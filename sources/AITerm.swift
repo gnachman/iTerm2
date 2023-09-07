@@ -6,6 +6,10 @@ protocol AITermControllerDelegate: AnyObject {
                                              completion: (AITermController.Registration) -> ())
 }
 
+fileprivate func isLegacy(model: String) -> Bool {
+    return !model.hasPrefix("gpt-")
+}
+
 @objc
 class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     private static let apiKeyUserDefaultsKey = "NoSyncOpenAIAPIKey"
@@ -169,10 +173,10 @@ class AITermController {
     func request(query: String) {
         precondition(state == .ground)
         state = .initialized(query: query)
-        handle(event: .begin)
+        handle(event: .begin, legacy: false)
     }
 
-    private func handle(event: Event) {
+    private func handle(event: Event, legacy: Bool) {
         DLog("handle(\(event)) in state \(state)")
         switch state {
         case .ground:
@@ -205,14 +209,14 @@ class AITermController {
             case .apiResponse(data: let data, response: _, error: let error):
                 DLog("Unexpected event \(event) in \(state)")
                 if let error {
-                    handle(event: .error(reason: "HTTP error from server: \(error)"))
+                    handle(event: .error(reason: "HTTP error from server: \(error)"), legacy: false)
                     return
                 }
                 guard let data else {
-                    handle(event: .error(reason: "Neither error nor data. This shouldn't happen."))
+                    handle(event: .error(reason: "Neither error nor data. This shouldn't happen."), legacy: false)
                     return
                 }
-                parseResponse(data: data)
+                parseResponse(data: data, legacy: legacy)
             case .error(reason: let reason):
                 DLog("error: \(reason)")
                 state = .ground
@@ -225,21 +229,66 @@ class AITermController {
         state = .ground
         delegate?.aitermControllerRequestRegistration(self) { [weak self] registration in
             self?.registration = registration
-            self?.handle(event: .begin)
+            self?.handle(event: .begin, legacy: false)
         }
     }
 
     private func url(forModel model: String) -> URL? {
-        if model.hasPrefix("gpt-") {
+        if !isLegacy(model: model) {
             return URL(string: "https://api.openai.com/v1/chat/completions")
         }
         return URL(string: "https://api.openai.com/v1/completions")
     }
 
+    private func legacyRequestBody(model: String, query: String) -> Data {
+        struct Body: Codable {
+            var model: String  // "text-davinci-003"
+            var prompt: String
+            var max_tokens: Int
+            var temperature = 0
+        }
+        let body = Body(model: model,
+                        prompt: query,
+                        max_tokens: max(Int(iTermAdvancedSettingsModel.aiMaxTokens()),
+                                        query.count / 2))
+        let bodyEncoder = JSONEncoder()
+        let bodyData = try! bodyEncoder.encode(body)
+        return bodyData
+    }
+
+    private func modernRequestBody(model: String, query: String) -> Data {
+        struct Message: Codable {
+            var role = "user"
+            var content: String
+        }
+        struct Body: Codable {
+            var model: String  // "text-davinci-003"
+            var messages = [Message]()
+            var max_tokens: Int
+            var temperature = 0
+        }
+        // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
+        // answer the same length as the query.
+        let body = Body(model: model,
+                        messages: [Message(content: query)],
+                        max_tokens: max(Int(iTermAdvancedSettingsModel.aiMaxTokens()),
+                                        query.count / 2))
+        let bodyEncoder = JSONEncoder()
+        let bodyData = try! bodyEncoder.encode(body)
+        return bodyData
+    }
+
+    private func requestBody(model: String, query: String) -> Data {
+        if isLegacy(model: model) {
+            return legacyRequestBody(model: model, query: query)
+        }
+        return modernRequestBody(model: model, query: query)
+    }
+
     private func makeAPICall(query: String, registration: Registration) {
         let model = iTermAdvancedSettingsModel.aiModel()!
         guard let url = url(forModel: model) else {
-            handle(event: .error(reason: "Invalid URL"))
+            handle(event: .error(reason: "Invalid URL"), legacy: false)
             return
         }
         var request = URLRequest(url: url)
@@ -250,32 +299,44 @@ class AITermController {
             request.addValue(value, forHTTPHeaderField: key)
         }
 
-        struct Body: Codable {
-            var model: String  // "text-davinci-003"
-            var prompt: String
-            var max_tokens: Int
-            var temperature = 0
-        }
-
-        // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
-        // answer the same length as the query.
-        let body = Body(model: model,
-                        prompt: query,
-                        max_tokens: max(Int(iTermAdvancedSettingsModel.aiMaxTokens()),
-                                        query.count / 2))
-        let bodyEncoder = JSONEncoder()
-        let bodyData = try! bodyEncoder.encode(body)
+        let bodyData = requestBody(model: model, query: query)
         request.httpBody = bodyData
 
         let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
-                self?.handle(event: .apiResponse(data: data, response: response, error: error))
+                self?.handle(event: .apiResponse(data: data, response: response, error: error),
+                             legacy: isLegacy(model: model))
             }
         }
         state = .querySent(query: query)
         task.resume()
     }
 
+    struct ModernResponse: Codable {
+        var id: String
+        var object: String
+        var created: Int
+        var model: String
+        var choices: [Choice]
+        var usage: Usage
+
+        struct Choice: Codable {
+            var index: Int
+            var message: Message
+            var finish_reason: String
+
+            struct Message: Codable {
+                var role: String
+                var content: String
+            }
+        }
+
+        struct Usage: Codable {
+            var prompt_tokens: Int
+            var completion_tokens: Int?
+            var total_tokens: Int
+        }
+    }
     struct Response: Codable {
         var id: String
         var object: String
@@ -298,17 +359,29 @@ class AITermController {
         }
     }
 
-    private func parseResponse(data: Data) {
+    private func parseResponse(data: Data, legacy: Bool) {
         let decoder = JSONDecoder()
         do {
-            let response = try decoder.decode(Response.self, from: data)
+            let choices = try {
+                if legacy {
+                    let response = try decoder.decode(Response.self, from: data)
+                    let choices = response.choices.map {
+                        $0.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                    return choices
+                } else {
+                    let response =  try decoder.decode(ModernResponse.self, from: data)
+                    let choices = response.choices.map {
+                        String($0.message.content.trimmingLeadingCharacters(in: .whitespacesAndNewlines))
+                    }
+                    return choices
+                }
+            }()
             state = .ground
-            let choices = response.choices.map {
-                $0.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            }
             delegate?.aitermController(self, offerChoices: choices)
         } catch {
-            handle(event: .error(reason: "Failed to decode API response: \(error). Data is: \(data.stringOrHex)"))
+            handle(event: .error(reason: "Failed to decode API response: \(error). Data is: \(data.stringOrHex)"),
+                   legacy: legacy)
         }
     }
 }
