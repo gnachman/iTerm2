@@ -334,6 +334,15 @@
 
 - (NSString *)validatedAndShellEscapedHostname:(NSString *)hostname {
     DLog(@"validate %@", hostname);
+    {
+        NSCharacterSet *legalInitialCharacters = [NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"];
+        NSCharacterSet *illegalInitialCharacters = [legalInitialCharacters invertedSet];
+        NSRange range = [hostname rangeOfCharacterFromSet:illegalInitialCharacters];
+        if (range.location == 0) {
+            ELog(@"Hostname %@ starts with an illegal character", hostname);
+            return nil;
+        }
+    }
     NSCharacterSet *legalCharacters = [NSCharacterSet characterSetWithCharactersInString:@":abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."];
     NSCharacterSet *illegalCharacters = [legalCharacters invertedSet];
     NSRange range = [hostname rangeOfCharacterFromSet:illegalCharacters];
