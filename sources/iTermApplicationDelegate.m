@@ -2297,6 +2297,10 @@ void TurnOnDebugLoggingAutomatically(void) {
     }];
 }
 
+- (IBAction)removeRecentProfilesFromDockMenu:(id)sender {
+    [ProfileDocument removeAllRecents];
+}
+
 - (IBAction)openDependencyEditor:(id)sender {
     [[iTermDependencyEditorWindowController sharedInstance] open];
 }

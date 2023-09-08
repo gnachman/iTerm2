@@ -16,6 +16,11 @@ class ProfileDocument: NSObject {
     private static let folder = "Recents"
 
     @objc
+    static func removeAllRecents() {
+        NSDocumentController.shared.clearRecentDocuments(nil)
+    }
+
+    @objc
     static func open(filename: String) {
         do {
             let url = URL(fileURLWithPath: filename)

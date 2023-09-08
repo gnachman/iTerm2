@@ -117,6 +117,12 @@
                                     <action selector="installShellIntegration:" target="-1" id="QBH-7C-wWV"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Remove Recent Profiles from Dock Menu" identifier="Remove Recent Profiles from Dock Menu" id="WcV-7l-ycc">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="removeRecentProfilesFromDockMenu:" target="201" id="aKX-KH-bN7"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="1469"/>
                             <menuItem title="Quit iTerm2" keyEquivalent="q" identifier="Quit iTerm2" id="136">
                                 <connections>
