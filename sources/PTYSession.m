@@ -11876,7 +11876,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // Put a zero-width space in between \ and ( to avoid interpolated strings coming from the server.
     theName = [theName stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
     [self setIconName:theName];
-    [self enableSessionNameTitleComponentIfPossible];
+    __weak __typeof(self) weakSelf = self;
+    // Avoid changing the profile in a side-effect.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DLog(@"Deferred enableSessionNameTitleComponentIfPossible");
+        [weakSelf enableSessionNameTitleComponentIfPossible];
+    });
 }
 
 - (void)screenSetSubtitle:(NSString *)subtitle {
@@ -13058,6 +13063,57 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSData *data = [_screen.terminalOutput reportVariableNamed:name
                                                          value:value];
     [self screenSendReportData:data];
+}
+
+// Convert a title into a string that is safe to transmit in a report.
+// The goal is to make it hard for an attacker to issue a report that could be part of a command.
+- (NSString *)reportSafeTitle:(NSString *)unsafeTitle {
+    NSCharacterSet *unsafeSet = [NSCharacterSet characterSetWithCharactersInString:@"|;\r\n\e"];
+    NSString *result = unsafeTitle;
+    NSRange range;
+    range = [result rangeOfCharacterFromSet:unsafeSet];
+    while (range.location != NSNotFound) {
+        result = [result stringByReplacingCharactersInRange:range withString:@" "];
+        range = [result rangeOfCharacterFromSet:unsafeSet];
+    }
+    return result;
+}
+
+- (BOOL)allowTitleReporting {
+    return [iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING
+                                     inProfile:self.profile];
+}
+
+- (BOOL)terminalIsTrusted {
+    const BOOL result = ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences];
+    DLog(@"terminalIsTrusted returning %@", @(result));
+    return result;
+}
+
+- (void)screenReportIconTitle {
+    if (self.isTmuxClient) {
+        return;
+    }
+    if (!self.screenAllowTitleSetting || !self.terminalIsTrusted) {
+        return;
+    }
+    NSString *title = [self screenIconTitle] ?: @"";
+    NSString *s = [NSString stringWithFormat:@"\033]L%@\033\\",
+                   [self reportSafeTitle:title]];
+    [self screenSendReportData:[s dataUsingEncoding:NSUTF8StringEncoding]];
+}
+
+- (void)screenReportWindowTitle {
+    if (self.isTmuxClient) {
+        return;
+    }
+    if (!self.screenAllowTitleSetting || !self.terminalIsTrusted) {
+        return;
+    }
+    NSString *title = [self screenIconTitle] ?: @"";
+    NSString *s = [NSString stringWithFormat:@"\033]l%@\033\\",
+                   [self reportSafeTitle:[self screenWindowTitle]]];
+    [self screenSendReportData:[s dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
 - (void)screenReportCapabilities {
@@ -15509,6 +15565,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 #pragma mark - iTermUpdateCadenceController
 
 - (void)updateCadenceControllerUpdateDisplay:(iTermUpdateCadenceController *)controller {
+    DLog(@"Cadence controller requests display");
     [self updateDisplayBecause:nil];
 }
 

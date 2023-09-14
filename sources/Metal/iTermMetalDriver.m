@@ -345,6 +345,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
 // Called whenever the view needs to render a frame
 - (void)drawInMTKView:(nonnull MTKView *)view {
+    DLog(@"Draw metal");
     const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     const NSTimeInterval dt = now - _lastFrameStartTime;
     _lastFrameStartTime = now;

@@ -2797,18 +2797,14 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
         }
         case XTERMCC_REPORT_ICON_TITLE: {
-            NSString *s = [NSString stringWithFormat:@"\033]L%@\033\\",
-                           [self reportSafeTitle:[_delegate terminalIconTitle]]];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [_delegate terminalReportIconTitle];
             break;
         }
         case XTERMCC_REPORT_WIN_TITLE: {
             // NOTE: In versions prior to 2.9.20150415, we used "L" as the leader here, not "l".
             // That was wrong and may cause bug reports due to breaking bugward compatibility.
             // (see xterm docs)
-            NSString *s = [NSString stringWithFormat:@"\033]l%@\033\\",
-                           [self reportSafeTitle:[_delegate terminalWindowTitle]]];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [_delegate terminalReportWindowTitle];
             break;
         }
         case XTERMCC_PUSH_TITLE: {
@@ -5290,19 +5286,6 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     return [title substringFromIndex:NSMaxRange(newlineRange)];
 }
 
-// Convert a title into a string that is safe to transmit in a report.
-// The goal is to make it hard for an attacker to issue a report that could be part of a command.
-- (NSString *)reportSafeTitle:(NSString *)unsafeTitle {
-    NSCharacterSet *unsafeSet = [NSCharacterSet characterSetWithCharactersInString:@"|;\r\n\e"];
-    NSString *result = unsafeTitle;
-    NSRange range;
-    range = [result rangeOfCharacterFromSet:unsafeSet];
-    while (range.location != NSNotFound) {
-        result = [result stringByReplacingCharactersInRange:range withString:@" "];
-        range = [result rangeOfCharacterFromSet:unsafeSet];
-    }
-    return result;
-}
 // This is used for titles received from the remote host.
 - (NSString *)sanitizedTitle:(NSString *)unsafeTitle {
     // Very long titles are slow to draw in the tabs. Limit their length and

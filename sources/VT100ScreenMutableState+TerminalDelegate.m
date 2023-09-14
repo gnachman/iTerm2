@@ -562,7 +562,10 @@
 - (void)terminalSetWindowTitle:(NSString *)title {
     DLog(@"begin %@", title);
 
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    // Use a deferred side effect because we don't want to redraw at this moment.
+    // It is often while/just after drawing a prompt and users hate when it draws
+    // twice either during the prompt or just after entering a command at th eprompt.
+    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         if ([delegate screenAllowTitleSetting]) {
             DLog(@"calling screenSetWindowTitle:%@", title);
@@ -592,25 +595,27 @@
 
 - (void)terminalSetIconTitle:(NSString *)title {
     DLog(@"begin %@", title);
-    // Pause because this changes the profile
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    // Use a deferred side effect because we don't want to redraw at this moment.
+    // It is often while/just after drawing a prompt and users hate when it draws
+    // twice either during the prompt or just after entering a command at th eprompt.
+    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenSetIconName:title];
         }
-        [unpauser unpause];
     }];
 }
 
 - (void)terminalSetSubtitle:(NSString *)subtitle {
     DLog(@"begin %@", subtitle);
-    // Paused because it can change the profile.
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    // Use a deferred side effect because we don't want to redraw at this moment.
+    // It is often while/just after drawing a prompt and users hate when it draws
+    // twice either during the prompt or just after entering a command at th eprompt.
+    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenSetSubtitle:subtitle];
         }
-        [unpauser unpause];
     }];
 }
 
@@ -672,7 +677,6 @@
             }
 
             if (string) {
-                NSLog(@"string=%@", string);
                 [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
                     DLog(@"begin side-effect");
                     [delegate screenCopyStringToPasteboard:string];
@@ -875,24 +879,24 @@
     return self.config.theoreticalGridSize.width;
 }
 
-- (NSString *)terminalIconTitle {
+- (void)terminalReportIconTitle {
     DLog(@"begin");
-    if (self.allowTitleReporting && [self terminalIsTrusted]) {
-        return self.config.iconTitle ?: @"";
-    } else {
-        DLog(@"not allowed");
-        return @"";
-    }
+    [self willSendReport];
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenReportIconTitle];
+        [weakSelf didSendReport:delegate];
+    }];
 }
 
-- (NSString *)terminalWindowTitle {
+- (void)terminalReportWindowTitle {
     DLog(@"begin");
-    if (self.allowTitleReporting && [self terminalIsTrusted]) {
-        return self.config.windowTitle ?: @"";
-    } else {
-        DLog(@"not allowed");
-        return @"";
-    }
+    [self willSendReport];
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenReportWindowTitle];
+        [weakSelf didSendReport:delegate];
+    }];
 }
 
 - (void)terminalPushCurrentTitleForWindow:(BOOL)isWindow {

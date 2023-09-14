@@ -262,8 +262,8 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (int)terminalScreenWidthInCells;
 
 // Returns the current icon (tab)/window title.
-- (NSString *)terminalIconTitle;
-- (NSString *)terminalWindowTitle;
+- (void)terminalReportIconTitle;
+- (void)terminalReportWindowTitle;
 
 // Saves the current window/icon (depending on isWindow) title in a stack.
 - (void)terminalPushCurrentTitleForWindow:(BOOL)isWindow;

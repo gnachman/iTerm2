@@ -535,6 +535,9 @@ private class TokenExecutorImpl {
     func pause() -> Unpauser {
         assertQueue()
         pauseCount.mutate { value in
+            if value == 0 {
+                DLog("Pause")
+            }
             return value + 1
         }
         return Unpauser(self)
@@ -813,6 +816,7 @@ extension TokenExecutorImpl: UnpauserDelegate {
             return value - 1
         }
         if newCount == 0 {
+            DLog("Unpause")
             schedule()
         }
     }
