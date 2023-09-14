@@ -429,5 +429,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenWillSynchronize;
 - (void)screenDidSynchronize;
 - (void)screenOpenURL:(NSURL * _Nonnull)url completion:(void (^ _Nonnull)(void))completion;
+- (void)screenReportIconTitle;
+- (void)screenReportWindowTitle;
 
 @end
