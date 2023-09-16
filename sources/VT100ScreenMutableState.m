@@ -3924,6 +3924,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)compressAndRescheduleIfNeeded {
+    if (![iTermPreferences boolForKey:kPreferenceKeyCompressHistory]) {
+        DLog(@"History compression disabled");
+        return;
+    }
+    DLog(@"History compression enabled");
     if ([self.linebuffer compress]) {
         return;
     }
