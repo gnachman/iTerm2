@@ -168,6 +168,8 @@ enum {
     IBOutlet NSTextField *_aiPromptLabel;
     IBOutlet NSImageView *_aiPromptWarning;  // Image shown when prompt lacks \(ai.prompt)
 
+    IBOutlet NSButton *_compressHistory;
+
     BOOL _customScriptsFolderDidChange;
 }
 
@@ -620,6 +622,10 @@ enum {
     info.observer = ^{
         [weakSelf updateAIPromptWarning];
     };
+    [self defineControl:_compressHistory
+                    key:kPreferenceKeyCompressHistory
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_allowsSendingClipboardContents
                            key:kPreferenceKeyPhonyAllowSendingClipboardContents
