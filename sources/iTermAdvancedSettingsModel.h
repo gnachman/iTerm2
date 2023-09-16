@@ -98,6 +98,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setDefaultTabBarHeight:(CGFloat)value;
 + (int)defaultTabStopWidth;
 + (NSString *)defaultURLScheme;
++ (BOOL)defaultIconsUsingLetters;
 + (BOOL)defaultWideMode;
 + (BOOL)detectPasswordInput;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;

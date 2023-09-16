@@ -8,6 +8,7 @@
 #import "iTermGraphicSource.h"
 
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermProcessCache.h"
 #import "iTermTextExtractor.h"
 #import "NSColor+iTerm.h"
@@ -129,11 +130,22 @@ static NSDictionary *sGraphicIconMap;
     return nonnormalCommand;
 }
 
+static NSMutableDictionary *CachedGraphicImages(void) {
+    static NSMutableDictionary *images;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        images = [NSMutableDictionary dictionary];
+    });
+    return images;
+}
+
 - (NSImage *)imageForJobName:(NSString *)command enabled:(BOOL)enabled {
     if (!enabled) {
         return nil;
     }
-    return [self imageForJobName:command];
+    NSImage *image = [self imageForJobName:command] ?: [self defaultImageForCommand:command];
+    CachedGraphicImages()[command] = image;
+    return image;
 }
 
 - (NSImage *)imageForJobName:(NSString *)jobName {
@@ -143,13 +155,8 @@ static NSDictionary *sGraphicIconMap;
         return nil;
     }
     
-    static NSMutableDictionary *images;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        images = [NSMutableDictionary dictionary];
-    });
     NSString *iconName = [@"graphic_" stringByAppendingString:logicalName];
-    NSImage *image = images[command];
+    NSImage *image = CachedGraphicImages()[command];
     if (image) {
         return image;
     }
@@ -159,10 +166,6 @@ static NSDictionary *sGraphicIconMap;
         NSString *path = [appSupport stringByAppendingPathComponent:[iconName stringByAppendingPathExtension:@"png"]];
         image = [NSImage it_imageWithScaledBitmapFromFile:path pointSize:NSMakeSize(16, 16)];
     }
-    if (self.disableTinting) {
-        return image;
-    }
-
     NSString *colorCode = sGraphicColorMap[command];
     if (!colorCode) {
         colorCode = sGraphicColorMap[logicalName];
@@ -170,10 +173,91 @@ static NSDictionary *sGraphicIconMap;
     if (!colorCode) {
         colorCode = @"#888";
     }
+    image = [self image:image tinted:colorCode];
+    return image;
+}
+
+- (NSImage *)image:(NSImage *)image tinted:(NSString *)colorCode {
+    if (self.disableTinting) {
+        return image;
+    }
+
     NSColor *color = [NSColor colorFromHexString:colorCode];
     image = [image it_imageWithTintColor:color];
-    images[command] = image;
     return image;
+}
+
+- (NSImage *)defaultImageForCommand:(NSString *)jobName {
+    if (![iTermAdvancedSettingsModel defaultIconsUsingLetters]) {
+        return nil;
+    }
+    NSString *command = [self normalizedCommand:jobName];
+    if (command.length == 0) {
+        return nil;
+    }
+    NSString *firstLetter = [jobName firstComposedCharacter:nil];
+    NSImage *image = [self imageForLetter:firstLetter];
+    return [self image:image tinted:[self randomTintColorForString:jobName]];
+}
+
+- (NSImage *)imageForLetter:(NSString *)letter {
+    const NSSize size = NSMakeSize(16, 16);
+    return [NSImage imageOfSize:size drawBlock:^{
+        // Set up the font and style
+        NSFont *font = [NSFont boldSystemFontOfSize:12];
+        NSDictionary *attributes = @{NSFontAttributeName: font,
+                                     NSForegroundColorAttributeName: [NSColor blackColor] };
+
+        // Create attributed string
+        NSAttributedString *attrStr = [[NSAttributedString alloc] initWithString:[letter uppercaseString]
+                                                                      attributes:attributes];
+
+        // Calculate size and origin to center the text
+        NSSize textSize = [attrStr size];
+        NSPoint textOrigin = NSMakePoint((size.width - textSize.width) / 2.0,
+                                        (size.height - textSize.height) / 2.0);
+
+        // Draw the filled circle
+        NSBezierPath *circlePath = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(1,
+                                                                                     1,
+                                                                                     size.width - 2,
+                                                                                     size.height - 2)];
+        [[NSColor blackColor] setFill];
+        [circlePath fill];
+
+        // Set the blending mode to subtract the letter from the circle
+        [NSGraphicsContext saveGraphicsState];
+        [NSGraphicsContext.currentContext setCompositingOperation:NSCompositingOperationDestinationOut];
+
+        // Draw the attributed string at the calculated origin point
+        [attrStr drawAtPoint:textOrigin];
+
+        [NSGraphicsContext restoreGraphicsState];
+    }];
+}
+
+- (iTermSRGBColor)colorForString:(NSString *)string {
+    NSUInteger hash = [string hashWithDJB2];
+    int red = hash & 255;
+    int green = (hash >> 8) & 255;
+    int blue = (hash >> 16) & 255;
+
+    return (iTermSRGBColor){ red / 255.0, green / 255.0, blue / 255.0 };
+}
+
+- (NSString *)randomTintColorForString:(NSString *)string {
+    NSMutableString *acc = [string mutableCopy];
+    const CGFloat minBrightness = 0.30;
+    const CGFloat maxBrightness = 0.50;
+    iTermSRGBColor color = [self colorForString:acc];
+    CGFloat brightness = iTermPerceptualBrightnessSRGB(color);
+    while (brightness < minBrightness || brightness > maxBrightness) {
+        [acc appendFormat:@"%0.2f%0.2f%0.2f", color.r, color.g, color.b];
+        color = [self colorForString:acc];;
+        brightness = iTermPerceptualBrightnessSRGB(color);
+    }
+    return [NSString stringWithFormat:@"#%02x%02x%02x",
+            (int)(color.r * 255), (int)(color.g * 255), (int)(color.b * 255)];
 }
 
 @end

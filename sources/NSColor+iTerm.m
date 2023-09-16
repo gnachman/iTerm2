@@ -39,6 +39,11 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             kBlueComponentBrightness * b);
 }
 
+CGFloat iTermPerceptualBrightnessSRGB(iTermSRGBColor srgb) {
+    iTermRGBColor linearColor = iTermLinearizeSRGB(srgb);
+    return 0.2126 * linearColor.r + 0.7152 * linearColor.g + 0.0722 * linearColor.b;
+}
+
 typedef struct {
     CGFloat x;
     CGFloat y;
