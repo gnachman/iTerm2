@@ -123,6 +123,9 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 // Is this view active (receiving user input)?
 @property(nonatomic, assign) BOOL textViewIsActiveSession;
 
+// Is a subview of the terminal view a first responder?
+@property(nonatomic) BOOL subviewIsFirstResponder;
+
 // Is "smart cursor color" on?
 @property(nonatomic, assign) BOOL useSmartCursorColor;
 

@@ -3993,6 +3993,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if ([_delegate terminalIsTrusted]) {
             [_delegate terminalSetPasteboard:value];
         }
+    } else if ([key isEqualToString:@"Editor"]) {
+        NSString *payload = nil;
+        NSString *argString = value;
+        const NSInteger colonIndex  = [value rangeOfString:@":"].location;
+        if (colonIndex != NSNotFound) {
+            payload = [[value substringFromIndex:colonIndex] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+            argString = [value substringToIndex:colonIndex];
+        }
+        NSDictionary<NSString *, NSString *> *params = [argString it_keyValuePairsSeparatedBy:@";"];
+        [_delegate terminalInsertEditorWithParams:params payload:payload];
     } else if ([key isEqualToString:@"File"] || [key isEqualToString:@"MultipartFile"]) {
         _receivingMultipartFile = [key isEqualToString:@"MultipartFile"];
         if ([_delegate terminalIsTrusted]) {

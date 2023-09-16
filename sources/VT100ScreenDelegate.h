@@ -393,6 +393,9 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
               toTextDocumentOfType:(NSString * _Nullable)type
                           filename:(NSString * _Nullable)filename
                          forceWide:(BOOL)forceWide;
+- (void)screenInsertEditorWithParams:(NSDictionary<NSString *, NSString *> *)params
+                             payload:(NSString *)payload;
+
 - (void)screenDidHookSSHConductorWithToken:(NSString * _Nonnull)token
                                   uniqueID:(NSString * _Nonnull)uniqueID
                                   boolArgs:(NSString * _Nonnull)boolArgs
@@ -431,5 +434,6 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenOpenURL:(NSURL *)url completion:(void (^ _Nonnull)(void))completion;
 - (void)screenReportIconTitle;
 - (void)screenReportWindowTitle;
+- (void)screenInsertEditorInAbsoluteRange:(VT100GridAbsCoordRange)range;
 
 @end

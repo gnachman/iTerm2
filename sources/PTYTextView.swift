@@ -40,6 +40,16 @@ extension PTYTextView: ExternalSearchResultsController {
         portholeWithSelection?.copy(as: .controlSequences)
     }
 
+    @objc(insertEditorInRange:)
+    func insertEditor(range absRange: VT100GridAbsCoordRange) {
+        replaceWithPorthole(inRange: absRange,
+                            text: "",
+                            baseDirectory: nil,
+                            type: "application/x-text-editor",
+                            filename: nil,
+                            forceWide: false)
+    }
+
     @objc(renderRange:type:filename:forceWide:)
     func render(range originalRange: VT100GridAbsCoordRange,
                 type: String?,
@@ -107,7 +117,8 @@ extension PTYTextView: ExternalSearchResultsController {
                                     type: type,
                                     filename: filename,
                                     useSelectedTextColor: delegate?.textViewShouldUseSelectedTextColor() ?? true,
-                                    forceWide: iTermAdvancedSettingsModel.defaultWideMode() || forceWide)
+                                    forceWide: iTermAdvancedSettingsModel.defaultWideMode() || forceWide,
+                                    editable: type == "application/x-text-editor")
         let porthole = makePorthole(for: config)
         replace(range: absRange, withPorthole: porthole)
     }
@@ -182,6 +193,9 @@ extension PTYTextView: ExternalSearchResultsController {
         setNeedsDisplay(true)
         porthole.view.needsDisplay = true
         self.delegate?.textViewDidAddOrRemovePorthole()
+        if porthole.config.editable {
+            porthole.makeFirstResponder()
+        }
     }
 
     // Continue owning the porthole but remove it from view.

@@ -106,7 +106,9 @@ class TextViewPorthole: NSObject {
         }
         popup.sizeToFit()
 
+        let editable = config.type == "application/x-text-editor"
         containerView = PortholeContainerView()
+        containerView.scrollsVertically = editable
         containerView.frame = NSRect(x: 0, y: 0, width: 800, height: 200)
         containerView.accessory = popup
         _ = containerView.layoutSubviews()
@@ -117,15 +119,28 @@ class TextViewPorthole: NSObject {
 
         let textViewFrame = CGRect(x: 0, y: 0, width: 800, height: 200)
         textStorage.addLayoutManager(layoutManager)
+        var containerSize = textViewFrame.size
+        if editable {
+            containerSize.height = CGFloat.greatestFiniteMagnitude
+        }
         textContainer = TopRightAvoidingTextContainer(
-            containerSize: textViewFrame.size,
+            containerSize: containerSize,
             cutOutSize: NSSize(width: containerView.frame.width - containerView.wideButton.frame.minX,
                                height: max(popup.frame.height + 2, 18)))
         layoutManager.addTextContainer(textContainer)
         textView = ExclusiveSelectionTextView(frame: textViewFrame, textContainer: textContainer)
         textView.textContainerInset = NSSize(width: 0, height: 0)
-        textView.isEditable = false
+        containerView.formattingControlsHidden = editable
+        textView.isEditable = editable
         textView.isSelectable = true
+        textView.isVerticallyResizable = editable
+        if editable {
+            textView.autoresizingMask = [.width]
+            textView.maxSize = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            textContainer.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
+                                                 height: CGFloat.greatestFiniteMagnitude)
+        }
+        textView.font = savedVisualAttributes.font;
         textView.drawsBackground = false
         if let selectedTextAttributes = Self.selectedTextAttributes(config: config) {
             textView.selectedTextAttributes = selectedTextAttributes
@@ -145,8 +160,17 @@ class TextViewPorthole: NSObject {
         if config.forceWide {
             containerView.makeWide()
         }
+        containerView.updateHasScrollView()
         super.init()
 
+        if config.editable {
+            popup.isHidden = true
+            textView.textColor = savedVisualAttributes.textColor
+            textView.textStorage?.setAttributedString(
+                NSAttributedString(string: "\u{feff}",
+                                   attributes: [.foregroundColor: savedVisualAttributes.textColor,
+                                                .font: savedVisualAttributes.font]))
+        }
         updateLanguage()
         updateAppearance()
         textView.delegate = self
@@ -201,6 +225,11 @@ extension TextViewPorthole: Porthole {
         containerView.frame = frame
 
         if let scrollView = containerView.scrollView {
+            if config.editable {
+                textContainer.containerSize = CGSize(width: CGFloat.greatestFiniteMagnitude,
+                                                     height: CGFloat.greatestFiniteMagnitude)
+                return
+            }
             textView.isHorizontallyResizable = true
             textView.maxSize = CGSize(width: CGFloat.greatestFiniteMagnitude,
                                       height: scrollView.contentSize.height)
@@ -217,7 +246,7 @@ extension TextViewPorthole: Porthole {
     }
 
     func desiredHeight(forWidth width: CGFloat) -> CGFloat {
-        let fakeWidth :CGFloat
+        let fakeWidth: CGFloat
         if containerView.scrollView != nil {
             fakeWidth = .infinity
         } else {
@@ -235,7 +264,6 @@ extension TextViewPorthole: Porthole {
             DLog("After second call to glyphRange rect is \(rect)")
             return rect.height
         }
-
         // The height is now frozen.
         textView.frame = NSRect(x: 0, y: 0, width: width, height: textViewHeight)
         return containerView.scrollViewOverhead + textViewHeight + (outerMargin + innerMargin) * 2
@@ -252,6 +280,10 @@ extension TextViewPorthole: Porthole {
 
     func removeHighlights() {
         textView.removeTemporaryHighlights()
+    }
+
+    func makeFirstResponder() {
+//        textView.window?.makeFirstResponder(textView)
     }
 
     func select(searchResult: ExternalSearchResult,
@@ -405,7 +437,8 @@ extension TextViewPorthole: Porthole {
                                        type: type,
                                        filename: filename,
                                        useSelectedTextColor: useSelectedTextColor,
-                                       forceWide: dict[Self.wideKey] as? Bool ?? false),
+                                       forceWide: dict[Self.wideKey] as? Bool ?? false,
+                                       editable: type == "application/x-text-editor"),
                 uuid: uuid,
                 savedLines: savedLines.compactMap { ScreenCharArray(dictionary: $0) },
                 language: dict[Self.languageKey] as? String,
@@ -561,6 +594,15 @@ class TopRightAvoidingTextContainer: NSTextContainer {
         fatalError("Not supported")
     }
 
+    override var containerSize: NSSize {
+        get {
+            return super.containerSize
+        }
+        set {
+            NSLog("Set container size to \(newValue)")
+            super.containerSize = newValue
+        }
+    }
     override func lineFragmentRect(forProposedRect proposedRect: CGRect,
                                    at characterIndex: Int,
                                    writingDirection baseWritingDirection: NSWritingDirection,
@@ -578,8 +620,10 @@ class TopRightAvoidingTextContainer: NSTextContainer {
         }
         return rect
     }
-
+    #warning("DNS")
     func withFakeSize<T>(_ fakeSize: NSSize, closure: () throws -> T) rethrows -> T {
+        return try closure()
+        /*
         let savedContainerSize = containerSize
         let saved = size
         size = fakeSize
@@ -589,6 +633,7 @@ class TopRightAvoidingTextContainer: NSTextContainer {
             containerSize = savedContainerSize
         }
         return try closure()
+         */
     }
 }
 

@@ -14,6 +14,8 @@ class PortholeContainerView: NSView {
     let closeButton = SaneButton()
     let wideButton: SaneButton
     var scrollView: NestableScrollView? = nil
+    var scrollsVertically = false
+    var wide = false
     var wideMode: Bool {
         return wideButton.state == .on
     }
@@ -51,6 +53,13 @@ class PortholeContainerView: NSView {
             let dimmed = backgroundColor.usingColorSpace(.sRGB)!.colorDimmed(by: 0.2,
                                                                              towardsGrayLevel: 0.5)
             layer?.backgroundColor = dimmed.cgColor
+        }
+    }
+
+    var formattingControlsHidden = false {
+        didSet {
+            wideButton.isHidden = formattingControlsHidden
+            closeButton.isHidden = formattingControlsHidden
         }
     }
 
@@ -120,13 +129,20 @@ class PortholeContainerView: NSView {
     }
 
     @objc func toggleWide(_ sender: AnyObject?) {
-        if let scrollView = scrollView,
+        wide = !wide
+        updateHasScrollView()
+    }
+
+    func updateHasScrollView() {
+        let shouldHaveScrollView = wide || scrollsVertically
+        if !shouldHaveScrollView,
+           let scrollView = scrollView,
            let documentView = scrollView.documentView {
             documentView.removeFromSuperview()
             insertSubview(documentView, at: 0)
             scrollView.removeFromSuperview()
             self.scrollView = nil
-        } else if scrollView == nil {
+        } else if scrollView == nil && shouldHaveScrollView {
             guard let child = subviews.first else {
                 return
             }
@@ -134,8 +150,8 @@ class PortholeContainerView: NSView {
 
             let scrollView = NestableScrollView(frame: child.frame)
             self.scrollView = scrollView
-            scrollView.hasVerticalScroller = false
-            scrollView.hasHorizontalScroller = true
+            scrollView.hasVerticalScroller = scrollsVertically
+            scrollView.hasHorizontalScroller = wide
             scrollView.documentView = child
             scrollView.drawsBackground = false
             insertSubview(scrollView, at: 0)
@@ -197,6 +213,10 @@ class PortholeContainerView: NSView {
     private func layoutChild() {
         guard let child = subviews.first else {
             return
+        }
+        guard subviews[0] != closeButton else {
+            // Haven't added a child yet
+            return;
         }
         var frame = child.frame
         frame.size.width = bounds.width;

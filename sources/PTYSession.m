@@ -14560,6 +14560,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_textview renderRange:range type:type filename:filename forceWide:forceWide];
 }
 
+- (void)screenInsertEditorInAbsoluteRange:(VT100GridAbsCoordRange)range {
+    [_textview insertEditorInRange:range];
+}
+
 - (void)screenDidHookSSHConductorWithToken:(NSString *)token
                                   uniqueID:(NSString *)uniqueID
                                   boolArgs:(NSString *)boolArgs

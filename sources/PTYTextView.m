@@ -1447,6 +1447,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _drawingHelper.isInKeyWindow = [self isInKeyWindow];
     // Draw the cursor filled in when we're inactive if there's a popup open or key focus was stolen.
     _drawingHelper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _keyFocusStolenCount);
+    _drawingHelper.subviewIsFirstResponder = self.window.firstResponder != self && [[NSView castFrom:self.window.firstResponder] ancestorSharedWithView:self] == self;
     _drawingHelper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
     _drawingHelper.transparencyAlpha = [self transparencyAlpha];
     _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];

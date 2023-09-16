@@ -42,6 +42,7 @@ NSString *const kPreferenceKeyCheckForUpdatesAutomatically = @"SUEnableAutomatic
 NSString *const kPreferenceKeyCheckForTestReleases = @"CheckTestRelease";
 NSString *const kPreferenceKeyLoadPrefsFromCustomFolder = @"LoadPrefsFromCustomFolder";
 NSString *const kPreferenceKeyUseCustomScriptsFolder = @"UseCustomScriptsFolder";
+NSString *const kPreferenceKeyCompressHistory = @"CompressHistoryInBackground";
 
 // This pref was originally a suppressable warning plus a user default, which is why it's in two
 // parts.
@@ -350,6 +351,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows: @NO,
                   kPreferenceKeyInstantReplayMemoryMegabytes: @4,
                   kPreferenceKeySavePasteAndCommandHistory: @NO,
+                  kPreferenceKeyCompressHistory: @YES,
                   kPreferenceKeyAddBonjourHostsToProfiles: @NO,
                   kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates: @YES,
                   kPreferenceKeyCheckForUpdatesAutomatically: @YES,

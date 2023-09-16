@@ -78,9 +78,10 @@ struct PortholeConfig: CustomDebugStringConvertible {
     var filename: String?
     var useSelectedTextColor: Bool
     var forceWide: Bool
+    var editable: Bool
 
     var debugDescription: String {
-        "PortholeConfig(text=\(text) baseDirectory=\(String(describing: baseDirectory)) font=\(font) type=\(String(describing: type)) filename=\(String(describing: filename)) useSelectedTextColor=\(useSelectedTextColor) forceWide=\(forceWide)"
+        "PortholeConfig(text=\(text) baseDirectory=\(String(describing: baseDirectory)) font=\(font) type=\(String(describing: type)) filename=\(String(describing: filename)) useSelectedTextColor=\(useSelectedTextColor) forceWide=\(forceWide) editable=\(editable)"
     }
 }
 
@@ -128,6 +129,7 @@ protocol Porthole: ObjCPorthole {
                  matchAttributes: [NSAttributedString.Key: Any],
                  regularAttributes: [NSAttributedString.Key: Any]) -> NSAttributedString?
     func removeHighlights()
+    func makeFirstResponder()
 }
 
 fileprivate let portholeType = "Type"

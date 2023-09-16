@@ -534,5 +534,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalDidExecuteToken:(VT100Token *)token;
 - (void)terminalWillExecuteToken:(VT100Token *)token;
 - (void)terminalOpenURL:(NSURL *)url;
+- (void)terminalInsertEditorWithParams:(NSDictionary<NSString *, NSString *> *)params
+                               payload:(NSString *)payload;
 
 @end

@@ -12,8 +12,11 @@ import Foundation
     private var removingSelection = false
 
     func removeSelection() {
+        guard selectedRange().length > 0 else {
+            return
+        }
         removingSelection = true
-        setSelectedRange(NSRange(location: 0, length: 0))
+        setSelectedRange(NSRange(location: selectedRange().location, length: 0))
         removingSelection = false
     }
 
@@ -27,17 +30,35 @@ import Foundation
     }
 
     override var acceptsFirstResponder: Bool {
-        return false
+        return isEditable
     }
 
     override func becomeFirstResponder() -> Bool {
-        return false
+        NSLog("Become first responder \(self)")
+        super.becomeFirstResponder()
+        return isEditable
+    }
+
+    override func resignFirstResponder() -> Bool {
+        NSLog("Resign first responder \(self)")
+        return super.resignFirstResponder()
     }
 
     func temporarilyHighlight(_ ranges: [NSRange]) {
         for range in ranges {
             temporarilyHighlight(range)
         }
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        if isEditable {
+            // I'm sure this is the wrong fix but I can't figure out why it's necessary.
+            // Setting the frame also sets the container size which breaks automatic resizing.
+            textContainer?.containerSize = CGSize(width: CGFloat.greatestFiniteMagnitude,
+                                                  height: CGFloat.greatestFiniteMagnitude)
+        }
+        NSLog("\(newSize)")
     }
 
     func removeTemporaryHighlights() {

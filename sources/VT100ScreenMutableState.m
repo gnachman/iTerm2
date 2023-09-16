@@ -3936,12 +3936,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (_compressionScheduled) {
         return;
     }
-    _compressionScheduled = YES;
-    __weak __typeof(self) weakSelf = self;
     // This mechanism ensures we don't use too much CPU time on compression. We do compression about
     // every 100ms and LineBlock limits the amount of time it spends doing compression to about
     // 10ms.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), _queue, ^{
+    [self scheduleCompressionAfterDelay:0.1];
+}
+
+- (void)scheduleCompressionAfterDelay:(NSTimeInterval)delay {
+    __weak __typeof(self) weakSelf = self;
+    _compressionScheduled = YES;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), _queue, ^{
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
@@ -5244,6 +5248,22 @@ launchCoprocessWithCommand:(NSString *)command
                         toTextDocumentOfType:type
                                     filename:filename
                                    forceWide:forceWide];
+        [unpauser unpause];
+    }];
+}
+
+- (void)terminalInsertEditorWithParams:(NSDictionary<NSString *, NSString *> *)params
+                               payload:(NSString *)payload {
+    const NSInteger height = [params[@"height"] integerValue] ?: 3;
+    const long long absStartY = self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow + self.currentGrid.cursor.y;
+    const VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeMake(0, absStartY, self.currentGrid.size.width, absStartY + height);
+    [self carriageReturn];
+    for (NSInteger i = 0; i < height; i++)  {
+        [self eraseLineBeforeCursor:NO afterCursor:YES decProtect:NO];
+        [self appendLineFeed];
+    }
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenInsertEditorInAbsoluteRange:absRange];
         [unpauser unpause];
     }];
 }

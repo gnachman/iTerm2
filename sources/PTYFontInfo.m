@@ -41,7 +41,7 @@
 
 - (NSInteger)it_ligatureLevel {
     if ([self.fontName hasPrefix:@"Iosevka"]) {
-        return 2;
+        return 1;
     } else if ([self it_fontIsOnLigatureBlacklist]) {
         return 0;
     } else {

@@ -3526,13 +3526,14 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                                          faint:NO
                                                   isBackground:NO];
     }
+    const BOOL sessionActive = (_isInKeyWindow && _textViewIsActiveSession);
     [cursor drawWithRect:rect
              doubleWidth:isDoubleWidth
               screenChar:screenChar
          backgroundColor:cursorColor
          foregroundColor:cursorTextColor
                    smart:_useSmartCursorColor
-                 focused:((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor)
+                 focused:(sessionActive && !self.subviewIsFirstResponder) || _shouldDrawFilledInCursor
                    coord:cursorCoord
                  outline:outline
            virtualOffset:virtualOffset];
