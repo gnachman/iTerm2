@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>BuildMachineOSBuild</key>
-	<string>22G74</string>
+	<string>23A339</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
@@ -43,7 +43,7 @@
 	<key>DTXcodeBuild</key>
 	<string>15A240d</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.14</string>
+	<string>10.15</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2012 Nine Muses AB. All rights reserved.</string>
 </dict>
