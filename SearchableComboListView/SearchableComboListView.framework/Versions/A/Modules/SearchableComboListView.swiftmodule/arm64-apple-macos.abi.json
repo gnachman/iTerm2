@@ -1679,1225 +1679,1225 @@
   },
   "ConstValues": [
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboViewStringAdditions.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboViewStringAdditions.swift",
       "kind": "Array",
       "offset": 220,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 801,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 2729,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 2800,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 2820,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 2852,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "FloatLiteral",
       "offset": 2944,
       "length": 3,
       "value": "0.0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 3452,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 3457,
       "length": 2,
       "value": "16"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 3785,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 4056,
       "length": 1,
       "value": "1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 4386,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "FloatLiteral",
       "offset": 4433,
       "length": 3,
       "value": "0.0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 4820,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 4970,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 5027,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 5672,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 5912,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 6175,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 6234,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "Array",
       "offset": 6546,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "Array",
       "offset": 6655,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 6732,
       "length": 30,
       "value": "\"searchableComboViewCheckmark\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 6834,
       "length": 26,
       "value": "\"searchableComboViewLabel\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 6938,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 6984,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 7215,
       "length": 1,
       "value": "4"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 7910,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 8252,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 8499,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 8674,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 8702,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "Array",
       "offset": 8938,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 8957,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 9062,
       "length": 1,
       "value": "1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 9180,
       "length": 1,
       "value": "1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 9422,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 9554,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 9652,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 9741,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 9790,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 10196,
       "length": 3,
       "value": "\"X\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 10222,
       "length": 1,
       "value": "2"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 10272,
       "length": 3,
       "value": "\"X\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 10312,
       "length": 1,
       "value": "2"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 10448,
       "length": 39,
       "value": "\"init(coder:) has not been implemented\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 11752,
       "length": 2,
       "value": "16"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 13029,
       "length": 34,
       "value": "\"SearchableComboViewItemLabelCell\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 13371,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 13408,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 13447,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 13489,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 13534,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 13832,
       "length": 35,
       "value": "\"SearchableComboViewGroupLabelCell\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 14269,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 14306,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 14345,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 14387,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 14432,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "Array",
       "offset": 14606,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 14824,
       "length": 1,
       "value": "4"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 14945,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 14951,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 15056,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 15228,
       "length": 1,
       "value": "1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 15551,
       "length": 53,
       "value": "\"SearchableComboViewCheckMarkTableViewCellIdentifier\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 15747,
       "length": 5,
       "value": "\"✓\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 15988,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 16025,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 16064,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 16106,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 16151,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 16230,
       "length": 5,
       "value": "\"✓\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 16433,
       "length": 1,
       "value": "1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 2510,
       "length": 34,
       "value": "\"SearchableComboListView.SearchableComboTableViewController\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 18312,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 18376,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 18858,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 18921,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 19388,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 19423,
       "length": 2,
       "value": "-1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 20164,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 20322,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 20659,
       "length": 4,
       "value": "\"\r\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListSearchField.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListSearchField.swift",
       "kind": "BooleanLiteral",
       "offset": 776,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "StringLiteral",
       "offset": 370,
       "length": 24,
       "value": "\"SearchableComboListView.SearchableComboViewGroup\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "StringLiteral",
       "offset": 840,
       "length": 23,
       "value": "\"SearchableComboListView.SearchableComboViewItem\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 1686,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "FloatLiteral",
       "offset": 1808,
       "length": 5,
       "value": "0.167"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "IntegerLiteral",
       "offset": 2334,
       "length": 2,
       "value": "99"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 2402,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "IntegerLiteral",
       "offset": 2649,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "IntegerLiteral",
       "offset": 2655,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "IntegerLiteral",
       "offset": 2665,
       "length": 3,
       "value": "100"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "IntegerLiteral",
       "offset": 2678,
       "length": 3,
       "value": "100"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 2857,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 2904,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 3047,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 3101,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "IntegerLiteral",
       "offset": 3163,
       "length": 1,
       "value": "6"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 3223,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "FloatLiteral",
       "offset": 3299,
       "length": 4,
       "value": "0.66"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "IntegerLiteral",
       "offset": 3312,
       "length": 1,
       "value": "1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "FloatLiteral",
       "offset": 3378,
       "length": 3,
       "value": "0.5"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "Array",
       "offset": 3629,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "StringLiteral",
       "offset": 3706,
       "length": 18,
       "value": "\"Select Action…\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "StringLiteral",
       "offset": 3970,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 4288,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "StringLiteral",
       "offset": 4321,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 4812,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 4868,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 5155,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 5211,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "IntegerLiteral",
       "offset": 5615,
       "length": 2,
       "value": "-1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 8444,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "StringLiteral",
       "offset": 1547,
       "length": 19,
       "value": "\"SearchableComboListView.SearchableComboView\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "StringLiteral",
       "offset": 1547,
       "length": 19,
       "value": "\"SearchableComboListView.SearchableComboView\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 9660,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 9675,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboContentView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboContentView.swift",
       "kind": "BooleanLiteral",
       "offset": 437,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboContentView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboContentView.swift",
       "kind": "BooleanLiteral",
       "offset": 595,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "StringLiteral",
       "offset": 792,
       "length": 32,
       "value": "\"SearchableComboTableView.Enter\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 865,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 974,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 1021,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 1215,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 1286,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "IntegerLiteral",
       "offset": 1417,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 1688,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 1762,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 1830,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 1861,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 1981,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "IntegerLiteral",
       "offset": 2722,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "IntegerLiteral",
       "offset": 2750,
       "length": 2,
       "value": "-1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 2833,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "IntegerLiteral",
       "offset": 2891,
       "length": 2,
       "value": "-1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 3046,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 3087,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "IntegerLiteral",
       "offset": 3276,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 3512,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 3966,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "IntegerLiteral",
       "offset": 4212,
       "length": 2,
       "value": "51"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 4344,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 4374,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "IntegerLiteral",
       "offset": 4451,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 4487,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 4525,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 4556,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 4657,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 4690,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 1027,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 1194,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 1413,
       "length": 2,
       "value": "-1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 1698,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 1867,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 1891,
       "length": 1,
       "value": "1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 2032,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "StringLiteral",
       "offset": 2212,
       "length": 21,
       "value": "\"SearchableComboView\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 5008,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 6107,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 6255,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 6502,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 6744,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 6843,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 6944,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 6993,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 7043,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 7150,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "Array",
       "offset": 7302,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 7409,
       "length": 3,
       "value": "125"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 7450,
       "length": 3,
       "value": "126"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 7540,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 7677,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 7701,
       "length": 4,

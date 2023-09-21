@@ -1,10 +1,10 @@
-prefix="/Users/gnachman/git/iterm2-alt2/ThirdParty/libgit2"
-libdir="/Users/gnachman/git/iterm2-alt2/ThirdParty/libgit2/lib"
-includedir="/Users/gnachman/git/iterm2-alt2/ThirdParty/libgit2/include"
+prefix="/Users/gnachman/git/iterm2-alt3/ThirdParty/libgit2"
+libdir="/Users/gnachman/git/iterm2-alt3/ThirdParty/libgit2/lib"
+includedir="/Users/gnachman/git/iterm2-alt3/ThirdParty/libgit2/include"
 
 Name: libgit2
 Description: The git library, take 2
 Version: 1.1.0
 Libs: -L${libdir} -lgit2
-Libs.private: -framework CoreFoundation -framework Security -lz -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk/usr/lib -liconv
+Libs.private: -framework CoreFoundation -framework Security -lz -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.0.sdk/usr/lib -liconv
 Cflags: -I${includedir} 

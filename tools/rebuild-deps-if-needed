@@ -1,6 +1,6 @@
 #!/bin/bash
 
 if tools/check-xcode-version; then
-  make deps && xcodebuild -version > last-xcode-version
+  make paranoiddeps && xcodebuild -version > last-xcode-version
 fi
 

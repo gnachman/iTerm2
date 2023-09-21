@@ -1,6 +1,6 @@
 framework module ColorPicker {
   umbrella header "ColorPicker.h"
-
   export *
+
   module * { export * }
 }

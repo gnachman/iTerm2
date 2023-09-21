@@ -1,0 +1,4 @@
+(version 1)
+(allow default)
+(deny file* (subpath "/opt/homebrew/Cellar/libevent"))
+(deny file* (subpath "/opt/homebrew/Cellar/libssh2"))

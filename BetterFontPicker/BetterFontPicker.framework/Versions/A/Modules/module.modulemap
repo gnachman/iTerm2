@@ -1,7 +1,7 @@
 framework module BetterFontPicker {
   umbrella header "BetterFontPicker.h"
-
   export *
+
   module * { export * }
 }
 

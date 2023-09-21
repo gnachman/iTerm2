@@ -1,4 +1,4 @@
-prefix=/Users/gnachman/git/iterm2-alt2/ThirdParty/libsixel
+prefix=/Users/gnachman/git/iterm2-alt3/ThirdParty/libsixel
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
