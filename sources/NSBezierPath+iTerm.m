@@ -99,6 +99,10 @@
                     CGPathCloseSubpath(path);
                 }
                 break;
+            case NSBezierPathElementQuadraticCurveTo:
+                closed = NO;
+                CGPathAddQuadCurveToPoint(path, NULL, associatedPoints[0].x, associatedPoints[0].y, associatedPoints[1].x, associatedPoints[1].y);
+                break;
         }
     }
 

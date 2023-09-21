@@ -181,7 +181,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
 
     }
 
-    static func load<T: SecureUserDefaultStringTranscodable>(_ key: String) throws -> T? {
+    static func load<U: SecureUserDefaultStringTranscodable>(_ key: String) throws -> U? {
         let fileURL = try Self.path(key)
         // Check if the file exists before gettings its attributes to avoid an annoying exception
         // while debugging.
@@ -205,7 +205,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
             throw SecureUserDefaultError.badMagic
         }
         let payload = content.suffix(from: newline.upperBound)
-        return try SecureUserDefaultValue<T>(sudString: String(payload))?.value
+        return try SecureUserDefaultValue<U>(sudString: String(payload))?.value
     }
 
     static func delete(_ key: String) throws {
@@ -213,13 +213,13 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         try FileManager.default.removeItem(at: filename)
     }
 
-    static func store<T: SecureUserDefaultStringTranscodable>(_ key: String, value: T) throws {
+    static func store<U: SecureUserDefaultStringTranscodable>(_ key: String, value: U) throws {
         // Write to a temp file and then move it. If the destination is a link then it's not safe
         // to write to it.
         let unsafeURL = try self.path(key)
         let path = unsafeURL.path.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\\\\\"")
         let magic = Self.magic(key, filePath: URL(fileURLWithPath: path))
-        let encodedValue = SecureUserDefaultValue<T>(value: value).encodedString
+        let encodedValue = SecureUserDefaultValue<U>(value: value).encodedString
         let code =
         """
         do shell script "

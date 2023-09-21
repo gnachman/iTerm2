@@ -216,7 +216,7 @@ void PFMoveToApplicationsFolderIfNecessary(void) {
 		exit(0);
 	}
 	// Save the alert suppress preference if checked
-	else if ([[alert suppressionButton] state] == NSOnState) {
+	else if ([[alert suppressionButton] state] == NSControlStateValueOn) {
 		[[NSUserDefaults standardUserDefaults] setBool:YES forKey:AlertSuppressKey];
 	}
 
@@ -233,7 +233,7 @@ fail:
 	}
 }
 
-BOOL PFMoveIsInProgress() {
+BOOL PFMoveIsInProgress(void) {
     return MoveInProgress;
 }
 

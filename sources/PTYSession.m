@@ -13110,9 +13110,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!self.screenAllowTitleSetting || !self.terminalIsTrusted) {
         return;
     }
-    NSString *title = [self screenIconTitle] ?: @"";
     NSString *s = [NSString stringWithFormat:@"\033]l%@\033\\",
-                   [self reportSafeTitle:[self screenWindowTitle]]];
+                   [self reportSafeTitle:[self windowTitle]]];
     [self screenSendReportData:[s dataUsingEncoding:NSUTF8StringEncoding]];
 }
 

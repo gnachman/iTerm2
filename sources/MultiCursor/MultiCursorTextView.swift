@@ -145,7 +145,7 @@ extension MultiCursorTextView {
         }
     }
 
-    open override var insertionPointColor: NSColor {
+    open override var insertionPointColor: NSColor? {
         get {
             return super.insertionPointColor
         }
@@ -178,7 +178,7 @@ extension MultiCursorTextView {
         if !caretVisible {
             return
         }
-        (savedInsertionPointColor ?? insertionPointColor).set()
+        (savedInsertionPointColor ?? insertionPointColor)?.set()
         for rect in multiCursorRects {
             var temp = rect
             temp.size.width = 1
