@@ -489,7 +489,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHTMLTabTitles: @NO,
 
                   kPreferenceKeyDisableTransparencyForKeyWindow: @NO,
-                  kPreferenceKeyNeverBlockSystemShutdown: @NO
+                  kPreferenceKeyNeverBlockSystemShutdown: @NO,
+                  kPreferenceKeyCompressHistory: @YES
               };
     }
     return dict;
