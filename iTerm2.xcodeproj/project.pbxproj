@@ -13175,12 +13175,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm2" */;
 			buildPhases = (
+				93BD20450FE16DD50059656D /* Rewrite version number in plist file */,
 				874206480564169600CFC3F1 /* Headers */,
 				8742064A0564169600CFC3F1 /* Resources */,
 				8742064E0564169600CFC3F1 /* Sources */,
 				874206510564169600CFC3F1 /* Frameworks */,
 				874206550564169600CFC3F1 /* Rez */,
-				93BD20450FE16DD50059656D /* Update SVN Revision */,
 				874206560564169600CFC3F1 /* CopyFiles */,
 				A6866B7823CAA10A00ACD94C /* Embed XPC Services */,
 				A6725AD923D64A57001CA48A /* CopyFiles */,
@@ -15159,7 +15159,7 @@
 			shellPath = /bin/sh;
 			shellScript = "exec tools/updateVersion.py";
 		};
-		93BD20450FE16DD50059656D /* Update SVN Revision */ = {
+		93BD20450FE16DD50059656D /* Rewrite version number in plist file */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 12;
@@ -15169,12 +15169,12 @@
 			);
 			inputPaths = (
 			);
-			name = "Update SVN Revision";
+			name = "Rewrite version number in plist file";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "exec tools/updateVersion.py\ncd $BUILT_PRODUCTS_DIR/iTerm2.app/Contents/MacOS\nln -s iTerm2 iTerm\n";
+			shellScript = "test -f $SRCROOT/plists/iTerm2.plist || cp $SRCROOT/plists/dev-iTerm2.plist $SRCROOT/plists/iTerm2.plist\nexec tools/updateVersion.py\ncd $BUILT_PRODUCTS_DIR/iTerm2.app/Contents/MacOS\nln -s iTerm2 iTerm\n";
 		};
 		A60D023826844E6500E19362 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
