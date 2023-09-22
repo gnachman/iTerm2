@@ -39,6 +39,7 @@
                         <string>Create iTerm2 Tab</string>
                         <key>CFBundleTypeRole</key>
                         <string>Editor</string>
+                </dict>
                 <dict>
                         <key>CFBundleTypeExtensions</key>
                         <array>
