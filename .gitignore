@@ -26,6 +26,7 @@ api/library/python/iterm2/docs/_build/
 ThirdParty/libsixel-arm
 ThirdParty/libsixel/lib/libsixel-arm.a
 ThirdParty/libsixel/lib/libsixel-x86.a
+plists/iTerm2.plist
 
 # Compiled python modules.
 *.pyc
