@@ -37,7 +37,7 @@ def update(path):
     plist = NSMutableDictionary.dictionaryWithContentsOfFile_(path)
     print("Updating versions:", path, version)
     if not plist:
-        print("WARNING - FAILED TO LOAD PLIST")
+        print(f"WARNING - FAILED TO LOAD PLIST from {path}")
     plist["CFBundleShortVersionString"] = version
     plist["CFBundleGetInfoString"] = version
     plist["CFBundleVersion"] = version
@@ -48,12 +48,9 @@ def update(path):
 # Update the main app's plist
 
 # /Users/gnachman/git/iterm2/Build/Development
-buildDir = os.environ["BUILT_PRODUCTS_DIR"]
+srcDir = os.environ["SRCROOT"]
+print(f"SRCROOT={srcDir}")
 
-# iTerm2.app/Contents/Info.plist
-infoFile = os.environ["INFOPLIST_PATH"]
-
-# /Users/gnachman/git/iterm2/Build/Development/iTerm2.app/Contents/Info.plist
-path = os.path.join(buildDir, infoFile)
+path = os.path.join(srcDir, "plists", "iTerm2.plist")
 
 update(path)
