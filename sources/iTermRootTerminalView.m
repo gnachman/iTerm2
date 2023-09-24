@@ -983,7 +983,15 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             divisionViewFrame.origin.y += iTermGetStatusBarHeight();
         }
         if (!_divisionView) {
-            Class theClass = _useMetal ? [iTermLayerBackedSolidColorView class] : [SolidColorView class];
+            Class theClass;
+            if (@available(macOS 14.0, *)) {
+                // There's a bug in Sonoma (first seen in 14.0 Beta (23A5301h) which I believe is beta 4)
+                // where using a non-layer-backed division view caused all the other views to disappear, including those over it.
+                // I don't remember why I fell back to a non-layer-backed view for non-metal. Probably bugs in old macOS versions.
+                theClass = [iTermLayerBackedSolidColorView class];
+            } else {
+                theClass = _useMetal ? [iTermLayerBackedSolidColorView class] : [SolidColorView class];
+            }
             _divisionView = [[theClass alloc] initWithFrame:divisionViewFrame];
             _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
             [self addSubview:_divisionView];
