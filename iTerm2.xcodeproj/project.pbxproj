@@ -2477,6 +2477,7 @@
 		A685D9FA1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */; };
 		A685D9FB1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m in Sources */ = {isa = PBXBuildFile; fileRef = A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */; };
 		A685D9FD1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */; };
+		A686253C2AC0AE56002BB82C /* MultiIntervalTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = A686253B2AC0AE56002BB82C /* MultiIntervalTree.swift */; };
 		A6866B2723C6623E00ACD94C /* SCPFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D5186D1429007F550F /* SCPFile.m */; };
 		A6866B6223C856A700ACD94C /* iTermAnnouncementViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */; };
 		A6866B6C23CAA10A00ACD94C /* pidinfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A6866B6B23CAA10A00ACD94C /* pidinfo.m */; };
@@ -6413,6 +6414,7 @@
 		A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+TouchBar.h"; sourceTree = "<group>"; };
 		A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PseudoTerminal+TouchBar.m"; sourceTree = "<group>"; };
 		A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+Private.h"; sourceTree = "<group>"; };
+		A686253B2AC0AE56002BB82C /* MultiIntervalTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiIntervalTree.swift; sourceTree = "<group>"; };
 		A6866B6723CAA10A00ACD94C /* pidinfo.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = pidinfo.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6866B6923CAA10A00ACD94C /* pidinfoProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pidinfoProtocol.h; sourceTree = "<group>"; };
 		A6866B6A23CAA10A00ACD94C /* pidinfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pidinfo.h; sourceTree = "<group>"; };
@@ -10834,6 +10836,7 @@
 				A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */,
 				A6F0E2592797536A00022D20 /* JournalingIntervalTree.swift */,
 				A6ED047527A357BE00E41D13 /* MarkCache.swift */,
+				A686253B2AC0AE56002BB82C /* MultiIntervalTree.swift */,
 			);
 			name = "Data Structures";
 			sourceTree = "<group>";
@@ -15407,6 +15410,7 @@
 				A678C505279A2D3A00C59927 /* VT100WorkingDirectory.m in Sources */,
 				A6A4866620B676EB00493302 /* GeneralPreferencesViewController.m in Sources */,
 				A6A802EA226ED20800BC70DC /* iTermPrintGuard.m in Sources */,
+				A686253C2AC0AE56002BB82C /* MultiIntervalTree.swift in Sources */,
 				A653F66C24CE7CE30062377E /* iTermGraphEncoder.m in Sources */,
 				A66319872308C60000C502BD /* NSStringITerm.m in Sources */,
 				5370678A21C9D2780088D0F3 /* SIGKey.m in Sources */,
