@@ -13,11 +13,23 @@ protocol MarkCacheReading: AnyObject {
     subscript(line: Int) -> iTermMarkProtocol? {
         get
     }
+
+    @objc
+    func findAtOrBefore(location desiredLocation: Int64) -> [iTermMarkProtocol]
+
+    @objc(enumerateFrom:)
+    func enumerate(from location: Int64) -> NSEnumerator
 }
 
 @objc(iTermMarkCache)
 class MarkCache: NSObject, NSCopying, MarkCacheReading {
     private var dict = [Int: iTermMarkProtocol]()
+    private let sorted = SortedArray<iTermMarkProtocol>(location: { mark in
+        mark.entry?.interval.location
+    }, equals: { lhs, rhs in
+        lhs === rhs
+    })
+
     @objc private(set) var dirty = false
     @objc lazy var sanitizingAdapter: MarkCache = {
         return MarkCacheSanitizingAdapter(self)
@@ -32,24 +44,34 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
         self.dict = dict.mapValues({ value in
             value.doppelganger() as! iTermMarkProtocol
         })
+        for value in dict.values {
+            sorted.insert(object: value)
+        }
     }
 
-    @objc(remove:)
-    func remove(line: Int) {
+    @objc(removeMark:onLine:)
+    func remove(mark: iTermMarkProtocol, line: Int) {
         dirty = true
         dict.removeValue(forKey: line)
+        sorted.remove(object: mark)
     }
 
     @objc
     func removeAll() {
         dirty = true
         dict = [:]
+        sorted.removeAll()
     }
 
     @objc
     func copy(with zone: NSZone? = nil) -> Any {
         dirty = false
         return MarkCache(dict: dict)
+    }
+
+    @objc(enumerateFrom:)
+    func enumerate(from location: Int64) -> NSEnumerator {
+        return iTermSortedArrayEnumerator(nextProvider: sorted.itemsFrom(location: location))
     }
 
     @objc
@@ -61,10 +83,19 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
             dirty = true
             if let newValue = newValue {
                 dict[line] = newValue
+                sorted.insert(object: newValue)
             } else {
+                if let mark = dict[line] {
+                    sorted.remove(object: mark)
+                }
                 dict.removeValue(forKey: line)
             }
         }
+    }
+
+    @objc
+    func findAtOrBefore(location desiredLocation: Int64) -> [iTermMarkProtocol] {
+        return sorted.findAtOrBefore(location: desiredLocation)
     }
 }
 
@@ -74,8 +105,8 @@ fileprivate class MarkCacheSanitizingAdapter: MarkCache {
         self.source = source
     }
 
-    @objc(remove:)
-    override func remove(line: Int) {
+    @objc(removeMark:onLine:)
+    override func remove(mark: iTermMarkProtocol, line: Int) {
         fatalError()
     }
 
