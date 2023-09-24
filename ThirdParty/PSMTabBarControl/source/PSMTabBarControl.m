@@ -906,7 +906,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     return YES;
 }
 
-- (void)drawRect:(NSRect)rect {
+// In sonoma, rect can be larger than the bounds and filling can cause other views to be drawn over. WTF
+- (void)drawRect:(NSRect)insaneRect {
+    const NSRect rect = NSIntersectionRect(self.bounds, insaneRect);
     for (PSMTabBarCell *cell in [self cells]) {
         [cell setIsLast:NO];
     }
