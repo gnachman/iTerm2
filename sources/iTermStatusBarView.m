@@ -48,6 +48,7 @@
 
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
 
     if (self.backgroundColor) {
         [self.backgroundColor set];

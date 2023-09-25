@@ -155,7 +155,8 @@ static const CGFloat kButtonSize = 17;
     [delegate_ close];
 }
 
-- (void)drawRect:(NSRect)dirtyRect {
+- (void)drawRect:(NSRect)insaneRect {
+    const NSRect dirtyRect = NSIntersectionRect(insaneRect, self.bounds);
     NSColor *color = [self.delegate sessionTitleViewBackgroundColor];
     [color set];
     NSRectFill(dirtyRect);
@@ -169,7 +170,7 @@ static const CGFloat kButtonSize = 17;
         NSRectFillUsingOperation(NSMakeRect(dirtyRect.origin.x, 0, dirtyRect.size.width, 1), NSCompositingOperationSourceOver);
     }
 
-    [super drawRect:dirtyRect];
+    [super drawRect:insaneRect];
 }
 
 - (void)setDelegate:(id<SessionTitleViewDelegate>)delegate {

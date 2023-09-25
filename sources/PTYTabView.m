@@ -78,6 +78,7 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     if (self.drawsBackground) {
         if ([self.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
             [[NSColor blackColor] set];
+            dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
             NSRectFill(dirtyRect);
         } else {
             [super drawRect:dirtyRect];

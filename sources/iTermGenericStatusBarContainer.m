@@ -62,6 +62,7 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     [[self.delegate genericStatusBarContainerBackgroundColor] set];
     NSRectFill(dirtyRect);
 }

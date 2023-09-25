@@ -15,6 +15,7 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     if (!_fillPath) {
         _fillPath = [[NSBezierPath alloc] init];
         [_fillPath moveToPoint:NSMakePoint(0, 0)];

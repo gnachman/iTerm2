@@ -112,6 +112,7 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     switch (_mode) {
         case SplitSelectionViewModeSourceMove:
             [self drawSourceWithMessage:@"Select a destination pane" rect:dirtyRect];

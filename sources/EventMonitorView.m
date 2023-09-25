@@ -134,7 +134,7 @@
 - (void)drawRect:(NSRect)dirtyRect
 {
     [[NSColor controlBackgroundColor] set];
-    NSRectFill(dirtyRect);
+    NSRectFill(self.bounds);
     [[NSColor separatorColor] set];
     NSFrameRect(NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height));
 

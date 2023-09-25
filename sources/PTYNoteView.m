@@ -311,6 +311,7 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
 - (void)drawRect:(NSRect)dirtyRect
 {
     [super drawRect:dirtyRect];
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
 
     NSBezierPath *path = [self roundedRectangleWithPointerInRect:self.bounds
                                                            inset:kInset

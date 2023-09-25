@@ -10,6 +10,7 @@
 @implementation iTermLegacyView
 
 - (void)drawRect:(NSRect)dirtyRect {
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     [self.delegate legacyView:self drawRect:dirtyRect];
 }
 

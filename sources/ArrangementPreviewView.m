@@ -17,6 +17,7 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     [[NSColor lightGrayColor] set];
     NSRectFill(dirtyRect);
 

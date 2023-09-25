@@ -188,6 +188,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     const BOOL darkMode = [self.window.effectiveAppearance it_isDark];
     const CGFloat baselineAlpha = darkMode ? 0.8 : 0.7;
     [[[NSColor blackColor] colorWithAlphaComponent:baselineAlpha] set];

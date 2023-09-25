@@ -33,6 +33,7 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
 @implementation iTermOnboardingView
 
 - (void)drawRect:(NSRect)dirtyRect {
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     [[NSColor textBackgroundColor] set];
     NSRectFill(dirtyRect);
 }

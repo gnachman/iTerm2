@@ -96,6 +96,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     [self drawRect:dirtyRect width:nil];
 }
 

@@ -35,6 +35,7 @@ typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     [[NSColor clearColor] set];
     NSRectFill(dirtyRect);
 

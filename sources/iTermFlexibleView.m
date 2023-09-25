@@ -39,7 +39,8 @@
     _isFlipped = value;
 }
 
-- (void)drawRect:(NSRect)dirtyRect {
+- (void)drawRect:(NSRect)insaneRect {
+    const NSRect dirtyRect = NSIntersectionRect(insaneRect, self.bounds);
     [_color setFill];
     NSRectFill(dirtyRect);
 
@@ -49,7 +50,7 @@
         NSRectFillUsingOperation(view.frame, NSCompositingOperationCopy);
     }
 
-    [super drawRect:dirtyRect];
+    [super drawRect:insaneRect];
 }
 
 - (void)resizeWithOldSuperviewSize:(NSSize)oldSize {

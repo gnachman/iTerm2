@@ -50,6 +50,7 @@ const double kFindCursorHoleRadius = 30;
 
 // drawLayer:inContext: only gets called if drawRect: is implemented. wtf.
 - (void)drawRect:(CGRect)dirtyRect {
+    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     NSGradient *grad = [[NSGradient alloc] initWithStartingColor:[NSColor whiteColor]
                                                      endingColor:[NSColor blackColor]];
     NSPoint relativeCursorPosition = NSMakePoint(2 * (self.cursorPosition.x / self.frame.size.width - 0.5),
