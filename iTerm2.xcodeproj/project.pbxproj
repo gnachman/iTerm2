@@ -4157,6 +4157,7 @@
 		A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */; };
 		A6FD85341B768B7800EB9DCE /* BigArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85321B768B7800EB9DCE /* BigArrow.png */; };
 		A6FD85351B768B7800EB9DCE /* BigArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85331B768B7800EB9DCE /* BigArrow@2x.png */; };
+		A6FE614A2AC1EDF70078A66D /* SortedArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FE61492AC1EDF70078A66D /* SortedArray.swift */; };
 		A6FE8D03209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */; };
 		A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */; };
 		A6FE8D07209382C000B5C648 /* download@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D05209382C000B5C648 /* download@2x.png */; };
@@ -7439,6 +7440,7 @@
 		A6FD85321B768B7800EB9DCE /* BigArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BigArrow.png; path = images/BigArrow.png; sourceTree = "<group>"; };
 		A6FD85331B768B7800EB9DCE /* BigArrow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "BigArrow@2x.png"; path = "images/BigArrow@2x.png"; sourceTree = "<group>"; };
 		A6FE41892389FDAF00BBD086 /* VT100SixelParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100SixelParser.h; sourceTree = "<group>"; };
+		A6FE61492AC1EDF70078A66D /* SortedArray.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortedArray.swift; sourceTree = "<group>"; };
 		A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOptionalComponentDownloadWindowController.h; sourceTree = "<group>"; };
 		A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOptionalComponentDownloadWindowController.m; sourceTree = "<group>"; };
 		A6FE8D02209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermOptionalComponentDownloadWindowController.xib; sourceTree = "<group>"; };
@@ -10494,6 +10496,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A6FE61492AC1EDF70078A66D /* SortedArray.swift */,
 				A6EC8072281F2C2900493544 /* ExternalSearchResult.swift */,
 				1DA26ABF15007507004B5792 /* BackgroundThread.m */,
 				A67F57D31B11882900B4F135 /* CapturedOutput.m */,
@@ -16033,6 +16036,7 @@
 				A6481650228FD240008E7E0C /* iTermWeakProxy.m in Sources */,
 				A6CC7F60274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift in Sources */,
 				A6EA071A24EA043600DD6E17 /* NSURL+iTerm.m in Sources */,
+				A6FE614A2AC1EDF70078A66D /* SortedArray.swift in Sources */,
 				A66C818C294E755C00452A11 /* AITerm.swift in Sources */,
 				A60C035D2089698500FE2F1F /* iTermAPIScriptLauncher.m in Sources */,
 				A6A30ED72950EACF0050F01A /* NSView+RecursiveDescription.m in Sources */,
