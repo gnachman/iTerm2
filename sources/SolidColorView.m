@@ -31,7 +31,8 @@
             [self class], self, NSStringFromRect(self.frame), @(self.isHidden), @(self.alphaValue)];
 }
 
-- (void)drawRect:(NSRect)dirtyRect {
+- (void)drawRect:(NSRect)insaneRect {
+    const NSRect dirtyRect = NSIntersectionRect(insaneRect, self.bounds);
     [_color setFill];
     NSRectFill(dirtyRect);
     [super drawRect:dirtyRect];
