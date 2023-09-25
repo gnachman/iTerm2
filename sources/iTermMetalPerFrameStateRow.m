@@ -50,7 +50,12 @@ NS_ASSUME_NONNULL_BEGIN
             _date = [textView drawingHelperTimestampForLine:i];
         }
         _screenCharLine = [[screen screenCharArrayForLine:i] paddedOrTruncatedToLength:width];
+#if DEBUG
         assert(_screenCharLine != nil);
+#endif
+        if (!_screenCharLine) {
+            _screenCharLine = [[[ScreenCharArray alloc] init] paddedOrTruncatedToLength:width];
+        }
         [_screenCharLine makeSafe];
 
         _selectedIndexSet = [textView.selection selectedIndexesIncludingTabFillersInAbsoluteLine:totalScrollbackOverflow + i];
