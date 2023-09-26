@@ -208,7 +208,7 @@ class SortedArray<T> {
             }
             array.insert(object, at: start)
         } else {
-            fatalError("Can't insert object without location")
+            DLog("Declining to insert object \(object) that has a nil location")
         }
     }
 
