@@ -214,6 +214,8 @@
 - (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller {
     self = [super initWithFrame:frame];
     if (self) {
+        self.wantsLayer = YES;
+        self.layer = [[CALayer alloc] init];
         [self setHasVerticalScroller:YES];
         assert([self contentView] != nil);
 

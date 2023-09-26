@@ -60,6 +60,8 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
 - (instancetype)initWithFrame:(NSRect)aRect {
     self = [super initWithFrame:aRect];
     if (self) {
+        self.wantsLayer = YES;
+        self.layer = [[CALayer alloc] init];
         _tabViewItemsInMRUOrder = [[NSMutableArray alloc] init];
         _swipeTracker = [[iTermSwipeTracker alloc] init];
         _swipeTracker.delegate = self;

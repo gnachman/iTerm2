@@ -239,6 +239,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        self.wantsLayer = YES;
+        self.layer = [[CALayer alloc] init];
         [self registerForDraggedTypes:@[ iTermMovePaneDragType, @"com.iterm2.psm.controlitem" ]];
         lastResizeDate_ = [NSDate date];
         _announcements = [[NSMutableArray alloc] init];
@@ -368,8 +370,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         return;
     }
     _terminalBackgroundColor = color;
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
+//    [CATransaction begin];
+//    [CATransaction setDisableActions:YES];
 
     _imageView.backgroundColor = color;
     _legacyScrollerBackgroundView.backgroundColor = color;
@@ -387,14 +389,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _legacyScrollerBackgroundView.hidden = YES;
     }
     [self setNeedsDisplay:YES];
-    [CATransaction commit];
+//    [CATransaction commit];
     [self updateMinimapAlpha];
 }
 
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
                        blend:(CGFloat)blend {
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
+//    [CATransaction begin];
+//    [CATransaction setDisableActions:YES];
     _backgroundColorView.transparency = 1 - transparencyAlpha;
     _backgroundColorView.blend = blend;
     if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
@@ -409,7 +411,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
     _imageView.transparency = 1 - transparencyAlpha;
     _imageView.blend = blend;
-    [CATransaction commit];
+//    [CATransaction commit];
 }
 
 - (NSRect)frameForScroller NS_AVAILABLE_MAC(10_14) {
@@ -853,8 +855,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)updateImageAndBackgroundViewVisibility {
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
+//    [CATransaction begin];
+//    [CATransaction setDisableActions:YES];
     if (_metalView.alphaValue == 0) {
         _imageView.hidden = (_imageView.image == nil);
         DLog(@"updateImageAndBackgroundViewVisibility: set backgroundColorView.hidden=%@ because metalView.alphaValue=0",
@@ -868,7 +870,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _legacyScrollerBackgroundView.hidden = YES;
     }
     [self setNeedsDisplay:YES];
-    [CATransaction commit];
+//    [CATransaction commit];
 }
 
 - (NSColor *)it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden {
@@ -985,19 +987,19 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         NSRect frame = _imageView.frame;
         frame.origin.x = 0;
         frame.origin.y = self.bounds.size.height - frame.size.height;
-        [CATransaction begin];
-        [CATransaction setDisableActions:YES];
+//        [CATransaction begin];
+//        [CATransaction setDisableActions:YES];
         _imageView.frame = frame;
         _backgroundColorView.frame = frame;
         _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
-        [CATransaction commit];
+//        [CATransaction commit];
     }
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
+//    [CATransaction begin];
+//    [CATransaction setDisableActions:YES];
     _imageView.frame = self.bounds;
     _backgroundColorView.frame = self.bounds;
     _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
-    [CATransaction commit];
+//    [CATransaction commit];
 
     if (_hoverURLView) {
         [_hoverURLTextField sizeToFit];

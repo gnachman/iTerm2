@@ -166,6 +166,8 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                      delegate:(id<iTermRootTerminalViewDelegate, iTermToolbeltViewDelegate>)delegate {
     self = [super initWithFrame:frameRect color:color];
     if (self) {
+        self.wantsLayer = YES;
+        self.layer = [[CALayer alloc] init];
         _delegate = delegate;
 
         self.autoresizesSubviews = YES;

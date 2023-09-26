@@ -11,6 +11,14 @@ import Foundation
     var didAcquireSelection: (() -> ())?
     private var removingSelection = false
 
+    override var shouldDrawInsertionPoint: Bool {
+        false
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        NSLog("ExclusiveSelectionTextView.draw(_: \(dirtyRect))")
+        super.draw(dirtyRect)
+    }
     func removeSelection() {
         removingSelection = true
         setSelectedRange(NSRange(location: 0, length: 0))

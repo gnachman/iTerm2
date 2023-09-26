@@ -46,6 +46,8 @@
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
+        self.wantsLayer = YES;
+        self.layer = [[CALayer alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(scrollViewDidScroll:)
                                                      name:NSViewBoundsDidChangeNotification
@@ -65,6 +67,8 @@
 }
 
 - (CGFloat)desiredAlphaValue {
+    return 1;
+    /*
     if ([PTYNoteViewController anyNoteVisible] || child_.contentNavigationShortcuts.count > 0) {
         return 1;
     }
@@ -72,6 +76,7 @@
         return 1;
     }
     return 0;
+     */
 }
 
 - (BOOL)haveMetalDisablingChildren {

@@ -48,6 +48,8 @@
 - (instancetype)initWithFrame:(NSRect)frame uniqueIdentifier:(NSString *)identifier {
     self = [super initWithFrame:frame];
     if (self) {
+        self.wantsLayer = YES;
+        self.layer = [[CALayer alloc] init];
         _stringUniqueIdentifier = identifier ?: [[NSUUID UUID] UUIDString];
     }
     return self;

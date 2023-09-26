@@ -123,6 +123,7 @@ class TextViewPorthole: NSObject {
                                height: max(popup.frame.height + 2, 18)))
         layoutManager.addTextContainer(textContainer)
         textView = ExclusiveSelectionTextView(frame: textViewFrame, textContainer: textContainer)
+        textView.wantsLayer = true
         textView.textContainerInset = NSSize(width: 0, height: 0)
         textView.isEditable = false
         textView.isSelectable = true

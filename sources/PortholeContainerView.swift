@@ -7,7 +7,7 @@
 
 import Foundation
 
-class PortholeContainerView: NSView {
+class PortholeContainerView: NSView, CALayerDelegate {
     static let margin = CGFloat(4.0)
     var closeCallback: (() -> ())? = nil
     var wideCallback: (() -> ())? = nil

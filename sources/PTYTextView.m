@@ -124,6 +124,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 @end
 
 @implementation PTYTextView {
+    BOOL _addedTestView;
     // -refresh does not want to be reentrant.
     BOOL _inRefresh;
 
@@ -221,6 +222,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (instancetype)initWithFrame:(NSRect)aRect {
     self = [super initWithFrame:aRect];
     if (self) {
+        self.wantsLayer = YES;
+        self.layer = [[CALayer alloc] init];
         // This class has a complicated role.
         //
         // In the old days, it was responsible for drawing and input handling, like a normal view.
@@ -1409,20 +1412,20 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         return;
     }
     _suppressDrawing = suppressDrawing;
-    if (PTYTextView.useLayerForBetterPerformance) {
-        if (@available(macOS 10.15, *)) {} {
-            // Using a layer in a view inside a scrollview is a disaster, per macOS
-            // tradition (insane drawing artifacts, especially when scrolling). But
-            // not using a layer makes it godawful slow (see note about
-            // rdar://45295749). So use a layer when the view is hidden, and
-            // remove it when visible.
-            if (suppressDrawing) {
-                self.layer = [[[CALayer alloc] init] autorelease];
-            } else {
-                self.layer = nil;
-            }
-        }
-    }
+//    if (PTYTextView.useLayerForBetterPerformance) {
+//        if (@available(macOS 10.15, *)) {} {
+//            // Using a layer in a view inside a scrollview is a disaster, per macOS
+//            // tradition (insane drawing artifacts, especially when scrolling). But
+//            // not using a layer makes it godawful slow (see note about
+//            // rdar://45295749). So use a layer when the view is hidden, and
+//            // remove it when visible.
+//            if (suppressDrawing) {
+//                self.layer = [[[CALayer alloc] init] autorelease];
+//            } else {
+//                self.layer = nil;
+//            }
+//        }
+//    }
     PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
     [scrollView.verticalScroller setNeedsDisplay:YES];
 }
@@ -2259,6 +2262,16 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     if (_dataSource == nil || _delegate == nil || _inRefresh) {
         return YES;
     }
+
+    if (!_addedTestView) {
+        _addedTestView = YES;
+        NSView *v = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 100, 2000)];
+        v.wantsLayer = YES;
+        v.layer = [[CALayer alloc] init];
+        v.layer.backgroundColor = [[NSColor blueColor] CGColor];
+        [self.superview addSubview:v];
+    }
+
     // Get the number of lines that have disappeared if scrollback buffer is full.
     _inRefresh = YES;
     const VT100SyncResult syncResult = [self.delegate textViewWillRefresh];

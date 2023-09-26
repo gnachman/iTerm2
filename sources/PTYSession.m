@@ -6731,13 +6731,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
-    if (_textview.hasPortholes) {
+/*    if (_textview.hasPortholes) {
         // When metal is enabled the note's superview (PTYTextView) has alphaValue=0 so it will not be visible.
         if (reason) {
             *reason = iTermMetalUnavailableReasonPortholes;
         }
         return NO;
     }
+ */
     if (_textview.transparencyAlpha < 1) {
         BOOL transparencyAllowed = NO;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS

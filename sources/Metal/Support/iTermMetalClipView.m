@@ -24,6 +24,8 @@ NSString *const iTermMetalClipViewWillScroll = @"iTermMetalClipViewWillScroll";
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
+        self.wantsLayer = YES;
+        self.layer = [[CALayer alloc] init];
         self.copiesOnScroll = NO;
     }
     return self;
