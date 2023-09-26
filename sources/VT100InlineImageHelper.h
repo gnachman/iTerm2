@@ -29,7 +29,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
                                   code:(unichar)code;
 - (void)inlineImageDidCreateTextDocumentInRange:(VT100GridAbsCoordRange)range
-                                           type:(NSString *)type
+                                           type:(NSString * _Nullable)type
                                        filename:(NSString * _Nullable)filename
                                       forceWide:(BOOL)forceWide;
 - (void)inlineImageDidFinishWithImageData:(NSData *)imageData;

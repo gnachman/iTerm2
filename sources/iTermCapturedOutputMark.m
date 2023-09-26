@@ -15,10 +15,6 @@ static NSString *const kMarkGuidKey = @"Guid";
 
 @synthesize guid = _guid;
 
-// I feel like I hit a dark corner of the compiler that requires me to do this.
-@dynamic interval;
-@dynamic object;
-
 - (NSString *)guid {
     if (!_guid) {
         _guid = [NSString uuid];

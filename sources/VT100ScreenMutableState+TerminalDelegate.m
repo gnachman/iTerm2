@@ -2721,4 +2721,48 @@
     }];
 }
 
+- (void)terminalBlock:(NSString *)blockID
+                start:(BOOL)start
+                 type:(NSString *)type {
+    DLog(@"start=%@ blockID=%@", @(start), blockID);
+
+    iTermBlockMark *mark = (iTermBlockMark *)[self addMarkOnLine:self.numberOfScrollbackLines + self.currentGrid.cursorY
+                                                         ofClass:[iTermBlockMark class]];
+    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+        iTermBlockMark *mark = (iTermBlockMark *)obj;
+        mark.blockID = blockID;
+        mark.start = start;
+        mark.type = type;
+    }];
+    if (!start) {
+        iTermBlockMark *startMark = [self startBlockWithID:blockID];
+        if (startMark) {
+            VT100GridAbsCoordRange range = {
+                .start = [self absCoordRangeForInterval:startMark.entry.interval].start,
+                .end = [self absCoordRangeForInterval:mark.entry.interval].start
+            };
+            [self inlineImageDidCreateTextDocumentInRange:range
+                                                     type:startMark.type
+                                                 filename:nil
+                                                forceWide:NO];
+        }
+    }
+}
+
+- (iTermBlockMark *)startBlockWithID:(NSString *)blockID {
+    for (NSArray *objects in self.intervalTree.reverseLimitEnumerator) {
+        for (id<IntervalTreeObject> obj in objects) {
+            iTermBlockMark *candidate = [iTermBlockMark castFrom:obj];
+            if (!candidate) {
+                continue;
+            }
+            if (candidate.start && [candidate.blockID isEqualToString:blockID]) {
+                return candidate;
+            }
+        }
+    }
+    return nil;
+}
+
 @end
+

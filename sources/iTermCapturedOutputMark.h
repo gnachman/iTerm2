@@ -8,7 +8,7 @@
 
 #import "iTermMark.h"
 
-@protocol iTermCapturedOutputMarkReading<NSObject, IntervalTreeImmutableEntry, iTermMark>
+@protocol iTermCapturedOutputMarkReading<NSObject, iTermMark>
 @property (nonatomic, copy, readonly) NSString *guid;
 @end
 

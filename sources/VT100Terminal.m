@@ -4002,6 +4002,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             receivingFile_ = YES;
             [_delegate terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
         }
+    } else if ([key isEqualToString:@"Block"]) {
+        NSDictionary<NSString *, NSString *> *dict = [value it_keyValuePairsSeparatedBy:@";"];
+        NSString *blockID = dict[@"id"];
+        if (blockID) {
+            if ([dict[@"attr"] isEqualToString:@"start"]) {
+                [_delegate terminalBlock:blockID start:YES type:dict[@"type"]];
+            } else if ([dict[@"attr"] isEqualToString:@"end"]) {
+                [_delegate terminalBlock:blockID start:NO type:nil];
+            }
+        }
     } else if ([key isEqualToString:@"FilePart"]) {
         if ([_delegate terminalIsTrusted]) {
             [_delegate terminalDidReceiveBase64FileData:value];
