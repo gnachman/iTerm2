@@ -16781,6 +16781,7 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
@@ -16861,6 +16862,7 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -16934,6 +16936,7 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -17005,6 +17008,7 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -17094,6 +17098,7 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -17175,6 +17180,7 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -17256,6 +17262,7 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -17467,6 +17474,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -17540,6 +17548,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -17612,6 +17621,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -17684,6 +17694,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -17746,10 +17757,12 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -17802,9 +17815,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -17857,9 +17872,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -17912,9 +17929,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -17986,12 +18005,14 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.FileProviderService;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = macosx;
@@ -18065,11 +18086,13 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.FileProviderService;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = macosx;
@@ -18143,11 +18166,13 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.FileProviderService;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = macosx;
@@ -18221,11 +18246,13 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.FileProviderService;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = macosx;
@@ -18350,6 +18377,7 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
@@ -18437,6 +18465,7 @@
 					"-laprutil-1",
 					"-licucore",
 					"-ObjC",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -18546,6 +18575,7 @@
 					"-laprutil-1",
 					"-licucore",
 					"-ObjC",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -18816,11 +18846,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -18873,10 +18905,12 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -18929,10 +18963,12 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -18985,10 +19021,12 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -19276,6 +19314,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(LD_RUNPATH_SEARCH_PATHS_$(IS_MACCATALYST)_$(_BOOL_$(SKIP_INSTALL)))",
+					"@loader_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
@@ -19292,6 +19334,7 @@
 					"-liconv",
 					"-lz",
 					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -19352,6 +19395,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(LD_RUNPATH_SEARCH_PATHS_$(IS_MACCATALYST)_$(_BOOL_$(SKIP_INSTALL)))",
+					"@loader_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
@@ -19367,6 +19414,7 @@
 					"-liconv",
 					"-lz",
 					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -19427,6 +19475,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(LD_RUNPATH_SEARCH_PATHS_$(IS_MACCATALYST)_$(_BOOL_$(SKIP_INSTALL)))",
+					"@loader_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
@@ -19442,6 +19494,7 @@
 					"-liconv",
 					"-lz",
 					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -19502,6 +19555,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(LD_RUNPATH_SEARCH_PATHS_$(IS_MACCATALYST)_$(_BOOL_$(SKIP_INSTALL)))",
+					"@loader_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
@@ -19517,6 +19574,7 @@
 					"-liconv",
 					"-lz",
 					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -19590,12 +19648,14 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -19662,11 +19722,13 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -19733,11 +19795,13 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -19804,11 +19868,13 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -19880,12 +19946,14 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -19953,11 +20021,13 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -20025,11 +20095,13 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -20097,11 +20169,13 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
+					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ld_classic";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -20572,6 +20646,7 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
@@ -20657,6 +20732,7 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
