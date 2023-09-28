@@ -345,6 +345,14 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     screen_char_t *buffer = (screen_char_t *)data.mutableBytes;
     memmove(buffer, self.line, MIN(length, self.length) * sizeof(screen_char_t));
 
+    // Copy continuation to added section if needed.
+    screen_char_t continuation = self.continuation;
+    screen_char_t zero = { 0 };
+    if (memcmp(&continuation, &zero, sizeof(continuation))) {
+        for (int i = self.length; i < length; i++) {
+            buffer[i] = continuation;
+        }
+    }
     unichar eol = self.eol;
     if (eol == EOL_SOFT &&
         buffer[length - 1].code == 0 &&
@@ -359,7 +367,6 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     if (eol == EOL_DWC) {
         ScreenCharSetDWC_SKIP(&buffer[length - 1]);
     }
-    screen_char_t continuation = self.continuation;
     continuation.code = eol;
     memmove(&buffer[length], &continuation, sizeof(screen_char_t));
     return [[ScreenCharArray alloc] initWithData:data
