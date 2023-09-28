@@ -215,6 +215,9 @@ class SortedArray<T> {
     func remove(object: T) {
         if let desiredLocation = location(object), var i = firstIndexAtOrBefore(location: desiredLocation) {
             while i < array.count {
+                defer {
+                    i += 1
+                }
                 guard let l = location(array[i]) else {
                     continue
                 }
@@ -225,7 +228,6 @@ class SortedArray<T> {
                     array.remove(at: i)
                     return
                 }
-                i += 1
             }
         }
     }
