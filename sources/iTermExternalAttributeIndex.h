@@ -20,23 +20,24 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, readonly) BOOL hasUnderlineColor;
 @property (atomic, readonly) VT100TerminalColorValue underlineColor;
 @property (atomic, readonly) unsigned int urlCode;
+@property (atomic, copy, readonly) NSString *blockID;
 @property (nonatomic, readonly) NSString *humanReadableDescription;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
 + (iTermExternalAttribute * _Nullable)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
                                                      underlineColor:(VT100TerminalColorValue)underlineColor
-                                                            urlCode:(unsigned int)urlCode;
+                                                            urlCode:(unsigned int)urlCode
+                                                            blockID:(NSString * _Nullable)blockID;
 
 + (instancetype _Nullable)fromData:(NSData *)data;
 - (instancetype)init;
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
-                               urlCode:(unsigned int)urlCode;
-- (instancetype)initWithURLCode:(unsigned int)urlCode;
+                               urlCode:(unsigned int)urlCode
+                               blockID:(NSString * _Nullable)blocokID;
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
 - (NSData *)data;
-
 @end
 
 @protocol iTermExternalAttributeIndexReading<NSCopying, NSMutableCopying, NSObject>

@@ -48,6 +48,7 @@ extern NSString *const kScreenStateCursorCoord;
 extern NSString *const kScreenStatePromptStateKey;
 extern NSString *const kScreenStateProtectedMode;
 extern NSString *const kScreenStateExfiltratedEnvironmentKey;
+extern NSString *const kScreenStateBlockStartAbsLineKey;
 
 @class IntervalTree;
 @class iTermOrderEnforcer;
@@ -190,6 +191,8 @@ extern NSString *const kScreenStateExfiltratedEnvironmentKey;
 @property (nullable, nonatomic, strong, readonly) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
 @property (nonatomic, readonly) NSDictionary *promptStateDictionary;
 @property (nonatomic, readonly) iTermAtomicMutableArrayOfWeakObjects<id<VT100ScreenMarkReading>> *namedMarks;
+@property (nonatomic, readonly, copy) NSDictionary<NSString *, NSNumber *> *blockStartAbsLine;
+@property (nonatomic, readonly) NSInteger blocksGeneration;
 
 @end
 
@@ -246,6 +249,8 @@ extern NSString *const kScreenStateExfiltratedEnvironmentKey;
 @property (nonatomic, readwrite) BOOL shouldExpectPromptMarks;
 @property (nonatomic, copy, readwrite) id<VT100ScreenConfiguration> config;
 @property (nullable, nonatomic, strong, readwrite) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
+@property (nonatomic, readwrite, copy) NSMutableDictionary<NSString *, NSNumber *> *blockStartAbsLine;
+@property (nonatomic, readwrite) NSInteger blocksGeneration;
 
 @end
 

@@ -45,6 +45,7 @@ NSString *const kScreenStateCursorCoord = @"Cursor Coord";
 NSString *const kScreenStateProtectedMode = @"Protected Mode";
 NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
 NSString *const kScreenStatePromptStateKey = @"Prompt State";
+NSString *const kScreenStateBlockStartAbsLineKey = @"Block start lines";
 
 NSString *VT100ScreenTerminalStateKeyVT100Terminal = @"VT100Terminal";
 NSString *VT100ScreenTerminalStateKeySavedColors = @"SavedColors";
@@ -132,6 +133,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 @synthesize exfiltratedEnvironment = _exfiltratedEnvironment;
 @synthesize promptStateDictionary = _promptStateDictionary;
 @synthesize namedMarks = _namedMarks;
+@synthesize blockStartAbsLine = _blockStartAbsLine;
+@synthesize blocksGeneration = _blocksGeneration;
 
 - (instancetype)initForMutationOnQueue:(dispatch_queue_t)queue {
     self = [super init];
@@ -149,6 +152,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         _colorMap = [[iTermColorMap alloc] init];
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] initWithQueue:queue];
         _namedMarks = [[iTermAtomicMutableArrayOfWeakObjects alloc] init];
+        _blockStartAbsLine = [NSMutableDictionary dictionary];
         _fakePromptDetectedAbsLine = -1;
     }
     return self;
@@ -226,6 +230,10 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     _config = source.config;
     _exfiltratedEnvironment = [source.exfiltratedEnvironment copy];
     _promptStateDictionary = [source.promptStateDictionary copy];
+    if (source.blocksGeneration > _blocksGeneration) {
+        _blocksGeneration = source.blocksGeneration;
+        _blockStartAbsLine = [source.blockStartAbsLine copy];
+    }
     if (source.namedMarksDirty) {
         _namedMarks = [source.namedMarks compactMap:^id _Nonnull(id<VT100ScreenMarkReading>  _Nonnull mark) {
             return [mark doppelganger];
@@ -961,7 +969,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     if (string.length) {
         for (int i = 0; i < lines.count; i++) {
             NSString *ito = [self debugStringForIntervalTreeObjectsOnLine:i];
-            lines[i] = [NSString stringWithFormat:@"%8lld:        %@%@", absoluteLineNumber++, lines[i], ito];
+            NSString *ea = [self debugStringForExtendedAttributesOnLine:i];
+            lines[i] = [NSString stringWithFormat:@"%8lld:        %@%@%@", absoluteLineNumber++, lines[i], ito, ea];
         }
 
         [lines addObject:@"- end of history -"];
@@ -970,7 +979,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     NSArray *gridLines = [gridDump componentsSeparatedByString:@"\n"];
     for (int i = 0; i < gridLines.count; i++) {
         NSString *ito = [self debugStringForIntervalTreeObjectsOnLine:i + self.numberOfScrollbackLines];
-        [lines addObject:[NSString stringWithFormat:@"%8lld (%04d): %@%@", absoluteLineNumber++, i, gridLines[i], ito]];
+        NSString *ea = [self debugStringForExtendedAttributesOnLine:i + self.numberOfScrollbackLines];
+        [lines addObject:[NSString stringWithFormat:@"%8lld (%04d): %@%@%@", absoluteLineNumber++, i, gridLines[i], ito, ea]];
     }
     return [lines componentsJoinedByString:@"\n"];
 }
@@ -987,6 +997,14 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         return @"";
     }
     return [NSString stringWithFormat:@"ITOs: %@", [strings componentsJoinedByString:@", "]];
+}
+
+- (NSString *)debugStringForExtendedAttributesOnLine:(int)line {
+    iTermExternalAttributeIndex *eaindex = [self externalAttributeIndexForLine:line];
+    if (!eaindex) {
+        return @"";
+    }
+    return [@" " stringByAppendingString:eaindex.description];
 }
 
 #pragma mark - iTermTextDataSource
@@ -1058,7 +1076,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 - (void)gridCursorDidMove {
 }
 
-- (void)gridCursorDidChangeLine {
+- (void)gridCursorDidChangeLineFrom:(int)previous {
 }
 
 - (void)gridDidResize {

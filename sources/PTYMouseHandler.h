@@ -120,6 +120,11 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
                       sideEffects:(iTermClickSideEffects)sideEffects
                             state:(iTermMouseState)state;
 - (BOOL)mouseHandlerAnyReportingModeEnabled:(PTYMouseHandler *)mouseHandler;
+- (void)mouseHandlerRedraw:(PTYMouseHandler *)mouseHandler;
+- (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler blockIDOnLine:(int)line;
+- (BOOL)mouseHandlerMouseDownAt:(NSPoint)locationInWindow;
+- (BOOL)mouseHandlerMouseUpAt:(NSPoint)locationInWindow;
+
 @end
 
 @interface PTYMouseHandler : NSObject
@@ -171,6 +176,7 @@ NS_DESIGNATED_INITIALIZER;
 - (BOOL)scrollWheel:(NSEvent *)event pointInView:(NSPoint)point;
 - (void)swipeWithEvent:(NSEvent *)event;
 - (void)mouseMoved:(NSEvent *)event;
+- (void)mouseEntered:(NSEvent *)event;
 - (void)pressureChangeWithEvent:(NSEvent *)event;
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent;
 

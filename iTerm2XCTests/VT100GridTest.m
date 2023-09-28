@@ -80,7 +80,7 @@ do { \
     return backgroundColor_;
 }
 
-- (void)gridCursorDidChangeLine {
+- (void)gridCursorDidChangeLineFrom:(int)previous {
 }
 
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm {

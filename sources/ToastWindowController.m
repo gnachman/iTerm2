@@ -47,6 +47,14 @@ static NSMutableArray *visibleToast;
 }
 
 + (void)showToastWithMessage:(NSString *)message duration:(NSInteger)duration screenCoordinate:(NSPoint)center pointSize:(CGFloat)pointSize {
+    return [self showToastWithMessage:message duration:duration screenCoordinate:center pointSize:pointSize center:YES];
+}
+
++ (void)showToastWithMessage:(NSString *)message duration:(NSInteger)duration topLeftScreenCoordinate:(NSPoint)topLeft pointSize:(CGFloat)pointSize {
+    return [self showToastWithMessage:message duration:duration screenCoordinate:topLeft pointSize:pointSize center:NO];
+}
+
++ (void)showToastWithMessage:(NSString *)message duration:(NSInteger)duration screenCoordinate:(NSPoint)screenCoordinate pointSize:(CGFloat)pointSize center:(BOOL)center {
     ToastWindowController *toast = [[ToastWindowController alloc] init];
 
     NSTextField *textField = [[NSTextField alloc] init];
@@ -70,7 +78,7 @@ static NSMutableArray *visibleToast;
                                    textField.frame.size.width,
                                    textField.frame.size.height)];
 
-    NSScreen *screen = [NSScreen screenContainingCoordinate:center] ?: [NSScreen mainScreen];
+    NSScreen *screen = [NSScreen screenContainingCoordinate:screenCoordinate] ?: [NSScreen mainScreen];
     if (!screen) {
         return;
     }
@@ -80,11 +88,19 @@ static NSMutableArray *visibleToast;
                                                      defer:NO
                                                    screen:screen];
     [panel setOpaque:NO];
-    [panel setFrame:NSMakeRect(center.x - roundedRect.frame.size.width / 2,
-                               center.y - roundedRect.frame.size.height / 2,
-                               roundedRect.frame.size.width,
-                               roundedRect.frame.size.height)
-            display:YES];
+    NSRect rect;
+    if (center) {
+        rect = NSMakeRect(screenCoordinate.x - roundedRect.frame.size.width / 2,
+                          screenCoordinate.y - roundedRect.frame.size.height / 2,
+                          roundedRect.frame.size.width,
+                          roundedRect.frame.size.height);
+    } else {
+        rect = NSMakeRect(screenCoordinate.x,
+                          screenCoordinate.y,
+                          roundedRect.frame.size.width,
+                          roundedRect.frame.size.height);
+    }
+    [panel setFrame:rect display:YES];
 
     NSVisualEffectView *vev = [[NSVisualEffectView alloc] init];
     vev.wantsLayer = YES;
@@ -131,7 +147,7 @@ static NSMutableArray *visibleToast;
         return;
     }
     hiding_ = YES;
-    [[self.window animator] setAlphaValue:0];
+    [[self.window.contentView animator] setAlphaValue:0];
     [visibleToast performSelector:@selector(removeObject:)
                        withObject:self
                        afterDelay:[[NSAnimationContext currentContext] duration]];

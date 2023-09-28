@@ -2723,7 +2723,8 @@
 
 - (void)terminalBlock:(NSString *)blockID
                 start:(BOOL)start
-                 type:(NSString *)type {
+                 type:(NSString *)type
+               render:(BOOL)render {
     DLog(@"start=%@ blockID=%@", @(start), blockID);
 
     iTermBlockMark *mark = (iTermBlockMark *)[self addMarkOnLine:self.numberOfScrollbackLines + self.currentGrid.cursorY
@@ -2734,17 +2735,26 @@
         mark.start = start;
         mark.type = type;
     }];
-    if (!start) {
+    if (!render) {
+        self.terminal.currentBlockID = start ? blockID : nil;
+    }
+    _currentBlockID = (!render && start) ? blockID : nil;
+    if (start) {
+        self.blockStartAbsLine[blockID] = @(self.numberOfScrollbackLines + self.currentGrid.cursorY + self.cumulativeScrollbackOverflow);
+        self.blocksGeneration += 1;
+    } else {
         iTermBlockMark *startMark = [self startBlockWithID:blockID];
         if (startMark) {
             VT100GridAbsCoordRange range = {
                 .start = [self absCoordRangeForInterval:startMark.entry.interval].start,
                 .end = [self absCoordRangeForInterval:mark.entry.interval].start
             };
-            [self inlineImageDidCreateTextDocumentInRange:range
-                                                     type:startMark.type
-                                                 filename:nil
-                                                forceWide:NO];
+            if (render) {
+                [self inlineImageDidCreateTextDocumentInRange:range
+                                                         type:startMark.type
+                                                     filename:nil
+                                                    forceWide:NO];
+            }
         }
     }
 }

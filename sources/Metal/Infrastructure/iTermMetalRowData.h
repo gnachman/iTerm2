@@ -42,6 +42,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) NSDate *date;
 
 @property (nonatomic, readonly) NSMutableArray<iTermMetalImageRun *> *imageRuns;
+@property (nonatomic) BOOL belongsToBlock;
 
 - (void)writeDebugInfoToFolder:(NSURL *)folder;
 

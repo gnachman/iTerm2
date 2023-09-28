@@ -557,6 +557,7 @@ static _Atomic int gPerformingJoinedBlock;
     if (overflowCount == 0) {
         return;
     }
+
     DLog(@"Increment overflow by %d", overflowCount);
     self.scrollbackOverflow += overflowCount;
     assert(self.cumulativeScrollbackOverflow >= 0);
@@ -572,6 +573,9 @@ static _Atomic int gPerformingJoinedBlock;
     if (noScrollback) {
         // In alt grid but saving to scrollback in alt-screen is off, so pass in a nil linebuffer.
         lineBufferToUse = nil;
+    }
+    if (_currentBlockID) {
+        [self.currentGrid setBlockID:_currentBlockID onLine:self.currentGrid.cursor.y];
     }
     [self incrementOverflowBy:[self.currentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
                                                                          unlimitedScrollback:self.unlimitedScrollback
@@ -1265,7 +1269,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if ((*eaOut).urlCode) {
         *eaOut = [iTermExternalAttribute attributeHavingUnderlineColor:(*eaOut).hasUnderlineColor
                                                         underlineColor:(*eaOut).underlineColor
-                                                               urlCode:0];
+                                                               urlCode:0
+                                                               blockID:nil];
     }
 }
 
@@ -4164,6 +4169,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 
     if (screenState) {
+        [self.blockStartAbsLine it_mergeFrom:[NSDictionary castFrom:screenState[kScreenStateBlockStartAbsLineKey]] ?: @{}];
         self.protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
         [_promptStateMachine loadPromptStateDictionary:screenState[kScreenStatePromptStateKey]];
         [self.tabStops removeAllObjects];
@@ -5163,7 +5169,7 @@ launchCoprocessWithCommand:(NSString *)command
     return [self.terminal backgroundColorCodeReal];
 }
 
-- (void)gridCursorDidChangeLine {
+- (void)gridCursorDidChangeLineFrom:(int)previous {
     if (!self.trackCursorLineMovement) {
         return;
     }

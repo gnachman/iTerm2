@@ -53,11 +53,13 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqCreateCursorTS,
     iTermMetalFrameDataStatPqCreateOffscreenCommandLineTS,
     iTermMetalFrameDataStatPqCreateMarginTS,
+    iTermMetalFrameDataStatPqCreateBlockTS,
     iTermMetalFrameDataStatPqCreateTextTS,
     iTermMetalFrameDataStatPqCreateIndicatorsTS,
     iTermMetalFrameDataStatPqCreateTimestampsTS,
     iTermMetalFrameDataStatPqCreateFullScreenFlashTS,
     iTermMetalFrameDataStatPqCreateCornerCutoutTS,
+    iTermMetalFrameDataStatPqCreateButtonsTS,
 
     iTermMetalFrameDataStatPqPopulateTransientStates,
 
@@ -71,12 +73,14 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqEnqueueBadge,
     iTermMetalFrameDataStatPqEnqueueDrawCursor,
     iTermMetalFrameDataStatPqEnqueueDrawMarks,
+    iTermMetalFrameDataStatPqEnqueueDrawBlocks,
     iTermMetalFrameDataStatPqEnqueueDrawCursorGuide,
     iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineBgPre,
     iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineBg,
     iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineFg,
     iTermMetalFrameDataStatPqEnqueueDrawHighlightRow,
     iTermMetalFrameDataStatPqEnqueueDrawImage,
+    iTermMetalFrameDataStatPqEnqueueDrawButtons,
     iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToIntermediateTexture,
 
     iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder,

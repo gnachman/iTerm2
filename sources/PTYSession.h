@@ -945,6 +945,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)resetMode;
 - (void)enclosingTabWillBeDeselected;
 - (void)enclosingTabDidBecomeSelected;
+- (void)copyTextFromBlockWithID:(NSString *)blockID;
 
 #pragma mark - API
 

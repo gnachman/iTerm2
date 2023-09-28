@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
     ScreenCharArray *_screenCharLine;
     NSIndexSet *_selectedIndexSet;
     NSDate *_date;
+    BOOL _belongsToBlock;
     NSData *_matches;
     NSRange _underlinedRange;  // Underline for semantic history
     id<iTermExternalAttributeIndexReading> _eaIndex;

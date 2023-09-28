@@ -1167,6 +1167,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
                kScreenStateProtectedMode: @(_state.protectedMode),
                kScreenStatePromptStateKey: _state.promptStateDictionary,
+               kScreenStateBlockStartAbsLineKey: _state.blockStartAbsLine
             };
             dict = [dict dictionaryByRemovingNullValues];
             [encoder mergeDictionary:dict];
@@ -1500,6 +1501,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (NSArray<id<VT100ScreenMarkReading>> *)namedMarks {
     return _state.namedMarks.strongObjects;
+}
+
+- (long long)startAbsLineForBlock:(NSString *)blockID {
+    NSNumber *line = _state.blockStartAbsLine[blockID];
+    if (!line) {
+        return -1;
+    }
+    return line.longLongValue;
 }
 
 #pragma mark - Accessors

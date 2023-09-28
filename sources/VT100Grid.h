@@ -22,7 +22,7 @@
 - (screen_char_t)gridBackgroundColorCode;
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm;
 - (void)gridCursorDidMove;
-- (void)gridCursorDidChangeLine;
+- (void)gridCursorDidChangeLineFrom:(int)previuos;
 - (void)gridDidResize;
 @end
 
@@ -313,6 +313,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (void)setURLCode:(unsigned int)code
         inRectFrom:(VT100GridCoord)from
                 to:(VT100GridCoord)to;
+
+- (void)setBlockID:(NSString *)blockID onLine:(int)line;
 
 // Pop lines out of the line buffer and on to the screen. Up to maxLines will be restored. Before
 // popping, lines to be modified will first be filled with defaultChar.

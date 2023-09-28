@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermColorMap;
 @class iTermFontTable;
 @protocol iTermMetalPerFrameStateDelegate;
+@class iTermTerminalButton;
 @class iTermTextDrawingHelper;
 @class NSColor;
 @class PTYFontInfo;
@@ -33,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermColorMap *_colorMap;
     vector_float4 _fullScreenFlashColor;
     NSColor *_processedDefaultBackgroundColor;  // dimmed, etc.
+    NSColor *_processedDefaultTextColor;
     iTermLineStyleMarkColors _lineStyleMarkColors;
     vector_float4 _unfocusedSelectionColor;
     CGFloat _transparencyAlpha;
@@ -85,7 +87,8 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _timestampsEnabled;
     BOOL _blinkingItemsVisible;
     NSFont *_timestampFont;
-
+    NSArray<iTermTerminalButton *> *_terminalButtons NS_AVAILABLE_MAC(11);
+    
     // Offscreen command line
     NSColor *_offscreenCommandLineBackgroundColor;
     NSColor *_offscreenCommandLineOutlineColor;

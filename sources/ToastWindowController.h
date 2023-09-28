@@ -16,5 +16,6 @@
 + (void)showToastWithMessage:(NSString *)message;
 + (void)showToastWithMessage:(NSString *)message duration:(NSInteger)duration;
 + (void)showToastWithMessage:(NSString *)message duration:(NSInteger)duration screenCoordinate:(NSPoint)coord pointSize:(CGFloat)pointSize;
++ (void)showToastWithMessage:(NSString *)message duration:(NSInteger)duration topLeftScreenCoordinate:(NSPoint)coord pointSize:(CGFloat)pointSize;
 
 @end

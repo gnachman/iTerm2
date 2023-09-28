@@ -36,6 +36,7 @@
 @class iTermSelection;
 @protocol iTermSemanticHistoryControllerDelegate;
 @protocol iTermSwipeHandler;
+@class iTermTerminalButton;
 @class iTermURLActionHelper;
 @class iTermVariableScope;
 @class MovingAverage;
@@ -189,6 +190,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewToggleAnnotations;
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event;
 - (void)textViewDidReceiveFlagsChangedEvent:(NSEvent *)event;
+- (void)textViewHaveVisibleBlocksDidChange;
 - (iTermExpect *)textViewExpect;
 
 // We guess the user is trying to send arrow keys with the scroll wheel in alt screen.
@@ -467,6 +469,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Checked and at the end of -refresh. Meant to be use when a reentrant call failed.
 @property (nonatomic) BOOL needsUpdateSubviewFrames;
+@property (nonatomic, readonly) NSArray<iTermTerminalButton *> *terminalButtons NS_AVAILABLE_MAC(11);
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
@@ -705,6 +708,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (NSRect)rectForCoord:(VT100GridCoord)coord;
 - (void)updateSubviewFrames;
 - (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed;
+- (BOOL)copyBlock:(NSString *)block includingAbsLine:(long long)absLine;
 
 #pragma mark - Testing only
 

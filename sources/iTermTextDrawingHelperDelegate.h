@@ -15,6 +15,7 @@
 @protocol iTermExternalAttributeIndexReading;
 @class iTermFindOnPageHelper;
 @class iTermSelection;
+@class iTermTerminalButton;
 @class iTermTextExtractor;
 @class PTYFontInfo;
 @protocol VT100ScreenMarkReading;
@@ -65,6 +66,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSScrollView * _Nullable)enclosingScrollView;
 
 - (BOOL)drawingHelperShouldPadBackgrounds:(out NSSize *)padding;
+- (NSArray<iTermTerminalButton *> *)drawingHelperTerminalButtons;
 
 @end
 

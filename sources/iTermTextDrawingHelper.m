@@ -511,6 +511,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         [self drawCopyModeCursorWithBackgroundColor:cursorBackgroundColor
                                       virtualOffset:virtualOffset];
     }
+    [self drawButtons:virtualOffset];
 }
 
 - (BOOL)textAppearanceDependsOnBackgroundColor {
@@ -749,6 +750,24 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [self drawMarkIfNeededOnLine:line
                   leftMarginRect:leftMargin
                    virtualOffset:virtualOffset];
+
+    id<iTermExternalAttributeIndexReading> eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:line];
+
+    // Draw block indicator
+    if (eaIndex.attributes[@0].blockID) {
+        [[self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT
+                                            green:0
+                                             blue:0
+                                        colorMode:ColorModeAlternate
+                                             bold:NO
+                                            faint:NO
+                                     isBackground:NO] set];
+        const NSRect rect = NSMakeRect(0,
+                                       y,
+                                       leftMargin.size.width - 2,
+                                       _cellSize.height);
+        iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
+    }
 }
 
 - (void)drawStripesInRect:(NSRect)rect
@@ -1122,6 +1141,35 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     imageSize.width += kBadgeMargin + margins.right;
 
     return imageSize;
+}
+
+// Assumes that updateButtonFrames was invoked by caller first.
+- (void)drawButtons:(CGFloat)virtualOffset {
+    NSColor *background = [self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:YES];
+    NSColor *foreground = [self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:NO];
+
+    if (@available(macOS 11, *)) {
+        for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
+            [button drawWithBackgroundColor:background
+                            foregroundColor:foreground
+                                      frame:button.desiredFrame
+                              virtualOffset:virtualOffset];
+        }
+    }
+}
+
+- (void)updateButtonFrames NS_AVAILABLE_MAC(11) {
+    VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRect];
+    const CGFloat margin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    CGFloat x = _scrollViewDocumentVisibleRect.size.width - margin;
+    for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
+        x -= MAX(button.width, _cellSize.width);
+        button.desiredFrame = [button frameWithX:x
+                                      minAbsLine:drawableCoordRange.start.y + _totalScrollbackOverflow
+                                cumulativeOffset:_totalScrollbackOverflow
+                                      cellHeight:_cellSize.height];
+        x -= 4;
+    }
 }
 
 #pragma mark - Drawing: Drop targets

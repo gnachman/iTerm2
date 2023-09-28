@@ -54,11 +54,13 @@ static vector_float4 VectorForColor(NSColor *color) {
     _showBroadcastStripes = drawingHelper.showStripes;
     NSColorSpace *colorSpace = textView.window.screen.colorSpace ?: [NSColorSpace it_defaultColorSpace];
     _processedDefaultBackgroundColor = [[drawingHelper defaultBackgroundColor] colorUsingColorSpace:colorSpace];
+    _processedDefaultTextColor = [[drawingHelper defaultTextColor] colorUsingColorSpace:colorSpace];
     _lineStyleMarkColors = (iTermLineStyleMarkColors) {
         .success = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper successMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
         .other = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper otherMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
         .failure = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper errorMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector
     };
+
     _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
     _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
                                                                                        towardsGrayLevel:0.5]);
@@ -103,6 +105,10 @@ static vector_float4 VectorForColor(NSColor *color) {
                                                                                      yOffset:0
                                                                                   cellHeight:_cellSize.height];
     _strikethroughUnderlineDescriptor.thickness = [drawingHelper strikethroughThicknessForFont:_fontTable.asciiFont.font];
+
+    if (@available(macOS 11, *)) {
+        _terminalButtons = textView.terminalButtons;
+    }
 
     // Indicators
     NSColor *color = [[textView indicatorFullScreenFlashColor] colorUsingColorSpace:_colorSpace];

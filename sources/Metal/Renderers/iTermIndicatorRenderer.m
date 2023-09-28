@@ -154,7 +154,7 @@ NS_ASSUME_NONNULL_BEGIN
                                              image:indicator.image
                                            context:context
                                         colorSpace:colorSpace];
-            [_indicatorDescriptors addObject:indicator];
+    [_indicatorDescriptors addObject:indicator];
     indicator.texture.label = indicator.identifier;
 }
 

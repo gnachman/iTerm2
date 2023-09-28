@@ -28,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
     self = [super init];
     if (self) {
         _date = source->_date;
+        _belongsToBlock = source->_belongsToBlock;
         _screenCharLine = [ScreenCharArray emptyLineOfLength:source->_screenCharLine.length];
         _selectedIndexSet = [NSIndexSet indexSet];
         _markStyle = @(iTermMarkStyleNone);
@@ -65,6 +66,7 @@ NS_ASSUME_NONNULL_BEGIN
             _matches = findMatches;
         }
         _eaIndex = [[screen externalAttributeIndexForLine:i] copy];
+        _belongsToBlock = _eaIndex.attributes[@0].blockID != nil;
 
         const long long absoluteLine = totalScrollbackOverflow + i;
         _underlinedRange = [drawingHelper underlinedRangeOnLine:absoluteLine];

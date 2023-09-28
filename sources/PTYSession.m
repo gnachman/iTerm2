@@ -6516,6 +6516,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _textview.findOnPageHelper.currentIndex;
 }
 
+- (void)copyTextFromBlockWithID:(NSString *)blockID {
+    const long long absLine = [_screen startAbsLineForBlock:blockID];
+    if (absLine < 0) {
+        return;
+    }
+    [_textview copyBlock:blockID includingAbsLine:absLine];
+}
+
 #pragma mark - Metal Support
 
 #pragma mark iTermMetalGlueDelegate
@@ -8484,6 +8492,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self sendKeystrokeNotificationForEvent:event advanced:YES];
     }
     // Change of cmd modifier means we need mouseMoved events to highlight/unhighlight URLs.
+    [self.view updateTrackingAreas];
+}
+
+- (void)textViewHaveVisibleBlocksDidChange {
     [self.view updateTrackingAreas];
 }
 

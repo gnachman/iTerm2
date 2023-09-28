@@ -104,6 +104,7 @@ NSString *const kTerminalStateAlternateScrollMode = @"Alternate Scroll Mode";
 NSString *const kTerminalStateSGRStack = @"SGR Stack";
 NSString *const kTerminalStateDECSACE = @"DECSACE";
 NSString *const kTerminalStateProtectedMode = @"Protected Mode";
+NSString *const kTerminalStateBlockID = @"Block ID";
 
 static const size_t VT100TerminalMaxSGRStackEntries = 10;
 
@@ -658,12 +659,18 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)updateExternalAttributes {
-    if (!graphicRendition_.hasUnderlineColor && _currentURLCode == 0) {
+    if (!graphicRendition_.hasUnderlineColor && _currentURLCode == 0 && self.currentBlockID == nil) {
         _externalAttributes = nil;
         return;
     }
     _externalAttributes = [[iTermExternalAttribute alloc] initWithUnderlineColor:graphicRendition_.underlineColor
-                                                                         urlCode:_currentURLCode];
+                                                                         urlCode:_currentURLCode
+                                                                         blockID:self.currentBlockID];
+}
+
+- (void)setCurrentBlockID:(NSString *)currentBlockID {
+    _currentBlockID = [currentBlockID copy];
+    [self updateExternalAttributes];
 }
 
 - (screen_char_t)foregroundColorCode {
@@ -1865,6 +1872,7 @@ static const int kMaxScreenRows = 4096;
     self.url = nil;
     self.urlParams = nil;
     _currentURLCode = 0;
+    self.currentBlockID = nil;
 
     // (Not supported: Reset INVISIBLE)
 
@@ -4007,9 +4015,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         NSString *blockID = dict[@"id"];
         if (blockID) {
             if ([dict[@"attr"] isEqualToString:@"start"]) {
-                [_delegate terminalBlock:blockID start:YES type:dict[@"type"]];
+                [_delegate terminalBlock:blockID start:YES type:dict[@"type"] render:NO];
             } else if ([dict[@"attr"] isEqualToString:@"end"]) {
-                [_delegate terminalBlock:blockID start:NO type:nil];
+                [_delegate terminalBlock:blockID start:NO type:nil render:[dict[@"render"] isEqual:@"1"]];
             }
         }
     } else if ([key isEqualToString:@"FilePart"]) {
@@ -5195,6 +5203,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStatePreserveScreenOnDECCOLM: @(self.preserveScreenOnDECCOLM),
            kTerminalStateSavedColors: _savedColors.plist,
            kTerminalStateProtectedMode: @(_protectedMode),
+           kTerminalStateBlockID: self.currentBlockID ?: [NSNull null]
         };
     return [dict dictionaryByRemovingNullValues];
 }
@@ -5238,6 +5247,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     self.preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];
     self.protectedMode = [dict[kTerminalStateProtectedMode] unsignedIntegerValue];
+    self.currentBlockID = [NSString castFrom:dict[kTerminalStateBlockID]];
 
     if (!_sendModifiers) {
         self.sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];

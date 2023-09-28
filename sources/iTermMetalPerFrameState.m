@@ -710,6 +710,12 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                             alpha);
 }
 
+- (vector_float4)processedDefaultTextColor {
+    return simd_make_float4((float)_configuration->_processedDefaultTextColor.redComponent,
+                            (float)_configuration->_processedDefaultTextColor.greenComponent,
+                            (float)_configuration->_processedDefaultTextColor.blueComponent,
+                            1.0);
+}
 - (iTermLineStyleMarkColors)lineStyleMarkColors {
     return _configuration->_lineStyleMarkColors;
 }
@@ -738,11 +744,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr
-                     date:(out NSDate **)datePtr {
+                     date:(out NSDate **)datePtr
+           belongsToBlock:(out BOOL *)belongsToBlockPtr {
     NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_configuration->_useNativePowerlineGlyphs];
     if (_configuration->_timestampsEnabled) {
         *datePtr = _rows[row]->_date;
     }
+    *belongsToBlockPtr = _rows[row]->_belongsToBlock;
     ScreenCharArray *lineData = [_rows[row]->_screenCharLine paddedToAtLeastLength:width];
     NSData *findMatches = _rows[row]->_matches;
     NSIndexSet *selectedIndexes = _rows[row]->_selectedIndexSet;
@@ -1558,6 +1566,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (BOOL)hasMarkedText {
     return _inputMethodMarkedRange.length > 0;
+}
+
+- (NSArray<iTermTerminalButton *> *)terminalButtons NS_AVAILABLE_MAC(11) {
+    return _configuration->_terminalButtons;
 }
 
 @end

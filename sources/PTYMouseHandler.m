@@ -87,6 +87,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // If mouse reporting was off when momentum scrolling began, the rest of the momentum scroll
     // should not be reported. Issue 10960.
     BOOL _disableScrollReportingUntilMomentumEnds;
+    BOOL _overBlock;
 }
 
 - (instancetype)initWithSelectionScrollHelper:(iTermSelectionScrollHelper *)selectionScrollHelper
@@ -145,6 +146,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)mouseDownImpl:(NSEvent *)event
           sideEffects:(iTermClickSideEffects *)sideEffects {
     DLog(@"mouseDownImpl: called");
+    if ([self.mouseDelegate mouseHandlerMouseDownAt:event.locationInWindow]) {
+        return NO;  // Don't call super because we handled it.
+    }
     _mouseDownWasFirstMouse = ([event eventNumber] == _firstMouseEventNumber) || ![NSApp keyWindow];
     _lastMouseDownOnSelectedText = NO;  // This may get updated to YES later.
     const BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
@@ -392,6 +396,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"_makingThreeFingerSelection <- NO");
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([_threeFingerTapGestureRecognizer mouseUp:event]) {
+        return iTermClickSideEffectsNone;
+    }
+    if (event.clickCount == 1 && [self.mouseDelegate mouseHandlerMouseUpAt:event.locationInWindow]) {
         return iTermClickSideEffectsNone;
     }
     int numTouches = _numTouches;
@@ -1008,7 +1015,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // If this changes also update wantsMouseMovementEvents
 - (void)mouseMoved:(NSEvent *)event {
+    [self checkIfHoveringOverBlock:event];
+}
+
+- (void)checkIfHoveringOverBlock:(NSEvent *)event {
+    BOOL wasOverBlock = _overBlock;
+    _overBlock = [self mouseIsHoveringOverBlock:event];
+    if (wasOverBlock != _overBlock) {
+        [self.mouseDelegate mouseHandlerRedraw:self];
+    }
     [self reportMouseEvent:event];
+}
+
+- (void)mouseEntered:(NSEvent *)event {
+    [self checkIfHoveringOverBlock:event];
+}
+
+- (BOOL)mouseIsHoveringOverBlock:(NSEvent *)event {
+    const VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInWindow:[event locationInWindow]];
+    return [self.mouseDelegate mouseHandler:self blockIDOnLine:coord.y] != nil;
 }
 
 - (void)pressureChangeWithEvent:(NSEvent *)event {

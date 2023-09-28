@@ -258,6 +258,7 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property(nonatomic, readonly) iTermTimestampDrawHelper *timestampDrawHelper;
 
 @property(nonatomic, readonly) NSColor *defaultBackgroundColor;
+@property(nonatomic, readonly) NSColor *defaultTextColor;
 
 // Does the current ascii font have ligatures? Used to determine if ASCII
 // symbols (non-alphanumerics) get to use the fastpath.
@@ -339,6 +340,7 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 - (NSRange)underlinedRangeOnLine:(long long)row;
 
 - (void)updateCachedMetrics;
+- (void)updateButtonFrames;
 
 @end
 

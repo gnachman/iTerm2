@@ -179,6 +179,11 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
 
 @implementation NSColor (iTerm)
 
++ (instancetype)colorWithVector:(vector_float4)vector colorSpace:(NSColorSpace *)colorSpace {
+    CGFloat components[4] = { vector.x, vector.y, vector.z, vector.w };
+    return [NSColor colorWithColorSpace:colorSpace components:components count:4];
+}
+
 - (iTermLABColor)labColor {
     NSColor *color = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
     const iTermSRGBColor srgb = (iTermSRGBColor) {

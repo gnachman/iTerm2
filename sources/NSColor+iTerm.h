@@ -141,6 +141,8 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 - (NSColor *)blendedWithColor:(NSColor *)color weight:(CGFloat)weight;
 @property (nonatomic, readonly) vector_float4 vector;
 
++ (instancetype)colorWithVector:(vector_float4)vector colorSpace:(NSColorSpace *)colorSpace;
+
 @end
 
 @interface NSColorSpace(iTerm)

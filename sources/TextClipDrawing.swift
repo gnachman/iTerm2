@@ -267,6 +267,11 @@ extension Data {
 }
 
 extension TextClipDrawing: iTermTextDrawingHelperDelegate {
+    @available(macOS 11, *)
+    func drawingHelperTerminalButtons() -> [TerminalButton] {
+        return []
+    }
+    
     func drawingHelperDrawBackgroundImage(in rect: NSRect, blendDefaultBackground: Bool, virtualOffset: CGFloat) {
     }
 

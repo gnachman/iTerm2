@@ -350,7 +350,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
     cursor_.y = MIN(size_.height - 1, MAX(0, cursorY));
     if (cursorY != prev) {
         DLog(@"Move cursor y to %d (requested %d)", cursor_.y, cursorY);
-        [delegate_ gridCursorDidChangeLine];
+        [delegate_ gridCursorDidChangeLineFrom:prev];
         [delegate_ gridCursorDidMove];
     }
 }
@@ -876,12 +876,29 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         [eaIndex mutateAttributesFrom:from.x to:to.x block:^iTermExternalAttribute * _Nullable(iTermExternalAttribute * _Nullable old) {
             return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
                                                           underlineColor:old.underlineColor
-                                                                 urlCode:code];
+                                                                 urlCode:code
+                                                                 blockID:old.blockID];
         }];
         [self markCharsDirty:YES
                   inRectFrom:VT100GridCoordMake(from.x, y)
                           to:VT100GridCoordMake(to.x, y)];
     }
+}
+
+- (void)setBlockID:(NSString *)blockID onLine:(int)line {
+    VT100LineInfo *info = [self lineInfoAtLineNumber:line];
+    iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:blockID != nil];
+    [eaIndex mutateAttributesFrom:0
+                               to:self.size.width - 1
+                            block:^iTermExternalAttribute * _Nullable(iTermExternalAttribute * _Nullable old) {
+        return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
+                                                      underlineColor:old.underlineColor
+                                                             urlCode:old.urlCode
+                                                             blockID:blockID];
+    }];
+    [self markCharsDirty:YES
+              inRectFrom:VT100GridCoordMake(0, line)
+                      to:VT100GridCoordMake(self.size.width - 1, line)];
 }
 
 - (void)copyDirtyFromGrid:(VT100Grid *)otherGrid  didScroll:(BOOL)didScroll {

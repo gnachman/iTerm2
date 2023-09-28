@@ -12,6 +12,7 @@
 #import "iTermTextRendererTransientState.h"
 
 @import MetalKit;
+@class iTermTerminalButton;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -57,6 +58,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
 @property (nonatomic, readonly) vector_float4 defaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultBackgroundColor;
+@property (nonatomic, readonly) vector_float4 processedDefaultTextColor;
 @property (nonatomic, readonly) iTermLineStyleMarkColors lineStyleMarkColors;
 @property (nonatomic, readonly) NSImage *badgeImage;
 @property (nonatomic, readonly) CGRect badgeSourceRect;
@@ -83,6 +85,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) vector_float4 offscreenCommandLineOutlineColor;
 @property (nonatomic, readonly) vector_float4 offscreenCommandLineBackgroundColor;
 @property (nonatomic, readonly) VT100GridRange linesToSuppressDrawing;
+@property (nonatomic, readonly) NSArray<iTermTerminalButton *> *terminalButtons NS_AVAILABLE_MAC(11);
 
 // Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
@@ -95,7 +98,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr
-                     date:(out NSDate * _Nonnull * _Nonnull)date;
+                     date:(out NSDate * _Nonnull * _Nonnull)date
+           belongsToBlock:(out BOOL * _Nonnull)belongsToBlock;
 
 - (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize
                                                                        asciiOffset:(CGSize)asciiOffset;
