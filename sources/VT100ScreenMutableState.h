@@ -209,6 +209,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 // This is like addMarkStartingAtAbsoluteLine:oneLine:ofClass: but it notifies the delegate of a new mark.
 - (id<iTermMark>)addMarkOnLine:(int)line ofClass:(Class)markClass;
+- (id<iTermMark>)addMarkOnLine:(int)line column:(int)column ofClass:(Class)markClass;
 - (void)saveCursorLine;
 - (void)reloadMarkCache;
 - (void)removeNamedMark:(VT100ScreenMark *)mark;

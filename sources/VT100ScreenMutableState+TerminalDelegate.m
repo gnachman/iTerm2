@@ -2774,5 +2774,15 @@
     return nil;
 }
 
+- (void)terminalInsertCopyButtonForBlock:(NSString *)blockID {
+    iTermButtonMark *mark = (iTermButtonMark *)[self addMarkOnLine:self.numberOfScrollbackLines + self.currentGrid.cursorY
+                                                            column:self.currentGrid.cursorX
+                                                           ofClass:[iTermButtonMark class]];
+    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+        iTermButtonMark *mark = (iTermButtonMark *)obj;
+        mark.copyBlockID = blockID;
+    }];
+}
+
 @end
 

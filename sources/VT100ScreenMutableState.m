@@ -2256,6 +2256,21 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
+                                        column:(int)column
+                                       oneLine:(BOOL)oneLine
+                                       ofClass:(Class)markClass {
+    return [self addMarkStartingAtAbsoluteLine:line column:column oneLine:oneLine ofClass:markClass modifier:nil];
+}
+
+- (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
+                                       oneLine:(BOOL)oneLine
+                                       ofClass:(Class)markClass
+                                      modifier:(void (^ NS_NOESCAPE)(id<iTermMark>))modifier {
+    return [self addMarkStartingAtAbsoluteLine:line column:-1 oneLine:oneLine ofClass:markClass modifier:modifier];
+}
+
+- (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
+                                        column:(int)column
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass
                                       modifier:(void (^ NS_NOESCAPE)(id<iTermMark>))modifier {
@@ -2263,10 +2278,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (modifier) {
         modifier(mark);
     }
-    return [self addMark:mark onLine:line singleLine:oneLine];
+    return [self addMark:mark onLine:line column:column singleLine:oneLine];
 }
 
 - (id<iTermMark>)addMark:(iTermMark *)mark onLine:(long long)line singleLine:(BOOL)oneLine {
+    return [self addMark:mark onLine:line column:-1 singleLine:oneLine];
+}
+
+- (id<iTermMark>)addMark:(iTermMark *)mark onLine:(long long)line column:(int)column singleLine:(BOOL)oneLine {
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
         VT100ScreenMark *screenMark = (VT100ScreenMark *)mark;
         screenMark.delegate = self;
@@ -2280,13 +2299,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (oneLine) {
         absRange = VT100GridAbsCoordRangeMake(0, line, self.width, line);
     } else {
-        // Interval is whole screen
         long long absLimit = line + self.height - 1;
         const long long maxAbsLimit = self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + [self.currentGrid numberOfLinesUsed];
         if (absLimit >= maxAbsLimit) {
             absLimit = maxAbsLimit - 1;
         }
-        absRange = VT100GridAbsCoordRangeMake(0, line, self.width, absLimit);
+        if (column < 0) {
+            // Interval is whole screen
+            absRange = VT100GridAbsCoordRangeMake(0, line, self.width, absLimit);
+        } else {
+            // Interval is one cell
+            absRange = VT100GridAbsCoordRangeMake(column, line, column + 1, absLimit);
+        }
     }
     DLog(@"addMarkStartingAtAbsoluteLine: %@", mark);
     [self.mutableIntervalTree addObject:mark withInterval:[self intervalForGridAbsCoordRange:absRange]];
@@ -2469,9 +2493,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (id<iTermMark>)addMarkOnLine:(int)line ofClass:(Class)markClass {
+    return [self addMarkOnLine:line column:-1 ofClass:markClass];
+}
+
+- (id<iTermMark>)addMarkOnLine:(int)line column:(int)column ofClass:(Class)markClass {
     DLog(@"addMarkOnLine:%@ ofClass:%@", @(line), markClass);
     id<iTermMark> newMark = [self addMarkStartingAtAbsoluteLine:self.cumulativeScrollbackOverflow + line
-                                                        oneLine:YES
+                                                         column:column
+                                                        oneLine:column < 0
                                                         ofClass:markClass];
     if (_alertOnNextMark) {
         _alertOnNextMark = NO;

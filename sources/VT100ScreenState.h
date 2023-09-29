@@ -317,6 +317,7 @@ extern NSString *const kScreenStateBlockStartAbsLineKey;
                                      width:(int)width;
 
 - (__kindof id<IntervalTreeImmutableObject>)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
+- (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 

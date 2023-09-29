@@ -1511,12 +1511,13 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
     const long long firstLine = frameData.perFrameState.firstVisibleAbsoluteLineNumber;
     for (iTermTerminalButton *button in frameData.perFrameState.terminalButtons) {
-        if (button.absLine < firstLine ||
-            button.absLine >= firstLine + frameData.perFrameState.gridSize.height) {
+        if (button.absCoord.y < firstLine ||
+            button.absCoord.y >= firstLine + frameData.perFrameState.gridSize.height) {
             continue;
         }
         [tState addButton:button
-             onScreenLine:button.absLine - firstLine
+             onScreenLine:button.absCoord.y - firstLine
+                   column:button.absCoord.x
           foregroundColor:frameData.perFrameState.processedDefaultTextColor
           backgroundColor:frameData.perFrameState.processedDefaultBackgroundColor];
     }

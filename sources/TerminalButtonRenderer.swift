@@ -16,18 +16,21 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
         }
         var terminalButton: TerminalButton
         var line: Int
+        var column: Int
         var foregroundColor: vector_float4
         var backgroundColor: vector_float4
     }
     fileprivate var buttons = [Button]()
 
-    @objc(addButton:onScreenLine:foregroundColor:backgroundColor:)
+    @objc(addButton:onScreenLine:column:foregroundColor:backgroundColor:)
     func add(terminalButton: TerminalButton,
              line: Int,
+             column: Int,
              foregroundColor: vector_float4,
              backgroundColor: vector_float4) {
         buttons.append(Button(terminalButton: terminalButton,
                               line: line,
+                              column: column,
                               foregroundColor:foregroundColor,
                               backgroundColor:backgroundColor))
     }
@@ -72,33 +75,41 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
     func draw(with frameData: iTermMetalFrameData,
               transientState: iTermMetalCellRendererTransientState) {
         let tState = transientState as! TerminalButtonRendererTransientState
-        var x = CGFloat(tState.configuration.viewportSize.x) - tState.margins.right
         for button in tState.buttons {
-            drawButton(button,
-                       x: &x,
-                       renderEncoder: frameData.renderEncoder, 
-                       tState:tState)
+            if button.terminalButton.absCoord.x < 0 {
+                let rightSide = CGFloat(tState.configuration.viewportSize.x) - tState.margins.right
+                drawButton(button,
+                           x: rightSide,
+                           renderEncoder: frameData.renderEncoder,
+                           tState:tState)
+            } else {
+                let x = CGFloat(button.column) * transientState.cellConfiguration.cellSize.width + transientState.margins.left
+                drawButton(button,
+                           x: x,
+                           renderEncoder: frameData.renderEncoder,
+                           tState:tState)
+            }
         }
     }
     
     private func vertexBuffer(button: TerminalButtonRendererTransientState.Button,
-                              x: inout CGFloat,
+                              x: CGFloat,
                               cellHeight: CGFloat,
                               scale: CGFloat,
                               viewportSize: vector_uint2,
-                              topInset: CGFloat,
+                              bottomInset: CGFloat,
+                              gridHeight: Int,
                               context: iTermMetalBufferPoolContext) -> MTLBuffer {
-        x -= button.terminalButton.width * scale
         let textureFrame = CGRect(x: 0, y: 0, width: 1, height: 1)
+        let y = CGFloat(gridHeight - button.line - 1) * cellHeight + bottomInset
         let frame = NSRect(x: x,
-                           y: CGFloat(button.line) * cellHeight,
-                           width: button.terminalButton.width * scale,
-                           height: button.terminalButton.height * scale)
+                           y: y,
+                           width: button.terminalButton.desiredFrame.width * scale,
+                           height: button.terminalButton.desiredFrame.height * scale)
         var quad = CGRect(x: frame.minX,
-                          y: topInset + frame.minY,
+                          y: frame.minY,
                           width: frame.width,
                           height: frame.height)
-        quad.origin.y = CGFloat(viewportSize.y) - quad.minY - quad.size.height
         let bottomRight = iTermVertex(position: vector_float2(Float(quad.maxX),
                                                      Float(quad.minY)),
                              textureCoordinate: vector_float2(Float(textureFrame.maxX),
@@ -121,8 +132,6 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
             bottomRight, bottomLeft, topLeft,
             bottomRight, topLeft, topRight
         ]
-        print(vertices.map { $0.debugDescription })
-        x -= 4 * scale
         return vertices.withUnsafeBytes { pointer in
             let byteArray = Array(pointer.bindMemory(to: UInt8.self))
             return metalRenderer.verticesPool.requestBuffer(from: context,
@@ -132,16 +141,18 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
     }
 
     private func drawButton(_ button: TerminalButtonRendererTransientState.Button,
-                            x: inout CGFloat,
+                            x: CGFloat,
                             renderEncoder: MTLRenderCommandEncoder,
                             tState:TerminalButtonRendererTransientState) {
+        let top = tState.margins.top
         let vertexBuffer = vertexBuffer(
             button: button,
-            x: &x,
+            x: x,
             cellHeight: tState.cellConfiguration.cellSize.height,
             scale: tState.configuration.scale,
             viewportSize: tState.configuration.viewportSize,
-            topInset: tState.configuration.extraMargins.top,
+            bottomInset: tState.margins.top,
+            gridHeight: Int(tState.cellConfiguration.gridSize.height),
             context: tState.poolContext)
         let texture = texture(for: button, tState: tState)
         guard let texture else {
@@ -173,7 +184,8 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
             foregroundColor: NSColor(
                 vector: button.foregroundColor,
                 colorSpace: tState.configuration.colorSpace),
-            cellHeight: tState.cellConfiguration.cellSize.height * tState.configuration.scale)
+            cellSize: NSSize(width: tState.cellConfiguration.cellSize.width * tState.configuration.scale,
+                             height: tState.cellConfiguration.cellSize.height * tState.configuration.scale))
         let texture = metalRenderer.texture(
             fromImage: iTermImageWrapper(image: image),
             context: tState.poolContext,

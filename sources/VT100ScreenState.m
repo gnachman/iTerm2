@@ -540,6 +540,30 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return (id<VT100RemoteHostReading>)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
 }
 
+- (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range {
+    NSMutableArray<iTermTerminalButtonPlace *> *places = [NSMutableArray array];
+    const long long offset = self.cumulativeScrollbackOverflow;
+    Interval *interval = 
+    [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                            range.location + offset,
+                                                            0,
+                                                            range.location + offset)];
+    for (NSArray *objects in [self.intervalTree forwardLimitEnumeratorAt:interval.location]) {
+        for (id<IntervalTreeObject> obj in objects) {
+            VT100GridAbsCoordRange objRange = [self absCoordRangeForInterval:obj.entry.interval];
+            if (objRange.start.y >= range.location + range.length) {
+                return places;
+            }
+            if ([obj isKindOfClass:[iTermButtonMark class]]) {
+                iTermButtonMark *buttonMark = (iTermButtonMark *)obj;
+                iTermTerminalButtonPlace *place = [[iTermTerminalButtonPlace alloc] initWithMark:buttonMark coord:objRange.start];
+                [places addObject:place];
+            }
+        }
+    }
+    return places;
+}
+
 
 #pragma mark - Combined Grid And Scrollback
 

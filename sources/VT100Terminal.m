@@ -4020,6 +4020,12 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 [_delegate terminalBlock:blockID start:NO type:nil render:[dict[@"render"] isEqual:@"1"]];
             }
         }
+    } else if ([key isEqualToString:@"Button"]) {
+        NSDictionary<NSString *, NSString *> *dict = [value it_keyValuePairsSeparatedBy:@";"];
+        NSString *type = dict[@"type"];
+        if ([type isEqualToString:@"copy"] && dict[@"block"]) {
+            [_delegate terminalInsertCopyButtonForBlock:dict[@"block"]];
+        }
     } else if ([key isEqualToString:@"FilePart"]) {
         if ([_delegate terminalIsTrusted]) {
             [_delegate terminalDidReceiveBase64FileData:value];

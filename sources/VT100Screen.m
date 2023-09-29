@@ -629,6 +629,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                                              mark:mark] autorelease];
 }
 
+- (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range {
+    return [_state buttonsInRange:range];
+}
+
 - (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range {
     VT100GridRange historyRange;
     VT100GridRange screenRange;

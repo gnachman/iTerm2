@@ -181,7 +181,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     BOOL _cursorVisible;
     BOOL _haveVisibleBlock;
 
-    iTermTerminalCopyButton *_blockCopyButton NS_AVAILABLE_MAC(11);
+    iTermTerminalCopyButton *_hoverBlockCopyButton NS_AVAILABLE_MAC(11);
+    NSMutableArray<iTermTerminalButton *> *_buttons NS_AVAILABLE_MAC(11);
 }
 
 
@@ -340,6 +341,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         _notes = [[NSMutableArray alloc] init];
         _portholes = [[NSMutableArray alloc] init];
         _trackingChildWindows = [[NSMutableArray alloc] init];
+        _buttons = [[NSMutableArray alloc] init];
         [self initARC];
     }
     return self;
@@ -398,7 +400,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [_portholes release];
     [_portholesNeedUpdatesJoiner release];
     [_trackingChildWindows release];
-    [_blockCopyButton release];
+    [_hoverBlockCopyButton release];
+    [_buttons release];
 
     [super dealloc];
 }
@@ -1043,7 +1046,29 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         DLog(@"Have visible blocks");
         return YES;
     }
-    return [_mouseHandler wantsMouseMovementEvents];
+    return [_mouseHandler wantsMouseMovementEvents] || [self hasTerminalButtons];
+}
+
+- (BOOL)hasTerminalButtons {
+    if (@available(macOS 11, *)) {
+        return _buttons.count > 0 || _hoverBlockCopyButton != nil;
+    }
+    return NO;
+}
+
+- (BOOL)mouseIsOverButtonInEvent:(NSEvent *)event {
+    if (@available(macOS 11, *)) {
+        const NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
+        NSLog(@"%@", NSStringFromPoint(point));
+        NSArray<iTermTerminalButton *> *buttons = _buttons;
+        if (_hoverBlockCopyButton) {
+            buttons = [buttons arrayByAddingObject:_hoverBlockCopyButton];
+        }
+        return [buttons anyWithBlock:^BOOL(iTermTerminalButton *button) {
+            return NSPointInRect(point, button.desiredFrame);
+        }];
+    }
+    return NO;
 }
 
 // If this changes also update -wantsMouseMovementEvents.
@@ -1051,6 +1076,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [self resetMouseLocationToRefuseFirstResponderAt];
     [self updateUnderlinedURLs:event];
     [self updateButtonHover:event.locationInWindow pressed:!!([NSEvent pressedMouseButtons] & 1)];
+    [self updateCursor:event];
     [_mouseHandler mouseMoved:event];
 }
 
@@ -1141,8 +1167,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     }
     [self updateUnderlinedURLs:event];
 
-    [_blockCopyButton autorelease];
-    _blockCopyButton = nil;
+    [_hoverBlockCopyButton autorelease];
+    _hoverBlockCopyButton = nil;
     [_delegate textViewShowHoverURL:nil
                              anchor:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1)];
 }
@@ -4919,12 +4945,32 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self terminalButtons];
 }
 
+// Does not include hover buttons.
 - (NSArray<iTermTerminalButton *> *)terminalButtons NS_AVAILABLE_MAC(11) {
-    if (_blockCopyButton) {
-        return @[_blockCopyButton];
-    } else {
-        return @[];
+    NSMutableArray<iTermTerminalButton *> *buttons = [NSMutableArray array];
+    if (_hoverBlockCopyButton) {
+        [buttons addObject:_hoverBlockCopyButton];
     }
+    NSArray<iTermTerminalButtonPlace *> *places = [self.dataSource buttonsInRange:self.rangeOfVisibleLines];
+    NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
+    [places enumerateObjectsUsingBlock:^(iTermTerminalButtonPlace * _Nonnull place, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSInteger i = [_buttons indexOfObjectPassingTest:^BOOL(iTermTerminalButton * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            return (obj.id == place.id);
+        }];
+        if (i == NSNotFound || !VT100GridAbsCoordEquals(_buttons[i].absCoord, place.coord)) {
+            if (place.mark.copyBlockID) {
+                iTermTerminalButton *button = [[iTermTerminalCopyButton alloc] initWithID:place.id 
+                                                                                  blockID:place.mark.copyBlockID
+                                                                                 absCoord:place.coord];
+                [updated addObject:button];
+            }
+        } else {
+            [updated addObject:_buttons[i]];
+        }
+    }];
+    [_buttons autorelease];
+    _buttons = [updated retain];
+    return _buttons;
 }
 
 - (void)updateButtonHover:(NSPoint)locationInWindow pressed:(BOOL)pressed {
@@ -5918,10 +5964,12 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     while (i > 0 && [[self blockIDForLine:i - 1] isEqualToString:block]) {
         i -= 1;
     }
-    _blockCopyButton = [[iTermTerminalCopyButton alloc] initWithBlockID:block absLine:i + _dataSource.totalScrollbackOverflow];
+    _hoverBlockCopyButton = [[iTermTerminalCopyButton alloc] initWithID:-1
+                                                                blockID:block
+                                                               absCoord:VT100GridAbsCoordMake(self.dataSource.width - 1, i + _dataSource.totalScrollbackOverflow)];
     __weak __typeof(self) weakSelf = self;
     const long long offset = _dataSource.totalScrollbackOverflow;
-    _blockCopyButton.action = ^(NSPoint locationInWindow) {
+    _hoverBlockCopyButton.action = ^(NSPoint locationInWindow) {
         [weakSelf copyBlock:block absLine:line+offset screenCoordinate:[NSEvent mouseLocation]];
     };
 }
@@ -5942,8 +5990,8 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     // As a side effect update the current blockCopyButton.
     if (@available(macOS 11, *)) {
         if (!block) {
-            _blockCopyButton = nil;
-        } else if (![_blockCopyButton.blockID isEqualToString:block]) {
+            _hoverBlockCopyButton = nil;
+        } else if (![_hoverBlockCopyButton.blockID isEqualToString:block]) {
             [self makeBlockCopyButtonForLine:line block:block];
         }
     }

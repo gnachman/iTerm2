@@ -12,14 +12,13 @@ import Foundation
 class TerminalButton: NSObject {
     private(set) var backgroundImage: NSImage
     private(set) var foregroundImage: NSImage
-    @objc let width: CGFloat
     @objc var action: ((NSPoint) -> ())?
     private var lastForegroundColor: NSColor?
     private var lastBackgroundColor: NSColor?
     private var lastForegroundImage: NSImage?
     private var lastBackgroundImage: NSImage?
     private let aspectRatio: CGFloat
-    @objc let absLine: Int64
+    @objc let absCoord: VT100GridAbsCoord
     // Clients can use this as they like
     @objc var desiredFrame = NSRect.zero
     @objc var pressed: Bool {
@@ -34,12 +33,13 @@ class TerminalButton: NSObject {
         case pressedInside
     }
     private var state = State.normal
+    @objc let id: Int
 
-    init(backgroundImage: NSImage, foregroundImage: NSImage, width: CGFloat, absLine: Int64) {
+    init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, absCoord: VT100GridAbsCoord) {
+        self.id = id
         self.backgroundImage = backgroundImage
         self.foregroundImage = foregroundImage
-        self.width = width
-        self.absLine = absLine
+        self.absCoord = absCoord
         aspectRatio = foregroundImage.size.height / foregroundImage.size.width;
     }
 
@@ -61,15 +61,27 @@ class TerminalButton: NSObject {
         return result
     }
 
-    @objc(frameWithX:minAbsLine:cumulativeOffset:cellHeight:)
+    private func size(cellSize: NSSize) -> NSSize {
+        let width = cellSize.width * 2
+        var result = NSSize(width: width, height: aspectRatio * width);
+        var scale = cellSize.height / result.height
+        if scale < 1 {
+            result.width *= scale
+            result.height *= scale
+        }
+        return result
+    }
+
+    @objc(frameWithX:minAbsLine:cumulativeOffset:cellSize:)
     func frame(x: CGFloat,
                minAbsLine: Int64,
                cumulativeOffset: Int64,
-               cellHeight: CGFloat) -> NSRect {
+               cellSize: NSSize) -> NSRect {
+        let size = size(cellSize: cellSize)
         return NSRect(x: x,
-                      y: CGFloat(max(minAbsLine, absLine) - cumulativeOffset) * cellHeight,
-                      width: width,
-                      height: height)
+                      y: CGFloat(max(minAbsLine, absCoord.y) - cumulativeOffset) * cellSize.height,
+                      width: size.width,
+                      height: size.height)
     }
 
     @objc(drawWithBackgroundColor:foregroundColor:frame:virtualOffset:)
@@ -77,6 +89,7 @@ class TerminalButton: NSObject {
               foregroundColor: NSColor,
               frame rect: NSRect,
               virtualOffset: CGFloat) {
+        
         let (foregroundImage, backgroundImage) = switch state {
         case .normal, .pressedOutside:
             images(backgroundColor: backgroundColor, foregroundColor: foregroundColor)
@@ -89,8 +102,8 @@ class TerminalButton: NSObject {
 
     func image(backgroundColor: NSColor,
                foregroundColor: NSColor,
-               cellHeight: CGFloat) -> NSImage {
-        let size = NSSize(width: width, height: height)
+               cellSize: CGSize) -> NSImage {
+        let size = self.size(cellSize: cellSize)
         return NSImage(size: size,
                        flipped: false) { [weak self] _ in
             self?.draw(backgroundColor: backgroundColor,
@@ -100,10 +113,6 @@ class TerminalButton: NSObject {
             return true
         }
     }
-    var height: CGFloat {
-        aspectRatio * width
-    }
-
     var selected: Bool {
         switch state {
         case .normal, .pressedOutside:
@@ -159,16 +168,16 @@ class TerminalButton: NSObject {
 class TerminalCopyButton: TerminalButton {
     @objc let blockID: String
 
-    @objc
-    init?(blockID: String, absLine: Int64) {
+    @objc(initWithID:blockID:absCoord:)
+    init?(id: Int, blockID: String, absCoord: VT100GridAbsCoord) {
         self.blockID = blockID
         guard let bg = NSImage(systemSymbolName: "doc.on.doc.fill", accessibilityDescription: nil),
               let fg = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: nil) else {
             return nil
         }
-        super.init(backgroundImage: bg,
+        super.init(id: id,
+                   backgroundImage: bg,
                    foregroundImage: fg,
-                   width: 14,
-                   absLine: absLine)
+                   absCoord: absCoord)
     }
 }

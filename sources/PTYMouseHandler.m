@@ -1016,6 +1016,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // If this changes also update wantsMouseMovementEvents
 - (void)mouseMoved:(NSEvent *)event {
     [self checkIfHoveringOverBlock:event];
+    [self reportMouseEvent:event];
 }
 
 - (void)checkIfHoveringOverBlock:(NSEvent *)event {
@@ -1024,7 +1025,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (wasOverBlock != _overBlock) {
         [self.mouseDelegate mouseHandlerRedraw:self];
     }
-    [self reportMouseEvent:event];
 }
 
 - (void)mouseEntered:(NSEvent *)event {
@@ -1033,6 +1033,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)mouseIsHoveringOverBlock:(NSEvent *)event {
     const VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInWindow:[event locationInWindow]];
+    if (coord.y < 0) {
+        return NO;
+    }
     return [self.mouseDelegate mouseHandler:self blockIDOnLine:coord.y] != nil;
 }
 

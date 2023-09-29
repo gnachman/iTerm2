@@ -1161,14 +1161,17 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)updateButtonFrames NS_AVAILABLE_MAC(11) {
     VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRect];
     const CGFloat margin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
-    CGFloat x = _scrollViewDocumentVisibleRect.size.width - margin;
     for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
-        x -= MAX(button.width, _cellSize.width);
+        CGFloat x;
+        if (button.absCoord.x < 0) {
+            x = _scrollViewDocumentVisibleRect.size.width - margin;
+        } else {
+            x = margin + button.absCoord.x * self.cellSize.width;
+        }
         button.desiredFrame = [button frameWithX:x
                                       minAbsLine:drawableCoordRange.start.y + _totalScrollbackOverflow
                                 cumulativeOffset:_totalScrollbackOverflow
-                                      cellHeight:_cellSize.height];
-        x -= 4;
+                                        cellSize:_cellSize];
     }
 }
 

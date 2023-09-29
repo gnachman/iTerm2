@@ -85,6 +85,7 @@ NSPopoverDelegate> {
 
 - (BOOL)showCommandInfoForEvent:(NSEvent *)event;
 - (IBAction)performFindPanelAction:(id)sender;
+- (BOOL)mouseIsOverButtonInEvent:(NSEvent *)event;
 
 @end
 
