@@ -64,7 +64,7 @@ class TerminalButton: NSObject {
     private func size(cellSize: NSSize) -> NSSize {
         let width = cellSize.width * 2
         var result = NSSize(width: width, height: aspectRatio * width);
-        var scale = cellSize.height / result.height
+        let scale = cellSize.height / result.height
         if scale < 1 {
             result.width *= scale
             result.height *= scale

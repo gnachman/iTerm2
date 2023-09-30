@@ -633,6 +633,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state buttonsInRange:range];
 }
 
+- (VT100GridCoordRange)rangeOfBlockWithID:(NSString *)blockID {
+    return [_state rangeOfBlockWithID:blockID];
+}
+
 - (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range {
     VT100GridRange historyRange;
     VT100GridRange screenRange;

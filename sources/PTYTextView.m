@@ -4953,6 +4953,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     NSArray<iTermTerminalButtonPlace *> *places = [self.dataSource buttonsInRange:self.rangeOfVisibleLines];
     NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
+    const long long offset = _dataSource.totalScrollbackOverflow;
+    __weak __typeof(self) weakSelf = self;
     [places enumerateObjectsUsingBlock:^(iTermTerminalButtonPlace * _Nonnull place, NSUInteger idx, BOOL * _Nonnull stop) {
         NSInteger i = [_buttons indexOfObjectPassingTest:^BOOL(iTermTerminalButton * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             return (obj.id == place.id);
@@ -4962,6 +4964,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 iTermTerminalButton *button = [[iTermTerminalCopyButton alloc] initWithID:place.id 
                                                                                   blockID:place.mark.copyBlockID
                                                                                  absCoord:place.coord];
+                NSString *blockID = [[place.mark.copyBlockID copy] autorelease];
+
+                button.action = ^(NSPoint locationInWindow) {
+                    [weakSelf copyBlock:blockID
+                                absLine:-1
+                       screenCoordinate:[weakSelf.window convertPointToScreen:locationInWindow]];
+                };
                 [updated addObject:button];
             }
         } else {
@@ -4971,6 +4980,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_buttons autorelease];
     _buttons = [updated retain];
     return _buttons;
+}
+
+- (void)copyBlock:(NSString *)block absLine:(long long)absLine screenCoordinate:(NSPoint)screenCoordinate {
+    if ([self copyBlock:block includingAbsLine:absLine]) {
+        [ToastWindowController showToastWithMessage:@"Copied"
+                                           duration:1.5
+                            topLeftScreenCoordinate:screenCoordinate
+                                          pointSize:12];
+    }
 }
 
 - (void)updateButtonHover:(NSPoint)locationInWindow pressed:(BOOL)pressed {
@@ -5469,19 +5487,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
 }
 
-- (BOOL)copyBlock:(NSString *)block includingAbsLine:(long long)absLine {
+- (VT100GridCoordRange)rangeOfBlockIncludingLine:(long long)absLine
+                          blockID:(NSString *)block {
     int start;
     const long long offset = self.dataSource.totalScrollbackOverflow;
     if (absLine < offset) {
         start = 0;
         if (![[self blockIDForLine:start] isEqualToString:block]) {
             DLog(@"Start line is not the same block");
-            return NO;
+            return VT100GridCoordRangeMake(-1, -1, -1, -1);
         }
     } else {
         start = absLine - offset;
     }
-
+    
     while (start - 1 >= 0 && [[self blockIDForLine:start - 1] isEqualToString:block]) {
         start -= 1;
     }
@@ -5490,23 +5509,44 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     while (end + 1 < count && [[self blockIDForLine:end + 1] isEqualToString:block]) {
         end += 1;
     }
+    
+    return VT100GridCoordRangeMake(0,
+                                     start,
+                                     self.dataSource.width,
+                                     end);
+}
 
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    const VT100GridCoordRange range = VT100GridCoordRangeMake(0,
-                                                              start,
-                                                              self.dataSource.width,
-                                                              end);
-    const VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range, 0, 0);
-    NSString *string = [extractor contentInRange:windowedRange
-                               attributeProvider:nil
-                                      nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
-                                             pad:NO
-                              includeLastNewline:YES
-                          trimTrailingWhitespace:YES
-                                    cappedAtSize:-1
-                                    truncateTail:YES
-                               continuationChars:nil
-                                          coords:nil];
+- (BOOL)copyBlock:(NSString *)block includingAbsLine:(long long)absLine {
+    if (absLine < 0) {
+        const VT100GridCoordRange range = [self.dataSource rangeOfBlockWithID:block];
+        if (range.start.x < 0) {
+            return NO;
+        }
+        return [self copyTextInRange:range];
+    }
+    const VT100GridCoordRange range = [self rangeOfBlockIncludingLine:absLine blockID:block];
+    if (range.start.x < 0) {
+        return NO;
+    }
+    return [self copyTextInRange:range];
+}
+
+- (BOOL)copyTextInRange:(VT100GridCoordRange)range {
+    NSString *string = [self stringForPortholeInRange:range];
+    if (!string) {
+        iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+        const VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range, 0, 0);
+        string = [extractor contentInRange:windowedRange
+                         attributeProvider:nil
+                                nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
+                                       pad:NO
+                        includeLastNewline:YES
+                    trimTrailingWhitespace:YES
+                              cappedAtSize:-1
+                              truncateTail:YES
+                         continuationChars:nil
+                                    coords:nil];
+    }
     if (string.length > 0) {
         [self copyString:string];
         return YES;
@@ -5972,15 +6012,6 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     _hoverBlockCopyButton.action = ^(NSPoint locationInWindow) {
         [weakSelf copyBlock:block absLine:line+offset screenCoordinate:[NSEvent mouseLocation]];
     };
-}
-
-- (void)copyBlock:(NSString *)block absLine:(long long)absLine screenCoordinate:(NSPoint)screenCoordinate {
-    if ([self copyBlock:block includingAbsLine:absLine]) {
-        [ToastWindowController showToastWithMessage:@"Copied"
-                                           duration:1.5
-                            topLeftScreenCoordinate:screenCoordinate
-                                          pointSize:12];
-    }
 }
 
 - (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler blockIDOnLine:(int)line {

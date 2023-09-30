@@ -2727,51 +2727,39 @@
                render:(BOOL)render {
     DLog(@"start=%@ blockID=%@", @(start), blockID);
 
-    iTermBlockMark *mark = (iTermBlockMark *)[self addMarkOnLine:self.numberOfScrollbackLines + self.currentGrid.cursorY
-                                                         ofClass:[iTermBlockMark class]];
-    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
-        iTermBlockMark *mark = (iTermBlockMark *)obj;
+    iTermBlockMark *mark;
+    VT100GridAbsCoordRange range;
+    if (!start && [_currentBlockID isEqualToString:blockID]) {
+        mark = [self mutableBlockMarkWithID:blockID];
+        if (!mark) {
+            return;
+        }
+    }
+    const long long absY = self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + self.currentGrid.cursor.y;
+    if (mark) {
+        range = [self absCoordRangeForInterval:mark.entry.interval];
+        [self.mutableIntervalTree removeObject:mark];
+    } else if (start) {
+        range.start = VT100GridAbsCoordMake(0, absY);
+        mark = [[iTermBlockMark alloc] init];
         mark.blockID = blockID;
-        mark.start = start;
         mark.type = type;
-    }];
+    }
+    range.end = VT100GridAbsCoordMake(self.width, absY);
+    [self.mutableIntervalTree addObject:mark withInterval:[self intervalForGridAbsCoordRange:range]];
     if (!render) {
         self.terminal.currentBlockID = start ? blockID : nil;
     }
     _currentBlockID = (!render && start) ? blockID : nil;
     if (start) {
-        self.blockStartAbsLine[blockID] = @(self.numberOfScrollbackLines + self.currentGrid.cursorY + self.cumulativeScrollbackOverflow);
+        self.blockStartAbsLine[blockID] = @(absY);
         self.blocksGeneration += 1;
     } else {
-        iTermBlockMark *startMark = [self startBlockWithID:blockID];
-        if (startMark) {
-            VT100GridAbsCoordRange range = {
-                .start = [self absCoordRangeForInterval:startMark.entry.interval].start,
-                .end = [self absCoordRangeForInterval:mark.entry.interval].start
-            };
-            if (render) {
-                [self inlineImageDidCreateTextDocumentInRange:range
-                                                         type:startMark.type
-                                                     filename:nil
-                                                    forceWide:NO];
-            }
-        }
+        [self inlineImageDidCreateTextDocumentInRange:[self absCoordRangeForInterval:mark.entry.interval]
+                                                 type:mark.type
+                                             filename:nil
+                                            forceWide:NO];
     }
-}
-
-- (iTermBlockMark *)startBlockWithID:(NSString *)blockID {
-    for (NSArray *objects in self.intervalTree.reverseLimitEnumerator) {
-        for (id<IntervalTreeObject> obj in objects) {
-            iTermBlockMark *candidate = [iTermBlockMark castFrom:obj];
-            if (!candidate) {
-                continue;
-            }
-            if (candidate.start && [candidate.blockID isEqualToString:blockID]) {
-                return candidate;
-            }
-        }
-    }
-    return nil;
 }
 
 - (void)terminalInsertCopyButtonForBlock:(NSString *)blockID {
@@ -2782,6 +2770,7 @@
         iTermButtonMark *mark = (iTermButtonMark *)obj;
         mark.copyBlockID = blockID;
     }];
+    [self appendStringAtCursor:@"  "];
 }
 
 @end

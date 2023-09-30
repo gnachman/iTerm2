@@ -82,5 +82,6 @@ iTermTriggerScopeProvider> {
 - (void)executePostTriggerActions;
 - (void)performBlockWithoutTriggers:(void (^)(void))block;
 - (void)movePromptUnderComposerIfNeeded;
+- (iTermBlockMark *)mutableBlockMarkWithID:(NSString *)blockID;
 
 @end

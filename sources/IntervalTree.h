@@ -74,6 +74,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Returns the object with the smallest limit
 - (NSArray<id<IntervalTreeImmutableObject>> * _Nullable)objectsWithSmallestLimit;
 
+- (NSArray<id<IntervalTreeImmutableObject>> * _Nullable)objectsWithSmallestLocation;
+
 // Returns the object with the largest location
 - (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithLargestLocation;
 
@@ -83,10 +85,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithLargestLimitBefore:(long long)limit;
 - (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithSmallestLimitAfter:(long long)limit;
 
+- (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithSmallestLocationAfter:(long long)location;
+
 // Enumerates backwards by location (NOT LIMIT)
 - (NSEnumerator<IntervalTreeImmutableObject> *)reverseEnumeratorAt:(long long)start;
 
 - (NSEnumerator<IntervalTreeImmutableObject> *)reverseLimitEnumeratorAt:(long long)start;
+- (NSEnumerator<IntervalTreeImmutableObject> *)forwardLocationEnumeratorAt:(long long)start;
 - (NSEnumerator<IntervalTreeImmutableObject> *)forwardLimitEnumeratorAt:(long long)start;
 - (NSEnumerator<IntervalTreeImmutableObject> *)reverseLimitEnumerator;
 - (NSEnumerator<IntervalTreeImmutableObject> *)forwardLimitEnumerator;

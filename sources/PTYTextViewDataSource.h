@@ -152,5 +152,6 @@
 - (iTermOffscreenCommandLine *)offscreenCommandLineBefore:(int)line;
 - (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range;
 - (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range;
+- (VT100GridCoordRange)rangeOfBlockWithID:(NSString *)blockID;
 
 @end

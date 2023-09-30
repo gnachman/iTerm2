@@ -106,7 +106,7 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
                            y: y,
                            width: button.terminalButton.desiredFrame.width * scale,
                            height: button.terminalButton.desiredFrame.height * scale)
-        var quad = CGRect(x: frame.minX,
+        let quad = CGRect(x: frame.minX,
                           y: frame.minY,
                           width: frame.width,
                           height: frame.height)
@@ -144,7 +144,6 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
                             x: CGFloat,
                             renderEncoder: MTLRenderCommandEncoder,
                             tState:TerminalButtonRendererTransientState) {
-        let top = tState.margins.top
         let vertexBuffer = vertexBuffer(
             button: button,
             x: x,

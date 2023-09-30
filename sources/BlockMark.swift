@@ -14,7 +14,6 @@ protocol BlockMarkReading: AnyObject, iTermMarkProtocol {
 @objc(iTermBlockMark)
 class BlockMark: iTermMark, BlockMarkReading {
     @objc var blockID = UUID().uuidString
-    @objc var start = true
     @objc var type: String?
 
     @objc

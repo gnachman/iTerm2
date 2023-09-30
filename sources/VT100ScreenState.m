@@ -564,6 +564,40 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return places;
 }
 
+- (VT100GridCoordRange)rangeOfBlockWithID:(NSString *)blockID {
+    id<iTermBlockMarkReading> mark = [self blockMarkWithID:blockID];
+    if (!mark) {
+        return VT100GridCoordRangeMake(-1, -1, -1, -1);
+    }
+    return [self coordRangeForInterval:mark.entry.interval];
+}
+
+- (iTermBlockMark *)blockMarkWithID:(NSString *)blockID {
+    NSNumber *n = self.blockStartAbsLine[blockID];
+    if (!n) {
+        return nil;
+    }
+    const long long line = n.longLongValue;
+    Interval *interval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, line, 0, line)];
+    BOOL foundBlock = NO;
+    for (NSArray *objects in [self.intervalTree forwardLocationEnumeratorAt:interval.limit]) {
+        for (id<IntervalTreeObject> obj in objects) {
+            iTermBlockMark *candidate = [iTermBlockMark castFrom:obj];
+            if (!candidate) {
+                continue;
+            }
+            if ([candidate.blockID isEqualToString:blockID]) {
+                return candidate;
+            }
+            foundBlock = YES;
+        }
+        if (foundBlock) {
+            // Already found a different block.
+            break;
+        }
+    }
+    return nil;
+}
 
 #pragma mark - Combined Grid And Scrollback
 

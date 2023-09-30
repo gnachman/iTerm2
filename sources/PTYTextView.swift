@@ -233,6 +233,22 @@ extension PTYTextView: ExternalSearchResultsController {
         DLog("End updatePortholeFrames")
     }
 
+    @objc(stringForPortholeInRange:)
+    func stringForPorthole(range: VT100GridCoordRange) -> String? {
+        for obj in portholes {
+            let porthole = obj as! Porthole
+            guard let gridCoordRange = self.range(porthole: porthole) else {
+                continue
+            }
+            if range.start.y < gridCoordRange.end.y && range.end.y > gridCoordRange.start.y {
+                return porthole.savedLines.map {
+                    $0.stringValue
+                }.joined(separator: "\n")
+            }
+        }
+        return nil
+    }
+
     private func range(porthole: Porthole) -> VT100GridCoordRange? {
         DLog("range(porthole: \(porthole))")
         guard PortholeRegistry.instance.mark(for: porthole.uniqueIdentifier) != nil else {

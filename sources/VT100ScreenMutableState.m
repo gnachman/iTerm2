@@ -2476,6 +2476,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"End");
 }
 
+- (iTermBlockMark *)mutableBlockMarkWithID:(NSString *)blockID {
+    return (iTermBlockMark *)[super blockMarkWithID:blockID];
+}
+
 #pragma mark - Shell Integration
 
 - (NSDictionary *)promptStateDictionary {
@@ -4199,6 +4203,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     if (screenState) {
         [self.blockStartAbsLine it_mergeFrom:[NSDictionary castFrom:screenState[kScreenStateBlockStartAbsLineKey]] ?: @{}];
+        self.blocksGeneration = 1;
         self.protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
         [_promptStateMachine loadPromptStateDictionary:screenState[kScreenStatePromptStateKey]];
         [self.tabStops removeAllObjects];
