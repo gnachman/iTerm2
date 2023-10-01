@@ -6014,6 +6014,9 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 }
 
 - (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler blockIDOnLine:(int)line {
+    if (line < 0) {
+        return nil;
+    }
     NSDictionary<NSNumber *, iTermExternalAttribute *> *attrs = [[self.dataSource externalAttributeIndexForLine:line] attributes];
     NSString *block = attrs[@0].blockID;
 
