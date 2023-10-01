@@ -1059,7 +1059,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (BOOL)mouseIsOverButtonInEvent:(NSEvent *)event {
     if (@available(macOS 11, *)) {
         const NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
-        NSLog(@"%@", NSStringFromPoint(point));
+        DLog(@"%@", NSStringFromPoint(point));
         NSArray<iTermTerminalButton *> *buttons = _buttons;
         if (_hoverBlockCopyButton) {
             buttons = [buttons arrayByAddingObject:_hoverBlockCopyButton];
@@ -4953,7 +4953,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     NSArray<iTermTerminalButtonPlace *> *places = [self.dataSource buttonsInRange:self.rangeOfVisibleLines];
     NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
-    const long long offset = _dataSource.totalScrollbackOverflow;
     __weak __typeof(self) weakSelf = self;
     [places enumerateObjectsUsingBlock:^(iTermTerminalButtonPlace * _Nonnull place, NSUInteger idx, BOOL * _Nonnull stop) {
         NSInteger i = [_buttons indexOfObjectPassingTest:^BOOL(iTermTerminalButton * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {

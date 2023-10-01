@@ -35,6 +35,12 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
         return MarkCacheSanitizingAdapter(self)
     }()
 
+    override var description: String {
+        let dictDescription = dict.keys.sorted().map {
+            "\($0)=\(type(of: dict[$0]!))"
+        }.joined(separator: " ")
+        return "<MarkCache: \(it_addressString) dict:\n\(dictDescription)\nsorted=\(sorted.debugDescription)>"
+    }
     @objc
     override init() {
         super.init()
@@ -96,6 +102,12 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
     @objc
     func findAtOrBefore(location desiredLocation: Int64) -> [iTermMarkProtocol] {
         return sorted.findAtOrBefore(location: desiredLocation)
+    }
+
+    @objc(eraseUpToLocation:)
+    func eraseUpTo(location: Int64) {
+        DLog("Erase up to \(location)")
+        sorted.removeUpTo(location: location)
     }
 }
 

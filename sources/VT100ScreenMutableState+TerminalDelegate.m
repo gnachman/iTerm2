@@ -2754,7 +2754,7 @@
     if (start) {
         self.blockStartAbsLine[blockID] = @(absY);
         self.blocksGeneration += 1;
-    } else {
+    } else if (render) {
         [self inlineImageDidCreateTextDocumentInRange:[self absCoordRangeForInterval:mark.entry.interval]
                                                  type:mark.type
                                              filename:nil

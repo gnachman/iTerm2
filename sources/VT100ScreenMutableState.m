@@ -1436,7 +1436,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     DLog(@"Erase interval tree objects above grid");
     // Erase interval tree objects above grid.
-    [self removeIntervalTreeObjectsInAbsRange:VT100GridAbsCoordRangeMake(0, 0, self.width, self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)
+    VT100GridAbsCoordRange absRangeToClear = VT100GridAbsCoordRangeMake(0, 0, self.width, self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
+    Interval *intervalToClear = [self intervalForGridAbsCoordRange:absRangeToClear];
+    DLog(@"BEFORE: %@", self.markCache.description);
+    [self.markCache eraseUpToLocation:intervalToClear.limit - 1];
+    DLog(@"AFTER: %@", self.markCache.description);
+    [self removeIntervalTreeObjectsInAbsRange:absRangeToClear
                           exceptAbsCoordRange:VT100GridAbsCoordRangeMake(-1, -1, -1, -1)];
 
     // Clear the grid by scrolling it up into history.
@@ -2333,6 +2338,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     return mark;
 }
+// Remove screen mark from mark cache
+// If there is a screen mark, reset lastCommandMark
+// If mark is named, remove from namedMarks and set namedMarkDirty
+// Call willRemove on annotations
+// Remove from the interval tree
+// For minimap marks, call observer methods
 
 - (BOOL)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
     DLog(@"Remove %@", obj);
@@ -2377,13 +2388,22 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange
                                                             exceptCoordRange:(VT100GridCoordRange)coordRangeToSave {
+    const VT100GridAbsCoordRange absCoordRangeToClear =
+    VT100GridAbsCoordRangeFromCoordRange(coordRange,
+                                         self.cumulativeScrollbackOverflow);
+
     VT100GridAbsCoordRange absCoordRangeToSave;
     if (coordRangeToSave.start.x < 0) {
         absCoordRangeToSave = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+        if (absCoordRangeToClear.start.y == 0 &&
+            absCoordRangeToClear.start.x == 0) {
+            Interval *interval = [self intervalForGridAbsCoordRange:absCoordRangeToClear];
+            [self.markCache eraseUpToLocation:interval.location];
+        }
     } else {
         absCoordRangeToSave = VT100GridAbsCoordRangeFromCoordRange(coordRangeToSave, self.cumulativeScrollbackOverflow);
     }
-    return [self removeIntervalTreeObjectsInAbsRange:VT100GridAbsCoordRangeFromCoordRange(coordRange, self.cumulativeScrollbackOverflow)
+    return [self removeIntervalTreeObjectsInAbsRange:absCoordRangeToClear
                                  exceptAbsCoordRange:absCoordRangeToSave];
 }
 
@@ -2465,6 +2485,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         return;
     }
     DLog(@"Begin");
+    DLog(@"BEFORE: %@", self.markCache);
+    [self.markCache eraseUpToLocation:lastDeadLocation - 1];
+    DLog(@"AFTER: %@", self.markCache);
     Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
     for (id<IntervalTreeObject> obj in [self.intervalTree objectsInInterval:deadInterval]) {
         if ([obj.entry.interval limit] <= lastDeadLocation) {
