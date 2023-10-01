@@ -140,7 +140,7 @@ static NSMutableDictionary *CachedGraphicImages(void) {
 }
 
 - (NSImage *)imageForJobName:(NSString *)command enabled:(BOOL)enabled {
-    if (!enabled) {
+    if (!enabled || !command) {
         return nil;
     }
     NSImage *image = [self imageForJobName:command] ?: [self defaultImageForCommand:command];
