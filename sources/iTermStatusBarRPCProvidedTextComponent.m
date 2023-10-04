@@ -23,13 +23,15 @@
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSAttributedString+PSM.h"
+#import "NSData+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration request";
+static NSString *const iTermStatusBarRPCRegistrationRequestKey_Deprecated = @"registration request";  // legacy, NSData value which cannot be JSON encoded for profile export or Python API
+static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registration request v2";  // use this instead, has a base64-encoded string
 
 @class iTermStatusBarRPCProvidedTextComponentCommon;
 
@@ -45,7 +47,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 @implementation ITMRPCRegistrationRequest(StatusBar)
 
 - (NSDictionary *)statusBarConfiguration {
-    return @{ iTermStatusBarRPCRegistrationRequestKey: self.data,
+    return @{ iTermStatusBarRPCRegistrationRequestV2Key: [self.data base64EncodedStringWithOptions:0],
               iTermStatusBarComponentConfigurationKeyKnobValues: @{} };
 }
 
@@ -155,14 +157,18 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 - (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
                                       scope:(iTermVariableScope *)scope
                                       knobs:(NSDictionary *)knobs {
-    return [self initWithConfiguration:@{ iTermStatusBarRPCRegistrationRequestKey: registrationRequest.data,
+    return [self initWithConfiguration:@{ iTermStatusBarRPCRegistrationRequestV2Key: [registrationRequest.data base64EncodedStringWithOptions:0],
                                           iTermStatusBarComponentConfigurationKeyKnobValues: knobs }
                                  scope:scope];
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
                                 scope:(nullable iTermVariableScope *)realScope {
-    NSData *data = configuration[iTermStatusBarRPCRegistrationRequestKey];
+    NSData *data = configuration[iTermStatusBarRPCRegistrationRequestKey_Deprecated];
+    if (!data) {
+        NSString *b64 = [NSString castFrom:configuration[iTermStatusBarRPCRegistrationRequestV2Key]];
+        data = [NSData dataWithBase64EncodedString:b64];
+    }
     ITMRPCRegistrationRequest *registrationRequest = [[ITMRPCRegistrationRequest alloc] initWithData:data
                                                                                                error:nil];
     if (!registrationRequest) {
@@ -593,7 +599,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 - (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
                                       scope:(iTermVariableScope *)scope
                                       knobs:(NSDictionary *)knobs {
-    return [self initWithConfiguration:@{ iTermStatusBarRPCRegistrationRequestKey: registrationRequest.data,
+    return [self initWithConfiguration:@{ iTermStatusBarRPCRegistrationRequestV2Key: [registrationRequest.data base64EncodedStringWithOptions:0],
                                           iTermStatusBarComponentConfigurationKeyKnobValues: knobs }
                                  scope:scope];
 }
@@ -717,7 +723,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 - (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
                                       scope:(iTermVariableScope *)scope
                                       knobs:(NSDictionary *)knobs {
-    return [self initWithConfiguration:@{ iTermStatusBarRPCRegistrationRequestKey: registrationRequest.data,
+    return [self initWithConfiguration:@{ iTermStatusBarRPCRegistrationRequestV2Key: [registrationRequest.data base64EncodedStringWithOptions:0],
                                           iTermStatusBarComponentConfigurationKeyKnobValues: knobs }
                                  scope:scope];
 }
