@@ -472,7 +472,11 @@ typedef struct {
         _rows[0]->_date = textView.drawingHelper.offscreenCommandLine.date;
         const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
         const int i = textView.drawingHelper.offscreenCommandLine.absoluteLineNumber - totalScrollbackOverflow;
-        _rows[0]->_eaIndex = [[screen externalAttributeIndexForLine:i] copy];
+        if (i < 0) {
+            _rows[0]->_eaIndex = nil;
+        } else {
+            _rows[0]->_eaIndex = [[screen externalAttributeIndexForLine:i] copy];
+        }
     }
 }
 
