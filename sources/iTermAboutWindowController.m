@@ -68,7 +68,7 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     NSPoint locationInView = [self convertPoint:theEvent.locationInWindow fromView:nil];
     if (NSPointInRect(locationInView, _blendbyte.frame)) {
         // Open the link
-        [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.blendbyte.com/"]];
+        [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.blendbyte.com/?utm_source=iterm2"]];
     }
 }
 
