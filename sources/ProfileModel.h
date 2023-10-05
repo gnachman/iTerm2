@@ -122,6 +122,8 @@ extern NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix;
 - (void)postChangeNotification;
 
 - (void)performBlockWithCoalescedNotifications:(void (^)(void))block;
+- (void)recordSortOrder;
+- (void)moveProfileWithGuidIfNeededToRespectSortOrder:(NSString *)guid;
 
 @end
 

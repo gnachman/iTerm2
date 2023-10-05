@@ -795,10 +795,71 @@ static NSMutableArray<NSString *> *_combinedLog;
     [self postNotificationName:kReloadAllProfiles object:nil userInfo:nil];
 }
 
+- (void)recordSortOrder {
+    if (!prefs_) {
+        return;
+    }
+    [prefs_ setObject:self.guids forKey:@"NoSyncSortedGUIDs"];
+}
+
+- (void)moveProfileWithGuidIfNeededToRespectSortOrder:(NSString *)guid {
+    NSArray<NSString *> *order = [prefs_ objectForKey:@"NoSyncSortedGUIDs"];
+    if (!order) {
+        return;
+    }
+
+    const NSInteger j = [self desiredIndexFor:guid using:order];
+    if (j == NSNotFound) {
+        return;
+    }
+    [self moveGuid:guid toRow:j];
+}
+
+- (NSInteger)desiredIndexFor:(NSString *)guid using:(NSArray<NSString *> *)order {
+    // Find where this guid is in `order`.
+    const NSInteger savedIndex = [order indexOfObject:guid];
+    if (savedIndex == NSNotFound) {
+        return NSNotFound;
+    }
+
+    // Create an inverted index of the current order, mapping guid -> index
+    NSMutableDictionary<NSString *, NSNumber *> *existing = [NSMutableDictionary dictionary];
+    [bookmarks_ enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        existing[obj[KEY_GUID]] = @(idx);
+    }];
+
+    // Search backwards from savedIndex for a predecessor we have.
+    for (NSInteger i = savedIndex - 1; i >= 0; i--) {
+        NSString *orderGuid = order[i];
+        NSNumber *n = existing[orderGuid];
+        if (!n) {
+            continue;
+        }
+        const NSInteger existingIndex = n.integerValue;
+        return existingIndex + 1;
+    }
+
+    // Search forwards from savedIndex for a successor we have.
+    for (NSInteger i = savedIndex + 1; i < order.count; i++) {
+        NSString *orderGuid = order[i];
+        NSNumber *n = existing[orderGuid];
+        if (!n) {
+            continue;
+        }
+        const NSInteger existingIndex = n.integerValue;
+        return existingIndex;
+    }
+
+    return NSNotFound;
+}
+
 - (void)moveGuid:(NSString*)guid toRow:(int)destinationRow
 {
     int sourceRow = [self indexOfProfileWithGuid:guid];
     if (sourceRow < 0) {
+        return;
+    }
+    if (sourceRow == destinationRow) {
         return;
     }
     Profile* bookmark = [bookmarks_ objectAtIndex:sourceRow];

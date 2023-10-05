@@ -130,6 +130,7 @@
     for (ProfileTableRow* theRow in bookmarks) {
         [underlyingModel moveGuid:[theRow guid] toRow:i++];
     }
+    [underlyingModel recordSortOrder];
     [underlyingModel rebuildMenus];
     [underlyingModel flush];
 }

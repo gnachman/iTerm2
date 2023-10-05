@@ -522,6 +522,7 @@
     [merged profileAddDynamicTagIfNeeded];
 
     [[ProfileModel sharedInstance] addBookmark:merged];
+    [[ProfileModel sharedInstance] moveProfileWithGuidIfNeededToRespectSortOrder:merged[KEY_GUID]];
 }
 
 // Remove a dynamic profile from the model. Updates displays of profiles,
