@@ -618,10 +618,18 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
                                                                      DLog(@"Application did become active completion block finished. Removing observer.");
                                                                      [[NSNotificationCenter defaultCenter] removeObserver:observer];
                                                                  }];
-        // It's not clear how this differs from [self activateIgnoringOtherApps:YES], but on 10.13
-        // it does not cause previously ordered-out windows to be ordered over other applications'
-        // windows. See issue 6875.
-        [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+        // On macOS 14 we have to dispatch_async or it doesn't work on modifier double-tap although
+        // it still works for a carbon hotkey (issue 11129).
+        // I have no freaking idea why. Smells like an OS bug to me. If anyone every investigates
+        // this further, [self activateIgnoringOtherApps:YES] and [NSApp activate] *also* fail when
+        // a carbon hotkey is pressed. I considered filing a radar but I think wishing on a star
+        // would be a better use of my time so I'll do that instead.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            // It's not clear how this differs from [self activateIgnoringOtherApps:YES], but on 10.13
+            // it does not cause previously ordered-out windows to be ordered over other applications'
+            // windows. See issue 6875.
+            [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+        });
     }
 }
 

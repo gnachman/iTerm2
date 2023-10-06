@@ -202,7 +202,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 return nil;
             }
         }];
-        [self hotKeyPressedWithSiblings:siblings];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self hotKeyPressedWithSiblings:siblings];
+        });
     }
 }
 
