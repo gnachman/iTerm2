@@ -953,9 +953,11 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawTimestamps];
 
-    [self drawCellRenderer:_terminalButtonRenderer
-                 frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueDrawButtons];
+    if (_terminalButtonRenderer) {
+        [self drawCellRenderer:_terminalButtonRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawButtons];
+    }
 
     [self drawRenderer:_flashRenderer
              frameData:frameData
@@ -1507,6 +1509,9 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 }
 
 - (void)populateTerminalButtonRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData NS_AVAILABLE_MAC(11) {
+    if (!_terminalButtonRenderer) {
+        return;
+    }
     iTermTerminalButtonRendererTransientState *tState = [frameData transientStateForRenderer:_terminalButtonRenderer];
 
     const long long firstLine = frameData.perFrameState.firstVisibleAbsoluteLineNumber;
@@ -2084,7 +2089,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 #pragma mark - Miscellaneous Utility Methods
 
 - (NSArray<id<iTermMetalCellRenderer>> *)cellRenderers {
-    return @[ _marginRenderer,
+    return [@[ _marginRenderer,
               _textRenderer,
               _offscreenCommandLineTextRenderer,
               _backgroundColorRenderer,
@@ -2105,7 +2110,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
               _keyCursorRenderer,
               _timestampsRenderer,
               _blockRenderer,
-              _terminalButtonRenderer];
+              _terminalButtonRenderer ?: [NSNull null]] arrayByRemovingNulls];
 }
 
 - (NSArray<id<iTermMetalRenderer>> *)nonCellRenderers {
