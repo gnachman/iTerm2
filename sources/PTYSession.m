@@ -11900,7 +11900,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"screenSetSubtitle:%@", subtitle);
     // Put a zero-width space in between \ and ( to avoid interpolated strings coming from the server.
     NSString *safeSubtitle = [subtitle stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
-    [self setSessionSpecificProfileValues:@{ KEY_SUBTITLE: safeSubtitle }];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DLog(@"Really set subtitle of %@ to %@", weakSelf, safeSubtitle);
+        [weakSelf setSessionSpecificProfileValues:@{ KEY_SUBTITLE: safeSubtitle }];
+    });
 }
 
 - (void)enableSessionNameTitleComponentIfPossible {
