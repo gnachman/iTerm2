@@ -368,6 +368,7 @@
 
 // Main queue
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
+    NSLog(@"Appliation did become active (process cache)");
     _rateLimit.minimumInterval = 0.5;
 }
 

@@ -733,11 +733,12 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     } else {
         __block id observer;
         DLog(@"Register an observer");
+        NSLog(@"activateAppWithCompletion");
         observer = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
                                                                      object:nil
                                                                       queue:NULL
                                                                  usingBlock:^(NSNotification * _Nonnull note) {
-                                                                     DLog(@"Application did become active. Invoke completion block");
+                                                                     NSLog(@"Application did become active. Invoke completion block");
                                                                      completion();
                                                                      DLog(@"Application did become active completion block finished. Removing observer.");
                                                                      [[NSNotificationCenter defaultCenter] removeObserver:observer];
