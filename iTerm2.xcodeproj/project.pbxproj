@@ -3723,9 +3723,6 @@
 		A6E2D0FF2AC49265005C6677 /* iTermBlock.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6E2D0FD2AC49264005C6677 /* iTermBlock.metal */; };
 		A6E2D1002AC49265005C6677 /* iTermBlock.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6E2D0FD2AC49264005C6677 /* iTermBlock.metal */; };
 		A6E2DF872AC4A1FF005C6677 /* TerminalButtonRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E2DF862AC4A1FF005C6677 /* TerminalButtonRenderer.swift */; };
-		A6E2DF892AC4C6E7005C6677 /* TerminalButton.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6E2DF882AC4C6E7005C6677 /* TerminalButton.metal */; };
-		A6E2DF8A2AC4C6E7005C6677 /* TerminalButton.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6E2DF882AC4C6E7005C6677 /* TerminalButton.metal */; };
-		A6E2DF8B2AC4C6E7005C6677 /* TerminalButton.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6E2DF882AC4C6E7005C6677 /* TerminalButton.metal */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E5110D24C1729E00D6552D /* iTermAttributedStringProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E5110B24C1729E00D6552D /* iTermAttributedStringProxy.h */; };
@@ -3972,6 +3969,9 @@
 		A6EFF23F1D21949D00806EEF /* iTermShortcut.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF23D1D21949D00806EEF /* iTermShortcut.h */; };
 		A6EFF2471D21DD0700806EEF /* iTermSessionHotkeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */; };
 		A6EFF2481D21DD0700806EEF /* iTermSessionHotkeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */; };
+		A6F09F5C2AD0A33300339D2D /* TerminalButton.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6F09F5B2AD0A33300339D2D /* TerminalButton.metal */; };
+		A6F09F5D2AD0A33300339D2D /* TerminalButton.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6F09F5B2AD0A33300339D2D /* TerminalButton.metal */; };
+		A6F09F5E2AD0A33300339D2D /* TerminalButton.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6F09F5B2AD0A33300339D2D /* TerminalButton.metal */; };
 		A6F0E2562795407A00022D20 /* VT100Screen+Search.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F0E2542795407A00022D20 /* VT100Screen+Search.h */; };
 		A6F0E2572795407A00022D20 /* VT100Screen+Search.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F0E2552795407A00022D20 /* VT100Screen+Search.m */; };
 		A6F0E25A2797536A00022D20 /* JournalingIntervalTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F0E2592797536A00022D20 /* JournalingIntervalTree.swift */; };
@@ -7180,7 +7180,6 @@
 		A6E2D0F42AC485F3005C6677 /* BlockRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockRenderer.swift; sourceTree = "<group>"; };
 		A6E2D0FD2AC49264005C6677 /* iTermBlock.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = iTermBlock.metal; path = Metal/Shaders/iTermBlock.metal; sourceTree = "<group>"; };
 		A6E2DF862AC4A1FF005C6677 /* TerminalButtonRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalButtonRenderer.swift; sourceTree = "<group>"; };
-		A6E2DF882AC4C6E7005C6677 /* TerminalButton.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = TerminalButton.metal; path = "../../iterm2-alt2/sources/Metal/Shaders/TerminalButton.metal"; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
 		A6E5110B24C1729E00D6552D /* iTermAttributedStringProxy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAttributedStringProxy.h; sourceTree = "<group>"; };
@@ -7351,6 +7350,7 @@
 		A6EFF23E1D21949D00806EEF /* iTermShortcut.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShortcut.m; sourceTree = "<group>"; };
 		A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSessionHotkeyController.h; sourceTree = "<group>"; };
 		A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSessionHotkeyController.m; sourceTree = "<group>"; };
+		A6F09F5B2AD0A33300339D2D /* TerminalButton.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = TerminalButton.metal; path = Metal/Shaders/TerminalButton.metal; sourceTree = "<group>"; };
 		A6F0E2542795407A00022D20 /* VT100Screen+Search.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100Screen+Search.h"; sourceTree = "<group>"; };
 		A6F0E2552795407A00022D20 /* VT100Screen+Search.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100Screen+Search.m"; sourceTree = "<group>"; };
 		A6F0E2582796AA7900022D20 /* VT100SyncResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100SyncResult.h; sourceTree = "<group>"; };
@@ -9957,6 +9957,7 @@
 		A67960871F81FC81008A42BC /* Shaders */ = {
 			isa = PBXGroup;
 			children = (
+				A6F09F5B2AD0A33300339D2D /* TerminalButton.metal */,
 				A6E2D0FD2AC49264005C6677 /* iTermBlock.metal */,
 				A67DAF19299C926200AD331A /* iTermSolidColor.metal */,
 				A67960C21F81FCA6008A42BC /* iTermShaderTypes.h */,
@@ -9977,7 +9978,6 @@
 				A6DBC04B2005F45700F1466D /* iTermHighlightRow.metal */,
 				A638A04E20EB40F600DE347F /* iTermTextShaderCommon.h */,
 				A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */,
-				A6E2DF882AC4C6E7005C6677 /* TerminalButton.metal */,
 			);
 			name = Shaders;
 			sourceTree = "<group>";
@@ -15267,7 +15267,7 @@
 				A67960FB1F8202C2008A42BC /* iTermCursorGuide.metal in Sources */,
 				A67960F91F8202C2008A42BC /* iTermBadge.metal in Sources */,
 				A6DBC04E2005F45700F1466D /* iTermHighlightRow.metal in Sources */,
-				A6E2DF8B2AC4C6E7005C6677 /* TerminalButton.metal in Sources */,
+				A6F09F5E2AD0A33300339D2D /* TerminalButton.metal in Sources */,
 				A60D023A2684521400E19362 /* Phony.swift in Sources */,
 				A67DAF1C299C926200AD331A /* iTermSolidColor.metal in Sources */,
 				A60EBD191FAED954008C7F5B /* iTermCopyBackground.metal in Sources */,
@@ -15283,7 +15283,7 @@
 				A67960F01F8202C1008A42BC /* iTermBackgroundImage.metal in Sources */,
 				A60EBD181FAED953008C7F5B /* iTermCopyBackground.metal in Sources */,
 				A68400AB1FF82E03008D3EE2 /* iTermIndicator.metal in Sources */,
-				A6E2DF8A2AC4C6E7005C6677 /* TerminalButton.metal in Sources */,
+				A6F09F5D2AD0A33300339D2D /* TerminalButton.metal in Sources */,
 				A68400C01FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,
 				A6DBC04020049CB100F1466D /* iTermImage.metal in Sources */,
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
@@ -15352,7 +15352,7 @@
 				A67960EB1F8202C0008A42BC /* iTermCursorGuide.metal in Sources */,
 				A67960E91F8202C0008A42BC /* iTermBadge.metal in Sources */,
 				A6DBC04C2005F45700F1466D /* iTermHighlightRow.metal in Sources */,
-				A6E2DF892AC4C6E7005C6677 /* TerminalButton.metal in Sources */,
+				A6F09F5C2AD0A33300339D2D /* TerminalButton.metal in Sources */,
 				A60D02342683D61000E19362 /* Phony.swift in Sources */,
 				A67DAF1A299C926200AD331A /* iTermSolidColor.metal in Sources */,
 				A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */,
