@@ -42,6 +42,7 @@
 #import "iTermWindowHacks.h"
 #import "NSArray+iTerm.h"
 #import "NSEvent+iTerm.h"
+#import "NSDate+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSResponder+iTerm.h"
@@ -85,6 +86,8 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     BOOL _it_active;
     BOOL _it_restorableStateInvalid;
     BOOL _leader;
+    BOOL _activated;
+    NSTimeInterval _activationStartTime;
 }
 
 - (void)dealloc {
@@ -732,30 +735,55 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         completion();
     } else {
         __block id observer;
-        DLog(@"Register an observer");
-        NSLog(@"activateAppWithCompletion");
+        DLog(@"activateAppWithCompletion");
+        _activated = NO;
+        _activationStartTime = [NSDate it_timeSinceBoot];
+        __weak __typeof(self) weakSelf = self;
         observer = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
                                                                      object:nil
                                                                       queue:NULL
                                                                  usingBlock:^(NSNotification * _Nonnull note) {
-                                                                     NSLog(@"Application did become active. Invoke completion block");
-                                                                     completion();
-                                                                     DLog(@"Application did become active completion block finished. Removing observer.");
-                                                                     [[NSNotificationCenter defaultCenter] removeObserver:observer];
-                                                                 }];
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            strongSelf->_activated = YES;
+            DLog(@"Application did become active. Invoke completion block");
+            completion();
+            DLog(@"Application did become active completion block finished. Removing observer.");
+            [[NSNotificationCenter defaultCenter] removeObserver:observer];
+        }];
 
-        // On macOS 14 we have to dispatch_async or it doesn't work on modifier double-tap although
+        // On macOS 14 we have to wait a spin or it doesn't work on modifier double-tap although
         // it still works for a carbon hotkey (issue 11129).
         // I have no freaking idea why. Smells like an OS bug to me. If anyone every investigates
         // this further, [self activateIgnoringOtherApps:YES] and [NSApp activate] *also* fail when
         // a carbon hotkey is pressed. I considered filing a radar but I think wishing on a star
         // would be a better use of my time so I'll do that instead.
-        dispatch_async(dispatch_get_main_queue(), ^{
-            // It's not clear how this differs from [self activateIgnoringOtherApps:YES], but on 10.13
-            // it does not cause previously ordered-out windows to be ordered over other applications'
-            // windows. See issue 6875.
-            [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
-        });
+        DLog(@"activateAppWithCompletion doing dispatch_async");
+        [self performSelector:@selector(activateWithRetry:) withObject:nil afterDelay:0];
+    }
+}
+
+- (void)activateWithRetry:(id)ignore {
+    if (_activated) {
+        DLog(@"Already activated");
+        return;
+    }
+    DLog(@"Call activateWithOptions:.ignoringOtherApps");
+    [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+    const NSTimeInterval elapsed = [NSDate it_timeSinceBoot] - _activationStartTime;
+    if (elapsed < 2.0) {
+        DLog(@"rescheduling with interval 0");
+        [self performSelector:@selector(activateWithRetry:) withObject:nil afterDelay:0];
+    } else if (elapsed < 2.0) {
+        DLog(@"rescheduling with interval 0.1");
+        [self performSelector:@selector(activateWithRetry:) withObject:nil afterDelay:0.1];
+    } else if (elapsed < 6.0) {
+        DLog(@"rescheduling with interval 0.5");
+        [self performSelector:@selector(activateWithRetry:) withObject:nil afterDelay:0.2];
+    } else {
+        DLog(@"giving up");
     }
 }
 
