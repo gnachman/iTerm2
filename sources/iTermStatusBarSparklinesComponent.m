@@ -103,6 +103,7 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
 
         _shapeLayers = @[ sublayer1, sublayer2 ];
         [self initializeSublayerFramesAndPaths:YES];
+        self.masksToBounds = YES;
     }
     return self;
 }
