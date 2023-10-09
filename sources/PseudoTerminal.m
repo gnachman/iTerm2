@@ -3031,7 +3031,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 - (IBAction)findUrls:(id)sender {
     DLog(@"begin");
-    iTermFindDriver *findDriver = self.currentSession.view.findDriver;
+    iTermFindDriver *findDriver = self.currentSession.view.findDriverCreatingIfNeeded;
     NSString *regex = [iTermAdvancedSettingsModel findUrlsRegex];
     DLog(@"findDriver=%@ regex=%@", findDriver, regex);
     __weak PTYSession *session = self.currentSession;

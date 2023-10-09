@@ -546,6 +546,19 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return nil;
 }
 
+- (iTermFindDriver *)findDriverCreatingIfNeeded {
+    switch (_findDriverType) {
+        case iTermSessionViewFindDriverDropDown:
+        case iTermSessionViewFindDriverPermanentStatusBar:
+            break;
+        case iTermSessionViewFindDriverTemporaryStatusBar:
+            if (!_temporaryStatusBarFindDriver) {
+                [self loadTemporaryStatusBarFindDriverWithStatusBarViewController:[self.delegate sessionViewStatusBarViewController]];
+            }
+    }
+    return self.findDriver;
+}
+
 - (NSSize)internalDecorationSize {
     NSSize size = NSZeroSize;
     if (_showTitle) {

@@ -180,6 +180,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) BOOL findViewIsHidden;
 @property(nonatomic, readonly) BOOL findViewHasKeyboardFocus;
 @property(nonatomic, readonly) iTermFindDriver *findDriver;
+@property(nonatomic, readonly) iTermFindDriver *findDriverCreatingIfNeeded;
 @property(nonatomic, readonly) NSSize internalDecorationSize;
 @property(nonatomic, readonly) iTermSessionViewFindDriver findDriverType;
 @property(nonatomic, weak) id<iTermSearchResultsMinimapViewDelegate> searchResultsMinimapViewDelegate NS_AVAILABLE_MAC(10_14);
