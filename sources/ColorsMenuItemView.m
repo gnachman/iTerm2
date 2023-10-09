@@ -31,6 +31,7 @@
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 
 @implementation iTermTabColorMenuItem

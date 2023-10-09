@@ -1014,6 +1014,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (void)mouseDown:(NSEvent *)event {
+    NSLog(@"mouseDown on %@: %@", self, event);
     [self.delegate textViewWillHandleMouseDown:event];
     [_mouseHandler mouseDown:event superCaller:^{ [super mouseDown:event]; }];
 }

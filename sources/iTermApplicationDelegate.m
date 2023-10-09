@@ -1342,7 +1342,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     [menu addItem:item];
 
     NSMenuItem *mainMenuItem = [[[NSMenuItem alloc] initWithTitle:@"Main Menu" action:nil keyEquivalent:@""] autorelease];
-    mainMenuItem.submenu = [NSApp mainMenu];
+    mainMenuItem.submenu = [[NSApp mainMenu] it_deepCopy];
     [menu addItem:mainMenuItem];
     
     item = [[[NSMenuItem alloc] initWithTitle:@"Quit iTerm2"

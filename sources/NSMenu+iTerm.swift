@@ -51,4 +51,50 @@ extension NSMenu {
         containerMenu.performActionForItem(at: i)
         return true
     }
+
+    @objc(it_deepCopy)
+    func deepCopy() -> NSMenu {
+        let copiedMenu = NSMenu(title: title)
+
+        // Iterate through the menu items and clone them
+        for menuItem in items {
+            if let copiedItem = menuItem.deepCopy() {
+                copiedMenu.addItem(copiedItem)
+            }
+        }
+
+        // Since items with custom views don't get copied, remove trailing separators.
+        while copiedMenu.items.last?.isSeparatorItem ?? false {
+            copiedMenu.removeItem(at: copiedMenu.items.count - 1)
+        }
+        return copiedMenu
+    }
+}
+
+extension NSMenuItem {
+    func deepCopy() -> NSMenuItem? {
+        if isSeparatorItem {
+            return NSMenuItem.separator()
+        }
+        if view != nil {
+            return nil
+        }
+        let copiedItem = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+        copiedItem.target = target
+        copiedItem.state = state
+        copiedItem.tag = tag
+        copiedItem.toolTip = toolTip
+        copiedItem.isAlternate = isAlternate
+        copiedItem.image = image
+
+        // Clone submenu if it exists
+        if let submenu = submenu {
+            let copiedSubmenu = submenu.deepCopy()
+            copiedItem.submenu = copiedSubmenu
+        }
+
+        // Copy other properties as needed (e.g., state, tag, etc.)
+
+        return copiedItem
+    }
 }
