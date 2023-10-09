@@ -18,7 +18,7 @@ static BOOL gShouldIgnoreOpenUntitledFile;
 extern NSString *const iTermApplicationWillTerminate;
 
 @interface NSApplication(Private)
-// This is true when "System Prefs > General > Close windows when quitting an
+// This is true when "System Prefs > Desktop & Dock > Close windows when quitting an
 // app" is on but you choose to log out/restart and turn on the "restore
 // windows when logging back in" checkbox. That checkbox supercedes the "close
 // windows when quitting an app" setting. I discovered this private API by
