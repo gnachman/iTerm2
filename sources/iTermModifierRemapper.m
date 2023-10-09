@@ -459,7 +459,11 @@
 }
 
 - (NSString *)accessibilityActionMessage {
-  return @"Open System Preferences";
+    if (@available(macOS 13, *)) {
+        return @"Open System Settings";
+    } else {
+        return @"Open System Preferences";
+    }
 }
 
 #pragma mark - iTermEventTapRemappingDelegate

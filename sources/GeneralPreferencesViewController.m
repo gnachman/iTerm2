@@ -776,23 +776,30 @@ enum {
 
 - (IBAction)warning:(id)sender {
     NSString *message;
+    NSString *action;
+    NSString *path;
     if (@available(macOS 13, *)) {
         message = @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable ”System Settings > Desktop & Dock > Close windows when quitting an application“ to enable window restoration.";
+        action = @"Open System Settings";
+        path = @"/System/Library/PreferencePanes/Dock.prefPane";
     } else {
         message = @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable System Preferences > General > Close windows when quitting an app to enable window restoration.";
+        action = @"Open System Preferences";
+        path = @"/System/Library/PreferencePanes/Appearance.prefPane";
     }
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"Open System Preferences", @"OK" ]
+                               actions:@[ action, @"OK" ]
                              accessory:nil
                             identifier:@"NoSyncWindowRestorationDisabled"
                            silenceable:kiTermWarningTypePersistent
                                heading:@"Window Restoration Disabled"
                                 window:self.view.window];
     if (selection == kiTermWarningSelection0) {
-        [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:@"/System/Library/PreferencePanes/Appearance.prefPane"]];
+        [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:path]];
     }
 }
+
 
 - (IBAction)browseCustomFolder:(id)sender {
     [self choosePrefsCustomFolder];
