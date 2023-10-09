@@ -44,6 +44,11 @@
     [self addSubview:contentView];
     contentView.frame = self.bounds;
 }
+
+- (BOOL)clipsToBounds {
+    return YES;
+}
+
 @end
 
 @implementation iTermStatusBarGraphicComponent {
