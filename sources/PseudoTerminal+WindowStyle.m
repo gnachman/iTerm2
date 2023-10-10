@@ -952,6 +952,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         self.window.collectionBehavior = self.desiredWindowCollectionBehavior;
     }
     self.window.movable = [self.class windowTypeIsMovable:self.windowType];
+    [[iTermPresentationController sharedInstance] update];
 }
 
 - (BOOL)togglingLionFullScreenImpl {
