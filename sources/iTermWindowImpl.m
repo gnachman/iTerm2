@@ -357,8 +357,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)makeKeyAndOrderFront:(nullable id)sender {
-    DLog(@"%@ makeKeyAndOrderFront: layoutDone=%@ %@", NSStringFromClass([self class]), @(_layoutDone), [NSThread callStackSymbols]);
-    DLog(@"%@\n%@", NSStringFromSelector(_cmd), [NSThread callStackSymbols]);
+    DLog(@"%@ makeKeyAndOrderFront: layoutDone=%@ %@", self, @(_layoutDone), [NSThread callStackSymbols]);
     if (!_layoutDone) {
         DLog(@"try to call windowWillShowInitial");
         [self setLayoutDone];
