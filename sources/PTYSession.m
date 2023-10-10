@@ -15023,6 +15023,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewDimmingAmountDidChange:(CGFloat)newDimmingAmount {
     [self sync];
+    [_textview setNeedsDisplay:YES];
 }
 
 - (BOOL)sessionViewIsVisible {
