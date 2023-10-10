@@ -4948,12 +4948,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 // Does not include hover buttons.
 - (NSArray<iTermTerminalButton *> *)terminalButtons NS_AVAILABLE_MAC(11) {
-    NSMutableArray<iTermTerminalButton *> *buttons = [NSMutableArray array];
+    NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
     if (_hoverBlockCopyButton) {
-        [buttons addObject:_hoverBlockCopyButton];
+        [updated addObject:_hoverBlockCopyButton];
     }
     NSArray<iTermTerminalButtonPlace *> *places = [self.dataSource buttonsInRange:self.rangeOfVisibleLines];
-    NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
     __weak __typeof(self) weakSelf = self;
     [places enumerateObjectsUsingBlock:^(iTermTerminalButtonPlace * _Nonnull place, NSUInteger idx, BOOL * _Nonnull stop) {
         NSInteger i = [_buttons indexOfObjectPassingTest:^BOOL(iTermTerminalButton * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
