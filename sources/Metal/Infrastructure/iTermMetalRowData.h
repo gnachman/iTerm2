@@ -37,6 +37,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @property (nonatomic) iTermMarkStyle markStyle;
 @property (nonatomic) BOOL lineStyleMark;
+@property (nonatomic) int lineStyleMarkRightInset;
 
 // Last-changed timestamp, if used.
 @property (nonatomic, strong) NSDate *date;

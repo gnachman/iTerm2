@@ -170,6 +170,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 #pragma mark - Interval Tree
 
+- (void)setName:(NSString * _Nullable)name forMark:(VT100ScreenMark *)mark;
+
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass;
@@ -247,7 +249,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)assignCurrentCommandEndDate;
 - (void)didInferEndOfCommand;
 // Anything we read from here until FinalTerm C can be assumed to be the shell echoing back the command.
-- (void)composerWillSendCommand;
+- (void)composerWillSendCommand:(NSString *)command
+                     startingAt:(VT100GridAbsCoord)startAbsCoord;
 
 #pragma mark Working Directory
 

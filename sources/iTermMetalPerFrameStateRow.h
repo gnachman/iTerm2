@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @public
     NSNumber *_markStyle;
     BOOL _lineStyleMark;
+    int _lineStyleMarkRightInset;
     ScreenCharArray *_screenCharLine;
     NSIndexSet *_selectedIndexSet;
     NSDate *_date;

@@ -55,6 +55,11 @@ static vector_float4 VectorForColor(NSColor *color) {
     NSColorSpace *colorSpace = textView.window.screen.colorSpace ?: [NSColorSpace it_defaultColorSpace];
     _processedDefaultBackgroundColor = [[drawingHelper defaultBackgroundColor] colorUsingColorSpace:colorSpace];
     _processedDefaultTextColor = [[drawingHelper defaultTextColor] colorUsingColorSpace:colorSpace];
+    NSColor *selectionColor = [[_colorMap colorForKey:kColorMapSelection] colorUsingColorSpace:colorSpace];
+    _selectionColor = simd_make_float4((float)selectionColor.redComponent,
+                                       (float)selectionColor.greenComponent,
+                                       (float)selectionColor.blueComponent,
+                                       1.0);
     _lineStyleMarkColors = (iTermLineStyleMarkColors) {
         .success = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper successMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
         .other = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper otherMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,

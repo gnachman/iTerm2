@@ -357,7 +357,10 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSArray<NSString *> *)lastWords:(NSUInteger)count;
 @property (nonatomic, readonly) NSString *firstNonEmptyLine;
 - (NSString *)truncatedToLength:(NSInteger)maxLength ellipsis:(NSString *)ellipsis;
-
+- (NSString *)sanitizedUsername;
+- (NSString *)sanitizedHostname;
+- (NSString *)sanitizedCommand;
+- (NSString *)removingInvisibles;
 @end
 
 @interface NSMutableString (iTerm)

@@ -34,6 +34,7 @@ class TerminalButton: NSObject {
     }
     private var state = State.normal
     @objc let id: Int
+    var selected: Bool { false }
 
     init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, absCoord: VT100GridAbsCoord) {
         self.id = id
@@ -78,21 +79,24 @@ class TerminalButton: NSObject {
                cumulativeOffset: Int64,
                cellSize: NSSize) -> NSRect {
         let size = size(cellSize: cellSize)
+        let height = size.height
+        let yoff = max(0, (cellSize.height - height))
         return NSRect(x: x,
-                      y: CGFloat(max(minAbsLine, absCoord.y) - cumulativeOffset) * cellSize.height,
+                      y: CGFloat(max(minAbsLine, absCoord.y) - cumulativeOffset) * cellSize.height + yoff,
                       width: size.width,
-                      height: size.height)
+                      height: height)
     }
 
-    @objc(drawWithBackgroundColor:foregroundColor:frame:virtualOffset:)
+    @objc(drawWithBackgroundColor:foregroundColor:selectedColor:frame:virtualOffset:)
     func draw(backgroundColor: NSColor,
               foregroundColor: NSColor,
+              selectedColor: NSColor,
               frame rect: NSRect,
               virtualOffset: CGFloat) {
         
         let (foregroundImage, backgroundImage) = switch state {
         case .normal, .pressedOutside:
-            images(backgroundColor: backgroundColor, foregroundColor: foregroundColor)
+            images(backgroundColor: selected ? selectedColor : backgroundColor, foregroundColor: foregroundColor)
         case .pressedInside:
             images(backgroundColor: foregroundColor, foregroundColor: backgroundColor)
         }
@@ -102,18 +106,20 @@ class TerminalButton: NSObject {
 
     func image(backgroundColor: NSColor,
                foregroundColor: NSColor,
+               selectedColor: NSColor,
                cellSize: CGSize) -> NSImage {
         let size = self.size(cellSize: cellSize)
         return NSImage(size: size,
                        flipped: false) { [weak self] _ in
             self?.draw(backgroundColor: backgroundColor,
                        foregroundColor: foregroundColor,
+                       selectedColor: selectedColor,
                        frame: NSRect(x: 0, y: 0, width: size.width, height: size.height),
                        virtualOffset: 0)
             return true
         }
     }
-    var selected: Bool {
+    var highlighted: Bool {
         switch state {
         case .normal, .pressedOutside:
             return false
@@ -124,22 +130,22 @@ class TerminalButton: NSObject {
 
     @objc
     func mouseDownInside() -> Bool {
-        let wasSelected = selected
+        let wasHighlighted = highlighted
         state = .pressedInside
-        return selected != wasSelected
+        return highlighted != wasHighlighted
     }
 
     @objc
     func mouseDownOutside() -> Bool {
-        let wasSelected = selected
+        let wasHighlighted = highlighted
         state = .pressedOutside
-        return selected != wasSelected
+        return highlighted != wasHighlighted
     }
 
     @objc
     @discardableResult
     func mouseUp(locationInWindow: NSPoint) -> Bool {
-        let wasSelected = selected
+        let wasHighlighted = highlighted
         switch state {
         case .pressedInside:
             action?(locationInWindow)
@@ -149,7 +155,7 @@ class TerminalButton: NSObject {
         case .normal:
             break
         }
-        return selected != wasSelected
+        return highlighted != wasHighlighted
     }
 
     @objc
@@ -180,4 +186,55 @@ class TerminalCopyButton: TerminalButton {
                    foregroundImage: fg,
                    absCoord: absCoord)
     }
+}
+
+@available(macOS 11, *)
+@objc(iTermTerminalMarkButton)
+class TerminalMarkButton: TerminalButton {
+    @objc let mark: VT100ScreenMarkReading
+
+    init?(identifier: Int, mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord, fgName: String, bgName: String) {
+        self.mark = mark
+        guard let bg = NSImage(systemSymbolName: bgName, accessibilityDescription: nil),
+              let fg = NSImage(systemSymbolName: fgName, accessibilityDescription: nil) else {
+            return nil
+        }
+        super.init(id: -2,
+                   backgroundImage: bg,
+                   foregroundImage: fg,
+                   absCoord: absCoord)
+    }
+}
+
+@available(macOS 11, *)
+@objc(iTermTerminalCopyCommandButton)
+class TerminalCopyCommandButton: TerminalMarkButton {
+
+    @objc(initWithMark:absCoord:)
+    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord) {
+        super.init(identifier: -2, mark: mark, absCoord: absCoord, fgName: "doc.on.doc", bgName: "doc.on.doc.fill")
+    }
+}
+
+
+@available(macOS 11, *)
+@objc(iTermTerminalBookmarkButton)
+class TerminalBookmarkButton: TerminalMarkButton {
+    override var selected: Bool {
+        return mark.name != nil
+    }
+    @objc(initWithMark:absCoord:)
+    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord) {
+        super.init(identifier: -3, mark: mark, absCoord: absCoord, fgName: "bookmark", bgName: "bookmark.fill")
+    }
+}
+
+@available(macOS 11, *)
+@objc(iTermTerminalShareButton)
+class TerminalShareButton: TerminalMarkButton {
+    @objc(initWithMark:absCoord:)
+    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord) {
+        super.init(identifier: -5, mark: mark, absCoord: absCoord, fgName: "square.and.arrow.up", bgName: "square.and.arrow.up.fill")
+    }
+
 }

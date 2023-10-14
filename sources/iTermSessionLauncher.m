@@ -320,47 +320,15 @@
 }
 
 - (NSString *)validatedAndShellEscapedUsername:(NSString *)username {
-    DLog(@"validate %@", username);
-    NSMutableCharacterSet *legalCharacters = [NSMutableCharacterSet alphanumericCharacterSet];
-    [legalCharacters addCharactersInString:@"_-+."];
-    NSCharacterSet *illegalCharacters = [legalCharacters invertedSet];
-    NSRange range = [username rangeOfCharacterFromSet:illegalCharacters];
-    if (range.location != NSNotFound) {
-        ELog(@"username %@ contains illegal character at position %@", username, @(range.location));
-        return nil;
-    }
-    return [username stringWithEscapedShellCharactersIncludingNewlines:YES];
+    return [username sanitizedUsername];
 }
 
 - (NSString *)validatedAndShellEscapedHostname:(NSString *)hostname {
-    DLog(@"validate %@", hostname);
-    {
-        NSCharacterSet *legalInitialCharacters = [NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"];
-        NSCharacterSet *illegalInitialCharacters = [legalInitialCharacters invertedSet];
-        NSRange range = [hostname rangeOfCharacterFromSet:illegalInitialCharacters];
-        if (range.location == 0) {
-            ELog(@"Hostname %@ starts with an illegal character", hostname);
-            return nil;
-        }
-    }
-    NSCharacterSet *legalCharacters = [NSCharacterSet characterSetWithCharactersInString:@":abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."];
-    NSCharacterSet *illegalCharacters = [legalCharacters invertedSet];
-    NSRange range = [hostname rangeOfCharacterFromSet:illegalCharacters];
-    if (range.location != NSNotFound) {
-        ELog(@"Hostname %@ contains illegal character at position %@", hostname, @(range.location));
-        return nil;
-    }
-    return [hostname stringWithEscapedShellCharactersIncludingNewlines:YES];
+    return [hostname sanitizedHostname];
 }
 
 - (NSString *)sanitizedCommand:(NSString *)unsafeCommand {
-    NSMutableCharacterSet *separators = [NSMutableCharacterSet whitespaceAndNewlineCharacterSet];
-    [separators formUnionWithCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@";<>&!#$*()\'\"`"]];
-    const NSRange range = [unsafeCommand rangeOfCharacterFromSet:separators];
-    if (range.location == NSNotFound) {
-        return unsafeCommand;
-    }
-    return [unsafeCommand substringToIndex:range.location];
+    return [unsafeCommand sanitizedCommand];
 }
 
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toShowManPage:(NSURL *)url {

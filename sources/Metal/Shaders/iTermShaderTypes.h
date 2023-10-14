@@ -96,6 +96,7 @@ typedef struct {
 typedef struct {
     float y;
     vector_float4 color;
+    float rightInset;
 } iTermLineStyleMarkPIU;
 
 typedef struct {

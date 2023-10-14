@@ -288,6 +288,9 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (NSRect)textViewCursorFrameInScreenCoords;
 - (void)textViewDidReceiveSingleClick;
 - (void)textViewDisableOffscreenCommandLine;
+- (void)textViewSaveScrollPositionForMark:(id<VT100ScreenMarkReading>)mark withName:(NSString *)name;
+- (void)textViewRemoveBookmarkForMark:(id<VT100ScreenMarkReading>)mark;
+
 @end
 
 @interface iTermHighlightedRow : NSObject

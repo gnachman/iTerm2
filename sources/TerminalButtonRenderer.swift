@@ -19,20 +19,23 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
         var column: Int
         var foregroundColor: vector_float4
         var backgroundColor: vector_float4
+        var selectedColor: vector_float4
     }
     fileprivate var buttons = [Button]()
 
-    @objc(addButton:onScreenLine:column:foregroundColor:backgroundColor:)
+    @objc(addButton:onScreenLine:column:foregroundColor:backgroundColor:selectedColor:)
     func add(terminalButton: TerminalButton,
              line: Int,
              column: Int,
              foregroundColor: vector_float4,
-             backgroundColor: vector_float4) {
+             backgroundColor: vector_float4,
+             selectedColor: vector_float4) {
         buttons.append(Button(terminalButton: terminalButton,
                               line: line,
                               column: column,
                               foregroundColor:foregroundColor,
-                              backgroundColor:backgroundColor))
+                              backgroundColor:backgroundColor,
+                             selectedColor: selectedColor))
     }
 
     override func writeDebugInfo(toFolder folder: URL) {
@@ -182,6 +185,9 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
                 colorSpace: tState.configuration.colorSpace),
             foregroundColor: NSColor(
                 vector: button.foregroundColor,
+                colorSpace: tState.configuration.colorSpace),
+            selectedColor: NSColor(
+                vector: button.selectedColor,
                 colorSpace: tState.configuration.colorSpace),
             cellSize: NSSize(width: tState.cellConfiguration.cellSize.width * tState.configuration.scale,
                              height: tState.cellConfiguration.cellSize.height * tState.configuration.scale))

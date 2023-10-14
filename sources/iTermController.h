@@ -211,6 +211,12 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                             completion:(void (^)(void))completion;
 - (NSWindow *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion;
 
+- (NSWindow *)openWindow:(BOOL)makeWindow
+                 command:(NSString *)command
+               directory:(NSString *)directory
+                hostname:(NSString *)hostname
+                username:(NSString *)username;
+
 - (NSArray<NSString *> *)currentSnippetsFilter;
 
 @end

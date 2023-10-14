@@ -59,6 +59,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) vector_float4 defaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultTextColor;
+@property (nonatomic, readonly) vector_float4 selectedBackgroundColor;
 @property (nonatomic, readonly) iTermLineStyleMarkColors lineStyleMarkColors;
 @property (nonatomic, readonly) NSImage *badgeImage;
 @property (nonatomic, readonly) CGRect badgeSourceRect;
@@ -95,6 +96,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                  rleCount:(int *)rleCount
                 markStyle:(out iTermMarkStyle *)markStylePtr
             lineStyleMark:(out BOOL *)lineStyleMarkPtr
+  lineStyleMarkRightInset:(out int *)lineStyleMarkRightInset
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr

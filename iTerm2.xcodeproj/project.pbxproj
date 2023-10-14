@@ -1254,6 +1254,7 @@
 		A6253D6B29F98636007AEDE9 /* SyntaxHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6253D6A29F98636007AEDE9 /* SyntaxHighlighter.swift */; };
 		A6257C18217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6257C16217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h */; };
 		A6257C19217707BB00A8C5BD /* iTermAdjustFontSizeHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6257C17217707BB00A8C5BD /* iTermAdjustFontSizeHelper.m */; };
+		A626DDE42AD627D3005EEB95 /* CommandURLHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A626DDE32AD627D3005EEB95 /* CommandURLHandler.swift */; };
 		A626DF0B217D3034005600F9 /* iTermTabBarAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A626DF09217D3034005600F9 /* iTermTabBarAccessoryViewController.h */; };
 		A626DF0C217D3034005600F9 /* iTermTabBarAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A626DF0A217D3034005600F9 /* iTermTabBarAccessoryViewController.m */; };
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
@@ -2066,6 +2067,7 @@
 		A66F52D92106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
 		A66F52DA2106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
 		A66F52DB2106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
+		A67094512AD9F26B0044DB50 /* SimpleContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67094502AD9F26B0044DB50 /* SimpleContextMenu.swift */; };
 		A670F0C32A1FDA6100C740AC /* iTermChangeTrackingDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = A670F0C12A1FDA6100C740AC /* iTermChangeTrackingDictionary.h */; };
 		A670F0C42A1FDA6100C740AC /* iTermChangeTrackingDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = A670F0C22A1FDA6100C740AC /* iTermChangeTrackingDictionary.m */; };
 		A67109AC240C677D0018631A /* NSEvent+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */; };
@@ -5614,6 +5616,7 @@
 		A6253D6A29F98636007AEDE9 /* SyntaxHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntaxHighlighter.swift; sourceTree = "<group>"; };
 		A6257C16217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAdjustFontSizeHelper.h; sourceTree = "<group>"; };
 		A6257C17217707BB00A8C5BD /* iTermAdjustFontSizeHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAdjustFontSizeHelper.m; sourceTree = "<group>"; };
+		A626DDE32AD627D3005EEB95 /* CommandURLHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandURLHandler.swift; sourceTree = "<group>"; };
 		A626DF09217D3034005600F9 /* iTermTabBarAccessoryViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTabBarAccessoryViewController.h; sourceTree = "<group>"; };
 		A626DF0A217D3034005600F9 /* iTermTabBarAccessoryViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarAccessoryViewController.m; sourceTree = "<group>"; };
 		A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -6198,6 +6201,7 @@
 		A66F52BA2106F6EF00571168 /* gitup.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = gitup.png; path = images/gitup.png; sourceTree = "<group>"; };
 		A66F52BD2106F6EF00571168 /* gitdown@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "gitdown@2x.png"; path = "images/gitdown@2x.png"; sourceTree = "<group>"; };
 		A66F52BF2106F6F000571168 /* gitup@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "gitup@2x.png"; path = "images/gitup@2x.png"; sourceTree = "<group>"; };
+		A67094502AD9F26B0044DB50 /* SimpleContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleContextMenu.swift; sourceTree = "<group>"; };
 		A670F0C12A1FDA6100C740AC /* iTermChangeTrackingDictionary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermChangeTrackingDictionary.h; sourceTree = "<group>"; };
 		A670F0C22A1FDA6100C740AC /* iTermChangeTrackingDictionary.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermChangeTrackingDictionary.m; sourceTree = "<group>"; };
 		A671AC5F26D95C0400B23C95 /* HTMLEncoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLEncoding.swift; sourceTree = "<group>"; };
@@ -10986,6 +10990,8 @@
 				A6A30ECD2950D29D0050F01A /* iTermPleaseWaitWindow.swift */,
 				A68ADA0429CCBE420008E092 /* CommandInfoViewController.swift */,
 				A68ADA0529CCBE420008E092 /* CommandInfoViewController.xib */,
+				A626DDE32AD627D3005EEB95 /* CommandURLHandler.swift */,
+				A67094502AD9F26B0044DB50 /* SimpleContextMenu.swift */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -15855,6 +15861,7 @@
 				A6D10E4027F8CD230026DB56 /* iTermWarning.m in Sources */,
 				A6E16C7524A880A100C6DB06 /* AMIndeterminateProgressIndicator.m in Sources */,
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
+				A67094512AD9F26B0044DB50 /* SimpleContextMenu.swift in Sources */,
 				53D0FD4E237DC30F00DAFA8A /* NSIndexSet+iTerm.m in Sources */,
 				A629F59C23AFF4D400C2F16B /* iTermShellIntegrationPanel.m in Sources */,
 				A6A5995B25930F8F0041172E /* TextViewWrapper.m in Sources */,
@@ -16154,6 +16161,7 @@
 				A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */,
 				A63F34D121E1E0F8000C9D52 /* iTermSessionPicker.m in Sources */,
 				A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */,
+				A626DDE42AD627D3005EEB95 /* CommandURLHandler.swift in Sources */,
 				A6038307294305EA00FE11C2 /* DebugLogging.m in Sources */,
 				A6DC989A289F2560009D21C0 /* NSFont+iTerm.m in Sources */,
 				A667C240276C7CC2006B4DEF /* iTermFullScreenWindowManager.m in Sources */,

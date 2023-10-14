@@ -695,6 +695,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return result;
 }
 
+- (vector_float4)selectedBackgroundColor {
+    return _configuration->_selectionColor;
+}
+
 - (vector_float4)processedDefaultBackgroundColor {
     float alpha;
     if (iTermTextIsMonochrome()) {
@@ -745,6 +749,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                  rleCount:(int *)rleCount
                 markStyle:(out iTermMarkStyle *)markStylePtr
             lineStyleMark:(out nonnull BOOL *)lineStyleMarkPtr
+  lineStyleMarkRightInset:(out nonnull int *)lineStyleMarkRightInsetPtr
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr
@@ -784,6 +789,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
     *markStylePtr = [_rows[row]->_markStyle intValue];
     *lineStyleMarkPtr = _rows[row]->_lineStyleMark;
+    *lineStyleMarkRightInsetPtr = _rows[row]->_lineStyleMarkRightInset;
     int lastDrawableGlyph = -1;
     for (int x = 0; x < width; x++) {
         BOOL selected = [selectedIndexes containsIndex:x];

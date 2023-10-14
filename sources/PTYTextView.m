@@ -4976,9 +4976,192 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [updated addObject:_buttons[i]];
         }
     }];
+
+    const int height = [self.dataSource height];
+    const int width = [self.dataSource width];
+    const int firstLine = self.rangeOfVisibleLines.location;
+    const long long offset = self.dataSource.totalScrollbackOverflow;
+    for (int i = firstLine; i < firstLine + height - 1; i++) {
+        const int markLine = i + 1;
+        id<VT100ScreenMarkReading> mark = [self.dataSource markOnLine:markLine];
+        if (!mark.lineStyle) {
+            continue;
+        }
+        if (!mark.command.length) {
+            continue;
+        }
+        iTermTerminalButton *existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalCopyCommandButton class]];
+        int x = width - 2;
+        if (existing) {
+            [updated addObject:existing];
+        } else {
+            iTermTerminalButton *button = [[iTermTerminalCopyCommandButton alloc] initWithMark:mark
+                                                                                      absCoord:VT100GridAbsCoordMake(x, i + offset)];
+            __weak __typeof(mark) weakMark = mark;
+            button.action = ^(NSPoint locationInWindow) {
+                [weakSelf popCommandCopyMenuAt:locationInWindow for:weakMark];
+            };
+            [updated addObject:button];
+        }
+        x -= 3;
+        existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalBookmarkButton class]];
+        if (existing) {
+            [updated addObject:existing];
+        } else {
+            iTermTerminalButton *button = [[iTermTerminalBookmarkButton alloc] initWithMark:mark
+                                                                                   absCoord:VT100GridAbsCoordMake(x, i + offset)];
+            __weak __typeof(mark) weakMark = mark;
+            button.action = ^(NSPoint locationInWindow) {
+                NSString *command = weakMark.command;
+                if (command.length) {
+                    [weakSelf toggleBookmarkForMark:weakMark];
+                }
+            };
+            [updated addObject:button];
+        }
+        x -= 3;
+        existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalShareButton class]];
+        if (existing) {
+            [updated addObject:existing];
+        } else {
+            iTermTerminalButton *button = [[iTermTerminalShareButton alloc] initWithMark:mark
+                                                                                absCoord:VT100GridAbsCoordMake(x, i + offset)];
+            __weak __typeof(mark) weakMark = mark;
+            button.action = ^(NSPoint locationInWindow) {
+                [weakSelf popShareMenuAt:locationInWindow absLine:markLine + offset for:weakMark];
+            };
+            [updated addObject:button];
+        }
+    }
+
     [_buttons autorelease];
     _buttons = [updated retain];
     return _buttons;
+}
+
+- (void)popCommandCopyMenuAt:(NSPoint)locationInWindow for:(id<VT100ScreenMarkReading>)mark {
+    if (![[mark retain] autorelease]) {
+        return;
+    }
+    NSString *command = mark.command;
+
+    iTermSimpleContextMenu *menu = [[[iTermSimpleContextMenu alloc] init] autorelease];
+    if (command.length) {
+        __weak __typeof(self) weakSelf = self;
+        [menu addItemWithTitle:@"Copy Command" action:^{
+            [weakSelf copyString:command];
+            [ToastWindowController showToastWithMessage:@"Command Copied"
+                                               duration:1.5
+                                topLeftScreenCoordinate:[weakSelf.window convertPointToScreen:locationInWindow]
+                                              pointSize:12];
+        }];
+        [menu addItemWithTitle:@"Copy Output" action:^{
+            iTermRenegablePromise<NSString *> *promise = [self promisedOutputForMark:mark progress:nil];
+            [[promise wait] whenFirst:^(NSString * _Nonnull string) {
+                [weakSelf copyString:string];
+                [ToastWindowController showToastWithMessage:@"Output Copied"
+                                                   duration:1.5
+                                    topLeftScreenCoordinate:[weakSelf.window convertPointToScreen:locationInWindow]
+                                                  pointSize:12];
+            } second:^(NSError * _Nonnull object) {
+                DLog(@"%@", object);
+            }];
+        }];
+    }
+
+    [menu showInView:self forEvent:NSApp.currentEvent];
+}
+
+- (void)popShareMenuAt:(NSPoint)locationInWindow absLine:(long long)absLine for:(id<VT100ScreenMarkReading>)mark {
+    if (![[mark retain] autorelease]) {
+        return;
+    }
+
+    __weak __typeof(self) weakSelf = self;
+    iTermSimpleContextMenu *menu = [[[iTermSimpleContextMenu alloc] init] autorelease];
+    NSString *command = mark.command;
+    if (command.length) {
+        [menu addItemWithTitle:@"Add Command as Snippet" action:^{
+            iTermSnippet *snippet = [[iTermSnippet alloc] initWithTitle:command
+                                                                  value:command
+                                                                   guid:[[NSUUID UUID] UUIDString]
+                                                                   tags:@[]
+                                                               escaping:iTermSendTextEscapingNone
+                                                                version:[iTermSnippet currentVersion]];
+            [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
+            [ToastWindowController showToastWithMessage:@"Snippet Added"
+                                               duration:1.5
+                                topLeftScreenCoordinate:[weakSelf.window convertPointToScreen:locationInWindow]
+                                              pointSize:12];
+        }];
+    }
+    const long long offset = self.dataSource.totalScrollbackOverflow;
+    NSString *directory = absLine >= offset ? [self.dataSource workingDirectoryOnLine:absLine - offset] : nil;
+    NSURLComponents *components = [[[NSURLComponents alloc] init] autorelease];
+    components.scheme = @"iterm2";
+    components.path = @"/command";
+    NSMutableArray *queryItems = [NSMutableArray array];
+    [queryItems addObject:[NSURLQueryItem queryItemWithName:@"c" value:mark.command]];
+    if (directory) {
+        [queryItems addObject:[NSURLQueryItem queryItemWithName:@"d" value:directory]];
+    }
+    components.queryItems = queryItems;
+    id<VT100RemoteHostReading> remoteHost = absLine >= offset ? [self.dataSource remoteHostOnLine:absLine - offset] : nil;
+    if (remoteHost && !remoteHost.isLocalhost) {
+        if (remoteHost.username) {
+            components.user = remoteHost.username;
+        }
+        if (remoteHost.hostname) {
+            components.host = remoteHost.hostname;
+        }
+    }
+    NSURL *url = [components URL];
+
+    if (url) {
+        [menu addItemWithTitle:@"Copy Command URL to Clipboard" action:^{
+            NSPasteboard *pasteBoard = [NSPasteboard generalPasteboard];
+            [pasteBoard clearContents];
+            [pasteBoard writeObjects:@[ url ]];
+        }];
+        [menu addItemWithTitle:@"Open Share Sheet…" action:^{
+            if (!weakSelf) {
+                return;
+            }
+            const NSRect viewRect = NSMakeRect(locationInWindow.x, locationInWindow.y, 0, 0);
+            NSSharingServicePicker *picker = [[[NSSharingServicePicker alloc] initWithItems:@[ url ]] autorelease];
+            [picker showRelativeToRect:viewRect ofView:weakSelf preferredEdge:NSRectEdgeMinY];
+        }];
+    }
+
+    [menu showInView:self forEvent:NSApp.currentEvent];
+}
+
+- (void)toggleBookmarkForMark:(id<VT100ScreenMarkReading>)mark {
+    if (!mark) {
+        return;
+    }
+    if (mark.name) {
+        [self.delegate textViewRemoveBookmarkForMark:mark];
+    } else {
+        [iTermBookmarkDialogViewController showInWindow:self.window
+                                         withCompletion:^(NSString * _Nonnull name) {
+            [self.delegate textViewSaveScrollPositionForMark:mark withName:name];
+        }];
+    }
+}
+
+- (iTermTerminalMarkButton *)cachedTerminalButtonForMark:(id<VT100ScreenMarkReading>)mark
+                                                 ofClass:(Class)desiredClass NS_AVAILABLE_MAC(11) {
+    return [iTermTerminalMarkButton castFrom:[_buttons objectPassingTest:^BOOL(iTermTerminalButton *genericButton, NSUInteger index, BOOL *stop) {
+        iTermTerminalMarkButton *button = [iTermTerminalMarkButton castFrom:genericButton];
+        if (!button) {
+            return NO;
+        }
+        if (![button isKindOfClass:desiredClass]) {
+            return NO;
+        }
+        return button.mark == mark || [button.mark.guid isEqualToString:mark.guid];
+    }]];
 }
 
 - (void)copyBlock:(NSString *)block absLine:(long long)absLine screenCoordinate:(NSPoint)screenCoordinate {

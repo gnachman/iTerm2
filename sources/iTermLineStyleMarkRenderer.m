@@ -15,12 +15,20 @@
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 
+@interface iTermLineStyleMarkInfo: NSObject
+@property (nonatomic) iTermMarkStyle style;
+@property (nonatomic) int rightInset;
+@end
+
+@implementation iTermLineStyleMarkInfo
+@end
+
 @interface iTermLineStyleMarkRendererTransientState()
-@property (nonatomic, copy) NSDictionary<NSNumber *, NSNumber *> *marks;
+@property (nonatomic, copy) NSDictionary<NSNumber *, iTermLineStyleMarkInfo *> *marks;
 @end
 
 @implementation iTermLineStyleMarkRendererTransientState {
-    NSMutableDictionary<NSNumber *, NSNumber *> *_marks;
+    NSMutableDictionary<NSNumber *, iTermLineStyleMarkInfo *> *_marks;
 }
 
 - (void)writeDebugInfoToFolder:(NSURL *)folder {
@@ -41,11 +49,12 @@
     const CGFloat marginInPoints = self.margins.bottom / scale;
     const CGFloat viewportHeightInPoints = self.configuration.viewportSize.y / scale;
 
-    [_marks enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull rowNumber, NSNumber * _Nonnull styleNumber, BOOL * _Nonnull stop) {
+    [_marks enumerateKeysAndObjectsUsingBlock:^(NSNumber *rowNumber, iTermLineStyleMarkInfo *info, BOOL *stop) {
         const CGFloat offsetFromTopInPoints = round((((CGFloat)rowNumber.intValue) - 0.5) * cellHeightInPoints) + marginInPoints;
         const CGFloat yInPoints = viewportHeightInPoints - offsetFromTopInPoints - heightInPoints;
         pius[i].y = yInPoints * scale;
-        switch (styleNumber.intValue) {
+        pius[i].rightInset = info.rightInset * self.cellConfiguration.cellSize.width;
+        switch (info.style) {
             case iTermMarkStyleOther:
                 pius[i].color = self.colors.other;
                 break;
@@ -63,14 +72,17 @@
     return data;
 }
 
-- (void)setMarkStyle:(iTermMarkStyle)markStyle row:(int)row {
+- (void)setMarkStyle:(iTermMarkStyle)markStyle row:(int)row rightInset:(int)rightInset {
     if (!_marks) {
         _marks = [NSMutableDictionary dictionary];
     }
     if (markStyle == iTermMarkStyleNone) {
         [_marks removeObjectForKey:@(row)];
     } else {
-        _marks[@(row)] = @(markStyle);
+        iTermLineStyleMarkInfo *info = [[iTermLineStyleMarkInfo alloc] init];
+        info.style = markStyle;
+        info.rightInset = rightInset;
+        _marks[@(row)] = info;
     }
 }
 
@@ -124,7 +136,7 @@
          NSStringFromSize(tState.cellConfiguration.cellSize),
          NSStringFromSize(tState.cellConfiguration.cellSizeWithoutSpacing));
 
-    const NSSize size = NSMakeSize(tState.configuration.viewportSize.x, scale);
+    const NSSize size = NSMakeSize(tState.configuration.viewportSize.x - tState.margins.right, scale);
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:size poolContext:tState.poolContext];
 }
 

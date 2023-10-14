@@ -998,7 +998,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             [merged set];
             NSRect rect;
             rect.origin.x = 0;
-            rect.size.width = _visibleRect.size.width;
+            int buttonCells = 9;
+            if (!mark.command.length) {
+                buttonCells = 0;
+            }
+            rect.size.width = leftMargin.size.width + self.cellSize.width * (self.gridSize.width - buttonCells);
             rect.size.height = 1;
             const CGFloat y = (((CGFloat)line) - 0.5) * _cellSize.height;
             rect.origin.y = round(y);
@@ -1147,11 +1151,13 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawButtons:(CGFloat)virtualOffset {
     NSColor *background = [self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:YES];
     NSColor *foreground = [self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:NO];
+    NSColor *selectedColor = [self.delegate drawingHelperColorForCode:ALTSEM_SELECTED green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:YES];
 
     if (@available(macOS 11, *)) {
         for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
             [button drawWithBackgroundColor:background
                             foregroundColor:foreground
+                              selectedColor:selectedColor
                                       frame:button.desiredFrame
                               virtualOffset:virtualOffset];
         }

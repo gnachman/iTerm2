@@ -2744,6 +2744,9 @@
         mark = [[iTermBlockMark alloc] init];
         mark.blockID = blockID;
         mark.type = type;
+    } else {
+        // End without a start
+        return;
     }
     range.end = VT100GridAbsCoordMake(self.width, absY);
     [self.mutableIntervalTree addObject:mark withInterval:[self intervalForGridAbsCoordRange:range]];

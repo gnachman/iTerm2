@@ -695,6 +695,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         int rles = 0;
         iTermMarkStyle markStyle;
         BOOL lineStyleMark = NO;
+        int lineStyleMarkRightInset = 0;
         NSDate *date;
         BOOL belongsToBlock;
         [frameData.perFrameState metalGetGlyphKeys:glyphKeys
@@ -704,6 +705,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                                           rleCount:&rles
                                          markStyle:&markStyle
                                      lineStyleMark:&lineStyleMark
+                           lineStyleMarkRightInset:&lineStyleMarkRightInset
                                                row:y
                                              width:columns
                                     drawableGlyphs:&drawableGlyphs
@@ -720,6 +722,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                                  @(rowData.keysData.length / sizeof(iTermMetalGlyphKey)));
         rowData.markStyle = markStyle;
         rowData.lineStyleMark = lineStyleMark;
+        rowData.lineStyleMarkRightInset = lineStyleMarkRightInset;
         [rowData.keysData checkForOverrun];
         [rowData.attributesData checkForOverrun];
         [rowData.backgroundColorRLEData checkForOverrun];
@@ -1441,7 +1444,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
             return;
         }
         if (rowData.lineStyleMark) {
-            [tState setMarkStyle:rowData.markStyle row:idx];
+            [tState setMarkStyle:rowData.markStyle row:idx rightInset:rowData.lineStyleMarkRightInset];
         }
     }];
     tState.colors = frameData.perFrameState.lineStyleMarkColors;
@@ -1524,7 +1527,8 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
              onScreenLine:button.absCoord.y - firstLine
                    column:button.absCoord.x
           foregroundColor:frameData.perFrameState.processedDefaultTextColor
-          backgroundColor:frameData.perFrameState.processedDefaultBackgroundColor];
+          backgroundColor:frameData.perFrameState.processedDefaultBackgroundColor
+            selectedColor:frameData.perFrameState.selectedBackgroundColor];
     }
 }
 

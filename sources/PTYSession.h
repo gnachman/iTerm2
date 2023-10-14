@@ -946,6 +946,10 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)enclosingTabWillBeDeselected;
 - (void)enclosingTabDidBecomeSelected;
 - (void)copyTextFromBlockWithID:(NSString *)blockID;
+- (void)runCommand:(NSString *)command
+       inDirectory:(NSString *)directory
+            onHost:(NSString *)hostname
+            asUser:(NSString *)username;
 
 #pragma mark - API
 

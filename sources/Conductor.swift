@@ -23,6 +23,7 @@ protocol ConductorDelegate: Any {
     func conductorAbort(reason: String)
     func conductorQuit()
     func conductorStateDidChange()
+    @objc func conductorSendInitialText()
     var guid: String { get }
 }
 
@@ -511,6 +512,8 @@ class Conductor: NSObject, Codable {
                     return "handleGetShell(\(output.string))"
                 case .handleFile(_, _):
                     return "handleFile"
+                case .handleNonFramerLogin:
+                    return "handleNonFramerLogin"
                 }
             }
 
@@ -525,6 +528,7 @@ class Conductor: NSObject, Codable {
             case handlePoll(StringArray, (Data) -> ())
             case handleGetShell(StringArray)
             case handleFile(StringArray, (String, Int32) -> ())
+            case handleNonFramerLogin
 
             private enum Key: CodingKey {
                 case rawValue
@@ -544,6 +548,7 @@ class Conductor: NSObject, Codable {
                 case handlePoll
                 case handleGetShell
                 case handleFile
+                case handleNonFramerLogin
             }
 
             private var rawValue: Int {
@@ -570,6 +575,8 @@ class Conductor: NSObject, Codable {
                     return RawValues.handleGetShell.rawValue
                 case .handleFile(_, _):
                     return RawValues.handleFile.rawValue
+                case .handleNonFramerLogin:
+                    return RawValues.handleNonFramerLogin.rawValue
                 }
             }
 
@@ -578,7 +585,7 @@ class Conductor: NSObject, Codable {
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
                 case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin(_), .handlePoll(_, _),
-                        .handleJump:
+                        .handleJump, .handleNonFramerLogin:
                     break
                 case .handleCheckForPython(let value):
                     try container.encode(value, forKey: .stringArray)
@@ -624,6 +631,8 @@ class Conductor: NSObject, Codable {
                     self = .handleGetShell(try container.decode(StringArray.self, forKey: .stringArray))
                 case .handleFile:
                     self = .handleFile(StringArray(), { _, _ in })
+                case .handleNonFramerLogin:
+                    self = .handleNonFramerLogin
                 }
             }
         }
@@ -1190,9 +1199,9 @@ class Conductor: NSObject, Codable {
     private func execLoginShell() {
         if let modifiedCommandArgs = modifiedCommandArgs,
            modifiedCommandArgs.isEmpty {
-            send(.execLoginShell(modifiedCommandArgs), .failIfNonzeroStatus)
+            send(.execLoginShell(modifiedCommandArgs), .handleNonFramerLogin)
         } else if parsedSSHArguments.commandArgs.isEmpty {
-            send(.execLoginShell([]), .failIfNonzeroStatus)
+            send(.execLoginShell([]), .handleNonFramerLogin)
         } else {
             run((parsedSSHArguments.commandArgs).joined(separator: " "))
         }
@@ -1250,9 +1259,24 @@ class Conductor: NSObject, Codable {
         return false
     }
 
+    private func sendInitialText() {
+        delegate?.conductorSendInitialText()
+    }
+
     private func update(executionContext: ExecutionContext, result: PartialResult) -> () {
         log("update \(executionContext) result=\(result)")
         switch executionContext.handler {
+        case .handleNonFramerLogin:
+            switch result {
+            case .end(let status):
+                if status == 0 {
+                    sendInitialText()
+                } else {
+                    fail("\(executionContext.command.stringValue): Unepected status \(status)")
+                }
+            case .abort, .line(_), .sideChannelLine(line: _, channel: _, pid: _), .canceled:
+                break
+            }
         case .failIfNonzeroStatus:
             switch result {
             case .end(let status):
@@ -1451,6 +1475,7 @@ class Conductor: NSObject, Codable {
             }
         }
         framedPID = pid
+        sendInitialText()
         delegate?.conductorStateDidChange()
     }
 

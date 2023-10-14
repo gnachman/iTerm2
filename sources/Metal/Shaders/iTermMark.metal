@@ -60,6 +60,9 @@ iTermLineStyleMarkVertexShader(uint vertexID [[ vertex_id ]],
     iTermLineStyleMarkVertexFunctionOutput out;
 
     float2 pixelSpacePosition = vertexArray[vertexID].position.xy;
+    if (pixelSpacePosition.x > 0) {
+        pixelSpacePosition.x -= perInstanceUniforms[iid].rightInset;
+    }
     pixelSpacePosition.y += perInstanceUniforms[iid].y;
     float2 viewportSize = float2(*viewportSizePointer);
 

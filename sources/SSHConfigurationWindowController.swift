@@ -59,9 +59,15 @@ class SSHConfiguration: NSObject {
                               andObject: tuple.1 as NSString)
         }
     }
+    @objc override init() {
+        config = Config(sshIntegration: true, environmentVariablesToCopy: [], filesToCopy: [])
+    }
 
     @objc init(dictionary: NSDictionary?) {
         config = Config(dictionary: (dictionary as? [String: AnyObject]) ?? [:])
+    }
+    @objc var dictionaryValue: [String: AnyObject] {
+        return config.dictionaryValue
     }
 }
 

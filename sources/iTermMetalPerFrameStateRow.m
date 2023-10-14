@@ -33,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
         _selectedIndexSet = [NSIndexSet indexSet];
         _markStyle = @(iTermMarkStyleNone);
         _lineStyleMark = NO;
+        _lineStyleMarkRightInset = 0;
     }
     return self;
 }
@@ -74,7 +75,8 @@ NS_ASSUME_NONNULL_BEGIN
                                       enabled:drawingHelper.drawMarkIndicators
                                      textView:textView
                           allowOtherMarkStyle:allowOtherMarkStyle
-                                lineStyleMark:&_lineStyleMark]);
+                                lineStyleMark:&_lineStyleMark
+                      lineStyleMarkRightInset:&_lineStyleMarkRightInset]);
     }
     return self;
 }
@@ -83,7 +85,8 @@ NS_ASSUME_NONNULL_BEGIN
                            enabled:(BOOL)enabled
                           textView:(PTYTextView *)textView
                allowOtherMarkStyle:(BOOL)allowOtherMarkStyle
-                     lineStyleMark:(out BOOL *)lineStyleMark {
+                     lineStyleMark:(out BOOL *)lineStyleMark
+           lineStyleMarkRightInset:(out int *)lineStyleMarkRightInset {
     if (!enabled) {
         return iTermMarkStyleNone;
     }
@@ -93,6 +96,11 @@ NS_ASSUME_NONNULL_BEGIN
         return iTermMarkStyleNone;
     }
     *lineStyleMark = mark.lineStyle;
+    if (mark.command.length && mark.lineStyle) {
+        *lineStyleMarkRightInset = 9;
+    } else {
+        *lineStyleMarkRightInset = 0;
+    }
     if (mark.code == 0) {
         return iTermMarkStyleSuccess;
     }

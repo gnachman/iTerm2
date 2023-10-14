@@ -29,6 +29,7 @@
 
 #import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
@@ -1454,6 +1455,71 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     NSArray<NSString *> *const combinedArray = [@[escapedCommand] arrayByAddingObjectsFromArray:escapedArguments];
     NSString *const commandLine = [combinedArray componentsJoinedByString:@" "];
     return [NSString stringWithFormat:@"sh -c \"%@\"", commandLine];
+}
+
+- (NSWindow *)openWindow:(BOOL)makeWindow 
+                 command:(NSString *)command
+               directory:(NSString *)directory
+                hostname:(NSString *)hostname
+                username:(NSString *)username {
+    MutableProfile *profile = [[[[ProfileModel sharedInstance] defaultProfile] mutableCopy] autorelease];
+    if (directory) {
+        profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
+        profile[KEY_WORKING_DIRECTORY] = directory;
+    } else {
+        profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryHomeValue;
+    }
+    if (hostname) {
+        profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeSSHValue;
+        iTermSSHConfiguration *sshConfig = [[[iTermSSHConfiguration alloc] init] autorelease];
+        profile[KEY_SSH_CONFIG] = sshConfig.dictionaryValue;
+        if (username) {
+            profile[KEY_COMMAND_LINE] = [NSString stringWithFormat:@"%@@%@", username, hostname];
+        } else {
+            profile[KEY_COMMAND_LINE] = hostname;
+        }
+    }
+    profile[KEY_INITIAL_TEXT] = command;
+    PseudoTerminal *term = [self currentTerminal];
+    if (makeWindow || !term) {
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                 windowType:WINDOW_TYPE_NORMAL
+                                            savedWindowType:WINDOW_TYPE_NORMAL
+                                                     screen:-1
+                                           hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                    profile:profile] autorelease];
+        [self addTerminalWindow:term];
+    }
+
+    DLog(@"Open login window");
+    void (^makeSession)(Profile *, PseudoTerminal *, void (^)(PTYSession *)) =
+    ^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *))  {
+        term.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
+
+        [term asyncCreateTabWithProfile:profile
+                            withCommand:nil
+                            environment:nil
+                               tabIndex:nil
+                         didMakeSession:^(PTYSession *session) {
+            makeSessionCompletion(session);
+        }
+                             completion:nil];
+    };
+    [iTermSessionLauncher launchBookmark:profile
+                              inTerminal:term
+                                 withURL:nil
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:YES
+                             canActivate:YES
+                      respectTabbingMode:NO
+                                   index:nil
+                                 command:nil
+                             makeSession:makeSession
+                          didMakeSession:^(PTYSession *session) { }
+                              completion:^(PTYSession * _Nonnull session, BOOL ok) {
+    }];
+    [term.window makeKeyAndOrderFront:nil];
+    return term.window;
 }
 
 - (NSWindow *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion {

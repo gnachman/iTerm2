@@ -19,7 +19,7 @@ typedef struct {
 @interface iTermLineStyleMarkRendererTransientState : iTermMetalCellRendererTransientState
 @property (nonatomic) iTermLineStyleMarkColors colors;
 
-- (void)setMarkStyle:(iTermMarkStyle)markStyle row:(int)row;
+- (void)setMarkStyle:(iTermMarkStyle)markStyle row:(int)row rightInset:(int)rightInset;
 @end
 
 @interface iTermLineStyleMarkRenderer : NSObject<iTermMetalCellRenderer>

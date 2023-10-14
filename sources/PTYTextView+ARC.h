@@ -17,6 +17,7 @@
 @protocol PTYTrackingChildWindow;
 @class URLAction;
 @protocol iTermContentNavigationShortcutView;
+@class iTermProgress;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -89,6 +90,9 @@ iTermURLActionHelperDelegate>
 - (NSDictionary *)charAttributes:(screen_char_t)c
               externalAttributes:(iTermExternalAttribute *)ea
                        processed:(BOOL)processed;
+
+- (iTermRenegablePromise<NSString *> *)promisedOutputForMark:(id<VT100ScreenMarkReading>)mark
+                                                    progress:(iTermProgress * _Nullable)outputProgress;
 
 #pragma mark - Install Shell Integration
 

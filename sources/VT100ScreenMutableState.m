@@ -2254,6 +2254,21 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return (iTermColorMap *)[super colorMap];
 }
 
+- (void)setName:(NSString *)name forMark:(VT100ScreenMark *)mark {
+    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull mutableObj) {
+        VT100ScreenMark *mutableMark = [VT100ScreenMark castFrom:mutableObj];
+        mutableMark.name = name;
+    }];
+    if (name) {
+        [self.namedMarks addObject:mark];
+    } else {
+        [self.namedMarks removeObjectsPassingTest:^BOOL(id<VT100ScreenMarkReading>  _Nullable anObject) {
+            return [anObject.guid isEqualToString:mark.guid];
+        }];
+    }
+    self.namedMarksDirty = YES;
+}
+
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass {
@@ -2437,7 +2452,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
             mark = [self markOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
-            if (mark) {
+            if (mark && !mark.command) {
+                // This code path should not be taken with auto-composer because mark.command gets
+                // set prior to sending the command.
                 const VT100GridAbsCoordRange commandRange = VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow);
                 const VT100GridAbsCoord outputStart = VT100GridAbsCoordMake(self.currentGrid.cursor.x,
                                                                             self.currentGrid.cursor.y + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.cumulativeScrollbackOverflow);
@@ -2448,6 +2465,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                     mark.command = command;
                     mark.commandRange = commandRange;
                     mark.outputStart = outputStart;
+                    // If you change this also update -setCommand:startingAt:inMark:
                 }];
             } else {
                 DLog(@"No mark");
@@ -3332,8 +3350,56 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return NO;
 }
 
-- (void)composerWillSendCommand {
+- (void)composerWillSendCommand:(NSString *)command 
+                     startingAt:(VT100GridAbsCoord)startAbsCoord {
     [_promptStateMachine willSendCommand];
+    id<VT100ScreenMarkReading> mark = self.lastPromptMark;
+    if (!mark) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+        VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
+        if (!screenMark) {
+            return;
+        }
+        [weakSelf setCommand:command startingAt:startAbsCoord inMark:screenMark];
+    }];
+}
+
+// This code path is taken when using the auto-composer.
+- (void)setCommand:(NSString *)command
+        startingAt:(VT100GridAbsCoord)startAbsCoord
+            inMark:(VT100ScreenMark *)screenMark {
+    screenMark.command = [command stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    const int width = self.width;
+
+    const int len = [self lengthOfStringInCells:command];
+    screenMark.commandRange = VT100GridAbsCoordRangeMake(startAbsCoord.x,
+                                                         startAbsCoord.y,
+                                                         (startAbsCoord.x + len) % width,
+                                                         startAbsCoord.y + (startAbsCoord.x + len) / width);
+    screenMark.outputStart = VT100GridAbsCoordMake(0, screenMark.commandRange.end.y + 1);
+    // If you modify this also update -commandDidEndWithRange:
+}
+
+- (int)lengthOfStringInCells:(NSString *)string {
+    screen_char_t *buf = iTermCalloc(string.length * 3, sizeof(screen_char_t));
+    int len = string.length;
+    BOOL dwc = NO;
+    StringToScreenChars(string,
+                        buf,
+                        (screen_char_t){0},
+                        (screen_char_t){0},
+                        &len,
+                        self.config.treatAmbiguousCharsAsDoubleWidth,
+                        NULL,
+                        &dwc,
+                        self.config.normalization,
+                        self.config.unicodeVersion,
+                        self.terminal.softAlternateScreenMode);
+    free(buf);
+    return len;
 }
 
 - (void)didInferEndOfCommand {

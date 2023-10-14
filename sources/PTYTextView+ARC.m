@@ -392,25 +392,12 @@ iTermCommandInfoViewControllerDelegate>
                             point:(NSPoint)windowPoint {
     long long overflow = self.dataSource.totalScrollbackOverflow;
     const int line = absoluteLineNumber - overflow;
-    const VT100GridCoordRange coordRange = [self.dataSource textViewRangeOfOutputForCommandMark:mark];
-    const VT100GridRange lineRange = VT100GridRangeMake(coordRange.start.y, coordRange.end.y - coordRange.start.y + 1);
+    const VT100GridRange lineRange = [self lineRangeForMark:mark];
     NSString *directory = [self.dataSource workingDirectoryOnLine:line];
     const NSPoint point = [self convertPoint:windowPoint
                                     fromView:nil];
-    iTermSelection *selection = [[iTermSelection alloc] init];
-    selection.delegate = self;
-    [selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(0, coordRange.start.y + overflow)
-                                   mode:kiTermSelectionModeLine
-                                 resume:NO
-                                 append:NO];
-    [selection moveSelectionEndpointTo:VT100GridAbsCoordMake(0, coordRange.end.y + overflow - 1)];
-    [selection endLiveSelection];
     iTermProgress *outputProgress = [[iTermProgress alloc] init];
-    iTermRenegablePromise<NSString *> *outputPromise = [self promisedStringForSelectedTextCappedAtSize:INT_MAX
-                                                                                     minimumLineNumber:0
-                                                                                            timestamps:NO
-                                                                                             selection:selection
-                                                                                              progress:outputProgress];
+    iTermRenegablePromise<NSString *> *outputPromise = [self promisedOutputForMark:mark progress:outputProgress];
     [iTermCommandInfoViewController presentMark:mark
                                            date:date
                                       directory:directory
@@ -420,6 +407,34 @@ iTermCommandInfoViewControllerDelegate>
                                          inView:self
                                              at:point
                                        delegate:self];
+}
+
+- (VT100GridCoordRange)coordRangeForMark:(id<VT100ScreenMarkReading>)mark {
+    return [self.dataSource textViewRangeOfOutputForCommandMark:mark];
+}
+
+- (VT100GridRange)lineRangeForMark:(id<VT100ScreenMarkReading>)mark {
+    const VT100GridCoordRange coordRange = [self coordRangeForMark:mark];
+    return VT100GridRangeMake(coordRange.start.y, coordRange.end.y - coordRange.start.y + 1);
+}
+
+- (iTermRenegablePromise<NSString *> *)promisedOutputForMark:(id<VT100ScreenMarkReading>)mark
+                                                    progress:(iTermProgress *)outputProgress {
+    long long overflow = self.dataSource.totalScrollbackOverflow;
+    iTermSelection *selection = [[iTermSelection alloc] init];
+    selection.delegate = self;
+    const VT100GridCoordRange coordRange = [self coordRangeForMark:mark];
+    [selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(0, coordRange.start.y + overflow)
+                                   mode:kiTermSelectionModeLine
+                                 resume:NO
+                                 append:NO];
+    [selection moveSelectionEndpointTo:VT100GridAbsCoordMake(0, coordRange.end.y + overflow - 1)];
+    [selection endLiveSelection];
+    return [self promisedStringForSelectedTextCappedAtSize:INT_MAX
+                                         minimumLineNumber:0
+                                                timestamps:NO
+                                                 selection:selection
+                                                  progress:outputProgress ?: [[iTermProgress alloc] init]];
 }
 
 #pragma mark - Mouse Cursor

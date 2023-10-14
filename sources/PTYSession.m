@@ -624,6 +624,9 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     iTermLocalFileChecker *_localFileChecker;
     BOOL _needsComposerColorUpdate;
     BOOL _textViewShouldTakeFirstResponder;
+
+    // Run this when the composer connects.
+    void (^_pendingConductor)(PTYSession *);
 }
 
 @synthesize isDivorced = _divorced;
@@ -1053,7 +1056,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pendingPublishRequests release];
     [_desiredComposerPrompt release];
     [_localFileChecker release];
-
+    [_pendingConductor release];
     [super dealloc];
 }
 
@@ -2753,7 +2756,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }];
 }
 
+// This can be called twice when using ssh; once before the conductor is ready and then again after
+// it has logged in.
 - (void)sendInitialText {
+    if ([_profile[KEY_CUSTOM_COMMAND] isEqual:kProfilePreferenceCommandTypeSSHValue] && !_conductor) {
+        DLog(@"Not sending initial text because ssh");
+        return;
+    }
     NSString *initialText = _profile[KEY_INITIAL_TEXT];
     if (![initialText length]) {
         return;
@@ -3865,6 +3874,46 @@ ITERM_WEAKLY_REFERENCEABLE
         [output appendBytes:p + start length:i - start];
     }
     return output;
+}
+
+- (void)pasteCommand:(NSString *)text {
+    PasteEvent *event = [_pasteHelper pasteEventWithString:text
+                                                    slowly:NO
+                                          escapeShellChars:NO
+                                                  isUpload:NO
+                                           allowBracketing:YES
+                                              tabTransform:NO
+                                              spacesPerTab:0
+                                                  progress:^(NSInteger progress) {}];
+    event.defaultChunkSize = 80;
+    event.defaultDelay = 0.02;
+    event.chunkKey = @"";
+    event.delayKey = @"";
+    event.flags = kPasteFlagsDisableWarnings | kPasteFlagsCommands;
+    [_pasteHelper tryToPasteEvent:event];
+}
+
+- (void)runCommand:(NSString *)command
+       inDirectory:(NSString *)directory
+            onHost:(NSString *)hostname
+            asUser:(NSString *)username {
+    if (hostname) {
+        NSString *ssh;
+        if (username) {
+            ssh = [NSString stringWithFormat:@"it2ssh %@@%@\n", username, hostname];
+        } else {
+            ssh = [NSString stringWithFormat:@"it2ssh %@\n", hostname];
+        }
+        [self pasteCommand:ssh];
+        [_pendingConductor autorelease];
+        _pendingConductor = [^(PTYSession *session) {
+            [session runCommand:command inDirectory:directory onHost:nil asUser:nil];
+        } copy];
+    } else {
+        NSString *escapedDirectory = [directory stringWithEscapedShellCharactersIncludingNewlines:YES];
+        NSString *text = [NSString stringWithFormat:@"cd %@ && %@\n", escapedDirectory, command];
+        [self pasteCommand:text];
+    }
 }
 
 - (void)pasteString:(NSString *)aString {
@@ -15362,6 +15411,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                model:[ProfileModel sharedInstance]];
 }
 
+- (void)textViewSaveScrollPositionForMark:(id<VT100ScreenMarkReading>)mark withName:(NSString *)name {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState setName:name forMark:(VT100ScreenMark *)mark.progenitor];
+    }];
+}
+
+- (void)textViewRemoveBookmarkForMark:(id<VT100ScreenMarkReading>)mark {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState setName:nil forMark:(VT100ScreenMark *)mark.progenitor];
+    }];
+}
+
 #pragma mark - iTermHotkeyNavigableSession
 
 - (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {
@@ -17170,7 +17231,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [_composerManager setPrefix:nil userData:nil];
         [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
             DLog(@"willSendCommand:%@", command);
-            [mutableState composerWillSendCommand];
+            const VT100GridAbsCoord start = 
+            VT100GridAbsCoordMake(mutableState.currentGrid.cursor.x,
+                                  mutableState.currentGrid.cursor.y + mutableState.numberOfScrollbackLines + mutableState.cumulativeScrollbackOverflow);
+            [mutableState composerWillSendCommand:command
+                                       startingAt:start];
             if (detectedByTrigger) {
                 [mutableState didSendCommand];
             }
@@ -17961,6 +18026,16 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)conductorWriteString:(NSString *)string {
     DLog(@"Conductor write: %@", string);
     [self writeTaskNoBroadcast:string];
+}
+
+- (void)conductorSendInitialText {
+    [self sendInitialText];
+    if (_pendingConductor) {
+        void (^pendingComposer)(PTYSession *) = [[_pendingConductor retain] autorelease];
+        [_pendingConductor autorelease];
+        _pendingConductor = nil;
+        pendingComposer(self);
+    }
 }
 
 - (void)conductorWillDie {
