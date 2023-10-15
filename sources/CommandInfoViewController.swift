@@ -28,6 +28,7 @@ class CommandInfoViewController: NSViewController {
     @IBOutlet weak var sendDirectory: NSButton!
     @IBOutlet weak var copyDirectory: NSButton!
     @IBOutlet weak var copyOutput: NSButton!
+    @IBOutlet weak var shareCommand: NSButton!
     @IBOutlet weak var progressIndicator: NSProgressIndicator!
     @IBOutlet weak var startedAtStackView: NSStackView!
     @IBOutlet weak var startedAt: NSTextField!
@@ -38,6 +39,7 @@ class CommandInfoViewController: NSViewController {
 
     private let _command: String
     private let _directory: String?
+    private let _remoteHost: VT100RemoteHostReading?
     private let _returnCode: iTermPromise<NSNumber>
     private let _runningTime: TimeInterval?
     private let _size: Int
@@ -49,9 +51,10 @@ class CommandInfoViewController: NSViewController {
     private var runtimeConstraint: NSLayoutConstraint?
     private var _mark: VT100ScreenMarkReading
 
-    @objc(presentOffscreenCommandLine:directory:outputSize:outputPromise:outputProgress:inView:at:delegate:)
+    @objc(presentOffscreenCommandLine:directory:remoteHost:outputSize:outputPromise:outputProgress:inView:at:delegate:)
     static func present(offscreenCommandLine: iTermOffscreenCommandLine,
                         directory: String?,
+                        remoteHost: VT100RemoteHostReading?,
                         outputSize: Int,
                         outputPromise: iTermRenegablePromise<NSString>,
                         outputProgress: Progress,
@@ -61,6 +64,7 @@ class CommandInfoViewController: NSViewController {
         present(mark: offscreenCommandLine.mark,
                 date: offscreenCommandLine.date,
                 directory: directory,
+                remoteHost: remoteHost,
                 outputSize: outputSize,
                 outputPromise: outputPromise,
                 outputProgress: outputProgress,
@@ -69,10 +73,11 @@ class CommandInfoViewController: NSViewController {
                 delegate: delegate)
     }
 
-    @objc(presentMark:date:directory:outputSize:outputPromise:outputProgress:inView:at:delegate:)
+    @objc(presentMark:date:directory:remoteHost:outputSize:outputPromise:outputProgress:inView:at:delegate:)
     static func present(mark: VT100ScreenMarkReading,
                         date: Date?,
                         directory: String?,
+                        remoteHost: VT100RemoteHostReading?,
                         outputSize: Int,
                         outputPromise: iTermRenegablePromise<NSString>,
                         outputProgress: Progress,
@@ -97,6 +102,7 @@ class CommandInfoViewController: NSViewController {
             mark: mark,
             command: mark.command,
             directory: directory,
+            remoteHost: remoteHost,
             returnCode: codePromise,
             runningTime: runningTime,
             size: outputSize,
@@ -118,6 +124,7 @@ class CommandInfoViewController: NSViewController {
     init(mark: VT100ScreenMarkReading,
          command: String,
          directory: String?,
+         remoteHost: VT100RemoteHostReading?,
          returnCode: iTermPromise<NSNumber>,
          runningTime: TimeInterval?,
          size: Int,
@@ -127,6 +134,7 @@ class CommandInfoViewController: NSViewController {
         _mark = mark
         _command = command
         _directory = directory
+        _remoteHost = remoteHost
         _returnCode = returnCode
         _runningTime = runningTime
         _size = size
@@ -285,6 +293,66 @@ class CommandInfoViewController: NSViewController {
         if let view = sender as? NSView {
             showCopiedToast(view)
         }
+    }
+
+    @objc
+    static func popShareMenu(command: String,
+                             directory: String?,
+                             remoteHost: VT100RemoteHostReading?,
+                             event: NSEvent,
+                             view: NSView) {
+        let menu = SimpleContextMenu()
+        menu.addItem(title: "Add Command as Snippet") {
+            let snippet = iTermSnippet(title: command, value: command, guid: UUID().uuidString, tags: [], escaping: .none, version: iTermSnippet.currentVersion())
+            iTermSnippetsModel.sharedInstance().addSnippet(snippet)
+            if let window = view.window {
+                ToastWindowController.showToast(withMessage: "Snippet Added",
+                                                duration: 1,
+                                                screenCoordinate: window.convertPoint(toScreen: event.locationInWindow), pointSize: 12.0)
+            }
+        }
+
+        var components = URLComponents()
+        components.scheme = "iterm2"
+        components.path = "/command"
+        var queryItems = [URLQueryItem(name: "c", value: command)]
+        if let directory {
+            queryItems.append(URLQueryItem(name: "d", value: directory))
+        }
+        if let remoteHost, let hostname = remoteHost.hostname, !remoteHost.isLocalhost {
+            components.host = hostname
+            if let username = remoteHost.username {
+                components.user = username
+            }
+        }
+        components.queryItems = queryItems
+        guard let url = components.url else {
+            return
+        }
+
+        menu.addItem(title: "Copy Command URL to Clipboard") {
+            Self.copyURL(url)
+        }
+        menu.addItem(title: "Open Share Sheet…") {
+            let viewRect = NSRect(origin: event.locationInWindow, size: .zero)
+            let picker = NSSharingServicePicker(items: [url])
+            picker.show(relativeTo: viewRect, of: view, preferredEdge: .minY)
+        }
+        menu.show(in: view, for: event)
+    }
+
+    private static func copyURL(_ url: URL) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        _ = pasteboard.writeObjects([url as NSURL, url.absoluteString as NSString])
+    }
+
+    @IBAction func shareCommand(_ sender: Any) {
+        Self.popShareMenu(command: _command,
+                          directory: _directory,
+                          remoteHost: _remoteHost,
+                          event: NSApp.currentEvent!,
+                          view: view)
     }
 
     @IBAction func sendDirectory(_ sender: Any) {

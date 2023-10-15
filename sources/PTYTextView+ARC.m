@@ -394,6 +394,7 @@ iTermCommandInfoViewControllerDelegate>
     const int line = absoluteLineNumber - overflow;
     const VT100GridRange lineRange = [self lineRangeForMark:mark];
     NSString *directory = [self.dataSource workingDirectoryOnLine:line];
+    id<VT100RemoteHostReading> remoteHost = [self.dataSource remoteHostOnLine:line];
     const NSPoint point = [self convertPoint:windowPoint
                                     fromView:nil];
     iTermProgress *outputProgress = [[iTermProgress alloc] init];
@@ -401,6 +402,7 @@ iTermCommandInfoViewControllerDelegate>
     [iTermCommandInfoViewController presentMark:mark
                                            date:date
                                       directory:directory
+                                     remoteHost:remoteHost
                                      outputSize:[self.dataSource numberOfCellsUsedInRange:lineRange]
                                   outputPromise:outputPromise
                                  outputProgress:outputProgress
