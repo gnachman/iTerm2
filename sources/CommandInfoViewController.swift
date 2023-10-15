@@ -34,6 +34,7 @@ class CommandInfoViewController: NSViewController {
     @IBOutlet weak var startedAt: NSTextField!
     @IBOutlet weak var stackView: NSStackView!
     @IBOutlet weak var copiedView: CopiedView!
+    @IBOutlet weak var disableShowingOffscreenCommand: NSButton!
 
     weak var delegate: CommandInfoViewControllerDelegate?
 
@@ -51,7 +52,7 @@ class CommandInfoViewController: NSViewController {
     private var runtimeConstraint: NSLayoutConstraint?
     private var _mark: VT100ScreenMarkReading
 
-    @objc(presentOffscreenCommandLine:directory:remoteHost:outputSize:outputPromise:outputProgress:inView:at:delegate:)
+    @objc(presentOffscreenCommandLine:directory:remoteHost:outputSize:outputPromise:outputProgress:inView:fromOffscreenCommandLine:at:delegate:)
     static func present(offscreenCommandLine: iTermOffscreenCommandLine,
                         directory: String?,
                         remoteHost: VT100RemoteHostReading?,
@@ -59,6 +60,7 @@ class CommandInfoViewController: NSViewController {
                         outputPromise: iTermRenegablePromise<NSString>,
                         outputProgress: Progress,
                         inView view: NSView,
+                        fromOffscreenCommandLine: Bool,
                         at p: NSPoint,
                         delegate: CommandInfoViewControllerDelegate?) {
         present(mark: offscreenCommandLine.mark,
@@ -69,11 +71,12 @@ class CommandInfoViewController: NSViewController {
                 outputPromise: outputPromise,
                 outputProgress: outputProgress,
                 inView: view,
+                fromOffscreenCommandLine: fromOffscreenCommandLine,
                 at: p,
                 delegate: delegate)
     }
 
-    @objc(presentMark:date:directory:remoteHost:outputSize:outputPromise:outputProgress:inView:at:delegate:)
+    @objc(presentMark:date:directory:remoteHost:outputSize:outputPromise:outputProgress:inView:fromOffscreenCommandLine:at:delegate:)
     static func present(mark: VT100ScreenMarkReading,
                         date: Date?,
                         directory: String?,
@@ -82,6 +85,7 @@ class CommandInfoViewController: NSViewController {
                         outputPromise: iTermRenegablePromise<NSString>,
                         outputProgress: Progress,
                         inView view: NSView,
+                        fromOffscreenCommandLine: Bool,
                         at p: NSPoint,
                         delegate: CommandInfoViewControllerDelegate?) {
         let mark = mark
@@ -111,6 +115,9 @@ class CommandInfoViewController: NSViewController {
             startDate: date)
         viewController.delegate = delegate
         viewController.loadView()
+        if !fromOffscreenCommandLine {
+            viewController.removeDisableButton()
+        }
         viewController.sizeToFit()
         let popover = NSPopover()
         viewController.enclosingPopover = popover
@@ -153,6 +160,10 @@ class CommandInfoViewController: NSViewController {
     deinit {
         _outputPromise.renege()
         timer?.invalidate()
+    }
+
+    private func removeDisableButton() {
+        disableShowingOffscreenCommand.removeFromSuperview()
     }
 
     private func timerDidFire() {

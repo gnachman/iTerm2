@@ -3408,7 +3408,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (BOOL)showCommandInfoForEvent:(NSEvent *)event {
     iTermOffscreenCommandLine *offscreenCommandLine = [self offscreenCommandLineForClickAt:event.locationInWindow];
     if (offscreenCommandLine) {
-        [self presentCommandInfoForOffscreenCommandLine:offscreenCommandLine event:event];
+        [self presentCommandInfoForOffscreenCommandLine:offscreenCommandLine event:event fromOffscreenCommandLine:YES];
         return YES;
     }
     id<VT100ScreenMarkReading> mark = [_contextMenuHelper markForClick:event];
@@ -3419,7 +3419,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         [self presentCommandInfoForMark:mark
                      absoluteLineNumber:VT100GridAbsCoordFromCoord(coord, overflow).y
                                    date:date
-                                  event:event];
+                                  event:event
+               fromOffscreenCommandLine:NO];
         return YES;
     }
     return NO;

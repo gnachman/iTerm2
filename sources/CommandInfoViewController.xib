@@ -14,6 +14,7 @@
                 <outlet property="copyDirectory" destination="2qj-sU-AUO" id="lEM-9c-pvc"/>
                 <outlet property="copyOutput" destination="w1e-QE-s74" id="PfS-yR-gUB"/>
                 <outlet property="directory" destination="USn-lU-ZIc" id="1Bf-xv-ac1"/>
+                <outlet property="disableShowingOffscreenCommand" destination="pQZ-rQ-rSV" id="kVZ-vA-dcG"/>
                 <outlet property="output" destination="eKH-d2-hAv" id="aF0-Td-x6S"/>
                 <outlet property="progressIndicator" destination="rX2-2G-4s3" id="mDd-OJ-QGB"/>
                 <outlet property="proxyIcon" destination="lO8-vd-LCm" id="f9G-Pb-nav"/>

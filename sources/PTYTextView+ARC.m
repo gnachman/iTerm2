@@ -371,25 +371,33 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (void)presentCommandInfoForOffscreenCommandLine:(iTermOffscreenCommandLine *)offscreenCommandLine
-                                            event:(NSEvent *)event {
+                                            event:(NSEvent *)event
+                         fromOffscreenCommandLine:(BOOL)fromOffscreenCommandLine {
     [self presentCommandInfoForMark:offscreenCommandLine.mark
                  absoluteLineNumber:offscreenCommandLine.absoluteLineNumber
                                date:offscreenCommandLine.date
-                              event:event];
+                              event:event
+           fromOffscreenCommandLine:fromOffscreenCommandLine];
 }
 
 - (void)presentCommandInfoForMark:(id<VT100ScreenMarkReading>)mark
                absoluteLineNumber:(long long)absoluteLineNumber
                              date:(NSDate *)date
-                            event:(NSEvent *)event {
-    [self presentCommandInfoForMark:mark absoluteLineNumber:absoluteLineNumber date:date point:event.locationInWindow];
+                            event:(NSEvent *)event 
+         fromOffscreenCommandLine:(BOOL)fromOffscreenCommandLine {
+    [self presentCommandInfoForMark:mark
+                 absoluteLineNumber:absoluteLineNumber
+                               date:date
+                              point:event.locationInWindow
+           fromOffscreenCommandLine:fromOffscreenCommandLine];
 }
 
 // Point is in window coords
 - (void)presentCommandInfoForMark:(id<VT100ScreenMarkReading>)mark
                absoluteLineNumber:(long long)absoluteLineNumber
                              date:(NSDate *)date
-                            point:(NSPoint)windowPoint {
+                            point:(NSPoint)windowPoint
+         fromOffscreenCommandLine:(BOOL)fromOffscreenCommandLine {
     long long overflow = self.dataSource.totalScrollbackOverflow;
     const int line = absoluteLineNumber - overflow;
     const VT100GridRange lineRange = [self lineRangeForMark:mark];
@@ -407,6 +415,7 @@ iTermCommandInfoViewControllerDelegate>
                                   outputPromise:outputPromise
                                  outputProgress:outputProgress
                                          inView:self
+                       fromOffscreenCommandLine:fromOffscreenCommandLine
                                              at:point
                                        delegate:self];
 }
@@ -1534,7 +1543,8 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [self presentCommandInfoForMark:mark
                  absoluteLineNumber:absRange.start.y
                                date:mark.startDate
-                              point:windowPoint];
+                              point:windowPoint
+           fromOffscreenCommandLine:NO];
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
