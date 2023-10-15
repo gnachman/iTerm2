@@ -848,17 +848,21 @@ async def really_find_completions_with_prefix(prefix, directory, max_count, exec
     return results
 
 async def contents_of_directory(directory, prefix, executable, max_count):
-    relative = await asyncio.get_event_loop().run_in_executor(None, lambda: os.listdir(directory))
-    result = []
-    for path in relative:
-        if len(result) >= max_count:
-            break
-        file_name = os.path.basename(path)
-        if len(prefix) == 0 or file_name.startswith(prefix):
-            full_path = os.path.join(directory, path)
-            if not executable or os.access(full_path, os.X_OK):
-                result.append(full_path)
-    return result
+    try:
+        relative = await asyncio.get_event_loop().run_in_executor(None, lambda: os.listdir(directory))
+        result = []
+        for path in relative:
+            if len(result) >= max_count:
+                break
+            file_name = os.path.basename(path)
+            if len(prefix) == 0 or file_name.startswith(prefix):
+                full_path = os.path.join(directory, path)
+                if not executable or os.access(full_path, os.X_OK):
+                    result.append(full_path)
+        return result
+    except Exception as e:
+        log(f'exception while getting contents of {directory}: {traceback.format_exc()}')
+        return []
 
 async def handle_file_fetch(identifier, path, offset, size):
     log(f'handle_file_fetch {identifier} {path}')
