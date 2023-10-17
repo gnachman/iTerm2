@@ -1444,6 +1444,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                                                findMatches:matches
                                                                            underlinedRange:[self underlinedRangeOnLine:sourceLineNumber + _totalScrollbackOverflow]
                                                                                  positions:&positions];
+    DLog(@"source=%@ display=%@: %@", @(sourceLineNumber), @(displayLineNumber), attributedStrings);
+
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_CONSTRUCTION]);
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_DRAW]);
@@ -1478,6 +1480,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         start += singlePartAttributedString.length;
         int numCellsDrawn;
         if ([singlePartAttributedString isKindOfClass:[NSAttributedString class]]) {
+            DLog(@"call drawSinglePartAttributedString:%@", singlePartAttributedString);
             numCellsDrawn = [self drawSinglePartAttributedString:(NSAttributedString *)singlePartAttributedString
                                                          atPoint:point
                                                           origin:origin
@@ -1488,6 +1491,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         } else {
             NSPoint offsetPoint = point;
             offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
+            DLog(@"call drawFastPathString:%@", singlePartAttributedString);
             numCellsDrawn = [self drawFastPathString:(iTermCheapAttributedString *)singlePartAttributedString
                                              atPoint:offsetPoint
                                      unadjustedPoint:point
@@ -1731,6 +1735,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                             positions:(CGFloat *)stringPositions
                                       backgroundColor:(NSColor *)backgroundColor
                                         virtualOffset:(CGFloat)virtualOffset {
+    DLog(@"ddrawUnderlineOrStrikethroughForFastPathString: %@", cheapString);
     NSDictionary *const attributes = cheapString.attributes;
     NSNumber *value = attributes[wantUnderline ? NSUnderlineStyleAttributeName : NSStrikethroughStyleAttributeName];
     NSUnderlineStyle underlineStyle = value.integerValue;
@@ -2140,7 +2145,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                 font:(NSFont *)font
                                        virtualOffset:(CGFloat)virtualOffset
                                                block:(void (^)(CGContextRef))block {
+    DLog(@"drawUnderlinedOrStruckthroughTextWithContext");
     if ([iTermAdvancedSettingsModel solidUnderlines]) {
+        DLog(@"Solid");
         [self drawUnderlineOrStrikethroughOfColor:underlineColor
                                     wantUnderline:wantUnderline
                                             style:underlineStyle
@@ -3001,6 +3008,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                        font:(NSFont *)font
                                        rect:(NSRect)rawRect
                               virtualOffset:(CGFloat)virtualOffset {
+    DLog(@"drawUnderlineOrStrikethroughOfColor:%@ rawRect:%@", color, NSStringFromRect(rawRect));
     const NSRect rect = NSRectSubtractingVirtualOffset(rawRect, virtualOffset);
     [color set];
     NSBezierPath *path = [NSBezierPath bezierPath];

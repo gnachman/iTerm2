@@ -39,7 +39,7 @@
                     <rect key="frame" x="20" y="20" width="806" height="103"/>
                     <subviews>
                         <stackView distribution="fillProportionally" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Bu-CZ-ehd" userLabel="Command Horizontal Stack View">
-                            <rect key="frame" x="290" y="195" width="227" height="17"/>
+                            <rect key="frame" x="290" y="86" width="227" height="17"/>
                             <subviews>
                                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gSV-cc-RpM">
                                     <rect key="frame" x="-2" y="1" width="70" height="16"/>
@@ -126,7 +126,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jc4-Tf-63f" userLabel="Directory Horizontal Stack View">
-                            <rect key="frame" x="293" y="170" width="221" height="17"/>
+                            <rect key="frame" x="293" y="61" width="221" height="17"/>
                             <subviews>
                                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gZ3-4g-znX">
                                     <rect key="frame" x="-2" y="1" width="64" height="16"/>
@@ -148,7 +148,7 @@
                                     </textFieldCell>
                                 </textField>
                                 <imageView focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="251" placeholderIntrinsicWidth="16" placeholderIntrinsicHeight="16" translatesAutoresizingMaskIntoConstraints="NO" id="lO8-vd-LCm" customClass="iTermDraggableImageView">
-                                    <rect key="frame" x="157" y="-2.5" width="16.5" height="22"/>
+                                    <rect key="frame" x="157" y="-1.5" width="16.5" height="21"/>
                                     <constraints>
                                         <constraint firstAttribute="width" constant="16" id="78G-Hm-gQH"/>
                                         <constraint firstAttribute="height" constant="16" id="wPg-L0-0Vi"/>
@@ -198,7 +198,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" verticalCompressionResistancePriority="250" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="x8h-AV-skv" userLabel="Output Stack View">
-                            <rect key="frame" x="315" y="146" width="177" height="16"/>
+                            <rect key="frame" x="315" y="37" width="177" height="16"/>
                             <subviews>
                                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9pg-pI-mpR">
                                     <rect key="frame" x="-2" y="0.0" width="50" height="16"/>
