@@ -61,6 +61,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 - (BOOL)terminalWindowUseMinimalStyle;
 // This is called only for the menu item window > move to (screen name)
 - (void)terminalWindowWillMoveToScreen:(NSScreen *)screen;
+- (void)terminalWindowDidMoveToScreen:(NSScreen *)screen;
 
 typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
     PTYWindowTitleBarFlavorDefault,
@@ -90,6 +91,7 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 @property (nonatomic) NSInteger it_accessibilityResizing;
 @property(nonatomic) BOOL it_restorableStateInvalid;
 @property(nonatomic) BOOL it_preventFrameChange;
+@property(nonatomic, readonly) BOOL it_isMovingScreen;
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;
 - (NSColor *)it_terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor;
 - (id<PSMTabStyle>)it_tabStyle;

@@ -38,6 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *_lastAlphaChangeStack;
 #endif
     BOOL _updatingDividerLayer;
+    BOOL _isMovingScreen;
 }
 
 @synthesize it_openingSheet;
@@ -552,7 +553,17 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([sender isKindOfClass:[NSScreen class]]) {
         [self.ptyDelegate terminalWindowWillMoveToScreen:sender];
     }
+    DLog(@"_isMovingScreen = YES");
+    _isMovingScreen = YES;
     [super _moveToScreen:sender];
+    DLog(@"_isMovingScreen = NO");
+    if ([sender isKindOfClass:[NSScreen class]]) {
+        [self.ptyDelegate terminalWindowDidMoveToScreen:sender];
+    }
+}
+
+- (BOOL)it_isMovingScreen {
+    return _isMovingScreen;
 }
 
 - (void)setFrame:(NSRect)frameRect display:(BOOL)flag {

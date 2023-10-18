@@ -439,6 +439,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     // Issue 10551
     iTermTextView *_fieldEditor;
+    BOOL _needsCanonicalize;
 }
 
 @synthesize scope = _scope;
@@ -1707,6 +1708,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     DLog(@"Current screen has frame %@. Moving.", NSStringFromRect(currentScreen.frame));
     _isAnchoredToScreen = NO;
+}
+
+- (void)terminalWindowDidMoveToScreen:(NSScreen *)screen {
+    if (_needsCanonicalize) {
+        DLog(@"moveToScreen finished so do deferred frame canonicalization");
+        [self canonicalizeWindowFrame];
+    }
+    _needsCanonicalize = NO;
 }
 
 - (PTYWindowTitleBarFlavor)ptyWindowTitleBarFlavor {
@@ -3905,6 +3914,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)canonicalizeWindowFrame {
     PtyLog(@"canonicalizeWindowFrame %@\n%@", self, [NSThread callStackSymbols]);
+    if (self.ptyWindow.it_isMovingScreen) {
+        _needsCanonicalize = YES;
+        DLog(@"Moving screens so don't canonicalize");
+        return;
+    }
     // It's important that this method respect the current screen if possible because
     // -windowDidChangeScreen calls it.
 
@@ -4505,12 +4519,16 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Accepting proposal");
         return proposedFrameSize;
     }
+    if (self.ptyWindow.it_isMovingScreen) {
+        DLog(@"Accepting proposal (2)");
+        return proposedFrameSize;
+    }
     if (self.windowType == WINDOW_TYPE_MAXIMIZED || self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED) {
         DLog( @"Blocking resize" );
         self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
         return self.window.screen.visibleFrameIgnoringHiddenDock.size;
     }
-    NSSize originalProposal = proposedFrameSize;
+     NSSize originalProposal = proposedFrameSize;
     // Find the session for the current pane of the current tab.
     PTYTab* tab = [self currentTab];
     if (!tab) {
