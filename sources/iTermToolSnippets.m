@@ -11,6 +11,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermActionsModel.h"
 #import "iTermEditSnippetWindowController.h"
+#import "iTermSearchField.h"
 #import "iTermSnippetsModel.h"
 #import "iTermTuple.h"
 #import "iTermCompetentTableRowView.h"
@@ -33,7 +34,7 @@ typedef NS_ENUM(NSUInteger, iTermToolSnippetsAction) {
     iTermToolSnippetsActionComposer
 };
 
-@interface iTermToolSnippets() <NSDraggingDestination, NSTableViewDataSource, NSTableViewDelegate>
+@interface iTermToolSnippets() <NSDraggingDestination, NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate>
 @end
 
 @implementation iTermToolSnippets {
@@ -45,6 +46,7 @@ typedef NS_ENUM(NSUInteger, iTermToolSnippetsAction) {
     NSButton *_addButton;
     NSButton *_removeButton;
     NSButton *_editButton;
+    iTermSearchField *_searchField;
 
     NSArray<iTermSnippet *> *_unfilteredSnippets;
     NSArray<iTermSnippet *> *_filteredSnippets;
@@ -116,6 +118,15 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
                                                 block:^(iTermSnippetsDidChangeNotification * _Nonnull notification) {
             [weakSelf snippetsDidChange:notification];
         }];
+
+        _searchField = [[iTermSearchField alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, 1)];
+        [_searchField sizeToFit];
+        _searchField.autoresizingMask = NSViewWidthSizable;
+        _searchField.frame = NSMakeRect(0, 0, frame.size.width, _searchField.frame.size.height);
+        [_searchField setDelegate:self];
+        [self addSubview:_searchField];
+        [_searchField setArrowHandler:_tableView];
+
         [self relayout];
         [self updateEnabled];
         [self registerForDraggedTypes:@[ NSPasteboardTypeString ]];
@@ -136,6 +147,14 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 - (void)relayout {
     NSRect frame = self.frame;
+
+    // Search field
+    NSRect searchFieldFrame = NSMakeRect(0,
+                                         0,
+                                         frame.size.width - 2 * kMargin,
+                                         _searchField.frame.size.height);
+    _searchField.frame = searchFieldFrame;
+
     [_applyButton sizeToFit];
     [_applyButton setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, _applyButton.frame.size.width, kButtonHeight)];
 
@@ -165,7 +184,8 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
                                   kButtonHeight);
     }
 
-    [_scrollView setFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
+    const CGFloat searchFieldY = searchFieldFrame.size.height + kMargin;
+    [_scrollView setFrame:NSMakeRect(0, searchFieldY, frame.size.width, frame.size.height - kButtonHeight - kMargin - searchFieldY)];
     NSSize contentSize = [self contentSize];
     [_tableView setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 }
@@ -266,8 +286,12 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 // Also updates _haveTags
 - (void)setFilteredSnippetsFrom:(NSArray<iTermSnippet *> *)unfilteredSnippets {
     NSArray<NSString *> *tags = [self.toolWrapper.delegate.delegate toolbeltSnippetTags];
+    NSString *query = _searchField.stringValue;
     _filteredSnippets = [unfilteredSnippets filteredArrayUsingBlock:^BOOL(iTermSnippet *snippet) {
-        return [snippet hasTags:tags];
+        if (![snippet hasTags:tags]) {
+            return NO;
+        }
+        return query.length == 0 || [snippet.title containsString:query] || [snippet.value containsString:query];
     }];
     _haveTags = [[self.toolWrapper.delegate.delegate toolbeltSnippetTags] count] > 0;
 }
@@ -562,5 +586,21 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (BOOL)wantsPeriodicDraggingUpdates {
     return YES;
 }
+
+#pragma mark - NSSearchFieldDelegate
+
+- (void)controlTextDidChange:(NSNotification *)aNotification {
+    [self updateModel];
+    [_tableView reloadData];
+}
+
+- (NSArray *)control:(NSControl *)control
+            textView:(NSTextView *)textView
+         completions:(NSArray *)words
+ forPartialWordRange:(NSRange)charRange
+ indexOfSelectedItem:(NSInteger *)index {
+    return @[];
+}
+
 
 @end
