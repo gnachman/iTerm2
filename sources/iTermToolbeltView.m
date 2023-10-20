@@ -530,7 +530,15 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 - (void)relayoutAllTools {
-    _splitter.frame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
+    const NSRect desiredFrame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
+    if (!NSEqualRects(_splitter.frame, desiredFrame)) {
+        // In issue 10712 we get in a loop where we set the splitter to its current frame which
+        // seems to kick off another layout pass, bringing you back here.
+        DLog(@"Actually setting frame");
+        _splitter.frame = desiredFrame;
+    } else {
+        DLog(@"Frame is already what we want so not setting it");
+    }
     for (iTermToolWrapper *wrapper in [_splitter subviews]) {
         [wrapper relayout];
     }
