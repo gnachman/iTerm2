@@ -1710,7 +1710,48 @@ ITERM_WEAKLY_REFERENCEABLE
     _isAnchoredToScreen = NO;
 }
 
+- (void)moveToScreen:(NSScreen *)screen {
+    const NSRect originalFrame = self.window.frame;
+    NSRect destinationFrame;
+    const NSRect sourceScreenFrame = self.fullScreen ? self.window.screen.frame : self.window.screen.visibleFrame;
+    const NSRect destinationScreenFrame = self.fullScreen ? screen.frame : screen.visibleFrame;
+    const NSPoint originOffset = NSMakePoint(originalFrame.origin.x - sourceScreenFrame.origin.x,
+                                             originalFrame.origin.y - sourceScreenFrame.origin.y);
+    const NSPoint offsetFraction = NSMakePoint(originOffset.x / sourceScreenFrame.size.width,
+                                               originOffset.y / sourceScreenFrame.size.height);
+    const NSPoint destinationOrigin = NSMakePoint(destinationScreenFrame.origin.x + offsetFraction.x * destinationScreenFrame.size.width,
+                                                  destinationScreenFrame.origin.y + offsetFraction.y * destinationScreenFrame.size.height);
+    destinationFrame.origin = destinationOrigin;
+    destinationFrame.size.height = MIN(originalFrame.size.height, destinationScreenFrame.size.height);
+    destinationFrame.size.width = MIN(originalFrame.size.width, destinationScreenFrame.size.width);
+
+    // Move towards origin to fit
+    CGFloat overage;
+    overage = MAX(0, NSMaxX(destinationFrame) - NSMaxX(destinationScreenFrame));
+    destinationFrame.origin.x = MAX(destinationScreenFrame.origin.x, destinationFrame.origin.x - overage);
+    overage = MAX(0, NSMaxY(destinationFrame) - NSMaxY(destinationScreenFrame));
+    destinationFrame.origin.y = MAX(destinationScreenFrame.origin.y, destinationFrame.origin.y - overage);
+    DLog(@"Failed to move window. Current screen is %@. Desired screen is %@. originalFrame=%@ destinationFrame=%@ sourceScreenFrame=%@ destinationScreenFrame=%@ originOffset=%@ offsetFraction=%@ destinationOrigin=%@",
+         self.window.screen,
+         screen,
+         NSStringFromRect(originalFrame),
+         NSStringFromRect(destinationFrame),
+         NSStringFromRect(sourceScreenFrame),
+         NSStringFromRect(destinationScreenFrame),
+         NSStringFromPoint(originOffset),
+         NSStringFromPoint(offsetFraction),
+         NSStringFromPoint(destinationOrigin));
+    [self.window setFrame:destinationFrame display:NO];
+    [self canonicalizeWindowFrame];
+}
+
 - (void)terminalWindowDidMoveToScreen:(NSScreen *)screen {
+    if (self.window &&
+        ![self.window.screen.it_uniqueKey isEqualToString:screen.it_uniqueKey] &&
+        !self.window.isFullScreen) {
+        DLog(@"Hit the backstop");
+        [self moveToScreen:screen];
+    }
     if (_needsCanonicalize) {
         DLog(@"moveToScreen finished so do deferred frame canonicalization");
         [self canonicalizeWindowFrame];

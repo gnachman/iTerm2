@@ -556,6 +556,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"_isMovingScreen = YES");
     _isMovingScreen = YES;
     [super _moveToScreen:sender];
+    _isMovingScreen = NO;
     DLog(@"_isMovingScreen = NO");
     if ([sender isKindOfClass:[NSScreen class]]) {
         [self.ptyDelegate terminalWindowDidMoveToScreen:sender];
