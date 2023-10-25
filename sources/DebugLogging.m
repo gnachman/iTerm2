@@ -25,8 +25,6 @@ static NSMutableString* gDebugLogStr = nil;
 
 static NSMutableDictionary *gPinnedMessages;
 BOOL gDebugLogging = NO;
-static BOOL gAutoWrite = YES;
-static NSFileHandle *gFileHandle = nil;
 
 static NSRecursiveLock *GetDebugLogLock(void) {
     static NSRecursiveLock *gDebugLogLock = nil;
@@ -69,23 +67,6 @@ static NSString *iTermOSVersionInfo(void) {
         value = [dict[@"ProductVersion"] copy];
     });
     return value ?: @"(nil)";
-}
-
-static void AutoWrite(void);
-static void AutoWrite(void) {
-    [GetDebugLogLock() lock];
-    if (!gFileHandle) {
-        gFileHandle = [NSFileHandle fileHandleForWritingAtPath:kDebugLogFilename];
-        if (!gFileHandle) {
-            [[NSFileManager defaultManager] createFileAtPath:kDebugLogFilename contents:nil attributes:nil];
-            gFileHandle = [NSFileHandle fileHandleForWritingAtPath:kDebugLogFilename];
-        }
-        [gFileHandle seekToEndOfFile];
-        [gFileHandle writeData:[gDebugLogHeader dataUsingEncoding:NSUTF8StringEncoding]];
-    }
-    [gFileHandle writeData:[gDebugLogStr dataUsingEncoding:NSUTF8StringEncoding]];
-    [gDebugLogStr setString:@""];
-    [GetDebugLogLock() unlock];
 }
 
 static void WriteDebugLogHeader(void) {
@@ -240,9 +221,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
                                         withString:@"*GIANT LOG TRUNCATED*\n"];
         }
         [GetDebugLogLock() unlock];
-        if (gAutoWrite) {
-            AutoWrite();
-        }
     }
     return 1;
 }
@@ -353,8 +331,6 @@ void ToggleDebugLogging(void) {
         alert.informativeText = @"Please send /tmp/debuglog.txt to the developers.";
         [alert addButtonWithTitle:@"OK"];
         [alert runModal];
-        [gFileHandle closeFile];
-        gFileHandle = nil;
     }
 }
 

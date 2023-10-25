@@ -537,7 +537,7 @@ DEFINE_BOOL(prioritizeSmartSelectionActions, NO, SECTION_SEMANTIC_HISTORY @"Chec
 
 #define SECTION_DEBUGGING @"Debugging: "
 
-DEFINE_BOOL(startDebugLoggingAutomatically, YES, SECTION_DEBUGGING @"Start debug logging automatically when iTerm2 is launched.");
+DEFINE_BOOL(startDebugLoggingAutomatically, NO, SECTION_DEBUGGING @"Start debug logging automatically when iTerm2 is launched.");
 DEFINE_BOOL(appendToExistingDebugLog, NO, SECTION_DEBUGGING @"Append to existing debug log rather than replacing it.");
 DEFINE_BOOL(logDrawingPerformance, NO, SECTION_DEBUGGING @"Log stats about text drawing performance to console.\nUsed for performance testing.");
 DEFINE_BOOL(logRestorableStateSize, NO, SECTION_DEBUGGING @"Log restorable state size info to /tmp/statesize.*.txt.");
