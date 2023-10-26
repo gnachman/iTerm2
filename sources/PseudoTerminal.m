@@ -11646,13 +11646,19 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (void)updateToolbeltAppearance {
     switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
-        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_MINIMAL: {
+            NSAppearance *appearance;
             if (self.minimalTabStyleBackgroundColor.isDark) {
-                _contentView.toolbelt.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+                appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
             } else {
-                _contentView.toolbelt.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+                appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            }
+            _contentView.toolbelt.appearance = appearance;
+            if (!self.useSeparateStatusbarsPerPane) {
+                self.contentView.statusBarViewController.view.appearance = appearance;
             }
             break;
+        }
 
         case TAB_STYLE_AUTOMATIC:
         case TAB_STYLE_LIGHT:
@@ -11661,6 +11667,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         case TAB_STYLE_DARK_HIGH_CONTRAST:
         case TAB_STYLE_COMPACT:
             _contentView.toolbelt.appearance = nil;
+            if (!self.useSeparateStatusbarsPerPane) {
+                self.contentView.statusBarViewController.view.appearance = nil;
+            }
             break;
     }
 }

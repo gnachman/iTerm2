@@ -135,6 +135,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)statusBarComponentDidClickWithView:(NSView *)view {
     NSPopover *popover = [[NSPopover alloc] init];
+    popover.appearance = view.effectiveAppearance;
     pid_t pid = [[self.scope valueForVariableName:iTermVariableKeySessionEffectiveSessionRootPid] integerValue];
     iTermJobTreeViewController *viewController = [[iTermJobTreeViewController alloc] initWithProcessID:pid
                                                                                    processInfoProvider:[self.delegate statusBarComponentProcessInfoProvider]];

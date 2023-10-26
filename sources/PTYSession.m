@@ -10649,9 +10649,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)updateAppearanceForMinimalTheme {
     const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
     if (minimal) {
-        _view.appearance = [_screen.colorMap colorForKey:kColorMapBackground].isDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+        NSAppearance *appearance = [_screen.colorMap colorForKey:kColorMapBackground].isDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+        _view.appearance = appearance;
+        self.statusBarViewController.view.appearance = appearance;
     } else {
         _view.appearance = nil;
+        self.statusBarViewController.view.appearance = nil;
     }
 }
 
