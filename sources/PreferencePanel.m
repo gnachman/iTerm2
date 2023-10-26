@@ -431,6 +431,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
     } else {
+        [_toolbar setVisible:YES];
         [self resizeWindowForTabViewItem:_globalTabViewItem animated:NO];
     }
 
