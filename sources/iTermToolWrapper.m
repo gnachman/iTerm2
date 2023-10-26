@@ -9,7 +9,7 @@
 #import "iTermToolWrapper.h"
 
 #import "iTermToolbeltView.h"
-
+#import "DebugLogging.h"
 #import "NSImage+iTerm.h"
 
 static const CGFloat kTitleHeight = 19;
