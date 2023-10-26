@@ -30,10 +30,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
                                                              font:(NSFont * _Nullable)font
                                                             value:(id)value;
-+ (void)initializeTextCell:(NSTableCellView *)cell
-            withIdentifier:(NSString *)identifier
-                      font:(NSFont * _Nullable)font
-                     value:(id)value;
 + (CGFloat)heightForTextCellUsingFont:(NSFont *)font;
 
 @end

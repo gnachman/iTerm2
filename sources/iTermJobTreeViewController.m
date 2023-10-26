@@ -249,6 +249,7 @@ static int gSignalsToList[] = {
     NSTimer *_timer;
     IBOutlet SignalPicker *signal_;  // TODO - use this
     IBOutlet NSButton *kill_;
+    IBOutlet NSVisualEffectView *_vev;
     iTermGraphicSource *_graphicSource;
 }
 
@@ -495,6 +496,8 @@ static int gSignalsToList[] = {
     const CGFloat pidWidth = [[[[self tableCellViewWithString:@"MMMMMM" image:nil isJob:NO] textField] cell] cellSizeForBounds:_outlineView.bounds].width;
     _outlineView.tableColumns.lastObject.width = pidWidth;
     _outlineView.tableColumns.firstObject.width = totalWidth - pidWidth;
+
+    _outlineView.enclosingScrollView.frame = NSMakeRect(0, NSMaxY(_vev.frame), self.view.frame.size.width, self.view.frame.size.height - NSMaxY(_vev.frame));
 }
 
 #pragma mark - Actions

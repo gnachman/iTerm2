@@ -20,6 +20,7 @@ static const CGFloat kBottomMargin = 8;
 static const CGFloat kButtonSize = 17;
 static const CGFloat kTopMargin = 3;  // Margin above title bar and close button
 static const CGFloat kCloseButtonLeftMargin = 2;
+static const CGFloat iTermToolWrapperCollapsedHeight = 22.0;
 
 @implementation NSView (ToolWrapper)
 
@@ -35,7 +36,7 @@ static const CGFloat kCloseButtonLeftMargin = 2;
 @end
 
 @interface iTermToolWrapper()
-@property(nonatomic, readwrite, assign) NSView *container;
+@property(nonatomic, readwrite) NSView *container;
 @end
 
 @implementation iTermToolWrapper {
@@ -46,6 +47,7 @@ static const CGFloat kCloseButtonLeftMargin = 2;
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        self.autoresizesSubviews = NO;
         _title = [[NSTextField alloc] initWithFrame:NSMakeRect(kCloseButtonLeftMargin + kButtonSize,
                                                                0,
                                                                frame.size.width - kButtonSize - kRightMargin - kCloseButtonLeftMargin,
@@ -53,12 +55,10 @@ static const CGFloat kCloseButtonLeftMargin = 2;
         [_title setEditable:NO];
         [_title bind:@"value" toObject:self withKeyPath:@"name" options:nil];
         _title.backgroundColor = [NSColor clearColor];
-        [_title setAutoresizingMask:NSViewWidthSizable | NSViewMaxYMargin];
         [_title setAlignment:NSTextAlignmentCenter];
         [_title setBezeled:NO];
         _title.lineBreakMode = NSLineBreakByTruncatingTail;
         [self addSubview:_title];
-        [_title release];
 
         NSImage *closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
         _closeButton = [[NSButton alloc] initWithFrame:NSMakeRect(kCloseButtonLeftMargin, 10, kButtonSize, kButtonSize)];
@@ -69,28 +69,29 @@ static const CGFloat kCloseButtonLeftMargin = 2;
         [_closeButton setBordered:NO];
         [_closeButton setTitle:@""];
         [self addSubview:_closeButton];
-        [_closeButton release];
 
-        _container = [[[NSView alloc] initWithFrame:NSMakeRect(kLeftMargin,
-                                                               kTitleHeight + kMargin,
-                                                               frame.size.width - kLeftMargin - kRightMargin,
-                                                               frame.size.height - kTitleHeight - kMargin - kBottomMargin)] autorelease];
-        [_container setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        _container = [[NSView alloc] initWithFrame:NSMakeRect(kLeftMargin,
+                                                              kTitleHeight + kMargin,
+                                                              frame.size.width - kLeftMargin - kRightMargin,
+                                                              frame.size.height - kTitleHeight - kMargin - kBottomMargin)];
         [self addSubview:_container];
         [self relayout];
     }
     return self;
 }
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_name release];
-
-    [super dealloc];
-}
-
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@:%p frame=%@>", [self class], self, [NSValue valueWithRect:self.frame]];
+}
+
+- (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
+    [super resizeWithOldSuperviewSize:oldSize];
+    [self relayout];
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    [super setFrameSize:newSize];
+    [self relayout];
 }
 
 - (void)relayout {
@@ -113,6 +114,13 @@ static const CGFloat kCloseButtonLeftMargin = 2;
 }
 
 - (CGFloat)minimumHeight {
+    if (_collapsed) {
+        return iTermToolWrapperCollapsedHeight;
+    }
+    return [self minimumHeightWhenExpanded];
+}
+
+- (CGFloat)minimumHeightWhenExpanded {
     return [self.tool minimumHeight] + kTitleHeight + kMargin + kBottomMargin;
 }
 
@@ -135,7 +143,6 @@ static const CGFloat kCloseButtonLeftMargin = 2;
 }
 
 - (void)setName:(NSString *)theName {
-    [_name autorelease];
     _name = [theName copy];
     [self performSelector:@selector(setTitleEditable) withObject:nil afterDelay:0];
 }
@@ -149,6 +156,47 @@ static const CGFloat kCloseButtonLeftMargin = 2;
         return nil;
     }
     return (id<ToolbeltTool>)[[_container subviews] firstObject];
+}
+
+- (void)setCollapsed:(BOOL)collapsed {
+    if (_collapsed == collapsed) {
+        return;
+    }
+    _collapsed = collapsed;
+
+    if (collapsed) {
+        [_container removeFromSuperview];
+        NSRect frame = self.frame;
+        frame.size.height = iTermToolWrapperCollapsedHeight;
+        self.frame = frame;
+        DLog(@"Collapse %@", self.tool);
+    } else {
+        NSRect frame = self.frame;
+        frame.size.height = self.minimumHeight;
+        self.frame = frame;
+        [self addSubview:_container];
+        [self relayout];
+        DLog(@"Expand %@", self.tool);
+    }
+}
+
+- (void)temporarilyRemoveSubviews {
+    if (_collapsed) {
+        return;
+    }
+    [_title removeFromSuperview];
+    [_container removeFromSuperview];
+    [_closeButton removeFromSuperview];
+}
+
+- (void)restoreSubviews {
+    if (_collapsed) {
+        return;
+    }
+    [self addSubview:_title];
+    [self addSubview:_container];
+    [self addSubview:_closeButton];
+    [self relayout];
 }
 
 @end

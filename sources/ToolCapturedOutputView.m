@@ -378,7 +378,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 }
 
 - (CGFloat)minimumHeight {
-    return 60;
+    return 91;
 }
 
 - (void)toggleCheckmark:(id)sender {

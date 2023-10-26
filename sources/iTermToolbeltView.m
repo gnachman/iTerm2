@@ -476,7 +476,7 @@ static NSString *const kDynamicToolURL = @"URL";
 
     [wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [theTool setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-    [_splitter adjustSubviews];
+    [self adjustSubviews];
     [_tools setObject:wrapper forKey:[[wrapper.name copy] autorelease]];
 }
 
@@ -617,17 +617,12 @@ static NSString *const kDynamicToolURL = @"URL";
          ofSubviewAt:(NSInteger)dividerIndex {
     CGFloat min = 0;
     NSArray *subviews = [_splitter subviews];
-    for (int i = 0; i <= dividerIndex; i++) {
+    for (int i = 0; i < dividerIndex; i++) {
         iTermToolWrapper *wrapper = subviews[i];
-        if (i == dividerIndex) {
-            min += wrapper.minimumHeight;
-        } else {
-            min += wrapper.frame.size.height;
-        }
-        if (i > 0) {
-            min += [splitView dividerThickness];
-        }
+        min += wrapper.minimumHeight;
+        min += [splitView dividerThickness];
     }
+    DLog(@"Constrain subview %@ to minY >= %@", @(dividerIndex), @(min));
     return min;
 }
 
@@ -636,25 +631,61 @@ static NSString *const kDynamicToolURL = @"URL";
          ofSubviewAt:(NSInteger)dividerIndex {
     CGFloat height = splitView.frame.size.height;
     NSArray *subviews = [_splitter subviews];
-    for (int i = subviews.count - 1; i > dividerIndex; i--) {
+    for (int i = subviews.count - 1; i >= dividerIndex; i--) {
         iTermToolWrapper *wrapper = subviews[i];
-        if (i == dividerIndex + 1) {
-            height -= wrapper.minimumHeight;
-        } else {
-            height -= wrapper.frame.size.height;
-        }
-        if (i != subviews.count - 1) {
-            height -= [splitView dividerThickness];
-        }
+        height -= wrapper.minimumHeight;
+        height -= [splitView dividerThickness];
     }
+    DLog(@"Constrain subview %@ to maxY <= %@", @(dividerIndex), @(height));
     return height;
 }
 
-- (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize {
-    [splitView adjustSubviews];
-    [self forceSplitterSubviewsToRespectSizeConstraints];
+- (CGFloat)minimumHeightForSplitterSubviews {
+    CGFloat total = 0;
+    for (iTermToolWrapper *wrapper in _splitter.subviews) {
+        total += wrapper.minimumHeight;
+    }
+    total += MAX(0, _splitter.subviews.count - 1) * _splitter.dividerThickness;
+    return total;
 }
 
+- (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize {
+    BOOL collapsedAny = NO;
+    for (iTermToolWrapper *wrapper in _splitter.subviews.reversed) {
+        if (!wrapper.collapsed) {
+            if ([self minimumHeightForSplitterSubviews] > _splitter.frame.size.height) {
+                wrapper.collapsed = YES;
+                collapsedAny = YES;
+            }
+        }
+    }
+    if (!collapsedAny && splitView.frame.size.height > oldSize.height) {
+        for (iTermToolWrapper *wrapper in _splitter.subviews) {
+            if (wrapper.collapsed) {
+                if ([self minimumHeightForSplitterSubviews] + wrapper.minimumHeightWhenExpanded <= _splitter.frame.size.height) {
+                    wrapper.collapsed = NO;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    [self adjustSubviews];
+}
+
+- (void)adjustSubviews {
+    // Remove subviews from the wrapper to avoid violating constraints as it's unavoidably smaller
+    // than its minimum size sometimes.
+    for (iTermToolWrapper *wrapper in _splitter.subviews) {
+        [wrapper temporarilyRemoveSubviews];
+    }
+    [_splitter adjustSubviews];
+    [self forceSplitterSubviewsToRespectSizeConstraints];
+    for (iTermToolWrapper *wrapper in _splitter.subviews) {
+        [wrapper restoreSubviews];
+    }
+}
 #pragma mark - PTYSplitViewDelegate
 
 - (NSDictionary *)proportions {
@@ -759,7 +790,7 @@ static NSString *const kDynamicToolURL = @"URL";
         y += tuple.secondObject.doubleValue * sumOfCurrentHeights;
         y += _splitter.dividerThickness;
     }
-    [_splitter adjustSubviews];
+    [self adjustSubviews];
     _proportions = [[self proportions] retain];
 }
 

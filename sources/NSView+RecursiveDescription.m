@@ -34,13 +34,14 @@
     if (self.autoresizesSubviews) {
         [arm addObject:@"subviews"];
     }
-    [s appendFormat:@"%@%@ frame=%@ hidden=%@ alphaValue=%0.2f autoresizing=%@ tracking_areas=%@\n",
+    [s appendFormat:@"%@%@ frame=%@ hidden=%@ alphaValue=%0.2f autoresizing=%@ autolayout=%@ tracking_areas=%@\n",
      prefix,
      self,
      [NSValue valueWithRect:self.frame],
      self.isHidden ? @"YES" : @"no",
      self.alphaValue,
      [arm componentsJoinedByString:@","],
+     self.translatesAutoresizingMaskIntoConstraints ? @"No" : @"*AUTO LAYOUT IN EFFECT*",
      self.trackingAreas.count ? self.trackingAreas : @"none"];
     for (NSView *view in [self subviews]) {
         [s appendString:[view recursiveDescriptionWithPrefix:[prefix stringByAppendingString:@"|   "]]];

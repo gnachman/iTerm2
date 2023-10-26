@@ -191,7 +191,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (CGFloat)minimumHeight {
-    return 60;
+    return 87;
 }
 
 #pragma mark - NSView

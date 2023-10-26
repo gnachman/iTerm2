@@ -80,13 +80,17 @@
 
 @interface iTermToolWrapper : NSView
 
+@property(nonatomic) BOOL collapsed;
 @property(nonatomic, copy) NSString *name;
 @property(nonatomic, readonly) NSView *container;
-@property(nonatomic, assign) id<ToolWrapperDelegate> delegate;
+@property(nonatomic, weak) id<ToolWrapperDelegate> delegate;
 @property(nonatomic, readonly) id<ToolbeltTool> tool;
 @property(nonatomic, readonly) CGFloat minimumHeight;
+@property(nonatomic, readonly) CGFloat minimumHeightWhenExpanded;
 
 - (void)relayout;
 - (void)removeToolSubviews;
+- (void)temporarilyRemoveSubviews;
+- (void)restoreSubviews;
 
 @end

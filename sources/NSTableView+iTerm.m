@@ -10,6 +10,85 @@
 #import <AppKit/AppKit.h>
 #import "NSTableColumn+iTerm.h"
 
+@interface iTermTableCellViewWithTextField: NSTableCellView
+@end
+
+@implementation iTermTableCellViewWithTextField {
+    NSString *_identifier;
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect
+                   identifier:(NSString *)identifier
+                         font:(NSFont *)font
+                        value:(id)value {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        _identifier = [identifier copy];
+        [self setFont:font value:value];
+    }
+    return self;
+}
+
+- (void)setFont:(NSFont *)font value:(id)value {
+    NSTextField *text = [[NSTextField alloc] init];
+    if (font) {
+        text.font = font;
+    }
+    text.bezeled = NO;
+    text.editable = NO;
+    text.selectable = NO;
+    text.drawsBackground = NO;
+    text.identifier = [_identifier stringByAppendingString:@"_TextField"];
+    text.lineBreakMode = NSLineBreakByTruncatingTail;
+
+    self.textField = text;
+    [self addSubview:text];
+    self.textField.frame = self.bounds;
+    [self updateTextFieldFrame];
+    if ([value isKindOfClass:[NSAttributedString class]]) {
+        text.attributedStringValue = value;
+        text.toolTip = [value string];
+    } else if ([value isKindOfClass:[NSString class]]) {
+        text.stringValue = value;
+        text.toolTip = value;
+    } else {
+        assert(NO);
+    }
+}
+
+- (NSSize)fittingSize {
+    NSSize size = self.textField.fittingSize;
+    size.height += 4;
+    return size;
+}
+
+- (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
+    [super resizeWithOldSuperviewSize:oldSize];
+    [self updateTextFieldFrame];
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    [super setFrameSize:newSize];
+    [self updateTextFieldFrame];
+}
+
+- (void)updateTextFieldFrame {
+    const CGFloat verticalPadding = 2.0;
+    CGFloat horizontalInset = 0;
+    if (@available(macOS 10.16, *)) {
+        horizontalInset = 0;
+    } else {
+        horizontalInset = 2;
+    }
+    NSRect frame = self.bounds;
+    frame.origin.x += horizontalInset;
+    frame.size.width -= horizontalInset * 2;
+    frame.origin.y += verticalPadding;
+    frame.size.height -= verticalPadding * 2;
+    self.textField.frame = frame;
+}
+
+@end
 @implementation NSTableView (iTerm)
 
 + (instancetype)toolbeltTableViewInScrollview:(NSScrollView *)scrollView
@@ -65,85 +144,26 @@
 - (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
                                                              font:(NSFont *)font
                                                             value:(id)value {
-    NSTableCellView *cell = [self makeViewWithIdentifier:identifier owner:self];
+    iTermTableCellViewWithTextField *cell = [self makeViewWithIdentifier:identifier owner:self];
     if (cell == nil) {
-        cell = [[NSTableCellView alloc] initWithFrame:NSMakeRect(0, 0, 100, 18)];
+        cell = [[iTermTableCellViewWithTextField alloc] initWithFrame:NSMakeRect(0, 0, 100, 18)
+                                                           identifier:identifier
+                                                                 font:font
+                                                                value:value];
     }
     if (cell.textField) {
         return cell;
     }
-    [NSTableView initializeTextCell:cell withIdentifier:identifier font:font value:value];
+    [cell setFont:font value:value];
     return cell;
 }
 
 + (CGFloat)heightForTextCellUsingFont:(NSFont *)font {
-    NSTableCellView *cell = [[NSTableCellView alloc] init];
-    [NSTableView initializeTextCell:cell
-                     withIdentifier:[NSString stringWithFormat:@"Measure font %@ %@", font.displayName, @(font.pointSize)]
-                               font:font
-                              value:@"M"];
+    NSTableCellView *cell = [[iTermTableCellViewWithTextField alloc] initWithFrame:NSZeroRect
+                                                                        identifier:@"iTermPhonyCell"
+                                                                              font:font
+                                                                             value:@"M"];
     return [cell fittingSize].height;
-}
-
-+ (void)initializeTextCell:(NSTableCellView *)cell withIdentifier:(NSString *)identifier font:(NSFont *)font value:(id)value {
-    NSTextField *text = [[NSTextField alloc] init];
-    if (font) {
-        text.font = font;
-    }
-    text.bezeled = NO;
-    text.editable = NO;
-    text.selectable = NO;
-    text.drawsBackground = NO;
-    text.identifier = [identifier stringByAppendingString:@"_TextField"];
-    text.translatesAutoresizingMaskIntoConstraints = NO;
-    text.lineBreakMode = NSLineBreakByTruncatingTail;
-
-    cell.textField = text;
-    [cell addSubview:text];
-    const CGFloat verticalPadding = 2.0;
-    CGFloat horizontalInset = 0;
-    if (@available(macOS 10.16, *)) {
-        horizontalInset = 0;
-    } else {
-        horizontalInset = 2;
-    }
-    [cell addConstraint:[NSLayoutConstraint constraintWithItem:text
-                                                     attribute:NSLayoutAttributeTop
-                                                     relatedBy:NSLayoutRelationEqual
-                                                        toItem:cell
-                                                     attribute:NSLayoutAttributeTop
-                                                    multiplier:1
-                                                      constant:verticalPadding]];
-    [cell addConstraint:[NSLayoutConstraint constraintWithItem:text
-                                                     attribute:NSLayoutAttributeBottom
-                                                     relatedBy:NSLayoutRelationEqual
-                                                        toItem:cell
-                                                     attribute:NSLayoutAttributeBottom
-                                                    multiplier:1
-                                                      constant:-verticalPadding]];
-    [cell addConstraint:[NSLayoutConstraint constraintWithItem:text
-                                                     attribute:NSLayoutAttributeLeft
-                                                     relatedBy:NSLayoutRelationEqual
-                                                        toItem:cell
-                                                     attribute:NSLayoutAttributeLeft
-                                                    multiplier:1
-                                                      constant:horizontalInset]];
-    [cell addConstraint:[NSLayoutConstraint constraintWithItem:text
-                                                     attribute:NSLayoutAttributeRight
-                                                     relatedBy:NSLayoutRelationEqual
-                                                        toItem:cell
-                                                     attribute:NSLayoutAttributeRight
-                                                    multiplier:1
-                                                      constant:horizontalInset]];
-    if ([value isKindOfClass:[NSAttributedString class]]) {
-        text.attributedStringValue = value;
-        text.toolTip = [value string];
-    } else if ([value isKindOfClass:[NSString class]]) {
-        text.stringValue = value;
-        text.toolTip = value;
-    } else {
-        assert(NO);
-    }
 }
 
 @end

@@ -219,9 +219,8 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
 {
 }
 
-- (CGFloat)minimumHeight
-{
-    return 88;
+- (CGFloat)minimumHeight {
+    return 110;
 }
 
 - (void)open:(id)sender {

@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22154" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22154"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermJobTreeViewController">
             <connections>
                 <outlet property="_outlineView" destination="5Km-gR-LVc" id="uIC-tT-dfP"/>
+                <outlet property="_vev" destination="lBb-Ii-0Mh" id="XXV-ag-7wH"/>
                 <outlet property="kill_" destination="ACM-dM-BU4" id="BHz-uT-9ce"/>
                 <outlet property="signal_" destination="Ykw-0a-zRO" id="cfi-z3-VSa"/>
                 <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
@@ -90,7 +91,7 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </tableHeaderView>
                 </scrollView>
-                <comboBox verticalHuggingPriority="750" id="Ykw-0a-zRO" customClass="SignalPicker">
+                <comboBox focusRingType="none" verticalHuggingPriority="750" id="Ykw-0a-zRO" customClass="SignalPicker">
                     <rect key="frame" x="4" y="0.0" width="129" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <comboBoxCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="lef-nJ-tqb">
@@ -140,6 +141,6 @@
         </menu>
     </objects>
     <resources>
-        <image name="NSRightFacingTriangleTemplate" width="10" height="14"/>
+        <image name="NSRightFacingTriangleTemplate" width="12" height="17"/>
     </resources>
 </document>

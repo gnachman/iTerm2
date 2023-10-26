@@ -83,7 +83,7 @@ static const CGFloat kMargin = 0;
 }
 
 - (CGFloat)minimumHeight {
-    return 60;
+    return 76;
 }
 
 - (void)updateJobs {

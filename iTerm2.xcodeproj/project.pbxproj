@@ -3113,7 +3113,6 @@
 		A6C763A11B45C52B00E3C992 /* TSVParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21941483144600FAC8E7 /* TSVParser.m */; };
 		A6C763A21B45C52B00E3C992 /* iTermToolbeltView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC881415513A00F83147 /* iTermToolbeltView.m */; };
 		A6C763A71B45C52B00E3C992 /* ToolNotes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67AAA814284BF300D5DA4E /* ToolNotes.m */; };
-		A6C763AA1B45C52B00E3C992 /* iTermToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* iTermToolWrapper.m */; };
 		A6C763AC1B45C52B00E3C992 /* BellTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC0D142D7F5F0016228A /* BellTrigger.m */; };
 		A6C763AD1B45C52B00E3C992 /* BounceTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC09142D7F300016228A /* BounceTrigger.m */; };
 		A6C763AE1B45C52B00E3C992 /* CaptureTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83951192E95EB0037E548 /* CaptureTrigger.m */; };
@@ -3978,6 +3977,7 @@
 		A6F18B592AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F18B342AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf */; };
 		A6F18B5A2AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F18B342AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf */; };
 		A6F18B5B2AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F18B342AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf */; };
+		A6F18B762AEA18F5006C08EE /* iTermToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* iTermToolWrapper.m */; };
 		A6F1B3AB268FCAC000546767 /* iTermStatusBarTriggersComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F1B3AA268FCAC000546767 /* iTermStatusBarTriggersComponent.swift */; };
 		A6F1B3AE268FD0F300546767 /* StatusBarIconTriggers@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F1B3AC268FD0F300546767 /* StatusBarIconTriggers@2x.png */; };
 		A6F1B3AF268FD0F300546767 /* StatusBarIconTriggers@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F1B3AC268FD0F300546767 /* StatusBarIconTriggers@2x.png */; };
@@ -15576,6 +15576,7 @@
 				A630117F20E69D43008114B7 /* iTermStatusBarComponentKnob.m in Sources */,
 				5370678321C9D2780088D0F3 /* SIGPolicy.m in Sources */,
 				A6A4866A20B6793E00493302 /* iTermKeyMappingViewController.m in Sources */,
+				A6F18B762AEA18F5006C08EE /* iTermToolWrapper.m in Sources */,
 				A663196A22FE5D3D00C502BD /* iTermFileDescriptorMultiClient.m in Sources */,
 				A620041F248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m in Sources */,
 				A6F3DA9424564598001D50C9 /* iTermScrollWheelStateMachine.m in Sources */,
@@ -16434,7 +16435,6 @@
 				A6C762EB1B45C52B00E3C992 /* AATreeNode.m in Sources */,
 				A6C762CC1B45C52B00E3C992 /* iTermCursor.m in Sources */,
 				A6C763CD1B45C52B00E3C992 /* VT100XtermParser.m in Sources */,
-				A6C763AA1B45C52B00E3C992 /* iTermToolWrapper.m in Sources */,
 				A62C3B321BCC24AB00B5629D /* iTermRecentDirectoryMO.m in Sources */,
 				A6C762A61B45C52B00E3C992 /* iTermApplication+Scripting.m in Sources */,
 				A6C7632F1B45C52B00E3C992 /* iTermDropDownFindViewController.m in Sources */,
