@@ -887,6 +887,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 // For Metal
 - (void)setNeedsDisplay:(BOOL)needsDisplay {
+    DLog(@"-[PTYTextView setNeedsDisplay:%@]", @(needsDisplay));
     [super setNeedsDisplay:needsDisplay];
     if (needsDisplay) {
         [_delegate textViewNeedsDisplayInRect:self.bounds];
@@ -1389,6 +1390,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 // sometimes decide to draw subviews of alpha=0 views, it doesn't always! So we make ourselves
 // alpha=1 but clear when an annotation is visible.
 - (void)drawRect:(NSRect)rect {
+    DLog(@"-[PTYTextView drawRect:]");
     rect = NSIntersectionRect(rect, self.bounds);
     [[NSColor clearColor] set];
     NSRectFillUsingOperation(rect, NSCompositingOperationCopy);

@@ -100,6 +100,11 @@ class PortholeContainerView: NSView {
         fatalError("Not implemented")
     }
 
+    override func draw(_ dirtyRect: NSRect) {
+        DLog("-[PortholeContainerView drawRect:]")
+        super.draw(dirtyRect)
+    }
+    
     func setContentSize(_ size: NSSize) {
         guard subviews.count > 0 else {
             return
