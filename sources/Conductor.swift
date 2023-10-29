@@ -1233,7 +1233,7 @@ class Conductor: NSObject, Codable {
     }
 
     private func checkForPython() {
-        send(.shell("python3 -V"), .handleCheckForPython(StringArray()))
+        send(.shell("command -v python3 >/dev/null 2>&1 && python3 -V"), .handleCheckForPython(StringArray()))
     }
 
     private static let minimumPythonMajorVersion = 3
