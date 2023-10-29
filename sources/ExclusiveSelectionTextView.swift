@@ -45,25 +45,33 @@ import Foundation
             return
         }
         textStorage.editAttributes { update in
+            let wholeRange = NSRange(location: 0, length: textStorage.string.utf16.count)
+            var ranges = [NSRange]()
             textStorage.enumerateAttribute(.it2_temporarilyHighlighted,
-                                           in: NSRange(location: 0, length: textStorage.string.utf16.count),
-                                           using: { value, attributeRange, stop in
-                var fixed = textStorage.attributes(at: attributeRange.location, effectiveRange: nil)
-                fixed.removeValue(forKey: .it2_temporarilyHighlighted)
-                if let backgroundColor = fixed[.it2_savedBackgroundColor] {
-                    fixed[.backgroundColor] = backgroundColor
-                    fixed.removeValue(forKey: .it2_savedBackgroundColor)
-                } else {
-                    fixed.removeValue(forKey: .backgroundColor)
+                                           in: wholeRange) { flag, range, stop in
+                if flag != nil {
+                    ranges.append(range)
                 }
-                if let foregroundColor = fixed[.it2_savedForegroundColor] {
-                    fixed[.foregroundColor] = foregroundColor
-                    fixed.removeValue(forKey: .it2_savedForegroundColor)
-                } else {
-                    fixed.removeValue(forKey: .backgroundColor)
+            }
+            for wholeRange in ranges {
+                textStorage.enumerateAttributes(in: wholeRange) { originalAttributes, attributeRange, stop in
+                    var fixed = originalAttributes
+                    fixed.removeValue(forKey: .it2_temporarilyHighlighted)
+                    if let backgroundColor = fixed[.it2_savedBackgroundColor] {
+                        fixed[.backgroundColor] = backgroundColor
+                        fixed.removeValue(forKey: .it2_savedBackgroundColor)
+                    } else {
+                        fixed.removeValue(forKey: .backgroundColor)
+                    }
+                    if let foregroundColor = fixed[.it2_savedForegroundColor] {
+                        fixed[.foregroundColor] = foregroundColor
+                        fixed.removeValue(forKey: .it2_savedForegroundColor)
+                    } else {
+                        fixed.removeValue(forKey: .foregroundColor)
+                    }
+                    update(attributeRange, fixed)
                 }
-                update(attributeRange, fixed)
-            })
+            }
         }
     }
 
