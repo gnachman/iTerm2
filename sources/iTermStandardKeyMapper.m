@@ -35,8 +35,10 @@
                                        NSEventModifierFlagFunction);
     if ((event.modifierFlags & mask) == (NSEventModifierFlagControl | NSEventModifierFlagShift | NSEventModifierFlagFunction)) {
         // control+shift+arrow takes this path. See issue 8382. Possibly other things should, too.
+        DLog(@"control|shift|function");
         return YES;
     }
+    DLog@("return no");
     return NO;
 }
 

@@ -252,6 +252,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (void)restoreSavedState:(NSDictionary *)savedState;
 - (NSArray<id<VT100ScreenMarkReading>> *)namedMarks;
 - (long long)startAbsLineForBlock:(NSString *)blockID;
+- (void)ensureDisambiguateEscapeInStack;
 
 @end
 

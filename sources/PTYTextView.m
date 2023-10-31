@@ -619,7 +619,6 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 #pragma mark - NSResponder Keyboard Input and Helpers
-
 // Control-pgup and control-pgdown are handled at this level by NSWindow if no
 // view handles it. It's necessary to setUserScroll in the PTYScroller, or else
 // it scrolls back to the bottom right away. This code handles those two
@@ -627,11 +626,13 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 // Addendum: control page up/down seem to be supported because I did not understand
 // macOS very well back in issue 1112. I guess I won't break it.
 - (BOOL)performKeyEquivalent:(NSEvent *)theEvent {
+    DLog(@"performKeyQuivalent self=%@ theEvent=%@", self, theEvent);
     if (self.window.firstResponder != self) {
         return [super performKeyEquivalent:theEvent];
     }
     NSString* unmodkeystr = [theEvent charactersIgnoringModifiers];
     if ([unmodkeystr length] == 0) {
+        DLog(@"Calling super.performKeyEquivalent");
         return [super performKeyEquivalent:theEvent];
     }
     unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;

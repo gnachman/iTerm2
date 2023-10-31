@@ -194,5 +194,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
 
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects;
 - (void)toggleAlternateScreen;
+- (void)ensureDisambiguateEscapeInStack;
 
 @end

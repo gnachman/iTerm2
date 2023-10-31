@@ -372,6 +372,7 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
 // if the key mapper is interested in it.
 - (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event {
     const BOOL cmdPressed = !!(event.modifierFlags & NSEventModifierFlagCommand);
+    DLog(@"!cmdPressed=%@", @(!cmdPressed));
     return !cmdPressed;
 }
 

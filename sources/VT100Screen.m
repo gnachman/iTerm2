@@ -1511,6 +1511,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.namedMarks.strongObjects;
 }
 
+- (void)ensureDisambiguateEscapeInStack {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [terminal ensureDisambiguateEscapeInStack];
+    }];
+}
+
 - (long long)startAbsLineForBlock:(NSString *)blockID {
     NSNumber *line = _state.blockStartAbsLine[blockID];
     if (!line) {

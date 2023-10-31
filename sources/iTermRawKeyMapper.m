@@ -33,6 +33,7 @@
 }
 
 - (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event {
+    DLog(@"Raw key mapper always wants key equivalent");
     return YES;
 }
 

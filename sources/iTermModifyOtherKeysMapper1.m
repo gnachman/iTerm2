@@ -7,6 +7,7 @@
 
 #import "iTermModifyOtherKeysMapper1.h"
 
+#import "DebugLogging.h"
 #import "NSEvent+iTerm.h"
 #import "iTermKeyboardHandler.h"
 
@@ -90,8 +91,10 @@ typedef enum {
 - (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)originalEvent {
     NSEvent *event = originalEvent;
     if ([self shouldModifyOtherKeysForEvent:event modifiedEvent:&event]) {
+        DLog(@"Passing to other");
         return [_modifyOther keyMapperWantsKeyEquivalent:event];
     } else {
+        DLog(@"Passing to standard");
         return [_standard keyMapperWantsKeyEquivalent:event];
     }
 }
@@ -166,22 +169,27 @@ typedef enum {
 // escPlus means that option is pressed and should send esc+.
 - (BOOL)shouldModifyOtherKeysForEvent:(NSEvent *)event
                         modifiedEvent:(out NSEvent **)modifiedEvent {
+    DLog(@"%@", event);
     if (modifiedEvent) {
         *modifiedEvent = event;
     }
     if (event.type != NSEventTypeKeyDown) {
+        DLog(@"Not key down");
         return NO;
     }
     if (event.it_modifierFlags & NSEventModifierFlagFunction) {
+        DLog(@"Is a function key");
         return NO;
     }
     if (event.it_modifierFlags & NSEventModifierFlagNumericPad) {
+        DLog(@"Is numeric keypad");
         return NO;
     }
     const NSEventModifierFlags mask = (NSEventModifierFlagOption |
                                        NSEventModifierFlagShift |
                                        NSEventModifierFlagControl);
     if ((event.it_modifierFlags & mask) == 0) {
+        DLog(@"No modifier pressed");
         return NO;
     }
 
@@ -205,11 +213,13 @@ typedef enum {
 
 - (BOOL)shouldModifyOtherKeysForRegularEvent:(NSEvent *)event
                                modifiedEvent:(out NSEvent **)modifiedEvent {
+    DLog(@"Regular event");
     return NO;
 }
 
 - (BOOL)shouldModifyOtherKeysForNumberEvent:(NSEvent *)event
                               modifiedEvent:(out NSEvent **)modifiedEvent {
+    DLog(@"Number event");
     const NSEventModifierFlags mask = (NSEventModifierFlagOption |
                                        NSEventModifierFlagShift |
                                        NSEventModifierFlagControl);
@@ -218,6 +228,7 @@ typedef enum {
     const BOOL meta = !!(flags & NSEventModifierFlagOption);
     const BOOL shift = !!(flags & NSEventModifierFlagShift);
     const int digit = [event.charactersIgnoringModifiers characterAtIndex:0] - '0';
+    DLog(@"control=%@ meta=%@ shirt=%@ digit=%@", @(control), @(meta), @(shift), @(digit));
     if ((control && meta && shift) ||
         (control && !meta && shift)) {
         switch (digit) {
@@ -268,6 +279,7 @@ typedef enum {
     const BOOL control = !!(flags & NSEventModifierFlagControl);
     const BOOL meta = !!(flags & NSEventModifierFlagOption);
     const BOOL shift = !!(flags & NSEventModifierFlagShift);
+    DLog(@"control=%@ meta=%@ shirt=%@ charactersIgnoringModifiers=%@", @(control), @(meta), @(shift), @(event.charactersIgnoringModifiers));
 
     if (control && !meta && !shift) {
         return ![@"{}[]\\`'" containsString:event.charactersIgnoringModifiers];
@@ -286,6 +298,7 @@ typedef enum {
 
 - (BOOL)shouldModifyOtherKeysForFunctionEvent:(NSEvent *)event
                                 modifiedEvent:(out NSEvent **)modifiedEvent {
+    DLog(@"function event");
     return NO;
 }
 
@@ -298,6 +311,8 @@ typedef enum {
     const BOOL control = !!(flags & NSEventModifierFlagControl);
     const BOOL meta = !!(flags & NSEventModifierFlagOption);
     const BOOL shift = !!(flags & NSEventModifierFlagShift);
+    DLog(@"control=%@ meta=%@ shift=%@", @(control), @(meta), @(shift));
+
     if (control && !meta && !shift) {
         return YES;
     }
@@ -313,6 +328,7 @@ typedef enum {
     const BOOL control = !!(flags & NSEventModifierFlagControl);
     const BOOL meta = !!(flags & NSEventModifierFlagOption);
     const BOOL shift = !!(flags & NSEventModifierFlagShift);
+    DLog(@"control=%@ meta=%@ shift=%@", @(control), @(meta), @(shift));
     if ((control && meta) ||
         (!control && meta && shift)) {
         return YES;
@@ -329,6 +345,7 @@ typedef enum {
     const BOOL control = !!(flags & NSEventModifierFlagControl);
     const BOOL meta = !!(flags & NSEventModifierFlagOption);
     const BOOL shift = !!(flags & NSEventModifierFlagShift);
+    DLog(@"control=%@ meta=%@ shift=%@", @(control), @(meta), @(shift));
     if (control || shift || meta) {
         return YES;
     }

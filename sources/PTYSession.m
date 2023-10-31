@@ -4538,6 +4538,9 @@ ITERM_WEAKLY_REFERENCEABLE
         const BOOL profileWantsTickit = [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL
                                                                   inProfile:aDict];
         self.keyMappingMode = profileWantsTickit ? iTermKeyMappingModeCSIu : iTermKeyMappingModeStandard;
+        if (profileWantsTickit) {
+            [_screen ensureDisambiguateEscapeInStack];
+        }
     }
 
     if (self.isTmuxClient) {

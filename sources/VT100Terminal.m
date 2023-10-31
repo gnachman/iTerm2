@@ -776,6 +776,15 @@ static const int kMaxScreenRows = 4096;
     self.softAlternateScreenMode = useAlternateScreenMode;
 }
 
+- (void)ensureDisambiguateEscapeInStack {
+    if (![[_mainKeyReportingModeStack firstObject] isEqual:@(VT100TerminalKeyReportingFlagsDisambiguateEscape)]) {
+        [_mainKeyReportingModeStack insertObject:@(VT100TerminalKeyReportingFlagsDisambiguateEscape) atIndex:0];
+    }
+    if (![[_alternateKeyReportingModeStack firstObject] isEqual:@(VT100TerminalKeyReportingFlagsDisambiguateEscape)]) {
+        [_alternateKeyReportingModeStack insertObject:@(VT100TerminalKeyReportingFlagsDisambiguateEscape) atIndex:0];
+    }
+}
+
 - (void)executeDecSetReset:(VT100Token *)token {
     assert(token->type == VT100CSI_DECSET ||
            token->type == VT100CSI_DECRST);

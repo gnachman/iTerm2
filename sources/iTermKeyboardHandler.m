@@ -121,10 +121,12 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 }
 
 - (BOOL)performKeyEquivalent:(NSEvent *)event inputContext:(NSTextInputContext *)inputContext {
+    DLog(@"event=%@", event);
     if ([_keyMapper keyMapperWantsKeyEquivalent:event]) {
         [self keyDown:event inputContext:inputContext];
         return YES;
     }
+    DLog(@"return no");
     return NO;
 }
 
