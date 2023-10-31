@@ -38,7 +38,7 @@
         DLog(@"control|shift|function");
         return YES;
     }
-    DLog@("return no");
+    DLog(@"return no");
     return NO;
 }
 

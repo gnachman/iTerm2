@@ -279,7 +279,7 @@ typedef enum {
     const BOOL control = !!(flags & NSEventModifierFlagControl);
     const BOOL meta = !!(flags & NSEventModifierFlagOption);
     const BOOL shift = !!(flags & NSEventModifierFlagShift);
-    DLog(@"control=%@ meta=%@ shirt=%@ charactersIgnoringModifiers=%@", @(control), @(meta), @(shift), @(event.charactersIgnoringModifiers));
+    DLog(@"control=%@ meta=%@ shirt=%@ charactersIgnoringModifiers=%@", @(control), @(meta), @(shift), event.charactersIgnoringModifiers);
 
     if (control && !meta && !shift) {
         return ![@"{}[]\\`'" containsString:event.charactersIgnoringModifiers];
