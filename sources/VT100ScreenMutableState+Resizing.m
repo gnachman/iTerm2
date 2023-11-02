@@ -592,6 +592,9 @@ static void SwapInt(int *a, int *b) {
     // This is OK because we nil the entries ourselves.
     [self.mutableIntervalTree removeAllObjects];
 
+    [self.blockStartAbsLine removeAllObjects];
+    self.blocksGeneration += 1;
+
     // Convert ranges of notes to their new coordinates and replace the interval tree.
     [objects enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull note, NSUInteger idx, BOOL * _Nonnull stop) {
         id<IntervalTreeImmutableEntry> entry = entries[idx];
@@ -614,6 +617,12 @@ static void SwapInt(int *a, int *b) {
         Interval *newInterval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, self.cumulativeScrollbackOverflow)
                                                              width:newWidth];
         [self.mutableIntervalTree addObject:note withInterval:newInterval];
+
+        iTermBlockMark *blockMark = [iTermBlockMark castFrom:note];
+        if (blockMark) {
+            DLog(@"Record block %@ as starting at line %@", blockMark.blockID, @(newRange.start.y));
+            self.blockStartAbsLine[blockMark.blockID] = @(newRange.start.y);
+        }
     }];
 }
 

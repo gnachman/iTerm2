@@ -5179,14 +5179,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)updateButtonHover:(NSPoint)locationInWindow pressed:(BOOL)pressed {
     NSPoint point = [self convertPoint:locationInWindow fromView:nil];
+    DLog(@"updateHover location=%@ pressed=%@", NSStringFromPoint(locationInWindow), @(pressed));
     if (@available(macOS 11, *)) {
         BOOL changed = NO;
         for (iTermTerminalButton *button in self.terminalButtons) {
             if (NSPointInRect(point, button.desiredFrame)) {
+                DLog(@"mouse is over %@", button);
                 // Mouse over button
                 if (pressed) {
                     changed = [button mouseDownInside] || changed;
                 } else if (button.pressed) {
+                    DLog(@"button was pressed");
                     [button mouseUpWithLocationInWindow:locationInWindow];
                     changed = YES;
                 }
@@ -5195,6 +5198,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 if (pressed) {
                     changed = [button mouseDownOutside] || changed;
                 } else if (button.pressed) {
+                    DLog(@"button was pressed");
                     [button mouseUpWithLocationInWindow:locationInWindow];
                     changed = YES;
                 }

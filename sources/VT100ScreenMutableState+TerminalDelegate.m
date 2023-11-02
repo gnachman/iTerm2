@@ -2726,7 +2726,9 @@
                  type:(NSString *)type
                render:(BOOL)render {
     DLog(@"start=%@ blockID=%@", @(start), blockID);
-
+    if (self.currentGrid == self.altGrid) {
+        return;
+    }
     iTermBlockMark *mark;
     VT100GridAbsCoordRange range;
     if (!start && [_currentBlockID isEqualToString:blockID]) {
