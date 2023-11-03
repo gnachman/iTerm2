@@ -2,6 +2,7 @@
 
 @class iTermLogoGenerator;
 @class iTermOpenQuicklyTableCellView;
+@class iTermVariableScope;
 
 // Represents and item in the Open Quickly table.
 @interface iTermOpenQuicklyItem : NSObject
@@ -69,4 +70,9 @@
 @class iTermSnippet;
 @interface iTermOpenQuicklySnippetItem : iTermOpenQuicklyItem
 @property(nonatomic, strong) iTermSnippet *snippet;
+@end
+
+NS_AVAILABLE_MAC(11_0)
+@interface iTermOpenQuicklyInvocationItem : iTermOpenQuicklyItem
+@property(nonatomic, strong) iTermVariableScope *scope;
 @end

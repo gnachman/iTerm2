@@ -5,6 +5,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
+#import "iTermExpressionParser.h"
 #import "iTermGitPollWorker.h"
 #import "iTermHotKeyController.h"
 #import "iTermLogoGenerator.h"
@@ -12,9 +13,11 @@
 #import "iTermOpenQuicklyCommands.h"
 #import "iTermOpenQuicklyItem.h"
 #import "iTermProfileHotKey.h"
+#import "iTermScriptFunctionCall.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermSnippetsModel.h"
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Global.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
 #import "NSAppearance+iTerm.h"
@@ -30,6 +33,7 @@
 
 // It's nice for each of these to be unique so in degenerate cases (e.g., empty query) the detail
 // uses the same feature for all items.
+static const double kInvocationMultiplier = 5;
 static const double kSessionBadgeMultiplier = 3;
 static const double kSessionNameMultiplier = 2;
 static const double kGitBranchMultiplier = 1.5;
@@ -442,6 +446,24 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     return actionItem;
 }
 
+- (void)addInvocation:(NSString *)invocation 
+                scope:(iTermVariableScope *)scope
+              toItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+          withMatcher:(iTermMinimumSubsequenceMatcher *)matcher NS_AVAILABLE_MAC(11_0) {
+    iTermOpenQuicklyInvocationItem *item = [[iTermOpenQuicklyInvocationItem alloc] init];
+    item.score = 1;
+    item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                    value:@"Invoke"
+                                                       highlightedIndexes:nil];
+    NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+    item.score = [self scoreForInvocation:invocation matcher:matcher attributedName:attributedName];
+    item.title = attributedName;
+    item.identifier = invocation;
+    item.scope = scope;
+
+    [items addObject:item];
+}
+
 - (void)addSnippetsToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     NSArray<NSString *> *tags = [[iTermController sharedInstance] currentSnippetsFilter];
@@ -594,7 +616,12 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     if ([command supportsSnippet] && haveCurrentWindow) {
         [self addSnippetsToItems:items withMatcher:matcher];
     }
-
+    if (@available(macOS 11, *)) {
+        iTermVariableScope *scope = [self scopeForValidInvocation:queryString];
+        if (scope) {
+            [self addInvocation:queryString scope:scope toItems:items withMatcher:matcher];
+        }
+    }
     // Sort from highest to lowest score.
     [items sortUsingComparator:^NSComparisonResult(iTermOpenQuicklyItem *obj1,
                                                    iTermOpenQuicklyItem *obj2) {
@@ -611,6 +638,57 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     self.items = items;
 }
 
+- (iTermVariableScope *)scopeForValidInvocation:(NSString *)invocation {
+    iTermVariableScope *scope = [[[[iTermController sharedInstance] currentTerminal] currentSession] variablesScope];
+    if (scope) {
+        iTermParsedExpression *expression = [[iTermExpressionParser callParser] parse:invocation
+                                                                                scope:scope];
+        if (expression) {
+            switch (expression.expressionType) {
+                case iTermParsedExpressionTypeVariableReference:
+                case iTermParsedExpressionTypeArrayLookup:
+                case iTermParsedExpressionTypeArrayOfValues:
+                case iTermParsedExpressionTypeArrayOfExpressions:
+                case iTermParsedExpressionTypeNumber:
+                case iTermParsedExpressionTypeBoolean:
+                case iTermParsedExpressionTypeError:
+                case iTermParsedExpressionTypeString:
+                case iTermParsedExpressionTypeNil:
+                case iTermParsedExpressionTypeInterpolatedString:
+                    break;
+
+                case iTermParsedExpressionTypeFunctionCall:
+                case iTermParsedExpressionTypeFunctionCalls:
+                    return scope;
+            }
+        }
+    }
+
+    scope = [iTermVariableScope globalsScope];
+    iTermParsedExpression *expression = [[iTermExpressionParser callParser] parse:invocation
+                                                                            scope:scope];
+    if (expression) {
+        switch (expression.expressionType) {
+            case iTermParsedExpressionTypeVariableReference:
+            case iTermParsedExpressionTypeArrayLookup:
+            case iTermParsedExpressionTypeArrayOfValues:
+            case iTermParsedExpressionTypeArrayOfExpressions:
+            case iTermParsedExpressionTypeNumber:
+            case iTermParsedExpressionTypeBoolean:
+            case iTermParsedExpressionTypeError:
+            case iTermParsedExpressionTypeString:
+            case iTermParsedExpressionTypeNil:
+            case iTermParsedExpressionTypeInterpolatedString:
+                break;
+
+            case iTermParsedExpressionTypeFunctionCall:
+            case iTermParsedExpressionTypeFunctionCalls:
+                return scope;
+        }
+    }
+
+    return nil;
+}
 - (id)objectAtIndex:(NSInteger)index {
     iTermOpenQuicklyItem *item = _items[index];
     if ([item isKindOfClass:[iTermOpenQuicklyProfileItem class]]) {
@@ -643,10 +721,31 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     } else if ([item isKindOfClass:[iTermOpenQuicklySnippetItem class]]) {
         return item;
     }
+    if (@available(macOS 11, *)) {
+        if ([item isKindOfClass:[iTermOpenQuicklyInvocationItem class]]) {
+            return item;
+        }
+    }
     return nil;
 }
 
 #pragma mark - Scoring
+
+- (double)scoreForInvocation:(NSString *)invocation
+                     matcher:(iTermMinimumSubsequenceMatcher *)matcher
+              attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *invocationFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ invocation ?: @"" ]
+                                multiplier:kInvocationMultiplier
+                                      name:nil
+                                  features:invocationFeature
+                                     limit:2 * kInvocationMultiplier];
+    if (invocationFeature.count) {
+        [attributedName appendAttributedString:invocationFeature[0][0]];
+    }
+    return score;
+}
 
 - (double)scoreForArrangementWithName:(NSString *)arrangementName
                               matcher:(iTermMinimumSubsequenceMatcher *)matcher

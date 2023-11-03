@@ -23,6 +23,7 @@
 #import "iTermProfileModelJournal.h"
 #import "iTermProfilePreferences.h"
 #import "iTermPythonArgumentParser.h"
+#import "iTermScriptConsole.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
 #import "iTermSelection.h"
@@ -543,6 +544,33 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                                heading:@"Failed to make change"
                                 window:window];
     return NO;
+}
+
++ (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window {
+    NSString *message = [NSString stringWithFormat:@"Error running “%@”:\n%@",
+                         invocation, error.localizedDescription];
+    NSString *traceback = error.localizedFailureReason;
+    NSArray *actions = @[ @"OK" ];
+    if (traceback) {
+        actions = [actions arrayByAddingObject:@"Reveal in Script Console"];
+    }
+    NSString *connectionKey = error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:connectionKey];
+    [entry addOutput:[NSString stringWithFormat:@"An error occurred while running the function invocation “%@”:\n%@\n\nTraceback:\n%@",
+                      invocation,
+                      error.localizedDescription,
+                      traceback]
+          completion:^{}];
+    iTermWarningSelection selection = [iTermWarning showWarningWithTitle:message
+                                                                 actions:actions
+                                                               accessory:nil
+                                                              identifier:@"NoSyncFunctionCallError"
+                                                             silenceable:kiTermWarningTypeTemporarilySilenceable
+                                                                 heading:[NSString stringWithFormat:@"%@ Function Call Failed", origin]
+                                                                  window:window];
+    if (selection == kiTermWarningSelection1) {
+        [[iTermScriptConsole sharedInstance] revealTailOfHistoryEntry:entry];
+    }
 }
 
 - (NSDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *)serverOriginatedRPCSubscriptions {

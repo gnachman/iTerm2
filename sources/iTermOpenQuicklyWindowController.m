@@ -18,6 +18,7 @@
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "PseudoTerminal.h"
+#import "PTYSession.h"
 #import "PTYTab.h"
 #import "SolidColorView.h"
 #import "VT100RemoteHost.h"
@@ -304,6 +305,30 @@
             PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
             PTYSession *session = term.currentSession;
             [session.textview sendSnippet:item];
+        } else {
+            if (@available(macOS 11, *)) {
+                if ([object isKindOfClass:[iTermOpenQuicklyInvocationItem class]]) {
+                    iTermOpenQuicklyInvocationItem *item = [iTermOpenQuicklyInvocationItem castFrom:object];
+                    [iTermScriptFunctionCall callFunction:item.identifier
+                                                  timeout:[[NSDate distantFuture] timeIntervalSinceNow]
+                                                    scope:item.scope
+                                               retainSelf:YES
+                                               completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
+                        if (error) {
+                            [iTermAPIHelper reportFunctionCallError:error
+                                                      forInvocation:item.identifier
+                                                             origin:@"Open Quickly"
+                                                             window:nil];
+                        } else {
+                            NSAlert *alert = [[NSAlert alloc] init];
+                            [alert setMessageText:@"Function Call Result"];
+                            [alert setInformativeText:[NSString stringWithFormat:@"%@ returned:\n%@", item.identifier, [value description]]];
+                            [alert addButtonWithTitle:@"OK"];
+                            [alert runModal];
+                        }
+                    }];
+                }
+            }
         }
     }
 

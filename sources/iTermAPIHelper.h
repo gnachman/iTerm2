@@ -77,6 +77,7 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
 
 + (void)setEnabled:(BOOL)enabled;
 + (BOOL)isEnabled;
++ (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window;
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 

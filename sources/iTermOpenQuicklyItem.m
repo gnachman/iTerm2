@@ -106,3 +106,12 @@
 }
 
 @end
+
+@implementation iTermOpenQuicklyInvocationItem
+
+- (NSImage *)icon {
+    return [NSImage it_imageForSymbolName:@"function" accessibilityDescription:nil];
+}
+
+@end
+
