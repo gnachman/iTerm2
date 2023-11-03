@@ -396,8 +396,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)chooseAndExportScript {
+    NSString *autoLaunchPath = [[[NSFileManager defaultManager] autolaunchScriptPath] stringByResolvingSymlinksInPath];
     [iTermScriptChooser chooseMultipleWithValidator:^BOOL(NSURL *url) {
-        return [iTermScriptExporter urlIsScript:url];
+        return [url.path.stringByResolvingSymlinksInPath isEqualToString:autoLaunchPath] || [iTermScriptExporter urlIsScript:url];
     } completion:^(NSArray<NSURL *> *urls, SIGIdentity *signingIdentity) {
         if (!urls) {
             return;
