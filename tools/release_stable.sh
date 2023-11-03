@@ -70,12 +70,12 @@ function Build {
   # Zip it, notarize it, staple it, and re-zip it.
   PRENOTARIZED_ZIP=iTerm2-${NAME}-prenotarized.zip
   zip -ry $PRENOTARIZED_ZIP iTerm.app
-  xcrun altool --notarize-app --primary-bundle-id "com.googlecode.iterm2" --username "apple@georgester.com" --password "$NOTPASS" --file $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1 || die "Notarization failed"
-  UUID=$(grep RequestUUID /tmp/upload.out | sed -e 's/RequestUUID = //')
+  xcrun notarytool submit --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1 || die "Notarization failed"
+  UUID=$(grep id: /tmp/upload.out | head -1 | sed -e 's/.*id: //')
   echo "uuid is $UUID"
-  xcrun altool --notarization-info $UUID -u "apple@georgester.com" -p "$NOTPASS"
+  xcrun notarytool info --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $UUID
   sleep 1
-  while xcrun altool --notarization-info $UUID -u "apple@georgester.com" -p "$NOTPASS" 2>&1 | egrep -i "in progress|Could not find the RequestUUID":
+  while xcrun notarytool info --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $UUID 2>&1 | egrep -i "in progress|Could not find the RequestUUID|Submission does not exist or does not belong to your team":
   do
       echo "Trying again"
       sleep 1
@@ -93,11 +93,12 @@ function Build {
   test -f $SVNDIR/downloads/stable/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" ($SUMMARY)" > $SVNDIR/downloads/stable/iTerm2-${NAME}.summary)
   test -f $SVNDIR/downloads/stable/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/stable/iTerm2-${NAME}.description)
   vi $SVNDIR/downloads/stable/iTerm2-${NAME}.description
-  shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' > /tmp/sum
+  echo 'SHA-256 of the zip file is' > $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
+  shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
   gpg --clearsign /tmp/sum
-  echo "You can use the following to verify the zip file on https://keybase.io/verify:" >> $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
-  echo "" >> $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
-  cat /tmp/sum.asc >> $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
+  echo "You can use the following to verify the zip file on https://keybase.io/verify:" >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+  echo "" >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+  cat /tmp/sum.asc >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   vi $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
   pushd $SVNDIR
 
