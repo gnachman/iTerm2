@@ -70,12 +70,12 @@ mv iTerm2.app iTerm.app
 
 PRENOTARIZED_ZIP=iTerm2-${NAME}-prenotarized.zip
 zip -ry $PRENOTARIZED_ZIP iTerm.app
-retry xcrun altool --notarize-app --primary-bundle-id "com.googlecode.iterm2" --username "apple@georgester.com" --password "$NOTPASS" --file $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1
-UUID=$(grep RequestUUID /tmp/upload.out | sed -e 's/RequestUUID = //')
+retry xcrun notarytool submit --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1
+UUID=$(grep id: /tmp/upload.out | head -1 | sed -e 's/.*id: //')
 echo "uuid is $UUID"
-xcrun altool --notarization-info $UUID -u "apple@georgester.com" -p "$NOTPASS"
+xcrun notarytool info --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $UUID
 sleep 1
-while xcrun altool --notarization-info $UUID -u "apple@georgester.com" -p "$NOTPASS" 2>&1 | egrep -i "in progress|Could not find the RequestUUID":
+while xcrun notarytool info --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $UUID 2>&1 | egrep -i "in progress|Could not find the RequestUUID|Submission does not exist or does not belong to your team":
 do
     echo "Trying again"
     sleep 1
