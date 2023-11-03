@@ -78,7 +78,7 @@ typedef enum {
     NO_PANE // no gane
 } PaneMode;
 
-@interface iTermProfilesWindowRestorer : NSObject
+@interface iTermProfilesWindowRestorer : NSObject<NSWindowRestoration>
 @end
 
 @implementation iTermProfilesWindowRestorer
