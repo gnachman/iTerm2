@@ -16,20 +16,29 @@ class OnePasswordUtils {
         if let customPath = _customPathToCLI {
             return customPath
         }
-        let normalPath = "/usr/local/bin/op"
-        lazy var normalPathExists = {
-            return FileManager.default.fileExists(atPath: normalPath)
+        let normalPaths = ["/usr/local/bin/op", "/opt/homebrew/bin/op"]
+        var defaultPath = normalPaths[0]
+        lazy var anyNormalPathExists = {
+            return normalPaths.anySatisfies {
+                FileManager.default.fileExists(atPath: $0)
+            }
         }()
-        if normalPathExists {
+        if anyNormalPathExists {
             DLog("normal path exists")
-            if usable == nil && !checkUsability(normalPath) {
+            let goodPath = normalPaths.first {
+                FileManager.default.fileExists(atPath: $0) && checkUsability($0)
+            }
+            if let goodPath {
+                defaultPath = goodPath
+            }
+            if usable == nil && goodPath == nil {
                 DLog("usability fail")
                 usable = false
-                showUnavailableMessage(normalPath)
+                showUnavailableMessage(normalPaths.joined(separator: " or "))
             } else {
                 DLog("normal path ok")
                 usable = true
-                return normalPath
+                return goodPath ?? normalPaths[0]
             }
         }
         if showCannotFindCLIMessage() {
@@ -41,7 +50,7 @@ class OnePasswordUtils {
                 }
             }
         }
-        return _customPathToCLI ?? normalPath
+        return _customPathToCLI ?? defaultPath
     }
 
     static func throwIfUnusable() throws {
