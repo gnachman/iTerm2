@@ -15406,6 +15406,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }];
 }
 
+- (BOOL)textViewEnclosingTabHasMultipleSessions {
+    return [[self.delegate sessions] count] > 1;
+}
+
 #pragma mark - iTermHotkeyNavigableSession
 
 - (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {

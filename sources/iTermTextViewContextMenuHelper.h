@@ -149,6 +149,8 @@ runCommandInBackground:(NSString *)command;
                   windowCoordinate:(NSPoint)windowCoordinate;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
     removeNamedMark:(id<VT100ScreenMarkReading>)mark;
+- (BOOL)contextMenuCurrentTabHasMultipleSessions:(iTermTextViewContextMenuHelper *)contextMenu;
+
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>

@@ -1567,6 +1567,10 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [self showWebkitPopoverAtPoint:windowCoordinate url:url];
 }
 
+- (BOOL)contextMenuCurrentTabHasMultipleSessions:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewEnclosingTabHasMultipleSessions];
+}
+
 #pragma mark - NSResponder Additions
 
 - (void)sendSnippet:(id)sender {

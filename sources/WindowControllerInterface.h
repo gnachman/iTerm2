@@ -166,6 +166,7 @@
 
 // Pop the current session out and move it into its own window.
 - (void)moveSessionToWindow:(id)sender;
+- (void)moveSessionToTab:(id)sender;
 
 // Show or hide this window's toolbelt.
 - (IBAction)toggleToolbeltVisibility:(id)sender;

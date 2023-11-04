@@ -9990,7 +9990,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (IBAction)moveSessionToTab:(id)sender {
-    [[MovePaneController sharedInstance] moveSession:[self currentSession]
+    NSString *sessionID = [NSString castFrom:[[NSMenuItem castFrom:sender] representedObject]];
+    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:sessionID] ?: self.currentSession;
+    [[MovePaneController sharedInstance] moveSession:session
                                        toTabInWindow:self.window];
 
 }

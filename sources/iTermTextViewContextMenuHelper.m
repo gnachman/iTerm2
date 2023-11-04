@@ -25,6 +25,8 @@
 #import "iTermTextExtractor.h"
 #import "iTermURLActionHelper.h"
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Session.h"
+#import "iTermVariableScope+Tab.h"
 #import "NSColor+iTerm.h"
 #import "RegexKitLite.h"
 #import "URLAction.h"
@@ -529,6 +531,12 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     add(@"Move Session to Split Pane", @selector(movePane:));
+    if ([self.delegate contextMenuCurrentTabHasMultipleSessions:self]) {
+        NSMenuItem *item = [theMenu addItemWithTitle:@"Move Session to Tab"
+                                              action:@selector(moveSessionToTab:)
+                                       keyEquivalent:@""];
+        item.representedObject = [self.delegate contextMenuSessionScope:self].ID;
+    }
     [theMenu addItemWithTitle:@"Move Session to Window"
                      action:@selector(moveSessionToWindow:)
                 keyEquivalent:@""];

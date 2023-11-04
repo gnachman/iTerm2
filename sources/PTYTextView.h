@@ -290,6 +290,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewDisableOffscreenCommandLine;
 - (void)textViewSaveScrollPositionForMark:(id<VT100ScreenMarkReading>)mark withName:(NSString *)name;
 - (void)textViewRemoveBookmarkForMark:(id<VT100ScreenMarkReading>)mark;
+- (BOOL)textViewEnclosingTabHasMultipleSessions;
 
 @end
 
