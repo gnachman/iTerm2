@@ -167,6 +167,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     [iTermOpenPanelBuiltInFunction registerBuiltInFunction];
     [iTermPasteBuiltInFunction registerBuiltInFunction];
     [iTermSavePanelBuiltInFunction registerBuiltInFunction];
+    [iTermGetProfilePropertyBuiltInFunction registerBuiltInFunction];
 }
 
 + (instancetype)sharedInstance {

@@ -1,32 +1,35 @@
 //
-//  PasteBuiltInFunction.swift
+//  GetProfilePropertyBuiltInFunction.swift
 //  iTerm2SharedARC
 //
-//  Created by George Nachman on 4/29/23.
+//  Created by George Nachman on 11/4/23.
 //
 
-import Cocoa
+import Foundation
 
-@objc(iTermPasteBuiltInFunction)
-class PasteBuiltInFunction: NSObject {
+@objc(iTermGetProfilePropertyBuiltInFunction)
+class GetProfilePropertyBuiltInFunction: NSObject {
 
 }
 
-extension PasteBuiltInFunction: iTermBuiltInFunctionProtocol {
+extension GetProfilePropertyBuiltInFunction: iTermBuiltInFunctionProtocol {
     private static func error(message: String) -> NSError {
-        return NSError(domain: "com.iterm2.paste",
+        return NSError(domain: "com.iterm2.get-profile-property",
                        code: 1,
                        userInfo: [ NSLocalizedDescriptionKey: message])
     }
 
     static func register() {
+        let keyArgName = "key"
+        let sessionIDArgName = "session_id"
+
         let builtInFunction = iTermBuiltInFunction(
-            name: "paste",
-            arguments: [:],
+            name: "get_profile_property",
+            arguments: [keyArgName: NSString.self],
             optionalArguments: Set(),
-            defaultValues: ["session_id": iTermVariableKeySessionID],
+            defaultValues: [sessionIDArgName: iTermVariableKeySessionID],
             context: .session) { parameters, completion in
-                guard let sessionID = parameters["session_id"] as? String else {
+                guard let sessionID = parameters[sessionIDArgName] as? String else {
                     completion(nil, error(message: "Missing session_id. This shouldn't happen so please report a bug."))
                     return
                 }
@@ -34,8 +37,9 @@ extension PasteBuiltInFunction: iTermBuiltInFunctionProtocol {
                     completion(nil, error(message: "No such session"))
                     return
                 }
-                session.textview.paste(nil)
-                completion(nil, nil)
+                let key = parameters[keyArgName] as! String
+                let value = iTermProfilePreferences.object(forKey: key, inProfile: session.profile)
+                completion(value, nil)
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")
     }

@@ -3237,6 +3237,7 @@
 		A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5E19988A7300BB57EC /* LogoShadow.png */; };
 		A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5E19988A7300BB57EC /* LogoShadow.png */; };
 		A6CFDAD2185D2587005DC94B /* URLAction.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD0185D2587005DC94B /* URLAction.h */; };
+		A6D009602AF6AD1700AA8F49 /* GetProfilePropertyBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D0095F2AF6AD1700AA8F49 /* GetProfilePropertyBuiltInFunction.swift */; };
 		A6D10E3227F7C2BC0026DB56 /* Array+MultiCursor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D10E2727F7C2AC0026DB56 /* Array+MultiCursor.swift */; };
 		A6D10E3327F7C2BC0026DB56 /* MultiCursorTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D10E2327F7C2AC0026DB56 /* MultiCursorTextView.swift */; };
 		A6D10E3427F7C2BC0026DB56 /* NSRange+MultiCursor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D10E2127F7C2AC0026DB56 /* NSRange+MultiCursor.swift */; };
@@ -7052,6 +7053,7 @@
 		A6CEDA5E19988A7300BB57EC /* LogoShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoShadow.png; path = images/LogoParts/LogoShadow.png; sourceTree = "<group>"; };
 		A6CFDAD0185D2587005DC94B /* URLAction.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = URLAction.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6CFDAD1185D2587005DC94B /* URLAction.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = URLAction.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6D0095F2AF6AD1700AA8F49 /* GetProfilePropertyBuiltInFunction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetProfilePropertyBuiltInFunction.swift; sourceTree = "<group>"; };
 		A6D10E2027F7C2AC0026DB56 /* NSSIze+MultiCursor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSSIze+MultiCursor.swift"; sourceTree = "<group>"; };
 		A6D10E2127F7C2AC0026DB56 /* NSRange+MultiCursor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSRange+MultiCursor.swift"; sourceTree = "<group>"; };
 		A6D10E2227F7C2AC0026DB56 /* Logging.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Logging.swift; sourceTree = "<group>"; };
@@ -11264,6 +11266,7 @@
 				A682273B2801F355005DF0B4 /* SavePanelBuiltInFunction.swift */,
 				A65003EA29FDE4410028BC9E /* PasteBuiltInFunction.swift */,
 				A65003EC29FDE6950028BC9E /* FocusBuiltInFunction.swift */,
+				A6D0095F2AF6AD1700AA8F49 /* GetProfilePropertyBuiltInFunction.swift */,
 			);
 			name = Language;
 			sourceTree = "<group>";
@@ -15997,6 +16000,7 @@
 				535EA4F220D0CB7A00FC81E0 /* iTermSwiftyString.m in Sources */,
 				A6B1476521334D3900D0814F /* iTermTmuxStatusBarMonitor.m in Sources */,
 				530AB8A020B08CAF00D2AA08 /* NSJSONSerialization+iTerm.m in Sources */,
+				A6D009602AF6AD1700AA8F49 /* GetProfilePropertyBuiltInFunction.swift in Sources */,
 				A6587A4821D82B4200794775 /* iTermStandardKeyMapper.m in Sources */,
 				A6E1524727602FFE00D0F41C /* iTermWeakBox.m in Sources */,
 				A6614A2420958ED400A10D97 /* iTermBuildingScriptWindowController.m in Sources */,
