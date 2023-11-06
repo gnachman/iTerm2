@@ -28,6 +28,7 @@
 #import "VT100RemoteHost.h"
 
 typedef enum {
+    iTermURLActionFactoryPhasePrompt,
     iTermURLActionFactoryPhaseHypertextLink,
     iTermURLActionFactoryPhaseExistingFile,
     iTermURLActionFactoryPhaseExistingFileRespectingHardNewlines,
@@ -95,7 +96,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     factory.semanticHistoryController = semanticHistoryController;
     factory.pathFactory = pathFactory;
     factory.completion = completion;
-    factory.phase = iTermURLActionFactoryPhaseHypertextLink;
+    factory.phase = iTermURLActionFactoryPhasePrompt;
 
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -144,6 +145,8 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 - (iTermURLActionFactoryPhase)phaseAfter:(iTermURLActionFactoryPhase)phase {
     if ([iTermAdvancedSettingsModel prioritizeSmartSelectionActions]) {
         switch (phase) {
+            case iTermURLActionFactoryPhasePrompt:
+                return iTermURLActionFactoryPhaseHypertextLink;
             case iTermURLActionFactoryPhaseHypertextLink:
                 return iTermURLActionFactoryPhaseSmartSelectionAction;
             case iTermURLActionFactoryPhaseSmartSelectionAction:
@@ -174,6 +177,9 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     }
     DLog(@"Try phase %@", @(self.phase));
     switch (self.phase) {
+        case iTermURLActionFactoryPhasePrompt:
+            [self tryPrompt];
+            break;
         case iTermURLActionFactoryPhaseHypertextLink:
             [self tryHypertextLink];
             break;
@@ -201,6 +207,14 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     }
 }
 
+- (void)tryPrompt {
+    URLAction *action = [self urlActionForPrompt];
+    if (action) {
+        [self completeWithAction:action];
+    } else {
+        [self fail];
+    }
+}
 - (void)tryHypertextLink {
     URLAction *action;
     action = [self urlActionForHypertextLink];
@@ -294,6 +308,17 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 
 #pragma mark - Sub-factories
 
+- (URLAction *)urlActionForPrompt {
+    VT100GridWindowedRange range = { 0 };
+    id<VT100ScreenMarkReading> mark = [self.extractor.dataSource commandMarkAt:self.coord range:&range];
+    if (!mark || mark.promptRange.start.x < 0 || !mark.command) {
+        return nil;
+    }
+    URLAction *action = [URLAction actionToShowCommandInfoForMark:mark
+                                                            coord:self.coord];
+    action.range = range;
+    return action;
+}
 - (URLAction *)urlActionForHypertextLink {
     iTermTextExtractor *extractor = self.extractor;
     iTermExternalAttribute *oea = [extractor externalAttributesAt:self.coord];

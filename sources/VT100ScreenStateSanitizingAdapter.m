@@ -67,6 +67,10 @@
     return [[_source markOnLine:line] doppelganger];
 }
 
+- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord range:(out nonnull VT100GridWindowedRange *)range {
+    return [[_source commandMarkAt:coord range:range] doppelganger];
+}
+
 - (id<IntervalTreeImmutableObject>)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
     return [[_source lastMarkMustBePrompt:wantPrompt class:theClass] doppelganger];
 }

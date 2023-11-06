@@ -3410,20 +3410,26 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (BOOL)showCommandInfoForEvent:(NSEvent *)event {
-    iTermOffscreenCommandLine *offscreenCommandLine = [self offscreenCommandLineForClickAt:event.locationInWindow];
-    if (offscreenCommandLine) {
-        [self presentCommandInfoForOffscreenCommandLine:offscreenCommandLine event:event fromOffscreenCommandLine:YES];
-        return YES;
+    if (event.buttonNumber == 1) {
+        iTermOffscreenCommandLine *offscreenCommandLine = [self offscreenCommandLineForClickAt:event.locationInWindow];
+        if (offscreenCommandLine) {
+            [self presentCommandInfoForOffscreenCommandLine:offscreenCommandLine event:event fromOffscreenCommandLine:YES];
+            return YES;
+        }
     }
-    id<VT100ScreenMarkReading> mark = [_contextMenuHelper markForClick:event];
+    id<VT100ScreenMarkReading> mark = [_contextMenuHelper markForClick:event requireMargin:event.buttonNumber == 1];
+    return [self showCommandInfoForMark:mark at:event.locationInWindow];
+}
+
+- (BOOL)showCommandInfoForMark:(id<VT100ScreenMarkReading>)mark at:(NSPoint)locationInWindow {
     if (mark.startDate != nil) {
-        const VT100GridCoord coord = [self coordForPointInWindow:event.locationInWindow];
+        const VT100GridCoord coord = [self coordForPointInWindow:locationInWindow];
         const long long overflow = [self.dataSource totalScrollbackOverflow];
         NSDate *date = [self.dataSource timestampForLine:coord.y];
         [self presentCommandInfoForMark:mark
                      absoluteLineNumber:VT100GridAbsCoordFromCoord(coord, overflow).y
                                    date:date
-                                  event:event
+                                  point:locationInWindow
                fromOffscreenCommandLine:NO];
         return YES;
     }
@@ -5858,6 +5864,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)mouseHandlerOpenTargetWithEvent:(NSEvent *)event
                            inBackground:(BOOL)inBackground {
+    if ([self showCommandInfoForEvent:event]) {
+        return;
+    }
     [_urlActionHelper openTargetWithEvent:event inBackground:inBackground];
 }
 

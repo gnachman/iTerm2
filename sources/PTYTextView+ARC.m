@@ -343,7 +343,7 @@ iTermCommandInfoViewControllerDelegate>
     if (offscreenCommandLine) {
         return nil;
     }
-    if ([_contextMenuHelper markForClick:event]) {
+    if ([_contextMenuHelper markForClick:event requireMargin:YES]) {
         return nil;
     }
 
@@ -546,7 +546,7 @@ iTermCommandInfoViewControllerDelegate>
             }
             break;
         }
-
+        case kURLActionShowCommandInfo:
         case kURLActionSmartSelectionAction:
             break;
     }
@@ -1075,6 +1075,11 @@ iTermCommandInfoViewControllerDelegate>
     return self.selection;
 }
 
+- (void)urlActionHelperShowCommandInfoForMark:(id<VT100ScreenMarkReading>)mark coord:(VT100GridCoord)coord {
+    const NSPoint point = [self convertPoint:[self pointForCoord:coord] toView:nil];
+    [self showCommandInfoForMark:mark at:point];
+}
+
 #pragma mark - Install Shell Integration
 
 - (IBAction)installShellIntegration:(id)sender {
@@ -1163,6 +1168,12 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                                markOnLine:(int)line {
     return [self.dataSource markOnLine:line];
+}
+
+- (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+                              markAtCoord:(VT100GridCoord)coord {
+    VT100GridWindowedRange range = { 0 };
+    return [self.dataSource commandMarkAt:coord range:&range];
 }
 
 - (NSString *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

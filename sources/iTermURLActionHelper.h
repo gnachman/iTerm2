@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class SmartMatch;
 @class URLAction;
 @protocol VT100RemoteHostReading;
+@protocol VT100ScreenMarkReading;
 
 @protocol iTermURLActionHelperDelegate<NSObject>
 - (BOOL)urlActionHelperShouldIgnoreHardNewlines:(iTermURLActionHelper *)helper;
@@ -59,6 +60,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<iTermObject>)urlActionHelperOwner:(iTermURLActionHelper *)helper;
 - (void)urlActionHelperCopySelectionIfNeeded:(iTermURLActionHelper *)helper;
 - (iTermSelection *)urlActionHelperSelection:(iTermURLActionHelper *)helper;
+- (void)urlActionHelperShowCommandInfoForMark:(id<VT100ScreenMarkReading>)mark coord:(VT100GridCoord)coord;
 @end
 
 @interface iTermURLActionHelper : NSObject

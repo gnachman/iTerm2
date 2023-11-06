@@ -393,7 +393,6 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
               toTextDocumentOfType:(NSString * _Nullable)type
                           filename:(NSString * _Nullable)filename
                          forceWide:(BOOL)forceWide;
-- (void)screenConvertAbsoluteRangeToBlock:(VT100GridAbsCoordRange)range;
 - (void)screenDidHookSSHConductorWithToken:(NSString * _Nonnull)token
                                   uniqueID:(NSString * _Nonnull)uniqueID
                                   boolArgs:(NSString * _Nonnull)boolArgs

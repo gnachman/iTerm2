@@ -44,6 +44,8 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                                markOnLine:(int)line;
+- (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+                              markAtCoord:(VT100GridCoord)coord;
 
 - (iTermOffscreenCommandLine *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
             offscreenCommandLineForClickAt:(NSPoint)windowPoint;
@@ -174,7 +176,7 @@ runCommandInBackground:(NSString *)command;
 - (NSMenu * _Nullable)menuForEvent:(NSEvent *)theEvent;
 - (NSMenu *)titleBarMenu;
 - (void)openContextMenuAt:(VT100GridCoord)clickPoint event:(NSEvent *)event;
-- (id<VT100ScreenMarkReading>)markForClick:(NSEvent *)event;
+- (id<VT100ScreenMarkReading>)markForClick:(NSEvent *)event requireMargin:(BOOL)requireMargin;
 - (void)selectOutputOfCommandMark:(id<VT100ScreenMarkReading>)mark;
 
 @end

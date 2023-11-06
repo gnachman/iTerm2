@@ -112,6 +112,7 @@
 - (NSArray *)charactersWithNotesOnLine:(int)line;
 - (id<VT100ScreenMarkReading>)markOnLine:(int)line;
 - (void)removeNamedMark:(id<VT100ScreenMarkReading>)mark;
+- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
 

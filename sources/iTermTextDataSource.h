@@ -7,6 +7,7 @@
 
 #import "ScreenCharArray.h"
 
+@protocol VT100ScreenMarkReading;
 @protocol iTermExternalAttributeIndexReading;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -22,6 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<iTermExternalAttributeIndexReading> _Nullable)externalAttributeIndexForLine:(int)y;
 - (id _Nullable)fetchLine:(int)line block:(id _Nullable (^ NS_NOESCAPE)(ScreenCharArray *sct))block;
 - (NSDate * _Nullable)dateForLine:(int)line;
+- (id<VT100ScreenMarkReading> _Nullable)commandMarkAt:(VT100GridCoord)coord
+                                                range:(out VT100GridWindowedRange *)range;
 
 @end
 

@@ -340,6 +340,8 @@ extern NSString *const kScreenStateBlockStartAbsLineKey;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 
 - (id<VT100ScreenMarkReading> _Nullable)markOnLine:(int)line;
+- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
+                                      range:(out nonnull VT100GridWindowedRange *)rangeOut;
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
 

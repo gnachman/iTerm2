@@ -854,6 +854,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state markOnLine:line];
 }
 
+- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord range:(out nonnull VT100GridWindowedRange *)range {
+    return [_state commandMarkAt:coord range:range];
+}
+
 - (void)removeNamedMark:(id<VT100ScreenMarkReading>)mark {
     [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState removeNamedMark:(VT100ScreenMark *)mark.progenitor];

@@ -84,6 +84,7 @@ NSPopoverDelegate> {
 - (void)scrollToCenterLine:(int)line;
 
 - (BOOL)showCommandInfoForEvent:(NSEvent *)event;
+- (BOOL)showCommandInfoForMark:(id<VT100ScreenMarkReading>)mark at:(NSPoint)locationInWindow;
 - (IBAction)performFindPanelAction:(id)sender;
 - (BOOL)mouseIsOverButtonInEvent:(NSEvent *)event;
 

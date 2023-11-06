@@ -62,4 +62,8 @@ class TerminalContentSnapshot: NSObject, iTermTextDataSource {
         }
         return Date(timeIntervalSinceReferenceDate: timestamp)
     }
+
+    func commandMark(at coord: VT100GridCoord, range: UnsafeMutablePointer<VT100GridWindowedRange>) -> VT100ScreenMarkReading? {
+        return nil
+    }
 }

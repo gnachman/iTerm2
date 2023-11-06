@@ -73,6 +73,14 @@
     return action;
 }
 
++ (instancetype)actionToShowCommandInfoForMark:(id<VT100ScreenMarkReading>)mark coord:(VT100GridCoord)coord {
+    URLAction *action = [self urlAction];
+    action.actionType = kURLActionShowCommandInfo;
+    action.mark = mark;
+    action.coord = coord;
+    return action;
+}
+
 #pragma mark - NSObject
 
 - (NSString *)description {
@@ -93,9 +101,12 @@
         case kURLActionSecureCopyFile:
             actionType = @"SecureCopyFile";
             break;
+        case kURLActionShowCommandInfo:
+            actionType = @"ShowCommandInfo";
+            break;
     }
-    return [NSString stringWithFormat:@"<%@: %p actionType=%@ string=%@ rule=%@ range=%@>",
-            [self class], self, actionType, self.string, self.rule, VT100GridWindowedRangeDescription(_range)];
+    return [NSString stringWithFormat:@"<%@: %p actionType=%@ string=%@ rule=%@ range=%@ coord=%@>",
+            [self class], self, actionType, self.string, self.rule, VT100GridWindowedRangeDescription(_range), VT100GridCoordDescription(self.coord)];
 }
 
 @end

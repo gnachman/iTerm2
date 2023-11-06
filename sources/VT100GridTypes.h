@@ -278,7 +278,7 @@ NSString *VT100GridAbsWindowedRangeDescription(VT100GridAbsWindowedRange range);
 
 NS_INLINE VT100GridAbsCoord VT100GridAbsWindowedRangeStart(VT100GridAbsWindowedRange range) {
     VT100GridAbsCoord coord = range.coordRange.start;
-    if (range.columnWindow.length) {
+    if (range.columnWindow.length >= 0) {
         coord.x = MIN(MAX(coord.x, range.columnWindow.location),
                       range.columnWindow.location + range.columnWindow.length);
     }
@@ -287,7 +287,7 @@ NS_INLINE VT100GridAbsCoord VT100GridAbsWindowedRangeStart(VT100GridAbsWindowedR
 
 NS_INLINE VT100GridAbsCoord VT100GridAbsWindowedRangeEnd(VT100GridAbsWindowedRange range) {
     VT100GridAbsCoord coord = range.coordRange.end;
-    if (range.columnWindow.length) {
+    if (range.columnWindow.length >= 0) {
         coord.x = MIN(coord.x, VT100GridRangeMax(range.columnWindow) + 1);
     }
     return coord;

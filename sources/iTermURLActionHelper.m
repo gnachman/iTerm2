@@ -365,6 +365,11 @@
                                        displayName:action.string
                                     locationInView:action.range.coordRange];
                 break;
+
+            case kURLActionShowCommandInfo:
+                [self.delegate urlActionHelperShowCommandInfoForMark:action.mark
+                                                               coord:action.coord];
+                break;
         }
     }
 }

@@ -852,6 +852,17 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return [VT100ScreenMark castFrom:self.markCache[self.cumulativeScrollbackOverflow + line]];
 }
 
+- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord range:(out nonnull VT100GridWindowedRange *)rangeOut {
+    id<VT100ScreenMarkReading> mark = [self markOnLine:coord.y];
+    const VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
+    if (mark.command != nil && mark.promptRange.start.x >= 0 && VT100GridCoordRangeContainsCoord(range, coord)) {
+        rangeOut->columnWindow = VT100GridRangeMake(-1, -1);
+        rangeOut->coordRange = VT100GridCoordRangeFromAbsCoordRange(mark.promptRange, self.cumulativeScrollbackOverflow);
+        return mark;
+    }
+    return nil;
+}
+
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
     if (range.start.x == -1) {
         return nil;

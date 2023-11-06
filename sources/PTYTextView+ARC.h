@@ -73,7 +73,7 @@ iTermURLActionHelperDelegate>
 - (void)presentCommandInfoForMark:(id<VT100ScreenMarkReading>)mark
                absoluteLineNumber:(long long)absoluteLineNumber
                              date:(NSDate *)date
-                            event:(NSEvent *)event
+                            point:(NSPoint)locationInWindow
          fromOffscreenCommandLine:(BOOL)fromOffscreenCommandLine;
 
 #pragma mark - Mouse Cursor
