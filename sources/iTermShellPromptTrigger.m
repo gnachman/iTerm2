@@ -23,6 +23,10 @@
     return YES;
 }
 
+- (BOOL)detectsPrompt {
+    return YES;
+}
+
 - (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
                                inSession:(id<iTermTriggerSession>)aSession

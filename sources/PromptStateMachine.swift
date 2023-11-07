@@ -17,6 +17,7 @@ protocol PromptStateMachineDelegate: AnyObject {
     func promptStateMachineAppendCommandToComposer(command: String)
 
     @objc var promptStateMachineCursorAbsCoord: VT100GridAbsCoord { get }
+    @objc func promptStateMachineCheckForPrompt()
 }
 
 @objc(iTermPromptStateMachine)
@@ -285,6 +286,7 @@ class PromptStateMachine: NSObject {
             set(state: .ground, on: "B")
         case .ground, .echoingBack, .executing:
             // Something crazy happened so continue without composer.
+            delegate?.promptStateMachineCheckForPrompt()
             set(state: .ground, on: "B")
         case .accruingAlreadyEnteredCommand:
             // Something crazy happened so continue without composer.

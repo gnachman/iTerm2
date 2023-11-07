@@ -65,15 +65,24 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
                           lineNumber:startAbsLineNumber];
 }
 
+- (void)resetRateLimit {
+    DLog(@"reset rate limit");
+    _lastPartialLineTriggerCheck = 0;
+}
+
 - (void)checkPartialLineTriggers {
+    DLog(@"begin");
     if (self.disableExecution) {
+        DLog(@"Execution disabled");
         return;
     }
     if (_triggerLineNumber == -1) {
+        DLog(@"Already cleared");
         return;
     }
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if (now - _lastPartialLineTriggerCheck < kMinimumPartialLineTriggerCheckInterval) {
+        DLog(@"Rate limit squelch");
         return;
     }
     _lastPartialLineTriggerCheck = now;
@@ -106,7 +115,9 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
                               stringLine:(iTermStringLine *)stringLine
                               lineNumber:(long long)startAbsLineNumber
                       requireIdempotency:(BOOL)requireIdempotency {
+    DLog(@"begin");
     if (self.evaluating) {
+        DLog(@"Already evaluating");
         return;
     }
     self.evaluating = YES;
@@ -123,6 +134,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         DLog(@"Start checking triggers");
         [_triggersSlownessDetector measureEvent:PTYSessionSlownessEventTriggers block:^{
             for (Trigger *trigger in triggers) {
+                DLog(@"Consider %@", trigger);
                 if (requireIdempotency && !trigger.isIdempotent) {
                     continue;
                 }
@@ -132,6 +144,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
                                     lineNumber:startAbsLineNumber
                               useInterpolation:_triggerParametersUseInterpolatedStrings];
                 if (stop || self.sessionExited || (_triggers != triggers)) {
+                    DLog(@"Stopping");
                     break;
                 }
             }
@@ -278,6 +291,12 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
 - (NSIndexSet *)enabledTriggerIndexes {
     return [_triggers it_indexSetWithObjectsPassingTest:^BOOL(Trigger *trigger) {
         return !trigger.disabled;
+    }];
+}
+
+- (BOOL)havePromptDetectingTrigger {
+    return [_triggers anyWithBlock:^BOOL(Trigger *trigger) {
+        return trigger.detectsPrompt;
     }];
 }
 

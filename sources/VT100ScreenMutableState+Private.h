@@ -47,6 +47,7 @@ iTermTriggerScopeProvider> {
     BOOL _compressionScheduled;
     iTermPromptStateMachine *_promptStateMachine;
     NSString *_currentBlockID;;
+    BOOL _triggerDidDetectPrompt;
 }
 
 @property (atomic) BOOL hadCommand;

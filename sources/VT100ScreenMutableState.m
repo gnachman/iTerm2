@@ -5121,6 +5121,7 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)handleTriggerDetectedPromptAt:(VT100GridAbsCoordRange)range {
     DLog(@"handleTriggerDetectedPromptAt: %@", VT100GridAbsCoordRangeDescription(range));
+    _triggerDidDetectPrompt = NO;
     if (self.fakePromptDetectedAbsLine == -2) {
         // Infer the end of the preceding command. Set a return status of 0 since we don't know what it was.
         [self setReturnCodeOfLastCommand:0];
@@ -5186,6 +5187,7 @@ launchCoprocessWithCommand:(NSString *)command
     }
     // We can't mutate the session at this point. Wait until trigger processing is done and the
     // current token (if any) is executed and then do the prompt handling.
+    _triggerDidDetectPrompt = YES;
     __weak __typeof(self) weakSelf = self;
     [_postTriggerActions addObject:[^{
         [weakSelf handleTriggerDetectedPromptAt:range];
@@ -5652,6 +5654,15 @@ launchCoprocessWithCommand:(NSString *)command
         [delegate screenAppendStringToComposer:command];
         [unpauser unpause];
     }];
+}
+
+- (void)promptStateMachineCheckForPrompt {
+    DLog(@"Prompt check requested");
+    if (_triggerEvaluator.havePromptDetectingTrigger) {
+        DLog(@"Have a prompt-detecting trigger");
+        [_triggerEvaluator resetRateLimit];
+        [self performPeriodicTriggerCheck];
+    }
 }
 
 @end

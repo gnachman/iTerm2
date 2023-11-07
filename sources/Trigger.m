@@ -130,6 +130,10 @@ NSString * const kTriggerDisabledKey = @"disabled";
     return NO;
 }
 
+- (BOOL)detectsPrompt {
+    return NO;
+}
+
 - (NSArray *)groupedMenuItemsForPopupButton
 {
     NSDictionary *menuItems = [self menuItemsForPoupupButton];

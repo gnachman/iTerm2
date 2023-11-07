@@ -114,7 +114,7 @@ extern NSString * const kTriggerDisabledKey;
 @property (nonatomic, readonly) BOOL isIdempotent;
 @property (class, nonatomic, readonly) NSString *title;
 @property (nonatomic, weak) id<iTermTriggerDelegate> delegate;
-
+@property (nonatomic, readonly) BOOL detectsPrompt;
 + (nullable NSSet<NSString *> *)synonyms;
 + (nullable Trigger *)triggerFromDict:(NSDictionary *)dict;
 
