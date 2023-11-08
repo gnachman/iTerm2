@@ -644,14 +644,16 @@ static int gSignalsToList[] = {
 + (instancetype)viewWithString:(NSString *)string font:(NSFont *)font from:(NSTableView *)tableView owner:(id)owner {
     iTermJobTreeTextTableCellView *view = [tableView makeViewWithIdentifier:NSStringFromClass(self) owner:owner];
     if (!view) {
-        view = [[self alloc] init];
-        view.autoresizesSubviews = NO;
+        view = [[self alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
+        view.autoresizesSubviews = YES;
 
         NSTextField *textField = [NSTextField newLabelStyledTextField];
         textField.font = font;
         view.textField = textField;
         [view addSubview:textField];
         textField.frame = view.bounds;
+        textField.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        textField.cell.truncatesLastVisibleLine = YES;
     }
     view.textField.stringValue = string;
     [view layoutSubviews];
@@ -668,7 +670,7 @@ static int gSignalsToList[] = {
 
 - (void)layoutTextFieldWithLeftInset:(CGFloat)leftInset {
     [self.textField sizeToFit];
-    const CGFloat width = MAX(NSWidth(self.textField.bounds), NSWidth(self.bounds));
+    const CGFloat width = NSWidth(self.bounds);
     self.textField.frame = NSMakeRect(leftInset, -2, width - leftInset, NSHeight(self.textField.frame) + 4);
 }
 
@@ -707,6 +709,14 @@ static int gSignalsToList[] = {
     [self layoutTextFieldWithLeftInset:height + margin];
 
     self.imageView.frame = NSMakeRect(0, NSMaxY(self.textField.frame) - height, height, height);
+}
+
+- (BOOL)clipsToBounds {
+    return YES;
+}
+
+- (BOOL)wantsDefaultClipping {
+    return NO;
 }
 @end
 
