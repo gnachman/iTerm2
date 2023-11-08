@@ -370,7 +370,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kTextmate2Identifier,
               kBBEditIdentifier,
               kEmacsAppIdentifier,
-              kIntelliJIDEAIdentifier,
+              kIntelliJIDEAIdentifierCE,
+              kIntelliJIDEAIdentifierUE,
               kWebStormIdentifier,
               kRiderIdentifier,
               kNovaAppIdentifier ];
@@ -449,7 +450,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
     // WebStorm doesn't actually support --line, but it's harmless to try.
     NSArray *jetbrains = @[
-        kIntelliJIDEAIdentifier,
+        kIntelliJIDEAIdentifierCE,
+        kIntelliJIDEAIdentifierUE,
         kWebStormIdentifier,
         kRiderIdentifier
     ];

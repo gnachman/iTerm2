@@ -34,7 +34,8 @@ NSString *kVSCodiumIdentifier1 = @"com.visualstudio.code.oss";
 NSString *kVSCodiumIdentifier2 = @"com.vscodium";
 NSString *kVSCodeInsidersIdentifier = @"com.microsoft.VSCodeInsiders";
 NSString *kEmacsAppIdentifier = @"org.gnu.Emacs";
-NSString *kIntelliJIDEAIdentifier = @"com.jetbrains.intellij.ce";
+NSString *kIntelliJIDEAIdentifierCE = @"com.jetbrains.intellij.ce";
+NSString *kIntelliJIDEAIdentifierUE = @"com.jetbrains.intellij";
 NSString *kWebStormIdentifier = @"com.jetbrains.WebStorm";
 NSString *kRiderIdentifier = @"com.jetbrains.rider";
 NSString *kNovaAppIdentifier = @"com.panic.Nova";
@@ -86,11 +87,12 @@ enum {
     kVSCodeInsidersTag,
     kEmacsAppTag,
     kVSCodium1Tag,
-    kIntelliJTag,
+    kIntelliJCETag,
     kWebStormTag,
     kRiderTag,
     kNovaTag,
     kVSCodium2Tag,
+    kIntelliJUETag,
 
     // Only append to the end of the list; never delete or change.
 };
@@ -140,7 +142,8 @@ enum {
                                kVSCodiumIdentifier2: @"vscodium",
                                kVSCodeInsidersIdentifier: @"vscode",
                                kEmacsAppIdentifier: @"",
-                               kIntelliJIDEAIdentifier: @"",
+                               kIntelliJIDEAIdentifierCE: @"",
+                               kIntelliJIDEAIdentifierUE: @"",
                                kWebStormIdentifier: @"",
                                kRiderIdentifier: @"",
                                kNovaAppIdentifier: @""
@@ -164,7 +167,8 @@ enum {
               kVSCodiumIdentifier2,
               kVSCodeInsidersIdentifier,
               kEmacsAppIdentifier,
-              kIntelliJIDEAIdentifier,
+              kIntelliJIDEAIdentifierUE,
+              kIntelliJIDEAIdentifierCE,
               kWebStormIdentifier,
               kRiderIdentifier ];
 }
@@ -192,7 +196,8 @@ enum {
                                   kVSCodiumIdentifier2,
                                   kVSCodeInsidersIdentifier,
                                   kEmacsAppIdentifier,
-                                  kIntelliJIDEAIdentifier,
+                                  kIntelliJIDEAIdentifierCE,
+                                  kIntelliJIDEAIdentifierUE,
                                   kWebStormIdentifier,
                                   kRiderIdentifier,
                                   kNovaAppIdentifier ];
@@ -213,7 +218,8 @@ enum {
                                kVSCodiumIdentifier2: @(kVSCodium2Tag),
                           kVSCodeInsidersIdentifier: @(kVSCodeInsidersTag),
                                 kEmacsAppIdentifier: @(kEmacsAppTag),
-                            kIntelliJIDEAIdentifier: @(kIntelliJTag),
+                          kIntelliJIDEAIdentifierCE: @(kIntelliJCETag),
+                          kIntelliJIDEAIdentifierUE: @(kIntelliJUETag),
                                 kWebStormIdentifier: @(kWebStormTag),
                                    kRiderIdentifier: @(kRiderTag),
                                  kNovaAppIdentifier: @(kNovaTag)
@@ -258,7 +264,8 @@ enum {
                                 kVSCodiumIdentifier2: @"VS Codium",
                            kVSCodeInsidersIdentifier: @"VS Code Insiders",
                                  kEmacsAppIdentifier: @"Emacs.app",
-                             kIntelliJIDEAIdentifier: @"IntelliJ IDEA",
+                           kIntelliJIDEAIdentifierCE: @"IntelliJ IDEA (Community Edition)",
+                           kIntelliJIDEAIdentifierUE: @"IntelliJ IDEA (Ultimate)",
                                  kWebStormIdentifier: @"WebStorm",
                                     kRiderIdentifier: @"Rider",
                                   kNovaAppIdentifier: @"Nova"
@@ -331,7 +338,8 @@ enum {
                               @(kVSCodium2Tag): kVSCodiumIdentifier2,
                          @(kVSCodeInsidersTag): kVSCodeInsidersIdentifier,
                                @(kEmacsAppTag): kEmacsAppIdentifier,
-                               @(kIntelliJTag): kIntelliJIDEAIdentifier,
+                             @(kIntelliJCETag): kIntelliJIDEAIdentifierCE,
+                             @(kIntelliJUETag): kIntelliJIDEAIdentifierUE,
                                @(kWebStormTag): kWebStormIdentifier,
                                   @(kRiderTag): kRiderIdentifier,
                                    @(kNovaTag): kNovaAppIdentifier
