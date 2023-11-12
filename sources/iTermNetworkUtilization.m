@@ -144,8 +144,6 @@ typedef struct {
         next += interface->ifm_msglen;
         if (interface->ifm_type == RTM_IFINFO2) {
             struct if_msghdr2 *header = (struct if_msghdr2 *)interface;
-            result.stats.downbytes += header->ifm_data.ifi_ibytes;
-            result.stats.upbytes += header->ifm_data.ifi_obytes;
 
             // See also: https://opensource.apple.com/source/Libinfo/Libinfo-542.40.3/gen.subproj/getifaddrs.c.auto.html L282
             if (header->ifm_addrs & RTA_IFP) {
@@ -153,9 +151,15 @@ typedef struct {
                 if (sa->sa_family == AF_LINK) {
                     struct sockaddr_dl *dl = (struct sockaddr_dl *)sa;
                     // Caches the socket address data (interface name + MAC address), in order to detect interface change
-                    [interfaceAddrs addObject:[NSData dataWithBytes:dl->sdl_data length:dl->sdl_nlen + dl->sdl_alen]];
+                    NSData *data = [NSData dataWithBytes:dl->sdl_data length:dl->sdl_nlen + dl->sdl_alen];
+                    if ([[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] hasPrefix:@"lo"]) {
+                        continue;
+                    }
+                    [interfaceAddrs addObject:data];
                 }
             }
+            result.stats.downbytes += header->ifm_data.ifi_ibytes;
+            result.stats.upbytes += header->ifm_data.ifi_obytes;
         }
     }
     result.interfaces = interfaceAddrs;
