@@ -62,6 +62,15 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
         sorted.remove(object: mark)
     }
 
+    @objc(removeMarks:onLines:)
+    func remove(marks: [iTermMarkProtocol], lines: [Int]) {
+        dirty = true
+        for line in lines {
+            dict.removeValue(forKey: line)
+        }
+        sorted.remove(objects: marks)
+    }
+
     @objc
     func removeAll() {
         dirty = true

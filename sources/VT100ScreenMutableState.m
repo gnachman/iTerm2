@@ -2362,29 +2362,24 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (BOOL)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
     DLog(@"Remove %@", obj);
-    long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
-    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-        long long theKey = (totalScrollbackOverflow +
-                            [self coordRangeForInterval:obj.entry.interval].end.y);
-        [self.markCache removeMark:(VT100ScreenMark *)obj onLine:theKey];
-        self.lastCommandMark = nil;
-        VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
-        if (screenMark.name) {
-            [self.namedMarks removeObjectsPassingTest:^BOOL(id<VT100ScreenMarkReading>  _Nullable anObject) {
-                return anObject == screenMark;
-            }];
-            self.namedMarksDirty = YES;
-        }
-    }
-    if ([obj isKindOfClass:[PTYAnnotation class]]) {
-        [self.mutableIntervalTree mutateObject:obj block:^(id<IntervalTreeObject> _Nonnull mutableObj) {
-            PTYAnnotation *mutableAnnotation = (PTYAnnotation *)mutableObj;
-            [mutableAnnotation willRemove];
-        }];
-    }
+    [self willRemoveObjectsFromIntervalTree:@[ obj ]];
     DLog(@"removeObjectFromIntervalTree: %@", obj);
-    const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:obj.entry.interval];
     const BOOL removed = [self.mutableIntervalTree removeObject:obj];
+    [self didRemoveObjectFromIntervalTree:obj];
+    return removed;
+}
+
+- (void)willRemoveObjectsFromIntervalTree:(NSArray<id<IntervalTreeObject>> *)objects {
+    [self willRemoveScreenMarksFromIntervalTree:[objects mapWithBlock:^id _Nullable(id<IntervalTreeObject>  _Nonnull anObject) {
+        return [VT100ScreenMark castFrom:anObject];
+    }]];
+    [self willRemoveAnnotationsFromIntervalTree:[objects mapWithBlock:^id _Nullable(id<IntervalTreeObject>  _Nonnull anObject) {
+        return [PTYAnnotation castFrom:anObject];
+    }]];
+}
+
+- (void)didRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
+    const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:obj.entry.interval];
     iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(obj);
     if (type != iTermIntervalTreeObjectTypeUnknown) {
         const long long line = range.start.y;
@@ -2393,7 +2388,44 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                  onLine:line];
         }];
     }
-    return removed;
+}
+
+- (void)willRemoveScreenMarksFromIntervalTree:(NSArray<VT100ScreenMark *> *)objects {
+    const long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
+    NSArray<NSNumber *> *keys = [objects mapWithBlock:^id _Nullable(VT100ScreenMark * _Nonnull obj) {
+        long long theKey = (totalScrollbackOverflow +
+                            [self coordRangeForInterval:obj.entry.interval].end.y);
+        return @(theKey);
+    }];
+    [self.markCache removeMarks:objects onLines:keys];
+    [objects enumerateObjectsUsingBlock:^(VT100ScreenMark * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        self.lastCommandMark = nil;
+        VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
+        if (screenMark.name) {
+            [self.namedMarks removeObjectsPassingTest:^BOOL(id<VT100ScreenMarkReading>  _Nullable anObject) {
+                return anObject == screenMark;
+            }];
+            self.namedMarksDirty = YES;
+        }
+    }];
+}
+
+- (void)willRemoveAnnotationsFromIntervalTree:(NSArray<PTYAnnotation *> *)objects {
+    [objects enumerateObjectsUsingBlock:^(PTYAnnotation * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self.mutableIntervalTree mutateObject:obj block:^(id<IntervalTreeObject> _Nonnull mutableObj) {
+            PTYAnnotation *mutableAnnotation = (PTYAnnotation *)mutableObj;
+            [mutableAnnotation willRemove];
+        }];
+    }];
+}
+
+- (void)removeObjectsFromIntervalTree:(NSArray<id<IntervalTreeObject>> *)objects {
+    [self willRemoveObjectsFromIntervalTree:objects];
+    [objects enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        const BOOL removed = [self.mutableIntervalTree removeObject:obj];
+        assert(removed);
+        [self didRemoveObjectFromIntervalTree:obj];
+    }];
 }
 
 - (void)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange {
@@ -2427,6 +2459,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"Remove interval tree objects in range %@", VT100GridAbsCoordRangeDescription(absCoordRange));
     Interval *intervalToClear = [self intervalForGridAbsCoordRange:absCoordRange];
     NSMutableArray<id<IntervalTreeObject>> *marksToMove = [NSMutableArray array];
+    NSMutableArray<id<IntervalTreeObject>> *marksToRemove = [NSMutableArray array];
+
     for (id<IntervalTreeObject> obj in [self.intervalTree objectsInInterval:intervalToClear]) {
         const VT100GridAbsCoordRange absMarkRange = [self absCoordRangeForInterval:obj.entry.interval];
         if (VT100GridAbsCoordRangeContainsAbsCoord(absCoordRangeToSave, absMarkRange.start)) {
@@ -2434,10 +2468,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         } else {
             DLog(@"Remove %p with range %@", obj, VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:obj.entry.interval]));
             DLog(@"Remove in range: %@", obj);
-            const BOOL removed = [self removeObjectFromIntervalTree:obj];
-            assert(removed);
+            [marksToRemove addObject:obj];
         }
     }
+    [self removeObjectsFromIntervalTree:marksToRemove];
     return marksToMove;
 }
 

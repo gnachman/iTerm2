@@ -90,6 +90,7 @@ class SortedArray<T>: CustomDebugStringConvertible {
     // Compares two values for equality.
     private var equals: (T, T) -> Bool
     var count: Int { array.count }
+    var isEmpty: Bool { count == 0 }
     var first: T? { array.first }
     var firstLocation: Int64? {
         if let first {
@@ -264,6 +265,83 @@ class SortedArray<T>: CustomDebugStringConvertible {
         } else {
             DLog("Declining to insert object \(object) that has a nil location")
         }
+    }
+
+    func remove(objects: [T]) {
+        array.remove(at: indexes(objects:objects))
+    }
+
+    private func indexes(objects: [T]) -> IndexSet {
+        guard !isEmpty else {
+            return IndexSet()
+        }
+        let sortedTuples = objects.compactMap { obj -> (Int64, T)? in
+            guard let l = location(obj) else {
+                return nil
+            }
+            return (l, obj)
+        }.sorted { lhs, rhs in
+            return lhs.0 < rhs.0
+        }
+        guard let tuple = sortedTuples.first else {
+            return IndexSet()
+        }
+        let firstLocation = tuple.0
+        // i is an index into array which will increase monotonically as we search for sortedTuples[tupleIndex].
+        guard var i = firstIndexAtOrAfter(location: firstLocation) else {
+            return IndexSet()
+        }
+        var indexesToRemove = IndexSet()
+        // tupleIndex is an index into sortedTuples which increases monotonically.
+        var tupleIndex = 0
+        var linearSearchCount = 0
+        let maximumLinearSearchIterations = 7
+        while i < array.count && tupleIndex < sortedTuples.count {
+            // Check if we can remove array[i] to eliminate the object at desiredSortedLocations[tupleIndex]
+            let (desiredLocation, desiredObject) = sortedTuples[tupleIndex]
+            // currentObject is what we're considering removing.
+            let currentObject = array[i]
+            guard let currentLocation = location(currentObject) else {
+                // The object at i has an undefined location so we won't remove it. Linear search forward.
+                i += 1
+                linearSearchCount += 1
+                continue
+            }
+            if currentLocation > desiredLocation {
+                // Failed to find the desired object.
+                tupleIndex += 1
+                continue
+            } 
+            if currentLocation == desiredLocation {
+                if equals(currentObject, desiredObject) {
+                    // Found the object.
+                    indexesToRemove.insert(i)
+                    tupleIndex += 1
+                    linearSearchCount = 0
+                    continue
+                } else {
+                    // Found an object with the right location. There might be more than one
+                    // with the same location so linear search forward without an iteration limit.
+                    tupleIndex += 1
+                    continue
+                }
+            }
+            assert(currentLocation < desiredLocation)
+            if linearSearchCount > maximumLinearSearchIterations {
+                // Give up and do a binary search.
+                guard let nextIndex = firstIndexAtOrAfter(location: desiredLocation) else {
+                    break
+                }
+                i = nextIndex
+                linearSearchCount = 0
+                continue
+            }
+
+            // Linear search forwards.
+            i += 1
+            linearSearchCount += 1
+        }
+        return indexesToRemove
     }
 
     func remove(object: T) {
