@@ -4,8 +4,8 @@ binary-path:     '/Users/gnachman/git/iterm2-alt3/ThirdParty/CoreParse.framework
 relocations:
   - { offsetInCU: 0x27, offset: 0x47A3F, size: 0x8, addend: 0x0, symName: '-[CPTokeniser init]', symObjAddr: 0x0, symBinAddr: 0x22BC, symSize: 0x60 }
   - { offsetInCU: 0x67, offset: 0x47A7F, size: 0x8, addend: 0x0, symName: '-[CPTokeniser advanceLineNumber:columnNumber:withInput:range:]', symObjAddr: 0x620, symBinAddr: 0x28DC, symSize: 0xEC }
-  - { offsetInCU: 0x8D, offset: 0x47AA5, size: 0x8, addend: 0x0, symName: '_advanceLineNumber:columnNumber:withInput:range:.onceToken', symObjAddr: 0x4AC8, symBinAddr: 0x22988, symSize: 0x0 }
-  - { offsetInCU: 0x1C0, offset: 0x47BD8, size: 0x8, addend: 0x0, symName: _newlineCharset, symObjAddr: 0x4AD0, symBinAddr: 0x22990, symSize: 0x0 }
+  - { offsetInCU: 0x8D, offset: 0x47AA5, size: 0x8, addend: 0x0, symName: '_advanceLineNumber:columnNumber:withInput:range:.onceToken', symObjAddr: 0x4AD0, symBinAddr: 0x22988, symSize: 0x0 }
+  - { offsetInCU: 0x1C0, offset: 0x47BD8, size: 0x8, addend: 0x0, symName: _newlineCharset, symObjAddr: 0x4AD8, symBinAddr: 0x22990, symSize: 0x0 }
   - { offsetInCU: 0x2AC, offset: 0x47CC4, size: 0x8, addend: 0x0, symName: '-[CPTokeniser init]', symObjAddr: 0x0, symBinAddr: 0x22BC, symSize: 0x60 }
   - { offsetInCU: 0x2E3, offset: 0x47CFB, size: 0x8, addend: 0x0, symName: '-[CPTokeniser initWithCoder:]', symObjAddr: 0x60, symBinAddr: 0x231C, symSize: 0x68 }
   - { offsetInCU: 0x32A, offset: 0x47D42, size: 0x8, addend: 0x0, symName: '-[CPTokeniser encodeWithCoder:]', symObjAddr: 0xC8, symBinAddr: 0x2384, symSize: 0x30 }

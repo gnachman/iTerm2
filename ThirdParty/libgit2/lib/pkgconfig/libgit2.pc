@@ -6,5 +6,5 @@ Name: libgit2
 Description: The git library, take 2
 Version: 1.1.0
 Libs: -L${libdir} -lgit2
-Libs.private: -framework CoreFoundation -framework Security -lz -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.0.sdk/usr/lib -liconv
+Libs.private: -framework CoreFoundation -framework Security -lz
 Cflags: -I${includedir} 

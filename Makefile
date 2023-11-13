@@ -69,6 +69,7 @@ clean:
 	rm -rf ColorPicker/ColorPicker.framework && git checkout ColorPicker/ColorPicker.framework
 	rm -rf SearchableComboListView/SearchableComboListView.framework && git checkout SearchableComboListView/SearchableComboListView.framework
 	rm -rf ThirdParty && git checkout ThirdParty
+	cd submodules/libsixel && make distclean
 	git checkout last-xcode-version
 
 backup-old-iterm:
