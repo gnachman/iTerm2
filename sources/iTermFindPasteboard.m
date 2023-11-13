@@ -66,7 +66,7 @@
 
 - (NSString *)stringValue {
     if (![iTermAdvancedSettingsModel synchronizeQueryWithFindPasteboard]) {
-        return _localValue;
+        return _localValue ?: @"";
     }
     NSPasteboard *findBoard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
     if (![[findBoard types] containsObject:NSPasteboardTypeString]) {
