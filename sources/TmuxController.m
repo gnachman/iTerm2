@@ -2698,20 +2698,6 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommandList:commands];
 }
 
-- (void)setLayoutInWindowPane:(int)windowPane toLayoutNamed:(NSString *)name {
-    NSArray *commands = @[ [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"select-layout -t %%%@ %@", @(windowPane), name]
-                                           responseTarget:self
-                                         responseSelector:@selector(didSetLayout:)
-                                           responseObject:nil
-                                                    flags:0],
-                           [gateway_ dictionaryForCommand:[self commandToListWindowsForSession:sessionId_]
-                                           responseTarget:self
-                                         responseSelector:@selector(didListWindowsSubsequentToSettingLayout:)
-                                           responseObject:nil
-                                                    flags:0] ];
-    [gateway_ sendCommandList:commands];
-}
-
 - (void)didSetLayout:(NSString *)response {
 }
 

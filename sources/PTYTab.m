@@ -2025,8 +2025,40 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self _splitViewDidResizeSubviews:splitView];
 }
 
+- (BOOL)allSplitsAreVertical:(NSSplitView *)node {
+    if (!node.isVertical) {
+        return NO;
+    }
+    for (NSView *subview in node.subviews) {
+        NSSplitView *split = [NSSplitView castFrom:subview];
+        if (split) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (BOOL)allSplitsAreHorizontal:(NSSplitView *)node {
+    if (node.isVertical) {
+        return NO;
+    }
+    for (NSView *subview in node.subviews) {
+        NSSplitView *split = [NSSplitView castFrom:subview];
+        if (split) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (void)arrangeTmuxSplitPanesEvenly {
-    [tmuxController_ setLayoutInWindowPane:self.tmuxWindow toLayoutNamed:@"tiled"];
+    if ([self allSplitsAreVertical:root_]) {
+        [tmuxController_ setLayoutInWindow:self.tmuxWindow toLayout:@"even-horizontal"];
+    } else if ([self allSplitsAreHorizontal:root_]) {
+        [tmuxController_ setLayoutInWindow:self.tmuxWindow toLayout:@"even-vertical"];
+    } else {
+        [tmuxController_ setLayoutInWindow:self.tmuxWindow toLayout:@"tiled"];
+    }
 }
 
 - (void)splitVertically:(BOOL)isVertical

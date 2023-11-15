@@ -244,7 +244,6 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
                 vSpacing:(CGFloat)vs
                   window:(int)window;
 - (BOOL)windowIsHidden:(int)windowId;
-- (void)setLayoutInWindowPane:(int)windowPane toLayoutNamed:(NSString *)name;
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout;
 - (NSArray<PTYSession<iTermTmuxControllerSession> *> *)clientSessions;
 
