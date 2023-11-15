@@ -1101,7 +1101,6 @@
 		1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39ADF180B8118004E56D5 /* InfoPlist.strings */; };
 		1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39AE5180B8118004E56D5 /* Credits.rtf */; };
 		1DD39B1A180B82F5004E56D5 /* DebugLogging.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD39B18180B82F5004E56D5 /* DebugLogging.h */; };
-		1DD39B7B180B8842004E56D5 /* libicucore.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39B7A180B8842004E56D5 /* libicucore.dylib */; };
 		1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */; };
 		1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD6707514934ADE008E4361 /* PTYSplitView.h */; };
 		1DD736411283C2FA009B7829 /* iTermPopupWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD7363F1283C2FA009B7829 /* iTermPopupWindowController.h */; };
@@ -2746,7 +2745,6 @@
 		1DD39AE6180B8118004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		1DD39B18180B82F5004E56D5 /* DebugLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = DebugLogging.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39B19180B82F5004E56D5 /* DebugLogging.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = DebugLogging.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DD39B7A180B8842004E56D5 /* libicucore.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libicucore.dylib; path = usr/lib/libicucore.dylib; sourceTree = SDKROOT; };
 		1DD39B7C180F68BF004E56D5 /* PTYTextViewDataSource.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PTYTextViewDataSource.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39B7D180F969E004E56D5 /* VT100ScreenDelegate.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenDelegate.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TmuxDashboardController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3706,7 +3704,6 @@
 				1D9A55B5180FA8F400B42CE9 /* AppKit.framework in Frameworks */,
 				1D9A5534180FA77F00B42CE9 /* Quartz.framework in Frameworks */,
 				1D9A5533180FA77900B42CE9 /* Carbon.framework in Frameworks */,
-				1DD39B7B180B8842004E56D5 /* libicucore.dylib in Frameworks */,
 				1DD39AD7180B8118004E56D5 /* Cocoa.framework in Frameworks */,
 				A6C763D31B45C5B700E3C992 /* libThermShared.a in Frameworks */,
 			);
@@ -4679,7 +4676,6 @@
 				A6184F881BAB3ED70088EF3C /* ColorPicker.framework */,
 				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
 				1DD39AD6180B8118004E56D5 /* Cocoa.framework */,
-				1DD39B7A180B8842004E56D5 /* libicucore.dylib */,
 				A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */,
 				1DD39AD8180B8118004E56D5 /* Other Frameworks */,
 				1DEB29301288885700B2CB9F /* Quartz.framework */,
@@ -8190,6 +8186,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_IDENTITY = "Mac Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
@@ -8225,7 +8222,7 @@
 				INFOPLIST_FILE = plists/Therm.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
@@ -9125,6 +9122,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_IDENTITY = "Mac Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
@@ -9162,7 +9160,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LINK_WITH_STANDARD_LIBRARIES = YES;
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				"OTHER_CFLAGS[arch=*]" = "-DITERM_DEBUG=1";
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
@@ -9196,6 +9194,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_IDENTITY = "Mac Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
@@ -9230,7 +9229,7 @@
 				INFOPLIST_FILE = plists/Therm.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				"OTHER_CFLAGS[arch=*]" = "-O3";
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (

@@ -735,8 +735,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     self.hotkeyWindowType = hotkeyWindowType;
 
     _wellFormed = YES;
+#if 0
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
+#endif
     self.terminalGuid = [NSString stringWithFormat:@"pty-%@", [NSString uuid]];
 
 #if ENABLE_SHORTCUT_ACCESSORY

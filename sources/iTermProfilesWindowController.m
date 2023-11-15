@@ -100,8 +100,10 @@ typedef enum {
                                                  selector:@selector(updatePaneButtons:)
                                                      name:@"iTermWindowBecameKey"
                                                    object:nil];
+#if 0
         [[self window] setRestorable:YES];
         [[self window] setRestorationClass:[iTermProfilesWindowRestorer class]];
+#endif
     }
     return self;
 }
