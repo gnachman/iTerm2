@@ -14,11 +14,11 @@
 + (UInt32)carbonModifiersForCocoaModifiers:(NSEventModifierFlags)cocoa {
     __block UInt32 carbon = 0;
     NSDictionary<NSNumber *, NSNumber *> *map =
-        @{ @(NSAlphaShiftKeyMask): @(alphaLock),
-           @(NSAlternateKeyMask): @(optionKey),
-           @(NSCommandKeyMask): @(cmdKey),
-           @(NSControlKeyMask): @(controlKey),
-           @(NSShiftKeyMask): @(shiftKey),
+    @{ @(NSEventModifierFlagCapsLock): @(alphaLock),
+       @(NSEventModifierFlagOption): @(optionKey),
+       @(NSEventModifierFlagCommand): @(cmdKey),
+       @(NSEventModifierFlagControl): @(controlKey),
+       @(NSEventModifierFlagShift): @(shiftKey),
          };
     [map enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
         if (cocoa & [key integerValue]) {

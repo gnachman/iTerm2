@@ -297,7 +297,7 @@ enum {
     NSString *action = prefs[kSemanticHistoryActionKey];
     // Uncheck all items
     for (NSMenuItem *item in [[action_ menu] itemArray]) {
-        [item setState:NSOffState];
+        [item setState:NSControlStateValueOff];
     }
     // Set selection in menu
     NSDictionary *actionToTagMap = [[self class] actionToTagMap];
@@ -307,7 +307,7 @@ enum {
     }
 
     // Check selected item
-    [[[action_ menu] itemWithTag:[action_ selectedTag]] setState:NSOnState];
+    [[[action_ menu] itemWithTag:[action_ selectedTag]] setState:NSControlStateValueOn];
     [self actionChanged:nil];
     NSString *text = prefs[kSemanticHistoryTextKey];
     if (text) {

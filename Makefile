@@ -31,16 +31,23 @@ install: | Deployment backup-old-iterm
 	cp -R build/Deployment/Therm.app $(APPS)
 
 Development: config.h
+	rm -rf build/Development/Therm.app
 	echo "Using PATH for build: $(PATH)"
+	cd ColorPicker && xcodebuild
 	xcodebuild -parallelizeTargets -target Therm -configuration Development && \
 	chmod -R go+rX build/Development
+	mkdir -p build/Development/Therm.app/Contents/Frameworks/
+	cp -rf ColorPicker/ColorPicker.framework build/Development/Therm.app/Contents/Frameworks/
 
 Dep:
 	xcodebuild -parallelizeTargets -target Therm -configuration Deployment
 
 Deployment:
+	rm -rf build/Deployment/Therm.app
 	xcodebuild -parallelizeTargets -target Therm -configuration Deployment && \
 	chmod -R go+rX build/Deployment
+	mkdir -p build/Deployment/Therm.app/Contents/Frameworks/
+	cp -rf ColorPicker/ColorPicker.framework build/Deployment/Therm.app/Contents/Frameworks/
 
 Nightly: force
 	cp plists/nightly-Therm.plist plists/Therm.plist

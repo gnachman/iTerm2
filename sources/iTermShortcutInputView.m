@@ -133,7 +133,7 @@
     frame.origin.y += 0.5;
     frame.size.width -= 0.5;
     frame.size.height -= 0.5;
-    NSRectFillUsingOperation(frame, NSCompositeSourceOver);
+    NSRectFillUsingOperation(frame, NSCompositingOperationSourceOver);
     [[NSGraphicsContext currentContext] setShouldAntialias:YES];
     
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];

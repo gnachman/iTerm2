@@ -238,27 +238,27 @@ static NSString *const kSubstitution = @"Substitution";
 }
 
 - (void)setShouldConvertUnicodePunctuation:(BOOL)shouldConvertUnicodePunctuation {
-    _convertUnicodePunctuation.state = shouldConvertUnicodePunctuation ? NSOnState : NSOffState;
+    _convertUnicodePunctuation.state = shouldConvertUnicodePunctuation ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (BOOL)shouldConvertUnicodePunctuation {
-    return _convertUnicodePunctuation.state == NSOnState;
+    return _convertUnicodePunctuation.state == NSControlStateValueOn;
 }
 
 - (void)setShouldConvertNewlines:(BOOL)shouldConvertNewlines {
-    _convertNewlines.state = shouldConvertNewlines ? NSOnState : NSOffState;
+    _convertNewlines.state = shouldConvertNewlines ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (BOOL)shouldConvertNewlines {
-    return _convertNewlines.state == NSOnState;
+    return _convertNewlines.state == NSControlStateValueOn;
 }
 
 - (void)setShouldRemoveNewlines:(BOOL)shouldRemoveNewlines {
-    _removeNewlines.state = shouldRemoveNewlines ? NSOnState : NSOffState;
+    _removeNewlines.state = shouldRemoveNewlines ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (BOOL)shouldRemoveNewlines {
-    return _removeNewlines.state == NSOnState;
+    return _removeNewlines.state == NSControlStateValueOn;
 }
 
 - (void)setEnableEscapeShellCharsWithBackslash:(BOOL)enableEscapeShellCharsWithBackslash {
@@ -270,11 +270,11 @@ static NSString *const kSubstitution = @"Substitution";
 }
 
 - (void)setShouldEscapeShellCharsWithBackslash:(BOOL)shouldEscapeShellCharsWithBackslash {
-    _escapeShellCharsWithBackslash.state = shouldEscapeShellCharsWithBackslash ? NSOnState : NSOffState;
+    _escapeShellCharsWithBackslash.state = shouldEscapeShellCharsWithBackslash ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (BOOL)shouldEscapeShellCharsWithBackslash {
-    return _escapeShellCharsWithBackslash.state == NSOnState;
+    return _escapeShellCharsWithBackslash.state == NSControlStateValueOn;
 }
 
 - (void)setDelayBetweenChunks:(NSTimeInterval)delayBetweenChunks {
@@ -298,11 +298,11 @@ static NSString *const kSubstitution = @"Substitution";
 }
 
 - (void)setShouldRemoveControlCodes:(BOOL)shouldRemoveControlCodes {
-    _removeControlCodes.state = shouldRemoveControlCodes ? NSOnState : NSOffState;
+    _removeControlCodes.state = shouldRemoveControlCodes ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (BOOL)shouldRemoveControlCodes {
-    return _removeControlCodes.state == NSOnState;
+    return _removeControlCodes.state == NSControlStateValueOn;
 }
 
 - (void)setEnableBracketedPaste:(BOOL)enableBracketedPaste {
@@ -314,11 +314,11 @@ static NSString *const kSubstitution = @"Substitution";
 }
 
 - (void)setShouldUseBracketedPasteMode:(BOOL)shouldUseBracketedPasteMode {
-    _bracketedPasteMode.state = shouldUseBracketedPasteMode ? NSOnState : NSOffState;
+    _bracketedPasteMode.state = shouldUseBracketedPasteMode ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (BOOL)shouldUseBracketedPasteMode {
-    return _bracketedPasteMode.state == NSOnState;
+    return _bracketedPasteMode.state == NSControlStateValueOn;
 }
 
 - (void)setEnableBase64:(BOOL)enableBase64 {
@@ -330,11 +330,11 @@ static NSString *const kSubstitution = @"Substitution";
 }
 
 - (void)setShouldBase64Encode:(BOOL)shouldBase64Encode {
-    _base64Encode.state = shouldBase64Encode ? NSOnState : NSOffState;
+    _base64Encode.state = shouldBase64Encode ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (BOOL)shouldBase64Encode {
-    return _base64Encode.state == NSOnState;
+    return _base64Encode.state == NSControlStateValueOn;
 }
 
 - (void)setEnableUseRegexSubstitution:(BOOL)enableRegexSubstitution {
@@ -346,13 +346,13 @@ static NSString *const kSubstitution = @"Substitution";
 }
 
 - (void)setShouldUseRegexSubstitution:(BOOL)shouldUseRegexSubstitution {
-    _useRegexSubstitution.state = shouldUseRegexSubstitution ? NSOnState : NSOffState;
+    _useRegexSubstitution.state = shouldUseRegexSubstitution ? NSControlStateValueOn : NSControlStateValueOff;
     _regex.enabled = shouldUseRegexSubstitution;
     _substitution.enabled = shouldUseRegexSubstitution;
 }
 
 - (BOOL)shouldUseRegexSubstitution {
-    return _useRegexSubstitution.state == NSOnState;
+    return _useRegexSubstitution.state == NSControlStateValueOn;
 }
 
 - (void)setEnableWaitForPrompt:(BOOL)enableWaitForPrompt {
@@ -364,11 +364,11 @@ static NSString *const kSubstitution = @"Substitution";
 }
 
 - (BOOL)shouldWaitForPrompt {
-    return _waitForPrompts.state == NSOnState;
+    return _waitForPrompts.state == NSControlStateValueOn;
 }
 
 - (void)setShouldWaitForPrompt:(BOOL)shouldWaitForPrompt {
-    _waitForPrompts.state = shouldWaitForPrompt ? NSOnState : NSOffState;
+    _waitForPrompts.state = shouldWaitForPrompt ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (void)setSubstitutionString:(NSString *)substitutionString {

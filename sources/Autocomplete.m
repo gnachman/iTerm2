@@ -388,7 +388,7 @@ const int kMaxResultContextWords = 4;
         unichar c = [keystr characterAtIndex:0];
         AcLog(@"c=%d", (int)c);
         unsigned int modflag = [event modifierFlags];
-        if ((modflag & NSShiftKeyMask) && c == 25) {
+        if ((modflag & NSEventModifierFlagShift) && c == 25) {
             // backtab
             [self less];
             return;

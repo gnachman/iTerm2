@@ -151,7 +151,7 @@
 
 - (BOOL)switchToWindowByNumber:(NSEvent *)event {
     const NSUInteger allModifiers =
-        (NSShiftKeyMask | NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask);
+    (NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagCommand | NSEventModifierFlagOption);
     if (([event modifierFlags] & allModifiers) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]]) {
         // Command-Alt (or selected modifier) + number: Switch to window by number.
         int digit = [self digitKeyForEvent:event];
@@ -174,7 +174,7 @@
 }
 
 - (BOOL)switchToPaneInWindowController:(PseudoTerminal *)currentTerminal byNumber:(NSEvent *)event {
-    const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+    const int mask = NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand;
     if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchPaneModifier]]) {
         int digit = [self digitKeyForEvent:event];
         NSArray *orderedSessions = currentTerminal.currentTab.orderedSessions;
@@ -200,7 +200,7 @@
 }
 
 - (BOOL)switchToTabInTabView:(PTYTabView *)tabView byNumber:(NSEvent *)event {
-    const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+    const int mask = NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand;
     if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]) {
         int digit = [self digitKeyForEvent:event];
         if (digit == 9 && [tabView numberOfTabViewItems] > 0) {

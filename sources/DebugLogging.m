@@ -28,7 +28,7 @@ static void AppendWindowDescription(NSWindow *window, NSMutableString *windows) 
      [window.contentView iterm_recursiveDescription]];
 }
 
-static void WriteDebugLogHeader() {
+static void WriteDebugLogHeader(void) {
     NSMutableString *windows = [NSMutableString string];
     for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
         AppendWindowDescription(window, windows);

@@ -39,11 +39,11 @@
   self.view.autoresizesSubviews = YES;
 
   NSButton *button = [[[NSButton alloc] init] autorelease];
-  [button setButtonType:NSMomentaryPushInButton];
+    [button setButtonType:NSButtonTypeMomentaryPushIn];
   [button setTarget:self];
   [button setAction:@selector(openInBrowserButtonPressed:)];
   [button setTitle:[NSString stringWithFormat:@"Open in %@", [self browserName]]];
-  [button setBezelStyle:NSTexturedRoundedBezelStyle];
+    [button setBezelStyle:NSBezelStyleToolbar];
   [button sizeToFit];
   NSRect frame = button.frame;
   frame.origin.x = self.view.frame.origin.x + 8;
@@ -117,8 +117,8 @@
     ITERM_IGNORE_PARTIAL_END
     
     WKPreferences *prefs = [[[NSClassFromString(@"WKPreferences") alloc] init] autorelease];
-    prefs.javaEnabled = NO;
-    prefs.javaScriptEnabled = YES;
+//    prefs.javaEnabled = NO;
+ //   prefs.javaScriptEnabled = YES;
     prefs.javaScriptCanOpenWindowsAutomatically = NO;
     configuration.preferences = prefs;
     configuration.processPool = [[[NSClassFromString(@"WKProcessPool") alloc] init] autorelease];

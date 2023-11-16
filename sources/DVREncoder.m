@@ -33,7 +33,7 @@
 //#define DVRDEBUG
 
 // Returns a timestamp for the current time.
-static long long now()
+static long long now(void)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);

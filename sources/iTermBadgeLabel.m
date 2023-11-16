@@ -24,7 +24,7 @@
     if (self) {
         _paragraphStyle = [[NSMutableParagraphStyle alloc] init];
         _paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
-        _paragraphStyle.alignment = NSRightTextAlignment;
+        _paragraphStyle.alignment = NSTextAlignmentRight;
     }
     return self;
 }

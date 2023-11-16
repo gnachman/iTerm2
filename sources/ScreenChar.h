@@ -196,7 +196,7 @@ typedef struct screen_char_t
 @end
 
 // Standard unicode replacement string. Is a double-width character.
-static inline NSString* ReplacementString()
+static inline NSString* ReplacementString(void)
 {
     const unichar kReplacementCharacter = UNICODE_REPLACEMENT_CHAR;
     return [NSString stringWithCharacters:&kReplacementCharacter length:1];

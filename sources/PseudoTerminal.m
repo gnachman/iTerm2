@@ -1903,12 +1903,12 @@ return NO;
 
     [[NSColor blackColor] set];
     NSRectFill(rect);
-    [[NSColor windowFrameColor] set];
+  //  [[NSColor windowFrameColor] set];
     NSFrameRect(rect);
     NSRect windowRect = rect;
 
     int N = [(NSDictionary *)[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] count];
-    [[NSColor windowFrameColor] set];
+   // [[NSColor windowFrameColor] set];
     NSRect tabsRect = NSMakeRect(rect.origin.x + 1,
                                  rect.origin.y,
                                  rect.size.width - 2,
@@ -3138,7 +3138,7 @@ return NO;
                   horizontalScrollerClass:nil
                     verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
                                borderType:NSNoBorder
-                              controlSize:NSRegularControlSize
+                                  controlSize:NSControlSizeRegular
                             scrollerStyle:[self scrollerStyle]];
 
     int screenWidth = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / charWidth;
@@ -3155,7 +3155,7 @@ return NO;
                        horizontalScrollerClass:nil
                          verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
                                     borderType:NSNoBorder
-                                   controlSize:NSRegularControlSize
+                                   controlSize:NSControlSizeRegular
                                  scrollerStyle:[self scrollerStyle]];
     // Respect minimum tab sizes.
     for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
@@ -4334,7 +4334,7 @@ return NO;
 
         [tabViewImage drawAtPoint:viewRect.origin
                          fromRect:NSZeroRect
-                        operation:NSCompositeSourceOver
+                        operation:NSCompositingOperationSourceOver
                          fraction:1.0];
         [viewImage unlockFocus];
 
@@ -4368,7 +4368,7 @@ return NO;
             offset->height = 0;
             offset->width = 0;
         }
-        *styleMask = NSBorderlessWindowMask;
+        *styleMask = NSWindowStyleMaskBorderless;
     } else {
         // grabs whole tabview image
         viewImage = [[tabViewItem identifier] image:YES];
@@ -4389,7 +4389,7 @@ return NO;
                 break;
         }
 
-        *styleMask = NSBorderlessWindowMask;
+        *styleMask = NSWindowStyleMaskBorderless;
     }
 
     return viewImage;
@@ -4562,7 +4562,6 @@ return NO;
     if (aTab == nil) {
         return nil;
     }
-
     NSWindowController<iTermWindowController> * term =
         [self terminalDraggedFromAnotherWindowAtPoint:point];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
@@ -4753,8 +4752,7 @@ return NO;
     for (PTYTab *aTab in [self tabs]) {
         NSTabViewItem *tabViewItem = [aTab tabViewItem];
         PTYSession *aSession = [aTab activeSession];
-        NSColor *color = [aSession tabColor];
-        [_contentView.tabBarControl setTabColor:color forTabViewItem:tabViewItem];
+        //NSColor *color = [aSession tabColor];
         if ([_contentView.tabView selectedTabViewItem] == tabViewItem) {
             NSColor* newTabColor = [_contentView.tabBarControl tabColorForTabViewItem:tabViewItem];
             if ([_contentView.tabView numberOfTabViewItems] == 1 &&
@@ -4911,10 +4909,9 @@ return NO;
     if (!tabViewItem) {
         return nil;
     }
-    PTYSession *newSession;
 
     // Initialize a new session
-    newSession = [[[PTYSession alloc] initSynthetic:YES] autorelease];
+    PTYSession *newSession = [[[PTYSession alloc] initSynthetic:YES] autorelease];
     // NSLog(@"New session for IR view is at %p", newSession);
 
     // set our preferences
@@ -7852,6 +7849,7 @@ return NO;
 }
 
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word {
+#if 0
     if (word == _previousTouchBarWord || [word isEqualToString:_previousTouchBarWord]) {
         return;
     }
@@ -7865,6 +7863,7 @@ return NO;
         NSString *title = [[self currentSession] windowTitle];
         [self updateTouchBarWithWordAtCursor:word forTitle:title];
     }];
+#endif
 }
 
 #pragma mark - Toolbelt

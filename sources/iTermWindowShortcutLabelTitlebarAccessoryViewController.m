@@ -40,7 +40,7 @@
         _label.stringValue = @"";
     } else if (_ordinal >= 10) {
         NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
-        paragraphStyle.alignment = NSRightTextAlignment;
+        paragraphStyle.alignment = NSTextAlignmentRight;
         NSDictionary *attributes = @{ NSFontAttributeName: _label.font,
                                       NSForegroundColorAttributeName: [NSColor lightGrayColor],
                                       NSParagraphStyleAttributeName: paragraphStyle };
@@ -58,15 +58,15 @@
             break;
 
         case kPreferencesModifierTagEitherCommand:
-            return [NSString stringForModifiersWithMask:NSCommandKeyMask];
+            return [NSString stringForModifiersWithMask:NSEventModifierFlagCommand];
             break;
 
         case kPreferencesModifierTagEitherOption:
-            return [NSString stringForModifiersWithMask:NSAlternateKeyMask];
+            return [NSString stringForModifiersWithMask:NSEventModifierFlagOption];
             break;
 
         case kPreferencesModifierTagCommandAndOption:
-            return [NSString stringForModifiersWithMask:(NSCommandKeyMask | NSAlternateKeyMask)];
+            return [NSString stringForModifiersWithMask:(NSEventModifierFlagCommand | NSEventModifierFlagOption)];
             break;
     }
 

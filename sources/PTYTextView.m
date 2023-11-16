@@ -1380,6 +1380,7 @@ static const int kDragThreshold = 3;
     BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
 
     _keyIsARepeat = [event isARepeat];
+#if 0
     DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
     DLog(@"_hadMarkedTextBeforeHandlingKeypressEvent=%d", (int)_hadMarkedTextBeforeHandlingKeypressEvent);
     DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
@@ -1391,6 +1392,7 @@ static const int kDragThreshold = 3;
     DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
     DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
     DLog(@"event is repeated=%d", _keyIsARepeat);
+#endif
 
     // discard repeated key events if auto repeat mode (DECARM) is disabled
     if (_keyIsARepeat && ![[_dataSource terminal] autorepeatMode]) {

@@ -42,12 +42,13 @@
 }
 
 #pragma mark - NSTextField Delegate
-
+#if 0
+// deprecated method
 - (void)controlTextDidChange:(NSNotification *)obj {
     _textField.integerValue = MAX(0, MIN(100, _textField.integerValue));
     _stepper.integerValue = _textField.integerValue;
     _numberOfSpaces = _textField.integerValue;
 }
-
+#endif
 
 @end

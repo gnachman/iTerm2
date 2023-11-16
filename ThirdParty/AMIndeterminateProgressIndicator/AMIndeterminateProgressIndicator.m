@@ -82,7 +82,7 @@ static CGFloat DegreesToRadians(double radians) {
         [image unlockFocus];
         
         NSBitmapImageRep *rep = image.bitmapImageRep;
-        NSData *data = [rep representationUsingType:NSPNGFileType
+        NSData *data = [rep representationUsingType:NSBitmapImageFileTypePNG
                                          properties:@{ NSImageInterlaced: @NO,
                                                        NSImageCompressionFactor: @1 }];
         CGDataProviderRef provider = CGDataProviderCreateWithCFData((CFDataRef)data);
@@ -108,7 +108,7 @@ static CGFloat DegreesToRadians(double radians) {
     NSLineCapStyle previousLineCapStyle = [NSBezierPath defaultLineCapStyle];
     CGFloat previousLineWidth = [NSBezierPath defaultLineWidth];
 
-    [NSBezierPath setDefaultLineCapStyle:NSRoundLineCapStyle];
+    [NSBezierPath setDefaultLineCapStyle:NSLineCapStyleRound];
     [NSBezierPath setDefaultLineWidth:strokeWidth];
     
     [NSBezierPath strokeLineFromPoint:firstPoint toPoint:secondPoint];

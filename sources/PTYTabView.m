@@ -26,10 +26,10 @@
 
 #import "PTYTabView.h"
 
-const NSUInteger kAllModifiers = (NSControlKeyMask |
-                                  NSCommandKeyMask |
-                                  NSAlternateKeyMask |
-                                  NSShiftKeyMask);
+const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
+                                  NSEventModifierFlagCommand |
+                                  NSEventModifierFlagOption |
+                                  NSEventModifierFlagShift);
 
 @implementation PTYTabView {
     // Holds references to tabs with the most recently used one at index 0 and least recently used

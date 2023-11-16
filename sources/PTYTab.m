@@ -1629,7 +1629,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                        horizontalScrollerClass:nil
                          verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
                                     borderType:NSNoBorder
-                                   controlSize:NSRegularControlSize
+                                   controlSize:NSControlSizeRegular
                                  scrollerStyle:[term scrollerStyle]];
     if (showTitles) {
         outerSize.height += [SessionView titleHeight];
@@ -2136,9 +2136,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         if ([session transparency] > 0 &&
             [[session textview] useTransparency] &&
             [[[session profile] objectForKey:KEY_BLUR] boolValue]) {
-            ++y;
+            y++;
         } else {
-            ++n;
+            n++;
         }
     }
     return y > 0;
@@ -3042,7 +3042,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                horizontalScrollerClass:nil
                                                  verticalScrollerClass:[realParentWindow_ scrollbarShouldBeVisible] ? [[session.view.scrollview verticalScroller] class] : nil
                                                             borderType:session.view.scrollview.borderType
-                                                           controlSize:NSRegularControlSize
+                                                           controlSize:NSControlSizeRegular
                                                          scrollerStyle:session.view.scrollview.scrollerStyle];
             
             int chars = forHeight ? (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / cellSize.height :
@@ -4781,7 +4781,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                            horizontalScrollerClass:nil
                                              verticalScrollerClass:[realParentWindow_ scrollbarShouldBeVisible] ? [[anySession.view.scrollview verticalScroller] class] : nil
                                                         borderType:anySession.view.scrollview.borderType
-                                                       controlSize:NSRegularControlSize
+                                                       controlSize:NSControlSizeRegular
                                                      scrollerStyle:anySession.view.scrollview.scrollerStyle];
         NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
         return VT100GridSizeMake((contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / cellSize.width,

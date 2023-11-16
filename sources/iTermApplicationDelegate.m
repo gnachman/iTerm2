@@ -430,11 +430,11 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)updateMaximizePaneMenuItem {
-    [maximizePane setState:[[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane] ? NSOnState : NSOffState];
+    [maximizePane setState:[[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane] ? NSControlStateValueOn : NSControlStateValueOff];
 }
 
 - (void)updateUseTransparencyMenuItem {
-    [useTransparency setState:[[[iTermController sharedInstance] currentTerminal] useTransparency] ? NSOnState : NSOffState];
+    [useTransparency setState:[[[iTermController sharedInstance] currentTerminal] useTransparency] ? NSControlStateValueOn : NSControlStateValueOff];
 }
 
 - (NSString *)markAlertAction {
@@ -1125,7 +1125,7 @@ static BOOL hasBecomeActive = NO;
     }
     NSMenuItem *menuItem = [toolbeltMenu itemWithTitle:theName];
 
-    NSInteger newState = ([menuItem state] == NSOnState) ? NSOffState : NSOnState;
+    NSInteger newState = ([menuItem state] == NSControlStateValueOn) ? NSControlStateValueOff : NSControlStateValueOn;
     [menuItem setState:newState];
 }
 

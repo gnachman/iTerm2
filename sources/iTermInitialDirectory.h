@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Profile.h"
+#import "profile.h"
 #import "ITAddressBookMgr.h"
 
 typedef NS_ENUM(NSUInteger, iTermInitialDirectoryMode) {

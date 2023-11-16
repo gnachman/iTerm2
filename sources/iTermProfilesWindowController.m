@@ -94,7 +94,7 @@ typedef enum {
 
         NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
         NSNumber* n = [prefs objectForKey:kCloseBookmarksWindowAfterOpeningKey];
-        [closeAfterOpeningBookmark_ setState:[n boolValue] ? NSOnState : NSOffState];
+        [closeAfterOpeningBookmark_ setState:[n boolValue] ? NSControlStateValueOn : NSOffState];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(updatePaneButtons:)
@@ -146,7 +146,7 @@ typedef enum {
 {
     BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
     [self _openBookmarkInTab:YES firstInWindow:!windowExists inPane:VERTICAL_PANE];
-    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+    if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
     }
 }
@@ -155,7 +155,7 @@ typedef enum {
 {
     BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
     [self _openBookmarkInTab:YES firstInWindow:!windowExists inPane:HORIZONTAL_PANE];
-    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+    if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
     }
 }
@@ -163,7 +163,7 @@ typedef enum {
 - (IBAction)openBookmarkInTab:(id)sender
 {
     [self _openBookmarkInTab:YES firstInWindow:NO inPane:NO_PANE];
-    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+    if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
     }
 }
@@ -171,7 +171,7 @@ typedef enum {
 - (IBAction)openBookmarkInWindow:(id)sender
 {
     [self _openBookmarkInTab:NO firstInWindow:NO inPane:NO_PANE];
-    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+    if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
     }
 }
@@ -251,7 +251,7 @@ typedef enum {
         [[iTermController sharedInstance] launchBookmark:bookmark
                                               inTerminal:terminal];
     }
-    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+    if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
     }
 }
@@ -311,14 +311,15 @@ typedef enum {
 - (IBAction)closeAfterOpeningChanged:(id)sender
 {
     NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
-    [prefs setObject:[NSNumber numberWithBool:[closeAfterOpeningBookmark_ state] == NSOnState]
+    [prefs setObject:[NSNumber numberWithBool:[closeAfterOpeningBookmark_ state] == NSControlStateValueOn]
               forKey:kCloseBookmarksWindowAfterOpeningKey];
 }
 
 - (IBAction)newTabsInNewWindow:(id)sender
 {
+	printf ("New tab in new inwodw\n");
     [self _openBookmarkInTab:YES firstInWindow:YES inPane:NO_PANE];
-    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+    if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
     }
 }

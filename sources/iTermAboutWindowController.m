@@ -66,7 +66,7 @@
         [ts appendAttributedString: as];
         [ts appendAttributedString: webAString];
        // [[_dynamicText textStorage] appendAttributedString:bugsAString];
-        [_dynamicText setAlignment:NSCenterTextAlignment
+        [_dynamicText setAlignment:NSTextAlignmentCenter
                              range:NSMakeRange(0, [[_dynamicText textStorage] length])];
         [_titleText setStringValue: [@"Therm v" stringByAppendingString: @THERM_VERSION]];
     }
