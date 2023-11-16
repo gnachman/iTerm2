@@ -2144,7 +2144,7 @@ static const int kMaxScreenRows = 4096;
                                                 green:components[1].doubleValue
                                                  blue:components[2].doubleValue
                                                 alpha:1];
-            NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+            NSColor *theColor = [srgb colorUsingType:0];
             [delegate_ terminalSetColorTableEntryAtIndex:ptyIndex
                                                    color:theColor];
         }

@@ -28,7 +28,7 @@ NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 
-void EnableDoubleWidthCharacterLineCache() {
+void EnableDoubleWidthCharacterLineCache(void) {
     gEnableDoubleWidthCharacterLineCache = YES;
 }
 

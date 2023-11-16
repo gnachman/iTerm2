@@ -2038,9 +2038,9 @@ ITERM_WEAKLY_REFERENCEABLE
     BOOL wasSelecting = _copyModeState.selecting;
     NSString *string = event.charactersIgnoringModifiers;
     unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
-    NSUInteger mask = (NSAlternateKeyMask | NSControlKeyMask | NSCommandKeyMask);
+    NSUInteger mask = (NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagCommand);
     BOOL moved = NO;
-    if ((event.modifierFlags & mask) == NSControlKeyMask) {
+    if ((event.modifierFlags & mask) == NSEventModifierFlagControl) {
         switch (code) {
             case 2:  // ^B
                 moved = [_copyModeState pageUp];
@@ -7607,13 +7607,13 @@ verticalSpacing:(float)verticalSpacing {
 - (void)screenSetPasteboard:(NSString *)value {
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         if ([value isEqualToString:@"ruler"]) {
-            [self setPasteboard:NSGeneralPboard];
+            [self setPasteboard:NSPasteboardNameGeneral];
         } else if ([value isEqualToString:@"find"]) {
-            [self setPasteboard:NSFindPboard];
+            [self setPasteboard:NSPasteboardNameFind];
         } else if ([value isEqualToString:@"font"]) {
-            [self setPasteboard:NSFontPboard];
+            [self setPasteboard:NSPasteboardNameFont];
         } else {
-            [self setPasteboard:NSGeneralPboard];
+            [self setPasteboard:NSPasteboardNameGeneral];
         }
     } else {
         XLog(@"Clipboard access denied for CopyToClipboard");

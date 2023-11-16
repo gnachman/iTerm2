@@ -1860,7 +1860,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [viewImage lockFocus];
     [textviewImage drawAtPoint:origin
                       fromRect:NSZeroRect
-                     operation:NSCompositeSourceOver
+                     operation:NSCompositingOperationSourceOver
                       fraction:1];
     [viewImage unlockFocus];
 }
@@ -2126,7 +2126,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 // Blur the window if any session is blurred.
 - (BOOL)blur {
-    int n = 0;
     int y = 0;
     NSArray<PTYSession *> *sessions = [self sessions];
     for (PTYSession *session in sessions) {
@@ -2134,8 +2133,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [[session textview] useTransparency] &&
             [[[session profile] objectForKey:KEY_BLUR] boolValue]) {
             y++;
-        } else {
-            n++;
         }
     }
     return y > 0;

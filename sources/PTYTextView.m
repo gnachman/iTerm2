@@ -3491,8 +3491,8 @@ return;
     DLog(@"Have selected text of length %d. selection=%@", (int)[copyString length], _selection);
     if (copyString) {
         NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-        [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
-        [pboard setString:copyString forType:NSStringPboardType];
+        [pboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:self];
+        [pboard setString:copyString forType:NSPasteboardTypeString];
     }
 
     [[PasteboardHistory sharedInstance] save:copyString];
@@ -3512,7 +3512,7 @@ return;
     DLog(@"Have selected text of length %d. selection=%@", (int)[copyAttributedString length], _selection);
     NSMutableArray *types = [NSMutableArray array];
     if (copyAttributedString) {
-        [types addObject:NSRTFPboardType];
+        [types addObject:NSPasteboardTypeRTF];
     }
     [pboard declareTypes:types owner:self];
     if (copyAttributedString) {
@@ -3810,8 +3810,10 @@ return;
 
 - (void)contextMenuActionOpenFile:(id)sender
 {
+    // copypasta from method below. because openFile doesnt exist now, everything is an url
     NSLog(@"Open file: '%@'", [sender representedObject]);
-    [[NSWorkspace sharedWorkspace] openFile:[[sender representedObject] stringByExpandingTildeInPath]];
+    NSURL *url = [NSURL URLWithUserSuppliedString:[sender representedObject]];
+    [[NSWorkspace sharedWorkspace] openURL:url];
 }
 
 - (void)contextMenuActionOpenURL:(id)sender
