@@ -211,9 +211,11 @@ enum {
     return map[@([[editors_ selectedItem] tag])];
 }
 
+#if 0
 - (void)controlTextDidChange:(NSNotification *)obj {
     [_delegate semanticHistoryPrefsControllerSettingChanged:self];
 }
+#endif
 
 - (IBAction)actionChanged:(id)sender
 {

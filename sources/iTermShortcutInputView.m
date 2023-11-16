@@ -43,7 +43,7 @@
 }
 
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
-    if (backgroundStyle == NSBackgroundStyleLight) {
+    if (backgroundStyle == NSBackgroundStyleNormal) {
         [_clearButton setImage:[NSImage imageNamed:@"Erase"]];
     } else {
         [_clearButton setImage:[NSImage imageNamed:@"EraseDarkBackground"]];
@@ -54,7 +54,7 @@
 
 - (void)drawRect:(NSRect)dirtyRect {
     [[NSColor clearColor] set];
-    NSRectFillUsingOperation(self.bounds, NSCompositeSourceOver);
+    NSRectFillUsingOperation(self.bounds, NSCompositingOperationSourceOver);
     
     BOOL isFirstResponder = ([self.window firstResponder] == self);
 
@@ -62,7 +62,7 @@
     NSColor *innerLineColor;
     NSColor *textColor;
     NSColor *fieldColor;
-    if (self.backgroundStyle == NSBackgroundStyleLight) {
+    if (self.backgroundStyle == NSBackgroundStyleNormal) {
         if (self.isEnabled) {
             outerLineColor = [NSColor colorWithWhite:169.0/255.0 alpha:1];
             innerLineColor = [NSColor colorWithWhite:240.0/255.0 alpha:1];
@@ -220,12 +220,12 @@
 }
 
 - (void)handleShortcutEvent:(NSEvent *)event {
-    if (event.type == NSKeyDown) {
+    if (event.type == NSEventTypeKeyDown) {
         self.hotkeyBeingRecorded = nil;
         self.shortcut = [iTermShortcut shortcutWithEvent:event];
         [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
         [[self window] makeFirstResponder:[self window]];
-    } else if (event.type == NSFlagsChanged) {
+    } else if (event.type == NSEventTypeFlagsChanged) {
         self.hotkeyBeingRecorded = [NSString stringForModifiersWithMask:event.modifierFlags];
     }
     [self setNeedsDisplay:YES];

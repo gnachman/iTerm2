@@ -4310,10 +4310,14 @@ return NO;
         viewImage = [[[NSImage alloc] initWithSize:contentFrame.size] autorelease];
         NSImage *tabViewImage = [[[NSImage alloc] init] autorelease];
 
+#if 0
         [textview lockFocus];
         NSBitmapImageRep *tabviewRep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:viewRect] autorelease];
         [tabViewImage addRepresentation:tabviewRep];
         [textview unlockFocus];
+#else
+        fprintf (stderr, "lockFocus + NSBitMapImageForTab commented block\n");
+#endif
 
         [viewImage lockFocus];
         BOOL isHorizontal = YES;
@@ -7413,14 +7417,6 @@ return NO;
                                                         object:nil
                                                       userInfo:nil];
 }
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpartial-availability"
-- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel
-{
-    return kValidModesForFontPanel;
-}
-#pragma clang diagnostic pop
 
 - (void)incrementBadge {
     if (![iTermAdvancedSettingsModel indicateBellsInDockBadgeLabel]) {

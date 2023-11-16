@@ -129,7 +129,7 @@
     [reducedAlphaImage lockFocus];
     [image drawInRect:NSMakeRect(0, 0, image.size.width, image.size.height)
              fromRect:NSZeroRect
-            operation:NSCompositeSourceOver
+            operation:NSCompositingOperationSourceOver
              fraction:_fillColor.alphaComponent];
     [reducedAlphaImage unlockFocus];
 

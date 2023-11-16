@@ -336,12 +336,12 @@
 
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent *)event {
-    if ([event type] == NSFlagsChanged) {
+    if ([event type] == NSEventTypeFlagsChanged) {
         event = [self eventByRemappingForSecureInput:event];
         if ([self handleFlagsChangedEvent:event]) {
             return;
         }
-    } else if ([event type] == NSKeyDown) {
+    } else if ([event type] == NSEventTypeKeyDown) {
         event = [self eventByRemappingForSecureInput:event];
         if ([self handleKeyDownEvent:event]) {
             return;

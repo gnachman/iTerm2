@@ -56,7 +56,7 @@ static void WriteDebugLogHeader(void) {
     gDebugLogHeader = [header copy];
 }
 
-static void WriteDebugLogFooter() {
+static void WriteDebugLogFooter(void) {
   NSMutableString *windows = [NSMutableString string];
   for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
       AppendWindowDescription(window, windows);
@@ -70,7 +70,7 @@ static void WriteDebugLogFooter() {
   [gDebugLogStr appendString:footer];
 }
 
-static void FlushDebugLog() {
+static void FlushDebugLog(void) {
     [gDebugLogLock lock];
     NSMutableString *log = [NSMutableString string];
     [log appendString:gDebugLogHeader ?: @""];
@@ -205,7 +205,7 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
     AppendPinnedDebugLogMessage(@"CrashLogMessage", string);
 }
 
-static void StartDebugLogging() {
+static void StartDebugLogging(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         gDebugLogLock = [[NSRecursiveLock alloc] init];
@@ -221,7 +221,7 @@ static void StartDebugLogging() {
     [gDebugLogLock unlock];
 }
 
-static BOOL StopDebugLogging() {
+static BOOL StopDebugLogging(void) {
     BOOL result = NO;
     [gDebugLogLock lock];
     if (gDebugLogging) {

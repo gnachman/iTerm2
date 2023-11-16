@@ -563,9 +563,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setActiveSession:(PTYSession *)session updateActivityCounter:(BOOL)updateActivityCounter {
     PtyLog(@"PTYTab setActiveSession:%p", session);
-    if (activeSession_ &&  activeSession_ != session && [activeSession_ dvr]) {
-        [realParentWindow_ closeInstantReplay:self];
-    }
     BOOL changed = session != activeSession_;
     if (changed && updateActivityCounter) {
         [activeSession_ setActivityCounter:@(_activityCounter++)];
@@ -1659,7 +1656,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                        horizontalScrollerClass:nil
                          verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
                                     borderType:NSNoBorder
-                                   controlSize:NSRegularControlSize
+                                   controlSize:NSControlSizeRegular
                                  scrollerStyle:[parentWindow_ scrollerStyle]];
     return scrollViewSize;
 }
