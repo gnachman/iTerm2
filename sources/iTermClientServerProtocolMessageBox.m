@@ -48,6 +48,9 @@
 
 - (void)dealloc {
     iTermClientServerProtocolMessageFree(&_protocolMessage);
+    if (_haveDecodedMessage) {
+        iTermMultiServerServerOriginatedMessageFree(&_decodedMessage);
+    }
 }
 
 @end
