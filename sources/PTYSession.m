@@ -1396,7 +1396,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                         horizontalScrollerClass:nil
                                           verticalScrollerClass:parent.scrollbarShouldBeVisible ? [[_view.scrollview verticalScroller] class] : nil
                                                      borderType:_view.scrollview.borderType
-                                                    controlSize:NSRegularControlSize
+                                                    controlSize:NSControlSizeRegular
                                                   scrollerStyle:_view.scrollview.scrollerStyle];
     
     int width = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / [_textview charWidth];
@@ -2067,7 +2067,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 _copyModeState.mode = kiTermSelectionModeBox;
                 break;
         }
-    } else if ((event.modifierFlags & mask) == NSAlternateKeyMask) {
+    } else if ((event.modifierFlags & mask) == NSEventModifierFlagOption) {
         switch (code) {
             case 'b':
             case NSLeftArrowFunctionKey:
@@ -2091,7 +2091,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 moved = [_copyModeState pageDown];
                 break;
             case '\t':
-                if (event.modifierFlags & NSShiftKeyMask) {
+                if (event.modifierFlags & NSEventModifierFlagShift) {
                     moved = [_copyModeState moveBackwardWord];
                 } else {
                     moved = [_copyModeState moveForwardWord];
@@ -2695,7 +2695,7 @@ ITERM_WEAKLY_REFERENCEABLE
                    horizontalScrollerClass:nil
                      verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
                                 borderType:NSNoBorder
-                               controlSize:NSRegularControlSize
+                               controlSize:NSControlSizeRegular
                              scrollerStyle:scrollerStyle];
     return outerSize;
 }
@@ -2775,10 +2775,10 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
     [iTermKeyBindingMgr removeMappingWithCode:NSLeftArrowFunctionKey
-                                    modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
+                                    modifiers:NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagNumericPad
                                    inBookmark:temp];
     [iTermKeyBindingMgr removeMappingWithCode:NSRightArrowFunctionKey
-                                    modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
+                                    modifiers:NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagNumericPad
                                    inBookmark:temp];
     
     ProfileModel* model;
@@ -3952,13 +3952,7 @@ static BOOL _xtermMouseReporting;
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask
 {
     if ([self optionKey] == OPT_ESC) {
-        if ((modmask == NSAlternateKeyMask) ||
-            (modmask & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
-            return YES;
-        }
-    }
-    if ([self rightOptionKey] == OPT_ESC) {
-        if ((modmask & NSRightAlternateKeyMask) == NSRightAlternateKeyMask) {
+        if (modmask == NSEventModifierFlagOption) {
             return YES;
         }
     }
@@ -4802,7 +4796,7 @@ verticalSpacing:(float)verticalSpacing {
     [dragImage lockFocus];
     [image drawAtPoint:NSZeroPoint
               fromRect:NSZeroRect
-             operation:NSCompositeSourceOver
+             operation:NSCompositingOperationSourceOver
               fraction:0.5];
     [dragImage unlockFocus];
     return dragImage;
@@ -4817,8 +4811,8 @@ verticalSpacing:(float)verticalSpacing {
         _pbtext = [[NSMutableData alloc] init];
     } else {
         NSPasteboard *pboard = [NSPasteboard pasteboardWithName:_pasteboard];
-        [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
-        [pboard setData:_pbtext forType:NSStringPboardType];
+        [pboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:self];
+        [pboard setData:_pbtext forType:NSPasteboardTypeString];
         
         [_pasteboard release];
         _pasteboard = nil;
@@ -5867,9 +5861,8 @@ verticalSpacing:(float)verticalSpacing {
     }
     
     unsigned short keycode = [event keyCode];
-    DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%lu>",
-         event, modflag, keycode, keystr, unmodkeystr, unicode, unicode,
-         (modflag & NSNumericPadKeyMask));
+    DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c)",
+         event, modflag, keycode, keystr, unmodkeystr, unicode, unicode);
     
     // Check if we have a custom key mapping for this event
     keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
@@ -5889,9 +5882,9 @@ verticalSpacing:(float)verticalSpacing {
             (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
              keyBindingAction == KEY_ACTION_PREVIOUS_SESSION)) {
                 // Warn users about outdated default key bindings.
-                int tempMods = modflag & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask);
+            int tempMods = modflag & (NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagShift | NSEventModifierFlagCommand);
                 int tempKeyCode = unmodunicode;
-                if (tempMods == (NSCommandKeyMask | NSAlternateKeyMask) &&
+            if (tempMods == (NSEventModifierFlagCommand | NSEventModifierFlagOption) &&
                     (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
                     [[_delegate sessions] count] > 1) {
                     if ([self _askAboutOutdatedKeyMappings]) {
@@ -5934,11 +5927,10 @@ verticalSpacing:(float)verticalSpacing {
             return;
         }
         
-        BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
-        BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
+        BOOL altPressed = (modflag & NSEventModifierFlagOption) == NSEventModifierFlagOption;
         
         // No special binding for this key combination.
-        if (modflag & NSFunctionKeyMask) {
+        if (modflag & NSEventModifierFlagFunction) {
             DLog(@"PTYSession keyDown is a function key");
             // Handle all "special" keys (arrows, etc.)
             NSData *data = nil;
@@ -5992,20 +5984,14 @@ verticalSpacing:(float)verticalSpacing {
                 send_str = (unsigned char *)[keydat bytes];
                 send_strlen = [keydat length];
             }
-        } else if ((leftAltPressed && [self optionKey] != OPT_NORMAL) ||
-                   (rightAltPressed && [self rightOptionKey] != OPT_NORMAL)) {
+        } else if (altPressed && [self optionKey] != OPT_NORMAL) {
             DLog(@"PTYSession keyDown opt + key -> modkey");
             // A key was pressed while holding down option and the option key
             // is not behaving normally. Apply the modified behavior.
-            int mode;  // The modified behavior based on which modifier is pressed.
-            if (leftAltPressed) {
-                mode = [self optionKey];
-            } else {
-                assert(rightAltPressed);
-                mode = [self rightOptionKey];
-            }
+            int mode = [self optionKey];
+            // mode = [self rightOptionKey];
             
-            NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0) ?
+            NSData *keydat = ((modflag & NSEventModifierFlagControl) && unicode > 0) ?
             [keystr dataUsingEncoding:_terminal.encoding]:
             [unmodkeystr dataUsingEncoding:_terminal.encoding];
             if (keydat != nil) {
@@ -6037,7 +6023,7 @@ verticalSpacing:(float)verticalSpacing {
             
             // Enter key is on numeric keypad, but not marked as such
             if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
-                modflag |= NSNumericPadKeyMask;
+                modflag |= NSEventModifierFlagNumericPad;
                 DLog(@"PTYSession keyDown enter key");
                 keystr = @"\015";  // Enter key -> 0x0d
             }
@@ -6062,17 +6048,17 @@ verticalSpacing:(float)verticalSpacing {
                 keycode == kVK_ANSI_Keypad8 ||
                 keycode == kVK_ANSI_Keypad9) {
                 DLog(@"Key code 0x%x forced to have numeric keypad mask set", (int)keycode);
-                modflag |= NSNumericPadKeyMask;
+                modflag |= NSEventModifierFlagNumericPad;
             }
             
             // Check if we are in keypad mode
-            if (modflag & NSNumericPadKeyMask) {
+            if (modflag & NSEventModifierFlagNumericPad) {
                 DLog(@"PTYSession keyDown numeric keypad");
                 data = [_terminal.output keypadData:unicode keystr:keystr];
             }
             
-            int indMask = modflag & NSDeviceIndependentModifierFlagsMask;
-            if ((indMask & NSCommandKeyMask) &&   // pressing cmd
+            int indMask = modflag & NSEventModifierFlagDeviceIndependentFlagsMask;
+            if ((indMask & NSEventModifierFlagCommand) &&   // pressing cmd
                 ([keystr isEqualToString:@"0"] ||  // pressed 0 key
                  ([keystr intValue] > 0 && [keystr intValue] <= 9) || // or any other digit key
                  [keystr isEqualToString:@"\r"])) {   // or enter
@@ -6090,29 +6076,29 @@ verticalSpacing:(float)verticalSpacing {
                      modflag, send_strlen, send_str[0], send_str[0]);
             }
             
-            if ((modflag & NSControlKeyMask) &&
+            if ((modflag & NSEventModifierFlagControl) &&
                 send_strlen == 1 &&
                 send_str[0] == '|') {
                 DLog(@"PTYSession keyDown c-|");
                 // Control-| is sent as Control-backslash
                 send_str = (unsigned char*)"\034";
                 send_strlen = 1;
-            } else if ((modflag & NSControlKeyMask) &&
-                       (modflag & NSShiftKeyMask) &&
+            } else if ((modflag & NSEventModifierFlagControl) &&
+                       (modflag & NSEventModifierFlagShift) &&
                        send_strlen == 1 &&
                        send_str[0] == '/') {
                 DLog(@"PTYSession keyDown c-?");
                 // Control-shift-/ is sent as Control-?
                 send_str = (unsigned char*)"\177";
                 send_strlen = 1;
-            } else if ((modflag & NSControlKeyMask) &&
+            } else if ((modflag & NSEventModifierFlagControl) &&
                        send_strlen == 1 &&
                        send_str[0] == '/') {
                 DLog(@"PTYSession keyDown c-/");
                 // Control-/ is sent as Control-/, but needs some help to do so.
                 send_str = (unsigned char*)"\037"; // control-/
                 send_strlen = 1;
-            } else if ((modflag & NSShiftKeyMask) &&
+            } else if ((modflag & NSEventModifierFlagShift) &&
                        send_strlen == 1 &&
                        send_str[0] == '\031') {
                 DLog(@"PTYSession keyDown shift-tab -> esc[Z");
@@ -6197,6 +6183,7 @@ verticalSpacing:(float)verticalSpacing {
     return [[[self profile] objectForKey:KEY_OPTION_KEY_SENDS] intValue];
 }
 
+#if 0
 - (int)rightOptionKey
 {
     NSNumber* rightOptPref = [[self profile] objectForKey:KEY_RIGHT_OPTION_KEY_SENDS];
@@ -6205,6 +6192,7 @@ verticalSpacing:(float)verticalSpacing {
     }
     return [rightOptPref intValue];
 }
+#endif
 
 - (BOOL)applicationKeypadAllowed
 {
@@ -6329,7 +6317,7 @@ verticalSpacing:(float)verticalSpacing {
                                        localRect.size.height * dy);
         [image drawInRect:rect
                  fromRect:sourceRect
-                operation:NSCompositeCopy
+                operation:NSCompositingOperationCopy
                  fraction:alpha
            respectFlipped:YES
                     hints:nil];
@@ -6337,12 +6325,12 @@ verticalSpacing:(float)verticalSpacing {
         if (blendDefaultBackground) {
             // Blend default background color over background image.
             [[[self processedBackgroundColor] colorWithAlphaComponent:1 - _textview.blend] set];
-            NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+            NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
         }
     } else if (blendDefaultBackground) {
         // No image, so just draw background color.
         [[[self processedBackgroundColor] colorWithAlphaComponent:alpha] set];
-        NSRectFillUsingOperation(rect, NSCompositeCopy);
+        NSRectFillUsingOperation(rect, NSCompositingOperationCopy);
     }
 }
 
@@ -6563,9 +6551,9 @@ verticalSpacing:(float)verticalSpacing {
          VT100GridCoordDescription(coord));
     
     switch (eventType) {
-        case NSLeftMouseDown:
-        case NSRightMouseDown:
-        case NSOtherMouseDown:
+        case NSEventTypeLeftMouseDown:
+        case NSEventTypeRightMouseDown:
+        case NSEventTypeOtherMouseDown:
             switch ([_terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
@@ -6584,9 +6572,9 @@ verticalSpacing:(float)verticalSpacing {
             }
             break;
             
-        case NSLeftMouseUp:
-        case NSRightMouseUp:
-        case NSOtherMouseUp:
+        case NSEventTypeLeftMouseUp:
+        case NSEventTypeRightMouseUp:
+        case NSEventTypeOtherMouseUp:
             if (_reportingMouseDown) {
                 _reportingMouseDown = NO;
                 _lastReportedCoord = VT100GridCoordMake(-1, -1);
@@ -6610,7 +6598,7 @@ verticalSpacing:(float)verticalSpacing {
             break;
             
             
-        case NSMouseMoved:
+        case NSEventTypeMouseMoved:
             if ([_terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
@@ -6622,9 +6610,9 @@ verticalSpacing:(float)verticalSpacing {
             }
             break;
             
-        case NSLeftMouseDragged:
-        case NSRightMouseDragged:
-        case NSOtherMouseDragged:
+        case NSEventTypeLeftMouseDragged:
+        case NSEventTypeRightMouseDragged:
+        case NSEventTypeOtherMouseDragged:
             if (_reportingMouseDown &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
@@ -6649,7 +6637,7 @@ verticalSpacing:(float)verticalSpacing {
             }
             break;
             
-        case NSScrollWheel:
+        case NSEventTypeScrollWheel:
             switch ([_terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
@@ -6951,6 +6939,11 @@ verticalSpacing:(float)verticalSpacing {
     return YES;
     
 }
+
+- (int)rightOptionKey { 
+    <#code#>
+}
+
 
 - (NSString*)_getLocale
 {
@@ -8795,7 +8788,7 @@ verticalSpacing:(float)verticalSpacing {
         }
     }
     if (selector == @selector(deleteBackward:)) {
-        [_textview keyDown:[NSEvent keyEventWithType:NSKeyDown
+        [_textview keyDown:[NSEvent keyEventWithType:NSEventTypeKeyDown
                                             location:NSZeroPoint
                                        modifierFlags:[NSEvent modifierFlags]
                                            timestamp:0
@@ -9061,7 +9054,8 @@ verticalSpacing:(float)verticalSpacing {
                                                     if (selection == 0) {
                                                         NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"coprocess-stderr." suffix:@".txt"];
                                                         [errors writeToFile:filename atomically:NO encoding:NSUTF8StringEncoding error:nil];
-                                                        [[NSWorkspace sharedWorkspace] openFile:filename];
+                                                        NSURL *url =[NSURL URLWithString:filename];
+                                                        [[NSWorkspace sharedWorkspace] openURL:url];
                                                     } else if (selection == 1) {
                                                         [Coprocess setSilentlyIgnoreErrors:YES fromCommand:coprocess.command];
                                                     }
