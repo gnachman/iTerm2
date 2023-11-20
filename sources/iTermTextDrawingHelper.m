@@ -1725,6 +1725,31 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return length;
 }
 
+- (NSColor *)underlineColorForAttributes:(NSDictionary *)attributes {
+    // First, use value in attribute if it is present.
+    const BOOL hasUnderlineColor = [attributes[iTermHasUnderlineColorAttribute] boolValue];
+    if (hasUnderlineColor) {
+        NSArray<NSNumber *> *components = attributes[iTermUnderlineColorAttribute];
+        return [self.delegate drawingHelperColorForCode:components[0].intValue
+                                                  green:components[1].intValue
+                                                   blue:components[2].intValue
+                                              colorMode:components[3].intValue
+                                                   bold:[attributes[iTermBoldAttribute] boolValue]
+                                                  faint:[attributes[iTermFaintAttribute] boolValue]
+                                           isBackground:NO];
+    }
+
+    // Use the optional profile setting, if any.
+    NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
+    if (underline) {
+        return underline;
+    }
+
+    // Fall back to text color.
+    CGColorRef cgColor = (__bridge CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
+    return [NSColor colorWithCGColor:cgColor];
+}
+
 - (void)drawUnderlineOrStrikethroughForFastPathString:(iTermCheapAttributedString *)cheapString
                                         wantUnderline:(BOOL)wantUnderline
                                               atPoint:(NSPoint)origin
@@ -1752,26 +1777,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                    origin.y,
                                    size.width,
                                    size.height);
-    NSColor *underlineColor;
-    const BOOL hasUnderlineColor = [attributes[iTermHasUnderlineColorAttribute] boolValue];
-    if (hasUnderlineColor) {
-        NSArray<NSNumber *> *components = attributes[iTermUnderlineColorAttribute];
-        underlineColor = [self.delegate drawingHelperColorForCode:components[0].intValue
-                                                            green:components[1].intValue
-                                                             blue:components[2].intValue
-                                                        colorMode:components[3].intValue
-                                                             bold:[attributes[iTermBoldAttribute] boolValue]
-                                                            faint:[attributes[iTermFaintAttribute] boolValue]
-                                                     isBackground:NO];
-    } else {
-        NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
-        if (underline) {
-            underlineColor = underline;
-        } else {
-            CGColorRef cgColor = (__bridge CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
-            underlineColor = [NSColor colorWithCGColor:cgColor];
-        }
-    }
+    NSColor *underlineColor = [self underlineColorForAttributes:attributes];
     [self drawUnderlinedOrStruckthroughTextWithContext:underlineContext
                                          wantUnderline:wantUnderline
                                                 inRect:rect
@@ -2092,14 +2098,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                         origin.y,
                                         size.width,
                                         size.height);
-         NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
-         NSColor *underlineColor;
-         if (underline) {
-             underlineColor = underline;
-         } else {
-             CGColorRef cgColor = (__bridge CGColorRef)attributes[(__bridge NSString *)kCTForegroundColorAttributeName];
-             underlineColor = [NSColor colorWithCGColor:cgColor];
-         }
+         NSColor *underlineColor = [self underlineColorForAttributes:attributes];
          [self drawUnderlinedOrStruckthroughTextWithContext:underlineContext
                                               wantUnderline:wantUnderline
                                                      inRect:rect
