@@ -116,7 +116,7 @@ extension PTYTextView: ExternalSearchResultsController {
                          withPorthole porthole: Porthole) {
         DLog("replace(range:\(VT100GridAbsCoordRangeDescription(absRange)), withPorthole:\(porthole))")
         let hmargin = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
-        let desiredHeight = porthole.desiredHeight(forWidth: bounds.width - hmargin * 2)
+        let desiredHeight = porthole.fit(toWidth: bounds.width - hmargin * 2)
         let relativeRange = VT100GridCoordRangeFromAbsCoordRange(absRange, dataSource.totalScrollbackOverflow())
         porthole.savedLines = (relativeRange.start.y ... relativeRange.end.y).map { i in
             dataSource.screenCharArray(forLine: i).copy() as! ScreenCharArray
@@ -148,7 +148,7 @@ extension PTYTextView: ExternalSearchResultsController {
             return
         }
         let hmargin = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
-        let desiredHeight = porthole.desiredHeight(forWidth: bounds.width - hmargin * 2)
+        let desiredHeight = porthole.fit(toWidth: bounds.width - hmargin * 2)
         dataSource.changeHeight(of: porthole.mark, to: Int32(ceil(desiredHeight / lineHeight)))
     }
 

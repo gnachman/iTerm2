@@ -102,21 +102,16 @@
         iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
                                                                                prompt:@"Directory Listing"
                                                                               message:message];
+        iTermAccessoryViewUnfucker *unfucker = [[iTermAccessoryViewUnfucker alloc] initWithView:accessory];
         accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
         accessory.textView.selectable = YES;
         accessory.requestLayout = ^{
+            [unfucker layout];
             [alert layout];
-            if (@available(macOS 10.16, *)) {
-                // FB8897296:
-                // Prior to Big Sur, you could call [NSAlert layout] on an already-visible NSAlert
-                // to have it change its size to accommodate an accessory view controller whose
-                // frame changed.
-                //
-                // On Big Sur, it no longer works. Instead, you must call NSAlert.layout *twice*.
-                [alert layout];
-            }
+            [alert layout];
         };
-        alert.accessoryView = accessory;
+        [unfucker layout];
+        alert.accessoryView = unfucker;
 
         [alert addButtonWithTitle:@"Open in Finder"];
         [alert addButtonWithTitle:@"I Fixed It"];

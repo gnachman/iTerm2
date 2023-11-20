@@ -7,6 +7,7 @@
 //
 
 #import "iTermDisclosableView.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSMutableAttributedString+iTerm.h"
 
 static const CGFloat iTermDisclosableViewTextViewWidth = 300;
@@ -87,10 +88,12 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
     NSRect _originalWindowFrame;
     NSTextField *_labelField;
     CGFloat _headerWidth;
+    NSLayoutConstraint *_bottomAnchor;
 }
 
 + (NSTextView *)newTextViewWithFrame:(NSRect)frame scrollview:(out NSScrollView **)scrollViewPtr {
     NSTextView *textView = [[NSTextView alloc] initWithFrame:frame];
+    textView.translatesAutoresizingMaskIntoConstraints = NO;
     [[textView textContainer] setContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)];
     *scrollViewPtr = nil;
     [textView setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
@@ -104,6 +107,7 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
     self = [super initWithFrame:frameRect];
     if (self) {
         _disclosureButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, 2, 24, 24)];
+        _disclosureButton.controlSize = NSControlSizeSmall;
         [_disclosureButton setButtonType:NSButtonTypeOnOff];
         [_disclosureButton setBezelStyle:NSBezelStyleDisclosure];
         [_disclosureButton setImagePosition:NSImageOnly];
@@ -111,29 +115,37 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
         [_disclosureButton setTarget:self];
         [_disclosureButton setAction:@selector(disclosureButtonPressed:)];
         [_disclosureButton sizeToFit];
+        _disclosureButton.translatesAutoresizingMaskIntoConstraints = NO;
 
+        NSFont *font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         _labelField = [[NSTextField alloc] initWithFrame:NSMakeRect(NSMaxX(_disclosureButton.frame), 0, frameRect.size.width-NSMaxX(_disclosureButton.frame), 18)];
+        _labelField.font = font;
         [_labelField setDrawsBackground:NO];
         [_labelField setBordered:NO];
         [_labelField setEditable:NO];
         [_labelField setSelectable:NO];
         [_labelField setStringValue:prompt];
         [_labelField setAlignment:NSTextAlignmentLeft];
-        [_labelField setAutoresizingMask:NSViewWidthSizable];
         [_labelField setTextColor:[NSColor headerTextColor]];
+        _labelField.translatesAutoresizingMaskIntoConstraints = NO;
         [_labelField sizeToFit];
         _headerWidth = _labelField.frame.size.width;
 
         NSScrollView *scrollview;
         _textView = [self.class newTextViewWithFrame:NSMakeRect(8, NSMaxY(_disclosureButton.frame) + 3, 100, 100)
-                     scrollview:&scrollview];
+                                          scrollview:&scrollview];
+        if (scrollview) {
+            _textView.translatesAutoresizingMaskIntoConstraints = YES;
+        }
         _scrollView = scrollview;
+        scrollview.translatesAutoresizingMaskIntoConstraints = NO;
 
         _textView.drawsBackground = NO;
         _textView.selectable = NO;
         _textView.editable = NO;
         [_textView setMinSize:NSMakeSize(0.0, 0)];
         [_textView setString:message];
+        _textView.font = font;
         [_textView sizeToFit];
 
         NSTextStorage *storage = [_textView textStorage];
@@ -157,6 +169,24 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
         } else {
             [self addSubview:_textView];
         }
+
+        [_disclosureButton.centerYAnchor constraintEqualToAnchor:_labelField.centerYAnchor].active = YES;
+        [_labelField.leadingAnchor constraintEqualToAnchor:_disclosureButton.trailingAnchor constant:4].active = YES;
+        [_labelField.centerXAnchor constraintEqualToAnchor:self.centerXAnchor].active = YES;
+        [_labelField.topAnchor constraintEqualToAnchor:self.topAnchor].active = YES;
+        if (_scrollView) {
+            [_scrollView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:8].active = YES;
+            [_scrollView.topAnchor constraintEqualToAnchor:_disclosureButton.bottomAnchor constant:3].active = YES;
+            [_scrollView.widthAnchor constraintEqualToConstant:iTermDisclosableViewTextViewWidth].active = YES;
+            [_scrollView.heightAnchor constraintEqualToConstant:100].active = YES;
+        } else {
+            [_textView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:8].active = YES;
+            [_textView.topAnchor constraintEqualToAnchor:_disclosureButton.bottomAnchor constant:3].active = YES;
+            [_textView.widthAnchor constraintEqualToConstant:iTermDisclosableViewTextViewWidth].active = YES;
+            _bottomAnchor = [_textView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor];
+            _bottomAnchor.active = NO;
+            [_textView setContentCompressionResistancePriority:NSLayoutPriorityRequired forOrientation:NSLayoutConstraintOrientationVertical];
+        }
     }
     return self;
 }
@@ -166,7 +196,8 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
 }
 
 - (CGFloat)heightWhenOpen {
-    return NSMaxY(_textView.frame);
+    const CGFloat h = [_textView desiredHeightForWidth:NSWidth(_textView.frame)];
+    return NSMinY(_textView.frame) + h;
 }
 
 - (CGFloat)heightWhenClosed {
@@ -181,12 +212,11 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
 }
 
 - (void)disclosureButtonPressed:(id)sender {
-    NSRect myFrame = self.frame;
-    self.frame = NSMakeRect(NSMinX(myFrame), NSMinY(myFrame), self.intrinsicContentSize.width, self.intrinsicContentSize.height);
     const BOOL isOpen = (_disclosureButton.state == NSControlStateValueOn);
+    _bottomAnchor.active = isOpen;
     _scrollView.hidden = !isOpen;
     _textView.hidden = !isOpen;
-    [self callRequestLayout];
+    self.requestLayout();
 }
 
 - (void)callRequestLayout {
@@ -198,3 +228,29 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
 }
 
 @end
+
+@implementation iTermAccessoryViewUnfucker: NSView
+
+- (instancetype)initWithView:(NSView *)contentView {
+    self = [super initWithFrame:NSMakeRect(0, 0, contentView.bounds.size.width, contentView.bounds.size.height)];
+    if (self) {
+        _contentView = contentView;
+        [self addSubview:_contentView];
+    }
+    return self;
+}
+
+- (void)layout {
+    NSRect frame = self.frame;
+    const NSSize ics = _contentView.intrinsicContentSize;
+    if (ics.width >= 0 && ics.height >= 0) {
+        frame.size = _contentView.intrinsicContentSize;
+    } else {
+        frame.size = _contentView.frame.size;
+    }
+    self.frame = frame;
+    _contentView.frame = self.bounds;
+}
+
+@end
+

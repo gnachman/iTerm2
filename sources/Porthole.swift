@@ -97,7 +97,7 @@ protocol ObjCPorthole: AnyObject {
     @objc var view: NSView { get }
     @objc var uniqueIdentifier: String { get }
     @objc var dictionaryValue: [String: AnyObject] { get }
-    @objc func desiredHeight(forWidth width: CGFloat) -> CGFloat  // includes top and bottom margin
+    @objc func fit(toWidth width: CGFloat) -> CGFloat
     @objc func removeSelection()
     @objc func updateColors(useSelectedTextColor: Bool)
     @objc var savedLines: [ScreenCharArray] { get set }

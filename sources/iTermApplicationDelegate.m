@@ -835,24 +835,19 @@ static BOOL hasBecomeActive = NO;
         [alert addButtonWithTitle:@"OK"];
         [alert addButtonWithTitle:@"Cancel"];
         iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
-                                                                               prompt:@"Details"
+                                                                               prompt:@"Why am I being prompted?"
                                                                               message:[NSString stringWithFormat:@"You are being prompted because:\n\n%@",
                                                                                        reason.message]];
+        iTermAccessoryViewUnfucker *unfucker = [[iTermAccessoryViewUnfucker alloc] initWithView:accessory];
         accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
         accessory.requestLayout = ^{
+            [unfucker layout];
             [alert layout];
-            if (@available(macOS 10.16, *)) {
-                // FB8897296:
-                // Prior to Big Sur, you could call [NSAlert layout] on an already-visible NSAlert
-                // to have it change its size to accommodate an accessory view controller whose
-                // frame changed.
-                //
-                // On Big Sur, it no longer works. Instead, you must call NSAlert.layout *twice*.
-                [alert layout];
-            }
+            [alert layout];
         };
-        alert.accessoryView = accessory;
-
+        [unfucker layout];
+        alert.accessoryView = unfucker;
+        [alert layout];
         if ([alert runModal] != NSAlertFirstButtonReturn) {
             DLog(@"User declined to quit");
             return NSTerminateCancel;

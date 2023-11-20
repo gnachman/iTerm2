@@ -7,6 +7,20 @@
 
 import Foundation
 
+extension NSTextContainer {
+    func withFakeSize<T>(_ fakeSize: NSSize, closure: () throws -> T) rethrows -> T {
+        let savedContainerSize = containerSize
+        let saved = size
+        size = fakeSize
+        containerSize = fakeSize
+        defer {
+            size = saved
+            containerSize = savedContainerSize
+        }
+        return try closure()
+    }
+}
+
 extension NSTextView {
     @objc func it_scrollCursorToVisible() {
         guard let location = selectedRanges.first?.rangeValue.location else {
@@ -31,6 +45,32 @@ extension NSTextView {
         let screenRect = window?.convertToScreen(convert(insertionPointRect, to: nil)) ?? .zero
 
         return screenRect
+    }
+
+    @objc(desiredHeightForWidth:)
+    func desiredHeight(forWidth width: CGFloat) -> CGFloat {
+        let fakeWidth: CGFloat
+        if enclosingScrollView != nil {
+            fakeWidth = .infinity
+        } else {
+            // Set the width so the height calculation will be based on it. The height here is arbitrary.
+            fakeWidth = width
+        }
+        guard let textContainer = self.textContainer,
+              let layoutManager = self.layoutManager else {
+            return frame.size.height
+        }
+        return textContainer.withFakeSize(NSSize(width: fakeWidth, height: .infinity)) { () -> CGFloat in
+            // forces layout
+            // This is obviously indefensible but I just can't get it to work with a single call to glyphRange.
+            // 😘 AppKit
+            _ = layoutManager.glyphRange(for: textContainer)
+            DLog("After first call to glyphRange rect would be \(layoutManager.usedRect(for: textContainer))")
+            _ = layoutManager.glyphRange(for: textContainer)
+            let rect = layoutManager.usedRect(for: textContainer)
+            DLog("After second call to glyphRange rect is \(rect)")
+            return rect.height
+        }
     }
 }
 

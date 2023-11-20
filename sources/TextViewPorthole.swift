@@ -172,7 +172,7 @@ class TextViewPorthole: NSObject {
     }
 
     func fittingSize(for width: CGFloat) -> NSSize {
-        return NSSize(width: width, height: self.desiredHeight(forWidth: width))
+        return NSSize(width: width, height: self.fit(toWidth: width))
     }
 
     @objc func changeLanguage(_ sender: Any?) {
@@ -216,27 +216,8 @@ extension TextViewPorthole: Porthole {
         containerView.frame = frame
     }
 
-    func desiredHeight(forWidth width: CGFloat) -> CGFloat {
-        let fakeWidth :CGFloat
-        if containerView.scrollView != nil {
-            fakeWidth = .infinity
-        } else {
-        // Set the width so the height calculation will be based on it. The height here is arbitrary.
-            fakeWidth = width
-        }
-        let textViewHeight = textContainer.withFakeSize(NSSize(width: fakeWidth, height: .infinity)) { () -> CGFloat in
-            // forces layout
-            // This is obviously indefensible but I just can't get it to work with a single call to glyphRange.
-            // 😘 AppKit
-            _ = layoutManager.glyphRange(for: textContainer)
-            DLog("After first call to glyphRange rect would be \(layoutManager.usedRect(for: textContainer))")
-            _ = layoutManager.glyphRange(for: textContainer)
-            let rect = layoutManager.usedRect(for: textContainer)
-            DLog("After second call to glyphRange rect is \(rect)")
-            return rect.height
-        }
-
-        // The height is now frozen.
+    func fit(toWidth width: CGFloat) -> CGFloat {
+        let textViewHeight = textView.desiredHeight(forWidth: width)
         textView.frame = NSRect(x: 0, y: 0, width: width, height: textViewHeight)
         return containerView.scrollViewOverhead + textViewHeight + (outerMargin + innerMargin) * 2
     }
@@ -577,18 +558,6 @@ class TopRightAvoidingTextContainer: NSTextContainer {
                           height: rect.height)
         }
         return rect
-    }
-
-    func withFakeSize<T>(_ fakeSize: NSSize, closure: () throws -> T) rethrows -> T {
-        let savedContainerSize = containerSize
-        let saved = size
-        size = fakeSize
-        containerSize = fakeSize
-        defer {
-            size = saved
-            containerSize = savedContainerSize
-        }
-        return try closure()
     }
 }
 

@@ -314,21 +314,18 @@ static BOOL gShowingWarning;
     }
 
     if (_accessory) {
+        iTermAccessoryViewUnfucker *unfucker = [[iTermAccessoryViewUnfucker alloc] initWithView:_accessory];
         iTermDisclosableView *disclosableView = [iTermDisclosableView castFrom:_accessory];
         if (disclosableView) {
             disclosableView.requestLayout = ^{
-                if (@available(macOS 10.16, *)) {
-                    // Issue 9929 - big sur doesn't respect a synchrnonous call to layout.
-                    // I don't know why and it makes me sad.
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [alert layout];
-                    });
-                } else {
-                    [alert layout];
-                }
+                [unfucker layout];
+                [alert layout];
+                [alert layout];
             };
+            [unfucker layout];
         }
-        [alert setAccessoryView:_accessory];
+
+        [alert setAccessoryView:unfucker];
         if (_initialFirstResponder) {
             alert.window.initialFirstResponder = _initialFirstResponder;
         }

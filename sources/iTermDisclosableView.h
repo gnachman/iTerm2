@@ -28,3 +28,15 @@
 - (instancetype)initWithCoder:(NSCoder *)decoder NS_UNAVAILABLE;
 @end
 
+// Hides auto layout from NSAlert.
+@interface iTermAccessoryViewUnfucker: NSView
+@property (nonatomic, readonly) NSView *contentView;
+
+- (instancetype)initWithView:(NSView *)contentView NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithFrame:(NSRect)frameRect NS_UNAVAILABLE;
+- (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
+
+- (void)layout;
+
+@end
+
