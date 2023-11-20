@@ -7215,6 +7215,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_tmuxController selectPane:self.tmuxPane];
         [self.delegate sessionDidReportSelectedTmuxPane:self];
     }
+    [self setNeedsDisplay:YES];
 }
 
 - (BOOL)wantsContentChangedNotification
