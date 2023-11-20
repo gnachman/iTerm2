@@ -970,6 +970,12 @@
 		A6024B89254D367E0036D6CF /* iTermColorSuggester.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B87254D367E0036D6CF /* iTermColorSuggester.m */; };
 		A6024B8B254DDFEE0036D6CF /* iTermNSColorCategoryTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B8A254DDFEE0036D6CF /* iTermNSColorCategoryTests.m */; };
 		A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */; };
+		A602AAE32B0BCDB100E6C965 /* whitebox_logo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE12B0BCDB000E6C965 /* whitebox_logo@2x.png */; };
+		A602AAE42B0BCDB100E6C965 /* whitebox_logo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE12B0BCDB000E6C965 /* whitebox_logo@2x.png */; };
+		A602AAE52B0BCDB100E6C965 /* whitebox_logo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE12B0BCDB000E6C965 /* whitebox_logo@2x.png */; };
+		A602AAE62B0BCDB100E6C965 /* whitebox_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */; };
+		A602AAE72B0BCDB100E6C965 /* whitebox_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */; };
+		A602AAE82B0BCDB100E6C965 /* whitebox_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */; };
 		A6038307294305EA00FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A60383082943067000FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A6038309294306BA00FE11C2 /* iTermSandboxedWorkerClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 7577E2A02593B88700905402 /* iTermSandboxedWorkerClient.m */; };
@@ -5426,6 +5432,8 @@
 		A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSURL+iTerm.h"; sourceTree = "<group>"; };
 		A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSURL+iTerm.m"; sourceTree = "<group>"; };
 		A602516A1CCD40D9009BABF1 /* iTermNSURLCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSURLCategoryTest.m; sourceTree = "<group>"; };
+		A602AAE12B0BCDB000E6C965 /* whitebox_logo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "whitebox_logo@2x.png"; path = "images/sponsors/whitebox_logo@2x.png"; sourceTree = "<group>"; };
+		A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = whitebox_logo.png; path = images/sponsors/whitebox_logo.png; sourceTree = "<group>"; };
 		A603830D2943A92800FE11C2 /* AsyncFileProviderLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncFileProviderLogging.swift; sourceTree = "<group>"; };
 		A60383162943AF1500FE11C2 /* iTerm2SandboxedWorker-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2SandboxedWorker-Bridging-Header.h"; sourceTree = "<group>"; };
 		A60383172943AF1800FE11C2 /* iTerm2SandboxedWorkerShims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTerm2SandboxedWorkerShims.swift; sourceTree = "<group>"; };
@@ -8303,6 +8311,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */,
+				A602AAE12B0BCDB000E6C965 /* whitebox_logo@2x.png */,
 				A6BF02DD2A8AABD7003D205F /* blendbyte_logo.png */,
 				A6BF02DE2A8AABD7003D205F /* blendbyte_logo@2x.png */,
 				A61094182A4A213D00AC2268 /* key-dark.png */,
@@ -13904,6 +13914,7 @@
 				A67F61EC214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				1D8BBA6A1B30F5C30005A852 /* Navigate.png in Resources */,
 				1D6ED9E119AEA20D005A7799 /* broken_image.png in Resources */,
+				A602AAE82B0BCDB100E6C965 /* whitebox_logo.png in Resources */,
 				A67F61B2214395B70093940A /* graphic_php.png in Resources */,
 				A6E7AE85214394DD00DE9F3B /* graphic_code@2x.png in Resources */,
 				1D6ED9E219AEA20D005A7799 /* PrefsAppearance@2x.png in Resources */,
@@ -13918,6 +13929,7 @@
 				A66A883324DFCCC30043728B /* graphic_elixir@2x.png in Resources */,
 				1D6ED9E419AEA20D005A7799 /* PrefsProfile.png in Resources */,
 				1D6ED9E519AEA20D005A7799 /* PrefsProfile@2x.png in Resources */,
+				A602AAE52B0BCDB100E6C965 /* whitebox_logo@2x.png in Resources */,
 				A6F2F21A250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
 				1D6ED9E619AEA20D005A7799 /* PrefsKeyboard.png in Resources */,
 				A67F61FA2143976F0093940A /* graphic_icons.json in Resources */,
@@ -14064,6 +14076,7 @@
 				A6B4832E29D73DA10055E24A /* rectangle.portrait.on.rectangle.portrait.png in Resources */,
 				A6E7AEB0214394F600DE9F3B /* graphic_git@2x.png in Resources */,
 				53AA7647237E35A50094D75A /* OpenQuicklyActionIcon@2x.png in Resources */,
+				A602AAE42B0BCDB100E6C965 /* whitebox_logo@2x.png in Resources */,
 				A6F18B542AE2F39C006C08EE /* uniE0D1_lego_block_sideways.pdf in Resources */,
 				A6E7AE6E214394CA00DE9F3B /* graphic_bower@2x.png in Resources */,
 				5308BF9922828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */,
@@ -14214,6 +14227,7 @@
 				A67D0D391A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				A67D0D721A2EE12A003A8B35 /* MainMenu.xib in Resources */,
 				A67F6151214395870093940A /* graphic_less.png in Resources */,
+				A602AAE72B0BCDB100E6C965 /* whitebox_logo.png in Resources */,
 				1D8BBA861B31DC140005A852 /* ChevronDown@2x.png in Resources */,
 				A6F7A711213CB143004DE961 /* StatusBarIconFolder@2x.png in Resources */,
 				A6A64E622508BE650040490B /* StatusBarIconSnippet.png in Resources */,
@@ -14518,6 +14532,7 @@
 				A68E33361DE746F5003F1D8E /* Next Mark Touch Bar Icon@2x.png in Resources */,
 				A67F6181214395A70093940A /* graphic_nginx.png in Resources */,
 				1D8BBA781B30FD230005A852 /* Later.png in Resources */,
+				A602AAE32B0BCDB100E6C965 /* whitebox_logo@2x.png in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
 				A6E16C6F24A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */,
 				A67F61DE214395D50093940A /* graphic_yarn.png in Resources */,
@@ -14733,6 +14748,7 @@
 				A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				A6F31A2D295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */,
 				A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */,
+				A602AAE62B0BCDB100E6C965 /* whitebox_logo.png in Resources */,
 				A6BF02E22A8AABD7003D205F /* blendbyte_logo@2x.png in Resources */,
 				A6E7AE8C214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A67F618A214395A70093940A /* graphic_nginx@2x.png in Resources */,

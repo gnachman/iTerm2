@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21701"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -24,7 +24,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="588" height="413"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GaD-UM-uz4">
+                    <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GaD-UM-uz4">
                         <rect key="frame" x="181" y="361" width="389" height="27"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="iTerm2" id="U4n-GV-8aZ">
@@ -92,7 +92,7 @@
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                     </scrollView>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fQo-xv-ggV">
+                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fQo-xv-ggV">
                         <rect key="frame" x="169" y="342" width="401" height="17"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="By George Nachman and Contributors" id="XAW-F5-RXa">
@@ -107,7 +107,7 @@
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="axesIndependently" image="NSApplicationIcon" id="b3m-Nh-0FF"/>
                     </imageView>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1dy-hB-9aL">
-                        <rect key="frame" x="226" y="174" width="139" height="48"/>
+                        <rect key="frame" x="148" y="174" width="139" height="48"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <subviews>
                             <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="AZQ-PW-Jiz">
@@ -115,10 +115,30 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="blendbyte_logo" id="Wks-Sn-8FU"/>
                             </imageView>
-                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SmU-Oj-xJT">
+                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SmU-Oj-xJT">
                                 <rect key="frame" x="56" y="12" width="65" height="16"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Blendbyte" id="mZ1-ny-qyf">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="linkColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                        </subviews>
+                    </customView>
+                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QLQ-ce-ZLX" userLabel="Whitebox">
+                        <rect key="frame" x="292" y="174" width="139" height="48"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <subviews>
+                            <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="r4H-cK-fWg">
+                                <rect key="frame" x="0.0" y="0.0" width="48" height="48"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="whitebox_logo" id="Gkx-JC-hcS"/>
+                            </imageView>
+                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yn8-g8-sO4">
+                                <rect key="frame" x="56" y="12" width="62" height="16"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" lineBreakMode="clipping" title="Whitebox" id="5go-AO-e2e">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="linkColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -134,15 +154,15 @@
                         <rect key="frame" x="22" y="223" width="546" height="20"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <clipView key="contentView" drawsBackground="NO" id="Y1k-vx-Mfh">
-                            <rect key="frame" x="0.0" y="0.0" width="546" height="20"/>
+                            <rect key="frame" x="0.0" y="0.0" width="531" height="20"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="NO" spellingCorrection="YES" smartInsertDelete="YES" id="XqE-kC-hnW">
-                                    <rect key="frame" x="0.0" y="0.0" width="546" height="20"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="531" height="20"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
-                                    <size key="minSize" width="546" height="20"/>
+                                    <size key="minSize" width="531" height="20"/>
                                     <size key="maxSize" width="553" height="10000000"/>
                                     <attributedString key="textStorage">
                                         <fragment>
@@ -171,7 +191,7 @@
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="n20-ME-3Ey">
-                            <rect key="frame" x="530" y="0.0" width="16" height="20"/>
+                            <rect key="frame" x="531" y="0.0" width="15" height="20"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                     </scrollView>
@@ -181,6 +201,8 @@
                     <outlet property="_blendbyteText" destination="SmU-Oj-xJT" id="eVN-S4-Obz"/>
                     <outlet property="_bottomAlignedScrollView" destination="cIi-Dh-gHn" id="3ge-23-X50"/>
                     <outlet property="_sponsorsHeading" destination="XqE-kC-hnW" id="pQL-Be-gdx"/>
+                    <outlet property="_whitebox" destination="QLQ-ce-ZLX" id="mCk-Eh-gWM"/>
+                    <outlet property="_whiteboxText" destination="Yn8-g8-sO4" id="i36-xm-S0G"/>
                 </connections>
             </view>
             <point key="canvasLocation" x="358" y="551.5"/>
@@ -189,5 +211,6 @@
     <resources>
         <image name="NSApplicationIcon" width="32" height="32"/>
         <image name="blendbyte_logo" width="22.079999923706055" height="22.079999923706055"/>
+        <image name="whitebox_logo" width="22.079999923706055" height="22.079999923706055"/>
     </resources>
 </document>

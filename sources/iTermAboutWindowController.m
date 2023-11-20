@@ -24,8 +24,11 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     IBOutlet NSScrollView *_bottomAlignedScrollView;
     IBOutlet NSTextView *_sponsorsHeading;
     IBOutlet NSView *_blendbyte;
-    NSTrackingArea *_trackingArea;
+    IBOutlet NSView *_whitebox;
+    NSTrackingArea *_blendbyteTrackingArea;
     IBOutlet NSTextField *_blendbyteText;
+    IBOutlet NSTextField *_whiteboxText;
+    NSTrackingArea *_whiteboxTrackingArea;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
@@ -46,15 +49,21 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
                                                                                               font:_sponsorsHeading.font
                                                                                     paragraphStyle:paragraphStyle]];
 
+    _blendbyteTrackingArea = [self addSponsorView:_blendbyte textField:_blendbyteText];
+    _whiteboxTrackingArea = [self addSponsorView:_whitebox textField:_whiteboxText];
+}
+
+- (NSTrackingArea *)addSponsorView:(NSView *)containerView textField:(NSTextField *)textField {
     // Create a tracking area for the _blendbyte view
-    _trackingArea = [[NSTrackingArea alloc] initWithRect:_blendbyte.bounds
+    NSTrackingArea *trackingArea = [[NSTrackingArea alloc] initWithRect:containerView.bounds
                                                 options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
                                                   owner:self
                                                userInfo:nil];
-    [_blendbyte addTrackingArea:_trackingArea];
+    [containerView addTrackingArea:trackingArea];
     NSDictionary *underlineAttribute = @{NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle)};
-    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:[_blendbyteText stringValue] attributes:underlineAttribute];
-    [_blendbyteText setAttributedStringValue:attributedString];
+    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:[textField stringValue] attributes:underlineAttribute];
+    [textField setAttributedStringValue:attributedString];
+    return trackingArea;
 }
 
 - (void)mouseEntered:(NSEvent *)theEvent {
@@ -70,18 +79,27 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     if (NSPointInRect(locationInView, _blendbyte.frame)) {
         // Open the link
         [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.blendbyte.com/"]];
+    } else if (NSPointInRect(locationInView, _whitebox.frame)) {
+        // Open the link
+        [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://whitebox.so/?utm_source=iTerm2"]];
     }
 }
 
 // Don't forget to update the tracking area when the view resizes
 - (void)updateTrackingAreas {
     [super updateTrackingAreas];
-    [_blendbyte removeTrackingArea:_trackingArea];
-    _trackingArea = [[NSTrackingArea alloc] initWithRect:_blendbyte.bounds
-                                                options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
-                                                  owner:self
-                                               userInfo:nil];
-    [_blendbyte addTrackingArea:_trackingArea];
+    _blendbyteTrackingArea = [self updateTrackingArea:_blendbyteTrackingArea forView:_blendbyte];
+    _whiteboxTrackingArea = [self updateTrackingArea:_whiteboxTrackingArea forView:_blendbyte];
+}
+
+- (NSTrackingArea *)updateTrackingArea:(NSTrackingArea *)existingTrackingArea forView:(NSView *)container {
+    [container removeTrackingArea:existingTrackingArea];
+    NSTrackingArea *trackingArea = [[NSTrackingArea alloc] initWithRect:container.bounds
+                                                    options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
+                                                      owner:self
+                                                   userInfo:nil];
+    [container addTrackingArea:trackingArea];
+    return trackingArea;
 }
 
 @end
