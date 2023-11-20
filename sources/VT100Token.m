@@ -295,6 +295,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(SSH_TERMINATE):                   @"SSH_TERMINATE",
                 @(SSH_RECOVERY_BOUNDARY):           @"SSH_RECOVERY_BOUNDARY",
         };
+        [map retain];
     });
     NSString *name = map[@(type)];
     if (name) {
