@@ -131,7 +131,7 @@ static NSDate* lastResizeDate_;
 
         // setCopiesOnScroll is off because there is a top and bottom margin in the PTYTextView and
         // we would not want that copied.
-        [[_scrollview contentView] setCopiesOnScroll:NO];
+        // DEPRECATED [[_scrollview contentView] setCopiesOnScroll:NO];
     }
     return self;
 }
@@ -532,7 +532,7 @@ static NSDate* lastResizeDate_;
         [_hoverURLTextField setEditable:NO];
         [_hoverURLTextField setSelectable:NO];
         [_hoverURLTextField setStringValue:url];
-        [_hoverURLTextField setAlignment:NSLeftTextAlignment];
+        [_hoverURLTextField setAlignment:NSTextAlignmentLeft];
         [_hoverURLTextField setAutoresizingMask:NSViewWidthSizable];
         [_hoverURLTextField setTextColor:[NSColor headerTextColor]];
         _hoverURLTextField.autoresizingMask = NSViewNotSizable;
@@ -662,7 +662,7 @@ static NSDate* lastResizeDate_;
                        horizontalScrollerClass:nil
                          verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
                                     borderType:NSNoBorder
-                                   controlSize:NSRegularControlSize
+                                   controlSize:NSControlSizeRegular
                                  scrollerStyle:[[self scrollview] scrollerStyle]];
 
     if (_showTitle) {
@@ -689,7 +689,7 @@ static NSDate* lastResizeDate_;
                           horizontalScrollerClass:nil
                             verticalScrollerClass:verticalScrollerClass
                                        borderType:[[self scrollview] borderType]
-                                      controlSize:NSRegularControlSize
+                                      controlSize:NSControlSizeRegular
                                     scrollerStyle:[[[self scrollview] verticalScroller] scrollerStyle]];
     return contentSize;
 }

@@ -293,7 +293,7 @@ static BOOL hasBecomeActive = NO;
 #pragma mark - Interface Builder
 
 - (void)awakeFromNib {
-    secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
+    secureInputDesired_ = NO; // [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
 
     NSMenu *viewMenu = [self topLevelViewNamed:@"View"];
     [viewMenu addItem:[NSMenuItem separatorItem]];
@@ -1914,6 +1914,8 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)toggleSecureInput:(id)sender {
+    secureInputDesired_ = NO;
+#if 0
     // Set secureInputDesired_ to the opposite of the current state.
     secureInputDesired_ = !IsSecureEventInputEnabled();
     DLog(@"toggleSecureInput called. Setting desired to %d", (int)secureInputDesired_);
@@ -1924,6 +1926,7 @@ static BOOL hasBecomeActive = NO;
     // Save the preference, independent of whether it succeeded or not.
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:secureInputDesired_]
                                               forKey:@"Secure Input"];
+#endif
 }
 
 - (IBAction)debugLogging:(id)sender {
@@ -2181,6 +2184,8 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)setSecureInput:(BOOL)secure {
+	return ;
+#if 0
     if (secure && _secureInputCount > 0) {
         XLog(@"Want to turn on secure input but it's already on");
         return;
@@ -2209,6 +2214,7 @@ static BOOL hasBecomeActive = NO;
         }
     }
     DLog(@"After: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
+#endif
 }
 
 - (void)hideStuckToolTips {

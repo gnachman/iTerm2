@@ -94,7 +94,7 @@ NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWin
 NSString *const iTermDidDecodeWindowRestorableStateNotification = @"iTermDidDecodeWindowRestorableStateNotification";
 NSString *const iTermTabDidChangePositionInWindowNotification = @"iTermTabDidChangePositionInWindowNotification";
 
-static NSString *const kWindowNameFormat = @"iTerm Window %d";
+static NSString *const kWindowNameFormat = @"Therm Window %d";
 
 #define PtyLog DLog
 
@@ -377,7 +377,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                    hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
     NSInteger mask = 0;
     if (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
-        mask = NSNonactivatingPanelMask;
+        mask = NSWindowStyleMaskNonactivatingPanel;
     }
     switch (windowType) {
         case WINDOW_TYPE_TOP:
@@ -389,18 +389,17 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            return mask | NSBorderlessWindowMask | NSResizableWindowMask;
+            return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            return mask | NSBorderlessWindowMask;
+            return mask | NSWindowStyleMaskBorderless;
 
         default:
             return (mask |
-                    NSTitledWindowMask |
-                    NSClosableWindowMask |
-                    NSMiniaturizableWindowMask |
-                    NSResizableWindowMask |
-                    NSTexturedBackgroundWindowMask);
+                    NSWindowStyleMaskTitled |
+                    NSWindowStyleMaskClosable |
+                    NSWindowStyleMaskMiniaturizable |
+                    NSWindowStyleMaskResizable);
     }
 }
 
@@ -673,7 +672,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         [self.ptyWindow setLayoutDone];
     }
 
-    if (styleMask & NSTitledWindowMask) {
+    if (styleMask & NSWindowStyleMaskTitled) {
         if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)]) {
             // TODO: Why is this here?
             self.window.bottomCornerRounded = NO;
@@ -1655,7 +1654,7 @@ return NO;
             windowNumber = [NSString stringWithFormat:@"%d. ", number_ + 1];
         }
 #else
-        if (self.window.styleMask & NSTitledWindowMask) {
+        if (self.window.styleMask & NSWindowStyleMaskTitled) {
             windowNumber = [NSString stringWithFormat:@"%d. ", number_ + 1];
         }
 #endif
@@ -2367,12 +2366,10 @@ return NO;
                              includingContents:(BOOL)includeContents {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:7];
     NSRect rect = [[self window] frame];
-    int screenNumber = 0;
     for (NSScreen* screen in [NSScreen screens]) {
         if (screen == [[self window] screen]) {
             break;
         }
-        ++screenNumber;
     }
 
     [result setObject:_terminalGuid forKey:TERMINAL_GUID];
@@ -3097,9 +3094,9 @@ return NO;
 
     // Decide when to snap.  (We snap unless control, and only control, is held down.)
     const NSUInteger theMask =
-        (NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
+    (NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
     BOOL modifierDown =
-        (([[NSApp currentEvent] modifierFlags] & theMask) == NSControlKeyMask);
+    (([[NSApp currentEvent] modifierFlags] & theMask) == NSEventModifierFlagControl);
     BOOL snapWidth = !modifierDown;
     BOOL snapHeight = !modifierDown;
     if (sender != [self window]) {
@@ -4755,7 +4752,7 @@ return NO;
 - (void)updateTabColors {
     for (PTYTab *aTab in [self tabs]) {
         NSTabViewItem *tabViewItem = [aTab tabViewItem];
-        PTYSession *aSession = [aTab activeSession];
+       // PTYSession *aSession = [aTab activeSession];
         //NSColor *color = [aSession tabColor];
         if ([_contentView.tabView selectedTabViewItem] == tabViewItem) {
             NSColor* newTabColor = [_contentView.tabBarControl tabColorForTabViewItem:tabViewItem];
@@ -5024,13 +5021,13 @@ return NO;
 
 - (IBAction)irPrev:(id)sender
 {
-    [self irAdvance:-1];
+  //  [self irAdvance:-1];
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 }
 
 - (IBAction)irNext:(id)sender
 {
-    [self irAdvance:1];
+   // [self irAdvance:1];
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 }
 
@@ -5055,7 +5052,7 @@ return NO;
     if (mru.count) {
         [coprocessCommand_ addItemsWithObjectValues:mru];
     }
-    [coprocessIgnoreErrors_ setState:[Coprocess shouldIgnoreErrorsFromCommand:coprocessCommand_.stringValue] ? NSOnState : NSOffState];
+    [coprocessIgnoreErrors_ setState:[Coprocess shouldIgnoreErrorsFromCommand:coprocessCommand_.stringValue] ? NSControlStateValueOn : NSControlStateValueOff];
     [NSApp runModalForWindow:coprocesssPanel_];
 
     [self.window endSheet:coprocesssPanel_];
@@ -5070,7 +5067,7 @@ return NO;
             return;
         }
         [[self currentSession] launchCoprocessWithCommand:[coprocessCommand_ stringValue]];
-        [Coprocess setSilentlyIgnoreErrors:[coprocessIgnoreErrors_ state] == NSOnState fromCommand:[coprocessCommand_ stringValue]];
+        [Coprocess setSilentlyIgnoreErrors:[coprocessIgnoreErrors_ state] == NSControlStateValueOn fromCommand:[coprocessCommand_ stringValue]];
     }
     [NSApp stopModal];
 }
@@ -6269,7 +6266,7 @@ return NO;
     // If updatePaneTitles caused any session to change dimensions, then tell tmux
     // controllers that our capacity has changed.
     if (needResize) {
-        DLog(@"refrshTerminal needs resize");
+        DLog(@"refreshedTerminal needs resize");
         NSArray *tmuxControllers = [self uniqueTmuxControllers];
         for (TmuxController *c in tmuxControllers) {
             [c windowDidResize:self];
@@ -6508,7 +6505,7 @@ return NO;
     [_contentView.tabView cycleFlagsChanged:[theEvent modifierFlags]];
 
     NSUInteger modifierFlags = [theEvent modifierFlags];
-    if (!(modifierFlags & NSCommandKeyMask) &&
+    if (!(modifierFlags & NSEventModifierFlagCommand) &&
         [[[self currentSession] textview] isFindingCursor]) {
         // The cmd key was let up while finding the cursor
 
@@ -6521,7 +6518,7 @@ return NO;
         }
     }
 
-    _contentView.tabBarControl.cmdPressed = ((modifierFlags & NSCommandKeyMask) == NSCommandKeyMask);
+    _contentView.tabBarControl.cmdPressed = ((modifierFlags & NSEventModifierFlagCommand) == NSEventModifierFlagCommand);
 }
 
 // Change position of window widgets.
@@ -6681,7 +6678,7 @@ return NO;
                       horizontalScrollerClass:nil
                         verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
                                    borderType:NSNoBorder
-                                  controlSize:NSRegularControlSize
+                                      controlSize:NSControlSizeRegular
                                 scrollerStyle:[self scrollerStyle]];
         rows = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / charSize.height;
         columns = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / charSize.width;
@@ -6946,6 +6943,7 @@ return NO;
 }
 
 
+#if 0
 // Returns true if the given menu item is selectable.
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
     BOOL logging = [[self currentSession] logging];
@@ -7068,6 +7066,7 @@ return NO;
     }
     return result;
 }
+#endif
 
 - (IBAction)toggleAutoCommandHistory:(id)sender
 {
@@ -7862,6 +7861,16 @@ return NO;
 #endif
 }
 
+- (NSScriptObjectSpecifier *)objectSpecifier { 
+    return NULL;
+}
+
+
+- (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded { 
+  
+}
+
+
 #pragma mark - Toolbelt
 
 - (void)toolbeltUpdateMouseCursor {
@@ -7928,6 +7937,30 @@ return NO;
     if ([[self superclass] instancesRespondToSelector:_cmd]) {
         [super controlTextDidChange:aNotification];
     }
+}
+// TODO Deprecate the instant replay logic (aka IR)
+
+- (long long)instantReplayCurrentTimestamp { 
+    return 0;
+}
+
+- (long long)instantReplayFirstTimestamp { 
+    return 0;
+}
+
+- (long long)instantReplayLastTimestamp { 
+    return 0;
+}
+
+- (void)instantReplaySeekTo:(float)position { 
+//
+}
+
+- (void)instantReplayStep:(int)direction { 
+  //
+}
+
+- (void)encodeWithCoder:(nonnull NSCoder *)coder { 
 }
 
 @end

@@ -67,7 +67,7 @@
     rect.origin.y -= frameWidth;
     rect.size.width += frameWidth * 2;
     rect.size.height += frameWidth * 2;
-    NSFrameRectWithWidthUsingOperation(rect, 0.5, NSCompositeSourceOver);
+    NSFrameRectWithWidthUsingOperation(rect, 0.5, NSCompositingOperationSourceOver);
 }
 
 @end
@@ -190,7 +190,7 @@
 
     if (screenChar.code) {
         // Draw the character over the cursor.
-        CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+        CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] CGContext];
         if (smart && focused) {
             [self drawSmartCursorCharacter:screenChar
                                doubleWidth:doubleWidth
@@ -216,7 +216,7 @@
     NSColor *proposedForeground = [self.delegate cursorColorForCharacter:screenChar
                                                           wantBackground:YES
                                                                    muted:NO];
-    proposedForeground = [proposedForeground colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    proposedForeground = [proposedForeground colorUsingType:0]; // ColorSpaceName:NSCalibratedRGBColorSpace];
     NSColor *overrideColor = [self overrideColorForSmartCursorWithForegroundColor:proposedForeground
                                                                   backgroundColor:backgroundColor];
 

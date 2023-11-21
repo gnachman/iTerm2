@@ -6941,7 +6941,8 @@ verticalSpacing:(float)verticalSpacing {
 }
 
 - (int)rightOptionKey { 
-    <#code#>
+    // do nothing
+	return NO;
 }
 
 

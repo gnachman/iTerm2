@@ -309,9 +309,19 @@ static iTermController *gSharedInstance;
 }
 
 - (NSArray<PseudoTerminal *> *)terminalsSortedByNumber {
+    fprintf (stderr, "TERMINAL COUNTER ALIGNED MEH\n");
+    
+    return _terminalWindows;
+#if 0
     return [_terminalWindows sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
-        return [@([obj1 number]) compare:@([obj2 number])];
+        if (@available(macOS 12.0, *)) {
+            NSGrammaticalNumber *n2 = [obj2 number];
+        } else {
+            // Fallback on earlier versions
+        }
+        return [@([obj1 number]) compare:n2];
     }];
+#endif
 }
 
 - (void)previousTerminal {
@@ -643,7 +653,7 @@ static iTermController *gSharedInstance;
         }
     }
 
-    unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
+    unsigned int modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
     [aMenuItem setKeyEquivalentModifierMask:modifierMask];
     [aMenuItem setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
     [aMenuItem setTarget:aTarget];
@@ -662,11 +672,11 @@ static iTermController *gSharedInstance;
             }
         }
 
-        modifierMask = NSCommandKeyMask | NSControlKeyMask;
+        modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
         [aMenuItem setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
         [aMenuItem setTarget:self];
 
-        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
+        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSEventModifierFlagOption];
         [aMenuItem setAlternate:YES];
         [aMenu addItem:aMenuItem];
         [aMenuItem release];
@@ -723,7 +733,7 @@ static iTermController *gSharedInstance;
         aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All"
                                                action:openAllSelector
                                         keyEquivalent:@""];
-        unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
+        unsigned int modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];
         [aMenuItem setRepresentedObject:subMenu];
         if ([self respondsToSelector:openAllSelector]) {
@@ -739,9 +749,9 @@ static iTermController *gSharedInstance;
         aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All in New Window"
                                                action:openAllSelector
                                         keyEquivalent:@""];
-        modifierMask = NSCommandKeyMask | NSControlKeyMask;
+        modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
         [aMenuItem setAlternate:YES];
-        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
+        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSEventModifierFlagOption];
         [aMenuItem setRepresentedObject:subMenu];
         if ([self respondsToSelector:openAllSelector]) {
             [aMenuItem setTarget:self];
@@ -877,7 +887,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)irAdvance:(int)dir {
-    [_frontTerminalWindowController irAdvance:dir];
+    // [_frontTerminalWindowController irAdvance:dir];
 }
 
 + (void)switchToSpaceInBookmark:(Profile *)aDict {
@@ -1212,7 +1222,9 @@ static iTermController *gSharedInstance;
             [self showAlertForScript:fullPath error:errorInfo];
         }
     } else {
-        [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
+        fprintf (stderr, "LAUNCHING SCRIPT DISABLED\n");
+      //  [NSWorkspace openApplicationAtURL:fullPath configuration: 0 completionHandler: 0];
+//        [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
     }
 
 }

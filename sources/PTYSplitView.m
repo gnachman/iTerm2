@@ -14,7 +14,7 @@
 @dynamic delegate;
 
 - (NSColor *)dividerColor {
-    return [NSColor redColor];
+    return [NSColor darkGrayColor];
 #if 0
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
