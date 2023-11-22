@@ -85,9 +85,9 @@
 
     NSRunningApplication *app = [self appToSwitchBackToIfAllowed];
     BOOL result = NO;
-    if (app) {
+    if (app && [NSApp isActive]) {
         DLog(@"Restore app %@", app);
-        DLog(@"** Restor previously active app from\n%@", [NSThread callStackSymbols]);
+        DLog(@"** Restore previously active app from\n%@", [NSThread callStackSymbols]);
         result = [app activateWithOptions:0];
         DLog(@"activateWithOptions:0 returned %@", @(result));
     }
