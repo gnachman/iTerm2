@@ -29,6 +29,7 @@ extern NSString *kIntelliJIDEAIdentifierUE;
 extern NSString *kWebStormIdentifier;
 extern NSString *kRiderIdentifier;
 extern NSString *kNovaAppIdentifier;
+extern NSString *kXcodeAppIdentifier;
 
 extern NSString *kSemanticHistoryBestEditorAction;
 extern NSString *kSemanticHistoryUrlAction;

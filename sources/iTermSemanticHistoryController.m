@@ -357,6 +357,26 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
 }
 
+- (void)openDocumentInXcode:(NSString *)path line:(NSString *)line {
+    assert(path);
+    if (!path) {
+        // I don't expect this to ever happen.
+        return;
+    }
+
+    NSMutableArray *args = [NSMutableArray array];
+    if ([line length]) {
+        [args addObjectsFromArray:@[@"--line", line]];
+    }
+
+    [args addObject:path];
+
+    NSString *xedPath = @"/usr/bin/xed";
+
+    DLog(@"Launch Xcode: `%@ %@`", xedPath, args);
+    [self launchTaskWithPath:xedPath arguments:args completion:nil];
+}
+
 + (NSArray *)bundleIdsThatSupportOpeningToLineNumber {
     return @[ kAtomIdentifier,
               kVSCodeIdentifier,
@@ -374,7 +394,9 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kIntelliJIDEAIdentifierUE,
               kWebStormIdentifier,
               kRiderIdentifier,
-              kNovaAppIdentifier ];
+              kNovaAppIdentifier,
+              kXcodeAppIdentifier,
+    ];
 }
 
 - (void)openFile:(NSString *)path
@@ -446,6 +468,10 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
     if ([identifier isEqualToString:kNovaAppIdentifier]) {
         [self openDocumentInNova:path line:lineNumber column:columnNumber];
+        return;
+    }
+    if ([identifier isEqualToString:kXcodeAppIdentifier]) {
+        [self openDocumentInXcode:path line:lineNumber];
         return;
     }
     // WebStorm doesn't actually support --line, but it's harmless to try.
