@@ -390,7 +390,17 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     return model;
 }
 
+- (void)reset {
+    [_layers enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermStatusBarTimeSeriesLayer * _Nonnull layer, BOOL * _Nonnull stop) {
+        [layer removeFromSuperlayer];
+    }];
+    _layers = nil;
+}
+
 - (void)redrawAnimated:(BOOL)animated {
+    if (!self.view.window) {
+        return;
+    }
     iTermStatusBarSparklinesModel *model = [self sparklinesModel];
     const double ceiling = self.ceiling;
     if (!_layers) {

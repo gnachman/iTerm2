@@ -21,7 +21,11 @@ typedef struct {
 } iTermCPUTicks;
 
 
-@implementation iTermLocalCPUUtilizationPublisher
+@implementation iTermLocalCPUUtilizationPublisher {
+    NSTimer *_timer;
+    iTermCPUTicks _last;
+}
+
 + (instancetype)sharedInstance {
     static iTermLocalCPUUtilizationPublisher *instance;
     static dispatch_once_t onceToken;
@@ -30,29 +34,98 @@ typedef struct {
     });
     return instance;
 }
+
+- (void)addSubscriber:(id)subscriber block:(void (^)(id _Nonnull))block {
+    [super addSubscriber:subscriber block:block];
+    [self updateTimer];
+}
+
+- (void)removeSubscriber:(id)subscriber {
+    [super removeSubscriber:subscriber];
+    [self updateTimer];
+}
+
+- (void)updateTimer {
+    if (!self.hasAnySubscribers) {
+        [_timer invalidate];
+        _timer = nil;
+        return;
+    }
+    if (_timer) {
+        return;
+    }
+
+    _timer = [NSTimer scheduledTimerWithTimeInterval:1
+                                              target:self
+                                            selector:@selector(timerDidFire:)
+                                            userInfo:nil
+                                             repeats:YES];
+}
+
+- (void)timerDidFire:(NSTimer *)timer {
+    iTermCPUTicks current = [self sample];
+    iTermCPUTicks delta = current;
+    delta.idle -= _last.idle;
+    delta.total -= _last.total;
+    _last = current;
+
+    double value = [self utilizationInDelta:delta];
+    if (value != value) {
+        return;
+    }
+    [self publish:@(value)];
+}
+
+- (double)utilizationInDelta:(iTermCPUTicks)delta {
+    if (_last.total == 0) {
+        return 0;
+    } else {
+        return 1.0 - delta.idle / delta.total;
+    }
+}
+
+- (iTermCPUTicks)sample {
+    host_cpu_load_info_data_t cpuinfo;
+    mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
+    kern_return_t rc = host_statistics(mach_host_self(),
+                                       HOST_CPU_LOAD_INFO,
+                                       (host_info_t)&cpuinfo,
+                                       &count);
+    iTermCPUTicks result = { 0, 0 };
+    if (rc != KERN_SUCCESS) {
+        return result;
+    }
+
+    for (int i = 0; i < CPU_STATE_MAX; i++) {
+        result.total += cpuinfo.cpu_ticks[i];
+    }
+    result.idle = cpuinfo.cpu_ticks[CPU_STATE_IDLE];
+    return result;
+}
+
 @end
 
 #pragma mark -
 
 @interface iTermCPUUtilization()
+@property (nonatomic, copy) NSString *sessionID;
 @end
 
 
 // The design:
 //
-// Source publisher:                  Router:            Consumer:
-// One per data source                One per session    One per data sink
+// Source publisher:                  iTermCPUUtilization:  Router:            Consumer:
+// One per data source                One per session       One per session    One per data sink
 //
-// [Local publisher singleton] -----> router ----------> consumer
-//                              \             `--------> consumer
-//                               `--> router ----------> consumer
-//                                            `--------> consumer
-// [example1.com publisher] --------> router ----------> consumer
-//                                            `--------> consumer
-// [example2.com publisher] --------> router ----------> consumer
-//                                            `--------> consumer
+// [Local publisher singleton] -----> [timer fires] -----> router ----------> consumer
+//                              \                                  `--------> consumer
+//                               `--> [timer fires] -----> router ----------> consumer
+//                                                                 `--------> consumer
+// [example1.com publisher] --------> [timer fires] -----> router ----------> consumer
+//                                                                 `--------> consumer
+// [example2.com publisher] --------> [timer fires] -----> router ----------> consumer
+//                                                                 `--------> consumer
 @implementation iTermCPUUtilization {
-    iTermCPUTicks _last;
     NSTimer *_timer;
     iTermPublisher<NSNumber *> *_publisher;
     iTermPublisher<NSNumber *> *_router;
@@ -78,6 +151,7 @@ typedef struct {
 }
 
 + (void)setInstance:(iTermCPUUtilization *)instance forSessionID:(NSString *)sessionID {
+    instance.sessionID = sessionID;
     if (instance) {
         self.sessionInstances[sessionID] = instance;
     } else {
@@ -88,7 +162,6 @@ typedef struct {
 - (instancetype)initWithPublisher:(iTermPublisher<NSNumber *> *)publisher {
     self = [super init];
     if (self) {
-        _cadence = 1;
         _router = [[iTermPublisher alloc] initWithCapacity:publisher.capacity];
         [self setPublisher:publisher];
     }
@@ -109,7 +182,6 @@ typedef struct {
     [publisher addSubscriber:self block:^(NSNumber * _Nonnull payload) {
         [weakSelf republish:payload];
     }];
-    [self updateTimer];
 }
 
 // publisher -> router
@@ -124,74 +196,13 @@ typedef struct {
     NSNumber *last = _publisher.historicalValues.lastObject;
     if (last != nil) {
         block(last.doubleValue);
-    } else {
-        [self update];
     }
-    [self updateTimer];
 }
 
 #pragma mark - Private
-
-- (double)utilizationInDelta:(iTermCPUTicks)delta {
-    if (_last.total == 0) {
-        return 0;
-    } else {
-        return 1.0 - delta.idle / delta.total;
-    }
-}
-
-- (void)update {
-    const BOOL isLocal = [_publisher isKindOfClass:[iTermLocalCPUUtilizationPublisher class]];
-    if (!isLocal) {
-        return;
-    }
-    iTermCPUTicks current = [self sample];
-    iTermCPUTicks delta = current;
-    delta.idle -= _last.idle;
-    delta.total -= _last.total;
-    _last = current;
-
-    double value = [self utilizationInDelta:delta];
-    if (value != value) {
-        return;
-    }
-    [_publisher publish:@(value)];
-}
 
 - (NSArray<NSNumber *> *)samples {
     return _publisher.historicalValues;
 }
 
-- (iTermCPUTicks)sample {
-    host_cpu_load_info_data_t cpuinfo;
-    mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
-    kern_return_t rc = host_statistics(mach_host_self(),
-                                       HOST_CPU_LOAD_INFO,
-                                       (host_info_t)&cpuinfo,
-                                       &count);
-    iTermCPUTicks result = { 0, 0 };
-    if (rc != KERN_SUCCESS) {
-        return result;
-    }
-
-    for (int i = 0; i < CPU_STATE_MAX; i++) {
-        result.total += cpuinfo.cpu_ticks[i];
-    }
-    result.idle = cpuinfo.cpu_ticks[CPU_STATE_IDLE];
-    return result;
-}
-
-- (void)updateTimer {
-    const BOOL isLocal = [_publisher isKindOfClass:[iTermLocalCPUUtilizationPublisher class]];
-    if (!_router.hasAnySubscribers || (_timer != nil && !isLocal)) {
-        [_timer invalidate];
-        _timer = nil;
-    } else if (!_timer && isLocal) {
-        _timer = [NSTimer scheduledTimerWithTimeInterval:self.cadence
-                                                  target:self
-                                                selector:@selector(update)
-                                                userInfo:nil
-                                                 repeats:YES];
-    }
-}
 @end

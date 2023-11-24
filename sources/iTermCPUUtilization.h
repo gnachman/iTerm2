@@ -13,7 +13,6 @@ NS_ASSUME_NONNULL_BEGIN
 typedef void (^iTermCPUUtilizationObserver)(double);
 
 @interface iTermCPUUtilization : NSObject
-@property (nonatomic) NSTimeInterval cadence;
 @property (nullable, nonatomic, readonly) NSArray<NSNumber *> *samples;
 @property (nonatomic, strong) iTermPublisher<NSNumber *> *publisher;
 

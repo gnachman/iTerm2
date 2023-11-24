@@ -335,6 +335,7 @@ class Conductor: NSObject, Codable {
         case runPython(String)
         // Shell out to this command and then return to conductor
         case shell(String)
+        case pythonversion
         case getshell
         case write(data: Data, dest: String)
         case cd(String)
@@ -358,7 +359,7 @@ class Conductor: NSObject, Codable {
 
         var isFramer: Bool {
             switch self {
-            case .execLoginShell, .setenv(_, _), .run(_), .runPython(_), .shell(_),
+            case .execLoginShell, .setenv(_, _), .run(_), .runPython(_), .shell(_), .pythonversion,
                     .write(_, _), .cd(_), .quit, .getshell, .eval(_):
                 return false
 
@@ -381,6 +382,8 @@ class Conductor: NSObject, Codable {
                 return "runpython"
             case .shell(let cmd):
                 return "shell \(cmd)"
+            case .pythonversion:
+                return "pythonversion"
             case .write(let data, let dest):
                 return "write \(data.base64EncodedString()) \(dest)"
             case .cd(let dir):
@@ -432,6 +435,8 @@ class Conductor: NSObject, Codable {
                 return "running “\(cmd)”"
             case .shell(let cmd):
                 return "running in shell “\(cmd)”"
+            case .pythonversion:
+                return "running pythonversion"
             case .runPython(_):
                 return "running Python code"
             case .write(_, let dest):
@@ -766,7 +771,7 @@ class Conductor: NSObject, Codable {
       case sshargs, varsToSend, payloads, initialDirectory, parsedSSHArguments, depth, parent,
            framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
            modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
-           homeDirectory, shell, uname, terminalConfiguration
+           homeDirectory, shell, pythonversion, uname, terminalConfiguration
     }
 
 
@@ -1233,7 +1238,7 @@ class Conductor: NSObject, Codable {
     }
 
     private func checkForPython() {
-        send(.shell("command -v python3 >/dev/null 2>&1 && python3 -V"), .handleCheckForPython(StringArray()))
+        send(.pythonversion, .handleCheckForPython(StringArray()))
     }
 
     private static let minimumPythonMajorVersion = 3

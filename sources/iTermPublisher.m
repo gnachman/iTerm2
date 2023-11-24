@@ -143,7 +143,8 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
         [_historicalValues removeObjectAtIndex:0];
     }
     _updateTime = mach_absolute_time();
-    for (iTermSubscriber *obj in _subscribers) {
+    NSArray<iTermSubscriber *> *subs = [_subscribers copy];
+    for (iTermSubscriber *obj in subs) {
         if (obj.object) {
             obj.block(payload);
         }

@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermStatusBarCPUUtilizationComponent {
     iTermVariableReference *_sshRef;
-    NSArray<NSNumber *> *_previousValues;
+    __weak iTermPublisher<NSNumber *> *_lastPublisher;
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
@@ -31,7 +31,10 @@ NS_ASSUME_NONNULL_BEGIN
         __weak __typeof(self) weakSelf = self;
         // scope will be nil in status bar configuration UI but not during normal use.
         if (scope.ID) {
+            static int sig;
+            int inst = sig++;
             [[iTermCPUUtilization instanceForSessionID:scope.ID] addSubscriber:self block:^(double value) {
+                NSLog(@"update %d of %p", inst, weakSelf);
                 [weakSelf update:value];
             }];
             _sshRef.onChangeBlock = ^{
@@ -72,14 +75,15 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (iTermStatusBarSparklinesModel *)sparklinesModel {
-    NSMutableArray<NSNumber *> *values = [[[iTermCPUUtilization instanceForSessionID:self.scope.ID] samples] mutableCopy];
-    // The data source may change when sshing but the drawing code doesn't expect retroactive changes.
-    NSInteger i = _previousValues.count;
-    while (i > 0 && values.count < _previousValues.count) {
-        i -= 1;
-        [values insertObject:_previousValues[i] atIndex:0];
+    iTermCPUUtilization *util = [iTermCPUUtilization instanceForSessionID:self.scope.ID];
+    NSMutableArray<NSNumber *> *values = [[util samples] mutableCopy];
+    if (util.publisher != _lastPublisher) {
+        [self reset];
     }
-    _previousValues = values;
+    _lastPublisher = util.publisher;
+    while (values.count < self.maximumNumberOfValues) {
+        [values insertObject:@0 atIndex:0];
+    }
     iTermStatusBarTimeSeries *timeSeries = [[iTermStatusBarTimeSeries alloc] initWithValues:values];
     iTermStatusBarTimeSeriesRendition *rendition =
     [[iTermStatusBarTimeSeriesRendition alloc] initWithTimeSeries:timeSeries
@@ -154,6 +158,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)sshLevelDidChange {
     [self invalidate];
+}
+
+- (void)redrawAnimated:(BOOL)animated {
+    if (!self.view.window) {
+        return;
+    }
+    [super redrawAnimated:animated];
 }
 
 @end
