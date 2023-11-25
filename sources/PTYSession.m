@@ -15416,8 +15416,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     const BOOL alt = [self.screen terminalSoftAlternateScreenMode];
     const BOOL bottom = _textview.scrolledToBottom;
     DLog(@"alt=%@ bottom=%@", @(alt), @(bottom));
-    return !(alt && bottom);k
-    
+    return !(alt && bottom);    
 }
 
 #pragma mark - iTermHotkeyNavigableSession
