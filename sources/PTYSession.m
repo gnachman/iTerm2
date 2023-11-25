@@ -15408,6 +15408,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [[self.delegate sessions] count] > 1;
 }
 
+- (BOOL)textViewSelectionScrollAllowed {
+    if (![iTermProfilePreferences boolForKey:KEY_DRAG_TO_SCROLL_IN_ALTERNATE_SCREEN_MODE_DISABLED
+                                   inProfile:self.profile]) {
+        return YES;
+    }
+    const BOOL alt = [self.screen terminalSoftAlternateScreenMode];
+    const BOOL bottom = _textview.scrolledToBottom;
+    DLog(@"alt=%@ bottom=%@", @(alt), @(bottom));
+    return !(alt && bottom);k
+    
+}
+
 #pragma mark - iTermHotkeyNavigableSession
 
 - (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {

@@ -99,6 +99,9 @@ typedef NS_ENUM(NSInteger, iTermSelectionScrollDirection) {
 }
 
 - (void)mouseDraggedTo:(NSPoint)locationInTextView coord:(VT100GridCoord)coord {
+    if (![self.delegate selectionScrollAllowed]) {
+        [self disableUntilMouseUp];
+    }
     if (_disabled) {
         DLog(@"Ignore: disabled until mouse up");
         return;

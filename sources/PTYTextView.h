@@ -291,6 +291,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewSaveScrollPositionForMark:(id<VT100ScreenMarkReading>)mark withName:(NSString *)name;
 - (void)textViewRemoveBookmarkForMark:(id<VT100ScreenMarkReading>)mark;
 - (BOOL)textViewEnclosingTabHasMultipleSessions;
+- (BOOL)textViewSelectionScrollAllowed;
 
 @end
 
@@ -474,6 +475,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Checked and at the end of -refresh. Meant to be use when a reentrant call failed.
 @property (nonatomic) BOOL needsUpdateSubviewFrames;
 @property (nonatomic, readonly) NSArray<iTermTerminalButton *> *terminalButtons NS_AVAILABLE_MAC(11);
+@property (nonatomic, readonly) BOOL scrolledToBottom;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.

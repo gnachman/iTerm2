@@ -2695,6 +2695,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     }
 }
 
+- (BOOL)selectionScrollAllowed {
+    return [self.delegate textViewSelectionScrollAllowed];
+}
+
 // Returns YES if the selection changed.
 - (BOOL)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView {
     if (!_selection.live) {
@@ -5870,9 +5874,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_urlActionHelper openTargetWithEvent:event inBackground:inBackground];
 }
 
-- (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler {
+- (BOOL)scrolledToBottom {
     return (([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight ==
             [_dataSource numberOfLines]);
+}
+
+- (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler {
+    return [self scrolledToBottom];
 }
 
 - (void)mouseHandlerUnlockScrolling:(PTYMouseHandler *)handler {

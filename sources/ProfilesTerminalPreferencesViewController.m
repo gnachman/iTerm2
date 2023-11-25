@@ -53,6 +53,7 @@
     IBOutlet NSButton *_newOutputAlert;
     IBOutlet NSButton *_sessionEndedAlert;
     IBOutlet NSButton *_terminalGeneratedAlerts;
+    IBOutlet NSButton *_dragToScrollInAlternateScreenModeDisabled;
 }
 
 - (void)awakeFromNib {
@@ -90,6 +91,10 @@
 
     [self defineControl:_scrollbackInAlternateScreen
                     key:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_dragToScrollInAlternateScreenModeDisabled
+                    key:KEY_DRAG_TO_SCROLL_IN_ALTERNATE_SCREEN_MODE_DISABLED
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
