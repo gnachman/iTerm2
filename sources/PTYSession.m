@@ -5021,14 +5021,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)useTransparencyDidChange {
-    // The view does not like getting replaced during the spin of the runloop during which it is created.
     if (_view.window && _delegate.realParentWindow && _textview) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (_view.window && _delegate.realParentWindow && _textview) {
-                [_delegate sessionTransparencyDidChange];
-                [self invalidateBlend];
-            }
-        });
+        if (_view.window && _delegate.realParentWindow && _textview) {
+            [_delegate sessionTransparencyDidChange];
+            [self invalidateBlend];
+        }
     }
 }
 
