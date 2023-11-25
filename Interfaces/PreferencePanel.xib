@@ -3500,7 +3500,7 @@ DQ
             <point key="canvasLocation" x="-902.5" y="518"/>
         </customView>
         <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="578" height="633"/>
+            <rect key="frame" x="0.0" y="0.0" width="578" height="635"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2390">
@@ -3535,7 +3535,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2400">
-                    <rect key="frame" x="62" y="586" width="103" height="16"/>
+                    <rect key="frame" x="62" y="588" width="103" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Scrollback lines:" id="2417">
                         <font key="font" metaFont="system"/>
@@ -3544,7 +3544,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2401">
-                    <rect key="frame" x="168" y="583" width="171" height="21"/>
+                    <rect key="frame" x="168" y="585" width="171" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2416">
                         <font key="font" metaFont="system"/>
@@ -3580,7 +3580,7 @@ DQ
                     </connections>
                 </comboBox>
                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2434">
-                    <rect key="frame" x="20" y="614" width="117" height="16"/>
+                    <rect key="frame" x="20" y="616" width="117" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Scrollback Buffer" id="2435">
                         <font key="font" metaFont="systemBold"/>
@@ -3598,7 +3598,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5154">
-                    <rect key="frame" x="20" y="559" width="391" height="18"/>
+                    <rect key="frame" x="20" y="561" width="391" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">When using a program like tmux, which shows a status bar at the bottom of the screen, history is not normally saved. This allows such history to be saved but with a performance penalty.</string>
                     <buttonCell key="cell" type="check" title="Save lines to scrollback when an app status bar is present" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5155">
@@ -3834,7 +3834,7 @@ DQ
                     </connections>
                 </button>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3647">
-                    <rect key="frame" x="345" y="585" width="151" height="18"/>
+                    <rect key="frame" x="345" y="587" width="151" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Unlimited scrollback" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="3648">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3943,7 +3943,7 @@ DQ
                 </button>
             </subviews>
             <accessibility identifier="prefsProfilesTerminal"/>
-            <point key="canvasLocation" x="90" y="-862.5"/>
+            <point key="canvasLocation" x="90" y="-861.5"/>
         </customView>
         <customView id="ayN-Cl-pQs" userLabel="Prefs - Profiles - Session" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="486"/>
