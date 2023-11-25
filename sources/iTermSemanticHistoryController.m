@@ -251,7 +251,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         // I don't expect this to ever happen.
         return;
     }
-    NSArray<NSString *> *possibleIdentifiers = codium ? @[ kVSCodiumIdentifier1, kVSCodiumIdentifier2 ] : @[kVSCodeIdentifier];
+    NSArray<NSString *> *possibleIdentifiers = codium ? @[ kVSCodiumIdentifier1, kVSCodiumIdentifier2 ] : @[kVSCodeIdentifier, kVSCodeInsidersIdentifier];
     NSString *identifier;
     NSString *bundlePath = nil;
     for (NSString *candidate in possibleIdentifiers) {
@@ -362,6 +362,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kVSCodeIdentifier,
               kVSCodiumIdentifier1,
               kVSCodiumIdentifier2,
+              kVSCodeInsidersIdentifier,
               kSublimeText2Identifier,
               kSublimeText3Identifier,
               kSublimeText4Identifier,
@@ -397,7 +398,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
     if ([identifier isEqualToString:kVSCodeIdentifier] ||
         [identifier isEqualToString:kVSCodiumIdentifier1] ||
-        [identifier isEqualToString:kVSCodiumIdentifier2]) {
+        [identifier isEqualToString:kVSCodiumIdentifier2] ||
+        [identifier isEqualToString:kVSCodeInsidersIdentifier]) {
         if (lineNumber != nil) {
             path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
         }
