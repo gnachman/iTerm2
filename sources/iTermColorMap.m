@@ -166,6 +166,9 @@ const int kColorMapAnsiBrightModifier = 8;
                                 1);
     } else {
         NSData *data = _fastMap[@(theKey)];
+        if (!data) {
+            return simd_make_float4(1, 0, 0, 1);
+        }
         vector_float4 value;
         memmove(&value, data.bytes, sizeof(value));
         return value;
