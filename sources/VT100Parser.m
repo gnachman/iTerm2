@@ -123,7 +123,7 @@
                                         encoding:encoding
                                       savedState:_savedStateForPartialParse
                                        dcsHooked:&_dcsHooked];
-            DLog(@"%@: dcs produced %@", self, token);
+            DLog(@"%@: control parser produced %@", self, token);
             if (token->type != VT100_WAIT) {
                 [_savedStateForPartialParse removeAllObjects];
             }
