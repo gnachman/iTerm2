@@ -105,6 +105,13 @@ class ProfileDocument: NSObject {
                 cache[guid] = name
             }
             DispatchQueue.main.async {
+                // Somehow a user ended up with resolved symlinks and visible GUIDs. If that happens
+                // remove them all, which is my only option. Issue 11198
+                if NSDocumentController.shared.recentDocumentURLs.contains(where: { url in
+                    url.pathExtension == "itermtab"
+                }) {
+                    NSDocumentController.shared.clearRecentDocuments(nil)
+                }
                 NSDocumentController.shared.noteNewRecentDocumentURL(linkURL)
             }
         }
