@@ -310,7 +310,8 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
             [[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]];
         [profileHotKey hideHotKeyWindowAnimated:YES
                                 suppressHideApp:suppressHide
-                               otherIsRollingIn:anyHotkeyWindowIsRollingIn];
+                               otherIsRollingIn:anyHotkeyWindowIsRollingIn
+                               causedByKeypress:NO];
         profileHotKey.wasAutoHidden = YES;
     }
 }
@@ -371,7 +372,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
                                                           NSUInteger idx,
                                                           BOOL *_Nonnull stop) {
             if (profileHotKey.hotKeyWindowOpen) {
-                [profileHotKey hideHotKeyWindowAnimated:YES suppressHideApp:NO otherIsRollingIn:NO];
+                [profileHotKey hideHotKeyWindowAnimated:YES suppressHideApp:NO otherIsRollingIn:NO causedByKeypress:YES];
                 profileHotKey.wasAutoHidden = NO;
                 handled = YES;
             }
@@ -436,15 +437,6 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     } else {
         return nil;
     }
-}
-
-- (void)fastHideAllHotKeyWindows {
-    _disableAutoHide = YES;
-    for (PseudoTerminal *term in [self hotKeyWindowControllers]) {
-        iTermProfileHotKey *hotKey = [self profileHotKeyForWindowController:term];
-        [hotKey hideHotKeyWindowAnimated:NO suppressHideApp:NO otherIsRollingIn:NO];
-    }
-    _disableAutoHide = NO;
 }
 
 - (NSArray<iTermPanel *> *)visibleFloatingHotkeyWindows {
@@ -651,10 +643,15 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     return NO;
 }
 
-- (BOOL)willFinishRollingOutProfileHotKey:(iTermProfileHotKey *)profileHotKey {
+- (BOOL)willFinishRollingOutProfileHotKey:(iTermProfileHotKey *)profileHotKey
+                         causedByKeypress:(BOOL)causedByKeypress {
     // Restore the previous state (key window or active app) unless we switched
     // to another hotkey window.
     DLog(@"Finished rolling out %p. key window is %@.", profileHotKey.windowController, [[NSApp keyWindow] windowController]);
+    if (!causedByKeypress && self.previousState) {
+        DLog(@"Erase previous state");
+        self.previousState = nil;
+    }
     if (![self otherHotKeyWindowWillBecomeKeyAfterOrderOut:profileHotKey]) {
         DLog(@"Restoring the previous state %p", self.previousState);
         iTermPreviousState *previousState = [self.previousState retain];

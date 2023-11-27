@@ -65,7 +65,8 @@
 // behind the next app.
 - (void)hideHotKeyWindowAnimated:(BOOL)animated
                  suppressHideApp:(BOOL)suppressHideApp
-                otherIsRollingIn:(BOOL)otherIsRollingIn;
+                otherIsRollingIn:(BOOL)otherIsRollingIn
+                causedByKeypress:(BOOL)causedByKeypress;
 
 // Erase the restorable state since it won't be needed after the last session is gone. We wouldn't
 // want to restore a defunct session.

@@ -91,9 +91,6 @@ extern NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID;
 - (iTermProfileHotKey *)didCreateWindowController:(PseudoTerminal *)windowController
                                       withProfile:(Profile *)profile;
 
-// Hide all hotkey windows without animation. Used by Exposé All Tabs.
-- (void)fastHideAllHotKeyWindows;
-
 // Alpha=1, level=floating, on all spaces hotkey windows.
 - (NSArray<iTermPanel *> *)visibleFloatingHotkeyWindows;
 - (NSArray<iTermPanel *> *)allFloatingHotkeyWindows;
