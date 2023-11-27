@@ -20,6 +20,7 @@ extern NSString *kAtomIdentifier;
 extern NSString *kVSCodeIdentifier;
 extern NSString *kVSCodiumIdentifier1;
 extern NSString *kVSCodiumIdentifier2;
+extern NSString *kVSCodeInsidersIdentifier;
 extern NSString *kTextmateIdentifier;
 extern NSString *kTextmate2Identifier;
 extern NSString *kBBEditIdentifier;
