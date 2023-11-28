@@ -1,7 +1,9 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermTipCardViewController">
@@ -20,22 +22,22 @@
             <rect key="frame" x="0.0" y="0.0" width="300" height="124"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <customView id="eLp-gP-ZDf" userLabel="Container View" customClass="iTermTipCardContainerView">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eLp-gP-ZDf" userLabel="Container View" customClass="iTermTipCardContainerView">
                     <rect key="frame" x="4" y="8" width="292" height="114"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
-                        <customView id="Ko0-wO-3Hh" userLabel="Cover View" customClass="SolidColorView">
+                        <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ko0-wO-3Hh" userLabel="Cover View" customClass="SolidColorView">
                             <rect key="frame" x="1" y="1" width="290" height="62"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
-                        <box autoresizesSubviews="NO" boxType="custom" borderType="line" titlePosition="noTitle" id="a3V-cP-S93" userLabel="Title background color (box)">
+                        <box autoresizesSubviews="NO" fixedFrame="YES" boxType="custom" borderType="line" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="a3V-cP-S93" userLabel="Title background color (box)" customClass="DraggableNSBox" customModule="iTerm2SharedARC">
                             <rect key="frame" x="1" y="63" width="290" height="50"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                            <view key="contentView">
+                            <view key="contentView" id="ajZ-Bb-lv9">
                                 <rect key="frame" x="1" y="1" width="288" height="48"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
-                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="Uqc-uM-fBd">
+                                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Uqc-uM-fBd">
                                         <rect key="frame" x="4" y="4" width="280" height="41"/>
                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Shell Integration" id="F7A-0l-yly">
@@ -49,7 +51,7 @@
                             <color key="borderColor" red="0.1648087238456728" green="0.41528780037972046" blue="0.79472458964646464" alpha="0.0" colorSpace="calibratedRGB"/>
                             <color key="fillColor" red="0.56470588235294117" green="0.57647058823529407" blue="0.80392156862745101" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         </box>
-                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="oJ3-Cg-erw" userLabel="Body text field">
+                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" preferredMaxLayoutWidth="268" translatesAutoresizingMaskIntoConstraints="NO" id="oJ3-Cg-erw" userLabel="Body text field">
                             <rect key="frame" x="10" y="6" width="272" height="54"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla" id="5Nk-zE-G82">

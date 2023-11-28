@@ -8,6 +8,7 @@
 
 #import "iTermTipCardViewController.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermFlippedView.h"
 #import "iTermTipCardActionButton.h"
 #import "NSColor+iTerm.h"
@@ -75,10 +76,13 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 
 @end
 
+@interface iTermTipCardViewController()<DraggableNSBoxDelegate>
+@end
+
 @implementation iTermTipCardViewController {
     IBOutlet NSTextField *_title;
     IBOutlet NSTextField *_body;
-    IBOutlet NSBox *_titleBox;
+    IBOutlet DraggableNSBox *_titleBox;
     IBOutlet iTermTipCardContainerView *_container;
 
     // A view that sits above the buttons and below the body content to hide staged buttons.
@@ -95,6 +99,10 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     [_actionButtons release];
     [_fakeBottomDivider release];
     [super dealloc];
+}
+
+- (void)awakeFromNib {
+    _titleBox.delegate = self;
 }
 
 - (void)viewDidLoad {
@@ -130,21 +138,21 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 
 - (void)setBodyText:(NSString *)body {
     NSMutableAttributedString *attributedString =
-        [[[NSMutableAttributedString alloc] init] autorelease];
+    [[[NSMutableAttributedString alloc] init] autorelease];
 
     NSMutableParagraphStyle *bigTextParagraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     [bigTextParagraphStyle setParagraphSpacing:4];
     NSDictionary *bigTextAttributes =
-        @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:16] ?: [NSFont systemFontOfSize:16],
-           NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.2 alpha:1],
-           NSParagraphStyleAttributeName: bigTextParagraphStyle };
+    @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:16] ?: [NSFont systemFontOfSize:16],
+       NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.2 alpha:1],
+       NSParagraphStyleAttributeName: bigTextParagraphStyle };
 
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     [paragraphStyle setAlignment:NSTextAlignmentRight];
     NSDictionary *signatureAttributes =
-        @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light Italic" size:12] ?: [NSFont systemFontOfSize:12],
-           NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.3 alpha:1],
-           NSParagraphStyleAttributeName: paragraphStyle};
+    @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light Italic" size:12] ?: [NSFont systemFontOfSize:12],
+       NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.3 alpha:1],
+       NSParagraphStyleAttributeName: paragraphStyle};
 
     [attributedString iterm_appendString:body
                           withAttributes:bigTextAttributes];
@@ -522,6 +530,18 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     // apparently has to be doen after the transaction is committed so this goes here.
     for (iTermTipCardActionButton *button in buttonsToCollapse) {
         [button setCollapsed:YES];
+    }
+}
+
+- (void)draggableBoxDidDrag:(DraggableNSBox *)box {
+    if (self.didDrag) {
+        self.didDrag();
+    }
+}
+
+- (void)draggableBoxWillDrag:(DraggableNSBox *)box {
+    if (self.willDrag) {
+        self.willDrag();
     }
 }
 

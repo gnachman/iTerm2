@@ -24,6 +24,9 @@
 
 @property (nonatomic, readonly) iTermTipCardActionButton *currentlySelectedButton;
 
+@property (nonatomic, copy) void (^didDrag)(void);
+@property (nonatomic, copy) void (^willDrag)(void);
+
 // Update the card title.
 - (void)setTitleString:(NSString *)titleString;
 

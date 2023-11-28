@@ -976,6 +976,7 @@
 		A602AAE62B0BCDB100E6C965 /* whitebox_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */; };
 		A602AAE72B0BCDB100E6C965 /* whitebox_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */; };
 		A602AAE82B0BCDB100E6C965 /* whitebox_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */; };
+		A602AAEA2B16A8B600E6C965 /* DraggableNSBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A602AAE92B16A8B600E6C965 /* DraggableNSBox.swift */; };
 		A6038307294305EA00FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A60383082943067000FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A6038309294306BA00FE11C2 /* iTermSandboxedWorkerClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 7577E2A02593B88700905402 /* iTermSandboxedWorkerClient.m */; };
@@ -5434,6 +5435,7 @@
 		A602516A1CCD40D9009BABF1 /* iTermNSURLCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSURLCategoryTest.m; sourceTree = "<group>"; };
 		A602AAE12B0BCDB000E6C965 /* whitebox_logo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "whitebox_logo@2x.png"; path = "images/sponsors/whitebox_logo@2x.png"; sourceTree = "<group>"; };
 		A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = whitebox_logo.png; path = images/sponsors/whitebox_logo.png; sourceTree = "<group>"; };
+		A602AAE92B16A8B600E6C965 /* DraggableNSBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraggableNSBox.swift; sourceTree = "<group>"; };
 		A603830D2943A92800FE11C2 /* AsyncFileProviderLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncFileProviderLogging.swift; sourceTree = "<group>"; };
 		A60383162943AF1500FE11C2 /* iTerm2SandboxedWorker-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2SandboxedWorker-Bridging-Header.h"; sourceTree = "<group>"; };
 		A60383172943AF1800FE11C2 /* iTerm2SandboxedWorkerShims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTerm2SandboxedWorkerShims.swift; sourceTree = "<group>"; };
@@ -8686,6 +8688,7 @@
 				A6916940281346A400083F99 /* ExclusiveSelectionTextView.swift */,
 				A6D1C41D2861430D00B68526 /* FindIndicatorWindow.swift */,
 				A67A68FF2A00930F0027B550 /* AutoResizingTextView.swift */,
+				A602AAE92B16A8B600E6C965 /* DraggableNSBox.swift */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -15576,6 +15579,7 @@
 				A67F62022143A1650093940A /* iTermGraphicSource.m in Sources */,
 				A605943F2583305E00CACEE6 /* iTermSharedImageStore.m in Sources */,
 				A68ADA0629CCBE420008E092 /* CommandInfoViewController.swift in Sources */,
+				A602AAEA2B16A8B600E6C965 /* DraggableNSBox.swift in Sources */,
 				A608A5812797811D003525F7 /* iTermCapturedOutputMark.m in Sources */,
 				A666D5F1221A1EF100D6184A /* iTermVariableScope+Window.m in Sources */,
 				A60E045626DC978000DD162B /* FilterTextField.swift in Sources */,
