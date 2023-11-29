@@ -5668,10 +5668,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_dataSource setStringValueOfAnnotation:annotation to:stringValue];
 }
 
+- (BOOL)shouldBeAlphaedOut {
+    return ([self allAnnotationsAreHidden] &&
+            !self.hasPortholes &&
+            self.contentNavigationShortcuts.count == 0);
+}
 - (void)updateAlphaValue {
-    if ([self allAnnotationsAreHidden] &&
-        !self.hasPortholes &&
-        self.contentNavigationShortcuts.count == 0) {
+    if ([self shouldBeAlphaedOut]) {
         [self setAlphaValue:0.0];
     } else {
         [self setAlphaValue:1.0];

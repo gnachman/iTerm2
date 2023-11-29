@@ -6781,6 +6781,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
+#if ENABLE_FORCE_LEGACY_RENDERER_WITH_PTYTEXTVIEW_SUBVIEWS
     if ([PTYNoteViewController anyNoteVisible] || _textview.contentNavigationShortcuts.count > 0) {
         // When metal is enabled the note's superview (PTYTextView) has alphaValue=0 so it will not be visible.
         if (reason) {
@@ -6795,6 +6796,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
+#endif
     if (_textview.transparencyAlpha < 1) {
         BOOL transparencyAllowed = NO;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
@@ -6952,7 +6954,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)showMetalAndStopDrawingTextView NS_AVAILABLE_MAC(10_11) {
-    // If the text view had been visible, hide it. Hiding it before the
+    // If the legacy view had been visible, hide it. Hiding it before the
     // first frame is drawn causes a flash of gray.
     DLog(@"showMetalAndStopDrawingTextView");
     _wrapper.useMetal = YES;
@@ -6961,7 +6963,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (PTYScrollView.shouldDismember) {
         _view.scrollview.alphaValue = 0;
     } else {
-        _view.scrollview.contentView.alphaValue = 0;
+        _view.scrollview.contentView.alphaValue = _textview.shouldBeAlphaedOut ? 0.0 : 1.0;
     }
     [self setMetalViewAlphaValue:1];
 }

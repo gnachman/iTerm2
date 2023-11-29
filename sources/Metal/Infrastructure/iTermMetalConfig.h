@@ -42,3 +42,6 @@
 // but it never becomes visible! This flag enables a workaround where we redraw any frame with a
 // never-before-seen texture. I have a question out to developer tech support on this one.
 #define ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND 1
+
+// Disable metal renderer when there's a subview like a porthole or annotation?
+#define ENABLE_FORCE_LEGACY_RENDERER_WITH_PTYTEXTVIEW_SUBVIEWS 0

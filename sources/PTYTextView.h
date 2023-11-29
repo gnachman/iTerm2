@@ -476,6 +476,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic) BOOL needsUpdateSubviewFrames;
 @property (nonatomic, readonly) NSArray<iTermTerminalButton *> *terminalButtons NS_AVAILABLE_MAC(11);
 @property (nonatomic, readonly) BOOL scrolledToBottom;
+@property (nonatomic, readonly) BOOL shouldBeAlphaedOut;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
