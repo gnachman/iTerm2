@@ -69,7 +69,7 @@ NS_ASSUME_NONNULL_BEGIN
     id<iTermImageInfoReading> image = notification.object;
     [_loadedImages addObject:image.uniqueIdentifier];
     if ([self missingImageIsVisible:image]) {
-        [_textView setNeedsDisplay:YES];
+        [_textView requestDelegateRedraw];
     }
 }
 
@@ -121,7 +121,7 @@ NS_ASSUME_NONNULL_BEGIN
         NSMutableSet<NSString *> *newlyLoaded = [self->_missingImages mutableCopy];
         [newlyLoaded intersectSet:self->_loadedImages];
         if (newlyLoaded.count) {
-            [self->_textView setNeedsDisplay:YES];
+            [self->_textView requestDelegateRedraw];
             [self->_missingImages minusSet:self->_loadedImages];
         }
     });

@@ -59,7 +59,7 @@
 - (void)findOnPageHelperSearchExternallyFor:(NSString *)query
                                        mode:(iTermFindMode)mode;
 - (void)findOnPageHelperRemoveExternalHighlights;
-
+- (void)findOnPageHelperRequestRedraw;
 @end
 
 typedef NS_ENUM(NSUInteger, FindCursorType) {

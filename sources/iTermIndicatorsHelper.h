@@ -28,7 +28,7 @@ extern CGFloat kiTermIndicatorStandardHeight;
 
 @protocol iTermIndicatorsHelperDelegate <NSObject>
 
-- (void)setNeedsDisplay:(BOOL)needsDisplay;
+- (void)indicatorNeedsDisplay;
 - (NSColor *)indicatorFullScreenFlashColor;
 
 @end

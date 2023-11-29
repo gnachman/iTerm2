@@ -179,7 +179,7 @@ extension PTYTextView: ExternalSearchResultsController {
         addSubview(porthole.view)
         updatePortholeFrame(porthole, force: true)
         NotificationCenter.default.post(name: NSNotification.Name.iTermPortholesDidChange, object: nil)
-        setNeedsDisplay(true)
+        requestDelegateRedraw()
         porthole.view.needsDisplay = true
         self.delegate?.textViewDidAddOrRemovePorthole()
     }

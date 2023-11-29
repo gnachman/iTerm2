@@ -716,6 +716,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)updateSubviewFrames;
 - (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed;
 - (BOOL)copyBlock:(NSString *)block includingAbsLine:(long long)absLine;
+- (void)setNeedsDisplay:(BOOL)needsDisplay NS_UNAVAILABLE;
+- (void)setNeedsDisplayInRect:(NSRect)invalidRect NS_UNAVAILABLE;  // Use this instead of setNeedsDisplay:
+- (void)requestDelegateRedraw;  // Use this instead of setNeedsDisplay:
 
 #pragma mark - Testing only
 

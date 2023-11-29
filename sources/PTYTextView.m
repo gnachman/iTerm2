@@ -887,18 +887,9 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 // For Metal
-- (void)setNeedsDisplay:(BOOL)needsDisplay {
-    DLog(@"-[PTYTextView setNeedsDisplay:%@]", @(needsDisplay));
-    [super setNeedsDisplay:needsDisplay];
-    if (needsDisplay) {
-        [_delegate textViewNeedsDisplayInRect:self.bounds];
-    }
-}
-
-// For Metal
-- (void)setNeedsDisplayInRect:(NSRect)invalidRect {
-    [super setNeedsDisplayInRect:invalidRect];
-    [_delegate textViewNeedsDisplayInRect:invalidRect];
+- (void)requestDelegateRedraw {
+    DLog(@"-[PTYTextView requestDelegateRedraw]");
+    [_delegate textViewNeedsDisplayInRect:self.bounds];
 }
 
 - (void)removeAllTrackingAreas {
@@ -973,7 +964,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
     DLog(@"Line %d is dirty in range [%d, %d), set rect %@ dirty",
          y, x, maxX, [NSValue valueWithRect:dirtyRect]);
-    [self setNeedsDisplayInRect:dirtyRect];
+    [self requestDelegateRedraw];
 }
 
 - (void)invalidateInputMethodEditorRect {
@@ -987,7 +978,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                 [_dataSource width] * _charWidth,
                                 imeLines * _lineHeight);
     imeRect = [self rectWithHalo:imeRect];
-    [self setNeedsDisplayInRect:imeRect];
+    [self requestDelegateRedraw];
 }
 
 - (void)viewDidMoveToWindow {
@@ -1161,7 +1152,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         }
         [[iTermSecureKeyboardEntryController sharedInstance] didReleaseFocus];
         _keyFocusStolenCount = 0;
-        [self setNeedsDisplay:YES];
+        [self requestDelegateRedraw];
     }
     if ([NSApp isActive]) {
         [self resetMouseLocationToRefuseFirstResponderAt];
@@ -1188,7 +1179,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                 [[iTermSecureKeyboardEntryController sharedInstance] didStealFocus];
             }
             ++_keyFocusStolenCount;
-            [self setNeedsDisplay:YES];
+            [self requestDelegateRedraw];
         }
     }
     [self updateUnderlinedURLs:event];
@@ -1668,7 +1659,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     }
     _drawingHelper.underlinedRange =
         VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
-    [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
+    [self requestDelegateRedraw];  // It would be better to just display the underlined/formerly underlined area.
     return YES;
 }
 
@@ -1708,7 +1699,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 - (void)useBackgroundIndicatorChanged:(NSNotification *)notification {
     _showStripesWhenBroadcastingInput = [iTermApplication.sharedApplication delegate].useBackgroundPatternIndicator;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 
@@ -1817,39 +1808,39 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (void)setUseNonAsciiFont:(BOOL)useNonAsciiFont {
     _drawingHelper.useNonAsciiFont = useNonAsciiFont;
     _useNonAsciiFont = useNonAsciiFont;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
     [self updateMarkedTextAttributes];
 }
 
 - (void)setAntiAlias:(BOOL)asciiAntiAlias nonAscii:(BOOL)nonAsciiAntiAlias {
     _drawingHelper.asciiAntiAlias = asciiAntiAlias;
     _drawingHelper.nonAsciiAntiAlias = nonAsciiAntiAlias;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)setUseBoldFont:(BOOL)boldFlag {
     _useBoldFont = boldFlag;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)setThinStrokes:(iTermThinStrokesSetting)thinStrokes {
     _thinStrokes = thinStrokes;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)setAsciiLigatures:(BOOL)asciiLigatures {
     _asciiLigatures = asciiLigatures;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)setNonAsciiLigatures:(BOOL)nonAsciiLigatures {
     _nonAsciiLigatures = nonAsciiLigatures;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)setUseItalicFont:(BOOL)italicFlag {
     _useItalicFont = italicFlag;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 
@@ -1857,17 +1848,17 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _useCustomBoldColor = flag;
     _brightenBold = brighten;
     _drawingHelper.useCustomBoldColor = flag;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)setBlinkAllowed:(BOOL)value {
     _drawingHelper.blinkAllowed = value;
     _blinkAllowed = value;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)setCursorNeedsDisplay {
-    [self setNeedsDisplayInRect:[self rectWithHalo:[self cursorFrame]]];
+    [self requestDelegateRedraw];
 }
 
 - (void)setCursorType:(ITermCursorType)value {
@@ -1916,7 +1907,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
     // Refresh to avoid drawing before and after resize.
     [self refresh];
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)setLineHeight:(double)aLineHeight {
@@ -1987,13 +1978,13 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         return;
     }
     _transparency = fVal;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
     [_delegate textViewTransparencyDidChange];
 }
 
 - (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value {
     _drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor = value;
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (float)blend {
@@ -2002,7 +1993,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 - (void)setBlend:(float)fVal {
     _drawingHelper.blend = MIN(MAX(0.05, fVal), 1);
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)setUseSmartCursorColor:(BOOL)value {
@@ -2173,7 +2164,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                           lineEnd - lineStart);
         [_findOnPageHelper removeHighlightsInRange:range];
         [_findOnPageHelper removeSearchResultsInRange:range];
-        [self setNeedsDisplayInRect:[self gridRect]];
+        [self requestDelegateRedraw];
     } else {
         for (int y = lineStart; y < lineEnd; y++) {
             VT100GridRange range = [_dataSource dirtyRangeForLine:y - lineStart];
@@ -2290,7 +2281,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     // the screen has scrolled by less than its height, input is coming in
     // slowly anyway.
     if (!canSkipRedraw) {
-        [self setNeedsDisplay:YES];
+        [self requestDelegateRedraw];
     }
 
     // Move subviews up
@@ -2402,12 +2393,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _needsUpdateSubviewFrames = NO;
     [self updateNoteViewFrames];
     [self updatePortholeFrames];
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)markCursorDirty {
     DLog(@"Cursor marked dirty. Schedule redraw.");
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (BOOL)shouldRedrawBlinkingObjects {
@@ -2458,7 +2449,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                     }
                     const NSRect rect = [self rectWithHalo:dirtyRect];
                     DLog(@"Redraw rect for line y=%d i=%d blink: %@", y, i, NSStringFromRect(rect));
-                    [self setNeedsDisplayInRect:rect];
+                    [self requestDelegateRedraw];
                     break;
                 }
             }
@@ -2476,7 +2467,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
             if (gDebugLogging) {
                 DLog(@"found selection change on line %d", y);
             }
-            [self setNeedsDisplayInRect:[self rectWithHalo:dirtyRect]];
+            [self requestDelegateRedraw];
         }
     }
     return anyBlinkers;
@@ -3212,7 +3203,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [self updateNoteViewFrames];
     [note setNoteHidden:!visible];
     if (visible) {
-        [self setNeedsDisplay:YES];
+        [self requestDelegateRedraw];
         if (focus) {
             [note makeFirstResponder];
         }
@@ -3358,7 +3349,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     if (_badgeLabel.isDirty) {
         _badgeLabel.dirty = NO;
         _drawingHelper.badgeImage = [_badgeLabel image];
-        [self setNeedsDisplay:YES];
+        [self requestDelegateRedraw];
     }
 }
 
@@ -3577,14 +3568,14 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     if (numValid != sender.numberOfValidItemsForDrop) {
         sender.numberOfValidItemsForDrop = numValid;
     }
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
     return operation;
 }
 
 - (void)draggingExited:(nullable id <NSDraggingInfo>)sender {
     _drawingHelper.showDropTargets = NO;
     [self.delegate textViewDidUpdateDropTargetVisibility];
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 //
@@ -3596,7 +3587,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     int dropLine = dropPoint.y / _lineHeight;
     if (dropLine != _drawingHelper.dropLine) {
         _drawingHelper.dropLine = dropLine;
-        [self setNeedsDisplay:YES];
+        [self requestDelegateRedraw];
     }
     return [self draggingEntered:sender];
 }
@@ -4233,6 +4224,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                     width:self.dataSource.width ?: 1];
 }
 
+- (void)findOnPageHelperRequestRedraw {
+    [self requestDelegateRedraw];
+}
+
 - (void)findOnPageHelperRemoveExternalHighlights {
     [self removePortholeHighlights];
 }
@@ -4263,7 +4258,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         [self showFindIndicator:absRange];
     });
     if (!wrapped) {
-        [self setNeedsDisplay:YES];
+        [self requestDelegateRedraw];
     }
 }
 
@@ -4299,19 +4294,19 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         DLog(@"Entire range %@ is visible within %@ so don't scroll",
              VT100GridCoordRangeDescription(range),
              VT100GridCoordRangeDescription(visibleRange));
-        [self setNeedsDisplay:YES];
+        [self requestDelegateRedraw];
         return;
     }
     // Lock scrolling after finding text
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 
     [self scrollToCenterLine:range.end.y];
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)findOnPageFailed {
     [_selection clearSelection];
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (long long)findOnPageOverflowAdjustment {
@@ -4507,7 +4502,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)beginFindCursor:(BOOL)hold forceFireworks:(BOOL)forceFireworks {
     _cursorVisible = YES;
-    [self setNeedsDisplayInRect:self.cursorFrame];
+    [self requestDelegateRedraw];
     if (!_findCursorView) {
         [self createFindCursorWindowWithFireworks:forceFireworks];
     }
@@ -4584,7 +4579,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)refreshTerminal:(NSNotification *)notification {
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 #pragma mark - iTermSelectionDelegate
@@ -4605,7 +4600,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_delegate textViewSelectionDidChangeToTruncatedString:@""];
     }
     [self removePortholeSelections];
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
     DLog(@"Selection did change: selection=%@. stack=%@",
          selection, [NSThread callStackSymbols]);
 }
@@ -4775,25 +4770,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                               towardsGrayLevel:0.5];
     }
     [self updatePortholeColorsWithUseSelectedTextColor:[_delegate textViewShouldUseSelectedTextColor]];
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)immutableColorMap:(id<iTermColorMapReading>)colorMap
     dimmingAmountDidChangeTo:(double)dimmingAmount {
     [_delegate textViewProcessedBackgroundColorDidChange];
-    [[self superview] setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)immutableColorMap:(id<iTermColorMapReading>)colorMap
     mutingAmountDidChangeTo:(double)mutingAmount {
     [_delegate textViewProcessedBackgroundColorDidChange];
-    [[self superview] setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
+    [self setNeedsDisplay:YES];
 }
 
 #pragma mark - iTermIndicatorsHelperDelegate
 
 - (NSColor *)indicatorFullScreenFlashColor {
     return [self defaultTextColor];
+}
+
+- (void)indicatorNeedsDisplay {
+    [self requestDelegateRedraw];
 }
 
 #pragma mark - Mouse reporting
@@ -5216,7 +5217,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             }
         }
         if (changed) {
-            [self setNeedsDisplay:YES];
+            [self requestDelegateRedraw];
         }
     }
 }
@@ -5858,7 +5859,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)mouseHandlerDidMutateState:(PTYMouseHandler *)handler {
     // Make changes to selection appear right away.
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)mouseHandlerDidInferScrollingIntent:(PTYMouseHandler *)handler trying:(BOOL)trying {
@@ -6203,7 +6204,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 }
 
 - (void)mouseHandlerRedraw:(PTYMouseHandler *)mouseHandler {
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
 }
 
 - (void)makeBlockCopyButtonForLine:(int)line block:(NSString *)block NS_AVAILABLE_MAC(11) {
@@ -6249,7 +6250,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
         for (iTermTerminalButton *button in self.terminalButtons) {
             if (NSPointInRect(point, button.desiredFrame)) {
                 if ([button mouseDownInside]) {
-                    [self setNeedsDisplay:YES];
+                    [self requestDelegateRedraw];
                 }
                 return YES;
             }
@@ -6273,7 +6274,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
             }
             clicked = clicked || button.pressed;
             if ([button mouseUpWithLocationInWindow:locationInWindow]) {
-                [self setNeedsDisplay:YES];
+                [self requestDelegateRedraw];
             }
         }
     }

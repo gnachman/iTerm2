@@ -1242,9 +1242,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_modeHandler wouldHandleEvent:event];
 }
 
-- (void)coprocessChanged
-{
-    [_textview setNeedsDisplay:YES];
+- (void)coprocessChanged {
+    [_textview requestDelegateRedraw];
 }
 
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame dark:(BOOL)dark {
@@ -4942,7 +4941,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_patternedImage release];
     _patternedImage = nil;
 
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
 }
 
 - (CGFloat)effectiveBlend {
@@ -5045,7 +5044,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)invalidateBlend {
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
     [self.view setNeedsDisplay:YES];
     [self.view setTransparencyAlpha:_textview.transparencyAlpha
                               blend:self.effectiveBlend];
@@ -6600,7 +6599,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap NS_AVAILABLE_MAC(10_11) {
     if (_view.useMetal) {
         if (redrawAsap) {
-            [_textview setNeedsDisplay:YES];
+            [_textview requestDelegateRedraw];
         }
     }
 }
@@ -6875,7 +6874,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             _metalContext = NULL;
         }
     }
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
     [_cadenceController changeCadenceIfNeeded];
 
     if (useMetal) {
@@ -7156,7 +7155,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     coprocess.delegate = self.weakSelf;
     coprocess.mute = mute;
     [_shell setCoprocess:coprocess];
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
 }
 
 - (void)launchSilentCoprocessWithCommand:(NSString *)command
@@ -7214,7 +7213,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_tmuxController selectPane:self.tmuxPane];
         [self.delegate sessionDidReportSelectedTmuxPane:self];
     }
-    [self.textview setNeedsDisplay:YES];
+    [self.textview requestDelegateRedraw];
 }
 
 - (BOOL)wantsContentChangedNotification
@@ -10782,7 +10781,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_modeHandler.mode == iTermSessionModeCopy) {
         _modeHandler.copyModeHandler.state.coord = range.start;
         _modeHandler.copyModeHandler.state.start = range.end;
-        [self.textview setNeedsDisplay:YES];
+        [self.textview requestDelegateRedraw];
     }
 }
 
@@ -10801,7 +10800,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)textViewDidHighlightMark {
     if (self.useMetal) {
-        [_textview setNeedsDisplay:YES];
+        [_textview requestDelegateRedraw];
     }
 }
 
@@ -11059,7 +11058,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             break;
     }
     [self setSessionSpecificProfileValues:@{ KEY_SHOW_TIMESTAMPS: @(mode) }];
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
 }
 
 - (void)textViewSetClickCoord:(VT100GridAbsCoord)coord
@@ -11504,7 +11503,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_textview addSearchResult:r];
     }
     if ([results count]) {
-        [_textview setNeedsDisplay:YES];
+        [_textview requestDelegateRedraw];
     }
     if (more) {
         DLog(@"Schedule continueTailFind in .01 sec");
@@ -11634,7 +11633,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenUpdateDisplay:(BOOL)redraw {
     [self updateDisplayBecause:[NSString stringWithFormat:@"screen requested update redraw=%@", @(redraw)]];
     if (redraw) {
-        [_textview setNeedsDisplay:YES];
+        [_textview requestDelegateRedraw];
     }
 }
 
@@ -11664,7 +11663,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                         dark:_screen.colorMap.darkMode
                                                                      profile:_profile];
     self.cursorTypeOverride = nil;
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
     [self restoreColorsFromProfile];
     _screen.trackCursorLineMovement = NO;
 }
@@ -11754,7 +11753,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_desiredComposerPrompt release];
         _desiredComposerPrompt = nil;
     }
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
 }
 
 - (void)screenAppendStringToComposer:(NSString *)string {
@@ -12185,7 +12184,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)internalSetHighlightCursorLine:(BOOL)highlight {
     _cursorGuideSettingHasChanged = YES;
     _textview.highlightCursorLine = highlight;
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
 }
 
 - (BOOL)highlightCursorLine {
@@ -12676,7 +12675,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
     _alertOnNextMark = alertOnNextMark;
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
     [self sync];
 }
 
@@ -14339,7 +14338,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)popupIsSearching:(BOOL)searching {
     _textview.showSearchingCursor = searching;
-    [_textview setNeedsDisplayInRect:_textview.cursorFrame];
+    [_textview requestDelegateRedraw];
 }
 
 - (void)popupWillClose:(iTermPopupWindowController *)popup {
@@ -15031,13 +15030,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewMouseEntered:(NSEvent *)event {
     [_textview mouseEntered:event];
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
     [_textview updateCursor:event];
 }
 
 - (void)sessionViewMouseExited:(NSEvent *)event {
     [_textview mouseExited:event];
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
     [_textview updateCursor:event];
 }
 
@@ -15055,7 +15054,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewDimmingAmountDidChange:(CGFloat)newDimmingAmount {
     [self sync];
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
 }
 
 - (BOOL)sessionViewIsVisible {
@@ -15064,7 +15063,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewDraggingExited:(id<NSDraggingInfo>)sender {
     [self.delegate sessionDraggingExited:self];
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
 }
 
 - (NSDragOperation)sessionViewDraggingEntered:(id<NSDraggingInfo>)sender {
@@ -15548,7 +15547,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
     _metalFrameChangePending = YES;
     id token = [self temporarilyDisableMetal];
-    [self.textview setNeedsDisplay:YES];
+    [self.textview requestDelegateRedraw];
     dispatch_async(dispatch_get_main_queue(), ^{
         DLog(@"sessionViewNeedsMetalFrameUpdate %@ in dispatch_async", self);
         _metalFrameChangePending = NO;
@@ -15564,7 +15563,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     DLog(@"sessionViewRecreateMetalView metalDeviceChanging<-YES");
     _metalDeviceChanging = YES;
-    [self.textview setNeedsDisplay:YES];
+    [self.textview requestDelegateRedraw];
     [_delegate sessionUpdateMetalAllowed];
     dispatch_async(dispatch_get_main_queue(), ^{
         _metalDeviceChanging = NO;
@@ -16536,7 +16535,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 #pragma mark - iTermCopyModeHandlerDelegate
 
 - (void)copyModeHandlerDidChangeEnabledState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
     const BOOL enabled = handler.enabled;
     if (enabled) {
         [_textview.window makeFirstResponder:_textview];
@@ -17040,7 +17039,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)composerManager:(iTermComposerManager *)composerManager minimalFrameDidChangeTo:(NSRect)newFrame {
-    [_textview setNeedsDisplay:YES];
+    [_textview requestDelegateRedraw];
     DLog(@"Composer frame changed to %@", NSStringFromRect(newFrame));
 }
 
@@ -17243,7 +17242,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         }];
         DLog(@"Dismiss composer and request redraw");
         [_composerManager dismissAnimated:NO];
-        [_textview setNeedsDisplay:YES];
+        [_textview requestDelegateRedraw];
         return;
     }
     [self reallySendCommand:command];

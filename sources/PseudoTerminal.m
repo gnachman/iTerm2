@@ -3883,7 +3883,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // update the cursor
     [[self currentSession] refresh];
-    [[[self currentSession] textview] setNeedsDisplay:YES];
+    [[[self currentSession] textview] requestDelegateRedraw];
     [_contentView setNeedsDisplay:YES];
     [[iTermFindPasteboard sharedInstance] updateObservers:nil];
 
@@ -4359,7 +4359,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     // update the cursor
     [[[self currentSession] textview] refresh];
-    [[[self currentSession] textview] setNeedsDisplay:YES];
+    [[[self currentSession] textview] requestDelegateRedraw];
     [_contentView setNeedsDisplay:YES];
 
     // Note that if you have multiple displays you can see a lion fullscreen window when it's
@@ -4397,7 +4397,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // update the cursor
     [[[self currentSession] textview] refresh];
-    [[[self currentSession] textview] setNeedsDisplay:YES];
+    [[[self currentSession] textview] requestDelegateRedraw];
     [_contentView updateDivisionViewAndWindowNumberLabel];
 }
 
@@ -4867,7 +4867,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     for (PTYSession *session in self.allSessions) {
         [session updateMetalDriver];
-        [session.textview setNeedsDisplay:YES];
+        [session.textview requestDelegateRedraw];
         [session didChangeScreen:self.window.backingScaleFactor];
     }
     const NSSize screenSize = self.window.screen.frame.size;
@@ -5008,7 +5008,7 @@ ITERM_WEAKLY_REFERENCEABLE
     for (PTYSession* aSession in [self allSessions]) {
         [aSession useTransparencyDidChange];
         [[aSession view] setNeedsDisplay:YES];
-        [[aSession textview] setNeedsDisplay:YES];
+        [[aSession textview] requestDelegateRedraw];
     }
     [self haveTransparentPaneDidChange];
 }
@@ -5999,7 +5999,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         // Background tabs' timers run infrequently so make sure the display is
         // up to date to avoid a jump when it's shown.
-        [[aSession textview] setNeedsDisplay:YES];
+        [[aSession textview] requestDelegateRedraw];
         [aSession updateDisplayBecause:@"tabView:didSelectTabViewItem:"];
         aSession.active = YES;
         [self setDimmingForSession:aSession];
@@ -8731,7 +8731,7 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
 
     PtyLog(@"fitWindowToTabs - refresh textview");
     for (PTYSession* session in [[self currentTab] sessions]) {
-        [[session textview] setNeedsDisplay:YES];
+        [[session textview] requestDelegateRedraw];
     }
     PtyLog(@"fitWindowToTabs - update tab bar");
     [_contentView.tabBarControl updateFlashing];

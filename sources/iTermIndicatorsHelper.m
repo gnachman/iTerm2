@@ -100,10 +100,10 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         iTermIndicator *indicator = [[iTermIndicator alloc] init];
         indicator.image = [[self class] indicatorImages][identifier];
         _visibleIndicators[identifier] = indicator;;
-        [_delegate setNeedsDisplay:YES];
+        [_delegate indicatorNeedsDisplay];
     } else if (!visible && _visibleIndicators[identifier]) {
         [_visibleIndicators removeObjectForKey:identifier];
-        [_delegate setNeedsDisplay:YES];
+        [_delegate indicatorNeedsDisplay];
     }
 }
 
@@ -253,7 +253,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         DLog(@"Set fullScreenAlpha=%@", @(_fullScreenAlpha));
         if (!_haveSetNeedsDisplay) {
             DLog(@"Tell delegate %@ setNeedsDisplay", _delegate);
-            [_delegate setNeedsDisplay:YES];
+            [_delegate indicatorNeedsDisplay];
         }
         DLog(@"Set haveSetNeedsDisplay=YES");
         _haveSetNeedsDisplay = YES;
@@ -305,7 +305,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
 - (void)beginFlashingFullScreen {
     _fullScreenFlashStartTime = [NSDate timeIntervalSinceReferenceDate];
-    [_delegate setNeedsDisplay:YES];
+    [_delegate indicatorNeedsDisplay];
     [self checkForFlashUpdate];
 }
 

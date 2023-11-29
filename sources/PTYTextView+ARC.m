@@ -299,7 +299,7 @@ iTermCommandInfoViewControllerDelegate>
         const BOOL changedUnderline = [self removeUnderline];
         const BOOL cursorChanged = [self updateCursor:event action:nil];
         if (changedUnderline || cursorChanged) {
-            [self setNeedsDisplay:YES];
+            [self requestDelegateRedraw];
         }
         return;
     }
@@ -332,7 +332,7 @@ iTermCommandInfoViewControllerDelegate>
                                                                                    [self.dataSource totalScrollbackOverflow]);
     }
 
-    [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
+    [self requestDelegateRedraw];  // It would be better to just display the underlined/formerly underlined area.
     [self updateCursor:event action:action];
 }
 
@@ -1122,7 +1122,7 @@ iTermCommandInfoViewControllerDelegate>
 
 - (void)imageDidLoad:(NSNotification *)notification {
     if ([self missingImageIsVisible:notification.object]) {
-        [self setNeedsDisplay:YES];
+        [self requestDelegateRedraw];
     }
 }
 
@@ -1502,7 +1502,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         if (!imageInfo.paused) {
             // A redraw is needed to recompute which visible lines are animated
             // and ensure they keep getting redrawn on a fast cadence.
-            [self setNeedsDisplay:YES];
+            [self requestDelegateRedraw];
         }
     }
 }
@@ -1708,7 +1708,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                             size.height);
     [self refresh];
     [self addSubview:view];
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
     [self updateAlphaValue];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
     [view animateIn];
@@ -1735,7 +1735,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     }];
     [[NSView castFrom:view] removeFromSuperview];
     [self refresh];
-    [self setNeedsDisplay:YES];
+    [self requestDelegateRedraw];
     [self updateAlphaValue];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
 }

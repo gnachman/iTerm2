@@ -168,7 +168,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _searchingForNextResult = scrollToFirstResult;
         _lastStringSearchedFor = [aString copy];
 
-        [_delegate setNeedsDisplay:YES];
+        [_delegate findOnPageHelperRequestRedraw];
         [_delegate findOnPageHelperSearchExternallyFor:aString mode:mode];
     }
 }
@@ -188,7 +188,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _searchingForNextResult = NO;
     [_delegate findOnPageHelperRemoveExternalHighlights];
 
-    [_delegate setNeedsDisplay:YES];
+    [_delegate findOnPageHelperRequestRedraw];
 }
 
 - (void)resetCopiedFindContext {
@@ -248,7 +248,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     if (redraw) {
-        [_delegate setNeedsDisplay:YES];
+        [_delegate findOnPageHelperRequestRedraw];
     }
     return more;
 }

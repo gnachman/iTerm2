@@ -838,7 +838,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     /*
     for (PTYSession *aSession in [self sessions]) {
         [[aSession textview] refresh];
-        [[aSession textview] setNeedsDisplay:YES];
+        [[aSession textview] requestDelegateRedraw];
     }
      */
     [self updateLabelAttributes];
