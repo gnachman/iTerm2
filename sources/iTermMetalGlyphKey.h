@@ -26,6 +26,7 @@ typedef struct {
     BOOL boxDrawing;
     BOOL thinStrokes;
     BOOL drawable;  // If this is NO it will be ignored
+    BOOL antialiased;  // Only relevant for non-ascii glyphs
     iTermMetalGlyphKeyTypeface typeface : iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded;
 } iTermMetalGlyphKey;
 
@@ -65,13 +66,14 @@ NS_INLINE NSString *iTermMetalGlyphKeyDescription(const iTermMetalGlyphKey *key)
         typefaceString = [typefaceString stringByAppendingString:@"I"];
     }
 
-    return [NSString stringWithFormat:@"code=%@ combiningSuccessor=%@ complex=%@ boxDrawing=%@ thinStrokes=%@ typeface=%@",
+    return [NSString stringWithFormat:@"code=%@ combiningSuccessor=%@ complex=%@ boxDrawing=%@ thinStrokes=%@ typeface=%@ antialiased=%@",
             formattedCode,
             formattedCombiningSuccessor,
             key->isComplex ? @"YES" : @"NO",
             key->boxDrawing ? @"YES" : @"NO",
             key->thinStrokes ? @"YES" : @"NO",
-            typefaceString];
+            typefaceString,
+            key->antialiased ? @"YES" : @"NO"];
 }
 
 NS_INLINE NSString *iTermStringFromColorVectorFloat4(vector_float4 v) {

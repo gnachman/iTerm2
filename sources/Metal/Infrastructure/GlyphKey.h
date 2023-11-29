@@ -38,7 +38,8 @@ namespace iTerm2 {
                     _repr.isComplex == other._repr.isComplex &&
                     _repr.boxDrawing == other._repr.boxDrawing &&
                     _repr.thinStrokes == other._repr.thinStrokes &&
-                    _repr.typeface == other._repr.typeface);
+                    _repr.typeface == other._repr.typeface &&
+                    _repr.antialiased == other._repr.antialiased);
         }
 
         inline std::size_t get_hash() const {
@@ -46,14 +47,15 @@ namespace iTerm2 {
         }
 
         NSString *description() const {
-            return [NSString stringWithFormat:@"[GlyphKey: code=%@ combiningSuccessor=%@ complex=%@ boxdrawing=%@ thinstrokes=%@ drawable=%@ typeface=%@]",
+            return [NSString stringWithFormat:@"[GlyphKey: code=%@ combiningSuccessor=%@ complex=%@ boxdrawing=%@ thinStrokes=%@ drawable=%@ typeface=%@ antialiased=%@]",
                     @(_repr.code),
                     @(_repr.combiningSuccessor),
                     @(_repr.isComplex),
                     @(_repr.boxDrawing),
                     @(_repr.thinStrokes),
                     @(_repr.drawable),
-                    @(_repr.typeface)];
+                    @(_repr.typeface),
+                    @(_repr.antialiased)];
         }
 
     private:
@@ -67,6 +69,7 @@ namespace iTerm2 {
             hash_combine(seed, _repr.thinStrokes);
             // No need to include _repr.drawable because we just skip those glyphs.
             hash_combine(seed, _repr.typeface);
+            hash_combine(seed, _repr.antialiased);
 
             return seed;
         }

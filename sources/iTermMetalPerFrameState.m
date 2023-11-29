@@ -977,7 +977,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             }
             glyphKeys[x].boxDrawing = isBoxDrawingCharacter;
             glyphKeys[x].thinStrokes = [self useThinStrokesWithAttributes:&attributes[x]];
-
+            const BOOL isAscii = !glyphKeys[x].isComplex && (glyphKeys[x].code < 128);
+            glyphKeys[x].antialiased = !isAscii && _configuration->_nonasciiAntialias;
             const int boldBit = line[x].bold ? (1 << 0) : 0;
             const int italicBit = line[x].italic ? (1 << 1) : 0;
             glyphKeys[x].typeface = (boldBit | italicBit);

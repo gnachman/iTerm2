@@ -1042,6 +1042,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         .thinStrokes = !!(attributes & iTermASCIITextureAttributesThinStrokes),
         .drawable = YES,
         .typeface = (attributes & typefaceMask),
+        .antialiased = NO  // always no because it's ascii
     };
     BOOL emoji = NO;
     // Don't need to pass predecessor or successor because ASCII never has combining spacing marks.
