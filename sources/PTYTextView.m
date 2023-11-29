@@ -5388,13 +5388,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return accessibilityLineNumber + offset;
 }
 
-- (VT100GridCoord)accessibilityHelperCoordForPoint:(NSPoint)screenPosition {
-    NSRect screenRect = NSMakeRect(screenPosition.x,
-                                   screenPosition.y,
-                                   0,
-                                   0);
-    NSRect windowRect = [self.window convertRectFromScreen:screenRect];
-    NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView:nil];
+// WARNING! accessibilityScreenPosition is idiotic: y=0 is the top of the main screen and it increases going down.
+- (VT100GridCoord)accessibilityHelperCoordForPoint:(NSPoint)accessibilityScreenPosition {
+    const NSPoint locationInTextView = [self viewPointFromAccessibilityScreenPoint:accessibilityScreenPosition];
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     int x = (locationInTextView.x - [iTermPreferences intForKey:kPreferenceKeySideMargins] - visibleRect.origin.x) / _charWidth;
     int y = locationInTextView.y / _lineHeight;

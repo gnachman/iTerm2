@@ -225,4 +225,12 @@ static NSInteger gTakingSnapshot;
     [self it_setAssociatedObject:nil forKey:@"PopoverWarning"];
 }
 
+- (NSPoint)viewPointFromAccessibilityScreenPoint:(NSPoint)stupidScreenPoint {
+    const CGFloat flippedY = NSMaxY([NSScreen mainScreen].frame) - stupidScreenPoint.y;
+    const NSPoint regularScreenPoint = NSMakePoint(stupidScreenPoint.x, flippedY);
+    const NSPoint windowPoint = [self.window convertPointFromScreen:regularScreenPoint];
+    const NSPoint viewPoint = [self convertPoint:windowPoint fromView:nil];
+    return viewPoint;
+}
+
 @end

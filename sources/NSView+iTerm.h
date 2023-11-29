@@ -54,4 +54,7 @@
 - (void)it_showWarning:(NSString *)text;
 - (void)it_removeWarning;
 
+// Accessibility APIs use y=0 at the top of the screen instead of the bottom. <3
+- (NSPoint)viewPointFromAccessibilityScreenPoint:(NSPoint)screenPoint;
+
 @end

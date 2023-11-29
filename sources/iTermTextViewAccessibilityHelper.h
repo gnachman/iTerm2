@@ -58,6 +58,7 @@
 - (NSInteger)lineForIndex:(NSUInteger)theIndex;
 - (NSRange)rangeForLine:(NSUInteger)lineNumber;
 - (NSString *)stringForRange:(NSRange)range;
+// WARNING! screenPosition is idiotic: y=0 is the top of the main screen and it increases going down.
 - (NSRange)rangeForPosition:(NSPoint)screenPosition;
 - (NSRange)rangeOfIndex:(NSUInteger)theIndex;
 - (NSRect)boundsForRange:(NSRange)range;
