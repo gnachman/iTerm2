@@ -139,7 +139,7 @@ static const CGFloat kWindowTopMargin = 8;
 - (void)windowDidMove:(NSNotification *)notification {
     if (_dragging) {
         [self saveWindowPosition];
-k    }
+    }
 }
 
 - (void)saveWindowPosition {
