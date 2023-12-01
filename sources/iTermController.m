@@ -521,24 +521,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                       partialAttachments:nil];
         return;
     }
-    BOOL shouldDelay = NO;
-    DLog(@"Try to open arrangement %p...", terminalArrangement);
-    if ([PseudoTerminal willAutoFullScreenNewWindow] &&
-        [PseudoTerminal anyWindowIsEnteringLionFullScreen]) {
-        DLog(@"Prevented by autofullscreen + a window entering.");
-        shouldDelay = YES;
-    }
-    if ([PseudoTerminal arrangementIsLionFullScreen:terminalArrangement] &&
-        [PseudoTerminal anyWindowIsEnteringLionFullScreen]) {
-        DLog(@"Prevented by fs arrangement + a window entering.");
-        shouldDelay = YES;
-    }
-    if (shouldDelay) {
-        DLog(@"Trying again in .25 sec");
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self tryOpenArrangement:terminalArrangement named:arrangementName asTabsInWindow:term];
-        });
-    } else {
+    const BOOL lionFullScreen = [PseudoTerminal arrangementIsLionFullScreen:terminalArrangement];
+    [PseudoTerminal performWhenWindowCreationIsSafeForLionFullScreen:lionFullScreen
+                                                               block:^{
+
         DLog(@"Opening it.");
         PseudoTerminal *term = [PseudoTerminal terminalWithArrangement:terminalArrangement
                                                                  named:arrangementName
@@ -546,7 +532,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         if (term) {
           [self addTerminalWindow:term];
         }
-    }
+    }];
 }
 
 - (BOOL)loadWindowArrangementWithName:(NSString *)theName asTabsInTerminal:(PseudoTerminal *)term {

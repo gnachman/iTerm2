@@ -114,6 +114,10 @@ extern NSString *const iTermSnippetsTagsDidChange;
 replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                with:(NSString *)replacementOldCWD;
 
+- (void)tryOpenArrangement:(NSDictionary *)terminalArrangement
+                     named:(NSString *)arrangementName
+            asTabsInWindow:(PseudoTerminal *)term;
+
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu
                  supermenu:(NSMenu *)supermenu

@@ -2824,6 +2824,30 @@ ITERM_WEAKLY_REFERENCEABLE
     return NO;
 }
 
++ (void)performWhenWindowCreationIsSafeForLionFullScreen:(BOOL)lionFullScreen
+                                                   block:(void (^)(void))block {
+    BOOL shouldDelay = NO;
+    DLog(@"begin");
+    if ([PseudoTerminal willAutoFullScreenNewWindow] &&
+        [PseudoTerminal anyWindowIsEnteringLionFullScreen]) {
+        DLog(@"Prevented by autofullscreen + a window entering.");
+        shouldDelay = YES;
+    }
+    if (lionFullScreen &&
+        [PseudoTerminal anyWindowIsEnteringLionFullScreen]) {
+        DLog(@"Prevented by fs arrangement + a window entering.");
+        shouldDelay = YES;
+    }
+    if (shouldDelay) {
+        DLog(@"Trying again in .25 sec");
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self performWhenWindowCreationIsSafeForLionFullScreen:lionFullScreen block:block];
+        });
+    } else {
+        block();
+    }
+}
+
 + (BOOL)arrangementIsLionFullScreen:(NSDictionary *)arrangement {
     return [PseudoTerminal _windowTypeForArrangement:arrangement] == WINDOW_TYPE_LION_FULL_SCREEN;
 }
@@ -10665,14 +10689,33 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self createDuplicateOfTab:(PTYTab *)[[sender representedObject] identifier]];
 }
 
+- (IBAction)duplicateWindow:(id)sender {
+    const BOOL lionFullScreen = self.lionFullScreen;
+    __weak __typeof(self) weakSelf = self;
+    [PseudoTerminal performWhenWindowCreationIsSafeForLionFullScreen:lionFullScreen
+                                                               block:^{
+        [weakSelf reallyDuplicateWindow];
+    }];
+}
+
+- (void)reallyDuplicateWindow {
+    NSDictionary *arrangement = [self arrangementExcludingTmuxTabs:NO includingContents:NO];
+    [[iTermController sharedInstance] tryOpenArrangement:arrangement named:nil asTabsInWindow:nil];
+}
+
 - (void)createDuplicateOfTab:(PTYTab *)theTab {
     DLog(@"Duplicate tab %@", theTab);
     if (!theTab) {
         theTab = [self currentTab];
     }
-    PseudoTerminal *destinationTerminal = [[iTermController sharedInstance] windowControllerForNewTabWithProfile:self.currentSession.profile
-                                                                                                       candidate:self
-                                                                                              respectTabbingMode:NO];
+    PseudoTerminal *destinationTerminal = 
+    [[iTermController sharedInstance] windowControllerForNewTabWithProfile:self.currentSession.profile
+                                                                 candidate:self
+                                                        respectTabbingMode:NO];
+    [self createDuplicateOfTab:theTab inTerminal:destinationTerminal];
+}
+
+- (void)createDuplicateOfTab:(PTYTab *)theTab inTerminal:(PseudoTerminal *)destinationTerminal {
     if (destinationTerminal == nil) {
         PTYTab *copyOfTab = [[theTab copy] autorelease];
         [copyOfTab updatePaneTitles];
@@ -10709,12 +10752,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                               didMakeSession:nil
                                   completion:nil];
     } else {
-        [self openTabWithArrangement:theTab.arrangementWithNewGUID
-                               named:nil
-                     hasFlexibleView:theTab.isTmuxTab
-                             viewMap:nil
-                          sessionMap:nil
-                  partialAttachments:nil];
+        [destinationTerminal openTabWithArrangement:theTab.arrangementWithNewGUID
+                                              named:nil
+                                    hasFlexibleView:theTab.isTmuxTab
+                                            viewMap:nil
+                                         sessionMap:nil
+                                 partialAttachments:nil];
     }
 }
 

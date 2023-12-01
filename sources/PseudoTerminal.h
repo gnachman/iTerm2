@@ -146,6 +146,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Will the arrangement open a Lion fullscreen window?
 + (BOOL)arrangementIsLionFullScreen:(NSDictionary *)arrangement;
 
++ (void)performWhenWindowCreationIsSafeForLionFullScreen:(BOOL)lionFullScreen
+                                                   block:(void (^)(void))block;
+
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
 //   algorithm.
