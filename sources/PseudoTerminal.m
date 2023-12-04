@@ -213,9 +213,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // color. This stores the normal background color so we can restore to it.
     NSColor *normalBackgroundColor;
 
-    // This prevents recursive resizing.
-    BOOL _resizeInProgressFlag;
-
     // There is a scheme for saving window positions. Each window is assigned
     // a number, and the positions are stored by window name. The window name
     // includes its unique number. This variable gives this window's number.
@@ -378,6 +375,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     NSInteger mask = 0;
     if (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
         mask = NSWindowStyleMaskNonactivatingPanel;
+        mask |= NSWindowStyleMaskBorderless;
+        mask |= NSWindowStyleMaskTitled;
     }
     switch (windowType) {
         case WINDOW_TYPE_TOP:
@@ -397,6 +396,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         default:
             return (mask |
                     NSWindowStyleMaskTitled |
+		    NSWindowStyleMaskBorderless |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
                     NSWindowStyleMaskResizable);
@@ -532,6 +532,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
 
+    // self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
     NSScreen *screen = [self anchorToScreenNumber:screenNumber];
 
     desiredRows_ = desiredColumns_ = -1;
@@ -600,7 +601,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     PtyLog(@"finishInitializationWithSmartLayout - initWithContentRect");
     // create the window programmatically with appropriate style mask
-    NSUInteger styleMask;
+    NSUInteger styleMask = [PseudoTerminal styleMaskForWindowType:windowType hotkeyWindowType:hotkeyWindowType];
+#if 0
+    NSWindowStyleMaskBorderless;
+	    ;
     if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         // We want to set the style mask to the window's non-fullscreen appearance so we're prepared
         // to exit fullscreen with the right style.
@@ -608,6 +612,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     } else {
         styleMask = [PseudoTerminal styleMaskForWindowType:windowType hotkeyWindowType:hotkeyWindowType];
     }
+#endif
     savedWindowType_ = savedWindowType;
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
@@ -655,11 +660,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     } else {
         self.window.alphaValue = 0;
     }
-    self.window.opaque = NO;
+    self.window.opaque = YES;
+    [self.window setBackgroundColor:[NSColor redColor]];
+    // self.window.titlebarAppearsTransparent = YES;
 
     normalBackgroundColor = [_contentView color];
-
-    _resizeInProgressFlag = NO;
 
     hidingToolbeltShouldResizeWindow_ = NO;
     // hidingToolbeltShouldResizeWindow_ can only be set to the right value after the window's frame
@@ -678,6 +683,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
             self.window.bottomCornerRounded = NO;
         }
     }
+            self.window.bottomCornerRounded = YES;
 
     [self updateTabBarStyle];
     self.window.delegate = self;
@@ -724,7 +730,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                                              object:nil];
     PtyLog(@"set window inited");
     self.windowInitialized = YES;
-    useTransparency_ = YES;
+    useTransparency_ = NO;
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         [self hideMenuBar];
@@ -3371,6 +3377,7 @@ return NO;
 
 - (BOOL)useTransparency
 {
+	return NO;
     if ([self lionFullScreen]) {
         return NO;
     }
@@ -4402,12 +4409,14 @@ return NO;
         [session setIgnoreResizeNotifications:NO];
     }
 
-    const BOOL willShowTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
+    BOOL willShowTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                                  [_contentView.tabView numberOfTabViewItems] > 1 &&
                                  [_contentView.tabBarControl isHidden]);
+    willShowTabBar = false;
     // check window size in case tabs have to be hidden or shown
-    if (([_contentView.tabView numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
-        willShowTabBar) {
+    // if (([_contentView.tabView numberOfTabViewItems] == 1) || willShowTabBar) {
+    if (true) {
+	    // XXX show grey window on latest macOS here
         // Need to change the visibility status of the tab bar control.
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
 
@@ -4426,20 +4435,24 @@ return NO;
             PTYSession *session = firstTab.sessions.firstObject;
             [[session view] setShowTitle:NO adjustScrollView:YES];
         }
+#if 0
         if (willShowTabBar && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
             [_contentView willShowTabBar];
         }
         [self fitWindowToTabs];
         [self repositionWidgets];
+#endif
         if (wasDraggedFromAnotherWindow_) {
             wasDraggedFromAnotherWindow_ = NO;
             [firstTab setReportIdealSizeAsCurrent:NO];
             
+#if 0
             // fitWindowToTabs will detect the window changed sizes and do a bogus move of it in this case.
             if (windowType_ == WINDOW_TYPE_NORMAL ||
                 windowType_ == WINDOW_TYPE_NO_TITLE_BAR) {
                 [[self window] setFrameOrigin:originalOrigin];
             }
+#endif
         }
     }
 
@@ -4559,6 +4572,7 @@ return NO;
     newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem
                            atPoint:(NSPoint)point
 {
+	return nil;
     PTYTab *aTab = [tabViewItem identifier];
     if (aTab == nil) {
         return nil;
@@ -4750,6 +4764,13 @@ return NO;
 
 // This updates the window's background color and title text color as well as the tab bar's color.
 - (void)updateTabColors {
+	return;
+    // self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
+	    [self.window setTitlebarAppearsTransparent:YES]; // Make title bar transparent
+    [[self currentSession] setBackgroundColor:[NSColor blackColor]];
+
+    [[self window] setBackgroundColor:[NSColor redColor]];
+	return;
     for (PTYTab *aTab in [self tabs]) {
         NSTabViewItem *tabViewItem = [aTab tabViewItem];
        // PTYSession *aSession = [aTab activeSession];
@@ -4771,6 +4792,8 @@ return NO;
 }
 
 - (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
+	printf ("SET BACKOGURND COLR\n");
+    self.window.titlebarAppearsTransparent = YES;
 #if 0
     if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
@@ -4787,7 +4810,12 @@ return NO;
 #endif
     // backgroundColor = [PSMDarkTabStyle tabBarColor];
 // TODO: use background color instead of black
-    self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+    // self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+    [[self currentSession] setBackgroundColor:[NSColor redColor]];
+    [[self window] setBackgroundColor:[NSColor redColor]];
+    // self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
+// [self.window.contentView setWantsLayer:YES];
+return;
 
     backgroundColor = [NSColor windowBackgroundColor]; //colorWithCalibratedWhite:0 alpha:1.00];
     PTYTextView *textView = [[self currentSession] textview];
@@ -4795,8 +4823,24 @@ return NO;
     float alpha = 1.0 - [[self currentSession] transparency];
     backgroundColor = [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapBackground]] colorWithAlphaComponent:alpha];
     self.window.titlebarAppearsTransparent = YES;
+    [[self currentSession] setBackgroundColor:[NSColor blackColor]];
+    [[self currentSession] setBackgroundColor:[NSColor greenColor]];
+    // [self.window setTitleVisibility:NSWindowTitleHidden];
+
     // XXX seems like alpha is ignored in mojave :?
-    [self.window setBackgroundColor:backgroundColor];
+    [self.window setBackgroundColor:[NSColor redColor]];
+    // printf ("BACK TITLE\n");
+    self.window.backgroundColor = [NSColor redColor];
+#if 0
+
+    //////////////////////////////////////////////////////
+    // [self.window setBackgroundColor:backgroundColor];
+    NSView *titleBarView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, self.window.frame.size.width, 64)]; // self.window.titleBarHeight)];
+    titleBarView.wantsLayer = YES;
+    titleBarView.layer.backgroundColor = [[NSColor redColor] CGColor]; // Set to black or any color you want
+    NSView *themeFrame = [self.window.contentView superview];
+    [themeFrame addSubview:titleBarView positioned:NSWindowBelow relativeTo:nil];
+#endif
 }
 
 
@@ -5630,6 +5674,7 @@ return NO;
 }
 
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize {
+	return YES;
     PtyLog(@"fitWindowToTabSize %@", NSStringFromSize(tabSize));
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
@@ -5996,6 +6041,8 @@ return NO;
 
 - (void)toggleBroadcastingInputToSession:(PTYSession *)session
 {
+	// XXX deprecate this feature
+#if 0
     NSNumber *n = [NSNumber numberWithInt:[[session view] viewId]];
     switch ([self broadcastMode]) {
         case BROADCAST_TO_ALL_PANES:
@@ -6053,6 +6100,7 @@ return NO;
     [self refreshTerminal:nil];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
+#endif
 }
 
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move {
@@ -6207,7 +6255,6 @@ return NO;
 
 - (void)refreshTerminal:(NSNotification *)aNotification {
     PtyLog(@"refreshTerminal - calling fitWindowToTabs");
-
     [self updateTabBarStyle];
     [self updateCurrentLocation];
     

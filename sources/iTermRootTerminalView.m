@@ -56,7 +56,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         _tabView.autoresizesSubviews = YES;
         _tabView.allowsTruncatedLabels = NO;
-        _tabView.controlSize = NSSmallControlSize;
+        _tabView.controlSize = NSControlSizeSmall;
         _tabView.tabViewType = NSNoTabsNoBorder;
         [self addSubview:_tabView];
 
@@ -101,6 +101,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         [self addSubview:_toolbelt];
         [self updateToolbelt];
     }
+    // XXX fix glitches on startup
+    [self layoutSubviews];  // This may modify _leftTabBarWidth if it's too big or too small.
     return self;
 }
 
@@ -209,7 +211,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (BOOL)tabBarShouldBeVisible {
-// return NO;
+ return NO;
     if (self.tabBarControl.flashing) {
         return YES;
     } else {
@@ -218,6 +220,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)numberOfAdditionalTabs {
+	return NO;
     if ([_delegate anyFullScreen] &&
         ![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
         return NO;
@@ -256,11 +259,14 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (void)layoutSubviews {
     DLog(@"layoutSubviews");
-
     BOOL showToolbeltInline = NO; // self.shouldShowToolbelt;
     BOOL hasScrollbar = self.scrollbarShouldBeVisible;
     NSWindow *thisWindow = _delegate.window;
+    /// XXX seems like it's ignored
+    thisWindow.titlebarAppearsTransparent = YES;
     [thisWindow setShowsResizeIndicator:hasScrollbar];
+    [thisWindow setBackgroundColor:[NSColor redColor]];
+    // thisWindow.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
 
     // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is
     // too big for the current window size, you could end up with a negative-width tab view frame.
@@ -289,6 +295,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         [self setLeftTabBarWidthFromPreferredWidth];
     } else {
         // The tabBar control is visible.
+	    printf ("TWO\n");
         DLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
         self.tabBarControl.hidden = NO;
         [self.tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
@@ -340,9 +347,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
             }
 
             case PSMTab_BottomTab: {
+					   // dont do a thing here just keep hidden
+#if 0
                 DLog(@"repositionWidgets - putting tabs at bottom");
                 [self removeLeftTabBarDragHandle];
                 // setup aRect to make room for the tabs at the bottom.
+		printf ("BOTTOM BAR\n");
 		int tabsdelta = 0;
 		if (minitabs) {
 			tabsdelta = 18;
@@ -367,13 +377,43 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 }
 		y -= tabsdelta;
 		heightAdjustment -= tabsdelta;
+#if 1
                 NSRect tabViewFrame = NSMakeRect(tabBarFrame.origin.x,
                                                  y,
                                                  tabBarFrame.size.width,
                                                  [thisWindow.contentView frame].size.height - heightAdjustment);
                 DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
                 self.tabView.frame = tabViewFrame;
+#endif
                 [self updateDivisionView];
+        // self.tabBarControl.hidden = NO; // XXX when tabbar is not hidden, the window gets grey for some reason
+		// XXX making the tabbar always hidden avoids some flickering too
+#endif
+        self.tabBarControl.hidden = YES; // XXX when tabbar is not hidden, the window gets grey for some reason
+        [self setLeftTabBarWidthFromPreferredWidth];
+#if 0
+		{
+        [self removeLeftTabBarDragHandle];
+        self.tabBarControl.hidden = YES;
+        CGFloat yOrigin = [_delegate haveBottomBorder] ? 1 : 0;
+        CGFloat heightAdjustment = _delegate.divisionViewShouldBeVisible ? kDivisionViewHeight : 0;
+        if ([_delegate haveTopBorder]) {
+            heightAdjustment++;
+        }
+        NSRect tabViewFrame =
+            NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
+                       yOrigin,
+                       [self tabviewWidth],
+                       [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
+        DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
+        [self.tabView setFrame:tabViewFrame];
+        [self updateDivisionView];
+
+        // Even though it's not visible it needs an accurate number so we can compute the proper
+        // window size when it appears.
+        [self setLeftTabBarWidthFromPreferredWidth];
+		}
+#endif
                 break;
             }
 
@@ -458,9 +498,11 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     // Note: this used to call setNeedsDisplay on each session in the current tab.
     [self setNeedsDisplay:YES];
 
+#if 0
     DLog(@"repositionWidgets - update tab bar");
     [self.tabBarControl updateFlashing];
     DLog(@"repositionWidgets - return.");
+#endif
 }
 
 - (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth contentWidth:(CGFloat)contentWidth {
