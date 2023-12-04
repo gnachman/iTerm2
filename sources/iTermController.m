@@ -205,6 +205,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)updateWindowTitles {
+	return;
     for (PseudoTerminal *terminal in _terminalWindows) {
         if ([terminal currentSessionName]) {
             [terminal setWindowTitle];
@@ -578,6 +579,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
+	return;
     DLog(@"Controller: window exited fullscreen");
     if (_arrangeHorizontallyPendingFullScreenTransitions &&
         [[iTermFullScreenWindowManager sharedInstance] numberOfQueuedTransitions] == 0) {
@@ -921,8 +923,8 @@ static iTermController *gSharedInstance;
 - (iTermWindowType)windowTypeForBookmark:(Profile *)aDict {
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
-        if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
-            NO) { // [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
+        if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN && NO) {
+		// [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
             return WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
             return windowType;

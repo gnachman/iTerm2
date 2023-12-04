@@ -143,8 +143,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)toggleFullScreen:(nullable id)sender {
    // hack to avoid native fullscreen to work. ignore settings
-        [(id<PTYWindowDelegateProtocol>)[self delegate] toggleTraditionalFullScreenMode];
-return;
+   [(id<PTYWindowDelegateProtocol>)[self delegate] toggleTraditionalFullScreenMode];
 #if 0
     if (![[self ptyDelegate] lionFullScreen]  &&
         ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {

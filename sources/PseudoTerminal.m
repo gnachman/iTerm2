@@ -1640,6 +1640,7 @@ return NO;
 }
 
 - (void)setWindowTitle {
+	return;
     if (self.isShowingTransientTitle) {
         PTYSession *session = self.currentSession;
         NSString *aTitle;
@@ -1658,6 +1659,7 @@ return NO;
 }
 
 - (void)setWindowTitle:(NSString *)title {
+	return;
     if (title == nil) {
         // title can be nil during loadWindowArrangement
         title = @"";
@@ -3547,7 +3549,38 @@ return NO;
     [SessionView windowDidResize];
     PtyLog(@"toggleFullScreenMode called");
     CGFloat savedToolbeltWidth = _contentView.toolbeltWidth;
-    if (!_fullScreen) {
+    if (_fullScreen) {
+        [self showMenuBar];
+        windowType_ = savedWindowType_;
+    self.window.styleMask = [self styleMask];
+        // self.window.styleMask = // [self styleMask] | NSWindowStyleMaskBorderless;
+        // NSWindowStyleMaskNonactivatingPanel
+	// NSWindowStyleMaskResizable
+        // NSFullSizeContentViewWindowMask;
+        // | NSWindowStyleMaskBorderless
+        // | NSWindowStyleMaskTitled;
+        self.window.styleMask = // [self styleMask] | NSWindowStyleMaskBorderless;
+        NSWindowStyleMaskNonactivatingPanel
+	| NSWindowStyleMaskResizable
+        | NSFullSizeContentViewWindowMask
+        | NSWindowStyleMaskBorderless
+        | NSWindowStyleMaskTitled;
+	self.window.titleVisibility = NSWindowTitleHidden;
+
+        // This will be close but probably not quite right because tweaking to the decoration size
+        // happens later.
+        if (oldFrameSizeIsBogus_) {
+            oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
+        }
+        [self.window setFrame:oldFrame_ display:YES];
+#if ENABLE_SHORTCUT_ACCESSORY
+        if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] && (self.window.styleMask & NSTitledWindowMask)) {
+            [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
+            [self updateWindowNumberVisibility:nil];
+        }
+#endif
+        PtyLog(@"toggleFullScreenMode - allocate new terminal");
+    } else {
         oldFrame_ = self.window.frame;
         oldFrameSizeIsBogus_ = NO;
         savedWindowType_ = windowType_;
@@ -3558,33 +3591,23 @@ return NO;
 #endif
         windowType_ = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         [self.window setOpaque:NO];
+	self.window.titleVisibility = NSWindowTitleHidden;
         self.window.alphaValue = 0;
-        self.window.styleMask = [self styleMask];
-        [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
-                      display:YES];
+        self.window.styleMask = // [self styleMask] | NSWindowStyleMaskBorderless;
+        NSWindowStyleMaskNonactivatingPanel
+	| NSWindowStyleMaskResizable
+        //| NSFullSizeContentViewWindowMask
+        | NSWindowStyleMaskBorderless
+        //| NSWindowStyleMaskTitled;
+	;
+        [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen] display:YES];
         self.window.alphaValue = 1;
-    } else {
-        [self showMenuBar];
-        windowType_ = savedWindowType_;
-        self.window.styleMask = [self styleMask];
-
-        // This will be close but probably not quite right because tweaking to the decoration size
-        // happens later.
-        if (oldFrameSizeIsBogus_) {
-            oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
-        }
-        [self.window setFrame:oldFrame_ display:YES];
-#if ENABLE_SHORTCUT_ACCESSORY
-        if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
-            (self.window.styleMask & NSTitledWindowMask)) {
-            [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
-            [self updateWindowNumberVisibility:nil];
-        }
-#endif
-        PtyLog(@"toggleFullScreenMode - allocate new terminal");
     }
+[[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
+[[self.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
+[[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
+#if 0
     [self.window setHasShadow:(windowType_ == WINDOW_TYPE_NORMAL)];
-
     if (!_fullScreen &&
         [iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault]) {
         oldUseTransparency_ = useTransparency_;
@@ -3597,13 +3620,18 @@ return NO;
             restoreUseTransparency_ = NO;
         }
     }
+#endif
     _fullScreen = !_fullScreen;
     [_contentView.tabBarControl updateFlashing];
+#if 0
     togglingFullScreen_ = YES;
+#endif
     _contentView.toolbeltWidth = savedToolbeltWidth;
+#if 0
     [_contentView constrainToolbeltWidth];
     [_contentView updateToolbelt];
     [self updateUseTransparency];
+#endif
 
     if (_fullScreen) {
         PtyLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");
@@ -3615,6 +3643,7 @@ return NO;
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 
     if (!_fullScreen) {
+#if 0
         // Find the largest possible session size for the existing window frame
         // and fit the window to an imaginary session of that size.
         NSSize contentSize = [[[self window] contentView] frame].size;
@@ -3647,6 +3676,7 @@ return NO;
         }
 
         [self fitWindowToTabSize:contentSize];
+#endif
     }
     togglingFullScreen_ = NO;
     PtyLog(@"toggleFullScreenMode - calling updateSessionScrollbars");
@@ -3670,9 +3700,11 @@ return NO;
     }
 
     PtyLog(@"toggleFullScreenMode - calling setWindowTitle");
+#if 1
     [self setWindowTitle];
     PtyLog(@"toggleFullScreenMode - calling window update");
     [[self window] update];
+#endif
     for (PTYTab *aTab in [self tabs]) {
         [aTab notifyWindowChanged];
     }
@@ -3804,7 +3836,7 @@ return NO;
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
     DLog(@"Window did enter lion fullscreen");
-
+return;
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
@@ -3830,6 +3862,7 @@ return NO;
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
 {
+return;
     DLog(@"Window will exit lion fullscreen");
     exitingLionFullscreen_ = YES;
     [_contentView.tabBarControl updateFlashing];
@@ -3840,6 +3873,7 @@ return NO;
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification
 {
+return;
     DLog(@"Window did exit lion fullscreen");
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
@@ -3866,6 +3900,7 @@ return NO;
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
     // Disable redrawing during zoom-initiated live resize.
+        return defaultFrame;
     zooming_ = YES;
     if (togglingLionFullScreen_) {
         // Tell it to use the whole screen when entering Lion fullscreen.
@@ -3887,6 +3922,7 @@ return NO;
 }
 
 - (void)windowWillShowInitial {
+return;
     PtyLog(@"windowWillShowInitial");
     iTermTerminalWindow* window = [self ptyWindow];
     // If it's a full or top-of-screen window with a screen number preference, always honor that.
@@ -4980,7 +5016,7 @@ return;
     [[newSession screen] setMaxScrollbackLines:0];
     [self setupSession:newSession title:nil withSize:nil];
     [[newSession view] setViewId:[[oldSession view] viewId]];
-    [[newSession view] setShowTitle:[[oldSession view] showTitle] adjustScrollView:YES];
+//    [[newSession view] setShowTitle:[[oldSession view] showTitle] adjustScrollView:YES];
 
     // Add this session to our term and make it current
     PTYTab *theTab = [tabViewItem identifier];
