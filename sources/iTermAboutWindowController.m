@@ -48,6 +48,9 @@
         
 #endif
         [[self window] setLevel:NSFloatingWindowLevel];
+// [[self.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
+[[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
+[[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
 
         [_dynamicText setLinkTextAttributes:self.linkTextViewAttributes];
         NSTextStorage *ts = [_dynamicText textStorage];
