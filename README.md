@@ -14,7 +14,7 @@ Therm is a fork of iTerm2 made by [pancake](https://infosec.exchange/@pancake) w
 * Support AlwaysOnTop mode (CMD+Shift+F)
 * Disable force-touch link previews, smart-paste and print-to-printer anoying features
 
-<center><img src="therm.png" width=50%></center>
+<center><img src="https://github.com/trufae/Therm/blob/c933b89a4e670bb24a26d3db1a0fb820917f90ec/therm.png" width=50%></center>
 
 ## Installation
 
