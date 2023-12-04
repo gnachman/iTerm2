@@ -1,73 +1,75 @@
-Therm
-=====
+# Therm
 
-Therm is a fork of iTerm2 done by pancake <pancake@nopcode.org> that aims to:
+Therm is a fork of iTerm2 made by [pancake](https://infosec.exchange/@pancake) with minimalism in mind:
 
-* Better defaults for power-users (distraction-less tabs, dark theme, follow mouse, ...)
-* Remove clutchy stuff like maximized indicators, scrollbars or title tabs
-* No timestamps (removed buggy feature and get some speed)
-* No Lion-style fullscreen, standard one is faster and handier
-* Fixes application switch issue when follow mouse is enabled
-* Non-fullscreen windows have a thin border
-* Tabs are small, dark and non-intrussive
-* Remove the AutoUpdates (Sparkle framework)
+* Better defaults (hidden tabs, scrollbars and window controls, dark theme, follow mouse, ...)
+* Removed tons of barely-used and buggy features, gaining some performance and reducing size
+* Fast fullscreen toggling, no animations (CMD+Enter)
+* Resize splits with keystrokes (CMD+Shift+HJKL)
+* Remove the AutoUpdates (Sparkle framework) and custom ANSI escape codes
 * Search entry is now dark and toggleable with CMD+f
-* Removed the integrated SSH client functionality (buggy)
-* Avoid blurry and transparency effects (leaky and slow)
-* Added more fonts as default (Agave, Profont, Firacode, ...)
-* Support CMD+F to toggle foreground (always-on-top)
-* Disabled proprietary escape codes, as well as others with bugs (set-title, ..)
-* Disable force-touch actions that preview URLs (better use a real browser)
-* Disable the smart-paste and print-to-printer anoying features
+* Removed Brodcast, Tmux and SSH client functionality (buggy)
+* Solid, non transparent and no blurry effects allowed. Faster, lighter and more readable.
+* Added better default lfonts (Agave, Profont, Firacode, ...)
+* Support AlwaysOnTop mode (CMD+Shift+F)
+* Disable force-touch link previews, smart-paste and print-to-printer anoying features
 
-![Therm Screenshot](therm.png)
+<center><img src="therm.png" width=50%></center>
 
-Installation
-------------
+## Installation
 
-I have decided to remove the auto-self-update feature, mainly because the library weights too much and i don't like my software to be doing network requests and downloading code that is installed without my own consent or review. I checked the code and the library is a 3rd party project used by many other projects, which is checking the SSL certficate and such, so there's no security issue (afaik).
+Download the latest build from the release page, Therm will never do network requests without your consent, so no auto-udpates, nobody in your network need to know which terminal are you using..
 
 So, in order to get Therm installed in your system you can:
 
-* Download the last DMG from the Releases github page
+### Manual Installation
 
-	https://github.com/trufae/Therm/releases	
+Find them out in [https://github.com/trufae/Therm/releases](https://github.com/trufae/Therm/releases)
 
-* Install it via brew
+Just drag and drop the .app into the `/Applications` and accept the certificate.
 
-	brew install therm
+To resign the app with your certificate you can run this:
 
-Future
-------
+```
+codesign -f -s 'J5PTVY8BHH' Therm.app/Contents/MacOS/Therm
+```
 
-I will continue removing features and options in order to get a small,
-fast and nice terminal, so I don't have to change over 9000 settings
-to get it working as I expect on first run.
+### Using Brew
 
-It is also planned to port Therm to old OSX macs (PowerPC and x86-32).
+Maybe
 
-This is the app where I spent more time in my daily workflow, so it make
-sense to not over-engineer or make it fully configurable with features
-that <10% of users use.
+```sh
+brew install therm
+```
 
-Settings
---------
+### Source Build
 
-To remove your settings and start over, kill Therm, open system Terminal
-and type the following command:
+To build it from source you just need to run `make run` or `open Therm.xcodeproj`.
 
-	$ rm ~/Library/Preferences/com.pancake.therm.plist
+## Future
 
-Contributions
--------------
+Plan is to continue removing features and optimizing the code to make Therm even faster and cleaner.
 
-I plan to contribute with iTerm2 by sending bugfixes and feature enhancements
-as pullrequests to the original repo, iTerm2 is a great project, and there's
-no aim in harming it.
+* [ ] Keep removing features
+* [ ] Remove all deprecated APIs uses
+* [ ] Improve emoji support
+* [ ] Support PowerPC and x86-32 macOS
 
-Click here For more information about <a href="https://iterm2.com">iTerm2</a>.
+## Settings
 
-This is an opensource project, under the GPL license, you can contribute by
-sending patches or filling issues to share your wishes or concerns.
+Reset your settings to start from scratch with these steps:
+
+```sh
+pkill Therm
+rm ~/Library/Preferences/com.pancake.therm.plist
+```
+
+## Contributions
+
+No plans to sync changes from iTerm2, except for maybe the Metal backend or better emoji support, but the software renderer is really fast and I can probably write a cleaner utf support from scratch.
+
+I really value and appreciate all the work done by the author of <a href="https://iterm2.com">iTerm2</a>, so feel free to check it out and use it if you prefer.
+
+This is an opensource project, under the GPL license, you can contribute by sending patches or filling issues to share your wishes or concerns.
 
 --pancake
