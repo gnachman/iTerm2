@@ -624,6 +624,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                               styleMask:styleMask
                                                 backing:NSBackingStoreBuffered
                                                   defer:(hotkeyWindowType != iTermHotkeyWindowTypeNone)];
+#if 0
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
         // this on OS 10.10 when creating normal windows on a 2-screen display. The
@@ -633,6 +634,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         // monitor.
         [myWindow setFrame:initialFrame display:NO];
     }
+#endif
 
     [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL)];
 
@@ -655,6 +657,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                        tabBarDelegate:self
                                              delegate:self] autorelease];
     self.window.contentView = _contentView;
+#if 0
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
         self.window.alphaValue = 1;
     } else {
@@ -662,7 +665,20 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
     self.window.opaque = YES;
     [self.window setBackgroundColor:[NSColor redColor]];
+#endif
+    [[self.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
+    [[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
+    [[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
     // self.window.titlebarAppearsTransparent = YES;
+    self.window.titleVisibility = NSWindowTitleHidden;
+    self.window.styleMask = // self.window.styleMask | NSFullSizeContentViewWindowMask;
+        NSWindowStyleMaskNonactivatingPanel
+	| NSWindowStyleMaskResizable
+        | NSFullSizeContentViewWindowMask
+        | NSWindowStyleMaskBorderless
+        | NSWindowStyleMaskTitled;
+
+
 
     normalBackgroundColor = [_contentView color];
 
@@ -685,7 +701,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
             self.window.bottomCornerRounded = YES;
 
-    [self updateTabBarStyle];
+ //   [self updateTabBarStyle];
     self.window.delegate = self;
 
     [[NSNotificationCenter defaultCenter] addObserver:self
