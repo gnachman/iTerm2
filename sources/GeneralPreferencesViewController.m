@@ -208,7 +208,7 @@ enum {
     info.customSettingChangedHandler = ^(id sender) {
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NoSyncNeverRemindPrefsChangesLostForFile"];
         NSNumber *value;
-        if ([_autoSaveOnQuit state] == NSOnState) {
+        if ([_autoSaveOnQuit state] == NSControlStateValueOn) {
             value = @0;
         } else {
             value = @1;
@@ -391,6 +391,12 @@ enum {
     }
 #endif
     return NO;
+}
+
+- (void)pushToCustomFolder:(id)sender __attribute__((ibaction)) {
+}
+
+- (void)browseCustomFolder:(id)sender __attribute__((ibaction)) {
 }
 
 @end

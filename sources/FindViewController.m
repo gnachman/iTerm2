@@ -303,9 +303,9 @@ const CGFloat kEdgeWidth = 1;
 - (void)_loadFindStringFromSharedPasteboard
 {
     if (![findBarTextField_ textFieldIsFirstResponder]) {
-        NSPasteboard* findBoard = [NSPasteboard pasteboardWithName:NSFindPboard];
-        if ([[findBoard types] containsObject:NSStringPboardType]) {
-            NSString *value = [findBoard stringForType:NSStringPboardType];
+        NSPasteboard* findBoard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
+        if ([[findBoard types] containsObject:NSPasteboardTypeString]) {
+            NSString *value = [findBoard stringForType:NSPasteboardTypeString];
             if (value && [value length] > 0) {
                 if (savedState_ && ![value isEqualTo:savedState_.string]) {
                     [self restoreState];
@@ -536,7 +536,7 @@ const CGFloat kEdgeWidth = 1;
 }
 
 - (BOOL)validateUserInterfaceItem:(NSMenuItem *)item {
-    item.state = (item.tag == state_.mode) ? NSOnState : NSOffState;
+    item.state = (item.tag == state_.mode) ? NSControlStateValueOn : NSControlStateValueOff;
     return YES;
 }
 
@@ -551,10 +551,10 @@ const CGFloat kEdgeWidth = 1;
         return;
     }
     // Copy into the NSFindPboard
-    NSPasteboard *findPB = [NSPasteboard pasteboardWithName:NSFindPboard];
+    NSPasteboard *findPB = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
     if (findPB) {
-        [findPB declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
-        [findPB setString:[findBarTextField_ stringValue] forType:NSStringPboardType];
+        [findPB declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+        [findPB setString:[findBarTextField_ stringValue] forType:NSPasteboardTypeString];
     }
 }
 

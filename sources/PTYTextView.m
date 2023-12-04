@@ -90,9 +90,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 //   `-----'  :      :
 static const double kCharWidthFractionOffset = 0.35;
 
-static const NSUInteger kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
-static const NSUInteger kRectangularSelectionModifiers = (NSCommandKeyMask | NSAlternateKeyMask);
-static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSControlKeyMask);
+static const NSUInteger kDragPaneModifiers = (NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
+static const NSUInteger kRectangularSelectionModifiers = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
+static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSEventModifierFlagControl);
 
 static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 
@@ -282,7 +282,7 @@ static const int kDragThreshold = 3;
         // register for drag and drop
         [self registerForDraggedTypes: [NSArray arrayWithObjects:
             NSFilenamesPboardType,
-            NSStringPboardType,
+                                        NSPasteboardTypeString,
             nil]];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -318,7 +318,8 @@ static const int kDragThreshold = 3;
 
         if ([pointer_ viewShouldTrackTouches]) {
             DLog(@"Begin tracking touches in view %@", self);
-            [self setAcceptsTouchEvents:YES];
+          //   [self setAcceptsTouchEvents:YES];
+            [self allowedTouchTypes];
             [self setWantsRestingTouches:YES];
             if ([self useThreeFingerTapGestureRecognizer]) {
                 threeFingerTapGestureRecognizer_ =
@@ -451,7 +452,7 @@ static const int kDragThreshold = 3;
         @{ NSBackgroundColorAttributeName: [self defaultBackgroundColor] ?: [NSColor blackColor],
            NSForegroundColorAttributeName: [self defaultTextColor] ?: [NSColor whiteColor],
            NSFontAttributeName: self.nonAsciiFont ?: [NSFont systemFontOfSize:12],
-           NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWordMask) };
+           NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWord) };
 
     [self setMarkedTextAttributes:theAttributes];
 }
@@ -709,6 +710,7 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];
 }
 
+#if 0
 - (void)changeFont:(id)fontManager
 {
     if ([[[PreferencePanel sharedInstance] windowIfLoaded] isVisible]) {
@@ -717,6 +719,7 @@ static const int kDragThreshold = 3;
         [[PreferencePanel sessionsInstance] changeFont:fontManager];
     }
 }
+#endif
 
 - (void)setLineHeight:(double)aLineHeight {
     _lineHeight = ceil(aLineHeight);
@@ -1373,7 +1376,7 @@ static const int kDragThreshold = 3;
     }
     unsigned int modflag = [event modifierFlags];
     _hadMarkedTextBeforeHandlingKeypressEvent = [self hasMarkedText];
-    BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+   // BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
 
     _keyIsARepeat = [event isARepeat];
 #if 0
@@ -1421,16 +1424,15 @@ static const int kDragThreshold = 3;
     id delegate = [self delegate];
     unsigned int modflag = [event modifierFlags];
     unsigned short keyCode = [event keyCode];
-    BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
-    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
+  //  BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    BOOL leftAltPressed = (modflag & NSEventModifierFlagOption) == NSEventModifierFlagOption;
 
     // Should we process the event immediately in the delegate?
     if (!_hadMarkedTextBeforeHandlingKeypressEvent &&
         ([delegate hasActionableKeyMappingForEvent:event] ||       // delegate will do something useful
-         (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||  // is an arrow key, f key, etc.
+         (modflag & (NSEventModifierFlagNumericPad | NSEventModifierFlagFunction)) ||  // is an arrow key, f key, etc.
          ([[event charactersIgnoringModifiers] length] > 0 &&      // Will send Meta/Esc+ (length is 0 if it's a dedicated dead key)
-          ((leftAltPressed && [delegate optionKey] != OPT_NORMAL) ||
-           (rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL))) ||
+          (leftAltPressed && [delegate optionKey] != OPT_NORMAL)) ||
          ((modflag & NSEventModifierFlagControl) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
              DLog(@"PTYTextView keyDown: process in delegate");
@@ -4838,7 +4840,7 @@ return;
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
     // NOTE: draggingUpdated: calls this method because they need the same implementation.
     int numValid = -1;
-    if ([NSEvent modifierFlags] & NSAlternateKeyMask) {  // Option-drag to copy
+    if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {  // Option-drag to copy
         _drawingHelper.showDropTargets = YES;
     }
     NSDragOperation operation = [self dragOperationForSender:sender numberOfValidItems:&numValid];
@@ -5560,7 +5562,7 @@ return;
 - (id)validRequestorForSendType:(NSString *)sendType returnType:(NSString *)returnType
 {
     NSSet *acceptedReturnTypes = [NSSet setWithArray:@[ (NSString *)kUTTypeUTF8PlainText,
-                                                        NSStringPboardType ]];
+                                                        NSPasteboardTypeString ]];
     NSSet *acceptedSendTypes = nil;
     if (self._haveShortSelection) {
         acceptedSendTypes = acceptedReturnTypes;
@@ -5584,8 +5586,8 @@ return;
         [self selectedTextCappedAtSize:[iTermAdvancedSettingsModel maximumBytesToProvideToServices]];
 
     if (copyString && [copyString length] > 0) {
-        [pboard declareTypes:@[ NSStringPboardType ] owner:self];
-        [pboard setString:copyString forType:NSStringPboardType];
+        [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+        [pboard setString:copyString forType:NSPasteboardTypeString];
         return YES;
     }
 
@@ -5594,7 +5596,7 @@ return;
 
 // Service
 - (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard {
-    NSString *string = [pboard stringForType:NSStringPboardType];
+    NSString *string = [pboard stringForType:NSPasteboardTypeString];
     if (string.length) {
         [_delegate insertText:string];
         return YES;
@@ -5700,6 +5702,7 @@ return;
     return frame;
 }
 
+// XXX FIREWORKS WTF
 - (void)createFindCursorWindowWithFireworks:(BOOL)forceFireworks {
     [self scrollRectToVisible:[self cursorFrame]];
     self.findCursorWindow = [[[NSWindow alloc] initWithContentRect:NSZeroRect
@@ -6242,7 +6245,7 @@ return;
 #endif
 
     // It's ok to paste if the the drag obejct is either a file or a string.
-    BOOL pasteOK = !![[sender draggingPasteboard] availableTypeFromArray:@[ NSFilenamesPboardType, NSStringPboardType ]];
+                           BOOL pasteOK = !![[sender draggingPasteboard] availableTypeFromArray:@[ NSFilenamesPboardType, NSPasteboardTypeString ]];
 
     const BOOL optionPressed = ([NSEvent modifierFlags] & NSAlternateKeyMask) != 0;
     NSDragOperation sourceMask = [sender draggingSourceOperationMask];
@@ -6451,7 +6454,8 @@ return;
 
 - (void)_pointerSettingsChanged:(NSNotification *)notification {
     BOOL track = [pointer_ viewShouldTrackTouches];
-    [self setAcceptsTouchEvents:track];
+    // [self setAcceptsTouchEvents:/// track];
+    [self allowedTouchTypes];
     [self setWantsRestingTouches:track];
     [threeFingerTapGestureRecognizer_ release];
     threeFingerTapGestureRecognizer_ = nil;

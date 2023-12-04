@@ -125,7 +125,7 @@ const CGFloat kDefaultTagsWidth = 80;
                           horizontalScrollerClass:nil
                             verticalScrollerClass:[scrollView_.verticalScroller class]
                                        borderType:scrollView_.borderType
-                                      controlSize:NSRegularControlSize
+                                      controlSize:NSControlSizeRegular
                                     scrollerStyle:scrollView_.verticalScroller.scrollerStyle];
 
         tableView_ = [[ProfileTableView alloc] initWithFrame:tableViewFrame];
@@ -211,6 +211,7 @@ const CGFloat kDefaultTagsWidth = 80;
 
 #pragma mark -  Drag drop
 
+#if 0
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard
 {
     // Copy guid to pboard
@@ -232,6 +233,7 @@ const CGFloat kDefaultTagsWidth = 80;
     }
     return YES;
 }
+#endif
 
 - (NSDragOperation)tableView:(NSTableView *)aTableView
                 validateDrop:(id<NSDraggingInfo>)info

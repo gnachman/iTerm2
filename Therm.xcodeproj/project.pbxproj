@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -11,7 +11,6 @@
 		1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D027C0F1CD1867000B0FBFF /* iTermColorPresets.h */; };
 		1D027C121CD1867100B0FBFF /* iTermColorPresets.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D027C101CD1867000B0FBFF /* iTermColorPresets.m */; };
 		1D0318281A42563A00932107 /* iTermImageWell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0318261A42563A00932107 /* iTermImageWell.h */; };
-		1D0318291A42563A00932107 /* iTermImageWell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0318261A42563A00932107 /* iTermImageWell.h */; };
 		1D03D420191419080049EB8F /* DirectoriesPopup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D03D41D191419080049EB8F /* DirectoriesPopup.h */; };
 		1D06A052134CDBF800C414EF /* iTermSemanticHistoryController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* iTermSemanticHistoryController.h */; };
 		1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D114BC04510097C0ED /* ProfileTableRow.h */; };
@@ -31,7 +30,6 @@
 		1D173859126C820A004622DC /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
 		1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D19C71214171F1D00617E08 /* ToolJobs.h */; };
 		1D1F8C1A1A32616A00167161 /* AMIndeterminateProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D1F8C181A32616A00167161 /* AMIndeterminateProgressIndicator.h */; };
-		1D1F8C1B1A32616A00167161 /* AMIndeterminateProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D1F8C181A32616A00167161 /* AMIndeterminateProgressIndicator.h */; };
 		1D21EE3B147711300066E04A /* ContextMenuActionPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D21EE39147711300066E04A /* ContextMenuActionPrefsController.h */; };
 		1D237D28131D8741004DD60C /* FindView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D26131D8741004DD60C /* FindView.h */; };
 		1D237D94131D8D66004DD60C /* FindViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D92131D8D66004DD60C /* FindViewController.h */; };
@@ -41,7 +39,6 @@
 		1D29732714082676004C5DBE /* MovePaneController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D29732514082676004C5DBE /* MovePaneController.h */; };
 		1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D29732914082A52004C5DBE /* SplitSelectionView.h */; };
 		1D2C65491AE9A2C900142CF5 /* iTermTemporaryDoubleBufferedGridController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2C65471AE9A2C900142CF5 /* iTermTemporaryDoubleBufferedGridController.h */; };
-		1D2C654A1AE9A2C900142CF5 /* iTermTemporaryDoubleBufferedGridController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2C65471AE9A2C900142CF5 /* iTermTemporaryDoubleBufferedGridController.h */; };
 		1D2E802E129DA45A00F3D71E /* PTYTab.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E802C129DA45A00F3D71E /* PTYTab.h */; };
 		1D2E813112A18F7500F3D71E /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
 		1D2F3B3D1516BA470044C337 /* iTermFontPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */; };
@@ -51,7 +48,6 @@
 		1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
 		1D373E4918F3613600773D3E /* iTermShortcutInputView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D373E4718F3613600773D3E /* iTermShortcutInputView.h */; };
 		1D374DEB1B349FC8007BE76A /* iTermTipData.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D374DE91B349FC8007BE76A /* iTermTipData.h */; };
-		1D374DEC1B349FC8007BE76A /* iTermTipData.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D374DE91B349FC8007BE76A /* iTermTipData.h */; };
 		1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D395912134E75B5005A8021 /* SmartSelectionRules.plist */; };
 		1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */; };
 		1D3D21871482E0E500FAC8E7 /* TmuxGateway.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D21851482E0E500FAC8E7 /* TmuxGateway.h */; };
@@ -564,11 +560,8 @@
 		1D44D0FF1CC7F5A700BE5630 /* PTYTextViewTest-golden-travis-testVerticalSpacing.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D44CE2C1CC7E8F000BE5630 /* PTYTextViewTest-golden-travis-testVerticalSpacing.png */; };
 		1D44D1001CC7F5A700BE5630 /* PTYTextViewTest-golden-travis-testWindowedCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D44CE2D1CC7E8F000BE5630 /* PTYTextViewTest-golden-travis-testWindowedCharacterSelection.png */; };
 		1D468BB91B0543E300226083 /* iTermKeyboardNavigatableTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468BB71B0543E300226083 /* iTermKeyboardNavigatableTableView.h */; };
-		1D468BBA1B0543E300226083 /* iTermKeyboardNavigatableTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468BB71B0543E300226083 /* iTermKeyboardNavigatableTableView.h */; };
 		1D468BC01B056CD600226083 /* iTermProfileSearchToken.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468BBE1B056CD600226083 /* iTermProfileSearchToken.h */; };
-		1D468BC11B056CD600226083 /* iTermProfileSearchToken.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468BBE1B056CD600226083 /* iTermProfileSearchToken.h */; };
 		1D468F041B06A79000226083 /* StopTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468F021B06A79000226083 /* StopTrigger.h */; };
-		1D468F051B06A79000226083 /* StopTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468F021B06A79000226083 /* StopTrigger.h */; };
 		1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */; };
 		1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27F165F362B000046EE /* TabClose_Front_Pressed@2x.png */; };
 		1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B280165F362B000046EE /* TabClose_Front@2x.png */; };
@@ -626,337 +619,6 @@
 		1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
 		1D6C50A71226EEFB00E0AA3E /* ProfileListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */; };
-		1D6ED85619AEA20D005A7799 /* URLAction.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD0185D2587005DC94B /* URLAction.h */; };
-		1D6ED85819AEA20D005A7799 /* LineBufferPosition.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D78B55C183EE1C000014D49 /* LineBufferPosition.h */; };
-		1D6ED85919AEA20D005A7799 /* FindContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D53FD13181C4B4B00524D4F /* FindContext.h */; };
-		1D6ED85A19AEA20D005A7799 /* ProfilesTerminalPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */; };
-		1D6ED85C19AEA20D005A7799 /* iTermPreferencesBaseViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */; };
-		1D6ED85D19AEA20D005A7799 /* ITAddressBookMgr.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E74F4804E9089700000106 /* ITAddressBookMgr.h */; };
-		1D6ED85E19AEA20D005A7799 /* PTYNoteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4093183B398C003A6A6D /* PTYNoteViewController.h */; };
-		1D6ED85F19AEA20D005A7799 /* PSMYosemiteTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572609CB9398008F320C /* PSMYosemiteTabStyle.h */; };
-		1D6ED86019AEA20D005A7799 /* iTermKeyMappingViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */; };
-		1D6ED86119AEA20D005A7799 /* iTermOpenQuicklyItem.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B45A719731B4900F5444D /* iTermOpenQuicklyItem.h */; };
-		1D6ED86219AEA20D005A7799 /* iTermOpenQuicklyTextField.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B459D19731A4700F5444D /* iTermOpenQuicklyTextField.h */; };
-		1D6ED86319AEA20D005A7799 /* iTermAdvancedSettingsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */; };
-		1D6ED86419AEA20D005A7799 /* TemporaryNumberAllocator.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3103186D2973007F550F /* TemporaryNumberAllocator.h */; };
-		1D6ED86519AEA20D005A7799 /* PSMOverflowPopUpButton.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */; };
-		1D6ED86619AEA20D005A7799 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
-		1D6ED86719AEA20D005A7799 /* PSMProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572C09CB9398008F320C /* PSMProgressIndicator.h */; };
-		1D6ED86819AEA20D005A7799 /* VT100OtherParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3A218C352B000450FA1 /* VT100OtherParser.h */; };
-		1D6ED86919AEA20D005A7799 /* NSFont+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698118FE48B200437DA9 /* NSFont+iTerm.h */; };
-		1D6ED86A19AEA20D005A7799 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
-		1D6ED86B19AEA20D005A7799 /* iTermEditKeyActionWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D6118F37160008ADC98 /* iTermEditKeyActionWindowController.h */; };
-		1D6ED86C19AEA20D005A7799 /* VT100ScreenMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */; };
-		1D6ED86D19AEA20D005A7799 /* PSMRolloverButton.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572E09CB9398008F320C /* PSMRolloverButton.h */; };
-		1D6ED86E19AEA20D005A7799 /* PSMTabBarCell.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02573009CB9398008F320C /* PSMTabBarCell.h */; };
-		1D6ED86F19AEA20D005A7799 /* ProfilesWindowPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698618FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h */; };
-		1D6ED87019AEA20D005A7799 /* iTermAnnouncementViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */; };
-		1D6ED87119AEA20D005A7799 /* iTermOpenQuicklyView.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B45B1197345C700F5444D /* iTermOpenQuicklyView.h */; };
-		1D6ED87219AEA20D005A7799 /* NSView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */; };
-		1D6ED87319AEA20D005A7799 /* ToolDirectoriesView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */; };
-		1D6ED87419AEA20D005A7799 /* PopupWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3112186E2F14007F550F /* PopupWindow.h */; };
-		1D6ED87519AEA20D005A7799 /* iTermProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */; };
-		1D6ED87619AEA20D005A7799 /* PSMTabBarControl.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02573209CB9398008F320C /* PSMTabBarControl.h */; };
-		1D6ED87819AEA20D005A7799 /* SCPFile.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30ED186D150A007F550F /* SCPFile.h */; };
-		1D6ED87919AEA20D005A7799 /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
-		1D6ED87A19AEA20D005A7799 /* SBSystemPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */; };
-		1D6ED87B19AEA20D005A7799 /* PSMTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02573909CB9398008F320C /* PSMTabStyle.h */; };
-		1D6ED87C19AEA20D005A7799 /* AdvancedWorkingDirectoryWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713B018FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h */; };
-		1D6ED87D19AEA20D005A7799 /* PSMTabDragAssistant.h in Headers */ = {isa = PBXBuildFile; fileRef = F6E708B70A9D0EA400D0C4EF /* PSMTabDragAssistant.h */; };
-		1D6ED87E19AEA20D005A7799 /* VT100XtermParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AB918C34F6400B241ED /* VT100XtermParser.h */; };
-		1D6ED87F19AEA20D005A7799 /* VT100StringParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3A718C353C500450FA1 /* VT100StringParser.h */; };
-		1D6ED88019AEA20D005A7799 /* PSMTabDragWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = F62D15F00AA64B2F0075A287 /* PSMTabDragWindow.h */; };
-		1D6ED88119AEA20D005A7799 /* NSImage+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B45B6197C60FB00F5444D /* NSImage+iTerm.h */; };
-		1D6ED88319AEA20D005A7799 /* iTermOpenQuicklyTableCellView.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B4598197319CA00F5444D /* iTermOpenQuicklyTableCellView.h */; };
-		1D6ED88419AEA20D005A7799 /* iTermAnnouncementView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */; };
-		1D6ED88519AEA20D005A7799 /* CarbonHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F620E748404000EC682 /* CarbonHelpers.h */; };
-		1D6ED88619AEA20D005A7799 /* CGSAccessibility.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F630E748404000EC682 /* CGSAccessibility.h */; };
-		1D6ED88719AEA20D005A7799 /* CGSCIFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F640E748404000EC682 /* CGSCIFilter.h */; };
-		1D6ED88819AEA20D005A7799 /* CGSConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F650E748404000EC682 /* CGSConnection.h */; };
-		1D6ED88919AEA20D005A7799 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
-		1D6ED88A19AEA20D005A7799 /* iTermNSKeyBindingEmulator.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */; };
-		1D6ED88B19AEA20D005A7799 /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
-		1D6ED88C19AEA20D005A7799 /* CGSCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F660E748404000EC682 /* CGSCursor.h */; };
-		1D6ED88D19AEA20D005A7799 /* ProfileTagsView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C021878CD30004A60AF /* ProfileTagsView.h */; };
-		1D6ED88E19AEA20D005A7799 /* NSView+RecursiveDescription.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */; };
-		1D6ED88F19AEA20D005A7799 /* CGSDebug.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F670E748404000EC682 /* CGSDebug.h */; };
-		1D6ED89019AEA20D005A7799 /* iTermOpenQuicklyTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B458E1973193100F5444D /* iTermOpenQuicklyTableView.h */; };
-		1D6ED89119AEA20D005A7799 /* CGSDisplays.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F680E748404000EC682 /* CGSDisplays.h */; };
-		1D6ED89319AEA20D005A7799 /* VT100LineInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F409D183F3AF5003A6A6D /* VT100LineInfo.h */; };
-		1D6ED89419AEA20D005A7799 /* GeneralPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */; };
-		1D6ED89519AEA20D005A7799 /* CGSHotKeys.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F690E748404000EC682 /* CGSHotKeys.h */; };
-		1D6ED89619AEA20D005A7799 /* CGSInternal.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6A0E748404000EC682 /* CGSInternal.h */; };
-		1D6ED89719AEA20D005A7799 /* CGSMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6B0E748404000EC682 /* CGSMisc.h */; };
-		1D6ED89819AEA20D005A7799 /* AATreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358644184BEA57009ED690 /* AATreeNode.h */; };
-		1D6ED89919AEA20D005A7799 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
-		1D6ED89A19AEA20D005A7799 /* CGSNotifications.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6C0E748404000EC682 /* CGSNotifications.h */; };
-		1D6ED89B19AEA20D005A7799 /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
-		1D6ED89C19AEA20D005A7799 /* CGSRegion.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6D0E748404000EC682 /* CGSRegion.h */; };
-		1D6ED89E19AEA20D005A7799 /* CGSSession.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6E0E748404000EC682 /* CGSSession.h */; };
-		1D6ED89F19AEA20D005A7799 /* CGSTransitions.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6F0E748404000EC682 /* CGSTransitions.h */; };
-		1D6ED8A019AEA20D005A7799 /* CGSWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F700E748404000EC682 /* CGSWindow.h */; };
-		1D6ED8A119AEA20D005A7799 /* CGSWorkspace.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F710E748404000EC682 /* CGSWorkspace.h */; };
-		1D6ED8A319AEA20D005A7799 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
-		1D6ED8A419AEA20D005A7799 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
-		1D6ED8A519AEA20D005A7799 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
-		1D6ED8A619AEA20D005A7799 /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
-		1D6ED8A719AEA20D005A7799 /* ProfileListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */; };
-		1D6ED8A819AEA20D005A7799 /* iTermProfilesWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* iTermProfilesWindowController.h */; };
-		1D6ED8A919AEA20D005A7799 /* DVR.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D33312695442007F741B /* DVR.h */; };
-		1D6ED8AA19AEA20D005A7799 /* DVRBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D3451269741B007F741B /* DVRBuffer.h */; };
-		1D6ED8AB19AEA20D005A7799 /* ProfilesSessionPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DBB4B351901F12400832B09 /* ProfilesSessionPreferencesViewController.h */; };
-		1D6ED8AC19AEA20D005A7799 /* iTermShortcutInputView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D373E4718F3613600773D3E /* iTermShortcutInputView.h */; };
-		1D6ED8AD19AEA20D005A7799 /* DVRIndexEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D3491269746F007F741B /* DVRIndexEntry.h */; };
-		1D6ED8AE19AEA20D005A7799 /* VT100TmuxParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */; };
-		1D6ED8AF19AEA20D005A7799 /* DVRDecoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D34D126974BC007F741B /* DVRDecoder.h */; };
-		1D6ED8B019AEA20D005A7799 /* iTermMouseCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */; };
-		1D6ED8B119AEA20D005A7799 /* DVREncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D35112697529007F741B /* DVREncoder.h */; };
-		1D6ED8B219AEA20D005A7799 /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
-		1D6ED8B319AEA20D005A7799 /* WindowControllerInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */; };
-		1D6ED8B419AEA20D005A7799 /* NSPopUpButton+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8006D18F34CAB00722B35 /* NSPopUpButton+iTerm.h */; };
-		1D6ED8B519AEA20D005A7799 /* iTermOpenQuicklyWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B4582196F8EA100F5444D /* iTermOpenQuicklyWindowController.h */; };
-		1D6ED8B619AEA20D005A7799 /* PTYWindow+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */; };
-		1D6ED8B719AEA20D005A7799 /* PasswordTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DABA03119253FEA00A228D8 /* PasswordTrigger.h */; };
-		1D6ED8B819AEA20D005A7799 /* AppearancePreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138C18F26A91008D94DD /* AppearancePreferencesViewController.h */; };
-		1D6ED8B919AEA20D005A7799 /* iTermExposeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7475F188C679C005355CF /* iTermExposeView.h */; };
-		1D6ED8BA19AEA20D005A7799 /* PasteboardHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C187F1275D22900461E55 /* PasteboardHistory.h */; };
-		1D6ED8BB19AEA20D005A7799 /* NSDateFormatterExtras.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */; };
-		1D6ED8BC19AEA20D005A7799 /* Autocomplete.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE214DF128212EE004E3ADF /* Autocomplete.h */; };
-		1D6ED8BD19AEA20D005A7799 /* ProfilesGeneralPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713AB18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h */; };
-		1D6ED8BE19AEA20D005A7799 /* FileTransferManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30EA186D150A007F550F /* FileTransferManager.h */; };
-		1D6ED8BF19AEA20D005A7799 /* DebugLogging.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD39B18180B82F5004E56D5 /* DebugLogging.h */; };
-		1D6ED8C019AEA20D005A7799 /* iTermPopupWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD7363F1283C2FA009B7829 /* iTermPopupWindowController.h */; };
-		1D6ED8C119AEA20D005A7799 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
-		1D6ED8C219AEA20D005A7799 /* PTYTab.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E802C129DA45A00F3D71E /* PTYTab.h */; };
-		1D6ED8C319AEA20D005A7799 /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
-		1D6ED8C419AEA20D005A7799 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
-		1D6ED8C819AEA20D005A7799 /* iTermShellHistoryController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C0C187BC4C3004A60AF /* iTermShellHistoryController.h */; };
-		1D6ED8CA19AEA20D005A7799 /* iTermWarning.h in Headers */ = {isa = PBXBuildFile; fileRef = A6099B0318D6B0FD00081FA9 /* iTermWarning.h */; };
-		1D6ED8CB19AEA20D005A7799 /* ProfilesColorsPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713BD18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h */; };
-		1D6ED8CC19AEA20D005A7799 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
-		1D6ED8CD19AEA20D005A7799 /* iTermExpose.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */; };
-		1D6ED8CE19AEA20D005A7799 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
-		1D6ED8CF19AEA20D005A7799 /* VT100Parser.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AB418C33FC500B241ED /* VT100Parser.h */; };
-		1D6ED8D019AEA20D005A7799 /* GlobalSearch.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAED28612E9395E005E49ED /* GlobalSearch.h */; };
-		1D6ED8D219AEA20D005A7799 /* iTermSearchField.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAED99012EDF923005E49ED /* iTermSearchField.h */; };
-		1D6ED8D319AEA20D005A7799 /* RegexKitLite.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D85D1D81306687700A3E998 /* RegexKitLite.h */; };
-		1D6ED8D419AEA20D005A7799 /* FindView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D26131D8741004DD60C /* FindView.h */; };
-		1D6ED8D519AEA20D005A7799 /* FindViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D92131D8D66004DD60C /* FindViewController.h */; };
-		1D6ED8D619AEA20D005A7799 /* ProfilesKeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */; };
-		1D6ED8D719AEA20D005A7799 /* iTermSemanticHistoryController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* iTermSemanticHistoryController.h */; };
-		1D6ED8D819AEA20D005A7799 /* ProcessCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D988595135D23BD0072023F /* ProcessCache.h */; };
-		1D6ED8D919AEA20D005A7799 /* iTermProfilePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713A618F7C9F4008D94DD /* iTermProfilePreferences.h */; };
-		1D6ED8DB19AEA20D005A7799 /* iTermExposeTabView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74755188C66CF005355CF /* iTermExposeTabView.h */; };
-		1D6ED8DD19AEA20D005A7799 /* PopupModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3117186E2F54007F550F /* PopupModel.h */; };
-		1D6ED8DE19AEA20D005A7799 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
-		1D6ED8DF19AEA20D005A7799 /* CVector.h in Headers */ = {isa = PBXBuildFile; fileRef = A699BAE418C8394700D425A7 /* CVector.h */; };
-		1D6ED8E219AEA20D005A7799 /* iTermObjectPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3B518C5884600450FA1 /* iTermObjectPool.h */; };
-		1D6ED8E319AEA20D005A7799 /* iTermOpenQuicklyTableRowView.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B45931973198900F5444D /* iTermOpenQuicklyTableRowView.h */; };
-		1D6ED8E519AEA20D005A7799 /* FontSizeEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */; };
-		1D6ED8E619AEA20D005A7799 /* VT100Grid.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8B8A121806038F00C2DC25 /* VT100Grid.h */; };
-		1D6ED8E719AEA20D005A7799 /* WindowArrangements.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCA5ECD13EE507800B7725E /* WindowArrangements.h */; };
-		1D6ED8E819AEA20D005A7799 /* KeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8FEF118F3217100722B35 /* KeysPreferencesViewController.h */; };
-		1D6ED8E919AEA20D005A7799 /* PTYNoteView.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4098183B3AA7003A6A6D /* PTYNoteView.h */; };
-		1D6ED8EA19AEA20D005A7799 /* ArrangementPreviewView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */; };
-		1D6ED8EB19AEA20D005A7799 /* SplitPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8AF5613FD781700C8A435 /* SplitPanel.h */; };
-		1D6ED8EC19AEA20D005A7799 /* PTYSession+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */; };
-		1D6ED8ED19AEA20D005A7799 /* MovePaneController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D29732514082676004C5DBE /* MovePaneController.h */; };
-		1D6ED8EE19AEA20D005A7799 /* MarkTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D891E41190724DB0053C4BB /* MarkTrigger.h */; };
-		1D6ED8EF19AEA20D005A7799 /* SplitSelectionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D29732914082A52004C5DBE /* SplitSelectionView.h */; };
-		1D6ED8F019AEA20D005A7799 /* FutureMethods.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */; };
-		1D6ED8F119AEA20D005A7799 /* iTermToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* iTermToolbeltView.h */; };
-		1D6ED8F219AEA20D005A7799 /* ToolProfiles.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC8B1415546000F83147 /* ToolProfiles.h */; };
-		1D6ED8F319AEA20D005A7799 /* ToolPasteHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */; };
-		1D6ED8F419AEA20D005A7799 /* iTermToolWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DF341415799700F83147 /* iTermToolWrapper.h */; };
-		1D6ED8F519AEA20D005A7799 /* iTermDragHandleView.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B45BB197CB78B00F5444D /* iTermDragHandleView.h */; };
-		1D6ED8F619AEA20D005A7799 /* ToolJobs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D19C71214171F1D00617E08 /* ToolJobs.h */; };
-		1D6ED8F719AEA20D005A7799 /* VT100RemoteHost.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30F2186D150A007F550F /* VT100RemoteHost.h */; };
-		1D6ED8F819AEA20D005A7799 /* ToolNotes.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D67AAA714284BF300D5DA4E /* ToolNotes.h */; };
-		1D6ED8F919AEA20D005A7799 /* NSFileManager+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */; };
-		1D6ED8FA19AEA20D005A7799 /* TriggerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D31BC63142D33CA001F7ECB /* TriggerController.h */; };
-		1D6ED8FB19AEA20D005A7799 /* iTermProfilePreferencesBaseViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713A118F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.h */; };
-		1D6ED8FC19AEA20D005A7799 /* Trigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCBFC142D7BA60016228A /* Trigger.h */; };
-		1D6ED8FE19AEA20D005A7799 /* BounceTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC08142D7F300016228A /* BounceTrigger.h */; };
-		1D6ED8FF19AEA20D005A7799 /* VT100DCSParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E39D18C351F400450FA1 /* VT100DCSParser.h */; };
-		1D6ED90019AEA20D005A7799 /* PTYTab+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D5655C719AD2B1A001C460B /* PTYTab+Scripting.h */; };
-		1D6ED90119AEA20D005A7799 /* iTermLaunchServices.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713B818FCCDD1008D94DD /* iTermLaunchServices.h */; };
-		1D6ED90219AEA20D005A7799 /* BellTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC0C142D7F5F0016228A /* BellTrigger.h */; };
-		1D6ED90319AEA20D005A7799 /* iTermApplication+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D5655CC19AD2B9B001C460B /* iTermApplication+Scripting.h */; };
-		1D6ED90419AEA20D005A7799 /* VT100WorkingDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30F3186D150A007F550F /* VT100WorkingDirectory.h */; };
-		1D6ED90519AEA20D005A7799 /* ScriptTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC10142D7F970016228A /* ScriptTrigger.h */; };
-		1D6ED90619AEA20D005A7799 /* AlertTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC14142D7FC10016228A /* AlertTrigger.h */; };
-		1D6ED90819AEA20D005A7799 /* SCPPath.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30EE186D150A007F550F /* SCPPath.h */; };
-		1D6ED90919AEA20D005A7799 /* CoprocessTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DDD90142E5AC600275650 /* CoprocessTrigger.h */; };
-		1D6ED90A19AEA20D005A7799 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
-		1D6ED90B19AEA20D005A7799 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
-		1D6ED90D19AEA20D005A7799 /* Coprocess.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DDD9A142E5FBB00275650 /* Coprocess.h */; };
-		1D6ED90E19AEA20D005A7799 /* SendTextTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D24C282142EF334006B246F /* SendTextTrigger.h */; };
-		1D6ED90F19AEA20D005A7799 /* SmartSelectionController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D24C2C3142FEACF006B246F /* SmartSelectionController.h */; };
-		1D6ED91019AEA20D005A7799 /* NSMutableAttributedString+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */; };
-		1D6ED91119AEA20D005A7799 /* iTermExposeGridView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7475A188C6731005355CF /* iTermExposeGridView.h */; };
-		1D6ED91219AEA20D005A7799 /* iTermSemanticHistoryPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */; };
-		1D6ED91319AEA20D005A7799 /* SessionTitleView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */; };
-		1D6ED91419AEA20D005A7799 /* PointerPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */; };
-		1D6ED91519AEA20D005A7799 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
-		1D6ED91619AEA20D005A7799 /* PointerPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */; };
-		1D6ED91719AEA20D005A7799 /* PreferenceInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138218F263BC008D94DD /* PreferenceInfo.h */; };
-		1D6ED91819AEA20D005A7799 /* NSObject+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30EC186D150A007F550F /* NSObject+iTerm.h */; };
-		1D6ED91919AEA20D005A7799 /* PointerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FE146881EC007CAE78 /* PointerController.h */; };
-		1D6ED91A19AEA20D005A7799 /* EventMonitorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D825602146B258A007CAE78 /* EventMonitorView.h */; };
-		1D6ED91B19AEA20D005A7799 /* HighlightTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */; };
-		1D6ED91C19AEA20D005A7799 /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
-		1D6ED91D19AEA20D005A7799 /* ContextMenuActionPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D21EE39147711300066E04A /* ContextMenuActionPrefsController.h */; };
-		1D6ED91E19AEA20D005A7799 /* iTermLogoGenerator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */; };
-		1D6ED91F19AEA20D005A7799 /* LineBlock.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A2183F3B78003A6A6D /* LineBlock.h */; };
-		1D6ED92019AEA20D005A7799 /* TmuxGateway.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D21851482E0E500FAC8E7 /* TmuxGateway.h */; };
-		1D6ED92119AEA20D005A7799 /* TmuxController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D218E1482F18A00FAC8E7 /* TmuxController.h */; };
-		1D6ED92219AEA20D005A7799 /* iTermInstantReplayWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */; };
-		1D6ED92319AEA20D005A7799 /* TSVParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D21931483144600FAC8E7 /* TSVParser.h */; };
-		1D6ED92419AEA20D005A7799 /* TmuxLayoutParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D21AD14839AAB00FAC8E7 /* TmuxLayoutParser.h */; };
-		1D6ED92519AEA20D005A7799 /* TmuxWindowOpener.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */; };
-		1D6ED92719AEA20D005A7799 /* TmuxHistoryParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEF1485C578005849A1 /* TmuxHistoryParser.h */; };
-		1D6ED92819AEA20D005A7799 /* TmuxStateParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CF31486BD3D005849A1 /* TmuxStateParser.h */; };
-		1D6ED92919AEA20D005A7799 /* SolidColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC38816148E840600B89F7C /* SolidColorView.h */; };
-		1D6ED92A19AEA20D005A7799 /* IntervalMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7B9A671491D82F003A2A22 /* IntervalMap.h */; };
-		1D6ED92B19AEA20D005A7799 /* iTermSizeRememberingView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */; };
-		1D6ED92C19AEA20D005A7799 /* SmartMatch.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30C4186D0F36007F550F /* SmartMatch.h */; };
-		1D6ED92D19AEA20D005A7799 /* PTYSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD6707514934ADE008E4361 /* PTYSplitView.h */; };
-		1D6ED92E19AEA20D005A7799 /* iTermRule.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8CE03B195A143100FE1BEE /* iTermRule.h */; };
-		1D6ED92F19AEA20D005A7799 /* TmuxDashboardController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */; };
-		1D6ED93019AEA20D005A7799 /* PopupEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A310D186E2EDA007F550F /* PopupEntry.h */; };
-		1D6ED93119AEA20D005A7799 /* CommandHistoryPopup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */; };
-		1D6ED93219AEA20D005A7799 /* TmuxSessionsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA9AEE814A51CA000BEB37B /* TmuxSessionsTable.h */; };
-		1D6ED93319AEA20D005A7799 /* TmuxControllerRegistry.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */; };
-		1D6ED93419AEA20D005A7799 /* TmuxWindowsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */; };
-		1D6ED93519AEA20D005A7799 /* EquivalenceClassSet.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAE714B14AAF24200DA144B /* EquivalenceClassSet.h */; };
-		1D6ED93619AEA20D005A7799 /* iTermCommandHistoryCommandUseMO+Addtions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7474B188C6394005355CF /* iTermCommandHistoryCommandUseMO+Addtions.h */; };
-		1D6ED93719AEA20D005A7799 /* ProfilesTextPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2697C18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h */; };
-		1D6ED93819AEA20D005A7799 /* ProfileModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2214BABE8700BD5035 /* ProfileModel.h */; };
-		1D6ED93919AEA20D005A7799 /* charmaps.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2414BABE8700BD5035 /* charmaps.h */; };
-		1D6ED93A19AEA20D005A7799 /* iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2614BABE8700BD5035 /* iTerm.h */; };
-		1D6ED93B19AEA20D005A7799 /* iTermController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2714BABE8700BD5035 /* iTermController.h */; };
-		1D6ED93C19AEA20D005A7799 /* iTermKeyBindingMgr.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */; };
-		1D6ED93D19AEA20D005A7799 /* NSStringITerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2914BABE8700BD5035 /* NSStringITerm.h */; };
-		1D6ED93E19AEA20D005A7799 /* NSArray+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30EB186D150A007F550F /* NSArray+iTerm.h */; };
-		1D6ED93F19AEA20D005A7799 /* iTermAdvancedSettingsModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */; };
-		1D6ED94019AEA20D005A7799 /* PreferencePanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2A14BABE8700BD5035 /* PreferencePanel.h */; };
-		1D6ED94119AEA20D005A7799 /* PseudoTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2B14BABE8700BD5035 /* PseudoTerminal.h */; };
-		1D6ED94219AEA20D005A7799 /* PTYScrollView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2C14BABE8700BD5035 /* PTYScrollView.h */; };
-		1D6ED94319AEA20D005A7799 /* PTYSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2D14BABE8700BD5035 /* PTYSession.h */; };
-		1D6ED94419AEA20D005A7799 /* NSScreen+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B4575195F668500F5444D /* NSScreen+iTerm.h */; };
-		1D6ED94519AEA20D005A7799 /* PTYTabView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2E14BABE8700BD5035 /* PTYTabView.h */; };
-		1D6ED94619AEA20D005A7799 /* BulkCopyProfilePreferencesWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7139918F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.h */; };
-		1D6ED94719AEA20D005A7799 /* PTYTask.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2F14BABE8700BD5035 /* PTYTask.h */; };
-		1D6ED94819AEA20D005A7799 /* PTYTextView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3014BABE8700BD5035 /* PTYTextView.h */; };
-		1D6ED94919AEA20D005A7799 /* iTermCommandHistoryEntryMO+Additions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74746188C6344005355CF /* iTermCommandHistoryEntryMO+Additions.h */; };
-		1D6ED94A19AEA20D005A7799 /* iTermFlippedView.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE991915DB1F00BE8758 /* iTermFlippedView.h */; };
-		1D6ED94B19AEA20D005A7799 /* PTYWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3114BABE8700BD5035 /* PTYWindow.h */; };
-		1D6ED94C19AEA20D005A7799 /* VT100CSIParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAF18C33ED300B241ED /* VT100CSIParser.h */; };
-		1D6ED94D19AEA20D005A7799 /* VT100Screen.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3214BABE8700BD5035 /* VT100Screen.h */; };
-		1D6ED94E19AEA20D005A7799 /* CaptureTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB83950192E95EB0037E548 /* CaptureTrigger.h */; };
-		1D6ED94F19AEA20D005A7799 /* DirectoriesPopup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D03D41D191419080049EB8F /* DirectoriesPopup.h */; };
-		1D6ED95019AEA20D005A7799 /* VT100Terminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3314BABE8700BD5035 /* VT100Terminal.h */; };
-		1D6ED95119AEA20D005A7799 /* ProfileTableRow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D114BC04510097C0ED /* ProfileTableRow.h */; };
-		1D6ED95219AEA20D005A7799 /* ProfileModelWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D514BC04E20097C0ED /* ProfileModelWrapper.h */; };
-		1D6ED95319AEA20D005A7799 /* ProfileTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */; };
-		1D6ED95419AEA20D005A7799 /* ToolCapturedOutputView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB83955192E9A610037E548 /* ToolCapturedOutputView.h */; };
-		1D6ED95519AEA20D005A7799 /* iTermOpenQuicklyWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B45A219731AC500F5444D /* iTermOpenQuicklyWindow.h */; };
-		1D6ED95619AEA20D005A7799 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
-		1D6ED95719AEA20D005A7799 /* iTermHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB9D8F0183FE9EF0029F0B5 /* iTermHotKeyController.h */; };
-		1D6ED95819AEA20D005A7799 /* ProfilesAdvancedPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */; };
-		1D6ED95919AEA20D005A7799 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
-		1D6ED95A19AEA20D005A7799 /* VT100ControlParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3AC18C3588800450FA1 /* VT100ControlParser.h */; };
-		1D6ED95B19AEA20D005A7799 /* LineBufferHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */; };
-		1D6ED95C19AEA20D005A7799 /* TaskNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */; };
-		1D6ED95D19AEA20D005A7799 /* VT100AnsiParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E39818C3515900450FA1 /* VT100AnsiParser.h */; };
-		1D6ED95E19AEA20D005A7799 /* ProfilePreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7139118F50762008D94DD /* ProfilePreferencesViewController.h */; };
-		1D6ED95F19AEA20D005A7799 /* iTermOpenQuicklyModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B45AC19731D3200F5444D /* iTermOpenQuicklyModel.h */; };
-		1D6ED96019AEA20D005A7799 /* BackgroundThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA26ABE15007507004B5792 /* BackgroundThread.h */; };
-		1D6ED96119AEA20D005A7799 /* iTermFontPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */; };
-		1D6ED96419AEA20D005A7799 /* iTermTextExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */; };
-		1D6ED96519AEA20D005A7799 /* PTYFontInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D70BA331680158700824B72 /* PTYFontInfo.h */; };
-		1D6ED96619AEA20D005A7799 /* ThreeFingerTapGestureRecognizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6944D5169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h */; };
-		1D6ED96719AEA20D005A7799 /* PasteContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F8416F02E7400B7FCE9 /* PasteContext.h */; };
-		1D6ED96819AEA20D005A7799 /* PasteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F8A16F0328B00B7FCE9 /* PasteViewController.h */; };
-		1D6ED96919AEA20D005A7799 /* PasteView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F9016F03E5400B7FCE9 /* PasteView.h */; };
-		1D6ED96A19AEA20D005A7799 /* NSMutableData+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */; };
-		1D6ED96B19AEA20D005A7799 /* iTermNewWindowCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */; };
-		1D6ED96C19AEA20D005A7799 /* iTermExposeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74750188C6692005355CF /* iTermExposeWindow.h */; };
-		1D6ED96D19AEA20D005A7799 /* NSBezierPath+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F9416F04D0900B7FCE9 /* NSBezierPath+iTerm.h */; };
-		1D6ED96E19AEA20D005A7799 /* PasteEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F9816F1135F00B7FCE9 /* PasteEvent.h */; };
-		1D6ED96F19AEA20D005A7799 /* RoundedRectView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F9C16F137D900B7FCE9 /* RoundedRectView.h */; };
-		1D6ED97019AEA20D005A7799 /* ToastWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085FA016F138A000B7FCE9 /* ToastWindowController.h */; };
-		1D6ED97119AEA20D005A7799 /* MovingAverage.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9053C417A5CCF100A0B64E /* MovingAverage.h */; };
-		1D6ED97319AEA20D005A7799 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
-		1D6ED97619AEA20D005A7799 /* close.png in Resources */ = {isa = PBXBuildFile; fileRef = FB094A16033D58B601F955DB /* close.png */; };
-		1D6ED97719AEA20D005A7799 /* config.png in Resources */ = {isa = PBXBuildFile; fileRef = FB754C5F036EFC5301F955DB /* config.png */; };
-		1D6ED97919AEA20D005A7799 /* important.png in Resources */ = {isa = PBXBuildFile; fileRef = FBB2EBCD040AC7C201F955DB /* important.png */; };
-		1D6ED97B19AEA20D005A7799 /* newwin.png in Resources */ = {isa = PBXBuildFile; fileRef = FB896717038D935801F955DB /* newwin.png */; };
-		1D6ED97E19AEA20D005A7799 /* QuestionMarkSign.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */; };
-		1D6ED98019AEA20D005A7799 /* QuestionMarkSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */; };
-		1D6ED98719AEA20D005A7799 /* Maximized.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CA1949165D005769D5 /* Maximized.png */; };
-		1D6ED98A19AEA20D005A7799 /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
-		1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576E09CB93C2008F320C /* TabNewMetal.png */; };
-		1D6ED99119AEA20D005A7799 /* TabNewMetalPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */; };
-		1D6ED99219AEA20D005A7799 /* TabNewMetalRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577009CB93C2008F320C /* TabNewMetalRollover.png */; };
-		1D6ED99319AEA20D005A7799 /* Therm.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* Therm.sdef */; };
-		1D6ED99519AEA20D005A7799 /* BrokenPipeDivider.png in Resources */ = {isa = PBXBuildFile; fileRef = A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */; };
-		1D6ED99619AEA20D005A7799 /* PrefsAdvanced@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117F18D82B9500B23C7B /* PrefsAdvanced@2x.png */; };
-		1D6ED99719AEA20D005A7799 /* Warning.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577109CB93C2008F320C /* Warning.png */; };
-		1D6ED99819AEA20D005A7799 /* dead@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FBA19830C37007A4284 /* dead@2x.png */; };
-		1D6ED99D19AEA20D005A7799 /* dead.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FB919830C37007A4284 /* dead.png */; };
-		1D6ED99E19AEA20D005A7799 /* dsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = 93A6FEF910685E9900A5F905 /* dsa_pub.pem */; };
-		1D6ED9A119AEA20D005A7799 /* PresetKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */; };
-		1D6ED9A219AEA20D005A7799 /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
-		1D6ED9A319AEA20D005A7799 /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
-		1D6ED9A519AEA20D005A7799 /* MigrationMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */; };
-		1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
-		1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
-		1D6ED9AA19AEA20D005A7799 /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
-		1D6ED9AC19AEA20D005A7799 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
-		1D6ED9B519AEA20D005A7799 /* bell.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA02CFA1327612600D7E7DB /* bell.png */; };
-		1D6ED9B819AEA20D005A7799 /* wrap_to_bottom.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */; };
-		1D6ED9B919AEA20D005A7799 /* wrap_to_top.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */; };
-		1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D395912134E75B5005A8021 /* SmartSelectionRules.plist */; };
-		1D6ED9BC19AEA20D005A7799 /* closebutton.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101118DFA7D5007E901D /* closebutton.png */; };
-		1D6ED9BD19AEA20D005A7799 /* BroadcastInput.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */; };
-		1D6ED9BF19AEA20D005A7799 /* closebutton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101018DFA7D5007E901D /* closebutton@2x.png */; };
-		1D6ED9C019AEA20D005A7799 /* IBarCursorXMR.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */; };
-		1D6ED9C119AEA20D005A7799 /* Coprocess.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D9DDE9D142E855D00275650 /* Coprocess.png */; };
-		1D6ED9C319AEA20D005A7799 /* Maximized@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CB1949165D005769D5 /* Maximized@2x.png */; };
-		1D6ED9C419AEA20D005A7799 /* DefaultPointerActions.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */; };
-		1D6ED9C519AEA20D005A7799 /* LogoShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5E19988A7300BB57EC /* LogoShadow.png */; };
-		1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */; };
-		1D6ED9CA19AEA20D005A7799 /* IBarCursorXMR@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */; };
-		1D6ED9CE19AEA20D005A7799 /* TabClose_Front_Rollover@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */; };
-		1D6ED9D119AEA20D005A7799 /* TabClose_Front_Pressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27F165F362B000046EE /* TabClose_Front_Pressed@2x.png */; };
-		1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B280165F362B000046EE /* TabClose_Front@2x.png */; };
-		1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B287165F3669000046EE /* TabClose_Front_Pressed.png */; };
-		1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC319468A40006BAF5C /* TabClose_Front_Rollover.png */; };
-		1D6ED9D519AEA20D005A7799 /* TabClose_Front.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B288165F3669000046EE /* TabClose_Front.png */; };
-		1D6ED9D919AEA20D005A7799 /* important@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B291165F405A000046EE /* important@2x.png */; };
-		1D6ED9DA19AEA20D005A7799 /* Alert@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6C185F889600300319 /* Alert@2x.png */; };
-		1D6ED9DC19AEA20D005A7799 /* PrefsGeneral.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D737D5D17495B4100B3334D /* PrefsGeneral.png */; };
-		1D6ED9DD19AEA20D005A7799 /* NewOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FBF19830F0D007A4284 /* NewOutput.png */; };
-		1D6ED9DE19AEA20D005A7799 /* PrefsAdvanced.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */; };
-		1D6ED9DF19AEA20D005A7799 /* PrefsGeneral@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D737D5E17495B4100B3334D /* PrefsGeneral@2x.png */; };
-		1D6ED9E019AEA20D005A7799 /* PrefsAppearance.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6DE176C8F0B0071CCF8 /* PrefsAppearance.png */; };
-		1D6ED9E119AEA20D005A7799 /* broken_image.png in Resources */ = {isa = PBXBuildFile; fileRef = A6057C161883D12E004A60AF /* broken_image.png */; };
-		1D6ED9E219AEA20D005A7799 /* PrefsAppearance@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6DF176C8F0B0071CCF8 /* PrefsAppearance@2x.png */; };
-		1D6ED9E319AEA20D005A7799 /* Alert.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6B185F889600300319 /* Alert.png */; };
-		1D6ED9E419AEA20D005A7799 /* PrefsProfile.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6E2176CB4D80071CCF8 /* PrefsProfile.png */; };
-		1D6ED9E519AEA20D005A7799 /* PrefsProfile@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6E3176CB4D80071CCF8 /* PrefsProfile@2x.png */; };
-		1D6ED9E619AEA20D005A7799 /* PrefsKeyboard.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6E6176CBC0C0071CCF8 /* PrefsKeyboard.png */; };
-		1D6ED9E719AEA20D005A7799 /* PrefsKeyboard@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6E7176CBC0C0071CCF8 /* PrefsKeyboard@2x.png */; };
-		1D6ED9E819AEA20D005A7799 /* PrefsMouse.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EA176CC47E0071CCF8 /* PrefsMouse.png */; };
-		1D6ED9EA19AEA20D005A7799 /* PrefsMouse@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EB176CC47E0071CCF8 /* PrefsMouse@2x.png */; };
-		1D6ED9EB19AEA20D005A7799 /* PrefsArrangements.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EE176CCABE0071CCF8 /* PrefsArrangements.png */; };
-		1D6ED9EC19AEA20D005A7799 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
-		1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
-		1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */; };
-		1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB2F006CD2EC7F000001 /* AppKit.framework */; };
-		1D6EDAFC19AEA20D005A7799 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
-		1D6EDAFD19AEA20D005A7799 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF0897013DBAF4C00A52AD8 /* Quartz.framework */; };
 		1D70BA351680158700824B72 /* PTYFontInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D70BA331680158700824B72 /* PTYFontInfo.h */; };
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
 		1D72A4D51BE9707A0042174A /* iTermWebViewWrapperViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72A4D31BE9707A0042174A /* iTermWebViewWrapperViewController.h */; };
@@ -977,31 +639,22 @@
 		1D891E43190724DB0053C4BB /* MarkTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D891E41190724DB0053C4BB /* MarkTrigger.h */; };
 		1D8B8A141806038F00C2DC25 /* VT100Grid.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8B8A121806038F00C2DC25 /* VT100Grid.h */; };
 		1D8BBA5A1B30E9AF0005A852 /* iTermTipCardActionButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA581B30E9AF0005A852 /* iTermTipCardActionButton.h */; };
-		1D8BBA5B1B30E9AF0005A852 /* iTermTipCardActionButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA581B30E9AF0005A852 /* iTermTipCardActionButton.h */; };
 		1D8BBA681B30F5C30005A852 /* Navigate.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA661B30F5C30005A852 /* Navigate.png */; };
 		1D8BBA691B30F5C30005A852 /* Navigate.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA661B30F5C30005A852 /* Navigate.png */; };
-		1D8BBA6A1B30F5C30005A852 /* Navigate.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA661B30F5C30005A852 /* Navigate.png */; };
 		1D8BBA6B1B30F5C30005A852 /* Navigate@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA671B30F5C30005A852 /* Navigate@2x.png */; };
 		1D8BBA6C1B30F5C30005A852 /* Navigate@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA671B30F5C30005A852 /* Navigate@2x.png */; };
-		1D8BBA6D1B30F5C30005A852 /* Navigate@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA671B30F5C30005A852 /* Navigate@2x.png */; };
 		1D8BBA701B30F7FB0005A852 /* Dismiss@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA6E1B30F7FB0005A852 /* Dismiss@2x.png */; };
 		1D8BBA711B30F7FB0005A852 /* Dismiss@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA6E1B30F7FB0005A852 /* Dismiss@2x.png */; };
-		1D8BBA721B30F7FB0005A852 /* Dismiss@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA6E1B30F7FB0005A852 /* Dismiss@2x.png */; };
 		1D8BBA731B30F7FB0005A852 /* Dismiss.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA6F1B30F7FB0005A852 /* Dismiss.png */; };
 		1D8BBA741B30F7FB0005A852 /* Dismiss.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA6F1B30F7FB0005A852 /* Dismiss.png */; };
-		1D8BBA751B30F7FB0005A852 /* Dismiss.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA6F1B30F7FB0005A852 /* Dismiss.png */; };
 		1D8BBA781B30FD230005A852 /* Later.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA761B30FD230005A852 /* Later.png */; };
 		1D8BBA791B30FD230005A852 /* Later.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA761B30FD230005A852 /* Later.png */; };
-		1D8BBA7A1B30FD230005A852 /* Later.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA761B30FD230005A852 /* Later.png */; };
 		1D8BBA7B1B30FD230005A852 /* Later@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA771B30FD230005A852 /* Later@2x.png */; };
 		1D8BBA7C1B30FD230005A852 /* Later@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA771B30FD230005A852 /* Later@2x.png */; };
-		1D8BBA7D1B30FD230005A852 /* Later@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA771B30FD230005A852 /* Later@2x.png */; };
 		1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA801B31DC0D0005A852 /* ChevronDown.png */; };
 		1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
 		1D8BBA861B31DC140005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
-		1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
 		1D8BBA911B33529E0005A852 /* iTermTip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA8F1B33529E0005A852 /* iTermTip.h */; };
-		1D8BBA931B33529E0005A852 /* iTermTip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA8F1B33529E0005A852 /* iTermTip.h */; };
 		1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
 		1D8CDF521958F31700FE1BEE /* iTermSizeRememberingView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */; };
 		1D8CE03D195A143100FE1BEE /* iTermRule.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8CE03B195A143100FE1BEE /* iTermRule.h */; };
@@ -1015,10 +668,8 @@
 		1D988597135D23BD0072023F /* ProcessCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D988595135D23BD0072023F /* ProcessCache.h */; };
 		1D99C8E41BD59C37001EE1FC /* SearchCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D99C8E21BD59C37001EE1FC /* SearchCursor.png */; };
 		1D99C8E51BD59C37001EE1FC /* SearchCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D99C8E21BD59C37001EE1FC /* SearchCursor.png */; };
-		1D99C8E61BD59C37001EE1FC /* SearchCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D99C8E21BD59C37001EE1FC /* SearchCursor.png */; };
 		1D99C8E71BD59C37001EE1FC /* SearchCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D99C8E31BD59C37001EE1FC /* SearchCursor@2x.png */; };
 		1D99C8E81BD59C37001EE1FC /* SearchCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D99C8E31BD59C37001EE1FC /* SearchCursor@2x.png */; };
-		1D99C8E91BD59C37001EE1FC /* SearchCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D99C8E31BD59C37001EE1FC /* SearchCursor@2x.png */; };
 		1D9A5533180FA77900B42CE9 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D9A5534180FA77F00B42CE9 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF0897013DBAF4C00A52AD8 /* Quartz.framework */; };
 		1D9A55B5180FA8F400B42CE9 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD9180B8118004E56D5 /* AppKit.framework */; };
@@ -1035,23 +686,17 @@
 		1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */; };
 		1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */; };
 		1DA1C1F21A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
-		1DA1C1F41A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
 		1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA26ABE15007507004B5792 /* BackgroundThread.h */; };
 		1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */; };
 		1DA34E05165F268F00AA91C4 /* IBarCursorXMR@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */; };
 		1DA3E2BA1970ACBE00001E6E /* iTermLogoGenerator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */; };
 		1DA76A061B30892900CB272A /* iTermTipWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA76A031B30892900CB272A /* iTermTipWindowController.h */; };
-		1DA76A071B30892900CB272A /* iTermTipWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA76A031B30892900CB272A /* iTermTipWindowController.h */; };
 		1DA76A0B1B30892900CB272A /* iTermTipWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DA76A051B30892900CB272A /* iTermTipWindowController.xib */; };
 		1DA76A0C1B30892900CB272A /* iTermTipWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DA76A051B30892900CB272A /* iTermTipWindowController.xib */; };
-		1DA76A0D1B30892900CB272A /* iTermTipWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DA76A051B30892900CB272A /* iTermTipWindowController.xib */; };
 		1DA76A101B30895600CB272A /* iTermTipRootView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA76A0E1B30895600CB272A /* iTermTipRootView.h */; };
-		1DA76A111B30895600CB272A /* iTermTipRootView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA76A0E1B30895600CB272A /* iTermTipRootView.h */; };
 		1DA76A1F1B308AD000CB272A /* iTermTipCardViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA76A1C1B308AD000CB272A /* iTermTipCardViewController.h */; };
-		1DA76A201B308AD000CB272A /* iTermTipCardViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA76A1C1B308AD000CB272A /* iTermTipCardViewController.h */; };
 		1DA76A241B308AD000CB272A /* iTermTipCardViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DA76A1E1B308AD000CB272A /* iTermTipCardViewController.xib */; };
 		1DA76A251B308AD000CB272A /* iTermTipCardViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DA76A1E1B308AD000CB272A /* iTermTipCardViewController.xib */; };
-		1DA76A261B308AD000CB272A /* iTermTipCardViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DA76A1E1B308AD000CB272A /* iTermTipCardViewController.xib */; };
 		1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */; };
 		1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA9AEE814A51CA000BEB37B /* TmuxSessionsTable.h */; };
 		1DABA03319253FEA00A228D8 /* PasswordTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DABA03119253FEA00A228D8 /* PasswordTrigger.h */; };
@@ -1061,11 +706,8 @@
 		1DB40A401B1FDC75005B83C7 /* NoColor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB40A3E1B1FDC75005B83C7 /* NoColor.png */; };
 		1DB40A411B1FDC75005B83C7 /* NoColor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB40A3F1B1FDC75005B83C7 /* NoColor@2x.png */; };
 		1DB40A421B1FDC7F005B83C7 /* NoColor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB40A3F1B1FDC75005B83C7 /* NoColor@2x.png */; };
-		1DB40A431B1FDC80005B83C7 /* NoColor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB40A3F1B1FDC75005B83C7 /* NoColor@2x.png */; };
 		1DB40AA11B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40A9F1B221028005B83C7 /* iTermNoColorAccessoryButton.h */; };
-		1DB40AA21B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40A9F1B221028005B83C7 /* iTermNoColorAccessoryButton.h */; };
 		1DB40AB51B27B577005B83C7 /* PTYTabDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */; };
-		1DB40AB61B27B577005B83C7 /* PTYTabDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */; };
 		1DB67CED14850D53005849A1 /* TmuxWindowOpener.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */; };
 		1DB67CF11485C578005849A1 /* TmuxHistoryParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEF1485C578005849A1 /* TmuxHistoryParser.h */; };
 		1DB67CF51486BD3D005849A1 /* TmuxStateParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CF31486BD3D005849A1 /* TmuxStateParser.h */; };
@@ -1077,10 +719,8 @@
 		1DBB4B371901F12400832B09 /* ProfilesSessionPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DBB4B351901F12400832B09 /* ProfilesSessionPreferencesViewController.h */; };
 		1DBBA5DE1B3CB0590026E3B6 /* restore-arrangement.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DBBA5DC1B3CB0590026E3B6 /* restore-arrangement.png */; };
 		1DBBA5DF1B3CB0590026E3B6 /* restore-arrangement.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DBBA5DC1B3CB0590026E3B6 /* restore-arrangement.png */; };
-		1DBBA5E01B3CB0590026E3B6 /* restore-arrangement.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DBBA5DC1B3CB0590026E3B6 /* restore-arrangement.png */; };
 		1DBBA5E11B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DBBA5DD1B3CB0590026E3B6 /* restore-arrangement@2x.png */; };
 		1DBBA5E21B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DBBA5DD1B3CB0590026E3B6 /* restore-arrangement@2x.png */; };
-		1DBBA5E31B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DBBA5DD1B3CB0590026E3B6 /* restore-arrangement@2x.png */; };
 		1DC13AC318864E2200034DAE /* CommandHistoryPopup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */; };
 		1DC2A1CC1949165D005769D5 /* Maximized.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CA1949165D005769D5 /* Maximized.png */; };
 		1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CA1949165D005769D5 /* Maximized.png */; };
@@ -1121,19 +761,15 @@
 		1DE8DF361415799700F83147 /* iTermToolWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DF341415799700F83147 /* iTermToolWrapper.h */; };
 		1DE922E61AC3709200965876 /* BackgroundStripes.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E51AC3709200965876 /* BackgroundStripes.png */; };
 		1DE922E71AC3709200965876 /* BackgroundStripes.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E51AC3709200965876 /* BackgroundStripes.png */; };
-		1DE922E81AC3709200965876 /* BackgroundStripes.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E51AC3709200965876 /* BackgroundStripes.png */; };
 		1DE922EA1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E91AC370DC00965876 /* BackgroundStripes@2x.png */; };
 		1DE922EB1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E91AC370DC00965876 /* BackgroundStripes@2x.png */; };
-		1DE922EC1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E91AC370DC00965876 /* BackgroundStripes@2x.png */; };
 		1DECF96B1BD948CC00E75FEB /* iTermQuickLookController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DECF9691BD948CC00E75FEB /* iTermQuickLookController.h */; };
 		1DECF96C1BD948CC00E75FEB /* iTermQuickLookController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DECF96A1BD948CC00E75FEB /* iTermQuickLookController.m */; };
 		1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */; };
 		1DEDF56919C917FD005B023A /* new-tab.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56719C917FD005B023A /* new-tab.png */; };
 		1DEDF56A19C917FD005B023A /* new-tab.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56719C917FD005B023A /* new-tab.png */; };
-		1DEDF56B19C917FD005B023A /* new-tab.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56719C917FD005B023A /* new-tab.png */; };
 		1DEDF56C19C917FD005B023A /* new-tab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56819C917FD005B023A /* new-tab@2x.png */; };
 		1DEDF56D19C917FD005B023A /* new-tab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56819C917FD005B023A /* new-tab@2x.png */; };
-		1DEDF56E19C917FD005B023A /* new-tab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56819C917FD005B023A /* new-tab@2x.png */; };
 		1DEF5E6D185F889600300319 /* Alert.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6B185F889600300319 /* Alert.png */; };
 		1DEF5E6E185F889600300319 /* Alert.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6B185F889600300319 /* Alert.png */; };
 		1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6C185F889600300319 /* Alert@2x.png */; };
@@ -1203,34 +839,25 @@
 		A60BB3851EB54B6700D76C09 /* CopyMode@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */; };
 		A60BB3861EB54BD100D76C09 /* CopyMode.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3821EB54B6700D76C09 /* CopyMode.png */; };
 		A60BB3871EB54BD200D76C09 /* CopyMode.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3821EB54B6700D76C09 /* CopyMode.png */; };
-		A60BB3881EB54BD300D76C09 /* CopyMode.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3821EB54B6700D76C09 /* CopyMode.png */; };
 		A60BB3891EB54BD700D76C09 /* CopyMode@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */; };
 		A60BB38A1EB54BD800D76C09 /* CopyMode@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */; };
-		A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */; };
 		A60BB38E1EB6A08A00D76C09 /* iTermProcessCollection.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BB38C1EB6A08A00D76C09 /* iTermProcessCollection.h */; };
 		A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB38D1EB6A08A00D76C09 /* iTermProcessCollection.m */; };
 		A60BB3911EB6A56800D76C09 /* iTermProcessCollectionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB3901EB6A56800D76C09 /* iTermProcessCollectionTest.m */; };
 		A60BB3921EB6A56800D76C09 /* iTermProcessCollectionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB3901EB6A56800D76C09 /* iTermProcessCollectionTest.m */; };
 		A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		A60D85A81A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
-		A60D85A91A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
 		A6184F8A1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
-		A6184F8B1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
 		A6184F8D1BAB3EFB0088EF3C /* ColorPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		A6184F8E1BAB3F090088EF3C /* ColorPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A61ABBBB1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
-		A61ABBBC1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
 		A61ABBC21AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */; };
-		A61ABBC31AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */; };
 		A61B66CA18D4D855009AC9D5 /* NSView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */; };
 		A61B66CF18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */; };
 		A61CEAA71C72EA4C00939E97 /* iTermWeakReferenceTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A61CEAA51C72EA4C00939E97 /* iTermWeakReferenceTest.m */; };
 		A61D16FC1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
-		A61D16FD1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
 		A61F8E301E62591800D315D0 /* iTermFakeUserDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */; };
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A62A1AE31AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
-		A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1F6E1E6BEA7900363EE9 /* DVR.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D33312695442007F741B /* DVR.h */; };
 		A62A1F711E6E724B00363EE9 /* iTermMenuOpener.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1F6F1E6E724B00363EE9 /* iTermMenuOpener.h */; };
 		A62A1F721E6E724B00363EE9 /* iTermMenuOpener.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1F701E6E724B00363EE9 /* iTermMenuOpener.m */; };
@@ -1297,58 +924,38 @@
 		A647E3B718C5884600450FA1 /* iTermObjectPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3B518C5884600450FA1 /* iTermObjectPool.h */; };
 		A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
 		A65B72531B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
-		A65B72541B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
 		A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72511B1A5D7500F947A7 /* WarningSign@2x.png */; };
 		A65B72561B1A5D7500F947A7 /* WarningSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72511B1A5D7500F947A7 /* WarningSign@2x.png */; };
-		A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72511B1A5D7500F947A7 /* WarningSign@2x.png */; };
 		A65B725A1B1A630100F947A7 /* CheckMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72581B1A630100F947A7 /* CheckMark.png */; };
 		A65B725B1B1A630100F947A7 /* CheckMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72581B1A630100F947A7 /* CheckMark.png */; };
-		A65B725C1B1A630100F947A7 /* CheckMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72581B1A630100F947A7 /* CheckMark.png */; };
 		A65B725D1B1A630100F947A7 /* CheckMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72591B1A630100F947A7 /* CheckMark@2x.png */; };
 		A65B725E1B1A630100F947A7 /* CheckMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72591B1A630100F947A7 /* CheckMark@2x.png */; };
-		A65B725F1B1A630100F947A7 /* CheckMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72591B1A630100F947A7 /* CheckMark@2x.png */; };
 		A65B726D1B23559A00F947A7 /* iTermFileDescriptorSocketPath.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B72691B23559A00F947A7 /* iTermFileDescriptorSocketPath.h */; };
-		A65B726E1B23559A00F947A7 /* iTermFileDescriptorSocketPath.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B72691B23559A00F947A7 /* iTermFileDescriptorSocketPath.h */; };
 		A65B72711B248F1800F947A7 /* iTermOrphanServerAdopter.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B726F1B248F1800F947A7 /* iTermOrphanServerAdopter.h */; };
-		A65B72721B248F1800F947A7 /* iTermOrphanServerAdopter.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B726F1B248F1800F947A7 /* iTermOrphanServerAdopter.h */; };
 		A65B72781B2BF2D200F947A7 /* iTermProfilesPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B72761B2BF2D200F947A7 /* iTermProfilesPanel.h */; };
-		A65B72791B2BF2D200F947A7 /* iTermProfilesPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B72761B2BF2D200F947A7 /* iTermProfilesPanel.h */; };
 		A65B72A21B3134FB00F947A7 /* iTermTipController.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B72A01B3134FB00F947A7 /* iTermTipController.h */; };
-		A65B72A31B3134FB00F947A7 /* iTermTipController.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B72A01B3134FB00F947A7 /* iTermTipController.h */; };
 		A65B72A91B3285A300F947A7 /* DisableTips.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72A71B3285A300F947A7 /* DisableTips.png */; };
 		A65B72AA1B3285A300F947A7 /* DisableTips.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72A71B3285A300F947A7 /* DisableTips.png */; };
-		A65B72AB1B3285A300F947A7 /* DisableTips.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72A71B3285A300F947A7 /* DisableTips.png */; };
 		A65B72AC1B3285A300F947A7 /* DisableTips@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72A81B3285A300F947A7 /* DisableTips@2x.png */; };
 		A65B72AD1B3285A300F947A7 /* DisableTips@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72A81B3285A300F947A7 /* DisableTips@2x.png */; };
-		A65B72AE1B3285A300F947A7 /* DisableTips@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72A81B3285A300F947A7 /* DisableTips@2x.png */; };
 		A65B72B11B33C07D00F947A7 /* NextTip.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72AF1B33C07D00F947A7 /* NextTip.png */; };
 		A65B72B21B33C07D00F947A7 /* NextTip.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72AF1B33C07D00F947A7 /* NextTip.png */; };
-		A65B72B31B33C07D00F947A7 /* NextTip.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72AF1B33C07D00F947A7 /* NextTip.png */; };
 		A65B72B41B33C07D00F947A7 /* NextTip@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72B01B33C07D00F947A7 /* NextTip@2x.png */; };
 		A65B72B51B33C07D00F947A7 /* NextTip@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72B01B33C07D00F947A7 /* NextTip@2x.png */; };
-		A65B72B61B33C07D00F947A7 /* NextTip@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72B01B33C07D00F947A7 /* NextTip@2x.png */; };
 		A65EC02F1F31800300AC0A6B /* iTermUpdateCadenceController.h in Headers */ = {isa = PBXBuildFile; fileRef = A65EC02D1F31800300AC0A6B /* iTermUpdateCadenceController.h */; };
 		A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */ = {isa = PBXBuildFile; fileRef = A65EC02E1F31800300AC0A6B /* iTermUpdateCadenceController.m */; };
 		A65EC0331F3181E700AC0A6B /* NSTimer+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A65EC0311F3181E700AC0A6B /* NSTimer+iTerm.h */; };
 		A65EC0341F3181E700AC0A6B /* NSTimer+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A65EC0321F3181E700AC0A6B /* NSTimer+iTerm.m */; };
 		A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
-		A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010B19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */; };
 		A663010C19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */; };
-		A663010D19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */; };
 		A663011019CFE41A004AF81C /* iTermAboutWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A663010E19CFE41A004AF81C /* iTermAboutWindow.h */; };
-		A663011119CFE41A004AF81C /* iTermAboutWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A663010E19CFE41A004AF81C /* iTermAboutWindow.h */; };
 		A663011719CFE450004AF81C /* iTermAboutWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A663011519CFE450004AF81C /* iTermAboutWindowController.h */; };
-		A663011819CFE450004AF81C /* iTermAboutWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A663011519CFE450004AF81C /* iTermAboutWindowController.h */; };
 		A663012819D0864C004AF81C /* SCConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012219D0864C004AF81C /* SCConstants.h */; };
-		A663012919D0864C004AF81C /* SCConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012219D0864C004AF81C /* SCConstants.h */; };
 		A663012A19D0864C004AF81C /* SCEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012319D0864C004AF81C /* SCEvent.h */; };
-		A663012B19D0864C004AF81C /* SCEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012319D0864C004AF81C /* SCEvent.h */; };
 		A663012F19D0864C004AF81C /* SCEventListenerProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012519D0864C004AF81C /* SCEventListenerProtocol.h */; };
-		A663013019D0864C004AF81C /* SCEventListenerProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012519D0864C004AF81C /* SCEventListenerProtocol.h */; };
 		A663013119D0864C004AF81C /* SCEvents.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012619D0864C004AF81C /* SCEvents.h */; };
-		A663013219D0864C004AF81C /* SCEvents.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012619D0864C004AF81C /* SCEvents.h */; };
 		A66444BA1DEEA534000AC615 /* iTermDisclosableView.h in Headers */ = {isa = PBXBuildFile; fileRef = A66444B81DEEA534000AC615 /* iTermDisclosableView.h */; };
 		A66444BB1DEEA534000AC615 /* iTermDisclosableView.m in Sources */ = {isa = PBXBuildFile; fileRef = A66444B91DEEA534000AC615 /* iTermDisclosableView.m */; };
 		A667190A1DCE36C3000CE608 /* iTermRootTerminalView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BDB0B91B470CBE00F511E6 /* iTermRootTerminalView.h */; };
@@ -1418,7 +1025,6 @@
 		A66719551DCE36C3000CE608 /* iTermAutomaticProfileSwitcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EEA6661C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h */; };
 		A66719561DCE36C3000CE608 /* iTermRecentDirectoryMO.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B211BCC24AB00B5629D /* iTermRecentDirectoryMO.h */; };
 		A66719691DCE3965000CE608 /* libThermSharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libThermSharedARC.a */; };
-		A667196A1DCE396A000CE608 /* libThermSharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libThermSharedARC.a */; };
 		A667196B1DCE3970000CE608 /* libThermSharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libThermSharedARC.a */; };
 		A667F3871B48615900705186 /* iTermToolbeltTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F3861B48615900705186 /* iTermToolbeltTest.m */; };
 		A667F3881B48671B00705186 /* libThermShared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libThermShared.a */; };
@@ -1432,10 +1038,8 @@
 		A668E8A21E7EFEA5005F8758 /* iTermURLStore.h in Headers */ = {isa = PBXBuildFile; fileRef = A668E8A01E7EFEA5005F8758 /* iTermURLStore.h */; };
 		A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */ = {isa = PBXBuildFile; fileRef = A668E8A11E7EFEA5005F8758 /* iTermURLStore.m */; };
 		A66A1FA81A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */; };
-		A66A1FA91A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */; };
 		A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
 		A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
-		A66A1FB01A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
 		A66B71231C826F4500D461E2 /* iTermTextExtractorTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */; };
 		A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = A66BFADA1CD072DB00DA2346 /* iTermThroughputEstimator.h */; };
 		A66BFADD1CD072DB00DA2346 /* iTermThroughputEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = A66BFADB1CD072DB00DA2346 /* iTermThroughputEstimator.m */; };
@@ -1473,111 +1077,75 @@
 		A67778CD1CFFAE8D00DEED78 /* NSApplication+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F38A1B48AEF200705186 /* NSApplication+iTerm.m */; };
 		A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
 		A67D0D331A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
-		A67D0D341A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
 		A67D0D351A2EE12A003A8B35 /* AddressBook.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D121A2EE12A003A8B35 /* AddressBook.strings */; };
 		A67D0D361A2EE12A003A8B35 /* AddressBook.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D121A2EE12A003A8B35 /* AddressBook.strings */; };
-		A67D0D371A2EE12A003A8B35 /* AddressBook.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D121A2EE12A003A8B35 /* AddressBook.strings */; };
 		A67D0D381A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D131A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib */; };
 		A67D0D391A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D131A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib */; };
-		A67D0D3A1A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D131A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib */; };
 		A67D0D3B1A2EE12A003A8B35 /* Autocomplete.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D141A2EE12A003A8B35 /* Autocomplete.xib */; };
 		A67D0D3C1A2EE12A003A8B35 /* Autocomplete.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D141A2EE12A003A8B35 /* Autocomplete.xib */; };
-		A67D0D3D1A2EE12A003A8B35 /* Autocomplete.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D141A2EE12A003A8B35 /* Autocomplete.xib */; };
 		A67D0D411A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D161A2EE12A003A8B35 /* ProfilesWindow.xib */; };
 		A67D0D421A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D161A2EE12A003A8B35 /* ProfilesWindow.xib */; };
-		A67D0D431A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D161A2EE12A003A8B35 /* ProfilesWindow.xib */; };
 		A67D0D441A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D171A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib */; };
 		A67D0D451A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D171A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib */; };
-		A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D171A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib */; };
 		A67D0D471A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D181A2EE12A003A8B35 /* CommandHistoryPopup.xib */; };
 		A67D0D481A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D181A2EE12A003A8B35 /* CommandHistoryPopup.xib */; };
-		A67D0D491A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D181A2EE12A003A8B35 /* CommandHistoryPopup.xib */; };
 		A67D0D4A1A2EE12A003A8B35 /* configPanel.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D191A2EE12A003A8B35 /* configPanel.strings */; };
 		A67D0D4B1A2EE12A003A8B35 /* configPanel.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D191A2EE12A003A8B35 /* configPanel.strings */; };
-		A67D0D4C1A2EE12A003A8B35 /* configPanel.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D191A2EE12A003A8B35 /* configPanel.strings */; };
 		A67D0D4D1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1A1A2EE12A003A8B35 /* DirectoriesPopup.xib */; };
 		A67D0D4E1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1A1A2EE12A003A8B35 /* DirectoriesPopup.xib */; };
-		A67D0D4F1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1A1A2EE12A003A8B35 /* DirectoriesPopup.xib */; };
 		A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1B1A2EE12A003A8B35 /* FindView.xib */; };
 		A67D0D511A2EE12A003A8B35 /* FindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1B1A2EE12A003A8B35 /* FindView.xib */; };
-		A67D0D521A2EE12A003A8B35 /* FindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1B1A2EE12A003A8B35 /* FindView.xib */; };
 		A67D0D531A2EE12A003A8B35 /* GlobalSearch.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1C1A2EE12A003A8B35 /* GlobalSearch.xib */; };
 		A67D0D541A2EE12A003A8B35 /* GlobalSearch.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1C1A2EE12A003A8B35 /* GlobalSearch.xib */; };
-		A67D0D551A2EE12A003A8B35 /* GlobalSearch.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1C1A2EE12A003A8B35 /* GlobalSearch.xib */; };
 		A67D0D561A2EE12A003A8B35 /* InstantReplay.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1D1A2EE12A003A8B35 /* InstantReplay.xib */; };
 		A67D0D571A2EE12A003A8B35 /* InstantReplay.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1D1A2EE12A003A8B35 /* InstantReplay.xib */; };
-		A67D0D581A2EE12A003A8B35 /* InstantReplay.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1D1A2EE12A003A8B35 /* InstantReplay.xib */; };
 		A67D0D591A2EE12A003A8B35 /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1E1A2EE12A003A8B35 /* iTerm.strings */; };
 		A67D0D5A1A2EE12A003A8B35 /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1E1A2EE12A003A8B35 /* iTerm.strings */; };
-		A67D0D5B1A2EE12A003A8B35 /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1E1A2EE12A003A8B35 /* iTerm.strings */; };
 		A67D0D5C1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1F1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib */; };
 		A67D0D5D1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1F1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib */; };
-		A67D0D5E1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D1F1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib */; };
 		A67D0D5F1A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D201A2EE12A003A8B35 /* iTermKeyMapping.xib */; };
 		A67D0D601A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D201A2EE12A003A8B35 /* iTermKeyMapping.xib */; };
-		A67D0D611A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D201A2EE12A003A8B35 /* iTermKeyMapping.xib */; };
 		A67D0D621A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D211A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib */; };
 		A67D0D631A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D211A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib */; };
-		A67D0D641A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D211A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib */; };
 		A67D0D651A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D221A2EE12A003A8B35 /* iTermPasswordManager.xib */; };
 		A67D0D661A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D221A2EE12A003A8B35 /* iTermPasswordManager.xib */; };
-		A67D0D671A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D221A2EE12A003A8B35 /* iTermPasswordManager.xib */; };
 		A67D0D681A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D231A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib */; };
 		A67D0D691A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D231A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib */; };
-		A67D0D6A1A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D231A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib */; };
 		A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D241A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib */; };
 		A67D0D6C1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D241A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib */; };
-		A67D0D6D1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D241A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib */; };
 		A67D0D6E1A2EE12A003A8B35 /* MainMenu.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D251A2EE12A003A8B35 /* MainMenu.strings */; };
 		A67D0D6F1A2EE12A003A8B35 /* MainMenu.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D251A2EE12A003A8B35 /* MainMenu.strings */; };
-		A67D0D701A2EE12A003A8B35 /* MainMenu.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D251A2EE12A003A8B35 /* MainMenu.strings */; };
 		A67D0D711A2EE12A003A8B35 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D261A2EE12A003A8B35 /* MainMenu.xib */; };
 		A67D0D721A2EE12A003A8B35 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D261A2EE12A003A8B35 /* MainMenu.xib */; };
-		A67D0D731A2EE12A003A8B35 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D261A2EE12A003A8B35 /* MainMenu.xib */; };
 		A67D0D741A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D271A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib */; };
 		A67D0D751A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D271A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib */; };
-		A67D0D761A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D271A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib */; };
 		A67D0D771A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D281A2EE12A003A8B35 /* PasteboardHistory.xib */; };
 		A67D0D781A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D281A2EE12A003A8B35 /* PasteboardHistory.xib */; };
-		A67D0D791A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D281A2EE12A003A8B35 /* PasteboardHistory.xib */; };
 		A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D291A2EE12A003A8B35 /* PasteView.xib */; };
 		A67D0D7B1A2EE12A003A8B35 /* PasteView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D291A2EE12A003A8B35 /* PasteView.xib */; };
-		A67D0D7C1A2EE12A003A8B35 /* PasteView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D291A2EE12A003A8B35 /* PasteView.xib */; };
 		A67D0D7D1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2A1A2EE12A003A8B35 /* PreferencePanel.strings */; };
 		A67D0D7E1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2A1A2EE12A003A8B35 /* PreferencePanel.strings */; };
-		A67D0D7F1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2A1A2EE12A003A8B35 /* PreferencePanel.strings */; };
 		A67D0D801A2EE12A003A8B35 /* PreferencePanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2B1A2EE12A003A8B35 /* PreferencePanel.xib */; };
 		A67D0D811A2EE12A003A8B35 /* PreferencePanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2B1A2EE12A003A8B35 /* PreferencePanel.xib */; };
-		A67D0D821A2EE12A003A8B35 /* PreferencePanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2B1A2EE12A003A8B35 /* PreferencePanel.xib */; };
 		A67D0D861A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2D1A2EE12A003A8B35 /* PseudoTerminal.strings */; };
 		A67D0D871A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2D1A2EE12A003A8B35 /* PseudoTerminal.strings */; };
-		A67D0D881A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2D1A2EE12A003A8B35 /* PseudoTerminal.strings */; };
 		A67D0D891A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2E1A2EE12A003A8B35 /* PseudoTerminal.xib */; };
 		A67D0D8A1A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2E1A2EE12A003A8B35 /* PseudoTerminal.xib */; };
-		A67D0D8B1A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2E1A2EE12A003A8B35 /* PseudoTerminal.xib */; };
 		A67D0D8C1A2EE12A003A8B35 /* SplitPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2F1A2EE12A003A8B35 /* SplitPanel.xib */; };
 		A67D0D8D1A2EE12A003A8B35 /* SplitPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2F1A2EE12A003A8B35 /* SplitPanel.xib */; };
-		A67D0D8E1A2EE12A003A8B35 /* SplitPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D2F1A2EE12A003A8B35 /* SplitPanel.xib */; };
 		A67D0D8F1A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */; };
 		A67D0D901A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */; };
-		A67D0D911A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */; };
 		A67E0AD0186E4B71009B2B68 /* TaskNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */; };
 		A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */; };
 		A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */; };
 		A67F118218D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117F18D82B9500B23C7B /* PrefsAdvanced@2x.png */; };
 		A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117F18D82B9500B23C7B /* PrefsAdvanced@2x.png */; };
 		A67F57B01B012BD100B4F135 /* NSWorkspace+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57AE1B012BD100B4F135 /* NSWorkspace+iTerm.h */; };
-		A67F57B11B012BD100B4F135 /* NSWorkspace+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57AE1B012BD100B4F135 /* NSWorkspace+iTerm.h */; };
 		A67F57B71B01A01800B4F135 /* iTermImageInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57B51B01A01800B4F135 /* iTermImageInfo.h */; };
-		A67F57B81B01A01800B4F135 /* iTermImageInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57B51B01A01800B4F135 /* iTermImageInfo.h */; };
 		A67F57BE1B01A08800B4F135 /* iTermAnimatedImageInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57BC1B01A08800B4F135 /* iTermAnimatedImageInfo.h */; };
-		A67F57BF1B01A08800B4F135 /* iTermAnimatedImageInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57BC1B01A08800B4F135 /* iTermAnimatedImageInfo.h */; };
 		A67F57CB1B0930CA00B4F135 /* iTermFileDescriptorClient.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57C51B0930CA00B4F135 /* iTermFileDescriptorClient.h */; };
-		A67F57CC1B0930CA00B4F135 /* iTermFileDescriptorClient.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57C51B0930CA00B4F135 /* iTermFileDescriptorClient.h */; };
 		A67F57D01B0930CA00B4F135 /* iTermFileDescriptorServer.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */; };
-		A67F57D11B0930CA00B4F135 /* iTermFileDescriptorServer.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */; };
 		A67F57D41B11882900B4F135 /* CapturedOutput.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57D21B11882900B4F135 /* CapturedOutput.h */; };
-		A67F57D51B11882900B4F135 /* CapturedOutput.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57D21B11882900B4F135 /* CapturedOutput.h */; };
 		A680AA1318CEA1040034D4F8 /* VT100TmuxParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */; };
 		A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */; };
 		A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */; };
@@ -1590,16 +1158,12 @@
 		A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
 		A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
 		A686A1181C86A6DD0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
-		A686A1191C86A6DE0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
-		A686A11A1C86A6DE0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
 		A686A11D1C86AA930024C2DE /* DeadForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A11B1C86AA930024C2DE /* DeadForDarkTheme.png */; };
 		A686A11E1C86AA930024C2DE /* DeadForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A11C1C86AA930024C2DE /* DeadForDarkTheme@2x.png */; };
 		A686C1951ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
 		A686C1961ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
-		A686C1971ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
 		A686C1981ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
 		A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
-		A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
 		A686F3621D32CD8100F08ED7 /* NSWindow+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3601D32CD8100F08ED7 /* NSWindow+iTerm.h */; };
 		A686F3631D32CD8100F08ED7 /* NSWindow+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F3611D32CD8100F08ED7 /* NSWindow+iTerm.m */; };
 		A686F3891D36A49100F08ED7 /* iTermPreciseTimer.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3871D36A49100F08ED7 /* iTermPreciseTimer.h */; };
@@ -1637,8 +1201,6 @@
 		A68E33401DE79284003F1D8E /* Color Preset Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E333E1DE79284003F1D8E /* Color Preset Touch Bar Icon@2x.png */; };
 		A690F7011B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
 		A690F7021B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
-		A690F7031B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
-		A690F7041B424EF8009F76D8 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		A690F7051B424F15009F76D8 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */; };
 		A6936B491D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B471D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.h */; };
@@ -1658,7 +1220,6 @@
 		A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101018DFA7D5007E901D /* closebutton@2x.png */; };
 		A697101518DFA7FC007E901D /* closebutton.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101118DFA7D5007E901D /* closebutton.png */; };
 		A697E27B1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
-		A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A699BAE618C8394700D425A7 /* CVector.h in Headers */ = {isa = PBXBuildFile; fileRef = A699BAE418C8394700D425A7 /* CVector.h */; };
 		A69A15731D7FD78200A9E7EF /* TipCalendar.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A15711D7FD78200A9E7EF /* TipCalendar.png */; };
 		A69A15741D7FD78200A9E7EF /* TipCalendar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A15721D7FD78200A9E7EF /* TipCalendar@2x.png */; };
@@ -1700,18 +1261,13 @@
 		A6AE1EDD192723F700780C19 /* iTermAnnouncementView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */; };
 		A6B3A7351AC74E02008E8D4E /* FindCursorCell4.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7311AC74E02008E8D4E /* FindCursorCell4.png */; };
 		A6B3A7361AC74E02008E8D4E /* FindCursorCell4.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7311AC74E02008E8D4E /* FindCursorCell4.png */; };
-		A6B3A7371AC74E02008E8D4E /* FindCursorCell4.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7311AC74E02008E8D4E /* FindCursorCell4.png */; };
 		A6B3A7381AC74E02008E8D4E /* FindCursorCell3.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7321AC74E02008E8D4E /* FindCursorCell3.png */; };
 		A6B3A7391AC74E02008E8D4E /* FindCursorCell3.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7321AC74E02008E8D4E /* FindCursorCell3.png */; };
-		A6B3A73A1AC74E02008E8D4E /* FindCursorCell3.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7321AC74E02008E8D4E /* FindCursorCell3.png */; };
 		A6B3A73B1AC74E02008E8D4E /* FindCursorCell2.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7331AC74E02008E8D4E /* FindCursorCell2.png */; };
 		A6B3A73C1AC74E02008E8D4E /* FindCursorCell2.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7331AC74E02008E8D4E /* FindCursorCell2.png */; };
-		A6B3A73D1AC74E02008E8D4E /* FindCursorCell2.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7331AC74E02008E8D4E /* FindCursorCell2.png */; };
 		A6B3A73E1AC74E02008E8D4E /* FindCursorCell1.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */; };
 		A6B3A73F1AC74E02008E8D4E /* FindCursorCell1.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */; };
-		A6B3A7401AC74E02008E8D4E /* FindCursorCell1.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */; };
 		A6B3A7431AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */; };
-		A6B3A7441AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */; };
 		A6B5134A18E779BB00D249A5 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
 		A6B70FBB19830C37007A4284 /* dead.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FB919830C37007A4284 /* dead.png */; };
 		A6B70FBC19830C37007A4284 /* dead.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FB919830C37007A4284 /* dead.png */; };
@@ -2118,9 +1674,7 @@
 		A6C763CC1B45C52B00E3C992 /* VT100Token.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B218C36D0300450FA1 /* VT100Token.m */; };
 		A6C763CD1B45C52B00E3C992 /* VT100XtermParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */; };
 		A6C763CE1B45C53A00E3C992 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF757F026DDAD703A80106 /* main.m */; };
-		A6C763CF1B45C53B00E3C992 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF757F026DDAD703A80106 /* main.m */; };
 		A6C763D31B45C5B700E3C992 /* libThermShared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libThermShared.a */; };
-		A6C763D81B45C5C800E3C992 /* libThermShared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libThermShared.a */; };
 		A6C763DA1B45C6DD00E3C992 /* NSWindow+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */; };
 		A6C763DB1B45C6DD00E3C992 /* PSMDarkTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */; };
 		A6C763DC1B45C6DD00E3C992 /* PSMOverflowPopUpButton.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572A09CB9398008F320C /* PSMOverflowPopUpButton.m */; };
@@ -2149,16 +1703,12 @@
 		A6CFDAD2185D2587005DC94B /* URLAction.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD0185D2587005DC94B /* URLAction.h */; };
 		A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
-		A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22B441BC9D368004084E0 /* iTermShellHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E525DD1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
-		A6E525DE1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
 		A6E525DF1A9C5730007B898E /* VT100StateTransition.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DB1A9C5730007B898E /* VT100StateTransition.h */; };
-		A6E525E01A9C5730007B898E /* VT100StateTransition.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DB1A9C5730007B898E /* VT100StateTransition.h */; };
 		A6E525E11A9C5730007B898E /* VT100State.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DC1A9C5730007B898E /* VT100State.h */; };
-		A6E525E21A9C5730007B898E /* VT100State.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DC1A9C5730007B898E /* VT100State.h */; };
 		A6E7137A18F1D70E008D94DD /* GeneralPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */; };
 		A6E7138418F263BC008D94DD /* PreferenceInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138218F263BC008D94DD /* PreferenceInfo.h */; };
 		A6E7138918F26445008D94DD /* iTermPreferencesBaseViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */; };
@@ -2179,25 +1729,15 @@
 		A6E74761188C679C005355CF /* iTermExposeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7475F188C679C005355CF /* iTermExposeView.h */; };
 		A6E761641D39D216005C0E5C /* iTermMutableAttributedStringBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E761621D39D216005C0E5C /* iTermMutableAttributedStringBuilder.h */; };
 		A6E77F7B1A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F791A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h */; };
-		A6E77F7C1A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F791A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h */; };
 		A6E77F7D1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F7A1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h */; };
-		A6E77F7E1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F7A1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h */; };
 		A6E77F811A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F7F1A23F484009B1CB6 /* iTermFindOnPageHelper.h */; };
-		A6E77F821A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F7F1A23F484009B1CB6 /* iTermFindOnPageHelper.h */; };
 		A6E77F8F1A2449EF009B1CB6 /* NSEvent+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F8D1A2449EF009B1CB6 /* NSEvent+iTerm.h */; };
-		A6E77F901A2449EF009B1CB6 /* NSEvent+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F8D1A2449EF009B1CB6 /* NSEvent+iTerm.h */; };
 		A6E77F9A1A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F981A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.h */; };
-		A6E77F9B1A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F981A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.h */; };
 		A6E77FA11A2A8A5A009B1CB6 /* NSData+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F9F1A2A8A5A009B1CB6 /* NSData+iTerm.h */; };
-		A6E77FA21A2A8A5A009B1CB6 /* NSData+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F9F1A2A8A5A009B1CB6 /* NSData+iTerm.h */; };
 		A6E77FB11A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77FAF1A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h */; };
-		A6E77FB21A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77FAF1A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h */; };
 		A6E77FB91A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77FB61A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h */; };
-		A6E77FBA1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77FB61A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h */; };
 		A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
-		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
-		A6E9ACCB1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
 		A6ECA59A1D76907400D19511 /* iTermImageDecoderDriver.h in Headers */ = {isa = PBXBuildFile; fileRef = A6ECA5981D76907400D19511 /* iTermImageDecoderDriver.h */; };
 		A6ECA59B1D76907400D19511 /* iTermImageDecoderDriver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6ECA5991D76907400D19511 /* iTermImageDecoderDriver.m */; };
 		A6EEA6681C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EEA6661C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h */; };
@@ -2209,14 +1749,10 @@
 		A6EFF2211D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF21F1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m */; };
 		A6EFF2311D2049A300806EEF /* Erase.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF22F1D20499700806EEF /* Erase.png */; };
 		A6EFF2321D2049A300806EEF /* Erase@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2301D20499700806EEF /* Erase@2x.png */; };
-		A6EFF2331D2049A400806EEF /* Erase.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF22F1D20499700806EEF /* Erase.png */; };
-		A6EFF2341D2049A400806EEF /* Erase@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2301D20499700806EEF /* Erase@2x.png */; };
 		A6EFF2371D20F6BE00806EEF /* EraseDarkBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */; };
 		A6EFF2381D20F6BE00806EEF /* EraseDarkBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */; };
 		A6EFF2391D20F6BF00806EEF /* EraseDarkBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */; };
 		A6EFF23A1D20F6BF00806EEF /* EraseDarkBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */; };
-		A6EFF23B1D20F6C000806EEF /* EraseDarkBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */; };
-		A6EFF23C1D20F6C000806EEF /* EraseDarkBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */; };
 		A6EFF23F1D21949D00806EEF /* iTermShortcut.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF23D1D21949D00806EEF /* iTermShortcut.h */; };
 		A6EFF2401D21949D00806EEF /* iTermShortcut.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF23E1D21949D00806EEF /* iTermShortcut.m */; };
 		A6EFF2471D21DD0700806EEF /* iTermSessionHotkeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */; };
@@ -2251,7 +1787,6 @@
 		A6FEA2791CF2CBCC00376F28 /* iTermAppHotKeyProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA2771CF2CBCC00376F28 /* iTermAppHotKeyProvider.m */; };
 		A6FEA2881CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FEA2851CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.h */; };
 		A6FEA2891CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA2861CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.m */; };
-		A6FEA28A1CF4DD2700376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */; };
 		A6FEA28B1CF4DD2900376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */; };
 		A6FEA28C1CF4DD2900376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */; };
 		C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */ = {isa = PBXBuildFile; fileRef = C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */; };
@@ -2261,13 +1796,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		1D6EDB0C19AEA276005A7799 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 1D6ED85219AEA20D005A7799;
-			remoteInfo = iTerm2ForApplescriptTesting;
-		};
 		A667195D1DCE36EF000CE608 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -2289,13 +1817,6 @@
 			remoteGlobalIDString = A6C7603F1B45C4CF00E3C992;
 			remoteInfo = iTerm2Shared;
 		};
-		A6C763D61B45C5C500E3C992 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A6C7603F1B45C4CF00E3C992;
-			remoteInfo = iTerm2Shared;
-		};
 		A6C764221B45CB2800E3C992 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -2306,16 +1827,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		1D6EDB0019AEA20D005A7799 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 12;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				A6184F8E1BAB3F090088EF3C /* ColorPicker.framework in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		1DAAE591180FAD7C0061611B /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -2574,7 +2085,6 @@
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
 		1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfileListView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D6C50A61226EEFB00E0AA3E /* ProfileListView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfileListView.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		1D6EDB0A19AEA20D005A7799 /* ThermForApplescriptTesting.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ThermForApplescriptTesting.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1D70BA331680158700824B72 /* PTYFontInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PTYFontInfo.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D70BA341680158700824B72 /* PTYFontInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PTYFontInfo.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D72438C11F416E500BD4924 /* LineBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBuffer.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -3676,22 +3186,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		1D6EDAF419AEA20D005A7799 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A667196A1DCE396A000CE608 /* libThermSharedARC.a in Frameworks */,
-				A690F7041B424EF8009F76D8 /* OpenDirectory.framework in Frameworks */,
-				1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */,
-				1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */,
-				A6184F8B1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
-				1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */,
-				1D6EDAFC19AEA20D005A7799 /* Carbon.framework in Frameworks */,
-				1D6EDAFD19AEA20D005A7799 /* Quartz.framework in Frameworks */,
-				A6C763D81B45C5C800E3C992 /* libThermShared.a in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		1DD39AD1180B8117004E56D5 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -4179,7 +3673,6 @@
 			children = (
 				8742065A0564169600CFC3F1 /* Therm.app */,
 				1DD39AD4180B8117004E56D5 /* ThermTests.app */,
-				1D6EDB0A19AEA20D005A7799 /* ThermForApplescriptTesting.app */,
 				A6C760501B45C4CF00E3C992 /* libThermShared.a */,
 				A6C7641C1B45CB2800E3C992 /* ThermXCTests.xctest */,
 				A667195C1DCE36C3000CE608 /* libThermSharedARC.a */,
@@ -5539,327 +5032,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		1D6ED85519AEA20D005A7799 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				1D6ED85619AEA20D005A7799 /* URLAction.h in Headers */,
-				1D6ED85819AEA20D005A7799 /* LineBufferPosition.h in Headers */,
-				1D6ED85919AEA20D005A7799 /* FindContext.h in Headers */,
-				1D6ED85A19AEA20D005A7799 /* ProfilesTerminalPreferencesViewController.h in Headers */,
-				1D6ED85C19AEA20D005A7799 /* iTermPreferencesBaseViewController.h in Headers */,
-				1D6ED85D19AEA20D005A7799 /* ITAddressBookMgr.h in Headers */,
-				1D6ED85E19AEA20D005A7799 /* PTYNoteViewController.h in Headers */,
-				1D6ED85F19AEA20D005A7799 /* PSMYosemiteTabStyle.h in Headers */,
-				A65B72721B248F1800F947A7 /* iTermOrphanServerAdopter.h in Headers */,
-				1D6ED86019AEA20D005A7799 /* iTermKeyMappingViewController.h in Headers */,
-				1D6ED86119AEA20D005A7799 /* iTermOpenQuicklyItem.h in Headers */,
-				A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */,
-				1D6ED86219AEA20D005A7799 /* iTermOpenQuicklyTextField.h in Headers */,
-				1D6ED86319AEA20D005A7799 /* iTermAdvancedSettingsViewController.h in Headers */,
-				1D6ED86419AEA20D005A7799 /* TemporaryNumberAllocator.h in Headers */,
-				1D6ED86519AEA20D005A7799 /* PSMOverflowPopUpButton.h in Headers */,
-				1D6ED86619AEA20D005A7799 /* iTermTabBarControlView.h in Headers */,
-				1D6ED86719AEA20D005A7799 /* PSMProgressIndicator.h in Headers */,
-				A6E77F9B1A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.h in Headers */,
-				A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */,
-				1D6ED86819AEA20D005A7799 /* VT100OtherParser.h in Headers */,
-				1DB40AB61B27B577005B83C7 /* PTYTabDelegate.h in Headers */,
-				1DA76A071B30892900CB272A /* iTermTipWindowController.h in Headers */,
-				1D6ED86919AEA20D005A7799 /* NSFont+iTerm.h in Headers */,
-				1D6ED86A19AEA20D005A7799 /* ToolCommandHistoryView.h in Headers */,
-				1D6ED86B19AEA20D005A7799 /* iTermEditKeyActionWindowController.h in Headers */,
-				1D6ED86C19AEA20D005A7799 /* VT100ScreenMark.h in Headers */,
-				1D6ED86D19AEA20D005A7799 /* PSMRolloverButton.h in Headers */,
-				1D6ED86E19AEA20D005A7799 /* PSMTabBarCell.h in Headers */,
-				1D6ED86F19AEA20D005A7799 /* ProfilesWindowPreferencesViewController.h in Headers */,
-				1D6ED87019AEA20D005A7799 /* iTermAnnouncementViewController.h in Headers */,
-				1D6ED87119AEA20D005A7799 /* iTermOpenQuicklyView.h in Headers */,
-				1D6ED87219AEA20D005A7799 /* NSView+iTerm.h in Headers */,
-				1D6ED87319AEA20D005A7799 /* ToolDirectoriesView.h in Headers */,
-				1D6ED87419AEA20D005A7799 /* PopupWindow.h in Headers */,
-				1D6ED87519AEA20D005A7799 /* iTermProgressIndicator.h in Headers */,
-				1D6ED87619AEA20D005A7799 /* PSMTabBarControl.h in Headers */,
-				1D6ED87819AEA20D005A7799 /* SCPFile.h in Headers */,
-				1D6ED87919AEA20D005A7799 /* iTermFindCursorView.h in Headers */,
-				1D6ED87A19AEA20D005A7799 /* SBSystemPreferences.h in Headers */,
-				1D6ED87B19AEA20D005A7799 /* PSMTabStyle.h in Headers */,
-				1D6ED87C19AEA20D005A7799 /* AdvancedWorkingDirectoryWindowController.h in Headers */,
-				1D6ED87D19AEA20D005A7799 /* PSMTabDragAssistant.h in Headers */,
-				1D6ED87E19AEA20D005A7799 /* VT100XtermParser.h in Headers */,
-				1D6ED87F19AEA20D005A7799 /* VT100StringParser.h in Headers */,
-				1D6ED88019AEA20D005A7799 /* PSMTabDragWindow.h in Headers */,
-				1D6ED88119AEA20D005A7799 /* NSImage+iTerm.h in Headers */,
-				1D6ED88319AEA20D005A7799 /* iTermOpenQuicklyTableCellView.h in Headers */,
-				1D6ED88419AEA20D005A7799 /* iTermAnnouncementView.h in Headers */,
-				1D6ED88519AEA20D005A7799 /* CarbonHelpers.h in Headers */,
-				1D6ED88619AEA20D005A7799 /* CGSAccessibility.h in Headers */,
-				1D6ED88719AEA20D005A7799 /* CGSCIFilter.h in Headers */,
-				1D6ED88819AEA20D005A7799 /* CGSConnection.h in Headers */,
-				A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */,
-				1D6ED88919AEA20D005A7799 /* IntervalTree.h in Headers */,
-				1D6ED88A19AEA20D005A7799 /* iTermNSKeyBindingEmulator.h in Headers */,
-				1D6ED88B19AEA20D005A7799 /* NSColor+iTerm.h in Headers */,
-				A6E77FA21A2A8A5A009B1CB6 /* NSData+iTerm.h in Headers */,
-				1D6ED88C19AEA20D005A7799 /* CGSCursor.h in Headers */,
-				1D6ED88D19AEA20D005A7799 /* ProfileTagsView.h in Headers */,
-				A67F57B81B01A01800B4F135 /* iTermImageInfo.h in Headers */,
-				1D6ED88E19AEA20D005A7799 /* NSView+RecursiveDescription.h in Headers */,
-				1D6ED88F19AEA20D005A7799 /* CGSDebug.h in Headers */,
-				1DB40AA21B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */,
-				1D6ED89019AEA20D005A7799 /* iTermOpenQuicklyTableView.h in Headers */,
-				1D6ED89119AEA20D005A7799 /* CGSDisplays.h in Headers */,
-				1D6ED89319AEA20D005A7799 /* VT100LineInfo.h in Headers */,
-				1D6ED89419AEA20D005A7799 /* GeneralPreferencesViewController.h in Headers */,
-				1D6ED89519AEA20D005A7799 /* CGSHotKeys.h in Headers */,
-				1D6ED89619AEA20D005A7799 /* CGSInternal.h in Headers */,
-				1D6ED89719AEA20D005A7799 /* CGSMisc.h in Headers */,
-				1D6ED89819AEA20D005A7799 /* AATreeNode.h in Headers */,
-				1D6ED89919AEA20D005A7799 /* AATree.h in Headers */,
-				1D6ED89A19AEA20D005A7799 /* CGSNotifications.h in Headers */,
-				1D6ED89B19AEA20D005A7799 /* iTermColorMap.h in Headers */,
-				1D6ED89C19AEA20D005A7799 /* CGSRegion.h in Headers */,
-				1D6ED89E19AEA20D005A7799 /* CGSSession.h in Headers */,
-				1D6ED89F19AEA20D005A7799 /* CGSTransitions.h in Headers */,
-				1D6ED8A019AEA20D005A7799 /* CGSWindow.h in Headers */,
-				A67F57D51B11882900B4F135 /* CapturedOutput.h in Headers */,
-				1D6ED8A119AEA20D005A7799 /* CGSWorkspace.h in Headers */,
-				1D6ED8A319AEA20D005A7799 /* LineBuffer.h in Headers */,
-				1D6ED8A419AEA20D005A7799 /* iTermApplicationDelegate.h in Headers */,
-				A65B726E1B23559A00F947A7 /* iTermFileDescriptorSocketPath.h in Headers */,
-				1D6ED8A519AEA20D005A7799 /* iTermApplication.h in Headers */,
-				1D6ED8A619AEA20D005A7799 /* Compatability.h in Headers */,
-				1D6ED8A719AEA20D005A7799 /* ProfileListView.h in Headers */,
-				1D6ED8A819AEA20D005A7799 /* iTermProfilesWindowController.h in Headers */,
-				1D6ED8A919AEA20D005A7799 /* DVR.h in Headers */,
-				1D6ED8AA19AEA20D005A7799 /* DVRBuffer.h in Headers */,
-				1D6ED8AB19AEA20D005A7799 /* ProfilesSessionPreferencesViewController.h in Headers */,
-				1D6ED8AC19AEA20D005A7799 /* iTermShortcutInputView.h in Headers */,
-				A6E525E21A9C5730007B898E /* VT100State.h in Headers */,
-				1D6ED8AD19AEA20D005A7799 /* DVRIndexEntry.h in Headers */,
-				1D6ED8AE19AEA20D005A7799 /* VT100TmuxParser.h in Headers */,
-				1D6ED8AF19AEA20D005A7799 /* DVRDecoder.h in Headers */,
-				1D6ED8B019AEA20D005A7799 /* iTermMouseCursor.h in Headers */,
-				1D6ED8B119AEA20D005A7799 /* DVREncoder.h in Headers */,
-				1D6ED8B219AEA20D005A7799 /* FakeWindow.h in Headers */,
-				A663011119CFE41A004AF81C /* iTermAboutWindow.h in Headers */,
-				1D6ED8B319AEA20D005A7799 /* WindowControllerInterface.h in Headers */,
-				1D6ED8B419AEA20D005A7799 /* NSPopUpButton+iTerm.h in Headers */,
-				1D6ED8B519AEA20D005A7799 /* iTermOpenQuicklyWindowController.h in Headers */,
-				1D6ED8B619AEA20D005A7799 /* PTYWindow+Scripting.h in Headers */,
-				1D6ED8B719AEA20D005A7799 /* PasswordTrigger.h in Headers */,
-				1D6ED8B819AEA20D005A7799 /* AppearancePreferencesViewController.h in Headers */,
-				1D6ED8B919AEA20D005A7799 /* iTermExposeView.h in Headers */,
-				1D6ED8BA19AEA20D005A7799 /* PasteboardHistory.h in Headers */,
-				1D6ED8BB19AEA20D005A7799 /* NSDateFormatterExtras.h in Headers */,
-				1D6ED8BC19AEA20D005A7799 /* Autocomplete.h in Headers */,
-				1D6ED8BD19AEA20D005A7799 /* ProfilesGeneralPreferencesViewController.h in Headers */,
-				1D6ED8BE19AEA20D005A7799 /* FileTransferManager.h in Headers */,
-				1D6ED8BF19AEA20D005A7799 /* DebugLogging.h in Headers */,
-				1D6ED8C019AEA20D005A7799 /* iTermPopupWindowController.h in Headers */,
-				1D6ED8C119AEA20D005A7799 /* TextViewWrapper.h in Headers */,
-				1D6ED8C219AEA20D005A7799 /* PTYTab.h in Headers */,
-				1D6ED8C319AEA20D005A7799 /* SessionView.h in Headers */,
-				1D6ED8C419AEA20D005A7799 /* ScreenChar.h in Headers */,
-				A6E77FB21A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h in Headers */,
-				A6E77F821A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */,
-				A6E525DE1A9C5730007B898E /* VT100StateMachine.h in Headers */,
-				1D468F051B06A79000226083 /* StopTrigger.h in Headers */,
-				1D6ED8C819AEA20D005A7799 /* iTermShellHistoryController.h in Headers */,
-				1D6ED8CA19AEA20D005A7799 /* iTermWarning.h in Headers */,
-				1D6ED8CB19AEA20D005A7799 /* ProfilesColorsPreferencesViewController.h in Headers */,
-				1D6ED8CC19AEA20D005A7799 /* iTermPasteHelper.h in Headers */,
-				1D6ED8CD19AEA20D005A7799 /* iTermExpose.h in Headers */,
-				1D6ED8CE19AEA20D005A7799 /* NSTextField+iTerm.h in Headers */,
-				1D6ED8CF19AEA20D005A7799 /* VT100Parser.h in Headers */,
-				1D6ED8D019AEA20D005A7799 /* GlobalSearch.h in Headers */,
-				1D1F8C1B1A32616A00167161 /* AMIndeterminateProgressIndicator.h in Headers */,
-				1D6ED8D219AEA20D005A7799 /* iTermSearchField.h in Headers */,
-				1D6ED8D319AEA20D005A7799 /* RegexKitLite.h in Headers */,
-				1D6ED8D419AEA20D005A7799 /* FindView.h in Headers */,
-				1D6ED8D519AEA20D005A7799 /* FindViewController.h in Headers */,
-				1D6ED8D619AEA20D005A7799 /* ProfilesKeysPreferencesViewController.h in Headers */,
-				1D6ED8D719AEA20D005A7799 /* iTermSemanticHistoryController.h in Headers */,
-				1D6ED8D819AEA20D005A7799 /* ProcessCache.h in Headers */,
-				1D6ED8D919AEA20D005A7799 /* iTermProfilePreferences.h in Headers */,
-				1D6ED8DB19AEA20D005A7799 /* iTermExposeTabView.h in Headers */,
-				A60D85A91A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */,
-				1D6ED8DD19AEA20D005A7799 /* PopupModel.h in Headers */,
-				1D6ED8DE19AEA20D005A7799 /* iTermSelection.h in Headers */,
-				1D6ED8DF19AEA20D005A7799 /* CVector.h in Headers */,
-				1D2C654A1AE9A2C900142CF5 /* iTermTemporaryDoubleBufferedGridController.h in Headers */,
-				1D6ED8E219AEA20D005A7799 /* iTermObjectPool.h in Headers */,
-				1DA76A111B30895600CB272A /* iTermTipRootView.h in Headers */,
-				1D6ED8E319AEA20D005A7799 /* iTermOpenQuicklyTableRowView.h in Headers */,
-				1D6ED8E519AEA20D005A7799 /* FontSizeEstimator.h in Headers */,
-				1D6ED8E619AEA20D005A7799 /* VT100Grid.h in Headers */,
-				1D6ED8E719AEA20D005A7799 /* WindowArrangements.h in Headers */,
-				1D6ED8E819AEA20D005A7799 /* KeysPreferencesViewController.h in Headers */,
-				1D6ED8E919AEA20D005A7799 /* PTYNoteView.h in Headers */,
-				A67F57CC1B0930CA00B4F135 /* iTermFileDescriptorClient.h in Headers */,
-				1D6ED8EA19AEA20D005A7799 /* ArrangementPreviewView.h in Headers */,
-				A6E9ACCB1A19956D008B0B6F /* NSWindow+PSM.h in Headers */,
-				1D6ED8EB19AEA20D005A7799 /* SplitPanel.h in Headers */,
-				1D6ED8EC19AEA20D005A7799 /* PTYSession+Scripting.h in Headers */,
-				1D6ED8ED19AEA20D005A7799 /* MovePaneController.h in Headers */,
-				1D6ED8EE19AEA20D005A7799 /* MarkTrigger.h in Headers */,
-				1D6ED8EF19AEA20D005A7799 /* SplitSelectionView.h in Headers */,
-				1D6ED8F019AEA20D005A7799 /* FutureMethods.h in Headers */,
-				1D6ED8F119AEA20D005A7799 /* iTermToolbeltView.h in Headers */,
-				1D6ED8F219AEA20D005A7799 /* ToolProfiles.h in Headers */,
-				1D6ED8F319AEA20D005A7799 /* ToolPasteHistory.h in Headers */,
-				1D6ED8F419AEA20D005A7799 /* iTermToolWrapper.h in Headers */,
-				1D6ED8F519AEA20D005A7799 /* iTermDragHandleView.h in Headers */,
-				1D6ED8F619AEA20D005A7799 /* ToolJobs.h in Headers */,
-				1D6ED8F719AEA20D005A7799 /* VT100RemoteHost.h in Headers */,
-				A61D16FD1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */,
-				1D6ED8F819AEA20D005A7799 /* ToolNotes.h in Headers */,
-				1D6ED8F919AEA20D005A7799 /* NSFileManager+iTerm.h in Headers */,
-				1D6ED8FA19AEA20D005A7799 /* TriggerController.h in Headers */,
-				1D6ED8FB19AEA20D005A7799 /* iTermProfilePreferencesBaseViewController.h in Headers */,
-				1D6ED8FC19AEA20D005A7799 /* Trigger.h in Headers */,
-				1D6ED8FE19AEA20D005A7799 /* BounceTrigger.h in Headers */,
-				1D6ED8FF19AEA20D005A7799 /* VT100DCSParser.h in Headers */,
-				1D6ED90019AEA20D005A7799 /* PTYTab+Scripting.h in Headers */,
-				1D6ED90119AEA20D005A7799 /* iTermLaunchServices.h in Headers */,
-				1D6ED90219AEA20D005A7799 /* BellTrigger.h in Headers */,
-				1D6ED90319AEA20D005A7799 /* iTermApplication+Scripting.h in Headers */,
-				A65B72A31B3134FB00F947A7 /* iTermTipController.h in Headers */,
-				1D6ED90419AEA20D005A7799 /* VT100WorkingDirectory.h in Headers */,
-				1D6ED90519AEA20D005A7799 /* ScriptTrigger.h in Headers */,
-				1D6ED90619AEA20D005A7799 /* AlertTrigger.h in Headers */,
-				1D6ED90819AEA20D005A7799 /* SCPPath.h in Headers */,
-				1D6ED90919AEA20D005A7799 /* CoprocessTrigger.h in Headers */,
-				1D6ED90A19AEA20D005A7799 /* iTermRestorableSession.h in Headers */,
-				A663013019D0864C004AF81C /* SCEventListenerProtocol.h in Headers */,
-				A6B3A7441AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */,
-				1D6ED90B19AEA20D005A7799 /* NSColor+Scripting.h in Headers */,
-				1D6ED90D19AEA20D005A7799 /* Coprocess.h in Headers */,
-				1D6ED90E19AEA20D005A7799 /* SendTextTrigger.h in Headers */,
-				1DA76A201B308AD000CB272A /* iTermTipCardViewController.h in Headers */,
-				A6E77F901A2449EF009B1CB6 /* NSEvent+iTerm.h in Headers */,
-				1D6ED90F19AEA20D005A7799 /* SmartSelectionController.h in Headers */,
-				1D6ED91019AEA20D005A7799 /* NSMutableAttributedString+iTerm.h in Headers */,
-				1D6ED91119AEA20D005A7799 /* iTermExposeGridView.h in Headers */,
-				1D6ED91219AEA20D005A7799 /* iTermSemanticHistoryPrefsController.h in Headers */,
-				1D6ED91319AEA20D005A7799 /* SessionTitleView.h in Headers */,
-				1D6ED91419AEA20D005A7799 /* PointerPreferencesViewController.h in Headers */,
-				1D6ED91519AEA20D005A7799 /* PseudoTerminalRestorer.h in Headers */,
-				1D6ED91619AEA20D005A7799 /* PointerPrefsController.h in Headers */,
-				1D6ED91719AEA20D005A7799 /* PreferenceInfo.h in Headers */,
-				1D6ED91819AEA20D005A7799 /* NSObject+iTerm.h in Headers */,
-				1D6ED91919AEA20D005A7799 /* PointerController.h in Headers */,
-				1D6ED91A19AEA20D005A7799 /* EventMonitorView.h in Headers */,
-				1D6ED91B19AEA20D005A7799 /* HighlightTrigger.h in Headers */,
-				1D6ED91C19AEA20D005A7799 /* VT100Output.h in Headers */,
-				1D6ED91D19AEA20D005A7799 /* ContextMenuActionPrefsController.h in Headers */,
-				A67F57D11B0930CA00B4F135 /* iTermFileDescriptorServer.h in Headers */,
-				A67F57BF1B01A08800B4F135 /* iTermAnimatedImageInfo.h in Headers */,
-				1D6ED91E19AEA20D005A7799 /* iTermLogoGenerator.h in Headers */,
-				1D6ED91F19AEA20D005A7799 /* LineBlock.h in Headers */,
-				1D8BBA5B1B30E9AF0005A852 /* iTermTipCardActionButton.h in Headers */,
-				1D6ED92019AEA20D005A7799 /* TmuxGateway.h in Headers */,
-				1D6ED92119AEA20D005A7799 /* TmuxController.h in Headers */,
-				1D6ED92219AEA20D005A7799 /* iTermInstantReplayWindowController.h in Headers */,
-				1D6ED92319AEA20D005A7799 /* TSVParser.h in Headers */,
-				1D6ED92419AEA20D005A7799 /* TmuxLayoutParser.h in Headers */,
-				A663011819CFE450004AF81C /* iTermAboutWindowController.h in Headers */,
-				1D6ED92519AEA20D005A7799 /* TmuxWindowOpener.h in Headers */,
-				1D6ED92719AEA20D005A7799 /* TmuxHistoryParser.h in Headers */,
-				1D6ED92819AEA20D005A7799 /* TmuxStateParser.h in Headers */,
-				1D6ED92919AEA20D005A7799 /* SolidColorView.h in Headers */,
-				1D6ED92A19AEA20D005A7799 /* IntervalMap.h in Headers */,
-				1D6ED92B19AEA20D005A7799 /* iTermSizeRememberingView.h in Headers */,
-				1D6ED92C19AEA20D005A7799 /* SmartMatch.h in Headers */,
-				1D6ED92D19AEA20D005A7799 /* PTYSplitView.h in Headers */,
-				1D468BBA1B0543E300226083 /* iTermKeyboardNavigatableTableView.h in Headers */,
-				1D6ED92E19AEA20D005A7799 /* iTermRule.h in Headers */,
-				1D6ED92F19AEA20D005A7799 /* TmuxDashboardController.h in Headers */,
-				1D6ED93019AEA20D005A7799 /* PopupEntry.h in Headers */,
-				1D6ED93119AEA20D005A7799 /* CommandHistoryPopup.h in Headers */,
-				A61ABBBC1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */,
-				1D6ED93219AEA20D005A7799 /* TmuxSessionsTable.h in Headers */,
-				1D6ED93319AEA20D005A7799 /* TmuxControllerRegistry.h in Headers */,
-				1D6ED93419AEA20D005A7799 /* TmuxWindowsTable.h in Headers */,
-				1D6ED93519AEA20D005A7799 /* EquivalenceClassSet.h in Headers */,
-				A6E77FBA1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h in Headers */,
-				1D6ED93619AEA20D005A7799 /* iTermCommandHistoryCommandUseMO+Addtions.h in Headers */,
-				A6E77F7E1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h in Headers */,
-				1D6ED93719AEA20D005A7799 /* ProfilesTextPreferencesViewController.h in Headers */,
-				1D6ED93819AEA20D005A7799 /* ProfileModel.h in Headers */,
-				1D6ED93919AEA20D005A7799 /* charmaps.h in Headers */,
-				A61ABBC31AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */,
-				1D6ED93A19AEA20D005A7799 /* iTerm.h in Headers */,
-				1D6ED93B19AEA20D005A7799 /* iTermController.h in Headers */,
-				1D6ED93C19AEA20D005A7799 /* iTermKeyBindingMgr.h in Headers */,
-				1D6ED93D19AEA20D005A7799 /* NSStringITerm.h in Headers */,
-				A6E77F7C1A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h in Headers */,
-				1D6ED93E19AEA20D005A7799 /* NSArray+iTerm.h in Headers */,
-				1D6ED93F19AEA20D005A7799 /* iTermAdvancedSettingsModel.h in Headers */,
-				1D6ED94019AEA20D005A7799 /* PreferencePanel.h in Headers */,
-				1D6ED94119AEA20D005A7799 /* PseudoTerminal.h in Headers */,
-				1D6ED94219AEA20D005A7799 /* PTYScrollView.h in Headers */,
-				1D6ED94319AEA20D005A7799 /* PTYSession.h in Headers */,
-				1D6ED94419AEA20D005A7799 /* NSScreen+iTerm.h in Headers */,
-				1D6ED94519AEA20D005A7799 /* PTYTabView.h in Headers */,
-				1D6ED94619AEA20D005A7799 /* BulkCopyProfilePreferencesWindowController.h in Headers */,
-				1D374DEC1B349FC8007BE76A /* iTermTipData.h in Headers */,
-				1D6ED94719AEA20D005A7799 /* PTYTask.h in Headers */,
-				1D6ED94819AEA20D005A7799 /* PTYTextView.h in Headers */,
-				1DA1C1F41A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */,
-				1D0318291A42563A00932107 /* iTermImageWell.h in Headers */,
-				1D6ED94919AEA20D005A7799 /* iTermCommandHistoryEntryMO+Additions.h in Headers */,
-				1D6ED94A19AEA20D005A7799 /* iTermFlippedView.h in Headers */,
-				1D8BBA931B33529E0005A852 /* iTermTip.h in Headers */,
-				A663012919D0864C004AF81C /* SCConstants.h in Headers */,
-				1D6ED94B19AEA20D005A7799 /* PTYWindow.h in Headers */,
-				1D6ED94C19AEA20D005A7799 /* VT100CSIParser.h in Headers */,
-				A66A1FA91A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */,
-				1D6ED94D19AEA20D005A7799 /* VT100Screen.h in Headers */,
-				1D468BC11B056CD600226083 /* iTermProfileSearchToken.h in Headers */,
-				1D6ED94E19AEA20D005A7799 /* CaptureTrigger.h in Headers */,
-				1D6ED94F19AEA20D005A7799 /* DirectoriesPopup.h in Headers */,
-				1D6ED95019AEA20D005A7799 /* VT100Terminal.h in Headers */,
-				1D6ED95119AEA20D005A7799 /* ProfileTableRow.h in Headers */,
-				1D6ED95219AEA20D005A7799 /* ProfileModelWrapper.h in Headers */,
-				1D6ED95319AEA20D005A7799 /* ProfileTableView.h in Headers */,
-				1D6ED95419AEA20D005A7799 /* ToolCapturedOutputView.h in Headers */,
-				1D6ED95519AEA20D005A7799 /* iTermOpenQuicklyWindow.h in Headers */,
-				1D6ED95619AEA20D005A7799 /* NSDictionary+iTerm.h in Headers */,
-				1D6ED95719AEA20D005A7799 /* iTermHotKeyController.h in Headers */,
-				1D6ED95819AEA20D005A7799 /* ProfilesAdvancedPreferencesViewController.h in Headers */,
-				1D6ED95919AEA20D005A7799 /* ColorsMenuItemView.h in Headers */,
-				1D6ED95A19AEA20D005A7799 /* VT100ControlParser.h in Headers */,
-				1D6ED95B19AEA20D005A7799 /* LineBufferHelpers.h in Headers */,
-				1D6ED95C19AEA20D005A7799 /* TaskNotifier.h in Headers */,
-				1D6ED95D19AEA20D005A7799 /* VT100AnsiParser.h in Headers */,
-				1D6ED95E19AEA20D005A7799 /* ProfilePreferencesViewController.h in Headers */,
-				1D6ED95F19AEA20D005A7799 /* iTermOpenQuicklyModel.h in Headers */,
-				A663012B19D0864C004AF81C /* SCEvent.h in Headers */,
-				1D6ED96019AEA20D005A7799 /* BackgroundThread.h in Headers */,
-				1D6ED96119AEA20D005A7799 /* iTermFontPanel.h in Headers */,
-				1D6ED96419AEA20D005A7799 /* iTermTextExtractor.h in Headers */,
-				A6E525E01A9C5730007B898E /* VT100StateTransition.h in Headers */,
-				1D6ED96519AEA20D005A7799 /* PTYFontInfo.h in Headers */,
-				1D6ED96619AEA20D005A7799 /* ThreeFingerTapGestureRecognizer.h in Headers */,
-				1D6ED96719AEA20D005A7799 /* PasteContext.h in Headers */,
-				1D6ED96819AEA20D005A7799 /* PasteViewController.h in Headers */,
-				1D6ED96919AEA20D005A7799 /* PasteView.h in Headers */,
-				1D6ED96A19AEA20D005A7799 /* NSMutableData+iTerm.h in Headers */,
-				1D6ED96B19AEA20D005A7799 /* iTermNewWindowCommand.h in Headers */,
-				1D6ED96C19AEA20D005A7799 /* iTermExposeWindow.h in Headers */,
-				1D6ED96D19AEA20D005A7799 /* NSBezierPath+iTerm.h in Headers */,
-				1D6ED96E19AEA20D005A7799 /* PasteEvent.h in Headers */,
-				1D6ED96F19AEA20D005A7799 /* RoundedRectView.h in Headers */,
-				1D6ED97019AEA20D005A7799 /* ToastWindowController.h in Headers */,
-				1D6ED97119AEA20D005A7799 /* MovingAverage.h in Headers */,
-				A67F57B11B012BD100B4F135 /* NSWorkspace+iTerm.h in Headers */,
-				1D6ED97319AEA20D005A7799 /* iTermRemotePreferences.h in Headers */,
-				A663013219D0864C004AF81C /* SCEvents.h in Headers */,
-				A65B72791B2BF2D200F947A7 /* iTermProfilesPanel.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		874206480564169600CFC3F1 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -6363,29 +5535,6 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		1D6ED85219AEA20D005A7799 /* ThermForApplescriptTesting */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 1D6EDB0519AEA20D005A7799 /* Build configuration list for PBXNativeTarget "ThermForApplescriptTesting" */;
-			buildPhases = (
-				1D6ED85519AEA20D005A7799 /* Headers */,
-				1D6ED97419AEA20D005A7799 /* Resources */,
-				1D6ED9ED19AEA20D005A7799 /* Sources */,
-				1D6EDAF419AEA20D005A7799 /* Frameworks */,
-				1D6EDAFF19AEA20D005A7799 /* Rez */,
-				1D6EDB0019AEA20D005A7799 /* CopyFiles */,
-				1D6EDB0419AEA20D005A7799 /* Update SVN Revision */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				A6C763D71B45C5C500E3C992 /* PBXTargetDependency */,
-				1D6ED85319AEA20D005A7799 /* PBXTargetDependency */,
-			);
-			name = ThermForApplescriptTesting;
-			productName = "JTerminal (Application)";
-			productReference = 1D6EDB0A19AEA20D005A7799 /* ThermForApplescriptTesting.app */;
-			productType = "com.apple.product-type.application";
-		};
 		1DD39AD3180B8117004E56D5 /* ThermTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "ThermTests" */;
@@ -6399,7 +5548,6 @@
 			);
 			dependencies = (
 				A6C763D51B45C5BE00E3C992 /* PBXTargetDependency */,
-				1D6EDB0D19AEA276005A7799 /* PBXTargetDependency */,
 			);
 			name = ThermTests;
 			productName = iTermTests;
@@ -6485,17 +5633,10 @@
 		0464AB0C006CD2EC7F000001 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1330;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
 				TargetAttributes = {
-					1D6ED85219AEA20D005A7799 = {
-						DevelopmentTeam = H7V7XYVQ7D;
-					};
-					1DD39AD3180B8117004E56D5 = {
-						DevelopmentTeam = H7V7XYVQ7D;
-					};
 					874206460564169600CFC3F1 = {
-						DevelopmentTeam = J5PTVY8BHH;
-						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.Sandbox = {
 								enabled = 0;
@@ -6538,7 +5679,6 @@
 			targets = (
 				874206460564169600CFC3F1 /* Therm */,
 				1DD39AD3180B8117004E56D5 /* ThermTests */,
-				1D6ED85219AEA20D005A7799 /* ThermForApplescriptTesting */,
 				A6C7603F1B45C4CF00E3C992 /* ThermShared */,
 				A6C7641B1B45CB2800E3C992 /* ThermXCTests */,
 				A66717851DCE36C3000CE608 /* ThermSharedARC */,
@@ -6547,152 +5687,6 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		1D6ED97419AEA20D005A7799 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				1D6ED97619AEA20D005A7799 /* close.png in Resources */,
-				A686A11A1C86A6DE0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
-				A67D0D5E1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
-				1D6ED97719AEA20D005A7799 /* config.png in Resources */,
-				1DB40A431B1FDC80005B83C7 /* NoColor@2x.png in Resources */,
-				A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
-				A67D0D731A2EE12A003A8B35 /* MainMenu.xib in Resources */,
-				1D6ED97919AEA20D005A7799 /* important.png in Resources */,
-				1D6ED97B19AEA20D005A7799 /* newwin.png in Resources */,
-				1DBBA5E01B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
-				1D6ED97E19AEA20D005A7799 /* QuestionMarkSign.png in Resources */,
-				1D8BBA7A1B30FD230005A852 /* Later.png in Resources */,
-				A67D0D491A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
-				A67D0D8B1A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
-				1DEDF56E19C917FD005B023A /* new-tab@2x.png in Resources */,
-				1D6ED98019AEA20D005A7799 /* QuestionMarkSign@2x.png in Resources */,
-				1D6ED98719AEA20D005A7799 /* Maximized.png in Resources */,
-				1D6ED98A19AEA20D005A7799 /* LogoFrame.png in Resources */,
-				A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */,
-				A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
-				A67D0D4C1A2EE12A003A8B35 /* configPanel.strings in Resources */,
-				1DA76A261B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
-				A67D0D551A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
-				A67D0D911A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
-				A67D0D371A2EE12A003A8B35 /* AddressBook.strings in Resources */,
-				A65B72B61B33C07D00F947A7 /* NextTip@2x.png in Resources */,
-				1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */,
-				A690F7031B424C55009F76D8 /* Media.xcassets in Resources */,
-				1D8BBA6D1B30F5C30005A852 /* Navigate@2x.png in Resources */,
-				1D6ED99119AEA20D005A7799 /* TabNewMetalPressed.png in Resources */,
-				1D6ED99219AEA20D005A7799 /* TabNewMetalRollover.png in Resources */,
-				A67D0D7C1A2EE12A003A8B35 /* PasteView.xib in Resources */,
-				1D6ED99319AEA20D005A7799 /* Therm.sdef in Resources */,
-				1D6ED99519AEA20D005A7799 /* BrokenPipeDivider.png in Resources */,
-				1D6ED99619AEA20D005A7799 /* PrefsAdvanced@2x.png in Resources */,
-				A6B3A7401AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
-				A67D0D761A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */,
-				1D6ED99719AEA20D005A7799 /* Warning.png in Resources */,
-				A663010D19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
-				1D6ED99819AEA20D005A7799 /* dead@2x.png in Resources */,
-				A65B725C1B1A630100F947A7 /* CheckMark.png in Resources */,
-				A6B3A73A1AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
-				A6EFF2341D2049A400806EEF /* Erase@2x.png in Resources */,
-				A65B72AE1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
-				A67D0D5B1A2EE12A003A8B35 /* iTerm.strings in Resources */,
-				1D6ED99D19AEA20D005A7799 /* dead.png in Resources */,
-				1D6ED99E19AEA20D005A7799 /* dsa_pub.pem in Resources */,
-				1D6ED9A119AEA20D005A7799 /* PresetKeyMappings.plist in Resources */,
-				A67D0D431A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
-				A65B72B31B33C07D00F947A7 /* NextTip.png in Resources */,
-				A65B725F1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
-				1D6ED9A219AEA20D005A7799 /* ColorPresets.plist in Resources */,
-				1D6ED9A319AEA20D005A7799 /* DefaultBookmark.plist in Resources */,
-				1D6ED9A519AEA20D005A7799 /* MigrationMap.plist in Resources */,
-				1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */,
-				1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */,
-				A6B3A73D1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
-				1D6ED9AA19AEA20D005A7799 /* IBarCursor.png in Resources */,
-				1D6ED9AC19AEA20D005A7799 /* NewOutput@2x.png in Resources */,
-				A67D0D671A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
-				1D6ED9B519AEA20D005A7799 /* bell.png in Resources */,
-				A65B72AB1B3285A300F947A7 /* DisableTips.png in Resources */,
-				1DBBA5E31B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
-				1DE922EC1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
-				A66A1FB01A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
-				1DA76A0D1B30892900CB272A /* iTermTipWindowController.xib in Resources */,
-				A67D0D881A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
-				1D6ED9B819AEA20D005A7799 /* wrap_to_bottom.png in Resources */,
-				1D6ED9B919AEA20D005A7799 /* wrap_to_top.png in Resources */,
-				A67D0D701A2EE12A003A8B35 /* MainMenu.strings in Resources */,
-				A67D0D791A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
-				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
-				1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */,
-				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
-				1D6ED9BC19AEA20D005A7799 /* closebutton.png in Resources */,
-				1D6ED9BD19AEA20D005A7799 /* BroadcastInput.png in Resources */,
-				A67D0D521A2EE12A003A8B35 /* FindView.xib in Resources */,
-				A6FEA28A1CF4DD2700376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
-				1D6ED9BF19AEA20D005A7799 /* closebutton@2x.png in Resources */,
-				1DE922E81AC3709200965876 /* BackgroundStripes.png in Resources */,
-				1D6ED9C019AEA20D005A7799 /* IBarCursorXMR.png in Resources */,
-				1D6ED9C119AEA20D005A7799 /* Coprocess.png in Resources */,
-				A686C1971ADF62F200906FAE /* Zoomed.png in Resources */,
-				A67D0D3D1A2EE12A003A8B35 /* Autocomplete.xib in Resources */,
-				1D99C8E61BD59C37001EE1FC /* SearchCursor.png in Resources */,
-				A67D0D7F1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
-				1D6ED9C319AEA20D005A7799 /* Maximized@2x.png in Resources */,
-				1D6ED9C419AEA20D005A7799 /* DefaultPointerActions.plist in Resources */,
-				A6EFF2331D2049A400806EEF /* Erase.png in Resources */,
-				A686A1191C86A6DE0024C2DE /* NewOutputForDarkTheme.png in Resources */,
-				A67D0D821A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
-				A67D0D611A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
-				A67D0D581A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
-				A67D0D341A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
-				1D6ED9C519AEA20D005A7799 /* LogoShadow.png in Resources */,
-				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
-				A60BB3881EB54BD300D76C09 /* CopyMode.png in Resources */,
-				1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */,
-				1D6ED9CA19AEA20D005A7799 /* IBarCursorXMR@2x.png in Resources */,
-				1D6ED9CE19AEA20D005A7799 /* TabClose_Front_Rollover@2x.png in Resources */,
-				1D8BBA721B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
-				1D99C8E91BD59C37001EE1FC /* SearchCursor@2x.png in Resources */,
-				A67D0D4F1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
-				A67D0D641A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,
-				A6B3A7371AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
-				1D6ED9D119AEA20D005A7799 /* TabClose_Front_Pressed@2x.png in Resources */,
-				1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */,
-				1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */,
-				1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */,
-				A6EFF23C1D20F6C000806EEF /* EraseDarkBackground@2x.png in Resources */,
-				1DEDF56B19C917FD005B023A /* new-tab.png in Resources */,
-				1D6ED9D519AEA20D005A7799 /* TabClose_Front.png in Resources */,
-				1D6ED9D919AEA20D005A7799 /* important@2x.png in Resources */,
-				1D6ED9DA19AEA20D005A7799 /* Alert@2x.png in Resources */,
-				A67D0D3A1A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
-				1D6ED9DC19AEA20D005A7799 /* PrefsGeneral.png in Resources */,
-				1D6ED9DD19AEA20D005A7799 /* NewOutput.png in Resources */,
-				A67D0D6D1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
-				1D6ED9DE19AEA20D005A7799 /* PrefsAdvanced.png in Resources */,
-				1D8BBA751B30F7FB0005A852 /* Dismiss.png in Resources */,
-				1D6ED9DF19AEA20D005A7799 /* PrefsGeneral@2x.png in Resources */,
-				A65B72541B1A5D7500F947A7 /* WarningSign.png in Resources */,
-				1D6ED9E019AEA20D005A7799 /* PrefsAppearance.png in Resources */,
-				1D8BBA6A1B30F5C30005A852 /* Navigate.png in Resources */,
-				1D6ED9E119AEA20D005A7799 /* broken_image.png in Resources */,
-				1D6ED9E219AEA20D005A7799 /* PrefsAppearance@2x.png in Resources */,
-				A67D0D6A1A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
-				1D6ED9E319AEA20D005A7799 /* Alert.png in Resources */,
-				1D6ED9E419AEA20D005A7799 /* PrefsProfile.png in Resources */,
-				1D6ED9E519AEA20D005A7799 /* PrefsProfile@2x.png in Resources */,
-				1D6ED9E619AEA20D005A7799 /* PrefsKeyboard.png in Resources */,
-				A6EFF23B1D20F6C000806EEF /* EraseDarkBackground.png in Resources */,
-				1D6ED9E719AEA20D005A7799 /* PrefsKeyboard@2x.png in Resources */,
-				A67D0D8E1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
-				1D6ED9E819AEA20D005A7799 /* PrefsMouse.png in Resources */,
-				1D6ED9EA19AEA20D005A7799 /* PrefsMouse@2x.png in Resources */,
-				1D8BBA7D1B30FD230005A852 /* Later@2x.png in Resources */,
-				1D6ED9EB19AEA20D005A7799 /* PrefsArrangements.png in Resources */,
-				1D6ED9EC19AEA20D005A7799 /* PrefsArrangements@2x.png in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		1DD39AD2180B8117004E56D5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -7584,13 +6578,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXRezBuildPhase section */
-		1D6EDAFF19AEA20D005A7799 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		874206550564169600CFC3F1 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
@@ -7600,33 +6587,7 @@
 		};
 /* End PBXRezBuildPhase section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		1D6EDB0419AEA20D005A7799 /* Update SVN Revision */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 12;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Update SVN Revision";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "exec true";
-		};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
-		1D6ED9ED19AEA20D005A7799 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A6C763CF1B45C53B00E3C992 /* main.m in Sources */,
-				A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		1DD39AD0180B8117004E56D5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -8081,14 +7042,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		1D6ED85319AEA20D005A7799 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-		};
-		1D6EDB0D19AEA276005A7799 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 1D6ED85219AEA20D005A7799 /* ThermForApplescriptTesting */;
-			targetProxy = 1D6EDB0C19AEA276005A7799 /* PBXContainerItemProxy */;
-		};
 		A667195E1DCE36EF000CE608 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A66717851DCE36C3000CE608 /* ThermSharedARC */;
@@ -8103,11 +7056,6 @@
 			isa = PBXTargetDependency;
 			target = A6C7603F1B45C4CF00E3C992 /* ThermShared */;
 			targetProxy = A6C763D41B45C5BE00E3C992 /* PBXContainerItemProxy */;
-		};
-		A6C763D71B45C5C500E3C992 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A6C7603F1B45C4CF00E3C992 /* ThermShared */;
-			targetProxy = A6C763D61B45C5C500E3C992 /* PBXContainerItemProxy */;
 		};
 		A6C764231B45CB2800E3C992 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -8160,7 +7108,9 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -8185,11 +7135,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = J5PTVY8BHH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -8220,7 +7171,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/Therm.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				OTHER_CODE_SIGN_FLAGS = "--deep";
@@ -8247,198 +7201,6 @@
 			};
 			name = Nightly;
 		};
-		1D6EDB0619AEA20D005A7799 /* Development */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
-				ENABLE_HARDENED_RUNTIME = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)",
-					"$(PROJECT_DIR)",
-					"$(PROJECT_DIR)/ThirdParty",
-					"$(PROJECT_DIR)/ColorPicker",
-				);
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_VERSION = "";
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
-				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
-				GCC_WARN_MISSING_PARENTHESES = YES;
-				GCC_WARN_SHADOW = YES;
-				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = NO;
-				GCC_WARN_UNKNOWN_PRAGMAS = NO;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_LABEL = YES;
-				GCC_WARN_UNUSED_PARAMETER = NO;
-				GCC_WARN_UNUSED_VALUE = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					.,
-					ThirdParty,
-				);
-				INFOPLIST_FILE = "plists/ThermForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				LINK_WITH_STANDARD_LIBRARIES = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
-				"OTHER_CFLAGS[arch=*]" = "-DITERM_DEBUG=1";
-				OTHER_CODE_SIGN_FLAGS = "--deep";
-				OTHER_LDFLAGS = (
-					"-laprutil-1",
-					"-licucore",
-					"-ObjC",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
-				PRODUCT_NAME = ThermForApplescriptTesting;
-				SDKROOT = macosx;
-				SECTORDER_FLAGS = "";
-				VALID_ARCHS = "arm64 i386 x86_64 arm64e";
-				WARNING_CFLAGS = (
-					"-Wextra",
-					"-Wall",
-					"-Wno-unused-parameter",
-					"-Wno-sign-compare",
-					"-Wno-missing-field-initializers",
-				);
-				WRAPPER_EXTENSION = app;
-				ZERO_LINK = YES;
-			};
-			name = Development;
-		};
-		1D6EDB0719AEA20D005A7799 /* Deployment */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
-				ENABLE_HARDENED_RUNTIME = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)",
-					"$(PROJECT_DIR)",
-					"$(PROJECT_DIR)/ThirdParty",
-					"$(PROJECT_DIR)/ColorPicker",
-				);
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_VERSION = "";
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
-				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
-				GCC_WARN_MISSING_PARENTHESES = YES;
-				GCC_WARN_SHADOW = YES;
-				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = NO;
-				GCC_WARN_UNKNOWN_PRAGMAS = NO;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_LABEL = YES;
-				GCC_WARN_UNUSED_PARAMETER = NO;
-				GCC_WARN_UNUSED_VALUE = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					.,
-					ThirdParty,
-				);
-				INFOPLIST_FILE = "plists/ThermForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				"OTHER_CFLAGS[arch=*]" = "";
-				OTHER_CODE_SIGN_FLAGS = "--deep";
-				OTHER_LDFLAGS = (
-					"-laprutil-1",
-					"-licucore",
-					"-ObjC",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
-				PRODUCT_NAME = ThermForApplescriptTesting;
-				SDKROOT = macosx;
-				VALID_ARCHS = "arm64 i386 x86_64 arm64e";
-				WARNING_CFLAGS = (
-					"-Wextra",
-					"-Wall",
-					"-Wno-unused-parameter",
-					"-Wno-sign-compare",
-					"-Wno-missing-field-initializers",
-				);
-				WRAPPER_EXTENSION = app;
-				ZERO_LINK = NO;
-			};
-			name = Deployment;
-		};
-		1D6EDB0819AEA20D005A7799 /* Nightly */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
-				ENABLE_HARDENED_RUNTIME = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)",
-					"$(PROJECT_DIR)",
-					"$(PROJECT_DIR)/ThirdParty",
-					"$(PROJECT_DIR)/ColorPicker",
-				);
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_VERSION = "";
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
-				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
-				GCC_WARN_MISSING_PARENTHESES = YES;
-				GCC_WARN_SHADOW = YES;
-				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = NO;
-				GCC_WARN_UNKNOWN_PRAGMAS = NO;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_LABEL = YES;
-				GCC_WARN_UNUSED_PARAMETER = NO;
-				GCC_WARN_UNUSED_VALUE = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					.,
-					ThirdParty,
-				);
-				INFOPLIST_FILE = "plists/ThermForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				OTHER_CODE_SIGN_FLAGS = "--deep";
-				OTHER_LDFLAGS = (
-					"-laprutil-1",
-					"-licucore",
-					"-ObjC",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
-				PRODUCT_NAME = ThermForApplescriptTesting;
-				SDKROOT = macosx;
-				VALID_ARCHS = "arm64 i386 x86_64 arm64e";
-				WARNING_CFLAGS = (
-					"-Wextra",
-					"-Wall",
-					"-Wno-unused-parameter",
-					"-Wno-sign-compare",
-					"-Wno-missing-field-initializers",
-				);
-				WRAPPER_EXTENSION = app;
-				ZERO_LINK = NO;
-			};
-			name = Nightly;
-		};
 		1DD39B03180B812D004E56D5 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -8459,7 +7221,8 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = J5PTVY8BHH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -8530,8 +7293,9 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = J5PTVY8BHH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -8597,8 +7361,9 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = J5PTVY8BHH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -8663,6 +7428,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -8713,6 +7479,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -8760,6 +7527,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -8808,6 +7576,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -8865,6 +7634,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -8918,6 +7688,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -8971,6 +7742,7 @@
 				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -8999,7 +7771,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pancake.therm.$(PRODUCT_NAME:rfc1034identifier)";
@@ -9031,6 +7807,7 @@
 				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -9052,7 +7829,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pancake.therm.$(PRODUCT_NAME:rfc1034identifier)";
@@ -9084,6 +7865,7 @@
 				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -9105,7 +7887,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pancake.therm.$(PRODUCT_NAME:rfc1034identifier)";
@@ -9121,11 +7907,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = J5PTVY8BHH;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -9157,7 +7944,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/Therm.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
@@ -9193,11 +7983,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = J5PTVY8BHH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -9227,7 +8018,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/Therm.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				"OTHER_CFLAGS[arch=*]" = "-O3";
@@ -9279,8 +8073,10 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -9299,7 +8095,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_PROFILING_CODE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				ONLY_ACTIVE_ARCH = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				VALID_ARCHS = "arm64 i386 x86_64 arm64e";
 				WARNING_CFLAGS = "-Wall";
@@ -9330,7 +8126,9 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -9354,16 +8152,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1D6EDB0519AEA20D005A7799 /* Build configuration list for PBXNativeTarget "ThermForApplescriptTesting" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				1D6EDB0619AEA20D005A7799 /* Development */,
-				1D6EDB0719AEA20D005A7799 /* Deployment */,
-				1D6EDB0819AEA20D005A7799 /* Nightly */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
-		};
 		1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "ThermTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

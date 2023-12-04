@@ -181,12 +181,12 @@ static const CGFloat kMargin = 8;
     for (int i = start; i != limit; i += step) {
         NSString *action = actions[i];
         NSButton *button = [[[NSButton alloc] init] autorelease];
-        [button setButtonType:NSMomentaryPushInButton];
+        [button setButtonType:NSButtonTypeMomentaryPushIn];
         [button setTarget:self];
         [button setAction:@selector(buttonPressed:)];
         [button setTag:i];
         [button setTitle:action];
-        [button setBezelStyle:NSTexturedRoundedBezelStyle];
+        [button setBezelStyle:NSBezelStyleToolbar];
         [button sizeToFit];
         button.autoresizingMask = NSViewMinXMargin;
         _buttonWidth += kMargin;

@@ -19,10 +19,10 @@
     self = [super initWithFrame:frameRect];
     if (self) {
         _disclosureButton = [[[NSButton alloc] initWithFrame:NSMakeRect(0, 2, 24, 24)] autorelease];
-        [_disclosureButton setButtonType:NSOnOffButton];
-        [_disclosureButton setBezelStyle:NSDisclosureBezelStyle];
+        [_disclosureButton setButtonType:NSButtonTypeOnOff];
+        [_disclosureButton setBezelStyle:NSBezelStyleDisclosure];
         [_disclosureButton setImagePosition:NSImageOnly];
-        [_disclosureButton setState:NSOffState];
+        [_disclosureButton setState:NSControlStateValueOff];
         [_disclosureButton setTarget:self];
         [_disclosureButton setAction:@selector(disclosureButtonPressed:)];
         [_disclosureButton sizeToFit];
@@ -33,7 +33,7 @@
         [_labelField setEditable:NO];
         [_labelField setSelectable:NO];
         [_labelField setStringValue:prompt];
-        [_labelField setAlignment:NSLeftTextAlignment];
+        [_labelField setAlignment:NSTextAlignmentLeft];
         [_labelField setAutoresizingMask:NSViewWidthSizable];
         [_labelField setTextColor:[NSColor headerTextColor]];
         [_labelField sizeToFit];
@@ -68,8 +68,8 @@
 }
 
 - (NSSize)intrinsicContentSize {
-    return NSMakeSize(_disclosureButton.state == NSOnState ? NSMaxX(_textView.frame) : NSMaxX(_labelField.frame),
-                      _disclosureButton.state == NSOnState ? NSMaxY(_textView.frame) : NSMaxY(_disclosureButton.frame));
+    return NSMakeSize(_disclosureButton.state == NSControlStateValueOn ? NSMaxX(_textView.frame) : NSMaxX(_labelField.frame),
+                      _disclosureButton.state == NSControlStateValueOn ? NSMaxY(_textView.frame) : NSMaxY(_disclosureButton.frame));
 }
 
 - (void)disclosureButtonPressed:(id)sender {

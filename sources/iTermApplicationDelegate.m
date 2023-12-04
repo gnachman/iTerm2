@@ -307,6 +307,8 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+#if 0
+// invalidated
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if ([menuItem action] == @selector(openDashboard:)) {
         return [[iTermController sharedInstance] haveTmuxConnection];
@@ -376,6 +378,7 @@ static BOOL hasBecomeActive = NO;
         return YES;
     }
 }
+#endif
 
 #pragma mark - APIs
 
@@ -871,14 +874,16 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
     hasBecomeActive = YES;
-    if (secureInputDesired_) {
+#if 0
+    if (secureInputDesired_) { // deprecate the secure input
         DLog(@"Application becoming active. Enable secure input.");
         [self setSecureInput:YES];
     }
+#endif
 #if 0
     for (NSWindow *window in [[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels]) {
         [window setTitleVisibility:NSWindowTitleHidden];
-        [window setTitlebarAppearsTransparent:TRUE];
+        [window setTitlebarAppearsTransparent:YES];
     }
     // If focus follows mouse is on, find the window under the cursor and make it key. If a PTYTextView
     // is under the cursor make it first responder.
@@ -997,7 +1002,7 @@ static BOOL hasBecomeActive = NO;
         });
     }
    // [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
-    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
+    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:NO];
 
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
@@ -1114,7 +1119,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)windowArrangementsDidChange:(id)sender {
   //  [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
-    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
+    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:NO];
 }
 
 - (void)toolDidToggle:(NSNotification *)notification {
@@ -1217,14 +1222,14 @@ static BOOL hasBecomeActive = NO;
     [closeTab setTarget:frontTerminal];
     [closeTab setKeyEquivalent:@"w"];
     [closeWindow setKeyEquivalent:@"W"];
-    [closeWindow setKeyEquivalentModifierMask: NSCommandKeyMask];
+    [closeWindow setKeyEquivalentModifierMask: NSEventModifierFlagCommand];
 }
 
 - (void)nonTerminalWindowBecameKey:(NSNotification *)aNotification {
     [closeTab setAction:nil];
     [closeTab setKeyEquivalent:@""];
     [closeWindow setKeyEquivalent:@"w"];
-    [closeWindow setKeyEquivalentModifierMask:NSCommandKeyMask];
+    [closeWindow setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
 }
 
 - (void)updateAddressBookMenu:(NSNotification*)aNotification {
@@ -1671,7 +1676,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem {
-    if ([iTermToolbeltView numberOfVisibleTools] == 1 && [menuItem state] == NSOnState) {
+    if ([iTermToolbeltView numberOfVisibleTools] == 1 && [menuItem state] == NSControlStateValueOn) {
         return;
     }
     [iTermToolbeltView toggleShouldShowTool:[menuItem title]];

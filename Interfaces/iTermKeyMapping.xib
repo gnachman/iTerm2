@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
-        <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11542"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -23,16 +22,16 @@
             <rect key="frame" x="0.0" y="0.0" width="525" height="279"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <scrollView horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="IMN-ot-Emh">
+                <scrollView fixedFrame="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="IMN-ot-Emh">
                     <rect key="frame" x="0.0" y="33" width="525" height="246"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <clipView key="contentView" id="0Ig-8x-G8g">
-                        <rect key="frame" x="1" y="0.0" width="523" height="245"/>
+                        <rect key="frame" x="1" y="1" width="523" height="244"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="9am-Ja-chV" id="ba5-LU-f2s">
-                                <rect key="frame" x="0.0" y="0.0" width="523" height="228"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <rect key="frame" x="0.0" y="0.0" width="523" height="227"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <tableViewGridLines key="gridStyleMask" vertical="YES" horizontal="YES"/>
@@ -40,7 +39,6 @@
                                 <tableColumns>
                                     <tableColumn identifier="0" editable="NO" width="198" minWidth="40" maxWidth="1000" id="Qlz-bw-G7W">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Key Combination">
-                                            <font key="font" metaFont="smallSystem"/>
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" white="0.33333299" alpha="1" colorSpace="calibratedWhite"/>
                                         </tableHeaderCell>
@@ -51,9 +49,8 @@
                                         </textFieldCell>
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                     </tableColumn>
-                                    <tableColumn identifier="1" editable="NO" width="319.101" minWidth="42.10107" maxWidth="1000" id="8iu-ei-TS7">
+                                    <tableColumn identifier="1" editable="NO" width="310" minWidth="42.10107" maxWidth="1000" id="8iu-ei-TS7">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
-                                            <font key="font" metaFont="smallSystem"/>
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" white="0.33333299" alpha="1" colorSpace="calibratedWhite"/>
                                         </tableHeaderCell>
@@ -72,15 +69,15 @@
                             </tableView>
                         </subviews>
                     </clipView>
-                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="dX4-0X-Caj">
+                    <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="dX4-0X-Caj">
                         <rect key="frame" x="-100" y="-100" width="266" height="15"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="B0m-r4-UO4">
-                        <rect key="frame" x="508" y="17" width="16" height="228"/>
+                    <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="B0m-r4-UO4">
+                        <rect key="frame" x="508" y="18" width="16" height="227"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <tableHeaderView key="headerView" id="9am-Ja-chV">
+                    <tableHeaderView key="headerView" wantsLayer="YES" id="9am-Ja-chV">
                         <rect key="frame" x="0.0" y="0.0" width="523" height="17"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </tableHeaderView>
@@ -88,7 +85,7 @@
                         <outlet property="nextKeyView" destination="D4A-qx-BsH" id="0Lx-JL-HpM"/>
                     </connections>
                 </scrollView>
-                <button id="D4A-qx-BsH">
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="D4A-qx-BsH">
                     <rect key="frame" x="0.0" y="3" width="21" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="jzp-Du-pvI">
@@ -100,7 +97,7 @@
                         <outlet property="nextKeyView" destination="csN-Fw-hKk" id="65i-8U-0aS"/>
                     </connections>
                 </button>
-                <button id="csN-Fw-hKk">
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="csN-Fw-hKk">
                     <rect key="frame" x="20" y="3" width="20" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="h8l-hr-iTp">
@@ -112,7 +109,7 @@
                         <outlet property="nextKeyView" destination="G8O-KW-SKT" id="S2f-cY-YqI"/>
                     </connections>
                 </button>
-                <popUpButton id="G8O-KW-SKT">
+                <popUpButton fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G8O-KW-SKT">
                     <rect key="frame" x="39" y="3" width="144" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <popUpButtonCell key="cell" type="square" title="Load Preset..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="0rv-a0-ans" id="Tmb-OS-Cqe">
@@ -130,7 +127,7 @@
                         <action selector="loadPresets:" target="-2" id="vvS-N2-cM0"/>
                     </connections>
                 </popUpButton>
-                <button misplaced="YES" id="mE2-Fe-MAY">
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mE2-Fe-MAY">
                     <rect key="frame" x="394" y="3" width="131" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="square" title="Add Touch Bar Item" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" borderStyle="border" inset="2" id="2Vc-Od-Zym">
@@ -147,8 +144,8 @@
         </customView>
     </objects>
     <resources>
-        <image name="NSActionTemplate" width="14" height="14"/>
-        <image name="NSAddTemplate" width="11" height="11"/>
-        <image name="NSRemoveTemplate" width="11" height="11"/>
+        <image name="NSActionTemplate" width="20" height="20"/>
+        <image name="NSAddTemplate" width="18" height="17"/>
+        <image name="NSRemoveTemplate" width="18" height="5"/>
     </resources>
 </document>
