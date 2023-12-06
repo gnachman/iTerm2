@@ -388,9 +388,9 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     } else if (tableColumn == _partialLineColumn) {
         NSButton *checkbox = [[[NSButton alloc] initWithFrame:NSZeroRect] autorelease];
         [checkbox sizeToFit];
-        [checkbox setButtonType:NSSwitchButton];
+        [checkbox setButtonType:NSButtonTypeSwitch];
         checkbox.title = @"";
-        checkbox.state = [triggerDictionary[kTriggerPartialLineKey] boolValue] ? NSOnState : NSOffState;
+        checkbox.state = [triggerDictionary[kTriggerPartialLineKey] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
         checkbox.target = self;
         checkbox.action = @selector(instantDidChange:);
         return checkbox;
@@ -584,7 +584,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
 }
 
 - (void)instantDidChange:(NSButton *)checkbox {
-    NSNumber *newValue = checkbox.state == NSOnState ? @(YES) : @(NO);
+    NSNumber *newValue = checkbox.state == NSControlStateValueOn ? @(YES) : @(NO);
     NSInteger row = [_tableView rowForView:checkbox];
     
     // If a text field is editing, make it save its contents before we get the trigger dictionary.

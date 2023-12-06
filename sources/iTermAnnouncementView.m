@@ -95,7 +95,7 @@ static const CGFloat kMargin = 8;
                                                                             closeSize.width,
                                                                             closeSize.height)] autorelease];
         closeButton.autoresizingMask = NSViewMinXMargin;
-        [closeButton setButtonType:NSMomentaryPushInButton];
+        [closeButton setButtonType:NSButtonTypeMomentaryPushIn];
         [closeButton setImage:closeImage];
         [closeButton setTarget:self];
         [closeButton setAction:@selector(close:)];

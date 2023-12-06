@@ -18,6 +18,8 @@
 
 - (instancetype)initWithFrame:(NSRect)frame URL:(NSURL *)url {
     self = [super initWithFrame:frame];
+    // toolwebview removed because we cant disable javascript and we dont want web previews. the whole class should be removed imho
+#if 0
     if (self) {
         WKWebViewConfiguration *configuration = [[[WKWebViewConfiguration alloc] init] autorelease];
         if (!configuration) {
@@ -31,7 +33,7 @@
             }
             ITERM_IGNORE_PARTIAL_END
             WKPreferences *prefs = [[[WKPreferences alloc] init] autorelease];
-            prefs.javaEnabled = NO;
+           // prefs.javaEnabled = NO;
             prefs.javaScriptEnabled = YES;
             prefs.javaScriptCanOpenWindowsAutomatically = NO;
             configuration.preferences = prefs;
@@ -52,6 +54,7 @@
             _webView = [webView retain];
         }
     }
+#endif
     return self;
 }
 

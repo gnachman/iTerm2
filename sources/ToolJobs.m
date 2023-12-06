@@ -73,7 +73,7 @@ static const CGFloat kMargin = 4;
         [self setCompletes:YES];
         [self setDataSource:self];
 
-        [[self cell] setControlSize:NSSmallControlSize];
+        [[self cell] setControlSize:NSControlSizeSmall];
         [[self cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
     }
     return self;
@@ -185,11 +185,11 @@ static const CGFloat kMargin = 4;
                                                             frame.size.height - kButtonHeight,
                                                             frame.size.width,
                                                             kButtonHeight)] autorelease];
-        [kill_ setButtonType:NSMomentaryPushInButton];
+        [kill_ setButtonType:NSButtonTypeMomentaryPushIn];
         [kill_ setTitle:@"Send Signal"];
         [kill_ setTarget:self];
         [kill_ setAction:@selector(kill:)];
-        [kill_ setBezelStyle:NSSmallSquareBezelStyle];
+        [kill_ setBezelStyle:NSBezelStyleSmallSquare];
         [kill_ sizeToFit];
         [kill_ setAutoresizingMask:NSViewMinYMargin | NSViewMaxXMargin];
         [self addSubview:kill_];

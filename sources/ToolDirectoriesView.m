@@ -53,8 +53,8 @@ static const CGFloat kHelpMargin = 5;
         [self addSubview:searchField_];
 
         help_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
-        [help_ setBezelStyle:NSHelpButtonBezelStyle];
-        [help_ setButtonType:NSMomentaryPushInButton];
+        [help_ setBezelStyle:NSBezelStyleHelpButton];
+        [help_ setButtonType:NSButtonTypeMomentaryPushIn];
         [help_ setBordered:YES];
         [help_ sizeToFit];
         help_.target = self;
@@ -64,11 +64,11 @@ static const CGFloat kHelpMargin = 5;
         [self addSubview:help_];
 
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
-        [clear_ setButtonType:NSMomentaryPushInButton];
+        [clear_ setButtonType:NSButtonTypeMomentaryPushIn];
         [clear_ setTitle:@"Clear All"];
         [clear_ setTarget:self];
         [clear_ setAction:@selector(clear:)];
-        [clear_ setBezelStyle:NSSmallSquareBezelStyle];
+        [clear_ setBezelStyle:NSBezelStyleSmallSquare];
         [clear_ sizeToFit];
         [clear_ setAutoresizingMask:NSViewMinYMargin | NSViewMinXMargin];
         [self addSubview:clear_];
@@ -235,12 +235,12 @@ static const CGFloat kHelpMargin = 5;
     iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text;
     NSString *escapedPath = [entry.path stringWithEscapedShellCharactersIncludingNewlines:YES];
-    if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
+    if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
         text = [@"cd " stringByAppendingString:escapedPath];
     } else {
         text = escapedPath;
     }
-    if (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask)) {
+    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift)) {
         text = [text stringByAppendingString:@"\n"];
     }
     [wrapper.delegate.delegate toolbeltInsertText:text];
@@ -286,12 +286,14 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (CGFloat)minimumHeight {
-    return 88;
+    return 80;
 }
 
+#if 0
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
   return [self respondsToSelector:[item action]] && [tableView_ clickedRow] >= 0;
 }
+#endif
 
 - (void)toggleStar:(id)sender {
     NSInteger index = [tableView_ clickedRow];

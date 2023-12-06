@@ -72,11 +72,11 @@
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
-    [self setNeedsDisplay];
+    [self setNeedsDisplay: YES];
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification {
-    [self setNeedsDisplay];
+    [self setNeedsDisplay: YES];
 }
 
 @end

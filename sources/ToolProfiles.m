@@ -38,18 +38,18 @@ static const CGFloat kInnerMargin = 5;
         [listView_ release];
 
         _openButton = [[[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)] autorelease];
-        [_openButton setButtonType:NSMomentaryPushInButton];
+        [_openButton setButtonType:NSButtonTypeMomentaryPushIn];
         [_openButton setTitle:@"Open"];
         [_openButton setTarget:self];
         [_openButton setAction:@selector(open:)];
-        [_openButton setBezelStyle:NSSmallSquareBezelStyle];
+        [_openButton setBezelStyle:NSBezelStyleSmallSquare];
         [_openButton sizeToFit];
         [_openButton setAutoresizingMask:NSViewMinYMargin];
         [self addSubview:_openButton];
         [_openButton bind:@"enabled" toObject:listView_ withKeyPath:@"hasSelection" options:nil];
 
         popup_ = [[[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width - _openButton.frame.size.width - kInnerMargin, kPopupHeight)] autorelease];
-        [[popup_ cell] setControlSize:NSSmallControlSize];
+        [[popup_ cell] setControlSize:NSControlSizeSmall];
         [[popup_ cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [[popup_ menu] addItemWithTitle:@"New Tab"
                                  action:@selector(toolProfilesNewTab:)
@@ -135,11 +135,11 @@ static const CGFloat kInnerMargin = 5;
 - (void)profileTableRowSelected:(id)profileTable
 {
     NSEvent *event = [[NSApplication sharedApplication] currentEvent];
-    if ([event modifierFlags] & (NSControlKeyMask)) {
+    if ([event modifierFlags] & (NSEventModifierFlagControl)) {
         [self toolProfilesNewHorizontalSplit:nil];
-    } else if ([event modifierFlags] & (NSAlternateKeyMask)) {
+    } else if ([event modifierFlags] & (NSEventModifierFlagOption)) {
         [self toolProfilesNewVerticalSplit:nil];
-    } else if ([event modifierFlags] & (NSShiftKeyMask)) {
+    } else if ([event modifierFlags] & (NSEventModifierFlagShift)) {
         [self toolProfilesNewWindow:nil];
     } else {
         [self toolProfilesNewTab:nil];

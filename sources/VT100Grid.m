@@ -1078,8 +1078,10 @@ static NSString *const kGridSizeKey = @"Size";
         }
 
         // clear DWC's that are about to get orphaned
+#if 0
         int si = sourceIndex;
         int di = destIndex;
+#endif
         for (int iteration = 0; iteration < rect.size.height; iteration++) {
             const int lineNumber = iteration + rect.origin.y;
             [self erasePossibleDoubleWidthCharInLineNumber:lineNumber
@@ -1088,8 +1090,10 @@ static NSString *const kGridSizeKey = @"Size";
             [self erasePossibleDoubleWidthCharInLineNumber:lineNumber
                                           startingAtOffset:rightIndex
                                                   withChar:defaultChar];
+#if 0
             si -= direction;
             di -= direction;
+#endif
         }
 
         // Move lines.
@@ -1310,7 +1314,7 @@ static NSString *const kGridSizeKey = @"Size";
 
     BOOL foundCursor = NO;
     BOOL prevLineStartsWithDoubleWidth = NO;
-    int numPopped = 0;
+   // int numPopped = 0;
     while (destLineNumber >= 0) {
         screen_char_t *dest = [self screenCharsAtLineNumber:destLineNumber];
         memcpy(dest, defaultLine, sizeof(screen_char_t) * size_.width);
@@ -1331,7 +1335,7 @@ static NSString *const kGridSizeKey = @"Size";
         int cont;
         NSTimeInterval timestamp;
         screen_char_t continuation;
-        ++numPopped;
+       // numPopped++;
         assert([lineBuffer popAndCopyLastLineInto:dest
                                             width:size_.width
                                 includesEndOfLine:&cont

@@ -1079,7 +1079,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
 
             // selected? set tab states...
             if ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]]) {
-                [cell setState:NSOnState];
+                [cell setState:NSControlStateValueOn];
                 tabState |= PSMTab_SelectedMask;
                 // previous cell
                 if (i > 0) {
@@ -1087,10 +1087,10 @@ const NSInteger kPSMStartResizeAnimation = 0;
                 }
                 // next cell - see below
             } else {
-                [cell setState:NSOffState];
+                [cell setState:NSControlStateValueOff];
                 // see if prev cell was selected
                 if (i > 0) {
-                    if ([[_cells objectAtIndex:i-1] state] == NSOnState){
+                    if ([[_cells objectAtIndex:i-1] state] == NSControlStateValueOn){
                         tabState |= PSMTab_LeftIsSelectedMask;
                     }
                 }

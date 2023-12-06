@@ -3621,8 +3621,8 @@ return;
             if (string) {
                 NSPasteboard *pboard = [NSPasteboard generalPasteboard];
                 [pboard clearContents];
-                [pboard declareTypes:@[ NSStringPboardType ] owner:self];
-                [pboard setString:string forType:NSStringPboardType];
+                [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+                [pboard setString:string forType:NSPasteboardTypeString];
             }
         }
     }
@@ -4637,7 +4637,7 @@ extern BOOL unfocused;
     struct timeval begintime;
     gettimeofday(&begintime, NULL);
     BOOL keepSearching = NO;
-    int iterations = 0;
+   // int iterations = 0;
     int ms_diff = 0;
     do {
         if (context.status == Searching) {
@@ -4720,7 +4720,6 @@ extern BOOL unfocused;
             (endtime.tv_usec - begintime.tv_usec) / 1000;
             context.status = Searching;
         }
-        ++iterations;
     } while (keepSearching && ms_diff < context.maxTime * 1000);
 
     switch (context.status) {

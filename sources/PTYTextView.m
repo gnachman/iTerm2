@@ -1374,12 +1374,12 @@ static const int kDragThreshold = 3;
         [delegate keyDown:event];
         return;
     }
-    unsigned int modflag = [event modifierFlags];
     _hadMarkedTextBeforeHandlingKeypressEvent = [self hasMarkedText];
    // BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
 
     _keyIsARepeat = [event isARepeat];
 #if 0
+    unsigned int modflag = [event modifierFlags];
     unsigned short keyCode = [event keyCode];
     BOOL leftAltPressed = (modflag & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
     DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
@@ -4428,6 +4428,8 @@ return;
 }
 
 - (void)saveImageAs:(id)sender {
+#if 0
+    // UNUSED CODE: this function is never called
     iTermImageInfo *imageInfo = [sender representedObject];
     NSSavePanel* panel = [NSSavePanel savePanel];
 
@@ -4444,6 +4446,7 @@ return;
         NSString *filename = [panel legacyFilename];
         [imageInfo saveToFile:filename];
     }
+#endif
 }
 
 - (void)copyImage:(id)sender {

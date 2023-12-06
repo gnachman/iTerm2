@@ -51,8 +51,8 @@ static const CGFloat kButtonHeight = 23;
         spareCell_ = [[self cell] retain];
 
         help_ = [[NSButton alloc] initWithFrame:CGRectZero];
-        [help_ setBezelStyle:NSHelpButtonBezelStyle];
-        [help_ setButtonType:NSMomentaryPushInButton];
+        [help_ setBezelStyle:NSBezelStyleHelpButton];
+        [help_ setButtonType:NSButtonTypeMomentaryPushIn];
         [help_ setBordered:YES];
         [help_ sizeToFit];
         help_.target = self;
@@ -62,11 +62,11 @@ static const CGFloat kButtonHeight = 23;
         [self addSubview:help_];
 
         _clearButton = [[[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)] autorelease];
-        [_clearButton setButtonType:NSMomentaryPushInButton];
+        [_clearButton setButtonType:NSButtonTypeMomentaryPushIn];
         [_clearButton setTitle:@"Clear"];
         [_clearButton setTarget:self];
         [_clearButton setAction:@selector(clear:)];
-        [_clearButton setBezelStyle:NSSmallSquareBezelStyle];
+        [_clearButton setBezelStyle:NSBezelStyleSmallSquare];
         [_clearButton sizeToFit];
         [_clearButton setAutoresizingMask:NSViewMinYMargin];
         [self addSubview:_clearButton];
@@ -331,10 +331,11 @@ static const CGFloat kButtonHeight = 23;
 }
 
 #pragma mark - NSMenuDelegate
-
+#if 0
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
     return [self respondsToSelector:[item action]] && [tableView_ clickedRow] >= 0;
 }
+#endif
 
 #pragma mark - NSTextFieldDelegate
 

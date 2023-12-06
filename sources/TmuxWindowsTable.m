@@ -196,6 +196,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [self updateEnabledStateOfButtons];
 }
 
+#if 0
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard *)pboard {
     NSArray* selectedItems = [[self filteredModel] objectsAtIndexes:rowIndexes];
     [pboard declareTypes:[NSArray arrayWithObject:kWindowPasteboardType] owner:self];
@@ -206,6 +207,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
                     forType:kWindowPasteboardType];
     return YES;
 }
+#endif
 
 #pragma mark NSSearchField delegate
 

@@ -1005,8 +1005,8 @@ static BOOL hasBecomeActive = NO;
     [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:NO];
 
     // register for services
-    [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
-                                                       returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
+    [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSPasteboardTypeString, nil]
+                             returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSPasteboardTypeString, nil]];
     // Register our services provider. Registration must happen only when we're
     // ready to accept requests, so I do it after a spin of the runloop.
     dispatch_async(dispatch_get_main_queue(), ^{

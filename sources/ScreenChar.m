@@ -127,7 +127,7 @@ static BOOL hasWrapped = NO;
 @synthesize eol = _eol;
 @end
 
-static void CreateComplexCharMapIfNeeded() {
+static void CreateComplexCharMapIfNeeded(void) {
     if (!complexCharMap) {
         complexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
         inverseComplexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];

@@ -601,6 +601,9 @@ if (0) {
     return NSMakeSize(textRect.size.width + 10 + 6 + 8, 30);
 }
 
+- (void)updateTouchBarWithWordAtCursor:(NSString *)word withTitle:(NSString *)title {
+}
+
 @end
 
 ITERM_IGNORE_PARTIAL_END

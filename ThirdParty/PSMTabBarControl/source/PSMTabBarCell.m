@@ -372,7 +372,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
     if (_isPlaceholder){
         [[NSColor colorWithCalibratedWhite:0 alpha:0.2] set];
-        NSRectFillUsingOperation(cellFrame, NSCompositeSourceAtop);
+        NSRectFillUsingOperation(cellFrame, NSCompositingOperationSourceAtop);
         return;
     }
 

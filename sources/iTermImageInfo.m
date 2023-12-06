@@ -139,6 +139,8 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
 }
 
 - (void)saveToFile:(NSString *)filename {
+    // XXX this function uses deprecated apis and its never called
+#if 0
     NSBitmapImageFileType fileType = NSPNGFileType;
     if ([filename hasSuffix:@".bmp"]) {
         fileType = NSBMPFileType;
@@ -175,6 +177,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
         data = [rep representationUsingType:fileType properties:@{}];
     }
     [data writeToFile:filename atomically:NO];
+#endif
 }
 
 - (void)setImageFromImage:(iTermImage *)image data:(NSData *)data {

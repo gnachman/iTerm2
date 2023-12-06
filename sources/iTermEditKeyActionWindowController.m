@@ -55,7 +55,7 @@
     // For some reason, the first item is checked by default. Make sure every
     // item is unchecked before making a selection.
     for (NSMenuItem *item in [_actionPopup itemArray]) {
-        [item setState:NSOffState];
+        [item setState:NSControlStateValueOff];
     }
     NSString *formattedString = @"";
     if (self.currentKeyCombination) {
@@ -421,7 +421,7 @@
         NSMenuItem *theItem = [[button menu] itemWithTitle:selectedValue];
         if (theItem) {
             [button setTitle:selectedValue];
-            [theItem setState:NSOnState];
+            [theItem setState:NSControlStateValueOn];
         }
     }
 }

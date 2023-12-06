@@ -1640,7 +1640,7 @@ return NO;
 }
 
 - (void)setWindowTitle {
-	return;
+#if 0
     if (self.isShowingTransientTitle) {
         PTYSession *session = self.currentSession;
         NSString *aTitle;
@@ -1656,10 +1656,12 @@ return NO;
     } else {
         [self setWindowTitle:[self currentSessionName]];
     }
+#endif
 }
 
 - (void)setWindowTitle:(NSString *)title {
-	return;
+    // there's no title, so dont spend time updating it
+#if 0
     if (title == nil) {
         // title can be nil during loadWindowArrangement
         title = @"";
@@ -1721,6 +1723,7 @@ return NO;
             });
         }
     }
+#endif
 }
 
 - (NSArray *)broadcastSessions
@@ -3396,10 +3399,12 @@ return NO;
 - (BOOL)useTransparency
 {
 	return NO;
+#if 0
     if ([self lionFullScreen]) {
         return NO;
     }
     return useTransparency_;
+#endif
 }
 
 // Like toggleFullScreenMode but does nothing if it's already fullscreen.
@@ -4460,11 +4465,12 @@ return;
     for (PTYSession* session in [self allSessions]) {
         [session setIgnoreResizeNotifications:NO];
     }
-
+#if 0
     BOOL willShowTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                                  [_contentView.tabView numberOfTabViewItems] > 1 &&
                                  [_contentView.tabBarControl isHidden]);
     willShowTabBar = false;
+#endif
     // check window size in case tabs have to be hidden or shown
     // if (([_contentView.tabView numberOfTabViewItems] == 1) || willShowTabBar) {
     if (true) {
@@ -4475,7 +4481,7 @@ return;
         NSTabViewItem *tabViewItem = [[_contentView.tabView tabViewItems] objectAtIndex:0];
         PTYTab *firstTab = [tabViewItem identifier];
 
-        NSPoint originalOrigin = self.window.frame.origin;
+   //     NSPoint originalOrigin = self.window.frame.origin;
         if (wasDraggedFromAnotherWindow_) {
             // A tab was just dragged out of another window's tabbar into its own window.
             // When this happens, it loses its size. This is our only chance to resize it.
@@ -4816,13 +4822,12 @@ return;
 
 // This updates the window's background color and title text color as well as the tab bar's color.
 - (void)updateTabColors {
-	return;
+#if 0
     // self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
 	    [self.window setTitlebarAppearsTransparent:YES]; // Make title bar transparent
     [[self currentSession] setBackgroundColor:[NSColor blackColor]];
 
     [[self window] setBackgroundColor:[NSColor redColor]];
-	return;
     for (PTYTab *aTab in [self tabs]) {
         NSTabViewItem *tabViewItem = [aTab tabViewItem];
        // PTYSession *aSession = [aTab activeSession];
@@ -4841,6 +4846,7 @@ return;
             }
         }
     }
+#endif
 }
 
 - (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
@@ -4863,27 +4869,26 @@ return;
     // backgroundColor = [PSMDarkTabStyle tabBarColor];
 // TODO: use background color instead of black
     // self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
-    [[self currentSession] setBackgroundColor:[NSColor redColor]];
+  //  [[self currentSession] setBackgroundColor:[NSColor redColor]];
     [[self window] setBackgroundColor:[NSColor redColor]];
     // self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
 // [self.window.contentView setWantsLayer:YES];
 return;
-
+#if 0
     backgroundColor = [NSColor windowBackgroundColor]; //colorWithCalibratedWhite:0 alpha:1.00];
     PTYTextView *textView = [[self currentSession] textview];
     iTermColorMap *_colorMap = textView.colorMap;
     float alpha = 1.0 - [[self currentSession] transparency];
     backgroundColor = [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapBackground]] colorWithAlphaComponent:alpha];
     self.window.titlebarAppearsTransparent = YES;
-    [[self currentSession] setBackgroundColor:[NSColor blackColor]];
-    [[self currentSession] setBackgroundColor:[NSColor greenColor]];
+   // [[self currentSession] setBackgroundColor:[NSColor blackColor]];
+   // [[self currentSession] setBackgroundColor:[NSColor greenColor]];
     // [self.window setTitleVisibility:NSWindowTitleHidden];
 
     // XXX seems like alpha is ignored in mojave :?
     [self.window setBackgroundColor:[NSColor redColor]];
     // printf ("BACK TITLE\n");
     self.window.backgroundColor = [NSColor redColor];
-#if 0
 
     //////////////////////////////////////////////////////
     // [self.window setBackgroundColor:backgroundColor];

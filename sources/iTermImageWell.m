@@ -16,9 +16,27 @@
     }
 
     NSPasteboard *pasteboard = [draggingInfo draggingPasteboard];
-    NSString *theString = [pasteboard stringForType:NSFilenamesPboardType];
+    NSString *theString = NULL;
+#if 0
+    [pasteboard stringForType:NSFilenamesPboardType];
+#else
+    // Use the new type for file URLs
+    NSArray *classes = [[NSArray alloc] initWithObjects:[NSURL class], nil];
+    NSDictionary *options = [NSDictionary dictionary];
 
-    if (theString) {
+    // Check if the pasteboard contains a valid URL
+    if ([pasteboard canReadObjectForClasses:classes options:options]) {
+        NSArray *urls = [pasteboard readObjectsForClasses:classes options:options];
+        if (urls != nil && [urls count] > 0) {
+            // Assuming you want the first URL
+            NSURL *firstUrl = [urls objectAtIndex:0];
+            theString = [firstUrl absoluteString];
+            // Use theString as needed
+        }
+    }
+#endif
+
+    if (theString != NULL) {
         NSData *data = [theString dataUsingEncoding:NSUTF8StringEncoding];
         NSArray *filenames =
             [NSPropertyListSerialization propertyListWithData:data

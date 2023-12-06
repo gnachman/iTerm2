@@ -285,7 +285,7 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 + (BOOL)logDebugInfo {
     NSNumber *n = [[NSUserDefaults standardUserDefaults] valueForKey:kLogDebugInfoKey];
     if (n) {
-        return [n intValue] == NSOnState;
+        return [n intValue] == NSControlStateValueOn;
     } else {
         return NO;
     }
@@ -306,7 +306,7 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 }
 
 - (void)windowWillOpen {
-    [logDebugInfo_ setState:[SmartSelectionController logDebugInfo] ? NSOnState : NSOffState];
+    [logDebugInfo_ setState:[SmartSelectionController logDebugInfo] ? NSControlStateValueOn : NSControlStateValueOff];
 }
 
 #pragma mark - Context Menu Actions Delegate

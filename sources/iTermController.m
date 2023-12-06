@@ -205,12 +205,13 @@ static iTermController *gSharedInstance;
 }
 
 - (void)updateWindowTitles {
-	return;
+#if 0
     for (PseudoTerminal *terminal in _terminalWindows) {
         if ([terminal currentSessionName]) {
             [terminal setWindowTitle];
         }
     }
+#endif
 }
 
 - (BOOL)haveTmuxConnection {

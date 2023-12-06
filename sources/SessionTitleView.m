@@ -49,7 +49,7 @@ static const CGFloat kButtonSize = 17;
                                                                                  (frame.size.height - kButtonSize) / 2,
                                                                                  kButtonSize,
                                                                                  kButtonSize)] autorelease];
-        [closeButton_ setButtonType:NSMomentaryPushInButton];
+        [closeButton_ setButtonType:NSButtonTypeMomentaryPushIn];
         [closeButton_ setImage:closeImage];
         [closeButton_ setTarget:self];
         [closeButton_ setAction:@selector(close:)];
@@ -121,7 +121,8 @@ static const CGFloat kButtonSize = 17;
 }
 
 + (NSColor *)colorByDimmingColor:(NSColor *)origColor byDimmingAmount:(double)dimmingAmount {
-    NSColor *color = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    NSColorSpace *sRGBColorSpace = [NSColorSpace sRGBColorSpace];
+    NSColor *color = [origColor colorUsingColorSpace:sRGBColorSpace];
     double r = [color redComponent];
     double g = [color greenComponent];
     double b = [color blueComponent];
@@ -254,15 +255,15 @@ static const CGFloat kButtonSize = 17;
             break;
 
         case kPreferencesModifierTagEitherCommand:
-            prefix = [NSString stringForModifiersWithMask:NSCommandKeyMask];
+            prefix = [NSString stringForModifiersWithMask:NSEventModifierFlagCommand];
             break;
 
         case kPreferencesModifierTagEitherOption:
-            prefix = [NSString stringForModifiersWithMask:NSAlternateKeyMask];
+            prefix = [NSString stringForModifiersWithMask:NSEventModifierFlagOption];
             break;
 
         case kPreferencesModifierTagCommandAndOption:
-            prefix = [NSString stringForModifiersWithMask:(NSCommandKeyMask | NSAlternateKeyMask)];
+            prefix = [NSString stringForModifiersWithMask:(NSEventModifierFlagCommand | NSEventModifierFlagOption)];
             break;
     }
     return [NSString stringWithFormat:@"%@%@   %@", prefix, @(_ordinal), title_];
