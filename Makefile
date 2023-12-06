@@ -18,6 +18,9 @@ debug: Development
 	/Developer/usr/bin/gdb build/Development/Therm.app/Contents/MacOS/Therm
 
 dist: prod
+ifeq ($(shell whoami),pancake)
+	codesign -f -s 'J5PTVY8BHH' build/Deployment/Therm.app/Contents/MacOS/Therm
+endif
 	cd build/Deployment/ && zip -r Therm.app.zip Therm.app
 	mv build/Deployment/Therm.app.zip Therm-$(VERSION).zip
 
