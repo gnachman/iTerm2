@@ -56,12 +56,12 @@ NSString *const kScreenStatePrimaryGridStateKey = @"Primary Grid State";
 NSString *const kScreenStateAlternateGridStateKey = @"Alternate Grid State";
 NSString *const kScreenStateNumberOfLinesDroppedKey = @"Number of Lines Dropped";
 
-int kVT100ScreenMinColumns = 2;
-int kVT100ScreenMinRows = 2;
+int kVT100ScreenMinColumns = 1;
+int kVT100ScreenMinRows = 1;
 
 static const int kDefaultScreenColumns = 80;
 static const int kDefaultScreenRows = 25;
-static const int kDefaultMaxScrollbackLines = 1000;
+static const int kDefaultMaxScrollbackLines = 10000;
 static const int kDefaultTabstopWidth = 8;
 
 NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
@@ -184,7 +184,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     self = [super init];
     if (self) {
         assert(terminal);
-        [self setTerminal:terminal];
+        [self setTerminal: terminal];
         primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
                                                                          kDefaultScreenRows)
                                               delegate:self];
@@ -196,7 +196,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         tabStops_ = [[NSMutableSet alloc] init];
         [self setInitialTabStops];
         linebuffer_ = [[LineBuffer alloc] init];
-
 
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes] * 1024 * 1024];
@@ -214,6 +213,12 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _animatedLines = [[NSMutableIndexSet alloc] init];
+// XXX initial scrollback i
+#if 0
+	[self terminalScrollDown:-12];
+        [self clearScrollbackBuffer];
+        [self resetScrollbackOverflow];
+#endif
     }
     return self;
 }
@@ -895,7 +900,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
     if (newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
-        [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+        [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY];
         [self commandDidStartAtScreenCoord:newCommandStart];
     }
     [delegate_ screenNeedsRedraw];
@@ -1565,8 +1570,7 @@ return;
       multipleResults:(BOOL)multipleResults
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
-    int linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                                   toLineBuffer:linebuffer_];
+    int linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed] toLineBuffer:linebuffer_];
 
     // Get the start position of (x,y)
     LineBufferPosition *startPos;
@@ -1623,10 +1627,7 @@ return;
 
 - (void)saveFindContextAbsPos
 {
-    int linesPushed;
-    linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
-                               toLineBuffer:linebuffer_];
-
+    int linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed] toLineBuffer:linebuffer_];
     savedFindContextAbsPos_ = [self findContextAbsPosition];
     [self popScrollbackLines:linesPushed];
 }
@@ -2727,7 +2728,6 @@ return;
         if (j <= 0) {
             return;
         }
-
         int limit = MIN(currentGrid_.cursorX + j, currentGrid_.size.width);
         [currentGrid_ setCharsFrom:VT100GridCoordMake(currentGrid_.cursorX, currentGrid_.cursorY)
                                 to:VT100GridCoordMake(limit - 1, currentGrid_.cursorY)
@@ -2767,6 +2767,7 @@ return;
 }
 
 - (void)terminalSetWindowTitle:(NSString *)title {
+#if 0
     if ([delegate_ screenAllowTitleSetting]) {
         NSString *newTitle = [[title copy] autorelease];
         if ([delegate_ screenShouldSyncTitle]) {
@@ -2774,6 +2775,7 @@ return;
         }
         [delegate_ screenSetWindowTitle:newTitle];
     }
+#endif
 
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
@@ -2790,6 +2792,7 @@ return;
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {
+#if 0
     if ([delegate_ screenAllowTitleSetting]) {
         NSString *newTitle = [[title copy] autorelease];
         if ([delegate_ screenShouldSyncTitle]) {
@@ -2797,6 +2800,7 @@ return;
         }
         [delegate_ screenSetName:newTitle];
     }
+#endif
 }
 
 - (void)terminalPasteString:(NSString *)string {
@@ -2879,9 +2883,7 @@ return;
     }
     if ([delegate_ screenShouldInitiateWindowResize] &&
         ![delegate_ screenWindowIsFullscreen]) {
-        [delegate_ screenResizeToWidth:columns
-                                height:rows];
-
+        [delegate_ screenResizeToWidth:columns height:rows];
     }
 }
 
@@ -2929,15 +2931,13 @@ return;
 
 - (void)terminalScrollUp:(int)n {
     [delegate_ screenRemoveSelection];
-    for (int i = 0;
-         i < MIN(currentGrid_.size.height, n);
-         i++) {
+    for (int i = 0; i < MIN(currentGrid_.size.height, n); i++) {
         [self incrementOverflowBy:[currentGrid_ scrollUpIntoLineBuffer:linebuffer_
-                                                   unlimitedScrollback:unlimitedScrollback_
+                                               unlimitedScrollback:unlimitedScrollback_
                                                useScrollbackWithRegion:_appendToScrollbackWithStatusBar
-                                                             softBreak:NO]];
+                                               softBreak:NO]];
     }
-    // [delegate_ screenTriggerableChangeDidOccur];
+    [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalScrollDown:(int)n {
@@ -2945,7 +2945,7 @@ return;
     [currentGrid_ scrollRect:[currentGrid_ scrollRegionRect]
                       downBy:MIN(currentGrid_.size.height, n)
                    softBreak:NO];
-    // [delegate_ screenTriggerableChangeDidOccur];
+    [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (BOOL)terminalWindowIsMiniaturized {
@@ -3284,8 +3284,8 @@ return;
     // would be desirable anyway. Like xterm (and unlike Terminal) we leave the cursor put.
     [delegate_ screenRemoveSelection];
     [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
-                            to:VT100GridCoordMake(currentGrid_.size.width - 1,
-                                                  currentGrid_.size.height - 1)
+                            to:VT100GridCoordMake(currentGrid_.size.width,
+                                                  currentGrid_.size.height)
                         toChar:[currentGrid_ defaultChar]];
 }
 
@@ -4484,7 +4484,7 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (void)incrementOverflowBy:(int)overflowCount {
-    scrollbackOverflow_ += overflowCount;
+    //scrollbackOverflow_ += overflowCount;
     cumulativeScrollbackOverflow_ += overflowCount;
 }
 
@@ -4803,8 +4803,7 @@ extern BOOL unfocused;
     int maxLines = MAX(1000, maxArea / effectiveWidth);
 
     // Make a copy of the last blocks of the line buffer; enough to contain at least |maxLines|.
-    LineBuffer *temp = [linebuffer_ appendOnlyCopyWithMinimumLines:maxLines
-                                                           atWidth:effectiveWidth];
+    LineBuffer *temp = [linebuffer_ appendOnlyCopyWithMinimumLines:maxLines atWidth:effectiveWidth];
 
     // Offset for intervals so 0 is the first char in the provided contents.
     int linesDroppedForBrevity = ([linebuffer_ numLinesWithWidth:effectiveWidth] -
@@ -4901,7 +4900,7 @@ extern BOOL unfocused;
                             maxLinesToRestore:linesRestored];
     DLog(@"appendFromDictionary: Grid size is %dx%d", currentGrid_.size.width, currentGrid_.size.height);
     DLog(@"Restored %d wrapped lines from dictionary", [self numberOfScrollbackLines] + linesRestored);
-    currentGrid_.cursorY = linesRestored + 1;
+    currentGrid_.cursorY = linesRestored - 1;
     currentGrid_.cursorX = 0;
 
     // Reduce line buffer's max size to not include the grid height. This is its final state.

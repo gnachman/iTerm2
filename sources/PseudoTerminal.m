@@ -532,6 +532,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
 
+		fprintf (stderr, "INIT\n");
     // self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
     NSScreen *screen = [self anchorToScreenNumber:screenNumber];
 
@@ -546,6 +547,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
+		fprintf (stderr, "SILLY\n");
             initialFrame = [screen visibleFrameIgnoringHiddenDock];
             break;
 
@@ -566,8 +568,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
             // Use the system-supplied frame which has a reasonable origin. It may
+		fprintf (stderr, "NORMAL\n");
             // be overridden by smart window placement or a saved window location.
             initialFrame = [[self window] frame];
+#if 0
             if (_isAnchoredToScreen) {
                 // Move the frame to the desired screen
                 NSScreen* baseScreen = [[self window] screen];
@@ -595,6 +599,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                 DLog(@"after adjusting top right, initial origin is %@", NSStringFromPoint(destPoint));
                 [[self window] setFrameOrigin:destPoint];
             }
+#endif
             break;
     }
     preferredOrigin_ = initialFrame.origin;
@@ -678,8 +683,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         | NSWindowStyleMaskBorderless
         | NSWindowStyleMaskTitled;
 
-
-
     normalBackgroundColor = [_contentView color];
 
     hidingToolbeltShouldResizeWindow_ = NO;
@@ -762,6 +765,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 #endif
     self.terminalGuid = [NSString stringWithFormat:@"pty-%@", [NSString uuid]];
 
+#if 1
 #if ENABLE_SHORTCUT_ACCESSORY
     if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)]) {
         _shortcutAccessoryViewController =
@@ -774,8 +778,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
     _shortcutAccessoryViewController.ordinal = number_ + 1;
 #endif
+#endif
     [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalWindowControllerWasCreatedNotification object:self];
     DLog(@"Done initializing PseudoTerminal %@", self);
+    /// XXX if we dont start the window in fullscreen it looks blank
+[self toggleTraditionalFullScreenMode];
 }
 
 - (BOOL)isHotKeyWindow {
@@ -3294,9 +3301,11 @@ return NO;
 
 - (void)saveTmuxWindowOrigins
 {
+#if 0
     for (TmuxController *tc in [self uniqueTmuxControllers]) {
         [tc saveWindowOrigins];
     }
+#endif
 }
 
 - (void)windowDidChangeScreen:(NSNotification *)notification {
@@ -3343,7 +3352,7 @@ return NO;
     // Adjust the size of all the sessions.
     PtyLog(@"windowDidResize - call repositionWidgets");
     [self repositionWidgets];
-
+#if 0
     [self notifyTmuxOfWindowResize];
     // windowDidMove does not get called if the origin changes because of a resize.
     [self saveTmuxWindowOrigins];
@@ -3353,6 +3362,7 @@ return NO;
             [aTab updateFlexibleViewColors];
         }
     }
+#endif
 
     self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
     [self setWindowTitle];
@@ -3648,6 +3658,8 @@ return NO;
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 
     if (!_fullScreen) {
+        NSSize contentSize = [[[self window] contentView] frame].size;
+        [self fitWindowToTabSize:contentSize];
 #if 0
         // Find the largest possible session size for the existing window frame
         // and fit the window to an imaginary session of that size.
@@ -3698,6 +3710,7 @@ return NO;
     }
 
     [self fitTabsToWindow];
+#if 0
     PtyLog(@"toggleFullScreenMode - calling fitWindowToTabs");
     [self fitWindowToTabsExcludingTmuxTabs:YES];
     for (TmuxController *c in [self uniqueTmuxControllers]) {
@@ -3705,6 +3718,7 @@ return NO;
     }
 
     PtyLog(@"toggleFullScreenMode - calling setWindowTitle");
+#endif
 #if 1
     [self setWindowTitle];
     PtyLog(@"toggleFullScreenMode - calling window update");
@@ -3724,7 +3738,6 @@ return NO;
     [self refreshTools];
     [self updateTabColors];
     [self saveTmuxWindowOrigins];
-
     [self updateTouchBarIfNeeded];
 }
 
@@ -4850,7 +4863,6 @@ return;
 }
 
 - (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
-	printf ("SET BACKOGURND COLR\n");
     self.window.titlebarAppearsTransparent = YES;
 #if 0
     if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
@@ -6064,15 +6076,20 @@ return;
 
 - (BroadcastMode)broadcastMode
 {
+#if 0
     if ([[self currentTab] isBroadcasting]) {
                     return BROADCAST_TO_ALL_PANES;
         } else {
                     return broadcastMode_;
         }
+#endif
+	return BROADCAST_OFF;
 }
 
 - (void)setBroadcastMode:(BroadcastMode)mode
 {
+	// remove the broadcast mode
+#if 0
     if (mode != BROADCAST_CUSTOM && mode == [self broadcastMode]) {
         mode = BROADCAST_OFF;
     }
@@ -6094,6 +6111,7 @@ return;
     [self setDimmingForSessions];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
+#endif
 }
 
 - (void)toggleBroadcastingInputToSession:(PTYSession *)session
@@ -6165,11 +6183,9 @@ return;
     // close it.
     for (PTYSession *aSession in [self allSessions]) {
         if (mode) {
-            [aSession setSplitSelectionMode:(aSession != session) ? kSplitSelectionModeOn : kSplitSelectionModeCancel
-                                       move:move];
+            [aSession setSplitSelectionMode:(aSession != session) ? kSplitSelectionModeOn : kSplitSelectionModeCancel move:move];
         } else {
-            [aSession setSplitSelectionMode:kSplitSelectionModeOff
-                                       move:move];
+            [aSession setSplitSelectionMode:kSplitSelectionModeOff move:move];
         }
     }
 }
@@ -6284,17 +6300,7 @@ return;
 }
 
 - (void)updateWindowNumberVisibility:(NSNotification*)aNotification {
-    // This is if displaying of window number was toggled in prefs.
-#if ENABLE_SHORTCUT_ACCESSORY
-    if (_shortcutAccessoryViewController) {
-        _shortcutAccessoryViewController.view.hidden = ![iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber];
-    } else {
-        // Pre-10.10 code path
-        [self setWindowTitle];
-    }
-#else
     [self setWindowTitle];
-#endif
 }
 
 - (void)_scrollerStyleChanged:(id)sender
@@ -6528,6 +6534,11 @@ return;
 }
 
 - (BOOL)haveTopBorder {
+	if ([self anyFullScreen]) {
+		return NO;
+	}
+	return YES;
+#if 0
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
@@ -6537,6 +6548,7 @@ return;
     return ([iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder] &&
             !visibleTopTabBar &&
             windowTypeCompatibleWithTopBorder);
+#endif
 }
 
 - (BOOL)haveRightBorder {
@@ -6565,7 +6577,7 @@ return;
 - (NSSize)windowDecorationSize
 {
     NSSize contentSize = NSZeroSize;
-
+#if 0
     if (!_contentView.tabBarControl.flashing &&
         [self tabBarShouldBeVisibleWithAdditionalTabs:tabViewItemsBeingAdded]) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
@@ -6578,6 +6590,7 @@ return;
                 break;
         }
     }
+#endif
 
     // Add 1px border
     if ([self haveLeftBorder]) {
@@ -7677,12 +7690,15 @@ return;
 
 - (BOOL)allTabsAreTmuxTabs
 {
+    return NO;
+#if 0
     for (PTYTab *aTab in [self tabs]) {
         if (![aTab isTmuxTab]) {
             return NO;
         }
     }
     return YES;
+#endif
 }
 
 - (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state {
@@ -7794,7 +7810,7 @@ return;
     PtyLog(@"PseudoTerminal: -addSessionInNewTab: %p", object);
     // Increment tabViewItemsBeingAdded so that the maximum content size will
     // be calculated with the tab bar if it's about to open.
-    ++tabViewItemsBeingAdded;
+    tabViewItemsBeingAdded++;
     [self setupSession:object title:nil withSize:nil];
     tabViewItemsBeingAdded--;
     if ([object screen]) {  // screen initialized ok

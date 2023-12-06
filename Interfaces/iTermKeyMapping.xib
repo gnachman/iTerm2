@@ -49,7 +49,7 @@
                                         </textFieldCell>
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                     </tableColumn>
-                                    <tableColumn identifier="1" editable="NO" width="310" minWidth="42.10107" maxWidth="1000" id="8iu-ei-TS7">
+                                    <tableColumn identifier="1" editable="NO" width="281" minWidth="42.10107" maxWidth="1000" id="8iu-ei-TS7">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" white="0.33333299" alpha="1" colorSpace="calibratedWhite"/>
