@@ -79,6 +79,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (ScreenCharArray *)copyByZeroingRange:(NSRange)range;
 - (ScreenCharArray *)paddedOrTruncatedToLength:(NSUInteger)newLength;
 - (ScreenCharArray *)paddedToAtLeastLength:(NSUInteger)newLength;
+- (ScreenCharArray *)screenCharArrayByRemovingFirst:(int)n;
+- (ScreenCharArray *)screenCharArrayByRemovingLast:(int)n;
+
 - (NSMutableData *)mutableLineData;
 - (ScreenCharArray *)screenCharArrayBySettingCharacterAtIndex:(int)i
                                                            to:(screen_char_t)c;

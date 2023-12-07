@@ -350,6 +350,7 @@ extern NSString *const kScreenStateBlockStartAbsLineKey;
 - (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
+- (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 

@@ -1239,6 +1239,30 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     return nil;
 }
 
+- (PseudoTerminal *)windowForSessionWithGUID:(NSString *)guid {
+    PTYSession *session = [self sessionWithGUID:guid];
+    if (!session) {
+        return nil;
+    }
+    return [self windowForSession:session];
+}
+
+- (PseudoTerminal *)windowForSession:(PTYSession *)session {
+    PTYTab *tab = [self tabForSession:session];
+    if (!tab) {
+        return nil;
+    }
+    return [self windowForTab:tab];
+}
+
+- (PTYTab *)tabForSession:(PTYSession *)session {
+    return [PTYTab castFrom:session.delegate];
+}
+
+- (PseudoTerminal *)windowForTab:(PTYTab *)tab {
+    return [PseudoTerminal castFrom:tab.realParentWindow];
+}
+
 - (void)dumpViewHierarchy {
     for (PseudoTerminal *term in [self terminals]) {
         DebugLog([NSString stringWithFormat:@"Terminal %@ at %@", [term window], [NSValue valueWithRect:[[term window] frame]]]);

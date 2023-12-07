@@ -253,6 +253,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (NSArray<id<VT100ScreenMarkReading>> *)namedMarks;
 - (long long)startAbsLineForBlock:(NSString *)blockID;
 - (void)ensureDisambiguateEscapeInStack;
+- (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
 
 @end
 

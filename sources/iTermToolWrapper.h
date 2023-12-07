@@ -21,6 +21,7 @@
 @class iTermCommandHistoryCommandUseMO;
 @class ToolNamedMarks;
 @class iTermToolWrapper;
+@class iTermToolCodecierge;
 
 @protocol iTermToolbeltViewDelegate<NSObject>
 
@@ -36,6 +37,7 @@
 - (void)toolbeltDidSelectMark:(id<iTermMark>)mark;
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput;
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid;
+- (NSString *)toolbeltCurrentSessionGUID;
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession;
 - (void)toolbeltApplyActionToCurrentSession:(iTermAction *)action;
 - (void)toolbeltOpenAdvancedPasteWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
@@ -54,6 +56,7 @@
 @property(nonatomic, readonly) ToolCommandHistoryView *commandHistoryView;
 @property(nonatomic, readonly) ToolNamedMarks *namedMarksView;
 @property(nonatomic, readonly) iTermToolSnippets *snippetsView;
+@property(nonatomic, readonly) iTermToolCodecierge *codeciergeView;
 
 - (void)hideToolbelt;
 - (void)toggleShowToolWithName:(NSString *)theName;

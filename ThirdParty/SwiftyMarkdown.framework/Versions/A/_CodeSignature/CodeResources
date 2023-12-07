@@ -22,14 +22,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			yZW7b+SQbJlhCp1EZrGCdo3asQ6xsKdHMRlQA3hk5ak=
+			4qeKjgOYeSs30mkgD6l768DX2Nxq9swddQt/TCUJmL4=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/Project/x86_64-apple-macos.swiftsourceinfo</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			NpQniZr+6XmaaOOXlTG6brnGBRuAYUBMtnVbBrANRWY=
+			DOnEkAfZziBUmgUnVIpu6oggjmJ9dnWGyZkM/TiKs98=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/arm64-apple-macos.abi.json</key>
@@ -50,7 +50,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			tymiDTtiNaqRK6uBDR5wO/64WEZ0zhfPuEE1LggMNIE=
+			IiobfQhqDlF5PIgsAS1bF7kkaxukdZixCWsJDDuhHlU=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/x86_64-apple-macos.abi.json</key>
@@ -71,7 +71,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			+43PvhYE7yln1zyJMMi0O8yH/iY0d1KDx9HP/yAZcH4=
+			oHUctWfUgrU2AzB8uuyNjJSfAnYL91PeUoaHuH5RqlQ=
 			</data>
 		</dict>
 		<key>Resources/Info.plist</key>

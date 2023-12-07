@@ -92,6 +92,7 @@ extern NSString *const iTermSnippetsTagsDidChange;
 - (PseudoTerminal *)terminalWithGuid:(NSString *)guid;
 - (PTYTab *)tabWithID:(NSString *)tabID;  // short numeric ID
 - (PTYTab *)tabWithGUID:(NSString *)guid;  // UUID
+- (PseudoTerminal *)windowForSessionWithGUID:(NSString *)guid;
 
 - (int)allocateWindowNumber;
 

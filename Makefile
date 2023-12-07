@@ -175,7 +175,7 @@ bindeps: SwiftyMarkdown Highlightr
 	cd SearchableComboListView && $(MAKE)
 
 SwiftyMarkdown: force
-	cd submodules/SwiftyMarkdown && xcodebuild
+	cd submodules/SwiftyMarkdown && xcodebuild -configuration Release
 	rm -rf ThirdParty/SwiftyMarkdown.framework
 	mv submodules/SwiftyMarkdown/build/Release/SwiftyMarkdown.framework ThirdParty/SwiftyMarkdown.framework
 

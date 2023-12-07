@@ -3646,6 +3646,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[_contentView.toolbelt directoriesView] updateDirectories];
     [[_contentView.toolbelt jobsView] updateJobs];
     [[_contentView.toolbelt snippetsView] currentSessionDidChange];
+    [[_contentView.toolbelt codeciergeView] currentSessionDidChange];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
     [self refreshNamedMarks];
 }
@@ -11730,6 +11731,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (id<VT100RemoteHostReading>)toolbeltCurrentHost {
     return [[self currentSession] currentHost];
+}
+
+- (NSString *)toolbeltCurrentSessionGUID {
+    return self.currentSession.guid;
 }
 
 - (pid_t)toolbeltCurrentShellProcessId {

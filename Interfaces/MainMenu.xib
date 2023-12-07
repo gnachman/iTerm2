@@ -164,7 +164,7 @@
                                     <action selector="duplicateTab:" target="-1" id="DcR-B7-VKj"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Duplicate Window" identifier="Duplicate Tab" id="9BQ-Nt-1uD">
+                            <menuItem title="Duplicate Window" identifier="Duplicate Window" id="9BQ-Nt-1uD">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="duplicateWindow:" target="-1" id="lzk-wL-GJ6"/>

@@ -1007,7 +1007,6 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (void)mouseDown:(NSEvent *)event {
-    NSLog(@"mouseDown on %@: %@", self, event);
     [self.delegate textViewWillHandleMouseDown:event];
     [_mouseHandler mouseDown:event superCaller:^{ [super mouseDown:event]; }];
 }
@@ -5183,7 +5182,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)copyBlock:(NSString *)block absLine:(long long)absLine screenCoordinate:(NSPoint)screenCoordinate {
     if ([self copyBlock:block includingAbsLine:absLine]) {
         [ToastWindowController showToastWithMessage:@"Copied"
-                                           duration:1.5
+                                           duration:1
                             topLeftScreenCoordinate:screenCoordinate
                                           pointSize:12];
     }

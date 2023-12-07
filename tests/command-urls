@@ -1,0 +1,3 @@
+iterm2:/command?c=ls&d=/tmp
+iterm2://bryan.dreamhost.com/command?c=ls&d=/tmp
+iterm2://gnachman@bryan.dreamhost.com/command?c=ls&d=/tmp
