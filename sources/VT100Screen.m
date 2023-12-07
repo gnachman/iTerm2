@@ -1008,26 +1008,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
-    NSEnumerator *enumerator = [_state.markCache enumerateFrom:mark.entry.interval.limit];
-    for (id<VT100ScreenMarkReading> nextMark in enumerator) {
-        if (nextMark.isPrompt) {
-            VT100GridCoordRange range;
-            range.start = [_state coordRangeForInterval:mark.entry.interval].end;
-            range.start.x = 0;
-            range.start.y++;
-            range.end = [_state coordRangeForInterval:nextMark.entry.interval].start;
-            return range;
-        }
-    }
-
-    // Command must still be running with no subsequent prompt.
-    VT100GridCoordRange range;
-    range.start = [_state coordRangeForInterval:mark.entry.interval].end;
-    range.start.x = 0;
-    range.start.y++;
-    range.end.x = 0;
-    range.end.y = _state.numberOfLines - _state.height + [_state.currentGrid numberOfLinesUsed];
-    return range;
+    return [_state rangeOfOutputForCommandMark:mark];
 }
 
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber

@@ -3263,8 +3263,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)commandWasAborted {
-    id<VT100ScreenMarkReading> screenMark = [self lastCommandMark];
+    id<VT100ScreenMarkReading> screenMark = [self lastPromptMark];
+    BOOL hadMark = NO;
+    int line = 0;
+    VT100GridCoordRange outputRange = { 0 };
+    NSString *command = nil;
     if (screenMark) {
+        hadMark = YES;
+        const VT100GridRange lineRange = [self lineNumberRangeOfInterval:screenMark.entry.interval];
+        line = lineRange.location;
+        outputRange = [self rangeOfOutputForCommandMark:screenMark];
+        command = [[[self contentInRange:screenMark.commandRange] mapWithBlock:^id _Nullable(ScreenCharArray * _Nonnull sca) {
+            return sca.stringValue;
+        }] componentsJoinedByString:@"\n"];
+
         DLog(@"Removing last command mark %@", screenMark);
         const NSInteger line = [self coordRangeForInterval:screenMark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
         [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
@@ -3278,6 +3290,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self didUpdatePromptLocation];
     [self commandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
+    if (hadMark) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenCommandDidAbortOnLine:line
+                                      outputRange:outputRange
+                                          command:command];
+        }];
+    }
 }
 
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
@@ -3338,6 +3357,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
         ScreenCharArray *sca = [self screenCharArrayForLine:y - offset];
         [sca makeSafe];
+        if (y == range.end.y) {
+            sca = [sca screenCharArrayByRemovingLast:sca.length - range.end.x];
+        }
+        if (y == range.start.y) {
+            sca = [sca screenCharArrayByRemovingFirst:range.start.x];
+        }
+
         [result addObject:sca];
     }
     return result;

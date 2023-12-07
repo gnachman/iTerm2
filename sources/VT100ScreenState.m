@@ -848,6 +848,29 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return [extractor haveNonWhitespaceInFirstLineOfRange:VT100GridWindowedRangeMake(range, 0, 0)];
 }
 
+- (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
+    NSEnumerator *enumerator = [self.markCache enumerateFrom:mark.entry.interval.limit];
+    for (id<VT100ScreenMarkReading> nextMark in enumerator) {
+        if (nextMark.isPrompt) {
+            VT100GridCoordRange range;
+            range.start = [self coordRangeForInterval:mark.entry.interval].end;
+            range.start.x = 0;
+            range.start.y++;
+            range.end = [self coordRangeForInterval:nextMark.entry.interval].start;
+            return range;
+        }
+    }
+
+    // Command must still be running with no subsequent prompt.
+    VT100GridCoordRange range;
+    range.start = [self coordRangeForInterval:mark.entry.interval].end;
+    range.start.x = 0;
+    range.start.y++;
+    range.end.x = 0;
+    range.end.y = self.numberOfLines - self.height + [self.currentGrid numberOfLinesUsed];
+    return range;
+}
+
 - (id<VT100ScreenMarkReading>)markOnLine:(int)line {
     return [VT100ScreenMark castFrom:self.markCache[self.cumulativeScrollbackOverflow + line]];
 }

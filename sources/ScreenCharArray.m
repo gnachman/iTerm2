@@ -275,6 +275,24 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     };
 }
 
+- (ScreenCharArray *)screenCharArrayByRemovingFirst:(int)n {
+    if (n >= self.length) {
+        return [ScreenCharArray emptyLineOfLength:0];
+    }
+    return [[ScreenCharArray alloc] initWithCopyOfLine:self.line + n
+                                                length:self.length - n
+                                          continuation:self.continuation];
+}
+
+- (ScreenCharArray *)screenCharArrayByRemovingLast:(int)n {
+    if (n >= self.length) {
+        return [ScreenCharArray emptyLineOfLength:0];
+    }
+    return [[ScreenCharArray alloc] initWithCopyOfLine:self.line
+                                                length:self.length - n
+                                          continuation:self.continuation];
+}
+
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other {
     const size_t combinedLength = (_length + other.length);
     screen_char_t *copy = malloc(sizeof(screen_char_t) * combinedLength);

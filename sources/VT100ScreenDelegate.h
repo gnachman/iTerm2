@@ -316,6 +316,10 @@
                     inDirectory:(NSString * _Nullable)directory
                            mark:(id<VT100ScreenMarkReading> _Nullable)mark;
 - (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading> _Nullable)maybeMark;
+// Failed to run the command (e.g., syntax error)
+- (void)screenCommandDidAbortOnLine:(int)line
+                        outputRange:(VT100GridCoordRange)outputRange
+                            command:(NSString *)command;
 
 typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
     // We polled for the working directory for a really sketchy reason, such as the user pressing enter.

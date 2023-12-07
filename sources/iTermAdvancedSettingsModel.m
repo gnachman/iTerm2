@@ -754,7 +754,8 @@ DEFINE_BOOL(concurrentMutation, NO, SECTION_EXPERIMENTAL @"Mutate session state 
 DEFINE_BOOL(fastTriggerRegexes, YES, SECTION_EXPERIMENTAL @"Fast regular expression evaluation for triggers.\nThis is experimental because it could potentially change how regular expressions are interpreted.");
 DEFINE_BOOL(postFakeFlagsChangedEvents, NO, SECTION_EXPERIMENTAL @"Post fake flags-changed events when remapping modifiers with an event tap.\nThis is an attempt to work around incompatibilities with AltTab in issue 10220.");
 DEFINE_BOOL(fullWidthFlags, YES, SECTION_EXPERIMENTAL @"Flag emoji render full-width");
-DEFINE_INT(aiMaxTokens, 80, SECTION_EXPERIMENTAL @"Maximum tokens for OpenAI");
+DEFINE_INT(aiResponseMaxTokens, 1000, SECTION_EXPERIMENTAL @"Maximum tokens for OpenAI to use in its response");
+DEFINE_INT(aiMaxTokens, 4000, SECTION_EXPERIMENTAL @"Maximum tokens for OpenAI including both request and response");
 DEFINE_STRING(aiModel, @"gpt-3.5-turbo", SECTION_EXPERIMENTAL @"OpenAI Model name");
 DEFINE_BOOL(addUtilitiesToPATH, YES, SECTION_EXPERIMENTAL @"Add path to iTerm2 utilities to $PATH for new sessions?");
 

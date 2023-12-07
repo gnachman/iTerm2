@@ -4212,6 +4212,7 @@
 		A6FEA28A1CF4DD2700376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */; };
 		A6FEA28B1CF4DD2900376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */; };
 		A6FEA28C1CF4DD2900376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */; };
+		A6FEFC7B2B1FA23400D98EB9 /* ToolCodecierge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FEFC7A2B1FA23400D98EB9 /* ToolCodecierge.swift */; };
 		A6FF3F2D242C6D3B003CCB03 /* ColorsMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A073973F14C7694600786414 /* ColorsMenuItemView.m */; };
 		A6FF3F2E2435BA35003CCB03 /* PasteView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9116F03E5400B7FCE9 /* PasteView.m */; };
 		A6FF3F2F2435BA3C003CCB03 /* FindView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D27131D8741004DD60C /* FindView.m */; };
@@ -7501,6 +7502,7 @@
 		A6FEA2851CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotkeyPreferencesWindowController.h; sourceTree = "<group>"; };
 		A6FEA2861CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyPreferencesWindowController.m; sourceTree = "<group>"; };
 		A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermHotkeyPreferencesWindowController.xib; sourceTree = "<group>"; };
+		A6FEFC7A2B1FA23400D98EB9 /* ToolCodecierge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCodecierge.swift; sourceTree = "<group>"; };
 		A6FF3F302435C8E5003CCB03 /* iTermSplitViewAnimation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSplitViewAnimation.h; sourceTree = "<group>"; };
 		A6FF3F312435C8E5003CCB03 /* iTermSplitViewAnimation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSplitViewAnimation.m; sourceTree = "<group>"; };
 		A6FF4AEC246BBFDB00410BA2 /* iTermTmuxWindowCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxWindowCache.h; sourceTree = "<group>"; };
@@ -8837,6 +8839,7 @@
 				A6EC936924E7868D00EEADEF /* iTermToolSnippets.h */,
 				A6EC936A24E7868D00EEADEF /* iTermToolSnippets.m */,
 				A6354B952A1B269A002836A3 /* ToolNamedMarks.swift */,
+				A6FEFC7A2B1FA23400D98EB9 /* ToolCodecierge.swift */,
 			);
 			name = Toolbelt;
 			sourceTree = "<group>";
@@ -15433,6 +15436,7 @@
 				A667C26027791223006B4DEF /* PTYAnnotation.m in Sources */,
 				A653F6BB24D4C9B50062377E /* iTermKeyLabels.m in Sources */,
 				53D0FD52237DCB5A00DAFA8A /* NSTableView+iTerm.m in Sources */,
+				A6FEFC7B2B1FA23400D98EB9 /* ToolCodecierge.swift in Sources */,
 				A6153D5121F30FF4002976FC /* iTermStatusBarJobComponent.m in Sources */,
 				537BFDDF2102B4060098C91F /* iTermPublisher.m in Sources */,
 				A61A85A224F1A70500B03880 /* iTermGlobalSearchWindowController.m in Sources */,

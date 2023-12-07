@@ -39,6 +39,8 @@ extern NSString *const PTYSessionTerminatedNotification;
 extern NSString *const PTYSessionRevivedNotification;
 extern NSString *const iTermSessionWillTerminateNotification;
 extern NSString *const PTYSessionDidResizeNotification;
+extern NSString *const PTYSessionDidDealloc;
+extern NSString *const PTYCommandDidExitNotification;
 
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;

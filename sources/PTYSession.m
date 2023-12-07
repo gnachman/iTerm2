@@ -211,6 +211,8 @@ NSString *const PTYSessionTerminatedNotification = @"PTYSessionTerminatedNotific
 NSString *const PTYSessionRevivedNotification = @"PTYSessionRevivedNotification";
 NSString *const iTermSessionWillTerminateNotification = @"iTermSessionDidTerminate";
 NSString *const PTYSessionDidResizeNotification = @"PTYSessionDidResizeNotification";
+NSString *const PTYSessionDidDealloc = @"PTYSessionDidDealloc";
+NSString *const PTYCommandDidExitNotification = @"PTYCommandDidExitNotification";
 
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
@@ -911,7 +913,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
     [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
-
+    NSString *guid = [_guid copy];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidDealloc object:[guid autorelease]];
+    });
     if (_textview.delegate == self) {
         _textview.delegate = nil;
     }
@@ -13309,6 +13314,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)screenCommandDidAbortOnLine:(int)line
+                        outputRange:(VT100GridCoordRange)outputRange
+                            command:(NSString *)command {
+    NSDictionary *userInfo = @{ @"remoteHost": (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
+                                @"directory": (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
+                                @"snapshot": [self contentSnapshot],
+                                @"startLine": @(outputRange.start.y),
+                                @"lineCount": @(outputRange.end.y - outputRange.start.y + 1),
+                                @"command": (id)command ?: (id)[NSNull null]};
+    userInfo = [userInfo dictionaryByRemovingNullValues];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"PTYCommandDidExitNotification"
+                                                        object:_guid
+                                                      userInfo:userInfo];
+}
+
 - (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading>)maybeMark {
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if ([obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_CommandEnd]) {
@@ -13323,6 +13343,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  toConnectionKey:key];
         }
     }];
+
+    if (maybeMark) {
+        const VT100GridRange lineRange = [_screen lineNumberRangeOfInterval:maybeMark.entry.interval];
+        const int line = lineRange.location;
+        const VT100GridCoordRange outputRange = [_screen rangeOfOutputForCommandMark:maybeMark];
+        NSDictionary *userInfo = @{ @"command": maybeMark.command ?: (id)[NSNull null],
+                                    @"exitCode": @(maybeMark.code),
+                                    @"remoteHost": (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
+                                    @"directory": (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
+                                    @"snapshot": [self contentSnapshot],
+                                    @"startLine": @(outputRange.start.y),
+                                    @"lineCount": @(outputRange.end.y - outputRange.start.y + 1) };
+        userInfo = [userInfo dictionaryByRemovingNullValues];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"PTYCommandDidExitNotification"
+                                                            object:_guid
+                                                          userInfo:userInfo];
+    }
+}
+
+- (iTermTerminalContentSnapshot *)contentSnapshot {
+    return [_screen snapshotDataSource];
 }
 
 - (void)updateConfigurationFields {
@@ -15187,7 +15228,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (query.length == 0) {
         return nil;
     }
-    if (query.length >= [iTermAdvancedSettingsModel aiMaxTokens] / 8) {
+    if (query.length >= [iTermAdvancedSettingsModel aiResponseMaxTokens] / 8) {
         return nil;
     }
     return query;
