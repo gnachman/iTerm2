@@ -304,7 +304,7 @@ DEFINE_STRING(tabColorMenuOptions, @"#fb6b62 #f6ac47 #f0dc4f #b5d749 #5fa3f8 #c1
 DEFINE_BOOL(removeAddTabButton, NO, SECTION_TABS @"Remove the “new tab” button from horizontal tab bars?");
 DEFINE_FLOAT(lightModeInactiveTabDarkness, 0.07, SECTION_TABS @"Darkness (in [0…1]) for non-selected tabs in non-Minimal theme in light mode.");
 DEFINE_FLOAT(darkModeInactiveTabDarkness, 0.5, SECTION_TABS @"Darkness (in [0…1]) for non-selected tabs in non-Minimal theme in dark mode.");
-DEFINE_BOOL(saveProfilesToRecentDocuments, YES, SECTION_TABS @"Add items to Recents (in the dock icon's menu) to reopen recently used profiles as tabs?")
+DEFINE_BOOL(saveProfilesToRecentDocuments, NO, SECTION_TABS @"Add items to Recents (in the dock icon's menu) to reopen recently used profiles as tabs?")
 DEFINE_BOOL(placeTabsInTitlebarAccessoryInFullScreen, YES, SECTION_TABS @"Place the tabbar in the window's titlebar in full screen mode (macOS 13+ only)?\nThis can be disabled to work around a bug in macOS where tabs may not be visible in full screen.");
 DEFINE_BOOL(defaultIconsUsingLetters, YES, SECTION_TABS @"Use the running command's first letter as the tab's default icon if there isn't a built in one.\nThis takes effect when tabs are configured to use built-in icons.");
 
