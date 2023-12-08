@@ -171,6 +171,12 @@ enum {
     IBOutlet NSButton *_compressHistory;
 
     BOOL _customScriptsFolderDidChange;
+
+    IBOutlet NSComboBox *_aiModel;
+    IBOutlet NSTextField *_aiTokenLimit;
+    IBOutlet NSTextField *_aiModelLabel;
+    IBOutlet NSTextField *_aiTokenLimitLabel;
+
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -611,17 +617,6 @@ enum {
             displayName:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_openAIAPIKey
-                    key:kPreferenceKeyOpenAIAPIKey
-            relatedView:_openAIAPIKeyLabel
-                   type:kPreferenceInfoTypeStringTextField];
-    info = [self defineControl:_aiPrompt
-                           key:kPreferenceKeyAIPrompt
-                   relatedView:_aiPromptLabel
-                          type:kPreferenceInfoTypeStringTextField];
-    info.observer = ^{
-        [weakSelf updateAIPromptWarning];
-    };
     [self defineControl:_compressHistory
                     key:kPreferenceKeyCompressHistory
             relatedView:nil
@@ -638,6 +633,45 @@ enum {
         [iTermPasteboardReporter setConfiguration:newValue.intValue];
     };
     PreferenceInfo *allowSendingClipboardInfo = info;
+
+    /// -------
+
+    [self defineControl:_openAIAPIKey
+                    key:kPreferenceKeyOpenAIAPIKey
+            relatedView:_openAIAPIKeyLabel
+                   type:kPreferenceInfoTypeStringTextField];
+    info = [self defineControl:_aiPrompt
+                           key:kPreferenceKeyAIPrompt
+                   relatedView:_aiPromptLabel
+                          type:kPreferenceInfoTypeStringTextField];
+    info.observer = ^{
+        [weakSelf updateAIPromptWarning];
+    };
+
+    [OpenAIMetadata.instance enumerateModels:^(NSString * _Nonnull name, NSInteger context) {
+        [_aiModel addItemWithObjectValue:name];
+    }];
+
+    PreferenceInfo *tokenLimitInfo = [self defineControl:_aiTokenLimit
+                                                     key:kPreferenceKeyAITokenLimit
+                                             relatedView:_aiTokenLimitLabel
+                                                    type:kPreferenceInfoTypeIntegerTextField];
+    info = [self defineControl:_aiModel
+                           key:kPreferenceKeyAIModel
+                   relatedView:_aiModelLabel
+                          type:kPreferenceInfoTypeStringTextField];
+    info.onChange = ^{
+        NSString *model = [weakSelf stringForKey:kPreferenceKeyAIModel];
+        if (!model) {
+            return;
+        }
+        NSNumber *tokens = [OpenAIMetadata.instance contextWindowTokensForModelName:model];
+        if (!tokens) {
+            return;
+        }
+        [weakSelf setObject:tokens forKey:kPreferenceKeyAITokenLimit];
+        [weakSelf updateValueForInfo:tokenLimitInfo];
+    };
 
     [self updateEnabledState];
     [self commitControls];

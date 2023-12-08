@@ -39,8 +39,6 @@ class AITermControllerRegistrationHelper {
     }
 }
 
-private let charactersPerToken = 2
-
 @objc
 class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     private let controller: AITermController
@@ -394,8 +392,12 @@ class AITermController {
         return URL(string: "https://api.openai.com/v1/completions")
     }
 
-    private func maxTokens(_ query: String) -> Int {
-        return Int(iTermAdvancedSettingsModel.aiMaxTokens()) - (query.utf8.count / charactersPerToken)
+    private func maxTokens(model: String, query: String) -> Int {
+        let naiveLimit = Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit)) - OpenAIMetadata.instance.tokens(in: query)
+        if let responseLimit = OpenAIMetadata.instance.maxResponseTokens(modelName: model) {
+            return min(responseLimit, naiveLimit)
+        }
+        return naiveLimit
     }
 
     private func legacyRequestBody(model: String, messages: [Message]) -> Data {
@@ -408,7 +410,7 @@ class AITermController {
         let query = messages.compactMap { $0.content }.joined(separator: "\n")
         let body = LegacyBody(model: model,
                               prompt: query,
-                              max_tokens: maxTokens(query))
+                              max_tokens: maxTokens(model: model, query: query))
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
         return bodyData
@@ -450,7 +452,7 @@ class AITermController {
             }
         }
 
-        var approximateTokenCount: Int { (content ?? "").utf8.count / charactersPerToken + 1 }
+        var approximateTokenCount: Int { OpenAIMetadata.instance.tokens(in: (content ?? "")) + 1 }
     }
 
     struct Body: Codable {
@@ -468,7 +470,7 @@ class AITermController {
         let query = messages.compactMap { $0.content }.joined(separator: "\n")
         let body = Body(model: model,
                         messages: messages,
-                        max_tokens: maxTokens(query),
+                        max_tokens: maxTokens(model: model, query: query),
                         functions: functions.isEmpty ? nil : functions.map { $0.decl },
                         function_call: functions.isEmpty ? nil : "auto")
         print("REQUEST:\n\(body)")
@@ -489,7 +491,7 @@ class AITermController {
     }
 
     private func makeAPICall(messages: [Message], registration: Registration) {
-        let model = iTermAdvancedSettingsModel.aiModel()!
+        let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-3.5-turbo"
         guard let url = url(forModel: model) else {
             handle(event: .error(reason: "Invalid URL"), legacy: false)
             return
@@ -578,7 +580,7 @@ class AITermController {
         } catch {
             let decoder = JSONDecoder()
             if let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) {
-                handle(event: .error(reason: "Error from OpenAI: \(errorResponse.error.message)"),
+                handle(event: .error(reason: errorResponse.error.message),
                        legacy: legacy)
             } else {
                 handle(event: .error(reason: "Failed to decode API response: \(error). Data is: \(data.stringOrHex)"),
@@ -640,7 +642,7 @@ class AITermController {
                         return
                     case .failure(let error):
                         DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
-                        handle(event: .error(reason: "Error from OpenAI: \(error.localizedDescription)"),
+                        handle(event: .error(reason: error.localizedDescription),
                                legacy: false)
                         return
                     }
@@ -825,7 +827,7 @@ struct AIConversation {
     private var delegate = Delegate()
     private weak var window: NSWindow?
     var maxTokens: Int {
-        return Int(iTermAdvancedSettingsModel.aiMaxTokens() - iTermAdvancedSettingsModel.aiResponseMaxTokens())
+        return Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit) - iTermAdvancedSettingsModel.aiResponseMaxTokens())
     }
     var busy: Bool { delegate.busy }
 

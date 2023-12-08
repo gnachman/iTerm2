@@ -43,8 +43,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)aggressiveBaseCharacterDetection;
 + (BOOL)aggressiveFocusFollowsMouse;
 + (int)aiResponseMaxTokens;
-+ (int)aiMaxTokens;
-+ (NSString *)aiModel;
 + (double)alertTriggerRateLimit;
 + (BOOL)alertsIndicateShortcuts;
 + (BOOL)allowDragOfTabIntoNewWindow;

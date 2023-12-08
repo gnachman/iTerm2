@@ -193,6 +193,8 @@ NSString *const kPreferenceKeyOpenAIAPIKey = @"NoSyncOpenAIAPIKey";
 NSString *const kPreferenceKeyAIPrompt = @"AI Prompt";
 NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions = @"Alert On Marks in Offscreen Sessions";
 NSString *const kPreferenceKeyCompressHistory = @"Compress History";
+NSString *const kPreferenceKeyAIModel = @"AiModel";
+NSString *const kPreferenceKeyAITokenLimit = @"AiMaxTokens";
 
 NSString *const iTermDefaultAIPrompt =
 @"#!/usr/bin/\\(shell)\n"
@@ -390,7 +392,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyOpenAIAPIKey: @"",
                   kPreferenceKeyAIPrompt: iTermDefaultAIPrompt,
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
-
+                  kPreferenceKeyAIModel: @"gpt-3.5-turbo",
+                  kPreferenceKeyAITokenLimit: @4000,
+                  
                   kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),
                   

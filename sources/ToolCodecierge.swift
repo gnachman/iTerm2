@@ -73,31 +73,69 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     }
                     conversation = AIConversation(window: window, messages: initialMessages)
                     if ghostRiding {
-                        struct Command: Codable {
-                            var command: String = ""
+                        do {
+                            struct ExecuteCommand: Codable {
+                                var command: String = ""
+                            }
+                            let schema = JSONSchema(for: ExecuteCommand(),
+                                                    descriptions: ["command": "The command to run"])
+                            let decl = ChatGPTFunctionDeclaration(
+                                name: "execute",
+                                description: "Execute a command at the shell. The output will be provided in a subsequent message from me.",
+                                parameters: schema)
+                            conversation?.define(
+                                function: decl,
+                                arguments: ExecuteCommand.self,
+                                implementation: { [weak self] command, controller, completion in
+                                    guard let self,
+                                          let session = iTermController.sharedInstance().session(withGUID: guid) else {
+                                        completion(.failure(AIConversation.AIError("The session no longer exists")))
+                                        return
+                                    }
+                                    session.writeTask(command.command.trimmingTrailingNewline + "\n")
+                                    delegate?.session(session: self, didProduceAdditionalText: "Running `\(command.command.escapedForMarkdownCode)`\n")
+                                    pendingCompletion = completion
+                                })
                         }
-                        func execute(command: String) {
 
+                        do {
+                            struct WriteCommand: Codable {
+                                var filename: String = ""
+                                var contents: String = ""
+                            }
+                            let schema = JSONSchema(for: WriteCommand(),
+                                                    descriptions: ["filename": "The filename to write to. It may be relative or absolute.",
+                                                                   "contents": "The contents of the file to be written."])
+                            let decl = ChatGPTFunctionDeclaration(
+                                name: "write",
+                                description: "Write a file, replacing an existing file with the same name.",
+                                parameters: schema)
+                            conversation?.define(
+                                function: decl,
+                                arguments: WriteCommand.self,
+                                implementation: { [weak self] command, controller, completion in
+                                    guard let self,
+                                          let session = iTermController.sharedInstance().session(withGUID: guid) else {
+                                        completion(.failure(AIConversation.AIError("The session no longer exists")))
+                                        return
+                                    }
+                                    session.sendTextSlowly("cat > \(command.filename)\n")
+                                    session.sendTextSlowly(command.contents)
+                                    if !command.contents.hasSuffix("\n") {
+                                        session.sendTextSlowly("\n")
+                                    }
+                                    session.sendTextSlowly("\u{0004}")
+                                    delegate?.session(session: self, didProduceAdditionalText: "Writing to \(command.filename)\n")
+                                    pendingCompletion = { result in
+                                        switch result {
+                                        case .success:
+                                            completion(.success("Done"))
+                                        case .failure(let error):
+                                            completion(.failure(error))
+                                        }
+                                    }
+                                })
                         }
-                        let schema = JSONSchema(for: Command(),
-                                                descriptions: ["command": "The command to run"])
-                        let decl = ChatGPTFunctionDeclaration(
-                            name: "execute",
-                            description: "Execute a command at the shell. The output will be provided in a subsequent message from me.",
-                            parameters: schema)
-                        conversation?.define(
-                            function: decl,
-                            arguments: Command.self, 
-                            implementation: { [weak self] command, controller, completion in
-                                guard let self,
-                                      let session = iTermController.sharedInstance().session(withGUID: guid) else {
-                                    completion(.failure(AIConversation.AIError("The session no longer exists")))
-                                    return
-                                }
-                                session.writeTask(command.command.trimmingTrailingNewline + "\n")
-                                delegate?.session(session: self, didProduceAdditionalText: "Running `\(command.command.escapedForMarkdownCode)`\n")
-                                pendingCompletion = completion
-                            })
                     }
                 }
             }
@@ -203,7 +241,12 @@ class ToolCodecierge: NSView, ToolbeltTool {
                         delegate?.session(session: self, didProduceText: updated.messages.last!.content ?? "")
                     case .failure(let error):
                         DLog("\(error)")
-                        delegate?.session(session: self, didProduceText: "There was an error: \(error.localizedDescription)")
+                        let reason = if let aiError = error as? AIConversation.AIError {
+                            aiError.message
+                        } else {
+                            error.localizedDescription
+                        }
+                        delegate?.session(session: self, didProduceText: "There was an error: \(reason)")
                     }
                 }
             }
@@ -770,10 +813,25 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
                 let image = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy")!
                 let modified = attributedString.mutableCopy() as! NSMutableAttributedString
                 var ranges = [NSRange]()
+                let utf16String = attributedString.string.utf16
                 attributedString.enumerateAttribute(.swiftyMarkdownLineStyle, in: NSRange(from: 0, to: attributedString.length)) { value, range, stopPtr in
-                    if value as? String == "codeblock" {
-                        ranges.append(range)
+                    guard value as? String == "codeblock" else {
+                        return
                     }
+                    if let previous = ranges.last {
+                        let startIndex = utf16String.index(utf16String.startIndex, offsetBy: previous.upperBound)
+                        let endIndex = utf16String.index(utf16String.startIndex, offsetBy: range.lowerBound)
+                        let utf16CodeUnits = Array(utf16String[startIndex..<endIndex])
+                        let substringToCheck = String(utf16CodeUnits: utf16CodeUnits, count: utf16CodeUnits.count)
+                        if substringToCheck.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            // The area between this range and the last contains contains only whitespace characters
+                            ranges.removeLast()
+                            ranges.append(NSRange(location: previous.location,
+                                                  length: range.upperBound - previous.location))
+                            return
+                        }
+                    }
+                    ranges.append(range)
                 }
                 for range in ranges.reversed() {
                     modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { point in
@@ -1121,5 +1179,62 @@ class DynamicImage {
         }
         return image.it_cachingImage(withTintColor: darkMode ? dark : light,
                                      key: cacheKey)
+    }
+}
+
+@objc
+class OpenAIMetadata: NSObject {
+    @objc static let instance = OpenAIMetadata()
+
+    private struct Model {
+        var name: String
+        var contextWindowTokens: Int
+        var maxResponseTokens: Int?
+    }
+
+    private let models = [
+        Model(name: "gpt-4-1106-preview",
+              contextWindowTokens: 128000,
+              maxResponseTokens: 4096),
+        Model(name: "gpt-4",
+              contextWindowTokens: 8192),
+        Model(name: "gpt-4-32k",
+              contextWindowTokens: 32768),
+        Model(name: "gpt-3.5-turbo-1106",
+              contextWindowTokens: 16385,
+              maxResponseTokens:4096),
+        Model(name: "gpt-3.5-turbo",
+              contextWindowTokens: 4096),
+        Model(name: "gpt-3.5-turbo-16k",
+              contextWindowTokens: 16385),
+        Model(name: "gpt-3.5-turbo-instruct",
+              contextWindowTokens: 4096)
+        ]
+
+    @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int) -> ()) {
+        for model in models {
+            closure(model.name, model.contextWindowTokens)
+        }
+    }
+
+    @objc(contextWindowTokensForModelName:) func objc_contextWindowTokens(modelName: String) -> NSNumber? {
+        if let model = models.first(where: { $0.name == modelName}) {
+            return NSNumber(value: model.contextWindowTokens)
+        }
+        return nil
+    }
+
+    func maxResponseTokens(modelName: String) -> Int? {
+        guard let model = models.first(where: { $0.name == modelName}) else {
+            return nil
+        }
+        if let result = model.maxResponseTokens {
+            return result
+        }
+        return model.contextWindowTokens
+    }
+
+    func tokens(in string: String) -> Int {
+        return string.utf8.count / 2
     }
 }

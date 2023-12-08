@@ -90,6 +90,8 @@ extern NSString *const kPreferenceKeyLoadPrefsFromCustomFolder;
 extern NSString *const kPreferenceKeyUseCustomScriptsFolder;  // Bool
 extern NSString *const kPreferenceKeyOpenAIAPIKey;
 extern NSString *const kPreferenceKeyAIPrompt;
+extern NSString *const kPreferenceKeyAIModel;
+extern NSString *const kPreferenceKeyAITokenLimit;
 
 // Note: if kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection is false, then use the default value (.never).
 // Otherwise, respect this value.
