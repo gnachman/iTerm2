@@ -58,11 +58,47 @@ class ToolCodecierge: NSView, ToolbeltTool {
         var guid: String
         var state: State = .uninitialized
         var history = History()
+        var ghostRiding = false
+        var pendingCompletion: ((Result<String, Error>) -> ())?
+
         var goal: String? {
             didSet {
                 history = History()
                 if let window = iTermController.sharedInstance().windowForSession(withGUID: guid)?.window(), let goal {
-                    conversation = AIConversation(window: window, messages: [AITermController.Message(role: "system", content: "You help a me in a terminal emulator. My goal is \(goal). \(contextualInfo) Start by suggesting a command. Don't overwhelm me with too much information: just go one step at a time. When I've reached my goal, remind me to click the End Task button.")])
+                    var initialMessages = [AITermController.Message]()
+                    if ghostRiding {
+                        initialMessages.append(AITermController.Message(role: "system", content: "You operate a terminal emulator for me. My goal is \(goal). \(contextualInfo). Ask clarifying questions as needed and run commands using the execute function when you're ready. When I've reached my goal, remind me to click the End Task button."))
+                    } else {
+                        initialMessages.append(AITermController.Message(role: "system", content: "You help a me in a terminal emulator. My goal is \(goal). \(contextualInfo) Start by suggesting a command. Don't overwhelm me with too much information: just go one step at a time. When I've reached my goal, remind me to click the End Task button."))
+                    }
+                    conversation = AIConversation(window: window, messages: initialMessages)
+                    if ghostRiding {
+                        struct Command: Codable {
+                            var command: String = ""
+                        }
+                        func execute(command: String) {
+
+                        }
+                        let schema = JSONSchema(for: Command(),
+                                                descriptions: ["command": "The command to run"])
+                        let decl = ChatGPTFunctionDeclaration(
+                            name: "execute",
+                            description: "Execute a command at the shell. The output will be provided in a subsequent message from me.",
+                            parameters: schema)
+                        conversation?.define(
+                            function: decl,
+                            arguments: Command.self, 
+                            implementation: { [weak self] command, controller, completion in
+                                guard let self,
+                                      let session = iTermController.sharedInstance().session(withGUID: guid) else {
+                                    completion(.failure(AIConversation.AIError("The session no longer exists")))
+                                    return
+                                }
+                                session.writeTask(command.command.trimmingTrailingNewline + "\n")
+                                delegate?.session(session: self, didProduceAdditionalText: "Running `\(command.command.escapedForMarkdownCode)`\n")
+                                pendingCompletion = completion
+                            })
+                    }
                 }
             }
         }
@@ -74,10 +110,10 @@ class ToolCodecierge: NSView, ToolbeltTool {
             let shell = scope?.value(forVariableName: "shell")
             let uname = scope?.value(forVariableName: "uname")
             if let shell, let uname {
-                return "The user's shell is \(shell) and the system's `uname` is \(uname). "
+                return "The shell is \(shell) and the system's `uname` is \(uname). "
             }
             if let shell {
-                return "The user's shell is \(shell). "
+                return "The shell is \(shell). "
             }
             if let uname {
                 return "The system's `uname` is \(uname). "
@@ -148,6 +184,11 @@ class ToolCodecierge: NSView, ToolbeltTool {
         func updateHistory(command newCommand: Command?) {
             if let newCommand {
                 history.commands.append(newCommand)
+                if let pendingCompletion {
+                    self.pendingCompletion = nil
+                    pendingCompletion(.success(message(forCommand: newCommand)))
+                    return
+                }
             }
             if running, conversation != nil {
                 let text = if let newCommand {
@@ -159,7 +200,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     guard let self else { return }
                     switch result {
                     case .success(let updated):
-                        delegate?.session(session: self, didProduceText: updated.messages.last!.content)
+                        delegate?.session(session: self, didProduceText: updated.messages.last!.content ?? "")
                     case .failure(let error):
                         DLog("\(error)")
                         delegate?.session(session: self, didProduceText: "There was an error: \(error.localizedDescription)")
@@ -174,7 +215,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                 switch result {
                 case .success(let updated):
                     self.conversation = updated
-                    delegate?.session(session: self, didProduceAdditionalText: updated.messages.last!.content)
+                    delegate?.session(session: self, didProduceAdditionalText: updated.messages.last!.content ?? "")
                 case .failure(let error):
                     DLog("\(error)")
                     delegate?.session(session: self, didProduceAdditionalText: "There was an error: \(error.localizedDescription)")
@@ -236,7 +277,11 @@ class ToolCodecierge: NSView, ToolbeltTool {
             if command.exitCode != 0 {
                 lines.append("The command failed with exit code \(command.exitCode).")
             }
-            lines.append("Briefly explain the output, especially if anything went wrong, and suggest the next step. If there is another command to run, please state it.")
+            if ghostRiding {
+                lines.append("Briefly explain the output, especially if anything went wrong, and perform the next step.")
+            } else {
+                lines.append("Briefly explain the output, especially if anything went wrong, and suggest the next step. If there is another command to run, please state it.")
+            }
             return lines.joined(separator: "\n")
         }
     }
@@ -313,10 +358,11 @@ class ToolCodecierge: NSView, ToolbeltTool {
         addSubview(onboardingView)
         onboardingView.isHidden = true
 
-        goalView = CodeciergeGoalView(startCallback: { [weak self] goal in
+        goalView = CodeciergeGoalView(startCallback: { [weak self] goal, autoRunCommands in
             guard let self, let session = currentSession() else {
                 return
             }
+            session.ghostRiding = autoRunCommands
             session.goal = goal
             session.suggestion = "Thinking…"
             self.state = .running
@@ -372,7 +418,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
     }
 
     func minimumHeight() -> CGFloat {
-        return 110.0
+        return 130.0
     }
 
     private func currentSession() -> Session? {
@@ -384,6 +430,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
             return session
         }
         let session = Session(guid)
+        session.ghostRiding = true
         session.delegate = self
         session.state = initialState
         SessionRegistry.instance.sessions[guid] = session
@@ -413,7 +460,6 @@ class ToolCodecierge: NSView, ToolbeltTool {
     }
 
     private func appendToSuggestion(guid: String, suggestion: String) {
-        let scrollOffset = suggestionView.height
         if let existing = SessionRegistry.instance.sessions[guid]?.suggestion {
             setSuggestion(guid: guid, suggestion: existing + suggestion)
         } else {
@@ -421,7 +467,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
         }
         if let suggestionView = self.suggestionView {
             DispatchQueue.main.async {
-                suggestionView.scrollOffset = min(suggestionView.height - 1, scrollOffset + 12)
+                suggestionView.scrollToEnd()
             }
         }
     }
@@ -520,10 +566,12 @@ class CodeciergeOnboardingView: NSView {
 }
 
 class CodeciergeGoalView: NSView, NSTextFieldDelegate {
-    private let startCallback: (String) -> ()
+    private let startCallback: (String, Bool) -> ()
     private let label: NSTextField
     private let textField: NSTextField
     private let startButton: NSButton
+    private let autoButton: NSButton
+
     var goal: String {
         get { textField.stringValue }
         set {
@@ -533,20 +581,29 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
     }
     override var isFlipped: Bool { true }
 
-    init(startCallback: @escaping (String) -> ()) {
+    init(startCallback: @escaping (String, Bool) -> ()) {
         self.startCallback = startCallback
         label = NSTextField(labelWithString: "What are you trying to accomplish? I'll suggest commands and explain their output.")
         label.lineBreakMode = .byWordWrapping
         label.usesSingleLineMode = false
         textField = NSTextField()
+        autoButton = NSButton()
+        autoButton.setButtonType(.switch)
+        autoButton.title = "Run commands automatically"
+        autoButton.state = .off
+
         startButton = NSButton(title: "Start", target: nil, action: nil)
         startButton.isEnabled = false
 
         super.init(frame: .zero)
 
+        addSubview(autoButton)
         addSubview(label)
         addSubview(textField)
         addSubview(startButton)
+
+        autoButton.target = self
+        autoButton.action = #selector(autoToggled(_:))
 
         textField.delegate = self
         startButton.target = self
@@ -563,6 +620,21 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
         layoutSubviews()
     }
 
+    @objc func autoToggled(_ sender: Any) {
+        if autoButton.state == .on {
+            let selection = iTermWarning.show(withTitle: "This lets an AI completely control your computer. It could delete your files, do something stupid or dangerous, or lead to the downfall of humanity. Proceed with caution.",
+                              actions: [ "OK", "Cancel" ],
+                              accessory: nil,
+                              identifier: nil,
+                              silenceable: .kiTermWarningTypePersistent,
+                              heading: "Danger!",
+                              window: window)
+            if selection == .kiTermWarningSelection1 {
+                autoButton.state = .off
+            }
+        }
+    }
+
     private func layoutSubviews() {
         let height = label.sizeThatFits(NSSize(width: bounds.width - 4, height: .infinity)).height
         label.frame = NSRect(x: 2, y: 0, width: bounds.width - 4, height: height)
@@ -570,9 +642,11 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
         textField.sizeToFit()
         textField.frame = NSRect(x: 2, y: label.frame.maxY + 4, width: bounds.width - 4, height: textField.bounds.height)
 
+        autoButton.sizeToFit()
+        autoButton.frame = NSRect(x: 0, y: textField.frame.maxY + 4, width: autoButton.bounds.width, height: autoButton.bounds.height)
         startButton.sizeToFit()
         startButton.frame = NSRect(x: bounds.width - 2 - startButton.bounds.width,
-                                   y: textField.frame.maxY + 4,
+                                   y: autoButton.frame.maxY + 4,
                                    width: startButton.bounds.width,
                                    height: startButton.bounds.height)
     }
@@ -598,7 +672,7 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
                 return
             }
         }
-        startCallback(textField.stringValue)
+        startCallback(textField.stringValue, autoButton.state == .on)
     }
 
     func controlTextDidChange(_ obj: Notification) {
@@ -610,8 +684,10 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
     }
 
     func controlTextDidEndEditing(_ obj: Notification) {
-        if startButton.isEnabled {
-            startButtonPressed()
+        if obj.userInfo?["NSTextMovement"] as? Int == NSTextMovement.return.rawValue {
+            if startButton.isEnabled {
+                startButtonPressed()
+            }
         }
     }
 }
@@ -626,17 +702,6 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
     private let endButton: NSButton
     private let replyTextField: NSTextField
     private let replyButton: NSButton
-    var scrollOffset: CGFloat {
-        get {
-            scrollView.documentVisibleRect.minY
-        }
-        set {
-            textView.scrollToVisible(NSRect(x: 0,
-                                            y: newValue,
-                                            width: 1,
-                                            height: 1))
-        }
-    }
     var busy: Bool = false {
         didSet {
             layoutSubviews()
@@ -702,7 +767,7 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
             let attributedString = md.attributedString()
             if #available(macOS 11.0, *) {
                 let image = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy")!
-                var modified = attributedString.mutableCopy() as! NSMutableAttributedString
+                let modified = attributedString.mutableCopy() as! NSMutableAttributedString
                 var ranges = [NSRange]()
                 attributedString.enumerateAttribute(.swiftyMarkdownLineStyle, in: NSRange(from: 0, to: attributedString.length)) { value, range, stopPtr in
                     if value as? String == "codeblock" {
@@ -876,8 +941,10 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
     }
 
     func controlTextDidEndEditing(_ obj: Notification) {
-        if replyButton.isEnabled {
-            send(self)
+        if obj.userInfo?["NSTextMovement"] as? Int == NSTextMovement.return.rawValue {
+            if replyButton.isEnabled {
+                send(self)
+            }
         }
     }
 

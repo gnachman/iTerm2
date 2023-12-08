@@ -134,9 +134,100 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
 
 }
 
+protocol AnyOptional {
+    static var wrappedType: Any.Type { get }
+}
+
+extension Optional: AnyOptional {
+    static var wrappedType: Any.Type {
+        return Wrapped.self
+    }
+}
+
+struct JSONSchema: Codable {
+    var type = "object"
+    var properties: [String: Property] = [:]
+    var required: [String] = []
+
+    struct Property: Codable {
+        var type: String  // e.g., "string"
+        var description: String?  // Documentation
+        var `enum`: [String]?
+    }
+
+    init<T>(for instance: T,
+            descriptions: [String: String]) {
+        let mirror = Mirror(reflecting: instance)
+
+        for child in mirror.children {
+            guard let label = child.label else { continue }
+
+            let type = Swift.type(of: child.value)
+            let fieldType = JSONSchema.extractFieldType(type)
+
+            var property = Property(type: fieldType)
+            property.description = descriptions[label]
+
+            properties[label] = property
+            if !(child.value is AnyOptional.Type) {
+                required.append(label)
+            }
+        }
+    }
+
+    private static func extractFieldType(_ type: Any.Type) -> String {
+        if type == Int.self || type == UInt.self || type == Int8.self || type == UInt8.self ||
+            type == Int16.self || type == UInt16.self || type == Int32.self || type == UInt32.self ||
+            type == Int64.self || type == UInt64.self || type == Float.self || type == Double.self {
+            return "number"
+        } else if type == String.self {
+            return "string"
+        } else if type == Bool.self {
+            return "boolean"
+        } else if let optionalType = type as? AnyOptional.Type {
+            return extractFieldType(optionalType.wrappedType)
+        } else {
+            return "object"
+        }
+    }
+
+}
+
+struct ChatGPTFunctionDeclaration: Codable {
+    var name: String
+    var description: String
+    var parameters: JSONSchema
+}
+
+fileprivate protocol AnyFunction {
+    var typeErasedParameterType: Any.Type { get }
+    var decl: ChatGPTFunctionDeclaration { get }
+    func invoke(json: Data, llm: AITermController, completion: @escaping (Result<String, Error>) -> ())
+}
+
+struct Function<T: Codable>: AnyFunction {
+    typealias Impl = (T, AITermController, @escaping (Result<String, Error>) -> ()) -> ()
+
+    var decl: ChatGPTFunctionDeclaration
+    var call: Impl
+    var parameterType: T.Type
+
+    var typeErasedParameterType: Any.Type { parameterType }
+    func invoke(json: Data, llm: AITermController, completion: @escaping (Result<String, Error>) -> ()) {
+        do {
+            let value = try JSONDecoder().decode(parameterType, from: json)
+            call(value, llm, completion)
+        } catch {
+            completion(.failure(error))
+        }
+    }
+}
+
 class AITermController {
     var representedObject: String?
-    
+    private(set) fileprivate var functions = [AnyFunction]()
+    var truncate: (([Message]) -> ([Message]))?
+
     struct Registration {
         var apiKey: String
 
@@ -163,7 +254,7 @@ class AITermController {
         case ground
         case initialized(query: String)
         case initializedMessages(messages: [Message])
-        case querySent
+        case querySent(messages: [Message])
     }
 
     enum Event: CustomDebugStringConvertible {
@@ -210,6 +301,14 @@ class AITermController {
         precondition(state == .ground)
         state = .initializedMessages(messages: messages)
         handle(event: .begin, legacy: false)
+    }
+
+    func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, arguments: T.Type, implementation: @escaping Function<T>.Impl) {
+        functions.append(Function(decl: decl, call: implementation, parameterType: arguments))
+    }
+
+    fileprivate func define(functions: [AnyFunction]) {
+        self.functions.append(contentsOf: functions)
     }
 
     private func handle(event: Event, legacy: Bool) {
@@ -306,7 +405,7 @@ class AITermController {
             var max_tokens: Int
             var temperature = 0
         }
-        let query = messages.map { $0.content }.joined(separator: "\n")
+        let query = messages.compactMap { $0.content }.joined(separator: "\n")
         let body = LegacyBody(model: model,
                               prompt: query,
                               max_tokens: maxTokens(query))
@@ -317,24 +416,62 @@ class AITermController {
 
     struct Message: Codable, Equatable {
         var role = "user"
-        var content: String
+        var content: String?
 
-        var approximateTokenCount: Int { content.utf8.count / charactersPerToken + 1 }
+        // For function calling
+        var name: String?
+        var function_call: FunctionCall?
+
+        struct FunctionCall: Codable, Equatable {
+            var name: String
+            var arguments: String
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case role
+            case name
+            case content
+            case function_call
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+
+            try container.encode(role, forKey: .role)
+
+            if let name {
+                try container.encode(name, forKey: .name)
+            }
+
+            try container.encode(content, forKey: .content)
+
+            if let function_call {
+                try container.encode(function_call, forKey: .function_call)
+            }
+        }
+
+        var approximateTokenCount: Int { (content ?? "").utf8.count / charactersPerToken + 1 }
     }
+
     struct Body: Codable {
         var model: String  // "text-davinci-003"
         var messages = [Message]()
         var max_tokens: Int
         var temperature = 0
+        var functions: [ChatGPTFunctionDeclaration]? = nil
+        var function_call: String? = nil  // "none" and "auto" also allowed
     }
 
     private func modernRequestBody(model: String, messages: [Message]) -> Data {
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
         // answer the same length as the query.
-        let query = messages.map { $0.content }.joined(separator: "\n")
+        let query = messages.compactMap { $0.content }.joined(separator: "\n")
         let body = Body(model: model,
                         messages: messages,
-                        max_tokens: maxTokens(query))
+                        max_tokens: maxTokens(query),
+                        functions: functions.isEmpty ? nil : functions.map { $0.decl },
+                        function_call: functions.isEmpty ? nil : "auto")
+        print("REQUEST:\n\(body)")
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
         return bodyData
@@ -374,7 +511,7 @@ class AITermController {
                              legacy: isLegacy(model: model))
             }
         }
-        state = .querySent
+        state = .querySent(messages: messages)
         task.resume()
     }
 
@@ -390,11 +527,6 @@ class AITermController {
             var index: Int
             var message: Message
             var finish_reason: String
-
-            struct Message: Codable {
-                var role: String
-                var content: String
-            }
         }
 
         struct Usage: Codable {
@@ -403,7 +535,18 @@ class AITermController {
             var total_tokens: Int
         }
     }
-    struct Response: Codable {
+
+    struct ErrorResponse: Codable {
+        var error: Error
+
+        struct Error: Codable {
+            var message: String
+            var type: String?
+            var code: String?
+        }
+    }
+
+    struct LegacyResponse: Codable {
         var id: String
         var object: String
         var created: Int
@@ -426,28 +569,87 @@ class AITermController {
     }
 
     private func parseResponse(data: Data, legacy: Bool) {
-        let decoder = JSONDecoder()
         do {
-            let choices = try {
-                if legacy {
-                    let response = try decoder.decode(Response.self, from: data)
-                    let choices = response.choices.map {
-                        $0.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                    }
-                    return choices
-                } else {
-                    let response =  try decoder.decode(ModernResponse.self, from: data)
-                    let choices = response.choices.map {
-                        String($0.message.content.trimmingLeadingCharacters(in: .whitespacesAndNewlines))
-                    }
-                    return choices
-                }
-            }()
-            state = .ground
-            delegate?.aitermController(self, offerChoices: choices)
+            let choices = legacy ? try parseLegacyResponse(data: data) : try parseModernResponse(data: data)
+            if let choices {
+                state = .ground
+                delegate?.aitermController(self, offerChoices: choices)
+            }
         } catch {
-            handle(event: .error(reason: "Failed to decode API response: \(error). Data is: \(data.stringOrHex)"),
-                   legacy: legacy)
+            let decoder = JSONDecoder()
+            if let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) {
+                handle(event: .error(reason: "Error from OpenAI: \(errorResponse.error.message)"),
+                       legacy: legacy)
+            } else {
+                handle(event: .error(reason: "Failed to decode API response: \(error). Data is: \(data.stringOrHex)"),
+                       legacy: legacy)
+            }
+        }
+    }
+
+    private func parseLegacyResponse(data: Data) throws -> [String] {
+        let decoder = JSONDecoder()
+        let response = try decoder.decode(LegacyResponse.self, from: data)
+        let choices = response.choices.map {
+            $0.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return choices
+    }
+
+    private func parseModernResponse(data: Data) throws -> [String]? {
+        let decoder = JSONDecoder()
+        let response =  try decoder.decode(ModernResponse.self, from: data)
+        print("RESPONSE:\n\(response)")
+        let choices = response.choices.compactMap { choice -> String? in
+            guard let content = choice.message.content else {
+                return nil
+            }
+            return String(content.trimmingLeadingCharacters(in: .whitespacesAndNewlines))
+        }
+        if let firstChoice = response.choices.first,
+           let functionCall = firstChoice.message.function_call {
+            doFunctionCall(firstChoice.message, call: functionCall)
+            return nil
+        }
+        return choices
+    }
+
+    private func doFunctionCall(_ message: Message, call functionCall: Message.FunctionCall) {
+        switch state {
+        case .ground, .initialized, .initializedMessages:
+            DLog("Unexpected function call in state \(state)")
+            return
+        case .querySent(let messages):
+            var amended = messages
+            amended.append(message)
+            if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
+                DLog("Invoke function with arguments \(functionCall.arguments)")
+                impl.invoke(json: functionCall.arguments.data(using: .utf8)!, llm: self) { [weak self] result in
+                    guard let self else { return }
+                    switch result {
+                    case .success(let response):
+                        DLog("Response to function call with arguments \(functionCall.arguments): \(response)")
+                        amended.append(Message(role: "function",
+                                               content: response,
+                                               name: functionCall.name))
+                        state = .ground
+                        if let truncate {
+                            amended = truncate(amended)
+                        }
+                        request(messages: amended)
+                        return
+                    case .failure(let error):
+                        DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
+                        handle(event: .error(reason: "Error from OpenAI: \(error.localizedDescription)"),
+                               legacy: false)
+                        return
+                    }
+                }
+                return
+            }
+            amended.append(Message(role: "user",
+                                   content: "There is no registered function by that name. Try again."))
+            request(messages: amended)
         }
     }
 }
@@ -622,7 +824,9 @@ struct AIConversation {
     private var controller: AITermController
     private var delegate = Delegate()
     private weak var window: NSWindow?
-    var maxTokens = 3000
+    var maxTokens: Int {
+        return Int(iTermAdvancedSettingsModel.aiMaxTokens() - iTermAdvancedSettingsModel.aiResponseMaxTokens())
+    }
     var busy: Bool { delegate.busy }
 
     init(window: NSWindow,
@@ -631,6 +835,14 @@ struct AIConversation {
         self.messages = messages
         controller = AITermController(registration: AITermControllerRegistrationHelper.instance.registration)
         controller.delegate = delegate
+        let maxTokens = self.maxTokens
+        controller.truncate = { truncate(messages: $0, maxTokens: maxTokens) }
+    }
+
+    func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, 
+                            arguments: T.Type,
+                            implementation: @escaping Function<T>.Impl) {
+        controller.define(function: decl, arguments: arguments, implementation: implementation)
     }
 
     mutating func add(text: String, role: String = "user") {
@@ -661,6 +873,7 @@ struct AIConversation {
             case .success(let text):
                 let message = AITermController.Message(role: "assistant", content: text)
                 let amended = AIConversation(window: window, messages: prior + [message])
+                amended.controller.define(functions: controller.functions)
                 completion(.success(amended))
             break
             case .failure(let error):
@@ -672,38 +885,42 @@ struct AIConversation {
     }
 
     private var truncatedMessages: [AITermController.Message] {
-        var tokens = messages.map { $0.approximateTokenCount }.reduce(0, +)
-
-        var messagesToSend = messages
-        var j = 0
-        for i in 0..<messagesToSend.count {
-            defer {
-                j += 1
-            }
-            if tokens < maxTokens {
-                break
-            }
-            if messages[i].role == "system" {
-                continue
-            }
-            if i == messages.count - 1 {
-                var (head, tail) = messagesToSend[j].content.halved
-
-                while tokens >= maxTokens {
-                    (head, _) = head.halved
-                    (_, tail) = tail.halved
-                    tokens -= messagesToSend[j].approximateTokenCount
-                    messagesToSend[j].content = head + "…[truncated]…" + tail
-                    tokens += messagesToSend[j].approximateTokenCount
-                }
-            } else {
-                tokens -= messages[i].approximateTokenCount
-                messagesToSend.remove(at: j)
-                j -= 1
-            }
-        }
-        return messagesToSend
+        return truncate(messages: messages, maxTokens: maxTokens)
     }
+}
+
+func truncate(messages: [AITermController.Message], maxTokens: Int) -> [AITermController.Message] {
+    var tokens = messages.map { $0.approximateTokenCount }.reduce(0, +)
+
+    var messagesToSend = messages
+    var j = 0
+    for i in 0..<messagesToSend.count {
+        defer {
+            j += 1
+        }
+        if tokens < maxTokens {
+            break
+        }
+        if messages[i].role == "system" {
+            continue
+        }
+        if i == messages.count - 1 {
+            var (head, tail) = (messagesToSend[j].content ?? "").halved
+
+            while tokens >= maxTokens {
+                (head, _) = head.halved
+                (_, tail) = tail.halved
+                tokens -= messagesToSend[j].approximateTokenCount
+                messagesToSend[j].content = head + "…[truncated]…" + tail
+                tokens += messagesToSend[j].approximateTokenCount
+            }
+        } else {
+            tokens -= messages[i].approximateTokenCount
+            messagesToSend.remove(at: j)
+            j -= 1
+        }
+    }
+    return messagesToSend
 }
 
 extension String {
