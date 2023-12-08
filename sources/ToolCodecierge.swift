@@ -583,10 +583,11 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
 
     init(startCallback: @escaping (String, Bool) -> ()) {
         self.startCallback = startCallback
-        label = NSTextField(labelWithString: "What are you trying to accomplish? I'll suggest commands and explain their output.")
+        label = NSTextField(labelWithString: "What are you trying to do? I'll suggest commands and explain their output.")
         label.lineBreakMode = .byWordWrapping
         label.usesSingleLineMode = false
         textField = NSTextField()
+        textField.placeholderString = "I want to…"
         autoButton = NSButton()
         autoButton.setButtonType(.switch)
         autoButton.title = "Run commands automatically"
@@ -645,7 +646,7 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
         autoButton.sizeToFit()
         autoButton.frame = NSRect(x: 0, y: textField.frame.maxY + 4, width: autoButton.bounds.width, height: autoButton.bounds.height)
         startButton.sizeToFit()
-        startButton.frame = NSRect(x: bounds.width - 2 - startButton.bounds.width,
+        startButton.frame = NSRect(x: (bounds.width - startButton.bounds.width) / 2,
                                    y: autoButton.frame.maxY + 4,
                                    width: startButton.bounds.width,
                                    height: startButton.bounds.height)
