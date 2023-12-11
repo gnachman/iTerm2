@@ -146,8 +146,7 @@ xterm-new|modern xterm terminal emulator,
 
 # Left/right margins are supported in xterm since patch #279 (2012/05/10)
 vt420+lrmm|VT420 left/right margins,
-	mgc=\E[?69l,
-	smglr=\E[?69h\E[%i%p1%d;%p2%ds,
+	mgc=\E[?69l
 
 # These "ansi+XXX" blocks were added in ncurses 5.0:
 ansi+rep,
