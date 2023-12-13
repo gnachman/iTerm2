@@ -6967,9 +6967,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (PTYScrollView.shouldDismember) {
         _view.scrollview.alphaValue = 0;
     } else {
-        _view.scrollview.contentView.alphaValue = _textview.shouldBeAlphaedOut ? 0.0 : 1.0;
+        [self updateWrapperAlphaForMetalEnabled:YES];
     }
     [self setMetalViewAlphaValue:1];
+}
+
+- (void)updateWrapperAlphaForMetalEnabled:(BOOL)useMetal {
+    if (useMetal) {
+        _view.scrollview.contentView.alphaValue = _textview.shouldBeAlphaedOut ? 0.0 : 1.0;
+    } else {
+        _view.scrollview.contentView.alphaValue = 1;
+    }
 }
 
 - (void)setMetalViewAlphaValue:(CGFloat)alphaValue {
@@ -6986,7 +6994,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (PTYScrollView.shouldDismember) {
             _view.scrollview.alphaValue = 1;
         } else {
-            _view.scrollview.contentView.alphaValue = 1;
+            [self updateWrapperAlphaForMetalEnabled:NO];
         }
     }
 }
@@ -7695,6 +7703,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)textViewDidAddOrRemovePorthole {
     [self.delegate sessionUpdateMetalAllowed];
+    [self updateWrapperAlphaForMetalEnabled:_view.useMetal];
 }
 
 - (NSString *)textViewCurrentSSHSessionName {
@@ -15511,7 +15520,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (PTYScrollView.shouldDismember) {
         _view.scrollview.alphaValue = 1;
     } else {
-        _view.scrollview.contentView.alphaValue = 1;
+        [self updateWrapperAlphaForMetalEnabled:NO];
     }
     [self setMetalViewAlphaValue:0];
     id token = @(_nextMetalDisabledToken++);
