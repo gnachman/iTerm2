@@ -318,9 +318,17 @@ static NSString *const kArrangement = @"Arrangement";
                 // full screen window. Do this to avoid overlapping notifications.
                 return windowLevelJustBelowNotificiations;
             }
-            // Floating panel and fixed menu bar — overlap the menu bar.
+            if (!self.windowController.fullScreen) {
+                // Non-fullscreen windows have their frame set below the menu bar so we can let
+                // notifications overlap them.
+                return windowLevelJustBelowNotificiations;
+            }
+            // Floating fullscreen panel and fixed menu bar — overlap the menu bar.
             // Unfortunately, this overlaps notification center since it is at the same level as
-            // the menu bar.
+            // the menu bar. If iTerm2 is not active then it can't hide the menu bar by setting
+            // presentation options. To move this below notifications we'd also need to adjust the
+            // window's frame as the menu bar hides and shows (e.g., if iTerm2 is activated then
+            // it gains the ability to hide the menu bar, and the frame would need to change).
             return NSStatusWindowLevel;
         }
     }
