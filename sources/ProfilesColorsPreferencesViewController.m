@@ -370,8 +370,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     _boldColor.enabled = [self boolForKey:KEY_USE_BOLD_COLOR];
     _cursorColorLabel.labelEnabled = shouldEnableCursorColor;
     _cursorTextColorLabel.labelEnabled = shouldEnableCursorColor;
-
-    _useSmartCursorColor.enabled = shouldEnableSmartCursorColor;
 }
 
 - (NSDictionary *)colorWellDictionary {
