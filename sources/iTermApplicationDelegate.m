@@ -846,6 +846,7 @@ static BOOL hasBecomeActive = NO;
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillTerminate object:nil];
 
     // This causes all windows to be closed and all sessions to be terminated.
+    DLog(@"Will release shared instance");
     [iTermController releaseSharedInstance];
 
     // save preferences
@@ -860,6 +861,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
     DLog(@"applicationWillTerminate called");
+    [iTermController releaseSharedInstance];
     [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
     DLog(@"applicationWillTerminate returning");
     TurnOffDebugLoggingSilently();

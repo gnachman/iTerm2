@@ -108,6 +108,8 @@ static iTermController *gSharedInstance;
 }
 
 + (void)releaseSharedInstance {
+    DLog(@"releaseSharedInstance");
+    [gSharedInstance cleanUpIfNeeded];
     [gSharedInstance release];
     gSharedInstance = nil;
 }
@@ -178,6 +180,25 @@ static iTermController *gSharedInstance;
 }
 
 - (void)dealloc {
+    DLog(@"dealloc");
+    [self cleanUpIfNeeded];
+
+    [_restorableSessions release];
+    [_currentRestorableSessionsStack release];
+    [_fullScreenWindowManager release];
+    [_lastSelection release];
+    [_setCurrentTerminalHelper release];
+    [super dealloc];
+
+
+- (void)cleanUpIfNeeded {
+    @synchronized([iTermController class]) {
+        static BOOL needsCleanUp = YES;
+        if (!needsCleanUp) {
+            return;
+        }
+        needsCleanUp = NO;
+    }
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     // Save hotkey window arrangement to user defaults before closing it.
@@ -195,8 +216,11 @@ static iTermController *gSharedInstance;
         //
         // In either case, we only get here if we're pretty sure everything will get restored
         // nicely.
+        DLog(@"Intentionally leaving sessions running on quit");
         [_terminalWindows autorelease];
     } else {
+        DLog(@"Will close all terminal windows to kill jobs: %@", _terminalWindows);
+        // Terminate buried sessions
         // Close all terminal windows, killing jobs.
         while ([_terminalWindows count] > 0) {
             [[_terminalWindows objectAtIndex:0] close];
@@ -205,12 +229,7 @@ static iTermController *gSharedInstance;
         [_terminalWindows release];
     }
 
-    [_restorableSessions release];
-    [_currentRestorableSessionsStack release];
-    [_fullScreenWindowManager release];
-    [_lastSelection release];
-    [_setCurrentTerminalHelper release];
-    [super dealloc];
+    _terminalWindows = nil;
 }
 
 - (PseudoTerminal*)keyTerminalWindow {
