@@ -167,7 +167,7 @@
 - (void)screenPushCurrentTitleForWindow:(BOOL)flag;
 
 // If the flag is set, pop the current window title from the stack; otherwise pop the icon title.
-- (void)screenPopCurrentTitleForWindow:(BOOL)flag;
+- (void)screenPopCurrentTitleForWindow:(BOOL)flag completion:(void (^)(void))completion;
 
 // Returns the screen's number (in practice, this is the tab's number that cmd-N switches to).
 - (int)screenNumber;

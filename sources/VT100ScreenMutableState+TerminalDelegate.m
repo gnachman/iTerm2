@@ -912,11 +912,15 @@
 
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow {
     DLog(@"begin %@", @(isWindow));
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         DLog(@"begin side-effect");
         if ([delegate screenAllowTitleSetting]) {
             DLog(@"allowed");
-            [delegate screenPopCurrentTitleForWindow:isWindow];
+            [delegate screenPopCurrentTitleForWindow:isWindow completion:^{
+                [unpauser unpause];
+            }];
+        } else {
+            [unpauser unpause];
         }
     }];
 }

@@ -232,7 +232,7 @@ static NSString *const iTermSessionTitleSession = @"session";
         }
         return @"Shell";
     }
-    if (titleComponents & iTermTitleComponentsSessionName) {
+    if (titleComponents & (iTermTitleComponentsSessionName | iTermTitleComponentsTemporarySessionName)) {
         name = effectiveSessionName;
     } else if (titleComponents & iTermTitleComponentsProfileName) {
         name = profileName;

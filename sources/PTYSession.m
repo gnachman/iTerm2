@@ -4778,6 +4778,13 @@ ITERM_WEAKLY_REFERENCEABLE
     _titleDirty = YES;
 }
 
+- (void)resetIconName {
+    DLog(@"Reset icon name");
+    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionIconName];
+    [self profileNameDidChangeTo:self.profile[KEY_NAME]];
+    [self resetSessionNameTitleComponents];
+}
+
 - (void)setWindowTitle:(NSString *)title {
     [self.variablesScope setValue:title forVariableNamed:iTermVariableKeySessionWindowName];
     _titleDirty = YES;
@@ -4858,7 +4865,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)popIconTitle {
     NSString *theName = [_nameController popIconTitle];
-    [self setIconName:theName ?: [iTermProfilePreferences stringForKey:KEY_NAME inProfile:self.profile]];
+    if (!theName) {
+        [self resetIconName];
+    } else {
+        [self setIconName:theName];
+    }
 }
 
 - (void)userInitiatedReset {
@@ -11959,12 +11970,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (components & iTermTitleComponentsCustom) {
         return;
     }
-    if (components & (iTermTitleComponentsSessionName | iTermTitleComponentsProfileAndSessionName)) {
+    if (components & (iTermTitleComponentsSessionName | iTermTitleComponentsProfileAndSessionName | iTermTitleComponentsTemporarySessionName)) {
         return;
     }
-    components |= iTermTitleComponentsSessionName;
+    components |= iTermTitleComponentsTemporarySessionName;
     [self setSessionSpecificProfileValues:@{ KEY_TITLE_COMPONENTS: @(components) }];
 
+}
+
+- (void)resetSessionNameTitleComponents {
+    iTermTitleComponents components = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
+                                                                           inProfile:self.profile];
+    components &= ~iTermTitleComponentsTemporarySessionName;
+    [self setSessionSpecificProfileValues:@{ KEY_TITLE_COMPONENTS: @(components) }];
 }
 
 - (BOOL)screenWindowIsFullscreen {
@@ -12077,12 +12095,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 // If the flag is set, pop the window title; otherwise pop the icon title.
-- (void)screenPopCurrentTitleForWindow:(BOOL)flag {
-    if (flag) {
-        [self popWindowTitle];
-    } else {
-        [self popIconTitle];
-    }
+- (void)screenPopCurrentTitleForWindow:(BOOL)flag completion:(void (^)(void))completion {
+    // This is called from a side-effect and it'll modify the profile so do a spin of the runloop
+    // to avoid reentrant joined threads.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (flag) {
+            [self popWindowTitle];
+        } else {
+            [self popIconTitle];
+        }
+        completion();
+    });
 }
 
 - (NSString *)screenName {
