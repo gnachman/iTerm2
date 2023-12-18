@@ -182,14 +182,14 @@ static iTermController *gSharedInstance;
 - (void)dealloc {
     DLog(@"dealloc");
     [self cleanUpIfNeeded];
-
+    
     [_restorableSessions release];
     [_currentRestorableSessionsStack release];
     [_fullScreenWindowManager release];
     [_lastSelection release];
     [_setCurrentTerminalHelper release];
     [super dealloc];
-
+}
 
 - (void)cleanUpIfNeeded {
     @synchronized([iTermController class]) {
