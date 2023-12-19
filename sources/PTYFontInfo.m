@@ -164,7 +164,7 @@
         NSLayoutManager *layoutManager = [FontSizeEstimator layoutManagerForFont:font_ textContainer:textContainer];
         CGFloat lineHeight = [layoutManager usedRectForTextContainer:textContainer].size.height;
         CGFloat baselineOffsetFromTop = [layoutManager defaultBaselineOffsetForFont:font_];
-        return -floorf(lineHeight - baselineOffsetFromTop);
+        return -round(lineHeight - baselineOffsetFromTop);
     } else {
         return -(floorf(font_.leading) - floorf(self.descender));
     }
