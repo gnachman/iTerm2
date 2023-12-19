@@ -3679,7 +3679,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 if (![scanner scanHexInt:&intValue]) {
                     ok = NO;
                 } else {
-                    ok = (intValue <= 255);
+                    ok = (intValue <= 0xFFFF);
                 }
                 if (ok) {
                     int limit = (1 << (4 * [components[j] length])) - 1;
