@@ -24,6 +24,9 @@
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
 
+@interface ToolPasteHistory()<NSMenuDelegate>
+@end
+
 @implementation ToolPasteHistory {
     NSScrollView *_scrollView;
     NSTableView *_tableView;
@@ -92,12 +95,51 @@ static const CGFloat kMargin = 4;
                                                               repeats:YES];
         [_tableView performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
         [_tableView reloadData];
+
+        _tableView.menu = [[NSMenu alloc] init];
+        _tableView.menu.delegate = self;
+        NSMenuItem *item;
+        item = [[NSMenuItem alloc] initWithTitle:@"Copy"
+                                          action:@selector(copySelection:)
+                                   keyEquivalent:@""];
+        item.target = self;
+        [_tableView.menu addItem:item];
+
+        item = [[NSMenuItem alloc] initWithTitle:@"Open in Advanced Paste"
+                                          action:@selector(openInAdvancedPaste:)
+                                   keyEquivalent:@""];
+        item.target = self;
+        [_tableView.menu addItem:item];
+
     }
     return self;
 }
 
 - (void)dealloc {
     [minuteRefreshTimer_ invalidate];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
+    return [self respondsToSelector:[item action]] && [_tableView clickedRow] >= 0;
+}
+
+- (void)copySelection:(id)sender {
+    const NSInteger selectedIndex = [_tableView clickedRow];
+    if (selectedIndex < 0) {
+        return;
+    }
+    PasteboardEntry *entry = pasteHistory_.entries[selectedIndex];
+    NSPasteboard *thePasteboard = [NSPasteboard generalPasteboard];
+    [thePasteboard declareTypes:@[ NSPasteboardTypeString ] owner:nil];
+    [thePasteboard setString:[entry mainValue] forType:NSPasteboardTypeString];
+    [[PasteboardHistory sharedInstance] save:[entry mainValue]];
+}
+
+- (void)openInAdvancedPaste:(id)sender {
+    [self copySelection:nil];
+    PTYTextView *textView = [[iTermController sharedInstance] frontTextView];
+    [textView.window makeFirstResponder:textView];
+    [NSApp sendAction:@selector(pasteOptions:) to:nil from:nil];
 }
 
 - (void)shutdown {
