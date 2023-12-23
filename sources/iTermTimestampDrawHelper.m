@@ -43,8 +43,8 @@ const CGFloat iTermTimestampGradientWidth = 20;
                                obscured:(CGFloat)obscured {
     self = [super init];
     if (self) {
-        _bgColor = backgroundColor;
-        _fgColor = textColor;
+        _bgColor = backgroundColor ?: [NSColor colorWithRed:0 green:0 blue:0 alpha:1];
+        _fgColor = textColor ?: [NSColor colorWithRed:0 green:0 blue:0 alpha:1];
         _now = now;
         _useTestingTimezone = useTestingTimezone;
         _rowHeight = rowHeight;
