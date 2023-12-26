@@ -1,0 +1,152 @@
+#compdef img2sixel
+# ------------------------------------------------------------------------------
+# Description
+# -----------
+#
+#  Completion script for img2sixel (https://github.com/saitoha/libsixel)
+#
+# ------------------------------------------------------------------------------
+# Author
+# -------
+#
+#  * Hayaki Saito (https://github.com/saitoha)
+#
+# ------------------------------------------------------------------------------
+
+_diffusiontype() {
+  _values \
+    'DIFFUSIONTYPE' \
+    'auto[choose diffusion type automatically (default)]' \
+    'none[do not diffuse]' \
+    'fs[Floyd-Steinberg method]' \
+    "atkinson[Bill Atkinson's method]" \
+    'jajuni[Jarvis, Judice & Ninke method]' \
+    "stucki[Stucki's method]" \
+    "burkes[Burkes' method]" \
+    'a_dither[positionally stable arithmetic dither]' \
+    'x_dither[positionally stable arithmetic xor based dither]'
+}
+
+_findtype() {
+  _values \
+    'FINDTYPE' \
+    'auto[choose finding method automatically (default)]' \
+    'norm[simply comparing the range in RGB space]' \
+    'lum[transforming into luminosities before the comparison]'
+}
+
+_selecttype() {
+  _values \
+    'SELECTTYPE' \
+    'auto[choose selecting method automatically (default)]' \
+    'center[choose the center of the box]' \
+    'average[calculate the color average into the box]' \
+    'histogram[similar with average but considers color histogram]'
+}
+
+_resamplingtype() {
+  _values \
+    'RESAMPLINGTYPE' \
+    'nearest[Nearest-Neighbor method]' \
+    'gaussian[Gaussian filter]' \
+    'hanning[Hanning filter]' \
+    'hamming[Hamming filter]' \
+    'bilinear[Bilinear filter (default)]' \
+    'welsh[Welsh filter]' \
+    'bicubic[Bicubic filter]' \
+    'lanczos2[Lanczos2 filter]' \
+    'lanczos3[Lanczos3 filter]' \
+    'lanczos3[Lanczos4 filter]'
+}
+
+_qualitytype() {
+  _values \
+    'QUALITYTYPE' \
+    'auto[decide quality mode automatically (default)]' \
+    'high[high quality and low speed mode]' \
+    'low[low quality and high speed mode]'
+}
+
+_looptype() {
+  _values \
+    'LOOPTYPE' \
+    'auto[honor the setting of GIF header (default)]' \
+    'force[always enable loop]' \
+    'disable[always disable loop]'
+}
+
+_palettetype() {
+  _values \
+    'PALETTETYPE' \
+    'auto[choose palette type automatically (default)]' \
+    'hls[use HLS color space]' \
+    'rgb[use RGB color space]'
+}
+
+_builtinpalette() {
+  _values \
+    'BUILTINPALETTE' \
+    'xterm16[X default 16 color map]' \
+    'xterm256[X default 256 color map]' \
+    'vt340mono[VT340 monochrome map]' \
+    'vt340color[VT340 color map]' \
+    'gray1[1bit grayscale map]' \
+    'gray2[2bit grayscale map]' \
+    'gray4[4bit grayscale map]' \
+    'gray8[8bit grayscale map]'
+}
+
+_encodepolicy() {
+  _values \
+    'ENCODEPOLICY' \
+    'auto[choose encoding policy automatically (default)]' \
+    'fast[encode as fast as possible]' \
+    'size[encode to as small sixel sequence as possible]'
+}
+
+_arguments -S -s -A "-*" -S \
+  {-o,--outfile}'[specify output file (default: stdout)]':files:_files \
+  {-7,--7bit-mode}'[generate a sixel image for 7bit terminals (default)]' \
+  {-8,--8bit-mode}'[generate a sixel image for 8bit terminals]' \
+  {-R,--gri-limit}'[limit arguments of DECGRI(!) to 255]' \
+  {-p,--colors=}'[specify number of colors to reduce the image to]' \
+  {-m,--mapfile=}'[transform image colors to match specified set of colors]':files:_files \
+  {-e,--monochrome}'[output monochrome sixel image]' \
+  {-k,--insecure}'[allow to connect to SSL sites without certs]' \
+  {-i,--invert}'[assume the terminal background color is white]' \
+  {-I,--high-color}'[output 15bpp sixel image]' \
+  {-u,--use-macro}'[use DECDMAC and DECINVM for GIF animation]' \
+  {-n,--macro-number}'[specify a number argument for DECDMAC]' \
+  {-C,--complexion-score=}'[specify a score value for complexion correction]' \
+  {-g,--ignore-delay}'[render GIF animation without delay]' \
+  {-S,--static}'[render animated GIF as a static image]' \
+  {-d,--diffusion=}'[choose diffusion method which used with -p option]':diffusiontype:_diffusiontype \
+  {-f,--find-largest=}'[method for finding the largest dimension in median-cut]':findtype:_findtype \
+  {-s,--select-color=}'[method for selecting color from median-cut boxes]':selecttype:_selecttype \
+  {-c,--crop=}'[crop image to specified geometory(%dx%d+%d+%d)]' \
+  {-w,--width=}'[resize image to specified width]' \
+  {-h,--height=}'[resize image to specified height]' \
+  {-r,--resampling=}'[choose resampling filter used with -w or -h option]':resamplingtype:_resamplingtype \
+  {-q,--quality=}'[select quality of color quanlization]':qualitytype:_qualitytype \
+  {-l,--loop-control=}'[select loop control mode of GIF animation]':looptype:_looptype \
+  {-t,--palette-type=}'[select palette color space type]':palettetype:_palettetype \
+  {-b,--builtin-palette=}'[select built-in palette type]':builtinpalette:_builtinpalette \
+  {-E,--encode-policy=}'[select encoding policy]':encodepolicy:_encodepolicy \
+  {-B,--bgcolor=}'[select background color]' \
+  {-P,--penetrate}'[penetrate GNU Screen using DCS pass-through sequence]' \
+  {-D,--pipe-mode}'[read source images from stdin continuously]' \
+  {-v,--verbose}'[show debugging information]' \
+  {-V,--version}'[show version and license information]' \
+  {-H,--help}'[show help]' \
+  '*:files:_files' \
+  && return 0
+
+return 1
+
+# Local Variables:
+# mode: Shell-Script
+# sh-indentation: 2
+# indent-tabs-mode: nil
+# sh-basic-offset: 2
+# End:
+# vim: ft=zsh sw=2 ts=2 et

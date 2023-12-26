@@ -1,0 +1,49 @@
+.TH SIXEL 5 "May 21, 2014"
+.SH NAME
+sixel \- SIXEL format
+.SH DESCRIPTION
+SIXEL is a bitmap graphics format for terminals and printers introduced
+by Digital Equipment Corp. (DEC).
+Its data scheme is represented as a terminal-friendly escape sequence.
+So if you want to show a SIXEL image file, all you have to do is "cat"
+it to your terminal.
+.br
+
+.TP 5
+Terminal requirements:
+Several of DEC VT series, VT240/VT241/VT330/VT340/VT282/VT284/VT286/VT382
+.br
+RLogin (Japanese terminal emulator)
+.br
+tanasinn (Works with firefox)
+.br
+mlterm (Works on each of X, win32/cygwin and framebuffer version)
+.br
+XTerm (configured with --enable-sixel-graphics and launched with "-ti 340" option)
+.br
+yaft / yaftx (Works on framebuffer / X11 environment)
+.br
+DECterm
+.br
+Kermit for DOS
+.br
+WRQ Reflection
+.br
+ZSTEM
+
+.SH "SEE ALSO"
+.BR "img2sixel"(1), " sixel2png"(1), "
+.LP
+All About SIXELs, Sep 29, 1990:
+.IP
+.br
+ftp://ftp.cs.utk.edu/pub/shuford/terminal/all_about_sixels.txt
+.LP
+Displaying Sixel Image Files, 2014:
+.IP
+.br
+http://rullf2.xs4all.nl/sg/doc.html
+.LP
+
+.\" end of man page
+

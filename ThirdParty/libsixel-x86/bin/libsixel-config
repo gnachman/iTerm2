@@ -1,0 +1,90 @@
+#!/bin/sh
+#
+# Author: Hayaki Saito, 2015
+#
+
+prefix=/Users/gnachman/git/iterm2-alt3/ThirdParty/libsixel-x86
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+include_dir=${prefix}/include
+bindir=${exec_prefix}/bin
+datadir=${datarootdir}
+datarootdir=${prefix}/share
+mandir=${datarootdir}/man
+
+LANG=C;		export LANG
+LANGUAGE=C;	export LANGUAGE
+LC_ALL=C;	export LC_ALL
+LC_CTYPE=C;	export LC_CTYPE
+
+test $# = 0 && exec /bin/sh $0 --error
+
+while test $# -gt 0; do
+	case "$1" in
+	# basic configuration
+	--prefix)
+		echo "$prefix"
+		;;
+	--exec-prefix)
+		echo "${exec_prefix}"
+		;;
+	# compile/link
+	--cflags)
+		echo "-I${include_dir}"
+		;;
+	--libs)
+		echo "-L${libdir} -lsixel"
+		;;
+	# identification
+	--version)
+		echo 1.8.6
+		;;
+	--abi-version)
+		echo 1:6:0 | tr : .
+		;;
+	# locations
+	--bindir)
+		echo "${bindir}"
+		;;
+	--datadir)
+		echo "${datadir}"
+		;;
+	--datarootdir)
+		echo "${datarootdir}"
+		;;
+	--libdir)
+		echo "${libdir}"
+		;;
+	--mandir)
+		echo "${mandir}"
+		;;
+	# general info
+	--help)
+		cat <<ENDHELP
+Usage: libsixel-config [options]
+
+Options:
+  --prefix           echos the package-prefix of libsixel
+  --exec-prefix      echos the executable-prefix of libsixel
+
+  --cflags           echos the C compiler flags needed to compile with libsixel
+  --libs             echos the libraries needed to link with libsixel
+
+  --version          echos the release+patchdate version of libsixel
+  --abi-version      echos the ABI version of libsixel
+
+  --bindir           echos the directory containing libsixel programs
+  --datadir          echos the directory containing libsixel data
+  --libdir           echos the directory containing libsixel libraries
+  --mandir           echos the directory containing libsixel manpages
+
+  --help             prints this message
+ENDHELP
+		;;
+	--error|*)
+		/bin/sh $0 --help 1>&2
+		exit 1
+		;;
+	esac
+	shift
+done

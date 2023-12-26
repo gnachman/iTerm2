@@ -1,0 +1,172 @@
+# bash completion for img2sixel
+
+have img2sixel &&
+_img2sixel()
+{
+    local cur prev
+
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    _expand || return 0
+
+    case "$prev" in
+    -p|--colors)
+        COMPREPLY=( $( compgen -W '2 \
+                                   4 \
+                                   8 \
+                                   16 \
+                                   32 \
+                                   64 \
+                                   128 \
+                                   256' -- "$cur" ) )
+        return 0
+        ;;
+    -m|--mapfile)
+        _filedir
+        return 0
+        ;;
+    -C|--complexion-score)
+        COMPREPLY=( $( compgen -W '1 \
+                                   2 \
+                                   3 \
+                                   4 \
+                                   5 \
+                                   6' -- "$cur" ) )
+        return 0
+        ;;
+    -d|--diffusion)
+        COMPREPLY=( $( compgen -W 'auto \
+                                   none \
+                                   fs \
+                                   atkinson \
+                                   jajuni \
+                                   stucki \
+                                   burkes \
+                                   a_dither \
+                                   x_dither' -- "$cur" ) )
+        return 0
+        ;;
+    -f|--find-largest)
+        COMPREPLY=( $( compgen -W 'auto \
+                                   norm \
+                                   lum' -- "$cur" ) )
+        return 0
+        ;;
+    -s|--select-color)
+        COMPREPLY=( $( compgen -W 'auto \
+                                   center \
+                                   average \
+                                   histogram' -- "$cur" ) )
+        return 0
+        ;;
+    -r|--resampling)
+        COMPREPLY=( $( compgen -W 'auto \
+                                   nearest \
+                                   gaussian \
+                                   hanning \
+                                   hamming \
+                                   bilinear \
+                                   welsh \
+                                   bicubic \
+                                   lanczos2 \
+                                   lanczos3 \
+                                   lanczos4' -- "$cur" ) )
+        return 0
+        ;;
+    -q|--quality)
+        COMPREPLY=( $( compgen -W 'auto \
+                                   high \
+                                   low' -- "$cur" ) )
+        return 0
+        ;;
+    -l|--loop-control)
+        COMPREPLY=( $( compgen -W 'auto \
+                                   force \
+                                   disable' -- "$cur" ) )
+        return 0
+        ;;
+    -t|--palette-type)
+        COMPREPLY=( $( compgen -W 'auto \
+                                   hls \
+                                   rgb' -- "$cur" ) )
+        return 0
+        ;;
+    -b|--builtin-palette)
+        COMPREPLY=( $( compgen -W 'xterm16 \
+                                   xterm256 \
+                                   vt340mono \
+                                   vt340color \
+                                   gray1 \
+                                   gray2 \
+                                   gray4 \
+                                   gray8 ' -- "$cur" ) )
+        return 0
+        ;;
+    -E|--encode-policy)
+        COMPREPLY=( $( compgen -W 'auto \
+                                   fast \
+                                   size' -- "$cur" ) )
+        return 0
+        ;;
+    -o|--outfile)
+        _filedir
+        return 0
+        ;;
+    esac
+
+    case "$cur" in
+    -*)
+        COMPREPLY=( $( compgen -W '
+                                   -o --outfile \
+                                   -7 --7bit-mode \
+                                   -8 --8bit-mode \
+                                   -R --gri-limit \
+                                   -p --colors \
+                                   -m --mapfile \
+                                   -e --monochrome \
+                                   -k --insecure \
+                                   -i --invert \
+                                   -I --high-color \
+                                   -u --use-macro \
+                                   -n --macro-number \
+                                   -C --complexion-score \
+                                   -g --ignore-delay \
+                                   -S --static \
+                                   -d --diffusion \
+                                   -f --find-largest \
+                                   -s --select-color \
+                                   -c --crop \
+                                   -w --width \
+                                   -h --height \
+                                   -r --resampling \
+                                   -q --quality \
+                                   -l --loop-control \
+                                   -t --palette-type \
+                                   -b --builtin-palette \
+                                   -E --encode-policy \
+                                   -B --bgcolor \
+                                   -P --penetrate \
+                                   -D --pipe-mode \
+                                   -v --verbose \
+                                   -V --version \
+                                   -H --help \
+                                  ' -- "$cur" ))
+        ;;
+    *)
+        _filedir
+        ;;
+    esac
+
+    return 0
+} &&
+complete -F _img2sixel $nospace $filenames img2sixel
+
+# Local variables:
+# mode: shell-script
+# sh-basic-offset: 4
+# sh-indent-comment: t
+# indent-tabs-mode: nil
+# End:
+# ex: ts=4 sw=4 et filetype=sh

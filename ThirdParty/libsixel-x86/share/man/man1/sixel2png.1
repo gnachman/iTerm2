@@ -1,0 +1,92 @@
+.\" vi:set wm=5
+.TH SIXEL2PNG 1 "May 2015"
+.if n .ds Q \&"
+.if n .ds U \&"
+.if t .ds Q ``
+.if t .ds U ''
+.UC 4
+.SH NAME
+sixel2png \- convert DEC SIXEL images into PNG format images
+
+
+.SH SYNOPSIS
+.B sixel2png
+\fB-i\fP <input sixel file>
+\fB-o\fP <output png file>
+.br
+.B img2sixel
+\fB<\fP <input sixel file>
+\fB>\fP <output png file>
+.ta .5i 1.8i
+
+
+.SH DESCRIPTION
+.I img2sixel
+convert DEC SIXEL images into PNG format images.
+
+
+.SH "COMMAND-LINE OPTIONS"
+\fIimg2sixel\fP has the following command-line options:
+.TP 5
+.B \-i
+Specify input file. If it is omitted or "-",
+this command accepts SIXEL data from STDIN.
+.TP 5
+.B \-o
+Specify output file. If it is omitted or "-",
+this command emit SIXEL data into STDOUT.
+
+
+.SH "SEE ALSO"
+sixel(5) img2sixel(1)
+
+
+.SH AUTHORS
+\fIsixel2png\fP is maintained by Hayaki Saito.
+We imported whole code of \fIstbiw-1.01\fP, written by Sean Barrett and its contributers, for writing PNG images,
+
+
+.SH COPYRIGHT
+Copyright (c) 2014-2015 Hayaki Saito
+.PP
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+.PP
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+.PP
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+.SH THANKS
+This software derives from the following implementation.
+.br
+.TP 5
+.B stbiw-0.92
+This software includes \fIstbiw-0.92\fP (stb_image_write.h),
+a public domain PNG/BMP/TGA writer.
+.br
+.B http://nothings.org/stb/stb_image_write.h
+
+
+.SH CONTRIBUTORS
+.nf
+Masami HIRATA(@msmhrt)
+Bruce Mitchener (@waywardmonkeys)
+.fi
+
+
+.SH BUGS
+.PD
+.IP \(bu
+Send bug-reports, fixes, enhancements to
+.BR saitoha@me.com .
+
