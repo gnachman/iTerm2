@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22505"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -1149,6 +1149,12 @@ DQ
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="Io8-vc-lTj"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Disambiguate Escape" tag="12" identifier="Terminal State.Disambiguate Escape" id="KSe-b9-e6z">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="ZES-6p-vhi"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="JGI-zr-cwU"/>

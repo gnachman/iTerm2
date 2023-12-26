@@ -40,7 +40,7 @@ typedef struct {
 
 typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
     VT100TerminalKeyReportingFlagsNone = 0,
-    VT100TerminalKeyReportingFlagsDisambiguateEscape = (1 << 0),  // Legacy: can't be entered except by restoration.
+    VT100TerminalKeyReportingFlagsDisambiguateEscape = (1 << 0),  // CSI > 1u
     VT100TerminalKeyReportingFlagsReportAllEventTypes = (1 << 1),  // TODO
     VT100TerminalKeyReportingFlagsReportAlternateKeys = (1 << 2),  // TODO
     VT100TerminalKeyReportingFlagsReportAllKeysAsEscapeCodes = (1 << 3),  // TODO
@@ -194,6 +194,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
 
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects;
 - (void)toggleAlternateScreen;
-- (void)ensureDisambiguateEscapeInStack;
+- (void)toggleDisambiguateEscape;
 
 @end

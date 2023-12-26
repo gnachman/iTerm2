@@ -637,6 +637,24 @@ static const int kMaxScreenRows = 4096;
     [self.delegate terminalReportKeyUpDidChange:reportKeyUp];
 }
 
+- (void)toggleDisambiguateEscape {
+    if (self.currentKeyReportingModeStack.count) {
+        const int value = self.currentKeyReportingModeStack.lastObject.intValue;
+        [self.currentKeyReportingModeStack removeLastObject];
+        [self.currentKeyReportingModeStack addObject:@(value == 1 ? 0 : 1)];
+    } else {
+        switch (_sendModifiers[4].intValue) {
+            case 1:
+                _sendModifiers[4] = @(VT100TerminalKeyReportingFlagsNone);
+                break;
+            default:
+                _sendModifiers[4] = @(VT100TerminalKeyReportingFlagsDisambiguateEscape);
+                break;
+        }
+    }
+    [self.delegate terminalKeyReportingFlagsDidChange];
+}
+
 - (VT100TerminalKeyReportingFlags)keyReportingFlags {
     if (self.currentKeyReportingModeStack.count) {
         return self.currentKeyReportingModeStack.lastObject.intValue;
@@ -774,15 +792,6 @@ static const int kMaxScreenRows = 4096;
         [_delegate terminalShowPrimaryBuffer];
     }
     self.softAlternateScreenMode = useAlternateScreenMode;
-}
-
-- (void)ensureDisambiguateEscapeInStack {
-    if (![[_mainKeyReportingModeStack firstObject] isEqual:@(VT100TerminalKeyReportingFlagsDisambiguateEscape)]) {
-        [_mainKeyReportingModeStack insertObject:@(VT100TerminalKeyReportingFlagsDisambiguateEscape) atIndex:0];
-    }
-    if (![[_alternateKeyReportingModeStack firstObject] isEqual:@(VT100TerminalKeyReportingFlagsDisambiguateEscape)]) {
-        [_alternateKeyReportingModeStack insertObject:@(VT100TerminalKeyReportingFlagsDisambiguateEscape) atIndex:0];
-    }
 }
 
 - (void)executeDecSetReset:(VT100Token *)token {

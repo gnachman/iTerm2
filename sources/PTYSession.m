@@ -4541,9 +4541,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (modifyOtherKeysTerminalSetting == -1) {
         const BOOL profileWantsTickit = [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL
                                                                   inProfile:aDict];
-        self.keyMappingMode = profileWantsTickit ? iTermKeyMappingModeCSIu : iTermKeyMappingModeStandard;
         if (profileWantsTickit) {
-            [_screen ensureDisambiguateEscapeInStack];
+            [self setKeyMappingMode:iTermKeyMappingModeCSIu];
         }
     }
 
@@ -10882,6 +10881,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
         case 11:
             return _keyMappingMode == iTermKeyMappingModeRaw;
+
+        case 12:
+            return !!(_screen.terminalKeyReportingFlags & VT100TerminalKeyReportingFlagsDisambiguateEscape);
     }
 
     return NO;
@@ -10946,6 +10948,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             case 11:
                 terminal.sendModifiers[4] = @-1;
                 self.keyMappingMode = iTermKeyMappingModeRaw;
+                break;
+
+            case 12:
+                [terminal toggleDisambiguateEscape];
+                [self updateKeyMapper];
                 break;
         }
     }];
@@ -14267,7 +14274,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenKeyReportingFlagsDidChange {
-    if (_screen.terminalKeyReportingFlags & VT100TerminalKeyReportingFlagsDisambiguateEscape) {
+    const BOOL profileWantsTickit = [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL
+                                                              inProfile:self.profile];
+    if ((_screen.terminalKeyReportingFlags & VT100TerminalKeyReportingFlagsDisambiguateEscape) || profileWantsTickit) {
         self.keyMappingMode = iTermKeyMappingModeCSIu;
     } else {
         self.keyMappingMode = iTermKeyMappingModeStandard;
