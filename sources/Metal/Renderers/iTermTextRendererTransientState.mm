@@ -223,6 +223,13 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
     // The underlines would come along with them so we adjust them here. Issue 10168.
     iTermMetalUnderlineDescriptor adjustedASCIIUnderlineDescriptor = _asciiUnderlineDescriptor;
     adjustedASCIIUnderlineDescriptor.offset -= self.asciiOffset.height / self.configuration.scale;
+    vector_uint2 augmentedGlyphSize = CGSizeToVectorUInt2(_asciiTextureGroup.glyphSize);
+    if (iTermTextIsMonochrome()) {
+        // There is only a center part for ASCII on Mojave because the glyph size is increased to contain the largest ASCII glyph, notwithstanding the ascii offset.
+        // If we don't account for ascii offset here than glyphs that spill into the right (such as Italic often does) can be truncated.
+        augmentedGlyphSize.x += self.asciiOffset.width;
+        augmentedGlyphSize.y += self.asciiOffset.height;
+    }
     for (int i = 0; i < iTermNumberOfPIUArrays; i++) {
         const int n = piuArrays[i].get_number_of_segments();
         iTermASCIITexture *asciiTexture = [_asciiTextureGroup asciiTextureForAttributes:(iTermASCIITextureAttributes)i];
@@ -233,7 +240,7 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
                       piuArrays[i].size_of_segment(j),
                       asciiTexture.textureArray.texture,
                       CGSizeToVectorUInt2(asciiTexture.textureArray.atlasSize),
-                      CGSizeToVectorUInt2(_asciiTextureGroup.glyphSize),
+                      augmentedGlyphSize,
                       adjustedASCIIUnderlineDescriptor,
                       _strikethroughUnderlineDescriptor,
                       underlined,

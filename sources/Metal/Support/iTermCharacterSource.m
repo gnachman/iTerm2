@@ -260,6 +260,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 
     self = [super init];
+    // This is an appropriate place to set _debug to YES.
     if (self) {
         _fakeBold = attributes.bold;
         _fakeItalic = attributes.italic;
@@ -406,15 +407,18 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     bitmap.data = [NSMutableData uninitializedDataWithLength:length];
     bitmap.size = NSMakeSize(glyphWidth, glyphHeight);
 
-    BOOL saveBitmapsForDebugging = NO;
-    if (saveBitmapsForDebugging) {
+    if (_debug) {
         NSImage *image = [NSImage imageWithRawData:[NSData dataWithBytes:bitmapBytes length:bitmap.data.length]
                                               size:bitmap.size
                                      bitsPerSample:8
                                    samplesPerPixel:4
                                           hasAlpha:YES
                                     colorSpaceName:NSDeviceRGBColorSpace];
-        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.%@.png", _string, @(part)]];
+        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.%@.%@.%@.png", _font.familyName,
+                            [@[_attributes.bold ? @"Bold" : @"",
+                              _attributes.italic ? @"Italic" : @"",
+                              _attributes.useThinStrokes ? @"Thin" : @""] componentsJoinedByString:@""],
+                            _string, @(part)]];
 
         NSData *bigData = [NSData dataWithBytes:bitmapBytes length:sourceLength];
         image = [NSImage imageWithRawData:bigData
@@ -460,6 +464,10 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 - (NSArray<NSNumber *> *)newParts {
     CGRect boundingBox = self.frame;
+    if (_isAscii) {
+        boundingBox.size.width += _descriptor.asciiOffset.width;
+        boundingBox.size.height += _descriptor.asciiOffset.height;
+    }
     const int radius = _radius;
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
     for (int y = 0; y < self.maxParts; y++) {
@@ -588,6 +596,26 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     NSMutableData *data = [NSMutableData dataWithBytes:CGBitmapContextGetData(_context)
                                                 length:length];
     [_datas addObject:data];
+
+    if (_debug) {
+        // Step 1: Create a CGImage from the CGBitmapContext
+        CGImageRef imageRef = CGBitmapContextCreateImage(_context);
+
+        // Step 2: Create a URL for the output file
+        NSURL *url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"/tmp/full.%@.%@,%@.%@.png", _string, @(offset.x), @(offset.y), @(iteration)]];
+
+        // Step 3: Write the CGImage to disk as PNG
+        CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)url, kUTTypePNG, 1, NULL);
+        CGImageDestinationAddImage(destination, imageRef, nil);
+
+        if (!CGImageDestinationFinalize(destination)) {
+            NSLog(@"Failed to write image to /tmp/image.png");
+        }
+
+        // Clean up
+        CFRelease(destination);
+        CGImageRelease(imageRef);
+    }
     CGContextRestoreGState(_context);
     CGContextSetTextMatrix(_context, textMatrix);
 }

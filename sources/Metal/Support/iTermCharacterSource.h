@@ -53,6 +53,7 @@
 @property (nonatomic, readonly) BOOL isEmoji;
 @property (nonatomic, readonly) CGRect frame;
 @property (nonatomic, readonly) NSArray<NSNumber *> *parts;
+@property (nonatomic) BOOL debug;
 
 // Using conservative settings (bold, italic, thick strokes, antialiased)
 // returns the frame that contains all characters in the range. This is useful
