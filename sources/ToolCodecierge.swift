@@ -13,6 +13,7 @@ fileprivate protocol ToolCodeciergeSessionDelegate: AnyObject {
     func session(session: ToolCodecierge.Session, didProduceText text: String)
     func session(session: ToolCodecierge.Session, didProduceAdditionalText text: String)
     func sessionDidReceiveCommand(session: ToolCodecierge.Session, command: String)
+    func sessionEnabled(_ session: ToolCodecierge.Session) -> Bool
 }
 
 @objc(iTermToolCodecierge)
@@ -196,12 +197,14 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     truncateTail: false,
                     continuationChars: nil,
                     coords: nil) as! String
-                updateHistory(command: command,
-                              exitCode: exitCode,
-                              directory: directory,
-                              output: content,
-                              remoteHost: remoteHost)
-                delegate?.sessionDidReceiveCommand(session: self, command: command)
+                if let delegate, delegate.sessionEnabled(self) {
+                    updateHistory(command: command,
+                                  exitCode: exitCode,
+                                  directory: directory,
+                                  output: content,
+                                  remoteHost: remoteHost)
+                    delegate.sessionDidReceiveCommand(session: self, command: command)
+                }
             }
         }
 
@@ -547,6 +550,10 @@ extension ToolCodecierge: ToolCodeciergeSessionDelegate {
         let sanitizedCommand = command.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 80)
         appendToSuggestion(guid: session.guid, suggestion: "\n\n### 💻 Terminal\n`\(sanitizedCommand)`")
         appendToSuggestion(guid: session.guid, suggestion: "\n\n### 🔮 Assistant\nThinking…")
+    }
+
+    fileprivate func sessionEnabled(_ session: ToolCodecierge.Session) -> Bool {
+        return !isHiddenOrHasHiddenAncestor
     }
 }
 
