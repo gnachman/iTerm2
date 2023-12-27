@@ -392,8 +392,19 @@ class AITermController {
         return URL(string: "https://api.openai.com/v1/completions")
     }
 
-    private func maxTokens(model: String, query: String) -> Int {
-        let naiveLimit = Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit)) - OpenAIMetadata.instance.tokens(in: query)
+    private func maxTokens(model: String,
+                           query: String,
+                           functions: [ChatGPTFunctionDeclaration]) -> Int {
+        let encodedFunctions = {
+            if functions.isEmpty {
+                return ""
+            }
+            guard let data = try? JSONEncoder().encode(functions) else {
+                return ""
+            }
+            return String(data: data, encoding: .utf8) ?? ""
+        }()
+        let naiveLimit = Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit)) - OpenAIMetadata.instance.tokens(in: query) - OpenAIMetadata.instance.tokens(in: encodedFunctions)
         if let responseLimit = OpenAIMetadata.instance.maxResponseTokens(modelName: model) {
             return min(responseLimit, naiveLimit)
         }
@@ -410,7 +421,7 @@ class AITermController {
         let query = messages.compactMap { $0.content }.joined(separator: "\n")
         let body = LegacyBody(model: model,
                               prompt: query,
-                              max_tokens: maxTokens(model: model, query: query))
+                              max_tokens: maxTokens(model: model, query: query, functions: []))
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
         return bodyData
@@ -468,10 +479,11 @@ class AITermController {
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
         // answer the same length as the query.
         let query = messages.compactMap { $0.content }.joined(separator: "\n")
+        let maybeDecls = functions.isEmpty ? nil : functions.map { $0.decl }
         let body = Body(model: model,
                         messages: messages,
-                        max_tokens: maxTokens(model: model, query: query),
-                        functions: functions.isEmpty ? nil : functions.map { $0.decl },
+                        max_tokens: maxTokens(model: model, query: query, functions: maybeDecls ?? []),
+                        functions: maybeDecls,
                         function_call: functions.isEmpty ? nil : "auto")
         print("REQUEST:\n\(body)")
         let bodyEncoder = JSONEncoder()
