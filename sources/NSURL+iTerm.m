@@ -362,7 +362,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     NSString *uuid = [[NSUUID UUID] UUIDString];
     NSURL *destination =
-        [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:uuid];
+    [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:[uuid stringByAppendingString:@".zip"]];
 
     BOOL ok = [self saveContentsOfPathToZip:destination];
     if (ok) {
@@ -409,20 +409,25 @@ NS_ASSUME_NONNULL_BEGIN
         sourceDirIsTemporary = YES;
     }
 
-    NSFileCoordinator *coordinator = [[NSFileCoordinator alloc] init];
-    __block NSError *error = nil;
-    [coordinator coordinateReadingItemAtURL:sourceDir
-                                    options:NSFileCoordinatorReadingForUploading
-                                      error:&error
-                                 byAccessor:^(NSURL * _Nonnull zippedURL) {
-                                     [fileManager copyItemAtURL:zippedURL
-                                                          toURL:destination
-                                                          error:&error];
-                                 }];
-    if (sourceDirIsTemporary) {
-        [fileManager removeItemAtURL:sourceDir error:NULL];
+    NSTask *task = [[NSTask alloc] init];
+    [task setLaunchPath:@"/usr/bin/zip"];
+
+    NSString *destinationPath = [destination path];
+    NSString *sourcePath = [sourceDir path];
+
+    [task setArguments:@[@"-r", destinationPath, sourcePath]];
+
+    @try {
+        [task launch];
+        [task waitUntilExit];
+        if (sourceDirIsTemporary) {
+            [fileManager removeItemAtURL:sourceDir error:NULL];
+        }
+        return YES;
+    } @catch (NSException *exception) {
+        NSLog(@"Failed to create zip file: %@", [exception reason]);
+        return NO;
     }
-    return YES;
 }
 
 @end
