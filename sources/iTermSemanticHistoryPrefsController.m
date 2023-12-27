@@ -39,6 +39,7 @@ NSString *kIntelliJIDEAIdentifierUE = @"com.jetbrains.intellij";
 NSString *kWebStormIdentifier = @"com.jetbrains.WebStorm";
 NSString *kRiderIdentifier = @"com.jetbrains.rider";
 NSString *kNovaAppIdentifier = @"com.panic.Nova";
+NSString *kXcodeAppIdentifier = @"com.apple.dt.Xcode";
 
 NSString *kSemanticHistoryBestEditorAction = @"best editor";
 NSString *kSemanticHistoryUrlAction = @"url";
@@ -93,6 +94,7 @@ enum {
     kNovaTag,
     kVSCodium2Tag,
     kIntelliJUETag,
+    kXcodeTag,
 
     // Only append to the end of the list; never delete or change.
 };
@@ -146,7 +148,8 @@ enum {
                                kIntelliJIDEAIdentifierUE: @"",
                                kWebStormIdentifier: @"",
                                kRiderIdentifier: @"",
-                               kNovaAppIdentifier: @""
+                               kNovaAppIdentifier: @"",
+                               kXcodeAppIdentifier: @"",
     };
     return schemes[editor];
 }
@@ -169,6 +172,7 @@ enum {
               kEmacsAppIdentifier,
               kIntelliJIDEAIdentifierUE,
               kIntelliJIDEAIdentifierCE,
+              kXcodeAppIdentifier,
               kWebStormIdentifier,
               kRiderIdentifier ];
 }
@@ -200,7 +204,8 @@ enum {
                                   kIntelliJIDEAIdentifierUE,
                                   kWebStormIdentifier,
                                   kRiderIdentifier,
-                                  kNovaAppIdentifier ];
+                                  kNovaAppIdentifier,
+                                  kXcodeAppIdentifier, ];
     return [editorBundleIds containsObject:bundleId];
 }
 
@@ -222,7 +227,8 @@ enum {
                           kIntelliJIDEAIdentifierUE: @(kIntelliJUETag),
                                 kWebStormIdentifier: @(kWebStormTag),
                                    kRiderIdentifier: @(kRiderTag),
-                                 kNovaAppIdentifier: @(kNovaTag)
+                                 kNovaAppIdentifier: @(kNovaTag),
+                                kXcodeAppIdentifier: @(kXcodeTag),
     };
     return tags;
 }
@@ -268,7 +274,8 @@ enum {
                            kIntelliJIDEAIdentifierUE: @"IntelliJ IDEA (Ultimate)",
                                  kWebStormIdentifier: @"WebStorm",
                                     kRiderIdentifier: @"Rider",
-                                  kNovaAppIdentifier: @"Nova"
+                                  kNovaAppIdentifier: @"Nova",
+                                kXcodeAppIdentifier: @"Xcode",
     };
 
     NSDictionary *tags = [[self class] identifierToTagMap];
@@ -342,7 +349,8 @@ enum {
                              @(kIntelliJUETag): kIntelliJIDEAIdentifierUE,
                                @(kWebStormTag): kWebStormIdentifier,
                                   @(kRiderTag): kRiderIdentifier,
-                                   @(kNovaTag): kNovaAppIdentifier
+                                   @(kNovaTag): kNovaAppIdentifier,
+                                  @(kXcodeTag): kXcodeAppIdentifier,
     };
     return map[@([[editors_ selectedItem] tag])];
 }
