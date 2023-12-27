@@ -4275,7 +4275,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)loadColorsFromProfile:(Profile *)aDict {
-    const BOOL dark = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
+    const BOOL dark = [NSApp effectiveAppearance].it_isDark;
     NSDictionary<NSNumber *, NSString *> *keyMap = [self colorTableForProfile:aDict darkMode:dark];
 
     NSMutableDictionary<NSNumber *, id> *colorTable =
@@ -6135,7 +6135,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 }
 
 - (NSString *)amendedColorKey:(NSString *)baseKey {
-    return iTermAmendedColorKey(baseKey, self.profile, self.view.effectiveAppearance.it_isDark);
+    return iTermAmendedColorKey(baseKey, self.profile, [NSApp effectiveAppearance].it_isDark);
 }
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues {
@@ -13485,7 +13485,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.dimOnlyText = dimOnlyText;
         dirty = YES;
     }
-    const BOOL darkMode = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
+    const BOOL darkMode = [NSApp effectiveAppearance].it_isDark;
     const BOOL darkModeDidChange = (_config.darkMode != darkMode);
     if (darkModeDidChange) {
         _config.darkMode = darkMode;
@@ -15316,7 +15316,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (BOOL)textViewShouldUseSelectedTextColor {
-    const BOOL dark = self.view.effectiveAppearance.it_isDark;
+    const BOOL dark = [NSApp effectiveAppearance].it_isDark;
     NSString *key = iTermAmendedColorKey(KEY_USE_SELECTED_TEXT_COLOR, self.profile, dark);
     return [iTermProfilePreferences boolForKey:key inProfile:self.profile];
 }
