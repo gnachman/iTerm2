@@ -16974,7 +16974,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                                            options:0
                                                                             locale:[NSLocale currentLocale]];
             });
-            return [NSString stringWithFormat:@"[%@] ", [dateFormatter stringFromDate:[NSDate date]]];
+            return [[NSString stringWithFormat:@"[%@] ", [dateFormatter stringFromDate:[NSDate date]]] stringByReplacingUnicodeSpacesWithASCIISpace];
         }
 
         case iTermLoggingStyleHTML: {

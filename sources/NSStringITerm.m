@@ -2537,7 +2537,28 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return string;
 }
 
+- (NSString *)stringByReplacingUnicodeSpacesWithASCIISpace {
+    static NSRegularExpression *regex;
 
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSError *error = NULL;
+        regex = [NSRegularExpression regularExpressionWithPattern:@"\\p{Zs}"
+                                                          options:NSRegularExpressionCaseInsensitive
+                                                            error:&error];
+        if (error) {
+            NSLog(@"Error creating regular expression: %@", error);
+        }
+    });
+    if (!regex) {
+        return self;
+    }
+    NSString *modifiedString = [regex stringByReplacingMatchesInString:self
+                                                               options:0
+                                                                 range:NSMakeRange(0, self.length)
+                                                          withTemplate:@" "];
+    return modifiedString;
+}
 @end
 
 @implementation NSMutableString (iTerm)
