@@ -343,9 +343,9 @@ static BOOL hasBecomeActive = NO;
         _splitVerticallyWithCurrentProfile.title = [@"│⃞ " stringByAppendingString:_splitVerticallyWithCurrentProfile.title];
     }
 
-#if !BETA
-    [_iterm2Menu removeItem:_captureGPUFrameMenuItem];
-#endif
+//#if !BETA
+//    [_iterm2Menu removeItem:_captureGPUFrameMenuItem];
+//#endif
 
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
     _triggers.submenu.delegate = self;
