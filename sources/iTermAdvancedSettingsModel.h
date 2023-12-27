@@ -74,6 +74,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)badgeTopMargin;
 + (double)bellRateLimit;
 + (BOOL)bordersOnlyInLightMode;
++ (BOOL)bounceOnInactiveBell;
 + (BOOL)bootstrapDaemon;
 + (BOOL)clearBellIconAggressively;
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;

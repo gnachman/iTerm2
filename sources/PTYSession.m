@@ -13699,21 +13699,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                      visible:flashBell]) {
         return;
     }
+    BOOL notified = NO;
     if (quell) {
         DLog(@"Quell bell");
     } else {
         if (audibleBell) {
+            notified = YES;
             DLog(@"Beep: ring audible bell");
             NSBeep();
         }
         if (showBellIndicator) {
+            notified = YES;
             [self setBell:YES];
         }
         if (flashBell) {
+            notified = YES;
             [self screenFlashImage:kiTermIndicatorBell];
         }
     }
-    [[_delegate realParentWindow] incrementBadge];
+    if ([[_delegate realParentWindow] incrementBadge]) {
+        notified = YES;
+    }
+    if (notified && !NSApp.isActive && [iTermAdvancedSettingsModel bounceOnInactiveBell]) {
+        DLog(@"request user attention");
+        [NSApp requestUserAttention:NSCriticalRequest];
+    }
 }
 
 - (BOOL)shouldIgnoreBellWhichIsAudible:(BOOL)audible visible:(BOOL)visible {

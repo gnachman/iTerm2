@@ -348,6 +348,7 @@ DEFINE_FLOAT(horizontalScrollingSensitivity, 0.1, SECTION_MOUSE @"Sensitivity of
 
 #define SECTION_TERMINAL @"Terminal: "
 
+DEFINE_BOOL(bounceOnInactiveBell, NO, SECTION_TERMINAL @"Bounce dock icon when the bell rings while another app is active?");
 DEFINE_BOOL(traditionalVisualBell, NO, SECTION_TERMINAL @"Visual bell flashes the whole screen, not just a bell icon.");
 DEFINE_FLOAT(indicatorFlashInitialAlpha, 0.5, SECTION_TERMINAL @"Initial alpha value when flashing the visual bell or search wraparound indicator");
 DEFINE_FLOAT(timeBetweenBlinks, 0.5, SECTION_TERMINAL @"Cursor blink speed (seconds).");

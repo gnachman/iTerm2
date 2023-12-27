@@ -10946,11 +10946,11 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 #pragma clang diagnostic pop
 
-- (void)incrementBadge {
+- (BOOL)incrementBadge {
     DLog(@"incrementBadge");
     if (![iTermAdvancedSettingsModel indicateBellsInDockBadgeLabel]) {
         DLog(@"Disabled by advanced pref");
-        return;
+        return NO;
     }
 
     NSDockTile *dockTile;
@@ -10960,7 +10960,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else {
         if ([[NSApplication sharedApplication] isActive]) {
             DLog(@"App is active so don't increment it");
-            return;
+            return NO;
         }
         DLog(@"Use main app dock tile");
         dockTile = [[NSApplication sharedApplication] dockTile];
@@ -10969,12 +10969,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     DLog(@"Old count was %d", count);
     if (count == 999) {
         DLog(@"Won't go over 999, so stop early");
-        return;
+        return NO;
     }
     ++count;
     DLog(@"Set badge label to %@", @(count));
     [dockTile setBadgeLabel:[NSString stringWithFormat:@"%d", count]];
     [self.window.dockTile setShowsApplicationBadge:YES];
+    return YES;
 }
 
 - (void)sessionHostDidChange:(PTYSession *)session to:(id<VT100RemoteHostReading>)host {

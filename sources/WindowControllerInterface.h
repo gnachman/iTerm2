@@ -138,7 +138,7 @@
 - (BOOL)useTransparency;
 
 // Increment the badge count, or set it to 1 if there is none.
-- (void)incrementBadge;
+- (BOOL)incrementBadge;
 
 // For scripting.
 - (NSScriptObjectSpecifier *)objectSpecifier;
