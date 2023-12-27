@@ -38,7 +38,8 @@ class PreferenceKey(enum.Enum):
     USE_METAL = "UseMetal"  #: Use the GPU renderer?  Takes a boolean.
     DISABLE_METAL_WHEN_UNPLUGGED = "disableMetalWhenUnplugged"  #: Disable the GPU renderer when not connected to power?  Takes a boolean.
     PREFER_INTEGRATED_GPU = "preferIntegratedGPU"  #: Prefer the integrated GPU over discrete, if available?  Takes a boolean.
-    METAL_MAXIMIZE_THROUGHPUT = "metalMaximizeThroughput"  #: Maximize throughput for GPU renderer, vs framerate?  Takes a boolean.
+    METAL_MAXIMIZE_THROUGHPUT = "metalMaximizeThroughput"  #: Deprecated. Use MAXIMIZE_THROUGHPUT (which is identical besides the name) instead.
+    MAXIMIZE_THROUGHPUT = "metalMaximizeThroughput"  #: Maximize throughput vs framerate?  Takes a boolean.
     THEME = "TabStyleWithAutomaticOption"  #: Theme.  Takes an integer.  0 = Light, 1 = Dark, 2 = Light high contrast, 3 = Dark high contrast, 4 = Automatic (10.14+), 5 = Minimal (10.14+).
     TAP_BAR_POSTIION = "TabViewType"  #: Where the tab bar should be placed.  Takes an integer.  0=Top, 1=Bottom, 2=Left.
     HIDE_TAB_BAR_WHEN_ONLY_ONE_TAB = "HideTab"  #: Hide tab bar when there is only one tab?  Takes a boolean.

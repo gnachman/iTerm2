@@ -81,7 +81,7 @@ NSString *const kPreferenceKeyUseMetal = @"UseMetal";
 NSString *const kPreferenceKeyDisableMetalWhenUnplugged = @"disableMetalWhenUnplugged";
 NSString *const kPreferenceKeyDisableInLowPowerMode = @"disableMetalInLowPowerMode";
 NSString *const kPreferenceKeyPreferIntegratedGPU = @"preferIntegratedGPU";
-NSString *const kPreferenceKeyMetalMaximizeThroughput = @"metalMaximizeThroughput";
+NSString *const kPreferenceKeyMaximizeThroughput = @"metalMaximizeThroughput";  // Used to be metal-specific but not any more
 NSString *const kPreferenceKeyEnableAPIServer = @"EnableAPIServer";
 NSString *const kPreferenceKeyAPIAuthentication = @"API Authentication Method";
 
@@ -386,7 +386,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyDisableMetalWhenUnplugged: @YES,
                   kPreferenceKeyDisableInLowPowerMode: @YES,
                   kPreferenceKeyPreferIntegratedGPU: @YES,
-                  kPreferenceKeyMetalMaximizeThroughput: @YES,
+                  kPreferenceKeyMaximizeThroughput: @YES,
                   kPreferenceKeyEnableAPIServer: @NO,
                   kPreferenceKeyAPIAuthentication: @0,  // ignored — synthetic value
                   kPreferenceKeyOpenAIAPIKey: @"",
@@ -854,7 +854,7 @@ typedef struct {
 }
 
 FAST_BOOL_ACCESSOR(hideTabActivityIndicator, kPreferenceKeyHideTabActivityIndicator)
-FAST_BOOL_ACCESSOR(maximizeMetalThroughput, kPreferenceKeyMetalMaximizeThroughput)
+FAST_BOOL_ACCESSOR(maximizeThroughput, kPreferenceKeyMaximizeThroughput)
 FAST_BOOL_ACCESSOR(useTmuxProfile, kPreferenceKeyUseTmuxProfile)
 
 @end

@@ -585,6 +585,8 @@ private class TokenExecutorImpl {
     func whilePaused(_ block: () -> (), onExecutorQueue: Bool) {
         dispatchPrecondition(condition: .onQueue(.main))
 
+        DLog("Incr pending pauses if \(iTermPreferences.maximizeThroughput())")
+        let unpauser = iTermPreferences.maximizeThroughput() ? nil : pause()
         let sema = DispatchSemaphore(value: 0)
         queue.sync {
             let barrierDidRun = MutableAtomicObject(false)
@@ -612,6 +614,10 @@ private class TokenExecutorImpl {
             DLog("Task queue should now be blocked.")
         }
         block()
+        if unpauser != nil {
+            DLog("Decr pending pauses")
+        }
+        unpauser?.unpause()
         sema.signal()
     }
 

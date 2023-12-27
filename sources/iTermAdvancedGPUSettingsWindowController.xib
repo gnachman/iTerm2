@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21507" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21507"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22505"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -16,34 +16,26 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="lYj-Ug-93d">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="131" y="158" width="390" height="170"/>
+            <rect key="contentRect" x="131" y="158" width="390" height="139"/>
             <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <view key="contentView" id="Zm4-XI-Uft">
-                <rect key="frame" x="0.0" y="0.0" width="390" height="170"/>
+                <rect key="frame" x="0.0" y="0.0" width="390" height="139"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Hz6-mo-xeY">
-                        <rect key="frame" x="0.0" y="6" width="390" height="164"/>
+                        <rect key="frame" x="0.0" y="0.0" width="390" height="139"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <subviews>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tDk-ce-oAK">
-                                <rect key="frame" x="18" y="128" width="348" height="18"/>
+                                <rect key="frame" x="18" y="103" width="348" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="check" title="Disable GPU renderer when disconnected from power" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="tTM-lD-Hre">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                             </button>
-                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vbb-Yh-2Ul">
-                                <rect key="frame" x="18" y="84" width="291" height="18"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <buttonCell key="cell" type="check" title="Maximize throughput (may increase latency)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="kir-ls-Kka">
-                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                            </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="k3k-2P-4l2">
-                                <rect key="frame" x="18" y="64" width="224" height="18"/>
+                                <rect key="frame" x="18" y="59" width="224" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="check" title="Prefer integrated to discrete GPU" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="NO0-qW-ScI">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -51,7 +43,7 @@
                                 </buttonCell>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZxX-wi-fC8">
-                                <rect key="frame" x="317" y="13" width="59" height="32"/>
+                                <rect key="frame" x="314" y="13" width="59" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="BrO-1S-FrC">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -65,7 +57,7 @@ DQ
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aPE-Zd-MzY">
-                                <rect key="frame" x="235" y="13" width="82" height="32"/>
+                                <rect key="frame" x="232" y="13" width="82" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="TTN-aT-b6F">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -79,7 +71,7 @@ Gw
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mLb-fd-Raa">
-                                <rect key="frame" x="18" y="106" width="274" height="18"/>
+                                <rect key="frame" x="18" y="81" width="274" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="check" title="Disable GPU renderer in low power mode" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="HOV-Bh-KeV">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -90,13 +82,12 @@ Gw
                     </customView>
                 </subviews>
             </view>
-            <point key="canvasLocation" x="-15" y="300"/>
+            <point key="canvasLocation" x="-15" y="284.5"/>
         </window>
         <customObject id="HdW-S4-ebr" userLabel="View controller" customClass="iTermAdvancedGPUSettingsViewController">
             <connections>
                 <outlet property="disableInLowPowerMode" destination="mLb-fd-Raa" id="blk-5H-UH1"/>
                 <outlet property="disableWhenDisconnected" destination="tDk-ce-oAK" id="0fn-Zw-PJM"/>
-                <outlet property="maximizeThroughput" destination="vbb-Yh-2Ul" id="hzH-OH-F1Y"/>
                 <outlet property="preferIntegratedGPU" destination="k3k-2P-4l2" id="tl4-Sp-s7P"/>
             </connections>
         </customObject>

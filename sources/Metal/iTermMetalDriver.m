@@ -872,7 +872,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     } else {
 #if ENABLE_DEFER_CURRENT_DRAWABLE
         const BOOL synchronousDraw = (_context.group != nil);
-        frameData.deferCurrentDrawable = ([iTermPreferences boolForKey:kPreferenceKeyMetalMaximizeThroughput] &&
+        frameData.deferCurrentDrawable = ([iTermPreferences boolForKey:kPreferenceKeyMaximizeThroughput] &&
                                           !synchronousDraw);
 #else
         frameData.deferCurrentDrawable = NO;

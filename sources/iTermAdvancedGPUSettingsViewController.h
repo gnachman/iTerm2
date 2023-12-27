@@ -12,7 +12,6 @@
 @property (nonatomic, strong) IBOutlet NSButton *disableWhenDisconnected;
 @property (nonatomic, strong) IBOutlet NSButton *disableInLowPowerMode;
 @property (nonatomic, strong) IBOutlet NSButton *preferIntegratedGPU;
-@property (nonatomic, strong) IBOutlet NSButton *maximizeThroughput;
 
 @end
 

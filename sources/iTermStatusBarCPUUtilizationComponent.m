@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarCPUUtilizationComponent.h"
 
+#import "DebugLogging.h"
 #import "iTermCPUUtilization.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope+Session.h"
@@ -34,7 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
             static int sig;
             int inst = sig++;
             [[iTermCPUUtilization instanceForSessionID:scope.ID] addSubscriber:self block:^(double value) {
-                NSLog(@"update %d of %p", inst, weakSelf);
+                DLog(@"update %d of %p", inst, weakSelf);
                 [weakSelf update:value];
             }];
             _sshRef.onChangeBlock = ^{

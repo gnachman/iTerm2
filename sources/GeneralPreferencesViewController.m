@@ -70,6 +70,7 @@ enum {
     IBOutlet NSButton *_advancedGPU;
     iTermAdvancedGPUSettingsWindowController *_advancedGPUWindowController;
 
+    IBOutlet NSButton *_maximizeThroughput;
     IBOutlet NSButton *_enableAPI;
     IBOutlet NSPopUpButton *_apiPermission;
 
@@ -388,23 +389,20 @@ enum {
     };
 
 
-    _advancedGPUWindowController.viewController.maximizeThroughput.target = self;
-    _advancedGPUWindowController.viewController.maximizeThroughput.action = @selector(settingChanged:);
-
-    info = [self defineUnsearchableControl:_advancedGPUWindowController.viewController.maximizeThroughput
-                                       key:kPreferenceKeyMetalMaximizeThroughput
-                                      type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^{
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
-    };
-
     [self addViewToSearchIndex:_advancedGPUPrefsButton
                    displayName:@"Advanced GPU settings"
                        phrases:@[ _advancedGPUWindowController.viewController.disableWhenDisconnected.title,
                                   _advancedGPUWindowController.viewController.disableInLowPowerMode.title,
-                                  _advancedGPUWindowController.viewController.preferIntegratedGPU.title,
-                                  _advancedGPUWindowController.viewController.maximizeThroughput.title ]
+                                  _advancedGPUWindowController.viewController.preferIntegratedGPU.title ]
                            key:nil];
+
+    info = [self defineControl:_maximizeThroughput
+                           key:kPreferenceKeyMaximizeThroughput
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
+    };
 
     [self defineControl:_enableBonjour
                     key:kPreferenceKeyAddBonjourHostsToProfiles

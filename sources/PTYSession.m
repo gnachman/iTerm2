@@ -15742,7 +15742,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     state.visible = [_delegate sessionBelongsToVisibleTab] && !self.view.window.isMiniaturized;
 
     if (self.useMetal) {
-        if ([iTermPreferences maximizeMetalThroughput] &&
+        if ([iTermPreferences maximizeThroughput] &&
             !_screen.terminalSoftAlternateScreenMode) {
             state.useAdaptiveFrameRate = YES;
         } else {
