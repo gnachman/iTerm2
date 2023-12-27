@@ -3,7 +3,7 @@
 	url = https://github.com/gnachman/NMSSH.git
 [submodule "submodules/CoreParse"]
 	path = submodules/CoreParse
-	url = https://github.com/beelsebob/CoreParse
+	url = https://github.com/gnachman/CoreParse
 [submodule "submodules/Sparkle"]
 	path = submodules/Sparkle
 	url = https://github.com/gnachman/Sparkle.git
