@@ -152,7 +152,12 @@ typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
 - (void)setForeground24BitColor:(NSColor *)color;
 
 - (void)resetCharset;
-- (void)resetByUserRequest:(BOOL)preservePrompt;
+typedef NS_ENUM(NSUInteger, VT100TerminalResetReason) {
+    VT100TerminalResetReasonUserRequest,
+    VT100TerminalResetReasonControlSequence,
+    VT100TerminalResetReasonBrokenPipe
+};
+- (void)resetForReason:(VT100TerminalResetReason)reason;
 - (void)resetForTmuxUnpause;
 // Use this when restarting the login shell. Some features like paste bracketing should be turned
 // off for a newly launched program. It differs from resetByUserRequest: by not modifying screen

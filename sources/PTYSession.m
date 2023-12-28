@@ -3555,7 +3555,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                  VT100ScreenMutableState *mutableState,
                                                  id<VT100ScreenDelegate> delegate) {
-            [terminal resetByUserRequest:NO];
+            [terminal resetForReason:VT100TerminalResetReasonBrokenPipe];
             [self appendBrokenPipeMessage:@"Session Restarted"];
             [self replaceTerminatedShellWithNewInstance];
         }];
@@ -4874,7 +4874,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)userInitiatedReset {
     _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [terminal resetByUserRequest:YES];
+        [terminal resetForReason:VT100TerminalResetReasonUserRequest];
     }];
     [self updateDisplayBecause:@"reset terminal"];
 }
@@ -14830,13 +14830,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     // Ensure it doesn't contain empty lines.
     conductorSH = [conductorSH stringByReplacingOccurrencesOfString:@"\n\n" withString:@"\n \n"];
 
-    [self writeTaskNoBroadcast:conductorSH];
-    [self writeTaskNoBroadcast:[NSString stringWithFormat:@"main %@ %@ %@ %@\n",
-                                [token base64EncodedWithEncoding:NSUTF8StringEncoding],
-                                [uniqueID base64EncodedWithEncoding:NSUTF8StringEncoding],
-                                [encodedBA base64EncodedWithEncoding:NSUTF8StringEncoding],
-                                [sshArgs base64EncodedWithEncoding:NSUTF8StringEncoding]]];
-    [self writeTaskNoBroadcast:@"EOF\n"];
+    NSString *message = [NSString stringWithFormat:@"%@main %@ %@ %@ %@",
+                         conductorSH,
+                         [token base64EncodedWithEncoding:NSUTF8StringEncoding],
+                         [uniqueID base64EncodedWithEncoding:NSUTF8StringEncoding],
+                         [encodedBA base64EncodedWithEncoding:NSUTF8StringEncoding],
+                         [sshArgs base64EncodedWithEncoding:NSUTF8StringEncoding]];
+    [self writeTaskNoBroadcast:[[message base64EncodedWithEncoding:NSUTF8StringEncoding] chunkedWithLineLength:80 separator:@"\n"]];
+    // Terminate with an esc on its own line.
+    [self writeTaskNoBroadcast:@"\n\e\n"];
 }
 
 - (NSString *)screenSSHLocation {

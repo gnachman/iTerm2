@@ -526,6 +526,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth;
 - (void)terminalUpdateEnv:(NSString *)value;
 - (void)terminalBeginSSHIntegeration:(NSString *)args;
+- (void)terminalSendConductor:(NSString *)args;
 - (void)terminalEndSSH:(NSString *)uniqueID;
 - (void)terminalBeginFramerRecoveryForChildOfConductorAtDepth:(int)parentDepth;
 - (void)terminalHandleFramerRecoveryString:(NSString *)string;

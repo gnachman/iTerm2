@@ -34,13 +34,6 @@ if command -v base64 > /dev/null 2> /dev/null; then
 elif command -v b64encode > /dev/null 2> /dev/null; then
     base64_encode() { command b64encode - | command sed '1d;$d' | command tr -d \\n\\r; }
     base64_decode() { command fold -w 76 | command b64decode -r; }
-elif detect_python; then
-    pybase64() { command "$python" -c "import sys, base64; getattr(sys.stdout, 'buffer', sys.stdout).write(base64.standard_b64$1(getattr(sys.stdin, 'buffer', sys.stdin).read()))"; }
-    base64_encode() { pybase64 "encode"; }
-    base64_decode() { pybase64 "decode"; }
-elif detect_perl; then
-    base64_encode() { command "$perl" -MMIME::Base64 -0777 -ne 'print encode_base64($_)'; }
-    base64_decode() { command "$perl" -MMIME::Base64 -ne 'print decode_base64($_)'; }
 else
     die "base64 executable not present on local host"
 fi
@@ -144,11 +137,12 @@ if [[ $TERM == screen* ]]; then
 else
     st='\a'
 fi
-send_conductor='printf "\033]1337;SendConductor'"$st"'"'
+send_conductor='printf "\033]1337;SendConductor=v=2'"$st"'"'
 
 # Run a command on the remote host that instructs iTerm2 to send a script, then reads the script and executes it.
 # I tried many ways to concatenate s and l and this is the only one that works on both Ubuntu 18 and Ubuntu 20.
-sanitized="stty -echo; $send_conductor"';s="";IFS=""; while read -r l;do [ "$l" = EOF ]&&break; s=$(printf "%s\n%s" "$s" "$l"); done; unset IFS; eval "$s"'
+esc=$(printf "\033")
+sanitized="stty -echo; $send_conductor"';s="";IFS=""; while read -r l;do echo "$l" >> /tmp/l; [ "$l" = "'$esc'" ]&&break; s=$(printf "%s\n%s" "$s" "$l"); done; unset IFS; s=$(echo "$s" | { command -v base64 > /dev/null 2> /dev/null && command base64 -d || { command -v b64encode > /dev/null 2> /dev/null && command fold -w 76 | command b64decode -r; } || echo "echo base64 not available on remote host"; }); eval "$s"'
 
 # If ssh gets a signal, let it2ssh keep running.
 set +e

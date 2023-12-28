@@ -12,6 +12,7 @@
 #import "VT100AnsiParser.h"
 #import "VT100DCSParser.h"
 #import "VT100OtherParser.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @interface VT100ControlParser ()
 @property(nonatomic, retain) VT100DCSParser *dcsParser;
@@ -196,5 +197,8 @@
     [_dcsParser cancelConductorRecoveryMode];
 }
 
+- (BOOL)dcsHookIsSSH {
+    return _dcsParser.isHooked && [_dcsParser.hookDescription isEqualToString:[VT100ConductorParser hookDescription]];
+}
 
 @end

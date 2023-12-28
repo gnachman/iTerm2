@@ -21,9 +21,10 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
     }
     private var state = State.initial
     var hookDescription: String {
-        return "[SSH CONDUCTOR]"
+        return Self.hookDescription
     }
 
+    @objc static let hookDescription = "[SSH CONDUCTOR]"
     private func DLog(_ messageBlock: @autoclosure () -> String,
                       file: String = #file,
                       line: Int = #line,

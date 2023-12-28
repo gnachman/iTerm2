@@ -1036,7 +1036,7 @@ class Conductor: NSObject, Codable {
     }
 
     @objc func startRecovery() {
-        write("\nrecover\n\n")
+        write("\n\("recover".base64Encoded)\n\n")
         state = .recovery(.ground)
         delegate?.conductorStateDidChange()
     }
@@ -1792,7 +1792,7 @@ class Conductor: NSObject, Codable {
             return
         }
         state = .willExecute(pending)
-        let chunked = pending.command.stringValue.chunk(128, continuation: pending.command.isFramer ? "\\" : "").joined(separator: "\n") + "\n"
+        let chunked = pending.command.stringValue.components(separatedBy: "\n").map(\.base64Encoded).joined(separator: "\n").chunk(128, continuation: pending.command.isFramer ? "\\" : "").joined(separator: "\n") + "\n"
         write(chunked)
     }
 

@@ -606,6 +606,9 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
 }
 
 - (void)unhook {
+    if (_hook) {
+        DLog(@"Unhook DCS. Hook was %@. Called from\n%@", _hook, [NSThread callStackSymbols]);
+    }
     _hook = nil;
     _uniqueID = nil;
     [_parameterString deleteCharactersInRange:NSMakeRange(0, _parameterString.length)];

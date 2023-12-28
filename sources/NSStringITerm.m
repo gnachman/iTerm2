@@ -2559,6 +2559,22 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                                                           withTemplate:@" "];
     return modifiedString;
 }
+
+- (NSString *)chunkedWithLineLength:(NSInteger)length separator:(NSString *)separator {
+    NSMutableString *result = [NSMutableString stringWithCapacity:self.length + self.length / length + 1];
+    NSInteger start = 0;
+    while (start < self.length) {
+        const NSInteger chunkLength = MIN(length, self.length - start);
+        const NSRange range = NSMakeRange(start, chunkLength);
+        [result appendString:[self substringWithRange:range]];
+        start += chunkLength;
+        if (start < self.length) {
+            [result appendString:separator];
+        }
+    }
+    return result;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

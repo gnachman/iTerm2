@@ -362,6 +362,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)sanitizedCommand;
 - (NSString *)removingInvisibles;
 - (NSString *)stringByReplacingUnicodeSpacesWithASCIISpace;
+
+- (NSString *)chunkedWithLineLength:(NSInteger)length separator:(NSString *)separator;
+
 @end
 
 @interface NSMutableString (iTerm)

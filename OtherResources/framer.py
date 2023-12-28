@@ -59,23 +59,33 @@ def log(message):
         global LOGFILE
         if not LOGFILE:
             LOGFILE = open("/tmp/framer.txt", "a")
-        print(f'DEBUG {os.getpid()}: {message}', file=LOGFILE)
+        print(f'DEBUG {time.time():.6f} {os.getpid()}: {message}', file=LOGFILE)
         LOGFILE.flush()
 
-def send(data):
+def send(q, data):
     if QUITTING:
         log("[squelched] " + str(data))
         return
     log("> " + str(data))
-    os.write(sys.stdout.fileno(), data)
+    q.append(data)
 
-def send_esc(text):
+def send_esc(q, text):
     if QUITTING:
         log("[squelched] " + str(text))
         return
     log("> [osc 134] " + str(text) + " [st]")
-    print('\033]134;:' + str(text) + '\033\\', end="")
-    sys.stdout.flush()
+    q.append('\033]134;:' + str(text) + '\033\\')
+
+def lock():
+    return []
+
+def unlock(writes):
+    if writes:
+        for data in writes:
+            if isinstance(data, str):
+                data = data.encode('utf-8')
+            os.write(sys.stdout.fileno(), data)
+        sys.stdout.flush()
 
 class Process:
     @staticmethod
@@ -277,9 +287,11 @@ async def autopoll(delay):
                 continue
             # Send poll output and sleep until client requests autopolling again.
             identifier = makeid()
-            send_esc(f'%autopoll {identifier}')
-            send_poll_output(cats)
-            send_esc(f'%end {identifier}')
+            q = lock()
+            send_esc(q, f'%autopoll {identifier}')
+            send_poll_output(q, cats)
+            send_esc(q, f'%end {identifier}')
+            unlock(q)
             AUTOPOLL = 0
             while not AUTOPOLL:
                 log(f'autopoll: sleep for {delay}')
@@ -291,12 +303,12 @@ async def autopoll(delay):
     except Exception as e:
         log(f'autopoll threw {e}: {traceback.format_exc()}')
 
-def send_poll_output(cats):
+def send_poll_output(q, cats):
     for catname in cats:
         output = cats[catname]
-        send(f'$begin {catname}'.encode("utf-8") + b'\n')
+        send(q, f'$begin {catname}'.encode("utf-8") + b'\n')
         for line in output:
-            send(line.encode("utf-8") + b'\n')
+            send(q, line.encode("utf-8") + b'\n')
 
 def get_echo_icanon(tty):
     try:
@@ -304,11 +316,12 @@ def get_echo_icanon(tty):
         return (bool(attrs[3] & termios.ECHO), bool(attrs[3] & termios.ICANON))
     except Exception as e:
         log(f'get_echo_icanon threw {e}: {traceback.format_exc()}')
-        return (False, False)
+        raise
 
 async def watch_tty(proc, delay):
     try:
         while True:
+            log("watch_tty: poll")
             poll_tty(proc)
             await asyncio.sleep(delay)
     except asyncio.CancelledError:
@@ -318,7 +331,7 @@ async def watch_tty(proc, delay):
         log(f'watch_tty threw {e}: {traceback.format_exc()}')
 
 def poll_tty(proc):
-    log("Check TTY")
+    log(f"Check TTY with fd {proc.master}")
     new_echo, new_icanon = get_echo_icanon(proc.master)
     if new_echo != proc.echo or new_icanon != proc.icanon:
         log(f'echo: {proc.echo}->{new_echo}, icanon: {proc.icanon}->{new_icanon}')
@@ -534,9 +547,9 @@ async def save_and_exec(identifier, code):
         await run_login_shell(identifier, "/bin/sh", ["sh", tmpname], os.getcwd(), e)
     except Exception as e:
         log(f'save_and_exec: {traceback.format_exc()}')
-        begin(identifier)
-        send_esc(f'Command failed: {e}')
-        end(identifier, 1)
+        q = begin(identifier)
+        send_esc(q, f'Command failed: {e}')
+        end(q, identifier, 1)
 
 ## Commands
 
@@ -568,15 +581,15 @@ async def run_login_shell(identifier, login_shell, argv, directory, environment)
         global PROCESSES
         proc.login = True
         PROCESSES[proc.pid] = proc
-        begin(identifier)
-        send_esc(proc.pid)
-        end(identifier, 0)
+        q = begin(identifier)
+        send_esc(q, proc.pid)
+        end(q, identifier, 0)
         await proc.handle_read(make_monitor_process(proc, True))
     except Exception as e:
         log(f'run_login_shell: {e}')
-        begin(identifier)
-        send_esc(f'Command failed: {e}')
-        end(identifier, 1)
+        q = begin(identifier)
+        send_esc(q, f'Command failed: {e}')
+        end(q, identifier, 1)
     return False
 
 async def handle_run(identifier, args):
@@ -585,16 +598,16 @@ async def handle_run(identifier, args):
         proc = await Process.run_shell_tty(args[0])
         global PROCESSES
         PROCESSES[proc.pid] = proc
-        begin(identifier)
-        send_esc(proc.pid)
-        end(identifier, 0)
+        q = begin(identifier)
+        send_esc(q, proc.pid)
+        end(q, identifier, 0)
         await proc.handle_read(make_monitor_process(proc, False))
 
         start_tty_task(identifier, proc)
     except Exception as e:
         log(f'handle_run: {e}')
-        begin(identifier)
-        end(identifier, 1)
+        q = begin(identifier)
+        end(q, identifier, 1)
     return False
 
 def start_tty_task(identifier, proc):
@@ -610,8 +623,8 @@ def reset():
 
 async def handle_reset(identifier, args):
     reset()
-    begin(identifier)
-    end(identifier, 0)
+    q = begin(identifier)
+    end(q, identifier, 0)
 
 async def handle_save(identifier, args):
     log(f'handle_save {identifier} {args}')
@@ -622,8 +635,8 @@ async def handle_save(identifier, args):
     except Exception as e:
         log(f'handle_save: {e}')
         code = 1
-    begin(identifier)
-    end(identifier, code)
+    q = begin(identifier)
+    end(q, identifier, code)
 
 async def handle_eval(identifier, args):
     log(f'handle_eval {identifier} [{len(args[0])} bytes]')
@@ -632,26 +645,26 @@ async def handle_eval(identifier, args):
 async def handle_file(identifier, args):
     log(f'handle_file {identifier} {args}')
     if len(args) < 2:
-        begin(identifier)
-        end(identifier, 1)
+        q = begin(identifier)
+        end(q, identifier, 1)
         return
-    begin(identifier)
+    q = begin(identifier)
     sub = args[0]
     if sub == "ls":
-        await handle_file_ls(identifier, base64.b64decode(args[1]).decode('latin1'), args[2])
+        await handle_file_ls(q, identifier, base64.b64decode(args[1]).decode('latin1'), args[2])
         return
     if sub == "fetch":
         if len(args) >= 4:
-            await handle_file_fetch(identifier, base64.b64decode(args[1]).decode('latin1'), int(args[2]), int(args[3]))
+            await handle_file_fetch(q, identifier, base64.b64decode(args[1]).decode('latin1'), int(args[2]), int(args[3]))
         else:
-            await handle_file_fetch(identifier, base64.b64decode(args[1]).decode('latin1'), 0, float('inf'))
-        return
+            await handle_file_fetch(q, identifier, base64.b64decode(args[1]).decode('latin1'), 0, float('inf'))
         return
     if sub == "stat":
-        await handle_file_stat(identifier, base64.b64decode(args[1]).decode('latin1'))
+        await handle_file_stat(q, identifier, base64.b64decode(args[1]).decode('latin1'))
         return
     if sub == "suggest":
-        await handle_file_suggest(identifier,
+        await handle_file_suggest(q,
+                                  identifier,
                                   base64.b64decode(args[1]).decode('latin1'),
                                   args[2],
                                   base64.b64decode(args[3]).decode('latin1'),
@@ -665,47 +678,53 @@ async def handle_file(identifier, args):
                 recursive = True
             i += 1
         if i == len(args):
-            end(identifier, 1)
+            end(q, identifier, 1)
             return
-        await handle_file_rm(identifier, base64.b64decode(args[i]).decode('latin1'), recursive)
+        await handle_file_rm(q, identifier, base64.b64decode(args[i]).decode('latin1'), recursive)
         return
     if sub == "ln":
         await handle_file_ln(
+            q,
             identifier,
             base64.b64decode(args[1]).decode('latin1'),
             base64.b64decode(args[2]).decode('latin1'))
         return
     if sub == "mv":
         await handle_file_mv(
+            q,
             identifier,
             base64.b64decode(args[1]).decode('latin1'),
             base64.b64decode(args[2]).decode('latin1'))
         return
     if sub == "mkdir":
-        await handle_file_mkdir(identifier, base64.b64decode(args[1]).decode('latin1'))
+        await handle_file_mkdir(q, identifier, base64.b64decode(args[1]).decode('latin1'))
         return
     if sub == "create":
-        await handle_file_create(identifier,
+        await handle_file_create(q,
+                                 identifier,
                                  base64.b64decode(args[1]).decode('latin1'),
                                  base64.b64decode("".join(args[2:])))
         return
     if sub == "append":
-        await handle_file_append(identifier,
+        await handle_file_append(q,
+                                 identifier,
                                  base64.b64decode(args[1]).decode('latin1'),
                                  base64.b64decode("".join(args[2:])))
         return
     if sub == "utime":
-        await handle_file_utime(identifier,
+        await handle_file_utime(q,
+                                identifier,
                                 base64.b64decode(args[1]).decode('latin1'),
                                 int(float(args[2])))
         return
     if sub == "chmod-u":
-        await handle_file_chmod_u(identifier,
+        await handle_file_chmod_u(q,
+                                  identifier,
                                   base64.b64decode(args[1]).decode('latin1'),
                                   args[2])
         return
     log(f'unrecognized subcommand {sub}')
-    end(identifier, 1)
+    end(q, identifier, 1)
 
 def permissions(path):
     return {
@@ -732,21 +751,21 @@ def remotefile(pp, abspath, s):
             "ctime": ctime,
             "mtime": mtime}
 
-def file_error(identifier, e, path):
+def file_error(q, identifier, e, path):
     try:
         raise e
     except OSError as e:
         log(f'file_error {path}: {traceback.format_exc()}')
         errors = {errno.EPERM: 1, errno.ENOENT: 2, errno.ENOTDIR: 3, errno.ELOOP: 4}
-        end(identifier, errors.get(e.errno, 100))
+        end(q, identifier, errors.get(e.errno, 100))
     except PermissionError as e:
         log(f'file_error {path}: {traceback.format_exc()}')
-        end(identifier, 1)
+        end(q, identifier, 1)
     except Exception as e:
         log(f'file_error {path}: {traceback.format_exc()}')
-        end(identifier, 255)
+        end(q, identifier, 255)
 
-async def handle_file_ls(identifier, path, sorting):
+async def handle_file_ls(q, identifier, path, sorting):
     log(f'handle_file_ls {identifier} {path}')
     try:
         pp = permissions(path)
@@ -763,37 +782,37 @@ async def handle_file_ls(identifier, path, sorting):
             return d['mtime']
         obj = sorted(obj, key=sort_ls)
         log(f'After sorting contents of {path} are {obj}')
-        send_esc("[")
+        send_esc(q, "[")
         first = True
         for entry in obj:
             if first:
                 first = False
             else:
-                send_esc(",")
+                send_esc(q, ",")
             j = json.dumps(entry)
-            send_esc(j)
-        send_esc("]")
-        end(identifier, 0)
+            send_esc(q, j)
+        send_esc(q, "]")
+        end(q, identifier, 0)
         log("handle_file_ls completed normally")
     except Exception as e:
-        file_error(identifier, e, path)
+        file_error(q, identifier, e, path)
 
-def send_remote_file(path):
+def send_remote_file(q, path):
     pp = permissions(os.path.abspath(os.path.join(path, os.pardir)))
     s = os.stat(path, follow_symlinks=False)
     obj = remotefile(pp, path, s)
     j = json.dumps(obj)
-    send_esc(j)
+    send_esc(q, j)
 
-async def handle_file_stat(identifier, path):
+async def handle_file_stat(q, identifier, path):
     log(f'handle_file_stat {identifier} {path}')
     try:
-        send_remote_file(path)
-        end(identifier, 0)
+        send_remote_file(q, path)
+        end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, path)
+        file_error(q, identifier, e, path)
 
-async def handle_file_suggest(identifier, prefix, directories, pwd, permissions):
+async def handle_file_suggest(q, identifier, prefix, directories, pwd, permissions):
     log(f'handle_file_suggest({identifier}, {prefix}, {directories}, {pwd}, {permissions})')
     combined = []
     max_count = 1
@@ -809,8 +828,8 @@ async def handle_file_suggest(identifier, prefix, directories, pwd, permissions)
         combined.extend([entry.removeprefix(prefix) for entry in temp])
         if len(combined) > max_count:
             break
-    send_esc(json.dumps(combined))
-    end(identifier, 0)
+    send_esc(q, json.dumps(combined))
+    end(q, identifier, 0)
 
 def decode_base64_directories(encoded_directories):
     decoded_directories = []
@@ -864,7 +883,7 @@ async def contents_of_directory(directory, prefix, executable, max_count):
         log(f'exception while getting contents of {directory}: {traceback.format_exc()}')
         return []
 
-async def handle_file_fetch(identifier, path, offset, size):
+async def handle_file_fetch(q, identifier, path, offset, size):
     log(f'handle_file_fetch {identifier} {path}')
     try:
         with open(path, "rb") as f:
@@ -878,13 +897,13 @@ async def handle_file_fetch(identifier, path, offset, size):
             encoded = base64.encodebytes(content).decode('utf8')
             for line in encoded.split("\n"):
                 log(f'will send f{type(line)}')
-                send_esc(line)
+                send_esc(q, line)
         log("ending")
-        end(identifier, 0)
+        end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, path)
+        file_error(q, identifier, e, path)
 
-async def handle_file_rm(identifier, path, recursive):
+async def handle_file_rm(q, identifier, path, recursive):
     log(f'handle_file_rm {identifier} {path} {recursive}')
     try:
         if os.path.isdir(path):
@@ -895,66 +914,66 @@ async def handle_file_rm(identifier, path, recursive):
         else:
             os.unlink(path)
         log("ending")
-        end(identifier, 0)
+        end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, path)
+        file_error(q, identifier, e, path)
 
-async def handle_file_ln(identifier, pointTo, symlink):
+async def handle_file_ln(q, identifier, pointTo, symlink):
     log(f'handle_file_ln {pointTo} {symlink}')
     try:
         os.symlink(pointTo, symlink)
-        send_remote_file(symlink)
-        end(identifier, 0)
+        send_remote_file(q, symlink)
+        end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, symlink)
+        file_error(q, identifier, e, symlink)
 
-async def handle_file_mv(identifier, source, dest):
+async def handle_file_mv(q, identifier, source, dest):
     log(f'handle_file_mv {source} {dest}')
     try:
         shutil.move(source, dest)
-        send_remote_file(dest)
-        end(identifier, 0)
+        send_remote_file(q, dest)
+        end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, source)
+        file_error(q, identifier, e, source)
 
-async def handle_file_mkdir(identifier, path):
+async def handle_file_mkdir(q, identifier, path):
     log(f'handle_file_mkdir {identifier} {path}')
     try:
         os.mkdir(path)
-        end(identifier, 0)
+        end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, path)
+        file_error(q, identifier, e, path)
 
-async def handle_file_create(identifier, path, content):
+async def handle_file_create(q, identifier, path, content):
     log(f'handle_file_create {identifier} {path} length={len(content)} bytes')
     try:
         with open(path, "wb") as f:
             f.write(content)
-        send_remote_file(path)
-        end(identifier, 0)
+        send_remote_file(q, path)
+        end(q, identifier, 0)
     except Exception as e:
         file_error(identifier, e, path)
 
-async def handle_file_append(identifier, path, content):
+async def handle_file_append(q, identifier, path, content):
     log(f'handle_file_append {identifier} {path} length={len(content)} bytes')
     try:
         with open(path, "ab") as f:
             f.write(content)
-        send_remote_file(path)
-        end(identifier, 0)
+        send_remote_file(q, path)
+        end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, path)
+        file_error(q, identifier, e, path)
 
-async def handle_file_utime(identifier, path, date):
+async def handle_file_utime(q, identifier, path, date):
     log(f'handle_file_utime {identifier} {path} {date}')
     try:
         os.utime(path, (date, date))
-        send_remote_file(path)
-        end(identifier, 0)
+        send_remote_file(q, path)
+        end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, path)
+        file_error(q, identifier, e, path)
 
-async def handle_file_chmod_u(identifier, path, mode):
+async def handle_file_chmod_u(q, identifier, path, mode):
     log(f'handle_file_chmod_u {identifier} {path} {mode}')
     try:
         s = os.stat(path, follow_symlinks=False)
@@ -966,24 +985,26 @@ async def handle_file_chmod_u(identifier, path, mode):
         if "x" in mode:
             value |= stat.S_IXUSR
         os.chmod(path, value)
-        send_remote_file(path)
-        end(identifier, 0)
+        send_remote_file(q, path)
+        end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, path)
+        file_error(q, identifier, e, path)
 
 async def handle_recover(identifier, args):
     log("handle_recover")
+    q = lock()
     reset()
-    send_esc(f'begin-recovery')
+    send_esc(q, f'begin-recovery')
     for pid in PROCESSES:
         proc = PROCESSES[pid]
         if proc.login:
-            send_esc(f'recovery: login {pid}')
+            send_esc(q, f'recovery: login {pid}')
             for key in RECOVERY_STATE:
-                send_esc(f'recovery: {key} {RECOVERY_STATE[key]}')
+                send_esc(q, f'recovery: {key} {RECOVERY_STATE[key]}')
         else:
-            send_esc(f'recovery: process {pid}')
-    send_esc(f'end-recovery')
+            send_esc(q, f'recovery: process {pid}')
+    send_esc(q, f'end-recovery')
+    unlock(q)
 
 async def handle_register(identifier, args):
     if len(args) < 1:
@@ -995,8 +1016,8 @@ async def handle_register(identifier, args):
         log(f'handle_register: {e}')
         fail(identifier, "exception decoding argument")
         return
-    begin(identifier)
-    end(identifier, 0)
+    q = begin(identifier)
+    end(q,identifier, 0)
     await register(pid)
 
 async def handle_deregister(identifier, args):
@@ -1009,14 +1030,14 @@ async def handle_deregister(identifier, args):
         log(f'handle_deregister: {e}')
         fail(identifier, "exception decoding argument")
         return
-    begin(identifier)
-    end(identifier, 0)
+    q = begin(identifier)
+    end(q,identifier, 0)
     await deregister(pid)
 
 async def handle_autopoll(identifier, args):
     log(f'handle_autopoll({identifier}, {args})')
-    begin(identifier)
-    end(identifier, 0)
+    q = begin(identifier)
+    end(q,identifier, 0)
     global AUTOPOLL
     if AUTOPOLL:
         return
@@ -1031,12 +1052,12 @@ async def handle_poll(identifier, args):
     log(f'handle_poll({identifier}, {args})')
     output = await poll()
     log(f'handle_poll({identifier}, {args}): read {len(output)} categories of output')
-    begin(identifier)
+    q = begin(identifier)
     if output is not None:
-        send_poll_output(output)
-        end(identifier, 0)
+        send_poll_output(q,output)
+        end(q,identifier, 0)
     else:
-        end(identifier, 1)
+        end(q,identifier, 1)
 
 async def handle_send(identifier, args):
     if len(args) < 2:
@@ -1051,15 +1072,15 @@ async def handle_send(identifier, args):
         return
     if pid not in PROCESSES:
         log("No such process")
-        begin(identifier)
-        end(identifier, 1)
+        q = begin(identifier)
+        end(q,identifier, 1)
         return
     proc = PROCESSES[pid]
     log(f'write {decoded}')
     await proc.write(decoded)
     log('wrote')
-    begin(identifier)
-    end(identifier, 0)
+    q = begin(identifier)
+    end(q,identifier, 0)
     return False
 
 async def handle_kill(identifier, args):
@@ -1071,18 +1092,18 @@ async def handle_kill(identifier, args):
         return
     if pid not in PROCESSES:
         log(f'no such process')
-        begin(identifier)
-        error(identifier, 1)
+        q = begin(identifier)
+        end(q,identifier, 1)
         return
     proc = PROCESSES[int(args[0])]
     proc.send_signal(signal.SIGTERM)
-    begin(identifier)
-    end(identifier, 0)
+    q = begin(identifier)
+    end(q,identifier, 0)
     return False
 
 async def handle_quit(identifier, args):
-    begin(identifier)
-    end(identifier, 0)
+    q = begin(identifier)
+    end(q,identifier, 0)
     global AUTOPOLL_TASK
     if AUTOPOLL_TASK:
         log('will cancel autopoll')
@@ -1111,37 +1132,48 @@ def make_monitor_process(proc, islogin):
             COMPLETED.append(proc.pid)
             return cleanup()
         print_output(makeid(), proc.pid, channel, islogin, value)
-        poll_tty(proc)
+        log("make_monitor_process: poll")
+        try:
+            poll_tty(proc)
+        except Exception as e:
+            log(f'make_monitor_process->poll_tty threw {e}: {traceback.format_exc()}')
         return None
     return monitor_process
 
 def print_output(identifier, pid, channel, islogin, data):
+    q = lock()
     if islogin:
-        send_esc(f'%output {identifier} {pid} -1 {DEPTH}')
+        send_esc(q, f'%output {identifier} {pid} -1 {DEPTH}')
     else:
-        send_esc(f'%output {identifier} {pid} {channel} {DEPTH}')
-    send(data)
-    send_esc(f'%end {identifier}')
+        send_esc(q, f'%output {identifier} {pid} {channel} {DEPTH}')
+    send(q, data)
+    send_esc(q, f'%end {identifier}')
+    unlock(q)
 
 def print_tty(message):
-    send_esc(f'%notif tty {message}')
+    q = lock()
+    send_esc(q, f'%notif tty {message}')
+    unlock(q)
 
 ## Infra
 
 def fail(identifier, reason):
     log(f'fail: {reason}')
-    begin(identifier)
-    end(identifier, 1)
+    q = begin(identifier)
+    end(q, identifier, 1)
 
 def begin(identifier):
-    send_esc(f'begin {identifier}')
+    q = lock()
+    send_esc(q, f'begin {identifier}')
+    return q
 
-def end(identifier, status):
+def end(q, identifier, status):
     if len(PROCESSES):
         type = "f"
     else:
         type = "r"
-    send_esc(f'end {identifier} {status} {type}')
+    send_esc(q, f'end {identifier} {status} {type}')
+    unlock(q)
 
 async def cleanup():
     """Await tasks that have completed, clear the COMPLETED list, and remove them from TASKS."""
@@ -1157,7 +1189,9 @@ async def cleanup():
         proc = PROCESSES[pid]
         del PROCESSES[pid]
         await proc.cleanup()
-        send_esc(f'%terminate {proc.pid} {proc.return_code}')
+        q = lock()
+        send_esc(q, f'%terminate {proc.pid} {proc.return_code}')
+        unlock(q)
 
 async def handle(args):
     log(f'handle {args}')
@@ -1229,6 +1263,7 @@ async def mainloop():
                 args.append(line)
             log(f'args is now {args}')
         else:
+            args = list(map(lambda s: base64.b64decode(s).decode('utf-8'), args))
             quit = await handle(args)
             log("flush stdout")
             sys.stdout.flush()
@@ -1239,7 +1274,9 @@ async def mainloop():
 
 def ping():
     if len(PROCESSES):
-        send_esc("%ping")
+        q = lock()
+        send_esc(q, "%ping")
+        unlock(q)
     else:
         log("Squelch pre-login ping")
 
@@ -1290,7 +1327,10 @@ HANDLERS = {
 def main():
     if sys.stdin.isatty():
         signal.signal(signal.SIGWINCH, on_sigwinch)
-    asyncio.run(mainloop())
+    try:
+        asyncio.run(mainloop())
+    except Exception as e:
+        log(f'Exception {traceback.format_exc()}')
 
 if __name__ == "__main__":
     main()

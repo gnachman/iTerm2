@@ -474,4 +474,15 @@
     }
 }
 
+- (void)resetExceptSSH {
+    @synchronized(self) {
+        [_savedStateForPartialParse removeAllObjects];
+        if (!_controlParser.dcsHookIsSSH) {
+            [self forceUnhookDCS:nil];
+            [self clearStream];
+            [_sshParsers[@(_mainSSHParserPID)] reset];
+        }
+    }
+}
+
 @end

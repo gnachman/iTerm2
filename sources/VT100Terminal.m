@@ -459,16 +459,28 @@ static const int kMaxScreenRows = 4096;
     [_delegate terminalSetCursorVisible:YES];
 }
 
-- (void)resetByUserRequest:(BOOL)userInitiated {
-    [self resetAllowingResize:YES preservePrompt:userInitiated resetParser:userInitiated modifyContent:YES];
+- (void)resetForReason:(VT100TerminalResetReason)reason {
+    DLog(@"Reset for reason %@", @(reason));
+    const BOOL userInitiated = (reason == VT100TerminalResetReasonUserRequest);
+    const BOOL controlSequence = (reason == VT100TerminalResetReasonControlSequence);
+    [self resetAllowingResize:YES
+               preservePrompt:userInitiated
+                  resetParser:userInitiated
+                  preserveSSH:userInitiated || controlSequence
+                modifyContent:YES];
 }
 
 - (void)resetForSSH {
-    [self resetAllowingResize:NO preservePrompt:YES resetParser:NO modifyContent:NO];
+    [self resetAllowingResize:NO 
+               preservePrompt:YES
+                  resetParser:NO
+                  preserveSSH:YES
+                modifyContent:NO];
 }
 
 - (void)resetForRelaunch {
     [self finishResettingParser:YES
+                    preserveSSH:NO
                  preservePrompt:NO
                   modifyContent:NO];
 }
@@ -488,6 +500,7 @@ static const int kMaxScreenRows = 4096;
 - (void)resetAllowingResize:(BOOL)canResize
              preservePrompt:(BOOL)preservePrompt
                 resetParser:(BOOL)resetParser
+                preserveSSH:(BOOL)preserveSSH
               modifyContent:(BOOL)modifyContent {
     if (canResize && _columnMode) {
         __weak __typeof(self) weakSelf = self;
@@ -497,29 +510,37 @@ static const int kMaxScreenRows = 4096;
           moveCursorTo:VT100GridCoordMake(-1, -1)
             completion:^{
             [weakSelf finishResettingParser:resetParser
+                                preserveSSH:preserveSSH
                              preservePrompt:preservePrompt
                               modifyContent:modifyContent];
         }];
         return;
     }
     [self finishResettingParser:resetParser
+                    preserveSSH:preserveSSH
                  preservePrompt:preservePrompt
                   modifyContent:modifyContent];
 }
 
 - (void)finishResettingParser:(BOOL)resetParser
+                  preserveSSH:(BOOL)preserveSSH
                preservePrompt:(BOOL)preservePrompt
                 modifyContent:(BOOL)modifyContent {
     self.columnMode = NO;
     [self commonReset];
     if (resetParser) {
-        [_parser reset];
+        if (preserveSSH) {
+            [_parser resetExceptSSH];
+        } else {
+            [_parser reset];
+        }
     }
     [_delegate terminalResetPreservingPrompt:preservePrompt modifyContent:modifyContent];
 }
 
 - (void)resetForTmuxUnpause {
     [self finishResettingParser:YES
+                    preserveSSH:YES
                  preservePrompt:NO
                   modifyContent:YES];
 }
@@ -2331,7 +2352,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case ANSI_RIS:
-            [self resetByUserRequest:NO];
+            [self resetForReason:VT100TerminalResetReasonControlSequence];
             break;
         case VT100CSI_SM:
         case VT100CSI_RM: {
@@ -2704,6 +2725,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                     if (token.sshInfo.valid) {
                         [_delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:token.sshInfo.depth];
                     } else {
+                        DLog(@"Invalid SSH info for framer wrapper. Begin recovery. Token is %@", token);
                         [_delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:-1];
                     }
                     break;
@@ -4217,7 +4239,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     } else if ([key isEqualToString:@"it2ssh"]) {
         [_delegate terminalBeginSSHIntegeration:value];
     } else if ([key isEqualToString:@"SendConductor"]) {
-        [_delegate terminalBeginSSHIntegeration:nil];
+        [_delegate terminalSendConductor:value];
     } else if ([key isEqualToString:@"EndSSH"]) {
         if ([_delegate terminalIsTrusted] && value.length > 0) {
             [_delegate terminalEndSSH:value];

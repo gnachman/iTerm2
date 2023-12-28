@@ -4438,6 +4438,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)reallyAppendBannerMessage:(NSString *)message {
+    DLog(@"Append banner %@", message);
     // Save graphic rendition. Set to system message color.
     const VT100GraphicRendition saved = self.terminal.graphicRendition;
 

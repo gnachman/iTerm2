@@ -36,4 +36,7 @@
 // Reset all state.
 - (void)reset;
 
+// Reset but preserve SSH state.
+- (void)resetExceptSSH;
+
 @end

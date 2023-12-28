@@ -44,5 +44,7 @@ NS_INLINE BOOL isc1(int c) {
 - (void)startConductorRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelConductorRecoveryMode;
 
+- (BOOL)dcsHookIsSSH;
+
 @end
 

@@ -14,12 +14,11 @@ branch() {
 
 set -x
 
-git submodule update --init --remote -- submodules/iTerm2-shell-integration
 SUBMODULE=$PWD/submodules/iTerm2-shell-integration
 test -d $SUBMODULE || die No $SUBMODULE directory
 pushd $SUBMODULE
 if [ $(branch) != main ]; then
-  die "Not on main. The current branch is $(branch)."
+  echo "Not on main. The current branch is $(branch)."
 fi
 popd
 
