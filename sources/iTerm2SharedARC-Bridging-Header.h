@@ -90,6 +90,7 @@
 #import "NSStringITerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSURL+IDN.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSView+iTerm.h"
 #import "PSMTabBarControl.h"

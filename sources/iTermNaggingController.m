@@ -8,6 +8,7 @@
 #import "iTermNaggingController.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
@@ -575,7 +576,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
         return;
     }
 
-    [_delegate naggingControllerShowMessage:[NSString stringWithFormat: @"Open this URL? %@", url.absoluteString]
+    [_delegate naggingControllerShowMessage:[NSString stringWithFormat: @"Open this URL? %@", url.sanitizedForPrinting.absoluteString]
                                  isQuestion:YES
                                   important:YES
                                  identifier:allowHostKey
