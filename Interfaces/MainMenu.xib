@@ -1667,6 +1667,7 @@ DQ
                 <outlet property="_installPythonRuntime" destination="0D0-tt-wlA" id="nad-Fp-mh8"/>
                 <outlet property="_iterm2Menu" destination="57" id="xrG-8D-NNQ"/>
                 <outlet property="_namedMarksMenuItem" destination="bWZ-Rb-J4D" id="M8H-RD-WYb"/>
+                <outlet property="_removeRecentProfilesFromDockMenuItem" destination="WcV-7l-ycc" id="Fyb-Mv-FK0"/>
                 <outlet property="_scriptsMenu" destination="CZD-7u-bch" id="2Q5-aI-74T"/>
                 <outlet property="_showTipOfTheDay" destination="ft3-BP-igZ" id="WZt-qp-iuC"/>
                 <outlet property="_splitHorizontally" destination="1289" id="Arv-ON-Put"/>

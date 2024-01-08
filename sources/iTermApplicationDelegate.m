@@ -191,7 +191,7 @@ static BOOL hasBecomeActive = NO;
     NSMenu *_statusIconBuriedSessions;  // unsafe unretained
     IBOutlet NSMenu *_scriptsMenu;
     IBOutlet NSMenuItem *_composerMenuItem;
-
+    IBOutlet NSMenuItem *_removeRecentProfilesFromDockMenuItem;
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
     IBOutlet NSMenuItem *maximizePane;
@@ -1071,6 +1071,9 @@ void TurnOnDebugLoggingAutomatically(void) {
     if ([iTermUserDefaults importPath]) {
         [iTerm2ImportExport finishImporting];
         assert(NO);
+    }
+    if (![iTermAdvancedSettingsModel saveProfilesToRecentDocuments]) {
+        [_removeRecentProfilesFromDockMenuItem.menu removeItem:_removeRecentProfilesFromDockMenuItem];
     }
     [iTermMenuBarObserver sharedInstance];
     // Cleanly crash on uncaught exceptions, such as during actions.
