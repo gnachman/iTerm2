@@ -682,7 +682,7 @@ class AITermRegistrationWindowController: NSWindowController {
     override func awakeFromNib() {
         var temp = message.string
         let urls = ["https://openai.com/join/",
-                    "https://beta.openai.com/account/api-keys",
+                    "https://platform.openai.com/api-keys",
                     "https://iterm2.com/aiterm"]
         for (i, url) in urls.enumerated() {
             temp = temp.replacingOccurrences(of: "$\(i + 1)", with: url)
