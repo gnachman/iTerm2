@@ -97,7 +97,7 @@ Gw
                                         <fragment>
                                             <string key="content">iTerm2 integrates with OpenAI to convert natural language text into Unix commands. &lt;a href="$3"&gt;Learn more here&lt;/a&gt;.
 
-Before you can use this feature, you’ll n need an API key from OpenAI. </string>
+Before you can use this feature, you’ll need an API key from OpenAI. </string>
                                             <attributes>
                                                 <color key="NSColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                 <font key="NSFont" size="12" name="Helvetica"/>
