@@ -1,3 +1,5 @@
+import CoreImage
+
 protocol AITermControllerDelegate: AnyObject {
     func aitermControllerWillSendRequest(_ sender: AITermController)
     func aitermController(_ sender: AITermController, offerChoices: [String])
@@ -673,13 +675,42 @@ class AITermRegistrationWindowController: NSWindowController {
     @IBOutlet var message: NSTextView!
     @IBOutlet var okButton: NSButton!
     @IBOutlet var textField: NSTextField!
+    @IBOutlet var imageView: NSImageView!
     private(set) var apiKey: String?
+    private var imageLight: NSImage?
 
     static func create() -> AITermRegistrationWindowController {
         return AITermRegistrationWindowController(windowNibName: NSNib.Name("AITerm"))
     }
 
+    func invertImage(image: NSImage) -> NSImage {
+        let imageRep = image.representations.first as! NSBitmapImageRep
+        let cgImage = imageRep.cgImage!
+        let ciImage = CIImage(cgImage: cgImage)
+
+        let filter = CIFilter(name: "CIColorInvert")!
+        filter.setValue(ciImage, forKey: kCIInputImageKey)
+        let invertedImage = filter.outputImage!
+
+        let newImageRep = NSCIImageRep(ciImage: invertedImage)
+        let newImage = NSImage(size: image.size)
+        newImage.addRepresentation(newImageRep)
+        return newImage
+    }
+
+    @objc func updateImage(_ sender: NSNotification) {
+        let currentStyle = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") ?? "Light"
+        imageView.image = currentStyle == "Light" ? imageLight : invertImage(image: imageLight!)
+    }
+
     override func awakeFromNib() {
+        imageLight = imageView.image
+        if NSAppearance.current.name == .darkAqua {
+            imageView.image = invertImage(image: imageView.image!)
+        }
+        DistributedNotificationCenter.default().addObserver(self, selector: #selector(updateImage(_:)), name: NSNotification.Name(rawValue: "AppleInterfaceThemeChangedNotification"), object: nil)
+
+
         var temp = message.string
         let urls = ["https://openai.com/join/",
                     "https://beta.openai.com/account/api-keys",
@@ -714,6 +745,10 @@ class AITermRegistrationWindowController: NSWindowController {
     @IBAction func cancel(_ sender: Any) {
         apiKey = nil
         window?.sheetParent?.endSheet(window!, returnCode: .cancel)
+    }
+    
+    deinit {
+        DistributedNotificationCenter.default().removeObserver(self, name: NSNotification.Name(rawValue: "AppleInterfaceThemeChangedNotification"), object: nil)
     }
 }
 

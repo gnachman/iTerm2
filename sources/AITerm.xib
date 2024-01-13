@@ -8,6 +8,8 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="AITermRegistrationWindowController" customModule="iTerm2SharedARC">
             <connections>
+                <outlet property="image" destination="c9k-v5-1fv" id="2yA-Rk-cUD"/>
+                <outlet property="imageView" destination="c9k-v5-1fv" id="rxi-ty-HwY"/>
                 <outlet property="message" destination="VK8-MA-zGT" id="zuV-gQ-H06"/>
                 <outlet property="okButton" destination="rr2-ko-uv8" id="3zU-qh-OrI"/>
                 <outlet property="textField" destination="5Sq-ah-i4Z" id="Lvm-Xp-jPr"/>
