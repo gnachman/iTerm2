@@ -510,7 +510,7 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="b0A-74-lFS"/>
-                            <menuItem title="Engage Artificial Intelligence" keyEquivalent="b" identifier="Engage Artificial Intelligence" id="zgu-Gv-WUr">
+                            <menuItem title="Engage Artificial Intelligence" keyEquivalent="y" identifier="Engage Artificial Intelligence" id="zgu-Gv-WUr">
                                 <connections>
                                     <action selector="performNaturalLanguageQuery:" target="-1" id="oJ4-at-Hbh"/>
                                 </connections>
