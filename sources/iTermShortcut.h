@@ -18,6 +18,7 @@ extern CGFloat kShortcutPreferredHeight;
 // Describes a keyboard shortcut for opening a hotkey window.
 @interface iTermShortcut : NSObject<NSCopying>
 @property(nonatomic, assign) NSUInteger keyCode;
+@property(nonatomic, assign) BOOL hasKeyCode;
 @property(nonatomic, assign) NSEventModifierFlags modifiers;
 @property(nonatomic, copy) NSString *characters;
 @property(nonatomic, copy) NSString *charactersIgnoringModifiers;
@@ -52,6 +53,7 @@ extern CGFloat kShortcutPreferredHeight;
 + (NSDictionary *)dictionaryForShortString:(NSString *)string;
 
 - (instancetype)initWithKeyCode:(NSUInteger)code
+                     hasKeyCode:(BOOL)hasKeyCode
                       modifiers:(NSEventModifierFlags)modifiers
                      characters:(NSString *)characters
     charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers NS_DESIGNATED_INITIALIZER;

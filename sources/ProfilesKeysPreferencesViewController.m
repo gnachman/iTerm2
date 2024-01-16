@@ -299,6 +299,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     model.hasModifierActivation = [self boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER];
     model.modifierActivation = [self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION];
     model.primaryShortcut = [[iTermShortcut alloc] initWithKeyCode:[self unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE]
+                                                        hasKeyCode:YES
                                                          modifiers:[self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS]
                                                         characters:[self stringForKey:KEY_HOTKEY_CHARACTERS]
                                        charactersIgnoringModifiers:[self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS]];

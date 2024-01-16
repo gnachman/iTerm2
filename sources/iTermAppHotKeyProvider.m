@@ -47,6 +47,7 @@
         NSString *characters = [NSString stringWithFormat:@"%C", character];
 
         iTermShortcut *shortcut = [[[iTermShortcut alloc] initWithKeyCode:code
+                                                               hasKeyCode:YES
                                                                 modifiers:modifiers
                                                                characters:characters
                                               charactersIgnoringModifiers:characters] autorelease];

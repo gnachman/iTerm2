@@ -17,6 +17,7 @@
 + (NSString *)stringForKeystroke:(iTermKeystroke *)keystroke {
     BOOL isArrow = NO;
     NSString *charactersAsString = [self stringForKeyCode:keystroke.virtualKeyCode
+                                               hasKeyCode:keystroke.hasVirtualKeyCode
                                                 character:keystroke.character
                                                   isArrow:&isArrow];
 
@@ -29,12 +30,13 @@
 }
 
 + (NSString *)stringForKeyCode:(CGKeyCode)virtualKeyCode
+                    hasKeyCode:(BOOL)hasKeyCode
                      character:(unichar)character
                        isArrow:(BOOL *)isArrow {
     TISInputSourceRef inputSource = NULL;
     NSString *result = nil;
 
-    if (virtualKeyCode != iTermKeystrokeKeyCodeUnavailable) {
+    if (hasKeyCode) {
         inputSource = TISCopyCurrentKeyboardInputSource();
         if (inputSource == NULL) {
             goto exit;

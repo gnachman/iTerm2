@@ -340,6 +340,7 @@ static const CGFloat kWindowTopMargin = 8;
     if (!_hotKey) {
         NSString *characters = [NSString stringWithFormat:@"%c", 27];
         iTermShortcut *shortcut = [[[iTermShortcut alloc] initWithKeyCode:kVK_Escape
+                                                               hasKeyCode:YES
                                                                 modifiers:0
                                                                characters:characters
                                               charactersIgnoringModifiers:characters] autorelease];

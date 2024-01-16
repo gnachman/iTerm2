@@ -442,6 +442,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     int code = [iTermPreferences intForKey:kPreferenceKeyHotKeyCode];
     if (code || theChar) {
         iTermKeystroke *keystroke = [[iTermKeystroke alloc] initWithVirtualKeyCode:code
+                                                                        hasKeyCode:YES
                                                                      modifierFlags:modifiers
                                                                          character:theChar
                                                                  modifiedCharacter:theChar];

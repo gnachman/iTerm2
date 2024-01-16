@@ -15,7 +15,10 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
-const int iTermKeystrokeKeyCodeUnavailable = 0;
+// Using this as a test for whether there is a keycode is a big red flag because 0 is the keycode for A on a US keyboard.
+// It should only be used as a placeholder when the hasKeyCode flag is NO.
+// When this is ported to Swift, this and hasKeyCode can go away because keycode should be an optional.
+static const int iTermKeystrokeKeyCodeUnavailable = 0;
 
 @implementation iTermKeystroke {
     // When set, self.character = self.modifiedCharacter and it should be treated as a modified
@@ -32,6 +35,7 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         backspace = [[iTermKeystroke alloc] initWithVirtualKeyCode:kVK_Delete
+                                                        hasKeyCode:YES
                                                      modifierFlags:0
                                                          character:0x7f
                                                  modifiedCharacter:0x7f];
@@ -133,6 +137,7 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
         // Standard ASCII key
         c = [key characterAtIndex:i];
         return [[iTermKeystroke alloc] initWithVirtualKeyCode:iTermKeystrokeKeyCodeUnavailable
+                                                   hasKeyCode:NO
                                                 modifierFlags:modifierFlags
                                             modifiedCharacter:c];
     }
@@ -144,6 +149,7 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
     }
     c = [tuple[1] intValue];
     return [[iTermKeystroke alloc] initWithVirtualKeyCode:iTermKeystrokeKeyCodeUnavailable
+                                               hasKeyCode:NO
                                             modifierFlags:modifierFlags
                                                 character:c
                                         modifiedCharacter:c];
@@ -153,6 +159,7 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
     NSString *unmodkeystr = [event charactersIgnoringModifiers];
     const unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
     return [[self alloc] initWithVirtualKeyCode:event.keyCode
+                                     hasKeyCode:YES
                                   modifierFlags:event.it_modifierFlags
                                       character:unmodunicode
                               modifiedCharacter:event.characters.firstCharacter];
@@ -160,14 +167,15 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
 
 + (instancetype)withCharacter:(unichar)character
                 modifierFlags:(NSEventModifierFlags)modifierFlags {
-    return [[self alloc] initWithVirtualKeyCode:0
+    return [[self alloc] initWithVirtualKeyCode:iTermKeystrokeKeyCodeUnavailable
+                                     hasKeyCode:NO
                                   modifierFlags:modifierFlags
                                       character:character
                               modifiedCharacter:character];
 }
 
 - (instancetype)initInvalid {
-    return [self initWithVirtualKeyCode:0 modifierFlags:0 character:0 modifiedCharacter:0];
+    return [self initWithVirtualKeyCode:iTermKeystrokeKeyCodeUnavailable hasKeyCode:NO modifierFlags:0 character:0 modifiedCharacter:0];
 }
 
 - (instancetype)initWithSerialized:(NSString *)serialized {
@@ -185,6 +193,7 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
         unsigned long long flags = 0;
         if (sscanf(string.UTF8String, ":%x:%llx", &character, &flags) == 2) {
             return [self initWithVirtualKeyCode:iTermKeystrokeKeyCodeUnavailable
+                                     hasKeyCode:NO
                                   modifierFlags:flags
                               modifiedCharacter:character];
         }
@@ -196,6 +205,7 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
         unsigned int virtualKeyCode = 0;
         if (sscanf(string.UTF8String, "%x-%llx-%x", &character, &flags, &virtualKeyCode) == 3) {
             return [self initWithVirtualKeyCode:virtualKeyCode
+                                     hasKeyCode:YES
                                   modifierFlags:flags
                                       character:character
                               modifiedCharacter:0];
@@ -206,6 +216,7 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
         unsigned int flags = 0;
         if (sscanf(string.UTF8String, "%x-%x", &character, &flags) == 2) {
             return [self initWithVirtualKeyCode:0
+                                     hasKeyCode:NO
                                   modifierFlags:flags
                                       character:character
                               modifiedCharacter:0];
@@ -215,9 +226,11 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
 }
 
 - (instancetype)initWithVirtualKeyCode:(int)virtualKeyCode
+                            hasKeyCode:(BOOL)hasKeyCode
                          modifierFlags:(NSEventModifierFlags)modifierFlags
                      modifiedCharacter:(unsigned int)character {
     self = [self initWithVirtualKeyCode:virtualKeyCode
+                             hasKeyCode:hasKeyCode
                           modifierFlags:modifierFlags
                               character:character
                       modifiedCharacter:character];
@@ -228,13 +241,14 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
 }
 
 - (instancetype)initWithVirtualKeyCode:(int)virtualKeyCode
+                            hasKeyCode:(BOOL)hasKeyCode
                          modifierFlags:(NSEventModifierFlags)modifierFlags
                              character:(unsigned int)character
                      modifiedCharacter:(UTF32Char)modifiedCharacter {
     self = [super init];
     if (self) {
         _virtualKeyCode = virtualKeyCode;
-        _hasVirtualKeyCode = virtualKeyCode != 0;
+        _hasVirtualKeyCode = hasKeyCode;
         const NSEventModifierFlags mask = (NSEventModifierFlagOption |
                                            NSEventModifierFlagControl |
                                            NSEventModifierFlagShift |
@@ -284,7 +298,7 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
     if (_characterIsModified) {
         return [self modifiedSerialized];
     }
-    if (self.virtualKeyCode == iTermKeystrokeKeyCodeUnavailable) {
+    if (!self.hasVirtualKeyCode) {
         return [self legacySerialized];
     }
     return [NSString stringWithFormat: @"*-0x%llx-0x%x",
@@ -295,7 +309,7 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
     if (_characterIsModified) {
         return [self modifiedSerialized];
     }
-    if (self.virtualKeyCode == iTermKeystrokeKeyCodeUnavailable) {
+    if (!self.hasVirtualKeyCode) {
         return [self legacySerialized];
     }
     return [NSString stringWithFormat: @"0x%x-0x%llx-0x%x",
@@ -322,6 +336,12 @@ const int iTermKeystrokeKeyCodeUnavailable = 0;
                     return key;
                 }
             }
+        }
+        if (dict[self.legacySerialized]) {
+            // Fall back to a binding that doesn't include a keycode. This is necessary for
+            // factory defaults to keep working, as well as bindings made prior to the addition
+            // of the language-agnostic key bindings feature.
+            return self.legacySerialized;
         }
         return nil;
     }

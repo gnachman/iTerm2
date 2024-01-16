@@ -123,6 +123,7 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
         flags &= ~iTermLeaderModifierFlag;
     }
     return [[self alloc] initWithKeyCode:event.keyCode
+                              hasKeyCode:YES
                                modifiers:flags
                               characters:event.characters
              charactersIgnoringModifiers:event.charactersIgnoringModifiers];
@@ -133,16 +134,18 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
 }
 
 - (instancetype)init {
-    return [self initWithKeyCode:0 modifiers:0 characters:@"" charactersIgnoringModifiers:@""];
+    return [self initWithKeyCode:0 hasKeyCode:NO modifiers:0 characters:@"" charactersIgnoringModifiers:@""];
 }
 
 - (instancetype)initWithKeyCode:(NSUInteger)code
+                     hasKeyCode:(BOOL)hasKeyCode
                       modifiers:(NSEventModifierFlags)modifiers
                      characters:(NSString *)characters
     charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
     self = [super init];
     if (self) {
         _keyCode = code;
+        _hasKeyCode = hasKeyCode;
         _modifiers = modifiers & kHotKeyModifierMask;
         _characters = [characters copy];
         _charactersIgnoringModifiers = [charactersIgnoringModifiers copy];
@@ -191,6 +194,7 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
 
 - (iTermKeystroke *)keystroke {
     return [[iTermKeystroke alloc] initWithVirtualKeyCode:self.keyCode
+                                               hasKeyCode:self.hasKeyCode
                                             modifierFlags:self.modifiers
                                                 character:[self.charactersIgnoringModifiers firstCharacter]
                                         modifiedCharacter:[self.characters firstCharacter]];

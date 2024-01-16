@@ -13,8 +13,6 @@ typedef NS_ENUM(NSUInteger, iTermEventModifierFlags) {
     iTermLeaderModifierFlag = 1 << 24
 };
 
-extern const int iTermKeystrokeKeyCodeUnavailable;
-
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermKeystroke: NSObject<NSCopying>
@@ -38,6 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithSerialized:(NSString *)serialized;
 - (instancetype)initWithVirtualKeyCode:(int)virtualKeyCode
+                            hasKeyCode:(BOOL)hasKeyCode
                          modifierFlags:(NSEventModifierFlags)modifierFlags
                              character:(unsigned int)character
                      modifiedCharacter:(UTF32Char)modifiedCharacter NS_DESIGNATED_INITIALIZER;
