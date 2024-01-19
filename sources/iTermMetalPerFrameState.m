@@ -761,6 +761,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }
     *belongsToBlockPtr = _rows[row]->_belongsToBlock;
     ScreenCharArray *lineData = [_rows[row]->_screenCharLine paddedToAtLeastLength:width];
+    ITDebugAssert(lineData != nil);
     NSData *findMatches = _rows[row]->_matches;
     NSIndexSet *selectedIndexes = _rows[row]->_selectedIndexSet;
     NSRange underlinedRange = _rows[row]->_underlinedRange;

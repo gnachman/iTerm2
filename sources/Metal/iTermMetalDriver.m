@@ -690,6 +690,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         rowData.attributesData = [iTermAttributesData dataOfLength:sizeof(iTermMetalGlyphAttributes) * columns];
         rowData.backgroundColorRLEData = [iTermBackgroundColorRLEsData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * columns];
         rowData.screenCharArray = [frameData.perFrameState screenCharArrayForRow:y];
+        if (!rowData.screenCharArray) {
+            ITDebugAssert(NO);
+            rowData.screenCharArray = [ScreenCharArray emptyLineOfLength:columns];
+        }
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
         int rles = 0;
