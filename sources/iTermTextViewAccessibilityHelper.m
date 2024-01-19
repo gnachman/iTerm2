@@ -246,6 +246,13 @@
     for (int i = 0; i < [_delegate accessibilityHelperNumberOfLines]; i++) {
         screen_char_t continuation;
         const screen_char_t* line = [_delegate accessibilityHelperLineAtIndex:i continuation:&continuation];
+        if (!line) {
+            [_allText appendString:@"\n"];
+            offset += 1;
+            [_lineBreakIndexOffsets addObject:@(offset)];
+            continue;
+        }
+
         int k;
         // Get line width, store it in k
         for (k = width - 1; k >= 0; k--) {
