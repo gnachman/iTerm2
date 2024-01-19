@@ -188,7 +188,7 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
             [result appendCharacter:c.code];
             continue;
         }
-        [result appendString:ScreenCharToStr(&c)];
+        [result appendString:ScreenCharToStr(&c) ?: @""];
     }
     return result;
 }
