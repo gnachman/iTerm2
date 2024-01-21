@@ -7021,6 +7021,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                            useItalicFont:_textview.useItalicFont
                                                         usesNonAsciiFont:_textview.useNonAsciiFont
                                                                  context:[PTYSession onePixelContext]];
+    DLog(@"Bounding rect is %@", NSStringFromRect(rect));
     CGSize asciiOffset = CGSizeZero;
     if (rect.origin.y < 0) {
         // Iosevka Light is the only font I've found that needs this.
@@ -7034,6 +7035,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // In a monochrome world, this is still necessary because even though glyph size and cell
         // size are no longer required to be the same, part of the glyph will be drawn outside its
         // bounds and get clipped in the texture.
+        DLog(@"Apply negative Y compensation");
         asciiOffset.height = -floor(rect.origin.y * scale);
     }
     if (iTermTextIsMonochrome() && rect.origin.x < 0) {
@@ -7049,14 +7051,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         //
         // Changing the assumption that glyphs are left-aligned would be very complex, and I can't
         // afford to add more risk right now. This is less than beautiful, but it's quite safe.
+        DLog(@"Apply negative X compensation");
         asciiOffset.width = -floor(rect.origin.x * scale);
     }
     if (iTermTextIsMonochrome()) {
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
-        glyphSize.width = round(0.49 + MAX(cellSize.width, NSMaxX(rect)));
-        glyphSize.height = round(0.49 + MAX(cellSize.height, NSMaxY(rect)));
+        glyphSize.width = round(1 + MAX(cellSize.width, NSMaxX(rect)));
+        glyphSize.height = round(1 + MAX(cellSize.height, NSMaxY(rect)));
+        DLog(@"Set glyph size to larger than max(cell size, bounding rect)=%@", NSStringFromSize(glyphSize));
     } else {
         glyphSize = cellSize;
+        DLog(@"Use cell size as glyph size");
     }
     [self setMetalContextSize:glyphSize];
     if (!_metalContext) {

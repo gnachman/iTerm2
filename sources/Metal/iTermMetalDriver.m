@@ -313,6 +313,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               scale:(CGFloat)scale
             context:(CGContextRef)context
 legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
+    DLog(@"scale=%@", @(scale));
     scale = MAX(1, scale);
     cellSize.width *= scale;
     cellSize.height *= scale;

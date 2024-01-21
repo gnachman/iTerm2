@@ -233,6 +233,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                                   useNativePowerlineGlyphs:NO
                                                                                    context:context];
             CGRect frame = [source frameFlipped:NO];
+            DLog(@"Bound for %@ is %@", [NSString stringWithLongCharacter:c], NSStringFromRect(frame));
             unionRect = NSUnionRect(unionRect, frame);
         }
     }
@@ -271,6 +272,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                             renderBold:&_fakeBold
                                           renderItalic:&_fakeItalic
                                               remapped: &remapped].font;
+        DLog(@"Use font %@", _font);
         if (remapped) {
             string = [string stringByReplacingBaseCharacterWith:remapped];
         }
