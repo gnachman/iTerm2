@@ -455,7 +455,7 @@
 - (NSString *)accessibilityMessageForModifier {
   return @"You have chosen to remap certain modifier keys. For this to work for all key "
          @"combinations (such as cmd-tab), you must turn on \"access for assistive devices\" "
-         @"in the Universal Access preferences panel in System Preferences and restart iTerm2.";
+         @"in the Universal Access preferences panel in System Settings and restart iTerm2.";
 }
 
 - (NSString *)accessibilityActionMessage {

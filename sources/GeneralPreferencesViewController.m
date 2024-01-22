@@ -949,7 +949,7 @@ enum {
                 // User didn't hit cancel; if he chose a writable directory, ask if he wants to write to it.
                 if ([[iTermRemotePreferences sharedInstance] remoteLocationIsValid]) {
                     NSAlert *alert = [[NSAlert alloc] init];
-                    alert.messageText = @"Copy local preferences to custom folder now?";
+                    alert.messageText = @"Copy local settings to custom folder now?";
                     [alert addButtonWithTitle:@"Copy"];
                     [alert addButtonWithTitle:@"Don’t Copy"];
                     if ([alert runModal] == NSAlertFirstButtonReturn) {

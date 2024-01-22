@@ -14,9 +14,9 @@ NSString *iTermMetalUnavailableReasonDescription(iTermMetalUnavailableReason rea
         case iTermMetalUnavailableReasonNoGPU:
             return @"no usable GPU found on this machine.";
         case iTermMetalUnavailableReasonDisabled:
-            return @"GPU Renderer is disabled in Preferences > General.";
+            return @"GPU Renderer is disabled in Settings > General.";
         case iTermMetalUnavailableReasonLigatures:
-            return @"ligatures are enabled. You can disable them in Preferences > Profiles > Text > Use ligatures.";
+            return @"ligatures are enabled. You can disable them in Settings > Profiles > Text > Use ligatures.";
         case iTermMetalUnavailableReasonInitializing:
             return @"the GPU renderer is initializing. It should be ready soon.";
         case iTermMetalUnavailableReasonInvalidSize:
@@ -24,11 +24,11 @@ NSString *iTermMetalUnavailableReasonDescription(iTermMetalUnavailableReason rea
         case iTermMetalUnavailableReasonSessionInitializing:
             return @"the session is initializing.";
         case iTermMetalUnavailableReasonTransparency:
-            return @"transparent windows are not supported. They can be disabled in Preferences > Profiles > Window > Transparency.";
+            return @"transparent windows are not supported. They can be disabled in Settings > Profiles > Window > Transparency.";
         case iTermMetalUnavailableReasonVerticalSpacing:
-            return @"the font's vertical spacing set to less than 100%. You can change it in Preferences > Profiles > Text > Change Font.";
+            return @"the font's vertical spacing set to less than 100%. You can change it in Settings > Profiles > Text > Change Font.";
         case iTermMetalUnavailableReasonMarginSize:
-            return @"terminal window margins are too small. You can edit them in Preferences > Advanced.";
+            return @"terminal window margins are too small. You can edit them in Settings > Advanced.";
         case iTermMetalUnavailableReasonAnnotations:
             return @"annotations or URL shortcuts are open.";
         case iTermMetalUnavailableReasonPortholes:
@@ -45,9 +45,9 @@ NSString *iTermMetalUnavailableReasonDescription(iTermMetalUnavailableReason rea
             return @"the window is being resized.";
         case iTermMetalUnavailableReasonDisconnectedFromPower:
             return @"the computer is not connected to power. You can enable GPU rendering while disconnected from "
-            @"power in Preferences > General > Advanced GPU Settings.";
+            @"power in Settings > General > Advanced GPU Settings.";
         case iTermMetalUnavailableReasonIdle:
-            return @"the session is idle. You can enable Metal while idle in Preferences > Advanced.";
+            return @"the session is idle. You can enable Metal while idle in Settings > Advanced.";
         case iTermMetalUnavailableReasonTooManyPanesReason:
             return @"This tab has too many split panes";
         case iTermMetalUnavailableReasonNoFocus:

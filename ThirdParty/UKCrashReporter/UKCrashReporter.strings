@@ -2,7 +2,7 @@
 "WANT_TO_SEND_CRASH_TITLE" = "Do you want to report the last crash?";
 
 /* Message for alert window when we had a crash: */
-"WANT_TO_SEND_CRASH" = "The application %@ has recently crashed. To help improve it, you can send the system's crash log and a copy of the preferences file to the programmers working on this program so they can use the information in it to fix the bug. Do you want to send the log?";
+"WANT_TO_SEND_CRASH" = "The application %@ has recently crashed. To help improve it, you can send the system's crash log and a copy of the settings file to the programmers working on this program so they can use the information in it to fix the bug. Do you want to send the log?";
 
 /* Name of OK button in alert window: */
 "WANT_TO_SEND_CRASH_SEND" = "Send";

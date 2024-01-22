@@ -1037,7 +1037,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
         return;
     }
     NSString *profileName = [profile objectForKey:KEY_NAME] ?: @"(unknown name)";
-    NSString *message = [NSString stringWithFormat:@"The selected profile, “%@”, is a dynamic profile. Changes made through preferences will be lost when you restart iTerm2. To modify this profile you must edit its source file.", profileName];
+    NSString *message = [NSString stringWithFormat:@"The selected profile, “%@”, is a dynamic profile. Changes made through Settings will be lost when you restart iTerm2. To modify this profile you must edit its source file.", profileName];
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
                                actions:@[ @"OK", @"Reveal in Finder" ]

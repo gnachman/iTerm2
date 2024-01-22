@@ -1,4 +1,4 @@
-﻿/* NSButton (When idle, sends) : <title: When idle, sends> (oid:926) */
+/* NSButton (When idle, sends) : <title: When idle, sends> (oid:926) */
 " When idle, sends" = " When idle, sends";
 
 /* NSTextField (%) : <title:%> (oid:1374) */
@@ -270,7 +270,7 @@
 "Panel" = "Panel";
 
 /* NSWindow (Preferences) : <title:Preferences> (oid:32) */
-"Preferences" = "Preferences";
+"Preferences" = "Settings";
 
 /* NSTextField (Profile) : <title:Profile
 

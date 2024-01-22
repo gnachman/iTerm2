@@ -115,7 +115,7 @@
 }
 
 + (NSString *)groupFooter {
-    return @"You can change this setting in Preferences > Profiles > Session";
+    return @"You can change this setting in Settings > Profiles > Session";
 }
 
 - (NSNumber *)priority {
@@ -163,7 +163,7 @@
 }
 
 + (NSString *)groupFooter {
-    return @"You can change this setting in Preferences > Profiles > Session";
+    return @"You can change this setting in Settings > Profiles > Session";
 }
 
 - (NSNumber *)priority {

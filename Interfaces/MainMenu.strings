@@ -1,4 +1,4 @@
-﻿/* NSMenuItem : <title: > (oid:349) */
+/* NSMenuItem : <title: > (oid:349) */
 " " = " ";
 
 /* NSPanel (About iTerm) : <title:About iTerm> (oid:498) */
@@ -95,7 +95,7 @@
 "Paste Selection" = "Paste Selection";
 
 /* NSMenuItem : <title:Preferences...> (oid:129) */
-"Preferences..." = "Preferences...";
+"Preferences..." = "Settings...";
 
 /* NSMenuItem : <title:Previous Tab> (oid:615) */
 "Previous Tab" = "Previous Tab";

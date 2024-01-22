@@ -62,14 +62,14 @@
 + (void)switchToSpace:(int)spaceNum {
     if (!AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)@{(__bridge id)kAXTrustedCheckOptionPrompt: @YES})) {
         [self complainThatCantSwitchToSpace:spaceNum
-                                        fix:@"You must grant iTerm2 accessibility permission in System Preferences > Security & Privacy."];
+                                        fix:@"You must grant iTerm2 accessibility permission in System Settings > Security & Privacy."];
         return;
     }
     CGEventRef keyDownEvent = [self newEventToSwitchToSpace:spaceNum down:YES];
     CGEventRef keyUpEvent = [self newEventToSwitchToSpace:spaceNum down:NO];
     if (!keyDownEvent || !keyUpEvent) {
         [self complainThatCantSwitchToSpace:spaceNum
-                                        fix:@"You must enable shortcuts to switch desktops in System Preferences > Keyboard."];
+                                        fix:@"You must enable shortcuts to switch desktops in System Settings > Keyboard."];
         if (keyDownEvent) {
             CFRelease(keyDownEvent);
         }

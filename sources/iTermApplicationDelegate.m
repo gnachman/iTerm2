@@ -634,7 +634,7 @@ static BOOL hasBecomeActive = NO;
         if ([iTermColorPresets importColorPresetFromFile:filename]) {
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
             alert.messageText = @"Colors Scheme Imported";
-            alert.informativeText = @"The color scheme was imported and added to presets. You can find it under Preferences>Profiles>Colors>Load Presets….";
+            alert.informativeText = @"The color scheme was imported and added to presets. You can find it under Settings > Profiles > Colors > Load Presets….";
             [alert runModal];
         }
         return YES;
@@ -1318,7 +1318,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     NSMenu *menu = [[[NSMenu alloc] init] autorelease];
     NSMenuItem *item;
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Preferences"
+    item = [[[NSMenuItem alloc] initWithTitle:@"Settings"
                                        action:@selector(showAndOrderFrontRegardlessPrefWindow:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];

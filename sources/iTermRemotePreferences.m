@@ -173,11 +173,11 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
 
         if (!data || error) {
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Failed to load preferences from URL. Falling back to local copy.";
+            alert.messageText = @"Failed to load settings from URL. Falling back to local copy.";
             alert.informativeText = [NSString stringWithFormat:@"HTTP request failed: %@",
                                      [error localizedDescription] ?: @"unknown error"];
             [alert addButtonWithTitle:@"OK"];
-            [alert addButtonWithTitle:@"Reveal Setting in Preferences"];
+            [alert addButtonWithTitle:@"Reveal in Settings"];
             const NSModalResponse response = [alert runModal];
             if (response == NSAlertSecondButtonReturn) {
                 [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyLoadPrefsFromCustomFolder];
@@ -213,7 +213,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
         if ([[self customFolderOrURL] length] == 0) {
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Error Loading Settings";
-            alert.informativeText = @"You have enabled “Load preferences from a custom folder or URL” in settings but the location is not set.";
+            alert.informativeText = @"You have enabled “Load settings from a custom folder or URL” in settings but the location is not set.";
             [alert addButtonWithTitle:@"Don’t Load Remote Settings"];
             [alert addButtonWithTitle:@"Cancel"];
             if ([alert runModal] == NSAlertFirstButtonReturn) {
@@ -221,7 +221,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
             }
         } else {
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Failed to load preferences from custom directory. Falling back to local copy.";
+            alert.messageText = @"Failed to load settings from custom directory. Falling back to local copy.";
             alert.informativeText = [NSString stringWithFormat:@"Missing or malformed file at \"%@\"",
                                      [self customFolderOrURL]];
             [alert runModal];
@@ -250,7 +250,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
 {
     if ([self remotePrefsHaveChanged]) {
         NSString *theTitle =
-            [NSString stringWithFormat:@"Preferences at %@ changed since iTerm2 started. "
+            [NSString stringWithFormat:@"Settings at %@ changed since iTerm2 started. "
                                        @"Overwrite it?",
                                        [self customFolderOrURL]];
         if ([iTermWarning showWarningWithTitle:theTitle actions:@[ @"Overwrite",
@@ -271,7 +271,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
             @"copy ~/Library/Preferences/com.googlecode.iterm2.plist to "
             @"your hosting provider.";
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Preferences cannot be copied to a URL.";
+        alert.messageText = @"Settings cannot be copied to a URL.";
         alert.informativeText = informativeText;
         [alert runModal];
         return;
@@ -281,7 +281,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
     NSDictionary *myDict = iTermRemotePreferencesSave(iTermUserDefaultsDictionary(self.preservedKeys), filename);
     if (!myDict) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Failed to copy preferences to custom directory.";
+        alert.messageText = @"Failed to copy settings to custom directory.";
         alert.informativeText = [NSString stringWithFormat:@"Tried to copy %@ to %@",
                                  [self remotePrefsLocation], filename];
         [alert runModal];
@@ -480,7 +480,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
         } else {
             // Not a URL
             NSString *theTitle = [NSString stringWithFormat:
-                                  @"Preferences have changed. Copy them to %@?",
+                                  @"Settings have changed. Copy them to %@?",
                                   [self customFolderOrURL]];
 
             iTermWarningSelection selection =
