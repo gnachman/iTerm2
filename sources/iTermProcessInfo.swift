@@ -26,6 +26,18 @@ class iTermProcessInfo: NSObject {
         self.parentProcessID = parentProcessID
         self.collection = collection
         self.dataSource = dataSource
+
+        super.init()
+
+        _deepestForegroundJob = WeakLazyOptional { [weak self] in
+            guard let self else {
+                return nil
+            }
+            var level = 0
+            var visitedPIDs = Set<pid_t>()
+            var cycle = false
+            return self.deepestForegroundJob(level: &level, visited: &visitedPIDs, cycle: &cycle, depth: 0)
+        }
     }
 
     override func isEqual(to object: Any?) -> Bool {
@@ -101,12 +113,11 @@ class iTermProcessInfo: NSObject {
          dataSource.startTime(forProcess: processID)
     }()
 
-    @objc lazy var deepestForegroundJob: iTermProcessInfo? = {
-        var level = 0
-        var visitedPIDs = Set<pid_t>()
-        var cycle = false
-        return deepestForegroundJob(level: &level, visited: &visitedPIDs, cycle: &cycle, depth: 0)
-    }()
+    @objc var deepestForegroundJob: iTermProcessInfo? {
+        return _deepestForegroundJob.value
+    }
+
+    private var _deepestForegroundJob: WeakLazyOptional<iTermProcessInfo>!
 
     func deepestForegroundJob(level levelInOut: inout Int,
                               visited: inout Set<pid_t>,

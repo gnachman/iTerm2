@@ -38,6 +38,35 @@ class Mutex {
     }
 }
 
+// lazy vars can't be weak. This class lives at the nexus of many of Swift's
+// problems. I'd have preferred WeakLazy<T> but then value would have type T??
+// for optionals.
+//
+// Usage:
+// class Node {
+//     var next: WeakLazyOptional<Node> { return MakeNextMaybe() }
+// }
+//
+// The closure is invoked exactly once the first time `value` is used. The
+// returned optional is weakly held.
+class WeakLazyOptional<T: AnyObject> {
+    private weak var _value: T?
+    private let mutex = Mutex()
+    private var initializer: (() -> T?)?
+    init(_ initializer: @escaping () -> T?) {
+        self.initializer = initializer
+    }
+    var value: T? {
+        return mutex.sync {
+            if let initializer {
+                self.initializer = nil
+                _value = initializer()
+            }
+            return _value
+        }
+    }
+}
+
 // Provides atomic access to an object.
 class MutableAtomicObject<T> {
     private let mutex = Mutex()
