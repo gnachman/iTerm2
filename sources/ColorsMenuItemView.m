@@ -53,21 +53,21 @@
     NSInteger _mouseDownIndex;
 }
 
-const int kNumberOfColors = 8;
-const int kColorAreaOffsetX_PreBigSur = 20;
-const int kColorAreaOffsetX_BigSur = 24;
-const int kColorAreaOffsetX_BigSur_NoneChecked = 10;
-const int kColorAreaOffsetY = 10;
-const int kColorAreaDistanceX = 18;
-const int kColorAreaDimension = 12;
-const int kColorAreaBorder = 1;
-const int kDefaultColorOffset = 2;
-const int kDefaultColorDimension = 8;
-const int kDefaultColorStokeWidth = 2;
-const int kMenuFontSize = 14;
-const int kMenuLabelOffsetX_PreBigSur = 20;
-const int kMenuLabelOffsetX_BigSur = 24;
-const int kMenuLabelOffsetX_BigSur_NoneChecked = 10;
+static const int kNumberOfColors = 8;
+static const int kOffsetX_PreBigSur = 20;
+static const int kOffsetX_BigSur = 24;
+static const int kOffsetX_BigSur_NoneChecked = 10;
+static const int kOffsetX_Sonoma = 24;
+static const int kOffsetX_Sonoma_NoneChecked = 14;
+static const int kOffsetY = 10;
+static const int kColorAreaDistanceX = 18;
+static const int kColorAreaDimension = 12;
+static const int kColorAreaBorder = 1;
+static const int kDefaultColorOffset = 2;
+static const int kDefaultColorDimension = 8;
+static const int kDefaultColorStokeWidth = 2;
+static const int kMenuFontSize = 14;
+
 const int kMenuLabelOffsetY = 32;
 
 const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
@@ -139,13 +139,20 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
 }
 
 - (CGFloat)colorXOffset {
+    if (@available(macOS 14, *)) {
+        if ([self anySiblingIsChecked]) {
+            return kOffsetX_Sonoma;
+        } else {
+            return kOffsetX_Sonoma_NoneChecked;
+        }
+    }
     if (@available(macOS 10.16, *)) {
         if ([self anySiblingIsChecked]) {
-            return kColorAreaOffsetX_BigSur;
+            return kOffsetX_BigSur;
         }
-        return kColorAreaOffsetX_BigSur_NoneChecked;
+        return kOffsetX_BigSur_NoneChecked;
     }
-    return kColorAreaOffsetX_PreBigSur;
+    return kOffsetX_PreBigSur;
 }
 
 - (NSRect)rectForIndex:(NSInteger)i  enlarged:(BOOL)enlarged {
@@ -154,7 +161,7 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     }
     CGFloat growth = enlarged ? 2 : 0;
     return NSMakeRect(self.colorXOffset + kColorAreaDistanceX * i - growth,
-                      kColorAreaOffsetY - growth,
+                      kOffsetY - growth,
                       kColorAreaDimension + growth * 2,
                       kColorAreaDimension + growth * 2);
 
@@ -264,16 +271,7 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
         attributes[NSForegroundColorAttributeName] = [attributes[NSForegroundColorAttributeName] colorWithAlphaComponent:alpha];
     }
     NSString *labelTitle = @"Tab Color:";
-    CGFloat x;
-    if (@available(macOS 10.16, *)) {
-        if ([self anySiblingIsChecked]) {
-            x = kMenuLabelOffsetX_BigSur;
-        } else {
-            x = kMenuLabelOffsetX_BigSur_NoneChecked;
-        }
-    } else {
-        x = kMenuLabelOffsetX_PreBigSur;
-    }
+    const CGFloat x = [self colorXOffset];
     [labelTitle drawAtPoint:NSMakePoint(x, kMenuLabelOffsetY) withAttributes:attributes];
     [NSBezierPath setDefaultLineWidth:savedWidth];
 }
