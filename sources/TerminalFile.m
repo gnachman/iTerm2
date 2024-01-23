@@ -29,7 +29,9 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 - (instancetype)initWithName:(NSString *)name size:(NSInteger)size {
     self = [super initWithName:name size:size];
     if (self) {
-        [TransferrableFile lockFileName:self.localPath];
+        if (self.localPath) {
+            [TransferrableFile lockFileName:self.localPath];
+        }
     }
     return self;
 }

@@ -29,14 +29,21 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 }
 
 + (void)lockFileName:(NSString *)name {
-    [iTermTransferrableFileLockedFileNames() addObject:name];
+    if (name) {
+        [iTermTransferrableFileLockedFileNames() addObject:name];
+    }
 }
 
 + (void)unlockFileName:(NSString *)name {
-    [iTermTransferrableFileLockedFileNames() removeObject:name];
+    if (name) {
+        [iTermTransferrableFileLockedFileNames() removeObject:name];
+    }
 }
 
 + (BOOL)fileNameIsLocked:(NSString *)name {
+    if (!name) {
+        return NO;
+    }
     return [iTermTransferrableFileLockedFileNames() containsObject:name];
 }
 
