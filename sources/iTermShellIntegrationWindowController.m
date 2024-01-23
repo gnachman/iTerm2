@@ -530,7 +530,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                              afterRegex:@"^ok$"
                             expectation:expectation]];
-    [result appendString:[self sendText:@"base64 --decode <<'EOF'| tar xfz -\n"
+    [result appendString:[self sendText:@"base64 -d <<'EOF'| tar xfz -\n"
                              reallySend:reallySend
                              afterRegex:@"^ok$"
                             expectation:expectation]];
