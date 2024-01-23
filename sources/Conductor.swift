@@ -217,6 +217,7 @@ class Conductor: NSObject, Codable {
         case append(path: Data, content: Data)
         case utime(path: Data, date: Date)
         case chmod(path: Data, r: Bool, w: Bool, x: Bool)
+        case zip(path: Data)
 
         var stringValue: String {
             switch self {
@@ -236,6 +237,9 @@ class Conductor: NSObject, Codable {
                 } else {
                     return "fetch\n\(path.base64EncodedString())"
                 }
+
+            case .zip(let path):
+                return "zip\n\(path.base64EncodedString())"
 
             case .stat(let path):
                 return "stat\n\(path.base64EncodedString())"
@@ -297,6 +301,8 @@ class Conductor: NSObject, Codable {
                 } else {
                     return "fetch \(path.stringOrHex)"
                 }
+            case .zip(path: let path):
+                return "zip \(path.stringOrHex)"
             case .stat(let path):
                 return "stat \(path.stringOrHex)"
             case .fetchSuggestions(request: let request):
@@ -2075,6 +2081,17 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    @MainActor
+    func zip(_ path: String) async throws -> String {
+        return try await logging("zip \(path)") {
+            guard let pathData = path.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(path)
+            }
+            log("perform file operation to zip \(path)")
+            return try await performFileOperation(subcommand: .zip(path: pathData))
+        }
+    }
+
     private func remoteFile(_ json: String) throws -> RemoteFile {
         log("file operation completed with \(json.count) characters")
         guard let jsonData = json.data(using: .utf8) else {
@@ -2325,16 +2342,28 @@ extension Conductor: ConductorFileTransferDelegate {
         Task {
             await reallyBeginDownload(fileTransfer: fileTransfer,
                                       remotePath: remotePath,
-                                      fileHandle: fileHandle)
+                                      fileHandle: fileHandle,
+                                      allowDirectories: true)
         }
     }
 
     @MainActor
     private func reallyBeginDownload(fileTransfer: ConductorFileTransfer,
                                      remotePath: String,
-                                     fileHandle: FileHandle) async {
+                                     fileHandle: FileHandle,
+                                     allowDirectories: Bool) async {
         do {
-            let info = try await stat(fileTransfer.path.path)
+            let info = try await stat(remotePath)
+            if info.kind == .folder {
+                if !allowDirectories {
+                    fileTransfer.fail(reason: "Transfer of directory at \(remotePath) not allowed")
+                }
+                await reallyDownloadFolder(info: info,
+                                           fileTransfer: fileTransfer,
+                                           remotePath: remotePath,
+                                           fileHandle: fileHandle)
+                return
+            }
             let sizeKnown: Bool
             if let size = info.size {
                 sizeKnown = true
@@ -2368,6 +2397,24 @@ extension Conductor: ConductorFileTransferDelegate {
                 }
             }
             fileTransfer.didFinishSuccessfully()
+        } catch {
+            fileTransfer.fail(reason: error.localizedDescription)
+        }
+    }
+
+    @MainActor
+    private func reallyDownloadFolder(info: RemoteFile,
+                                      fileTransfer: ConductorFileTransfer,
+                                      remotePath: String,
+                                      fileHandle: FileHandle) async {
+        do {
+            let remoteZipPath = try await zip(remotePath)
+            fileTransfer.isZipOfFolder = true
+            await reallyBeginDownload(fileTransfer: fileTransfer,
+                                      remotePath: remoteZipPath,
+                                      fileHandle: fileHandle,
+                                      allowDirectories: false)
+            try? await rm(remoteZipPath, recursive: false)
         } catch {
             fileTransfer.fail(reason: error.localizedDescription)
         }

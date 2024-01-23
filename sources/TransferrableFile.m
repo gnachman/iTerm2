@@ -104,8 +104,12 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
     assert(false);
 }
 
-- (NSString *)finalDestinationForPath:(NSString *)baseName
+- (NSString *)finalDestinationForPath:(NSString *)originalBaseName
                  destinationDirectory:(NSString *)destinationDirectory {
+    NSString *baseName = originalBaseName;
+    if (self.isZipOfFolder) {
+        baseName = [baseName stringByAppendingString:@".zip"];
+    }
     NSString *name = baseName;
     NSString *finalDestination = nil;
     int retries = 0;

@@ -28,6 +28,7 @@ typedef NS_ENUM(NSInteger, TransferrableFileStatus) {
 @property(atomic, assign) NSInteger fileSize;  // -1 if unknown
 @property(atomic, retain) TransferrableFile *successor;
 @property(atomic, assign) BOOL hasPredecessor;
+@property(atomic, assign) BOOL isZipOfFolder;
 
 + (void)lockFileName:(NSString *)name;
 + (void)unlockFileName:(NSString *)name;

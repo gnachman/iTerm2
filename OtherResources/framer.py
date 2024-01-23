@@ -19,6 +19,7 @@ import tempfile
 import termios
 import time
 import traceback
+import zipfile
 
 # pid -> Process
 PROCESSES = {}
@@ -723,6 +724,11 @@ async def handle_file(identifier, args):
                                   base64.b64decode(args[1]).decode('latin1'),
                                   args[2])
         return
+    if sub == "zip":
+        await handle_file_zip(q,
+                              identifier,
+                              base64.b64decode(args[1]).decode('latin1'))
+        return
     log(f'unrecognized subcommand {sub}')
     end(q, identifier, 1)
 
@@ -752,6 +758,10 @@ def remotefile(pp, abspath, s):
             "mtime": mtime}
 
 def file_error(q, identifier, e, path):
+    if e is None:
+        log(f'file_error {path}')
+        end(q, identifier, 1)
+        return
     try:
         raise e
     except OSError as e:
@@ -882,6 +892,46 @@ async def contents_of_directory(directory, prefix, executable, max_count):
     except Exception as e:
         log(f'exception while getting contents of {directory}: {traceback.format_exc()}')
         return []
+
+async def handle_file_zip(q, identifier, path):
+    log(f'handle_file_zip {identifier} {path}')
+
+    if not os.path.isdir(path):
+        log(f'{path} is not a directory')
+        file_error(q, identifier, None, f'{path} is not a directory')
+        return
+    try:
+        # Create a temporary file in the user's home directory
+        temp_file = tempfile.NamedTemporaryFile(dir=os.path.expanduser("~"), prefix=".", delete=False)
+        log(f'zip to {temp_file}')
+        ziph = zipfile.ZipFile(temp_file.name, 'w', zipfile.ZIP_DEFLATED)
+        log('Opened zip for writing')
+    except Exception as e:
+        file_error(q, identifier, e, "While creating a temporary file under your home directory")
+        return
+
+    try:
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                try:
+                    full_path = os.path.join(root, file)
+                    log('add {full_path}')
+                    ziph.write(full_path,
+                               os.path.relpath(os.path.join(root, file),
+                                               os.path.join(path, '..')))
+                except Exception as e:
+                    log(f'Failed to add {file}: {e}')
+                    # zip as much as possible. Errors are just ignored, which isn't great.
+                    pass
+        log('Done zipping')
+    except Exception as e:
+        file_error(q, identifier, e, temp_file)
+    finally:
+        log('close zip')
+        ziph.close()
+        log('send tempfile name')
+        send_esc(q, temp_file.name)
+        end(q, identifier, 0)
 
 async def handle_file_fetch(q, identifier, path, offset, size):
     log(f'handle_file_fetch {identifier} {path}')
