@@ -9,6 +9,7 @@
 #import "iTermWebViewWrapperViewController.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermFlippedView.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermSystemVersion.h"
@@ -121,7 +122,10 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
     Class WKWebViewConfigurationClass = NSClassFromString(@"WKWebViewConfiguration");
     WKWebViewConfiguration *configuration = [[WKWebViewConfigurationClass alloc] init];
 
-    configuration.applicationNameForUserAgent = @"iTerm2";
+    NSString *webUserAgent = [iTermAdvancedSettingsModel webUserAgent];
+    if (!webUserAgent.length) {
+        configuration.applicationNameForUserAgent = @"iTerm2";
+    }
 
     WKPreferences *prefs = [[NSClassFromString(@"WKPreferences") alloc] init];
     prefs.javaScriptEnabled = YES;
@@ -140,6 +144,9 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
     configuration.websiteDataStore = [NSClassFromString(@"WKWebsiteDataStore") defaultDataStore];
     WKWebView *webView = [[WKWebViewClass alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
                                                  configuration:configuration];
+    if (webUserAgent.length) {
+        webView.customUserAgent = webUserAgent;
+    }
     [configuration.userContentController it_setWeakAssociatedObject:webView forKey:&iTermWebViewFactoryUserControllerWebviewKey];
     webView.UIDelegate = self;
 

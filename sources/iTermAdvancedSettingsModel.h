@@ -424,6 +424,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)openProfilesInNewWindow;
 + (BOOL)vs16Supported;
 + (BOOL)vs16SupportedInPrimaryScreen;
++ (NSString *)webUserAgent;
 + (BOOL)workAroundBigSurBug;
 + (BOOL)workAroundMultiDisplayOSBug;
 + (BOOL)workAroundNumericKeypadBug;
