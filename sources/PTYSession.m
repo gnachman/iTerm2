@@ -10674,7 +10674,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             // manage the appearance so that window chrome matches up with the background color. To
             // break that dependency cycle, we manually update the appearance for minimal when the
             // system theme changes.
-            self.view.appearance = [self colorMapShouldBeInDarkMode] ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            NSAppearance *desiredAppearance = [self colorMapShouldBeInDarkMode] ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            if ([desiredAppearance.name isEqual:self.view.effectiveAppearance.name]) {
+                [self.view updateForAppearanceChange];
+            } else {
+                self.view.appearance = desiredAppearance;
+            }
         }
     } else {
         [super observeValueForKeyPath:keyPath

@@ -2022,6 +2022,10 @@ typedef struct {
 }
 
 - (void)viewDidChangeEffectiveAppearance {
+    [self updateForAppearanceChange];
+}
+
+- (void)updateForAppearanceChange {
     [self updateMinimapAlpha];
     [self.delegate sessionViewDidChangeEffectiveAppearance];
 }

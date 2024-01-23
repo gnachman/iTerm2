@@ -289,5 +289,6 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // Sets the next responder for the dropdown find view controller so you can still use menu items
 // vended by PTYTextView when it is focused.
 - (void)setMainResponder:(NSResponder *)responder;
+- (void)updateForAppearanceChange;
 
 @end
