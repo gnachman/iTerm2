@@ -130,7 +130,7 @@ static struct {
                                                    pointlessKeystrokes:nil
                                                         allowedActions:allowedActions];
         } else if ([value isKindOfClass:[NSArray class]]) {
-            if (allowedActions && ![allowedActions containsObject:value]) {
+            if (allowedActions && ![allowedActions containsObject:[(NSArray *)value firstObject]]) {
                 value = nil;
             }
         } else {
