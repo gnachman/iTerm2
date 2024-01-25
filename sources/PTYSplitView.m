@@ -220,6 +220,12 @@
 
     first.frame = firstRect;
     second.frame = secondRect;
+    [self adjustSubviews];
+    if ([self.delegate respondsToSelector:@selector(splitViewDidResizeSubviews:)]) {
+        NSNotification *notification = [NSNotification notificationWithName:NSSplitViewDidResizeSubviewsNotification
+                                                                     object:self];
+        [self.delegate splitViewDidResizeSubviews:notification];
+    }
 }
 
 - (void)didAddSubview:(NSView *)subview {
