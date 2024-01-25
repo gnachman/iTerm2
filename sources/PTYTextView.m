@@ -4320,7 +4320,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
         withOffset:(int)offset
-scrollToFirstResult:(BOOL)scrollToFirstResult {
+scrollToFirstResult:(BOOL)scrollToFirstResult
+             force:(BOOL)force {
     DLog(@"begin self=%@ aString=%@", self, aString);
     [_findOnPageHelper findString:aString
                  forwardDirection:direction
@@ -4329,7 +4330,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                           context:[_dataSource findContext]
                     numberOfLines:[_dataSource numberOfLines]
           totalScrollbackOverflow:[_dataSource totalScrollbackOverflow]
-               scrollToFirstResult:scrollToFirstResult];
+               scrollToFirstResult:scrollToFirstResult
+                            force:force];
 }
 
 - (void)clearHighlights:(BOOL)resetContext {

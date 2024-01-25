@@ -53,7 +53,8 @@
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
         withOffset:(int)offset
-scrollToFirstResult:(BOOL)scrollToFirstResult;
+scrollToFirstResult:(BOOL)scrollToFirstResult
+             force:(BOOL)force;
 
 // The search view became (in)visible.
 - (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender;

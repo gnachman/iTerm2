@@ -99,6 +99,7 @@ typedef NS_ENUM(NSUInteger, FindCursorType) {
 // numberOfLines: Number of lines in the data to be searched
 // totalScrollbackOverflow: Number of lines lost to scrollback history (used to calculate absolute
 //   line numbers).
+// force: Begin a new search even if the string and mode are unchanged.
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
@@ -106,7 +107,8 @@ typedef NS_ENUM(NSUInteger, FindCursorType) {
            context:(FindContext *)findContext
      numberOfLines:(int)numberOfLines
 totalScrollbackOverflow:(long long)totalScrollbackOverflow
-scrollToFirstResult:(BOOL)scrollToFirstResult;
+scrollToFirstResult:(BOOL)scrollToFirstResult
+              force:(BOOL)force;
 
 // Remove all highlight data.
 - (void)clearHighlights;

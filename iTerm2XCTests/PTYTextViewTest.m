@@ -2307,7 +2307,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
             forwardDirection:NO
                         mode:iTermFindModeCaseSensitiveSubstring
                   withOffset:0
-         scrollToFirstResult:YES];
+         scrollToFirstResult:YES
+                       force:NO];
         double progress;
         while ([textView findInProgress]) {
             [textView continueFind:&progress];

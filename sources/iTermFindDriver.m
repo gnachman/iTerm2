@@ -221,7 +221,8 @@ static NSString *gSearchString;
        forwardDirection:![iTermAdvancedSettingsModel swapFindNextPrevious]
                    mode:_state.mode
              withOffset:-1
-    scrollToFirstResult:NO];
+    scrollToFirstResult:NO
+                  force:YES];
 }
 
 - (BOOL)shouldSearchAutomatically {
@@ -356,7 +357,8 @@ static NSString *gSearchString;
        forwardDirection:![iTermAdvancedSettingsModel swapFindNextPrevious]
                    mode:_state.mode
              withOffset:-1
-    scrollToFirstResult:NO];
+    scrollToFirstResult:NO
+                  force:NO];
 }
 
 - (NSInteger)numberOfResults {
@@ -520,7 +522,8 @@ static NSString *gSearchString;
      forwardDirection:(BOOL)direction
                  mode:(iTermFindMode)mode
            withOffset:(int)offset
-  scrollToFirstResult:(BOOL)scrollToFirstResult {
+  scrollToFirstResult:(BOOL)scrollToFirstResult
+                force:(BOOL)force {
     DLog(@"begin self=%@ subString=%@ direction=%@ mode=%@ offset=%@ scrollToFirstResult=%@",
          self, subString, @(direction), @(mode), @(offset), @(scrollToFirstResult));
     BOOL ok = NO;
@@ -534,7 +537,8 @@ static NSString *gSearchString;
                  forwardDirection:direction
                              mode:mode
                        withOffset:offset
-              scrollToFirstResult:scrollToFirstResult];
+              scrollToFirstResult:scrollToFirstResult
+                            force:force];
             ok = YES;
         }
     }
@@ -568,7 +572,8 @@ static NSString *gSearchString;
        forwardDirection:YES
                    mode:_state.mode
              withOffset:1
-    scrollToFirstResult:YES];
+    scrollToFirstResult:YES
+                  force:NO];
 }
 
 - (void)searchPrevious {
@@ -577,7 +582,8 @@ static NSString *gSearchString;
        forwardDirection:NO
                    mode:_state.mode
              withOffset:1
-    scrollToFirstResult:YES];
+    scrollToFirstResult:YES
+                  force:NO];
 }
 
 - (void)startDelay {
@@ -628,7 +634,8 @@ static NSString *gSearchString;
        forwardDirection:![iTermAdvancedSettingsModel swapFindNextPrevious]
                    mode:_state.mode
              withOffset:-1
-    scrollToFirstResult:YES];
+    scrollToFirstResult:YES
+                  force:NO];
 }
 
 - (NSArray<NSString *> *)completionsForText:(NSString *)text

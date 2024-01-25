@@ -120,12 +120,14 @@ typedef struct {
            context:(FindContext *)findContext
      numberOfLines:(int)numberOfLines
     totalScrollbackOverflow:(long long)totalScrollbackOverflow
-scrollToFirstResult:(BOOL)scrollToFirstResult {
+scrollToFirstResult:(BOOL)scrollToFirstResult 
+             force:(BOOL)force {
     DLog(@"begin self=%@ aString=%@", self, aString);
     _searchingForward = direction;
     _findOffset = offset;
     if ([_lastStringSearchedFor isEqualToString:aString] &&
-        _mode == mode) {
+        _mode == mode &&
+        !force) {
         DLog(@"query and mode are unchanged.");
         _haveRevealedSearchResult = NO;  // select the next item before/after the current selection.
         _searchingForNextResult = scrollToFirstResult;

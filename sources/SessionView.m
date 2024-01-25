@@ -2127,13 +2127,15 @@ typedef struct {
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
         withOffset:(int)offset
-scrollToFirstResult:(BOOL)scrollToFirstResult {
+scrollToFirstResult:(BOOL)scrollToFirstResult
+             force:(BOOL)force {
     DLog(@"begin self=%@ aString=%@", self, aString);
     [self.delegate findString:aString
              forwardDirection:direction
                          mode:mode
                    withOffset:offset
-          scrollToFirstResult:scrollToFirstResult];
+          scrollToFirstResult:scrollToFirstResult
+                        force:NO];
 }
 
 - (void)findDriverFilterVisibilityDidChange:(BOOL)visible {

@@ -6332,9 +6332,6 @@ DLog(args); \
 }
 
 - (void)findPasteboardStringDidChangeTo:(NSString *)string {
-    if ([_view.findDriver.findString isEqualToString:string]) {
-        return;
-    }
     if (!_view.findDriver.shouldSearchAutomatically) {
         return;
     }
@@ -6429,13 +6426,15 @@ DLog(args); \
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
         withOffset:(int)offset
-scrollToFirstResult:(BOOL)scrollToFirstResult {
+scrollToFirstResult:(BOOL)scrollToFirstResult
+             force:(BOOL)force {
     DLog(@"self=%@ aString=%@", self, aString);
     [_textview findString:aString
          forwardDirection:direction
                      mode:mode
                withOffset:offset
-      scrollToFirstResult:scrollToFirstResult];
+      scrollToFirstResult:scrollToFirstResult
+                    force:force];
 }
 
 - (NSString *)unpaddedSelectedText {
