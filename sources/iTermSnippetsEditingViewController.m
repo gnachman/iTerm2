@@ -105,7 +105,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     iTermTuple<NSString *, NSSet<NSString *> *> *phraseTags = [self phraseAndTagsFromQuery];
     NSString *query = phraseTags.firstObject;
     NSSet<NSString *> *tags = phraseTags.secondObject;
-    if (tags.count && ![tags isSubsetOfSet:[NSSet setWithArray:snippet.tags]k]) {
+    if (tags.count && ![tags isSubsetOfSet:[NSSet setWithArray:snippet.tags]]) {
         return NO;
     }
     if (query.length == 0) {
