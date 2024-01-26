@@ -673,6 +673,7 @@ class AITermRegistrationWindowController: NSWindowController {
     @IBOutlet var message: NSTextView!
     @IBOutlet var okButton: NSButton!
     @IBOutlet var textField: NSTextField!
+    @IBOutlet var titleImageView: NSImageView!
     private(set) var apiKey: String?
 
     static func create() -> AITermRegistrationWindowController {
@@ -700,7 +701,8 @@ class AITermRegistrationWindowController: NSWindowController {
         message.textStorage?.setAttributedString(attributed)
         super.awakeFromNib()
         okButton.isEnabled = !textField.stringValue.isEmpty
-
+        titleImageView.image?.isTemplate = true
+        
         DispatchQueue.main.async { [self] in
             self.window?.makeFirstResponder(textField)
         }
