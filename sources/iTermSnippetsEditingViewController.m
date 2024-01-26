@@ -14,6 +14,7 @@
 #import "iTermSnippetsModel.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSMutableAttributedString+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -28,7 +29,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 @implementation iTermSnippetsEditingView
 @end
 
-@interface iTermSnippetsEditingViewController ()<NSTableViewDataSource, NSTableViewDelegate>
+@interface iTermSnippetsEditingViewController ()<NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate>
 @end
 
 @implementation iTermSnippetsEditingViewController {
@@ -39,8 +40,10 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     IBOutlet NSButton *_editButton;
     IBOutlet NSButton *_exportButton;
     IBOutlet NSButton *_importButton;
+    IBOutlet NSSearchField *_searchField;
 
-    NSArray<iTermSnippet *> *_snippets;
+    NSArray<iTermSnippet *> *_allSnippets;
+    NSArray<iTermSnippet *> *_filteredSnippets;
     iTermEditSnippetWindowController *_windowController;
 }
 
@@ -49,7 +52,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     [containerView addSubview:self.view];
     containerView.autoresizesSubviews = YES;
     self.view.frame = containerView.bounds;
-    _snippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
+    [self load];
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
     [self updateEnabled];
     [_tableView registerForDraggedTypes:@[ iTermSnippetsEditingPasteboardType ]];
@@ -67,10 +70,88 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 
 #pragma mark - Private
 
+- (void)load {
+    _allSnippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
+    _filteredSnippets = [_allSnippets filteredArrayUsingBlock:^BOOL(iTermSnippet *snippet) {
+        return [self snippetMatchesQuery:snippet];
+    }];
+}
+
+- (iTermTuple<NSString *, NSSet<NSString *> *> *)phraseAndTagsFromQuery {
+    NSString *query = self.query;
+    if (query.length == 0) {
+        return [iTermTuple tupleWithObject:@"" andObject:nil];
+    }
+    NSMutableSet<NSString *> *tags = [NSMutableSet set];
+    NSRange tagRange = [query rangeOfString:@"tag:"];
+    while (tagRange.location != NSNotFound) {
+        if (tagRange.location == 0 || [query characterAtIndex:tagRange.location - 1] == ' ') {
+            NSString *tag = [[[query substringFromIndex:tagRange.location + @"tag:".length] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] firstObject];
+            if (tag.length) {
+                NSString *before = [[query substringToIndex:tagRange.location] stringByTrimmingTrailingWhitespace];
+                NSString *after = [[query substringFromIndex:NSMaxRange(tagRange) + tag.length] stringByTrimmingLeadingWhitespace];
+                query = [before stringByAppendingString:after];
+            }
+            [tags addObject:tag];
+            tagRange = [query rangeOfString:@"tag:"];
+        } else {
+            break;
+        }
+    }
+    return [iTermTuple tupleWithObject:query andObject:tags];
+}
+
+- (BOOL)snippetMatchesQuery:(iTermSnippet *)snippet {
+    iTermTuple<NSString *, NSSet<NSString *> *> *phraseTags = [self phraseAndTagsFromQuery];
+    NSString *query = phraseTags.firstObject;
+    NSSet<NSString *> *tags = phraseTags.secondObject;
+    if (tags.count && ![tags isSubsetOfSet:[NSSet setWithArray:snippet.tags]k]) {
+        return NO;
+    }
+    if (query.length == 0) {
+        return YES;
+    }
+    return ([snippet.tags containsObject:query] ||
+            [snippet.title localizedCaseInsensitiveContainsString:query] ||
+            [snippet.value localizedCaseInsensitiveContainsString:query]);
+}
+
+- (NSInteger)filteredIndex:(NSInteger)unfilteredIndex {
+    if (unfilteredIndex >= _allSnippets.count) {
+        return _filteredSnippets.count;
+    }
+    iTermSnippet *snippet = _allSnippets[unfilteredIndex];
+    return [_filteredSnippets indexOfObject:snippet];
+}
+
+- (NSIndexSet *)filteredIndexSet:(NSIndexSet *)unfilteredIndexSet {
+    NSMutableIndexSet *result = [NSMutableIndexSet indexSet];
+    [unfilteredIndexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
+        const NSInteger i = [self filteredIndex:idx];
+        if (i != NSNotFound) {
+            [result addIndex:i];
+        }
+    }];
+    return result;
+}
+
+- (NSInteger)insertionFilteredIndex:(NSInteger)unfilteredIndex {
+    for (NSInteger i = unfilteredIndex; i < _allSnippets.count; i++) {
+        NSInteger candidate = [self filteredIndex:i];
+        if (candidate != NSNotFound) {
+            return candidate;
+        }
+    }
+    return _filteredSnippets.count;
+}
+
+- (NSString *)query {
+    return [_searchField.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
 - (NSArray<iTermSnippet *> *)selectedSnippets {
-    NSArray<iTermSnippet *> *snippets = [[iTermSnippetsModel sharedInstance] snippets];
     return [[_tableView.selectedRowIndexes it_array] mapWithBlock:^id(NSNumber *indexNumber) {
-        return snippets[indexNumber.integerValue];
+        return _filteredSnippets[indexNumber.integerValue];
     }];
 }
 
@@ -82,50 +163,71 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 - (void)pushUndo {
     [[self undoManager] registerUndoWithTarget:self
                                       selector:@selector(setSnippets:)
-                                        object:_snippets];
+                                        object:_allSnippets];
 }
 
 - (void)snippetsDidChange:(iTermSnippetsDidChangeNotification *)notif {
-    _snippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
-    switch (notif.mutationType) {
-        case iTermSnippetsDidChangeMutationTypeEdit: {
-            [_tableView it_performUpdateBlock:^{
-                [_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:notif.index]
-                                      columnIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 2)]];
-            }];
-            break;
-        }
-        case iTermSnippetsDidChangeMutationTypeDeletion: {
-            [_tableView it_performUpdateBlock:^{
-                [_tableView removeRowsAtIndexes:notif.indexSet
-                                  withAnimation:YES];
-            }];
-            break;
-        }
-        case iTermSnippetsDidChangeMutationTypeInsertion: {
-            [_tableView it_performUpdateBlock:^{
-                [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:notif.index]
-                                  withAnimation:YES];
-            }];
-            break;
-        }
-        case iTermSnippetsDidChangeMutationTypeMove: {
-            [_tableView it_performUpdateBlock:^{
-                [_tableView removeRowsAtIndexes:notif.indexSet
+    [_tableView it_performUpdateBlock:^{
+        switch (notif.mutationType) {
+            case iTermSnippetsDidChangeMutationTypeEdit: {
+                const NSInteger i = [self filteredIndex:notif.index];
+                if (i != NSNotFound) {
+                    // Row is currently visible.
+                    if ([self snippetMatchesQuery:[[iTermSnippetsModel sharedInstance] snippets][notif.index]]) {
+                        // Row will remain visible so just reload it.
+                        [self->_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:i]
+                                                    columnIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 2)]];
+                    } else {
+                        // Row will cease to be visible.
+                        [self->_tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:notif.index]
+                                                withAnimation:YES];
+                    }
+                } else if ([self snippetMatchesQuery:[[iTermSnippetsModel sharedInstance] snippets][notif.index]]) {
+                    // Row is not currently visible but will become visible.
+                    NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:[self insertionFilteredIndex:notif.index]];
+                    [self->_tableView insertRowsAtIndexes:indexSet
+                                            withAnimation:YES];
+                }
+                break;
+            }
+            case iTermSnippetsDidChangeMutationTypeDeletion: {
+                NSIndexSet *indexSet = [self filteredIndexSet:notif.indexSet];
+                if (indexSet.count) {
+                    [_tableView removeRowsAtIndexes:indexSet
+                                      withAnimation:YES];
+                }
+                break;
+            }
+            case iTermSnippetsDidChangeMutationTypeInsertion: {
+                iTermSnippet *snippet = [[iTermSnippetsModel sharedInstance] snippets][notif.index];
+                if ([self snippetMatchesQuery:snippet]) {
+                    const NSInteger i = [self insertionFilteredIndex:notif.index];
+                    [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:i]
+                                      withAnimation:YES];
+                }
+                break;
+            }
+            case iTermSnippetsDidChangeMutationTypeMove: {
+                NSIndexSet *indexSet = [self filteredIndexSet:notif.indexSet];
+                [_tableView removeRowsAtIndexes:indexSet
                                   withAnimation:YES];
                 NSMutableIndexSet *insertionIndexes = [NSMutableIndexSet indexSet];
-                for (NSInteger i = 0; i < notif.indexSet.count; i++) {
-                    [insertionIndexes addIndex:notif.index + i];
+                const NSInteger unshiftedInsertionIndex = [self insertionFilteredIndex:notif.index];
+                const NSInteger shift = [indexSet countOfIndexesInRange:NSMakeRange(0, unshiftedInsertionIndex)];
+                const NSInteger insertionIndex = unshiftedInsertionIndex - shift;
+                for (NSInteger i = 0; i < indexSet.count; i++) {
+                    [insertionIndexes addIndex:insertionIndex + i];
                 }
                 [_tableView insertRowsAtIndexes:insertionIndexes
                                   withAnimation:YES];
-            }];
-            break;
+                break;
+            }
+            case iTermSnippetsDidChangeMutationTypeFullReplacement:
+                [_tableView reloadData];
+                break;
         }
-        case iTermSnippetsDidChangeMutationTypeFullReplacement:
-            [_tableView reloadData];
-            break;
-    }
+        [self load];
+    }];
 }
 
 - (void)updateEnabled {
@@ -277,7 +379,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     NSIndexSet *indexes = [_tableView selectedRowIndexes];
     NSMutableArray<NSDictionary *> *array = [NSMutableArray array];
     [indexes enumerateIndexesUsingBlock:^(NSUInteger i, BOOL * _Nonnull stop) {
-        iTermSnippet *snippet = _snippets[i];
+        iTermSnippet *snippet = _filteredSnippets[i];
         [array addObject:snippet.dictionaryValue];
     }];
     NSString *json = [NSJSONSerialization it_jsonStringForObject:array];
@@ -310,7 +412,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
-    return _snippets.count;
+    return _filteredSnippets.count;
 }
 
 - (NSView *)tableView:(NSTableView *)tableView
@@ -346,9 +448,16 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
         textField = cellView.textField;
     }
 
-    NSString *trimmedTitle = [_snippets[row] trimmedTitle:256];
-    if (_snippets[row].tags.count) {
-        NSArray<NSAttributedString *> *substrings = [_snippets[row].tags flatMapWithBlock:^id _Nullable(NSString * _Nonnull tag) {
+    NSString *trimmedTitle = [_filteredSnippets[row] trimmedTitle:256];
+    NSDictionary *attributes = @{ NSFontAttributeName: font,
+                                  NSForegroundColorAttributeName: NSColor.textColor };
+    NSAttributedString *titleAttributedString =
+    [NSAttributedString attributedStringWithString:[@" " stringByAppendingString:trimmedTitle]
+                                        attributes:attributes];
+    titleAttributedString = [self attributedString:titleAttributedString byHighlightingSubstring:self.query];
+
+    if (_filteredSnippets[row].tags.count) {
+        NSArray<NSAttributedString *> *substrings = [_filteredSnippets[row].tags flatMapWithBlock:^id _Nullable(NSString * _Nonnull tag) {
             NSDictionary *attributes = @{
                 NSForegroundColorAttributeName: NSColor.whiteColor,
                 NSBackgroundColorAttributeName: [NSColor colorWithSRGBRed:0.97 green:0.47 blue:0.10 alpha:1.0],
@@ -360,36 +469,93 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
                                                                             attributes:@{ NSFontAttributeName: font }];
             return @[tagString, space];
         }];
-        NSDictionary *attributes = @{ NSFontAttributeName: font,
-                                      NSForegroundColorAttributeName: NSColor.textColor };
-        NSAttributedString *titleAttributedString =
-        [NSAttributedString attributedStringWithString:[@" " stringByAppendingString:trimmedTitle]
-                                            attributes:attributes];
         substrings = [substrings arrayByAddingObject:titleAttributedString];
         textField.attributedStringValue = [NSAttributedString attributedStringWithAttributedStrings:substrings];
     } else {
-        textField.stringValue = trimmedTitle;
+        textField.attributedStringValue = titleAttributedString;
     }
     return cellView;
 }
 
-- (NSView *)viewForValueColumnOnRow:(NSInteger)row {
-    static NSString *const identifier = @"PrefsSnippetsValue";
-    NSTextField *result = [_tableView makeViewWithIdentifier:identifier owner:self];
-    if (result == nil) {
-        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
-        result.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-        result.lineBreakMode = NSLineBreakByTruncatingTail;
+- (NSAttributedString *)attributedString:(NSAttributedString *)document byHighlightingSubstring:(NSString *)query {
+    const NSRange range = [document.string rangeOfString:query
+                                                 options:NSCaseInsensitiveSearch
+                                                   range:NSMakeRange(0, document.string.length)];
+    if (range.location == NSNotFound) {
+        return document;
     }
-    result.stringValue = [_snippets[row] trimmedValue:256];
+
+    NSFontManager *fontManager = [NSFontManager sharedFontManager];
+    NSMutableAttributedString *result = [document mutableCopy];
+    [result enumerateAttributesInRange:range options:0 usingBlock:^(NSDictionary<NSAttributedStringKey,id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop) {
+        NSMutableDictionary *modifiedAttrs = [attrs mutableCopy];
+        modifiedAttrs[NSBackgroundColorAttributeName] = [NSColor yellowColor];
+        modifiedAttrs[NSForegroundColorAttributeName] = [NSColor blackColor];
+        NSFont *font = attrs[NSFontAttributeName];
+        if (font) {
+            NSFont *boldFont = [fontManager convertFont:font toHaveTrait:NSBoldFontMask];
+            if (boldFont) {
+                modifiedAttrs[NSFontAttributeName] = boldFont;
+            }
+        }
+        [result setAttributes:modifiedAttrs range:range];
+    }];
     return result;
+}
+
+- (NSView *)viewForValueColumnOnRow:(NSInteger)row {
+    NSFont *font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+
+    static NSString *const identifier = @"PrefsSnippetsValue";
+    iTermTableCellView *cellView = [_tableView makeViewWithIdentifier:identifier owner:self];
+    NSTextField *textField;
+    if (cellView == nil) {
+        cellView = [[iTermTableCellView alloc] init];
+        textField = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+        cellView.strongTextField = textField;
+        textField.font = font;
+        textField.lineBreakMode = NSLineBreakByTruncatingTail;
+        [cellView addSubview:textField];
+        textField.translatesAutoresizingMaskIntoConstraints = NO;
+        [NSLayoutConstraint activateConstraints:@[
+            [textField.leadingAnchor constraintEqualToAnchor:cellView.leadingAnchor],
+            [textField.trailingAnchor constraintEqualToAnchor:cellView.trailingAnchor],
+            [textField.topAnchor constraintEqualToAnchor:cellView.topAnchor],
+            [textField.bottomAnchor constraintEqualToAnchor:cellView.bottomAnchor],
+        ]];
+    } else {
+        textField = cellView.textField;
+    }
+    NSString *string;
+    if (self.query.length > 0) {
+        const NSRange range = [_filteredSnippets[row].value rangeOfString:self.query
+                                                                  options:NSCaseInsensitiveSearch
+                                                                    range:NSMakeRange(0, _filteredSnippets[row].value.length)];
+        if (range.location == NSNotFound) {
+            string = [_filteredSnippets[row] trimmedValue:80];
+        } else {
+            string = [_filteredSnippets[row] trimmedValue:80 includingRange:range];
+        }
+    } else {
+        string = [_filteredSnippets[row] trimmedValue:256];
+    }
+
+    NSDictionary *attributes = @{ NSFontAttributeName: font,
+                                  NSForegroundColorAttributeName: NSColor.textColor };
+    NSAttributedString *unhighlightedAttributedString =
+    [NSAttributedString attributedStringWithString:string
+                                        attributes:attributes];
+    textField.attributedStringValue = [self attributedString:unhighlightedAttributedString
+                                     byHighlightingSubstring:self.query];
+
+    return cellView;
 }
 
 #pragma mark Drag-Drop
 
 - (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
     NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
-    [pbItem setPropertyList:@[ _snippets[row].guid ] forType:iTermSnippetsEditingPasteboardType];
+    [pbItem setPropertyList:@[ _filteredSnippets[row].guid ] forType:iTermSnippetsEditingPasteboardType];
     return pbItem;
 }
 
@@ -428,6 +594,13 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     [[iTermSnippetsModel sharedInstance] moveSnippetsWithGUIDs:allGuids
                                                        toIndex:row];
     return YES;
+}
+
+#pragma mark - NSSearchFieldDelegate
+
+- (void)controlTextDidChange:(NSNotification *)obj {
+    [self load];
+    [_tableView reloadData];
 }
 
 @end

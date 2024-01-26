@@ -43,6 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 - (NSString *)trimmedValue:(NSInteger)maxLength;
+- (NSString *)trimmedValue:(NSInteger)maxLength includingRange:(NSRange)range;
 - (NSString *)trimmedTitle:(NSInteger)maxLength;
 - (BOOL)titleEqualsValueUpToLength:(NSInteger)maxLength;
 - (BOOL)matchesActionKey:(id)actionKey;

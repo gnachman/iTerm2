@@ -118,6 +118,29 @@
     return [self.value ellipsizedDescriptionNoLongerThan:maxLength];
 }
 
+- (NSString *)trimmedValue:(NSInteger)maxLength includingRange:(NSRange)range {
+    NSRange proposed = range;
+    if (proposed.length > maxLength) {
+        proposed.length = maxLength;
+    } else {
+        NSInteger midpoint = range.location + range.length / 2;
+        NSInteger radius = maxLength / 2;
+        NSInteger start = MAX(0, midpoint - radius);
+        NSInteger limit = MIN(self.value.length, start + maxLength);
+        NSInteger underage = maxLength - (limit - start);
+        if (underage > 0) {
+            start = MAX(0, start - underage);
+            limit = MIN(start + maxLength, self.value.length);
+        }
+        proposed = NSMakeRange(start, limit - start);
+    }
+    NSString *end = [[self.value substringFromIndex:proposed.location] ellipsizedDescriptionNoLongerThan:proposed.length];
+    if (proposed.location > 0) {
+        return [@"…" stringByAppendingString:end];
+    }
+    return end;
+}
+
 - (NSString *)trimmedTitle:(NSInteger)maxLength {
     return [self.title ellipsizedDescriptionNoLongerThan:maxLength];
 }
