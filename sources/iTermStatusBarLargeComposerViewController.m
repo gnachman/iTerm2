@@ -248,7 +248,7 @@
                                                          completion:^(NSArray<NSString *> *choices, NSString *error) {
         if (choices.count >= 1) {
             [weakSelf acceptSuggestion:choices[0]];
-        } else {
+        } else if (error) {
             [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem with the AI query: %@", error]
                                        actions:@[ @"OK" ]
                                      accessory:nil

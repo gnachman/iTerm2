@@ -320,7 +320,7 @@ class AITermController {
             switch event {
             case .begin:
                 guard let registration else {
-                    requestRegistration()
+                    requestRegistration(continuation: state)
                     return
                 }
                 DispatchQueue.main.async { [self] in
@@ -339,7 +339,7 @@ class AITermController {
             switch event {
             case .begin:
                 guard let registration else {
-                    requestRegistration()
+                    requestRegistration(continuation: state)
                     return
                 }
                 DispatchQueue.main.async { [self] in
@@ -377,10 +377,11 @@ class AITermController {
         }
     }
 
-    private func requestRegistration() {
+    private func requestRegistration(continuation: State) {
         state = .ground
         delegate?.aitermControllerRequestRegistration(self) { [weak self] registration in
             self?.registration = registration
+            self?.state = continuation
             self?.handle(event: .begin, legacy: false)
         }
     }
