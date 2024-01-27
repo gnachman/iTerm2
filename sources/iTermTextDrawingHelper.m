@@ -3197,7 +3197,10 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     if (!self.offscreenCommandLine) {
         return nil;
     }
-    return [[self defaultTextColor] it_colorByDimmingByAmount:0.95];
+    NSColor *textColor = self.defaultTextColor;
+    NSColor *backgroundColor = self.defaultBackgroundColor;
+    NSColor *blend = [textColor blendedWithColor:backgroundColor weight:0.5];
+    return blend;
 }
 
 - (void)drawOffscreenCommandLineWithVirtualOffset:(CGFloat)virtualOffset {

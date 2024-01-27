@@ -157,7 +157,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
              frame:(NSRect)frame {
     NSColor *color = _fgColor;
     NSDictionary *attributes = [self attributesForTextColor:color ?: [NSColor colorWithRed:0 green:0 blue:0 alpha:1]
-                                                     shadow:[self shadowForTextColor:color] ?: [NSColor colorWithRed:1 green:1 blue:1 alpha:1]
+                                                     shadow:[self shadowForTextColor:color ?: [NSColor colorWithRed:1 green:1 blue:1 alpha:1]]
                                                      retina:_isRetina];
     const BOOL repeat = [self rowIsRepeat:index];
     if (s.length && repeat) {
