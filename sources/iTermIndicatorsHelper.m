@@ -28,6 +28,7 @@ NSString *const kiTermIndicatorCopyMode = @"kiTermIndicatorCopyMode";
 NSString *const kiTermIndicatorDebugLogging = @"kiTermIndicatorDebugLogging";
 NSString *const kiTermIndicatorSecureKeyboardEntry_Forced = @"kiTermIndicatorSecureKeyboardEntry_Forced";
 NSString *const kiTermIndicatorSecureKeyboardEntry_User = @"kiTermIndicatorSecureKeyboardEntry_User";
+NSString *const kiTermIndicatorPinned = @"kiTermIndicatorPinned";
 
 static const NSTimeInterval kFullScreenFlashDuration = 0.3;
 static const NSTimeInterval kFlashDuration = 0.3;
@@ -67,20 +68,22 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 + (NSDictionary *)indicatorImages {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        gIndicatorImages = @{ kiTermIndicatorBell: [NSImage it_imageNamed:@"bell" forClass:self.class],
-                              kiTermIndicatorWrapToTop: [NSImage it_imageNamed:@"wrap_to_top" forClass:self.class],
-                              kiTermIndicatorWrapToBottom: [NSImage it_imageNamed:@"wrap_to_bottom" forClass:self.class],
-                              kItermIndicatorBroadcastInput: [NSImage it_imageNamed:@"BroadcastInput" forClass:self.class],
-                              kiTermIndicatorMaximized: [NSImage it_imageNamed:@"Maximized" forClass:self.class],
-                              kiTermIndicatorCoprocess: [NSImage it_imageNamed:@"Coprocess" forClass:self.class],
-                              kiTermIndicatorAlert: [NSImage it_imageNamed:@"Alert" forClass:self.class],
-                              kiTermIndicatorAllOutputSuppressed: [NSImage it_imageNamed:@"SuppressAllOutput" forClass:self.class],
-                              kiTermIndicatorZoomedIn: [NSImage it_imageNamed:@"Zoomed" forClass:self.class],
-                              kiTermIndicatorCopyMode: [NSImage it_imageNamed:@"CopyMode" forClass:self.class],
-                              kiTermIndicatorDebugLogging: [NSImage it_imageNamed:@"DebugLogging" forClass:self.class],
-                              kiTermIndicatorFilter: [NSImage it_imageNamed:@"FilterIndicator" forClass:self.class],
-                              kiTermIndicatorSecureKeyboardEntry_Forced: [NSImage it_imageNamed:@"SecureKeyboardEntry" forClass:self.class],
-                              kiTermIndicatorSecureKeyboardEntry_User: [NSImage it_imageNamed:@"SecureKeyboardEntry" forClass:self.class],
+        gIndicatorImages = @{ 
+            kiTermIndicatorBell: [NSImage it_imageNamed:@"bell" forClass:self.class],
+            kiTermIndicatorWrapToTop: [NSImage it_imageNamed:@"wrap_to_top" forClass:self.class],
+            kiTermIndicatorWrapToBottom: [NSImage it_imageNamed:@"wrap_to_bottom" forClass:self.class],
+            kItermIndicatorBroadcastInput: [NSImage it_imageNamed:@"BroadcastInput" forClass:self.class],
+            kiTermIndicatorMaximized: [NSImage it_imageNamed:@"Maximized" forClass:self.class],
+            kiTermIndicatorCoprocess: [NSImage it_imageNamed:@"Coprocess" forClass:self.class],
+            kiTermIndicatorAlert: [NSImage it_imageNamed:@"Alert" forClass:self.class],
+            kiTermIndicatorAllOutputSuppressed: [NSImage it_imageNamed:@"SuppressAllOutput" forClass:self.class],
+            kiTermIndicatorZoomedIn: [NSImage it_imageNamed:@"Zoomed" forClass:self.class],
+            kiTermIndicatorCopyMode: [NSImage it_imageNamed:@"CopyMode" forClass:self.class],
+            kiTermIndicatorDebugLogging: [NSImage it_imageNamed:@"DebugLogging" forClass:self.class],
+            kiTermIndicatorFilter: [NSImage it_imageNamed:@"FilterIndicator" forClass:self.class],
+            kiTermIndicatorSecureKeyboardEntry_Forced: [NSImage it_imageNamed:@"SecureKeyboardEntry" forClass:self.class],
+            kiTermIndicatorSecureKeyboardEntry_User: [NSImage it_imageNamed:@"SecureKeyboardEntry" forClass:self.class],
+            kiTermIndicatorPinned: [NSImage it_imageNamed:@"PinnedIndicator" forClass:self.class],
         };
     });
 
@@ -124,7 +127,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorCopyMode,
               kiTermIndicatorDebugLogging,
               kiTermIndicatorSecureKeyboardEntry_Forced,
-              kiTermIndicatorSecureKeyboardEntry_User];
+              kiTermIndicatorSecureKeyboardEntry_User,
+              kiTermIndicatorPinned];
 }
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect))block {
@@ -169,7 +173,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorCopyMode: @"In copy mode.",
         kiTermIndicatorDebugLogging: @"Debug logging is enabled.",
         kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.",
-        kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on."
+        kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on.",
+        kiTermIndicatorPinned: @"This Hotkey Window is pinned."
     };
     return messages[name];
 }

@@ -23,6 +23,7 @@ extern NSString *const kiTermIndicatorDebugLogging;
 extern NSString *const kiTermIndicatorFilter;
 extern NSString *const kiTermIndicatorSecureKeyboardEntry_Forced;
 extern NSString *const kiTermIndicatorSecureKeyboardEntry_User;
+extern NSString *const kiTermIndicatorPinned;
 
 extern CGFloat kiTermIndicatorStandardHeight;
 

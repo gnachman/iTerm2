@@ -10593,6 +10593,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return _liveSession && _filter;
 }
 
+- (BOOL)textViewInPinnedHotkeyWindow {
+    if (![iTermAdvancedSettingsModel showPinnedIndicator]) {
+        return NO;
+    }
+    iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:[PseudoTerminal castFrom:_delegate.realParentWindow]];
+    if (!profileHotkey) {
+        return NO;
+    }
+    return !profileHotkey.autoHides;
+}
+
 - (BOOL)textViewShouldShowMarkIndicators {
     return [iTermProfilePreferences boolForKey:KEY_SHOW_MARK_INDICATORS inProfile:_profile];
 }

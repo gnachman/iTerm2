@@ -331,6 +331,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showMetalFPSmeter;
 + (BOOL)showLocationsInScrollbar;
 + (BOOL)showMarksInScrollbar;
++ (BOOL)showPinnedIndicator;
 + (BOOL)showSessionRestoredBanner;
 + (BOOL)showTimestampsByDefault;
 + (BOOL)showWindowTitleWhenTabBarInvisible;

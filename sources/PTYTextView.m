@@ -1683,6 +1683,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                             visible:gDebugLogging];
     [_indicatorsHelper setIndicator:kiTermIndicatorFilter
                             visible:[_delegate textViewIsFiltered]];
+    [_indicatorsHelper setIndicator:kiTermIndicatorPinned
+                            visible:[_delegate textViewInPinnedHotkeyWindow]];
 
     const BOOL secureByUser = [[iTermSecureKeyboardEntryController sharedInstance] enabledByUserDefault];
     const BOOL secure = [[iTermSecureKeyboardEntryController sharedInstance] isEnabled];

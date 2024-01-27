@@ -184,6 +184,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewIsZoomedIn;
 - (BOOL)textViewShouldShowMarkIndicators;
 - (BOOL)textViewIsFiltered;
+- (BOOL)textViewInPinnedHotkeyWindow;
 
 // Is it possible to restart this session?
 - (BOOL)isRestartable;

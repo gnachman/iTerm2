@@ -1840,6 +1840,12 @@
 		A66319872308C60000C502BD /* NSStringITerm.m in Sources */ = {isa = PBXBuildFile; fileRef = E8E901A202743CA303A80106 /* NSStringITerm.m */; };
 		A66319882312139400C502BD /* NSImage+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */; };
 		A66319892312312600C502BD /* iTermRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8CE03C195A143100FE1BEE /* iTermRule.m */; };
+		A66351462B659309009B93F7 /* PinnedIndicator@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66351442B659309009B93F7 /* PinnedIndicator@2x.png */; };
+		A66351472B659309009B93F7 /* PinnedIndicator@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66351442B659309009B93F7 /* PinnedIndicator@2x.png */; };
+		A66351482B659309009B93F7 /* PinnedIndicator@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66351442B659309009B93F7 /* PinnedIndicator@2x.png */; };
+		A66351492B659309009B93F7 /* PinnedIndicator.png in Resources */ = {isa = PBXBuildFile; fileRef = A66351452B659309009B93F7 /* PinnedIndicator.png */; };
+		A663514A2B659309009B93F7 /* PinnedIndicator.png in Resources */ = {isa = PBXBuildFile; fileRef = A66351452B659309009B93F7 /* PinnedIndicator.png */; };
+		A663514B2B659309009B93F7 /* PinnedIndicator.png in Resources */ = {isa = PBXBuildFile; fileRef = A66351452B659309009B93F7 /* PinnedIndicator.png */; };
 		A66444BA1DEEA534000AC615 /* iTermDisclosableView.h in Headers */ = {isa = PBXBuildFile; fileRef = A66444B81DEEA534000AC615 /* iTermDisclosableView.h */; };
 		A6644BE225CDCCD600419355 /* iTermLegacyView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6644BE025CDCCD600419355 /* iTermLegacyView.h */; };
 		A6644BE325CDCCD600419355 /* iTermLegacyView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6644BE125CDCCD600419355 /* iTermLegacyView.m */; };
@@ -6109,6 +6115,8 @@
 		A663196B22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermFileDescriptorMultiClient+MRR.h"; sourceTree = "<group>"; };
 		A663196C22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermFileDescriptorMultiClient+MRR.m"; sourceTree = "<group>"; };
 		A663197822FF349700C502BD /* iTermServer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = iTermServer; sourceTree = BUILT_PRODUCTS_DIR; };
+		A66351442B659309009B93F7 /* PinnedIndicator@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PinnedIndicator@2x.png"; path = "images/PinnedIndicator@2x.png"; sourceTree = "<group>"; };
+		A66351452B659309009B93F7 /* PinnedIndicator.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PinnedIndicator.png; path = images/PinnedIndicator.png; sourceTree = "<group>"; };
 		A66444B81DEEA534000AC615 /* iTermDisclosableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDisclosableView.h; sourceTree = "<group>"; };
 		A66444B91DEEA534000AC615 /* iTermDisclosableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDisclosableView.m; sourceTree = "<group>"; };
 		A6644BE025CDCCD600419355 /* iTermLegacyView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLegacyView.h; sourceTree = "<group>"; };
@@ -8315,6 +8323,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A66351452B659309009B93F7 /* PinnedIndicator.png */,
+				A66351442B659309009B93F7 /* PinnedIndicator@2x.png */,
 				A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */,
 				A602AAE12B0BCDB000E6C965 /* whitebox_logo@2x.png */,
 				A6BF02DD2A8AABD7003D205F /* blendbyte_logo.png */,
@@ -13679,6 +13689,7 @@
 				A65429B420C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,
 				1D6ED99819AEA20D005A7799 /* dead@2x.png in Resources */,
 				A6EC80872829E28900493544 /* it2ssh in Resources */,
+				A663514B2B659309009B93F7 /* PinnedIndicator.png in Resources */,
 				A65B725C1B1A630100F947A7 /* CheckMark.png in Resources */,
 				A6F1B3B3268FD0F300546767 /* StatusBarIconTriggers.png in Resources */,
 				A6038322294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */,
@@ -13789,6 +13800,7 @@
 				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				A67F614F214395870093940A /* graphic_java@2x.png in Resources */,
 				1D6ED9BC19AEA20D005A7799 /* closebutton.png in Resources */,
+				A66351482B659309009B93F7 /* PinnedIndicator@2x.png in Resources */,
 				1D6ED9BD19AEA20D005A7799 /* BroadcastInput.png in Resources */,
 				A67F618C214395A70093940A /* graphic_nginx@2x.png in Resources */,
 				A6E7AEB4214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
@@ -14152,6 +14164,7 @@
 				A67D0D811A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A629F5B723B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */,
 				A6350299229B5F620042B779 /* YosemiteAddTab.png in Resources */,
+				A663514A2B659309009B93F7 /* PinnedIndicator.png in Resources */,
 				A65B72B51B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A6BEE47B26E0A624009C0C2C /* FilterIndicator.png in Resources */,
 				A6F7A720213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
@@ -14175,6 +14188,7 @@
 				5376CB3D220D2E4300FE7476 /* git.sb in Resources */,
 				A66A882F24DFCCC30043728B /* graphic_postgres@2x.png in Resources */,
 				A67F61EB214395D50093940A /* graphic_yarn@2x.png in Resources */,
+				A66351472B659309009B93F7 /* PinnedIndicator@2x.png in Resources */,
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A65E6F592547F1D5008A4866 /* WindowCornerFull_Square.png in Resources */,
 				A6F31A28295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
@@ -14380,6 +14394,7 @@
 				A66F52D92106F6F100571168 /* gitup@2x.png in Resources */,
 				1D5FDD7C1208E91100C46BA3 /* close.png in Resources */,
 				A6A64E612508BE650040490B /* StatusBarIconSnippet.png in Resources */,
+				A66351462B659309009B93F7 /* PinnedIndicator@2x.png in Resources */,
 				A67F6141214395870093940A /* graphic_http@2x.png in Resources */,
 				1D44CCDB1CC6A1DE00BE5630 /* Loupe.png in Resources */,
 				A67D0D5C1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
@@ -14724,6 +14739,7 @@
 				A67F61CD214395C60093940A /* graphic_read@2x.png in Resources */,
 				1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */,
 				A629F5B923B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
+				A66351492B659309009B93F7 /* PinnedIndicator.png in Resources */,
 				1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */,
 				1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */,
 				A67F619B214395B70093940A /* graphic_php@2x.png in Resources */,
