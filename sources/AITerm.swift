@@ -390,7 +390,7 @@ class AITermController {
         if !isLegacy(model: model) {
             return URL(string: "https://api.openai.com/v1/chat/completions")
         }
-        return URL(string: "https://api.openai.com/v1/completions")
+        return URL(string: iTermAdvancedSettingsModel.aitermURL())
     }
 
     private func maxTokens(model: String,
