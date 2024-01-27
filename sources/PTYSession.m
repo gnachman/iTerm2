@@ -7708,6 +7708,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         [note setNoteHidden:anyNoteIsVisible];
     }
     [self.delegate sessionUpdateMetalAllowed];
+    [self updateWrapperAlphaForMetalEnabled:_view.useMetal];
 }
 
 - (void)textViewDidAddOrRemovePorthole {
@@ -10828,6 +10829,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     DLog(@"text view needs display");
     NSRect visibleRect = NSIntersectionRect(rect, _textview.enclosingScrollView.documentVisibleRect);
     [_view setMetalViewNeedsDisplayInTextViewRect:visibleRect];
+    [self updateWrapperAlphaForMetalEnabled:_view.useMetal];
 }
 
 - (BOOL)textViewShouldDrawRect {

@@ -458,7 +458,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         return NO;
     }
     if ([item action] == @selector(showHideNotes:)) {
-        item.state = [self anyAnnotationsAreVisible] ? NSControlStateValueOn : NSControlStateValueOff;
+        item.state = [self hasAnyAnnotations] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
     if ([item action] == @selector(toggleShowTimestamps:)) {
@@ -3233,6 +3233,15 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                         (1 + coordRange.end.y) * _lineHeight)];
         }
     }
+}
+
+- (BOOL)hasAnyAnnotations {
+    for (NSView *view in [self subviews]) {
+        if ([view isKindOfClass:[PTYNoteView class]]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (BOOL)anyAnnotationsAreVisible {
