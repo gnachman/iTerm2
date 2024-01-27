@@ -434,6 +434,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     _live = NO;
 
     [_delegate selectionDidChange:[[self retain] autorelease]];
+    [_delegate liveSelectionDidEnd];
 }
 
 - (void)clearColumnWindowForLiveSelection {

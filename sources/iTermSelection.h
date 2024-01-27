@@ -55,6 +55,8 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
                            containingCharacter:(unichar)c
                                        inRange:(NSRange)range;
 
+- (void)liveSelectionDidEnd;
+
 @end
 
 // Represents a single region of selected text, in either a continuous range or in a box (depending

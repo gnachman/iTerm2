@@ -45,6 +45,9 @@ class SelectionExtractorDelegate: NSObject, iTermSelectionDelegate {
     func selectionDidChange(_ selection: iTermSelection!) {
     }
 
+    func liveSelectionDidEnd() {
+    }
+
     func selectionAbsRangeForParenthetical(at coord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange {
         return realDelegate!.selectionAbsRangeForParenthetical(at: coord)
     }

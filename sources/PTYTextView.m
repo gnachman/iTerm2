@@ -4606,6 +4606,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
          selection, [NSThread callStackSymbols]);
 }
 
+- (void)liveSelectionDidEnd {
+    if ([self _haveShortSelection] && [iTermAdvancedSettingsModel autoSearch]) {
+        NSString *selection = [self selectedText];
+        if (selection) {
+            [[iTermFindPasteboard sharedInstance] setStringValueUnconditionally:selection];
+            [[iTermFindPasteboard sharedInstance] updateObservers:_delegate];
+        }
+    }
+}
+
 - (VT100GridRange)selectionRangeOfTerminalNullsOnAbsoluteLine:(long long)absLineNumber {
     const long long lineNumber = absLineNumber - _dataSource.totalScrollbackOverflow;
     if (lineNumber < 0 || lineNumber > INT_MAX) {

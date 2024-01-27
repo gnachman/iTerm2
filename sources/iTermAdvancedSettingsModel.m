@@ -760,6 +760,8 @@ DEFINE_BOOL(fullWidthFlags, YES, SECTION_EXPERIMENTAL @"Flag emoji render full-w
 DEFINE_INT(aiResponseMaxTokens, 1000, SECTION_EXPERIMENTAL @"Maximum tokens for OpenAI to use in its response");
 DEFINE_BOOL(addUtilitiesToPATH, YES, SECTION_EXPERIMENTAL @"Add path to iTerm2 utilities to $PATH for new sessions?");
 DEFINE_STRING(aitermURL, @"https://api.openai.com/v1/completions", SECTION_EXPERIMENTAL @"URL for AI API.\nA ChatGPT API endpoint should be here. Note that this URL is only used if the model name does not begin with `gpt-` because those models used an older API.");
+DEFINE_BOOL(autoSearch, NO, SECTION_EXPERIMENTAL @"Automatically search for selected text after making a selection?");
+
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "
 
