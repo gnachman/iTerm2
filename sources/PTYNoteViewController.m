@@ -97,6 +97,7 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
                               kWidth,
                               kHeight);
     self.scrollView = [[NSScrollView alloc] initWithFrame:frame];
+    scrollView_.scrollerStyle = NSScrollerStyleOverlay;
     scrollView_.drawsBackground = NO;
     scrollView_.hasVerticalScroller = YES;
     scrollView_.hasHorizontalScroller = NO;
