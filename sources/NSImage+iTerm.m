@@ -420,10 +420,9 @@
     [image it_drawWithBlock:^{
         [tintColor set];
         NSRectFillUsingOperation(NSMakeRect(0, 0, size.width, size.height),
-                                 NSCompositingOperationSourceAtop);
+                                 NSCompositingOperationSourceIn);
     }];
     return image;
-
 }
 
 - (NSImage *)it_cachingImageWithTintColor:(NSColor *)tintColor key:(const void *)key {

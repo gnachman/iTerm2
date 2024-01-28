@@ -42,7 +42,7 @@ const CGFloat kDragAreaSize = 5;
         backgroundColor_ = [[self defaultBackgroundColor] retain];
         NSImage *closeImage;
         if (@available(macOS 11.0, *)) {
-            closeImage = [NSImage imageWithSystemSymbolName:@"delete.left"
+            closeImage = [NSImage imageWithSystemSymbolName:@"trash"
                                    accessibilityDescription:@"Delete annotation"];
             closeImage = [closeImage it_imageWithTintColor:[NSColor blackColor]];
         } else {
