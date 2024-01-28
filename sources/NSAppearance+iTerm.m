@@ -29,7 +29,7 @@
         case TAB_STYLE_AUTOMATIC:
         case TAB_STYLE_MINIMAL:
         case TAB_STYLE_COMPACT:
-            return NSAppearance.currentAppearance;
+            return NSApp.effectiveAppearance;
 
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
