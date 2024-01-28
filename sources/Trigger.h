@@ -95,7 +95,7 @@ extern NSString * const kTriggerDisabledKey;
 - (id<PTYAnnotationReading> _Nullable)triggerSession:(Trigger *)trigger
                       makeAnnotationInRange:(NSRange)rangeInScreenChars
                                        line:(long long)lineNumber;
-
+- (BOOL)triggerSessionIsInAlternateScreen;
 @end
 
 @interface Trigger : NSObject<iTermObject>

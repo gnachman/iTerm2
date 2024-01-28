@@ -5345,6 +5345,10 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
+- (BOOL)triggerSessionIsInAlternateScreen {
+    return self.terminal.softAlternateScreenMode;
+}
+
 #pragma mark - VT100GridDelegate
 
 - (screen_char_t)gridForegroundColorCode {

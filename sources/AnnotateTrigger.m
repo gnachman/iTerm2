@@ -39,6 +39,11 @@
     if (length == 0) {
         return YES;
     }
+    if ([aSession triggerSessionIsInAlternateScreen]) {
+        // Don't allow annotations to be created in alternate screen mode because they won't behave
+        // well.
+        return YES;
+    }
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
     id<PTYAnnotationReading> annotation =
         [aSession triggerSession:self
