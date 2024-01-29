@@ -223,6 +223,8 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
     // The underlines would come along with them so we adjust them here. Issue 10168.
     iTermMetalUnderlineDescriptor adjustedASCIIUnderlineDescriptor = _asciiUnderlineDescriptor;
     adjustedASCIIUnderlineDescriptor.offset -= self.asciiOffset.height / self.configuration.scale;
+
+    // TODO: Now that I increase glyphSize by asciiOffset this is probably unnecessary.
     vector_uint2 augmentedGlyphSize = CGSizeToVectorUInt2(_asciiTextureGroup.glyphSize);
     if (iTermTextIsMonochrome()) {
         // There is only a center part for ASCII on Mojave because the glyph size is increased to contain the largest ASCII glyph, notwithstanding the ascii offset.
