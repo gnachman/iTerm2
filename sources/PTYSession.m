@@ -7052,11 +7052,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     }
     if (iTermTextIsMonochrome()) {
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
-        glyphSize.width = round(0.49 + MAX(cellSize.width, NSMaxX(rect)));
-        glyphSize.height = round(0.49 + MAX(cellSize.height, NSMaxY(rect)));
+        glyphSize.width = round(1 + MAX(cellSize.width, NSMaxX(rect)));
+        glyphSize.height = round(1 + MAX(cellSize.height, NSMaxY(rect)));
     } else {
         glyphSize = cellSize;
     }
+    glyphSize.width += asciiOffset.width;
+    glyphSize.height += asciiOffset.height;
     [self setMetalContextSize:glyphSize];
     if (!_metalContext) {
         DLog(@"%p Failed to allocate metal context. Disable metal and try again in 1 second.", self);
