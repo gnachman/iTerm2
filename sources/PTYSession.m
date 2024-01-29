@@ -7020,6 +7020,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                                            useItalicFont:_textview.useItalicFont
                                                         usesNonAsciiFont:_textview.useNonAsciiFont
                                                                  context:[PTYSession onePixelContext]];
+    DLog(@"Bounding rect for %@ is %@", _textview.fontTable.asciiFont, NSStringFromRect(rect));
     CGSize asciiOffset = CGSizeZero;
     if (rect.origin.y < 0) {
         // Iosevka Light is the only font I've found that needs this.
@@ -7050,15 +7051,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         // afford to add more risk right now. This is less than beautiful, but it's quite safe.
         asciiOffset.width = -floor(rect.origin.x * scale);
     }
+    DLog(@"Ascii offset is %@", NSStringFromSize(asciiOffset));
     if (iTermTextIsMonochrome()) {
+        DLog(@"Increase glyph size for monochrome");
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
         glyphSize.width = round(1 + MAX(cellSize.width, NSMaxX(rect)));
         glyphSize.height = round(1 + MAX(cellSize.height, NSMaxY(rect)));
+        glyphSize.width += asciiOffset.width;
+        glyphSize.height += asciiOffset.height;
     } else {
         glyphSize = cellSize;
     }
-    glyphSize.width += asciiOffset.width;
-    glyphSize.height += asciiOffset.height;
+    DLog(@"cellSize=%@ glyphSize=%@", NSStringFromSize(cellSize), NSStringFromSize(glyphSize));
     [self setMetalContextSize:glyphSize];
     if (!_metalContext) {
         DLog(@"%p Failed to allocate metal context. Disable metal and try again in 1 second.", self);
