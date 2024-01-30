@@ -465,20 +465,38 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
 }
 
 - (NSDictionary *)dictionaryValuePreservingColorSpace {
-    NSString *colorSpace;
-    if ([[self colorSpace] isEqual:[NSColorSpace sRGBColorSpace]]) {
-        colorSpace = kEncodedColorDictionarySRGBColorSpace;
-    } else if ([[self colorSpace] isEqual:[NSColorSpace displayP3ColorSpace]]) {
-        colorSpace = kEncodedColorDictionaryP3ColorSpace;
-    } else if ([self.colorSpace isEqual:[NSColorSpace deviceRGBColorSpace]]) {
-        colorSpace = kEncodedColorDictionaryCalibratedColorSpace;
+    DLog(@"%@", self);
+    switch (self.type) {
+        case NSColorTypeComponentBased:
+            break;
+        case NSColorTypePattern:
+            DLog(@"Attempt to get dictionary value for pattern color");
+            return [[NSColor colorWithSRGBRed:0.5 green:0.5 blue:0.5 alpha:1.0] dictionaryValuePreservingColorSpace];
+        case NSColorTypeCatalog:
+            DLog(@"Converting catalog color to rgb");
+            return [[self colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]] dictionaryValuePreservingColorSpace];
+    }
+
+    NSColorSpace *colorSpace = [self colorSpace];
+    NSString *colorSpaceName;
+    if ([colorSpace isEqual:[NSColorSpace sRGBColorSpace]]) {
+        colorSpaceName = kEncodedColorDictionarySRGBColorSpace;
+    } else if ([colorSpace isEqual:[NSColorSpace displayP3ColorSpace]]) {
+        colorSpaceName = kEncodedColorDictionaryP3ColorSpace;
+    } else if ([colorSpace isEqual:[NSColorSpace deviceRGBColorSpace]]) {
+        colorSpaceName = kEncodedColorDictionaryCalibratedColorSpace;
     } else {
-        DLog(@"Convert color in space %@ to calibrated", self.colorSpace);
-        return [[self colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]] dictionaryValuePreservingColorSpace];
+        DLog(@"Convert color in space %@ to calibrated", colorSpace);
+        NSColor *deviceColor = [self colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
+        if (!deviceColor) {
+            DLog(@"Failed to convert %@ to device RGB color space", self);
+            deviceColor = [NSColor colorWithSRGBRed:0.5 green:0.5 blue:0.5 alpha:1.0];
+        }
+        return [deviceColor dictionaryValuePreservingColorSpace];
     }
     CGFloat red, green, blue, alpha;
     [self getRed:&red green:&green blue:&blue alpha:&alpha];
-    return @{ kEncodedColorDictionaryColorSpace: colorSpace,
+    return @{ kEncodedColorDictionaryColorSpace: colorSpaceName,
               kEncodedColorDictionaryRedComponent: @(red),
               kEncodedColorDictionaryGreenComponent: @(green),
               kEncodedColorDictionaryBlueComponent: @(blue),
