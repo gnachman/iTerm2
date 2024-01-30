@@ -334,6 +334,12 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
     return _variants ?: @[ @"" ];
 }
 
+- (BOOL)statusBarComponentIsEmpty {
+    return _variants.count == 0 || [_variants allWithBlock:^BOOL(NSString *anObject) {
+        return anObject.length == 0;
+    }];ty
+}
+
 - (void)updateWithKnobValues:(NSDictionary<NSString *, id> *)knobValues {
     __weak __typeof(self) weakSelf = self;
     iTermVariableScope *scope = [self.delegate.scope copy];

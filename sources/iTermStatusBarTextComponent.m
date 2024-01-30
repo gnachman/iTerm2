@@ -77,6 +77,10 @@ NS_ASSUME_NONNULL_BEGIN
     return textField;
 }
 
+- (BOOL)statusBarComponentIsEmpty {
+    return [[self longestStringValue] length] == 0;
+}
+
 - (NSColor *)textColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     return [knobValues[iTermStatusBarSharedTextColorKey] colorValue] ?: ([self defaultTextColor] ?: [self.delegate statusBarComponentDefaultTextColor]);
