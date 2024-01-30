@@ -837,6 +837,10 @@ enum {
     [self choosePrefsCustomFolder];
 }
 
+- (IBAction)browseScriptsFolder:(id)sender {
+    [self chooseCustomScriptsFolder];
+}
+
 - (IBAction)pushToCustomFolder:(id)sender {
     [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
 }

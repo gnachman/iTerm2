@@ -5284,7 +5284,7 @@ DQ
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
                                                 <connections>
-                                                    <action selector="browseCustomFolder:" target="9Se-ld-UJa" id="NSL-HJ-4xG"/>
+                                                    <action selector="browseScriptsFolder:" target="9Se-ld-UJa" id="KbM-oS-jDJ"/>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Sd7-qu-MNg">
