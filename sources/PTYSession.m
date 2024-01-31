@@ -11681,6 +11681,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (void)screenNeedsRedraw {
+    DLog(@"screenNeedsRedraw");
     [self refresh];
     [_textview updateSubviewFrames];
 }
@@ -14365,10 +14366,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self dismissAnnouncementWithIdentifier:kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier];
 }
 
+// BE CAREFUL! If you change this you MUST change -[VT100ScreenMutableState appendLineFeed].
+// When this would be idempotent then it's called via a flag change.
+// When this is not idempotent it is called as a side effect, which is slower.
+// -appendLineFeed contains an idempotency test that must match the implementation of this method.
 - (void)screenDidReceiveLineFeed {
-    [self publishNewline];
-    [_pwdPoller didReceiveLineFeed];
-    if (_logging.enabled && !self.isTmuxGateway) {
+    [self publishNewline];  // Idempotent exactly when not publishing
+    [_pwdPoller didReceiveLineFeed];  // Idempotent
+    if (_logging.enabled && !self.isTmuxGateway) {  // Idempotent if condition is false
         switch (_logging.style) {
             case iTermLoggingStyleRaw:
             case iTermLoggingStyleAsciicast:
@@ -15757,7 +15762,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)updateCadenceControllerUpdateDisplay:(iTermUpdateCadenceController *)controller {
     DLog(@"Cadence controller requests display");
-    [self updateDisplayBecause:nil];
+    [self updateDisplayBecause:@"Cadence controller update"];
 }
 
 - (iTermUpdateCadenceState)updateCadenceControllerState {

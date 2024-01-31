@@ -581,6 +581,8 @@ static _Atomic int gPerformingJoinedBlock;
                                                                          unlimitedScrollback:self.unlimitedScrollback
                                                                      useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                                   willScroll:nil]];
+    // BE CAREFUL! This condition must match the implementation of -screenDidReceiveLineFeed.
+    // See the more detailed note there.
     if (self.config.publishing || self.config.loggingEnabled) {
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenDidReceiveLineFeed];
@@ -5364,7 +5366,8 @@ launchCoprocessWithCommand:(NSString *)command
         return;
     }
     const int line = self.currentGrid.cursorY + self.numberOfScrollbackLines;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    // This can happen pretty frequently so I think it's worth deferring.
+    [self addDeferredSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenCursorDidMoveToLine:line];
     }];
 }
@@ -5622,6 +5625,7 @@ launchCoprocessWithCommand:(NSString *)command
 
 // Main queue or mutation queue while joined.
 - (void)tokenExecutorSync {
+    DLog(@"tokenExecutorSync");
     [self performLightweightBlockWithJoinedThreads:^(VT100ScreenMutableState * _Nonnull mutableState) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenSync:mutableState];
