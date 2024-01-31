@@ -394,6 +394,10 @@ private struct FolderImporterExporter {
                 exclude: Set<String>,
                 destination: URL) throws {
         DLog("Begin")
+        var isDirectory = ObjCBool(false)
+        guard FileManager.default.fileExists(atPath: path.url.resolvingSymlinksInPath().path, isDirectory: &isDirectory) && isDirectory.boolValue else {
+            return
+        }
         do {
             try FileManager.default.deepCopyContentsOfDirectory(source: path.url,
                                                                 to: destination,
