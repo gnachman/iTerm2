@@ -556,7 +556,6 @@ class CommandLinePasswordDataSource: NSObject {
                          file: String = #file,
                          line: Int = #line,
                          function: String = #function) {
-            if debugging {
                 let message = messageBlock()
                 // This is commented out because we don't want to log passwords. I keep it around
                 // only for testing locally.
@@ -565,8 +564,11 @@ class CommandLinePasswordDataSource: NSObject {
                     passwordLogger.info("\(message, privacy: .public)")
                 }
                  */
+                if #available(macOS 11.0, *) {
+                    let logline = "\(file):\(line) \(function): \(message)"
+                    os_log("issue11317 %{public}s", logline)
+                }
                 DebugLogImpl(file, Int32(line), function, message)
-            }
         }
     }
 
