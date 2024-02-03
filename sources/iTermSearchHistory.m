@@ -63,7 +63,7 @@
     iTermUserDefaults.searchHistory = @[];
     [_queries removeAllObjects];
     [[iTermFindPasteboard sharedInstance] setStringValueUnconditionally:nil];
-    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
+    [[iTermFindPasteboard sharedInstance] updateObservers:nil internallyGenerated:NO];
 }
 
 - (void)coalescingFence {

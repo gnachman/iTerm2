@@ -891,14 +891,16 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
                    options:NSKeyValueObservingOptionNew
                    context:&iTermEffectiveAppearanceKey];
 
-        [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString * _Nonnull newValue) {
+        [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString * _Nonnull newValue, BOOL internallyGenerated) {
             if (!weakSelf.view.window.isKeyWindow) {
                 return;
             }
             if (![iTermAdvancedSettingsModel synchronizeQueryWithFindPasteboard] && sender != weakSelf) {
                 return;
             }
-            [weakSelf findPasteboardStringDidChangeTo:newValue];
+            if (internallyGenerated) {
+                [weakSelf findPasteboardStringDidChangeTo:newValue];
+            }
         }];
 
         if (!synthetic) {
@@ -7160,13 +7162,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
         [pboard setData:_pbtext forType:NSPasteboardTypeString];
 
+        const BOOL wasFindPasteboard = [_pasteboard isEqual:NSPasteboardNameFind];
         [_pasteboard release];
         _pasteboard = nil;
         [_pbtext release];
         _pbtext = nil;
 
-        // In case it was the find pasteboard that changed
-        [[iTermFindPasteboard sharedInstance] updateObservers:self];
+        if (wasFindPasteboard) {
+            [[iTermFindPasteboard sharedInstance] updateObservers:self internallyGenerated:YES];
+        }
     }
 }
 
@@ -15269,7 +15273,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (!findPanelWasOpen) {
         [self.view.findDriver setFilterHidden:YES];
     }
-    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
+    [[iTermFindPasteboard sharedInstance] updateObservers:nil internallyGenerated:YES];
 }
 
 - (void)textViewEnterShortcutNavigationMode {

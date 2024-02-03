@@ -68,7 +68,6 @@ class AppSwitchingPreventionDetector: NSObject {
             break
         case .pending(command: let command):
             if IsSecureEventInputEnabled() {
-                let parts = (command as NSString).componentsInShellCommand()
                 startTimer()
                 state = .waiting
             } else {

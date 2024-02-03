@@ -75,23 +75,24 @@
     return [findBoard stringForType:NSPasteboardTypeString] ?: @"";
 }
 
-- (void)updateObservers:(id _Nullable)sender {
-    [[iTermSearchQueryDidChangeNotification notificationWithSender:sender] post];
+- (void)updateObservers:(id _Nullable)sender internallyGenerated:(BOOL)internallyGenerated {
+    [[iTermSearchQueryDidChangeNotification notificationWithSender:sender
+                                               internallyGenerated:internallyGenerated] post];
 }
 
-- (void)addObserver:(id)observer block:(void (^)(id sender, NSString *newValue))block {
+- (void)addObserver:(id)observer block:(void (^)(id sender, NSString *newValue, BOOL internallyGenerated))block {
     __weak __typeof(self) weakSelf = self;
-    [iTermSearchQueryDidChangeNotification subscribe:observer block:^(id sender) {
+    [iTermSearchQueryDidChangeNotification subscribe:observer block:^(id sender, BOOL internallyGenerated) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
         }
-        block(sender, strongSelf.stringValue);
+        block(sender, strongSelf.stringValue, internallyGenerated);
     }];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
-    [self updateObservers:nil];
+    [self updateObservers:nil internallyGenerated:NO];
 }
 
 @end

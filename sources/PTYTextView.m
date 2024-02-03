@@ -4168,7 +4168,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
             NSString *selection = [self selectedText];
             if (selection) {
                 [[iTermFindPasteboard sharedInstance] setStringValueUnconditionally:selection];
-                [[iTermFindPasteboard sharedInstance] updateObservers:_delegate];
+                [[iTermFindPasteboard sharedInstance] updateObservers:_delegate internallyGenerated:YES];
             }
             break;
         }
@@ -4622,7 +4622,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         NSString *selection = [self selectedText];
         if (selection) {
             [[iTermFindPasteboard sharedInstance] setStringValueUnconditionally:selection];
-            [[iTermFindPasteboard sharedInstance] updateObservers:_delegate];
+            [[iTermFindPasteboard sharedInstance] updateObservers:_delegate internallyGenerated:YES];
         }
     }
 }

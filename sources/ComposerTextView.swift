@@ -240,7 +240,7 @@ class ComposerTextView: MultiCursorTextView {
                         return textStorage.string.substringWithUTF16Range(range)
                     }.joined(separator: "\n")
                     iTermFindPasteboard.sharedInstance().setStringValueUnconditionally(selection)
-                    iTermFindPasteboard.sharedInstance().updateObservers(self)
+                    iTermFindPasteboard.sharedInstance().updateObservers(self, internallyGenerated: true)
                     return
                 default:
                     break

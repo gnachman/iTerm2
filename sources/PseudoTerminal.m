@@ -3910,7 +3910,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentSession] refresh];
     [[[self currentSession] textview] requestDelegateRedraw];
     [_contentView setNeedsDisplay:YES];
-    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
+    [[iTermFindPasteboard sharedInstance] updateObservers:nil internallyGenerated:NO];
 
     // Start the timers back up
     for (PTYSession* aSession in [self allSessions]) {
@@ -6094,7 +6094,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
     [self updateForTransparency:self.ptyWindow];
     [self updateDocumentEdited];
-    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
+    [[iTermFindPasteboard sharedInstance] updateObservers:nil internallyGenerated:NO];
     [self updateBackgroundImage];
     [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
     [tab didSelectTab];
@@ -8527,7 +8527,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self updateForTransparency:self.ptyWindow];
     [_contentView layoutIfStatusBarChanged];
     [self updateToolbeltAppearance];
-    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
+    [[iTermFindPasteboard sharedInstance] updateObservers:nil internallyGenerated:NO];
     for (PTYSession *session in self.currentTab.sessions) {
         [session updateViewBackgroundImage];
     }
