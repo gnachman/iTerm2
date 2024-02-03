@@ -378,6 +378,7 @@ DEFINE_BOOL(fullHeightCursor, NO, SECTION_TERMINAL @"Cursor occupies line spacin
 DEFINE_FLOAT(underlineCursorOffset, 0, SECTION_TERMINAL @"Vertical offset for underline cursor.\nPositive values move it up, negative values move it down.");
 DEFINE_SETTABLE_OPTIONAL_BOOL(preventEscapeSequenceFromClearingHistory, PreventEscapeSequenceFromClearingHistory, nil, SECTION_TERMINAL @"Prevent CSI 3 J from clearing scrollback history?\nThis is also known as the terminfo E3 capability.");
 DEFINE_SETTABLE_OPTIONAL_BOOL(preventEscapeSequenceFromChangingProfile, PreventEscapeSequenceFromChangingProfile, nil, SECTION_TERMINAL @"Prevent control sequences from changing the current profile?");
+DEFINE_SETTABLE_BOOL(warnAboutSecureKeyboardInputWithOpenCommand, WarnAboutSecureKeyboardInputWithOpenCommand, YES, SECTION_TERMINAL @"Warn if the `open` command appears to fail when secure keyboard input is enabled?")
 DEFINE_INT(maxHistoryLinesToRestore, 20000, SECTION_TERMINAL @"Maximum number of lines of history to restore.\nWhen the app is relaunched, only the last N lines of history are restored to avoid making launch too slow. If you reduce this number, existing sessions won't be affected until their history is cleared.");
 
 DEFINE_FLOAT(verticalBarCursorWidth, 1, SECTION_TERMINAL @"Width of vertical bar cursor.");

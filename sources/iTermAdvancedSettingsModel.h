@@ -427,6 +427,10 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)openProfilesInNewWindow;
 + (BOOL)vs16Supported;
 + (BOOL)vs16SupportedInPrimaryScreen;
+
++ (BOOL)warnAboutSecureKeyboardInputWithOpenCommand;
++ (void)setWarnAboutSecureKeyboardInputWithOpenCommand:(BOOL)value;
+
 + (NSString *)webUserAgent;
 + (BOOL)workAroundBigSurBug;
 + (BOOL)workAroundMultiDisplayOSBug;

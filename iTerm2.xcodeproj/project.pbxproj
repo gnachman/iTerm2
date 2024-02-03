@@ -1996,6 +1996,7 @@
 		A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3951B4F71AE00705186 /* iTermSavePanel.h */; };
 		A668E8A21E7EFEA5005F8758 /* iTermURLStore.h in Headers */ = {isa = PBXBuildFile; fileRef = A668E8A01E7EFEA5005F8758 /* iTermURLStore.h */; };
 		A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */ = {isa = PBXBuildFile; fileRef = A668E8A11E7EFEA5005F8758 /* iTermURLStore.m */; };
+		A66A1EE02B6EB7F10083FC3B /* AppSwitchingPreventionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66A1EDF2B6EB7F10083FC3B /* AppSwitchingPreventionDetector.swift */; };
 		A66A1FA81A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */; };
 		A66A1FA91A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */; };
 		A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
@@ -6165,6 +6166,7 @@
 		A667F3961B4F71AE00705186 /* iTermSavePanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSavePanel.m; sourceTree = "<group>"; };
 		A668E8A01E7EFEA5005F8758 /* iTermURLStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermURLStore.h; sourceTree = "<group>"; };
 		A668E8A11E7EFEA5005F8758 /* iTermURLStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermURLStore.m; sourceTree = "<group>"; };
+		A66A1EDF2B6EB7F10083FC3B /* AppSwitchingPreventionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSwitchingPreventionDetector.swift; sourceTree = "<group>"; };
 		A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.h; sourceTree = "<group>"; };
 		A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.m; sourceTree = "<group>"; };
 		A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermWindowShortcutAccessoryView.xib; path = Interfaces/iTermWindowShortcutAccessoryView.xib; sourceTree = "<group>"; };
@@ -10881,6 +10883,7 @@
 				A670F0C22A1FDA6100C740AC /* iTermChangeTrackingDictionary.m */,
 				A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */,
 				A6EED4612A804A2E006F0DB4 /* InputSourceForcer.swift */,
+				A66A1EDF2B6EB7F10083FC3B /* AppSwitchingPreventionDetector.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -16060,6 +16063,7 @@
 				A6EB2042223EC54E00E928C3 /* ini.c in Sources */,
 				A61A859D24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.m in Sources */,
 				A682274628078434005DF0B4 /* PTYTextView.swift in Sources */,
+				A66A1EE02B6EB7F10083FC3B /* AppSwitchingPreventionDetector.swift in Sources */,
 				A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */,
 				A67960CC1F81FCB6008A42BC /* iTermMetalCellRenderer.m in Sources */,
 				A6A73D4F27C80E6C002E4CCA /* iTermCancelable.m in Sources */,

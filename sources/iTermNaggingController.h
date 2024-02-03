@@ -82,6 +82,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)offerToDisableTriggersInInteractiveApps;
 - (void)tmuxDidUpdatePasteBuffer;
 - (void)openURL:(NSURL *)url;
+- (void)openCommandDidFailWithSecureInputEnabled;
 
 @end
 

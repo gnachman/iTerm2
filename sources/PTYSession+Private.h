@@ -75,6 +75,7 @@ TriggerDelegate> {
     BOOL _havePendingPublish;
     NSMutableArray<PTYSessionPublishRequest *> *_pendingPublishRequests;
     iTermComposerManager *_composerManager;
+    iTermAppSwitchingPreventionDetector *_appSwitchingPreventionDetector;
 }
 
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;

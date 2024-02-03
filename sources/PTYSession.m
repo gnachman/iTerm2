@@ -364,6 +364,9 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     iTermSSHStateProfile,
 };
 
+@interface PTYSession(AppSwitching)<iTermAppSwitchingPreventionDetectorDelegate>
+@end
+
 @implementation PTYSession {
     NSString *_termVariable;
 
@@ -1062,6 +1065,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_desiredComposerPrompt release];
     [_localFileChecker release];
     [_pendingConductor release];
+    [_appSwitchingPreventionDetector release];
+
     [super dealloc];
 }
 
@@ -13336,11 +13341,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     }
 }
 
+- (iTermAppSwitchingPreventionDetector *)appSwitchingPreventionDetector {
+    if (!_appSwitchingPreventionDetector) {
+        _appSwitchingPreventionDetector = [[iTermAppSwitchingPreventionDetector alloc] init];
+        _appSwitchingPreventionDetector.delegate = self;
+    }
+    return _appSwitchingPreventionDetector;
+}
+
 - (void)screenDidExecuteCommand:(NSString *)command
                           range:(VT100GridCoordRange)range
                          onHost:(id<VT100RemoteHostReading>)host
                     inDirectory:(NSString *)directory
                            mark:(id<VT100ScreenMarkReading>)mark {
+    if (IsSecureEventInputEnabled()) {
+        [[self appSwitchingPreventionDetector] didExecuteCommand:command];
+    }
     NSString *trimmedCommand =
     [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     if (trimmedCommand.length) {
@@ -13380,6 +13396,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)screenCommandDidAbortOnLine:(int)line
                         outputRange:(VT100GridCoordRange)outputRange
                             command:(NSString *)command {
+    [_appSwitchingPreventionDetector commandDidFinishWithStatus:-1];
     NSDictionary *userInfo = @{ @"remoteHost": (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
                                 @"directory": (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
                                 @"snapshot": [self contentSnapshot],
@@ -13393,6 +13410,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading>)maybeMark {
+    [_appSwitchingPreventionDetector commandDidFinishWithStatus:code];
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if ([obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_CommandEnd]) {
             ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
@@ -18237,6 +18255,14 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
             self.variablesScope.uname = _conductor.uname;
             break;
     }
+}
+
+@end
+
+@implementation PTYSession(AppSwitching)
+
+- (void)appSwitchingPreventionDetectorDidDetectFailure {
+    [_naggingController openCommandDidFailWithSecureInputEnabled];
 }
 
 @end

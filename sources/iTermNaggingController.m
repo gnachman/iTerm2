@@ -25,6 +25,7 @@ static NSString *const iTermNaggingControllerAskAboutAlternateMouseScrollIdentif
 static NSString *const iTermNaggingControllerAskAboutMouseReportingFrustrationIdentifier = @"AskAboutMouseReportingFrustration";
 NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier = @"TurnOffBracketedPasteOnHostChange";
 static NSString *const iTermNaggingControllerAskAboutClearingScrollbackHistoryIdentifier = @"ClearScrollbackHistory";
+static NSString *const iTermNaggingControllerWarnAboutSecureKeyboardInputWithOpenCommand = @"WarnAboutSecureKeyboardInputWithOpenCommand";
 NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurnOffBracketedPasteOnHostChange";
 static NSString *const iTermNaggingControllerAskAboutChangingProfileIdentifier = @"AskAboutChangingProfile";
 static NSString *const iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach = @"TmuxWindowsShouldCloseAfterDetach";
@@ -500,6 +501,26 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
             case 1: {
                 const BOOL value = YES;
                 iTermAdvancedSettingsModel.preventEscapeSequenceFromClearingHistory = &value;
+                break;
+            }
+        }
+    }];
+}
+
+- (void)openCommandDidFailWithSecureInputEnabled {
+    if (!iTermAdvancedSettingsModel.warnAboutSecureKeyboardInputWithOpenCommand) {
+        return;
+    }
+    NSString *message = @"The open command doesn't activate other apps when Secure Keyboard Input is enabled.";
+    [self.delegate naggingControllerShowMessage:message
+                                     isQuestion:YES
+                                      important:NO
+                                     identifier:iTermNaggingControllerWarnAboutSecureKeyboardInputWithOpenCommand
+                                        options:@[ @"Don’t Remind Me Again" ]
+                                     completion:^(int selection) {
+        switch (selection) {
+            case 0: {
+                iTermAdvancedSettingsModel.warnAboutSecureKeyboardInputWithOpenCommand = NO;
                 break;
             }
         }
