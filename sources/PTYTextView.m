@@ -941,29 +941,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 #pragma mark Set Needs Display Helpers
 
 - (void)setNeedsDisplayOnLine:(int)line {
-    [self setNeedsDisplayOnLine:line inRange:VT100GridRangeMake(0, _dataSource.width)];
+    [self requestDelegateRedraw];
 }
 
 - (void)setNeedsDisplayOnLine:(int)y inRange:(VT100GridRange)range {
-    NSRect dirtyRect;
-    const BOOL allowPartialLineRedraw = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
-    const int x = allowPartialLineRedraw ? range.location : 0;
-    const int maxX = range.location + range.length;
-
-    dirtyRect.origin.x = [iTermPreferences intForKey:kPreferenceKeySideMargins] + x * _charWidth;
-    dirtyRect.origin.y = y * _lineHeight;
-    dirtyRect.size.width = allowPartialLineRedraw ? (maxX - x) * _charWidth : _dataSource.width;
-    dirtyRect.size.height = _lineHeight;
-
-    if (self.showTimestamps) {
-        dirtyRect.size.width = self.visibleRect.size.width - dirtyRect.origin.x;
-    }
-
-    // Expand the rect in case we're drawing a changed cell with an oversize glyph.
-    dirtyRect = [self rectWithHalo:dirtyRect];
-
-    DLog(@"Line %d is dirty in range [%d, %d), set rect %@ dirty",
-         y, x, maxX, [NSValue valueWithRect:dirtyRect]);
     [self requestDelegateRedraw];
 }
 
@@ -1460,6 +1441,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     }
     PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
     [scrollView.verticalScroller setNeedsDisplay:YES];
+}
+
+- (BOOL)drawingHelperIsValid {
+    return _drawingHelper.delegate != nil;
 }
 
 - (iTermTextDrawingHelper *)drawingHelper {

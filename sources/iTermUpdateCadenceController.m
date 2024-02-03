@@ -219,7 +219,11 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     return _activeUpdateCadence;
 }
 
-- (void)setUpdateCadence:(NSTimeInterval)cadence liveResizing:(BOOL)liveResizing force:(BOOL)force {
+- (void)setUpdateCadence:(NSTimeInterval)requestedCadence liveResizing:(BOOL)liveResizing force:(BOOL)force {
+    // Knock a millisecond off the cadence to account for overhead in scheduling the next iteration.
+    // It might end up a little faster than the requested cadence but it greatly improves our chances
+    // of hitting 120hz.
+    const NSTimeInterval cadence = MAX(0.002, requestedCadence) - 0.001;
     if (_useGCDUpdateTimer) {
         [self setGCDUpdateCadence:cadence liveResizing:liveResizing force:force];
     } else {

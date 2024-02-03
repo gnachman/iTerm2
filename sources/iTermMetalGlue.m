@@ -89,7 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (nullable id<iTermMetalDriverDataSourcePerFrameState>)metalDriverWillBeginDrawingFrame {
-    if (self.textView.drawingHelper.delegate == nil) {
+    if (!self.textView.drawingHelperIsValid) {
         return nil;
     }
     ITBetaAssert(self.delegate != nil, @"Nil delegate");

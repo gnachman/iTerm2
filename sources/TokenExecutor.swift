@@ -478,9 +478,13 @@ private class TaskQueue {
         }
     }
 
-    func setFlag(value: Int) {
+    // Returns the previous value.
+    func setFlag(value: Int) -> Int {
         mutex.sync {
-            flags |= value
+            defer {
+                flags |= value
+            }
+            return flags
         }
     }
 
@@ -639,8 +643,9 @@ private class TokenExecutorImpl {
 
     // Any queue
     func setSideEffectFlag(value: Int) {
-        sideEffects.setFlag(value: value)
-        sideEffectScheduler.markNeedsUpdate(deferred: sideEffectScheduler.period / 2)
+        if (sideEffects.setFlag(value: value) & value) == 0 {
+            sideEffectScheduler.markNeedsUpdate(deferred: sideEffectScheduler.period / 2)
+        }
     }
 
     func assertSynchronousSideEffectsAreSafe() {
@@ -865,6 +870,7 @@ class PeriodicScheduler: NSObject {
     private let mutex = Mutex()
     let period: TimeInterval
     private let action: () -> ()
+    private var scheduledDeferred = false  // guarded by mutex
 
     @objc(initWithQueue:period:block:)
     init(_ queue: DispatchQueue, period: TimeInterval, action: @escaping () -> ()) {
@@ -879,9 +885,21 @@ class PeriodicScheduler: NSObject {
     }
 
     @objc func markNeedsUpdate(deferred delay: TimeInterval) {
-        needsUpdate = true
-        queue.asyncAfter(deadline: .now() + delay) { [weak self] in
-            self?.schedule(reset: false)
+        let needsScheduling = mutex.sync {
+            _needsUpdate = true
+            defer {
+                scheduledDeferred = true
+            }
+            return scheduledDeferred
+        }
+        if needsScheduling {
+            queue.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self else { return }
+                self.mutex.sync {
+                    self.scheduledDeferred = false
+                }
+                self.schedule(reset: false)
+            }
         }
     }
 

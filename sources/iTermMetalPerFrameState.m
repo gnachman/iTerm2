@@ -164,10 +164,10 @@ typedef struct {
     [self loadCursorInfoWithDrawingHelper:drawingHelper textView:textView];
     [self loadBackgroundImageWithGlue:glue];
     [self loadMarkedTextWithDrawingHelper:drawingHelper];
-    [self loadIndicatorsFromTextView:textView];
+    [self loadIndicatorsFromTextView:textView drawingHelper:drawingHelper];
     [self loadHighlightedRowsFromTextView:textView];
     [self loadAnnotationRangesFromTextView:textView];
-    [self loadOffscreenCommandLine:textView screen:screen];
+    [self loadOffscreenCommandLine:textView screen:screen drawingHelper:drawingHelper];
 }
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -197,7 +197,7 @@ typedef struct {
     _containerRect = textView.delegate.textViewContainerRect;
     _extraMargins = textView.delegate.textViewExtraMargins;
 
-    _linesToSuppressDrawing = textView.drawingHelper.linesToSuppress;
+    _linesToSuppressDrawing = drawingHelper.linesToSuppress;
     _linesToSuppressDrawing.location -= _visibleRange.start.y;
 }
 
@@ -463,15 +463,16 @@ typedef struct {
 
 // Replace the first entry in _rows with the offscren command line if we are showing one.
 - (void)loadOffscreenCommandLine:(PTYTextView *)textView
-                          screen:(VT100Screen *)screen {
-    _haveOffscreenCommandLine = textView.drawingHelper.offscreenCommandLine != nil;
+                          screen:(VT100Screen *)screen 
+                   drawingHelper:(iTermTextDrawingHelper *)drawingHelper {
+    _haveOffscreenCommandLine = drawingHelper.offscreenCommandLine != nil;
     if (_haveOffscreenCommandLine) {
-        _rows[0]->_screenCharLine = textView.drawingHelper.offscreenCommandLine.characters;
+        _rows[0]->_screenCharLine = drawingHelper.offscreenCommandLine.characters;
         _rows[0]->_selectedIndexSet = [[NSIndexSet alloc] init];
         _rows[0]->_matches = nil;
-        _rows[0]->_date = textView.drawingHelper.offscreenCommandLine.date;
+        _rows[0]->_date = drawingHelper.offscreenCommandLine.date;
         const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
-        const int i = textView.drawingHelper.offscreenCommandLine.absoluteLineNumber - totalScrollbackOverflow;
+        const int i = drawingHelper.offscreenCommandLine.absoluteLineNumber - totalScrollbackOverflow;
         if (i < 0) {
             _rows[0]->_eaIndex = nil;
         } else {
@@ -480,9 +481,10 @@ typedef struct {
     }
 }
 
-- (void)loadIndicatorsFromTextView:(PTYTextView *)textView {
+- (void)loadIndicatorsFromTextView:(PTYTextView *)textView 
+                     drawingHelper:(iTermTextDrawingHelper *)drawingHelper {
     _indicators = [NSMutableArray array];
-    NSRect frame = textView.drawingHelper.indicatorFrame;
+    NSRect frame = drawingHelper.indicatorFrame;
     frame.origin.y -= MAX(0, textView.virtualOffset);
     
     [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame andDraw:NO block:^(NSString *identifier, NSImage *image, NSRect rect) {

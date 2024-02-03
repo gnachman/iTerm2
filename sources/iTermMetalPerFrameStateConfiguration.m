@@ -127,7 +127,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     _timestampFont = _fontTable.asciiFont.font;
 
     // Offscreen command line
-    if (textView.drawingHelper.offscreenCommandLine) {
+    if (drawingHelper.offscreenCommandLine) {
         _offscreenCommandLineBackgroundColor = [textView.drawingHelper.offscreenCommandLineBackgroundColor colorUsingColorSpace:_colorSpace];
         _offscreenCommandLineOutlineColor = [textView.drawingHelper.offscreenCommandLineOutlineColor colorUsingColorSpace:_colorSpace];
         _offscreenCommandLineBackgroundColor = [textView.drawingHelper.offscreenCommandLineBackgroundColor colorUsingColorSpace:_colorSpace];
