@@ -571,7 +571,8 @@ private struct UserDefaultsImporterExporter {
     func performImport(from source: URL) throws {
         DLog("Begin")
         if iTermUserDefaults.importPath != nil {
-            DLog("Have improt path")
+            DLog("Have import path")
+            iTermPreferences.initializeUserDefaults()
             iTermPreferences.setBool(false, forKey: kPreferenceKeyLoadPrefsFromCustomFolder)
             iTermPreferences.setString(nil, forKey: kPreferenceKeyCustomFolder)
             iTermUserDefaults.importPath = nil

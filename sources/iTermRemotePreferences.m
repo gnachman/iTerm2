@@ -74,6 +74,10 @@ static NSString *iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL = @"NoSyn
 
 - (NSString *)prefsFilenameWithBaseDir:(NSString *)base
 {
+    if ([base.pathExtension isEqualToString:@"plist"] &&
+        [[NSFileManager defaultManager] fileExistsAtPath:base]) {
+        return base;
+    }
     return [NSString stringWithFormat:@"%@/%@.plist",
            base, [[NSBundle mainBundle] bundleIdentifier]];
 }
