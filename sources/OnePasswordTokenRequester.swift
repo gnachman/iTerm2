@@ -65,6 +65,7 @@ class OnePasswordUtils {
             usable = nil
             _customPathToCLI = nil
         }
+        _majorVersion = nil
     }
     static func checkUsability() -> Bool {
         return checkUsability(pathToCLI)
@@ -138,7 +139,11 @@ class OnePasswordUtils {
         return majorVersionNumber(pathToCLI)
     }
 
+    static var _majorVersion: Int?
     private static func majorVersionNumber(_ pathToCLI: String) -> Int? {
+        if let _majorVersion {
+            return _majorVersion
+        }
         let maybeData = try? CommandLinePasswordDataSource.InteractiveCommandRequest(
             command: pathToCLI,
             args: ["-v"],
@@ -148,6 +153,7 @@ class OnePasswordUtils {
             DLog("version string is \(string)")
             if Scanner(string: string).scanInt(&value) {
                 DLog("scan returned \(value)")
+                _majorVersion = value
                 return value
             }
             DLog("scan failed")
