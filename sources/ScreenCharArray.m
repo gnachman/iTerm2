@@ -44,7 +44,8 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
         }
         iTermMetadata metadata;
         iTermMetadataInitFromArray(&metadata, metadataArray);
-        self = [self initWithData:dictionary[ScreenCharArrayKeyData]
+        screen_char_t placeholder = { 0 };
+        self = [self initWithData:dictionary[ScreenCharArrayKeyData] ?: [NSData dataWithBytes:&placeholder length:sizeof(placeholder)]
                          metadata:iTermMetadataMakeImmutable(metadata)
                      continuation:_continuation];
         iTermMetadataRelease(metadata);
@@ -67,6 +68,8 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
        includingContinuation:(BOOL)includingContinuation
                     metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation {
+    assert(data != nil);
+    assert(data.bytes != nil);
     self = [super init];
     if (self) {
         _line = data.bytes;
@@ -115,6 +118,7 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
                       length:(int)length
                     metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation {
+    assert(line != nil);
     self = [super init];
     if (self) {
         _line = line;
@@ -436,6 +440,7 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
 
 - (void)makeSafe {
     if (_data != nil) {
+        assert(_line != nil);
         return;
     }
     NSMutableData *mutableData = [[NSMutableData alloc] initWithLength:(_length + 1) * sizeof(screen_char_t)];
@@ -446,6 +451,7 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     memmove(&screenChars[_length], &eol, sizeof(eol));
     _line = _data.bytes;
     _shouldFreeOnRelease = NO;
+    assert(_line != nil);
 }
 
 const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {

@@ -58,6 +58,7 @@ NS_ASSUME_NONNULL_BEGIN
         if (!_screenCharLine) {
             _screenCharLine = [[[ScreenCharArray alloc] init] paddedOrTruncatedToLength:width];
         }
+        assert(_screenCharLine.line != nil);
         [_screenCharLine makeSafe];
 
         _selectedIndexSet = [textView.selection selectedIndexesIncludingTabFillersInAbsoluteLine:totalScrollbackOverflow + i];
