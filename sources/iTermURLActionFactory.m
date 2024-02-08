@@ -309,6 +309,9 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 #pragma mark - Sub-factories
 
 - (URLAction *)urlActionForPrompt {
+    if (![iTermAdvancedSettingsModel enableCmdClickPromptForShowCommandInfo]) {
+        return nil;
+    }
     VT100GridWindowedRange range = { 0 };
     id<VT100ScreenMarkReading> mark = [self.extractor.dataSource commandMarkAt:self.coord range:&range];
     if (!mark || mark.promptRange.start.x < 0 || !mark.command) {
