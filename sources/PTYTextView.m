@@ -5875,7 +5875,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (void)mouseHandlerOpenTargetWithEvent:(NSEvent *)event
                            inBackground:(BOOL)inBackground {
-    if ([self showCommandInfoForEvent:event]) {
+    if ([iTermAdvancedSettingsModel enableCmdClickPromptForShowCommandInfo]
+        && [self showCommandInfoForEvent:event]) {
         return;
     }
     [_urlActionHelper openTargetWithEvent:event inBackground:inBackground];

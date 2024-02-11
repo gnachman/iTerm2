@@ -136,6 +136,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)echoProbeDuration;
 + (void)setEchoProbeDuration:(double)value;
 + (BOOL)enableCharacterAccentMenu;
++ (BOOL)enableCmdClickPromptForShowCommandInfo;
 
 #if ITERM2_SHARED_ARC
 + (BOOL)enableSecureKeyboardEntryAutomatically;
