@@ -33,7 +33,7 @@ const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
     size.height = NSMinY(scrollView.frame) + (NSHeight(self.view.bounds) - NSMaxY(scrollView.frame));
 
     NSSize contentSize = [NSScrollView contentSizeForFrameSize:scrollView.frame.size
-                                       horizontalScrollerClass:scrollView.horizontalScroller.class
+                                       horizontalScrollerClass:nil
                                          verticalScrollerClass:scrollView.verticalScroller.class
                                                     borderType:scrollView.borderType
                                                    controlSize:NSControlSizeRegular

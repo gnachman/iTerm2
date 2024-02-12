@@ -1386,6 +1386,7 @@ DQ
                 <outlet property="_minimumContrastLabel" destination="4899" id="K9V-AN-lF3"/>
                 <outlet property="_mode" destination="3x1-gZ-174" id="r9o-Bp-I2W"/>
                 <outlet property="_modeLabel" destination="ZNy-wl-Zrf" id="bWI-lx-fiQ"/>
+                <outlet property="_modeWarning" destination="57d-0i-P0T" id="VvA-lw-DBC"/>
                 <outlet property="_presetsMenu" destination="3215" id="8lA-lg-5tg"/>
                 <outlet property="_presetsPopupButton" destination="3213" id="8pW-dt-uDC"/>
                 <outlet property="_selectedTextColor" destination="2277" id="jqd-jg-i3Y"/>
@@ -2656,6 +2657,17 @@ DQ
                     <rect key="frame" x="12" y="358" width="527" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57d-0i-P0T">
+                    <rect key="frame" x="337" y="369" width="27" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="square" title="⚠️" bezelStyle="shadowlessSquare" alignment="center" imageScaling="proportionallyDown" inset="2" id="VRh-tL-KgN">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="showModeWarning:" target="p8i-eM-oBc" id="NQS-RU-aPL"/>
+                    </connections>
+                </button>
             </subviews>
             <accessibility identifier="prefsProfilesColors"/>
             <point key="canvasLocation" x="2348.5" y="492.5"/>

@@ -10,12 +10,15 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermColorPresets.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSizeRememberingView.h"
+#import "iTermTextPopoverViewController.h"
 #import "iTermWarning.h"
 #import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSView+iTerm.h"
 #import "PreferencePanel.h"
 
 #import <ColorPicker/ColorPicker.h>
@@ -98,6 +101,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSView *_bwWarning1;
     IBOutlet NSView *_bwWarning2;
 
+    IBOutlet NSButton *_modeWarning;
+
     NSDictionary<NSString *, id> *_savedColors;
     NSTimer *_timer;
 }
@@ -159,6 +164,13 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                                                  name:NSPopUpButtonWillPopUpNotification
                                                object:_presetsPopupButton];
 
+    __weak __typeof(self) weakSelf = self;
+    [iTermPreferenceDidChangeNotification subscribe:self block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
+        if ([notification.key isEqualToString:kPreferenceKeyTabStyle]) {
+            // If the tab style changes the warning button may need to (dis)appear.
+            [weakSelf reloadProfile];
+        }
+    }];
     // Add presets to preset color selection.
     [self rebuildColorPresetsMenu];
 
@@ -193,7 +205,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     }
 
     PreferenceInfo *info;
-    __weak __typeof(self) weakSelf = self;
 
     // The separate colors stuff should be done first because -amendedKey:, which is called when
     // defining controls, expects it to be correct.
@@ -295,11 +306,28 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     if (!useModes) {
         _mode.enabled = NO;
         _modeLabel.labelEnabled = NO;
+        _modeWarning.hidden = YES;
         DLog(@"Do not copy");
         return;
     }
     _mode.enabled = YES;
     _modeLabel.labelEnabled = YES;
+
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_COMPACT:
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_AUTOMATIC:
+            _modeWarning.hidden = YES;
+            break;
+
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            _modeWarning.hidden = NO;
+            break;
+    }
+
 }
 
 - (void)copySharedColorsToModalColorsIfNeeded:(BOOL)useModes {
@@ -745,6 +773,10 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     for (PreferenceInfo *info in [self.keyMap objectEnumerator]) {
         [self updateValueForInfo:info];
     }
+}
+
+- (IBAction)showModeWarning:(id)sender {
+    [_modeWarning it_showWarning:@"Your current theme overrides the system light and dark mode setting, so color switching will not occur. You can change it in Settings > Appearance > General > Theme."];
 }
 
 #pragma mark - Overrides
