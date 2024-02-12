@@ -20,7 +20,6 @@
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "PTYWindow.h"
-#import "SBSystemPreferences.h"
 #import <Carbon/Carbon.h>
 #import <ScriptingBridge/ScriptingBridge.h>
 

@@ -452,20 +452,6 @@
     });
 }
 
-- (NSString *)accessibilityMessageForModifier {
-  return @"You have chosen to remap certain modifier keys. For this to work for all key "
-         @"combinations (such as cmd-tab), you must turn on \"access for assistive devices\" "
-         @"in the Universal Access preferences panel in System Settings and restart iTerm2.";
-}
-
-- (NSString *)accessibilityActionMessage {
-    if (@available(macOS 13, *)) {
-        return @"Open System Settings";
-    } else {
-        return @"Open System Preferences";
-    }
-}
-
 #pragma mark - iTermEventTapRemappingDelegate
 
 - (CGEventRef)remappedEventFromEventTap:(iTermEventTap *)eventTap

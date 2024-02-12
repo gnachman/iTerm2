@@ -169,7 +169,6 @@
 		1D6ED87619AEA20D005A7799 /* PSMTabBarControl.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02573209CB9398008F320C /* PSMTabBarControl.h */; };
 		1D6ED87819AEA20D005A7799 /* SCPFile.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30ED186D150A007F550F /* SCPFile.h */; };
 		1D6ED87919AEA20D005A7799 /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
-		1D6ED87A19AEA20D005A7799 /* SBSystemPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */; };
 		1D6ED87B19AEA20D005A7799 /* PSMTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02573909CB9398008F320C /* PSMTabStyle.h */; };
 		1D6ED87C19AEA20D005A7799 /* AdvancedWorkingDirectoryWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713B018FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h */; };
 		1D6ED87D19AEA20D005A7799 /* PSMTabDragAssistant.h in Headers */ = {isa = PBXBuildFile; fileRef = F6E708B70A9D0EA400D0C4EF /* PSMTabDragAssistant.h */; };
@@ -460,7 +459,6 @@
 		1D6ED9EB19AEA20D005A7799 /* PrefsArrangements.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EE176CCABE0071CCF8 /* PrefsArrangements.png */; };
 		1D6ED9EC19AEA20D005A7799 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
 		1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
-		1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */; };
 		1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB2F006CD2EC7F000001 /* AppKit.framework */; };
 		1D6EDAFB19AEA20D005A7799 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D6EDAFC19AEA20D005A7799 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
@@ -470,13 +468,10 @@
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
 		1D72A4D51BE9707A0042174A /* iTermWebViewWrapperViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72A4D31BE9707A0042174A /* iTermWebViewWrapperViewController.h */; };
 		1D78B55E183EE1C000014D49 /* LineBufferPosition.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D78B55C183EE1C000014D49 /* LineBufferPosition.h */; };
-		1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */; };
 		1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7B9A671491D82F003A2A22 /* IntervalMap.h */; };
 		1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C187F1275D22900461E55 /* PasteboardHistory.h */; };
 		1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */; };
-		1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */; };
 		1D81F0C0183C3C2D00910838 /* NSView+RecursiveDescription.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */; };
-		1D81F0C3183C3CCD00910838 /* SBSystemPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */; };
 		1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */; };
 		1D8255FC14687EE8007CAE78 /* PointerPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */; };
 		1D825600146881EC007CAE78 /* PointerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FE146881EC007CAE78 /* PointerController.h */; };
@@ -4799,10 +4794,8 @@
 		1D7C18801275D22900461E55 /* PasteboardHistory.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PasteboardHistory.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = NSDateFormatterExtras.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = NSDateFormatterExtras.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
 		1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSView+RecursiveDescription.h"; sourceTree = "<group>"; tabWidth = 4; };
 		1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+RecursiveDescription.m"; sourceTree = "<group>"; tabWidth = 4; };
-		1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SBSystemPreferences.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultPointerActions.plist; sourceTree = "<group>"; };
 		1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PointerPrefsController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PointerPrefsController.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -7597,7 +7590,6 @@
 				530AB89B20AFF21300D2AA08 /* CoreParse.framework in Frameworks */,
 				A67D19512237045C00BD0D4D /* libsixel.a in Frameworks */,
 				1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */,
-				1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */,
 				A6184F8B1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
 				A6FB633323DE7DEC00026D52 /* SearchableComboListView.framework in Frameworks */,
 				1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */,
@@ -7624,7 +7616,6 @@
 				A6FB633223DE7DEC00026D52 /* SearchableComboListView.framework in Frameworks */,
 				A6EC8051281BC67900493544 /* SwiftyMarkdown.framework in Frameworks */,
 				1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */,
-				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
 				1D9A55B8180FA92100B42CE9 /* libncurses.dylib in Frameworks */,
 				1D9A55B5180FA8F400B42CE9 /* AppKit.framework in Frameworks */,
 				A624231119CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
@@ -7665,7 +7656,6 @@
 				A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */,
 				A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */,
 				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
-				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
 				A6184F891BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
 				530AB89920AFF21300D2AA08 /* CoreParse.framework in Frameworks */,
@@ -8056,7 +8046,6 @@
 				1D407A3114BABE8700BD5035 /* PTYWindow.h */,
 				A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */,
 				1D085F9C16F137D900B7FCE9 /* RoundedRectView.h */,
-				1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */,
 				A68A30ED186D150A007F550F /* SCPFile.h */,
 				A68A30EE186D150A007F550F /* SCPPath.h */,
 				1D36155312CBF33E00803EA9 /* ScreenChar.h */,
@@ -9018,7 +9007,6 @@
 				1DD39AD8180B8118004E56D5 /* Other Frameworks */,
 				1DEB29301288885700B2CB9F /* Quartz.framework */,
 				1DEB29371288887100B2CB9F /* QuartzCore.framework */,
-				1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */,
 				A6FB633023DE7DEB00026D52 /* SearchableComboListView.framework */,
 				1DFA7C9D1923F77100DF1410 /* Security.framework */,
 				A624230F19CF6B0C00182C08 /* Sparkle.framework */,
@@ -11827,7 +11815,6 @@
 				1D6ED87619AEA20D005A7799 /* PSMTabBarControl.h in Headers */,
 				1D6ED87819AEA20D005A7799 /* SCPFile.h in Headers */,
 				1D6ED87919AEA20D005A7799 /* iTermFindCursorView.h in Headers */,
-				1D6ED87A19AEA20D005A7799 /* SBSystemPreferences.h in Headers */,
 				1D6ED87B19AEA20D005A7799 /* PSMTabStyle.h in Headers */,
 				1D6ED87C19AEA20D005A7799 /* AdvancedWorkingDirectoryWindowController.h in Headers */,
 				1D6ED87D19AEA20D005A7799 /* PSMTabDragAssistant.h in Headers */,
@@ -12170,7 +12157,6 @@
 				A68A30F7186D150B007F550F /* SCPFile.h in Headers */,
 				A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */,
 				1D8BBA5A1B30E9AF0005A852 /* iTermTipCardActionButton.h in Headers */,
-				1D81F0C3183C3CCD00910838 /* SBSystemPreferences.h in Headers */,
 				1D5FDD601208E8F000C46BA3 /* PSMTabStyle.h in Headers */,
 				A6E713B318FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h in Headers */,
 				1D5FDD621208E8F000C46BA3 /* PSMTabDragAssistant.h in Headers */,
