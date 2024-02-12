@@ -19,6 +19,7 @@ class InputSourceForcer: NSObject {
         }
     }
     private var active = false
+    private var timer: Timer?
 
     private static var currentSystemLocale: String? {
         guard let inputSource = TISCopyCurrentKeyboardInputSource()?.takeRetainedValue() else {
@@ -68,9 +69,19 @@ class InputSourceForcer: NSObject {
         systemLocale = Self.currentSystemLocale
         active = true
         update()
+
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.timerDidFire()
+        }
+    }
+
+    private func timerDidFire() {
+        update()
     }
 
     @objc private func appWillResignActive(notification: Notification) {
+        timer?.invalidate()
+        timer = nil
         guard forcingEnabled else {
             DLog("Resigning active but input source forcing is not enabled")
             return
