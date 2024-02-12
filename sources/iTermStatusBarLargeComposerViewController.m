@@ -290,7 +290,7 @@
          @"^⇧↓\tAdd cursor below\n"
          @"^⇧-click\tAdd cursor\n"
          @"⌥-drag\tAdd cursors\n"
-         @"⌘B\tNatural language AI lookup\n"
+         @"⌘Y\tNatural language AI lookup\n"
          @"⌘F\tOpen Find bar\n"
          @"⌥⌘V\tOpen in Advanced Paste\n"
          @"⌘-click\tOpen in explainshell.com\n"
