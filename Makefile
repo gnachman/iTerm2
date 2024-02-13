@@ -1,4 +1,4 @@
-PATH := /usr/bin:/bin:/usr/sbin:/sbin
+PATH := /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 ORIG_PATH := $(PATH)
 PATH := /usr/bin:/bin:/usr/sbin:/sbin
