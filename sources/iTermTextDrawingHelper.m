@@ -608,7 +608,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             alpha = 1;
         }
     } else if (run->isMatch) {
-        color = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
+        color = [_colorMap colorForKey:kColorMapMatch];
     } else {
         const BOOL defaultBackground = (run->bgColor == ALTSEM_DEFAULT &&
                                         run->bgColorMode == ColorModeAlternate);
@@ -2260,6 +2260,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return maskContext;
 }
 
+NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor) {
+    return bgColor.isDark ? [NSColor colorWithCalibratedRed:1 green:1 blue:1 alpha:1] : [NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1];
+}
+
 NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
                                             screen_char_t *c,
                                             BOOL inUnderlinedRange,
@@ -2290,7 +2294,8 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
 
     if (isMatch) {
         // Black-on-yellow search result.
-        rawColor = [NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1];
+        NSColor *bgColor = [context->colorMap colorForKey:kColorMapMatch];
+        rawColor = iTermTextDrawingHelperTextColorForMatch(bgColor);
         assert(rawColor);
         context->havePreviousCharacterAttributes = NO;
     } else if (inUnderlinedRange) {

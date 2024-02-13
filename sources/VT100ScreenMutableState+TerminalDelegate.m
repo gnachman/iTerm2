@@ -2075,6 +2075,7 @@
                              @"bg": @(kColorMapBackground),
                              @"bold": @(kColorMapBold),
                              @"link": @(kColorMapLink),
+                             @"match": @(kColorMapMatch),
                              @"selbg": @(kColorMapSelection),
                              @"selfg": @(kColorMapSelectedText),
                              @"curbg": @(kColorMapCursor),

@@ -4331,6 +4331,7 @@ ITERM_WEAKLY_REFERENCEABLE
                               @(kColorMapSelectedText): k(KEY_SELECTED_TEXT_COLOR),
                               @(kColorMapBold): k(KEY_BOLD_COLOR),
                               @(kColorMapLink): k(KEY_LINK_COLOR),
+                              @(kColorMapMatch): k(KEY_MATCH_COLOR),
                               @(kColorMapCursor): k(KEY_CURSOR_COLOR),
                               @(kColorMapCursorText): k(KEY_CURSOR_TEXT_COLOR),
                               @(kColorMapUnderline): (useUnderline ? k(KEY_UNDERLINE_COLOR) : [NSNull null])

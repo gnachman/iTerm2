@@ -55,6 +55,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSButton *_brightenBoldText;
     IBOutlet CPKColorWell *_boldColor;
     IBOutlet CPKColorWell *_linkColor;
+    IBOutlet CPKColorWell *_matchColor;
     IBOutlet CPKColorWell *_selectionColor;
     IBOutlet CPKColorWell *_selectedTextColor;
     IBOutlet CPKColorWell *_cursorColor;
@@ -74,6 +75,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSTextField *_foregroundColorLabel;
     IBOutlet NSTextField *_backgroundColorLabel;
     IBOutlet NSTextField *_linkColorLabel;
+    IBOutlet NSTextField *_matchColorLabel;
     IBOutlet NSTextField *_selectionColorLabel;
     IBOutlet NSButton *_selectedTextColorEnabledButton;
     IBOutlet NSTextField *_badgeColorLabel;
@@ -421,6 +423,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
               KEY_BACKGROUND_COLOR: _backgroundColor,
               KEY_BOLD_COLOR: _boldColor,
               KEY_LINK_COLOR: _linkColor,
+              KEY_MATCH_COLOR: _matchColor,
               KEY_SELECTION_COLOR: _selectionColor,
               KEY_SELECTED_TEXT_COLOR: _selectedTextColor,
               KEY_CURSOR_COLOR: _cursorColor,

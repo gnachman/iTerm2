@@ -8,8 +8,7 @@
 import Foundation
 import AppKit
 
-// Draw a bit of text for the find indicator. Exactly matches the legacy drawing but all text is
-// black and it has a yellow background with a bit of extra yellow padding.
+// Draw a bit of text for the find indicator. Kind of matches standard drawing but with fewer colors.
 @objc(iTermTextClipDrawing)
 class TextClipDrawing: NSObject {
     @objc static let padding = NSSize(width: 4, height: 2.5)
@@ -146,8 +145,9 @@ class TextClipDrawing: NSObject {
         colorMap.minimumContrast = 0
         let black = NSColor(red: 0, green: 0, blue: 0, alpha: 1)
         let yellow = NSColor(red: 1, green: 1, blue: 0, alpha: 1)
-        colorMap.setColor(black, forKey: kColorMapForeground)
-        colorMap.setColor(yellow, forKey: kColorMapBackground)
+        let matchBg = drawingHelper.colorMap.color(forKey: kColorMapMatch)
+        colorMap.setColor(iTermTextDrawingHelperTextColorForMatch(matchBg), forKey: kColorMapForeground)
+        colorMap.setColor(matchBg, forKey: kColorMapMatch)
         colorMap.setColor(black, forKey: kColorMapUnderline)
         colorMap.setColor(black, forKey: kColorMapLink)
         colorMap.setColor(black, forKey: kColorMapSelectedText)

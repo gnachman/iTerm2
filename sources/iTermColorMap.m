@@ -14,6 +14,17 @@
 #import "iTerm2SharedARC-Swift.h"
 #import <simd/simd.h>
 
+// This value plus 0...255 are accepted.
+const int kColorMap8bitBase = 10;
+const int kColorMapNumberOf8BitColors = 256;
+
+// This value plus 0...2^24-1 are accepted as read-only keys.
+const int kColorMap24bitBase = kColorMap8bitBase + 256;
+
+// Additional configurable colors because I ran out space under 8bit base.
+const int kExtendedColorsBase = kColorMap24bitBase + (1 << 24);
+
+// Configurable colors
 const int kColorMapForeground = 0;
 const int kColorMapBackground = 1;
 const int kColorMapBold = 2;
@@ -24,12 +35,11 @@ const int kColorMapCursorText = 6;
 const int kColorMapInvalid = 7;
 const int kColorMapLink = 8;
 const int kColorMapUnderline = 9;
-// This value plus 0...255 are accepted.
-const int kColorMap8bitBase = 10;
-const int kColorMapNumberOf8BitColors = 256;
-// This value plus 0...2^24-1 are accepted as read-only keys. These must be the highest-valued keys.
-const int kColorMap24bitBase = kColorMap8bitBase + 256;
 
+// Additional configurable colors (I ran out of space < 10).
+const int kColorMapMatch = kExtendedColorsBase + 0;
+
+// ANSI colors that automatically get bright variants.
 const int kColorMapAnsiBlack = kColorMap8bitBase + 0;
 const int kColorMapAnsiRed = kColorMap8bitBase + 1;
 const int kColorMapAnsiGreen = kColorMap8bitBase + 2;
@@ -38,6 +48,8 @@ const int kColorMapAnsiBlue = kColorMap8bitBase + 4;
 const int kColorMapAnsiMagenta = kColorMap8bitBase + 5;
 const int kColorMapAnsiCyan = kColorMap8bitBase + 6;
 const int kColorMapAnsiWhite = kColorMap8bitBase + 7;
+
+// Add to ANSI color to get bright variant.
 const int kColorMapAnsiBrightModifier = 8;
 
 @interface iTermColorMapSanitizingAdapter: NSProxy<iTermColorMapReading>
@@ -99,7 +111,7 @@ const int kColorMapAnsiBrightModifier = 8;
 }
 
 - (void)setColor:(NSColor *)colorInArbitrarySpace forKey:(iTermColorMapKey)theKey {
-    if (theKey >= kColorMap24bitBase) {
+    if (theKey >= kColorMap24bitBase && theKey < kExtendedColorsBase) {
         return;
     }
     _generation += 1;
@@ -141,7 +153,7 @@ const int kColorMapAnsiBrightModifier = 8;
 - (NSColor *)colorForKey:(iTermColorMapKey)theKey {
     if (theKey == kColorMapInvalid) {
         return [NSColor redColor];
-    } else if (theKey >= kColorMap24bitBase) {
+    } else if (theKey >= kColorMap24bitBase && theKey < kExtendedColorsBase) {
         int n = theKey - kColorMap24bitBase;
         int blue = (n & 0xff);
         int green = (n >> 8) & 0xff;
@@ -155,7 +167,7 @@ const int kColorMapAnsiBrightModifier = 8;
 - (vector_float4)fastColorForKey:(iTermColorMapKey)theKey {
     if (theKey == kColorMapInvalid) {
         return simd_make_float4(1, 0, 0, 1);
-    } else if (theKey >= kColorMap24bitBase) {
+    } else if (theKey >= kColorMap24bitBase && theKey < kExtendedColorsBase) {
         int n = theKey - kColorMap24bitBase;
         int blue = (n & 0xff);
         int green = (n >> 8) & 0xff;
@@ -489,6 +501,7 @@ const int kColorMapAnsiBrightModifier = 8;
             @(kColorMapBackground): KEY_BACKGROUND_COLOR,
             @(kColorMapBold): KEY_BOLD_COLOR,
             @(kColorMapLink): KEY_LINK_COLOR,
+            @(kColorMapMatch): KEY_MATCH_COLOR,
             @(kColorMapSelection): KEY_SELECTION_COLOR,
             @(kColorMapSelectedText): KEY_SELECTED_TEXT_COLOR,
             @(kColorMapCursor): KEY_CURSOR_COLOR,

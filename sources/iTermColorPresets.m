@@ -159,6 +159,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
         KEY_BACKGROUND_COLOR,
         KEY_BOLD_COLOR,
         KEY_LINK_COLOR,
+        KEY_MATCH_COLOR,
         KEY_SELECTION_COLOR,
         KEY_SELECTED_TEXT_COLOR,
         KEY_CURSOR_COLOR,
@@ -265,7 +266,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
             if (colorDict) {
                 newDict[key] = colorDict;
             } else {
-                [newDict removeObjectForKey:key];  // Can happen for tab color and underline color, which are optional
+                [newDict removeObjectForKey:key];  // Can happen for tab color, match color, and underline color, which are optional
             }
         }
     }

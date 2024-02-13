@@ -1089,7 +1089,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         };
         return [self unprocessedColorForBackgroundColorKey:&temp isDefault:isDefault];
     } else if (colorKey->isMatch) {
-        color = (vector_float4){ 1, 1, 0, 1 };
+        color = VectorForColor([_configuration->_colorMap colorForKey:kColorMapMatch],
+                              _configuration->_colorSpace);
     } else {
         const BOOL defaultBackground = (colorKey->bgColor == ALTSEM_DEFAULT &&
                                         colorKey->bgColorMode == ColorModeAlternate);
@@ -1399,7 +1400,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
     if (findMatch) {
         // Black-on-yellow search result.
-        rawColor = (vector_float4){ 0, 0, 0, 1 };
+        NSColor *bgColor = [_configuration->_colorMap colorForKey:kColorMapMatch];
+        rawColor = VectorForColor(iTermTextDrawingHelperTextColorForMatch(bgColor),
+                                  _configuration->_colorSpace);
         caches->havePreviousCharacterAttributes = NO;
     } else if (inUnderlinedRange) {
         // Blue link text.

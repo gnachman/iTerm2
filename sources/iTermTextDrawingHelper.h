@@ -35,6 +35,8 @@ typedef NS_ENUM(NSUInteger, iTermMarkIndicatorType) {
 };
 
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
+NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor);
+
 extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 
 @interface iTermTextDrawingHelper : NSObject

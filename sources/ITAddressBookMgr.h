@@ -91,6 +91,7 @@
 #define KEY_USE_BOLD_COLOR         @"Use Bright Bold"  // Pre-3.3.7: Means "use the specified bold color, and also use the bright version of dark ansi colors". Post-3.3.7: Use the specified bold color
 #define KEY_BRIGHTEN_BOLD_TEXT     @"Brighten Bold Text"  // New in 3.3.7.
 #define KEY_LINK_COLOR             @"Link Color"
+#define KEY_MATCH_COLOR            @"Match Background Color"
 #define KEY_SELECTION_COLOR        @"Selection Color"
 #define KEY_SELECTED_TEXT_COLOR    @"Selected Text Color"
 #define KEY_CURSOR_COLOR           @"Cursor Color"

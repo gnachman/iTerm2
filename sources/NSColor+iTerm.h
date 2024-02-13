@@ -71,6 +71,7 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs);
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 @property(nonatomic, readonly) NSString *stringValue;
+@property(nonatomic, readonly) iTermSRGBColor itermSRGBColor;
 
 // This is some janky NTSC shit
 CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
