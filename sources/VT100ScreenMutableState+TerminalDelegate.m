@@ -41,12 +41,14 @@
     if (self.config.loggingEnabled) {
         const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
         const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
+        const BOOL atPrompt = _promptStateMachine.isAtPrompt;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenDidAppendStringToCurrentLine:string
                                               isPlainText:YES
                                               foreground:foregroundColorCode
-                                              background:backgroundColorCode];
+                                              background:backgroundColorCode
+                                                atPrompt:atPrompt];
         }];
     }
 }
@@ -66,11 +68,13 @@
         const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
         NSData *data = [NSData dataWithBytes:asciiData->buffer
                                       length:asciiData->length];
+        const BOOL atPrompt = _promptStateMachine.isAtPrompt;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenDidAppendAsciiDataToCurrentLine:data
                                                  foreground:foregroundColorCode
-                                                 background:backgroundColorCode];
+                                                 background:backgroundColorCode
+                                                   atPrompt:atPrompt];
         }];
     }
 }
@@ -84,12 +88,14 @@
     if (self.config.loggingEnabled) {
         const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
         const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
+        const BOOL atPrompt = _promptStateMachine.isAtPrompt;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenDidAppendStringToCurrentLine:@"\a"
                                              isPlainText:NO
                                               foreground:foregroundColorCode
-                                              background:backgroundColorCode];
+                                              background:backgroundColorCode
+                                                atPrompt:atPrompt];
         }];
     }
 }
@@ -2168,13 +2174,15 @@
                          externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.lastExternalAttribute]];
             [self appendStringToTriggerLine:string];
             if (self.config.loggingEnabled) {
+                const BOOL atPrompt = _promptStateMachine.isAtPrompt;
                 [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
                     DLog(@"begin side-effect");
                     [delegate screenDidAppendStringToCurrentLine:string
                                                      isPlainText:(self.lastCharacter.complexChar ||
                                                                   self.lastCharacter.code >= ' ')
                                                       foreground:foregroundColorCode
-                                                      background:backgroundColorCode];
+                                                      background:backgroundColorCode
+                                                        atPrompt:atPrompt];
                 }];
             }
         }

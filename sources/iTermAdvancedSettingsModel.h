@@ -351,6 +351,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 // background. If the brightness difference is less than this value then the text color becomes
 // black or white.
 + (double)smartCursorColorFgThreshold;
++ (BOOL)smartLoggingWithAutoComposer;
 + (int)smartSelectionRadius;
 + (BOOL)solidUnderlines;
 + (NSString *)splitPaneColor;

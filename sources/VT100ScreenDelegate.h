@@ -87,11 +87,13 @@
 - (void)screenDidAppendStringToCurrentLine:(NSString * _Nonnull)string
                                isPlainText:(BOOL)plainText
                                 foreground:(screen_char_t)fg
-                                background:(screen_char_t)bg;
+                                background:(screen_char_t)bg
+                                  atPrompt:(BOOL)atPrompt;
 
 - (void)screenDidAppendAsciiDataToCurrentLine:(NSData * _Nonnull)asciiData
                                    foreground:(screen_char_t)fg
-                                   background:(screen_char_t)bg;
+                                   background:(screen_char_t)bg
+                                     atPrompt:(BOOL)atPrompt;
 
 - (void)screenRevealComposerWithPrompt:(NSArray<ScreenCharArray *> * _Nonnull)prompt;
 - (void)screenDismissComposer;

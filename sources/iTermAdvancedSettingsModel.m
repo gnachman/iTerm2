@@ -764,6 +764,7 @@ DEFINE_INT(aiResponseMaxTokens, 1000, SECTION_EXPERIMENTAL @"Maximum tokens for 
 DEFINE_BOOL(addUtilitiesToPATH, YES, SECTION_EXPERIMENTAL @"Add path to iTerm2 utilities to $PATH for new sessions?");
 DEFINE_STRING(aitermURL, @"https://api.openai.com/v1/completions", SECTION_EXPERIMENTAL @"URL for AI API.\nA ChatGPT API endpoint should be here. Note that this URL is only used if the model name does not begin with `gpt-` because those models used an older API.");
 DEFINE_BOOL(autoSearch, NO, SECTION_EXPERIMENTAL @"Automatically search for selected text after making a selection?");
+DEFINE_BOOL(smartLoggingWithAutoComposer, NO, SECTION_EXPERIMENTAL @"Enable more compact logging when using auto composer?\nThis will avoid logging raw data in your prompt and your interactions with it. Instead, the prompt is logged once in plain text and the command is logged when sent.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

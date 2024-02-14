@@ -153,6 +153,14 @@ class PromptStateMachine: NSObject {
     private var _state = State.ground
     private var state: State { _state }
     private var currentEvent = ""
+    @objc var isAtPrompt: Bool {
+        switch state {
+        case .disabled, .ground, .executing:
+            return false
+        case .receivingPrompt, .enteringCommand, .accruingAlreadyEnteredCommand, .echoingBack:
+            return true
+        }
+    }
 
     private func set(state newValue: State, on event: String) {
         DLog("\(event): \(state) -> \(newValue)")

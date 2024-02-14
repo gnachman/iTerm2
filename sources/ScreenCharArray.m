@@ -197,6 +197,14 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     return result;
 }
 
+- (NSString *)stringValueIncludingNewline {
+    NSString *base = self.stringValue;
+    if (self.eol == EOL_HARD) {
+        return [base stringByAppendingString:@"\n"];
+    }
+    return base;
+}
+
 - (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider {
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     const screen_char_t *line = self.line;

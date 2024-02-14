@@ -4022,11 +4022,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (self.config.loggingEnabled) {
         const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
         const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
+        const BOOL atPrompt = _promptStateMachine.isAtPrompt;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenDidAppendStringToCurrentLine:string
                                              isPlainText:YES
                                               foreground:foregroundColorCode
-                                              background:backgroundColorCode];
+                                              background:backgroundColorCode
+                                                atPrompt:atPrompt];
         }];
     }
     return YES;

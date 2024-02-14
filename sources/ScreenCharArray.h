@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) iTermImmutableMetadata metadata;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 @property (nonatomic, readonly) NSString *stringValue;
+@property (nonatomic, readonly) NSString *stringValueIncludingNewline;
 
 @property (nonatomic, readonly) NSInteger lengthExcludingTrailingWhitespaceAndNulls;
 

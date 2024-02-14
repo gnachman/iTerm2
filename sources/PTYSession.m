@@ -11753,17 +11753,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)screenDidAppendStringToCurrentLine:(NSString * _Nonnull)string
                                isPlainText:(BOOL)plainText
                                 foreground:(screen_char_t)fg
-                                background:(screen_char_t)bg {
+                                background:(screen_char_t)bg
+                                  atPrompt:(BOOL)atPrompt {
     if (plainText) {
         [self logCooked:[string dataUsingEncoding:_screen.terminalEncoding]
              foreground:fg
-             background:bg];
+             background:bg
+               atPrompt:atPrompt];
     }
 }
 
 - (void)logCooked:(NSData *)data
        foreground:(screen_char_t)fg
-       background:(screen_char_t)bg {
+       background:(screen_char_t)bg
+         atPrompt:(BOOL)atPrompt {
     if (!_logging.enabled) {
         return;
     }
@@ -11775,25 +11778,43 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         case iTermLoggingStyleAsciicast:
             break;
         case iTermLoggingStylePlainText:
-            [_logging logData:data];
+            if ([iTermAdvancedSettingsModel smartLoggingWithAutoComposer]) {
+              if (!atPrompt || ![iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+                  [_logging logData:data];
+              }
+            } else {
+                [_logging logData:data];
+            }
             break;
         case iTermLoggingStyleHTML:
-            [_logging logData:[data htmlDataWithForeground:fg
-                                                background:bg
-                                                  colorMap:_screen.colorMap
-                                        useCustomBoldColor:_textview.useCustomBoldColor
-                                              brightenBold:_textview.brightenBold]];
+            if ([iTermAdvancedSettingsModel smartLoggingWithAutoComposer]) {
+                if (!atPrompt || ![iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+                    [_logging logData:[data htmlDataWithForeground:fg
+                                                        background:bg
+                                                          colorMap:_screen.colorMap
+                                                useCustomBoldColor:_textview.useCustomBoldColor
+                                                      brightenBold:_textview.brightenBold]];
+                }
+            } else {
+                [_logging logData:[data htmlDataWithForeground:fg
+                                                    background:bg
+                                                      colorMap:_screen.colorMap
+                                            useCustomBoldColor:_textview.useCustomBoldColor
+                                                  brightenBold:_textview.brightenBold]];
+            }
             break;
     }
 }
 
 - (void)screenDidAppendAsciiDataToCurrentLine:(NSData *)asciiData
                                    foreground:(screen_char_t)fg
-                                   background:(screen_char_t)bg {
+                                   background:(screen_char_t)bg
+                                     atPrompt:(BOOL)atPrompt {
     if (_logging.enabled) {
         [self logCooked:asciiData
              foreground:fg
-             background:bg];
+             background:bg
+               atPrompt:atPrompt];
     }
 }
 
@@ -12397,6 +12418,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                                  toConnectionKey:key];
         }
     }];
+    if ([iTermAdvancedSettingsModel smartLoggingWithAutoComposer]) {
+        if ([iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+            NSArray<ScreenCharArray *> *lines = mark.promptText;
+            for (ScreenCharArray *line in lines) {
+                NSString *string = (line == lines.lastObject) ? line.stringValue : line.stringValueIncludingNewline;
+                string = [string stringByAppendingString:@" "];
+                [self logCooked:[string dataUsingEncoding:_screen.terminalEncoding]
+                     foreground:(screen_char_t){0}
+                     background:(screen_char_t){0}
+                       atPrompt:NO];
+            }
+        }
+    }
     __weak __typeof(self) weakSelf = self;
     // Can't just do it here because it may trigger a resize and this runs as a side-effect.
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -17369,6 +17403,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             // TODO: This may wreak havoc if the shell decides to redraw itself.
             command = [[NSString stringWithLongCharacter:'U' - '@'] stringByAppendingString:command];
         }
+        if ([iTermAdvancedSettingsModel smartLoggingWithAutoComposer]) {
+            NSString *trimmedCommand = [command stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]];
+            [self logCooked:[trimmedCommand dataUsingEncoding:_screen.terminalEncoding]
+                 foreground:(screen_char_t){0}
+                 background:(screen_char_t){0} atPrompt:NO];
+        }
+
         const BOOL detectedByTrigger = [_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyDetectedByTrigger] boolValue];
         [_composerManager setPrefix:nil userData:nil];
         [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
