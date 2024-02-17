@@ -204,7 +204,9 @@ class ComposerTextView: MultiCursorTextView {
                 multiCursorReplaceCharacters(in: range, with: string)
             }
         } else {
-            multiCursorReplaceCharacters(in: NSRange(location: 0, length: textStorage?.length ?? 0),
+            let range = NSRange(from: prefixRange.upperBound,
+                                to: textStorage?.length ?? prefixRange.upperBound)
+            multiCursorReplaceCharacters(in: range,
                                          with: string)
         }
     }
