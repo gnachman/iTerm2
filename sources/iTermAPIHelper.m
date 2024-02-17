@@ -2835,6 +2835,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         if (request.activateApp.ignoringOtherApps) {
             options |= NSApplicationActivateIgnoringOtherApps;
         }
+        DLog(@"Activate with options %@", @(options));
         [[NSRunningApplication currentApplication] activateWithOptions:options];
     }
 

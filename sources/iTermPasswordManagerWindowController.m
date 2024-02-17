@@ -727,6 +727,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (void)authenticationDidComplete:(BOOL)success {
+    DLog(@"begin");
     // When a sheet is attached to a hotkey window another app becomes active after the auth dialog
     // is dismissed, leaving the hotkey behind another app.
     _awakeFromNibAvailabilityCheckFailed = NO;

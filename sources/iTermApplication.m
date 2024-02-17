@@ -699,6 +699,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         // Gotta wait for a spin of the runloop or else it doesn't activate. That's bad news
         // when toggling the preference because all the windows disappear.
         dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"uiElement=%@", @(uiElement));
             [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
         });
 
@@ -726,6 +727,16 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 - (NSArray<NSWindow *> *)orderedWindowsPlusAllHotkeyPanels {
     NSArray<NSWindow *> *panels = [[iTermHotKeyController sharedInstance] allFloatingHotkeyWindows] ?: @[];
     return [panels arrayByAddingObjectsFromArray:[self orderedWindows]];
+}
+
+- (void)activateIgnoringOtherApps:(BOOL)flag {
+    DLog(@"flag=%@\n%@", @(flag), [NSThread callStackSymbols]);
+    [super activateIgnoringOtherApps:flag];
+}
+
+- (void)activate {
+    DLog(@"%@", [NSThread callStackSymbols]);
+    [super activate];
 }
 
 - (void)activateAppWithCompletion:(void (^)(void))completion {
