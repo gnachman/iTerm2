@@ -19,7 +19,6 @@ class InputSourceForcer: NSObject {
         }
     }
     private var active = false
-    private var timer: Timer?
 
     private static var currentSystemLocale: String? {
         guard let inputSource = TISCopyCurrentKeyboardInputSource()?.takeRetainedValue() else {
@@ -45,6 +44,10 @@ class InputSourceForcer: NSObject {
                                                selector: #selector(appWillResignActive),
                                                name: NSApplication.willResignActiveNotification,
                                                object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(keyboardSelectionDidChange),
+                                               name: NSTextInputContext.keyboardSelectionDidChangeNotification,
+                                               object: nil)
     }
 
     @objc
@@ -65,23 +68,23 @@ class InputSourceForcer: NSObject {
     }
 
     @objc private func appDidBecomeActive(notification: Notification) {
-        DLog("App did become active")
+        DLog("App did become active in forcer")
         systemLocale = Self.currentSystemLocale
         active = true
         update()
+    }
 
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.timerDidFire()
+    @objc private func keyboardSelectionDidChange() {
+        guard active else {
+            return
+        }
+        DLog("Keyboard selection did change to \(systemLocale ?? "none")")
+        DispatchQueue.main.async { [weak self] in
+            self?.update()
         }
     }
 
-    private func timerDidFire() {
-        update()
-    }
-
     @objc private func appWillResignActive(notification: Notification) {
-        timer?.invalidate()
-        timer = nil
         guard forcingEnabled else {
             DLog("Resigning active but input source forcing is not enabled")
             return
@@ -124,6 +127,7 @@ class InputSourceForcer: NSObject {
     }
 
     private func setInputLocale(_ keyboardID: String) {
+        DLog("System locale is \(systemLocale ?? "none"), switch to \(keyboardID)")
         precondition(forcingEnabled)
         let inputSources = TISCreateInputSourceList(nil, false).takeRetainedValue() as! [TISInputSource]
         if let inputSource = inputSources.first(where: { inputSource in
