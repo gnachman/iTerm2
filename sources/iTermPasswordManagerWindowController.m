@@ -302,7 +302,30 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
     }
 }
 
++ (NSString *)randomPassword {
+    NSString *characters;
+    NSUInteger length = 16;
+    if ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption) {
+        characters = @"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        length += 2;
+    } else {
+        characters = @"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}|:<>?,./;'[]-=";
+    }
+    NSMutableString *randomPassword = [NSMutableString string];
+
+    for (NSUInteger i = 0; i < length; i++) {
+        uint32_t rand = arc4random_uniform((uint32_t)characters.length);
+        unichar character = [characters characterAtIndex:rand];
+        [randomPassword appendFormat:@"%C", character];
+    }
+    return randomPassword;
+}
+
 #pragma mark - Actions
+
+- (IBAction)generatePassword:(id)sender {
+    _newPassword.stringValue = [iTermPasswordManagerWindowController randomPassword];
+}
 
 - (IBAction)cancelAsyncOperation:(id)sender {
     _cancelCount += 1;
@@ -491,6 +514,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = [NSString stringWithFormat:@"Enter password for %@:", accountName];
             [alert addButtonWithTitle:@"OK"];
+            [alert addButtonWithTitle:@"Generate"];
             [alert addButtonWithTitle:@"Cancel"];
 
             NSSecureTextField *newPassword = [[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
@@ -500,19 +524,37 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
             [alert layout];
             [[alert window] makeFirstResponder:newPassword];
 
-            if ([self runModal:alert] == NSAlertFirstButtonReturn) {
-                __weak __typeof(self) weakSelf = self;
-                const NSInteger cancelCount = [self incrBusy];
-                [_entries[row] setPassword:newPassword.stringValue completion:^(NSError * _Nullable error) {
-                    [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
-                        [weakSelf decrBusy];
-                        if (error) {
-                            DLog(@"%@", error);
-                            return;
-                        }
-                        [weakSelf passwordsDidChange];
+            switch ([self runModal:alert]) {
+                case NSAlertFirstButtonReturn: {
+                    __weak __typeof(self) weakSelf = self;
+                    const NSInteger cancelCount = [self incrBusy];
+                    [_entries[row] setPassword:newPassword.stringValue completion:^(NSError * _Nullable error) {
+                        [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                            [weakSelf decrBusy];
+                            if (error) {
+                                DLog(@"%@", error);
+                                return;
+                            }
+                            [weakSelf passwordsDidChange];
+                        }];
                     }];
-                }];
+                    break;
+                }
+                case NSAlertSecondButtonReturn: {
+                    __weak __typeof(self) weakSelf = self;
+                    const NSInteger cancelCount = [self incrBusy];
+                    [_entries[row] setPassword:[iTermPasswordManagerWindowController randomPassword] completion:^(NSError * _Nullable error) {
+                        [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                            [weakSelf decrBusy];
+                            if (error) {
+                                DLog(@"%@", error);
+                                return;
+                            }
+                            [weakSelf passwordsDidChange];
+                        }];
+                    }];
+                    break;
+                }
             }
         }
     }

@@ -1615,6 +1615,9 @@
 		A64D6A042495608500FC0CDE /* iTermAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A663011619CFE450004AF81C /* iTermAboutWindowController.m */; };
 		A64DE9AA237A8555002E390C /* iTermFakeWindowTitleLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */; };
 		A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */; };
+		A64F32142B853CEE008EFDC9 /* dice.png in Resources */ = {isa = PBXBuildFile; fileRef = A64F32132B853CED008EFDC9 /* dice.png */; };
+		A64F32152B853CEE008EFDC9 /* dice.png in Resources */ = {isa = PBXBuildFile; fileRef = A64F32132B853CED008EFDC9 /* dice.png */; };
+		A64F32162B853CEE008EFDC9 /* dice.png in Resources */ = {isa = PBXBuildFile; fileRef = A64F32132B853CED008EFDC9 /* dice.png */; };
 		A64FCD53238DDFEE001D8199 /* iTermTTYState.c in Sources */ = {isa = PBXBuildFile; fileRef = A6E74ADE2383AA1D0089004A /* iTermTTYState.c */; };
 		A64FCD54238DE6EF001D8199 /* iTermClientServerProtocol.c in Sources */ = {isa = PBXBuildFile; fileRef = 53E282CD22EA9D98007CBA30 /* iTermClientServerProtocol.c */; };
 		A64FCD55238DE702001D8199 /* iTermPosixTTYReplacements.c in Sources */ = {isa = PBXBuildFile; fileRef = 53E282D522EAAD36007CBA30 /* iTermPosixTTYReplacements.c */; };
@@ -5961,6 +5964,7 @@
 		A64CA8AE29B5A38000DA4CBB /* CompressibleCharacterBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompressibleCharacterBuffer.swift; sourceTree = "<group>"; };
 		A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFakeWindowTitleLabel.h; sourceTree = "<group>"; };
 		A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFakeWindowTitleLabel.m; sourceTree = "<group>"; };
+		A64F32132B853CED008EFDC9 /* dice.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = dice.png; path = images/dice.png; sourceTree = "<group>"; };
 		A64FCD56238DE785001D8199 /* iTermFileDescriptorServerShared.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorServerShared.h; sourceTree = "<group>"; };
 		A64FCD57238DE785001D8199 /* iTermFileDescriptorServerShared.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorServerShared.c; sourceTree = "<group>"; };
 		A65003EA29FDE4410028BC9E /* PasteBuiltInFunction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBuiltInFunction.swift; sourceTree = "<group>"; };
@@ -8314,6 +8318,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A64F32132B853CED008EFDC9 /* dice.png */,
 				A66351452B659309009B93F7 /* PinnedIndicator.png */,
 				A66351442B659309009B93F7 /* PinnedIndicator@2x.png */,
 				A602AAE22B0BCDB000E6C965 /* whitebox_logo.png */,
@@ -13916,6 +13921,7 @@
 				A65B72541B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				A631FCA520EF0DFB00EB824F /* iTermStatusBarKnobColorViewController.xib in Resources */,
 				A6F31A2F295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */,
+				A64F32162B853CEE008EFDC9 /* dice.png in Resources */,
 				1D6ED9E019AEA20D005A7799 /* PrefsAppearance.png in Resources */,
 				A6A64E6B2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
 				A67F61EC214395D50093940A /* graphic_yarn@2x.png in Resources */,
@@ -13996,6 +14002,7 @@
 				A6E7AE8D214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A6F18B362AE2F39C006C08EE /* uniE0C1_flame-thin.pdf in Resources */,
 				A6A64E6A2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
+				A64F32152B853CEE008EFDC9 /* dice.png in Resources */,
 				A6B9662325F95DAD00D45CBD /* iTermTriggersPanel.xib in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				A67F615C214395990093940A /* graphic_micro.png in Resources */,
@@ -14760,6 +14767,7 @@
 				A6F31A2D295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */,
 				A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */,
 				A602AAE62B0BCDB100E6C965 /* whitebox_logo.png in Resources */,
+				A64F32142B853CEE008EFDC9 /* dice.png in Resources */,
 				A6BF02E22A8AABD7003D205F /* blendbyte_logo@2x.png in Resources */,
 				A6E7AE8C214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A67F618A214395A70093940A /* graphic_nginx@2x.png in Resources */,
