@@ -14763,8 +14763,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         if (![self haveResizedRecently]) {
             _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];
         }
-        _newOutput = YES;
-
+        // If you're in an interactive app in another tab it'll draw itself on
+        // jiggle but we shouldn't count that as activity.
+        if (self.shell.winSizeController.timeSinceLastJiggle > 0.25) {
+            _newOutput = YES;
+        }
+        
         // Make sure the screen gets redrawn soonish
         self.active = YES;
 

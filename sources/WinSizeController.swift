@@ -27,12 +27,14 @@ class WinSizeController: NSObject {
         var viewSize: NSSize
         var scaleFactor: CGFloat
         var regular: Bool  // false for the first resize of a jiggle
+        var completion: (() -> ())?
 
         static var defaultRequest: Request {
             return Request(size: VT100GridSizeMake(80, 25),
                            viewSize: NSSize(width: 800, height: 250),
                            scaleFactor: 2.0,
-                           regular: true)
+                           regular: true,
+                           completion: nil)
         }
 
         func sanitized(_ last: Request?) -> Request {
@@ -40,9 +42,14 @@ class WinSizeController: NSObject {
                 return Request(size: size,
                                viewSize: viewSize,
                                scaleFactor: last?.scaleFactor ?? 2,
-                               regular: regular)
+                               regular: regular,
+                               completion: completion)
             }
             return self
+        }
+
+        var withoutCompletion: Request {
+            return Request(size: size, viewSize: viewSize, scaleFactor: scaleFactor, regular: regular, completion: nil)
         }
 
         var debugDescription: String {
@@ -60,6 +67,13 @@ class WinSizeController: NSObject {
         }
     }
     @objc weak var delegate: WinSizeControllerDelegate?
+    private var lastJiggleTime = TimeInterval(0)
+    @objc var timeSinceLastJiggle: TimeInterval {
+        if lastJiggleTime == 0 {
+            return TimeInterval.infinity
+        }
+        return NSDate.it_timeSinceBoot() - lastJiggleTime
+    }
 
     // Cause the slave to receive a SIGWINCH and change the tty's window size. If `size` equals the
     // tty's current window size then no action is taken.
@@ -110,8 +124,14 @@ class WinSizeController: NSObject {
         var adjusted = base
         adjusted.size = VT100GridSizeMake(base.size.width + 1, base.size.height)
         adjusted.regular = false
+        adjusted.completion = { [weak self] in
+            self?.lastJiggleTime = NSDate.it_timeSinceBoot()
+        }
         set(adjusted)
         base.regular = true
+        base.completion = { [weak self] in
+            self?.lastJiggleTime = NSDate.it_timeSinceBoot()
+        }
         set(base)
     }
 
@@ -144,18 +164,36 @@ class WinSizeController: NSObject {
             DLog("delegate unready")
             return false
         }
+        var combinedCompletion = request.completion
         if request.regular && (queue.last?.regular ?? false) {
             DLog("Replace last request \(String(describing: queue.last))")
+            if let completion = queue.last?.completion {
+                let orig = request.completion
+                combinedCompletion = {
+                    completion()
+                    orig?()
+                }
+            }
             queue.removeLast()
         }
         if !request.regular,
            let i = queue.firstIndex(where: { !$0.regular }) {
             DLog("Remove up to previously added jiggle in queue \(queue) at index \(i)")
+            let comps = queue[0...i].compactMap { $0.completion }
+            if !comps.isEmpty {
+                combinedCompletion = {
+                    for c in comps {
+                        c()
+                    }
+                    request.completion?()
+                }
+            }
             queue.removeFirst(i + 1)
             DLog("\(queue)")
         }
-        let sanitized = request.sanitized(request)
-        lastRequest = sanitized
+        var sanitized = request.sanitized(request)
+        lastRequest = sanitized.withoutCompletion
+        sanitized.completion = combinedCompletion
         queue.append(sanitized)
         dequeue()
         return true
@@ -185,6 +223,7 @@ class WinSizeController: NSObject {
         delegate?.winSizeControllerSet(size: request.size,
                                        viewSize: request.viewSize,
                                        scaleFactor: request.scaleFactor)
+        request.completion?()
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             DLog("Delay finished")
             self?.dequeue()
