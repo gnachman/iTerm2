@@ -7,6 +7,7 @@
 
 #import "iTermNetworkUtilization.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermPublisher.h"
 
 #include <sys/sysctl.h>
@@ -152,7 +153,11 @@ typedef struct {
                     struct sockaddr_dl *dl = (struct sockaddr_dl *)sa;
                     // Caches the socket address data (interface name + MAC address), in order to detect interface change
                     NSData *data = [NSData dataWithBytes:dl->sdl_data length:dl->sdl_nlen + dl->sdl_alen];
-                    if ([[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] hasPrefix:@"lo"]) {
+                    const NSString *info = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                    if ([info hasPrefix:@"lo"]) {
+                        continue;
+                    }
+                    if ([iTermAdvancedSettingsModel excludeUtunFromNetworkUtilization] && [info hasPrefix:@"utun"]) {
                         continue;
                     }
                     [interfaceAddrs addObject:data];

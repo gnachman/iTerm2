@@ -148,6 +148,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 + (BOOL)escapeWithQuotes;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
++ (BOOL)excludeUtunFromNetworkUtilization;
 + (BOOL)experimentalKeyHandling;
 + (double)extraSpaceBeforeCompactTopTabBar;
 + (double)fakeNotchHeight;
