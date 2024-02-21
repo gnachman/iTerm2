@@ -481,7 +481,7 @@ DEFINE_FLOAT(commandHistoryAgePower, 1, SECTION_GENERAL @"When sorting command h
 DEFINE_BOOL(performSQLiteIntegrityCheck, YES, SECTION_GENERAL @"Perform restorable state integrity checks?");
 DEFINE_STRING(lastpassGroups, @"", SECTION_GENERAL @"Comma-separated list of LastPass groups for the password manager to look in for passwords.");
 DEFINE_STRING(onePasswordAccount, @"", SECTION_GENERAL @"1Password account name.\nThis is used if you’ve enabled the 1Password integration in the password manager. Use `op account list` to get the list of accounts. This can be an account shorthand, sign-in address, account ID, or user ID.");
-DEFINE_BOOL(excludeUtunFromNetworkUtilization, NO, SECTION_GENERAL @"Exclude utun interfaces from network utilization?\nThis is useful if you use a VPN and only want to see the traffic that goes over Wi-Fi or Ethernet.");
+DEFINE_BOOL(excludeUtunFromNetworkUtilization, YES, SECTION_GENERAL @"Exclude utun interfaces from network utilization?\nThis is useful if you use a VPN and only want to see the traffic that goes over Wi-Fi or Ethernet.");
 
 #pragma mark - Drawing
 
