@@ -65,6 +65,7 @@ static int MakeBlocking(int fd);
 
 static int gPipe[2];
 static char *gPath;
+static int use_spawn;
 
 typedef struct {
     iTermMultiServerClientOriginatedMessage messageWithLaunchRequest;
@@ -186,7 +187,7 @@ static void RemoveChild(int i) {
 
 #pragma mark - Launch
 
-static int Launch(const iTermMultiServerRequestLaunch *launch,
+static int LaunchLegacy(const iTermMultiServerRequestLaunch *launch,
                   iTermForkState *forkState,
                   iTermTTYState *ttyStatePtr,
                   int *errorPtr) {
@@ -201,7 +202,7 @@ static int Launch(const iTermMultiServerRequestLaunch *launch,
     if (forkState->pid == (pid_t)0) {
         // Child
         iTermExec(launch->path,
-                  (const char **)launch->argv,
+                  launch->argv,
                   1,  /* close file descriptors */
                   0,  /* restore resource limits */
                   forkState,
@@ -213,10 +214,54 @@ static int Launch(const iTermMultiServerRequestLaunch *launch,
         *errorPtr = errno;
         FDLog(LOG_DEBUG, "forkpty failed: %s", strerror(errno));
         return -1;
-    } 
+    }
     FDLog(LOG_DEBUG, "forkpty succeeded. Child pid is %d", forkState->pid);
     *errorPtr = 0;
     return fd;
+}
+
+static int LaunchModern(const iTermMultiServerRequestLaunch *launch,
+                  iTermForkState *forkState,
+                  iTermTTYState *ttyStatePtr,
+                        int *errorPtr) {
+    iTermTTYStateInit(ttyStatePtr,
+                      iTermTTYCellSizeMake(launch->columns, launch->rows),
+                      iTermTTYPixelSizeMake(launch->pixel_width, launch->pixel_height),
+                      launch->isUTF8);
+    int fd;
+    forkState->numFileDescriptorsToPreserve = 3;
+    FDLog(LOG_DEBUG, "Forking...");
+    forkState->pid = forkpty(&fd, ttyStatePtr->tty, &ttyStatePtr->term, &ttyStatePtr->win);
+    if (forkState->pid == (pid_t)0) {
+        // Child
+        int fds[] = { 0, 1, 2 };
+        iTermSpawn(launch->path,
+                   launch->argv,
+                   fds,
+                   forkState->numFileDescriptorsToPreserve,
+                   launch->pwd,
+                   launch->envp,
+                   fd,
+                   0);
+    }
+    if (forkState->pid == -1) {
+        *errorPtr = errno;
+        FDLog(LOG_DEBUG, "forkpty failed: %s", strerror(errno));
+        return -1;
+    }
+    FDLog(LOG_DEBUG, "forkpty succeeded. Child pid is %d", forkState->pid);
+    *errorPtr = 0;
+    return fd;
+}
+
+static int Launch(const iTermMultiServerRequestLaunch *launch,
+                  iTermForkState *forkState,
+                  iTermTTYState *ttyStatePtr,
+                  int *errorPtr) {
+    if (use_spawn) {
+        return LaunchModern(launch, forkState, ttyStatePtr, errorPtr);
+    }
+    return LaunchLegacy(launch, forkState, ttyStatePtr, errorPtr);
 }
 
 static int SendLaunchResponse(int fd, int status, pid_t pid, int masterFd, const char *tty, unsigned long long uniqueId) {
@@ -973,6 +1018,8 @@ static int Initialize(char *path) {
         return 1;
     }
     chdir("/");
+
+    use_spawn = getenv("ITERM_FDMS_USE_SPAWN") != NULL;
 
     return 0;
 }

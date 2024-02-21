@@ -16,18 +16,18 @@ int iTermForkAndExecToRunJobInServer(iTermForkState *forkState,
                                      iTermTTYState *ttyState,
                                      NSString *tempPath,
                                      const char *argpath,
-                                     const char **argv,
+                                     char **argv,
                                      BOOL closeFileDescriptors,
                                      const char *initialPwd,
-                                     const char **newEnviron);
+                                     char **newEnviron);
 
 int iTermForkAndExecToRunJobDirectly(iTermForkState *forkState,
                                      iTermTTYState *ttyState,
                                      const char *argpath,
-                                     const char **argv,
+                                     char **argv,
                                      BOOL closeFileDescriptors,
                                      const char *initialPwd,
-                                     const char **newEnviron);
+                                     char **newEnviron);
 
 void iTermSignalSafeWrite(int fd, const char *message);
 void iTermSignalSafeWriteInt(int fd, int n);

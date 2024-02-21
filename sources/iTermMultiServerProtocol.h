@@ -80,11 +80,11 @@ typedef struct {
     const char *path;
 
     // iTermMultiServerTagLaunchRequestArgv
-    const char **argv;
+    char **argv;
     int argc;
 
     // iTermMultiServerTagLaunchRequestEnvironment
-    const char **envp;
+    char **envp;
     int envc;
 
     // iTermMultiServerTagLaunchRequestColumns
@@ -175,11 +175,11 @@ typedef struct iTermMultiServerReportChild {
     const char *path;
 
     // iTermMultiServerTagReportChildArgs
-    const char **argv;
+    char **argv;
     int argc;
 
     // iTermMultiServerTagReportChildEnv
-    const char **envp;
+    char **envp;
     int envc;
 
     // iTermMultiServerTagReportChildIsUTF8

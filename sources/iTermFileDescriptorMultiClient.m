@@ -93,8 +93,8 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 
 // These C pointers live until the callback is run.
 - (void)launchChildWithExecutablePath:(const char *)path
-                                 argv:(const char **)argv
-                          environment:(const char **)environment
+                                 argv:(char **)argv
+                          environment:(char **)environment
                                   pwd:(const char *)pwd
                              ttyState:(iTermTTYState)ttyState
                              callback:(iTermMultiClientLaunchCallback *)callback {
@@ -453,8 +453,8 @@ static unsigned long long MakeUniqueID(void) {
 // ID, but we may read other messages before getting the child report.
 // These C pointers live until the callback is run.
 - (void)launchChildWithExecutablePath:(const char *)path
-                                 argv:(const char **)argv
-                          environment:(const char **)environment
+                                 argv:(char **)argv
+                          environment:(char **)environment
                                   pwd:(const char *)pwd
                              ttyState:(iTermTTYState)ttyState
                                 state:(iTermFileDescriptorMultiClientState *)state

@@ -243,7 +243,11 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(NSString
 
     NSArray<NSString *> *argv = @[ executable, path ];
     char **cargv = Make2DArray(argv);
-    const char **cenv = (const char **)Make2DArray(@[]);
+    NSArray<NSString *> *env = @[];
+    if ([iTermAdvancedSettingsModel disclaimChildren]) {
+        env = [env arrayByAddingObject:@"ITERM_FDMS_USE_SPAWN=1"];
+    }
+    char **cenv = Make2DArray(env);
     const char *argpath = executable.UTF8String;
 
     int fds[] = {
@@ -275,7 +279,7 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(NSString
             close(pipeFds[1]);
             iTermPosixMoveFileDescriptors(fds, numberOfFileDescriptorsToPreserve);
             iTermExec(argpath,
-                      (const char **)cargv,
+                      cargv,
                       YES,  // closeFileDescriptors
                       YES, // restoreResourceLimits
                       &forkState,

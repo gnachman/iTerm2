@@ -26,10 +26,10 @@ int iTermForkAndExecToRunJobInServer(iTermForkState *forkState,
                                      iTermTTYState *ttyState,
                                      NSString *tempPath,
                                      const char *argpath,
-                                     const char **argv,
+                                     char **argv,
                                      BOOL closeFileDescriptors,
                                      const char *initialPwd,
-                                     const char **newEnviron) {
+                                     char **newEnviron) {
     // Get ready to run the server in a thread.
     __block int serverConnectionFd = -1;
     DLog(@"iTermForkAndExecToRunJobInServer");
@@ -92,10 +92,10 @@ int iTermForkAndExecToRunJobInServer(iTermForkState *forkState,
 int iTermForkAndExecToRunJobDirectly(iTermForkState *forkState,
                                      iTermTTYState *ttyState,
                                      const char *argpath,
-                                     const char **argv,
+                                     char **argv,
                                      BOOL closeFileDescriptors,
                                      const char *initialPwd,
-                                     const char **newEnviron) {
+                                     char **newEnviron) {
     int fd;
     forkState->numFileDescriptorsToPreserve = 3;
     forkState->pid = forkpty(&fd, ttyState->tty, &ttyState->term, &ttyState->win);

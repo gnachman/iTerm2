@@ -37,9 +37,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)launchWithTTYState:(iTermTTYState)ttyState
                    argpath:(const char *)argpath
-                      argv:(const char **)argv
+                      argv:(char **)argv
                 initialPwd:(const char *)initialPwd
-                newEnviron:(const char **)newEnviron
+                newEnviron:(char **)newEnviron
                   callback:(iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> *)callback;
 
 - (void)waitForChild:(iTermFileDescriptorMultiClientChild *)child

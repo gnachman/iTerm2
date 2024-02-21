@@ -765,6 +765,7 @@ DEFINE_BOOL(addUtilitiesToPATH, YES, SECTION_EXPERIMENTAL @"Add path to iTerm2 u
 DEFINE_STRING(aitermURL, @"https://api.openai.com/v1/completions", SECTION_EXPERIMENTAL @"URL for AI API.\nA ChatGPT API endpoint should be here. Note that this URL is only used if the model name does not begin with `gpt-` because those models used an older API.");
 DEFINE_BOOL(autoSearch, NO, SECTION_EXPERIMENTAL @"Automatically search for selected text after making a selection?");
 DEFINE_BOOL(smartLoggingWithAutoComposer, NO, SECTION_EXPERIMENTAL @"Enable more compact logging when using auto composer?\nThis will avoid logging raw data in your prompt and your interactions with it. Instead, the prompt is logged once in plain text and the command is logged when sent.");
+DEFINE_BOOL(disclaimChildren, NO, SECTION_EXPERIMENTAL @"Disclaim ownership of children.\nBy enabling this, when launching a Cocoa app from a terminal window TCC should attribute ownership to the app, not iTerm2, for permissions. In order for changes to this setting to take effect, you must kill iTermServer.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

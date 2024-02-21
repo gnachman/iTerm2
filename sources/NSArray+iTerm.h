@@ -124,7 +124,7 @@
 
 - (double)sumOfNumbers;
 - (NSArray *)it_arrayByReplacingOccurrencesOf:(id)pattern with:(id)replacement;
-- (const char **)nullTerminatedCStringArray;
+- (char **)nullTerminatedCStringArray;
 - (NSArray<ObjectType> *)reversed;
 + (instancetype)mapIntegersFrom:(NSInteger)min to:(NSInteger)noninclusiveUpperBound block:(ObjectType (^NS_NOESCAPE)(NSInteger i))block;
 
@@ -133,7 +133,7 @@
 
 @end
 
-void iTermFreeeNullTerminatedCStringArray(const char **array);
+void iTermFreeeNullTerminatedCStringArray(char **array);
 
 @interface NSMutableArray<ObjectType> (iTerm)
 - (void)reverse;

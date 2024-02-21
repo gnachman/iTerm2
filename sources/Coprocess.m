@@ -67,7 +67,7 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
                                 environment:(NSDictionary<NSString *, NSString *> *)environment {
-    const char **replacementEnvironment = NULL;
+    char **replacementEnvironment = NULL;
     if (environment) {
         NSMutableDictionary *combined = [[[NSProcessInfo processInfo] environment] mutableCopy];
         [environment enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
@@ -111,7 +111,7 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
         }
 
         if (replacementEnvironment) {
-            extern const char **environ;
+            extern char **environ;
             environ = replacementEnvironment;
         }
         signal(SIGCHLD, SIG_DFL);

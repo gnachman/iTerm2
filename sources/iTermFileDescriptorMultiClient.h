@@ -59,8 +59,8 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
 - (void)attachWithCallback:(iTermCallback<id, NSNumber *> *)callback;
 
 - (void)launchChildWithExecutablePath:(const char *)path
-                                 argv:(const char *_Nonnull *_Nonnull)argv
-                          environment:(const char *_Nonnull *_Nonnull)environment
+                                 argv:(char *_Nonnull *_Nonnull)argv
+                          environment:(char *_Nonnull *_Nonnull)environment
                                   pwd:(const char *)pwd
                              ttyState:(iTermTTYState)ttyStatePtr
                              callback:(iTermMultiClientLaunchCallback *)callback;

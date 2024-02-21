@@ -141,8 +141,8 @@
         .deadMansPipe = { 0, 0 },
     };
 
-    const char **cArgv = [argv nullTerminatedCStringArray];
-    const char **cEnviron = [newEnviron nullTerminatedCStringArray];
+    char **cArgv = [argv nullTerminatedCStringArray];
+    char **cEnviron = [newEnviron nullTerminatedCStringArray];
     self.fd = iTermForkAndExecToRunJobInServer(&forkState,
                                                &ttyState,
                                                unixDomainSocketPath,

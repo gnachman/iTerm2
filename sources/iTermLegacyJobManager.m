@@ -105,8 +105,8 @@
         .connectionFd = -1,
         .deadMansPipe = { 0, 0 },
     };
-    const char **cArgv = [argv nullTerminatedCStringArray];
-    const char **cEnviron = [newEnviron nullTerminatedCStringArray];
+    char **cArgv = [argv nullTerminatedCStringArray];
+    char **cEnviron = [newEnviron nullTerminatedCStringArray];
     self.fd = iTermForkAndExecToRunJobDirectly(&forkState,
                                                &ttyState,
                                                argpath.UTF8String,

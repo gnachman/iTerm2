@@ -114,9 +114,9 @@ static const int iTermMultiServerMaximumSupportedRestorationIdentifierVersion = 
 typedef struct {
     iTermTTYState ttyState;
     NSData *argpath;
-    const char **argv;
+    char **argv;
     NSData *initialPwd;
-    const char **environ;
+    char **environ;
 } iTermMultiServerJobManagerForkRequest;
 
 - (void)forkAndExecWithTtyState:(iTermTTYState)ttyState
