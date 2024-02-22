@@ -169,7 +169,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
             NotificationCenter.default.addObserver(forName: Notification.Name("PTYCommandDidExitNotification"),
                                                    object: guid,
                                                    queue: nil) { [weak self] notif in
-                guard let self else { return }
+                guard let self, let delegate, delegate.sessionEnabled(self) else { return }
                 guard let userInfo = notif.userInfo,
                       let command = userInfo["command"] as? String else {
                     return
@@ -197,14 +197,12 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     truncateTail: false,
                     continuationChars: nil,
                     coords: nil) as! String
-                if let delegate, delegate.sessionEnabled(self) {
-                    updateHistory(command: command,
-                                  exitCode: exitCode,
-                                  directory: directory,
-                                  output: content,
-                                  remoteHost: remoteHost)
-                    delegate.sessionDidReceiveCommand(session: self, command: command)
-                }
+                updateHistory(command: command,
+                              exitCode: exitCode,
+                              directory: directory,
+                              output: content,
+                              remoteHost: remoteHost)
+                delegate.sessionDidReceiveCommand(session: self, command: command)
             }
         }
 
