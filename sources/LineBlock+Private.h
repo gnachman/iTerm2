@@ -7,17 +7,52 @@
 
 #import "LineBlock.h"
 
-@class iTermAtomicMutableArrayOfWeakObjects<T>;
-@class iTermCompressibleCharacterBuffer;
-@protocol iTermLineBlockObserver;
+@class iTermLegacyAtomicMutableArrayOfWeakObjects;
+@protocol iTermLineBlockMutationCertificate;
+@class iTermCharacterBuffer;
 @class iTermWeakBox<T>;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface LineBlock() {
-    iTermCompressibleCharacterBuffer *_characterBuffer;
     int _startOffset;  // Index of the first non-dropped screen_char_t in _rawBuffer.
-    NSMutableArray<iTermWeakBox<id<iTermLineBlockObserver>> *> *_observers;
+
+@public
+    // The raw lines, end-to-end. There is no delimiter between each line.
+    iTermCharacterBuffer *_characterBuffer;
+
+    int first_entry;  // first valid cumulative_line_length
+
+
+    // There will be as many entries in this array as there are lines in _characterBuffer.
+    // The ith value is the length of the ith line plus the value of
+    // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
+    //    const int * const cumulative_line_lengths;
+    int *cumulative_line_lengths;
+    LineBlockMetadata *metadata_;
+
+    // The number of elements allocated for cumulative_line_lengths.
+    int cll_capacity;
+
+    // The number of values in the cumulative_line_lengths array.
+    int cll_entries;
+
+    // If true, then the last raw line does not include a logical newline at its terminus.
+    BOOL is_partial;
+
+    // The number of wrapped lines if width==cached_numlines_width.
+    int cached_numlines;
+
+    // This is -1 if the cache is invalid; otherwise it specifies the width for which
+    // cached_numlines is correct.
+    int cached_numlines_width;
+
+    NSString *_guid;
+
+    NSObject *_cachedMutationCert;  // DON'T USE DIRECTLY THIS UNLESS YOU LOVE PAIN. Only -validMutationCertificate should touch it.
+
+    __weak LineBlock *_progenitor;
+    long long _absoluteBlockNumber;
 }
 
 // These are synchronized on [LineBlock class]. Sample graph:
@@ -126,8 +161,15 @@ NS_ASSUME_NONNULL_BEGIN
 // Use -modifyWithBlock: to get a iTermLineBlockMutationCertificate which allows mutation safely because
 // you can't get a certificate without copying (if needed).
 @property(nonatomic, nullable) LineBlock *owner;  // nil if I am an owner. This is the line block that is responsible for freeing malloced data.
-@property(nonatomic) iTermAtomicMutableArrayOfWeakObjects<LineBlock *> *clients;  // Copy-on write instances that still exist and have me as the owner.
+@property(nonatomic) iTermLegacyAtomicMutableArrayOfWeakObjects *clients;  // Copy-on write instances that still exist and have me as the owner.
 @property(nonatomic, readwrite) NSInteger generation;
+@property(atomic, readwrite) BOOL hasBeenCopied;
+
+- (int)bufferStartOffset;
+- (void)setBufferStartOffset:(ptrdiff_t)offset;
+- (LineBlock *)copyDeep:(BOOL)deep absoluteBlockNumber:(long long)absoluteBlockNumber;
+- (id<iTermLineBlockMutationCertificate>)validMutationCertificate;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -10,10 +10,12 @@ extern "C" {
 #import "LineBlock.h"
 #import "LineBlock+Private.h"
 #import "LineBlock+SwiftInterop.h"
+
 #import "DebugLogging.h"
 #import "FindContext.h"
-#import "iTermAtomicMutableArrayOfWeakObjects.h"
+#import "iTermCharacterBuffer.h"
 #import "iTermExternalAttributeIndex.h"
+#import "iTermLegacyAtomicMutableArrayOfWeakObjects.h"
 #import "iTermMalloc.h"
 #import "iTermMetadata.h"
 #import "iTermWeakBox.h"
@@ -26,6 +28,8 @@ extern "C" {
 }
 
 // BEGIN C++ HEADERS - No C headers here!
+#include <atomic>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -35,7 +39,7 @@ static BOOL gUseCachingNumberOfLines = NO;
 NSString *const kLineBlockRawBufferV1Key = @"Raw Buffer";  // v1 - uses legacy screen_char_t format.
 NSString *const kLineBlockRawBufferV2Key = @"Raw Buffer v2";  // v2 - used 0xf000-0xf003 for DWC_SKIP and friends.
 NSString *const kLineBlockRawBufferV3Key = @"Raw Buffer v3";  // v3 - uses 0x0001-0x0004 for DWC_SKIP and friends
-NSString *const kLineBlockRawBufferV4Key = @"Raw Buffer v4";  // v4 - Like v3 but could be compressed
+NSString *const kLineBlockRawBufferV4Key = @"Raw Buffer v4";  // v4 - Like v3 but could be compressed. No longer supported because overhead from compression-related abstractions was too slow.
 NSString *const kLineBlockBufferStartOffsetKey = @"Buffer Start Offset";
 NSString *const kLineBlockStartOffsetKey = @"Start Offset";
 NSString *const kLineBlockFirstEntryKey = @"First Entry";
@@ -45,6 +49,7 @@ NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 NSString *const kLineBlockGuid = @"GUID";
+static dispatch_queue_t gDeallocQueue;
 
 #ifdef DEBUG_SEARCH
 @interface NSString(LineBlockDebugging)
@@ -72,7 +77,6 @@ NSString *const kLineBlockGuid = @"GUID";
 - (screen_char_t *)mutableRawBuffer;
 - (void)setRawBufferCapacity:(size_t)count;
 - (void)invalidate;
-- (void)compress;
 @end
 
 // ONLY -validMutationCertificate should create this!
@@ -137,57 +141,41 @@ struct iTermNumFullLinesCacheKeyHasher {
     }
 };
 
+static std::recursive_mutex gLineBlockMutex;
+
+
 
 // Use iTermAssignToConstPointer if you need to change anything that is `const T * const` to make
 // these calls auditable to ensure we call validMutationCertificate appropriately.
-@implementation LineBlock {
-@public
-    // The raw lines, end-to-end. There is no delimiter between each line.
+static inline void ModifyLineBlock(LineBlock *self,
+                                   std::function<void(id<iTermLineBlockMutationCertificate>)> lambda) {
+    if (!self.hasBeenCopied) {
+        lambda([self validMutationCertificate]);
+        return;
+    }
 
-    int first_entry;  // first valid cumulative_line_length
-
-
-    // There will be as many entries in this array as there are lines in _characterBuffer.
-    // The ith value is the length of the ith line plus the value of
-    // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
-//    const int * const cumulative_line_lengths;
-    int *cumulative_line_lengths;
-    LineBlockMetadata *metadata_;
-
-    // The number of elements allocated for cumulative_line_lengths.
-    int cll_capacity;
-
-    // The number of values in the cumulative_line_lengths array.
-    int cll_entries;
-
-    // If true, then the last raw line does not include a logical newline at its terminus.
-    BOOL is_partial;
-
-    // The number of wrapped lines if width==cached_numlines_width.
-    int cached_numlines;
-
-    // This is -1 if the cache is invalid; otherwise it specifies the width for which
-    // cached_numlines is correct.
-    int cached_numlines_width;
-
-    // Keys are (offset from _characterBuffer.pointer, length to examine, width).
-    std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> _numberOfFullLinesCache;
-
-    NSString *_guid;
-
-    NSObject *_cachedMutationCert;  // DON'T USE DIRECTLY THIS UNLESS YOU LOVE PAIN. Only -validMutationCertificate should touch it.
-}
-
-NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock) {
-    lineBlock->_generation += 1;
-    for (iTermWeakBox<id<iTermLineBlockObserver>> *box in lineBlock->_observers) {
-        [box.object lineBlockDidChange:lineBlock];
+    {
+        std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
+        lambda([self validMutationCertificate]);
     }
 }
 
-- (instancetype)init {
+@implementation LineBlock {
+    // Keys are (offset from _characterBuffer.pointer, length to examine, width).
+    std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> _numberOfFullLinesCache;
+}
+
+@synthesize progenitor = _progenitor;
+@synthesize absoluteBlockNumber = _absoluteBlockNumber;
+
+NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock) {
+    lineBlock->_generation += 1;
+}
+
+- (instancetype)initWithCharacterBuffer:(iTermCharacterBuffer *)characterBuffer {
     self = [super init];
     if (self) {
+        _characterBuffer = characterBuffer;
         [self commonInit];
     }
     return self;
@@ -198,11 +186,13 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 //}
 #define iTermAssignToConstPointer(dest, address) (*(dest) = (address))
 
-- (LineBlock *)initWithRawBufferSize:(int)size absoluteBlockNumber:(long long)absoluteBlockNumber {
+- (LineBlock *)initWithRawBufferSize:(int)size
+                 absoluteBlockNumber:(long long)absoluteBlockNumber {
     self = [super init];
     if (self) {
         _absoluteBlockNumber = absoluteBlockNumber;
-        [self createCharacterBufferOfSize:size];
+        _characterBuffer = [[iTermCharacterBuffer alloc] initWithSize:size];
+
         // Allocate enough space for a bunch of 80-character lines. It can grow if needed.
         cll_capacity = 1 + size/80;
         iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMalloc(sizeof(int) * cll_capacity));
@@ -218,8 +208,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             gEnableDoubleWidthCharacterLineCache = YES;
             gUseCachingNumberOfLines = YES;
         }
+        gDeallocQueue = dispatch_queue_create("com.iterm2.lineblock-dealloc", DISPATCH_QUEUE_SERIAL);
     });
-    _observers = [NSMutableArray array];
     if (!_guid) {
         _guid = [[NSUUID UUID] UUIDString];
     }
@@ -227,7 +217,9 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     if (cll_capacity > 0) {
         metadata_ = (LineBlockMetadata *)iTermCalloc(sizeof(LineBlockMetadata), cll_capacity);
     }
-    self.clients = [iTermAtomicMutableArrayOfWeakObjects array];
+    static std::atomic<unsigned int> nextIndex(0);
+    _index = nextIndex.fetch_add(1, std::memory_order_relaxed);
+    [self initializeClients];
 }
 
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary
@@ -255,13 +247,9 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         }
 
         NSData *data = nil;
-        BOOL needsData = YES;
         iTermExternalAttributeIndex *migrationIndex = nil;
         if (dictionary[kLineBlockRawBufferV4Key]) {
-            if (![self createCharacterBufferFromEncodedData:dictionary[kLineBlockRawBufferV4Key]]) {
-                return nil;
-            }
-            needsData = NO;
+            data = [self decompressedDataFromV4Data:dictionary[kLineBlockRawBufferV4Key]];
         } else if (dictionary[kLineBlockRawBufferV3Key]) {
             data = dictionary[kLineBlockRawBufferV3Key];
         } else if (dictionary[kLineBlockRawBufferV2Key]) {
@@ -271,12 +259,11 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             data = [dictionary[kLineBlockRawBufferV1Key] migrateV1ToV3:&migrationIndex];
             _generation = 1;
         }
-        if (needsData) {
-            if (!data) {
-                return nil;
-            }
-            [self createCharacterBufferWithUncompressedData:data];
+        if (!data) {
+            return nil;
         }
+        _characterBuffer = [[iTermCharacterBuffer alloc] initWithData:data];
+
         [self setBufferStartOffset:[dictionary[kLineBlockBufferStartOffsetKey] intValue]];
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
         if (dictionary[kLineBlockGuid]) {
@@ -353,25 +340,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 
 // NOTE: You must not acquire a lock in dealloc. Assume it is reentrant.
 - (void)dealloc {
-    BOOL shouldFreeBuffers = YES;
-
-    // It's safe to access owner without a lock. No other object has a valid reference to this
-    // object. Therefore, it's impossible for `self.owner` to change after `dealloc` begins.
-    __weak LineBlock *owner = self.owner;
-    if (owner != nil) {
-        // I don't own my memory so I should not free it.
-        shouldFreeBuffers = NO;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            @synchronized([LineBlock class]) {
-                // Remove myself from the owner's client list to ensure its list of clients doesn't
-                // get too big. Do it asynchronously to avoid reentrant -[LineBlock dealloc] calls
-                // since iTermAtomicMutableArrayOfWeakObjects's methods are not reentrant.
-                [owner.clients prune];
-            }
-        });
-    }
-
-    if (shouldFreeBuffers) {
+    if ([self deinitializeClients]) {
         if (cumulative_line_lengths) {
             free((void *)cumulative_line_lengths);
         }
@@ -381,12 +350,32 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     }
 }
 
+- (BOOL)deinitializeClients {
+    // It's safe to access owner without a lock. No other object has a valid reference to this
+    // object. Therefore, it's impossible for `self.owner` to change after `dealloc` begins.
+    __weak LineBlock *owner = self.owner;
+    if (owner == nil) {
+        return YES;
+    }
+    // I don't own my memory so I should not free it.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
+
+        // Remove myself from the owner's client list to ensure its list of clients doesn't
+        // get too big. Do it asynchronously to avoid reentrant -[LineBlock dealloc] calls
+        // since iTermLegacyAtomicMutableArrayOfWeakObjects's methods are not reentrant.
+        [owner.clients prune];
+    });
+    return NO;
+}
+
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p abs=%@ %@>",
             NSStringFromClass([self class]),
             self,
             @(_absoluteBlockNumber),
-            [self characterBufferDescription]];
+            _characterBuffer.description];
 }
 
 - (void)setBufferStartOffset:(ptrdiff_t)offset {
@@ -395,6 +384,10 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 
 - (int)bufferStartOffset {
     return _startOffset;
+}
+
+- (int)rawBufferSize {
+    return _characterBuffer.size;
 }
 
 - (instancetype)copyWithAbsoluteBlockNumber:(long long)absoluteBlockNumber {
@@ -426,10 +419,14 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 }
 
 - (LineBlock *)copyDeep:(BOOL)deep absoluteBlockNumber:(long long)absoluteBlockNumber {
-    LineBlock *theCopy = [[LineBlock alloc] init];
+    assert(_characterBuffer);
+
+    self.hasBeenCopied = YES;
+
+    LineBlock *theCopy;
     if (!deep) {
+        theCopy = [[LineBlock alloc] initWithCharacterBuffer:_characterBuffer];
         theCopy->_absoluteBlockNumber = absoluteBlockNumber;
-        theCopy->_characterBuffer = _characterBuffer;
         [theCopy setBufferStartOffset:self.bufferStartOffset];
         theCopy->first_entry = first_entry;
         iTermAssignToConstPointer((void **)&theCopy->cumulative_line_lengths, (void *)cumulative_line_lengths);
@@ -445,11 +442,12 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         // Preserve these so delta encoding will continue to work when you encode a copy.
         theCopy->_generation = _generation;
         theCopy->_guid = [_guid copy];
+        theCopy.hasBeenCopied = YES;
 
         return theCopy;
     }
 
-    theCopy->_characterBuffer = [self copyOfCharacterBuffer:YES];
+    theCopy = [[LineBlock alloc] initWithCharacterBuffer:[_characterBuffer clone]];
     theCopy->_absoluteBlockNumber = absoluteBlockNumber;
     [theCopy setBufferStartOffset:self.bufferStartOffset];
     theCopy->first_entry = first_entry;
@@ -468,11 +466,15 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     theCopy->_generation = _generation;
     theCopy->_guid = [_guid copy];
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
-
+    theCopy.hasBeenCopied = YES;
+    
     return theCopy;
 }
 
 - (BOOL)isEqual:(id)object {
+    if (self == object){
+        return YES;
+    }
     LineBlock *other = [LineBlock castFrom:object];
     if (!other) {
         return NO;
@@ -483,7 +485,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     if (first_entry != other->first_entry) {
         return NO;
     }
-    if (self.rawBufferSize != other.rawBufferSize) {
+    if (_characterBuffer.size != other->_characterBuffer.size) {
         return NO;
     }
     if (cll_entries != other->cll_entries) {
@@ -497,7 +499,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
             return NO;
         }
     }
-    return [self characterBufferIsEqualTo:other->_characterBuffer];
+    return [_characterBuffer deepIsEqual:other->_characterBuffer];
 }
 
 - (int)rawSpaceUsed {
@@ -554,7 +556,7 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     }
     for (i = first_entry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
-        formatsct(self.bufferStart + prev - self.bufferStartOffset,
+        formatsct(_characterBuffer.pointer + _startOffset + prev - self.bufferStartOffset,
                   cumulative_line_lengths[i] - prev,
                   temp);
         [s appendFormat:@"%s%c\n",
@@ -562,6 +564,29 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
          iscont ? '+' : '!'];
         prev = cumulative_line_lengths[i];
     }
+}
+- (NSString *)dumpString {
+    NSMutableArray<NSString *> *strings = [NSMutableArray array];
+    [strings addObject:[NSString stringWithFormat:@"numRawLines=%@", @([self numRawLines])]];
+
+    char temp[1000];
+    int i;
+    int rawOffset = 0;
+    int prev;
+    if (first_entry > 0) {
+        prev = cumulative_line_lengths[first_entry - 1];
+    } else {
+        prev = 0;
+    }
+    for (i = first_entry; i < cll_entries; ++i) {
+        BOOL iscont = (i == cll_entries-1) && is_partial;
+        NSString *message = [NSString stringWithFormat:@"Line %d, length %d, offset from raw=%d, abs pos=%d, continued=%s: %s\n", i, cumulative_line_lengths[i] - prev, prev, prev + rawOffset, iscont?"yes":"no",
+                             formatsct(_characterBuffer.pointer + _startOffset + prev - self.bufferStartOffset, cumulative_line_lengths[i]-prev, temp)];
+        NSString *md = iTermMetadataShortDescription(metadata_[i].lineMetadata, cumulative_line_lengths[i] - prev);
+        [strings addObject:[message stringByAppendingString:md]];
+        prev = cumulative_line_lengths[i];
+    }
+    return [strings componentsJoinedByString:@"\n"];
 }
 
 - (void)dump:(int)rawOffset toDebugLog:(BOOL)toDebugLog {
@@ -581,7 +606,7 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     for (i = first_entry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
         NSString *message = [NSString stringWithFormat:@"Line %d, length %d, offset from raw=%d, abs pos=%d, continued=%s: %s\n", i, cumulative_line_lengths[i] - prev, prev, prev + rawOffset, iscont?"yes":"no",
-                             formatsct(self.bufferStart+prev-self.bufferStartOffset, cumulative_line_lengths[i]-prev, temp)];
+                             formatsct(_characterBuffer.pointer + _startOffset + prev - self.bufferStartOffset, cumulative_line_lengths[i]-prev, temp)];
         NSString *md = iTermMetadataShortDescription(metadata_[i].lineMetadata, cumulative_line_lengths[i] - prev);
         if (toDebugLog) {
             DLog(@"%@%@", message, md);
@@ -616,9 +641,33 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
 - (int)numberOfFullLinesFromBuffer:(const screen_char_t *)buffer
                             length:(int)length
                              width:(int)width {
-    return [self numberOfFullLinesFromOffset:buffer - self.rawBuffer
+    return [self numberOfFullLinesFromOffset:buffer - _characterBuffer.pointer
                                       length:length
                                        width:width];
+}
+
+static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
+                                        int length,
+                                        int width) {
+    int fullLines = 0;
+    for (int i = width; i < length; i += width) {
+        if (ScreenCharIsDWC_RIGHT(buffer[i])) {
+            --i;
+        }
+        ++fullLines;
+    }
+    return fullLines;
+}
+
+- (int)calculateNumberOfFullLinesWithOffset:(int)offset
+                                     length:(int)length
+                                      width:(int)width
+                                 mayHaveDWC:(BOOL)mayHaveDWC {
+    if (width <= 1 || !mayHaveDWC) {
+        // Need to use max(0) because otherwise we get -1 for length=0 width=1.
+        return MAX(0, length - 1) / width;
+    }
+    return iTermLineBlockNumberOfFullLinesImpl(_characterBuffer.pointer + offset, length, width);
 }
 
 - (NSInteger)sizeFromLine:(int)lineNum width:(int)width {
@@ -667,18 +716,17 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
              width:(int)width
           metadata:(iTermImmutableMetadata)lineMetadata
       continuation:(screen_char_t)continuation {
-    NSNumber *number =
-    [self modifyWithBlock:^id(id<iTermLineBlockMutationCertificate> cert) {
-        const BOOL result = [self reallyAppendLine:buffer
-                                            length:length
-                                           partial:partial
-                                             width:width
-                                          metadata:lineMetadata
-                                      continuation:continuation
-                                              cert:cert];
-        return @(result);
-    }];
-    return number.boolValue;
+    BOOL result;
+    ModifyLineBlock(self, [buffer, length, partial, width, lineMetadata, continuation, &result, &self](id<iTermLineBlockMutationCertificate> cert) -> void {
+        result = [self reallyAppendLine:buffer
+                                 length:length
+                                partial:partial
+                                  width:width
+                               metadata:lineMetadata
+                           continuation:continuation
+                                   cert:cert];
+    });
+    return result;
 }
 
 - (BOOL)reallyAppendLine:(const screen_char_t *)buffer
@@ -690,7 +738,7 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
                     cert:(id<iTermLineBlockMutationCertificate>)cert {
     _numberOfFullLinesCache.clear();
     const int space_used = [self rawSpaceUsed];
-    const int free_space = self.rawBufferSize - space_used - self.bufferStartOffset;
+    const int free_space = _characterBuffer.size - space_used - self.bufferStartOffset;
     if (length > free_space) {
         return NO;
     }
@@ -819,11 +867,11 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     if (x > length || (x == length && *yOffsetPtr == 0)) {
         VLog(@"getPositionOfLine: Set extends and advance pos to end of line");
         *extendsPtr = YES;
-        pos = p - self.rawBuffer + length;
+        pos = p - _characterBuffer.pointer + length;
     } else {
         VLog(@"getPositionOfLine: Clear extends and advance pos by x");
         *extendsPtr = NO;
-        pos = p - self.rawBuffer + x;
+        pos = p - _characterBuffer.pointer + x;
     }
     if (length > 0 && (!isStartOfWrappedLine || x > 0)) {
         VLog(@"getPositionOfLine: Set *yOffsetPtr <- 0");
@@ -864,21 +912,14 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     }
     int lines = 0;
     int i = 0;
-    const screen_char_t *p = self.bufferStartIfUncompressed;
-    if (p) {
-        p += startingOffset;
-    }
+    const screen_char_t *p = _characterBuffer.pointer + _startOffset + startingOffset;
 
     while (i + width < length) {
         // Advance i to the start of the next line
         i += width;
         ++lines;
         screen_char_t c;
-        if (p) {
-            c = p[i];
-        } else {
-            c = [self characterAtIndex:i + _startOffset + startingOffset];
-        }
+        c = p[i];
         if (ScreenCharIsDWC_RIGHT(c)) {
             // Oops, the line starts with the second half of a double-width
             // character. Wrap the last character of the previous line on to
@@ -959,7 +1000,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     int lineOffset = 0;
     [self _wrappedLineWithWrapWidth:width
                            location:location
-                        bufferStart:self.bufferStartIfUncompressed
+                        bufferStart:_characterBuffer.pointer + _startOffset
                             lineNum:&mutableLineNum
                          lineLength:&length
                   includesEndOfLine:&eof
@@ -999,7 +1040,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                                    width:width
                                                 metadata:&metadata_[location.index]];
     }
-    return OffsetOfWrappedLine(self.bufferStart + location.prev,
+    return OffsetOfWrappedLine(_characterBuffer.pointer + _startOffset + location.prev,
                                lineNum,
                                location.length,
                                width,
@@ -1028,7 +1069,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     if (*lineLength > width) {
         // return an infix of the full line
         const int i = location.prev + offset + width;
-        const screen_char_t c = bufferStart ? bufferStart[i] : [self characterAtIndex:i + _startOffset];
+        const screen_char_t c = bufferStart[i];
 
         if (width > 1 && ScreenCharIsDWC_RIGHT(c)) {
             // Result would end with the first half of a double-width character
@@ -1163,7 +1204,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     // eat up *lineNum many width-sized wrapped lines from this start of the current full line
     const int offset = [self _wrappedLineWithWrapWidth:width
                                               location:location
-                                           bufferStart:self.bufferStart
+                                           bufferStart:_characterBuffer.pointer + _startOffset
                                                lineNum:lineNum
                                             lineLength:lineLength
                                      includesEndOfLine:includesEndOfLine
@@ -1172,7 +1213,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                   isStartOfWrappedLine:isStartOfWrappedLine
                                               metadata:metadataPtr
                                             lineOffset:NULL];
-    return self.bufferStart + offset;
+    return _characterBuffer.pointer + _startOffset + offset;
 }
 
 - (ScreenCharArray *)screenCharArrayForWrappedLineWithWrapWidth:(int)width
@@ -1190,10 +1231,10 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     int length = 0;
     screen_char_t continuation = { 0 };
     int eol = 0;
-    const screen_char_t *maybeBufferStart = self.bufferStartIfUncompressed;
+    const screen_char_t *chunk = _characterBuffer.pointer + _startOffset;
     const int offset = [self _wrappedLineWithWrapWidth:width
                                               location:location
-                                           bufferStart:maybeBufferStart
+                                           bufferStart:chunk
                                                lineNum:&mutableLineNum
                                             lineLength:&length
                                      includesEndOfLine:&eol
@@ -1204,19 +1245,11 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                             lineOffset:NULL];
 
     ;
-    if (maybeBufferStart) {
-        ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:maybeBufferStart + offset
-                                             length:length
-                                           metadata:metadata
-                                       continuation:continuation];
-        return [sca paddedToLength:paddedSize eligibleForDWC:eligibleForDWC];
-    }
-    return [self screenCharArrayStartingAtOffset:offset + _startOffset
-                                          length:length
-                                        metadata:metadata
-                                    continuation:continuation
-                                  paddedToLength:paddedSize
-                                  eligibleForDWC:eligibleForDWC];
+    ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:chunk + offset
+                                                          length:length
+                                                        metadata:metadata
+                                                    continuation:continuation];
+    return [sca paddedToLength:paddedSize eligibleForDWC:eligibleForDWC];
 }
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
@@ -1225,7 +1258,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     if (!location.found) {
         return NULL;
     }
-    const screen_char_t *buffer = self.bufferStart + location.prev;
+    const screen_char_t *buffer = _characterBuffer.pointer + _startOffset + location.prev;
     const int length = location.length;
     screen_char_t continuation = { 0 };
     if (is_partial && location.index + 1 == cll_entries) {
@@ -1326,17 +1359,16 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
               upToWidth:(int)width
                metadata:(out iTermImmutableMetadata *)metadataPtr
            continuation:(screen_char_t *)continuationPtr {
-    NSNumber *number =
-    [self modifyWithBlock:^id(id<iTermLineBlockMutationCertificate> cert) {
-        const BOOL result = [self reallyPopLastLineInto:ptr
-                                             withLength:length
-                                              upToWidth:width
-                                               metadata:metadataPtr
-                                           continuation:continuationPtr
-                                                   cert:cert];
-        return @(result);
-    }];
-    return number.boolValue;
+    BOOL result;
+    ModifyLineBlock(self, [self, &result, ptr, length, width, metadataPtr, continuationPtr](id<iTermLineBlockMutationCertificate> cert) -> void {
+        result = [self reallyPopLastLineInto:ptr
+                                  withLength:length
+                                   upToWidth:width
+                                    metadata:metadataPtr
+                                continuation:continuationPtr
+                                        cert:cert];
+    });
+    return result;
 }
 
 - (BOOL)reallyPopLastLineInto:(screen_char_t const **)ptr
@@ -1370,14 +1402,14 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         const int numLines = [self numberOfFullLinesFromOffset:self.bufferStartOffset + start
                                                         length:available_len
                                                          width:width];
-        int offset_from_start = OffsetOfWrappedLine(self.bufferStart + start,
+        int offset_from_start = OffsetOfWrappedLine(_characterBuffer.pointer + _startOffset + start,
                                                     numLines,
                                                     available_len,
                                                     width,
                                                     _mayHaveDoubleWidthCharacter);
         *length = available_len - offset_from_start;
         if (ptr) {
-            *ptr = self.bufferStart + start + offset_from_start;
+            *ptr = _characterBuffer.pointer + _startOffset + start + offset_from_start;
         }
         cert.mutableCumulativeLineLengths[cll_entries - 1] -= *length;
         metadata_[cll_entries - 1].number_of_wrapped_lines = 0;
@@ -1402,7 +1434,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         // The last raw line is not longer than width. Return the whole thing.
         *length = available_len;
         if (ptr) {
-            *ptr = self.bufferStart + start;
+            *ptr = _characterBuffer.pointer + _startOffset + start;
         }
         if (metadataPtr) {
             iTermMetadata metadata = metadata_[cll_entries - 1].lineMetadata;
@@ -1474,14 +1506,31 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     } else {
         start = cumulative_line_lengths[linenum - 1];
     }
-    return self.rawBuffer + start;
+    return _characterBuffer.pointer + start;
+}
+
+- (BOOL)shouldOptimizeOutBufferSizeChangeTo:(int)desiredCapacity
+                               assumeLocked:(BOOL)assumeLocked {
+    if (self.hasBeenCopied && !assumeLocked) {
+        return NO;
+    }
+    const int existing = _characterBuffer.size;
+    if (desiredCapacity > existing) {
+        return NO;
+    }
+    return (existing - desiredCapacity) > 100;
 }
 
 - (void)changeBufferSize:(int)capacity {
-    [self modifyWithBlock:^id(id<iTermLineBlockMutationCertificate> cert) {
+    if ([self shouldOptimizeOutBufferSizeChangeTo:capacity assumeLocked:NO]) {
+        return;
+    }
+    ModifyLineBlock(self, [&self, capacity](id<iTermLineBlockMutationCertificate> cert) -> void {
+        if ([self shouldOptimizeOutBufferSizeChangeTo:capacity assumeLocked:YES]) {
+            return;
+        }
         [self changeBufferSize:capacity cert:cert];
-        return nil;
-    }];
+    });
 }
 
 - (void)changeBufferSize:(int)capacity cert:(id<iTermLineBlockMutationCertificate>)cert {
@@ -1504,10 +1553,16 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (void)shrinkToFit {
-    [self modifyWithBlock:^id(id<iTermLineBlockMutationCertificate> cert) {
+    if ([self shouldOptimizeOutBufferSizeChangeTo:self.rawSpaceUsed assumeLocked:NO]) {
+        return;
+    }
+    ModifyLineBlock(self, [self](id<iTermLineBlockMutationCertificate> cert) -> void {
+        // If the difference is tiny, don't bother.
+        if ([self shouldOptimizeOutBufferSizeChangeTo:self.rawSpaceUsed assumeLocked:YES]) {
+            return;
+        }
         [self changeBufferSize:[self rawSpaceUsed] cert:cert];
-        return nil;
-    }];
+    });
 }
 
 - (int)dropLines:(int)orig_n withWidth:(int)width chars:(int *)charsDropped {
@@ -1517,7 +1572,18 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     int i;
     *charsDropped = 0;
     int initialOffset = self.bufferStartOffset;
-    _numberOfFullLinesCache.clear();
+
+    if (_numberOfFullLinesCache.size() > 16) {
+        // A big unordered_map has a lot of tiny malloced regions that are slow to free, so do that in another thread.
+        __block std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> tempMap;
+        std::swap(_numberOfFullLinesCache, tempMap);
+        dispatch_async(gDeallocQueue, ^{
+            tempMap.clear();
+        });
+    } else {
+        _numberOfFullLinesCache.clear();
+    }
+
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - self.bufferStartOffset;
         LineBlockMetadata *metadata = &metadata_[i];
@@ -1536,7 +1602,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             // We found the raw line that includes the wrapped line we're searching for.
             // Set offset to the offset into the raw line where the nth wrapped
             // line begins.
-            int offset = OffsetOfWrappedLine(self.bufferStart + prev,
+            int offset = OffsetOfWrappedLine(_characterBuffer.pointer + _startOffset + prev,
                                              n,
                                              length,
                                              width,
@@ -1913,6 +1979,17 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
 }
 #endif
 
+- (NSString *)stringFromOffset:(int)offset
+                        length:(int)length
+                  backingStore:(unichar **)backingStorePtr
+                        deltas:(int **)deltasPtr {
+    return ScreenCharArrayToString(_characterBuffer.pointer + offset,
+                                   0,
+                                   length,
+                                   backingStorePtr,
+                                   deltasPtr);
+}
+
 - (void)_findInRawLine:(int)entry
                 needle:(NSString*)needle
                options:(FindOptions)options
@@ -1937,7 +2014,7 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
                                          deltas:&deltas];
 
 #ifdef DEBUG_SEARCH
-    SearchLog(@"Searching rawline %@", [self prettyRawLine:self.rawBuffer + rawOffset
+    SearchLog(@"Searching rawline %@", [self prettyRawLine:_characterBuffer.pointer + rawOffset
                                                     length:raw_line_length]);
     SearchLog(@"Deltas: %@", [self prettyDeltas:deltas length:haystack.length]);
 #endif
@@ -2201,7 +2278,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
     *x = 0;
     *y = 0;
     int prev = self.bufferStartOffset;
-    const screen_char_t *p = self.rawBufferIfUncompressed;
+    const screen_char_t *p = _characterBuffer.pointer;
     for (i = first_entry; i < cll_entries; ++i) {
         int eol = cumulative_line_lengths[i];
         int line_length = eol - prev;
@@ -2224,14 +2301,9 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 
             if (bytes_to_consume_in_this_line < line_length &&
                 prev + bytes_to_consume_in_this_line + 1 < eol) {
-                assert(prev + bytes_to_consume_in_this_line + 1 < self.rawBufferSize);
-                screen_char_t c;
+                assert(prev + bytes_to_consume_in_this_line + 1 < _characterBuffer.size);
                 const int i = prev + bytes_to_consume_in_this_line + 1;
-                if (p) {
-                    c = p[i];
-                } else {
-                    c = [self characterAtIndex:i];
-                }
+                const screen_char_t c = p[i];
                 if (width > 1 && ScreenCharIsDWC_RIGHT(c)) {
                     ++dwc_peek;
                 }
@@ -2283,11 +2355,11 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 }
 
 - (NSDictionary *)dictionary {
-    return @{ kLineBlockRawBufferV4Key: [self encodedCharacterBufferWithMaxSize:[self rawSpaceUsed]] ?: [NSData data],
+    return @{ kLineBlockRawBufferV3Key: _characterBuffer.data,
               kLineBlockBufferStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockFirstEntryKey: @(first_entry),
-              kLineBlockBufferSizeKey: @(self.rawBufferSize),
+              kLineBlockBufferSizeKey: @(_characterBuffer.size),
               kLineBlockCLLKey: [self cumulativeLineLengthsArray],
               kLineBlockIsPartialKey: @(is_partial),
               kLineBlockMetadataKey: [self metadataArray],
@@ -2338,85 +2410,62 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
     return cumulative_line_lengths[cll_entries - 1] > self.bufferStartOffset;
 }
 
-- (void)addObserver:(id<iTermLineBlockObserver>)observer {
-    [_observers addObject:[iTermWeakBox boxFor:observer]];
-}
-
-- (void)removeObserver:(id<iTermLineBlockObserver>)observer {
-    [_observers removeObjectsPassingTest:^BOOL(iTermWeakBox<id<iTermLineBlockObserver>> *anObject) {
-        return anObject.object == nil || anObject.object == observer;
-    }];
-}
-
-- (BOOL)hasObserver:(id<iTermLineBlockObserver>)observer {
-    // Can't use -[NSArray containsObject:] because it does [observer isEqual:_observers[j]] where
-    // _observesr[j] is an iTermWeakBox.
-    return [_observers anyWithBlock:^BOOL(iTermWeakBox<id<iTermLineBlockObserver>> *box) {
-        return [box.object isEqual:observer];
-    }];
-}
-
-static void *iTermMemdup(const void *data, size_t count, size_t size) {
-    void *dest = calloc(count, size);
-    const size_t numBytes = count * size;
-    memcpy(dest, data, numBytes);
-    return dest;
-}
-
-- (id)modifyWithBlock:(id (^)(id<iTermLineBlockMutationCertificate>))block {
-    // Synchronize for the duration of the mutation because -cowCopy will invalidate and nil out the certificate.
-    @synchronized([LineBlock class]) {
-        return block([self validMutationCertificate:NO]);
-    }
-}
+#pragma mark - COW
 
 // On exit, these postconditions are guaranteed:
 // self.owner==nil
 // self.clients.arrayByStrongifyingWeakBoxes.count==0.
-- (id<iTermLineBlockMutationCertificate>)validMutationCertificate:(BOOL)willCompress {
-    @synchronized([LineBlock class]) {
+- (id<iTermLineBlockMutationCertificate>)validMutationCertificate {
+    // The access to _hasBeenCopied is not a race because the line block must be copied on the
+    // same thread that mutates it.
+    if (!self.hasBeenCopied) {
+        if (!_cachedMutationCert) {
+            _cachedMutationCert = [[iTermLineBlockMutator alloc] initWithLineBlock:self];
+        }
+        return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
+    }
+
+    {
+        std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
+
         if (!_cachedMutationCert) {
             _cachedMutationCert = [[iTermLineBlockMutator alloc] initWithLineBlock:self];
         }
         assert(self.clients != nil);
 
-        NSArray<LineBlock *> *myClients = self.clients.strongObjects;
-        if (self.owner == nil && !myClients.count) {
+        if (self.owner == nil && self.clients.count == 0) {
             // I have neither an owner nor clients, so copy-on-write is unneeded.
-            if (!willCompress) {
-                [self purgeDecompressed];
-            }
             [self.clients prune];
             return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
         }
 
+        NSArray<LineBlock *> *myClients = (NSArray<LineBlock *> *)self.clients.strongObjects;
+        const NSUInteger numberOfClients = myClients.count;
+
         // Perform copy-on-write copying.
         const ptrdiff_t offset = self.bufferStartOffset;
-        _characterBuffer = [self copyOfCharacterBuffer:willCompress];
+        _characterBuffer = [_characterBuffer clone];
         [self setBufferStartOffset:offset];
         iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMemdup(self->cumulative_line_lengths, cll_capacity, sizeof(int)));
 
         if (self.owner != nil) {
             // I am no longer a client. Remove myself from my owner's client list.
-            [self.owner.clients removeObjectsPassingTest:^BOOL(LineBlock *block) {
+            [self.owner.clients removeObjectsPassingTest:^BOOL(id block) {
                 return block == self;
             }];
             // Since I am not a client anymore, I now have no owner.
             self.owner = nil;
         }
 
-        if (myClients.count == 0) {
+        if (numberOfClients == 0) {
             // I have no clients.
             // Nothing else to do since my owner pointer was already nilled out.
             [self.clients removeAllObjects];
-            if (!willCompress) {
-                [self purgeDecompressed];
-            }
             return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
         }
 
         // I have one or more clients.
-        assert(myClients.count >= 1);
+        assert(numberOfClients >= 1);
 
         // Designate the first client as the owner.
         LineBlock *newOwner = myClients[0];
@@ -2435,71 +2484,57 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
         // All clients were transferred and now I should have none.
         [self.clients removeAllObjects];
 
-        if (!willCompress) {
-            [self purgeDecompressed];
-        }
         return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
     }
 }
 
 - (LineBlock *)cowCopy {
-    @synchronized([LineBlock class]) {
-        // Make a shallow copy, sharing memory with me (and I may even be a shallow copy of some other LineBlock).
-        LineBlock *copy = [self copyDeep:NO absoluteBlockNumber:_absoluteBlockNumber];
+    std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
 
-        // Walk owner pointers up to the root.
-        LineBlock *owner = self;
-        while (owner.owner) {
-            owner = owner.owner;
-        }
+    self.hasBeenCopied = YES;
+    // Make a shallow copy, sharing memory with me (and I may even be a shallow copy of some other LineBlock).
+    LineBlock *copy = [self copyDeep:NO absoluteBlockNumber:_absoluteBlockNumber];
 
-        // Create ownership relation.
-        copy.owner = owner;
-        [owner.clients addObject:copy];
-
-        [(id<iTermLineBlockMutationCertificate>)_cachedMutationCert invalidate];
-        _cachedMutationCert = nil;
-        copy->_progenitor = self;
-        
-        return copy;
+    // Walk owner pointers up to the root.
+    LineBlock *owner = self;
+    while (owner.owner) {
+        owner = owner.owner;
     }
+
+    // Create ownership relation.
+    copy.owner = owner;
+    [owner.clients addObject:copy];
+
+    [(id<iTermLineBlockMutationCertificate>)_cachedMutationCert invalidate];
+    _cachedMutationCert = nil;
+    copy->_progenitor = self;
+
+    return copy;
 }
 
 - (NSInteger)numberOfClients {
-    @synchronized([LineBlock class]) {
+    if (!self.hasBeenCopied) {
+        return 0;
+    }
+    {
+        std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
         return self.clients.count;
     }
 }
 
+- (void)initializeClients {
+    self.clients = [[iTermLegacyAtomicMutableArrayOfWeakObjects alloc] init];
+}
+
 - (BOOL)hasOwner {
-    @synchronized([LineBlock class]) {
-        return self.owner != nil;
-    }
+    std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
+    return self.owner != nil;
 }
 
 - (void)invalidate {
     // The purpose of invalidation is to make syncing do the right thing when the progenitor block
     // is removed from the line buffer.
     _invalidated = YES;
-}
-
-// Returns NO if you need to try again later.
-- (BOOL)compressIfNeeded {
-    if (![self isOnlyUncompressed]) {
-        return YES;
-    }
-    if (![self hasBeenIdleLongEnoughToCompress]) {
-        return NO;
-    }
-    @synchronized([LineBlock class]) {
-        id<iTermLineBlockMutationCertificate> cert = [self validMutationCertificate:YES];
-        [cert compress];
-    }
-    return YES;
-}
-
-- (void)dumpCompression {
-    NSLog(@"LineBlock %p: abs=%@ clients=%@ %@", self, @(_absoluteBlockNumber), @(self.clients.count), [self compressionDebugDescription]);
 }
 
 #pragma mark - iTermUniquelyIdentifiable
@@ -2538,12 +2573,12 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 
 - (screen_char_t *)mutableRawBuffer {
     assert(_valid);
-    return _lineBlock.mutableRawBuffer;
+    return _lineBlock->_characterBuffer.mutablePointer;
 }
 
 - (void)setRawBufferCapacity:(size_t)count {
     assert(_valid);
-    [_lineBlock resizeCharacterBufferTo:count];
+    [_lineBlock->_characterBuffer resize:count];
 }
 
 - (void)setCumulativeLineLengthsCapacity:(int)capacity {
@@ -2552,10 +2587,4 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
                               iTermRealloc((void *)_lineBlock->cumulative_line_lengths, capacity, sizeof(int)));
 }
 
-- (void)compress {
-    assert(_valid);
-    [_lineBlock reallyCompress];
-}
-
 @end
-

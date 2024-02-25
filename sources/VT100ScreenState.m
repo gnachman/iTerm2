@@ -151,7 +151,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         _linebuffer = [[LineBuffer alloc] init];
         _colorMap = [[iTermColorMap alloc] init];
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] initWithQueue:queue];
-        _namedMarks = [[iTermAtomicMutableArrayOfWeakObjects alloc] init];
+        _namedMarks = [[iTermMutableArrayOfWeakObjects alloc] init];
         _blockStartAbsLine = [NSMutableDictionary dictionary];
         _fakePromptDetectedAbsLine = -1;
     }
@@ -235,7 +235,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         _blockStartAbsLine = [source.blockStartAbsLine copy];
     }
     if (source.namedMarksDirty) {
-        _namedMarks = [source.namedMarks compactMap:^id _Nonnull(id<VT100ScreenMarkReading>  _Nonnull mark) {
+        _namedMarks = [source.namedMarks compactMap:^NSObject * _Nonnull(NSObject * _Nonnull obj) {
+            id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
             return [mark doppelganger];
         }];
     }
@@ -1151,15 +1152,6 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 }
 
 #pragma mark - VT100GridDelgate
-
-// This is here to enable copying of the temporary double buffer.
-- (screen_char_t)gridForegroundColorCode {
-    return self.terminalForegroundColorCode;
-}
-
-- (screen_char_t)gridBackgroundColorCode {
-    return self.terminalBackgroundColorCode;
-}
 
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
     return self.normalization;

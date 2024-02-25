@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "RegexKitLite.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermTextExtractor.h"
@@ -260,7 +261,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     if (_triggers.count) {
         return YES;
     }
-    if (_expect.expectations.count) {
+    if (!_expect.expectationsIsEmpty) {
         return YES;
     }
     return NO;

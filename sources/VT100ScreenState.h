@@ -21,7 +21,6 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMark.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
-#import "iTermAtomicMutableArrayOfWeakObjects.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -51,6 +50,7 @@ extern NSString *const kScreenStateExfiltratedEnvironmentKey;
 extern NSString *const kScreenStateBlockStartAbsLineKey;
 
 @class IntervalTree;
+@class iTermMutableArrayOfWeakObjects;
 @class iTermOrderEnforcer;
 
 @protocol VT100ScreenState<NSObject>
@@ -190,7 +190,7 @@ extern NSString *const kScreenStateBlockStartAbsLineKey;
 @property (nonatomic, copy, readonly) id<VT100ScreenConfiguration> config;
 @property (nullable, nonatomic, strong, readonly) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
 @property (nonatomic, readonly) NSDictionary *promptStateDictionary;
-@property (nonatomic, readonly) iTermAtomicMutableArrayOfWeakObjects<id<VT100ScreenMarkReading>> *namedMarks;
+@property (nonatomic, readonly) iTermMutableArrayOfWeakObjects *namedMarks;
 @property (nonatomic, readonly, copy) NSDictionary<NSString *, NSNumber *> *blockStartAbsLine;
 @property (nonatomic, readonly) NSInteger blocksGeneration;
 

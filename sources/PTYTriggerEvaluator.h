@@ -7,7 +7,6 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermExpect.h"
-#import "iTermSlownessDetector.h"
 #import "PTYTextViewDataSource.h"
 #import "Trigger.h"
 #import "VT100Token.h"
@@ -16,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class PTYTriggerEvaluator;
 @class iTermStringLine;
+@class iTermSlownessDetector;
 
 extern NSString *const PTYSessionSlownessEventExecute;
 

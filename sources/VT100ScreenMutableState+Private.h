@@ -19,7 +19,7 @@
 #import "iTermMark.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
 
-extern const NSInteger VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed;
+extern const int64_t VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed;
 
 @interface VT100ScreenMutableState()<
 PTYAnnotationDelegate,
@@ -48,6 +48,7 @@ iTermTriggerScopeProvider> {
     iTermPromptStateMachine *_promptStateMachine;
     NSString *_currentBlockID;;
     BOOL _triggerDidDetectPrompt;
+    BOOL _autoComposerEnabled;
 }
 
 @property (atomic) BOOL hadCommand;

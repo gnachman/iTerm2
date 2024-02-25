@@ -18,8 +18,6 @@
 @protocol iTermEncoderAdapter;
 
 @protocol VT100GridDelegate <NSObject>
-- (screen_char_t)gridForegroundColorCode;
-- (screen_char_t)gridBackgroundColorCode;
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm;
 - (void)gridCursorDidMove;
 - (void)gridCursorDidChangeLineFrom:(int)previuos;
@@ -49,6 +47,7 @@
 @property(nonatomic, readonly) BOOL haveScrolled;
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 @property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
+@property(nonatomic, readonly) screen_char_t defaultChar;
 
 - (id<VT100GridReading>)copy;
 
@@ -138,7 +137,11 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 
 @end
 
-@interface VT100Grid : NSObject<VT100GridReading>
+@interface VT100Grid : NSObject<VT100GridReading> {
+@public
+    // A gross little optimization
+    screen_char_t _defaultChar;
+}
 
 // Changing the size erases grid contents.
 @property(nonatomic, readwrite) VT100GridSize size;
@@ -157,6 +160,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 @property(nonatomic, readonly) int topMargin;
 @property(nonatomic, readonly) int bottomMargin;
 @property(nonatomic, readwrite) screen_char_t savedDefaultChar;
+@property(nonatomic, readwrite) screen_char_t defaultChar;
 @property(nonatomic, weak, readwrite) id<VT100GridDelegate> delegate;
 @property(nonatomic, readwrite) VT100GridCoord preferredCursorPosition;
 // Size of the grid if the cursor is outside the scroll region. Otherwise, size of the scroll region.

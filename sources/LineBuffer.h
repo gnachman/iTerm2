@@ -266,6 +266,9 @@ NS_ASSUME_NONNULL_BEGIN
 // If the last block is non-empty, make a new block to avoid having to copy it on write.
 - (void)seal;
 
+// Ensure it's fast to append to the buffer.
+- (void)ensureLastBlockUncopied;
+
 - (void)mergeFrom:(LineBuffer *)source;
 - (void)forceMergeFrom:(LineBuffer *)source;
 
@@ -273,9 +276,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)clear;
 
-// Returns YES if all blocks have been compressed.
-- (BOOL)compress;
-
+- (NSString *)dumpString;
 @end
 
 NS_ASSUME_NONNULL_END

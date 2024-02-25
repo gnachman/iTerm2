@@ -35,7 +35,7 @@ iTermMetadata iTermMetadataCopy(iTermMetadata obj) {
 }
 
 iTermMetadata iTermImmutableMetadataMutableCopy(iTermImmutableMetadata obj) {
-    iTermExternalAttributeIndex *index = [iTermImmutableMetadataGetExternalAttributesIndex(obj) mutableCopyWithZone:nil];
+    iTermExternalAttributeIndex *index = obj.externalAttributes ? [iTermImmutableMetadataGetExternalAttributesIndex(obj) mutableCopyWithZone:nil] : nil;
     return (iTermMetadata) {
         .timestamp = obj.timestamp,
         .externalAttributes = index

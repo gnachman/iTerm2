@@ -71,7 +71,6 @@
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermSharedImageStore.h"
-#import "iTermSlownessDetector.h"
 #import "iTermSnippetsModel.h"
 #import "iTermStandardKeyMapper.h"
 #import "iTermStatusBarUnreadCountController.h"

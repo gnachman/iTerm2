@@ -14,7 +14,11 @@ extern NSString *VT100ScreenTerminalStateKeyLineDrawingCharacterSets;
 extern NSString *VT100ScreenTerminalStateKeyRemoteHost;
 extern NSString *VT100ScreenTerminalStateKeyPath;
 
-@interface VT100ScreenState() <VT100ScreenMutableState>
+@interface VT100ScreenState() <VT100ScreenMutableState> {
+@protected
+    VT100Grid *_primaryGrid;
+    VT100Grid *_altGrid;
+}
 - (instancetype _Nonnull)initForMutationOnQueue:(dispatch_queue_t _Nonnull)queue;
 - (instancetype _Nonnull)initWithState:(VT100ScreenMutableState * _Nonnull)source
                            predecessor:(VT100ScreenState * _Nullable)predecessor;

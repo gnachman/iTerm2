@@ -54,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // This might lie and say YES if all the expectations have been dealloced.
 @property (nonatomic, readonly) BOOL maybeHasExpectations;
+@property (nonatomic, readonly) BOOL expectationsIsEmpty;
 
 // Dry means that it accepts mutations (add expectation, cancel expectation, reset dirty) but matching
 // will never happen on this object - only on its copies. The main effect is that willExpect: calls

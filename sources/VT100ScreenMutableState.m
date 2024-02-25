@@ -39,10 +39,10 @@
 
 #import <stdatomic.h>
 
-static const NSInteger VT100ScreenMutableStateSideEffectFlagNeedsRedraw = (1 << 0);
-static const NSInteger VT100ScreenMutableStateSideEffectFlagIntervalTreeVisibleRangeDidChange = (1 << 1);
-const NSInteger VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed = (1 << 2);
-static const NSInteger VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines = (1 << 3);
+static const int64_t VT100ScreenMutableStateSideEffectFlagNeedsRedraw = (1 << 0);
+static const int64_t VT100ScreenMutableStateSideEffectFlagIntervalTreeVisibleRangeDidChange = (1 << 1);
+const int64_t VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed = (1 << 2);
+static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines = (1 << 3);
 
 @interface VT100ScreenTokenExecutorUpdate()
 
@@ -115,6 +115,7 @@ static _Atomic int gPerformingJoinedBlock;
         self.primaryGrid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(defaultWidth,
                                                                              defaultHeight)
                                                   delegate:self];
+        self.primaryGrid.defaultChar = _terminal.defaultChar;
         self.currentGrid = self.primaryGrid;
 
         [self setInitialTabStops];
@@ -406,6 +407,8 @@ static _Atomic int gPerformingJoinedBlock;
     }
     _terminal.stringForKeypress = config.stringForKeypress;
     _alertOnNextMark = config.alertOnNextMark;
+
+    _autoComposerEnabled = config.autoComposerEnabled;
     if ([dirty containsObject:@"desiredComposerRows"]) {
         [_promptStateMachine revealOrDismissComposerAgain];
     }
@@ -615,6 +618,7 @@ static _Atomic int gPerformingJoinedBlock;
     const BOOL enabled = self.terminal.softAlternateScreenMode;
     const BOOL showing = self.currentGrid == self.altGrid;;
     _triggerEvaluator.triggersSlownessDetector.enabled = enabled;
+    [_triggerEvaluator.triggersSlownessDetector reset];
     [_promptStateMachine setAllowed:!enabled];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSoftAlternateScreenModeDidChangeTo:enabled showingAltScreen:showing];
@@ -821,29 +825,29 @@ static _Atomic int gPerformingJoinedBlock;
     screen_char_t *buffer;
     buffer = asciiData->screenChars->buffer;
 
-    screen_char_t fg = [self.terminal foregroundColorCode];
-    screen_char_t bg = [self.terminal backgroundColorCode];
-    iTermExternalAttribute *ea = [self.terminal externalAttributes];
+    VT100Terminal *terminal = self.terminal;
+    const screen_char_t defaultChar = terminal.processedDefaultChar;
+    iTermExternalAttribute *ea = [terminal externalAttributes];
 
     screen_char_t zero = { 0 };
-    if (memcmp(&fg, &zero, sizeof(fg)) || memcmp(&bg, &zero, sizeof(bg))) {
+    if (memcmp(&defaultChar, &zero, sizeof(defaultChar))) {
         STOPWATCH_START(setUpScreenCharArray);
         for (int i = 0; i < len; i++) {
-            CopyForegroundColor(&buffer[i], fg);
-            CopyBackgroundColor(&buffer[i], bg);
+            CopyForegroundColor(&buffer[i], defaultChar);
+            CopyBackgroundColor(&buffer[i], defaultChar);
         }
         STOPWATCH_LAP(setUpScreenCharArray);
     }
 
     // If a graphics character set was selected then translate buffer
     // characters into graphics characters.
-    if ([self.charsetUsesLineDrawingMode containsObject:@(self.terminal.charset)]) {
+    if ([self.charsetUsesLineDrawingMode containsObject:@(terminal.charset)]) {
         ConvertCharsToGraphicsCharset(buffer, len);
     }
 
     [self appendScreenCharArrayAtCursor:buffer
                                  length:len
-                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:ea]];
+                 externalAttributeIndex:ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil];
     STOPWATCH_LAP(appendAsciiDataAtCursor);
 }
 
@@ -1763,6 +1767,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     if (!self.altGrid) {
         self.altGrid = [[VT100Grid alloc] initWithSize:self.primaryGrid.size delegate:self];
+        self.altGrid.defaultChar = self.terminal.defaultChar;
     }
 
     [self.temporaryDoubleBuffer reset];
@@ -2264,7 +2269,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (name) {
         [self.namedMarks addObject:mark];
     } else {
-        [self.namedMarks removeObjectsPassingTest:^BOOL(id<VT100ScreenMarkReading>  _Nullable anObject) {
+        [self.namedMarks removeObjectsPassingTest:^BOOL(id _Nullable obj) {
+            id<VT100ScreenMarkReading> anObject = obj;
             return [anObject.guid isEqualToString:mark.guid];
         }];
     }
@@ -2404,7 +2410,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         self.lastCommandMark = nil;
         VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
         if (screenMark.name) {
-            [self.namedMarks removeObjectsPassingTest:^BOOL(id<VT100ScreenMarkReading>  _Nullable anObject) {
+            [self.namedMarks removeObjectsPassingTest:^BOOL(id  _Nullable obj) {
+                id<VT100ScreenMarkReading> anObject = obj;
                 return anObject == screenMark;
             }];
             self.namedMarksDirty = YES;
@@ -2601,7 +2608,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)removeNamedMark:(VT100ScreenMark *)mark {
     VT100GridAbsCoordRange range = [self absCoordRangeForInterval:mark.entry.interval];
     [self.mutableIntervalTree removeObject:mark];
-    [self.namedMarks removeObjectsPassingTest:^BOOL(id<VT100ScreenMarkReading>  _Nullable anObject) {
+    [self.namedMarks removeObjectsPassingTest:^BOOL(id  _Nullable obj) {
+        id<VT100ScreenMarkReading> anObject = obj;
         return anObject == mark;
     }];
     self.namedMarksDirty = YES;
@@ -4001,6 +4009,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
+    if (!_triggerEvaluator.haveTriggersOrExpectations && 
+        !self.config.loggingEnabled &&
+        _postTriggerActions.count == 0) {
+        return YES;
+    }
     __block BOOL result = NO;
     [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
         result = [self reallyAppendAsciiDataToTriggerLine:asciiData
@@ -4108,38 +4121,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // one of the side effects adds a joined block.
     _runSideEffectAfterTopJoinFinishes = YES;
     [self removeInaccessibleIntervalTreeObjects];
-    __weak __typeof(self) weakSelf = self;
-    dispatch_async(_queue, ^{
-        [weakSelf compressAndRescheduleIfNeeded];
-    });
-}
-
-- (void)compressAndRescheduleIfNeeded {
-    if (![iTermPreferences boolForKey:kPreferenceKeyCompressHistory]) {
-        DLog(@"History compression disabled");
-        return;
-    }
-    DLog(@"History compression enabled");
-    if ([self.linebuffer compress]) {
-        return;
-    }
-
-    if (_compressionScheduled) {
-        return;
-    }
-    _compressionScheduled = YES;
-    __weak __typeof(self) weakSelf = self;
-    // This mechanism ensures we don't use too much CPU time on compression. We do compression about
-    // every 100ms and LineBlock limits the amount of time it spends doing compression to about
-    // 10ms.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), _queue, ^{
-        __strong __typeof(self) strongSelf = weakSelf;
-        if (!strongSelf) {
-            return;
-        }
-        strongSelf->_compressionScheduled = NO;
-        [strongSelf compressAndRescheduleIfNeeded];
-    });
 }
 
 - (void)updateExpectFrom:(iTermExpect *)source {
@@ -4551,6 +4532,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     self.primaryGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"PrimaryGrid"]
                                                     delegate:self];
+    self.primaryGrid.defaultChar = self.terminal.defaultChar;
     if (!self.primaryGrid) {
         // This is to prevent a crash if the dictionary is bad (i.e., non-backward compatible change in a future version).
         self.primaryGrid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(2, 2) delegate:self];
@@ -4562,6 +4544,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (!self.altGrid) {
         self.altGrid = [[VT100Grid alloc] initWithSize:self.primaryGrid.size delegate:self];
     }
+    self.altGrid.defaultChar = self.terminal.defaultChar;
     if (onPrimary || includeRestorationBanner) {
         self.currentGrid = self.primaryGrid;
     } else {
@@ -5355,14 +5338,6 @@ launchCoprocessWithCommand:(NSString *)command
 
 #pragma mark - VT100GridDelegate
 
-- (screen_char_t)gridForegroundColorCode {
-    return [self.terminal foregroundColorCodeReal];
-}
-
-- (screen_char_t)gridBackgroundColorCode {
-    return [self.terminal backgroundColorCodeReal];
-}
-
 - (void)gridCursorDidChangeLineFrom:(int)previous {
     if (!self.trackCursorLineMovement) {
         return;
@@ -5600,13 +5575,13 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (BOOL)tokenExecutorShouldDiscardTokensWithHighPriority:(BOOL)highPriority {
-    if (self.exited) {
+    if (_exited) {
         return YES;
     }
-    if (!self.terminalEnabled) {
+    if (!_terminalEnabled) {
         return YES;
     }
-    if (!highPriority && !self.isTmuxGateway && self.hasMuteCoprocess) {
+    if (!highPriority && !_isTmuxGateway && _hasMuteCoprocess) {
         return YES;
     }
     if (_suppressAllOutput) {
@@ -5635,8 +5610,14 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
+// Runs on mutation queue
+- (void)tokenExecutorWillExecuteTokens {
+    DLog(@"begin");
+    [self.linebuffer ensureLastBlockUncopied];
+}
+
 // Runs on the main thread or while joined.
-- (void)tokenExecutorHandleSideEffectFlags:(NSInteger)flags {
+- (void)tokenExecutorHandleSideEffectFlags:(int64_t)flags {
     DLog(@"tokenExecutorHandleSideEffectFlags:%llx", (long long)flags);
     if (flags & VT100ScreenMutableStateSideEffectFlagNeedsRedraw) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {

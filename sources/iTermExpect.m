@@ -217,6 +217,14 @@
     }];
 }
 
+- (BOOL)expectationsIsEmpty {
+    if (_expectations.count == 0) {
+        return YES;
+    }
+    [self removeExpiredExpectations];
+    return _expectations.count == 0;
+}
+
 - (NSArray<iTermExpectation *> *)expectations {
     [self removeExpiredExpectations];
     return [_expectations copy];

@@ -168,6 +168,21 @@ static NSString *const kGridSizeKey = @"Size";
     return [self lineInfoAtLineNumber:lineNumber].metadata;
 }
 
+NS_INLINE iTermExternalAttributeIndex *VT100GridGetExternalAttributes(VT100Grid *self, int line, BOOL create) {
+    const int i = VT100GridLineInfoIndex(self, line);
+    if (i < 0) {
+        return nil;
+    }
+    VT100LineInfo *info = self->lineInfos_[i];
+    if (!info) {
+        return nil;
+    }
+    if (!create) {
+        return iTermMetadataGetExternalAttributesIndex(info.metadata);
+    }
+    return [info externalAttributesCreatingIfNeeded:YES];
+}
+
 - (iTermExternalAttributeIndex *)externalAttributesOnLine:(int)line
                                            createIfNeeded:(BOOL)createIfNeeded {
     return [[self lineInfoAtLineNumber:line] externalAttributesCreatingIfNeeded:createIfNeeded];
@@ -178,9 +193,16 @@ static NSString *const kGridSizeKey = @"Size";
     info.metadata = metadata;
 }
 
-- (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
+NS_INLINE screen_char_t *VT100GridScreenCharsAtLine(VT100Grid *self, int lineNumber) {
+#if DEBUG
     assert(lineNumber >= 0);
-    return [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];
+#endif
+    const int i = (self->screenTop_ + lineNumber) % self->size_.height;
+    return self->lines_[i].mutableBytes;
+}
+
+- (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
+    return VT100GridScreenCharsAtLine(self, lineNumber);
 }
 
 - (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range {
@@ -201,6 +223,10 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
     } else {
         return -1;
     }
+}
+
+NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
+    return VT100GridIndex(self->screenTop_, lineNumber, self->size_.height);
 }
 
 - (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber {
@@ -529,8 +555,11 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     // Empty contents of last line on screen.
     NSMutableData *lastLineData = [self lineDataAtLineNumber:(size_.height - 1)];
     if (lastLineData) {  // This if statement is just to quiet the analyzer.
-        [self clearLineData:lastLineData];
-        [[self lineInfoAtLineNumber:(size_.height - 1)] resetMetadata];
+        [self clearLineDataBytes:lastLineData.mutableBytes count:lastLineData.length / sizeof(screen_char_t)];
+        const int i = VT100GridLineInfoIndex(self, size_.height - 1);
+        if (i >= 0) {
+            [lineInfos_[i] resetMetadata];
+        }
     }
 
     // Mark new line at bottom of screen dirty and update its timestamp.
@@ -954,7 +983,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     screen_char_t *aLine;
     const int scrollLeft = self.scrollLeft;
     const int scrollRight = self.scrollRight;
-
+    const screen_char_t defaultChar = [self defaultChar];
     // Iterate over each character in the buffer and copy/insert into screen.
     // Grab a block of consecutive characters up to the remaining length in the
     // line and append them at once.
@@ -1000,9 +1029,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             if (wraparound) {
                 if (leftMargin == 0 && rightMargin == size_.width) {
                     // Set the continuation marker
-                    screen_char_t* prevLine = [self screenCharsAtLineNumber:cursor_.y];
+                    screen_char_t* prevLine = VT100GridScreenCharsAtLine(self, cursor_.y);
                     BOOL splitDwc = (cursor_.x == size_.width - 1);
-                    prevLine[size_.width] = [self defaultChar];
+                    prevLine[size_.width] = defaultChar;
                     prevLine[size_.width].code = (splitDwc ? EOL_DWC : EOL_SOFT);
                     if (splitDwc) {
                         ScreenCharSetDWC_SKIP(&prevLine[size_.width - 1]);
@@ -1035,7 +1064,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                     newCursorX--;
                 }
 
-                screen_char_t *line = [self screenCharsAtLineNumber:cursor_.y];
+                screen_char_t *line = VT100GridScreenCharsAtLine(self, cursor_.y);
                 if (rightMargin == size_.width) {
                     // Clear the continuation marker
                     line[size_.width].code = EOL_HARD;
@@ -1119,8 +1148,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         }
 
         const int lineNumber = cursor_.y;
-        aLine = [self screenCharsAtLineNumber:lineNumber];
-        iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:lineNumber createIfNeeded:attributes != nil];
+        aLine = VT100GridScreenCharsAtLine(self, lineNumber);
+        iTermExternalAttributeIndex *eaIndex = VT100GridGetExternalAttributes(self, lineNumber, attributes != nil);
 
         BOOL mayStompSplitDwc = NO;
         if (newx == size_.width) {
@@ -1206,7 +1235,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         if (cursor_.x >= effective_width && ansi) {
             if (wraparound) {
                 //set the wrapping flag
-                aLine[size_.width] = [self defaultChar];
+                aLine[size_.width] = defaultChar;
                 aLine[size_.width].code = ((effective_width == size_.width) ? EOL_SOFT : EOL_DWC);
                 self.cursorX = leftMargin;
                 numDropped += [self moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
@@ -2161,25 +2190,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     return dirty;
 }
 
-- (screen_char_t)defaultChar {
-    assert(delegate_);
-    screen_char_t c = { 0 };
-    screen_char_t fg = [delegate_ gridForegroundColorCode];
-    screen_char_t bg = [delegate_ gridBackgroundColorCode];
-
-    c.code = 0;
-    c.complexChar = NO;
-    CopyForegroundColor(&c, fg);
-    CopyBackgroundColor(&c, bg);
-
-    c.underline = NO;
-    c.strikethrough = NO;
-    c.underlineStyle = VT100UnderlineStyleSingle;
-    c.image = 0;
-
-    return c;
-}
-
 - (NSMutableData *)lineOfWidth:(int)width filledWithChar:(screen_char_t)c {
     NSMutableData *data = [NSMutableData dataWithLength:sizeof(screen_char_t) * (width + 1)];
     screen_char_t *line = data.mutableBytes;
@@ -2189,25 +2199,31 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     return data;
 }
 
-- (NSMutableData *)defaultLineOfWidth:(int)width {
+static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
     size_t length = (width + 1) * sizeof(screen_char_t);
 
-    screen_char_t *existingCache = (screen_char_t *)[cachedDefaultLine_ mutableBytes];
-    screen_char_t currentDefaultChar = [self defaultChar];
-    if (cachedDefaultLine_ &&
-        [cachedDefaultLine_ length] == length &&
+    screen_char_t *existingCache = (screen_char_t *)[self->cachedDefaultLine_ mutableBytes];
+    screen_char_t currentDefaultChar = self->_defaultChar;
+    if (self->cachedDefaultLine_ &&
+        self->cachedDefaultLine_.length == length &&
         length > 0 &&
         !memcmp(existingCache, &currentDefaultChar, sizeof(screen_char_t))) {
-        return cachedDefaultLine_;
+        return self->cachedDefaultLine_.bytes;
     }
 
     NSMutableData *line = [NSMutableData dataWithLength:length];
 
-    cachedDefaultLine_ = nil;
-    [self clearLineData:line];
-    cachedDefaultLine_ = line;
+    self->cachedDefaultLine_ = nil;
+    [self clearLineDataBytes:line.mutableBytes count:line.length / sizeof(screen_char_t)];
+    self->cachedDefaultLine_ = line;
 
-    return line;
+    return line.bytes;
+}
+
+- (NSData *)defaultLineOfWidth:(int)width {
+    // Force cache to be updated if necessary.
+    VT100GridDefaultLine(self, width);
+    return cachedDefaultLine_;
 }
 
 // Not double-width char safe.
@@ -2215,9 +2231,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     if (cachedDefaultLine_) {
         // Only do this if there is a cached line; otherwise there's an infinite recursion since
         // -defaultLineOfWidth indirectly calls this method.
-        NSData *defaultLine = [self defaultLineOfWidth:size_.width];
+        const screen_char_t *defaultLineChars = VT100GridDefaultLine(self, size_.width);
         memcpy(chars + range.location,
-               defaultLine.bytes,
+               defaultLineChars,
                sizeof(screen_char_t) * MIN(size_.width, range.length));
         if (range.length > size_.width) {
             const screen_char_t c = chars[range.location];
@@ -2229,20 +2245,19 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         }
     } else {
         // Rarely called slow path.
-        screen_char_t c = [self defaultChar];
+        screen_char_t c = _defaultChar;
         for (int i = range.location; i < range.location + range.length; i++) {
             chars[i] = c;
         }
     }
 }
 
-- (void)clearLineData:(NSMutableData *)line {
-    int length = (int)([line length] / sizeof(screen_char_t));
-    // Clear length+1 so that continuation is set properly
-    [self clearScreenChars:[line mutableBytes] inRange:VT100GridRangeMake(0, length)];
-    screen_char_t *chars = (screen_char_t *)[line mutableBytes];
-    int width = [line length] / sizeof(screen_char_t) - 1;
-    chars[width].code = EOL_HARD;
+- (void)clearLineDataBytes:(screen_char_t *)dest count:(NSInteger)length {
+    const screen_char_t c = _defaultChar;
+    for (int i = 0; i < length; i++) {
+        dest[i] = c;
+    }
+    dest[length].code = EOL_HARD;
 }
 
 // Returns number of lines dropped from line buffer because it exceeded its size (always 0 or 1).

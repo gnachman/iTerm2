@@ -533,7 +533,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalDidResynchronizeSSH;
 
 - (void)terminalDidExecuteToken:(VT100Token *)token;
-- (void)terminalWillExecuteToken:(VT100Token *)token;
+- (void)terminal:(VT100Terminal *)terminal willExecuteToken:(VT100Token *)token defaultChar:(const screen_char_t *)defaultChar encoding:(NSStringEncoding)encoding;
 - (void)terminalOpenURL:(NSURL *)url;
 - (void)terminalBlock:(NSString *)blockID start:(BOOL)start type:(NSString *)type render:(BOOL)render;
 - (void)terminalInsertCopyButtonForBlock:(NSString *)blockID;

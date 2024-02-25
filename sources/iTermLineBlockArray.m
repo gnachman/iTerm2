@@ -11,12 +11,11 @@
 #import "iTermCumulativeSumCache.h"
 #import "iTermTuple.h"
 #import "LineBlock.h"
-#import "LineBlock+SwiftInterop.h"
 #import "NSArray+iTerm.h"
 
-@interface iTermLineBlockArray()<iTermLineBlockObserver>
-// NOTE: Update -copyWithZone: if you add properties.
-@end
+typedef struct {
+    BOOL tailIsEmpty;
+} LineBlockArrayCacheHint;
 
 @interface iTermLineBlockCacheCollection : NSObject<NSCopying>
 @property (nonatomic) int capacity;
@@ -131,6 +130,12 @@
     }
 }
 
+- (void)setLastValue:(NSInteger)value {
+    for (iTermTuple<NSNumber *, iTermCumulativeSumCache *> *tuple in _caches) {
+        [tuple.secondObject setLastValue:value];
+    }
+}
+
 - (void)setLastValueWithBlock:(NSInteger (^)(int width))block {
     for (iTermTuple<NSNumber *, iTermCumulativeSumCache *> *tuple in _caches) {
         [tuple.secondObject setLastValue:block(tuple.firstObject.intValue)];
@@ -145,7 +150,10 @@
 
 @end
 
+static NSUInteger iTermLineBlockArrayNextUniqueID;
+
 @implementation iTermLineBlockArray {
+    NSUInteger _uid;
     NSMutableArray<LineBlock *> *_blocks;
     BOOL _mayHaveDoubleWidthCharacter;
     iTermLineBlockCacheCollection *_numLinesCaches;
@@ -155,28 +163,26 @@
 
     LineBlock *_head;
     LineBlock *_tail;
-    BOOL _headDirty;
-    BOOL _tailDirty;
+    NSUInteger _lastHeadGeneration;
+    NSUInteger _lastTailGeneration;
     // NOTE: Update -copyWithZone: if you add member variables.
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
+        @synchronized ([iTermLineBlockArray class]) {
+            _uid = iTermLineBlockArrayNextUniqueID++;
+        }
         _blocks = [NSMutableArray array];
         _numLinesCaches = [[iTermLineBlockCacheCollection alloc] init];
+        _lastHeadGeneration = [self generationOf:nil];
+        _lastTailGeneration = [self generationOf:nil];
     }
     return self;
 }
 
 - (void)dealloc {
-    // This causes the blocks to be released in a background thread.
-    // When a LineBuffer is really gigantic, it can take
-    // quite a bit of time to release all the blocks.
-    for (LineBlock *block in _blocks) {
-        [block removeObserver:self];
-    }
-
     // Do this serially to avoid lock contention.
     static dispatch_queue_t queue;
     static dispatch_once_t onceToken;
@@ -681,60 +687,69 @@
     return [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, limit)];
 }
 
-- (void)findUncompressedBlocks {
-    if (_blocks.count == 0) {
-        return;
-    }
-    for (NSInteger i = 0; i < _blocks.count; i++) {
-        if (!_blocks[i].isOnlyUncompressed) {
-            break;
-        }
-        _lastUncompressedHeadBlock = @(_blocks[i].absoluteBlockNumber);
-    }
-    if (_lastUncompressedHeadBlock.longLongValue == self.lastBlock.absoluteBlockNumber) {
-        return;
-    }
-    for (NSInteger i = _blocks.count - 1; i >= 0; i--) {
-        if (!_blocks[i].isOnlyUncompressed) {
-            break;
-        }
-        _firstUncompressedTailBlock = @(_blocks[i].absoluteBlockNumber);
-    }
-}
-
 #pragma mark - Low level method
 
 - (id)objectAtIndexedSubscript:(NSUInteger)index {
     return _blocks[index];
 }
 
+- (NSUInteger)generationOf:(LineBlock *)lineBlock {
+    if (!lineBlock) {
+        return 0xffffffffffffffffLL;
+    }
+    return (((NSUInteger)lineBlock.index) << 32) | lineBlock.generation;
+}
+
+- (LineBlock *)addBlockOfSize:(int)size 
+                       number:(long long)number
+  mayHaveDoubleWidthCharacter:(BOOL)mayHaveDoubleWidthCharacter {
+    LineBlock* block = [[LineBlock alloc] initWithRawBufferSize:size absoluteBlockNumber:number];
+    block.mayHaveDoubleWidthCharacter = mayHaveDoubleWidthCharacter;
+    [self addBlock:block hints:(LineBlockArrayCacheHint){ .tailIsEmpty = YES }];
+    return block;
+}
+
 - (void)addBlock:(LineBlock *)block {
+    [self addBlock:block hints:(LineBlockArrayCacheHint){0}];
+}
+
+- (void)addBlock:(LineBlock *)block hints:(LineBlockArrayCacheHint)hints {
     [self updateCacheIfNeeded];
-    [block addObserver:self];
     [_blocks addObject:block];
     if (_blocks.count == 1) {
         _head = block;
+        _lastHeadGeneration = [self generationOf:block];
     }
     _tail = block;
+    _lastTailGeneration = [self generationOf:block];
     [_numLinesCaches appendValue:0];
     if (_rawSpaceCache) {
         [_rawSpaceCache appendValue:0];
         [_rawLinesCache appendValue:0];
         // The block might not be empty. Treat it like a bunch of lines just got appended.
-        [self updateCacheForBlock:block];
+        if (hints.tailIsEmpty && _blocks.count > 1) {
+            // NOTE: If you update this also update updateCacheForBlock:
+            _lastTailGeneration = [self generationOf:block];
+            [_numLinesCaches setLastValue:0];
+            [_rawSpaceCache setLastValue:0];
+            [_rawLinesCache setLastValue:0];
+        } else {
+            [self updateCacheForBlock:block];
+        }
     }
 }
 
 - (void)removeFirstBlock {
     [self updateCacheIfNeeded];
     [_blocks.firstObject invalidate];
-    [_blocks.firstObject removeObserver:self];
     [_numLinesCaches removeFirstValue];
     [_rawSpaceCache removeFirstValue];
     [_rawLinesCache removeFirstValue];
     [_blocks removeObjectAtIndex:0];
     _head = _blocks.firstObject;
+    _lastHeadGeneration = [self generationOf:_head];
     _tail = _blocks.lastObject;
+    _lastTailGeneration = [self generationOf:_tail];
 }
 
 - (void)removeFirstBlocks:(NSInteger)count {
@@ -746,13 +761,14 @@
 - (void)removeLastBlock {
     [self updateCacheIfNeeded];
     [_blocks.lastObject invalidate];
-    [_blocks.lastObject removeObserver:self];
     [_blocks removeLastObject];
     [_numLinesCaches removeLastValue];
     [_rawSpaceCache removeLastValue];
     [_rawLinesCache removeLastValue];
     _head = _blocks.firstObject;
+    _lastHeadGeneration = [self generationOf:_head];
     _tail = _blocks.lastObject;
+    _lastTailGeneration = [self generationOf:_tail];
 }
 
 - (NSUInteger)count {
@@ -767,6 +783,7 @@
     return _blocks.firstObject;
 }
 
+// NOTE: If you modify this also modify addBlock:hints:
 - (void)updateCacheForBlock:(LineBlock *)block {
     if (_rawSpaceCache) {
         assert(_rawSpaceCache.count == _blocks.count);
@@ -775,15 +792,19 @@
     assert(_blocks.count > 0);
 
     if (block == _blocks.firstObject) {
-        _headDirty = NO;
+        _lastHeadGeneration = [self generationOf:_head];
         [_numLinesCaches setFirstValueWithBlock:^NSInteger(int width) {
             const int value = [block getNumLinesWithWrapWidth:width];
             return value;
         }];
         [_rawSpaceCache setFirstValue:[block rawSpaceUsed]];
         [_rawLinesCache setFirstValue:[block numRawLines]];
+        if (block == _blocks.lastObject) {
+            _lastTailGeneration = [self generationOf:_tail];
+        }
     } else if (block == _blocks.lastObject) {
-        _tailDirty = NO;
+        // NOTE: If you modify this also modify addBlock:hints:
+        _lastTailGeneration = [self generationOf:_tail];
         [_numLinesCaches setLastValueWithBlock:^NSInteger(int width) {
             const int value = [block getNumLinesWithWrapWidth:width];
             return value;
@@ -804,7 +825,6 @@
     const int w = [[[self cachedWidths] anyObject] intValue];
     for (int i = 0; i < _blocks.count; i++) {
         LineBlock *block = _blocks[i];
-        assert([block hasObserver:self]);
         BOOL ok = [block numRawLines] == [_rawLinesCache valueAtIndex:i];
         if (ok && w > 0) {
             ok = [block getNumLinesWithWrapWidth:w] == [[_numLinesCaches numLinesCacheForWidth:w] valueAtIndex:i];
@@ -826,10 +846,10 @@
 }
 
 - (void)reallyUpdateCacheIfNeeded {
-    if (_headDirty) {
+    if (_lastHeadGeneration != [self generationOf:_head]) {
         [self updateCacheForBlock:_blocks.firstObject];
     }
-    if (_tailDirty) {
+    if (_lastTailGeneration != [self generationOf:_tail]) {
         [self updateCacheForBlock:_blocks.lastObject];
     }
 }
@@ -841,7 +861,6 @@
     theCopy->_blocks = [NSMutableArray array];
     for (LineBlock *block in _blocks) {
         LineBlock *copiedBlock = [block cowCopy];
-        [copiedBlock addObserver:theCopy];
         [theCopy->_blocks addObject:copiedBlock];
     }
     theCopy->_numLinesCaches = [_numLinesCaches copy];
@@ -849,32 +868,12 @@
     theCopy->_rawLinesCache = [_rawLinesCache copy];
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
     theCopy->_head = theCopy->_blocks.firstObject;
-    theCopy->_headDirty = _headDirty;
+    theCopy->_lastHeadGeneration = _lastHeadGeneration;
     theCopy->_tail = theCopy->_blocks.lastObject;
-    theCopy->_tailDirty = _tailDirty;
+    theCopy->_lastTailGeneration = _lastTailGeneration;
     theCopy->_resizing = _resizing;
 
     return theCopy;
-}
-
-#pragma mark - iTermLineBlockObserver
-
-- (void)lineBlockDidChange:(LineBlock *)lineBlock {
-    if (lineBlock == _head) {
-        _headDirty = YES;
-        if (!_lastUncompressedHeadBlock || lineBlock.absoluteBlockNumber > _lastUncompressedHeadBlock.longLongValue) {
-            _lastUncompressedHeadBlock = @(lineBlock.absoluteBlockNumber);
-        }
-    } else if (lineBlock == _tail) {
-        _tailDirty = YES;
-        if (!_firstUncompressedTailBlock || lineBlock.absoluteBlockNumber < _firstUncompressedTailBlock.longLongValue) {
-            _firstUncompressedTailBlock = @(lineBlock.absoluteBlockNumber);
-        }
-    }
-}
-
-- (void)lineBlockDidDecompress:(LineBlock *)lineBlock {
-    _needsPurge = YES;
 }
 
 @end

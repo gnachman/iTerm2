@@ -294,6 +294,7 @@ static const int kMaxScreenRows = 4096;
         [self saveCursor];  // initialize save area
         _unicodeVersionStack = [[NSMutableArray alloc] init];
         _savedColors = [[VT100SavedColors alloc] init];
+        [self updateDefaultChar];
     }
     return self;
 }
@@ -348,18 +349,21 @@ static const int kMaxScreenRows = 4096;
     graphicRendition_.fgGreen = color.greenComponent * 255.0;
     graphicRendition_.fgBlue = color.blueComponent * 255.0;
     graphicRendition_.fgColorMode = ColorMode24bit;
+    [self updateDefaultChar];
 }
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem {
     self.dirty = YES;
     graphicRendition_.fgColorCode = fgColorCode;
     graphicRendition_.fgColorMode = (altsem ? ColorModeAlternate : ColorModeNormal);
+    [self updateDefaultChar];
 }
 
 - (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem {
     self.dirty = YES;
     graphicRendition_.bgColorCode = bgColorCode;
     graphicRendition_.bgColorMode = (altsem ? ColorModeAlternate : ColorModeNormal);
+    [self updateDefaultChar];
 }
 
 - (void)setSoftAlternateScreenMode:(BOOL)softAlternateScreenMode {
@@ -1070,6 +1074,7 @@ static const int kMaxScreenRows = 4096;
     self.dirty = YES;
     memset(&graphicRendition_, 0, sizeof(graphicRendition_));
     [self updateExternalAttributes];
+    [self updateDefaultChar];
 }
 
 // The actual spec for this is called ITU T.416-199303
@@ -1286,6 +1291,27 @@ static const int kMaxScreenRows = 4096;
     return VT100GridRectMake(0, 0, size.width, size.height);
 }
 
+- (void)updateDefaultChar {
+    screen_char_t c = { 0 };
+    screen_char_t fg = [self foregroundColorCodeReal];
+    screen_char_t bg = [self backgroundColorCodeReal];
+
+    c.code = 0;
+    c.complexChar = NO;
+    CopyForegroundColor(&c, fg);
+    CopyBackgroundColor(&c, bg);
+
+    c.underline = NO;
+    c.strikethrough = NO;
+    c.underlineStyle = VT100UnderlineStyleSingle;
+    c.image = 0;
+    _defaultChar = c;
+
+    CopyForegroundColor(&c, self.foregroundColorCode);
+    CopyBackgroundColor(&c, self.backgroundColorCode);
+    _processedDefaultChar = c;
+}
+
 - (void)executeSGR:(VT100Token *)token {
     self.dirty = YES;
     assert(token->type == VT100CSI_SGR);
@@ -1449,6 +1475,7 @@ static const int kMaxScreenRows = 4096;
             }
         }
     }
+    [self updateDefaultChar];
 }
 
 - (NSColor *)colorForXtermCCSetPaletteString:(NSString *)argument colorNumberPtr:(int *)numberPtr {
@@ -1815,6 +1842,7 @@ static const int kMaxScreenRows = 4096;
     }
 
     graphicRendition_ = savedCursor->graphicRendition;
+    [self updateDefaultChar];
 
     self.originMode = savedCursor->origin;
     self.wraparoundMode = savedCursor->wraparound;
@@ -1921,6 +1949,8 @@ static const int kMaxScreenRows = 4096;
     // Save current charset
     [self saveCursor];
 
+    [self updateDefaultChar];
+
     // Reset saved cursor position to 1,1.
     VT100SavedCursor *savedCursor = [self savedCursor];
     savedCursor->position = VT100GridCoordMake(0, 0);
@@ -1989,7 +2019,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 }
 
 - (void)reallyExecuteToken:(VT100Token *)token {
-    [_delegate terminalWillExecuteToken:token];
+    [_delegate terminal:self willExecuteToken:token defaultChar:&_defaultChar encoding:_encoding];;
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
     if (token->type == DCS_TMUX_HOOK) {
         [_delegate terminalStartTmuxModeWithDCSIdentifier:token.string];
@@ -4544,6 +4574,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     graphicRendition_.blink = VT100OutputCursorInformationGetBlink(info);
     graphicRendition_.underline = VT100OutputCursorInformationGetUnderline(info);
     graphicRendition_.bold = VT100OutputCursorInformationGetBold(info);
+    [self updateDefaultChar];
     if (self.wraparoundMode && VT100OutputCursorInformationGetAutowrapPending(info)) {
         [self.delegate terminalAdvanceCursorPastLastColumn];
     }
@@ -4854,6 +4885,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
             }
         }
     }
+    [self updateDefaultChar];
 }
 
 - (void)executeDECSCPP:(int)param {
@@ -5321,6 +5353,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     self.bracketedPasteMode = [dict[kTerminalStateBracketedPasteModeKey] boolValue];
     numLock_ = [dict[kTerminalStateNumLockKey] boolValue];
     graphicRendition_ = [self graphicRenditionFromDictionary:dict[kTerminalStateGraphicRenditionKey]];
+    [self updateDefaultChar];
     mainSavedCursor_ = [self savedCursorFromDictionary:dict[kTerminalStateMainSavedCursorKey]];
     altSavedCursor_ = [self savedCursorFromDictionary:dict[kTerminalStateAltSavedCursorKey]];
     self.allowColumnMode = [dict[kTerminalStateAllowColumnModeKey] boolValue];

@@ -724,7 +724,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (id<VT100ScreenMarkReading>)namedMarkWithGUID:(NSString *)guid {
-    for (id<VT100ScreenMarkReading> mark in _state.namedMarks) {
+    for (id<VT100ScreenMarkReading> mark in _state.namedMarks.strongObjects) {
         if ([mark.guid isEqualToString:guid]) {
             return mark;
         }
@@ -1159,7 +1159,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                kScreenStatePrimaryGridStateKey: _state.primaryGrid.dictionaryValue ?: @{},
                kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
                kScreenStateProtectedMode: @(_state.protectedMode),
-               kScreenStatePromptStateKey: _state.promptStateDictionary,
+               kScreenStatePromptStateKey: _state.promptStateDictionary ?: [NSNull null],
                kScreenStateBlockStartAbsLineKey: _state.blockStartAbsLine
             };
             dict = [dict dictionaryByRemovingNullValues];
@@ -1493,7 +1493,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (NSArray<id<VT100ScreenMarkReading>> *)namedMarks {
-    return _state.namedMarks.strongObjects;
+    return (NSArray<id<VT100ScreenMarkReading>> *)_state.namedMarks.strongObjects;
 }
 
 - (void)ensureDisambiguateEscapeInStack {

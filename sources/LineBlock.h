@@ -27,12 +27,7 @@ typedef struct {
 } LineBlockMetadata;
 
 @class LineBlock;
-@class iTermCompressibleCharacterBuffer;
 
-@protocol iTermLineBlockObserver<NSObject>
-- (void)lineBlockDidChange:(LineBlock *)lineBlock;
-- (void)lineBlockDidDecompress:(LineBlock *)lineBlock;
-@end
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
@@ -51,11 +46,27 @@ typedef struct {
 @property(nonatomic, readonly) BOOL invalidated;
 @property(nonatomic, readonly) long long absoluteBlockNumber;
 
+// Get the size of the raw buffer.
+@property(nonatomic, readonly) int rawBufferSize;
+
+// This is true if there is either a shallow (cowCopy) or deep (post-write) copy.
+// We can make certain convenient assumptions when this is false:
+// - It is not available to other threads so locking can be omitted.
+// - There's no need to check if copy-on-write should be performed.
+// - There are no clients.
+// The only purpose is as a performance optimization. It is a nice win when appending lots of text.
+@property(atomic, readonly) BOOL hasBeenCopied;
+
+// Unique 0-based counter. Does not survive app restoration.
+@property(nonatomic, readonly) unsigned int index;
+
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary
                 absoluteBlockNumber:(long long)absoluteBlockNumber;
 
 - (instancetype)initWithRawBufferSize:(int)size
                   absoluteBlockNumber:(long long)absoluteBlockNumber;
+
+- (instancetype)init NS_UNAVAILABLE;
 
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
 // Callers should split such lines into multiple pieces.
@@ -231,29 +242,21 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 // Call this only before a line block has been created.
 void EnableDoubleWidthCharacterLineCache(void);
 
-- (void)addObserver:(id<iTermLineBlockObserver>)observer;
-- (void)removeObserver:(id<iTermLineBlockObserver>)observer;
-- (BOOL)hasObserver:(id<iTermLineBlockObserver>)observer;
-
 - (void)setPartial:(BOOL)partial;
-- (LineBlock *)cowCopy;
 
 // For tests only
 - (LineBlockMetadata)internalMetadataForLine:(int)line;
-- (NSInteger)numberOfClients;
 - (BOOL)hasOwner;
 - (void)dropMirroringProgenitor:(LineBlock *)other;
 - (BOOL)isSynchronizedWithProgenitor;
 - (void)invalidate;
 - (NSInteger)sizeFromLine:(int)lineNum width:(int)width;
 
-// Returns NO if you need to try again later.
-- (BOOL)compressIfNeeded;
-- (void)dumpCompression;
-
 - (id)copy NS_UNAVAILABLE;
 - (id)copyWithZone:(NSZone *)zone NS_UNAVAILABLE;
+- (LineBlock *)cowCopy;
 
 - (instancetype)copyWithAbsoluteBlockNumber:(long long)absoluteBlockNumber;
+- (NSString *)dumpString;
 
 @end

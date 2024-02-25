@@ -68,6 +68,7 @@ class WeakLazyOptional<T: AnyObject> {
 }
 
 // Provides atomic access to an object.
+// Consider using iTermAtomicInt64 for plain old numbers as it's much faster.
 class MutableAtomicObject<T> {
     private let mutex = Mutex()
     private var _value: T
