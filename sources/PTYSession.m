@@ -631,6 +631,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     // Run this when the composer connects.
     void (^_pendingConductor)(PTYSession *);
+    BOOL _connectingSSH;
+    NSMutableData *_queuedConnectingSSH;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1067,6 +1069,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_localFileChecker release];
     [_pendingConductor release];
     [_appSwitchingPreventionDetector release];
+    [_queuedConnectingSSH release];
 
     [super dealloc];
 }
@@ -3338,7 +3341,7 @@ ITERM_WEAKLY_REFERENCEABLE
     forceEncoding:(BOOL)forceEncoding
         reporting:(BOOL)reporting {
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
-    if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes) {
+    if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH) {
         [self setBell:NO];
         if ([[_delegate realParentWindow] broadcastInputToSession:self]) {
             [[_delegate realParentWindow] sendInputToAllSessions:string
@@ -3346,6 +3349,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                    forceEncoding:forceEncoding];
         } else if (_conductor.handlesKeystrokes) {
             [_conductor sendKeys:[string dataUsingEncoding:encoding]];
+        } else if (_connectingSSH) {
+            [_queuedConnectingSSH appendData:[string dataUsingEncoding:encoding]];
         } else {
             assert(self.tmuxMode == TMUX_CLIENT);
             [[_tmuxController gateway] sendKeys:string
@@ -12131,6 +12136,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (void)screenDidSendAllPendingReports {
+    [self sendDataQueue];
+}
+
+- (void)sendDataQueue {
     for (NSData *data in _dataQueue) {
         DLog(@"Send deferred write of %@", [data stringWithEncoding:NSUTF8StringEncoding]);
         [self writeData:data];
@@ -14892,6 +14901,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSInteger)screenEndSSH:(NSString *)uniqueID {
     DLog(@"%@", uniqueID);
+    _connectingSSH = NO;
     if (![_conductor ancestryContainsClientUniqueID:uniqueID]) {
         DLog(@"Ancestry does not contain this unique ID");
         return 0;
@@ -14906,7 +14916,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     // it2ssh waits for a newline before exiting. This is in case ssh dies while iTerm2 is sending
     // conductor.sh.
     [self writeTaskNoBroadcast:@"\n"];
+    if (_queuedConnectingSSH.length) {
+        [_queuedConnectingSSH release];
+        _queuedConnectingSSH = nil;
+    }
     return count;
+}
+
+- (void)screenWillBeginSSHIntegration {
+    _connectingSSH = YES;
+    [_queuedConnectingSSH release];
+    _queuedConnectingSSH = [[NSMutableData alloc] init];
 }
 
 - (void)screenBeginSSHIntegrationWithToken:(NSString *)token
@@ -18262,6 +18282,11 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     }];
     [self unhookSSHConductor];
     [_sshWriteQueue setLength:0];
+}
+
+- (void)conductorStopQueueingInput {
+    _connectingSSH = NO;
+    [_conductor sendKeys:_queuedConnectingSSH];
 }
 
 - (void)conductorStateDidChange {

@@ -2616,6 +2616,9 @@
             DLog(@"Not enough parts");
             return;
         }
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenWillBeginSSHIntegration];
+        }];
         _sshIntegrationFlags = parts;
         return;
     }
