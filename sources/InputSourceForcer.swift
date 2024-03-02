@@ -18,7 +18,14 @@ class InputSourceForcer: NSObject {
             DLog("Set systemLocale to \(systemLocale ?? "(nil)")")
         }
     }
-    private var active = false
+    private var active = false {
+        willSet {
+            if newValue && !active {
+                haveChangedSinceBecomingActive = false
+            }
+        }
+    }
+    var haveChangedSinceBecomingActive = false
 
     private static var currentSystemLocale: String? {
         guard let inputSource = TISCopyCurrentKeyboardInputSource()?.takeRetainedValue() else {
@@ -79,6 +86,11 @@ class InputSourceForcer: NSObject {
             return
         }
         DLog("Keyboard selection did change to \(systemLocale ?? "none")")
+        guard !haveChangedSinceBecomingActive else {
+            DLog("Already forced after becoming active so ignoring keyboard selection change")
+            return
+        }
+        haveChangedSinceBecomingActive = true
         DispatchQueue.main.async { [weak self] in
             self?.update()
         }
