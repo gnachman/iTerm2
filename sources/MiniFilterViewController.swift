@@ -67,14 +67,37 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
         updateSubviews()
     }
 
+    private var shouldUseLargeControls: Bool {
+        if #available(macOS 11, *) {
+            return iTermAdvancedSettingsModel.statusBarHeight() >= 32
+        }
+        return false
+    }
+
+    @objc func setFont(_ font: NSFont) {
+        searchField.font = font
+        if #available(macOS 11, *) {
+            if shouldUseLargeControls {
+                searchField.controlSize = .large
+                closeButton.controlSize = .large
+            }
+        }
+        updateSubviews()
+    }
     private func updateSubviews() {
         let size = view.frame.size
-        let searchFieldSize = searchField.frame.size
+        var searchFieldSize = searchField.frame.size
+        searchField.sizeToFit()
+        searchFieldSize.height = searchField.frame.height
 
         let globalOffset = CGFloat(PSMShouldExtendTransparencyIntoMinimalTabBar() ? 0.5 : 0)
         // This makes the close button and text field line up vertically
-         let verticalOffset = CGFloat(1) + globalOffset
-
+        let verticalOffset =
+            if shouldUseLargeControls {
+                (searchFieldSize.height - closeButton.frame.height) / 2.0
+            } else {
+                CGFloat(1) + globalOffset
+            }
         let closeWidth: CGFloat
         if canClose {
             closeButton.isHidden = false

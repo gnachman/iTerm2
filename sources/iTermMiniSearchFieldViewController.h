@@ -17,5 +17,6 @@
 @property (nonatomic) BOOL canClose;
 
 - (void)sizeToFitSize:(NSSize)size;
+- (void)setFont:(NSFont *)font;
 
 @end

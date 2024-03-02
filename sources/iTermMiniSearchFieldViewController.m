@@ -85,15 +85,28 @@
     [self updateSubviews];
 }
 
+- (BOOL)shouldUseLargeControls {
+    if (@available(macOS 11.0, *)) {
+        return (iTermAdvancedSettingsModel.statusBarHeight >= 32);
+    }
+    return NO;
+}
+
 - (void)updateSubviews {
     NSSize size = self.view.frame.size;
     NSSize searchFieldSize = _searchField.frame.size;
+    [_searchField sizeToFit];
+    searchFieldSize.height = _searchField.frame.size.height;
 
     // Shift everything down by this amount.
     const CGFloat globalOffset = PSMShouldExtendTransparencyIntoMinimalTabBar() ? -0.5 : 0;
 
     // This makes the arrows and close buttons line up visually.
-    const CGFloat verticalOffset = 1 + globalOffset;
+    CGFloat verticalOffset = 1 + globalOffset;
+
+    if ([self shouldUseLargeControls]) {
+        verticalOffset = (searchFieldSize.height - _arrowsControl.frame.size.height) / 2.0;
+    }
 
     CGFloat closeWidth = 0;
     if (self.canClose) {
@@ -118,6 +131,18 @@
     } else {
         _searchField.frame = NSMakeRect(leftMargin, globalOffset, self.view.frame.size.width - used, searchFieldSize.height);
     }
+}
+
+- (void)setFont:(NSFont *)font {
+    _searchField.font = font;
+    if (@available(macOS 11.0, *)) {
+        if ([self shouldUseLargeControls]) {
+            _searchField.controlSize = NSControlSizeLarge;
+            _arrowsControl.controlSize = NSControlSizeLarge;
+            _closeButton.controlSize = NSControlSizeLarge;
+        }
+    }
+    [self updateSubviews];
 }
 
 #pragma mark - iTermFindViewController

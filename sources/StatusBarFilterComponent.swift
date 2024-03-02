@@ -19,6 +19,9 @@ class StatusBarFilterComponent: iTermStatusBarBaseComponent, iTermFilterViewCont
         let isTemporary = (knobValues[Self.isTemporaryKey] as? NSNumber) ?? NSNumber(false)
         let canClose = isTemporary.boolValue
         viewController.canClose = canClose
+        if let font = advancedConfiguration.font {
+            viewController.setFont(font)
+        }
         return viewController
     }()
 

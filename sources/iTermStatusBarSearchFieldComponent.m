@@ -95,6 +95,10 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
                                                                                bundle:[NSBundle bundleForClass:self.class]];
         const BOOL canClose = [self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarSearchComponentIsTemporaryKey] boolValue];
         _viewController.canClose = canClose;
+
+        if (self.advancedConfiguration.font) {
+            [_viewController setFont:self.advancedConfiguration.font];
+        }
     }
     return _viewController;
 }
