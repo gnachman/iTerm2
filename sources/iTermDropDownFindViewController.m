@@ -324,7 +324,13 @@ static const CGFloat kFilterHeight = 30;
         return NO;
     }
 
-    if (commandSelector == @selector(cancelOperation:)) {
+    if (NSApp.currentEvent.type == NSEventTypeKeyDown &&
+        [NSApp.currentEvent.charactersIgnoringModifiers isEqualToString:@"["] &&
+        (NSApp.currentEvent.it_modifierFlags & (NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift | NSEventModifierFlagControl)) == NSEventModifierFlagControl) {
+        // Control-[
+        [self.driver close];
+        return YES;
+    } else if (commandSelector == @selector(cancelOperation:)) {
         // Have the esc key close the find bar instead of erasing its contents.
         [self.driver close];
         return YES;
