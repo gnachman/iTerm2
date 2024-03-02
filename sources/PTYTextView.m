@@ -4629,7 +4629,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     const VT100GridCoord coord = VT100GridCoordFromAbsCoord(absCoord, _dataSource.totalScrollbackOverflow, &ok);
     if (!ok) {
         const long long totalScrollbackOverflow = _dataSource.totalScrollbackOverflow;
-        return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, totalScrollbackOverflow, 0, totalScrollbackOverflow), -1, -1);
+        return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, totalScrollbackOverflow, 0, totalScrollbackOverflow), 0, 0);
     }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     [extractor restrictToLogicalWindowIncludingCoord:coord];
@@ -4642,7 +4642,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     const VT100GridCoord coord = VT100GridCoordFromAbsCoord(absCoord, _dataSource.totalScrollbackOverflow, &ok);
     const long long totalScrollbackOverflow = _dataSource.totalScrollbackOverflow;
     if (!ok) {
-        return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, totalScrollbackOverflow, 0, totalScrollbackOverflow), -1, -1);
+        return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, totalScrollbackOverflow, 0, totalScrollbackOverflow), 0, 0);
     }
     VT100GridWindowedRange range;
     [self getWordForX:coord.x
@@ -4676,7 +4676,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     }];
     const long long totalScrollbackOverflow = _dataSource.totalScrollbackOverflow;
     if (!ok) {
-        return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, totalScrollbackOverflow, 0, totalScrollbackOverflow), -1, -1);
+        return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, totalScrollbackOverflow, 0, totalScrollbackOverflow), 0, 0);
     }
     return VT100GridAbsWindowedRangeFromWindowedRange(relativeRange, totalScrollbackOverflow);
 }
@@ -4708,7 +4708,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                           extractor.logicalWindow.length);
     }];
     if (!ok) {
-        return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, totalScrollbackOverflow, 0, totalScrollbackOverflow), -1, -1);
+        return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, totalScrollbackOverflow, 0, totalScrollbackOverflow), 0, 0);
     }
     return result;
 }

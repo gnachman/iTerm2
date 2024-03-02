@@ -388,6 +388,10 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
 }
 
 - (void)endLiveSelection {
+    [self endLiveSelectionWithSideEffects:YES];
+}
+
+- (void)endLiveSelectionWithSideEffects:(BOOL)sideEffects {
     if (!_live) {
         return;
     }
@@ -433,8 +437,10 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     _extend = NO;
     _live = NO;
 
-    [_delegate selectionDidChange:[[self retain] autorelease]];
-    [_delegate liveSelectionDidEnd];
+    if (sideEffects) {
+        [_delegate selectionDidChange:[[self retain] autorelease]];
+        [_delegate liveSelectionDidEnd];
+    }
 }
 
 - (void)clearColumnWindowForLiveSelection {
@@ -1066,7 +1072,9 @@ static NSRange iTermMakeRange(NSInteger location, NSInteger length) {
         // end live selection in the copy (which converts boxes to individual selections), and
         // then try again on the copy.
         iTermSelection *temp = [[self copy] autorelease];
-        [temp endLiveSelection];
+        // Side effects could cause an infinite recursion to here. The delegate shouldn't know that
+        // we're using a copy for this.
+        [temp endLiveSelectionWithSideEffects:NO];
         [temp enumerateSelectedAbsoluteRanges:block];
         return;
     }

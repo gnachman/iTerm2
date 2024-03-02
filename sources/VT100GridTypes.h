@@ -56,9 +56,10 @@ typedef struct {
     VT100GridRange columnWindow;  // 0s if you don't care
 } VT100GridWindowedRange;
 
+// An invalid range has -1 for all values, including columnWindow.
 typedef struct {
     VT100GridAbsCoordRange coordRange;  // inclusive of y, half-open on x
-    VT100GridRange columnWindow;
+    VT100GridRange columnWindow;  // Use (0,0) for when the there is no window.
 } VT100GridAbsWindowedRange;
 
 extern const VT100GridCoord VT100GridCoordInvalid;
@@ -278,7 +279,7 @@ NSString *VT100GridAbsWindowedRangeDescription(VT100GridAbsWindowedRange range);
 
 NS_INLINE VT100GridAbsCoord VT100GridAbsWindowedRangeStart(VT100GridAbsWindowedRange range) {
     VT100GridAbsCoord coord = range.coordRange.start;
-    if (range.columnWindow.length >= 0) {
+    if (range.columnWindow.length > 0) {
         coord.x = MIN(MAX(coord.x, range.columnWindow.location),
                       range.columnWindow.location + range.columnWindow.length);
     }
@@ -287,7 +288,7 @@ NS_INLINE VT100GridAbsCoord VT100GridAbsWindowedRangeStart(VT100GridAbsWindowedR
 
 NS_INLINE VT100GridAbsCoord VT100GridAbsWindowedRangeEnd(VT100GridAbsWindowedRange range) {
     VT100GridAbsCoord coord = range.coordRange.end;
-    if (range.columnWindow.length >= 0) {
+    if (range.columnWindow.length > 0) {
         coord.x = MIN(coord.x, VT100GridRangeMax(range.columnWindow) + 1);
     }
     return coord;

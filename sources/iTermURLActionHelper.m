@@ -175,7 +175,7 @@
                                                                              totalScrollbackOverflow,
                                                                              0,
                                                                              totalScrollbackOverflow),
-                                                  -1, -1);
+                                                  0, 0);
         return nil;
     }
     iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
