@@ -9,8 +9,10 @@
 
 #import "iTermNotificationCenter+Protected.h"
 #import "iTermPreferences.h"
+#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -194,11 +196,56 @@
     return instance;
 }
 
++ (NSString *)plistPathCreatingFolderIfNeeded:(BOOL)create {
+    NSString *appSupport;
+    if (create) {
+        appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
+    } else {
+        appSupport = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutCreating];
+        if (!appSupport) {
+            return nil;
+        }
+    }
+    return [appSupport stringByAppendingPathComponent:@"snippets.plist"];
+}
+
++ (NSArray<NSDictionary *> *)freshlyLoadedValues {
+    id obj = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySnippets];
+    if (obj) {
+        return [NSArray castFrom:obj];
+    }
+    NSString *path = [self plistPathCreatingFolderIfNeeded:NO];
+    NSDictionary *plist = [NSDictionary dictionaryWithContentsOfFile:path];
+    return plist[@"snippets"];
+}
+
++ (void)writeDictionaries:(NSArray<NSDictionary *> *)arrayOfDictionaries {
+    NSString *path = [self plistPathCreatingFolderIfNeeded:YES];
+    NSDictionary *plist = @{ @"snippets": arrayOfDictionaries };
+    NSError *error = nil;
+    [plist writeToURL:[NSURL fileURLWithPath:path] error:&error];
+    if (error) {
+        // Fall back to user defaults to avoid losing data but then we are subject to a potentially
+        // catastrophic size limit on user defaults.
+        [[NSUserDefaults standardUserDefaults] setObject:arrayOfDictionaries
+                                                  forKey:kPreferenceKeySnippets];
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem saving snippets to “%@”.\n\nThe error was:\n%@", path, error.localizedDescription]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"NoSyncWriteSnippetsFailed"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Problem Saving Snippets"
+                                    window:nil];
+    } else {
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:kPreferenceKeySnippets];
+    }
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {
         __block NSInteger i = 0;
-        _snippets = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySnippets]] mapWithBlock:^id(id anObject) {
+        _snippets = [[[iTermSnippetsModel freshlyLoadedValues] mapWithBlock:^id(id anObject) {
             NSDictionary *dict = [NSDictionary castFrom:anObject];
             if (!dict) {
                 return nil;
@@ -287,8 +334,7 @@
 #pragma mark - Private
 
 - (void)save {
-    [[NSUserDefaults standardUserDefaults] setObject:[self arrayOfDictionaries]
-                                              forKey:kPreferenceKeySnippets];
+    [iTermSnippetsModel writeDictionaries:[self arrayOfDictionaries]];
 }
 
 - (NSArray<NSDictionary *> *)arrayOfDictionaries {
