@@ -203,4 +203,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalResetReason) {
 - (void)toggleAlternateScreen;
 - (void)toggleDisambiguateEscape;
 
+// Call this after changing the graphic rendition externally;
+- (void)updateDefaultChar;
+
 @end

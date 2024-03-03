@@ -4427,24 +4427,31 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // Save graphic rendition. Set to system message color.
     const VT100GraphicRendition saved = self.terminal.graphicRendition;
 
-    VT100GraphicRendition temp = saved;
-    temp.fgColorMode = ColorModeAlternate;
-    temp.fgColorCode = ALTSEM_SYSTEM_MESSAGE;
-    temp.bgColorMode = ColorModeAlternate;
-    temp.bgColorCode = ALTSEM_SYSTEM_MESSAGE;
-    self.terminal.graphicRendition = temp;
-
     if (self.currentGrid.cursor.x > 0) {
         [self appendCarriageReturnLineFeed];
     }
 
-    [self eraseLineBeforeCursor:YES afterCursor:YES decProtect:NO];
-    [self appendStringAtCursor:message];
-    self.currentGrid.cursorX = 0;
-    self.currentGrid.preferredCursorPosition = self.currentGrid.cursor;
+    {
+        VT100GraphicRendition temp = saved;
+        temp.fgColorMode = ColorModeAlternate;
+        temp.fgColorCode = ALTSEM_SYSTEM_MESSAGE;
+        temp.bgColorMode = ColorModeAlternate;
+        temp.bgColorCode = ALTSEM_SYSTEM_MESSAGE;
+        self.terminal.graphicRendition = temp;
+        [self.terminal updateDefaultChar];
+        self.currentGrid.defaultChar = self.terminal.defaultChar;
 
-    // Restore the graphic rendition, add a newline, and calculate how far down the cursor moved.
-    self.terminal.graphicRendition = saved;
+        [self eraseLineBeforeCursor:YES afterCursor:YES decProtect:NO];
+        [self appendStringAtCursor:message];
+
+        self.currentGrid.cursorX = 0;
+        self.currentGrid.preferredCursorPosition = self.currentGrid.cursor;
+
+        self.terminal.graphicRendition = saved;
+        [self.terminal updateDefaultChar];
+        self.currentGrid.defaultChar = self.terminal.defaultChar;
+    }
+    
     [self appendCarriageReturnLineFeed];
 }
 

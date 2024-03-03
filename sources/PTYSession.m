@@ -3441,6 +3441,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                     alpha:1]];
         [terminal setBackgroundColor:ALTSEM_DEFAULT
                   alternateSemantics:YES];
+        [terminal updateDefaultChar];
+        mutableState.currentGrid.defaultChar = terminal.defaultChar;
         int width = (mutableState.width - message.length) / 2;
         if (width > 0) {
             [mutableState appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
@@ -3456,6 +3458,8 @@ ITERM_WEAKLY_REFERENCEABLE
                   alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
         [terminal setBackgroundColor:savedBgColor.backgroundColor
                   alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+        [terminal updateDefaultChar];
+        mutableState.currentGrid.defaultChar = terminal.defaultChar;
     }];
 }
 
@@ -11667,12 +11671,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                   alternateSemantics:YES];
         [terminal setBackgroundColor:ALTSEM_DEFAULT
                   alternateSemantics:YES];
+        [terminal updateDefaultChar];
+        mutableState.currentGrid.defaultChar = terminal.defaultChar;
         [mutableState appendStringAtCursor:message];
         [mutableState appendCarriageReturnLineFeed];
         [terminal setForegroundColor:savedFgColor.foregroundColor
                   alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
         [terminal setBackgroundColor:savedBgColor.backgroundColor
                   alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+        [terminal updateDefaultChar];
+        mutableState.currentGrid.defaultChar = terminal.defaultChar;
     }];
 }
 
