@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>ColorPicker</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.googlecode.iterm2.ColorPicker</string>
+	<string>com.pancake.therm.ColorPicker</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

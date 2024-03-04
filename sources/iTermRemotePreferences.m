@@ -182,7 +182,7 @@
     if ([folder stringIsUrlLike]) {
         NSString *informativeText =
             @"To make it available, first quit Therm and then manually "
-            @"copy ~/Library/Preferences/com.googlecode.iterm2.plist to "
+            @"copy ~/Library/Preferences/com.pancake.therm.plist to "
             @"your hosting provider.";
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
         alert.messageText = @"Preferences cannot be copied to a URL.";

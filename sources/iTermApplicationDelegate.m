@@ -547,7 +547,7 @@ static BOOL hasBecomeActive = NO;
  * window arrangements won't be restored, etc.)
  *
  * tell application "iTerm"
- *    open file "/com.googlecode.iterm2/commandmode"
+ *    open file "/com.pancake.therm/commandmode"
  *    // create a terminal if needed, run commands, whatever.
  * end tell
  */

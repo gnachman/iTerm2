@@ -27,9 +27,6 @@ endif
 config.h: version.txt
 	echo "#define THERM_VERSION \"`cat version.txt`\"" > config.h
 
-TAGS:
-	find . -name "*.[mhMH]" -exec etags -o ./TAGS -a '{}' +
-
 install: | Deployment backup-old-iterm
 	cp -R build/Deployment/Therm.app $(APPS)
 
@@ -52,12 +49,6 @@ Deployment:
 	mkdir -p build/Deployment/Therm.app/Contents/Frameworks/
 	cp -rf ColorPicker/ColorPicker.framework build/Deployment/Therm.app/Contents/Frameworks/
 
-Nightly: force
-	cp plists/nightly-Therm.plist plists/Therm.plist
-	xcodebuild -parallelizeTargets -target Therm -configuration Nightly CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO && \
-	git checkout -- plists/Therm.plist
-	chmod -R go+rX build/Nightly
-
 run: Development
 	build/Development/Therm.app/Contents/MacOS/Therm
 
@@ -74,27 +65,10 @@ clean:
 	rm -rf build
 	rm -f *~
 
-backup-old-iterm:
-	if [[ -d $(APPS)/Therm.app.bak ]] ; then rm -fr $(APPS)/Therm.app.bak ; fi
-	if [[ -d $(APPS)/Therm.app ]] ; then \
-	/bin/mv $(APPS)/Therm.app $(APPS)/Therm.app.bak ;\
-	 cp $(ITERM_CONF_PLIST) $(APPS)/Therm.app.bak/Contents/ ; \
-	fi
-
 restart:
 	PATH=$(ORIG_PATH) /usr/bin/open /Applications/Therm.app &
 	/bin/kill -TERM $(ITERM_PID)
 
-canary:
-	cp canary-Therm.plist Therm.plist
-	$(MAKE) Deployment
-	./canary.sh
-
 release:
 	cp plists/release-Therm.plist plists/Therm.plist
 	$(MAKE) Deployment
-
-preview:
-	cp plists/preview-Therm.plist plists/Therm.plist
-	$(MAKE) Deployment
-force:

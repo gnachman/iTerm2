@@ -38,7 +38,7 @@
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
-				<string>itermcolors</string>
+				<string>thermcolors</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>Therm.icns</string>
@@ -89,7 +89,7 @@
 	<key>CFBundleIconFile</key>
 	<string>Therm.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.googlecode.iterm2</string>
+	<string>com.pancake.therm</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -217,9 +217,5 @@
 	<string>dsa_pub.pem</string>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
-	<key>SUFeedURLForTesting</key>
-	<string>https://iterm2.com/appcasts/testing.xml</string>
-	<key>SUFeedURLForFinal</key>
-	<string>https://iterm2.com/appcasts/final.xml</string>
 </dict>
 </plist>

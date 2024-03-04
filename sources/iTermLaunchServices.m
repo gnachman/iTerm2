@@ -121,6 +121,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     NSString* handlerId = (NSString *)LSCopyDefaultHandlerForURLScheme((CFStringRef)url);
     Profile *profile = nil;
     if ([handlerId isEqualToString:@"com.googlecode.iterm2"] ||
+        [handlerId isEqualToString:@"com.pancake.therm"] ||
         [handlerId isEqualToString:@"net.sourceforge.iterm"]) {
         profile = [[ProfileModel sharedInstance] bookmarkWithGuid:[self guidForScheme:url]];
     }
