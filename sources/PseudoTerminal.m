@@ -781,8 +781,16 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 #endif
     [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalWindowControllerWasCreatedNotification object:self];
     DLog(@"Done initializing PseudoTerminal %@", self);
-    /// XXX if we dont start the window in fullscreen it looks blank
-[self toggleTraditionalFullScreenMode];
+
+    /// XXX PANCAKE if we dont start the window in fullscreen it looks blank
+    [self toggleTraditionalFullScreenMode];
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self toggleTraditionalFullScreenMode];
+      /// XXX this crashes because screen is not yet initialized
+      // [[self ptyWindow] clearScrollbackBuffer];
+    });
+      // [[self ptyWindow] performSelector:@selector(clearScrollbackBuffer:) withObject:self];
+	// fprintf (stderr, "CALL cLEAR SCROLBACk\n");
 }
 
 - (BOOL)isHotKeyWindow {
