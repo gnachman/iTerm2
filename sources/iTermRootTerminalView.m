@@ -281,6 +281,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         if ([_delegate haveTopBorder]) {
             heightAdjustment++;
         }
+	// TODO PANCAKE - add a toggle option in settings or detect if screen have notch at runtime
+        bool notchAdjustment = [_delegate anyFullScreen];
+	if (notchAdjustment) {
+            heightAdjustment = 40; // on fullscreen this can fix the notch issue
+	}
+	fprintf (stderr, "HEIGHT ADJUSTNMENT %d\n", heightAdjustment);
         NSRect tabViewFrame =
             NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
                        yOrigin,
@@ -295,7 +301,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         [self setLeftTabBarWidthFromPreferredWidth];
     } else {
         // The tabBar control is visible.
-	    printf ("TWO\n");
+	    printf ("TAB BAR IS VISIBLE\n");
         DLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
         self.tabBarControl.hidden = NO;
         [self.tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
