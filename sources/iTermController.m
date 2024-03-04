@@ -935,6 +935,7 @@ static iTermController *gSharedInstance;
     }
 }
 
+#if 0
 - (void)reloadAllBookmarks {
     int n = [self numberOfTerminals];
     for (int i = 0; i < n; ++i) {
@@ -942,6 +943,7 @@ static iTermController *gSharedInstance;
         [pty reloadBookmarks];
     }
 }
+#endif
 
 
 - (Profile *)defaultBookmark {

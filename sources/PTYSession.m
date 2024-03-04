@@ -512,6 +512,7 @@ static const NSUInteger kMaxHosts = 100;
         _terminal = [[VT100Terminal alloc] init];
         _terminal.output.optionIsMetaForSpecialKeys =
         [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
+	fprintf (stderr, "SCREEN INIT\n");
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal];
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
         
@@ -2791,7 +2792,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
-    [[iTermController sharedInstance] reloadAllBookmarks];
+//    [[iTermController sharedInstance] reloadAllBookmarks];
 }
 
 - (void)_setKeepOutdatedKeyMapping
@@ -2813,7 +2814,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                   forKey:[NSString stringWithFormat:kAskAboutOutdatedKeyMappingKeyFormat,
                                                           [_profile objectForKey:KEY_ORIGINAL_GUID]]];
     }
-    [[iTermController sharedInstance] reloadAllBookmarks];
+    // [[iTermController sharedInstance] reloadAllBookmarks];
 }
 
 + (BOOL)_recursiveSelectMenuWithSelector:(SEL)selector inMenu:(NSMenu *)menu {
@@ -3943,6 +3944,7 @@ static BOOL _xtermMouseReporting;
 }
 
 - (void)clearScrollbackBuffer {
+	fprintf(stderr, "CLEAR SCROLLBACK BUFFER\n");
     [_screen clearScrollbackBuffer];
     if (self.isTmuxClient) {
         [_tmuxController clearHistoryForWindowPane:self.tmuxPane];

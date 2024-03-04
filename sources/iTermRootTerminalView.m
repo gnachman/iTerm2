@@ -273,6 +273,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [self constrainToolbeltWidth];
     _tabViewFrameReduced = NO;
     if (![self tabBarShouldBeVisible]) {
+	    fprintf (stderr, "TAB BAR IS NOT VISIBLE HERE\n");
         // The tabBarControl should not be visible.
         [self removeLeftTabBarDragHandle];
         self.tabBarControl.hidden = YES;
@@ -336,6 +337,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 [self.tabView setFrame:tabViewFrame];
 
                 heightAdjustment = self.tabBarControl.flashing ? kHorizontalTabBarHeight : 0;
+	    fprintf (stderr, "HEIGHT ADJUSTNMENT %d\n", heightAdjustment);
 /*
 		if (minitabs) {
 			heightAdjustment = -18;

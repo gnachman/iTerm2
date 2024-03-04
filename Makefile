@@ -72,3 +72,6 @@ restart:
 release:
 	cp plists/release-Therm.plist plists/Therm.plist
 	$(MAKE) Deployment
+
+todo:
+	git grep PANCAKE

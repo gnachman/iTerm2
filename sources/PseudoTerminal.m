@@ -568,7 +568,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
             // Use the system-supplied frame which has a reasonable origin. It may
-		fprintf (stderr, "NORMAL\n");
+            fprintf (stderr, "NORMAL\n");
             // be overridden by smart window placement or a saved window location.
             initialFrame = [[self window] frame];
 #if 0
@@ -695,14 +695,16 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         PtyLog(@"no smart layout or is full screen, so set layout done");
         [self.ptyWindow setLayoutDone];
     }
-
+#if 0
     if (styleMask & NSWindowStyleMaskTitled) {
         if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)]) {
             // TODO: Why is this here?
             self.window.bottomCornerRounded = NO;
         }
     }
-            self.window.bottomCornerRounded = YES;
+#else
+    self.window.bottomCornerRounded = YES;
+#endif
 
  //   [self updateTabBarStyle];
     self.window.delegate = self;
@@ -723,10 +725,12 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                              selector:@selector(tmuxFontDidChange:)
                                                  name:@"kPTYSessionTmuxFontDidChange"
                                                object:nil];
+#if 0
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadBookmarks)
                                                  name:kReloadAllProfiles
                                                object:nil];
+#endif
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(hideToolbelt)
                                                  name:kToolbeltShouldHide
@@ -758,8 +762,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // Update the collection behavior.
     self.hotkeyWindowType = hotkeyWindowType;
 
-    _wellFormed = YES;
 #if 0
+    _wellFormed = YES;
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
 #endif
@@ -3948,9 +3952,11 @@ return;
 }
 
 - (void)windowWillShowInitial {
+// [window clearScrollbackBuffer];
 return;
-    PtyLog(@"windowWillShowInitial");
     iTermTerminalWindow* window = [self ptyWindow];
+    PtyLog(@"windowWillShowInitial");
+    // iTermTerminalWindow* window = [self ptyWindow];
     // If it's a full or top-of-screen window with a screen number preference, always honor that.
         [window setHasShadow:YES];
 
@@ -4587,7 +4593,7 @@ return;
                                 keyEquivalent:@""] autorelease];
     [item setRepresentedObject:tabViewItem];
     [rootMenu addItem:item];
-
+#if 0
     PTYTab *theTab = [tabViewItem identifier];
     if (![theTab isTmuxTab]) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Duplicate Tab"
@@ -4596,6 +4602,7 @@ return;
         [item setRepresentedObject:tabViewItem];
         [rootMenu addItem:item];
     }
+#endif
 
     item = [[[NSMenuItem alloc] initWithTitle:@"Save Tab as Window Arrangement"
                                        action:@selector(saveTabAsWindowArrangement:)
@@ -7268,6 +7275,7 @@ return;
     }
 }
 
+#if 0
 - (IBAction)duplicateTab:(id)sender {
     PTYTab *theTab = (PTYTab *)[[sender representedObject] identifier];
     if (!theTab) {
@@ -7308,6 +7316,7 @@ return;
         [self appendTab:copyOfTab];
     }
 }
+#endif
 
 - (void)saveTabAsWindowArrangement:(id)sender {
     PTYTab *theTab = (PTYTab *)[[sender representedObject] identifier];
@@ -7410,6 +7419,7 @@ return;
     [[self window] performClose:sender];
 }
 
+#if 0
 - (void)reloadBookmarks
 {
     for (PTYSession* session in [self allSessions]) {
@@ -7448,6 +7458,7 @@ return;
     }
     [self updateTouchBarIfNeeded];
 }
+#endif
 
 // Called when the parameter panel should close.
 - (IBAction)parameterPanelEnd:(id)sender {
