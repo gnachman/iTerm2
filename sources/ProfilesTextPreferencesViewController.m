@@ -161,7 +161,7 @@
             // mixed Asian/non-asian environments find it useful but almost nobody should turn it on
             // unless they really know what they're doing.
             iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:@"You probably don't want to turn this on. "
+                [iTermWarning showWarningWithTitle:@"You probably don’t want to turn this on. "
                                                    @"It will confuse interactive programs. "
                                                    @"You might want it if you work mostly with "
                                                    @"East Asian text combined with legacy or "
@@ -173,6 +173,8 @@
                                             window:weakSelf.view.window];
             if (selection == kiTermWarningSelection0) {
                 [strongSelf setBool:YES forKey:KEY_AMBIGUOUS_DOUBLE_WIDTH];
+            } else {
+                strongSelf->_ambiguousIsDoubleWidth.state = NSControlStateValueOff;
             }
         } else {
             [strongSelf setBool:NO forKey:KEY_AMBIGUOUS_DOUBLE_WIDTH];

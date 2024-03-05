@@ -237,7 +237,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
             // Host *
             //   ServerAliveInterval 60
             iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:@"You probably don't want to turn this on. "
+                [iTermWarning showWarningWithTitle:@"You probably don’t want to turn this on. "
                                                    @"It's not suitable for keeping ssh sessions alive, "
                                                    @"even with a code of “0”. Are you sure you want this?"
                                            actions:@[ @"Enable Send Code", @"Cancel" ]
@@ -246,6 +246,8 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
                                             window:weakSelf.view.window];
             if (selection == kiTermWarningSelection0) {
                 [strongSelf setBool:YES forKey:KEY_SEND_CODE_WHEN_IDLE];
+            } else {
+                strongSelf->_sendCodeWhenIdle.state = NSControlStateValueOff;
             }
         } else {
             [strongSelf setBool:NO forKey:KEY_SEND_CODE_WHEN_IDLE];
