@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# The file name is passed as an argument to the script
+file=$1
+
+# Use awk to extract the relevant lines and the hex bytes
+hex_values=$(awk '
+BEGIN { output = "" }
+/VT100Parser.m:309/ {
+    # Split the line into fields using a colon as the delimiter
+    split($0, fields, ":")
+    # The hex bytes are in the last field, remove the trailing part
+    sub(/  \(.*/, "", fields[5])
+    # Add the hex bytes to the output string
+    output = output fields[5]
+}
+END {
+    # Trim leading and trailing spaces
+    gsub(/^ +| +$/, "", output)
+    print output
+}' $file)
+
+# Convert the hex values to ASCII
+for hex in $hex_values; do
+    printf "\x$hex"
+done
+echo
+
+
