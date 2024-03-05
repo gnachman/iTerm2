@@ -1119,6 +1119,12 @@
 		A610941D2A4A213D00AC2268 /* key-light.png in Resources */ = {isa = PBXBuildFile; fileRef = A61094192A4A213D00AC2268 /* key-light.png */; };
 		A610941E2A4A213D00AC2268 /* key-light.png in Resources */ = {isa = PBXBuildFile; fileRef = A61094192A4A213D00AC2268 /* key-light.png */; };
 		A610941F2A4A213D00AC2268 /* key-light.png in Resources */ = {isa = PBXBuildFile; fileRef = A61094192A4A213D00AC2268 /* key-light.png */; };
+		A6109B612B969B4100D8E4E9 /* graphic_neovim.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B5F2B969B4000D8E4E9 /* graphic_neovim.png */; };
+		A6109B622B969B4100D8E4E9 /* graphic_neovim.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B5F2B969B4000D8E4E9 /* graphic_neovim.png */; };
+		A6109B632B969B4100D8E4E9 /* graphic_neovim.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B5F2B969B4000D8E4E9 /* graphic_neovim.png */; };
+		A6109B642B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B602B969B4000D8E4E9 /* graphic_neovim@2x.png */; };
+		A6109B652B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B602B969B4000D8E4E9 /* graphic_neovim@2x.png */; };
+		A6109B662B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B602B969B4000D8E4E9 /* graphic_neovim@2x.png */; };
 		A6110C3A2526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h in Headers */ = {isa = PBXBuildFile; fileRef = A6110C382526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h */; };
 		A6110C3B2526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m in Sources */ = {isa = PBXBuildFile; fileRef = A6110C392526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m */; };
 		A6121D2F2A04875C005D469C /* ImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6121D2E2A04875C005D469C /* ImportExport.swift */; };
@@ -5530,6 +5536,8 @@
 		A60F6FEA270B7F1D0017A003 /* iTermModifyOtherKeys1Test.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermModifyOtherKeys1Test.m; sourceTree = "<group>"; };
 		A61094182A4A213D00AC2268 /* key-dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "key-dark.png"; path = "images/key-dark.png"; sourceTree = "<group>"; };
 		A61094192A4A213D00AC2268 /* key-light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "key-light.png"; path = "images/key-light.png"; sourceTree = "<group>"; };
+		A6109B5F2B969B4000D8E4E9 /* graphic_neovim.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_neovim.png; path = "hyper-tab-icons-plus/png/graphic_neovim.png"; sourceTree = "<group>"; };
+		A6109B602B969B4000D8E4E9 /* graphic_neovim@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_neovim@2x.png"; path = "hyper-tab-icons-plus/png/graphic_neovim@2x.png"; sourceTree = "<group>"; };
 		A6110C382526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermModifyOtherKeysMapper1.h; sourceTree = "<group>"; };
 		A6110C392526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermModifyOtherKeysMapper1.m; sourceTree = "<group>"; };
 		A6121D2E2A04875C005D469C /* ImportExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportExport.swift; sourceTree = "<group>"; };
@@ -11101,6 +11109,8 @@
 		A6A7A94D214393F1000DA2D4 /* hyper-tab-icons-plus */ = {
 			isa = PBXGroup;
 			children = (
+				A6109B5F2B969B4000D8E4E9 /* graphic_neovim.png */,
+				A6109B602B969B4000D8E4E9 /* graphic_neovim@2x.png */,
 				A66A881C24DFCCC20043728B /* graphic_elixir.png */,
 				A66A882124DFCCC30043728B /* graphic_elixir@2x.png */,
 				A66A881D24DFCCC20043728B /* graphic_erlang.png */,
@@ -13820,6 +13830,7 @@
 				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
 				A6F18B5B2AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf in Resources */,
 				A67F619D214395B70093940A /* graphic_php@2x.png in Resources */,
+				A6109B632B969B4100D8E4E9 /* graphic_neovim.png in Resources */,
 				A6F2B6D92558B8AC008D6BF1 /* Composer.png in Resources */,
 				1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */,
 				A67F61CC214395C60093940A /* graphic_shell.png in Resources */,
@@ -13917,6 +13928,7 @@
 				1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */,
 				A6F31A29295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
 				A635F1E525076203008C3038 /* iTermActionsEditingViewController.xib in Resources */,
+				A6109B662B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
 				A6A64E632508BE650040490B /* StatusBarIconSnippet.png in Resources */,
 				A67F614C214395870093940A /* graphic_http.png in Resources */,
 				1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */,
@@ -14026,6 +14038,7 @@
 				A6E7AE6B214394CA00DE9F3B /* graphic_bower.png in Resources */,
 				A6F18B572AE2F39C006C08EE /* uniE0B4_right-half-circle-thick.pdf in Resources */,
 				A6E7AEB9214394F600DE9F3B /* graphic_ethereum.png in Resources */,
+				A6109B622B969B4100D8E4E9 /* graphic_neovim.png in Resources */,
 				A6E7AE68214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
 				A6CEDA6019988A7300BB57EC /* LogoFrame.png in Resources */,
 				A67F615F214395990093940A /* graphic_monitor@2x.png in Resources */,
@@ -14334,6 +14347,7 @@
 				1DC2AF5219521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				A63493EC23F0A3EF0047C31B /* UKCrashReporter.xib in Resources */,
 				A6D3205829C492410088BBE1 /* nerd.itse in Resources */,
+				A6109B652B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
 				A6A64E6D2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */,
 				A6A64E652508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				A63821F0229E50CD005D74BE /* Warning@2x.png in Resources */,
@@ -14416,6 +14430,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6109B612B969B4100D8E4E9 /* graphic_neovim.png in Resources */,
 				A65DF4A12849601A00AA29AB /* .zshenv in Resources */,
 				A6F18B3B2AE2F39C006C08EE /* uniE0CE_lego_separator.pdf in Resources */,
 				A6EEAED72834165C0039E850 /* framer.py in Resources */,
@@ -14829,6 +14844,7 @@
 				9DB3D6E0176C8F0B0071CCF8 /* PrefsAppearance.png in Resources */,
 				A6F7A74C213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
 				A6B4832D29D73DA10055E24A /* rectangle.portrait.on.rectangle.portrait.png in Resources */,
+				A6109B642B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
 				53C5650521B8CB1C002B3167 /* PowerlinePadlock.pdf in Resources */,
 				A6F7A713213CB143004DE961 /* StatusBarIconClock@2x.png in Resources */,
 				A66DB8321C8E4C2E00233E88 /* ChangeProfile.png in Resources */,

@@ -90,6 +90,9 @@
   "nano": [
     "nano"
   ],
+  "neovim": [
+    "nvim"
+  ],
   "nodejs": [
     "node"
   ],
@@ -187,6 +190,5 @@
     "Vim",
     "vi",
     "vim",
-    "nvim"
   ]
 }
