@@ -631,6 +631,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             DLog(@"NSKeyDown event taking the regular path");
             break;
         case NSEventTypeKeyUp:
+            DLog(@"Key up: %@", event);
             if (_leader) {
                 [self makeCursorSparkles];
             }
