@@ -154,9 +154,9 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
         NSString *const versionNumber = myDict[(NSString *)kCFBundleVersionKey];
         NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", versionNumber];
         NSAttributedString *whatsNew = nil;
-        if ([versionNumber hasPrefix:@"3.4."] || [versionString isEqualToString:@"unknown"]) {
+        if ([versionNumber hasPrefix:@"3.5."] || [versionString isEqualToString:@"unknown"]) {
             whatsNew = [self attributedStringWithLinkToURL:iTermAboutWindowControllerWhatsNewURLString
-                                                     title:@"What’s New in 3.4?\n"];
+                                                     title:@"What’s New in 3.5?\n"];
         }
 
         NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://iterm2.com/"

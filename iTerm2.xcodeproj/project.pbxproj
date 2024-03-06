@@ -1125,6 +1125,9 @@
 		A6109B642B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B602B969B4000D8E4E9 /* graphic_neovim@2x.png */; };
 		A6109B652B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B602B969B4000D8E4E9 /* graphic_neovim@2x.png */; };
 		A6109B662B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B602B969B4000D8E4E9 /* graphic_neovim@2x.png */; };
+		A6109B682B9832E900D8E4E9 /* Onboarding-Filtering.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B672B9832E800D8E4E9 /* Onboarding-Filtering.png */; };
+		A6109B692B9832E900D8E4E9 /* Onboarding-Filtering.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B672B9832E800D8E4E9 /* Onboarding-Filtering.png */; };
+		A6109B6A2B9832E900D8E4E9 /* Onboarding-Filtering.png in Resources */ = {isa = PBXBuildFile; fileRef = A6109B672B9832E800D8E4E9 /* Onboarding-Filtering.png */; };
 		A6110C3A2526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h in Headers */ = {isa = PBXBuildFile; fileRef = A6110C382526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h */; };
 		A6110C3B2526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m in Sources */ = {isa = PBXBuildFile; fileRef = A6110C392526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m */; };
 		A6121D2F2A04875C005D469C /* ImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6121D2E2A04875C005D469C /* ImportExport.swift */; };
@@ -3172,6 +3175,9 @@
 		A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
 		A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
 		A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
+		A6C830612B98433100ABEE2B /* Onboarding-Speed.png in Resources */ = {isa = PBXBuildFile; fileRef = A6C830602B98433100ABEE2B /* Onboarding-Speed.png */; };
+		A6C830622B98433100ABEE2B /* Onboarding-Speed.png in Resources */ = {isa = PBXBuildFile; fileRef = A6C830602B98433100ABEE2B /* Onboarding-Speed.png */; };
+		A6C830632B98433100ABEE2B /* Onboarding-Speed.png in Resources */ = {isa = PBXBuildFile; fileRef = A6C830602B98433100ABEE2B /* Onboarding-Speed.png */; };
 		A6C93DD4238A447900F21E0D /* iTermLogicalMovementHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */; };
 		A6C93DD5238A447900F21E0D /* iTermLogicalMovementHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */; };
 		A6C978F124A0194500971AA7 /* WindowCornerFull.psd in Resources */ = {isa = PBXBuildFile; fileRef = A6C978EF24A0194400971AA7 /* WindowCornerFull.psd */; };
@@ -3878,6 +3884,12 @@
 		A6EC47CA21EC73F5000E1321 /* PythonLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC47C921EC73F5000E1321 /* PythonLogo.png */; };
 		A6EC47CD21ED96F2000E1321 /* iTermLaunchExperienceController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC47CB21ED96F2000E1321 /* iTermLaunchExperienceController.h */; };
 		A6EC47CE21ED96F2000E1321 /* iTermLaunchExperienceController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EC47CC21ED96F2000E1321 /* iTermLaunchExperienceController.m */; };
+		A6EC5FB52B98398500F84417 /* Onboarding-OCL.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC5FB42B98398500F84417 /* Onboarding-OCL.png */; };
+		A6EC5FB62B98398500F84417 /* Onboarding-OCL.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC5FB42B98398500F84417 /* Onboarding-OCL.png */; };
+		A6EC5FB72B98398500F84417 /* Onboarding-OCL.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC5FB42B98398500F84417 /* Onboarding-OCL.png */; };
+		A6EC5FB92B98404300F84417 /* Onboarding-AI.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC5FB82B98404300F84417 /* Onboarding-AI.png */; };
+		A6EC5FBA2B98404300F84417 /* Onboarding-AI.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC5FB82B98404300F84417 /* Onboarding-AI.png */; };
+		A6EC5FBB2B98404300F84417 /* Onboarding-AI.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC5FB82B98404300F84417 /* Onboarding-AI.png */; };
 		A6EC8046281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */ = {isa = PBXBuildFile; fileRef = A6EC8045281B391900493544 /* TextViewPortholeRenderer-dark.css */; };
 		A6EC8047281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */ = {isa = PBXBuildFile; fileRef = A6EC8045281B391900493544 /* TextViewPortholeRenderer-dark.css */; };
 		A6EC8048281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */ = {isa = PBXBuildFile; fileRef = A6EC8045281B391900493544 /* TextViewPortholeRenderer-dark.css */; };
@@ -5538,6 +5550,7 @@
 		A61094192A4A213D00AC2268 /* key-light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "key-light.png"; path = "images/key-light.png"; sourceTree = "<group>"; };
 		A6109B5F2B969B4000D8E4E9 /* graphic_neovim.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_neovim.png; path = "hyper-tab-icons-plus/png/graphic_neovim.png"; sourceTree = "<group>"; };
 		A6109B602B969B4000D8E4E9 /* graphic_neovim@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_neovim@2x.png"; path = "hyper-tab-icons-plus/png/graphic_neovim@2x.png"; sourceTree = "<group>"; };
+		A6109B672B9832E800D8E4E9 /* Onboarding-Filtering.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Onboarding-Filtering.png"; path = "images/Onboarding/Onboarding-Filtering.png"; sourceTree = "<group>"; };
 		A6110C382526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermModifyOtherKeysMapper1.h; sourceTree = "<group>"; };
 		A6110C392526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermModifyOtherKeysMapper1.m; sourceTree = "<group>"; };
 		A6121D2E2A04875C005D469C /* ImportExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportExport.swift; sourceTree = "<group>"; };
@@ -7013,6 +7026,7 @@
 		A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = iTerm2.sdef; sourceTree = "<group>"; };
 		A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+Scripting.m"; sourceTree = "<group>"; };
+		A6C830602B98433100ABEE2B /* Onboarding-Speed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Onboarding-Speed.png"; path = "images/Onboarding/Onboarding-Speed.png"; sourceTree = "<group>"; };
 		A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLogicalMovementHelper.h; sourceTree = "<group>"; };
 		A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLogicalMovementHelper.m; sourceTree = "<group>"; };
 		A6C978EF24A0194400971AA7 /* WindowCornerFull.psd */ = {isa = PBXFileReference; lastKnownFileType = file; name = WindowCornerFull.psd; path = images/WindowCornerFull.psd; sourceTree = "<group>"; };
@@ -7336,6 +7350,8 @@
 		A6EC47C921EC73F5000E1321 /* PythonLogo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PythonLogo.png; path = images/Onboarding/PythonLogo.png; sourceTree = "<group>"; };
 		A6EC47CB21ED96F2000E1321 /* iTermLaunchExperienceController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLaunchExperienceController.h; sourceTree = "<group>"; };
 		A6EC47CC21ED96F2000E1321 /* iTermLaunchExperienceController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLaunchExperienceController.m; sourceTree = "<group>"; };
+		A6EC5FB42B98398500F84417 /* Onboarding-OCL.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Onboarding-OCL.png"; path = "images/Onboarding/Onboarding-OCL.png"; sourceTree = "<group>"; };
+		A6EC5FB82B98404300F84417 /* Onboarding-AI.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Onboarding-AI.png"; path = "images/Onboarding/Onboarding-AI.png"; sourceTree = "<group>"; };
 		A6EC8045281B391900493544 /* TextViewPortholeRenderer-dark.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = "TextViewPortholeRenderer-dark.css"; path = "OtherResources/TextViewPortholeRenderer-dark.css"; sourceTree = SOURCE_ROOT; };
 		A6EC8049281B3AF200493544 /* TextViewPortholeRenderer-light.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = "TextViewPortholeRenderer-light.css"; path = "OtherResources/TextViewPortholeRenderer-light.css"; sourceTree = SOURCE_ROOT; };
 		A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftyMarkdown.framework; path = ThirdParty/SwiftyMarkdown.framework; sourceTree = "<group>"; };
@@ -8348,6 +8364,10 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6C830602B98433100ABEE2B /* Onboarding-Speed.png */,
+				A6EC5FB82B98404300F84417 /* Onboarding-AI.png */,
+				A6EC5FB42B98398500F84417 /* Onboarding-OCL.png */,
+				A6109B672B9832E800D8E4E9 /* Onboarding-Filtering.png */,
 				A64F32132B853CED008EFDC9 /* dice.png */,
 				A66351452B659309009B93F7 /* PinnedIndicator.png */,
 				A66351442B659309009B93F7 /* PinnedIndicator@2x.png */,
@@ -13631,6 +13651,7 @@
 				A6F18B432AE2F39C006C08EE /* uniE0B8_lower-left-triangle.pdf in Resources */,
 				1D6ED97E19AEA20D005A7799 /* QuestionMarkSign.png in Resources */,
 				A67F6146214395870093940A /* graphic_java.png in Resources */,
+				A6109B6A2B9832E900D8E4E9 /* Onboarding-Filtering.png in Resources */,
 				A61A85A524F1CCBA00B03880 /* iTermGlobalSearch.xib in Resources */,
 				A67F61E6214395D50093940A /* graphic_vim.png in Resources */,
 				1D8BBA7A1B30FD230005A852 /* Later.png in Resources */,
@@ -13889,6 +13910,7 @@
 				A6FE8D0C209382C000B5C648 /* download.png in Resources */,
 				1D6ED9C519AEA20D005A7799 /* LogoShadow.png in Resources */,
 				A6C978F324A0194500971AA7 /* WindowCornerFull.psd in Resources */,
+				A6C830632B98433100ABEE2B /* Onboarding-Speed.png in Resources */,
 				A6E7AE8B214394DD00DE9F3B /* graphic_compile.png in Resources */,
 				A6FE8D0F2093893900B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
 				A629F5BB23B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
@@ -13963,8 +13985,10 @@
 				A6F7A73C213CB143004DE961 /* StatusBarIconClock.png in Resources */,
 				A6E7AE5D214394CA00DE9F3B /* graphic_bullhorn.png in Resources */,
 				A65D7CB421E1EBCE00E3D81C /* StopStatusIcon.png in Resources */,
+				A6EC5FBB2B98404300F84417 /* Onboarding-AI.png in Resources */,
 				A6A64E6E2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */,
 				1D6ED9DE19AEA20D005A7799 /* PrefsAdvanced.png in Resources */,
+				A6EC5FB72B98398500F84417 /* Onboarding-OCL.png in Resources */,
 				A629F58F23AF437400C2F16B /* utilities-manifest.txt in Resources */,
 				1D8BBA751B30F7FB0005A852 /* Dismiss.png in Resources */,
 				1D6ED9DF19AEA20D005A7799 /* PrefsGeneral@2x.png in Resources */,
@@ -14077,6 +14101,7 @@
 				A6F7A70E213CB143004DE961 /* StatusBarIconJobs.png in Resources */,
 				A67F6162214395990093940A /* graphic_mysql@2x.png in Resources */,
 				53B93DE221F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */,
+				A6EC5FB62B98398500F84417 /* Onboarding-OCL.png in Resources */,
 				A6F18B4E2AE2F39C006C08EE /* uniE0B7_left-half-circle-thin.pdf in Resources */,
 				A67F61B1214395B70093940A /* graphic_php.png in Resources */,
 				A6FE8D0E2093893700B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
@@ -14374,6 +14399,7 @@
 				A630119020E6B722008114B7 /* iTermStatusBarSetupCollectionViewItem.xib in Resources */,
 				A67F6171214395990093940A /* graphic_mysql.png in Resources */,
 				A65B725B1B1A630100F947A7 /* CheckMark.png in Resources */,
+				A6EC5FBA2B98404300F84417 /* Onboarding-AI.png in Resources */,
 				A65B72531B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				A66F52D42106F6F100571168 /* gitdown@2x.png in Resources */,
 				1D8BBA711B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
@@ -14401,8 +14427,10 @@
 				A65DF4A22849601A00AA29AB /* .zshenv in Resources */,
 				A66F52C82106F6F100571168 /* gitdirty.png in Resources */,
 				A6F1B3AF268FD0F300546767 /* StatusBarIconTriggers@2x.png in Resources */,
+				A6109B692B9832E900D8E4E9 /* Onboarding-Filtering.png in Resources */,
 				1D99C8E81BD59C37001EE1FC /* SearchCursor@2x.png in Resources */,
 				A6F18B4B2AE2F39C006C08EE /* uniE0B6_left-half-circle-thick.pdf in Resources */,
+				A6C830622B98433100ABEE2B /* Onboarding-Speed.png in Resources */,
 				A67D0D7E1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
 				A6E7AE84214394DD00DE9F3B /* graphic_code@2x.png in Resources */,
 				A65429A520BE7ECD00CE71B1 /* ScriptIcon.png in Resources */,
@@ -14560,6 +14588,7 @@
 				A6F1B3B1268FD0F300546767 /* StatusBarIconTriggers.png in Resources */,
 				A67F6150214395870093940A /* graphic_less.png in Resources */,
 				A635029C229B5F8B0042B779 /* YosemiteAddTab@2x.png in Resources */,
+				A6C830612B98433100ABEE2B /* Onboarding-Speed.png in Resources */,
 				A6F7A743213CB143004DE961 /* StatusBarIconPaste.png in Resources */,
 				A6B70FBB19830C37007A4284 /* dead.png in Resources */,
 				A623D94E1F8984700011F8C3 /* key@2x.png in Resources */,
@@ -14572,9 +14601,11 @@
 				1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */,
 				A67D0D411A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
 				A6F7A722213CB143004DE961 /* StatusBarIconCPU.png in Resources */,
+				A6EC5FB92B98404300F84417 /* Onboarding-AI.png in Resources */,
 				A6F7A72E213CB143004DE961 /* StatusBarIconLoupe.png in Resources */,
 				537A1FB822168DF800FBEE5A /* MinimalFindView.xib in Resources */,
 				A67F61C7214395C60093940A /* graphic_search.png in Resources */,
+				A6EC5FB52B98398500F84417 /* Onboarding-OCL.png in Resources */,
 				A6E7AE6A214394CA00DE9F3B /* graphic_bower.png in Resources */,
 				1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */,
 				A60C03692089897400FE2F1F /* iTermScriptConsole.xib in Resources */,
@@ -14781,6 +14812,7 @@
 				A67F61A4214395B70093940A /* graphic_python@2x.png in Resources */,
 				A629F57D23AF2DD900C2F16B /* utilities.tgz in Resources */,
 				A6339DD71D232CEE000BAD78 /* StatusItem.png in Resources */,
+				A6109B682B9832E900D8E4E9 /* Onboarding-Filtering.png in Resources */,
 				A6B4833629D73DA10055E24A /* square.and.pencil.png in Resources */,
 				A630118520E6A61D008114B7 /* iTermStatusBarSetupViewController.xib in Resources */,
 				A67D0D621A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,

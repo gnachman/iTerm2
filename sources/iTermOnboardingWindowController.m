@@ -103,7 +103,7 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
         return NO;
     }
     NSString *twoPartVersion = [[parts subarrayWithRange:NSMakeRange(0, 2)] componentsJoinedByString:@"."];
-    NSArray<NSString *> *versionsForAnnouncement = @[ @"3.1", @"3.2", @"3.3" ];
+    NSArray<NSString *> *versionsForAnnouncement = @[ @"3.1", @"3.2", @"3.3", @"3.4" ];
     return [versionsForAnnouncement containsObject:twoPartVersion];
 }
 
