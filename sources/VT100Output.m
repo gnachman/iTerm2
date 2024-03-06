@@ -1466,6 +1466,12 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
 }
 
 - (NSData *)reportCapabilities:(VT100Capabilities)capabilities {
+    NSString *report = [NSString stringWithFormat:@"\e]1337;Capabilities=%@\a",
+                        [VT100Output encodedTermFeaturesForCapabilities:capabilities]];
+    return [report dataUsingEncoding:NSUTF8StringEncoding];
+}
+
++ (NSString *)encodedTermFeaturesForCapabilities:(VT100Capabilities)capabilities {
     NSString *(^formatNumber)(NSString *, uint32_t) = ^NSString *(NSString *code, uint32_t value) {
         if (value == 0) {
             return @"";
@@ -1492,10 +1498,7 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
         capabilities.sixel ? @"Sx" : @"",
         capabilities.file ? @"F" : @"",
     ];
-    NSString *encodedValue = [parts componentsJoinedByString:@""];
-    NSString *report = [NSString stringWithFormat:@"\e]1337;Capabilities=%@\a",
-                        encodedValue ?: @""];
-    return [report dataUsingEncoding:NSUTF8StringEncoding];
+    return [parts componentsJoinedByString:@""];
 }
 
 - (NSData *)reportPasteboard:(NSString *)pasteboard contents:(NSString *)string {

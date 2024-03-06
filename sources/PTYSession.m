@@ -2617,6 +2617,9 @@ ITERM_WEAKLY_REFERENCEABLE
     env[PWD_ENVNAME] = trimmed;
 
     NSString *itermId = [self sessionId];
+    if (!self.isTmuxClient) {
+        env[@"TERM_FEATURES"] = [VT100Output encodedTermFeaturesForCapabilities:[self capabilities]];
+    }
     env[@"ITERM_SESSION_ID"] = itermId;
     env[@"TERM_PROGRAM_VERSION"] = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
     env[@"TERM_SESSION_ID"] = itermId;
@@ -13294,9 +13297,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     if (self.isTmuxClient) {
         return;
     }
+    NSData *data = [_screen.terminalOutput reportCapabilities:[self capabilities]];
+    [self screenSendReportData:data];
+}
+
+- (VT100Capabilities)capabilities {
     const BOOL clipboardAccessAllowed = [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
-    VT100Capabilities capabilities =
-    VT100OutputMakeCapabilities(YES,                                // compatibility24Bit
+    return VT100OutputMakeCapabilities(YES,                                // compatibility24Bit
                                 YES,                                // full24Bit
                                 clipboardAccessAllowed,             // clipboardWritable
                                 YES,                                // decslrm
@@ -13318,8 +13325,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                 YES,                                // notifications
                                 YES,                                // sixel
                                 YES);                               // file
-    NSData *data = [_screen.terminalOutput reportCapabilities:capabilities];
-    [self screenSendReportData:data];
 }
 
 - (VT100GridRange)screenRangeOfVisibleLines {

@@ -176,5 +176,6 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
                                               BOOL file);
 
 - (NSData *)reportCapabilities:(VT100Capabilities)capabilities;
++ (NSString *)encodedTermFeaturesForCapabilities:(VT100Capabilities)capabilities;
 
 @end
