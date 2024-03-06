@@ -2425,6 +2425,9 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
     if (theChar.code == 0 && !theChar.complexChar) {
         return nil;
     }
+    if (theChar.image) {
+        return nil;
+    }
     if (theChar.complexChar) {
         return ComplexCharToStr(theChar.code);
     } else {
