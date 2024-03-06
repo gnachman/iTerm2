@@ -684,7 +684,6 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     int eol = 0;
     const int offset = [self _wrappedLineWithWrapWidth:width
                                               location:location
-                                           bufferStart:nil
                                                lineNum:&mutableLineNum
                                             lineLength:&length
                                      includesEndOfLine:&eol
@@ -1000,7 +999,6 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     int lineOffset = 0;
     [self _wrappedLineWithWrapWidth:width
                            location:location
-                        bufferStart:_characterBuffer.pointer + _startOffset
                             lineNum:&mutableLineNum
                          lineLength:&length
                   includesEndOfLine:&eof
@@ -1049,7 +1047,6 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
 - (int)_wrappedLineWithWrapWidth:(int)width
                         location:(LineBlockLocation)location
-                     bufferStart:(const screen_char_t *)bufferStart
                          lineNum:(int*)lineNum
                       lineLength:(int*)lineLength
                includesEndOfLine:(int*)includesEndOfLine
@@ -1058,6 +1055,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
                         metadata:(out iTermImmutableMetadata *)metadataPtr
                       lineOffset:(out int *)lineOffset {
+    const screen_char_t *bufferStart = _characterBuffer.pointer + _startOffset;
     int offset = [self cacheAwareOffsetOfWrappedLineInBuffer:location
                                            wrappedLineNumber:*lineNum
                                                        width:width];
@@ -1204,7 +1202,6 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     // eat up *lineNum many width-sized wrapped lines from this start of the current full line
     const int offset = [self _wrappedLineWithWrapWidth:width
                                               location:location
-                                           bufferStart:_characterBuffer.pointer + _startOffset
                                                lineNum:lineNum
                                             lineLength:lineLength
                                      includesEndOfLine:includesEndOfLine
@@ -1234,7 +1231,6 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     const screen_char_t *chunk = _characterBuffer.pointer + _startOffset;
     const int offset = [self _wrappedLineWithWrapWidth:width
                                               location:location
-                                           bufferStart:chunk
                                                lineNum:&mutableLineNum
                                             lineLength:&length
                                      includesEndOfLine:&eol
