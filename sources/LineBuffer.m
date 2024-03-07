@@ -287,7 +287,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (NSString *)dumpString {
     NSMutableArray<NSString *> *strings = [NSMutableArray array];
     int i;
-    int rawOffset = 0;
     for (i = 0; i < _lineBlocks.count; ++i) {
         [strings addObject:[NSString stringWithFormat:@"Block %d:", i]];
         [strings addObject:_lineBlocks[i].dumpString];

@@ -63,8 +63,6 @@ static const int kOffsetY = 10;
 static const int kColorAreaDistanceX = 18;
 static const int kColorAreaDimension = 12;
 static const int kColorAreaBorder = 1;
-static const int kDefaultColorOffset = 2;
-static const int kDefaultColorDimension = 8;
 static const int kDefaultColorStokeWidth = 2;
 static const int kMenuFontSize = 14;
 
