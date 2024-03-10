@@ -439,6 +439,11 @@ DQ
                                     <action selector="toggleFullScreenMode:" target="-1" id="1256"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Toggle Notch" keyEquivalent="G" identifier="Toggle Notch" id="12314">
+                                <connections>
+                                    <action selector="toggleNotch:" target="-1" id="12324"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="806">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -547,7 +552,7 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1466">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Toggle Foreground" keyEquivalent="F" identifier="Toggle ForeGround" id="12312">
+                            <menuItem title="Toggle AlwaysOnTop" keyEquivalent="F" identifier="Toggle ForeGround" id="12312">
                                 <connections>
                                     <action selector="toggleForeground:" target="201" id="12323"/>
                                 </connections>
@@ -690,12 +695,14 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1405">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+			    <!--
                             <menuItem title="Pin Hotkey Window" keyEquivalent="-" identifier="Pin Hotkey Window" id="Kd2-6A-mAn">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                 <connections>
                                     <action selector="togglePinHotkeyWindow:" target="201" id="lqK-e4-zQn"/>
                                 </connections>
                             </menuItem>
+			    -->
                             <menuItem isSeparatorItem="YES" id="tbC-nC-pds">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

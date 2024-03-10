@@ -280,7 +280,7 @@ extern NSString *const iTermTabDidChangePositionInWindowNotification;
 - (void)showMenuBar;
 
 // Cause every session in this window to reload its bookmark.
-- (void)reloadBookmarks;
+// - (void)reloadBookmarks;
 
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
@@ -295,6 +295,7 @@ extern NSString *const iTermTabDidChangePositionInWindowNotification;
 - (PTYSession *)createTabWithProfile:(Profile *)profile
                          withCommand:(NSString *)command;
 
+- (void)toggleNotch;
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;
 // Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this

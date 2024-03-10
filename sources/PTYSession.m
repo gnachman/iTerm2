@@ -5511,6 +5511,7 @@ verticalSpacing:(float)verticalSpacing {
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
         case KEY_ACTION_REMAP_LOCALLY:
         case KEY_ACTION_TOGGLE_FULLSCREEN:
+        case KEY_ACTION_TOGGLE_NOTCH:
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
         case KEY_ACTION_SET_PROFILE:
@@ -5685,6 +5686,9 @@ verticalSpacing:(float)verticalSpacing {
             break;
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
         case KEY_ACTION_REMAP_LOCALLY:
+            break;
+        case KEY_ACTION_TOGGLE_NOTCH:
+            [[[iTermController sharedInstance] currentTerminal] toggleNotch:nil];
             break;
         case KEY_ACTION_TOGGLE_FULLSCREEN:
             [[[iTermController sharedInstance] currentTerminal] toggleFullScreenMode:nil];

@@ -26,6 +26,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 - (BOOL)haveLeftBorder;
 - (BOOL)haveRightBorder;
 - (BOOL)anyFullScreen;
+- (BOOL)wantNotch;
 - (BOOL)exitingLionFullscreen;
 - (BOOL)divisionViewShouldBeVisible;
 - (NSWindow *)window;
@@ -54,6 +55,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 
 // Should the toolbelt be visible?
 @property(nonatomic, assign) BOOL shouldShowToolbelt;
+@property(nonatomic, assign) BOOL wantNotch;
 
 // How wide the toolbelt should be. User may drag it to change.
 // ALWAYS USE THE FLOOR OF THIS VALUE!

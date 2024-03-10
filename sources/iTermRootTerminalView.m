@@ -285,15 +285,18 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 	// TODO PANCAKE - add a toggle option in settings or detect if screen have notch at runtime
         bool notchAdjustment = [_delegate anyFullScreen];
 	if (notchAdjustment) {
-            heightAdjustment = 40; // on fullscreen this can fix the notch issue
+            if (self.wantNotch) {
+                heightAdjustment = 40; // on fullscreen this can fix the notch issue
+            }
 	}
-	fprintf (stderr, "HEIGHT ADJUSTNMENT %d\n", heightAdjustment);
+	fprintf (stderr, "HEIGHT ADJUSTMENT %d\n", heightAdjustment);
         NSRect tabViewFrame =
             NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
                        yOrigin,
                        [self tabviewWidth],
                        [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
         DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
+        [self.tabView setBackgroundColor:[NSColor redColor]];
         [self.tabView setFrame:tabViewFrame];
         [self updateDivisionView];
 

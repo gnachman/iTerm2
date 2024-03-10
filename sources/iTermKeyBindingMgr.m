@@ -481,6 +481,9 @@ exit:
         case KEY_ACTION_TOGGLE_FULLSCREEN:
             actionString = @"Toggle Fullscreen";
             break;
+        case KEY_ACTION_TOGGLE_NOTCH:
+            actionString = @"Toggle Notch";
+            break;
         case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING:
             actionString = @"Toggle Pin Hotkey Window";
             break;

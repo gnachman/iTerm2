@@ -166,6 +166,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (void)popupWillClose:(iTermPopupWindowController *)popup;
 
 - (void)toggleFullScreenMode:(id)sender;
+- (void)toggleNotch:(id)sender;
 
 // Is the window title transient?
 - (void)clearTransientTitle;

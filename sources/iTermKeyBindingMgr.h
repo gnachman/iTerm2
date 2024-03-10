@@ -141,6 +141,7 @@
 #define KEY_ACTION_SWAP_PANE_BELOW 56
 #define KEY_FIND_AGAIN_DOWN 57
 #define KEY_FIND_AGAIN_UP 58
+#define KEY_ACTION_TOGGLE_NOTCH 59
 
 @interface iTermKeyBindingMgr : NSObject
 

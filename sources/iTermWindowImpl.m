@@ -141,6 +141,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return (id<PTYWindowDelegateProtocol>)[self delegate];
 }
 
+- (void)toggleNotch:(nullable id)sender {
+   [(id<PTYWindowDelegateProtocol>)[self delegate] toggleNotch];
+}
+
 - (void)toggleFullScreen:(nullable id)sender {
    // hack to avoid native fullscreen to work. ignore settings
    [(id<PTYWindowDelegateProtocol>)[self delegate] toggleTraditionalFullScreenMode];

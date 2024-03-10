@@ -3490,8 +3490,15 @@ return NO;
     return togglingLionFullScreen_;
 }
 
+- (void)toggleNotch {
+	fprintf(stderr, "TOGGLE NOTCH\n");
+	_contentView.wantNotch = !_contentView.wantNotch;
+	[_contentView layoutSubviews];
+}
+
 - (IBAction)toggleFullScreenMode:(id)sender
 {
+	fprintf(stderr, "TOGGLE FS\n");
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
 #if 0
     if ([self lionFullScreen] ||
