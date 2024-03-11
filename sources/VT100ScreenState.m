@@ -543,12 +543,11 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
 - (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range {
     NSMutableArray<iTermTerminalButtonPlace *> *places = [NSMutableArray array];
-    const long long offset = self.cumulativeScrollbackOverflow;
     Interval *interval = 
     [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
-                                                            range.location + offset,
+                                                            range.location,
                                                             0,
-                                                            range.location + offset)];
+                                                            range.location)];
     for (NSArray *objects in [self.intervalTree forwardLimitEnumeratorAt:interval.location]) {
         for (id<IntervalTreeObject> obj in objects) {
             VT100GridAbsCoordRange objRange = [self absCoordRangeForInterval:obj.entry.interval];
