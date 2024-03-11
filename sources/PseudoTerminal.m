@@ -2181,11 +2181,8 @@ return NO;
     for (PTYSession *session in sessions) {
         assert([session revive]);  // TODO(georgen): This isn't guaranteed
     }
-    if ([term loadArrangement:arrangement sessions:sessions]) {
-        return term;
-    } else {
-        return term;
-    }
+    [term loadArrangement:arrangement sessions:sessions];
+    return term;
 }
 
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary *)arrangement
@@ -5765,7 +5762,26 @@ return;
 }
 
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize {
-	return YES;
+    if ([self anyFullScreen]) {
+        [self fitTabsToWindow];
+        return NO;
+    }
+    NSRect frame = [[self window] frame];
+    int w = 80;
+    int h = 25;
+    // frame = [self canonicalFrameForScreen:self.screen windowFrame:frame preserveSize:YES];
+    DLog(@"Set window frame to %@", NSStringFromRect(frame));
+    NSDictionary *tempPrefs = [[ProfileModel sharedInstance] defaultBookmark];
+    // int charWidth = [[[self currentSession] textview] charWidth] * 4;
+    // int charHeight = [[[self currentSession] textview] charHeight] * 4;
+    NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[tempPrefs objectForKey:KEY_NORMAL_FONT]]
+                                 horizontalSpacing:[[tempPrefs objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
+                                   verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
+    frame.size.width = (w + 2) * charSize.width;
+    frame.size.height = (h + 1) * charSize.height;
+    [[self window] setFrame:frame display:YES];
+    return YES;
+#if 0
     PtyLog(@"fitWindowToTabSize %@", NSStringFromSize(tabSize));
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
