@@ -6770,6 +6770,7 @@ verticalSpacing:(float)verticalSpacing {
 }
 
 - (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)isTrying {
+#if 0
     static NSString *const kIdentifier = @"AskAboutAlternateMouseScroll";
     if (!isTrying) {
         [self dismissAnnouncementWithIdentifier:kIdentifier];
@@ -6802,6 +6803,7 @@ verticalSpacing:(float)verticalSpacing {
                                                     }
                                                 }];
     [self queueAnnouncement:announcement identifier:kIdentifier];
+#endif
 }
 
 // Grow or shrink the height of the frame if the number of lines in the data
