@@ -5889,6 +5889,7 @@ return;
     }
 
     return didResize;
+#endif
 }
 
 - (IBAction)selectPaneLeft:(id)sender

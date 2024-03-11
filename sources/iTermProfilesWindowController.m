@@ -317,7 +317,6 @@ typedef enum {
 
 - (IBAction)newTabsInNewWindow:(id)sender
 {
-	printf ("New tab in new inwodw\n");
     [self _openBookmarkInTab:YES firstInWindow:YES inPane:NO_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];

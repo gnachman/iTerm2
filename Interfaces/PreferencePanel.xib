@@ -40,7 +40,7 @@
             <connections>
                 <outlet property="delegate_" destination="-2" id="3281"/>
             </connections>
-            <point key="canvasLocation" x="26" y="-86"/>
+            <point key="canvasLocation" x="-302" y="180"/>
         </customView>
         <customObject id="ANy-SZ-4JP" userLabel="Profile iTermKeyMappingViewController" customClass="iTermKeyMappingViewController">
             <connections>
@@ -899,7 +899,7 @@ DQ
             <connections>
                 <outlet property="delegate" destination="5797" id="6373"/>
             </connections>
-            <point key="canvasLocation" x="-524" y="-517"/>
+            <point key="canvasLocation" x="-1202" y="-81"/>
         </window>
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" visibleAtLaunch="NO" animationBehavior="default" id="5910" userLabel="Smart Selection Rules Panel" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
@@ -2734,24 +2734,13 @@ DQ
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4916">
                     <rect key="frame" x="324" y="126" width="221" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Fullscreen" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4944" id="4941">
+                    <popUpButtonCell key="cell" type="push" title="Normal" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="4945" id="4941">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="4942">
                             <items>
                                 <menuItem title="Normal" id="4945"/>
                                 <menuItem title="Fullscreen" state="on" tag="1" id="4944"/>
-                                <menuItem title="No Title Bar" tag="12" id="REd-Hh-bME"/>
-                                <menuItem isSeparatorItem="YES" id="ohs-lg-RYo"/>
-                                <menuItem title="Full-Width Bottom of Screen" tag="5" id="4943"/>
-                                <menuItem title="Full-Width Top of Screen" tag="2" id="5591"/>
-                                <menuItem title="Full-Height Left of Screen" tag="6" id="6376"/>
-                                <menuItem title="Full-Height Right of Screen" tag="7" id="6405"/>
-                                <menuItem isSeparatorItem="YES" id="YuD-s4-8Sd"/>
-                                <menuItem title="Bottom of Screen" tag="8" id="gu9-sV-Xji"/>
-                                <menuItem title="Top of Screen" tag="9" id="onX-9F-jq7"/>
-                                <menuItem title="Left of Screen" tag="10" id="Wfg-EQ-Kpk"/>
-                                <menuItem title="Right of Screen" tag="11" id="07C-vC-8pn"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
@@ -3003,8 +2992,19 @@ DQ
                         <outlet property="nextKeyView" destination="4978" id="Tpo-gX-6bI"/>
                     </connections>
                 </button>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hCJ-bp-hT2">
+                    <rect key="frame" x="15" y="59" width="182" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Notch Guard (⌘+Shift+G)" bezelStyle="regularSquare" imagePosition="left" alignment="left" enabled="NO" inset="2" id="P4f-Ak-ODq">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="Ow6-jd-KFg"/>
+                    </connections>
+                </button>
             </subviews>
-            <point key="canvasLocation" x="446" y="4"/>
+            <point key="canvasLocation" x="-945" y="383"/>
         </customView>
         <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="578" height="545"/>
@@ -3389,7 +3389,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="511" height="95"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="511" height="95"/>
@@ -3867,7 +3867,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>
@@ -5016,7 +5016,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="1" width="238" height="377"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" headerView="5563" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="360"/>
@@ -5065,7 +5065,7 @@ DQ
                         <rect key="frame" x="224" y="17" width="15" height="102"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <tableHeaderView key="headerView" id="5563">
+                    <tableHeaderView key="headerView" wantsLayer="YES" id="5563">
                         <rect key="frame" x="0.0" y="0.0" width="238" height="17"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </tableHeaderView>
@@ -5107,7 +5107,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="16" y="-542"/>
+            <point key="canvasLocation" x="-242" y="-527"/>
         </customView>
         <customView id="qwf-ly-A8K" userLabel="Prefs - Pointer" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="892" height="421"/>
@@ -5127,7 +5127,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="2zv-hI-Vxj">
                         <rect key="frame" x="1" y="1" width="849" height="244"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
                                 <rect key="frame" x="0.0" y="0.0" width="849" height="227"/>
@@ -5176,7 +5176,7 @@ DQ
                         <rect key="frame" x="386" y="17" width="15" height="257"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <tableHeaderView key="headerView" id="6206">
+                    <tableHeaderView key="headerView" wantsLayer="YES" id="6206">
                         <rect key="frame" x="0.0" y="0.0" width="849" height="17"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </tableHeaderView>
@@ -5300,7 +5300,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="318" y="-5.5"/>
+            <point key="canvasLocation" x="361" y="17"/>
         </customView>
         <customView id="FiR-vo-BeU" userLabel="Prefs - Advanced" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="992" height="416"/>
@@ -5497,7 +5497,7 @@ DQ
                     </connections>
                 </customView>
             </subviews>
-            <point key="canvasLocation" x="1231" y="237"/>
+            <point key="canvasLocation" x="1238" y="-33"/>
         </customView>
         <window title="Filter Alerts" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="u39-OD-7hu" customClass="NSPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
