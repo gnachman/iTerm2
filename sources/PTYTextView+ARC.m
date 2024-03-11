@@ -473,6 +473,7 @@ iTermCommandInfoViewControllerDelegate>
     } else if ([self contextMenu:_contextMenuHelper offscreenCommandLineForClickAt:event.locationInWindow]) {
         changed = [self setCursor:[NSCursor arrowCursor]];
     } else if ([self mouseIsOverButtonInEvent:event]) {
+        DLog(@"Mouse is over a button");
         changed = [self setCursor:[NSCursor arrowCursor]];
     } else {
         changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];

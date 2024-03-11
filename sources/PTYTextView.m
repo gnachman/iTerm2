@@ -1038,7 +1038,9 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         if (_hoverBlockCopyButton) {
             buttons = [buttons arrayByAddingObject:_hoverBlockCopyButton];
         }
+        DLog(@"Mouse at %@", NSStringFromPoint(point));
         return [buttons anyWithBlock:^BOOL(iTermTerminalButton *button) {
+            DLog(@"Button %@ at %@", button, NSStringFromRect(button.desiredFrame));
             return NSPointInRect(point, button.desiredFrame);
         }];
     }
@@ -1501,6 +1503,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     const BOOL autoComposerOpen = [self.delegate textViewIsAutoComposerOpen];
     _drawingHelper.isCursorVisible = _cursorVisible && !autoComposerOpen;
     _drawingHelper.linesToSuppress = self.delegate.textViewLinesToSuppressDrawing;
+    [_drawingHelper updateCachedMetrics];
     [_drawingHelper updateButtonFrames];
     
     const VT100GridRange range = [self rangeOfVisibleLines];

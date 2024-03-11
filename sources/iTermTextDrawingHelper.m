@@ -249,7 +249,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         [[NSColor redColor] set];
         iTermRectFill(rect, virtualOffset);
     }
-    [self updateCachedMetrics];
     // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
     // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects
     // and they're guaranteed to be disjoint. So draw each of them individually.
@@ -1178,6 +1177,15 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                       minAbsLine:drawableCoordRange.start.y + _totalScrollbackOverflow
                                 cumulativeOffset:_totalScrollbackOverflow
                                         cellSize:_cellSize];
+        DLog(@"Set desired frame of %@ to %@ from minAbsLine:%@ = (%@ + %@) visibleRect:%@ cumulativeOffset:%@ cellSize.height:%@",
+             button,
+             NSStringFromRect(button.desiredFrame),
+             @(drawableCoordRange.start.y + _totalScrollbackOverflow),
+             @(drawableCoordRange.start.y),
+             @(_totalScrollbackOverflow),
+             NSStringFromRect(_visibleRect),
+             @(_totalScrollbackOverflow),
+             @(_cellSize.height));
     }
 }
 
