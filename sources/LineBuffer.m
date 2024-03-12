@@ -1549,6 +1549,8 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (void)beginResizing {
     assert(!_lineBlocks.resizing);
     _lineBlocks.resizing = YES;
+    _wantsSeal = NO;
+    [self removeTrailingEmptyBlocks];
     self.dirty = YES;
 }
 
