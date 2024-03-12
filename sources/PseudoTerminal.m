@@ -5772,6 +5772,8 @@ return;
     // frame = [self canonicalFrameForScreen:self.screen windowFrame:frame preserveSize:YES];
     DLog(@"Set window frame to %@", NSStringFromRect(frame));
     NSDictionary *tempPrefs = [[ProfileModel sharedInstance] defaultBookmark];
+    w = [[tempPrefs objectForKey:KEY_COLUMNS] intValue];
+    h = [[tempPrefs objectForKey:KEY_ROWS] intValue];
     // int charWidth = [[[self currentSession] textview] charWidth] * 4;
     // int charHeight = [[[self currentSession] textview] charHeight] * 4;
     NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[tempPrefs objectForKey:KEY_NORMAL_FONT]]
