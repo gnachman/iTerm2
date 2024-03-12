@@ -22,6 +22,8 @@ setVersion() {
 
 if [ -z "$1" ]; then
 	getVersion
+elif [ "$1" = "-f" ]; then
+	setVersion `getVersion`
 else
 	setVersion "$1"
 fi

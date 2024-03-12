@@ -38,6 +38,7 @@ Development: config.h
 	chmod -R go+rX build/Development
 	mkdir -p build/Development/Therm.app/Contents/Frameworks/
 	cp -rf ColorPicker/ColorPicker.framework build/Development/Therm.app/Contents/Frameworks/
+	sh version.sh -f
 
 Dep:
 	xcodebuild -parallelizeTargets -target Therm -configuration Deployment
@@ -48,6 +49,7 @@ Deployment:
 	chmod -R go+rX build/Deployment
 	mkdir -p build/Deployment/Therm.app/Contents/Frameworks/
 	cp -rf ColorPicker/ColorPicker.framework build/Deployment/Therm.app/Contents/Frameworks/
+	sh version.sh -f
 
 run: Development
 	build/Development/Therm.app/Contents/MacOS/Therm
