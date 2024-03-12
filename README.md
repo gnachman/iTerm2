@@ -2,6 +2,7 @@
 
 Therm is a fork of iTerm2 made by [pancake](https://infosec.exchange/@pancake) with minimalism in mind:
 
+* Toggleable Notch guard on fullscreen windows (CMD+Shift+G)
 * Better defaults (hidden tabs, scrollbars and window controls, dark theme, follow mouse, ...)
 * Removed tons of barely-used and buggy features, gaining some performance and reducing size
 * Fast fullscreen toggling, no animations (CMD+Enter)
