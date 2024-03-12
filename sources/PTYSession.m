@@ -627,7 +627,6 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     iTermLocalFileChecker *_localFileChecker;
     BOOL _needsComposerColorUpdate;
-    BOOL _textViewShouldTakeFirstResponder;
 
     // Run this when the composer connects.
     void (^_pendingConductor)(PTYSession *);
@@ -9788,7 +9787,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     DLog(@"PTYSession paste:");
 
     if ([self haveAutoComposer]) {
-        _textViewShouldTakeFirstResponder = NO;
         [self makeComposerFirstResponderIfAllowed];
         [_composerManager paste:sender];
         return;
@@ -10207,7 +10205,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (void)makeComposerFirstResponderIfAllowed {
-    if (!self.copyMode && self.haveAutoComposer && !_textViewShouldTakeFirstResponder) {
+    if (!self.copyMode && self.haveAutoComposer) {
         [_composerManager makeDropDownComposerFirstResponder];
     }
 }
@@ -15591,8 +15589,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)textViewDidReceiveSingleClick {
-    _textViewShouldTakeFirstResponder = YES;
-    [_textview.window makeFirstResponder:_textview];
+    DLog(@"textViewDidReceiveSingleClick");
 }
 
 - (void)textViewDisableOffscreenCommandLine {
@@ -17368,7 +17365,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)composerManagerDidBecomeFirstResponder:(iTermComposerManager *)composerManager {
-    _textViewShouldTakeFirstResponder = NO;
+    DLog(@"composerManagerDidBecomeFirstResponder");
 }
 
 - (BOOL)composerManagerShouldFetchSuggestions:(iTermComposerManager *)composerManager
