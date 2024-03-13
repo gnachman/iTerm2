@@ -250,7 +250,8 @@ class Conductor: NSObject, Codable {
                         request.prefix.base64Encoded,
                         request.directories.map { $0.base64Encoded }.joined(separator: " "),
                         (request.workingDirectory ?? "//").base64Encoded,
-                        request.executable ? "rx" : "r"
+                        request.executable ? "rx" : "r",
+                        "\(request.limit)"
                 ].joined(separator: "\n")
 
             case .rm(let path, let recursive):

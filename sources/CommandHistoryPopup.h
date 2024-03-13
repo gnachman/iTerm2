@@ -19,6 +19,8 @@
 
 @interface CommandHistoryPopupWindowController : iTermPopupWindowController
 
+@property (nonatomic) BOOL forwardKeyDown;
+
 - (instancetype)initForAutoComplete:(BOOL)autocomplete;
 - (instancetype)init NS_UNAVAILABLE;
 

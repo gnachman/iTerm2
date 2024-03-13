@@ -22,6 +22,7 @@ class SuggestionRequest: NSObject {
         var directories: [String]
         var workingDirectory: String?
         var executable: Bool
+        var limit: Int
 
         fileprivate var moreGeneralVariants: [Inputs] {
             if prefix.isEmpty {
@@ -35,7 +36,8 @@ class SuggestionRequest: NSObject {
             return Inputs(prefix: String(prefix.dropLast(1)),
                           directories: directories,
                           workingDirectory: workingDirectory,
-                          executable: executable)
+                          executable: executable,
+                          limit: limit)
         }
     }
     let inputs: Inputs
@@ -44,21 +46,35 @@ class SuggestionRequest: NSObject {
     @objc var directories: [String] { inputs.directories }
     @objc var workingDirectory: String? { inputs.workingDirectory }
     @objc var executable: Bool { inputs.executable }
-
+    @objc var limit: Int { inputs.limit }
     @objc var completion: ([String]) -> ()
 
     @objc
-    init(prefix: String,
+    convenience init(prefix: String,
          directories: [String],
          workingDirectory: String?,
          executable: Bool,
+         limit: Int,
          completion: @escaping ([String]) -> ()) {
-        inputs = Inputs(prefix: prefix,
-                        directories: directories,
-                        workingDirectory: workingDirectory,
-                        executable: executable)
+        self.init(inputs: Inputs(prefix: prefix,
+                                 directories: directories,
+                                 workingDirectory: workingDirectory,
+                                 executable: executable,
+                                 limit: limit),
+                  completion: completion)
+    }
+
+    private init(inputs: Inputs, completion: @escaping ([String]) -> ()) {
+        self.inputs = inputs
         self.completion = completion
 
+    }
+
+    @objc(requestWithReducedLimitBy:)
+    func requestWithReducedLimit(by factor: Int) -> SuggestionRequest {
+        var inputs = self.inputs
+        inputs.limit = max(1, inputs.limit / max(1, factor))
+        return SuggestionRequest(inputs: inputs, completion: completion)
     }
 }
 

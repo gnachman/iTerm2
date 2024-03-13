@@ -280,7 +280,7 @@ class ComposerTextView: MultiCursorTextView {
         }),
         // Tab
         Action(modifiers: [], characters: "\t", closure: { textView, _ in
-            if textView.hasSuggestion {
+            if textView.hasSuggestion && textView.suggestionRange.length > 0 {
                 textView.acceptSuggestion()
             } else {
                 textView.composerDelegate?.composerTextViewShowCompletions()
@@ -346,7 +346,7 @@ class ComposerTextView: MultiCursorTextView {
         }),
         // Tab
         Action(modifiers: [], characters: "\t", closure: { textView, _ in
-            if textView.hasSuggestion {
+            if textView.hasSuggestion && textView.suggestionRange.length > 0 {
                 textView.acceptSuggestion()
             } else {
                 textView.composerDelegate?.composerTextViewShowCompletions()

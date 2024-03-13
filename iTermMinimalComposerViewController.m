@@ -291,6 +291,7 @@ workingDirectory:(NSString *)pwd
     }
     if (!_historyWindowController) {
         _historyWindowController = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:NO];
+        _historyWindowController.forwardKeyDown = YES;
     }
     [_historyWindowController popWithDelegate:self inWindow:self.view.window];
     [_historyWindowController loadCommands:completions

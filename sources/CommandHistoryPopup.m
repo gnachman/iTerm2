@@ -158,23 +158,24 @@
 }
 
 - (void)moveLeft:(id)sender {
-    if (_autocomplete && NSApp.currentEvent.type == NSEventTypeKeyDown) {
+    if ((_autocomplete || self.forwardKeyDown) && NSApp.currentEvent.type == NSEventTypeKeyDown) {
         [self.delegate popupKeyDown:NSApp.currentEvent];
         [self closePopupWindow];
     }
 }
 
 - (void)moveRight:(id)sender {
-    if (_autocomplete && NSApp.currentEvent.type == NSEventTypeKeyDown) {
+    if ((_autocomplete || self.forwardKeyDown) && NSApp.currentEvent.type == NSEventTypeKeyDown) {
         [self.delegate popupKeyDown:NSApp.currentEvent];
         [self closePopupWindow];
     }
 }
 
 - (void)doCommandBySelector:(SEL)selector {
-    if (_autocomplete && NSApp.currentEvent.type == NSEventTypeKeyDown) {
+    if ((_autocomplete || self.forwardKeyDown) && NSApp.currentEvent.type == NSEventTypeKeyDown) {
         // Control-C and such should go to the session.
         [self.delegate popupKeyDown:NSApp.currentEvent];
+        [self closePopupWindow];
     } else {
         [super doCommandBySelector:selector];
     }

@@ -7901,6 +7901,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                   currentSessionOnly:(BOOL)currentSessionOnly {
     if (!commandHistoryPopup) {
         commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:NO];
+        commandHistoryPopup.forwardKeyDown = YES;
     }
     [self openPopupWindow:commandHistoryPopup];
     NSArray<iTermCommandHistoryCommandUseMO *> *candidates =

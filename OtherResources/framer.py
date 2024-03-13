@@ -669,7 +669,8 @@ async def handle_file(identifier, args):
                                   base64.b64decode(args[1]).decode('latin1'),
                                   args[2],
                                   base64.b64decode(args[3]).decode('latin1'),
-                                  args[4])
+                                  args[4],
+                                  int(args[5]))
         return
     if sub == "rm":
         i = 1
@@ -822,10 +823,9 @@ async def handle_file_stat(q, identifier, path):
     except Exception as e:
         file_error(q, identifier, e, path)
 
-async def handle_file_suggest(q, identifier, prefix, directories, pwd, permissions):
+async def handle_file_suggest(q, identifier, prefix, directories, pwd, permissions, max_count):
     log(f'handle_file_suggest({identifier}, {prefix}, {directories}, {pwd}, {permissions})')
     combined = []
-    max_count = 1
     for relative_directory in decode_base64_directories(directories):
         if relative_directory.startswith('/'):
             directory = relative_directory
@@ -852,13 +852,16 @@ def decode_base64_directories(encoded_directories):
     return decoded_directories
 
 async def really_find_completions_with_prefix(prefix, directory, max_count, executable):
+    log(f'really_find_completions_with_prefix({prefix}, {directory}, {max_count}, {executable}')
     if not prefix.startswith('/') and directory.startswith('/'):
+        log('Prefix is relative and directory is absolute. Recurse.')
         temp = await really_find_completions_with_prefix(
             os.path.join(directory, prefix), '', max_count, executable)
         prefix_to_remove = directory if directory.endswith('/') else directory + '/'
         return [entry.removeprefix(prefix_to_remove) for entry in temp]
 
     if prefix.endswith('/'):
+        log('Prefix ends in slash')
         return await contents_of_directory(prefix, '', executable, max_count)
 
     results = []
@@ -871,12 +874,15 @@ async def really_find_completions_with_prefix(prefix, directory, max_count, exec
 
     container = os.path.dirname(prefix)
     if len(container) == 0:
+        log(f"No dirname for {prefix}")
         return results
 
+    log("Add contents of directory using prefix basename")
     results.extend(await contents_of_directory(container, os.path.basename(prefix), executable, max_count))
     return results
 
 async def contents_of_directory(directory, prefix, executable, max_count):
+    log(f'contents_of_directory({directory}, {prefix}, {executable}, {max_count}')
     try:
         relative = await asyncio.get_event_loop().run_in_executor(None, lambda: os.listdir(directory))
         result = []

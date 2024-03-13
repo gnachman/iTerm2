@@ -439,6 +439,7 @@
     __weak __typeof(self) weakSelf = self;
     __block NSInteger generation = 0;
     generation = [self fetchCompletionsForCommand:command
+                                         explicit:NO
                                     completion:^(NSArray<NSString *> *completions, NSArray<NSString *> *commands) {
         [weakSelf didFetchCompletions:completions commands:commands generation:generation];
     }];
@@ -448,6 +449,7 @@
     _completionGeneration += 1;
     NSString *command = [self lineBeforeCursor];
     [self fetchCompletionsForCommand:command
+                            explicit:YES
                           completion:^(NSArray<NSString *> *completions, NSArray<NSString *> *commands) {
         NSArray<NSString *> *combined = [[[completions arrayByAddingObjectsFromArray:commands] sortedArrayUsingSelector:@selector(compare:)] uniq];
         completionBlock(command, combined);
@@ -477,6 +479,7 @@
 // If both are nil then autocomplete is not supported and no history was found.
 // If filename completions is nil then autocomplete is not supported.
 - (NSInteger)fetchCompletionsForCommand:(NSString *)command
+                               explicit:(BOOL)explicit
                              completion:(void (^)(NSArray<NSString *> *, NSArray<NSString *> *))completionBlock {
     const BOOL autocompleteSupported = [self.delegate largeComposerViewControllerShouldFetchSuggestions:self forHost:self.host tmuxController:self.tmuxController];
     if (!autocompleteSupported) {
@@ -511,7 +514,7 @@
     } else {
         directories = @[self.workingDirectory ?: NSHomeDirectory()];
     }
-    __weak __typeof(self) weakSelf = self;
+
     NSArray<NSString *> *historySuggestions = [self historySuggestionsForPrefix:command
                                                                      maxResults:32
                                                                    removePrefix:YES];
@@ -519,6 +522,8 @@
                                                                          directories:directories
                                                                     workingDirectory:self.workingDirectory
                                                                           executable:onFirstWord
+                                                                               limit:explicit ? 256 : 64
+
                                                                           completion:^(NSArray<NSString *> *completions) {
         completionBlock(completions ?: @[], historySuggestions ?: @[]);
     }];

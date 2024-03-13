@@ -17395,15 +17395,23 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)composerManager:(iTermComposerManager *)composerManager
        fetchSuggestions:(iTermSuggestionRequest *)request {
+    if (request.executable) {
+        // In the future it would be nice to search $PATH and shell builtins for command suggestions.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            request.completion(@[]);
+        });
+        return;
+    }
     if (@available(macOS 11, *)) {
         if ([_conductor framing]) {
-            [_conductor fetchSuggestions:request];
+            [_conductor fetchSuggestions:[request requestWithReducedLimitBy:8]];
+            return;
         }
     }
     [[iTermSlowOperationGateway sharedInstance] findCompletionsWithPrefix:request.prefix
                                                             inDirectories:request.directories
                                                                       pwd:request.workingDirectory
-                                                                 maxCount:1024
+                                                                 maxCount:request.limit
                                                                executable:request.executable
                                                                completion:^(NSArray<NSString *> * _Nonnull completions) {
         dispatch_async(dispatch_get_main_queue(), ^{
