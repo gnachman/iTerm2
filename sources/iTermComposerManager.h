@@ -66,6 +66,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (void)composerManager:(iTermComposerManager *)composerManager
        fetchSuggestions:(iTermSuggestionRequest *)request;
 - (BOOL)composerManagerHandleKeyDown:(NSEvent *)event;
+- (NSResponder *)composerManagerNextResponder;
 @end
 
 @interface iTermComposerManager : NSObject

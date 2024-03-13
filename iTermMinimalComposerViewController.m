@@ -248,6 +248,14 @@ workingDirectory:(NSString *)pwd
     return _largeComposerViewController.textView.cursorFrameInScreenCoordinates;
 }
 
+- (NSResponder *)nextResponder {
+    NSResponder *custom = [self.delegate minimalComposerNextResponder];
+    if (custom) {
+        return custom;
+    }
+    return [super nextResponder];
+}
+
 #pragma mark - iTermComposerTextViewDelegate
 
 - (void)composerTextViewDidFinishWithCancel:(BOOL)cancel {

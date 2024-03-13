@@ -298,6 +298,10 @@
     return [self.delegate composerManagerHandleKeyDown:event];
 }
 
+- (NSResponder *)minimalComposerNextResponder {
+    return [self.delegate composerManagerNextResponder];
+}
+
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
     sendToAdvancedPaste:(NSString *)content {
     [self dismissMinimalViewAnimated:YES];

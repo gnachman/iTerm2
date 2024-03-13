@@ -52,6 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
        fetchSuggestions:(iTermSuggestionRequest *)request;
 - (BOOL)minimalComposerHandleKeyDown:(NSEvent *)event;
+- (NSResponder *)minimalComposerNextResponder;
 
 @end
 

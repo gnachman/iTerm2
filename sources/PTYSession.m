@@ -17383,6 +17383,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return YES;
 }
 
+- (NSResponder *)composerManagerNextResponder {
+    return _textview;
+}
+
 - (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString {
     return [[[iTermSyntaxHighlighter alloc] init:attributedString
