@@ -17363,6 +17363,26 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self sendCommand:command];
 }
 
+- (BOOL)composerManagerHandleKeyDown:(NSEvent *)event {
+    iTermKeystroke *keystroke = [iTermKeystroke withEvent:event];
+    iTermKeyBindingAction *action = [iTermKeyMappings actionForKeystroke:keystroke
+                                                             keyMappings:self.profile[KEY_KEYBOARD_MAP]];
+
+    if (!action) {
+        return NO;
+    }
+    if (action.sendsText && keystroke.isNavigation) {
+        // Prevent natural text editing preset from interfering with composer navigation.
+        return NO;
+    }
+    DLog(@"PTYSession keyDown action=%@", action);
+    // A special action was bound to this key combination.
+    [self performKeyBindingAction:action event:event];
+
+    DLog(@"Special handler: KEY BINDING ACTION");
+    return YES;
+}
+
 - (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString {
     return [[[iTermSyntaxHighlighter alloc] init:attributedString

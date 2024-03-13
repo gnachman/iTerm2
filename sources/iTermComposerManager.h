@@ -65,7 +65,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
                                tmuxController:(TmuxController *)tmuxController;
 - (void)composerManager:(iTermComposerManager *)composerManager
        fetchSuggestions:(iTermSuggestionRequest *)request;
-
+- (BOOL)composerManagerHandleKeyDown:(NSEvent *)event;
 @end
 
 @interface iTermComposerManager : NSObject

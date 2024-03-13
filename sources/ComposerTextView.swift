@@ -24,6 +24,7 @@ protocol ComposerTextViewDelegate: AnyObject {
 
     @objc(composerSyntaxHighlighterForAttributedString:)
     func composerSyntaxHighlighter(textStorage: NSMutableAttributedString) -> SyntaxHighlighting
+    @objc func composerHandleKeyDown(event: NSEvent) -> Bool
 
     // Optional
     @objc(composerTextViewDidResignFirstResponder) optional func composerTextViewDidResignFirstResponder()
@@ -408,6 +409,9 @@ class ComposerTextView: MultiCursorTextView {
             action.characters == event.characters && action.modifiers == maskedModifiers
         }
         if let action, action.closure(self, event) {
+            return
+        }
+        if composerDelegate?.composerHandleKeyDown(event: event) ?? false {
             return
         }
         super.keyDown(with: event)

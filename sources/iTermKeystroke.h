@@ -27,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *serialized;
 @property (nonatomic, readonly) BOOL touchbar;
 @property (nonatomic, readonly) BOOL isValid;
+@property (nonatomic, readonly) BOOL isNavigation;
 
 + (instancetype)backspace;
 + (instancetype)withEvent:(NSEvent *)event;

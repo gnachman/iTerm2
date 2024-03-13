@@ -255,6 +255,10 @@ workingDirectory:(NSString *)pwd
     [self.delegate minimalComposer:self sendCommand:string ?: @"" dismiss:YES];
 }
 
+- (BOOL)composerHandleKeyDownWithEvent:(NSEvent *)event {
+    return [self.delegate minimalComposerHandleKeyDown:event];
+}
+
 - (void)composerTextViewDidResignFirstResponder {
 }
 

@@ -294,6 +294,10 @@
     }
 }
 
+- (BOOL)minimalComposerHandleKeyDown:(NSEvent *)event {
+    return [self.delegate composerManagerHandleKeyDown:event];
+}
+
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
     sendToAdvancedPaste:(NSString *)content {
     [self dismissMinimalViewAnimated:YES];

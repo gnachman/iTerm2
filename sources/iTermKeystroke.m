@@ -403,6 +403,23 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
     return [iTermKeystroke withCharacter:_character modifierFlags:_modifierFlags];
 }
 
+- (BOOL)isNavigation {
+    switch (self.virtualKeyCode) {
+        case kVK_UpArrow:
+        case kVK_DownArrow:
+        case kVK_LeftArrow:
+        case kVK_RightArrow:
+        case kVK_PageUp:
+        case kVK_PageDown:
+        case kVK_Home:
+        case kVK_End:
+            return YES;
+
+        default:
+            return NO;
+    }
+}
+
 @end
 
 @implementation iTermTouchbarItem

@@ -51,6 +51,7 @@ NS_ASSUME_NONNULL_BEGIN
                                tmuxController:(TmuxController *)tmuxController;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
        fetchSuggestions:(iTermSuggestionRequest *)request;
+- (BOOL)minimalComposerHandleKeyDown:(NSEvent *)event;
 
 @end
 
