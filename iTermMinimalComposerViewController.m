@@ -77,8 +77,14 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
                                     bounds.size.width - margin * 2,
                                     bounds.size.height - margin * 2);
     }
-    _topDragHandle.hidden = isAutoComposer;
-    _bottomDragHandle.hidden = isAutoComposer;
+    if (isAutoComposer) {
+        [_topDragHandle removeFromSuperview];
+        [_bottomDragHandle removeFromSuperview];
+    } else if (_bottomDragHandle.superview == nil) {
+        // Insert them prior to _closeButton.
+        [self.view insertSubview:_topDragHandle atIndex:self.view.subviews.count - 1];
+        [self.view insertSubview:_bottomDragHandle atIndex:self.view.subviews.count - 1];
+    }
     _vev.hidden = isAutoComposer;
 }
 
