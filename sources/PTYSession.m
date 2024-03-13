@@ -6379,6 +6379,7 @@ DLog(args); \
 }
 
 - (void)compose {
+    self.composerManager.isAutoComposer = self.shouldShowAutoComposer;
     if (self.currentCommand.length > 0) {
         [self setComposerString:self.currentCommand];
     }

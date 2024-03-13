@@ -10557,6 +10557,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return self.currentSession.hasSelection;
     } else if (item.action == @selector(clearInstantReplay:)) {
         return ![[self currentSession] liveSession] && self.currentSession.screen.dvr.canClear;
+    } else if (item.action == @selector(compose:)) {
+        return self.currentSession != nil && !self.currentSession.shouldShowAutoComposer;
     }
 
     return result;

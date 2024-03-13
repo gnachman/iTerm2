@@ -583,6 +583,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) SSHIdentity *sshIdentity;
 @property(nonatomic, readonly) NSArray<iTermSSHReconnectionInfo *> *sshCommandLineSequence;
 @property(nonatomic, readonly) id<ProcessInfoProvider> processInfoProvider;
+@property(nonatomic, readonly) BOOL shouldShowAutoComposer;
 
 #pragma mark - methods
 
