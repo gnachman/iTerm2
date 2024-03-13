@@ -51,6 +51,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager
                             prefix:(NSString *)prefix
                          forSearch:(BOOL)forSearch;
+- (void)composerManagerShowCompletions:(NSArray<NSString *> *)completions;
 - (BOOL)composerManager:(iTermComposerManager *)composerManager wantsKeyEquivalent:(NSEvent *)event;
 - (void)composerManager:(iTermComposerManager *)composerManager performFindPanelAction:(id)sender;
 - (void)composerManager:(iTermComposerManager *)composerManager

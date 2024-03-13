@@ -33,6 +33,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL hideAccessories;
 @property (nonatomic, weak) IBOutlet id<iTermStatusBarLargeComposerViewControllerDelegate> delegate;
 
+- (void)fetchCompletions:(void (^)(NSString *, NSArray<NSString *> *))completionBlock;
+
 @end
 
 NS_ASSUME_NONNULL_END

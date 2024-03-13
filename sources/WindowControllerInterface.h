@@ -424,7 +424,9 @@
 - (void)closeCommandHistory;
 
 - (void)openCommandHistory:(id)sender;
-- (void)openCommandHistoryWithPrefix:(NSString *)prefix sortChronologically:(BOOL)sortChronologically;
+- (void)openCommandHistoryWithPrefix:(NSString *)prefix 
+                 sortChronologically:(BOOL)sortChronologically
+                  currentSessionOnly:(BOOL)currentSessionOnly;
 - (void)nextMark:(id)sender;
 - (void)previousMark:(id)sender;
 

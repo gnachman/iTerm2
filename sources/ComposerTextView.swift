@@ -17,6 +17,7 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewSendControl:) func composerTextViewSendControl(_ control: String)
     @objc(composerTextViewOpenHistoryWithPrefix:forSearch:) func composerTextViewOpenHistory(prefix: String,
                                                                                              forSearch: Bool)
+    @objc(composerTextViewShowCompletions) func composerTextViewShowCompletions()
     @objc(composerTextViewWantsKeyEquivalent:) func composerTextViewWantsKeyEquivalent(_ event: NSEvent) -> Bool
     @objc(composerTextViewPerformFindPanelAction:) func composerTextViewPerformFindPanelAction(_ sender: Any?)
     @objc(composerTextViewClear) func composerTextViewClear()
@@ -276,6 +277,15 @@ class ComposerTextView: MultiCursorTextView {
         Action(modifiers: [.option], characters: "\r", closure: { textView, _ in
             textView.enqueueEachAction()
             return true
+        }),
+        // Tab
+        Action(modifiers: [], characters: "\t", closure: { textView, _ in
+            if textView.hasSuggestion {
+                textView.acceptSuggestion()
+            } else {
+                textView.composerDelegate?.composerTextViewShowCompletions()
+            }
+            return true
         })
     ]
 
@@ -332,6 +342,15 @@ class ComposerTextView: MultiCursorTextView {
         Action(modifiers: [.control], characters: "\u{15}", closure: { textView, event in
             textView.selectAll(nil)
             textView.delete(nil)
+            return true
+        }),
+        // Tab
+        Action(modifiers: [], characters: "\t", closure: { textView, _ in
+            if textView.hasSuggestion {
+                textView.acceptSuggestion()
+            } else {
+                textView.composerDelegate?.composerTextViewShowCompletions()
+            }
             return true
         })
     ]

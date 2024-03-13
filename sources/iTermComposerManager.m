@@ -336,6 +336,10 @@
     [self.delegate composerManagerOpenHistory:self prefix:prefix forSearch:forSearch];
 }
 
+- (void)minimalComposerShowCompletions:(NSArray<NSString *> *)completions {
+    [self.delegate composerManagerShowCompletions:completions];
+}
+
 - (BOOL)minimalComposer:(iTermMinimalComposerViewController *)composer wantsKeyEquivalent:(NSEvent *)event {
     return [self.delegate composerManager:self wantsKeyEquivalent:event];
 }

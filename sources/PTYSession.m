@@ -17334,7 +17334,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager
                             prefix:(nonnull NSString *)prefix
                          forSearch:(BOOL)forSearch {
-    [[_delegate realParentWindow] openCommandHistoryWithPrefix:prefix sortChronologically:!forSearch];
+    [[_delegate realParentWindow] openCommandHistoryWithPrefix:prefix
+                                           sortChronologically:!forSearch
+                                            currentSessionOnly:YES];
+}
+
+- (void)composerManagerShowCompletions:(NSArray<NSString *> *)completions {
+
 }
 
 - (void)composerManagerDidRemoveTemporaryStatusBarComponent:(iTermComposerManager *)composerManager {
@@ -17397,7 +17403,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [[iTermSlowOperationGateway sharedInstance] findCompletionsWithPrefix:request.prefix
                                                             inDirectories:request.directories
                                                                       pwd:request.workingDirectory
-                                                                 maxCount:1
+                                                                 maxCount:1024
                                                                executable:request.executable
                                                                completion:^(NSArray<NSString *> * _Nonnull completions) {
         dispatch_async(dispatch_get_main_queue(), ^{

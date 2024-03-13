@@ -54,6 +54,23 @@ extension Array where Element == URL {
     }
 }
 
+@objc
+extension NSArray {
+    @objc var longestCommonStringPrefix: String {
+        guard let converted = self as? [String] else {
+            return ""
+        }
+        let length = converted.lengthOfLongestCommonPrefix
+        if length == 0 {
+            return ""
+        }
+        let firstStringAsCollection = AnyCollection(converted.first!)
+        let subsequence = firstStringAsCollection.prefix(length)
+        return String(subsequence)
+
+    }
+}
+
 extension Array where Element: RandomAccessCollection, Element.Index == Int, Element.Element: Comparable {
     var lengthOfLongestCommonPrefix: Int {
         if isEmpty {
@@ -86,3 +103,36 @@ extension Array where Element: RandomAccessCollection, Element.Index == Int, Ele
     }
 }
 
+extension Array where Element: Collection, Element.Element: Comparable {
+    var lengthOfLongestCommonPrefix: Int {
+        if isEmpty {
+            return 0
+        }
+        var i = 0
+        while true {
+            let trying = i + 1
+            let firstCollection = AnyCollection(self.first!)
+            guard allSatisfy({ AnyCollection($0).count >= trying }) else {
+                return i
+            }
+            let prefix = firstCollection.prefix(trying)
+            guard allSatisfy({ AnyCollection($0).starts(with: prefix) }) else {
+                return i
+            }
+            i = trying
+        }
+    }
+
+    var longestCommonPrefix: [Element.Element] {
+        if isEmpty {
+            return []
+        }
+        let length = lengthOfLongestCommonPrefix
+        if length == 0 {
+            return []
+        }
+        let firstCollection = AnyCollection(self.first!)
+        let subsequence = firstCollection.prefix(length)
+        return Array<Element.Element>(subsequence)
+    }
+}

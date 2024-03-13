@@ -8,6 +8,7 @@
 #import "iTermStatusBarLargeComposerViewController.h"
 
 #import "CommandHistoryPopup.h"
+#import "NSArray+iTerm.h"
 #import "NSDate+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
@@ -18,6 +19,7 @@
 #import "SolidColorView.h"
 #import "VT100RemoteHost.h"
 #import "WindowControllerInterface.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermCommandHistoryEntryMO+CoreDataProperties.h"
 #import "iTermPopupWindowController.h"
 #import "iTermShellHistoryController.h"
@@ -389,10 +391,22 @@
 }
 
 - (NSString *)historySuggestionForPrefix:(NSString *)prefix {
+    return [[self historySuggestionsForPrefix:prefix maxResults:1 removePrefix:NO] firstObject];
+}
+
+- (NSArray<NSString *> *)historySuggestionsForPrefix:(NSString *)prefix
+                                          maxResults:(NSInteger)maxResults
+                                        removePrefix:(BOOL)removePrefix {
     NSArray<iTermCommandHistoryEntryMO *> *entries =
     [[iTermShellHistoryController sharedInstance] commandHistoryEntriesWithPrefix:prefix
                                                                            onHost:self.host];
-    return [entries.firstObject.command copy];
+    return [[entries subarrayToIndex:maxResults] mapWithBlock:^id _Nullable(iTermCommandHistoryEntryMO * _Nonnull entry) {
+        if (removePrefix) {
+            return [entry.command substringFromIndex:prefix.length];
+        } else {
+            return entry.command.copy;
+        }
+    }];
 }
 
 // NOTE: This must not change the suggestion directly. It has to do it in dispatch_async because
@@ -421,22 +435,63 @@
         ![textAfterCursor beginsWithWhitespace]) {
         return;
     }
-    NSString *historySuggestion = [[self historySuggestionForPrefix:command] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]];
 
-    if (historySuggestion) {
-        __weak __typeof(self) weakSelf = self;
-        const NSInteger generation = ++_completionGeneration;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf didFindCompletions:@[[historySuggestion substringFromIndex:command.length]]
-                           forGeneration:generation
-                                  escape:NO];
-        });
-        return;
-    }
+    __weak __typeof(self) weakSelf = self;
+    __block NSInteger generation = 0;
+    generation = [self fetchCompletionsForCommand:command
+                                    completion:^(NSArray<NSString *> *completions, NSArray<NSString *> *commands) {
+        [weakSelf didFetchCompletions:completions commands:commands generation:generation];
+    }];
+}
 
-    if (![self.delegate largeComposerViewControllerShouldFetchSuggestions:self forHost:self.host tmuxController:self.tmuxController]) {
+- (void)fetchCompletions:(void (^)(NSString *, NSArray<NSString *> *))completionBlock {
+    _completionGeneration += 1;
+    NSString *command = [self lineBeforeCursor];
+    [self fetchCompletionsForCommand:command
+                          completion:^(NSArray<NSString *> *completions, NSArray<NSString *> *commands) {
+        NSArray<NSString *> *combined = [[[completions arrayByAddingObjectsFromArray:commands] sortedArrayUsingSelector:@selector(compare:)] uniq];
+        completionBlock(command, combined);
+    }];
+}
+
+- (void)didFetchCompletions:(NSArray<NSString *> *)completions
+                   commands:(NSArray<NSString *> *)commands
+                 generation:(NSInteger)generation {
+    if (!completions && !commands) {
         [self.textView setSuggestion:nil];
         return;
+    }
+    if (!completions) {
+        [self didFindCompletions:@[]
+              historySuggestions:commands
+                   forGeneration:generation
+                          escape:NO];
+    }
+    [self didFindCompletions:completions
+          historySuggestions:commands
+               forGeneration:generation
+                      escape:YES];
+}
+
+// completionBlock(filename completions, commands from history)
+// If both are nil then autocomplete is not supported and no history was found.
+// If filename completions is nil then autocomplete is not supported.
+- (NSInteger)fetchCompletionsForCommand:(NSString *)command
+                             completion:(void (^)(NSArray<NSString *> *, NSArray<NSString *> *))completionBlock {
+    const BOOL autocompleteSupported = [self.delegate largeComposerViewControllerShouldFetchSuggestions:self forHost:self.host tmuxController:self.tmuxController];
+    if (!autocompleteSupported) {
+        NSString *historySuggestion = [[self historySuggestionForPrefix:command] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]];
+
+        if (historySuggestion) {
+            const NSInteger generation = ++_completionGeneration;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completionBlock(nil, @[ [historySuggestion substringFromIndex:command.length] ]);
+            });
+            return generation;
+        }
+
+        completionBlock(nil, nil);
+        return 0;
     }
 
     NSArray<NSString *> *words = [command componentsInShellCommand];
@@ -457,21 +512,25 @@
         directories = @[self.workingDirectory ?: NSHomeDirectory()];
     }
     __weak __typeof(self) weakSelf = self;
+    NSArray<NSString *> *historySuggestions = [self historySuggestionsForPrefix:command
+                                                                     maxResults:32
+                                                                   removePrefix:YES];
     iTermSuggestionRequest *request = [[iTermSuggestionRequest alloc] initWithPrefix:prefix
                                                                          directories:directories
                                                                     workingDirectory:self.workingDirectory
                                                                           executable:onFirstWord
                                                                           completion:^(NSArray<NSString *> *completions) {
-        [weakSelf didFindCompletions:completions
-                       forGeneration:generation
-                              escape:YES];
+        completionBlock(completions ?: @[], historySuggestions ?: @[]);
     }];
     [self.delegate largeComposerViewController:self fetchSuggestions:request];
+    return generation;
 }
 
-- (void)didFindCompletions:(NSArray<NSString *> *)completions
+- (void)didFindCompletions:(NSArray<NSString *> *)filenameCompletions
+        historySuggestions:(NSArray<NSString *> *)historySuggestions
              forGeneration:(NSInteger)generation
                     escape:(BOOL)shouldEscape {
+    NSArray<NSString *> *completions = [filenameCompletions arrayByAddingObjectsFromArray:historySuggestions];
     if ([_historyWindowController.window isVisible]) {
         return;
     }
@@ -481,10 +540,14 @@
     if (completions.count == 0) {
         return;
     }
-    if (shouldEscape) {
-        self.textView.suggestion = [completions.firstObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
+    // Pick the shortest suggestion because otherwise it's hard to traverse a deep path since the
+    // suggestion will make it easy to skip over intermediate folders.
+    NSString *suggestion = [completions longestCommonStringPrefix];
+    // Only escape if there are filename completions as it doesn't make sense to escape a history item.
+    if (shouldEscape && filenameCompletions.count > 0) {
+        self.textView.suggestion = [suggestion stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
     } else {
-        self.textView.suggestion = completions.firstObject;
+        self.textView.suggestion = suggestion;
     }
 }
 

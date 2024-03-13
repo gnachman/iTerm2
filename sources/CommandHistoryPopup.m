@@ -71,6 +71,10 @@
             iTermCommandHistoryCommandUseMO *commandUse = obj;
             popupEntry.command = commandUse.command;
             popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:commandUse.time.doubleValue];
+        } else if ([obj isKindOfClass:[NSString class]]) {
+            popupEntry.command = obj;
+            popupEntry.prefix = partialCommand;
+            popupEntry.date = nil;
         } else {
             iTermCommandHistoryEntryMO *entry = obj;
             popupEntry.command = entry.command;
@@ -97,6 +101,9 @@
     CommandHistoryPopupEntry* entry = [[self model] objectAtIndex:[self convertIndex:rowIndex]];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
+        if (!entry.date) {
+            return @"";
+        }
         return [NSDateFormatter dateDifferenceStringFromDate:entry.date];
     } else {
         // Contents
@@ -106,8 +113,11 @@
 
 - (NSString *)insertableString {
     CommandHistoryPopupEntry *entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];
-    NSString *const string = [entry.command substringFromIndex:_partialCommandLength];
-    return string;
+    if (entry.prefix.length > 0) {
+        return entry.command;
+    } else {
+        return [entry.command substringFromIndex:_partialCommandLength];
+    }
 }
 
 - (void)rowSelected:(id)sender {

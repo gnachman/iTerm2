@@ -25,6 +25,7 @@
 #import "iTermBroadcastPasswordHelper.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermColorPresets.h"
+#import "iTermCommandHistoryCommandUseMO+Additions.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
 #import "iTermEncoderAdapter.h"
@@ -7890,17 +7891,32 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [iTermShellHistoryController showInformationalMessage];
         return;
     }
-    [self openCommandHistoryWithPrefix:[[self currentSession] currentCommand] sortChronologically:NO];
+    [self openCommandHistoryWithPrefix:[[self currentSession] currentCommand]
+                   sortChronologically:NO
+                    currentSessionOnly:NO];
 }
 
-- (void)openCommandHistoryWithPrefix:(NSString *)prefix sortChronologically:(BOOL)sortChronologically {
+- (void)openCommandHistoryWithPrefix:(NSString *)prefix
+                 sortChronologically:(BOOL)sortChronologically
+                  currentSessionOnly:(BOOL)currentSessionOnly {
     if (!commandHistoryPopup) {
         commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:NO];
     }
     [self openPopupWindow:commandHistoryPopup];
-    [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
+    NSArray<iTermCommandHistoryCommandUseMO *> *candidates =
+    [commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
                                                             partialCommand:prefix
-                                                                    expand:YES]
+                                  expand:YES];
+    NSString *currentSessionGUID = self.currentSession.guid;
+    NSArray<iTermCommandHistoryCommandUseMO *> *filtered;
+    if (currentSessionOnly) {
+        filtered = [candidates filteredArrayUsingBlock:^BOOL(iTermCommandHistoryCommandUseMO *commandUse) {
+            return [commandUse.mark.sessionGuid isEqual:currentSessionGUID];
+        }];
+    } else {
+        filtered = candidates;
+    }
+    [commandHistoryPopup loadCommands:filtered
                        partialCommand:prefix
                   sortChronologically:sortChronologically];
 }
