@@ -213,7 +213,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _animatedLines = [[NSMutableIndexSet alloc] init];
-// XXX initial scrollback i
+// XXX initial scrollback
 #if 0
 	[self terminalScrollDown:-12];
         [self clearScrollbackBuffer];
@@ -2430,6 +2430,9 @@ return;
     } else {
         [self linefeed];
     }
+
+    // XXX PANCAKE fix screen refresh glitch
+    [delegate_ screenUpdateDisplay:YES];
     // [delegate_ screenTriggerableChangeDidOccur];
 }
 
