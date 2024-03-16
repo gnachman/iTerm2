@@ -4972,6 +4972,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return [self terminalButtons];
 }
 
+- (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11)) {
+    if (!button.mark) {
+        NSInteger y = button.transientAbsY;
+        if (y >= 0) {
+            // -1 means go in the right margin
+            return VT100GridAbsCoordMake(-1, y);
+        }
+    }
+    id<iTermMark> mark = button.mark;
+    Interval *interval = mark.entry.interval;
+    if (!interval) {
+        return VT100GridAbsCoordMake(-1, -1);
+    }
+    const VT100GridAbsCoord markCoord = [self.dataSource absCoordRangeForInterval:interval].start;
+    iTermTerminalMarkButton *markButton = [iTermTerminalMarkButton castFrom:button];
+    if (markButton) {
+        return VT100GridAbsCoordMake(self.dataSource.width + markButton.dx, markCoord.y - 1);
+    }
+    return markCoord;
+}
+
 // Does not include hover buttons.
 - (NSArray<iTermTerminalButton *> *)terminalButtons NS_AVAILABLE_MAC(11) {
     NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
@@ -4984,11 +5005,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         NSInteger i = [_buttons indexOfObjectPassingTest:^BOOL(iTermTerminalButton * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             return (obj.id == place.id);
         }];
-        if (i == NSNotFound || !VT100GridAbsCoordEquals(_buttons[i].absCoord, place.coord)) {
+        if (i == NSNotFound || !VT100GridAbsCoordEquals([self absCoordForButton:_buttons[i]], place.coord)) {
             if (place.mark.copyBlockID) {
                 iTermTerminalButton *button = [[iTermTerminalCopyButton alloc] initWithID:place.id 
                                                                                   blockID:place.mark.copyBlockID
-                                                                                 absCoord:place.coord];
+                                                                                     mark:place.mark
+                                                                                     absY:nil];
                 NSString *blockID = [[place.mark.copyBlockID copy] autorelease];
 
                 button.action = ^(NSPoint locationInWindow) {
@@ -5022,7 +5044,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [updated addObject:existing];
         } else {
             iTermTerminalButton *button = [[iTermTerminalCopyCommandButton alloc] initWithMark:mark
-                                                                                      absCoord:VT100GridAbsCoordMake(x, i + offset)
                                                                                             dx:x - width];
             __weak __typeof(mark) weakMark = mark;
             button.action = ^(NSPoint locationInWindow) {
@@ -5036,7 +5057,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [updated addObject:existing];
         } else {
             iTermTerminalButton *button = [[iTermTerminalBookmarkButton alloc] initWithMark:mark
-                                                                                   absCoord:VT100GridAbsCoordMake(x, i + offset)
                                                                                          dx:x - width];
             __weak __typeof(mark) weakMark = mark;
             button.action = ^(NSPoint locationInWindow) {
@@ -5053,7 +5073,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [updated addObject:existing];
         } else {
             iTermTerminalButton *button = [[iTermTerminalShareButton alloc] initWithMark:mark
-                                                                                absCoord:VT100GridAbsCoordMake(x, i + offset)
                                                                                       dx:x - width];
             __weak __typeof(mark) weakMark = mark;
             button.action = ^(NSPoint locationInWindow) {
@@ -5189,7 +5208,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         if (![button isKindOfClass:desiredClass]) {
             return NO;
         }
-        return button.mark == mark || [button.mark.guid isEqualToString:mark.guid];
+        return button.screenMark == mark || [button.screenMark.guid isEqualToString:mark.guid];
     }]];
 }
 
@@ -6228,7 +6247,9 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     }
     _hoverBlockCopyButton = [[iTermTerminalCopyButton alloc] initWithID:-1
                                                                 blockID:block
-                                                               absCoord:VT100GridAbsCoordMake(self.dataSource.width - 1, i + _dataSource.totalScrollbackOverflow)];
+                                                                   mark:nil
+                                                                   absY:@(i + _dataSource.totalScrollbackOverflow)];
+    _hoverBlockCopyButton.isFloating = YES;
     __weak __typeof(self) weakSelf = self;
     const long long offset = _dataSource.totalScrollbackOverflow;
     _hoverBlockCopyButton.action = ^(NSPoint locationInWindow) {

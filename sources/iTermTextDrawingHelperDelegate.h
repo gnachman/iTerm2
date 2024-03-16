@@ -67,6 +67,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)drawingHelperShouldPadBackgrounds:(out NSSize *)padding;
 - (NSArray<iTermTerminalButton *> *)drawingHelperTerminalButtons;
+- (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11));
 
 @end
 

@@ -18,9 +18,14 @@ class TerminalButton: NSObject {
     private var lastForegroundImage: NSImage?
     private var lastBackgroundImage: NSImage?
     private let aspectRatio: CGFloat
-    @objc var absCoord: VT100GridAbsCoord
+    @objc weak var mark: iTermMarkProtocol?
+    // Returns -1 if unset
+    @objc var transientAbsY: Int {
+        return -1
+    }
     // Clients can use this as they like
     @objc var desiredFrame = NSRect.zero
+    @objc var absCoordForDesiredFrame = VT100GridAbsCoordMake(-1, -1)
     @objc var pressed: Bool {
         switch state {
         case .normal: return false
@@ -32,16 +37,17 @@ class TerminalButton: NSObject {
         case pressedOutside
         case pressedInside
     }
+    var floating: Bool { false }
     private var state = State.normal
     @objc let id: Int
     @objc var enclosingSessionWidth: Int32 = 0
     var selected: Bool { false }
 
-    init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, absCoord: VT100GridAbsCoord) {
+    init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, mark: iTermMarkProtocol?) {
         self.id = id
         self.backgroundImage = backgroundImage
         self.foregroundImage = foregroundImage
-        self.absCoord = absCoord
+        self.mark = mark
         aspectRatio = foregroundImage.size.height / foregroundImage.size.width;
     }
 
@@ -74,8 +80,9 @@ class TerminalButton: NSObject {
         return result
     }
 
-    @objc(frameWithX:minAbsLine:cumulativeOffset:cellSize:)
+    @objc(frameWithX:absY:minAbsLine:cumulativeOffset:cellSize:)
     func frame(x: CGFloat,
+               absY: Int,
                minAbsLine: Int64,
                cumulativeOffset: Int64,
                cellSize: NSSize) -> NSRect {
@@ -83,7 +90,7 @@ class TerminalButton: NSObject {
         let height = size.height
         let yoff = max(0, (cellSize.height - height))
         return NSRect(x: x,
-                      y: CGFloat(max(minAbsLine, absCoord.y) - cumulativeOffset) * cellSize.height + yoff,
+                      y: CGFloat(max(minAbsLine, Int64(absY)) - cumulativeOffset) * cellSize.height + yoff,
                       width: size.width,
                       height: height)
     }
@@ -174,34 +181,42 @@ class TerminalButton: NSObject {
 @objc(iTermTerminalCopyButton)
 class TerminalCopyButton: TerminalButton {
     @objc let blockID: String
-
-    @objc(initWithID:blockID:absCoord:)
-    init?(id: Int, blockID: String, absCoord: VT100GridAbsCoord) {
+    @objc var absY: NSNumber?
+    override var transientAbsY: Int {
+        if let absY {
+            return absY.intValue
+        }
+        return -1
+    }
+    @objc var isFloating = false
+    override var floating: Bool { isFloating }
+    @objc(initWithID:blockID:mark:absY:)
+    init?(id: Int, blockID: String, mark: iTermMarkProtocol?, absY: NSNumber?) {
         self.blockID = blockID
         guard let bg = NSImage(systemSymbolName: "doc.on.doc.fill", accessibilityDescription: nil),
               let fg = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: nil) else {
             return nil
         }
+        self.absY = absY
         super.init(id: id,
                    backgroundImage: bg,
                    foregroundImage: fg,
-                   absCoord: absCoord)
+                   mark: mark)
     }
 }
 
 @available(macOS 11, *)
 @objc(iTermTerminalMarkButton)
 class TerminalMarkButton: TerminalButton {
-    @objc let mark: VT100ScreenMarkReading
-    private let dx: Int32
+    @objc let screenMark: VT100ScreenMarkReading
+    @objc let dx: Int32
 
     init?(identifier: Int, 
           mark: VT100ScreenMarkReading,
-          absCoord: VT100GridAbsCoord,
           fgName: String,
           bgName: String,
           dx: Int32) {
-        self.mark = mark
+        self.screenMark = mark
         guard let bg = NSImage(systemSymbolName: bgName, accessibilityDescription: nil),
               let fg = NSImage(systemSymbolName: fgName, accessibilityDescription: nil) else {
             return nil
@@ -210,14 +225,7 @@ class TerminalMarkButton: TerminalButton {
         super.init(id: -2,
                    backgroundImage: bg,
                    foregroundImage: fg,
-                   absCoord: absCoord)
-    }
-
-    override var enclosingSessionWidth: Int32 {
-        didSet {
-            absCoord.x = enclosingSessionWidth + dx
-
-        }
+                   mark: mark)
     }
 }
 
@@ -225,9 +233,9 @@ class TerminalMarkButton: TerminalButton {
 @objc(iTermTerminalCopyCommandButton)
 class TerminalCopyCommandButton: TerminalMarkButton {
 
-    @objc(initWithMark:absCoord:dx:)
-    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord, dx: Int32) {
-        super.init(identifier: -2, mark: mark, absCoord: absCoord, fgName: "doc.on.doc", bgName: "doc.on.doc.fill", dx: dx)
+    @objc(initWithMark:dx:)
+    init?(mark: VT100ScreenMarkReading, dx: Int32) {
+        super.init(identifier: -2, mark: mark, fgName: "doc.on.doc", bgName: "doc.on.doc.fill", dx: dx)
     }
 }
 
@@ -236,20 +244,20 @@ class TerminalCopyCommandButton: TerminalMarkButton {
 @objc(iTermTerminalBookmarkButton)
 class TerminalBookmarkButton: TerminalMarkButton {
     override var selected: Bool {
-        return mark.name != nil
+        return screenMark.name != nil
     }
-    @objc(initWithMark:absCoord:dx:)
-    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord, dx: Int32) {
-        super.init(identifier: -3, mark: mark, absCoord: absCoord, fgName: "bookmark", bgName: "bookmark.fill", dx: dx)
+    @objc(initWithMark:dx:)
+    init?(mark: VT100ScreenMarkReading, dx: Int32) {
+        super.init(identifier: -3, mark: mark, fgName: "bookmark", bgName: "bookmark.fill", dx: dx)
     }
 }
 
 @available(macOS 11, *)
 @objc(iTermTerminalShareButton)
 class TerminalShareButton: TerminalMarkButton {
-    @objc(initWithMark:absCoord:dx:)
-    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord, dx: Int32) {
-        super.init(identifier: -5, mark: mark, absCoord: absCoord, fgName: "square.and.arrow.up", bgName: "square.and.arrow.up.fill", dx: dx)
+    @objc(initWithMark:dx:)
+    init?(mark: VT100ScreenMarkReading, dx: Int32) {
+        super.init(identifier: -5, mark: mark, fgName: "square.and.arrow.up", bgName: "square.and.arrow.up.fill", dx: dx)
     }
 
 }

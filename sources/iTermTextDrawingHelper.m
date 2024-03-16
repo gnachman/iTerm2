@@ -1169,15 +1169,23 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
         CGFloat x;
         button.enclosingSessionWidth = _gridSize.width;
-        if (button.absCoord.x < 0) {
+        VT100GridAbsCoord absCoord = [_delegate absCoordForButton:button];
+        if (absCoord.x < 0) {
             x = _scrollViewDocumentVisibleRect.size.width - margin;
         } else {
-            x = margin + button.absCoord.x * self.cellSize.width;
+            x = margin + absCoord.x * self.cellSize.width;
         }
+        const long long minAbsY = drawableCoordRange.start.y + _totalScrollbackOverflow;
         button.desiredFrame = [button frameWithX:x
-                                      minAbsLine:drawableCoordRange.start.y + _totalScrollbackOverflow
+                                            absY:absCoord.y
+                                      minAbsLine:minAbsY
                                 cumulativeOffset:_totalScrollbackOverflow
                                         cellSize:_cellSize];
+        if (absCoord.x < 0) {
+            absCoord.x =  1; //self.gridSize.width;
+        }
+        absCoord.y = MAX(absCoord.y, minAbsY);
+        button.absCoordForDesiredFrame = absCoord;
         DLog(@"Set desired frame of %@ to %@ from minAbsLine:%@ = (%@ + %@) visibleRect:%@ cumulativeOffset:%@ cellSize.height:%@",
              button,
              NSStringFromRect(button.desiredFrame),
