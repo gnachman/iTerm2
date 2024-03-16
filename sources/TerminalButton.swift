@@ -18,7 +18,7 @@ class TerminalButton: NSObject {
     private var lastForegroundImage: NSImage?
     private var lastBackgroundImage: NSImage?
     private let aspectRatio: CGFloat
-    @objc let absCoord: VT100GridAbsCoord
+    @objc var absCoord: VT100GridAbsCoord
     // Clients can use this as they like
     @objc var desiredFrame = NSRect.zero
     @objc var pressed: Bool {
@@ -34,6 +34,7 @@ class TerminalButton: NSObject {
     }
     private var state = State.normal
     @objc let id: Int
+    @objc var enclosingSessionWidth: Int32 = 0
     var selected: Bool { false }
 
     init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, absCoord: VT100GridAbsCoord) {
@@ -192,17 +193,31 @@ class TerminalCopyButton: TerminalButton {
 @objc(iTermTerminalMarkButton)
 class TerminalMarkButton: TerminalButton {
     @objc let mark: VT100ScreenMarkReading
+    private let dx: Int32
 
-    init?(identifier: Int, mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord, fgName: String, bgName: String) {
+    init?(identifier: Int, 
+          mark: VT100ScreenMarkReading,
+          absCoord: VT100GridAbsCoord,
+          fgName: String,
+          bgName: String,
+          dx: Int32) {
         self.mark = mark
         guard let bg = NSImage(systemSymbolName: bgName, accessibilityDescription: nil),
               let fg = NSImage(systemSymbolName: fgName, accessibilityDescription: nil) else {
             return nil
         }
+        self.dx = dx
         super.init(id: -2,
                    backgroundImage: bg,
                    foregroundImage: fg,
                    absCoord: absCoord)
+    }
+
+    override var enclosingSessionWidth: Int32 {
+        didSet {
+            absCoord.x = enclosingSessionWidth + dx
+
+        }
     }
 }
 
@@ -210,9 +225,9 @@ class TerminalMarkButton: TerminalButton {
 @objc(iTermTerminalCopyCommandButton)
 class TerminalCopyCommandButton: TerminalMarkButton {
 
-    @objc(initWithMark:absCoord:)
-    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord) {
-        super.init(identifier: -2, mark: mark, absCoord: absCoord, fgName: "doc.on.doc", bgName: "doc.on.doc.fill")
+    @objc(initWithMark:absCoord:dx:)
+    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord, dx: Int32) {
+        super.init(identifier: -2, mark: mark, absCoord: absCoord, fgName: "doc.on.doc", bgName: "doc.on.doc.fill", dx: dx)
     }
 }
 
@@ -223,18 +238,18 @@ class TerminalBookmarkButton: TerminalMarkButton {
     override var selected: Bool {
         return mark.name != nil
     }
-    @objc(initWithMark:absCoord:)
-    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord) {
-        super.init(identifier: -3, mark: mark, absCoord: absCoord, fgName: "bookmark", bgName: "bookmark.fill")
+    @objc(initWithMark:absCoord:dx:)
+    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord, dx: Int32) {
+        super.init(identifier: -3, mark: mark, absCoord: absCoord, fgName: "bookmark", bgName: "bookmark.fill", dx: dx)
     }
 }
 
 @available(macOS 11, *)
 @objc(iTermTerminalShareButton)
 class TerminalShareButton: TerminalMarkButton {
-    @objc(initWithMark:absCoord:)
-    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord) {
-        super.init(identifier: -5, mark: mark, absCoord: absCoord, fgName: "square.and.arrow.up", bgName: "square.and.arrow.up.fill")
+    @objc(initWithMark:absCoord:dx:)
+    init?(mark: VT100ScreenMarkReading, absCoord: VT100GridAbsCoord, dx: Int32) {
+        super.init(identifier: -5, mark: mark, absCoord: absCoord, fgName: "square.and.arrow.up", bgName: "square.and.arrow.up.fill", dx: dx)
     }
 
 }

@@ -1168,6 +1168,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     const CGFloat margin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
     for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
         CGFloat x;
+        button.enclosingSessionWidth = _gridSize.width;
         if (button.absCoord.x < 0) {
             x = _scrollViewDocumentVisibleRect.size.width - margin;
         } else {

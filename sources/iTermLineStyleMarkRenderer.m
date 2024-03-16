@@ -136,7 +136,7 @@
          NSStringFromSize(tState.cellConfiguration.cellSize),
          NSStringFromSize(tState.cellConfiguration.cellSizeWithoutSpacing));
 
-    const NSSize size = NSMakeSize(tState.configuration.viewportSize.x - tState.margins.right, scale);
+    const NSSize size = NSMakeSize(tState.margins.left + tState.cellConfiguration.gridSize.width * tState.cellConfiguration.cellSize.width, scale);
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:size poolContext:tState.poolContext];
 }
 

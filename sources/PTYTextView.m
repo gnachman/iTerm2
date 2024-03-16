@@ -5022,7 +5022,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [updated addObject:existing];
         } else {
             iTermTerminalButton *button = [[iTermTerminalCopyCommandButton alloc] initWithMark:mark
-                                                                                      absCoord:VT100GridAbsCoordMake(x, i + offset)];
+                                                                                      absCoord:VT100GridAbsCoordMake(x, i + offset)
+                                                                                            dx:x - width];
             __weak __typeof(mark) weakMark = mark;
             button.action = ^(NSPoint locationInWindow) {
                 [weakSelf popCommandCopyMenuAt:locationInWindow for:weakMark];
@@ -5035,7 +5036,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [updated addObject:existing];
         } else {
             iTermTerminalButton *button = [[iTermTerminalBookmarkButton alloc] initWithMark:mark
-                                                                                   absCoord:VT100GridAbsCoordMake(x, i + offset)];
+                                                                                   absCoord:VT100GridAbsCoordMake(x, i + offset)
+                                                                                         dx:x - width];
             __weak __typeof(mark) weakMark = mark;
             button.action = ^(NSPoint locationInWindow) {
                 NSString *command = weakMark.command;
@@ -5051,7 +5053,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [updated addObject:existing];
         } else {
             iTermTerminalButton *button = [[iTermTerminalShareButton alloc] initWithMark:mark
-                                                                                absCoord:VT100GridAbsCoordMake(x, i + offset)];
+                                                                                absCoord:VT100GridAbsCoordMake(x, i + offset)
+                                                                                      dx:x - width];
             __weak __typeof(mark) weakMark = mark;
             button.action = ^(NSPoint locationInWindow) {
                 [weakSelf popShareMenuAt:locationInWindow absLine:markLine + offset for:weakMark];
