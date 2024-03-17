@@ -17420,7 +17420,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)composerManager:(iTermComposerManager *)composerManager
        fetchSuggestions:(iTermSuggestionRequest *)request {
-    if (request.executable) {
+    if (request.executable && ![request.prefix hasSuffix:@"/"]) {
         // In the future it would be nice to search $PATH and shell builtins for command suggestions.
         dispatch_async(dispatch_get_main_queue(), ^{
             request.completion(@[]);

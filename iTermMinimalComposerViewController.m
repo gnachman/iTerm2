@@ -304,7 +304,7 @@ workingDirectory:(NSString *)pwd
 
 - (void)didFetchCompletions:(NSArray<NSString *> *)completions forPrefix:(NSString *)prefix {
     _fetches -= 1;
-    if (_fetches > 0) {
+    if (_fetches > 0 || completions.count == 0) {
         return;
     }
     if (!_historyWindowController) {
