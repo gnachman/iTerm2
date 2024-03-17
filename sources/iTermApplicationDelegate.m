@@ -1074,6 +1074,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
     if (![iTermAdvancedSettingsModel saveProfilesToRecentDocuments]) {
         [_removeRecentProfilesFromDockMenuItem.menu removeItem:_removeRecentProfilesFromDockMenuItem];
+        [ProfileDocument removeAllRecents];
     }
     [iTermMenuBarObserver sharedInstance];
     // Cleanly crash on uncaught exceptions, such as during actions.
