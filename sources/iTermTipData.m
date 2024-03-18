@@ -287,7 +287,112 @@
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0081": @{ kTipTitleKey: @"Composer Power Features",
-                        kTipBodyKey: @"The composer supports multiple cursors. It also has the ability to send just one command out of a list, making it easy to walk through a list of commands one-by-one. Click the help button in the composer for details." }
+                        kTipBodyKey: @"The composer supports multiple cursors. It also has the ability to send just one command out of a list, making it easy to walk through a list of commands one-by-one. Click the help button in the composer for details." },
+
+            @"0082": @{ kTipTitleKey: @"Render Selection",
+                        kTipBodyKey: @"Transform selected text into a prettified, syntax-highlighted view with the “Render Selection” command, ideal for JSON, Markdown, or source code. This feature includes horizontal scrolling for easy log navigation." },
+
+            @"0083": @{ kTipTitleKey: @"SSH Integration",
+                        kTipBodyKey: @"Export environment variables and copy files to remote hosts seamlessly with SSH integration. Either configure a profile to use ssh or use it2ssh in place of ssh." },
+
+            @"0084": @{ kTipTitleKey: @"Auto Composer",
+                        kTipBodyKey: @"Improve your command line with the “auto composer”, which replaces the command line with a native control for ease of use. Requires shell integration." },
+
+            @"0085": @{ kTipTitleKey: @"AI Command Writing",
+                        kTipBodyKey: @"Generate commands using AI by entering a prompt in the composer and selecting “Edit > Engage Artificial Intelligence”. An OpenAI API key is required for this functionality." },
+
+            @"0086": @{ kTipTitleKey: @"Codecierge Tool",
+                        kTipBodyKey: @"Set and achieve terminal goals with “Codecierge”, a Toolbelt feature that guides you step-by-step based on your terminal activity. An OpenAI API key is necessary for this feature." },
+
+            @"0087": @{ kTipTitleKey: @"Named Marks",
+                        kTipBodyKey: @"Navigate your command history effortlessly with “named marks” by assigning names to lines in the terminal." },
+
+            @"0088": @{ kTipTitleKey: @"Font Assignments",
+                        kTipBodyKey: @"You can assign specific fonts to Unicode ranges. Use 'Settings > Profiles > Text > Manage Special Exceptions' to manage it and to install a huge set of Powerline symbols." },
+
+            @"0089": @{ kTipTitleKey: @"Disable Transparency",
+                        kTipBodyKey: @"Maintain clarity in your active window while enjoying transparency in background windows by using 'View > Disable transparency in key window'." },
+
+            @"0090": @{ kTipTitleKey: @"Leader Shortcut",
+                        kTipBodyKey: @"Create two-keystroke shortcuts with a “leader”: a special keystroke that precedes a custom key binding." },
+
+            @"0091": @{ kTipTitleKey: @"Sequence Binding",
+                        kTipBodyKey: @"Execute a series of actions in order with a single shortcut using “sequence” key bindings." },
+
+            @"0092": @{ kTipTitleKey: @"Export/Import Settings",
+                        kTipBodyKey: @"Easily backup or transfer your iTerm2 settings using the Export/Import feature in “Settings > General > Preferences”." },
+
+            @"0093": @{ kTipTitleKey: @"Multi-Session Bindings",
+                        kTipBodyKey: @"Apply key bindings uniformly across multiple sessions for consistent control in different tabs or windows." },
+
+            @"0094": @{ kTipTitleKey: @"Inject Trigger",
+                        kTipBodyKey: @"Simulate terminal input as if it were output from a running app with the “Inject” trigger." },
+
+            @"0095": @{ kTipTitleKey: @"Trigger Status Bar",
+                        kTipBodyKey: @"Easily manage your triggers using the new Triggers status bar component." },
+
+            @"0096": @{ kTipTitleKey: @"Session Size in Tab",
+                        kTipBodyKey: @"Display session size directly in tab titles for convenient at-a-glance information." },
+
+            @"0097": @{ kTipTitleKey: @"Advanced Snippet Editing",
+                        kTipBodyKey: @"Edit snippets in Advanced Paste by holding the ⌥ key, or open them in the composer with ⇧." },
+
+            @"0098": @{ kTipTitleKey: @"HTML Logs",
+                        kTipBodyKey: @"Save your terminal logs in HTML format for enhanced readability and sharing capabilities." },
+
+            @"0099": @{ kTipTitleKey: @"ASCIICast Logs",
+                        kTipBodyKey: @"Create and play back terminal recordings with ASCIICast logs, compatible with asciinema." },
+
+            @"0100": @{ kTipTitleKey: @"Timestamped Logs",
+                        kTipBodyKey: @"Include timestamps in your logs for better tracking and event correlation." },
+
+            @"0101": @{ kTipTitleKey: @"LastPass & 1Password",
+                        kTipBodyKey: @"Utilize LastPass or 1Password with the password manager by configuring it in the menu next to the search field." },
+
+            @"0102": @{ kTipTitleKey: @"Password Manager Access",
+                        kTipBodyKey: @"Access your password manager without authentication by adjusting the settings via the menu next to its search field." },
+
+            @"0103": @{ kTipTitleKey: @"Password Generation",
+                        kTipBodyKey: @"Generate strong, secure passwords using the password manager’s new password generation feature." },
+
+            @"0104": @{ kTipTitleKey: @"it2tip Utility",
+                        kTipBodyKey: @"Access tips of the day with the it2tip utility, a command line app. Enable it by installing shell integration and utilities." },
+
+            @"0105": @{ kTipTitleKey: @"Auto Shell Integration",
+                        kTipBodyKey: @"Experience automatic shell integration when creating a login shell, removing the need for explicit setup on your Mac." },
+
+            @"0106": @{ kTipTitleKey: @"Command Prompt Info",
+                        kTipBodyKey: @"Get detailed information about commands by ⌘-clicking on the command prompt." },
+
+            @"0107": @{ kTipTitleKey: @"tmux Integration",
+                        kTipBodyKey: @"Use tmux integration for automatic key bindings that emulate tmux’s shortcuts, configurable via the Leader settings." },
+
+            @"0108": @{ kTipTitleKey: @"tmux Clipboard Mirroring",
+                        kTipBodyKey: @"Sync your tmux paste buffer with the local clipboard for seamless integration (requires tmux 3.4)." },
+
+            @"0109": @{ kTipTitleKey: @"Multi-Cursor in Composer",
+                        kTipBodyKey: @"Enhance your editing in the Composer with multiple cursors, created using ^⇧-up/down or ⌥-drag." },
+
+            @"0110": @{ kTipTitleKey: @"Advanced Paste from Composer",
+                        kTipBodyKey: @"Move content from the Composer to the Advanced Paste window with ⌥⌘V for additional editing options." },
+
+            @"0111": @{ kTipTitleKey: @"Composer Search",
+                        kTipBodyKey: @"Search within the Composer using ⌘F to quickly find specific text." },
+
+            @"0112": @{ kTipTitleKey: @"Resize Composer",
+                        kTipBodyKey: @"Adjust the Composer’s height to suit your needs by dragging its bottom edge." },
+
+            @"0113": @{ kTipTitleKey: @"Explain Command",
+                        kTipBodyKey: @"Learn more about your commands by ⌘-clicking in the Composer to open them in explainshell.com." },
+
+            @"0114": @{ kTipTitleKey: @"Quick Command Send",
+                        kTipBodyKey: @"Quickly send and remove commands in the Composer using ⌥⇧-enter." },
+
+            @"0115": @{ kTipTitleKey: @"Queue Commands",
+                        kTipBodyKey: @"Queue up a command in the Composer to be sent after the current command finishes with ⌥-Enter." },
+
+            @"0116": @{ kTipTitleKey: @"Draggable Tip Window",
+                        kTipBodyKey: @"Reposition the Tip of the Day window conveniently on your screen, as it is now draggable." },
 
 // IMPORTANT: When updating this, also update it2tip
             };
