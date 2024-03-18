@@ -91,7 +91,7 @@
               {
                 "kind": "TypeNominal",
                 "name": "WeakStorage",
-                "printedName": "BetterFontPicker.SizePickerViewDelegate?"
+                "printedName": "(any BetterFontPicker.SizePickerViewDelegate)?"
               }
             ],
             "declKind": "Var",
@@ -100,8 +100,8 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "Custom",
               "HasStorage",
+              "Custom",
               "ReferenceOwnership",
               "AccessControl",
               "ObjC"
@@ -117,12 +117,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "BetterFontPicker.SizePickerViewDelegate?",
+                    "printedName": "(any BetterFontPicker.SizePickerViewDelegate)?",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "SizePickerViewDelegate",
-                        "printedName": "BetterFontPicker.SizePickerViewDelegate",
+                        "printedName": "any BetterFontPicker.SizePickerViewDelegate",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPSizePickerViewDelegate"
                       }
                     ],
@@ -152,12 +152,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "BetterFontPicker.SizePickerViewDelegate?",
+                    "printedName": "(any BetterFontPicker.SizePickerViewDelegate)?",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "SizePickerViewDelegate",
-                        "printedName": "BetterFontPicker.SizePickerViewDelegate",
+                        "printedName": "any BetterFontPicker.SizePickerViewDelegate",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPSizePickerViewDelegate"
                       }
                     ],
@@ -354,8 +354,8 @@
             "declAttributes": [
               "HasInitialValue",
               "Final",
-              "Custom",
               "HasStorage",
+              "Custom",
               "AccessControl",
               "ObjC"
             ],
@@ -1297,7 +1297,7 @@
               {
                 "kind": "TypeNominal",
                 "name": "WeakStorage",
-                "printedName": "BetterFontPicker.AffordanceDelegate?"
+                "printedName": "(any BetterFontPicker.AffordanceDelegate)?"
               }
             ],
             "declKind": "Var",
@@ -1306,8 +1306,8 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "Custom",
               "HasStorage",
+              "Custom",
               "ReferenceOwnership",
               "AccessControl",
               "ObjC"
@@ -1323,12 +1323,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "BetterFontPicker.AffordanceDelegate?",
+                    "printedName": "(any BetterFontPicker.AffordanceDelegate)?",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "AffordanceDelegate",
-                        "printedName": "BetterFontPicker.AffordanceDelegate",
+                        "printedName": "any BetterFontPicker.AffordanceDelegate",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPAffordanceDelegate"
                       }
                     ],
@@ -1358,12 +1358,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "BetterFontPicker.AffordanceDelegate?",
+                    "printedName": "(any BetterFontPicker.AffordanceDelegate)?",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "AffordanceDelegate",
-                        "printedName": "BetterFontPicker.AffordanceDelegate",
+                        "printedName": "any BetterFontPicker.AffordanceDelegate",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPAffordanceDelegate"
                       }
                     ],
@@ -1530,8 +1530,8 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "Custom",
               "HasStorage",
+              "Custom",
               "ReferenceOwnership",
               "AccessControl"
             ],
@@ -2692,7 +2692,7 @@
               {
                 "kind": "TypeNominal",
                 "name": "WeakStorage",
-                "printedName": "BetterFontPicker.FontPickerCompositeViewDelegate?"
+                "printedName": "(any BetterFontPicker.FontPickerCompositeViewDelegate)?"
               }
             ],
             "declKind": "Var",
@@ -2701,8 +2701,8 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "Custom",
               "HasStorage",
+              "Custom",
               "ReferenceOwnership",
               "AccessControl",
               "ObjC"
@@ -2718,12 +2718,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "BetterFontPicker.FontPickerCompositeViewDelegate?",
+                    "printedName": "(any BetterFontPicker.FontPickerCompositeViewDelegate)?",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "FontPickerCompositeViewDelegate",
-                        "printedName": "BetterFontPicker.FontPickerCompositeViewDelegate",
+                        "printedName": "any BetterFontPicker.FontPickerCompositeViewDelegate",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPCompositeViewDelegate"
                       }
                     ],
@@ -2753,12 +2753,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "BetterFontPicker.FontPickerCompositeViewDelegate?",
+                    "printedName": "(any BetterFontPicker.FontPickerCompositeViewDelegate)?",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "FontPickerCompositeViewDelegate",
-                        "printedName": "BetterFontPicker.FontPickerCompositeViewDelegate",
+                        "printedName": "any BetterFontPicker.FontPickerCompositeViewDelegate",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPCompositeViewDelegate"
                       }
                     ],
@@ -2814,8 +2814,8 @@
             "declAttributes": [
               "HasInitialValue",
               "Final",
-              "Custom",
               "HasStorage",
+              "Custom",
               "AccessControl",
               "ObjC"
             ],
@@ -2873,8 +2873,8 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "Custom",
               "HasStorage",
+              "Custom",
               "AccessControl",
               "SetterAccess",
               "ObjC"
@@ -2939,8 +2939,8 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "Custom",
               "HasStorage",
+              "Custom",
               "AccessControl",
               "SetterAccess",
               "ObjC"
@@ -3206,8 +3206,8 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "Custom",
               "HasStorage",
+              "Custom",
               "AccessControl",
               "ObjC"
             ],
@@ -3969,7 +3969,7 @@
               {
                 "kind": "TypeNominal",
                 "name": "WeakStorage",
-                "printedName": "BetterFontPicker.FontFamilyMemberPickerViewDelegate?"
+                "printedName": "(any BetterFontPicker.FontFamilyMemberPickerViewDelegate)?"
               }
             ],
             "declKind": "Var",
@@ -3995,12 +3995,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "BetterFontPicker.FontFamilyMemberPickerViewDelegate?",
+                    "printedName": "(any BetterFontPicker.FontFamilyMemberPickerViewDelegate)?",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "FontFamilyMemberPickerViewDelegate",
-                        "printedName": "BetterFontPicker.FontFamilyMemberPickerViewDelegate",
+                        "printedName": "any BetterFontPicker.FontFamilyMemberPickerViewDelegate",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPFontFamilyMemberPickerViewDelegate"
                       }
                     ],
@@ -4030,12 +4030,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "BetterFontPicker.FontFamilyMemberPickerViewDelegate?",
+                    "printedName": "(any BetterFontPicker.FontFamilyMemberPickerViewDelegate)?",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "FontFamilyMemberPickerViewDelegate",
-                        "printedName": "BetterFontPicker.FontFamilyMemberPickerViewDelegate",
+                        "printedName": "any BetterFontPicker.FontFamilyMemberPickerViewDelegate",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPFontFamilyMemberPickerViewDelegate"
                       }
                     ],
@@ -4320,8 +4320,8 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "Custom",
               "HasStorage",
+              "Custom",
               "ReferenceOwnership",
               "AccessControl",
               "IBOutlet",
@@ -4432,8 +4432,8 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "Custom",
               "HasStorage",
+              "Custom",
               "ReferenceOwnership",
               "AccessControl",
               "IBOutlet",
@@ -4535,7 +4535,7 @@
               {
                 "kind": "TypeNominal",
                 "name": "WeakStorage",
-                "printedName": "BetterFontPicker.MainViewControllerDelegate?"
+                "printedName": "(any BetterFontPicker.MainViewControllerDelegate)?"
               }
             ],
             "declKind": "Var",
@@ -4563,12 +4563,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "BetterFontPicker.MainViewControllerDelegate?",
+                    "printedName": "(any BetterFontPicker.MainViewControllerDelegate)?",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "MainViewControllerDelegate",
-                        "printedName": "BetterFontPicker.MainViewControllerDelegate",
+                        "printedName": "any BetterFontPicker.MainViewControllerDelegate",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPMainViewControllerDelegate"
                       }
                     ],
@@ -4598,12 +4598,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Optional",
-                    "printedName": "BetterFontPicker.MainViewControllerDelegate?",
+                    "printedName": "(any BetterFontPicker.MainViewControllerDelegate)?",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "MainViewControllerDelegate",
-                        "printedName": "BetterFontPicker.MainViewControllerDelegate",
+                        "printedName": "any BetterFontPicker.MainViewControllerDelegate",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPMainViewControllerDelegate"
                       }
                     ],
@@ -4648,12 +4648,12 @@
               {
                 "kind": "TypeNominal",
                 "name": "Array",
-                "printedName": "[BetterFontPicker.FontListDataSource]",
+                "printedName": "[any BetterFontPicker.FontListDataSource]",
                 "children": [
                   {
                     "kind": "TypeNominal",
                     "name": "FontListDataSource",
-                    "printedName": "BetterFontPicker.FontListDataSource",
+                    "printedName": "any BetterFontPicker.FontListDataSource",
                     "usr": "c:@M@BetterFontPicker@objc(pl)BFPFontListDataSource"
                   }
                 ],
@@ -4681,12 +4681,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Array",
-                    "printedName": "[BetterFontPicker.FontListDataSource]",
+                    "printedName": "[any BetterFontPicker.FontListDataSource]",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "FontListDataSource",
-                        "printedName": "BetterFontPicker.FontListDataSource",
+                        "printedName": "any BetterFontPicker.FontListDataSource",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPFontListDataSource"
                       }
                     ],
@@ -4716,12 +4716,12 @@
                   {
                     "kind": "TypeNominal",
                     "name": "Array",
-                    "printedName": "[BetterFontPicker.FontListDataSource]",
+                    "printedName": "[any BetterFontPicker.FontListDataSource]",
                     "children": [
                       {
                         "kind": "TypeNominal",
                         "name": "FontListDataSource",
-                        "printedName": "BetterFontPicker.FontListDataSource",
+                        "printedName": "any BetterFontPicker.FontListDataSource",
                         "usr": "c:@M@BetterFontPicker@objc(pl)BFPFontListDataSource"
                       }
                     ],
@@ -5187,193 +5187,11 @@
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorDataSource.swift",
-      "kind": "BooleanLiteral",
-      "offset": 301,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorDataSource.swift",
-      "kind": "Array",
-      "offset": 353,
-      "length": 2,
-      "value": "[]"
-    },
-    {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
       "kind": "FloatLiteral",
       "offset": 552,
       "length": 4,
       "value": "12.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 658,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 682,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "FloatLiteral",
-      "offset": 835,
-      "length": 4,
-      "value": "54.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "FloatLiteral",
-      "offset": 849,
-      "length": 4,
-      "value": "27.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1431,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1469,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1513,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1725,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1941,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "StringLiteral",
-      "offset": 2153,
-      "length": 4,
-      "value": "\"%g\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2466,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2634,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2793,
-      "length": 2,
-      "value": "21"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2833,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2908,
-      "length": 1,
-      "value": "2"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 3310,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 3348,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 3418,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 3441,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 3663,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 3715,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 3738,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 3948,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 4267,
-      "length": 5,
-      "value": "false"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontsDataSource.swift",
@@ -5388,13 +5206,6 @@
       "offset": 1446,
       "length": 2,
       "value": "\"\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontsDataSource.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1675,
-      "length": 5,
-      "value": "false"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
@@ -5416,97 +5227,6 @@
       "offset": 348,
       "length": 1,
       "value": "2"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
-      "kind": "IntegerLiteral",
-      "offset": 480,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
-      "kind": "FloatLiteral",
-      "offset": 587,
-      "length": 3,
-      "value": "2.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1004,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontListTableView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1038,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontListTableView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1066,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontListTableView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1216,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontListTableView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1244,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontListTableView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1306,
-      "length": 1,
-      "value": "2"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontListTableView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1336,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontListTableView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1369,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontListTableView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1461,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontListTableView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1653,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontListTableView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1764,
-      "length": 4,
-      "value": "true"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
@@ -5565,48 +5285,6 @@
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1058,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1318,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1445,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
-      "kind": "Array",
-      "offset": 1545,
-      "length": 2,
-      "value": "[]"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
-      "kind": "Array",
-      "offset": 1752,
-      "length": 2,
-      "value": "[]"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
-      "kind": "Array",
-      "offset": 1791,
-      "length": 2,
-      "value": "[]"
-    },
-    {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
       "kind": "StringLiteral",
       "offset": 466,
@@ -5622,129 +5300,10 @@
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
-      "kind": "BooleanLiteral",
-      "offset": 637,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
       "kind": "StringLiteral",
       "offset": 742,
       "length": 2,
       "value": "\"\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1236,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
-      "kind": "Array",
-      "offset": 2070,
-      "length": 2,
-      "value": "[]"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "StringLiteral",
-      "offset": 675,
-      "length": 2,
-      "value": "\"\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1372,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1378,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1388,
-      "length": 3,
-      "value": "100"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1401,
-      "length": 3,
-      "value": "100"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1610,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1657,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "StringLiteral",
-      "offset": 1907,
-      "length": 13,
-      "value": "\"Select Font\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "BooleanLiteral",
-      "offset": 2054,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "StringLiteral",
-      "offset": 2088,
-      "length": 2,
-      "value": "\"\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2872,
-      "length": 3,
-      "value": "340"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/Affordance.swift",
-      "kind": "BooleanLiteral",
-      "offset": 3414,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1668,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
-      "kind": "BooleanLiteral",
-      "offset": 2073,
-      "length": 5,
-      "value": "false"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
@@ -5752,41 +5311,6 @@
       "offset": 1694,
       "length": 10,
       "value": "\"BetterFontPicker.MenuButton\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2258,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2264,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2369,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
-      "kind": "FloatLiteral",
-      "offset": 2408,
-      "length": 3,
-      "value": "2.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
-      "kind": "StringLiteral",
-      "offset": 2532,
-      "length": 39,
-      "value": "\"init(coder:) has not been implemented\""
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
@@ -5801,20 +5325,6 @@
       "offset": 643,
       "length": 20,
       "value": "\"NoSyncBFPFavorites\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
-      "kind": "BooleanLiteral",
-      "offset": 828,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
-      "kind": "Array",
-      "offset": 1535,
-      "length": 2,
-      "value": "[]"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
@@ -5860,48 +5370,6 @@
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1636,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2163,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2222,
-      "length": 1,
-      "value": "2"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2346,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2408,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2415,
-      "length": 2,
-      "value": "-1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
       "kind": "StringLiteral",
       "offset": 2650,
       "length": 2,
@@ -5909,682 +5377,10 @@
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 2818,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 3270,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 3501,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 3590,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 3639,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 4445,
-      "length": 1,
-      "value": "5"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 4490,
-      "length": 1,
-      "value": "2"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 4551,
-      "length": 3,
-      "value": "\"X\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 4722,
-      "length": 39,
-      "value": "\"init(coder:) has not been implemented\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 4828,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "FloatLiteral",
-      "offset": 5116,
-      "length": 5,
-      "value": "320.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 5625,
-      "length": 2,
-      "value": "10"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 5860,
-      "length": 2,
-      "value": "32"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 5906,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7483,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 7650,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7777,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7801,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7905,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7976,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "Array",
-      "offset": 8270,
-      "length": 2,
-      "value": "[]"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8294,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8402,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8942,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 9123,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 9607,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 9769,
-      "length": 33,
-      "value": "\"FontNameTableViewCellIdentifier\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 9964,
-      "length": 2,
-      "value": "12"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 10253,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 10290,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 10329,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 10371,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 10416,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 10514,
-      "length": 2,
-      "value": "12"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 10759,
-      "length": 34,
-      "value": "\"SeparatorTableViewCellIdentifier\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 11198,
-      "length": 29,
-      "value": "\"StarTableViewCellIdentifier\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 11665,
-      "length": 34,
-      "value": "\"CheckMarkTableViewCellIdentifier\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 11842,
-      "length": 5,
-      "value": "\"✓\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 12083,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 12120,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 12159,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 12201,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 12246,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 12325,
-      "length": 5,
-      "value": "\"✓\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 12620,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 12721,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 13800,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 14183,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 14209,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 14563,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 14589,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 14859,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 15757,
-      "length": 1,
-      "value": "2"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 16085,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 16109,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 16222,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 16833,
-      "length": 1,
-      "value": "2"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 17139,
-      "length": 1,
-      "value": "2"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 17427,
-      "length": 1,
-      "value": "2"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 17820,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 17863,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 17886,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 18286,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 18362,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 18449,
-      "length": 2,
-      "value": "-1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 18811,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 18815,
-      "length": 1,
-      "value": "3"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 18932,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 18956,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 19177,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 19378,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 19740,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 19744,
-      "length": 1,
-      "value": "3"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 19919,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 19943,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 20025,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 20370,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 20440,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 20444,
-      "length": 1,
-      "value": "3"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
       "kind": "StringLiteral",
       "offset": 562,
       "length": 19,
       "value": "\"BetterFontPicker.TableViewController\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "StringLiteral",
-      "offset": 826,
-      "length": 17,
-      "value": "\"ellipsis.circle\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "StringLiteral",
-      "offset": 913,
-      "length": 31,
-      "value": "\"Choose stylistic alternatives\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1036,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1317,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1465,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "StringLiteral",
-      "offset": 1625,
-      "length": 2,
-      "value": "\"\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1886,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1934,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1954,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "Array",
-      "offset": 2118,
-      "length": 2,
-      "value": "[]"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 2781,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2877,
-      "length": 2,
-      "value": "10"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 2936,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "StringLiteral",
-      "offset": 3274,
-      "length": 28,
-      "value": "\"Alternative Stylistic Sets\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 4206,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/OptionsButtonController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 4236,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerPanel.swift",
-      "kind": "BooleanLiteral",
-      "offset": 276,
-      "length": 4,
-      "value": "true"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
@@ -6630,41 +5426,6 @@
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1229,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1563,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
-      "kind": "FloatLiteral",
-      "offset": 1907,
-      "length": 3,
-      "value": "2.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2159,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
-      "kind": "FloatLiteral",
-      "offset": 2284,
-      "length": 3,
-      "value": "2.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
       "kind": "StringLiteral",
       "offset": 362,
       "length": 17,
@@ -6690,279 +5451,6 @@
       "offset": 1321,
       "length": 10,
       "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2572,
-      "length": 2,
-      "value": "12"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2837,
-      "length": 2,
-      "value": "12"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2907,
-      "length": 2,
-      "value": "12"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 3882,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 3890,
-      "length": 3,
-      "value": "256"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 5422,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 5433,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 5663,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 5671,
-      "length": 3,
-      "value": "200"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "StringLiteral",
-      "offset": 5794,
-      "length": 23,
-      "value": "\"HorizontalSpacingIcon\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 5901,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 6270,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 6278,
-      "length": 3,
-      "value": "200"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "StringLiteral",
-      "offset": 6399,
-      "length": 21,
-      "value": "\"VerticalSpacingIcon\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 6504,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 6947,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "FloatLiteral",
-      "offset": 7201,
-      "length": 3,
-      "value": "3.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "Array",
-      "offset": 7247,
-      "length": 2,
-      "value": "[]"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7292,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7336,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "FloatLiteral",
-      "offset": 7637,
-      "length": 3,
-      "value": "0.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7670,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7751,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "FloatLiteral",
-      "offset": 7764,
-      "length": 4,
-      "value": "54.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7793,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7850,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 7919,
-      "length": 1,
-      "value": "1"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8002,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "FloatLiteral",
-      "offset": 8015,
-      "length": 5,
-      "value": "100.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "FloatLiteral",
-      "offset": 8449,
-      "length": 5,
-      "value": "200.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8496,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8550,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8594,
-      "length": 2,
-      "value": "25"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8739,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8785,
-      "length": 2,
-      "value": "25"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8941,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 8985,
-      "length": 2,
-      "value": "27"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 9181,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 884,
-      "length": 1,
-      "value": "0"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
@@ -7014,137 +5502,11 @@
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
-      "kind": "BooleanLiteral",
-      "offset": 3314,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
-      "kind": "StringLiteral",
-      "offset": 3348,
-      "length": 2,
-      "value": "\"\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 4094,
-      "length": 1,
-      "value": "0"
-    },
-    {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 306,
       "length": 4,
       "value": "2000"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "Array",
-      "offset": 538,
-      "length": 2,
-      "value": "[]"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1095,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1118,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1209,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1232,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1279,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1302,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1369,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1469,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1576,
-      "length": 5,
-      "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "BooleanLiteral",
-      "offset": 1621,
-      "length": 4,
-      "value": "true"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "FloatLiteral",
-      "offset": 2180,
-      "length": 3,
-      "value": "0.0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "IntegerLiteral",
-      "offset": 2999,
-      "length": 1,
-      "value": "0"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 3180,
-      "length": 20,
-      "value": "\"MainViewController\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 3370,
-      "length": 20,
-      "value": "\"MainViewController\""
     }
   ]
 }
