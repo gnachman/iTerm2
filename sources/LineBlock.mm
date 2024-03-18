@@ -29,6 +29,7 @@ extern "C" {
 
 // BEGIN C++ HEADERS - No C headers here!
 #include <atomic>
+#include <functional>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
