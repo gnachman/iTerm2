@@ -91,7 +91,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 
 - (void)setCommand:(NSString *)command;
 // Reveal appropriately (focus status bar, open popover, or open minimal)
-- (void)reveal;
+- (void)revealMakingFirstResponder:(BOOL)becomeFirstResponder;
 - (void)toggle;
 // Reveal minimal composer.
 - (void)revealMinimal;

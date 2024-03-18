@@ -102,7 +102,7 @@
     }
 }
 
-- (void)reveal {
+- (void)revealMakingFirstResponder:(BOOL)becomeFirstResponder {
     iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
     if (statusBarViewController && [self shouldRevealStatusBarComposerInViewController:statusBarViewController]) {
         if (_dropDownComposerViewIsVisible) {
@@ -110,7 +110,8 @@
         }
         [self showComposerInStatusBar:statusBarViewController];
     } else {
-        [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
+        [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]
+                   becomeFirstResponder:becomeFirstResponder];
     }
 }
 
@@ -129,7 +130,8 @@
             _saved = [component.stringValue copy];
         }
     }
-    [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
+    [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]
+               becomeFirstResponder:YES];
 }
 
 - (void)showComposerInStatusBar:(iTermStatusBarViewController *)statusBarViewController {
@@ -171,10 +173,10 @@
         [self dismissMinimalViewAnimated:YES];
         return;
     }
-    [self showMinimalComposerInView:superview];
+    [self showMinimalComposerInView:superview becomeFirstResponder:YES];
 }
 
-- (void)showMinimalComposerInView:(NSView *)superview {
+- (void)showMinimalComposerInView:(NSView *)superview becomeFirstResponder:(BOOL)becomeFirstResponder {
     if (_minimalViewController == nil) {
         _minimalViewController = [[iTermMinimalComposerViewController alloc] init];
         _minimalViewController.delegate = self;
@@ -201,7 +203,9 @@
         _saved = nil;
     }
     [_minimalViewController updateFrame];
-    [_minimalViewController makeFirstResponder];
+    if (becomeFirstResponder) {
+        [_minimalViewController makeFirstResponder];
+    }
     _minimalViewController.view.hidden = _temporarilyHidden;
     _dropDownComposerViewIsVisible = YES;
     _dismissCanceled = YES;

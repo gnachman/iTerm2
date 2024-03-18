@@ -5860,7 +5860,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
     DLog(@"Reveal auto composer. isAutoComposer <- YES");
     self.composerManager.isAutoComposer = YES;
     NSMutableAttributedString *prompt = [self kernedAttributedStringForScreenChars:promptText];
-    [self.composerManager reveal];
+    [self.composerManager revealMakingFirstResponder:[self textViewOrComposerIsFirstResponder]];
     NSDictionary *userData = nil;
     DLog(@"revealing auto composer");
     if (_screen.lastPromptMark.promptText) {
@@ -17420,7 +17420,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)composerManager:(iTermComposerManager *)composerManager
        fetchSuggestions:(iTermSuggestionRequest *)request {
-    if (request.executable && ![request.prefix hasSuffix:@"/"]) {
+    if (request.executable && ![request.prefix containsString:@"/"]) {
         // In the future it would be nice to search $PATH and shell builtins for command suggestions.
         dispatch_async(dispatch_get_main_queue(), ^{
             request.completion(@[]);
