@@ -24,6 +24,54 @@
     }
 }
 
+// NOTE: If you change this also update bezierPathsForSolidBoxesForCode:cellSize:scale:
++ (NSCharacterSet *)blockDrawingCharacters {
+    static NSCharacterSet *characterSet;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *temp = [[NSMutableCharacterSet alloc] init];
+        unichar chars[] = {
+            iTermUpperHalfBlock,  // ▀
+            iTermLowerOneEighthBlock,  // ▁
+            iTermLowerOneQuarterBlock,  // ▂
+            iTermLowerThreeEighthsBlock,  // ▃
+            iTermLowerHalfBlock,  // ▄
+            iTermLowerFiveEighthsBlock,  // ▅
+            iTermLowerThreeQuartersBlock,  // ▆
+            iTermLowerSevenEighthsBlock,  // ▇
+            iTermFullBlock,  // █
+            iTermLeftSevenEighthsBlock,  // ▉
+            iTermLeftThreeQuartersBlock,  // ▊
+            iTermLeftFiveEighthsBlock,  // ▋
+            iTermLeftHalfBlock,  // ▌
+            iTermLeftThreeEighthsBlock,  // ▍
+            iTermLeftOneQuarterBlock,  // ▎
+            iTermLeftOneEighthBlock,  // ▏
+            iTermRightHalfBlock,  // ▐
+            iTermUpperOneEighthBlock,  // ▔
+            iTermRightOneEighthBlock,  // ▕
+            iTermQuadrantLowerLeft,  // ▖
+            iTermQuadrantLowerRight,  // ▗
+            iTermQuadrantUpperLeft,  // ▘
+            iTermQuadrantUpperLeftAndLowerLeftAndLowerRight,  // ▙
+            iTermQuadrantUpperLeftAndLowerRight,  // ▚
+            iTermQuadrantUpperLeftAndUpperRightAndLowerLeft,  // ▛
+            iTermQuadrantUpperLeftAndUpperRightAndLowerRight,  // ▜
+            iTermQuadrantUpperRight,  // ▝
+            iTermQuadrantUpperRightAndLowerLeft,  // ▞
+            iTermQuadrantUpperRightAndLowerLeftAndLowerRight,  // ▟
+            iTermLightShade,  // ░
+            iTermMediumShade,  // ▒
+            iTermDarkShade,  // ▓
+        };
+        for (size_t i = 0; i < sizeof(chars) / sizeof(*chars); i++) {
+            [temp addCharactersInRange:NSMakeRange(chars[i], 1)];
+        }
+        characterSet = [temp copy];
+    });
+    return characterSet;
+}
+
 typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
     iTermPowerlineDrawingOptionsNone = 0,
     iTermPowerlineDrawingOptionsMirrored = 1 << 0,
@@ -129,6 +177,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
     return sBoxDrawingCharactersWithBezierPaths;
 }
 
+// NOTE: If you change this also update blockDrawingCharacters
 + (NSArray<NSBezierPath *> *)bezierPathsForSolidBoxesForCode:(unichar)code
                                                     cellSize:(NSSize)cellSize
                                                        scale:(CGFloat)scale {

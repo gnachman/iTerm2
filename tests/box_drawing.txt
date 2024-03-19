@@ -71,3 +71,7 @@ git     LN      Lock    SolidRt  Rt      SoldLf  Lf
 [0m
 git     LN      Lock    SolidRt  Rt      SoldLf  Lf
                                            
+
+Block characters:
+
+▀ ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▉ ▊ ▋ ▌ ▍ ▎ ▏ ▐ ▔ ▕ ▖ ▗ ▘ ▙ ▚ ▛ ▜ ▝ ▞ ▟ ░ ▒ ▓ 

@@ -52,7 +52,7 @@ typedef struct {
     unsigned int faint : 1;
     vector_float4 background;
     ColorMode mode : 2;
-    unsigned int isBoxDrawing : 1;
+    unsigned int isBlock : 1;
 } iTermTextColorKey;
 
 typedef struct {
@@ -758,6 +758,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                      date:(out NSDate **)datePtr
            belongsToBlock:(out BOOL *)belongsToBlockPtr {
     NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_configuration->_useNativePowerlineGlyphs];
+    NSCharacterSet *blockCharacterSert = [iTermBoxDrawingBezierCurveFactory blockDrawingCharacters];
     if (_configuration->_timestampsEnabled) {
         *datePtr = _rows[row]->_date;
     }
@@ -870,6 +871,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                             !line[x].complexChar &&
                                             line[x].code > 127 &&
                                             [boxCharacterSet characterIsMember:line[x].code]);
+        const BOOL isBlockCharacter = (characterIsDrawable &&
+                                       !line[x].complexChar &&
+                                       line[x].code > 127 &&
+                                       [blockCharacterSert characterIsMember:line[x].code]);
         // Foreground colors
         // Build up a compact key describing all the inputs to a text color
         currentColorKey->isMatch = findMatch;
@@ -882,7 +887,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         currentColorKey->bold = line[x].bold;
         currentColorKey->faint = line[x].faint;
         currentColorKey->background = backgroundColor;
-        currentColorKey->isBoxDrawing = isBoxDrawingCharacter;
+        currentColorKey->isBlock = isBlockCharacter;
         if (x > 0 &&
             currentColorKey->isMatch == previousColorKey->isMatch &&
             currentColorKey->inUnderlinedRange == previousColorKey->inUnderlinedRange &&
@@ -894,7 +899,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             currentColorKey->bold == previousColorKey->bold &&
             currentColorKey->faint == previousColorKey->faint &&
             simd_equal(currentColorKey->background, previousColorKey->background) &&
-            currentColorKey->isBoxDrawing == previousColorKey->isBoxDrawing) {
+            currentColorKey->isBlock == previousColorKey->isBlock) {
             attributes[x].foregroundColor = attributes[x - 1].foregroundColor;
         } else {
             vector_float4 textColor = [self textColorForCharacter:&line[x]
@@ -904,7 +909,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                         findMatch:findMatch
                                                 inUnderlinedRange:inUnderlinedRange && !annotated
                                                             index:x
-                                                       boxDrawing:isBoxDrawingCharacter
+                                           disableMinimumContrast:isBlockCharacter
                                                            caches:&caches];
             attributes[x].foregroundColor = textColor;
             attributes[x].foregroundColor.w = 1;
@@ -1388,7 +1393,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                              findMatch:(BOOL)findMatch
                      inUnderlinedRange:(BOOL)inUnderlinedRange
                                  index:(int)index
-                            boxDrawing:(BOOL)isBoxDrawingCharacter
+                disableMinimumContrast:(BOOL)disableMinimumContrast
                                 caches:(iTermMetalPerFrameStateCaches *)caches {
     vector_float4 rawColor = { 0, 0, 0, 0 };
     iTermColorMap *colorMap = _configuration->_colorMap;
@@ -1459,7 +1464,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     if (needsProcessing) {
       result = VectorForColor([_configuration->_colorMap processedTextColorForTextColor:ColorForVector(rawColor)
                                                                     overBackgroundColor:ColorForVector(unprocessedBackgroundColor)
-                                                                 disableMinimumContrast:isBoxDrawingCharacter],
+                                                                 disableMinimumContrast:disableMinimumContrast],
                               _configuration->_colorSpace);
     } else {
         result = rawColor;

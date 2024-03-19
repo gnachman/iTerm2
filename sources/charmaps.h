@@ -224,6 +224,7 @@ typedef NS_ENUM(unichar, iTermBoxDrawingCode) {
     iTermQuadrantUpperRight                           = 0x259D, // ▝
     iTermQuadrantUpperRightAndLowerLeft               = 0x259E, // ▞
     iTermQuadrantUpperRightAndLowerLeftAndLowerRight  = 0x259F, // ▟
+    // NOTE: If you add more block characters update two methods in iTermBoxDrawingBezierCurveFactory
 };
 
 // Defines a mapping from ascii characters to their Unicode graphical equivalent. Used in line-

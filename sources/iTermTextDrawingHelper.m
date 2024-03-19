@@ -85,6 +85,7 @@ typedef struct {
     BOOL shouldAntiAlias;
     NSColor *foregroundColor;
     BOOL boxDrawing;
+    BOOL contrastIneligible;
     NSFont *font;
     BOOL bold;
     BOOL faint;
@@ -2287,7 +2288,7 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
                                             int index,
                                             iTermTextColorContext *context,
                                             iTermBackgroundColorRun *colorRun,
-                                            BOOL isBoxDrawingCharacter) {
+                                            BOOL disableMinimumContrast) {
     NSColor *rawColor = nil;
     BOOL isMatch = NO;
     if (c->faint && colorRun && !context->backgroundColor) {
@@ -2372,7 +2373,7 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
     if (needsProcessing) {
         result = [context->colorMap processedTextColorForTextColor:rawColor
                                                overBackgroundColor:context->backgroundColor
-                                            disableMinimumContrast:isBoxDrawingCharacter];
+                                            disableMinimumContrast:disableMinimumContrast];
     } else {
         result = rawColor;
     }
@@ -2431,6 +2432,7 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
             *combinedAttributesChanged = (newAttributes->shouldAntiAlias != previousAttributes->shouldAntiAlias ||
                                           ![newAttributes->foregroundColor isEqual:previousAttributes->foregroundColor] ||
                                           newAttributes->boxDrawing != previousAttributes->boxDrawing ||
+                                          newAttributes->contrastIneligible != previousAttributes ->contrastIneligible ||
                                           ![newAttributes->font isEqual:previousAttributes->font] ||
                                           newAttributes->ligatureLevel != previousAttributes->ligatureLevel ||
                                           newAttributes->bold != previousAttributes->bold ||
@@ -2490,6 +2492,7 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
     const unichar code = c->code;
 
     attributes->boxDrawing = !isComplex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] characterIsMember:code];
+    attributes->contrastIneligible = !isComplex && [[iTermBoxDrawingBezierCurveFactory blockDrawingCharacters] characterIsMember:code];
 
     if (forceTextColor) {
         attributes->foregroundColor = forceTextColor;
@@ -2500,7 +2503,7 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
                                                                          i,
                                                                          textColorContext,
                                                                          colorRun,
-                                                                         attributes->boxDrawing);
+                                                                         attributes->contrastIneligible);
     }
 
     attributes->bold = c->bold;
