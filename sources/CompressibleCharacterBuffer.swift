@@ -13,7 +13,7 @@ class UnsafeReallocatableMutableBuffer<T: Equatable>: Equatable {
 
     init(count: Int) {
         precondition(count >= 0)
-        let pointer = UnsafeMutableRawPointer(calloc(count, MemoryLayout<T>.stride))!
+        let pointer = UnsafeMutableRawPointer(calloc(max(1, count), MemoryLayout<T>.stride))!
         buffer = UnsafeMutableBufferPointer<T>(start: pointer.assumingMemoryBound(to: T.self),
                                                count: count)
     }
@@ -63,7 +63,7 @@ class UnsafeReallocatableMutableBuffer<T: Equatable>: Equatable {
 
     func resize(to count: Int) {
         var pointer = UnsafeMutableRawPointer(buffer.baseAddress)!
-        pointer = realloc(pointer, Int(count) * MemoryLayout<T>.stride)!
+        pointer = realloc(pointer, Int(max(1, count)) * MemoryLayout<T>.stride)!
         buffer = UnsafeMutableBufferPointer<T>(
             start: pointer.assumingMemoryBound(to: T.self),
             count: Int(count))
