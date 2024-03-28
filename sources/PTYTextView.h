@@ -719,7 +719,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
 - (NSRect)rectForCoord:(VT100GridCoord)coord;
 - (void)updateSubviewFrames;
-- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed;
+- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed
+                                                                        elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor;
 - (BOOL)copyBlock:(NSString *)block includingAbsLine:(long long)absLine;
 - (void)setNeedsDisplay:(BOOL)needsDisplay NS_UNAVAILABLE;
 - (void)setNeedsDisplayInRect:(NSRect)invalidRect NS_UNAVAILABLE;  // Use this instead of setNeedsDisplay:

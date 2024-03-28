@@ -92,7 +92,8 @@ iTermURLActionHelperDelegate>
 // Returns a dictionary to pass to NSAttributedString.
 - (NSDictionary *)charAttributes:(screen_char_t)c
               externalAttributes:(iTermExternalAttribute *)ea
-                       processed:(BOOL)processed;
+                       processed:(BOOL)processed
+     elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor;
 
 - (iTermRenegablePromise<NSString *> *)promisedOutputForMark:(id<VT100ScreenMarkReading>)mark
                                                     progress:(iTermProgress * _Nullable)outputProgress;

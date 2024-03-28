@@ -578,7 +578,8 @@ iTermCommandInfoViewControllerDelegate>
                                        attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
         return [self charAttributes:theChar
                  externalAttributes:ea
-                          processed:NO];
+                          processed:NO
+        elideDefaultBackgroundColor:NO];
     }
                                               nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
                                                      pad:NO
@@ -636,7 +637,8 @@ iTermCommandInfoViewControllerDelegate>
 // Returns a dictionary to pass to NSAttributedString.
 - (NSDictionary *)charAttributes:(screen_char_t)c
               externalAttributes:(iTermExternalAttribute *)ea
-                       processed:(BOOL)processed {
+                       processed:(BOOL)processed
+     elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor {
     BOOL isBold = c.bold;
     BOOL isFaint = c.faint;
     NSColor *fgColor;
@@ -690,7 +692,7 @@ iTermCommandInfoViewControllerDelegate>
             font = [NSFont systemFontOfSize:size];
         }
     }
-    if (![iTermAdvancedSettingsModel copyBackgroundColor]) {
+    if (![iTermAdvancedSettingsModel copyBackgroundColor] || elideDefaultBackgroundColor) {
         if (c.backgroundColorMode == ColorModeAlternate &&
             c.backgroundColor == ALTSEM_DEFAULT) {
             bgColor = [NSColor clearColor];

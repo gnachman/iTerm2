@@ -5847,8 +5847,10 @@ ITERM_WEAKLY_REFERENCEABLE
 static NSString *const PTYSessionComposerPrefixUserDataKeyPrompt = @"prompt";
 static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"detected by trigger";
 
-- (NSMutableAttributedString *)kernedAttributedStringForScreenChars:(NSArray<ScreenCharArray *> *)promptText {
-    NSMutableAttributedString *prompt = [self attributedStringForScreenChars:promptText];
+- (NSMutableAttributedString *)kernedAttributedStringForScreenChars:(NSArray<ScreenCharArray *> *)promptText
+                                        elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor {
+    NSMutableAttributedString *prompt = [self attributedStringForScreenChars:promptText
+                                                 elideDefaultBackgroundColor:elideDefaultBackgroundColor];
     const CGFloat kern = [NSMutableAttributedString kernForString:@"W"
                                                       toHaveWidth:_textview.charWidth
                                                          withFont:_textview.fontTable.asciiFont.font];
@@ -5861,7 +5863,8 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
     assert(_initializationFinished);
     DLog(@"Reveal auto composer. isAutoComposer <- YES");
     self.composerManager.isAutoComposer = YES;
-    NSMutableAttributedString *prompt = [self kernedAttributedStringForScreenChars:promptText];
+    NSMutableAttributedString *prompt = [self kernedAttributedStringForScreenChars:promptText
+                                                       elideDefaultBackgroundColor:YES];
     [self.composerManager revealMakingFirstResponder:[self textViewOrComposerIsFirstResponder]];
     NSDictionary *userData = nil;
     DLog(@"revealing auto composer");
@@ -5876,11 +5879,13 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
                            userData:userData];
 }
 
-- (NSMutableAttributedString *)attributedStringForScreenChars:(NSArray<ScreenCharArray *> *)promptText {
+- (NSMutableAttributedString *)attributedStringForScreenChars:(NSArray<ScreenCharArray *> *)promptText
+                                  elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor {
     if (!_textview) {
         return nil;
     }
-    NSDictionary *defaultAttributes = [_textview attributeProviderUsingProcessedColors:YES]((screen_char_t){}, nil);
+    NSDictionary *defaultAttributes = [_textview attributeProviderUsingProcessedColors:YES
+                                                           elideDefaultBackgroundColor:elideDefaultBackgroundColor]((screen_char_t){}, nil);
     NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
                                                                       attributes:defaultAttributes];
 
@@ -5889,7 +5894,8 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 
     NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
     NSAttributedString *body = [[promptText mapWithBlock:^id _Nullable(ScreenCharArray *sca) {
-        return [sca attributedStringValueWithAttributeProvider:[_textview attributeProviderUsingProcessedColors:YES]];
+        return [sca attributedStringValueWithAttributeProvider:[_textview attributeProviderUsingProcessedColors:YES
+                                                                                    elideDefaultBackgroundColor:elideDefaultBackgroundColor]];
     }] attributedComponentsJoinedByAttributedString:newline];
     [result appendAttributedString:body];
     [result trimTrailingWhitespace];
@@ -18017,7 +18023,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     if (!promptText) {
         return;
     }
-    NSMutableAttributedString *prompt = [self kernedAttributedStringForScreenChars:promptText];
+    NSMutableAttributedString *prompt = [self kernedAttributedStringForScreenChars:promptText
+                                                       elideDefaultBackgroundColor:YES];
     [_composerManager setPrefix:prompt userData:[_composerManager prefixUserData]];
 }
 

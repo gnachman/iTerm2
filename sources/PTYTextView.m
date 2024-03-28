@@ -3010,9 +3010,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return [self contentWithAttributes:NO timestamps:NO];
 }
 
-- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed {
+- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed
+                                                                        elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor {
     return [[^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-        return [self charAttributes:theChar externalAttributes:ea processed:processed];
+        return [self charAttributes:theChar externalAttributes:ea processed:processed elideDefaultBackgroundColor:elideDefaultBackgroundColor];
     } copy] autorelease];
 }
 
@@ -3025,7 +3026,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                                            [_dataSource numberOfLines] - 1);
     NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *) = nil;
     if (attributes) {
-        attributeProvider = [self attributeProviderUsingProcessedColors:NO];
+        attributeProvider = [self attributeProviderUsingProcessedColors:NO elideDefaultBackgroundColor:NO];
     }
     return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
                    attributeProvider:attributeProvider
@@ -3909,7 +3910,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                                                      lineOffset + numLines - 1);
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
                                        attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-                return [self charAttributes:theChar externalAttributes:ea processed:NO];
+                return [self charAttributes:theChar externalAttributes:ea processed:NO elideDefaultBackgroundColor:NO];
             }
                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                      pad:NO
