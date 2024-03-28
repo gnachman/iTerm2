@@ -34,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermColorMap *_colorMap;
     vector_float4 _fullScreenFlashColor;
     NSColor *_processedDefaultBackgroundColor;  // dimmed, etc.
+    NSColor *_processedDeselectedDefaultBackgroundColor;
     NSColor *_processedDefaultTextColor;
     vector_float4 _selectionColor;
     iTermLineStyleMarkColors _lineStyleMarkColors;
@@ -89,10 +90,13 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _blinkingItemsVisible;
     NSFont *_timestampFont;
     NSArray<iTermTerminalButton *> *_terminalButtons NS_AVAILABLE_MAC(11);
-    
+
     // Offscreen command line
     NSColor *_offscreenCommandLineBackgroundColor;
     NSColor *_offscreenCommandLineOutlineColor;
+
+    // Selected command
+    NSRange _selectedCommandRegion;
 };
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper

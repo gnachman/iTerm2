@@ -30,7 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Return (-1,-1) to ignore the click.
 - (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
                     clickPoint:(NSEvent *)event
-                 allowOverflow:(BOOL)allowRightMarginOverflow;
+                 allowOverflow:(BOOL)allowRightMarginOverflow
+                    firstMouse:(BOOL)firstMouse;
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler
       coordIsMutable:(VT100GridCoord)coord;
 - (MouseMode)mouseHandlerMouseMode:(PTYMouseHandler *)handler;

@@ -434,7 +434,8 @@ precededByWhitespace:(BOOL)precededByWhitespace
               startingAtY:y_
                withOffset:1
                 inContext:findContext_
-          multipleResults:YES];
+          multipleResults:YES
+             absLineRange:NSMakeRange(0, 0)];
 
     [self _doPopulateMore];
 }
@@ -588,6 +589,7 @@ precededByWhitespace:(BOOL)precededByWhitespace
             more_ = [screen continueFindAllResults:findResults_
                                           rangeOut:&ignore
                                             inContext:findContext_
+                                      absLineRange:NSMakeRange(0, 0)
                                      rangeSearched:NULL];
         }
         AcLog(@"This iteration found %d results in %lf sec", (int) [findResults_ count], [[NSDate date] timeIntervalSinceDate:cs]);

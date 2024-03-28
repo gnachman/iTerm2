@@ -860,6 +860,18 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, block_num)];
 }
 
+- (BOOL)setStartCoord:(VT100GridCoord)coord ofFindContext:(FindContext *)findContext width:(int)width {
+    LineBufferPosition *position = [self positionForCoordinate:coord width:width offset:0];
+    int absBlockNum = 0;
+    int offset = 0;
+    if (![self _findPosition:position inBlock:&absBlockNum inOffset:&offset]) {
+        return NO;
+    }
+    findContext.offset = offset;
+    findContext.absBlockNum = absBlockNum + num_dropped_blocks;
+    return YES;
+}
+
 - (void)prepareToSearchFor:(NSString*)substring
                 startingAt:(LineBufferPosition *)start
                    options:(FindOptions)options
@@ -1051,7 +1063,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (LineBufferPosition *)positionOfFindContext:(FindContext *)context width:(int)width {
-    if (context.absBlockNum > num_dropped_blocks) {
+    if (context.absBlockNum < num_dropped_blocks) {
         // Before beginning
         return [self firstPosition];
     }

@@ -381,7 +381,8 @@ const int kColorMapAnsiBrightModifier = 8;
                               dimOnlyText:_dimOnlyText];
 }
 
-- (vector_float4)fastProcessedBackgroundColorForBackgroundColor:(vector_float4)backgroundColor {
+- (vector_float4)fastProcessedBackgroundColorForBackgroundColor:(vector_float4)backgroundColor
+                                             inDeselectedRegion:(BOOL)inDeselectedRegion {
     vector_float4 defaultBackgroundComponents = [self fastColorForKey:kColorMapBackground];
     const vector_float4 mutedRgb = [self fastAverageComponents:backgroundColor with:defaultBackgroundComponents alpha:_mutingAmount];
     vector_float4 grayRgb = { 0.5, 0.5, 0.5, 1 };
@@ -405,8 +406,13 @@ const int kColorMapAnsiBrightModifier = 8;
     }
 
     vector_float4 dimmedRgb;
+    double dimmingAmount = _dimmingAmount;
+    if (inDeselectedRegion) {
+        dimmingAmount = MIN(0.8, dimmingAmount + 0.15);
+        shouldDim = YES;
+    }
     if (shouldDim) {
-        dimmedRgb = [self fastAverageComponents:mutedRgb with:grayRgb alpha:_dimmingAmount];
+        dimmedRgb = [self fastAverageComponents:mutedRgb with:grayRgb alpha:dimmingAmount];
     } else {
         dimmedRgb = mutedRgb;
     }
@@ -418,7 +424,8 @@ const int kColorMapAnsiBrightModifier = 8;
 // There is an issue where where the passed-in color can be in a different color space than the
 // default background color. It doesn't make sense to combine RGB values from different color
 // spaces. The effects are generally subtle.
-- (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)backgroundColor {
+- (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)backgroundColor
+                              inDeselectedCommandRegion:(BOOL)inDeselectedCommandRegion {
     if (!backgroundColor) {
         return nil;
     }
@@ -452,11 +459,15 @@ const int kColorMapAnsiBrightModifier = 8;
         }
     }
 
-    if (shouldDim) {
+    double dimmingAmount = _dimmingAmount;
+    if (inDeselectedCommandRegion) {
+        dimmingAmount = MIN(0.8, dimmingAmount + 0.15);
+    }
+    if (shouldDim || inDeselectedCommandRegion) {
         [iTermColorMap getComponents:dimmedRgb
                byAveragingComponents:mutedRgb
                       withComponents:grayRgb
-                               alpha:_dimmingAmount];
+                               alpha:dimmingAmount];
     } else {
         memmove(dimmedRgb, mutedRgb, sizeof(CGFloat) * 3);
     }

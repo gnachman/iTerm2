@@ -155,7 +155,8 @@
                                              tabStyle:(id<PSMTabStyle>)tabStyle
                                         mainAndActive:(BOOL)mainAndActive {
     if (self.useMinimalStyle) {
-        NSColor *color = [self terminalWindowDecorationTextColorForBackgroundColor:[colorMap processedBackgroundColorForBackgroundColor:[colorMap colorForKey:kColorMapBackground]]
+        NSColor *color = [self terminalWindowDecorationTextColorForBackgroundColor:[colorMap processedBackgroundColorForBackgroundColor:[colorMap colorForKey:kColorMapBackground]
+                                                                                                              inDeselectedCommandRegion:NO]
                                                                effectiveAppearance:effectiveAppearance
                                                                           tabStyle:tabStyle
                                                                      mainAndActive:mainAndActive];

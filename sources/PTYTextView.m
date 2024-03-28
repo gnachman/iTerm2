@@ -1503,6 +1503,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     const BOOL autoComposerOpen = [self.delegate textViewIsAutoComposerOpen];
     _drawingHelper.isCursorVisible = _cursorVisible && !autoComposerOpen;
     _drawingHelper.linesToSuppress = self.delegate.textViewLinesToSuppressDrawing;
+    // TODO: Don't leave find on page helper as the source of truth for this!
+    _drawingHelper.selectedCommandRegion = [self relativeRangeFromAbsLineRange:self.findOnPageHelper.absLineRange];
     [_drawingHelper updateCachedMetrics];
     [_drawingHelper updateButtonFrames];
     
@@ -1525,6 +1527,17 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return _drawingHelper;
 }
 
+- (NSRange)relativeRangeFromAbsLineRange:(NSRange)absRange {
+    long long first = absRange.location;
+    long long last = NSMaxRange(absRange);
+    long long offset = _dataSource.totalScrollbackOverflow;
+    first -= offset;
+    last -= offset;
+    first = MAX(0, first);
+    last = MAX(first, last);
+    return NSMakeRange(first, last - first);
+}
+
 - (NSPoint)currentMouseCursorCoordinate:(out BOOL *)validPtr {
     NSEvent *currentEvent = [NSApp currentEvent];
     if (!currentEvent || !self.window) {
@@ -1543,7 +1556,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 - (NSColor *)defaultBackgroundColor {
     CGFloat alpha = [self useTransparency] ? 1 - _transparency : 1;
-    return [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapBackground]] colorWithAlphaComponent:alpha];
+    return [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapBackground]
+                                        inDeselectedCommandRegion:NO] colorWithAlphaComponent:alpha];
 }
 
 - (NSColor *)defaultTextColor {
@@ -2544,14 +2558,22 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (IBAction)selectAll:(id)sender {
+    NSRange absRangeToSelect;
+
+    if (_findOnPageHelper.absLineRange.length > 0 &&
+        _findOnPageHelper.absLineRange.location != NSNotFound) {
+        absRangeToSelect = _findOnPageHelper.absLineRange;
+    } else {
+        const long long overflow = _dataSource.totalScrollbackOverflow;
+        absRangeToSelect = NSMakeRange(overflow, [_dataSource numberOfLines]);
+    }
     // Set the selection region to the whole text.
-    const long long overflow = _dataSource.totalScrollbackOverflow;
-    [_selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(0, overflow)
+    [_selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(0, absRangeToSelect.location)
                                     mode:kiTermSelectionModeCharacter
                                   resume:NO
                                   append:NO];
     [_selection moveSelectionEndpointTo:VT100GridAbsCoordMake([_dataSource width],
-                                                              overflow + [_dataSource numberOfLines] - 1)];
+                                                              NSMaxRange(absRangeToSelect) - 1)];
     [_selection endLiveSelection];
     if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
         [self copySelectionAccordingToUserPreferences];
@@ -4191,10 +4213,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (BOOL)continueFindAllResults:(NSMutableArray *)results
                       rangeOut:(NSRange *)rangePtr
                      inContext:(FindContext *)context
+                  absLineRange:(NSRange)absLineRange
                  rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     return [_dataSource continueFindAllResults:results
                                       rangeOut:rangePtr
                                      inContext:context
+                                  absLineRange:absLineRange
                                  rangeSearched:rangeSearched];
 }
 
@@ -4205,7 +4229,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                     startingAtY:(int)y
                      withOffset:(int)offset
                       inContext:(FindContext*)context
-                multipleResults:(BOOL)multipleResults {
+                multipleResults:(BOOL)multipleResults
+                   absLineRange:(NSRange)absLineRange {
     DLog(@"begin self=%@ aString=%@ dataSource=%@", self, aString, _dataSource);
     [_dataSource setFindString:aString
               forwardDirection:direction
@@ -4214,7 +4239,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                    startingAtY:y
                     withOffset:offset
                      inContext:context
-               multipleResults:multipleResults];
+               multipleResults:multipleResults
+                  absLineRange:absLineRange];
 }
 
 - (void)findOnPageHelperSearchExternallyFor:(NSString *)query mode:(iTermFindMode)mode {
@@ -4228,6 +4254,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 - (void)findOnPageHelperRemoveExternalHighlights {
     [self removePortholeHighlights];
+}
+
+- (void)findOnPageHelperRemoveExternalHighlightsFrom:(iTermExternalSearchResult *)externalSearchResult {
+    [self removePortholeHighlightsFrom:externalSearchResult];
 }
 
 - (void)selectCoordRange:(VT100GridCoordRange)range {
@@ -4881,8 +4911,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (void)drawingHelperDrawBackgroundImageInRect:(NSRect)rect
                         blendDefaultBackground:(BOOL)blend
+                                    deselected:(BOOL)deselected
                                  virtualOffset:(CGFloat)virtualOffset {
-    [_delegate textViewDrawBackgroundImageInView:self viewRect:rect blendDefaultBackground:blend virtualOffset:virtualOffset];
+    [_delegate textViewDrawBackgroundImageInView:self
+                                        viewRect:rect
+                          blendDefaultBackground:blend
+                                      deselected:deselected
+                                   virtualOffset:virtualOffset];
 }
 
 - (id<VT100ScreenMarkReading>)drawingHelperMarkOnLine:(int)line {
@@ -5825,7 +5860,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
                     clickPoint:(NSEvent *)event
-                 allowOverflow:(BOOL)allowRightMarginOverflow {
+                 allowOverflow:(BOOL)allowRightMarginOverflow
+                    firstMouse:(BOOL)firstMouse {
     if (event.type == NSEventTypeLeftMouseUp && event.clickCount == 1) {
         const NSPoint windowPoint = [event locationInWindow];
         const NSPoint enclosingViewPoint = [self.enclosingScrollView convertPoint:windowPoint fromView:nil];
@@ -5846,6 +5882,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                 [self scrollToAbsoluteOffset:_drawingHelper.offscreenCommandLine.absoluteLineNumber height:1];
                 return VT100GridCoordMake(-1, -1);
             }
+        }
+        if (!firstMouse) {
+            const NSPoint temp =
+            [self clickPoint:event allowRightMarginOverflow:allowRightMarginOverflow];
+            [_delegate textViewSelectCommandRegionAtCoord:VT100GridCoordMake(temp.x, temp.y)];
         }
     }
     const NSPoint temp =

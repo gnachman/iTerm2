@@ -160,6 +160,16 @@ NS_INLINE int VT100GridRangeMax(VT100GridRange range) {
     return range.location + range.length - 1;
 }
 
+NS_INLINE long long VT100GridRangeNoninclusiveMaxLL(VT100GridRange range) {
+    return (long long)range.location + (long long)range.length;
+}
+
+NS_INLINE VT100GridRange VT100GridRangeIntersection(VT100GridRange r1, VT100GridRange r2) {
+    const long long start = MAX(r1.location, r2.location);
+    const long long end = MIN(VT100GridRangeNoninclusiveMaxLL(r1), VT100GridRangeNoninclusiveMaxLL(r2));
+    return VT100GridRangeMake((int)start, (int)MAX(0, end - start));
+}
+
 NS_INLINE VT100GridRect VT100GridRectMake(int x, int y, int width, int height) {
     VT100GridRect rect;
     rect.origin = VT100GridCoordMake(x, y);

@@ -40,15 +40,14 @@ import Foundation
         }
     }
 
-    func removeTemporaryHighlights() {
+    func removeTemporaryHighlight(inRange rangeToRemove: NSRange) {
         guard let textStorage = textStorage else {
             return
         }
         textStorage.editAttributes { update in
-            let wholeRange = NSRange(location: 0, length: textStorage.string.utf16.count)
             var ranges = [NSRange]()
             textStorage.enumerateAttribute(.it2_temporarilyHighlighted,
-                                           in: wholeRange) { flag, range, stop in
+                                           in: rangeToRemove) { flag, range, stop in
                 if flag != nil {
                     ranges.append(range)
                 }
@@ -73,6 +72,14 @@ import Foundation
                 }
             }
         }
+    }
+
+    func removeTemporaryHighlights() {
+        guard let textStorage = textStorage else {
+            return
+        }
+        let wholeRange = NSRange(location: 0, length: textStorage.string.utf16.count)
+        removeTemporaryHighlight(inRange: wholeRange)
     }
 
     private func temporarilyHighlight(_ range: NSRange) {

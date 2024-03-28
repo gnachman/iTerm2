@@ -13,13 +13,14 @@
 @class iTermImageWrapper;
 
 @protocol iTermBackgroundDrawingHelperDelegate<NSObject>
-- (SessionView *)backgroundDrawingHelperView;  // _view
-- (iTermImageWrapper *)backgroundDrawingHelperImage;  // _backgroundImage
-- (BOOL)backgroundDrawingHelperUseTransparency;  // _textview.useTransparency
-- (CGFloat)backgroundDrawingHelperTransparency;  // _textview.transparency
-- (iTermBackgroundImageMode)backgroundDrawingHelperBackgroundImageMode;  // _backgroundImageMode
-- (NSColor *)backgroundDrawingHelperDefaultBackgroundColor;  // [self processedBackgroundColor];
-- (CGFloat)backgroundDrawingHelperBlending;  // _textview.blend
+- (SessionView *)backgroundDrawingHelperView;
+- (iTermImageWrapper *)backgroundDrawingHelperImage;
+- (BOOL)backgroundDrawingHelperUseTransparency;
+- (CGFloat)backgroundDrawingHelperTransparency;
+- (iTermBackgroundImageMode)backgroundDrawingHelperBackgroundImageMode;
+- (NSColor *)backgroundDrawingHelperDefaultBackgroundColor;
+- (NSColor *)backgroundDrawingHelperDeselectedDefaultBackgroundColor;
+- (CGFloat)backgroundDrawingHelperBlending;
 @end
 
 @interface iTermBackgroundDrawingHelper : NSObject
@@ -30,6 +31,7 @@
                         dirtyRect:(NSRect)rect
            visibleRectInContainer:(NSRect)visibleRectInContainer
            blendDefaultBackground:(BOOL)blendDefaultBackground
+                       deselected:(BOOL)deselected
                              flip:(BOOL)shouldFlip
                     virtualOffset:(CGFloat)virtualOffset;
 

@@ -113,6 +113,42 @@ typedef struct {
     return _findInProgress || _searchingForNextResult;
 }
 
+- (void)setAbsLineRange:(NSRange)absLineRange {
+    if (NSEqualRanges(absLineRange, _absLineRange)) {
+        return;
+    }
+    _absLineRange = absLineRange;
+    // Remove search results outside this range.
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    [_searchResults enumerateObjectsUsingBlock:^(SearchResult * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (obj.isExternal) {
+            if (!NSLocationInRange(obj.externalAbsY, absLineRange)) {
+                [indexes addIndex:idx];
+                [_locations removeIndex:obj.externalAbsY];
+                [_highlightMap removeObjectForKey:@(obj.externalAbsY)];
+                [_delegate findOnPageHelperRemoveExternalHighlightsFrom:obj.externalResult];
+            }
+        } else {
+            if (!NSLocationInRange(obj.internalAbsStartY, absLineRange) &&
+                !NSLocationInRange(obj.internalAbsEndY, absLineRange)) {
+                [indexes addIndex:idx];
+                [_locations removeIndex:obj.internalAbsStartY];
+                [_highlightMap removeObjectForKey:@(obj.internalAbsStartY)];
+            }
+        }
+    }];
+    if (indexes.count) {
+        [_searchResults removeObjectsAtIndexes:indexes];
+
+        [self locationsDidChange];
+        _cachedCounts.valid = NO;
+
+        if (_numberOfProcessedSearchResults > _searchResults.count) {
+            _numberOfProcessedSearchResults = _searchResults.count;
+        }
+    }
+}
+
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
@@ -154,7 +190,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                startingAtY:numberOfLines + 1 + totalScrollbackOverflow
                                 withOffset:0
                                  inContext:findContext
-                           multipleResults:YES];
+                           multipleResults:YES
+                              absLineRange:self.absLineRange];
 
         [_copiedContext copyFromFindContext:findContext];
         _copiedContext.results = nil;
@@ -223,6 +260,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         more = [_delegate continueFindAllResults:newSearchResults
                                         rangeOut:rangePtr
                                        inContext:context
+                                    absLineRange:self.absLineRange
                                    rangeSearched:NULL];
         *progress = [context progress];
     } else {

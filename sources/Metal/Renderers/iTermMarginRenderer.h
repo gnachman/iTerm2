@@ -11,7 +11,10 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermMarginRendererTransientState : iTermMetalCellRendererTransientState
-@property (nonatomic) vector_float4 color;
+@property (nonatomic) vector_float4 regularColor;
+@property (nonatomic) vector_float4 deselectedColor;
+@property (nonatomic) VT100GridRect selectedCommandRect;
+@property (nonatomic) BOOL hasSelectedRegion;
 @end
 
 // Renders four margins around the periphery of the session as a solid color.

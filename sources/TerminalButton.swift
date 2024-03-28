@@ -41,6 +41,7 @@ class TerminalButton: NSObject {
     private var state = State.normal
     @objc let id: Int
     @objc var enclosingSessionWidth: Int32 = 0
+    @objc var shift = CGFloat(0)
     var selected: Bool { false }
 
     init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, mark: iTermMarkProtocol?) {
@@ -49,6 +50,23 @@ class TerminalButton: NSObject {
         self.foregroundImage = foregroundImage
         self.mark = mark
         aspectRatio = foregroundImage.size.height / foregroundImage.size.width;
+    }
+
+    required init?(_ original: TerminalButton) {
+        self.id = original.id
+        self.backgroundImage = original.backgroundImage
+        self.foregroundImage = original.foregroundImage
+        self.mark = original.mark
+        aspectRatio = original.foregroundImage.size.height / original.foregroundImage.size.width;
+        desiredFrame = original.desiredFrame
+        absCoordForDesiredFrame = original.absCoordForDesiredFrame
+        state = original.state
+        enclosingSessionWidth = original.enclosingSessionWidth
+        shift = original.shift
+    }
+
+    @objc func clone() -> Self {
+        return Self(self)!
     }
 
     private func tinted(_ cachedImage: NSImage?, _ baseImage: NSImage, _ cachedColor: NSColor?, _ color: NSColor) -> NSImage {
@@ -203,6 +221,23 @@ class TerminalCopyButton: TerminalButton {
                    foregroundImage: fg,
                    mark: mark)
     }
+    
+    required init?(_ original: TerminalButton) {
+        let downcast = original as! TerminalCopyButton
+        self.blockID = downcast.blockID
+        self.absY = downcast.absY
+        isFloating = downcast.isFloating
+        super.init(id: downcast.id,
+                   backgroundImage: downcast.backgroundImage,
+                   foregroundImage: downcast.foregroundImage,
+                   mark: downcast.mark)
+    }
+    
+    override func clone() -> Self {
+        let copy = TerminalCopyButton(id: id, blockID: blockID, mark: mark, absY: absY)!
+        copy.isFloating = isFloating
+        return copy as! Self
+    }
 }
 
 @available(macOS 11, *)
@@ -227,6 +262,17 @@ class TerminalMarkButton: TerminalButton {
                    foregroundImage: fg,
                    mark: mark)
     }
+
+    required init?(_ original: TerminalButton) {
+        let downcast = original as! TerminalMarkButton
+        self.screenMark = downcast.screenMark
+        self.dx = downcast.dx
+        super.init(original)
+    }
+
+    override func clone() -> Self {
+        return Self(self)!
+    }
 }
 
 @available(macOS 11, *)
@@ -236,6 +282,10 @@ class TerminalCopyCommandButton: TerminalMarkButton {
     @objc(initWithMark:dx:)
     init?(mark: VT100ScreenMarkReading, dx: Int32) {
         super.init(identifier: -2, mark: mark, fgName: "doc.on.doc", bgName: "doc.on.doc.fill", dx: dx)
+    }
+
+    required init?(_ original: TerminalButton) {
+        super.init(original)
     }
 }
 
@@ -250,6 +300,9 @@ class TerminalBookmarkButton: TerminalMarkButton {
     init?(mark: VT100ScreenMarkReading, dx: Int32) {
         super.init(identifier: -3, mark: mark, fgName: "bookmark", bgName: "bookmark.fill", dx: dx)
     }
+    required init?(_ original: TerminalButton) {
+        super.init(original)
+    }
 }
 
 @available(macOS 11, *)
@@ -259,5 +312,7 @@ class TerminalShareButton: TerminalMarkButton {
     init?(mark: VT100ScreenMarkReading, dx: Int32) {
         super.init(identifier: -5, mark: mark, fgName: "square.and.arrow.up", bgName: "square.and.arrow.up.fill", dx: dx)
     }
-
+    required init?(_ original: TerminalButton) {
+        super.init(original)
+    }
 }

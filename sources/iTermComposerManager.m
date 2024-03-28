@@ -364,6 +364,10 @@
     [self.delegate composerManager:self desiredHeightDidChange:desiredHeight];
 }
 
+- (void)minimalComposerAutoComposerTextDidChange:(iTermMinimalComposerViewController *)composer {
+    [self.delegate composerManagerAutoComposerTextDidChange:self];
+}
+
 - (id<iTermSyntaxHighlighting>)minimalComposer:(iTermMinimalComposerViewController *)composer
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString {
     return [self.delegate composerManager:self syntaxHighlighterForAttributedString:attributedString];

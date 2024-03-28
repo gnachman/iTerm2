@@ -632,6 +632,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     void (^_pendingConductor)(PTYSession *);
     BOOL _connectingSSH;
     NSMutableData *_queuedConnectingSSH;
+
+    __weak id<VT100ScreenMarkReading> _selectedCommandMark;
 }
 
 @synthesize isDivorced = _divorced;
@@ -8572,6 +8574,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
+    [self removeSelectedCommandRange];
     [self enableOffscreenMarkAlertsIfNeeded];
     const BOOL accept = [self shouldAcceptKeyDownEvent:event];
     if (accept) {
@@ -9838,8 +9841,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (BOOL)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)dirtyRect
                    blendDefaultBackground:(BOOL)blendDefaultBackground
+                               deselected:(BOOL)deselected
                             virtualOffset:(CGFloat)virtualOffset NS_DEPRECATED_MAC(10_0, 10_16) {
-    if (!self.shouldDrawBackgroundImageManually) {
+    if (!deselected && !self.shouldDrawBackgroundImageManually) {
         return NO;
     }
     if (!_backgroundDrawingHelper) {
@@ -9857,6 +9861,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                                   dirtyRect:dirtyRect
                                      visibleRectInContainer:NSMakeRect(0, 0, contentRect.size.width, contentRect.size.height)
                                      blendDefaultBackground:blendDefaultBackground
+                                                 deselected:deselected
                                                        flip:NO
                                               virtualOffset:virtualOffset];
     } else {
@@ -9870,6 +9875,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                                   dirtyRect:clippedDirtyRect
                                      visibleRectInContainer:windowVisibleRect
                                      blendDefaultBackground:blendDefaultBackground
+                                                 deselected:deselected
                                                        flip:YES
                                               virtualOffset:virtualOffset];
     }
@@ -9921,7 +9927,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (NSColor *)processedBackgroundColor {
     NSColor *unprocessedColor = [_screen.colorMap colorForKey:kColorMapBackground];
-    return [_screen.colorMap processedBackgroundColorForBackgroundColor:unprocessedColor];
+    return [_screen.colorMap processedBackgroundColorForBackgroundColor:unprocessedColor
+                                              inDeselectedCommandRegion:NO];
+}
+
+- (NSColor *)processedDeselectedBackgroundColor {
+    NSColor *unprocessedColor = [_screen.colorMap colorForKey:kColorMapBackground];
+    return [_screen.colorMap processedBackgroundColorForBackgroundColor:unprocessedColor
+                                              inDeselectedCommandRegion:YES];
 }
 
 - (void)textViewPostTabContentsChangedNotification
@@ -11569,6 +11582,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     more = [_screen continueFindAllResults:results
                                   rangeOut:&ignore
                                  inContext:_tailFindContext
+                              absLineRange:_textview.findOnPageHelper.absLineRange
                              rangeSearched:&rangeSearched];
     DLog(@"Continue tail find found %@ results, more=%@", @(results.count), @(more));
     if (VT100GridAbsCoordRangeIsValid(rangeSearched)) {
@@ -11627,7 +11641,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                startingAtY:0
                 withOffset:0
                  inContext:_tailFindContext
-           multipleResults:YES];
+           multipleResults:YES
+              absLineRange:_textview.findOnPageHelper.absLineRange];
 
     // Set the starting position to the block & offset that the backward search
     // began at. Do a forward search from that location.
@@ -14471,6 +14486,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self.tmuxForegroundJobMonitor updateOnce];
     [self.variablesScope setValue:@(showing)
                  forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
+    [self removeSelectedCommandRange];
 }
 
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp {
@@ -15633,6 +15649,57 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return !(alt && bottom);    
 }
 
+- (void)textViewSelectCommandRegionAtCoord:(VT100GridCoord)coord {
+    if (_screen.terminalSoftAlternateScreenMode) {
+        return;
+    }
+    id<VT100ScreenMarkReading> mark = [_screen commandMarkAtOrBeforeLine:coord.y];
+    id<VT100ScreenMarkReading> previous = _selectedCommandMark;
+    if (_selectedCommandMark == mark) {
+        _selectedCommandMark = nil;
+    } else {
+        _selectedCommandMark = mark;
+    }
+    [self updateSearchRange];
+    _screen.savedFindContextAbsPos = 0;
+    if (previous != _selectedCommandMark) {
+        [_textview requestDelegateRedraw];
+    }
+}
+
+- (void)removeSelectedCommandRange {
+    if (!_selectedCommandMark) {
+        return;
+    }
+    _selectedCommandMark = nil;
+    [self updateSearchRange];
+    _screen.savedFindContextAbsPos = 0;
+    [_textview requestDelegateRedraw];
+}
+
+- (void)updateSearchRange {
+    if (!_selectedCommandMark) {
+        _textview.findOnPageHelper.absLineRange = NSMakeRange(0, 0);
+        return;
+    }
+    VT100GridAbsCoordRange range;
+    range.start = [_screen absCoordRangeForInterval:_selectedCommandMark.entry.interval].start;
+
+    id<VT100ScreenMarkReading> successor = [_screen promptMarkAfterPromptMark:_selectedCommandMark];
+    if (successor) {
+        range.end = [_screen absCoordRangeForInterval:successor.entry.interval].start;
+        range.end.y -= 1;
+    } else {
+        range.end = VT100GridAbsCoordMake(_screen.width - 1, _screen.numberOfLines + _screen.totalScrollbackOverflow - 1);
+    }
+    if (_selectedCommandMark.lineStyle) {
+        _textview.findOnPageHelper.absLineRange = NSMakeRange(MAX(0, range.start.y - 1),
+                                                              range.end.y - range.start.y + 1);
+    } else {
+        _textview.findOnPageHelper.absLineRange = NSMakeRange(range.start.y, range.end.y - range.start.y + 1);
+    }
+}
+
 #pragma mark - iTermHotkeyNavigableSession
 
 - (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {
@@ -16292,6 +16359,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSColor *)backgroundDrawingHelperDefaultBackgroundColor {
     return [self processedBackgroundColor];
+}
+
+- (NSColor *)backgroundDrawingHelperDeselectedDefaultBackgroundColor {
+    return [self processedDeselectedBackgroundColor];
 }
 
 - (CGFloat)backgroundDrawingHelperBlending {
@@ -17306,6 +17377,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return newFrame;
 }
 
+- (void)composerManagerAutoComposerTextDidChange:(iTermComposerManager *)composerManager {
+    [self removeSelectedCommandRange];
+}
+
 - (void)composerManager:(iTermComposerManager *)composerManager desiredHeightDidChange:(CGFloat)desiredHeight {
     DLog(@"Desired height changed to %@", @(desiredHeight));
     [self sync];
@@ -17320,6 +17395,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)screenDidSynchronize {
     [self updateAutoComposerFrame];
+    [self updateSearchRange];
 }
 
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager {

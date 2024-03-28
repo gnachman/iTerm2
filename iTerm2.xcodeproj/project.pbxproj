@@ -1714,6 +1714,10 @@
 		A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6566752219EA582005FE60E /* NSNull+iTerm.m */; };
 		A656E9951F99C5FB00158128 /* iTermSubpixelModelBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = A656E9931F99C5FB00158128 /* iTermSubpixelModelBuilder.h */; };
 		A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */ = {isa = PBXBuildFile; fileRef = A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */; };
+		A657D1AA2BAFA95200A3B6C2 /* RectangleRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A657D1A92BAFA95200A3B6C2 /* RectangleRenderer.swift */; };
+		A657D1B12BAFAF6300A3B6C2 /* Rectangle.metal in Sources */ = {isa = PBXBuildFile; fileRef = A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */; };
+		A657D1B22BAFAF6300A3B6C2 /* Rectangle.metal in Sources */ = {isa = PBXBuildFile; fileRef = A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */; };
+		A657D1B32BAFAF6300A3B6C2 /* Rectangle.metal in Sources */ = {isa = PBXBuildFile; fileRef = A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */; };
 		A658716A1D85E6700061CEEE /* PFMoveApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = A65871681D85E6700061CEEE /* PFMoveApplication.h */; };
 		A658716B1D85E6750061CEEE /* PFMoveApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = A65871671D85E6700061CEEE /* PFMoveApplication.m */; };
 		A6587A4721D82B4200794775 /* iTermStandardKeyMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6587A4521D82B4200794775 /* iTermStandardKeyMapper.h */; };
@@ -6053,6 +6057,8 @@
 		A656E9671F8C994200158128 /* iTermMetalGlyphKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalGlyphKey.h; sourceTree = "<group>"; };
 		A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermSubpixelModelBuilder.mm; path = Metal/Infrastructure/iTermSubpixelModelBuilder.mm; sourceTree = "<group>"; };
 		A656E9931F99C5FB00158128 /* iTermSubpixelModelBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermSubpixelModelBuilder.h; path = Metal/Infrastructure/iTermSubpixelModelBuilder.h; sourceTree = "<group>"; };
+		A657D1A92BAFA95200A3B6C2 /* RectangleRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangleRenderer.swift; sourceTree = "<group>"; };
+		A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Rectangle.metal; path = Metal/Shaders/Rectangle.metal; sourceTree = "<group>"; };
 		A65871671D85E6700061CEEE /* PFMoveApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PFMoveApplication.m; path = LetsMove/PFMoveApplication.m; sourceTree = "<group>"; };
 		A65871681D85E6700061CEEE /* PFMoveApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PFMoveApplication.h; path = LetsMove/PFMoveApplication.h; sourceTree = "<group>"; };
 		A6587A4521D82B4200794775 /* iTermStandardKeyMapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStandardKeyMapper.h; sourceTree = "<group>"; };
@@ -10016,6 +10022,7 @@
 				A67960BD1F81FCA5008A42BC /* iTermBackgroundColor.metal */,
 				A67960BC1F81FCA5008A42BC /* iTermBackgroundImage.metal */,
 				A67960BE1F81FCA5008A42BC /* iTermBadge.metal */,
+				A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */,
 				A67960C01F81FCA5008A42BC /* iTermBroadcastStripes.metal */,
 				A67960BA1F81FCA5008A42BC /* iTermCursorGuide.metal */,
 				A67960C11F81FCA5008A42BC /* iTermCursorRenderer.metal */,
@@ -10081,6 +10088,7 @@
 				A66DCE7929E1D1CC003A94BE /* iTermLineStyleMarkRenderer.m */,
 				A6E2D0F42AC485F3005C6677 /* BlockRenderer.swift */,
 				A6E2DF862AC4A1FF005C6677 /* TerminalButtonRenderer.swift */,
+				A657D1A92BAFA95200A3B6C2 /* RectangleRenderer.swift */,
 			);
 			name = Renderers;
 			sourceTree = "<group>";
@@ -15344,6 +15352,7 @@
 				A6DBC04120049CB100F1466D /* iTermImage.metal in Sources */,
 				A6C1FD561FC2B210006B9A69 /* iTermMargin.metal in Sources */,
 				A67960F71F8202C2008A42BC /* iTermBackgroundColor.metal in Sources */,
+				A657D1B32BAFAF6300A3B6C2 /* Rectangle.metal in Sources */,
 				A68400AC1FF82E05008D3EE2 /* iTermIndicator.metal in Sources */,
 				A68400B41FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				A638A05220EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */,
@@ -15386,6 +15395,7 @@
 				A67960F11F8202C1008A42BC /* iTermBadge.metal in Sources */,
 				A67960F21F8202C1008A42BC /* iTermBroadcastStripes.metal in Sources */,
 				A6DBC04D2005F45700F1466D /* iTermHighlightRow.metal in Sources */,
+				A657D1B22BAFAF6300A3B6C2 /* Rectangle.metal in Sources */,
 				A67960EF1F8202C1008A42BC /* iTermBackgroundColor.metal in Sources */,
 				A67960F41F8202C1008A42BC /* iTermCursorRenderer.metal in Sources */,
 			);
@@ -15441,6 +15451,7 @@
 				A6F09F5C2AD0A33300339D2D /* TerminalButton.metal in Sources */,
 				A60D02342683D61000E19362 /* Phony.swift in Sources */,
 				A67DAF1A299C926200AD331A /* iTermSolidColor.metal in Sources */,
+				A657D1B12BAFAF6300A3B6C2 /* Rectangle.metal in Sources */,
 				A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */,
 				A67960E81F8202C0008A42BC /* iTermBackgroundImage.metal in Sources */,
 			);
@@ -15901,6 +15912,7 @@
 				A6E2A6182B86DF0E00EC6070 /* AtomicMutableArrayOfWeakObjects.swift in Sources */,
 				A6B6A4FE23CEE6E80016B1AE /* iTermOrderEnforcer.m in Sources */,
 				A65429BB20CE3C9F00CE71B1 /* iTermExpressionParser.m in Sources */,
+				A657D1AA2BAFA95200A3B6C2 /* RectangleRenderer.swift in Sources */,
 				5376CB0A2205337400FE7476 /* TmuxDashboardController.m in Sources */,
 				A6F718B22263E8A20053488E /* iTermInitialDirectory.m in Sources */,
 				A62132D327862A4800B80724 /* TokenExecutor.swift in Sources */,

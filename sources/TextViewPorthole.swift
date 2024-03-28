@@ -672,4 +672,10 @@ extension TextViewPorthole: ExternalSearchResultOwner {
         // If it's offscreen because the porthole is truncated then you get back a zero rect.
         return rect != NSRect.zero
     }
+    func remove(_ result: ExternalSearchResult) {
+        guard let myResult = result as? SearchResult else {
+            fatalError()
+        }
+        textView.removeTemporaryHighlight(inRange: myResult.range)
+    }
 }

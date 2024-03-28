@@ -20,22 +20,25 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
         var foregroundColor: vector_float4
         var backgroundColor: vector_float4
         var selectedColor: vector_float4
+        var shift: CGFloat
     }
     fileprivate var buttons = [Button]()
 
-    @objc(addButton:onScreenLine:column:foregroundColor:backgroundColor:selectedColor:)
+    @objc(addButton:onScreenLine:column:foregroundColor:backgroundColor:selectedColor:shift:)
     func add(terminalButton: TerminalButton,
              line: Int,
              column: Int,
              foregroundColor: vector_float4,
              backgroundColor: vector_float4,
-             selectedColor: vector_float4) {
+             selectedColor: vector_float4,
+             shift: CGFloat) {
         buttons.append(Button(terminalButton: terminalButton,
                               line: line,
                               column: column,
                               foregroundColor:foregroundColor,
                               backgroundColor:backgroundColor,
-                             selectedColor: selectedColor))
+                              selectedColor: selectedColor,
+                              shift: shift))
     }
 
     override func writeDebugInfo(toFolder folder: URL) {
@@ -104,7 +107,7 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
                               gridHeight: Int,
                               context: iTermMetalBufferPoolContext) -> MTLBuffer {
         let textureFrame = CGRect(x: 0, y: 0, width: 1, height: 1)
-        let y = CGFloat(gridHeight - button.line - 1) * cellHeight + bottomInset
+        let y = CGFloat(gridHeight - button.line - 1) * cellHeight + bottomInset - button.shift
         let frame = NSRect(x: x,
                            y: y,
                            width: button.terminalButton.desiredFrame.width * scale,

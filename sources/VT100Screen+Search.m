@@ -31,7 +31,8 @@
               startingAtY:(int)y
                withOffset:(int)offset
                 inContext:(FindContext *)context
-          multipleResults:(BOOL)multipleResults {
+          multipleResults:(BOOL)multipleResults
+             absLineRange:(NSRange)absLineRange {
     DLog(@"begin self=%@ aString=%@", self, aString);
 
     // It's too hard to reason about merging the search buffer with the real
@@ -42,6 +43,22 @@
     // uses progenitor pointers and expects a consistent pair of LineBuffers
     // for the merge.
     assert(!self.stateIsShared);
+
+    if (absLineRange.length > 0) {
+        // Constrain y to absLineRange
+        const long long overflow = self.totalScrollbackOverflow;
+        long long absY = y + overflow;
+        if (absY < absLineRange.location) {
+            absY = absLineRange.location;
+        } else if (absY >= NSMaxRange(absLineRange)) {
+            absY = NSMaxRange(absLineRange) - 1;
+        }
+        if (absY < overflow) {
+            y = 0;
+        } else {
+            y = absY - overflow;
+        }
+    }
 
     @autoreleasepool {
         LineBuffer *tempLineBuffer = [self searchBuffer];
@@ -79,10 +96,17 @@
                 if (!ok) {
                     startPos = lastValidPosition;
                 } else {
-                    VT100GridCoord lastPositionCoord = [tempLineBuffer coordinateForPosition:lastValidPosition
-                                                                                       width:_state.currentGrid.size.width
-                                                                                extendsRight:YES
-                                                                                          ok:&ok];
+                    VT100GridCoord lastPositionCoord;
+                    if (absLineRange.length > 0) {
+                        const long long lastY = MAX(0, NSMaxRange(absLineRange) - 1 - self.totalScrollbackOverflow);
+                        lastPositionCoord = VT100GridCoordMake(_state.currentGrid.size.width - 1, lastY);
+                        ok = YES;
+                    } else {
+                        lastPositionCoord = [tempLineBuffer coordinateForPosition:lastValidPosition
+                                                                            width:_state.currentGrid.size.width
+                                                                     extendsRight:YES
+                                                                               ok:&ok];
+                    }
                     assert(ok);
                     long long s = startPosCoord.y;
                     s *= _state.currentGrid.size.width;
@@ -94,6 +118,12 @@
 
                     if (s >= l) {
                         startPos = lastValidPosition;
+                    } else {
+                        VT100GridCoord lastValidCoord = [tempLineBuffer coordinateForPosition:lastValidPosition width:_state.currentGrid.size.width extendsRight:YES ok:&ok];
+                        if (ok && (startPosCoord.y > lastValidCoord.y ||
+                                   (startPosCoord.y == lastValidCoord.y && startPosCoord.x > lastValidCoord.x))) {
+                            startPos = lastValidPosition;
+                        }
                     }
                 }
             }
@@ -116,6 +146,7 @@
 - (BOOL)continueFindAllResultsImpl:(NSMutableArray<SearchResult *> *)results
                           rangeOut:(NSRange *)rangePtr
                          inContext:(FindContext *)context
+                      absLineRange:(NSRange)absLineRange
                      rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     context.hasWrapped = YES;
     NSDate* start = [NSDate date];
@@ -124,6 +155,7 @@
         keepSearching = [self continueFindResultsInContext:context
                                                   rangeOut:rangePtr
                                                    toArray:results
+                                              absLineRange:(NSRange)absLineRange
                                              rangeSearched:rangeSearched];
     } while (keepSearching &&
              [[NSDate date] timeIntervalSinceDate:start] < context.maxTime);
@@ -192,6 +224,7 @@
 - (BOOL)continueFindResultsInContext:(FindContext *)context
                             rangeOut:(NSRange *)rangePtr
                              toArray:(NSMutableArray *)results
+                        absLineRange:(NSRange)absLineRange
                        rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     __block BOOL keepSearching = NO;
@@ -203,10 +236,58 @@
 
             // Search one block.
             LineBufferPosition *stopAt;
-            if (context.dir > 0) {
-                stopAt = [temporaryLineBuffer lastPosition];
+            if (absLineRange.length > 0) {
+                int y = 0;
+                if (context.dir > 0) {
+                    y = NSMaxRange(absLineRange) - _state.totalScrollbackOverflow;
+                } else {
+                    y = absLineRange.location - _state.totalScrollbackOverflow;
+                }
+                stopAt = [temporaryLineBuffer positionForCoordinate:VT100GridCoordMake(0, y)
+                                                              width:_state.currentGrid.size.width
+                                                             offset:0];
+                if (!stopAt) {
+                    if (context.dir > 0) {
+                        stopAt = temporaryLineBuffer.penultimatePosition;
+                    } else {
+                        stopAt = temporaryLineBuffer.firstPosition;
+                    }
+                }
+                const VT100GridAbsCoord originalStartCoord = [self absCoordOfFindContext:context lineBuffer:temporaryLineBuffer];
+                VT100GridAbsCoord startCoord = originalStartCoord;
+                BOOL moveStart = NO;
+                if (startCoord.y < (NSInteger)absLineRange.location) {
+                    startCoord.y = absLineRange.location;
+                    startCoord.x = 0;
+                    moveStart = YES;
+                } else if (startCoord.y >= (NSInteger)NSMaxRange(absLineRange)) {
+                    startCoord.y = NSMaxRange(absLineRange) - 1;
+                    startCoord.x = _state.currentGrid.size.width - 1;
+                    moveStart = YES;
+                }
+                if (moveStart) {
+                    BOOL ok;
+                    VT100GridCoord rel = VT100GridCoordFromAbsCoord(startCoord, self.totalScrollbackOverflow, &ok);
+                    if (!ok) {
+                        DLog(@"Unable to convert %@, assume 0,0", VT100GridAbsCoordDescription(startCoord));
+                        rel = VT100GridCoordMake(0, 0);
+                    }
+                    DLog(@"Tweak start coord of search with line range %@ from %@ to %@",
+                         NSStringFromRange(absLineRange), VT100GridAbsCoordDescription(originalStartCoord),
+                         VT100GridAbsCoordDescription(startCoord));
+                    ok = [temporaryLineBuffer setStartCoord:rel
+                                              ofFindContext:context
+                                                      width:_state.currentGrid.size.width];
+                    if (!ok) {
+                        DLog(@"Failed to set search coord");
+                    }
+                }
             } else {
-                stopAt = [temporaryLineBuffer firstPosition];
+                if (context.dir > 0) {
+                    stopAt = [temporaryLineBuffer lastPosition];
+                } else {
+                    stopAt = [temporaryLineBuffer firstPosition];
+                }
             }
 
             if (rangeSearched) {
@@ -262,8 +343,36 @@
                             // NSLog(@"...wrapping");
                             // wrap around and resume search.
                             FindContext *tempFindContext = [[FindContext alloc] init];
+                            LineBufferPosition *startPos;
+                            if (absLineRange.length > 0) {
+                                const int width = _state.currentGrid.size.width;
+                                long long absY;
+                                int x;
+                                int offset;
+                                if (self.findContext.dir > 0) {
+                                    // First position in range
+                                    x = 0;
+                                    absY = absLineRange.location;
+                                    offset = 0;
+                                } else {
+                                    // Last position in range
+                                    absY = NSMaxRange(absLineRange);
+                                    x = 0;
+                                    offset = -1;
+                                }
+                                const int y = absY - self.totalScrollbackOverflow;
+                                startPos = [temporaryLineBuffer positionForCoordinate:VT100GridCoordMake(x, y)
+                                                                                width:width
+                                                                               offset:offset];
+                            } else {
+                                if (self.findContext.dir > 0) {
+                                    startPos = temporaryLineBuffer.firstPosition;
+                                } else {
+                                    startPos = temporaryLineBuffer.lastPosition.predecessor;
+                                }
+                            }
                             [temporaryLineBuffer prepareToSearchFor:self.findContext.substring
-                                                         startingAt:(self.findContext.dir > 0 ? [temporaryLineBuffer firstPosition] : [[temporaryLineBuffer lastPosition] predecessor])
+                                                         startingAt:startPos
                                                             options:self.findContext.options
                                                                mode:self.findContext.mode
                                                         withContext:tempFindContext];

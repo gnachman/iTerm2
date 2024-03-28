@@ -93,6 +93,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)rect
                    blendDefaultBackground:(BOOL)blendDefaultBackground
+                               deselected:(BOOL)deselected
                             virtualOffset:(CGFloat)virtualOffset;
 - (BOOL)textViewHasBackgroundImage;
 - (void)sendEscapeSequence:(NSString *)text;
@@ -293,6 +294,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewRemoveBookmarkForMark:(id<VT100ScreenMarkReading>)mark;
 - (BOOL)textViewEnclosingTabHasMultipleSessions;
 - (BOOL)textViewSelectionScrollAllowed;
+- (void)textViewSelectCommandRegionAtCoord:(VT100GridCoord)coord;
 
 @end
 

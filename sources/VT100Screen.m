@@ -379,10 +379,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (BOOL)continueFindAllResults:(NSMutableArray *)results
                       rangeOut:(NSRange *)rangePtr
                      inContext:(FindContext *)context
+                  absLineRange:(NSRange)absLineRange
                  rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     return [self continueFindAllResultsImpl:results
                                    rangeOut:rangePtr
                                   inContext:context
+                               absLineRange:absLineRange
                               rangeSearched:rangeSearched];
 }
 
@@ -856,6 +858,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord range:(out nonnull VT100GridWindowedRange *)range {
     return [_state commandMarkAt:coord range:range];
+}
+
+- (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line {
+    return [_state commandMarkAtOrBeforeLine:line];
+}
+
+- (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor {
+    return [_state promptMarkAfterPromptMark:predecessor];
 }
 
 - (void)removeNamedMark:(id<VT100ScreenMarkReading>)mark {
@@ -1460,7 +1470,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
           startingAtY:(int)y
            withOffset:(int)offset
             inContext:(FindContext*)context
-      multipleResults:(BOOL)multipleResults {
+      multipleResults:(BOOL)multipleResults
+         absLineRange:(NSRange)absLineRange {
     [self setFindStringImpl:aString
            forwardDirection:direction
                        mode:mode
@@ -1468,7 +1479,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                 startingAtY:y
                  withOffset:offset
                   inContext:context
-            multipleResults:multipleResults];
+            multipleResults:multipleResults
+               absLineRange:absLineRange];
 }
 
 - (void)addNote:(PTYAnnotation *)note

@@ -30,6 +30,7 @@ typedef struct {
                         dirtyRect:(NSRect)dirtyRect
            visibleRectInContainer:(NSRect)visibleRectInContainer
            blendDefaultBackground:(BOOL)blendDefaultBackground
+                       deselected:(BOOL)deselected
                              flip:(BOOL)shouldFlip
                     virtualOffset:(CGFloat)virtualOffset {
     const BOOL debug = NO;
@@ -40,8 +41,14 @@ typedef struct {
                                                     blendDefaultBackground:blendDefaultBackground];
     
     const float alpha = [self.delegate backgroundDrawingHelperUseTransparency] ? (1.0 - [self.delegate backgroundDrawingHelperTransparency]) : 1.0;
+    NSColor *defaultBackgroundColor;
+    if (deselected) {
+        defaultBackgroundColor = [self.delegate backgroundDrawingHelperDeselectedDefaultBackgroundColor];
+    } else {
+        defaultBackgroundColor = [self.delegate backgroundDrawingHelperDefaultBackgroundColor];
+    }
     if (!draws.image) {
-        [[[self.delegate backgroundDrawingHelperDefaultBackgroundColor] colorWithAlphaComponent:alpha] set];
+        [[defaultBackgroundColor colorWithAlphaComponent:alpha] set];
         iTermRectFillUsingOperation(draws.solidBackgroundColorRect, NSCompositingOperationCopy, virtualOffset);
         return;
     }
@@ -68,7 +75,6 @@ typedef struct {
                                hints:nil
                        virtualOffset:virtualOffset];
     // Draw letterboxes/pillarboxes
-    NSColor *defaultBackgroundColor = [self.delegate backgroundDrawingHelperDefaultBackgroundColor];
     [defaultBackgroundColor set];
     iTermRectFillUsingOperation(draws.boxes[0], NSCompositingOperationSourceOver, virtualOffset);
     iTermRectFillUsingOperation(draws.boxes[1], NSCompositingOperationSourceOver, virtualOffset);

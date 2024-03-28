@@ -331,6 +331,12 @@ extension PTYTextView: ExternalSearchResultsController {
         }
     }
 
+    @objc(removePortholeHighlightsFrom:)
+    func removePortholeHighlights(from externalSearchResult: ExternalSearchResult) {
+        externalSearchResult.owner?.remove(externalSearchResult)
+    }
+
+
     @objc
     func updatePortholeColors(useSelectedTextColor: Bool) {
         DLog("updatePortholeColors(useSelectedTextColor: \(useSelectedTextColor))")

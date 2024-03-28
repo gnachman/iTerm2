@@ -271,7 +271,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     const VT100GridCoord clickPointCoord = [self.mouseDelegate mouseHandler:self
                                                                  clickPoint:event
-                                                              allowOverflow:YES];
+                                                              allowOverflow:YES
+                                                                 firstMouse:_mouseDownWasFirstMouse];
     const int x = clickPointCoord.x;
     const int y = clickPointCoord.y;
     if ([self.mouseDelegate mouseHandler:self coordIsMutable:VT100GridCoordMake(x, y)] &&
@@ -555,7 +556,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             clickCoord =
             [self.mouseDelegate mouseHandler:self
                                   clickPoint:event
-                               allowOverflow:NO];
+                               allowOverflow:NO
+                                  firstMouse:_mouseDownWasFirstMouse];
             if (clickCoord.x >= 0 && clickCoord.y >= 0) {
                 [self.mouseDelegate mouseHandlerSetFindOnPageCursorCoord:clickCoord];
                 result |= iTermClickSideEffectsMoveFindOnPageCursor;
@@ -568,7 +570,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 clickCoord =
                 [self.mouseDelegate mouseHandler:self
                                       clickPoint:event
-                                   allowOverflow:NO];
+                                   allowOverflow:NO
+                                      firstMouse:_mouseDownWasFirstMouse];
             }
             const VT100GridCoord cursorCoord =
             [self.mouseDelegate mouseHandlerCursorCoord:self];
@@ -587,7 +590,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                           append:NO];
 
         const VT100GridCoord newEndPoint =
-        [self.mouseDelegate mouseHandler:self clickPoint:event allowOverflow:YES];
+        [self.mouseDelegate mouseHandler:self clickPoint:event allowOverflow:YES firstMouse:_mouseDownWasFirstMouse];
         [self.selection moveSelectionEndpointTo:VT100GridAbsCoordFromCoord(newEndPoint, overflow)];
         [self.selection endLiveSelection];
 
@@ -655,7 +658,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self.mouseDelegate mouseHandler:self viewCoordForEvent:event clipped:YES];
 
     const VT100GridCoord clickPointGridCoord =
-    [self.mouseDelegate mouseHandler:self clickPoint:event allowOverflow:YES];
+    [self.mouseDelegate mouseHandler:self clickPoint:event allowOverflow:YES firstMouse:_mouseDownWasFirstMouse];
     const int x = clickPointGridCoord.x;
     const int y = clickPointGridCoord.y;
 

@@ -94,8 +94,10 @@ extern const int kColorMap24bitBase;
 - (NSColor *)processedTextColorForTextColor:(NSColor *)textColor
                         overBackgroundColor:(NSColor*)backgroundColor
                      disableMinimumContrast:(BOOL)disableMinimumContrast;
-- (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)color;
-- (vector_float4)fastProcessedBackgroundColorForBackgroundColor:(vector_float4)backgroundColor;
+- (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)color
+                              inDeselectedCommandRegion:(BOOL)inDeselectedCommandRegion;
+- (vector_float4)fastProcessedBackgroundColorForBackgroundColor:(vector_float4)backgroundColor
+                                             inDeselectedRegion:(BOOL)inDeselectedRegion;
 - (NSColor *)colorByMutingColor:(NSColor *)color;
 - (vector_float4)fastColorByMutingColor:(vector_float4)color;
 - (NSColor *)colorByDimmingTextColor:(NSColor *)color;

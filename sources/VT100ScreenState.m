@@ -876,6 +876,51 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return [VT100ScreenMark castFrom:self.markCache[self.cumulativeScrollbackOverflow + line]];
 }
 
+- (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line {
+    const int width = self.width;
+    long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(width - 1,
+                                                                            line,
+                                                                            width - 1,
+                                                                            line)].location;
+    if (pos < 0) {
+        return nil;
+    }
+    for (NSArray *objects in [self.intervalTree reverseEnumeratorAt:pos]) {
+        id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+            if (![element conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+                return NO;
+            }
+            id<VT100ScreenMarkReading> temp = element;
+            return temp.isPrompt;
+        }];
+        if (mark) {
+            return mark;
+        }
+    }
+    return nil;
+}
+
+- (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor {
+    if (!predecessor) {
+        return nil;
+    }
+    const long long pos = predecessor.entry.interval.limit;
+
+    for (NSArray *objects in [self.intervalTree forwardLocationEnumeratorAt:pos]) {
+        id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+            if (![element conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+                return NO;
+            }
+            id<VT100ScreenMarkReading> temp = element;
+            return temp.isPrompt;
+        }];
+        if (mark) {
+            return mark;
+        }
+    }
+    return nil;
+}
+
 - (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord range:(out nonnull VT100GridWindowedRange *)rangeOut {
     id<VT100ScreenMarkReading> mark = [self markOnLine:coord.y];
     const VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];

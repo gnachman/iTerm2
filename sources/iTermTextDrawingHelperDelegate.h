@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)drawingHelperDrawBackgroundImageInRect:(NSRect)rect
                         blendDefaultBackground:(BOOL)blendDefaultBackground
+                                    deselected:(BOOL)deselected
                                  virtualOffset:(CGFloat)virtualOffset;
 
 - (id<VT100ScreenMarkReading> _Nullable)drawingHelperMarkOnLine:(int)line;

@@ -114,6 +114,7 @@ NS_ASSUME_NONNULL_BEGIN
                    options:(FindOptions)options
                       mode:(iTermFindMode)findMode
                withContext:(FindContext * _Nonnull)context;
+- (BOOL)setStartCoord:(VT100GridCoord)coord ofFindContext:(FindContext *)findContext width:(int)width;
 
 // Performs a search. Use prepareToSearchFor:startingAt:options:withContext: to initialize
 // the FindContext prior to calling this.

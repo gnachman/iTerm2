@@ -367,6 +367,7 @@ workingDirectory:(NSString *)pwd
     if (!self.isAutoComposer) {
         return;
     }
+    [self.delegate minimalComposerAutoComposerTextDidChange:self];
     const CGFloat desiredHeight = [self desiredHeight];
     if (desiredHeight == _desiredHeight) {
         return;

@@ -42,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer performFindPanelAction:(id)sender;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
  desiredHeightDidChange:(CGFloat)desiredHeight;
+- (void)minimalComposerAutoComposerTextDidChange:(iTermMinimalComposerViewController *)composer;
 - (void)minimalComposerClear:(iTermMinimalComposerViewController *)composer;
 - (id<iTermSyntaxHighlighting>)minimalComposer:(iTermMinimalComposerViewController *)composer
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString;

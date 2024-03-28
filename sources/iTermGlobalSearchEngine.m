@@ -43,7 +43,8 @@
                               startingAtY:session.screen.numberOfLines + 1 + session.screen.totalScrollbackOverflow
                                withOffset:0
                                 inContext:findContext
-                          multipleResults:YES];
+                          multipleResults:YES
+                             absLineRange:NSMakeRange(0, 0)];
             iTermGlobalSearchEngineCursor *cursor = [[iTermGlobalSearchEngineCursor alloc] init];
             cursor.session = session;
             cursor.findContext = findContext;
@@ -118,6 +119,7 @@
     const BOOL more = [cursor.session.screen continueFindAllResults:results
                                                            rangeOut:&range
                                                           inContext:cursor.findContext
+                                                       absLineRange:NSMakeRange(0, 0)
                                                       rangeSearched:NULL];
     iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:cursor.session.screen];
     id<ExternalSearchResultsController> esrc = cursor.session.externalSearchResultsController;

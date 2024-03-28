@@ -21,11 +21,13 @@ NS_ASSUME_NONNULL_BEGIN
               startingAtY:(int)y
                withOffset:(int)offset
                 inContext:(FindContext *)context
-          multipleResults:(BOOL)multipleResults;
+          multipleResults:(BOOL)multipleResults
+             absLineRange:(NSRange)absLineRange;
 
 - (BOOL)continueFindAllResultsImpl:(NSMutableArray<SearchResult *> *)results
                           rangeOut:(NSRange *)rangePtr
                          inContext:(FindContext *)context
+                      absLineRange:(NSRange)absLineRange
                      rangeSearched:(VT100GridAbsCoordRange *)rangeSearched;
 
 #pragma mark - Tail Find

@@ -56,6 +56,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (void)composerManager:(iTermComposerManager *)composerManager performFindPanelAction:(id)sender;
 - (void)composerManager:(iTermComposerManager *)composerManager
  desiredHeightDidChange:(CGFloat)desiredHeight;
+- (void)composerManagerAutoComposerTextDidChange:(iTermComposerManager *)composerManager;
 - (void)composerManagerClear:(iTermComposerManager *)composerManager;
 - (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString;

@@ -63,6 +63,7 @@
 - (BOOL)continueFindAllResults:(NSMutableArray*)results
                       rangeOut:(NSRange *)rangePtr
                      inContext:(FindContext*)context
+                  absLineRange:(NSRange)absLineRange
                  rangeSearched:(VT100GridAbsCoordRange *)VT100GridAbsCoordRange;
 - (FindContext*)findContext;
 
@@ -74,7 +75,8 @@
           startingAtY:(int)y
            withOffset:(int)offsetof  // Offset in the direction of searching (offset=1 while searching backwards means start one char before x,y)
             inContext:(FindContext*)context
-      multipleResults:(BOOL)multipleResults;
+      multipleResults:(BOOL)multipleResults
+         absLineRange:(NSRange)absLineRange;
 
 // Save the position of the current find context (with the screen appended).
 - (void)saveFindContextAbsPos;

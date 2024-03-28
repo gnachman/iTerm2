@@ -26,7 +26,8 @@
                     startingAtY:(int)y
                      withOffset:(int)offset
                       inContext:(FindContext*)context
-                multipleResults:(BOOL)multipleResults;
+                multipleResults:(BOOL)multipleResults
+                   absLineRange:(NSRange)absLineRange;
 
 // Save the absolute position in the find context.
 - (void)findOnPageSaveFindContextAbsPos;
@@ -35,6 +36,7 @@
 - (BOOL)continueFindAllResults:(NSMutableArray *)results
                       rangeOut:(NSRange *)rangePtr
                      inContext:(FindContext *)context
+                  absLineRange:(NSRange)absLineRange
                  rangeSearched:(VT100GridAbsCoordRange *)rangeSearched;
 
 // Select a range.
@@ -60,6 +62,7 @@
                                        mode:(iTermFindMode)mode;
 - (void)findOnPageHelperRemoveExternalHighlights;
 - (void)findOnPageHelperRequestRedraw;
+- (void)findOnPageHelperRemoveExternalHighlightsFrom:(iTermExternalSearchResult *)externalSearchResult;
 @end
 
 typedef NS_ENUM(NSUInteger, FindCursorType) {
@@ -86,6 +89,8 @@ typedef NS_ENUM(NSUInteger, FindCursorType) {
 // This is used to select which search result should be highlighted. If searching forward, it'll
 // be after the find cursor; if searching backward it will be before the find cursor.
 @property(nonatomic, readonly) FindCursor *findCursor;
+// Length of 0 means no range is selected. Otherwise, only this range of lines is searched.
+@property(nonatomic) NSRange absLineRange;
 
 // Begin a new search.
 //

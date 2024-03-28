@@ -136,6 +136,7 @@ typedef struct {
     iTermCopyToDrawableRenderer *_copyToDrawableRenderer;
     iTermBlockRenderer *_blockRenderer;
     iTermTerminalButtonRenderer *_terminalButtonRenderer NS_AVAILABLE_MAC(11);
+    iTermRectangleRenderer *_rectangleRenderer;
 
     // This one is special because it's debug only
     iTermCopyOffscreenRenderer *_copyOffscreenRenderer;
@@ -224,6 +225,7 @@ typedef struct {
         if (@available(macOS 11, *)) {
             _terminalButtonRenderer = [[iTermTerminalButtonRenderer alloc] initWithDevice:device];
         }
+        _rectangleRenderer = [[iTermRectangleRenderer alloc] initWithDevice:device];
 
         _commandQueue = [device newCommandQueue];
 #if ENABLE_PRIVATE_QUEUE
@@ -686,6 +688,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
         [frameData.rows addObject:rowData];
         rowData.y = y;
+        rowData.absLine = y + frameData.perFrameState.firstVisibleAbsoluteLineNumber;
         rowData.keysData = [iTermGlyphKeyData dataOfLength:sizeof(iTermMetalGlyphKey) * columns];
         rowData.attributesData = [iTermAttributesData dataOfLength:sizeof(iTermMetalGlyphAttributes) * columns];
         rowData.backgroundColorRLEData = [iTermBackgroundColorRLEsData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * columns];
@@ -813,6 +816,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     if (@available(macOS 11, *)) {
         [self populateTerminalButtonRendererTransientStateWithFrameData:frameData];
     }
+    [self populateRectangleRendererTransientStateWithFrameData:frameData];
 }
 
 - (id<MTLTexture>)destinationTextureForFrameData:(iTermMetalFrameData *)frameData {
@@ -965,6 +969,9 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                      frameData:frameData
                           stat:iTermMetalFrameDataStatPqEnqueueDrawButtons];
     }
+    [self drawCellRenderer:_rectangleRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawRectangles];
 
     [self drawRenderer:_flashRenderer
              frameData:frameData
@@ -1444,8 +1451,17 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
 - (void)populateLineStyleMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermLineStyleMarkRendererTransientState *tState = [frameData transientStateForRenderer:_lineStyleMarkRenderer];
+    const NSRange selectedCommandRegion = frameData.perFrameState.selectedCommandRegion;
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         if (VT100GridRangeContains(frameData.perFrameState.linesToSuppressDrawing, rowData.y)) {
+            return;
+        }
+        if (selectedCommandRegion.length > 0 && NSLocationInRange(rowData.absLine, selectedCommandRegion)) {
+            // Don't draw line-style mark in selected command region.
+            return;
+        }
+        if (selectedCommandRegion.length > 0 && rowData.absLine == NSMaxRange(selectedCommandRegion) + 1) {
+            // Don't draw line-style mark immediately after selected command region.
             return;
         }
         if (rowData.lineStyleMark) {
@@ -1502,7 +1518,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 - (void)populateMarginRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermMarginRendererTransientState *tState = [frameData transientStateForRenderer:_marginRenderer];
     vector_float4 color = frameData.perFrameState.processedDefaultBackgroundColor;
-    [tState setColor:color];
+    tState.regularColor = color;
+    tState.hasSelectedRegion = frameData.perFrameState.hasSelectedCommand;
+    tState.deselectedColor = frameData.perFrameState.processedDeselectedDefaultBackgroundColor;
+    tState.selectedCommandRect = frameData.perFrameState.selectedCommandRect;
 }
 
 - (void)populateBlockRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1514,6 +1533,25 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
             [tState addRow:idx];
         }
     }];
+}
+
+- (void)populateRectangleRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    if (!_rectangleRenderer) {
+        return;
+    }
+    iTermRectangleRendererTransientState *tState = [frameData transientStateForRenderer:_rectangleRenderer];
+    if (frameData.perFrameState.hasSelectedCommand) {
+        const CGFloat scale = tState.cellConfiguration.scale;
+        const CGFloat hmargin = tState.margins.left / scale;
+        [tState addFrameRectangleWithRect:frameData.perFrameState.selectedCommandRect
+                                thickness:1.0
+                                   insets:NSEdgeInsetsMake(-1, 1 - hmargin, 0, 2 - hmargin)
+                                    color:simd_make_float4(0.0, 0.0, 0.8, 1.0)];
+        [tState addFrameRectangleWithRect:frameData.perFrameState.selectedCommandRect
+                                thickness:1.0
+                                   insets:NSEdgeInsetsMake(-2, 0 - hmargin, -1, 1 - hmargin)
+                                    color:simd_make_float4(0.2, 0.2, 1.0, 1.0)];
+    }
 }
 
 - (void)populateTerminalButtonRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData NS_AVAILABLE_MAC(11) {
@@ -1533,7 +1571,8 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                    column:button.absCoordForDesiredFrame.x
           foregroundColor:frameData.perFrameState.processedDefaultTextColor
           backgroundColor:frameData.perFrameState.processedDefaultBackgroundColor
-            selectedColor:frameData.perFrameState.selectedBackgroundColor];
+            selectedColor:frameData.perFrameState.selectedBackgroundColor
+                    shift:button.shift];
     }
 }
 
@@ -2119,7 +2158,8 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
               _keyCursorRenderer,
               _timestampsRenderer,
               _blockRenderer,
-              _terminalButtonRenderer ?: [NSNull null]] arrayByRemovingNulls];
+              _terminalButtonRenderer ?: [NSNull null],
+               _rectangleRenderer] arrayByRemovingNulls];
 }
 
 - (NSArray<id<iTermMetalRenderer>> *)nonCellRenderers {

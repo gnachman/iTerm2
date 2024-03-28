@@ -18,6 +18,7 @@ protocol ExternalSearchResultOwner: AnyObject {
     var absLine: Int64 { get }
     var numLines: Int32 { get }
     func searchResultIsVisible(_ result: ExternalSearchResult) -> Bool
+    func remove(_ result: ExternalSearchResult)
 }
 
 @objc protocol ExternalSearchResultsController {

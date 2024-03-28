@@ -260,6 +260,7 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property(nonatomic, readonly) iTermTimestampDrawHelper *timestampDrawHelper;
 
 @property(nonatomic, readonly) NSColor *defaultBackgroundColor;
+@property(nonatomic, readonly) NSColor *deselectedDefaultBackgroundColor;
 @property(nonatomic, readonly) NSColor *defaultTextColor;
 
 // Does the current ascii font have ligatures? Used to determine if ASCII
@@ -282,6 +283,8 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property (nonatomic) BOOL useSelectedTextColor;
 @property (nonatomic, strong) iTermFontTable *fontTable;
 @property (nonatomic) VT100GridRange linesToSuppress;
+@property (nonatomic) NSRange selectedCommandRegion;
+@property (nonatomic) BOOL selectedCommandHasLineStyleMarks;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;
@@ -343,6 +346,7 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 
 - (void)updateCachedMetrics;
 - (void)updateButtonFrames;
+- (NSRange)rangeOfVisibleRows;
 
 @end
 
