@@ -129,8 +129,8 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
 
         let left = margins.left + CGFloat(rectangle.rect.origin.x) * cellWidth + scaledInsets.left
         let right = margins.left + CGFloat(rectangle.rect.origin.x + rectangle.rect.size.width) * cellWidth - scaledInsets.right
-        let top = margins.top + CGFloat(rectangle.rect.origin.y) * cellHeight + scaledInsets.top
-        let bottom = margins.top + CGFloat(rectangle.rect.origin.y + rectangle.rect.size.height) * cellHeight - scaledInsets.bottom
+        let top = margins.bottom + CGFloat(rectangle.rect.origin.y) * cellHeight + scaledInsets.top
+        let bottom = margins.bottom + CGFloat(rectangle.rect.origin.y + rectangle.rect.size.height) * cellHeight - scaledInsets.bottom
 
         let topLeftFrame = NSRect(x: left,
                                   y: top,
