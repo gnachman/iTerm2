@@ -8,7 +8,7 @@
 			<key>notes</key>
 			<string>Word bounded by whitespace</string>
 			<key>regex</key>
-			<string>\S+</string>
+			<string>\S+(?<![\*\@])</string>
 			<key>precision</key>
 			<string>low</string>
 		</dict>
