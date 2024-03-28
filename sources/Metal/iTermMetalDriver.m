@@ -1566,6 +1566,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
             button.absCoordForDesiredFrame.y >= firstLine + frameData.perFrameState.gridSize.height) {
             continue;
         }
+        if (VT100GridRangeContains(frameData.perFrameState.linesToSuppressDrawing, (button.absCoordForDesiredFrame.y - firstLine))) {
+            continue;
+        }
+
         [tState addButton:button
              onScreenLine:button.absCoordForDesiredFrame.y - firstLine
                    column:button.absCoordForDesiredFrame.x

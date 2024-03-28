@@ -1207,6 +1207,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     if (@available(macOS 11, *)) {
         for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
+            if (![self canDrawLine:button.absCoordForDesiredFrame.y - _totalScrollbackOverflow]) {
+                continue;
+            }
             [button drawWithBackgroundColor:background
                             foregroundColor:foreground
                               selectedColor:selectedColor
