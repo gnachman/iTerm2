@@ -48,6 +48,13 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
     }
 }
 
+extension NSSize: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(width)
+        hasher.combine(height)
+    }
+}
+
 @available(macOS 11, *)
 @objc(iTermTerminalButtonRenderer)
 class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
@@ -57,6 +64,8 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
         var backgroundColor: vector_float4
         var buttonClassName: String
         var selected: Bool
+        var state: TerminalButton.State
+        var size: NSSize
     }
     private var textureCache: [TextureKey: MTLTexture] = [:]
     private var texturePool = iTermTexturePool()
@@ -67,7 +76,7 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
             device: device,
             vertexFunctionName: "iTermTerminalButtonVertexShader",
             fragmentFunctionName: "iTermTerminalButtonFragmentShader",
-            blending: iTermMetalBlending(),
+            blending: iTermMetalBlending.premultipliedCompositing(),
             piuElementSize: 0,
             transientStateClass: TerminalButtonRendererTransientState.self)!
     }
@@ -178,10 +187,13 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
         let key = TextureKey(foregroundColor: button.foregroundColor,
                              backgroundColor: button.backgroundColor,
                              buttonClassName: String(describing: type(of: button.terminalButton)),
-                             selected: button.terminalButton.selected)
+                             selected: button.terminalButton.selected,
+                             state: button.terminalButton.state,
+                             size: button.terminalButton.desiredFrame.size)
         if let texture = textureCache[key] {
             return texture
         }
+        let defaultScale = NSScreen.main?.backingScaleFactor ?? 1.0
         let image = button.terminalButton.image(
             backgroundColor: NSColor(
                 vector: button.backgroundColor,
@@ -192,8 +204,8 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
             selectedColor: NSColor(
                 vector: button.selectedColor,
                 colorSpace: tState.configuration.colorSpace),
-            cellSize: NSSize(width: tState.cellConfiguration.cellSize.width * tState.configuration.scale,
-                             height: tState.cellConfiguration.cellSize.height * tState.configuration.scale))
+            cellSize: NSSize(width: button.terminalButton.desiredFrame.size.width * tState.configuration.scale / defaultScale,
+                             height: button.terminalButton.desiredFrame.size.height * tState.configuration.scale / defaultScale))
         let texture = metalRenderer.texture(
             fromImage: iTermImageWrapper(image: image),
             context: tState.poolContext,

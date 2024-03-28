@@ -10,13 +10,9 @@ import Foundation
 @available(macOS 11, *)
 @objc(iTermTerminalButton)
 class TerminalButton: NSObject {
-    private(set) var backgroundImage: NSImage
-    private(set) var foregroundImage: NSImage
     @objc var action: ((NSPoint) -> ())?
-    private var lastForegroundColor: NSColor?
-    private var lastBackgroundColor: NSColor?
-    private var lastForegroundImage: NSImage?
-    private var lastBackgroundImage: NSImage?
+    private let tintedBackgroundImage: TintedImage
+    private let tintedForegroundImage: TintedImage
     private let aspectRatio: CGFloat
     @objc weak var mark: iTermMarkProtocol?
     // Returns -1 if unset
@@ -32,32 +28,65 @@ class TerminalButton: NSObject {
         case .pressedInside, .pressedOutside: return true
         }
     }
-    enum State {
+    enum State: Int {
         case normal
         case pressedOutside
         case pressedInside
     }
     var floating: Bool { false }
-    private var state = State.normal
+    private(set) var state = State.normal
     @objc let id: Int
     @objc var enclosingSessionWidth: Int32 = 0
     @objc var shift = CGFloat(0)
     var selected: Bool { false }
 
+    private class TintedImage {
+        private(set) var original: NSImage
+        private var size: NSSize?
+        private var color: NSColor?
+        private var cached: NSImage?
+
+        init(original: NSImage) {
+            self.original = original
+        }
+
+        required init(_ original: TintedImage) {
+            self.original = original.original
+            self.size = original.size
+            self.color = original.color
+            self.cached = original.cached
+        }
+
+        func tintedImage(color: NSColor, size: NSSize) -> NSImage {
+            if let cached, color == self.color, size == self.size {
+                return cached
+            }
+            let tinted = original.it_image(withTintColor: color, size: size)!
+            self.size = size
+            self.color = color
+            cached = tinted
+            return tinted
+        }
+
+        func clone() -> Self {
+            return Self(self)
+        }
+    }
+
     init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, mark: iTermMarkProtocol?) {
         self.id = id
-        self.backgroundImage = backgroundImage
-        self.foregroundImage = foregroundImage
+        tintedBackgroundImage = TintedImage(original: backgroundImage)
+        tintedForegroundImage = TintedImage(original: foregroundImage)
         self.mark = mark
         aspectRatio = foregroundImage.size.height / foregroundImage.size.width;
     }
 
     required init?(_ original: TerminalButton) {
         self.id = original.id
-        self.backgroundImage = original.backgroundImage
-        self.foregroundImage = original.foregroundImage
+        tintedBackgroundImage = original.tintedBackgroundImage.clone()
+        tintedForegroundImage = original.tintedForegroundImage.clone()
         self.mark = original.mark
-        aspectRatio = original.foregroundImage.size.height / original.foregroundImage.size.width;
+        aspectRatio = original.tintedForegroundImage.original.size.height / original.tintedForegroundImage.original.size.width;
         desiredFrame = original.desiredFrame
         absCoordForDesiredFrame = original.absCoordForDesiredFrame
         state = original.state
@@ -69,22 +98,11 @@ class TerminalButton: NSObject {
         return Self(self)!
     }
 
-    private func tinted(_ cachedImage: NSImage?, _ baseImage: NSImage, _ cachedColor: NSColor?, _ color: NSColor) -> NSImage {
-        if color == cachedColor, let cachedImage {
-            return cachedImage
-        }
-        return baseImage.it_image(withTintColor: color)
-    }
-
     private func images(backgroundColor: NSColor,
-                        foregroundColor: NSColor) -> (NSImage, NSImage) {
-        let result = (tinted(lastForegroundImage, foregroundImage, lastForegroundColor, foregroundColor),
-                      tinted(lastBackgroundImage, backgroundImage, lastBackgroundColor, backgroundColor))
-        lastForegroundColor = foregroundColor
-        lastForegroundImage = result.0
-        lastBackgroundColor = backgroundColor
-        lastBackgroundImage = result.1
-        return result
+                        foregroundColor: NSColor,
+                        size: NSSize) -> (NSImage, NSImage) {
+        return (tintedForegroundImage.tintedImage(color: foregroundColor, size: size),
+                tintedBackgroundImage.tintedImage(color: backgroundColor, size: size))
     }
 
     private func size(cellSize: NSSize) -> NSSize {
@@ -95,7 +113,7 @@ class TerminalButton: NSObject {
             result.width *= scale
             result.height *= scale
         }
-        return result
+        return result.retinaRound(2.0)
     }
 
     @objc(frameWithX:absY:minAbsLine:cumulativeOffset:cellSize:)
@@ -122,9 +140,13 @@ class TerminalButton: NSObject {
         
         let (foregroundImage, backgroundImage) = switch state {
         case .normal, .pressedOutside:
-            images(backgroundColor: selected ? selectedColor : backgroundColor, foregroundColor: foregroundColor)
+            images(backgroundColor: selected ? selectedColor : backgroundColor,
+                   foregroundColor: foregroundColor,
+                   size: rect.size)
         case .pressedInside:
-            images(backgroundColor: foregroundColor, foregroundColor: backgroundColor)
+            images(backgroundColor: foregroundColor, 
+                   foregroundColor: backgroundColor,
+                   size: rect.size)
         }
         backgroundImage.it_draw(in: rect, virtualOffset: virtualOffset)
         foregroundImage.it_draw(in: rect, virtualOffset: virtualOffset)
@@ -227,10 +249,7 @@ class TerminalCopyButton: TerminalButton {
         self.blockID = downcast.blockID
         self.absY = downcast.absY
         isFloating = downcast.isFloating
-        super.init(id: downcast.id,
-                   backgroundImage: downcast.backgroundImage,
-                   foregroundImage: downcast.foregroundImage,
-                   mark: downcast.mark)
+        super.init(original)
     }
     
     override func clone() -> Self {

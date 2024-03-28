@@ -33,9 +33,7 @@ iTermTerminalButtonFragmentShader(iTermTerminalButtonVertexFunctionOutput in [[s
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
-    float4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
-    colorSample.xyz *= colorSample.w;
-    return colorSample;
+    return texture.sample(textureSampler, in.textureCoordinate);
 }
 
 

@@ -410,6 +410,34 @@
     return best;
 }
 
+- (NSImage *)it_imageWithTintColor:(NSColor *)tintColor size:(NSSize)size {
+    if (!tintColor) {
+        return self;
+    }
+    NSImage *image = [[NSImage alloc] initWithSize:size];
+    NSBitmapImageRep *bitmapRep = [[NSBitmapImageRep alloc]
+                                   initWithBitmapDataPlanes:NULL
+                                                 pixelsWide:size.width
+                                                 pixelsHigh:size.height
+                                              bitsPerSample:8
+                                            samplesPerPixel:4
+                                                   hasAlpha:YES
+                                                   isPlanar:NO
+                                             colorSpaceName:NSCalibratedRGBColorSpace
+                                               bitmapFormat:0
+                                                bytesPerRow:0
+                                               bitsPerPixel:32];
+
+    [image addRepresentation:bitmapRep];
+    [image it_drawWithBlock:^{
+        [tintColor set];
+        [self drawInRect:NSMakeRect(0, 0, size.width, size.height)];
+        NSRectFillUsingOperation(NSMakeRect(0, 0, size.width, size.height),
+                                 NSCompositingOperationSourceIn);
+    }];
+    return image;
+}
+
 - (NSImage *)it_imageWithTintColor:(NSColor *)tintColor {
     if (!tintColor) {
         return self;
