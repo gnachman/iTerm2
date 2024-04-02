@@ -87,10 +87,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) vector_float4 offscreenCommandLineOutlineColor;
 @property (nonatomic, readonly) vector_float4 offscreenCommandLineBackgroundColor;
 @property (nonatomic, readonly) VT100GridRange linesToSuppressDrawing;
+@property (nonatomic, readonly) CGFloat pointsOnBottomToSuppressDrawing;
 @property (nonatomic, readonly) NSArray<iTermTerminalButton *> *terminalButtons NS_AVAILABLE_MAC(11);
 @property (nonatomic, readonly) BOOL hasSelectedCommand;
 @property (nonatomic, readonly) VT100GridRect selectedCommandRect;
 @property (nonatomic, readonly) NSRange selectedCommandRegion;
+@property (nonatomic, readonly) BOOL forceRegularBottomMargin;
 
 // Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys

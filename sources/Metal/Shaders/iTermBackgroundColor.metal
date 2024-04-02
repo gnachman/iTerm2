@@ -10,6 +10,7 @@ typedef struct {
     float4 color;
 } iTermBackgroundColorVertexFunctionOutput;
 
+// Matches function in iTermMarginRenderer.m
 float4 iTermBlendColors(float4 src, float4 dst) {
     float4 out;
     out.w = src.w + dst.w * (1 - src.w);

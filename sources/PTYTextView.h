@@ -287,6 +287,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewOpenComposer:(NSString *)string;
 - (BOOL)textViewIsAutoComposerOpen;
 - (VT100GridRange)textViewLinesToSuppressDrawing;
+- (CGFloat)textViewPointsOnBottomToSuppressDrawing;
 - (NSRect)textViewCursorFrameInScreenCoords;
 - (void)textViewDidReceiveSingleClick;
 - (void)textViewDisableOffscreenCommandLine;

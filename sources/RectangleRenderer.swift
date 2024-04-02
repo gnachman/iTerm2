@@ -22,12 +22,18 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
     private(set) var rectangles = [Rectangle]()
     var isEmpty: Bool { rectangles.isEmpty }
     var count: Int { rectangles.count }
+    var clipRect: NSRect?
 
     @objc(addRectangleWithRect:insets:color:)
     func add(rectangle rect: VT100GridRect, insets: NSEdgeInsets, color: vector_float4) {
         rectangles.append(Rectangle(rect: rect,
                                     insets: insets,
                                     color: color))
+    }
+
+    @objc
+    func setClipRect(_ rect: NSRect) {
+        clipRect = rect;
     }
 
     @objc(addFrameRectangleWithRect:thickness:insets:color:)
@@ -64,6 +70,7 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
                                  bottom: insets.bottom - thickness,
                                  right: insets.right),
             color: color)
+
 
         // Right
         add(rectangle: VT100GridRect(origin: VT100GridCoord(x: rect.origin.x + rect.size.width,
@@ -109,15 +116,11 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
         return .pqCreateRectangleTS
     }
 
-    private func vertexBuffer(rectangle: RectangleRendererTransientState.Rectangle,
-                              cellConfiguration: iTermCellRenderConfiguration,
-                              margins: NSEdgeInsets,
-                              scale: CGFloat,
-                              viewportSize: vector_uint2,
-                              bottomInset: CGFloat,
-                              context: iTermMetalBufferPoolContext) -> MTLBuffer {
-        let textureFrame = CGRect(x: 0, y: 0, width: 1, height: 1)
-
+    private func quad(rectangle: RectangleRendererTransientState.Rectangle,
+                      cellConfiguration: iTermCellRenderConfiguration,
+                      margins: NSEdgeInsets,
+                      scale: CGFloat,
+                      viewportSize: vector_uint2) -> CGRect {
         let cellHeight: CGFloat = cellConfiguration.cellSize.height
         let cellWidth = cellConfiguration.cellSize.width
 
@@ -142,10 +145,13 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
                            width: topLeftFrame.width,
                            height: topLeftFrame.height)
 
-        let quad = CGRect(x: frame.minX,
-                          y: frame.minY,
-                          width: frame.width,
-                          height: frame.height)
+        return CGRect(x: frame.minX,
+                      y: frame.minY,
+                      width: frame.width,
+                      height: frame.height)
+    }
+
+    private func vertices(quad: CGRect, textureFrame: CGRect) -> [iTermVertex] {
         let bottomRight = iTermVertex(position: vector_float2(Float(quad.maxX),
                                                               Float(quad.minY)),
                                       textureCoordinate: vector_float2(Float(textureFrame.maxX),
@@ -168,11 +174,37 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
             bottomRight, bottomLeft, topLeft,
             bottomRight, topLeft, topRight
         ]
+        return vertices
+    }
+
+    private func vertexBuffer(rectangle: RectangleRendererTransientState.Rectangle,
+                              cellConfiguration: iTermCellRenderConfiguration,
+                              margins: NSEdgeInsets,
+                              scale: CGFloat,
+                              viewportSize: vector_uint2,
+                              bottomInset: CGFloat,
+                              clip: NSRect?,
+                              context: iTermMetalBufferPoolContext) -> (MTLBuffer, Int)? {
+        let quad = self.quad(rectangle: rectangle,
+                             cellConfiguration: cellConfiguration,
+                             margins: margins,
+                             scale: scale,
+                             viewportSize: viewportSize)
+        let clipped = if let clip {
+            quad.intersection(clip)
+        } else {
+            quad
+        }
+        if quad.width == 0 || quad.height == 0 {
+            return nil
+        }
+        let textureFrame = CGRect(x: 0, y: 0, width: 1, height: 1)
+        let vertices = self.vertices(quad: clipped, textureFrame: textureFrame)
         return vertices.withUnsafeBytes { pointer in
             let byteArray = Array(pointer.bindMemory(to: UInt8.self))
-            return renderer.verticesPool.requestBuffer(from: context,
-                                                       withBytes: byteArray,
-                                                       checkIfChanged: true)
+            return (renderer.verticesPool.requestBuffer(from: context,
+                                                        withBytes: byteArray,
+                                                        checkIfChanged: true), vertices.count)
         }
     }
 
@@ -182,13 +214,18 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
             return
         }
         for rect in tState.rectangles {
-            let vertexBuffer = vertexBuffer(rectangle: rect,
-                                            cellConfiguration: tState.cellConfiguration,
-                                            margins: tState.margins,
-                                            scale: tState.configuration.scale,
-                                            viewportSize: tState.configuration.viewportSize,
-                                            bottomInset: tState.margins.top,
-                                            context: tState.poolContext)
+            let tuple = vertexBuffer(rectangle: rect,
+                                     cellConfiguration: tState.cellConfiguration,
+                                     margins: tState.margins,
+                                     scale: tState.configuration.scale,
+                                     viewportSize: tState.configuration.viewportSize,
+                                     bottomInset: tState.margins.top,
+                                     clip: tState.clipRect,
+                                     context: tState.poolContext)
+            guard let tuple else {
+                continue
+            }
+            let (vertexBuffer, numVertices) = tuple
             var color = rect.color
             withUnsafePointer(to: &color) {
                 let colorBuffer = colorPool.requestBuffer(from: tState.poolContext,
@@ -196,7 +233,7 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
                                                           checkIfChanged: true)
                 renderer.draw(with: tState,
                               renderEncoder: frameData.renderEncoder,
-                              numberOfVertices: 6,
+                              numberOfVertices: numVertices,
                               numberOfPIUs: 0,
                               vertexBuffers: [ NSNumber(value: iTermVertexInputIndexVertices.rawValue): vertexBuffer,
                                                NSNumber(value: iTermVertexColorArray.rawValue): colorBuffer ],

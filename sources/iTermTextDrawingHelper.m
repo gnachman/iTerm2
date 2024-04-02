@@ -172,7 +172,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     NSRect _frame;
 
     // The -visibleRect of the view we're drawing into.
-    NSRect _visibleRect;
+    NSRect _visibleRectExcludingTopMargin;
+    NSRect _visibleRectIncludingTopMargin;
 
     NSSize _scrollViewContentSize;
     NSRect _scrollViewDocumentVisibleRect;
@@ -306,6 +307,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         }
     }
 
+    [NSGraphicsContext saveGraphicsState];
     [self drawRanges:ranges
                count:numRowsInRect
               origin:boundingCoordRange.start
@@ -320,6 +322,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     if (_showDropTargets) {
         [self drawDropTargetsWithVirtualOffset:virtualOffset];
     }
+    [NSGraphicsContext restoreGraphicsState];
 
     [self stopTiming];
 
@@ -355,6 +358,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return count;
 }
 
+// NOTE: This will set a clip rect on the graphics state if pointsOnBottomToSuppressDrawing is positive.
+// The caller must restoreGraphicsState after this returns in that case.
 - (void)drawRanges:(NSRange *)ranges
              count:(NSInteger)numRanges
             origin:(VT100GridCoord)origin
@@ -429,6 +434,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                 virtualOffset:virtualOffset];
     }
 
+    [NSGraphicsContext saveGraphicsState];
+    [self clipOutSuppressedBottomIfNeeded:virtualOffset];
+
     NSColor *cursorBackgroundColor = nil;
     const int cursorY = self.cursorCoord.y + origin.y;
     // Now iterate over the lines and paint the backgrounds.
@@ -456,12 +464,16 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         i += rows;
     }
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_DRAW_BACKGROUND]);
+    [NSGraphicsContext restoreGraphicsState];
 
     // Draw default background color over the line under the last drawn line so the tops of
     // characters aren't visible there. If there is an IME, that could be many lines tall.
-    VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRect];
+    VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRectExcludingTopMargin];
     [self drawExcessAtLine:drawableCoordRange.end.y
              virtualOffset:virtualOffset];
+
+    [NSGraphicsContext saveGraphicsState];
+    [self clipOutSuppressedBottomIfNeeded:virtualOffset];
 
     // Draw other background-like stuff that goes behind text.
     [self drawAccessoriesInRect:boundingRect
@@ -490,7 +502,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                 virtualOffset:virtualOffset];
     }
 
+    [NSGraphicsContext restoreGraphicsState];
     [self drawTopMarginWithVirtualOffset:virtualOffset];
+    [self clipOutSuppressedBottomIfNeeded:virtualOffset];
 
     // If the IME is in use, draw its contents over top of the "real" screen
     // contents.
@@ -522,6 +536,17 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                       virtualOffset:virtualOffset];
     }
     [self drawButtons:virtualOffset];
+}
+
+- (void)clipOutSuppressedBottomIfNeeded:(CGFloat)virtualOffset {
+    if (_pointsOnBottomToSuppressDrawing > 0) {
+        NSRect clipRect = NSMakeRect(0, _visibleRectIncludingTopMargin.origin.y, _visibleRectIncludingTopMargin.size.width, _visibleRectIncludingTopMargin.size.height - _pointsOnBottomToSuppressDrawing);
+        if (_debug) {
+            [[NSColor redColor] set];
+            iTermFrameRect(clipRect, virtualOffset);
+        }
+        iTermRectClip(clipRect, virtualOffset);
+    }
 }
 
 - (BOOL)textAppearanceDependsOnBackgroundColor {
@@ -593,10 +618,19 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             iTermRectFillUsingOperation(temp,
                                         enableBlending ? NSCompositingOperationSourceOver : NSCompositingOperationCopy,
                                         virtualOffset);
+
+            if (_debug) {
+                [[NSColor greenColor] set];
+                iTermFrameRect(temp, virtualOffset);
+            }
         } else {
             iTermRectFillUsingOperation(rect,
                                         enableBlending ? NSCompositingOperationSourceOver : NSCompositingOperationCopy,
                                         virtualOffset);
+            if (_debug) {
+                [[NSColor greenColor] set];
+                iTermFrameRect(rect, virtualOffset);
+            }
         }
 
         if (_debug) {
@@ -704,7 +738,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         // Draw the excess bar at the bottom of the visible rect the in case
         // that some other tab has a larger font and these lines don't fit
         // evenly in the available space.
-        NSRect visibleRect = _visibleRect;
+        NSRect visibleRect = _visibleRectExcludingTopMargin;
         excessRect.origin.x = 0;
         excessRect.origin.y = NSMaxY(visibleRect) - _excess;
         excessRect.size.width = _scrollViewContentSize.width;
@@ -714,7 +748,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     const NSRange range = [self rangeOfVisibleRows];
     [self.delegate drawingHelperDrawBackgroundImageInRect:excessRect
                                    blendDefaultBackground:YES
-                                               deselected:[self lineIsInDeselectedRegion:((NSInteger)NSMaxRange(range)) - 1]
+                                               deselected:!_forceRegularBottomMargin && [self lineIsInDeselectedRegion:((NSInteger)NSMaxRange(range))]
                                             virtualOffset:virtualOffset];
 
     if (_debug) {
@@ -724,7 +758,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         [path lineToPoint:NSMakePoint(NSMaxX(excessRect), NSMaxY(excessRect))];
         [path stroke];
 
-        NSFrameRect(excessRect);
+        iTermFrameRect(excessRect, virtualOffset);
     }
 
     if (_showStripes) {
@@ -734,7 +768,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 - (void)drawTopMarginWithVirtualOffset:(CGFloat)virtualOffset {
     // Draw a margin at the top of the visible area.
-    NSRect topMarginRect = _visibleRect;
+    NSRect topMarginRect = _visibleRectExcludingTopMargin;
     topMarginRect.origin.y -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
 
     topMarginRect.size.height = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
@@ -754,7 +788,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                     virtualOffset:(CGFloat)virtualOffset {
     NSRect leftMargin = NSMakeRect(0, y, MAX(0, [iTermPreferences intForKey:kPreferenceKeySideMargins]), _cellSize.height);
     NSRect rightMargin;
-    NSRect visibleRect = _visibleRect;
+    NSRect visibleRect = _visibleRectExcludingTopMargin;
     rightMargin.origin.x = _cellSize.width * _gridSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
     rightMargin.origin.y = y;
     rightMargin.size.width = visibleRect.size.width - rightMargin.origin.x;
@@ -1220,7 +1254,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 - (void)updateButtonFrames NS_AVAILABLE_MAC(11) {
-    VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRect];
+    VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRectExcludingTopMargin];
     const CGFloat margin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
     for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
         CGFloat x;
@@ -1256,7 +1290,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
              @(drawableCoordRange.start.y + _totalScrollbackOverflow),
              @(drawableCoordRange.start.y),
              @(_totalScrollbackOverflow),
-             NSStringFromRect(_visibleRect),
+             NSStringFromRect(_visibleRectExcludingTopMargin),
              @(_totalScrollbackOverflow),
              @(_cellSize.height));
     }
@@ -3266,7 +3300,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 }
 
 - (NSRect)offscreenCommandLineFrame {
-    return [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:_visibleRect
+    return [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:_visibleRectExcludingTopMargin
                                                                   cellSize:_cellSize
                                                                   gridSize:_gridSize];
 }
@@ -3337,7 +3371,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
     NSRect outline = rect;
     outline.origin.x = 1;
-    outline.size.width = _visibleRect.size.width - 2;
+    outline.size.width = _visibleRectExcludingTopMargin.size.width - 2;
 
     [[self offscreenCommandLineBackgroundColor] set];
     iTermRectFill(outline, virtualOffset);
@@ -3957,9 +3991,10 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
 - (void)updateCachedMetrics {
     _frame = _delegate.frame;
-    _visibleRect = [_delegate textDrawingHelperVisibleRect];
+    _visibleRectExcludingTopMargin = [_delegate textDrawingHelperVisibleRectExcludingTopMargin];
+    _visibleRectIncludingTopMargin = [_delegate textDrawingHelperVisibleRectIncludingTopMargin];
     _scrollViewContentSize = _delegate.enclosingScrollView.contentSize;
-    _scrollViewDocumentVisibleRect = _delegate.textDrawingHelperVisibleRect;
+    _scrollViewDocumentVisibleRect = _visibleRectExcludingTopMargin;
     _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
 
     BOOL ignore1 = NO, ignore2 = NO;

@@ -43,6 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _transparencyAffectsOnlyDefaultBackgroundColor;
     NSColor *_cursorGuideColor;
     NSColorSpace *_colorSpace;
+    BOOL _forceRegularBottomMargin;
 
     // Text
     iTermFontTable *_fontTable;

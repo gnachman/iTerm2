@@ -59,7 +59,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord ofLength:(int)length;
 
 - (NSString * _Nullable)drawingHelperLabelForDropTargetOnLine:(int)line;
-- (NSRect)textDrawingHelperVisibleRect;
+- (NSRect)textDrawingHelperVisibleRectExcludingTopMargin;
+- (NSRect)textDrawingHelperVisibleRectIncludingTopMargin;
 - (id<iTermExternalAttributeIndexReading> _Nullable)drawingHelperExternalAttributesOnLine:(int)lineNumber;
 
 // Sometimes these are implemented by NSView

@@ -15584,6 +15584,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && !_composerManager.temporarilyHidden;
 }
 
+- (CGFloat)textViewPointsOnBottomToSuppressDrawing {
+    if ([_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && !_composerManager.temporarilyHidden) {
+        const NSRect rect = _composerManager.dropDownFrame;
+        return NSMaxY(rect);
+    }
+    return 0;
+}
+
 - (VT100GridRange)textViewLinesToSuppressDrawing {
     if ([_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && !_composerManager.temporarilyHidden) {
         const NSRect rect = _composerManager.dropDownFrame;

@@ -344,8 +344,12 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
         return nil
     }
 
-    func textDrawingHelperVisibleRect() -> NSRect {
-        return originalDelegate.textDrawingHelperVisibleRect()
+    func textDrawingHelperVisibleRectExcludingTopMargin() -> NSRect {
+        return originalDelegate.textDrawingHelperVisibleRectExcludingTopMargin()
+    }
+
+    func textDrawingHelperVisibleRectIncludingTopMargin() -> NSRect {
+        return originalDelegate.textDrawingHelperVisibleRectIncludingTopMargin()
     }
 
     func drawingHelperExternalAttributes(onLine lineNumber: Int32) -> iTermExternalAttributeIndexReading? {

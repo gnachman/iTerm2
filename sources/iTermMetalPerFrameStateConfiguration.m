@@ -56,6 +56,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     NSColorSpace *colorSpace = textView.window.screen.colorSpace ?: [NSColorSpace it_defaultColorSpace];
     _processedDefaultBackgroundColor = [[drawingHelper defaultBackgroundColor] colorUsingColorSpace:colorSpace];
     _processedDeselectedDefaultBackgroundColor = [[drawingHelper deselectedDefaultBackgroundColor] colorUsingColorSpace:colorSpace];
+    _forceRegularBottomMargin = drawingHelper.forceRegularBottomMargin;
     _processedDefaultTextColor = [[drawingHelper defaultTextColor] colorUsingColorSpace:colorSpace];
     NSColor *selectionColor = [[_colorMap colorForKey:kColorMapSelection] colorUsingColorSpace:colorSpace];
     _selectionColor = simd_make_float4((float)selectionColor.redComponent,

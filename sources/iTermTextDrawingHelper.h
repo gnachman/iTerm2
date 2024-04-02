@@ -283,8 +283,10 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property (nonatomic) BOOL useSelectedTextColor;
 @property (nonatomic, strong) iTermFontTable *fontTable;
 @property (nonatomic) VT100GridRange linesToSuppress;
+@property (nonatomic) CGFloat pointsOnBottomToSuppressDrawing;
 @property (nonatomic) NSRange selectedCommandRegion;
 @property (nonatomic) BOOL selectedCommandHasLineStyleMarks;
+@property (nonatomic) BOOL forceRegularBottomMargin;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;

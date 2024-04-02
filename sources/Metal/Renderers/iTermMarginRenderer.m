@@ -90,15 +90,10 @@ NS_ASSUME_NONNULL_BEGIN
                             tState:(nonnull iTermMarginRendererTransientState *)tState {
     [self initializeRegularVertexBuffer:tState];
     vector_float4 regularColor = tState.regularColor;
-    vector_float4 deselectedColor = tState.deselectedColor;
     if (iTermTextIsMonochrome()) {
         regularColor.x *= regularColor.w;
         regularColor.y *= regularColor.w;
         regularColor.z *= regularColor.w;
-
-        deselectedColor.x *= deselectedColor.w;
-        deselectedColor.y *= deselectedColor.w;
-        deselectedColor.z *= deselectedColor.w;
     }
     id<MTLBuffer> colorBuffer = [_colorPool requestBufferFromContext:tState.poolContext
                                                            withBytes:&regularColor
@@ -111,6 +106,18 @@ NS_ASSUME_NONNULL_BEGIN
                            vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
                          fragmentBuffers:@{ @(iTermFragmentBufferIndexMarginColor): colorBuffer }
                                 textures:@{}];
+}
+
+// Matches function in iTermBackgroundColor.metal
+static vector_float4 iTermBlendColors(vector_float4 src, vector_float4 dst) {
+    vector_float4 out;
+    out.w = src.w + dst.w * (1 - src.w);
+    if (out.w > 0) {
+        out.xyz = (src.xyz * src.w + dst.xyz * dst.w * (1 - src.w)) / out.w;
+    } else {
+        out.xyz = 0;
+    }
+    return out;
 }
 
 - (void)drawWithSelectedRegionHavingFrameData:(nonnull iTermMetalFrameData *)frameData
@@ -127,14 +134,36 @@ NS_ASSUME_NONNULL_BEGIN
                        numQuads:n
                  transientState:tState];
 
+    const NSUInteger suppressedPx = tState.suppressedBottomHeight * tState.cellConfiguration.scale;
+    if (tState.suppressedBottomHeight > 0) {
+        // Avoid drawing margin in suppressed region. Background color renderer will handle it for us.
+        MTLScissorRect scissorRect = {
+            .x = 0,
+            .y = 0,
+            .width = tState.cellConfiguration.viewportSize.x,
+            .height = tState.cellConfiguration.viewportSize.y - suppressedPx
+        };
+        [frameData.renderEncoder setScissorRect:scissorRect];
+    }
+
     n = [self initializeDeselected:YES vertexBuffer:tState];
+    const vector_float4 blendedColor = iTermBlendColors(tState.deselectedColor, tState.regularColor);
     [self drawWithRenderEncoder:frameData.renderEncoder
-                          color:tState.deselectedColor
+                          color:blendedColor
                     poolContext:tState.poolContext
                    cellRenderer:cellRenderer
                    vertexBuffer:tState.vertexBuffer
                        numQuads:n
                  transientState:tState];
+    if (tState.suppressedBottomHeight > 0) {
+        MTLScissorRect scissorRect = {
+            .x = 0,
+            .y = 0,
+            .width = tState.cellConfiguration.viewportSize.x,
+            .height = tState.cellConfiguration.viewportSize.y
+        };
+        [frameData.renderEncoder setScissorRect:scissorRect];
+    }
 }
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
@@ -258,8 +287,9 @@ NS_ASSUME_NONNULL_BEGIN
     }
 
     // Bottom
-    const BOOL bottomDeselected = !VT100GridRangeContains(selectedRange,
-                                                          tState.cellConfiguration.gridSize.height);
+    const BOOL bottomDeselected = (!VT100GridRangeContains(selectedRange,
+                                                           tState.cellConfiguration.gridSize.height) &&
+                                   !tState.forceRegularBottomMargin);
     if (deselected == bottomDeselected) {
         v = [self appendVerticesForQuad:CGRectMake(0,
                                                    0,

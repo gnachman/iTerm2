@@ -15,6 +15,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) vector_float4 deselectedColor;
 @property (nonatomic) VT100GridRect selectedCommandRect;
 @property (nonatomic) BOOL hasSelectedRegion;
+
+// A regular bottom margin ignores whether it should be deselected.
+@property (nonatomic) BOOL forceRegularBottomMargin;
+
+// Don't draw margins in this many points on the bottom. This includes the bottom margin.
+@property (nonatomic) CGFloat suppressedBottomHeight;
 @end
 
 // Renders four margins around the periphery of the session as a solid color.

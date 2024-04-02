@@ -1243,16 +1243,21 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 // on then we want to draw the rect you have scrolled to in order to keep it from bouncing around.
 // Note also that this excludes the top margin.
 - (NSRect)adjustedDocumentVisibleRect {
+    return [self adjustedDocumentVisibleRectIncludingTopMargin:NO];
+}
+
+- (NSRect)adjustedDocumentVisibleRectIncludingTopMargin:(BOOL)includeTopMargin {
     const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
     if (!userScroll) {
-        const NSRect result = [self bottommostRectExcludingTopMargin];
+        const NSRect result = [self bottommostRectExcludingTopMargin:!includeTopMargin];
         DLog(@"User scroll is off so return bottommost rect of %@", NSStringFromRect(result));
         return result;
     }
     const NSRect documentVisibleRect = self.enclosingScrollView.documentVisibleRect;
     const int overflow = [_dataSource scrollbackOverflow];
     const int firstRow = MAX(0, documentVisibleRect.origin.y / _lineHeight - overflow) + _drawingHelper.numberOfIMELines;
-    const NSRect result = [self visibleRectExcludingTopMarginStartingAtRow:firstRow];
+    const NSRect result = [self visibleRectExcludingTopMargin:!includeTopMargin
+                                                startingAtRow:firstRow];
     DLog(@"adjustedDocumentVisibleRect is %@", NSStringFromRect(result));
     return result;
 }
@@ -1260,7 +1265,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (CGFloat)virtualOffset {
     const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
     if (userScroll) {
-        const NSRect rectToDraw = [self textDrawingHelperVisibleRect];
+        const NSRect rectToDraw = [self textDrawingHelperVisibleRectExcludingTopMargin];
         DLog(@"rectToDraw=%@", NSStringFromRect(rectToDraw));
         const CGFloat virtualOffset = NSMinY(rectToDraw) - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
         DLog(@"Draw document visible rect. virtualOffset=%@", @(virtualOffset));
@@ -1291,7 +1296,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         ITCriticalError(_dataSource.width < 0, @"Negative datasource width of %@", @(_dataSource.width));
         return;
     }
-    DLog(@"drawing document visible rect %@ for %@", NSStringFromRect(self.textDrawingHelperVisibleRect), self);
+    DLog(@"drawing document visible rect %@ for %@", NSStringFromRect(self.textDrawingHelperVisibleRectExcludingTopMargin), self);
     DLog(@"numberOfLines=%@", @(self.dataSource.numberOfLines));
 
     const CGFloat virtualOffset = [self virtualOffset];
@@ -1311,8 +1316,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         // Initialize drawing helper
         [self drawingHelper];
         DLog(@"draw: minY=%@, absLine=%@",
-             @(self.textDrawingHelperVisibleRect.origin.y),
-             @([_drawingHelper coordRangeForRect:self.textDrawingHelperVisibleRect].start.y + _dataSource.totalScrollbackOverflow));
+             @(self.textDrawingHelperVisibleRectExcludingTopMargin.origin.y),
+             @([_drawingHelper coordRangeForRect:self.textDrawingHelperVisibleRectExcludingTopMargin].start.y + _dataSource.totalScrollbackOverflow));
 
         if (_drawingHook) {
             // This is used by tests to customize the draw helper.
@@ -1371,21 +1376,31 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 // Note that this isn't actually the visible rect because it starts below the top margin.
-- (NSRect)textDrawingHelperVisibleRect {
-    return [self adjustedDocumentVisibleRect];
+- (NSRect)textDrawingHelperVisibleRectExcludingTopMargin {
+    return [self adjustedDocumentVisibleRectIncludingTopMargin:NO];
 }
 
-- (NSRect)bottommostRectExcludingTopMargin {
+- (NSRect)textDrawingHelperVisibleRectIncludingTopMargin {
+    return [self adjustedDocumentVisibleRectIncludingTopMargin:YES];
+}
+
+- (NSRect)bottommostRectExcludingTopMargin:(BOOL)excludeTopMargin {
     const int height = _dataSource.height;
-    return [self visibleRectExcludingTopMarginStartingAtRow:_dataSource.numberOfLines - height + _drawingHelper.numberOfIMELines];
+    return [self visibleRectExcludingTopMargin:excludeTopMargin
+                                 startingAtRow:_dataSource.numberOfLines - height + _drawingHelper.numberOfIMELines];
 }
 
-- (NSRect)visibleRectExcludingTopMarginStartingAtRow:(int)row {
+- (NSRect)visibleRectExcludingTopMargin:(BOOL)excludeTopMargin
+                          startingAtRow:(int)row {
     // This is necessary because of the special case in -drawRect:inView:
     NSRect rect = self.enclosingScrollView.documentVisibleRect;
     // Subtract the top margin's height.
-    rect.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     rect.origin.y = row * _lineHeight;
+    if (excludeTopMargin) {
+        rect.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    } else {
+        rect.origin.y -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    }
     return rect;
 }
 
@@ -1503,6 +1518,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     const BOOL autoComposerOpen = [self.delegate textViewIsAutoComposerOpen];
     _drawingHelper.isCursorVisible = _cursorVisible && !autoComposerOpen;
     _drawingHelper.linesToSuppress = self.delegate.textViewLinesToSuppressDrawing;
+    _drawingHelper.pointsOnBottomToSuppressDrawing = self.delegate.textViewPointsOnBottomToSuppressDrawing;
+    _drawingHelper.forceRegularBottomMargin = autoComposerOpen;
     // TODO: Don't leave find on page helper as the source of truth for this!
     _drawingHelper.selectedCommandRegion = [self relativeRangeFromAbsLineRange:self.findOnPageHelper.absLineRange];
     [_drawingHelper updateCachedMetrics];

@@ -120,6 +120,7 @@ typedef struct {
     BOOL _haveOffscreenCommandLine;
 
     VT100GridRange _linesToSuppressDrawing;
+    CGFloat _pointsOnBottomToSuppressDrawing;
 }
 @end
 
@@ -181,7 +182,7 @@ typedef struct {
 - (void)loadMetricsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                             textView:(PTYTextView *)textView
                               screen:(VT100Screen *)screen {
-    _documentVisibleRect = textView.textDrawingHelperVisibleRect;
+    _documentVisibleRect = textView.textDrawingHelperVisibleRectExcludingTopMargin;
 
     _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
     DLog(@"Visible range for document visible rect %@ is %@",
@@ -200,6 +201,7 @@ typedef struct {
 
     _linesToSuppressDrawing = drawingHelper.linesToSuppress;
     _linesToSuppressDrawing.location -= _visibleRange.start.y;
+    _pointsOnBottomToSuppressDrawing = drawingHelper.pointsOnBottomToSuppressDrawing;
 }
 
 - (void)loadLinesWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -446,6 +448,10 @@ typedef struct {
 
 - (VT100GridRange)linesToSuppressDrawing {
     return _linesToSuppressDrawing;
+}
+
+- (CGFloat)pointsOnBottomToSuppressDrawing {
+    return _pointsOnBottomToSuppressDrawing;
 }
 
 // Populate _rowToAnnotationRanges.
@@ -742,6 +748,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                             (float)_configuration->_processedDeselectedDefaultBackgroundColor.greenComponent,
                             (float)_configuration->_processedDeselectedDefaultBackgroundColor.blueComponent,
                             alpha);
+}
+
+- (BOOL)forceRegularBottomMargin {
+    return _configuration->_forceRegularBottomMargin;
 }
 
 - (vector_float4)processedDefaultTextColor {
