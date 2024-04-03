@@ -584,11 +584,12 @@ static _Atomic int gPerformingJoinedBlock;
                                                                          unlimitedScrollback:self.unlimitedScrollback
                                                                      useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                                   willScroll:nil]];
-    // BE CAREFUL! This condition must match the implementation of -screenDidReceiveLineFeed.
+    // BE CAREFUL! This condition must match the implementation of -screenDidReceiveLineFeedAtLineBufferGeneration.
     // See the more detailed note there.
     if (self.config.publishing || self.config.loggingEnabled) {
+        const long long lineBufferGeneration = self.linebuffer.generation;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenDidReceiveLineFeed];
+            [delegate screenDidReceiveLineFeedAtLineBufferGeneration:lineBufferGeneration];
         }];
     } else {
         [self.tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed];
@@ -793,9 +794,13 @@ static _Atomic int gPerformingJoinedBlock;
             ScreenCharArray *sca = [[ScreenCharArray alloc] initWithCopyOfLine:buffer
                                                                         length:len
                                                                   continuation:continuation];
+            DLog(@"VT100Screen did append %@ to line buffer", sca.stringValue);
+            const long long lineBufferGeneration = lineBuffer.generation;
             [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+                DLog(@"VT100Screen publishing append of %@", sca.stringValue);
                 [delegate screenAppendScreenCharArray:sca
-                                             metadata:temp];
+                                             metadata:temp
+                                 lineBufferGeneration:lineBufferGeneration];
                 iTermImmutableMetadataRelease(temp);
             }];
         }
@@ -2114,9 +2119,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         continuation.code = EOL_SOFT;
         ScreenCharArray *sca = [[ScreenCharArray alloc] initWithCopyOfLine:aLine + cursorX
                                                                     length:nextTabStop - startX continuation:continuation];
+        const long long lineBufferGeneration = self.linebuffer.generation;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenAppendScreenCharArray:sca
-                                         metadata:iTermImmutableMetadataDefault()];
+                                         metadata:iTermImmutableMetadataDefault()
+                             lineBufferGeneration:lineBufferGeneration];
         }];
     }
     self.currentGrid.cursorX = nextTabStop;
@@ -5637,8 +5644,9 @@ launchCoprocessWithCommand:(NSString *)command
         }];
     }
     if (flags & VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed) {
+        const long long lineBufferGeneration = self.linebuffer.generation;
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
-            [delegate screenDidReceiveLineFeed];
+            [delegate screenDidReceiveLineFeedAtLineBufferGeneration:lineBufferGeneration];
         }];
     }
     if (flags & VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines) {

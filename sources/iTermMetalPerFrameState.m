@@ -770,7 +770,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (VT100GridRect)selectedCommandRect {
     long long minY = ((long long)_configuration->_selectedCommandRegion.location) - _visibleRange.start.y;
+    minY -= _configuration->_totalScrollbackOverflow;
     long long maxY = ((long long)NSMaxRange(_configuration->_selectedCommandRegion)) - _visibleRange.start.y;
+    maxY -= _configuration->_totalScrollbackOverflow;
     minY = MAX(-1, minY);
     maxY = MIN(_configuration->_gridSize.height + 1, maxY);
 

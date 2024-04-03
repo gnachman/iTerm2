@@ -19,6 +19,11 @@
     int position;
     int length;
 }
+@property (nonatomic, readonly) int position;
+@property (nonatomic, readonly) int length;
+
+- (instancetype)initWithPosition:(int)position length:(int)length;
+
 @end
 
 @interface XYRange : NSObject {

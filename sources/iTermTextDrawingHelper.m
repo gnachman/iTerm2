@@ -1070,11 +1070,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     id<VT100ScreenMarkReading> mark = [self.delegate drawingHelperMarkOnLine:line];
     if (mark != nil && self.drawMarkIndicators) {
         if (mark.lineStyle) {
-            if (_selectedCommandRegion.length > 0 && NSLocationInRange(line + self.totalScrollbackOverflow, _selectedCommandRegion)) {
+            if (_selectedCommandRegion.length > 0 && NSLocationInRange(line, _selectedCommandRegion)) {
                 // Don't draw line-style mark in selected command region.
                 return;
             }
-            if (_selectedCommandRegion.length > 0 && line + self.totalScrollbackOverflow == NSMaxRange(_selectedCommandRegion) + 1) {
+            if (_selectedCommandRegion.length > 0 && line == NSMaxRange(_selectedCommandRegion) + 1) {
                 // Don't draw line-style mark immediately after selected command region.
                 return;
             }
@@ -1271,7 +1271,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                       minAbsLine:minAbsY
                                 cumulativeOffset:_totalScrollbackOverflow
                                         cellSize:_cellSize];
-        if (_selectedCommandRegion.length > 0 && absCoord.y == NSMaxRange(_selectedCommandRegion)) {
+        if (_selectedCommandRegion.length > 0 && absCoord.y - self.totalScrollbackOverflow == NSMaxRange(_selectedCommandRegion)) {
             NSRect frame = button.desiredFrame;
             button.shift = 2;
             frame.origin.y += button.shift;

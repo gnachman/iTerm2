@@ -6501,12 +6501,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     if ([filter isEqualToString:_filter]) {
         return;
     }
-    VT100Screen *source = nil;
-    if ([_asyncFilter canRefineWithQuery:filter]) {
-        source = self.screen;
-    } else {
-        source = self.liveSession.screen;
+    if (!filter) {
+        if (_asyncFilter) {
+            DLog(@"Nuke existing filter %@", _asyncFilter);
+            [_asyncFilter cancel];
+            [self.liveSession removeContentSubscriber:_asyncFilter];
+            [_filter autorelease];
+            _filter = nil;
+            [_asyncFilter release];
+            _asyncFilter = nil;
+        }
+        return;
     }
+
+    PTYSession *sourceSession = self.liveSession;
+    VT100Screen *source = sourceSession.screen;
     [_asyncFilter cancel];
     [self.liveSession removeContentSubscriber:_asyncFilter];
     const BOOL replacingFilter = (_filter != nil);
@@ -6520,13 +6529,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
     DLog(@"Append lines from %@", self.liveSession);
     __weak __typeof(self) weakSelf = self;
+    DLog(@"Will create new async filter for query %@ refining %@", filter, refining.it_addressString);
     _asyncFilter = [source newAsyncFilterWithDestination:self
                                                    query:filter
                                                 refining:refining
+                                            absLineRange:sourceSession.textview.findOnPageHelper.absLineRange
                                                 progress:^(double progress) {
         [weakSelf setFilterProgress:progress];
     }];
-    [self.liveSession addContentSubscriber:_asyncFilter];
+    if (sourceSession.textview.findOnPageHelper.absLineRange.length == 0 ||
+        (_selectedCommandMark == [_screen lastPromptMark] && sourceSession.selectedCommandMark.isRunning)) {
+        [self.liveSession addContentSubscriber:_asyncFilter];
+    }
     if (replacingFilter) {
         DLog(@"Clear buffer because there is a pre-existing filter");
         [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -6534,6 +6548,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         }];
     }
     [_asyncFilter start];
+}
+
+- (id<VT100ScreenMarkReading>)selectedCommandMark {
+    return _selectedCommandMark;
 }
 
 - (void)setFilterProgress:(double)progress {
@@ -14468,8 +14486,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 // When this would be idempotent then it's called via a flag change.
 // When this is not idempotent it is called as a side effect, which is slower.
 // -appendLineFeed contains an idempotency test that must match the implementation of this method.
-- (void)screenDidReceiveLineFeed {
-    [self publishNewline];  // Idempotent exactly when not publishing
+- (void)screenDidReceiveLineFeedAtLineBufferGeneration:(long long)lineBufferGeneration {
+    [self publishNewlineWithLineBufferGeneration:lineBufferGeneration];  // Idempotent exactly when not publishing
     [_pwdPoller didReceiveLineFeed];  // Idempotent
     if (_logging.enabled && !self.isTmuxGateway) {  // Idempotent if condition is false
         switch (_logging.style) {
@@ -14665,8 +14683,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenAppendScreenCharArray:(ScreenCharArray *)sca
-                           metadata:(iTermImmutableMetadata)metadata {
-    [self publishScreenCharArray:sca metadata:metadata];
+                           metadata:(iTermImmutableMetadata)metadata
+               lineBufferGeneration:(long long)lineBufferGeneration {
+    [self publishScreenCharArray:sca
+                        metadata:metadata
+            lineBufferGeneration:lineBufferGeneration];
 }
 
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
@@ -15704,7 +15725,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         range.end = [_screen absCoordRangeForInterval:successor.entry.interval].start;
         range.end.y -= 1;
     } else {
-        range.end = VT100GridAbsCoordMake(_screen.width - 1, _screen.numberOfLines + _screen.totalScrollbackOverflow - 1);
+        range.end = VT100GridAbsCoordMake(_screen.width - 1, _screen.numberOfLines + _screen.totalScrollbackOverflow);
     }
     if (_selectedCommandMark.lineStyle) {
         _textview.findOnPageHelper.absLineRange = NSMakeRange(MAX(0, range.start.y - 1),
@@ -15980,11 +16001,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (!_contentSubscribers) {
         _contentSubscribers = [[NSMutableArray alloc] init];
     }
+    DLog(@"Add content subscriber %@\n%@", contentSubscriber, [NSThread callStackSymbols]);
     [_contentSubscribers addObject:contentSubscriber];
     [self sync];
 }
 
 - (void)removeContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber {
+    DLog(@"Remove content subscriber %@\n%@", contentSubscriber, [NSThread callStackSymbols]);
     [_contentSubscribers removeObject:contentSubscriber];
     [self sync];
 }

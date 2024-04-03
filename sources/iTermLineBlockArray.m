@@ -284,7 +284,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     [_numLinesCaches setNumLinesCache:numLinesCache forWidth:width];
 }
 
-- (void)oopsWithWidth:(int)width block:(void (^)(void))block {
+- (void)oopsWithWidth:(int)width droppedChars:(long long)droppedChars block:(void (^)(void))block {
     TurnOnDebugLoggingSilently();
 
     if (width > 0) {
@@ -299,7 +299,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     int i = 0;
     for (LineBlock *block in _blocks) {
         DLog(@"-- BEGIN BLOCK %@ --", @(i++));
-        [block dump:width toDebugLog:YES];
+        [block dump:width droppedChars:droppedChars toDebugLog:YES];
     }
     DLog(@"-- End of boilerplate dumps --");
     block();
@@ -817,7 +817,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     }
 }
 
-- (void)sanityCheck {
+- (void)sanityCheck:(long long)droppedChars {
     if (_rawLinesCache == nil) {
         return;
     }
@@ -830,7 +830,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
             ok = [block getNumLinesWithWrapWidth:w] == [[_numLinesCaches numLinesCacheForWidth:w] valueAtIndex:i];
         }
         if (!ok) {
-            [self oopsWithWidth:0 block:^{
+            [self oopsWithWidth:0 droppedChars:droppedChars block:^{
                 DLog(@"Sanity check failed");
             }];
 

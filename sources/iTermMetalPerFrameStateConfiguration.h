@@ -91,12 +91,13 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _blinkingItemsVisible;
     NSFont *_timestampFont;
     NSArray<iTermTerminalButton *> *_terminalButtons NS_AVAILABLE_MAC(11);
+    long long _totalScrollbackOverflow;
 
     // Offscreen command line
     NSColor *_offscreenCommandLineBackgroundColor;
     NSColor *_offscreenCommandLineOutlineColor;
 
-    // Selected command
+    // Selected command (absolute lines)
     NSRange _selectedCommandRegion;
 };
 

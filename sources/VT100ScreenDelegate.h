@@ -357,7 +357,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenTerminalAttemptedPasteboardAccess;
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus;
 - (void)screenReportPasteBracketingWillChangeTo:(BOOL)bracket;
-- (void)screenDidReceiveLineFeed;
+- (void)screenDidReceiveLineFeedAtLineBufferGeneration:(long long)lineBufferGeneration;
 - (void)screenSoftAlternateScreenModeDidChangeTo:(BOOL)enabled
                                 showingAltScreen:(BOOL)showing;
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp;
@@ -375,7 +375,8 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                             charactersIgnoringModifiers:(NSString * _Nonnull)charactersIgnoringModifiers;
 - (void)screenDidAppendImageData:(NSData * _Nonnull)data;
 - (void)screenAppendScreenCharArray:(ScreenCharArray * _Nonnull)array
-                           metadata:(iTermImmutableMetadata)metadata;
+                           metadata:(iTermImmutableMetadata)metadata
+               lineBufferGeneration:(long long)lineBufferGeneration;
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot * _Nonnull)slot;
 - (void)screenOfferToDisableTriggersInInteractiveApps;

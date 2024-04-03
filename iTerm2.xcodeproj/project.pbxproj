@@ -3051,7 +3051,6 @@
 		A6C762F11B45C52B00E3C992 /* DVRDecoder.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D34E126974BC007F741B /* DVRDecoder.m */; };
 		A6C762F21B45C52B00E3C992 /* DVREncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D35212697529007F741B /* DVREncoder.m */; };
 		A6C762F31B45C52B00E3C992 /* DVRIndexEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D3B012697D53007F741B /* DVRIndexEntry.m */; };
-		A6C762F41B45C52B00E3C992 /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		A6C762FB1B45C52B00E3C992 /* FileTransferManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30CC186D1414007F550F /* FileTransferManager.m */; };
 		A6C762FD1B45C52B00E3C992 /* SCPPath.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D6186D1429007F550F /* SCPPath.m */; };
 		A6C762FF1B45C52B00E3C992 /* TransferrableFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D7186D1429007F550F /* TransferrableFile.m */; };
@@ -3305,6 +3304,7 @@
 		A6D5724127BCDAA1002E6E9F /* CharacterAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D5724027BCDAA1002E6E9F /* CharacterAttributes.swift */; };
 		A6D5985121B78B9700B59C94 /* iTermBroadcastInputHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D5984F21B78B9700B59C94 /* iTermBroadcastInputHelper.h */; };
 		A6D5985221B78B9700B59C94 /* iTermBroadcastInputHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D5985021B78B9700B59C94 /* iTermBroadcastInputHelper.m */; };
+		A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		A6D8973A22154A8800325F6A /* AnnotateTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D8973822154A8800325F6A /* AnnotateTrigger.h */; };
 		A6D8973B22154A8800325F6A /* AnnotateTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D8973922154A8800325F6A /* AnnotateTrigger.m */; };
 		A6D8CC3220CE417000E79512 /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
@@ -16255,6 +16255,7 @@
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
 				A621F11026F8E9E6001DD3A6 /* iTermTLVCodec.m in Sources */,
 				A67BCFE8270E702C00636983 /* VT100SavedColors.swift in Sources */,
+				A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */,
 				A6A3D18D2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift in Sources */,
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,
 				A61A859524EFA01800B03880 /* iTermBackgroundCommandRunner.m in Sources */,
@@ -16477,7 +16478,6 @@
 				A6C7639C1B45C52B00E3C992 /* TmuxLayoutParser.m in Sources */,
 				A6FEA2641CF0F33300376F28 /* iTermModifierRemapper.m in Sources */,
 				A6C762B01B45C52B00E3C992 /* NSColor+Scripting.m in Sources */,
-				A6C762F41B45C52B00E3C992 /* FakeWindow.m in Sources */,
 				A6C7632B1B45C52B00E3C992 /* SmartMatch.m in Sources */,
 				A6C763CB1B45C52B00E3C992 /* VT100TmuxParser.m in Sources */,
 				A6EFF21D1D1CA9F800806EEF /* NSLocale+iTerm.m in Sources */,

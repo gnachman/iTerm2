@@ -1062,6 +1062,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
                                               query:(NSString *)query
                                            refining:(iTermAsyncFilter *)refining
+                                       absLineRange:(NSRange)absLineRange
                                            progress:(void (^)(double))progress {
     [self.delegate screenEnsureDefaultMode];
     return [[iTermAsyncFilter alloc] initWithQuery:query
@@ -1071,6 +1072,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                        destination:destination
                                            cadence:1.0 / 60.0
                                           refining:refining
+                                      absLineRange:absLineRange
+                                cumulativeOverflow:_state.cumulativeScrollbackOverflow
                                           progress:progress];
 }
 

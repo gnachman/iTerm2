@@ -55,6 +55,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) BOOL lineStyle;
 @property(nonatomic, readonly, copy, nullable) NSString *name;
 
+@property(nonatomic, readonly) BOOL isRunning;
+
 - (id<VT100ScreenMarkReading>)progenitor;
 - (id<VT100ScreenMarkReading>)doppelganger;
 

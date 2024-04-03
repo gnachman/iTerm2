@@ -197,6 +197,25 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     return result;
 }
 
+- (NSString *)debugStringValue {
+    NSString *eol;
+    switch (self.eol) {
+        case EOL_HARD:
+            eol = @"[hard eol]";
+            break;
+        case EOL_DWC:
+            eol = @"[dwc eol]";
+            break;
+        case EOL_SOFT:
+            eol = @"[soft eol]";
+            break;
+        default:
+            eol = @"[unknown eol]";
+            break;
+    }
+    return [self.stringValue stringByAppendingString:eol];
+}
+
 - (NSString *)stringValueIncludingNewline {
     NSString *base = self.stringValue;
     if (self.eol == EOL_HARD) {
@@ -368,7 +387,7 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
 }
 
 - (ScreenCharArray *)paddedToLength:(int)length eligibleForDWC:(BOOL)eligibleForDWC {
-    if (self.length == length) {
+    if (self.length == length || length < 0) {
         return self;
     }
     NSMutableData *data = [NSMutableData dataWithLength:sizeof(screen_char_t) * (length + 1)];

@@ -312,4 +312,8 @@ static NSString *const kMarkOutputStart = @"Output Start";
     return _returnCodePromise;
 }
 
+- (BOOL)isRunning {
+    return _command.length > 0 && _endDate == nil;
+}
+
 @end

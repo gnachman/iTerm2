@@ -187,7 +187,7 @@ void iTermMetadataReset(iTermMetadata *obj) {
 }
 
 NSString *iTermMetadataShortDescription(iTermMetadata metadata, int length) {
-    return [NSString stringWithFormat:@"<iTermMetadata timestamp=%@ ea=%@>", @(metadata.timestamp), iTermMetadataGetExternalAttributesIndex(metadata)];
+    return [NSString stringWithFormat:@"<timestamp=%@ ea=%@>", @(metadata.timestamp), iTermMetadataGetExternalAttributesIndex(metadata)];
 }
 
 NSArray *iTermMetadataArrayFromData(NSData *data) {

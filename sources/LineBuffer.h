@@ -50,6 +50,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Absolute block number of last block.
 @property(nonatomic, readonly) int largestAbsoluteBlockNumber;
 @property(nonatomic, readonly) BOOL dirty;
+@property(nonatomic, readonly) long long numberOfDroppedChars;
+@property(nonatomic, readonly) long long generation;
 // Returns the metadata associated with a line when wrapped to the specified width.
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
 
@@ -139,6 +141,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (LineBufferPosition * _Nonnull)lastPosition;
 - (LineBufferPosition * _Nonnull)penultimatePosition;
 - (LineBufferPosition * _Nonnull)positionForStartOfLastLine;
+
+- (LineBufferPosition * _Nonnull)positionForStartOfLastLineBeforePosition:(LineBufferPosition *)limit;
+- (LineBufferPosition * _Nonnull)positionForStartOfResultRange:(ResultRange *)resultRange;
 
 // Convert the block,offset in a findcontext into an absolute position.
 - (long long)absPositionOfFindContext:(FindContext * _Nonnull)findContext;

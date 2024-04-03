@@ -1,5 +1,7 @@
 #import "LineBufferPosition.h"
 
+#import "DebugLogging.h"
+
 @implementation LineBufferPosition {
     long long absolutePosition_;
     int yOffset_;
@@ -44,6 +46,30 @@
     return (absolutePosition_ == other->absolutePosition_ &&
             yOffset_ == other->yOffset_ &&
             extendsToEndOfLine_ == other->extendsToEndOfLine_);
+}
+
+- (NSComparisonResult)compare:(LineBufferPosition *)other {
+    NSComparisonResult result = [@(self.absolutePosition) compare:@(other.absolutePosition)];
+    if (result != NSOrderedSame) {
+        return result;
+    }
+    result = [@(self.yOffset) compare:@(other.yOffset)];
+    if (result != NSOrderedSame) {
+        return result;
+    }
+    if (self.extendsToEndOfLine == other.extendsToEndOfLine) {
+        return NSOrderedSame;
+    } else if (self.extendsToEndOfLine) {
+        return NSOrderedDescending;
+    } else {
+        return NSOrderedAscending;
+    }
+}
+
+- (LineBufferPosition *)advancedBy:(int)cells {
+    LineBufferPosition *pos = [[[LineBufferPosition alloc] init] autorelease];
+    pos.absolutePosition = self.absolutePosition + cells;
+    return pos;
 }
 
 @end

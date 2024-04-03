@@ -284,6 +284,7 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property (nonatomic, strong) iTermFontTable *fontTable;
 @property (nonatomic) VT100GridRange linesToSuppress;
 @property (nonatomic) CGFloat pointsOnBottomToSuppressDrawing;
+// NOTE: This is a relative line range.
 @property (nonatomic) NSRange selectedCommandRegion;
 @property (nonatomic) BOOL selectedCommandHasLineStyleMarks;
 @property (nonatomic) BOOL forceRegularBottomMargin;

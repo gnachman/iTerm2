@@ -279,6 +279,7 @@ const CGFloat kEdgeWidth = 3;
     NSSize size = [self sizeOfIndexAndCount];
     NSRect result = [super searchTextRectForBounds:rect];
     result.size.width -= size.width + self.marginForIndexAndCount * 2;
+    result.size.width = MAX(1, result.size.width);
     return result;
 }
 

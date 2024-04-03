@@ -33,9 +33,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermJobManagerAttachResults)tryToFinishAttachingToMultiserverWithPartialAttachment:(id<iTermPartialAttachment>)partialAttachment;
 
-- (void)publishNewline;
+- (void)publishNewlineWithLineBufferGeneration:(long long)lineBufferGeneration;
 - (void)publishScreenCharArray:(ScreenCharArray *)array
-                      metadata:(iTermImmutableMetadata)metadata;
+                      metadata:(iTermImmutableMetadata)metadata
+          lineBufferGeneration:(long long)lineBufferGeneration;
 - (void)maybeTurnOffPasteBracketing;
 - (id<iTermPopupWindowHosting>)popupHost;
 
@@ -44,8 +45,11 @@ NS_ASSUME_NONNULL_BEGIN
 @interface PTYSessionPublishRequest: NSObject
 @property (readonly, nonatomic, strong) ScreenCharArray *array;
 @property (readonly, nonatomic) iTermImmutableMetadata metadata;
+@property (readonly, nonatomic) long long lineBufferGeneration;
 
-+ (instancetype)requestWithArray:(ScreenCharArray *)sca metadata:(iTermImmutableMetadata)metadata;
++ (instancetype)requestWithArray:(ScreenCharArray *)sca
+                        metadata:(iTermImmutableMetadata)metadata
+            lineBufferGeneration:(long long)lineBufferGeneration;
 
 @end
 

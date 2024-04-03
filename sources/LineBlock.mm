@@ -567,6 +567,10 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     }
 }
 - (NSString *)dumpString {
+    return [self dumpStringWithDroppedChars:0];
+}
+
+- (NSString *)dumpStringWithDroppedChars:(long long)droppedChars {
     NSMutableArray<NSString *> *strings = [NSMutableArray array];
     [strings addObject:[NSString stringWithFormat:@"numRawLines=%@", @([self numRawLines])]];
 
@@ -581,16 +585,23 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     }
     for (i = first_entry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
-        NSString *message = [NSString stringWithFormat:@"Line %d, length %d, offset from raw=%d, abs pos=%d, continued=%s: %s\n", i, cumulative_line_lengths[i] - prev, prev, prev + rawOffset, iscont?"yes":"no",
-                             formatsct(_characterBuffer.pointer + _startOffset + prev - self.bufferStartOffset, cumulative_line_lengths[i]-prev, temp)];
         NSString *md = iTermMetadataShortDescription(metadata_[i].lineMetadata, cumulative_line_lengths[i] - prev);
-        [strings addObject:[message stringByAppendingString:md]];
+        NSString *message = [NSString stringWithFormat:@"Line %d, length %d, offset from raw=%d, abs pos=%lld, continued=%s %@: %s\n",
+                             i,
+                             cumulative_line_lengths[i] - prev,
+                             prev,
+                             prev + rawOffset + droppedChars,
+                             iscont?"yes":"no",
+                             md,
+                             formatsct(_characterBuffer.pointer + _startOffset + prev - self.bufferStartOffset,
+                                       cumulative_line_lengths[i]-prev, temp)];
+        [strings addObject:message];
         prev = cumulative_line_lengths[i];
     }
     return [strings componentsJoinedByString:@"\n"];
 }
 
-- (void)dump:(int)rawOffset toDebugLog:(BOOL)toDebugLog {
+- (void)dump:(int)rawOffset droppedChars:(long long)droppedChars toDebugLog:(BOOL)toDebugLog {
     if (toDebugLog) {
         DLog(@"numRawLines=%@", @([self numRawLines]));
     } else {
@@ -606,13 +617,19 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     }
     for (i = first_entry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
-        NSString *message = [NSString stringWithFormat:@"Line %d, length %d, offset from raw=%d, abs pos=%d, continued=%s: %s\n", i, cumulative_line_lengths[i] - prev, prev, prev + rawOffset, iscont?"yes":"no",
-                             formatsct(_characterBuffer.pointer + _startOffset + prev - self.bufferStartOffset, cumulative_line_lengths[i]-prev, temp)];
         NSString *md = iTermMetadataShortDescription(metadata_[i].lineMetadata, cumulative_line_lengths[i] - prev);
+        NSString *message = [NSString stringWithFormat:@"Line %d, length %d, offset from raw=%d, abs pos=%lld, continued=%s %@: %s\n",
+                             i,
+                             cumulative_line_lengths[i] - prev,
+                             prev,
+                             prev + rawOffset + droppedChars,
+                             iscont?"yes":"no",
+                             md,
+                             formatsct(_characterBuffer.pointer + _startOffset + prev - self.bufferStartOffset, cumulative_line_lengths[i]-prev, temp)];
         if (toDebugLog) {
-            DLog(@"%@%@", message, md);
+            DLog(@"%@", message);
         } else {
-            NSLog(@"%@%@", message, md);
+            NSLog(@"%@", message);
         }
         prev = cumulative_line_lengths[i];
     }
@@ -825,6 +842,17 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
 
 - (LineBlockMetadata)internalMetadataForLine:(int)line {
     return metadata_[line];
+}
+
+- (int)offsetOfStartOfLineIncludingOffset:(int)offset {
+    int i = [self _findEntryBeforeOffset:offset];
+    if (i < 0) {
+        i = cll_entries - 2;
+    }
+    if (i < 0) {
+        return 0;
+    }
+    return cumulative_line_lengths[i];
 }
 
 - (int)getPositionOfLine:(int *)lineNum

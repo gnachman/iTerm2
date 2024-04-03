@@ -59,8 +59,8 @@ NS_ASSUME_NONNULL_BEGIN
                              remainder:(nullable int *)remainder
                            blockOffset:(nullable int *)yoffset
                                  index:(nullable int *)indexPtr;
-- (void)sanityCheck;
-- (void)oopsWithWidth:(int)width block:(void (^)(void))block;
+- (void)sanityCheck:(long long)droppedChars;
+- (void)oopsWithWidth:(int)width droppedChars:(long long)droppedChars block:(void (^)(void))block;
 - (NSSet<NSNumber *> *)cachedWidths;
 - (NSInteger)numberOfWrappedLinesForWidth:(int)width
                           upToBlockAtIndex:(NSInteger)limit;

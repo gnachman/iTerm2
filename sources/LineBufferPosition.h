@@ -19,6 +19,9 @@
 - (LineBufferPosition *)predecessor;
 
 - (BOOL)isEqualToLineBufferPosition:(LineBufferPosition *)other;
+- (NSComparisonResult)compare:(LineBufferPosition *)other;
+
+- (LineBufferPosition *)advancedBy:(int)cells;
 
 @end
 

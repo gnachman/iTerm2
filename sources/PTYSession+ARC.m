@@ -242,7 +242,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 
 #pragma mark - Content Subscriptions
 
-- (void)publishNewline {
+- (void)publishNewlineWithLineBufferGeneration:(long long)lineBufferGeneration {
     if (self.contentSubscribers.count == 0) {
         return;
     }
@@ -256,15 +256,20 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         [empty makeSafe];
     });
     // Dispatch because side-effects can't join the mutation queue.
-    [self publishScreenCharArray:empty metadata:iTermMetadataMakeImmutable(iTermMetadataDefault())];
+    [self publishScreenCharArray:empty 
+                        metadata:iTermMetadataMakeImmutable(iTermMetadataDefault())
+            lineBufferGeneration:lineBufferGeneration];
 }
 
 - (void)publishScreenCharArray:(ScreenCharArray *)array
-                      metadata:(iTermImmutableMetadata)metadata {
+                      metadata:(iTermImmutableMetadata)metadata
+          lineBufferGeneration:(long long)lineBufferGeneration {
     if (self.contentSubscribers.count == 0) {
         return;
     }
-    [self publish:[PTYSessionPublishRequest requestWithArray:array metadata:metadata]];
+    [self publish:[PTYSessionPublishRequest requestWithArray:array
+                                                    metadata:metadata
+                                        lineBufferGeneration:lineBufferGeneration]];
 }
 
 - (void)publish:(PTYSessionPublishRequest *)request {
@@ -287,7 +292,11 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         PTYSessionPublishRequest *request = _pendingPublishRequests.firstObject;
         [_pendingPublishRequests removeObjectAtIndex:0];
         for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
-            [subscriber deliver:request.array metadata:request.metadata];
+            [subscriber updateMetadataWithSelectedCommandRange:self.textview.findOnPageHelper.absLineRange
+                                            cumulativeOverflow:self.screen.totalScrollbackOverflow];
+            [subscriber deliver:request.array
+                       metadata:request.metadata
+           lineBufferGeneration:request.lineBufferGeneration];
         }
     }
     DLog(@"Done sending pending publish requests. Queue size is %@", @(_pendingPublishRequests.count));
@@ -298,8 +307,11 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 
 @implementation PTYSessionPublishRequest
 
-+ (instancetype)requestWithArray:(ScreenCharArray *)sca metadata:(iTermImmutableMetadata)metadata {
++ (instancetype)requestWithArray:(ScreenCharArray *)sca 
+                        metadata:(iTermImmutableMetadata)metadata
+            lineBufferGeneration:(long long)lineBufferGeneration {
     PTYSessionPublishRequest *request = [[PTYSessionPublishRequest alloc] init];
+    request->_lineBufferGeneration = lineBufferGeneration;
     [sca makeSafe];
     request->_array = sca;
     iTermImmutableMetadataRetain(metadata);
