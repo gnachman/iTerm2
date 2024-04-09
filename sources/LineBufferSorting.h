@@ -13,7 +13,7 @@
 #if __cplusplus
 extern "C"
 #endif
-int *SortedPositionsFromResultRanges(NSArray<ResultRange *> *ranges);
+int *SortedPositionsFromResultRanges(NSArray<ResultRange *> *ranges, BOOL includeEnds);
 
 @interface LineBufferSearchIntermediateMap: NSObject
 - (instancetype)initWithCapacity:(int)capacity NS_DESIGNATED_INITIALIZER;

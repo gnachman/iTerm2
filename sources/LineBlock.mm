@@ -849,10 +849,10 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     if (i < 0) {
         i = cll_entries - 2;
     }
-    if (i < 0) {
+    if (i < 1) {
         return 0;
     }
-    return cumulative_line_lengths[i];
+    return cumulative_line_lengths[i - 1];
 }
 
 - (int)getPositionOfLine:(int *)lineNum
@@ -1275,6 +1275,15 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                                         metadata:metadata
                                                     continuation:continuation];
     return [sca paddedToLength:paddedSize eligibleForDWC:eligibleForDWC];
+}
+
+- (NSNumber *)rawLineNumberAtWrappedLineOffset:(int)lineNum width:(int)width {
+    int temp = lineNum;
+    const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&temp];
+    if (!location.found) {
+        return nil;
+    }
+    return @(location.index);
 }
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width {

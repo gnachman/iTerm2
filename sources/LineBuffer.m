@@ -300,7 +300,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int i;
     for (i = 0; i < _lineBlocks.count; ++i) {
         [strings addObject:@""];
-        [strings addObject:[NSString stringWithFormat:@"-- BEGIN BLOCK %d (abs %@) --", i, i + num_dropped_blocks]];
+        [strings addObject:[NSString stringWithFormat:@"-- BEGIN BLOCK %d (abs %d) --", i, i + num_dropped_blocks]];
         [strings addObject:[_lineBlocks[i] dumpStringWithDroppedChars:droppedChars]];
     }
     return [strings componentsJoinedByString:@"\n"];
@@ -1016,11 +1016,18 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 // Returns an array of XRange values
-- (NSArray *)convertPositions:(NSArray *)resultRanges withWidth:(int)width {
+- (NSArray *)convertPositions:(NSArray<ResultRange *> *)resultRanges withWidth:(int)width {
+    return [self convertPositions:resultRanges expandedResultRanges:nil withWidth:width];
+}
+
+- (NSArray<XYRange *> * _Nullable)convertPositions:(NSArray<ResultRange *> * _Nonnull)resultRanges
+                              expandedResultRanges:(NSMutableArray<ResultRange *> * _Nullable)expandedResultRanges
+                                         withWidth:(int)width {
+    const BOOL expanded = (expandedResultRanges != nil);
     if (width <= 0) {
         return nil;
     }
-    int *sortedPositions = SortedPositionsFromResultRanges(resultRanges);
+    int *sortedPositions = SortedPositionsFromResultRanges(resultRanges, !expanded);
     int i = 0;
     int yoffset = 0;
     int numBlocks = _lineBlocks.count;
@@ -1030,7 +1037,8 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
     LineBufferSearchIntermediateMap *intermediate = [[LineBufferSearchIntermediateMap alloc] initWithCapacity:resultRanges.count * 2];
     int prev = -1;
-    const int numPositions = resultRanges.count * 2;
+    const int numPositions = resultRanges.count * (expanded ? 1 : 2);
+    int lastPositionToConvert = -1;
     for (int j = 0; j < numPositions; j++) {
         const int position = sortedPositions[j];
         if (position == prev) {
@@ -1053,7 +1061,15 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
             assert(position >= passed);
             assert(position < passed + used);
             assert(used == [block rawSpaceUsed]);
-            BOOL isOk = [block convertPosition:position - passed
+            const int positionToConvert = expanded ? [block offsetOfStartOfLineIncludingOffset:position - passed] : position - passed;
+            if (expanded) {
+                // Prevent duplicates when expanding.
+                if (positionToConvert == lastPositionToConvert) {
+                    continue;
+                }
+                lastPositionToConvert = positionToConvert;
+            }
+            BOOL isOk = [block convertPosition:positionToConvert
                                      withWidth:width
                                      wrapOnEOL:YES
                                            toX:&x
@@ -1062,16 +1078,38 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
             if (isOk) {
                 y += yoffset;
                 [intermediate addCoordinate:VT100GridCoordMake(x, y)
-                                forPosition:position];
+                                forPosition:positionToConvert + passed];
             } else {
                 assert(false);
+            }
+            if (expanded) {
+                const NSNumber *rawLineNumber = [block rawLineNumberAtWrappedLineOffset:y - yoffset
+                                                                                  width:width];
+                if (rawLineNumber) {
+                    const int length = [block getRawLineLength:rawLineNumber.intValue];
+                    [expandedResultRanges addObject:[[ResultRange alloc] initWithPosition:positionToConvert + passed
+                                                                                   length:length]];
+
+                    isOk = [block convertPosition:positionToConvert + length - 1
+                                        withWidth:width
+                                        wrapOnEOL:YES
+                                              toX:&x
+                                              toY:&y];
+                    if (isOk) {
+                        [intermediate addCoordinate:VT100GridCoordMake(x, y)
+                                        forPosition:positionToConvert + passed + length - 1];
+                    } else {
+                        assert(false);
+                    }
+                }
             }
         }
     }
 
     // Walk the positions array and populate results by looking up points in intermediate dict.
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:[resultRanges count] * 2];
-    [intermediate enumerateCoordPairsForRanges:resultRanges block:^(VT100GridCoord start, VT100GridCoord end) {
+    [intermediate enumerateCoordPairsForRanges:(expandedResultRanges ?: resultRanges)
+                                         block:^(VT100GridCoord start, VT100GridCoord end) {
         XYRange *xyrange = [[XYRange alloc] init];
         xyrange->xStart = start.x;
         xyrange->yStart = start.y;

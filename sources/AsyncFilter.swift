@@ -205,14 +205,18 @@ class FilteringUpdater: HexAddressFormatting {
         case .Matched:
             DLog("\(hexAddress): FilteringUpdater: update: status == Matched")
             let resultRanges = context.results as! [ResultRange]
-            let positions = lineBuffer.convertPositions(resultRanges, withWidth: width) ?? []
+            var expandedResultRanges = NSMutableArray(array: [ResultRange]())
+            let positions = lineBuffer.convertPositions(resultRanges,
+                                                        expandedResultRanges: expandedResultRanges,
+                                                        withWidth: width) ?? []
             let numberOfDroppedChars = lineBuffer.numberOfDroppedChars
             for (i, range) in positions.enumerated() {
                 let temporary = range === positions.last && context.includesPartialLastLine
                 DLog("\(hexAddress): FilteringUpdater: update: add \(range.description), temporary=\(temporary), position=\(Int64(resultRanges[i].position) + lineBuffer.numberOfDroppedChars)")
                 accept?(range.yStart, temporary)
                 if !temporary {
-                    acceptedLines.append(AbsResultRange(resultRanges[i], offset: numberOfDroppedChars))
+                    acceptedLines.append(AbsResultRange(expandedResultRanges[i] as! ResultRange,
+                                                        offset: numberOfDroppedChars))
                 }
                 if temporary && !needsToBackUp {
                     DLog("\(hexAddress): FilteringUpdater: update: Set needsToBackUp to true")

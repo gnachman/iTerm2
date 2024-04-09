@@ -103,6 +103,7 @@ typedef struct {
                                                  eligibleForDWC:(BOOL)eligibleForDWC;
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
+- (NSNumber *)rawLineNumberAtWrappedLineOffset:(int)lineNum width:(int)width;
 
 // Get the number of lines in this block at a given screen width.
 - (int)getNumLinesWithWrapWidth:(int)width;

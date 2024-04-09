@@ -15,17 +15,21 @@ extern "C" {
 #import "iTermMalloc.h"
 }
 
-extern "C" int *SortedPositionsFromResultRanges(NSArray<ResultRange *> *ranges) {
+extern "C" int *SortedPositionsFromResultRanges(NSArray<ResultRange *> *ranges,
+                                                BOOL includeEnds) {
     const int count = ranges.count;
-    int *result = (int *)iTermMalloc(sizeof(int) * count * 2);
+    const int resultCount = includeEnds ? count * 2 : count;
+    int *result = (int *)iTermMalloc(sizeof(int) * resultCount);
     int o = 0;
     for (ResultRange *rr in ranges) {
         const int position = rr->position;
         result[o++] = position;
-        result[o++] = position + rr->length - 1;
+        if (includeEnds) {
+            result[o++] = position + rr->length - 1;
+        }
     }
 
-    std::sort(result, result + count * 2);
+    std::sort(result, result + resultCount);
     return result;
 }
 

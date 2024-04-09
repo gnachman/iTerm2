@@ -126,6 +126,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<XYRange *> * _Nullable)convertPositions:(NSArray<ResultRange *> * _Nonnull)resultRanges
                                         withWidth:(int)width;
 
+- (NSArray<XYRange *> * _Nullable)convertPositions:(NSArray<ResultRange *> * _Nonnull)resultRanges
+                              expandedResultRanges:(NSMutableArray<ResultRange *> * _Nullable)expandedResultRanges
+                                        withWidth:(int)width;
+
 - (LineBufferPosition * _Nullable)positionForCoordinate:(VT100GridCoord)coord
                                                   width:(int)width
                                                  offset:(int)offset;
