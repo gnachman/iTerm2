@@ -17484,7 +17484,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (!action) {
         return NO;
     }
-    if (action.sendsText && keystroke.isNavigation) {
+    if (action.sendsText || keystroke.isNavigation) {
         // Prevent natural text editing preset from interfering with composer navigation.
         return NO;
     }
