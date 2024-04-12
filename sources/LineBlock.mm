@@ -2276,7 +2276,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 
         // Don't search arbitrarily long lines. If someone has a 10 million character long line then
         // it'll hang for a long time.
-        static const int MAX_SEARCHABLE_LINE_LENGTH = 500000;
+        static const int MAX_SEARCHABLE_LINE_LENGTH = 30000000;
         [self _findInRawLine:entry
                       needle:substring
                      options:options
