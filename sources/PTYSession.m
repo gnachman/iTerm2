@@ -9890,7 +9890,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                               virtualOffset:virtualOffset];
     } else {
         NSView *container = [self.delegate sessionContainerView:self];
-        NSRect clippedDirtyRect = NSIntersectionRect(dirtyRect, view.enclosingScrollView.documentVisibleRect);;
+        NSRect visibleRect = view.enclosingScrollView.documentVisibleRect;
+        const CGFloat marginHeight = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+        visibleRect.origin.y -= marginHeight;
+        NSRect clippedDirtyRect = NSIntersectionRect(dirtyRect, visibleRect);
         NSRect windowVisibleRect = [self.view insetRect:container.bounds
                                                 flipped:YES
                                  includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];

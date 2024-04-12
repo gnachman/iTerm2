@@ -72,13 +72,13 @@ static const int iTermOffscreenCommandLineBackgroundRendererNumQuads = 2;
     const CGFloat scale = tState.configuration.scale;
     const CGFloat padding = iTermOffscreenCommandLineVerticalPadding * scale;
 
-    const CGRect fieldQuad = CGRectMake(scale,
+    const CGRect fieldQuad = CGRectMake(0,
                                         viewportHeight - tState.rowHeight - padding * 2 + scale - tState.configuration.extraMargins.top,
-                                        viewportWidth - scale * 2,
+                                        viewportWidth,
                                         padding * 2 + tState.rowHeight - scale);
-    const CGRect lowerLineQuad = CGRectMake(scale,
+    const CGRect lowerLineQuad = CGRectMake(0,
                                             NSMinY(fieldQuad),
-                                            viewportWidth - scale * 2,
+                                            viewportWidth,
                                             scale);
 
     const iTermVertex vertices[iTermOffscreenCommandLineBackgroundRendererNumQuads * 6] = {

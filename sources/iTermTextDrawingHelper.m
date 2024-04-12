@@ -3370,8 +3370,8 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     const NSRect rect = self.offscreenCommandLineFrame;
 
     NSRect outline = rect;
-    outline.origin.x = 1;
-    outline.size.width = _visibleRectExcludingTopMargin.size.width - 2;
+    outline.origin.x = 0;
+    outline.size.width = _visibleRectExcludingTopMargin.size.width;
 
     [[self offscreenCommandLineBackgroundColor] set];
     iTermRectFill(outline, virtualOffset);
