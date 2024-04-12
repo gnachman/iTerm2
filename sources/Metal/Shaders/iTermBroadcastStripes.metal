@@ -23,7 +23,7 @@ iTermBroadcastStripesVertexShader(uint vertexID [[ vertex_id ]],
     out.clipSpacePosition.z = 0.0;
     out.clipSpacePosition.w = 1;
     const float2 coord = vertexArray[vertexID].textureCoordinate;
-    out.textureCoordinate = float2(coord.x, 1 - coord.y);
+    out.textureCoordinate = float2(coord.x, coord.y);
 
     return out;
 }
