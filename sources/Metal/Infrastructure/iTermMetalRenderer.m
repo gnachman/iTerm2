@@ -271,9 +271,10 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     }
 }
 
-- (int)bitsPerSampleInPixelFormat:(MTLPixelFormat)format {
+int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     switch (format) {
         case MTLPixelFormatBGRA8Unorm:
+        case MTLPixelFormatRGBA8Unorm:
             return 8;
         case MTLPixelFormatRGBA16Float:
             return 16;
@@ -282,6 +283,10 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
             break;
     }
     return 8;
+}
+
+- (int)bitsPerSampleInPixelFormat:(MTLPixelFormat)format {
+    return iTermBitsPerSampleForPixelFormat(format);
 }
 
 - (void)writeFragmentTexture:(id<MTLTexture>)texture index:(NSUInteger)index toFolder:(NSURL *)folder {

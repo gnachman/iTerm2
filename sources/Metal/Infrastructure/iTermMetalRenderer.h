@@ -164,4 +164,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
+int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format);
+
 NS_ASSUME_NONNULL_END

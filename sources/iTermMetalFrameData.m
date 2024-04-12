@@ -331,8 +331,9 @@ static NSInteger gNextFrameDataNumber;
                                        MTLTextureUsagePixelFormatView);
         }
         colorAttachment.texture = [self.device newTextureWithDescriptor:textureDescriptor];
-        [iTermTexture setBytesPerRow:self.viewportSize.x * 4
-                         rawDataSize:self.viewportSize.x * self.viewportSize.y * 4
+        const int bytesPerSample = iTermBitsPerSampleForPixelFormat(colorAttachment.texture.pixelFormat) / 8;
+        [iTermTexture setBytesPerRow:self.viewportSize.x * 4 * bytesPerSample
+                         rawDataSize:self.viewportSize.x * self.viewportSize.y * 4 * bytesPerSample
                      samplesPerPixel:4
                           forTexture:colorAttachment.texture];
         colorAttachment.texture.label = label;
