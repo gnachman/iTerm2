@@ -713,20 +713,35 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         return encoded.data
     }
 
+    private var placeholder: UnsafeMutablePointer<screen_char_t>?
+
+    deinit {
+        placeholder?.deallocate()
+    }
+
     @objc
     var mutablePointer: UnsafeMutablePointer<screen_char_t> {
         lastAccess = mach_absolute_time()
         let result = write { state in
             switch state.buffer {
             case .uninitialized:
-                return state.realize().buffer.baseAddress!
+                return state.realize().buffer.baseAddress
             case .compressed:
-                return state.decompress().buffer.baseAddress!
+                return state.decompress().buffer.baseAddress
             case .uncompressed(let buffer), .superposition(_, let buffer):
-                return buffer.buffer.baseAddress!
+                return buffer.buffer.baseAddress
             }
         }
-        return result
+        if let result {
+            return result
+        }
+        // There won't be a base address if the buffer is empty so return a placeholder.
+        if let placeholder {
+            return placeholder
+        }
+        let np = UnsafeMutablePointer<screen_char_t>.allocate(capacity: max(1, size))
+        placeholder = np
+        return np
     }
 
     @objc
