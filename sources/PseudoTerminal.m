@@ -3120,12 +3120,39 @@ ITERM_WEAKLY_REFERENCEABLE
         const VT100GridRange visibleLines = [session.textview rangeOfVisibleLines];
         const NSRange visibleAbsLines = NSMakeRange(visibleLines.location + session.screen.totalScrollbackOverflow,
                                                     visibleLines.length);
-        if (NSEqualRanges(visibleAbsLines, NSIntersectionRange(visibleAbsLines, linesSearched))) {
-            [session.textview convertVisibleSearchResultsToContentNavigationShortcuts];
+        if (NSLocationInRange(visibleAbsLines.location, linesSearched)) {
+            [session.textview convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionOpen];
             done = YES;
             return;
         }
     }];
+    [self makeCurrentSessionFirstResponder];
+}
+
+- (IBAction)smartSelectAllVisible:(id)sender {
+    DLog(@"begin");
+    iTermFindDriver *findDriver = self.currentSession.view.findDriverCreatingIfNeeded;
+
+    NSString *regex = [self.currentSession regularExpressonForNonLowPrecisionSmartSelectionRulesCombined];
+    DLog(@"findDriver=%@ regex=%@", findDriver, regex);
+    __weak PTYSession *session = self.currentSession;
+    __block BOOL done = NO;
+    [findDriver closeViewAndDoTemporarySearchForString:regex
+                                                  mode:iTermFindModeCaseSensitiveRegex
+                                              progress:^(NSRange linesSearched) {
+        if (!session.textview || done) {
+            return;
+        }
+        const VT100GridRange visibleLines = [session.textview rangeOfVisibleLines];
+        const NSRange visibleAbsLines = NSMakeRange(visibleLines.location + session.screen.totalScrollbackOverflow,
+                                                    visibleLines.length);
+        if (NSLocationInRange(visibleAbsLines.location, linesSearched)) {
+            [session.textview convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionCopy];
+            done = YES;
+            return;
+        }
+    }];
+    [self makeCurrentSessionFirstResponder];
 }
 
 - (IBAction)detachTmux:(id)sender {

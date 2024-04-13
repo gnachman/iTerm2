@@ -2571,7 +2571,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (IBAction)revealContentNavigationShortcuts:(id)sender {
-    [self convertVisibleSearchResultsToContentNavigationShortcuts];
+    [self convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionOpen];
 }
 
 - (IBAction)selectAll:(id)sender {
@@ -4287,6 +4287,16 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                               width:_dataSource.width];
     [_selection addSubSelection:sub];
     [_delegate textViewDidSelectRangeForFindOnPage:range];
+}
+
+- (void)selectAbsWindowedCoordRange:(VT100GridAbsWindowedRange)windowedRange {
+    [_selection clearSelection];
+    iTermSubSelection *sub =
+        [iTermSubSelection subSelectionWithAbsRange:windowedRange
+                                               mode:kiTermSelectionModeCharacter
+                                              width:_dataSource.width];
+    [_selection addSubSelection:sub];
+    [_delegate textViewDidSelectRangeForFindOnPage:VT100GridWindowedRangeFromVT100GridAbsWindowedRange(windowedRange, self.dataSource.totalScrollbackOverflow).coordRange];
 }
 
 - (NSRect)frameForCoord:(VT100GridCoord)coord {

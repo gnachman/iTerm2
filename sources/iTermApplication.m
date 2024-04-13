@@ -549,6 +549,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (BOOL)handleKeyDownEvent:(NSEvent *)event {
+    NSLog(@"keyDown %@ key window=%@ first responder=%@", event, [self keyWindow], [[self keyWindow] firstResponder]);
     DLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", event, [self keyWindow], [[self keyWindow] firstResponder]);
     if ((event.modifierFlags & iTermLeaderModifierFlag)) {
         DLog(@"Leader flag set");

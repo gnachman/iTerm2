@@ -30,6 +30,12 @@ extern NSString *const kNormalPrecision;
 extern NSString *const kHighPrecision;
 extern NSString *const kVeryHighPrecision;
 
+extern const double SmartSelectionVeryLowPrecision;
+extern const double SmartSelectionLowPrecision;
+extern const double SmartSelectionNormalPrecision;
+extern const double SmartSelectionHighPrecision;
+extern const double SmartSelectionVeryHighPrecision;
+
 @class SmartSelectionController;
 
 @protocol SmartSelectionDelegate <NSObject>

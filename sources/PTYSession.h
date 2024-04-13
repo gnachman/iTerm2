@@ -584,6 +584,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) NSArray<iTermSSHReconnectionInfo *> *sshCommandLineSequence;
 @property(nonatomic, readonly) id<ProcessInfoProvider> processInfoProvider;
 @property(nonatomic, readonly) BOOL shouldShowAutoComposer;
+@property(nonatomic, readonly) NSString *regularExpressonForNonLowPrecisionSmartSelectionRulesCombined;
 
 #pragma mark - methods
 

@@ -31,6 +31,12 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 
 static char iTermSmartSelectionControllerAssociatedObjectRowIndexKey;
 
+const double SmartSelectionVeryLowPrecision = 0.00001;
+const double SmartSelectionLowPrecision = 0.001;
+const double SmartSelectionNormalPrecision = 1.0;
+const double SmartSelectionHighPrecision = 1000.0;
+const double SmartSelectionVeryHighPrecision = 1000000.0;
+
 @interface SmartSelectionController() <NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate>
 @end
 
@@ -85,11 +91,11 @@ static char iTermSmartSelectionControllerAssociatedObjectRowIndexKey;
 }
 
 + (double)precisionInRule:(NSDictionary *)rule {
-    NSDictionary *precisionValues = @{ kVeryLowPrecision: @0.00001,
-                                       kLowPrecision: @0.001,
-                                       kNormalPrecision: @1.0,
-                                       kHighPrecision: @1000.0,
-                                       kVeryHighPrecision: @1000000.0 };
+    NSDictionary *precisionValues = @{ kVeryLowPrecision: @(SmartSelectionVeryLowPrecision),
+                                       kLowPrecision: @(SmartSelectionLowPrecision),
+                                       kNormalPrecision: @(SmartSelectionNormalPrecision),
+                                       kHighPrecision: @(SmartSelectionHighPrecision),
+                                       kVeryHighPrecision: @(SmartSelectionVeryHighPrecision) };
 
     NSString *precision = rule[kPrecisionKey];
     return [precisionValues[precision] doubleValue];

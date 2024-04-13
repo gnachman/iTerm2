@@ -148,7 +148,12 @@ iTermURLActionHelperDelegate>
 
 #pragma mark - Content Navigation Shortcuts
 
-- (void)convertVisibleSearchResultsToContentNavigationShortcuts;
+typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
+    iTermContentNavigationActionOpen,
+    iTermContentNavigationActionCopy
+};
+
+- (void)convertVisibleSearchResultsToContentNavigationShortcutsWithAction:(iTermContentNavigationAction)action;
 
 - (ContentNavigationShortcutView *)addShortcutWithRange:(VT100GridAbsCoordRange)range
                                           keyEquivalent:(NSString *)keyEquivalent

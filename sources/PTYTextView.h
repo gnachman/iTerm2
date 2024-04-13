@@ -696,6 +696,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                   cursorCoord:(VT100GridCoord)cursorCoord;
 
 - (void)selectCoordRange:(VT100GridCoordRange)range;
+- (void)selectAbsWindowedCoordRange:(VT100GridAbsWindowedRange)windowedRange;
+
 - (NSRect)frameForCoord:(VT100GridCoord)coord;
 
 - (iTermLogicalMovementHelper *)logicalMovementHelperForCursorCoordinate:(VT100GridCoord)cursorCoord;

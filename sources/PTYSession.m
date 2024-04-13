@@ -7700,6 +7700,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     }
 }
 
+- (NSString *)regularExpressonForNonLowPrecisionSmartSelectionRulesCombined {
+    NSArray<NSDictionary *> *rules = [iTermProfilePreferences objectForKey:KEY_SMART_SELECTION_RULES
+                                                                 inProfile:self.profile];
+    NSArray<NSString *> *regexes = [rules mapWithBlock:^id _Nullable(NSDictionary * _Nonnull rule) {
+        const double precision = [SmartSelectionController precisionInRule:rule];
+        if (precision < SmartSelectionNormalPrecision) {
+            return  nil;
+        }
+        NSString *bare = [SmartSelectionController regexInRule:rule];
+        NSError *error = nil;
+        NSRegularExpression *expr = [[NSRegularExpression alloc] initWithPattern:bare options:0 error:&error];
+        if (error || !expr) {
+            return nil;
+        }
+        [expr release];
+        return [NSString stringWithFormat:@"(?:%@)", bare];
+    }];
+    return [regexes componentsJoinedByString:@"|"];
+}
+
 - (VT100GridCoordRange)smartSelectionRangeAt:(VT100GridCoord)coord {
     if (coord.x < 0 || coord.y < 0 || coord.x >= _screen.width || coord.y >= _screen.height) {
         return VT100GridCoordRangeMake(0, 0, 0, 0);

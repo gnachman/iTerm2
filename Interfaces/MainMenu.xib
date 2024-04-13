@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22505"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22689"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -606,6 +606,12 @@ DQ
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="findUrls:" target="-1" id="PCp-uW-FfK"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Find Visible Smart Selection Matches" keyEquivalent="U" identifier="Find.Find Visible Smart Selection  Matches" id="MFq-yU-N9S">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="smartSelectAllVisible:" target="-1" id="Uk1-nN-UIn"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Pick Result to Open" keyEquivalent="O" identifier="Find.Pick Result To Open" id="KTc-zQ-Rb6">

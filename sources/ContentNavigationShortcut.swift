@@ -14,6 +14,7 @@ protocol ContentNavigationShortcutViewProtocol {
     var terminating: Bool { get }
     func pop(completion: @escaping () -> ())
     func dissolve(completion: @escaping () -> ())
+    var centerScreenCoordinate: NSPoint { get }
 }
 
 @objc(iTermContentNavigationShortcut)
@@ -180,6 +181,17 @@ class ContentNavigationShortcutView: NSView, ContentNavigationShortcutViewProtoc
         animation.fromValue = 0
         animation.toValue = Double.pi
         return animation;
+    }
+
+    @objc
+    var centerScreenCoordinate: NSPoint {
+        guard let windowCoord = superview?.convert(NSPoint(x: frame.midX, y: frame.midY), to: nil) else {
+            return NSPoint(x: Double.nan, y: Double.nan)
+        }
+        guard let screen = window?.convertToScreen(NSRect(origin: windowCoord, size: CGSize.zero)) else {
+            return NSPoint(x: Double.nan, y: Double.nan)
+        }
+        return screen.origin
     }
 
     @objc

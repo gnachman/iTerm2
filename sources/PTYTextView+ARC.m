@@ -1745,7 +1745,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
 }
 
-- (void)convertVisibleSearchResultsToContentNavigationShortcuts {
+- (void)convertVisibleSearchResultsToContentNavigationShortcutsWithAction:(iTermContentNavigationAction)action {
     [self removeContentNavigationShortcuts];
     const VT100GridRange relativeRange = [self rangeOfVisibleLines];
     const NSRange range = NSMakeRange(relativeRange.location + self.dataSource.totalScrollbackOverflow,
@@ -1800,7 +1800,29 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         [self addShortcutWithRange:result.internalAbsCoordRange
                      keyEquivalent:keyEquivalent
                             action:^(id<iTermContentNavigationShortcutView> view){
-            [weakSelf.delegate textViewOpen:content workingDirectory:folder remoteHost:remoteHost];
+            switch (action) {
+                case iTermContentNavigationActionOpen:
+                    [weakSelf.delegate textViewOpen:content workingDirectory:folder remoteHost:remoteHost];
+                    break;
+                case iTermContentNavigationActionCopy: {
+                    PTYTextView *strongSelf = weakSelf;
+                    if (strongSelf) {
+                        [strongSelf copyString:content];
+                        const NSPoint p = view.centerScreenCoordinate;
+                        if (p.x == p.x) {
+                            [ToastWindowController showToastWithMessage:@"Copied"
+                                                               duration:1
+                                                       screenCoordinate:p
+                                                              pointSize:12];
+                        }
+                        const VT100GridAbsWindowedRange absWindowedRange =
+                            VT100GridAbsWindowedRangeFromRelative(windowedRange,
+                                                                  strongSelf.dataSource.totalScrollbackOverflow);
+                        [strongSelf selectAbsWindowedCoordRange:absWindowedRange];
+                    }
+                    break;
+                }
+            }
             [view popWithCompletion:^{
                 [weakSelf removeContentNavigationShortcutView:view];
             }];
