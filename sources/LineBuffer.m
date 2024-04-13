@@ -316,7 +316,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             [s appendFormat:@"(nil)"];
             continue;
         }
-        [s appendFormat:@"%@", ScreenCharArrayToStringDebug(line.line, line.length)];
+        [s appendFormat:@"%9d: %@", i, ScreenCharArrayToStringDebug(line.line, line.length)];
         for (int j = line.length; j < width; j++) {
             [s appendString:@"."];
         }
@@ -981,11 +981,12 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     context.includesPartialLastLine = includesPartialLastLine && (blockIndex + 1 == numBlocks);
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
-    const int blockPosition = [self _blockPosition:context.absBlockNum - num_dropped_blocks];
+    const int blockPosition = [self _blockPosition:blockIndex];
+    const int blockSize = _lineBlocks.blocks[blockIndex].rawSpaceUsed;  // TODO: Is this right when lines are dropped?
     const int stopAt = stopPosition.absolutePosition - droppedChars;
     if (context.dir > 0 && blockPosition >= stopAt) {
         context.status = NotFound;
-    } else if (context.dir < 0 && blockPosition < stopAt) {
+    } else if (context.dir < 0 && blockPosition + blockSize < stopAt) {
         context.status = NotFound;
     } else {
         for (ResultRange* range in context.results) {

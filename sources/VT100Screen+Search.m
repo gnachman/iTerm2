@@ -51,7 +51,7 @@
         if (absY < absLineRange.location) {
             absY = absLineRange.location;
         } else if (absY >= NSMaxRange(absLineRange)) {
-            absY = NSMaxRange(absLineRange) - 1;
+            absY = NSMaxRange(absLineRange);
         }
         if (absY < overflow) {
             y = 0;
