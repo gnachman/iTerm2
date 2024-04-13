@@ -399,7 +399,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([_threeFingerTapGestureRecognizer mouseUp:event]) {
         return iTermClickSideEffectsNone;
     }
-    if (event.clickCount == 1 && [self.mouseDelegate mouseHandlerMouseUpAt:event.locationInWindow]) {
+    if ([self.mouseDelegate mouseHandlerMouseUp:event]) {
         return iTermClickSideEffectsNone;
     }
     int numTouches = _numTouches;

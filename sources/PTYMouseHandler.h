@@ -124,7 +124,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 - (void)mouseHandlerRedraw:(PTYMouseHandler *)mouseHandler;
 - (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler blockIDOnLine:(int)line;
 - (BOOL)mouseHandlerMouseDownAt:(NSPoint)locationInWindow;
-- (BOOL)mouseHandlerMouseUpAt:(NSPoint)locationInWindow;
+- (BOOL)mouseHandlerMouseUp:(NSEvent *)event;
 
 @end
 

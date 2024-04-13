@@ -6353,7 +6353,12 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     return NO;
 }
 
-- (BOOL)mouseHandlerMouseUpAt:(NSPoint)locationInWindow {
+- (BOOL)mouseHandlerMouseUp:(NSEvent *)event {
+    if (event.clickCount != 1) {
+        [self.delegate textViewRemoveSelectedCommand];
+        return NO;
+    }
+    const NSPoint locationInWindow = event.locationInWindow;
     NSPoint point = [self convertPoint:locationInWindow fromView:nil];
     if (!NSPointInRect(point, self.bounds)) {
         return NO;

@@ -295,6 +295,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewRemoveBookmarkForMark:(id<VT100ScreenMarkReading>)mark;
 - (BOOL)textViewEnclosingTabHasMultipleSessions;
 - (BOOL)textViewSelectionScrollAllowed;
+- (void)textViewRemoveSelectedCommand;
 - (void)textViewSelectCommandRegionAtCoord:(VT100GridCoord)coord;
 
 @end

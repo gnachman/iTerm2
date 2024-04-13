@@ -15705,6 +15705,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
+- (void)textViewRemoveSelectedCommand {
+    if (!_selectedCommandMark) {
+        return;
+    }
+    [self removeSelectedCommandRange];
+}
+
 - (void)removeSelectedCommandRange {
     if (!_selectedCommandMark) {
         return;
