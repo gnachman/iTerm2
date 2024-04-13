@@ -143,7 +143,7 @@ class FilteringUpdater: HexAddressFormatting {
     }
 
     func didAppendToLineBuffer() {
-        if let lastPosition, ![.Searching, .Matched].contains(context.status) {
+        if lastPosition != nil && ![.Searching, .Matched].contains(context.status) {
             // Ensure the next call to update() is able to continue searching even though the last
             // search did not return any results.
 
@@ -205,7 +205,7 @@ class FilteringUpdater: HexAddressFormatting {
         case .Matched:
             DLog("\(hexAddress): FilteringUpdater: update: status == Matched")
             let resultRanges = context.results as! [ResultRange]
-            var expandedResultRanges = NSMutableArray(array: [ResultRange]())
+            let expandedResultRanges = NSMutableArray(array: [ResultRange]())
             let positions = lineBuffer.convertPositions(resultRanges,
                                                         expandedResultRanges: expandedResultRanges,
                                                         withWidth: width) ?? []
