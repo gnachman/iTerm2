@@ -7703,6 +7703,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (NSString *)regularExpressonForNonLowPrecisionSmartSelectionRulesCombined {
     NSArray<NSDictionary *> *rules = [iTermProfilePreferences objectForKey:KEY_SMART_SELECTION_RULES
                                                                  inProfile:self.profile];
+    if (!rules) {
+        rules = [SmartSelectionController defaultRules];
+    }
     NSArray<NSString *> *regexes = [rules mapWithBlock:^id _Nullable(NSDictionary * _Nonnull rule) {
         const double precision = [SmartSelectionController precisionInRule:rule];
         if (precision < SmartSelectionNormalPrecision) {

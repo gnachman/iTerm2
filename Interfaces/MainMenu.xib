@@ -608,7 +608,7 @@ DQ
                                                 <action selector="findUrls:" target="-1" id="PCp-uW-FfK"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Find Visible Smart Selection Matches" keyEquivalent="U" identifier="Find.Find Visible Smart Selection  Matches" id="MFq-yU-N9S">
+                                        <menuItem title="Find All Smart Selection Matches" keyEquivalent="U" identifier="Find.Find All Smart Selection  Matches" id="MFq-yU-N9S">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="smartSelectAllVisible:" target="-1" id="Uk1-nN-UIn"/>
