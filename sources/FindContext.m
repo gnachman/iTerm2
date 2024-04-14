@@ -76,6 +76,10 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
     self.results = nil;
 }
 
+- (void)removeResults {
+    [self.results removeAllObjects];
+}
+
 - (void)setSubstring:(NSString *)substring {
     [substring_ autorelease];
     substring_ = [substring copy];

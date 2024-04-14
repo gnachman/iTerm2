@@ -3131,6 +3131,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (IBAction)smartSelectAllVisible:(id)sender {
     DLog(@"begin");
+    const long long y = VT100GridRangeNoninclusiveMaxLL(self.currentSession.screenRangeOfVisibleLines) + self.currentSession.screen.totalScrollbackOverflow;
+    [self.currentSession.textview.findOnPageHelper setStartPoint:VT100GridAbsCoordMake(0, y)];
     iTermFindDriver *findDriver = self.currentSession.view.findDriverCreatingIfNeeded;
 
     NSString *regex = [self.currentSession regularExpressonForNonLowPrecisionSmartSelectionRulesCombined];

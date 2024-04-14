@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermFindDriver.h"
+#import "VT100GridTypes.h"
 
 typedef NS_OPTIONS(NSUInteger, FindOptions) {
     FindOptBackwards        = (1 << 0),
@@ -77,9 +78,13 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 // Do the results include anything from the last line which is also partial?
 @property(nonatomic, readwrite) BOOL includesPartialLastLine;
 
+// Remembers where the search began so we can stop after wrapping.
+@property(nonatomic) VT100GridAbsCoord initialStart;
+
 - (void)copyFromFindContext:(FindContext *)other;
 
 - (void)reset;
+- (void)removeResults;
 
 - (FindContext *)copy;
 

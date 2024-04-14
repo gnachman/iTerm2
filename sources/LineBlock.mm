@@ -2357,7 +2357,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
                 //     bytes_to_consume_in_this_line % (consume * width);
                 *x = position - (prev + offset);
             } else {
-                *x = bytes_to_consume_in_this_line;
+                *x = MAX(0, bytes_to_consume_in_this_line);
             }
             return YES;
         }

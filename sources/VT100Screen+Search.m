@@ -59,6 +59,7 @@
             y = absY - overflow;
         }
     }
+    context.initialStart = VT100GridAbsCoordMake(x, self.totalScrollbackOverflow + y);
 
     @autoreleasepool {
         LineBuffer *tempLineBuffer = [self searchBuffer];
@@ -148,7 +149,6 @@
                          inContext:(FindContext *)context
                       absLineRange:(NSRange)absLineRange
                      rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
-    context.hasWrapped = YES;
     NSDate* start = [NSDate date];
     BOOL keepSearching;
     do {
@@ -226,8 +226,10 @@
                              toArray:(NSMutableArray *)results
                         absLineRange:(NSRange)absLineRange
                        rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
+    DLog(@"continue find…");
     // Append the screen contents to the scrollback buffer so they are included in the search.
     __block BOOL keepSearching = NO;
+    assert(context.substring != nil);
     @autoreleasepool {
         LineBuffer *temporaryLineBuffer = [self searchBuffer];
         [temporaryLineBuffer performBlockWithTemporaryChanges:^{
@@ -235,22 +237,43 @@
                                toLineBuffer:temporaryLineBuffer];
 
             // Search one block.
-            LineBufferPosition *stopAt;
+            BOOL ok;
+            const VT100GridCoord initialStartRel = VT100GridCoordFromAbsCoord(context.initialStart,
+                                                                              self.totalScrollbackOverflow,
+                                                                              &ok);
+
+            LineBufferPosition *initialStartPosition = nil;
+            if (ok) {
+                initialStartPosition = [temporaryLineBuffer positionForCoordinate:initialStartRel
+                                                                            width:_state.currentGrid.size.width
+                                                                           offset:0];
+            }
+            LineBufferPosition *stopAt = nil;
+            if (context.hasWrapped) {
+                DLog(@"Set stopAt to initial start position %@", initialStartPosition);
+                stopAt = initialStartPosition;
+            }
             if (absLineRange.length > 0) {
-                int y = 0;
-                if (context.dir > 0) {
-                    y = NSMaxRange(absLineRange) - _state.totalScrollbackOverflow;
-                } else {
-                    y = absLineRange.location - _state.totalScrollbackOverflow;
-                }
-                stopAt = [temporaryLineBuffer positionForCoordinate:VT100GridCoordMake(0, y)
-                                                              width:_state.currentGrid.size.width
-                                                             offset:0];
                 if (!stopAt) {
+                    int y = 0;
                     if (context.dir > 0) {
-                        stopAt = temporaryLineBuffer.penultimatePosition;
+                        DLog(@"Continue searching until the end of the selected command");
+                        y = NSMaxRange(absLineRange) - _state.totalScrollbackOverflow;
                     } else {
-                        stopAt = temporaryLineBuffer.firstPosition;
+                        DLog(@"Continue searching until the start of the selected command");
+                        y = absLineRange.location - _state.totalScrollbackOverflow;
+                    }
+                    stopAt = [temporaryLineBuffer positionForCoordinate:VT100GridCoordMake(0, y)
+                                                                  width:_state.currentGrid.size.width
+                                                                 offset:0];
+                    if (!stopAt) {
+                        if (context.dir > 0) {
+                            DLog(@"Continue searching until the end");
+                            stopAt = temporaryLineBuffer.penultimatePosition;
+                        } else {
+                            DLog(@"Continue searching until the start");
+                            stopAt = temporaryLineBuffer.firstPosition;
+                        }
                     }
                 }
                 const VT100GridAbsCoord originalStartCoord = [self absCoordOfFindContext:context lineBuffer:temporaryLineBuffer];
@@ -283,10 +306,14 @@
                     }
                 }
             } else {
-                if (context.dir > 0) {
-                    stopAt = [temporaryLineBuffer lastPosition];
-                } else {
-                    stopAt = [temporaryLineBuffer firstPosition];
+                if (!stopAt) {
+                    if (context.dir > 0) {
+                        DLog(@"Continue searching until the end");
+                        stopAt = [temporaryLineBuffer lastPosition];
+                    } else {
+                        DLog(@"Continue searching until the start");
+                        stopAt = [temporaryLineBuffer firstPosition];
+                    }
                 }
             }
 
@@ -299,7 +326,30 @@
             int ms_diff = 0;
             do {
                 if (context.status == Searching) {
+                    const int width = _state.currentGrid.size.width;
+                    const VT100GridCoord startCoord =
+                    [temporaryLineBuffer coordinateForPosition:[temporaryLineBuffer positionOfFindContext:context
+                                                                                                    width:width]
+                                                         width:width
+                                                  extendsRight:NO
+                                                            ok:nil];
+
+                    const VT100GridCoord stopCoord =
+                    [temporaryLineBuffer coordinateForPosition:stopAt
+                                                         width:width
+                                                  extendsRight:NO
+                                                            ok:nil];
                     [temporaryLineBuffer findSubstring:context stopAt:stopAt];
+                    const VT100GridCoord currentCoord =
+                    [temporaryLineBuffer coordinateForPosition:[temporaryLineBuffer positionOfFindContext:context
+                                                                                                    width:width]
+                                                         width:width
+                                                  extendsRight:NO
+                                                            ok:nil];
+                    DLog(@"Search from %@ to %@ went up to %@",
+                         VT100GridCoordDescription(startCoord),
+                         VT100GridCoordDescription(stopCoord),
+                         VT100GridCoordDescription(currentCoord));
                 }
 
                 // Handle the current state
@@ -310,6 +360,7 @@
                         NSArray *allPositions = [temporaryLineBuffer convertPositions:context.results
                                                                             withWidth:_state.currentGrid.size.width];
                         for (XYRange *xyrange in allPositions) {
+                            DLog(@"  Add result at %@", xyrange);
                             SearchResult *result = [SearchResult withCoordRange:xyrange.coordRange
                                                                        overflow:_state.cumulativeScrollbackOverflow];
 
@@ -340,8 +391,8 @@
                             [context reset];
                             keepSearching = NO;
                         } else {
-                            // NSLog(@"...wrapping");
                             // wrap around and resume search.
+                            DLog(@"...wrapping");
                             FindContext *tempFindContext = [[FindContext alloc] init];
                             LineBufferPosition *startPos;
                             if (absLineRange.length > 0) {
@@ -349,7 +400,7 @@
                                 long long absY;
                                 int x;
                                 int offset;
-                                if (self.findContext.dir > 0) {
+                                if (context.dir > 0) {
                                     // First position in range
                                     x = 0;
                                     absY = absLineRange.location;
@@ -364,20 +415,21 @@
                                 startPos = [temporaryLineBuffer positionForCoordinate:VT100GridCoordMake(x, y)
                                                                                 width:width
                                                                                offset:offset];
+                                DLog(@"New start position is %@,%@", @(x), @(y));
                             } else {
-                                if (self.findContext.dir > 0) {
+                                if (context.dir > 0) {
                                     startPos = temporaryLineBuffer.firstPosition;
+                                    DLog(@"New start position is first position");
                                 } else {
                                     startPos = temporaryLineBuffer.lastPosition.predecessor;
+                                    DLog(@"New start position is penultimate position");
                                 }
                             }
-                            [temporaryLineBuffer prepareToSearchFor:self.findContext.substring
+                            [temporaryLineBuffer prepareToSearchFor:context.substring
                                                          startingAt:startPos
-                                                            options:self.findContext.options
-                                                               mode:self.findContext.mode
+                                                            options:context.options
+                                                               mode:context.mode
                                                         withContext:tempFindContext];
-                            [self.findContext reset];
-                            // TODO test this!
                             [context copyFromFindContext:tempFindContext];
                             context.hasWrapped = YES;
                             keepSearching = YES;
