@@ -696,11 +696,15 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 - (void)performOnMainThread:(void (^ NS_NOESCAPE)(void))block {
-    dispatch_sync(dispatch_get_main_queue(), ^() {
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    dispatch_async(dispatch_get_main_queue(), ^() {
         [NSTimer scheduledTimerWithTimeInterval:0 repeats:NO block:^(NSTimer * _Nonnull timer) {
             block();
+            dispatch_group_leave(group);
         }];
     });
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 }
 
 - (NSString *)tempFileName {
