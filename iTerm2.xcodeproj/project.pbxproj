@@ -2782,6 +2782,7 @@
 		A6A4B2B82426BCD900184EAC /* iTermKeyMappings.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A4B2B62426BCD900184EAC /* iTermKeyMappings.m */; };
 		A6A4B2BB2426C02800184EAC /* iTermPresetKeyMappings.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A4B2B92426C02800184EAC /* iTermPresetKeyMappings.h */; };
 		A6A4B2BC2426C02800184EAC /* iTermPresetKeyMappings.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A4B2BA2426C02800184EAC /* iTermPresetKeyMappings.m */; };
+		A6A5162C2BCDE6C7006F3F09 /* PTYSessionHostState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A5162B2BCDE6C7006F3F09 /* PTYSessionHostState.swift */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A5995B25930F8F0041172E /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		A6A5BDFA2A070C3C00F5FD44 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A5BDF92A070C3C00F5FD44 /* AppDelegate.swift */; };
@@ -6822,6 +6823,7 @@
 		A6A4B2B62426BCD900184EAC /* iTermKeyMappings.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermKeyMappings.m; sourceTree = "<group>"; };
 		A6A4B2B92426C02800184EAC /* iTermPresetKeyMappings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPresetKeyMappings.h; sourceTree = "<group>"; };
 		A6A4B2BA2426C02800184EAC /* iTermPresetKeyMappings.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPresetKeyMappings.m; sourceTree = "<group>"; };
+		A6A5162B2BCDE6C7006F3F09 /* PTYSessionHostState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PTYSessionHostState.swift; sourceTree = "<group>"; };
 		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -9877,6 +9879,7 @@
 				A6E2A6382B910EEE00EC6070 /* iTermTaskQueue.mm */,
 				A6E2A63E2B91413700EC6070 /* LineBlock+SwiftInterop.h */,
 				A6E2A63F2B91413700EC6070 /* LineBlock+SwiftInterop.m */,
+				A6A5162B2BCDE6C7006F3F09 /* PTYSessionHostState.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -16094,6 +16097,7 @@
 				A6D009602AF6AD1700AA8F49 /* GetProfilePropertyBuiltInFunction.swift in Sources */,
 				A6587A4821D82B4200794775 /* iTermStandardKeyMapper.m in Sources */,
 				A6E1524727602FFE00D0F41C /* iTermWeakBox.m in Sources */,
+				A6A5162C2BCDE6C7006F3F09 /* PTYSessionHostState.swift in Sources */,
 				A6614A2420958ED400A10D97 /* iTermBuildingScriptWindowController.m in Sources */,
 				A6EC809B282EBFF200493544 /* URL+iTerm.swift in Sources */,
 				A68400C21FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,

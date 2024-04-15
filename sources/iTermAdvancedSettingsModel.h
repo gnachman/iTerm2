@@ -313,6 +313,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)requireCmdForDraggingText;
 + (BOOL)requireSlashInURLGuess;
 + (BOOL)resetSGROnPrompt;
++ (BOOL)restoreKeyModeAutomaticallyOnHostChange;
 + (BOOL)restoreWindowContents;
 + (BOOL)restoreWindowsWithinScreens;
 + (BOOL)retinaInlineImages;

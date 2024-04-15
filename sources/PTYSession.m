@@ -634,6 +634,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     NSMutableData *_queuedConnectingSSH;
 
     __weak id<VT100ScreenMarkReading> _selectedCommandMark;
+    NSMutableArray<PTYSessionHostState *> *_hostStack;
 }
 
 @synthesize isDivorced = _divorced;
@@ -798,6 +799,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         }];
         _expect = [[iTermExpect alloc] initDry:YES];
         _sshState = iTermSSHStateNone;
+        _hostStack = [[NSMutableArray alloc] init];
         [iTermCPUUtilization instanceForSessionID:_guid];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -1071,6 +1073,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pendingConductor release];
     [_appSwitchingPreventionDetector release];
     [_queuedConnectingSSH release];
+    [_hostStack release];
 
     [super dealloc];
 }
@@ -4646,6 +4649,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setKeyMappingMode:(iTermKeyMappingMode)mode {
+    DLog(@"setKeyMappingMode:%@", @(mode));
     _keyMappingMode = mode;
     [self updateKeyMapper];
 }
@@ -13100,6 +13104,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     // Ignore changes to username; only update on hostname changes. See issue 8030.
     if (previousHostName && ![previousHostName isEqualToString:host.hostname] && !ssh) {
         [self maybeResetTerminalStateOnHostChange:host];
+        if ([iTermAdvancedSettingsModel restoreKeyModeAutomaticallyOnHostChange]) {
+            [self pushOrPopHostState:host];
+        }
     }
     self.currentHost = host;
     [self updateVariablesFromConductor];
@@ -13138,6 +13145,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [self maybeTurnOffPasteBracketing];
         }
     }];
+}
+
+- (void)pushOrPopHostState:(id<VT100RemoteHostReading>)host {
+    DLog(@"Search host stack %@ for %@", _hostStack, host);
+    const NSInteger i = [_hostStack indexOfObjectPassingTest:^BOOL(PTYSessionHostState * _Nonnull state, NSUInteger idx, BOOL * _Nonnull stop) {
+        return state.remoteHost == host || [state.remoteHost isEqualToRemoteHost:host];
+    }];
+    if (i == NSNotFound) {
+        DLog(@"Not found. Save current key mapping mode %@", @(_keyMappingMode));
+        PTYSessionHostState *state = [[[PTYSessionHostState alloc] init] autorelease];
+        state.keyMappingMode = _keyMappingMode;
+        state.remoteHost = self.currentHost;
+        [_hostStack addObject:state];
+        return;
+    }
+    PTYSessionHostState *state = [[_hostStack[i] retain] autorelease];
+    DLog(@"Found at %@: %@. Restore mode and pop", @(i), state);
+    [_hostStack removeObjectsInRange:NSMakeRange(i, _hostStack.count - i)];
+    if (_keyMappingMode != state.keyMappingMode) {
+        [self setKeyMappingMode:state.keyMappingMode];
+    }
 }
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
