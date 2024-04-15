@@ -1359,15 +1359,16 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 - (iTermTuple<NSString *, NSString *> *)timestampConversionHelp {
     NSDate *date;
     date = [self dateValueFromUnix];
+    BOOL wasUnix = (date != nil);
     if (!date) {
         date = [self dateValueFromUTC];
     }
     if (date) {
         NSString *template;
         if (fmod(date.timeIntervalSince1970, 1) > 0.001) {
-            template = @"yyyyMMMd hh:mm:ss.SSS z";
+            template = @"yyyyMMMd j:mm:ss.SSS z";
         } else {
-            template = @"yyyyMMMd hh:mm:ss z";
+            template = @"yyyyMMMd j:mm:ss z";
         }
         NSLocale *currentLocale = [NSLocale currentLocale];
         NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
@@ -1375,7 +1376,13 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                                                                options:0
                                                                 locale:currentLocale];
         [fmt setDateFormat:dateFormat];
-        return [iTermTuple tupleWithObject:[fmt stringFromDate:date] andObject:[fmt stringFromDate:date]];
+        if (wasUnix) {
+            return [iTermTuple tupleWithObject:[fmt stringFromDate:date]
+                                     andObject:[fmt stringFromDate:date]];
+        } else {
+            return [iTermTuple tupleWithObject:[NSString stringWithFormat:@"Unix timestamp %@", @(date.timeIntervalSince1970)]
+                                     andObject:[@(date.timeIntervalSince1970) stringValue]];
+        }
     } else {
         return nil;
     }
@@ -1461,6 +1468,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
 - (NSDate *)dateValueFromUTC {
     NSArray<NSString *> *formats = @[ @"E, d MMM yyyy HH:mm:ss zzz",
+                                      @"EEE MMM dd HH:mm:ss zzz yyyy",
                                       @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
                                       @"yyyy-MM-dd't'HH:mm:ss.SSS'z'",
                                       @"yyyy-MM-dd'T'HH:mm:ss'Z'",
