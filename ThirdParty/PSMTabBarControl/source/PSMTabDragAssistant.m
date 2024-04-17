@@ -501,6 +501,9 @@
     PSMTabBarControl *destination = [[[self destinationTabBar] retain] autorelease];
     PSMTabBarControl *source = [[[self sourceTabBar] retain] autorelease];
 
+    if (_draggedCell && [destination.cells containsObject:_draggedCell]) {
+        [destination.tabView selectTabViewItem:[_draggedCell representedObject]];
+    }
     [self finishDrag];
 
     [destination sanityCheck:@"destination performDragOperation"];
