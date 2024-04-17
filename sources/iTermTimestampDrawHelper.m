@@ -7,6 +7,7 @@
 
 #import "iTermTimestampDrawHelper.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "NSColor+iTerm.h"
@@ -255,14 +256,20 @@ const CGFloat iTermTimestampGradientWidth = 20;
 - (NSString *)stringForTimestamp:(NSDate *)timestamp
                              now:(NSTimeInterval)now
               useTestingTimezone:(BOOL)useTestingTimezone {
-    const NSTimeInterval timeDelta = timestamp.timeIntervalSinceReferenceDate - now;
+    if (!timestamp) {
+        return @"";
+    }
+    const NSTimeInterval timeSinceReference = round(timestamp.timeIntervalSinceReferenceDate);
+    if (!timeSinceReference) {
+        return @"";
+    }
+    const NSTimeInterval timeDelta = timeSinceReference - now;
     NSDateFormatter *fmt = [self dateFormatterWithTimeDelta:timeDelta
                                          useTestingTimezone:useTestingTimezone];
-    NSString *theTimestamp = [fmt stringFromDate:timestamp];
-    if (!timestamp || ![timestamp timeIntervalSinceReferenceDate]) {
-        theTimestamp = @"";
-    }
-    return theTimestamp;
+    NSDate *rounded = [NSDate dateWithTimeIntervalSinceReferenceDate:timeSinceReference];
+    NSString *formattedString = [fmt stringFromDate:rounded];
+    DLog(@"%@ -> %@", timestamp, formattedString);
+    return formattedString;
 }
 
 - (NSDictionary *)attributesForTextColor:(NSColor *)fgColor shadow:(NSShadow *)shadow retina:(BOOL)retina {
