@@ -46,7 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol iTermShortcutNavigationModeHandlerDelegate<NSObject>
-- (void (^)(void))shortcutNavigationActionForKeyEquivalent:(NSString *)characters;
+- (void (^)(NSEvent *))shortcutNavigationActionForKeyEquivalent:(NSString *)characters;
 - (void)shortcutNavigationDidComplete;
 - (void)shortcutNavigationDidBegin;
 @end

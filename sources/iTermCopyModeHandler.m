@@ -453,7 +453,7 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
     if ([event.characters characterAtIndex:0] == 27) {
         return  YES;
     }
-    return [self.delegate shortcutNavigationActionForKeyEquivalent:event.characters] != nil;
+    return [self.delegate shortcutNavigationActionForKeyEquivalent:event.charactersIgnoringModifiers] != nil;
 }
 
 - (BOOL)handleEvent:(NSEvent *)event {
@@ -463,11 +463,11 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
     if ([event.characters characterAtIndex:0] == 27) {
         return YES;
     }
-    void (^block)(void) = [self.delegate shortcutNavigationActionForKeyEquivalent:event.characters];
+    void (^block)(NSEvent *) = [self.delegate shortcutNavigationActionForKeyEquivalent:event.charactersIgnoringModifiers];
     if (!block) {
         return NO;
     }
-    block();
+    block(event);
     return YES;
 }
 

@@ -157,7 +157,8 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 
 - (ContentNavigationShortcutView *)addShortcutWithRange:(VT100GridAbsCoordRange)range
                                           keyEquivalent:(NSString *)keyEquivalent
-                                                 action:(void (^)(id<iTermContentNavigationShortcutView>))action;
+                                                 action:(void (^)(id<iTermContentNavigationShortcutView>,
+                                                                  NSEvent *))action;
 - (void)removeContentNavigationShortcuts;
 
 // This is meant to be used after the view finishes animating.

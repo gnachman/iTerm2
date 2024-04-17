@@ -1679,7 +1679,8 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 
 - (ContentNavigationShortcutView *)addShortcutWithRange:(VT100GridAbsCoordRange)range
                                           keyEquivalent:(NSString *)keyEquivalent
-                                                 action:(void (^)(id<iTermContentNavigationShortcutView>))action {
+                                                 action:(void (^)(id<iTermContentNavigationShortcutView>,
+                                                                  NSEvent *))action {
     if (!self.contentNavigationShortcuts) {
         self.contentNavigationShortcuts = [NSMutableArray array];
     }
@@ -1799,26 +1800,36 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         ContentNavigationShortcutView *view =
         [self addShortcutWithRange:result.internalAbsCoordRange
                      keyEquivalent:keyEquivalent
-                            action:^(id<iTermContentNavigationShortcutView> view){
+                            action:^(id<iTermContentNavigationShortcutView> view,
+                                     NSEvent *event){
             switch (action) {
-                case iTermContentNavigationActionOpen:
-                    [weakSelf.delegate textViewOpen:content workingDirectory:folder remoteHost:remoteHost];
+                case iTermContentNavigationActionOpen: {
+                    PTYTextView *strongSelf = weakSelf;
+                    if (strongSelf) {
+                        if (event.modifierFlags & NSEventModifierFlagOption) {
+                            [strongSelf copyContentByShortcut:content
+                                                        event:event
+                                                         view:view
+                                                        range:windowedRange];
+                        } else {
+                            [strongSelf.delegate textViewOpen:content 
+                                             workingDirectory:folder
+                                                   remoteHost:remoteHost];
+                        }
+                    }
                     break;
+                }
                 case iTermContentNavigationActionCopy: {
                     PTYTextView *strongSelf = weakSelf;
                     if (strongSelf) {
-                        [strongSelf copyString:content];
-                        const NSPoint p = view.centerScreenCoordinate;
-                        if (p.x == p.x) {
-                            [ToastWindowController showToastWithMessage:@"Copied"
-                                                               duration:1
-                                                       screenCoordinate:p
-                                                              pointSize:12];
+                        if (event.modifierFlags & NSEventModifierFlagOption) {
+                            [strongSelf.delegate writeTask:content];
+                        } else {
+                            [strongSelf copyContentByShortcut:content
+                                                        event:event
+                                                         view:view
+                                                        range:windowedRange];
                         }
-                        const VT100GridAbsWindowedRange absWindowedRange =
-                            VT100GridAbsWindowedRangeFromRelative(windowedRange,
-                                                                  strongSelf.dataSource.totalScrollbackOverflow);
-                        [strongSelf selectAbsWindowedCoordRange:absWindowedRange];
                     }
                     break;
                 }
@@ -1833,6 +1844,24 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [layerOuter layoutWithin:self.enclosingScrollView.documentVisibleRect];
     [self refresh];
     [self.delegate textViewEnterShortcutNavigationMode];
+}
+
+- (void)copyContentByShortcut:(NSString *)content
+                        event:(NSEvent *)event
+                         view:(id<iTermContentNavigationShortcutView>)view
+                        range:(VT100GridWindowedRange)windowedRange {
+    [self copyString:content];
+    const NSPoint p = view.centerScreenCoordinate;
+    if (p.x == p.x) {
+        [ToastWindowController showToastWithMessage:@"Copied"
+                                           duration:1
+                                   screenCoordinate:p
+                                          pointSize:12];
+    }
+    const VT100GridAbsWindowedRange absWindowedRange =
+    VT100GridAbsWindowedRangeFromRelative(windowedRange,
+                                          self.dataSource.totalScrollbackOverflow);
+    [self selectAbsWindowedCoordRange:absWindowedRange];
 }
 
 #pragma mark - iTermCommandInfoViewControllerDelegate

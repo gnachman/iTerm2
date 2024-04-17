@@ -16892,7 +16892,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 #pragma mark - iTermShortcutNavigationModeHandlerDelegate
 
-- (void (^)(void))shortcutNavigationActionForKeyEquivalent:(NSString *)characters {
+- (void (^)(NSEvent *))shortcutNavigationActionForKeyEquivalent:(NSString *)characters {
     return [[_textview contentNavigationShortcuts] objectPassingTest:^BOOL(iTermContentNavigationShortcut *shortcut, NSUInteger index, BOOL *stop) {
         if (shortcut.view.terminating) {
             return NO;
