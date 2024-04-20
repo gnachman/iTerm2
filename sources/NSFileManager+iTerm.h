@@ -39,7 +39,7 @@ extern NSNotificationName iTermScriptsFolderDidChange;
 - (NSString *)spacelessAppSupportCreatingLink;
 - (NSString *)spacelessAppSupportWithoutCreatingLink;
 
-- (NSString *)temporaryDirectory;
+- (NSString *)it_temporaryDirectory;
 
 - (NSString *)downloadsDirectory;
 

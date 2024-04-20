@@ -158,7 +158,7 @@ class NerdFontInstaller {
             return
         }
         if let location {
-            let tempDir = URL(fileURLWithPath: FileManager.default.temporaryDirectory()!)
+            let tempDir = URL(fileURLWithPath: FileManager.default.it_temporaryDirectory()!)
             let zip = tempDir.appendingPathComponent("file.zip")
             do {
                 DLog("Move \(location.path) to \(zip.path)")

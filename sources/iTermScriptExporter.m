@@ -51,7 +51,7 @@
     NSString *name = [fullURL.path lastPathComponent];
     if (!fullEnvironment) {
         NSString *scriptName = [name stringByDeletingPathExtension];
-        NSString *temp = [[[NSFileManager defaultManager] temporaryDirectory] stringByAppendingPathComponent:scriptName];
+        NSString *temp = [[[NSFileManager defaultManager] it_temporaryDirectory] stringByAppendingPathComponent:scriptName];
         [[NSFileManager defaultManager] createDirectoryAtPath:temp withIntermediateDirectories:YES attributes:nil error:NULL];
         [self copySimpleScriptAtURL:fullURL
                               named:[name stringByDeletingPathExtension]

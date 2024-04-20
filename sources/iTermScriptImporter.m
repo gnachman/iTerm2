@@ -94,7 +94,7 @@ static BOOL sInstallingScript;
             pleaseWait = [iTermBuildingScriptWindowController newPleaseWaitWindowController];
             [pleaseWait.window makeKeyAndOrderFront:nil];
         }
-        NSString *tempDir = [[NSFileManager defaultManager] temporaryDirectory];
+        NSString *tempDir = [[NSFileManager defaultManager] it_temporaryDirectory];
 
         DLog(@"Unzip %@", url);
         [iTermCommandRunner unzipURL:url

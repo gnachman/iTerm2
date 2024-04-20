@@ -258,7 +258,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return [[self applicationSupportDirectory] stringByAppendingPathComponent:@"quiet"];
 }
 
-- (NSString *)temporaryDirectory {
+- (NSString *)it_temporaryDirectory {
     // Create a unique directory in the system temporary directory
     NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
     NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:guid];

@@ -191,7 +191,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
 
         // Write it to disk
         NSFileManager *fileManager = [NSFileManager defaultManager];
-        NSString *tempDir = [fileManager temporaryDirectory];
+        NSString *tempDir = [fileManager it_temporaryDirectory];
         NSString *tempFile = [tempDir stringByAppendingPathComponent:@"temp.plist"];
         error = nil;
         if (![data writeToFile:tempFile options:0 error:&error]) {
