@@ -253,9 +253,7 @@ class TerminalCopyButton: TerminalButton {
     }
     
     override func clone() -> Self {
-        let copy = TerminalCopyButton(id: id, blockID: blockID, mark: mark, absY: absY)!
-        copy.isFloating = isFloating
-        return copy as! Self
+        return Self(self)!
     }
 }
 
