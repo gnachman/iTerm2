@@ -2816,5 +2816,11 @@ willExecuteToken:(VT100Token *)token
     [self appendStringAtCursor:@"  "];
 }
 
+- (void)terminalSetPointerShape:(NSString *)pointerShape {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetPointerShape:pointerShape];
+    }];
+}
+
 @end
 

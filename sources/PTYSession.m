@@ -1074,6 +1074,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_appSwitchingPreventionDetector release];
     [_queuedConnectingSSH release];
     [_hostStack release];
+    [_defaultPointer release];
 
     [super dealloc];
 }
@@ -13423,6 +13424,39 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return [_textview rangeOfVisibleLines];
 }
 
+- (void)screenSetPointerShape:(NSString *)pointerShape {
+    NSDictionary *cursors = @{
+        @"X_cursor": ^{ return [NSCursor arrowCursor]; },
+        @"arrow": ^{ return[NSCursor arrowCursor]; },
+        @"based_arrow_down": ^{ return[NSCursor resizeDownCursor]; },
+        @"based_arrow_up": ^{ return[NSCursor resizeUpCursor]; },
+        @"cross": ^{ return[NSCursor crosshairCursor]; },
+        @"cross_reverse": ^{ return[NSCursor crosshairCursor]; },
+        @"crosshair": ^{ return[NSCursor crosshairCursor]; },
+        @"hand1": ^{ return[NSCursor pointingHandCursor]; },
+        @"hand2": ^{ return[NSCursor pointingHandCursor]; },
+        @"left_ptr": ^{ return[NSCursor arrowCursor]; },
+        @"left_side": ^{ return[NSCursor resizeLeftCursor]; },
+        @"right_side": ^{ return[NSCursor resizeRightCursor]; },
+        @"sb_h_double_arrow": ^{ return[NSCursor resizeLeftRightCursor]; },
+        @"sb_left_arrow": ^{ return[NSCursor resizeLeftCursor]; },
+        @"sb_right_arrow": ^{ return[NSCursor resizeRightCursor]; },
+        @"sb_up_arrow": ^{ return[NSCursor resizeUpCursor]; },
+        @"sb_v_double_arrow": ^{ return[NSCursor resizeUpDownCursor]; },
+        @"tcross": ^{ return[NSCursor crosshairCursor]; },
+        @"xterm": ^{ return [iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]; },
+    };
+    NSCursor *(^f)(void) = cursors[pointerShape];
+    if (!f) {
+        self.defaultPointer = nil;
+    } else {
+        self.defaultPointer = f();
+    }
+    NSLog(@"invalidateCursorRectsForView");
+    [_textview.window invalidateCursorRectsForView:_textview];
+    [_textview updateCursor:[NSApp currentEvent]];
+}
+
 #pragma mark - FinalTerm
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
@@ -15761,6 +15795,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
     [self removeSelectedCommandRange];
+}
+
+- (NSCursor *)textViewDefaultPointer {
+    return self.defaultPointer;
 }
 
 - (void)removeSelectedCommandRange {

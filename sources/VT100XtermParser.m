@@ -282,6 +282,7 @@ typedef enum {
                @12: @(XTERMCC_SET_TEXT_CURSOR_COLOR),
                @17: @(XTERMCC_SET_HIGHLIGHT_COLOR),
                @19: @(XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR),
+               @22: @(XTERMCC_SET_POINTER_SHAPE),
 
                // 50 is a nonstandard escape code implemented by Konsole.
                // xterm since started using it for setting the font, so 1337 is the preferred code

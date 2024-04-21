@@ -585,6 +585,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) id<ProcessInfoProvider> processInfoProvider;
 @property(nonatomic, readonly) BOOL shouldShowAutoComposer;
 @property(nonatomic, readonly) NSString *regularExpressonForNonLowPrecisionSmartSelectionRulesCombined;
+@property(nonatomic, strong) NSCursor *defaultPointer;
 
 #pragma mark - methods
 

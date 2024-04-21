@@ -537,5 +537,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalOpenURL:(NSURL *)url;
 - (void)terminalBlock:(NSString *)blockID start:(BOOL)start type:(NSString *)type render:(BOOL)render;
 - (void)terminalInsertCopyButtonForBlock:(NSString *)blockID;
+- (void)terminalSetPointerShape:(NSString *)pointerShape;
 
 @end

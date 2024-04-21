@@ -2735,6 +2735,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                      arg:token.string];
             break;
 
+        case XTERMCC_SET_POINTER_SHAPE:
+            [_delegate terminalSetPointerShape:token.string];
+            break;
+
         case XTERMCC_FINAL_TERM:
             [self executeFinalTermToken:token];
             break;

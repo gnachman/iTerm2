@@ -476,7 +476,7 @@ iTermCommandInfoViewControllerDelegate>
         DLog(@"Mouse is over a button");
         changed = [self setCursor:[NSCursor arrowCursor]];
     } else {
-        changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
+        changed = [self setCursor:self.delegate.textViewDefaultPointer ?: [iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
     }
     if (changed) {
         [self.enclosingScrollView setDocumentCursor:cursor_];

@@ -254,6 +254,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(XTERMCC_SET_TEXT_CURSOR_COLOR):             @"XTERMCC_SET_TEXT_CURSOR_COLOR",
                 @(XTERMCC_SET_HIGHLIGHT_COLOR):               @"XTERMCC_SET_HIGHLIGHT_COLOR",
                 @(XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR):    @"XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR",
+                @(XTERMCC_SET_POINTER_SHAPE):       @"XTERMCC_SET_POINTER_SHAPE",
                 
                 @(XTERMCC_FINAL_TERM):              @"XTERMCC_FINAL_TERM",
                 @(XTERMCC_FRAMER_WRAPPER):          @"XTERMCC_FRAMER_WRAPPER",

@@ -212,6 +212,7 @@ typedef enum {
     XTERMCC_SET_TEXT_CURSOR_COLOR,
     XTERMCC_SET_HIGHLIGHT_COLOR,
     XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR,
+    XTERMCC_SET_POINTER_SHAPE,
 
     // If a sequence is split into multiple tokens, the first will be one of the above whose name
     // includes MULTITOKEN_HEADER, then zero or more of these, and then XTERMCC_MULTITOKEN_END.
