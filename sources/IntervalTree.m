@@ -676,9 +676,9 @@ static NSString *const kIntervalLengthKey = @"Length";
 
     NSMutableArray *objects = [NSMutableArray array];
     if (myMaxLimit == bestLimit) {
-        IntervalTreeValue *value = node.data;
+        IntervalTreeValue *nodeValue = node.data;
         long long maxLimit = LLONG_MIN;
-        for (IntervalTreeEntry *entry in value.entries) {
+        for (IntervalTreeEntry *entry in nodeValue.entries) {
             if (entry.interval.limit > maxLimit) {
                 [objects removeAllObjects];
                 [objects addObject:entry.object];
@@ -707,7 +707,11 @@ static NSString *const kIntervalLengthKey = @"Length";
     if (node.data) {
         IntervalTreeValue *nodeValue = (IntervalTreeValue *)node.data;
         if (nodeValue.entries.count) {
-            return nodeValue.entries;
+            NSMutableArray *objects = [NSMutableArray array];
+            for (IntervalTreeEntry *entry in nodeValue.entries) {
+                [objects addObject:entry.object];
+            }
+            return objects;
         }
     }
     return [self objectsWithSmallestLimitFromNode:node.right];
