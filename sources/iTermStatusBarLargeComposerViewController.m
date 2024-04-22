@@ -237,7 +237,7 @@
     if (self.textView.selectedRange.length > 0) {
         return [self.textView.string substringWithRange:self.textView.selectedRange];
     } else {
-        return self.textView.string;
+        return self.textView.stringExcludingPrefixAndSuggestion;
     }
 }
 

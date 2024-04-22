@@ -86,6 +86,11 @@ class ComposerTextView: MultiCursorTextView {
         }
     }
 
+    @objc(stringExcludingPrefixAndSuggestion)
+    var stringExcludingPrefixAndSuggestion: String {
+        return String(string.substring(utf16Range: rangeExcludingPrefixAndSuggestion))
+    }
+
     @objc
     var stringExcludingPrefix: String {
         get {
@@ -901,3 +906,17 @@ extension NSAttributedString {
     var wholeRange: NSRange { NSRange(location: 0, length: length) }
 }
 
+extension String {
+    func index(fromUtf16 i: Int) -> Index? {
+        let utf16ViewIndex = self.utf16.index(self.utf16.startIndex, offsetBy: i)
+        return String.Index(utf16ViewIndex, within: self)
+    }
+
+    func substring(utf16Range: Range<Int>) -> Substring {
+        guard let start = index(fromUtf16: utf16Range.lowerBound),
+              let end = index(fromUtf16: utf16Range.upperBound) else {
+            return Substring()
+        }
+        return self[start..<end]
+    }
+}
