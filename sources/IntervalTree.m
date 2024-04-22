@@ -707,7 +707,7 @@ static NSString *const kIntervalLengthKey = @"Length";
     if (node.data) {
         IntervalTreeValue *nodeValue = (IntervalTreeValue *)node.data;
         if (nodeValue.entries.count) {
-            NSMutableArray *objects = [NSMutableArray array];
+            NSMutableArray *objects = [NSMutableArray arrayWithCapacity:nodeValue.entries.count];
             for (IntervalTreeEntry *entry in nodeValue.entries) {
                 [objects addObject:entry.object];
             }
@@ -1282,19 +1282,19 @@ static NSString *const kIntervalLengthKey = @"Length";
     }];
 }
 
-- (nonnull NSEnumerator<IntervalTreeImmutableObject> *)forwardLocationEnumeratorAt:(long long)start { 
+- (nonnull NSEnumerator<IntervalTreeImmutableObject> *)forwardLocationEnumeratorAt:(long long)start {
     return [IntervalTreeSanitizingEnumerator<IntervalTreeImmutableObject> with:[_source forwardLocationEnumeratorAt:start]];
 }
 
 
-- (NSArray<id<IntervalTreeImmutableObject>> * _Nullable)objectsWithSmallestLocation { 
+- (NSArray<id<IntervalTreeImmutableObject>> * _Nullable)objectsWithSmallestLocation {
     return [[_source objectsWithSmallestLocation] mapWithBlock:^id _Nullable(id<IntervalTreeImmutableObject>  _Nonnull anObject) {
         return [anObject doppelganger];
     }];
 }
 
 
-- (NSArray<id<IntervalTreeImmutableObject>> * _Nullable)objectsWithSmallestLocationAfter:(long long)location { 
+- (NSArray<id<IntervalTreeImmutableObject>> * _Nullable)objectsWithSmallestLocationAfter:(long long)location {
     return [[_source objectsWithSmallestLocationAfter:location] mapWithBlock:^id _Nullable(id<IntervalTreeImmutableObject>  _Nonnull anObject) {
         return [anObject doppelganger];
     }];
