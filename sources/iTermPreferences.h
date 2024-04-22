@@ -202,6 +202,7 @@ extern NSString *const kPreferenceKeyFocusFollowsMouse;
 extern NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines;
 extern NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection;
 extern NSString *const kPreferenceKeyEnterCopyModeAutomatically;
+extern NSString *const kPreferenceKeyClickToSelectCommand;
 extern NSString *const kPreferenceKeyFocusOnRightOrMiddleClick;
 
 // Not in prefs

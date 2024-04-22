@@ -15778,7 +15778,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     id<VT100ScreenMarkReading> mark = [_screen commandMarkAtOrBeforeLine:coord.y];
     id<VT100ScreenMarkReading> previous = _selectedCommandMark;
-    if (_selectedCommandMark == mark) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyClickToSelectCommand] || _selectedCommandMark == mark) {
         _selectedCommandMark = nil;
     } else {
         _selectedCommandMark = mark;

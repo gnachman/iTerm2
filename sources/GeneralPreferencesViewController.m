@@ -157,6 +157,8 @@ enum {
     IBOutlet NSButton *_warningButton;
     iTermUserDefaultsObserver *_observer;
 
+    IBOutlet NSButton *_clickToSelectCommand;
+
     IBOutlet NSPopUpButton *_allowsSendingClipboardContents;
     IBOutlet NSTextField *_allowsSendingClipboardContentsLabel;
 
@@ -550,6 +552,10 @@ enum {
     };
     [self defineControl:_enterCopyModeAutomatically
                     key:kPreferenceKeyEnterCopyModeAutomatically
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_clickToSelectCommand
+                    key:kPreferenceKeyClickToSelectCommand
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

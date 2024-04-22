@@ -156,6 +156,7 @@ NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines = @"TripleClick
 NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection = @"DoubleClickPerformsSmartSelection";
 NSString *const kPreferenceKeyEnterCopyModeAutomatically = @"EnterCopyModeAutomatically";
 NSString *const kPreferenceKeyFocusOnRightOrMiddleClick = @"FocusOnRightOrMiddleClick";
+NSString *const kPreferenceKeyClickToSelectCommand = @"ClickToSelectCommand";
 
 NSString *const kPreferenceKeyAppVersion = @"iTerm Version";  // Excluded from syncing
 NSString *const kPreferenceKeyAllAppVersions = @"NoSyncAllAppVersions";  // Array of known iTerm2 versions this user has used on this machine.
@@ -466,6 +467,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyTripleClickSelectsFullWrappedLines: @YES,
                   kPreferenceKeyDoubleClickPerformsSmartSelection: @NO,
                   kPreferenceKeyEnterCopyModeAutomatically: @YES,
+                  kPreferenceKeyClickToSelectCommand: @YES,
 
                   kPreferenceAutoCommandHistory: @NO,
                   kPreferenceAutoComposer: @NO,
