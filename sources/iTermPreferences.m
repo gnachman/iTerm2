@@ -196,10 +196,9 @@ NSString *const kPreferenceKeyCompressHistory = @"Compress History";
 NSString *const kPreferenceKeyAIModel = @"AiModel";
 NSString *const kPreferenceKeyAITokenLimit = @"AiMaxTokens";
 
-NSString *const iTermDefaultAIPrompt =
-@"#!/usr/bin/\\(shell)\n"
-@"# Note this command runs on systems like this: \\(uname)\n"
-@"# The next line will do this: \\(ai.prompt)\n";
+NSString *const iTermDefaultAIPrompt = @"Return commands suitable for copy/pasting into \\(shell) on \\(uname). Do NOT include commentary NOR Markdown triple-backtick code blocks as your whole response will be copied into my terminal automatically.\n"
+@"\n"
+@"The script should do this: \\(ai.prompt)";
 
 // NOTE: If you update this list, also update preferences.py.
 
