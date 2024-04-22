@@ -1198,22 +1198,14 @@ class OpenAIMetadata: NSObject {
     }
 
     private let models = [
-        Model(name: "gpt-4-1106-preview",
-              contextWindowTokens: 128000,
-              maxResponseTokens: 4096),
         Model(name: "gpt-4",
               contextWindowTokens: 8192),
-        Model(name: "gpt-4-32k",
-              contextWindowTokens: 32768),
-        Model(name: "gpt-3.5-turbo-1106",
-              contextWindowTokens: 16385,
-              maxResponseTokens:4096),
+        Model(name: "gpt-4-turbo",
+              contextWindowTokens: 128000,
+              maxResponseTokens: 4096),
         Model(name: "gpt-3.5-turbo",
-              contextWindowTokens: 4096),
-        Model(name: "gpt-3.5-turbo-16k",
-              contextWindowTokens: 16385),
-        Model(name: "gpt-3.5-turbo-instruct",
-              contextWindowTokens: 4096)
+              contextWindowTokens: 16384,
+              maxResponseTokens: 4096),
         ]
 
     @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int) -> ()) {
