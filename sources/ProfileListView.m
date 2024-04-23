@@ -1145,14 +1145,19 @@ const CGFloat kDefaultTagsWidth = 80;
         }
         tagsView_.hidden = !open;
     } else if (!open) {
-        [[[[iTermSplitViewAnimation alloc] initWithSplitView:splitView_
-                                              dividerAtIndex:0
-                                                        from:oldDividerPosition
-                                                          to:0
-                                                    duration:0.125
-                                                  completion:^{
+        if (animated) {
+            [[[[iTermSplitViewAnimation alloc] initWithSplitView:splitView_
+                                                  dividerAtIndex:0
+                                                            from:oldDividerPosition
+                                                              to:0
+                                                        duration:0.125
+                                                      completion:^{
+                tagsView_.hidden = YES;
+            }] autorelease] startAnimation];
+        } else {
+            [splitView_ setPosition:0 ofDividerAtIndex:oldDividerPosition];
             tagsView_.hidden = YES;
-        }] autorelease] startAnimation];
+        }
     }
 
 }

@@ -36,6 +36,7 @@
 #import "PTYTab.h"
 
 static NSString *const kCloseBookmarksWindowAfterOpeningKey = @"CloseBookmarksWindowAfterOpening";
+static NSString *const iTermProfilesWindowTagsOpen = @"NoSyncProfilesWindowTagsOpen";
 
 @interface iTermProfilesWindowController()
 @property (nonatomic, strong) IBOutlet NSButton* tabButton;
@@ -163,6 +164,14 @@ typedef enum {
     ((iTermProfileWindowContentView *)self.window.contentView).windowController = self;
 }
 
+- (void)awakeFromNib {
+    NSNumber *n = [NSNumber castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:iTermProfilesWindowTagsOpen]];
+    if (n.boolValue) {
+        [tableView_ setTagsOpen:NO animated:NO];
+        [tableView_ setTagsOpen:YES animated:NO];
+    }
+}
+
 - (IBAction)closeCurrentSession:(id)sender
 {
     if ([[self window] isKeyWindow]) {
@@ -237,6 +246,8 @@ typedef enum {
 }
 
 - (IBAction)toggleTags:(id)sender {
+    [[NSUserDefaults standardUserDefaults] setBool:!tableView_.tagsVisible
+                                              forKey:iTermProfilesWindowTagsOpen];
     [tableView_ toggleTags];
     [[self window] invalidateRestorableState];
 }

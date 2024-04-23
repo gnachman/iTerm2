@@ -5,6 +5,7 @@
 #import "iTermRemotePreferences.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermDynamicProfileManager.h"
 #import "iTermPreferences.h"
 #import "iTermUserDefaultsObserver.h"
@@ -152,7 +153,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
         }
         // Download the URL's contents.
         NSURL *url = [NSURL URLWithUserSuppliedString:filename];
-        const NSTimeInterval kFetchTimeout = 5.0;
+        const NSTimeInterval kFetchTimeout = [iTermAdvancedSettingsModel noSyncDownloadPrefsTimeout];
         NSURLRequest *req = [NSURLRequest requestWithURL:url
                                              cachePolicy:NSURLRequestUseProtocolCachePolicy
                                          timeoutInterval:kFetchTimeout];
