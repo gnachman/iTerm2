@@ -9322,6 +9322,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                 [session performKeyBindingAction:subaction event:event];
                 session = [[[iTermController sharedInstance] currentTerminal] currentSession] ?: self;
             }
+            break;
         case KEY_ACTION_SWAP_WITH_NEXT_PANE:
             [self.delegate sessionSwapWithSessionInDirection:1];
             break;
