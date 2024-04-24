@@ -510,16 +510,34 @@ void StringToScreenChars(NSString *s,
                     return;
                 }
             }
-            isDoubleWidth = [NSString isDoubleWidthCharacter:baseChar
-                                      ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
-                                              unicodeVersion:unicodeVersion
-                                              fullWidthFlags:fullWidthFlags];
-            if (!isDoubleWidth && composedLength > next) {
-                const unichar peek = [composedOrNonBmpChar characterAtIndex:next];
-                if (peek == 0xfe0f) {
-                    // VS16
-                    if ([[NSCharacterSet emojiAcceptingVS16] longCharacterIsMember:baseChar] && shouldSupportVS16) {
-                        isDoubleWidth = YES;
+            BOOL disambiguated = NO;
+            if (unicodeVersion >= 9) {  // really should be 16 but there's no UI to choose that.
+                if (baseChar == 0x2018 ||
+                    baseChar == 0x2019 ||
+                    baseChar == 0x201C ||
+                    baseChar == 0x201D) {
+                    const unichar peek = [composedOrNonBmpChar characterAtIndex:next];
+                    if (peek == 0xfe00 || peek == 0xfe01) {
+                        // VS0 or VS1
+                        // https://www.unicode.org/L2/L2023/23231.htm#177-C36
+                        isDoubleWidth = (peek == 0xfe01);
+                        disambiguated = YES;
+                    }
+                }
+            }
+
+            if (!disambiguated) {
+                isDoubleWidth = [NSString isDoubleWidthCharacter:baseChar
+                                          ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
+                                                  unicodeVersion:unicodeVersion
+                                                  fullWidthFlags:fullWidthFlags];
+                if (!isDoubleWidth && composedLength > next) {
+                    const unichar peek = [composedOrNonBmpChar characterAtIndex:next];
+                    if (peek == 0xfe0f) {
+                        // VS16
+                        if ([[NSCharacterSet emojiAcceptingVS16] longCharacterIsMember:baseChar] && shouldSupportVS16) {
+                            isDoubleWidth = YES;
+                        }
                     }
                 }
             }
