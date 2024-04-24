@@ -62,10 +62,8 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     IBOutlet NSScrollView *_bottomAlignedScrollView;
     IBOutlet NSTextView *_sponsorsHeading;
 
-    IBOutlet NSView *_blendbyte;
     IBOutlet NSView *_whitebox;
 
-    IBOutlet NSTextField *_blendbyteText;
     IBOutlet NSTextField *_whiteboxText;
 
     NSArray<iTermSponsor *> *_sponsors;
@@ -89,11 +87,7 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
                                                                                               font:_sponsorsHeading.font
                                                                                     paragraphStyle:paragraphStyle]];
 
-    _sponsors = @[ [iTermSponsor sponsorWithView:_blendbyte
-                                       textField:_blendbyteText
-                                       container:self
-                                             url:@"https://www.blendbyte.com/?utm_source=iterm2"],
-                   [iTermSponsor sponsorWithView:_whitebox 
+    _sponsors = @[ [iTermSponsor sponsorWithView:_whitebox
                                        textField:_whiteboxText
                                        container:self
                                              url:@"https://whitebox.so/?utm_source=iTerm2"] ];
