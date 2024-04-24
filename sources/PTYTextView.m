@@ -5512,6 +5512,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (void)accessibilityHelperSetSelectedRange:(VT100GridCoordRange)coordRange {
+    DLog(@"accessibilityHelperSetSelectedRange:%@", VT100GridCoordRangeDescription(coordRange));
     coordRange.start.y =
         [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
     coordRange.end.y =

@@ -340,7 +340,7 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 #pragma mark - Action
 
 - (IBAction)help:(id)sender {
-    [iTermShellHistoryController showInformationalMessage];
+    [iTermShellHistoryController showInformationalMessageInWindow:self.view.window];
 }
 
 - (IBAction)showFilterAlertsPanel:(id)sender {

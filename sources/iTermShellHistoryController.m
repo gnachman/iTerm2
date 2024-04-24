@@ -354,7 +354,7 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
 
 #pragma mark - APIs
 
-+ (void)showInformationalMessage {
++ (void)showInformationalMessageInWindow:(NSWindow *)window {
     NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
     SEL selector = @selector(installShellIntegration:);
     if (![firstResponder respondsToSelector:selector]) {
@@ -374,15 +374,17 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
     if (firstResponder) {
         [alert addButtonWithTitle:@"Install Now"];
     }
-    switch ([alert runModal]) {
-        case NSAlertFirstButtonReturn:
-            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
-            break;
-
-        case NSAlertThirdButtonReturn:  // Install now, optional button
-            [firstResponder performSelector:selector withObject:self];
-            break;
-    }
+    [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
+        switch (returnCode) {
+            case NSAlertFirstButtonReturn:
+                [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
+                break;
+                
+            case NSAlertThirdButtonReturn:  // Install now, optional button
+                [firstResponder performSelector:selector withObject:self];
+                break;
+        }
+    }];
 }
 
 - (void)backingStoreTypeDidChange {

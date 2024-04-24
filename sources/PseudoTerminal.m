@@ -7917,7 +7917,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (IBAction)openCommandHistory:(id)sender {
     if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
-        [iTermShellHistoryController showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessageInWindow:self.window];
         return;
     }
     [self openCommandHistoryWithPrefix:[[self currentSession] currentCommand]
@@ -7967,7 +7967,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self openPopupWindow:_directoriesPopupWindowController];
         [_directoriesPopupWindowController loadDirectoriesForHost:[[self currentSession] currentHost]];
     } else {
-        [iTermShellHistoryController showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessageInWindow:self.window];
     }
 }
 

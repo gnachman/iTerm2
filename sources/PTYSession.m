@@ -10585,7 +10585,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     DLog(@"Fetching range of last command output...");
     if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         DLog(@"Command history has never been used.");
-        [iTermShellHistoryController showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessageInWindow:_view.window];
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
         iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
@@ -10615,7 +10615,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     DLog(@"Fetching range of current command");
     if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         DLog(@"Command history has never been used.");
-        [iTermShellHistoryController showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessageInWindow:_view.window];
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
         VT100GridAbsCoordRange range;

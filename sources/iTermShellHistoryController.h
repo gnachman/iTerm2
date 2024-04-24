@@ -29,7 +29,7 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 + (instancetype)sharedInstance;
 
 // Advertises shell integration in a modal alert.
-+ (void)showInformationalMessage;
++ (void)showInformationalMessageInWindow:(NSWindow *)window;
 
 // Switch between in-memory and on-disk backing store based on global preference.
 - (void)backingStoreTypeDidChange;

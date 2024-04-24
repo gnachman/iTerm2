@@ -229,7 +229,7 @@
                                 partialCommand:prefix
                            sortChronologically:NO];
     } else {
-        [iTermShellHistoryController showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessageInWindow:self.view.window];
     }
 }
 
