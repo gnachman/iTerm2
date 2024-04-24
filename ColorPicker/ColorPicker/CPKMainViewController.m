@@ -7,6 +7,7 @@
 #import "CPKFavorite.h"
 #import "CPKFavoritesView.h"
 #import "CPKFlippedView.h"
+#import "CPKLogging.h"
 #import "CPKSelectionView.h"
 #import "NSColor+CPK.h"
 
@@ -68,7 +69,8 @@ static const CGFloat kBottomMargin = 8;
     __weak __typeof(self) weakSelf = self;
     self.selectionView = [[CPKSelectionView alloc] initWithFrame:self.view.bounds
                                                            block: ^(CPKColor *color) {
-                                                               [weakSelf selectColor:color.color];
+                                                               [weakSelf selectColor:color.color
+                                                                 updateSelectionView:NO];
                                                            }
                                                            color:[[CPKColor alloc] initWithColor:_selectedColor]
                                                       colorSpace:self.colorSpace
@@ -160,10 +162,19 @@ static const CGFloat kBottomMargin = 8;
 }
 
 - (void)selectColor:(NSColor *)color {
+    CPKLog(@"CPKMainViewController.selectColor(%@)", color);
+    [self selectColor:color updateSelectionView:YES];
+}
+
+- (void)selectColor:(NSColor *)color updateSelectionView:(BOOL)updateSelectionView {
+    CPKLog(@"CPKMainViewController.selectColor(%@, updateSelectionView:%@)", color, @(updateSelectionView));
     self.selectedColor = color;
     self.controlsView.swatchColor = color;
     _block(color);
     [self.favoritesView selectColor:color];
+    if (updateSelectionView) {
+        [self.selectionView setSelectedColor:[[CPKColor alloc] initWithColor:color]];
+    }
 }
 
 #pragma mark - CPKSelectionViewDelegate

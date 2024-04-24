@@ -88,6 +88,7 @@
 		A662E7951BD4933A00B79B8B /* RGB@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E7931BD4933A00B79B8B /* RGB@2x.png */; };
 		A667C232276A8A09006B4DEF /* NSColorSpace+CPK.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C230276A8A09006B4DEF /* NSColorSpace+CPK.h */; };
 		A667C233276A8A09006B4DEF /* NSColorSpace+CPK.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C231276A8A09006B4DEF /* NSColorSpace+CPK.m */; };
+		A6D3985B2BD9A4A600C4C1AD /* CPKLogging.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D398592BD9A4A600C4C1AD /* CPKLogging.h */; };
 		A6E1748E206DD85F00E70F8D /* CPKScreenshot.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E1748C206DD85F00E70F8D /* CPKScreenshot.h */; };
 		A6E1748F206DD85F00E70F8D /* CPKScreenshot.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E1748D206DD85F00E70F8D /* CPKScreenshot.m */; };
 /* End PBXBuildFile section */
@@ -206,6 +207,7 @@
 		A662E7931BD4933A00B79B8B /* RGB@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "RGB@2x.png"; path = "Images.xcassets/RGB/RGB@2x.png"; sourceTree = "<group>"; };
 		A667C230276A8A09006B4DEF /* NSColorSpace+CPK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSColorSpace+CPK.h"; sourceTree = "<group>"; };
 		A667C231276A8A09006B4DEF /* NSColorSpace+CPK.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSColorSpace+CPK.m"; sourceTree = "<group>"; };
+		A6D398592BD9A4A600C4C1AD /* CPKLogging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CPKLogging.h; sourceTree = "<group>"; };
 		A6E1748C206DD85F00E70F8D /* CPKScreenshot.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CPKScreenshot.h; sourceTree = "<group>"; };
 		A6E1748D206DD85F00E70F8D /* CPKScreenshot.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CPKScreenshot.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -330,6 +332,7 @@
 				539804D32346F345009165A8 /* CPKColor.m */,
 				A667C230276A8A09006B4DEF /* NSColorSpace+CPK.h */,
 				A667C231276A8A09006B4DEF /* NSColorSpace+CPK.m */,
+				A6D398592BD9A4A600C4C1AD /* CPKLogging.h */,
 			);
 			path = ColorPicker;
 			sourceTree = "<group>";
@@ -508,6 +511,7 @@
 				A6E1748E206DD85F00E70F8D /* CPKScreenshot.h in Headers */,
 				A6184F571BAA06DC0088EF3C /* CPKSwatchView.h in Headers */,
 				A6184EFD1BA8814B0088EF3C /* CPKGradientView.h in Headers */,
+				A6D3985B2BD9A4A600C4C1AD /* CPKLogging.h in Headers */,
 				A6184EEE1BA876390088EF3C /* CPKMainViewController.h in Headers */,
 				A6184F791BAA5E1A0088EF3C /* CPKSliderView.h in Headers */,
 				A6184F711BAA20510088EF3C /* NSColor+CPK.h in Headers */,

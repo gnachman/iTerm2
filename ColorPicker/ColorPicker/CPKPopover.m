@@ -1,4 +1,5 @@
 #import "CPKPopover.h"
+#import "CPKLogging.h"
 #import "CPKMainViewController.h"
 
 @interface CPKPopover() <NSPopoverDelegate>
@@ -37,7 +38,8 @@
 }
 
 - (void)setSelectedColor:(NSColor *)selectedColor {
-  [self.mainViewController selectColor:selectedColor];
+    CPKLog(@"CPKPopover.setSelectedColor:%@", selectedColor);
+    [self.mainViewController selectColor:selectedColor];
 }
 
 #pragma mark - NSPopoverDelegate

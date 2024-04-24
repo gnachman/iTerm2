@@ -1,10 +1,11 @@
 #import "CPKSelectionView.h"
 
+#import "CPKAlphaSliderView.h"
 #import "CPKColor.h"
 #import "CPKColorComponentSliderView.h"
 #import "CPKFlippedView.h"
 #import "CPKGradientView.h"
-#import "CPKAlphaSliderView.h"
+#import "CPKLogging.h"
 #import "NSColor+CPK.h"
 #import "NSColorSpace+CPK.h"
 #import "NSObject+CPK.h"
@@ -19,7 +20,7 @@ static const CGFloat kColorComponentSliderHeight = 24;
 static const CGFloat kAlphaSliderHeight = 12;
 static const CGFloat kMarginBetweenTextFields = 4;
 static const CGFloat kMarginBetweenLastSliderAndTextFields = 8;
-static const CGFloat kColorTextFieldWidth = 32;
+static const CGFloat kColorTextFieldWidth = 34;
 static const CGFloat kMarginBetweenTextFieldAndLabel = 0;
 static const CGFloat kBottomMargin = 4;
 static const CGFloat kMarginBetweenComponentSliders = 4;
@@ -829,6 +830,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 }
 
 - (void)setSelectedColor:(CPKColor *)selectedColor {
+    CPKLog(@"CPKSelectionView.setSelectedColor(%@)", selectedColor);
     if (!self.alphaAllowed) {
         selectedColor = [selectedColor colorWithAlphaComponent:1];
     }
@@ -862,6 +864,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                                         (int)floor(color.redComponent * 255),
                                         (int)floor(color.greenComponent * 255),
                                         (int)floor(color.blueComponent * 255)];
+    CPKLog(@"updateTextFieldsForColor:%@ hex=%@", color, self.hexTextField.stringValue);
     self.redTextField.stringValue =
         [NSString stringWithFormat:@"%d", (int)floor(color.redComponent * 255)];
     self.greenTextField.stringValue =

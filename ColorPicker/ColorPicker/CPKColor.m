@@ -40,6 +40,13 @@
     return [self initWithColor:[NSColor cpk_colorWithRed:red green:green blue:blue alpha:alpha colorSpace:colorSpace]];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p color=%@ hue=%@ sat=%@>",
+            NSStringFromClass([self class]),
+            self,
+            _color, @(_hueComponent), @(_saturationComponent)];
+}
+
 - (CGFloat)brightnessComponent {
     return _color.brightnessComponent;
 }

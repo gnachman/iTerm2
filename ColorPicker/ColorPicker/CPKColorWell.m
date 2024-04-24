@@ -1,5 +1,6 @@
 #import "CPKColorWell.h"
 #import "CPKControlsView.h"
+#import "CPKLogging.h"
 #import "CPKPopover.h"
 #import "NSObject+CPK.h"
 
@@ -31,6 +32,9 @@
 @property(nonatomic, weak) id<CPKColorWellViewDelegate> delegate;
 
 @property (nonatomic, strong) NSColorSpace *colorSpace;
+
+// This is how the well sets color on drag-drop
+- (void)pushColor:(NSColor *)color;
 
 @end
 
@@ -155,6 +159,19 @@
                                  source:self];
 }
 
+- (void)pushColor:(NSColor *)color {
+    CPKLog(@"pushColor:%@", color);
+    if (self.popover) {
+        self.popover.selectedColor = color;
+    } else {
+        NSColorPanel *panel = [NSColorPanel sharedColorPanel];
+        if (panel.isVisible) {
+            [panel setColor:color];
+        }
+    }
+}
+
+
 #pragma mark - NSDraggingDestination
 
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
@@ -180,16 +197,17 @@
                                       classes:@[ [NSColor class] ]
                                 searchOptions:@{}
                                    usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
-                                       NSColor *color = draggingItem.item;
-                                       if (color) {
-                                           self.popover.selectedColor = color;
-                                           self.selectedColor = color;
-                                           [self.delegate colorChangedByDrag:color];
+        NSColor *color = draggingItem.item;
+        CPKLog(@"performDragOperation color=%@", color);
+        if (color) {
+            self.popover.selectedColor = color;
+            self.selectedColor = color;
+            [self.delegate colorChangedByDrag:color];
 
-                                           ok = YES;
-                                           *stop = YES;
-                                       }
-                                   }];
+            ok = YES;
+            *stop = YES;
+        }
+    }];
     return ok;
 }
 
@@ -425,6 +443,7 @@ static NSColorSpace *gDefaultColorSpace;
 }
 
 - (void)setColor:(NSColor *)color {
+    CPKLog(@"setColor:%@", color);
     self.view.color = color;
     self.view.selectedColor = color;
 }
@@ -461,8 +480,10 @@ static NSColorSpace *gDefaultColorSpace;
 }
 
 - (void)colorChangedByDrag:(NSColor *)color {
+    CPKLog(@"colorChangedByDrag:%@", color);
     [self setColor:color];
     [self sendAction:self.action to:self.target];
+    [_view pushColor:color];
 }
 
 - (CPKColorWellView *)view {
