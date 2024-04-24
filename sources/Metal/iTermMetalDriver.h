@@ -93,6 +93,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) VT100GridRect selectedCommandRect;
 @property (nonatomic, readonly) NSRange selectedCommandRegion;  // absolute line numbers
 @property (nonatomic, readonly) BOOL forceRegularBottomMargin;
+@property (nonatomic, readonly) const vector_float4 *selectedCommandOutlineColors;  // array of length 2
 
 // Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys

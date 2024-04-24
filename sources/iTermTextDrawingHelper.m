@@ -828,6 +828,14 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }
 }
 
+- (NSArray<NSColor *> *)selectedCommandOutlineColors {
+    NSColor *bg = [[self defaultBackgroundColor] colorWithAlphaComponent:1.0];
+    return @[
+        [[NSColor colorWithDisplayP3Red:0.2 green:0.2 blue:1 alpha:1] blendedWithColor:bg weight:0.5],
+        [[NSColor colorWithDisplayP3Red:0 green:0 blue:0.8 alpha:1] blendedWithColor:bg weight:0.5]
+    ];
+}
+
 - (void)drawOutlineAroundSelectedCommand:(CGFloat)virtualOffset {
     const CGFloat commandRegionOutlineThickness = 2.0;
 
@@ -838,13 +846,15 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                              y - commandRegionOutlineThickness,
                              _cellSize.width * _gridSize.width + 2 * hMargin,
                              _selectedCommandRegion.length * _cellSize.height + commandRegionOutlineThickness * 2);
-    [[NSColor colorWithDisplayP3Red:0.2 green:0.2 blue:1 alpha:1] set];
+
+    NSArray<NSColor *> *colors = self.selectedCommandOutlineColors;
+    [colors[0] set];
 
     iTermFrameRect(rect, virtualOffset);
 
     rect = NSInsetRect(rect, 1, 1);
 
-    [[NSColor colorWithDisplayP3Red:0 green:0 blue:0.8 alpha:1] set];
+    [colors[1] set];
     iTermFrameRect(rect, virtualOffset);
 }
 

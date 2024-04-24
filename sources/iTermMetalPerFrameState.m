@@ -750,6 +750,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                             alpha);
 }
 
+- (const vector_float4 *)selectedCommandOutlineColors {
+    return _configuration->_selectedCommandOutlineColors;
+}
+
 - (BOOL)forceRegularBottomMargin {
     return _configuration->_forceRegularBottomMargin;
 }

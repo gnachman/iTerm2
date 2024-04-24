@@ -288,6 +288,7 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property (nonatomic) NSRange selectedCommandRegion;
 @property (nonatomic) BOOL selectedCommandHasLineStyleMarks;
 @property (nonatomic) BOOL forceRegularBottomMargin;
+@property (nonatomic, readonly) NSArray<NSColor *> *selectedCommandOutlineColors;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;

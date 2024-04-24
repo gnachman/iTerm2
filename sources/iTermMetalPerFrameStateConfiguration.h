@@ -99,6 +99,8 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Selected command (absolute lines)
     NSRange _selectedCommandRegion;
+
+    vector_float4 _selectedCommandOutlineColors[2];
 };
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper

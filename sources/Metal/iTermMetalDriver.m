@@ -1550,11 +1550,11 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         [tState addFrameRectangleWithRect:rect
                                 thickness:1.0
                                    insets:NSEdgeInsetsMake(-1, 1 - hmargin, 0, 2 - hmargin)
-                                    color:simd_make_float4(0.0, 0.0, 0.8, 1.0)];
+                                    color:frameData.perFrameState.selectedCommandOutlineColors[0]];
         [tState addFrameRectangleWithRect:rect
                                 thickness:1.0
                                    insets:NSEdgeInsetsMake(-2, 0 - hmargin, -1, 1 - hmargin)
-                                    color:simd_make_float4(0.2, 0.2, 1.0, 1.0)];
+                                    color:frameData.perFrameState.selectedCommandOutlineColors[1]];
         if (frameData.perFrameState.pointsOnBottomToSuppressDrawing > 0) {
             const CGFloat y = frameData.perFrameState.pointsOnBottomToSuppressDrawing * frameData.scale;
             [tState setClipRect:NSMakeRect(0,

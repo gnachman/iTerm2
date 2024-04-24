@@ -63,6 +63,10 @@ static vector_float4 VectorForColor(NSColor *color) {
                                        (float)selectionColor.greenComponent,
                                        (float)selectionColor.blueComponent,
                                        1.0);
+    NSArray<NSColor *> *scoc = drawingHelper.selectedCommandOutlineColors;
+    _selectedCommandOutlineColors[0] = scoc[0].vector;
+    _selectedCommandOutlineColors[1] = scoc[1].vector;
+
     _lineStyleMarkColors = (iTermLineStyleMarkColors) {
         .success = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper successMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
         .other = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper otherMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
