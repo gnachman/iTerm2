@@ -101,7 +101,7 @@ iTermCommandInfoViewControllerDelegate>
         }
     }
     if (item.action == @selector(performNaturalLanguageQuery:)) {
-        return [self.delegate textViewNaturalLanguageQuery] != nil;
+        return YES;
     }
     return NO;
 }

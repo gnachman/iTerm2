@@ -129,3 +129,15 @@
 }
 
 @end
+
+@implementation ShiftEnterTextView
+
+- (void)insertNewline:(id)sender {
+    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift) != 0) {
+        self.shiftEnterPressed();
+        return;
+    }
+    [super insertNewline:sender];
+}
+
+@end

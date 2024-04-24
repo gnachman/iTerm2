@@ -15531,7 +15531,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         query = self.currentCommand;
     }
     if (query.length == 0) {
-        return nil;
+        return [self requestNaturalLanguageQuery];
     }
     if (query.length >= [iTermAdvancedSettingsModel aiResponseMaxTokens] / 8) {
         return nil;
@@ -15539,10 +15539,44 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return query;
 }
 
+- (NSString *)requestNaturalLanguageQuery {
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:@"Describe the command you want to run in plain English. Press ⇧⏎ to send."];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    ShiftEnterTextView *input = [[[ShiftEnterTextView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)] autorelease];
+    [input setVerticallyResizable:YES];
+    [input setHorizontallyResizable:NO];
+    [input setAutoresizingMask:NSViewWidthSizable];
+    [[input textContainer] setContainerSize:NSMakeSize(200, FLT_MAX)];
+    [[input textContainer] setWidthTracksTextView:YES];
+    [input setTextContainerInset:NSMakeSize(4, 4)];
+    __weak __typeof(alert) weakAlert = alert;
+    input.shiftEnterPressed = ^{
+        [weakAlert.buttons.firstObject performClick:nil];
+    };
+    NSScrollView *scrollview = [[[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)] autorelease];
+    [scrollview setHasVerticalScroller:YES];
+    [scrollview setDocumentView:input];
+    scrollview.borderType = NSLineBorder;
+
+    [alert setAccessoryView:scrollview];
+    alert.window.initialFirstResponder = input;
+    const NSInteger button = [alert runSheetModalForWindow:self.view.window];
+
+    if (button == NSAlertFirstButtonReturn) {
+        return [[input string] copy];
+    } else if (button == NSAlertSecondButtonReturn) {
+        return nil;
+    }
+
+    return nil;
+}
+
 - (void)textViewPerformNaturalLanguageQuery {
     NSString *query = [self naturalLanguageQuery];
     if (!query) {
-        NSBeep();
         return;
     }
     [_aiterm release];
@@ -15591,6 +15625,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     [self setComposerString:choices[0]];
     [self.composerManager toggle];
+    [self makeComposerFirstResponderIfAllowed];
 }
 
 - (BOOL)sessionViewTerminalIsFirstResponder {

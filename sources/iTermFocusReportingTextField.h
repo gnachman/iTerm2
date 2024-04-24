@@ -41,4 +41,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermTextView: NSTextView
 @end
 
+// Text view that calls a closure on shift+enter
+@interface ShiftEnterTextView: NSTextView
+@property (nonatomic, strong) void (^shiftEnterPressed)(void);
+@end
+
 NS_ASSUME_NONNULL_END
