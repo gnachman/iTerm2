@@ -430,9 +430,11 @@ static iTermPreferencesSearchEngine *gSearchEngine;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
+        self.window.title = @"Edit Session";
     } else {
         [_toolbar setVisible:YES];
         [self resizeWindowForTabViewItem:_globalTabViewItem animated:NO];
+        self.window.title = @"Settings";
     }
 
     iTermPrefsPanel *panel = (iTermPrefsPanel *)self.window;
