@@ -685,6 +685,9 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
 }
 
 - (NSColor *)blendedWithColor:(NSColor *)color weight:(CGFloat)weight {
+    if (!color) {
+        return self;
+    }
     // Convert colors to LAB color space for perceptual blending
     CGFloat whitePoint[3] = {0.95047, 1.0, 1.08883}; // D50 white point
     CGFloat blackPoint[3] = {0.0, 0.0, 0.0};
