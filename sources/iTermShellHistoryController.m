@@ -355,6 +355,12 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
 #pragma mark - APIs
 
 + (void)showInformationalMessage {
+    [NSTimer scheduledTimerWithTimeInterval:0 repeats:NO block:^(NSTimer * _Nonnull timer) {
+        [iTermShellHistoryController reallyShowInformationalMessage];
+    }];
+}
+
++ (void)reallyShowInformationalMessage {
     NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
     SEL selector = @selector(installShellIntegration:);
     if (![firstResponder respondsToSelector:selector]) {
