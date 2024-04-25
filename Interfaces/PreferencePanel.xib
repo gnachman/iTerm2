@@ -5350,11 +5350,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KAL-YY-pcD">
-                                        <rect key="frame" x="111" y="202" width="569" height="266"/>
+                                        <rect key="frame" x="111" y="193" width="569" height="275"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xrd-YE-9w7">
-                                                <rect key="frame" x="180" y="231" width="369" height="21"/>
+                                                <rect key="frame" x="180" y="240" width="369" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">Go register for an account with openai and create an API key. Place the secret here. It probably will cost you money to use AI features.</string>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="euY-7d-vSJ">
@@ -5384,7 +5384,7 @@ DQ
                                                 </connections>
                                             </textField>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RYR-Tl-aPi">
-                                                <rect key="frame" x="75" y="234" width="103" height="16"/>
+                                                <rect key="frame" x="75" y="243" width="103" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="OpenAI API Key:" id="b2B-Hj-edT">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5474,7 +5474,7 @@ DQ
                                                 </connections>
                                             </textField>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Q5B-ar-uN1">
-                                                <rect key="frame" x="178" y="217" width="334" height="14"/>
+                                                <rect key="frame" x="178" y="218" width="334" height="14"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="You will be charged by OpenAI for each token sent or received." id="LEZ-sd-Ucb">
                                                     <font key="font" metaFont="smallSystem"/>
