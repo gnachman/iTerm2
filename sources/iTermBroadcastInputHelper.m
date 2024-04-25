@@ -214,7 +214,7 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
             DLog(@"off -> !off");
             NSWindow *window = [self.delegate broadcastInputHelperWindowForWarnings:self];
             DLog(@"Warn…");
-            if ([iTermWarning showWarningWithTitle:@"Keyboard input will be sent to multiple sessions."
+            if ([iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Keyboard input will be sent to %@.", [self formatDestinationsForMode:mode]]
                                            actions:@[ @"OK", @"Cancel" ]
                                         identifier:@"NoSyncSuppressBroadcastInputWarning"
                                        silenceable:kiTermWarningTypePermanentlySilenceable
@@ -237,6 +237,33 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
     }
     [self.delegate broadcastInputHelperDidUpdate:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
+}
+
+- (NSString *)formatDestinationsForMode:(BroadcastMode)mode {
+    switch (mode) {
+        case BROADCAST_OFF:
+            return @"no sessions";
+        case BROADCAST_TO_ALL_TABS: {
+            const NSInteger count = [[self allSessions] count];
+            if (count < 2) {
+                return @"all panes in all tabs in this window";
+            }
+            return [NSString stringWithFormat:@"%@ panes across all tabs in this window", @(count)];
+        }
+            break;
+        case BROADCAST_TO_ALL_PANES: {
+            // Just this tab
+            const NSInteger count = [[self.delegate broadcastInputHelperSessionsInCurrentTab:self includeExited:NO] count];
+            if (count < 2) {
+                return @"all panes in the current tab";
+            } else {
+                return [NSString stringWithFormat:@"%@ panes in the current tab", @(count)];
+            }
+        }
+            break;
+        case BROADCAST_CUSTOM:
+            return @"multiple sessions";
+    }
 }
 
 - (BOOL)shouldBroadcastToSessionWithID:(NSString *)sessionID {
