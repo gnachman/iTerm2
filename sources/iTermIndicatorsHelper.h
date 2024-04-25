@@ -42,8 +42,8 @@ extern CGFloat kiTermIndicatorStandardHeight;
 // Alpha value for fullscreen flash.
 @property(nonatomic, readonly) CGFloat fullScreenAlpha;
 
-- (void)setIndicator:(NSString *)identifier visible:(BOOL)visible;
-- (void)beginFlashingIndicator:(NSString *)identifier;
+- (void)setIndicator:(NSString *)identifier visible:(BOOL)visible darkBackground:(BOOL)darkBackground;
+- (void)beginFlashingIndicator:(NSString *)identifier darkBackground:(BOOL)darkBackground;
 - (void)beginFlashingFullScreen;
 
 // Use this from drawRect:
@@ -52,8 +52,8 @@ extern CGFloat kiTermIndicatorStandardHeight;
 // Use this with Metal
 - (void)didDraw;
 
-- (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect))block;
-- (void)enumerateCenterIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect, CGFloat))block;
+- (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block;
+- (void)enumerateCenterIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect, CGFloat, BOOL))block;
 
 - (NSString *)helpTextForIndicatorAt:(NSPoint)point;
 

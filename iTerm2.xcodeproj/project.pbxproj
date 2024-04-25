@@ -3287,6 +3287,7 @@
 		A6D3205729C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
 		A6D3205829C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
 		A6D3205929C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
+		A6D3985E2BDACC1300C4C1AD /* SFSymbolsHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D3985D2BDACC1300C4C1AD /* SFSymbolsHelpers.swift */; };
 		A6D441C72A91306400CA76E9 /* ProfileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D441C62A91306400CA76E9 /* ProfileDocument.swift */; };
 		A6D463E6240447AF005D073D /* iTermBackgroundColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */; };
 		A6D463E7240447AF005D073D /* iTermBackgroundColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */; };
@@ -7116,6 +7117,7 @@
 		A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDebugLogging.swift; sourceTree = "<group>"; };
 		A6D3205429C29EE30088BBE1 /* NerdFontInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NerdFontInstaller.swift; sourceTree = "<group>"; };
 		A6D3205629C492410088BBE1 /* nerd.itse */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = nerd.itse; path = OtherResources/nerd.itse; sourceTree = "<group>"; };
+		A6D3985D2BDACC1300C4C1AD /* SFSymbolsHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSymbolsHelpers.swift; sourceTree = "<group>"; };
 		A6D441C62A91306400CA76E9 /* ProfileDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDocument.swift; sourceTree = "<group>"; };
 		A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundColorView.h; sourceTree = "<group>"; };
 		A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundColorView.m; sourceTree = "<group>"; };
@@ -10919,6 +10921,7 @@
 				A6E2A6232B90148400EC6070 /* AtomicHelpers.m */,
 				A6E2A62E2B9108FE00EC6070 /* TokenExecutorHelpers.h */,
 				A6E2A62F2B9108FE00EC6070 /* TokenExecutorHelpers.m */,
+				A6D3985D2BDACC1300C4C1AD /* SFSymbolsHelpers.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -16074,6 +16077,7 @@
 				A66EF82D1EF59CFC0005891A /* iTermRateLimitedUpdate.m in Sources */,
 				A62EEDA720E025F300943DE3 /* iTermSetupCfgParser.m in Sources */,
 				A6B60CAC245E33C200DBD6A7 /* PSMCachedTitle.m in Sources */,
+				A6D3985E2BDACC1300C4C1AD /* SFSymbolsHelpers.swift in Sources */,
 				A67D1953223704C400BD0D4D /* VT100SixelParser.m in Sources */,
 				A6A4867920B67D3600493302 /* ProfilesGeneralPreferencesViewController.m in Sources */,
 				5378FA41224DAE4700CA2B2D /* iTermPreferencesSearch.m in Sources */,

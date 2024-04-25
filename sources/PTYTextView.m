@@ -1684,33 +1684,48 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 #pragma mark - Indicators
 
 - (NSRect)configureIndicatorsHelperWithRightMargin:(CGFloat)rightMargin {
+    NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+    const BOOL isDark = [backgroundColor isDark];
+
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
-                            visible:[_delegate textViewIsMaximized]];
+                            visible:[_delegate textViewIsMaximized]
+                     darkBackground:isDark];
     [_indicatorsHelper setIndicator:kItermIndicatorBroadcastInput
-                            visible:[_delegate textViewSessionIsBroadcastingInput]];
+                            visible:[_delegate textViewSessionIsBroadcastingInput]
+                     darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorCoprocess
-                            visible:[_delegate textViewHasCoprocess]];
+                            visible:[_delegate textViewHasCoprocess]
+                     darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorAlert
-                            visible:[_delegate alertOnNextMark]];
+                            visible:[_delegate alertOnNextMark]
+                     darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorAllOutputSuppressed
-                            visible:[_delegate textViewSuppressingAllOutput]];
+                            visible:[_delegate textViewSuppressingAllOutput]
+                     darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorZoomedIn
-                            visible:[_delegate textViewIsZoomedIn]];
+                            visible:[_delegate textViewIsZoomedIn]
+                     darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorCopyMode
-                            visible:[_delegate textViewCopyMode]];
+                            visible:[_delegate textViewCopyMode]
+                     darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorDebugLogging
-                            visible:gDebugLogging];
+                            visible:gDebugLogging
+                     darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorFilter
-                            visible:[_delegate textViewIsFiltered]];
+                            visible:[_delegate textViewIsFiltered]
+                     darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorPinned
-                            visible:[_delegate textViewInPinnedHotkeyWindow]];
+                            visible:[_delegate textViewInPinnedHotkeyWindow]
+                     darkBackground:isDark];
 
     const BOOL secureByUser = [[iTermSecureKeyboardEntryController sharedInstance] enabledByUserDefault];
     const BOOL secure = [[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
     [_indicatorsHelper setIndicator:kiTermIndicatorSecureKeyboardEntry_User
-                            visible:secure && secureByUser];
+                            visible:secure && secureByUser
+                     darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorSecureKeyboardEntry_Forced
-                            visible:secure && !secureByUser];
+                            visible:secure && !secureByUser
+                     darkBackground:isDark];
 
     NSRect rect = self.visibleRect;
     rect.size.width -= rightMargin;
@@ -3163,7 +3178,9 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         [iTermAdvancedSettingsModel traditionalVisualBell]) {
         [_indicatorsHelper beginFlashingFullScreen];
     } else {
-        [_indicatorsHelper beginFlashingIndicator:flashIdentifier];
+        NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+        const BOOL isDark = [backgroundColor isDark];
+        [_indicatorsHelper beginFlashingIndicator:flashIdentifier darkBackground:isDark];
     }
 }
 

@@ -40,39 +40,6 @@ class TerminalButton: NSObject {
     @objc var shift = CGFloat(0)
     var selected: Bool { false }
 
-    private class TintedImage {
-        private(set) var original: NSImage
-        private var size: NSSize?
-        private var color: NSColor?
-        private var cached: NSImage?
-
-        init(original: NSImage) {
-            self.original = original
-        }
-
-        required init(_ original: TintedImage) {
-            self.original = original.original
-            self.size = original.size
-            self.color = original.color
-            self.cached = original.cached
-        }
-
-        func tintedImage(color: NSColor, size: NSSize) -> NSImage {
-            if let cached, color == self.color, size == self.size {
-                return cached
-            }
-            let tinted = original.it_image(withTintColor: color, size: size)!
-            self.size = size
-            self.color = color
-            cached = tinted
-            return tinted
-        }
-
-        func clone() -> Self {
-            return Self(self)
-        }
-    }
-
     init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, mark: iTermMarkProtocol?) {
         self.id = id
         tintedBackgroundImage = TintedImage(original: backgroundImage)

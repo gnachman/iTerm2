@@ -151,6 +151,7 @@ NS_ASSUME_NONNULL_BEGIN
           colorSpace:(NSColorSpace *)colorSpace
              context:(iTermMetalBufferPoolContext *)context {
     indicator.texture = [self textureForIdentifier:indicator.identifier
+                                              dark:indicator.dark
                                              image:indicator.image
                                            context:context
                                         colorSpace:colorSpace];
@@ -159,10 +160,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (id<MTLTexture>)textureForIdentifier:(NSString *)identifier
+                                  dark:(BOOL)dark
                                  image:(NSImage *)image
                                context:(iTermMetalBufferPoolContext *)context
                             colorSpace:(NSColorSpace *)colorSpace {
-    NSString *key = [NSString stringWithFormat:@"%@:%@", identifier, colorSpace.localizedName];
+    NSString *key = [NSString stringWithFormat:@"%@:%@:%@", identifier, @(dark), colorSpace.localizedName];
     id<MTLTexture> texture = _identifierToTextureMap[key];
     if (!texture) {
         texture = [_metalRenderer textureFromImage:[iTermImageWrapper withImage:image.it_verticallyFlippedImage]

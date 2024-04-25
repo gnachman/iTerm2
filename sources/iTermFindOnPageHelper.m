@@ -158,8 +158,7 @@ typedef struct {
     totalScrollbackOverflow:(long long)totalScrollbackOverflow
 scrollToFirstResult:(BOOL)scrollToFirstResult 
              force:(BOOL)force {
-    NSLog(@"Initialize search for %@ dir=%@ offset=%@", aString, direction > 0 ? @"forwards" : @"backwards", @(offset));
-    DLog(@"begin self=%@ aString=%@", self, aString);
+    DLog(@"Initialize search for %@ dir=%@ offset=%@", aString, direction > 0 ? @"forwards" : @"backwards", @(offset));
     _searchingForward = direction;
     _findOffset = offset;
     if ([_lastStringSearchedFor isEqualToString:aString] &&
@@ -206,7 +205,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                     break;
             }
         }
-        NSLog(@"Start search at %@", VT100GridCoordDescription(startCoord));
+        DLog(@"Start search at %@", VT100GridCoordDescription(startCoord));
         [_delegate findOnPageSetFindString:aString
                           forwardDirection:NO
                                       mode:mode

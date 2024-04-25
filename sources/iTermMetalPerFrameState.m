@@ -498,20 +498,22 @@ typedef struct {
     NSRect frame = drawingHelper.indicatorFrame;
     frame.origin.y -= MAX(0, textView.virtualOffset);
     
-    [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame andDraw:NO block:^(NSString *identifier, NSImage *image, NSRect rect) {
+    [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame andDraw:NO block:^(NSString *identifier, NSImage *image, NSRect rect, BOOL dark) {
         iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];
         indicator.identifier = identifier;
         indicator.image = image;
         indicator.frame = rect;
         indicator.alpha = 0.75;
+        indicator.dark = dark;
         [self->_indicators addObject:indicator];
     }];
-    [textView.indicatorsHelper enumerateCenterIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect, CGFloat alpha) {
+    [textView.indicatorsHelper enumerateCenterIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect, CGFloat alpha, BOOL dark) {
         iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];
         indicator.identifier = identifier;
         indicator.image = image;
         indicator.frame = rect;
         indicator.alpha = alpha;
+        indicator.dark = dark;
         [self->_indicators addObject:indicator];
     }];
     [textView.indicatorsHelper didDraw];
