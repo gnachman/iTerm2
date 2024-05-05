@@ -48,6 +48,7 @@ extern NSString *const iTermApplicationDidCloseModalWindow;
 
 @protocol iTermApplicationDelegate<NSApplicationDelegate>
 - (NSMenu *)statusBarMenu;
+- (BOOL)handleInternalURL:(NSURL *)url;
 @end
 
 @interface iTermApplication : NSApplication

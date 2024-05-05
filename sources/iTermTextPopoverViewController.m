@@ -7,7 +7,10 @@
 
 #import "iTermTextPopoverViewController.h"
 
+#import "DebugLogging.h"
 #import "SolidColorView.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
 
 const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
 
@@ -21,9 +24,17 @@ const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
     if (!string.length) {
         return;
     }
-    NSDictionary *attributes = @{ NSFontAttributeName: self.textView.font,
-                                  NSForegroundColorAttributeName: self.textView.textColor ?: [NSColor textColor] };
+    NSDictionary *attributes = self.defaultAttributes;
     [_textView.textStorage appendAttributedString:[[NSAttributedString alloc] initWithString:string attributes:attributes]];
+}
+
+- (NSDictionary *)defaultAttributes {
+    return @{ NSFontAttributeName: self.textView.font,
+              NSForegroundColorAttributeName: self.textView.textColor ?: [NSColor textColor] };
+}
+
+- (void)appendAttributedString:(NSAttributedString *)string {
+    [_textView.textStorage appendAttributedString:string];
 }
 
 - (NSSize)marginSize {
@@ -70,6 +81,22 @@ const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
     NSRect frame = self.view.frame;
     frame.size = size;
     self.view.frame = frame;
+}
+
+#pragma mark - NSTextViewDelegate
+
+- (BOOL)textView:(NSTextView *)textView clickedOnLink:(id)link atIndex:(NSUInteger)charIndex {
+    DLog(@"Click on %@", link);
+    NSURL *url = nil;
+    if ([link isKindOfClass:[NSString class]]) {
+        url = [NSURL URLWithString:link];
+    } else if ([link isKindOfClass:[NSURL class]]) {
+        url = link;
+    }
+    if (!url) {
+        return NO;
+    }
+    return [[[iTermApplication sharedApplication] delegate] handleInternalURL:url];
 }
 
 @end

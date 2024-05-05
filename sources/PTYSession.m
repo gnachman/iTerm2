@@ -15814,7 +15814,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     id<VT100ScreenMarkReading> mark = [_screen commandMarkAtOrBeforeLine:coord.y];
     id<VT100ScreenMarkReading> previous = _selectedCommandMark;
-    if (![iTermPreferences boolForKey:kPreferenceKeyClickToSelectCommand] || _selectedCommandMark == mark) {
+    const BOOL allowed = [iTermPreferences boolForKey:kPreferenceKeyClickToSelectCommand];
+    if (!allowed || _selectedCommandMark == mark) {
         _selectedCommandMark = nil;
     } else {
         _selectedCommandMark = mark;
@@ -15824,6 +15825,24 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (previous != _selectedCommandMark) {
         [_textview requestDelegateRedraw];
     }
+    if (allowed) {
+        NSString *const warningKey = @"NoSyncUserHasSelectedCommand";
+        if (mark != nil && ![[NSUserDefaults standardUserDefaults] boolForKey:warningKey]) {
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:warningKey];
+            [self showCommandSelectionInfo];
+        }
+    }
+}
+
+- (void)showCommandSelectionInfo {
+    const NSPoint point = [_view convertPoint:NSApp.currentEvent.locationInWindow
+                                     fromView:nil];
+    NSString *html = @"You’ve selected a command by clicking on it. This restricts Find, Filter, and Select All to the content of the command. You can turn this feature off in Settings > General > Selection. <a href=\"iterm2:disable-command-selection\">Click here to disable this feature.</a>";
+    NSAttributedString *attributedString = [NSAttributedString attributedStringWithHTML:html
+                                                                                   font:[NSFont systemFontOfSize:[NSFont systemFontSize]]
+                                                                         paragraphStyle:[NSParagraphStyle defaultParagraphStyle]];
+    [_view it_showWarningWithAttributedString:attributedString
+                                         rect:NSMakeRect(point.x, point.y, 1, 1)];
 }
 
 - (void)textViewRemoveSelectedCommand {

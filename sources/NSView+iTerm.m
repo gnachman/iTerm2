@@ -201,6 +201,10 @@ static NSInteger gTakingSnapshot;
 }
 
 - (void)it_showWarning:(NSString *)text {
+    [self it_showWarning:text rect:self.bounds];
+}
+
+- (void)it_showWarning:(NSString *)text rect:(NSRect)rect {
     iTermTextPopoverViewController *popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
                                                                   bundle:[NSBundle bundleForClass:self.class]];
     popoverVC.popover.behavior = NSPopoverBehaviorTransient;
@@ -210,7 +214,23 @@ static NSInteger gTakingSnapshot;
     [popoverVC appendString:text];
     [popoverVC sizeToFit];
     [popoverVC.view it_setAssociatedObject:@YES forKey:iTermDeclineFirstResponderAssociatedObjectKey];
-    [popoverVC.popover showRelativeToRect:self.bounds
+    [popoverVC.popover showRelativeToRect:rect
+                                    ofView:self
+                             preferredEdge:NSRectEdgeMaxY];
+    [self it_setAssociatedObject:popoverVC forKey:@"PopoverWarning"];
+}
+
+- (void)it_showWarningWithAttributedString:(NSAttributedString *)text rect:(NSRect)rect {
+    iTermTextPopoverViewController *popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
+                                                                  bundle:[NSBundle bundleForClass:self.class]];
+    popoverVC.popover.behavior = NSPopoverBehaviorTransient;
+    [popoverVC view];
+    popoverVC.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    popoverVC.textView.drawsBackground = NO;
+    [popoverVC appendAttributedString:text];
+    [popoverVC sizeToFit];
+    [popoverVC.view it_setAssociatedObject:@YES forKey:iTermDeclineFirstResponderAssociatedObjectKey];
+    [popoverVC.popover showRelativeToRect:rect
                                     ofView:self
                              preferredEdge:NSRectEdgeMaxY];
     [self it_setAssociatedObject:popoverVC forKey:@"PopoverWarning"];
