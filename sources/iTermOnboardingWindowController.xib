@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22505"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22689"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -33,7 +33,7 @@
             <windowCollectionBehavior key="collectionBehavior" fullScreenNone="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="665" height="402"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1728" height="1079"/>
             <value key="minSize" type="size" width="665" height="402"/>
             <value key="maxSize" type="size" width="665" height="437"/>
             <view key="contentView" wantsLayer="YES" id="se5-gp-TjO" customClass="iTermOnboardingView">
@@ -110,7 +110,7 @@
                             <action selector="pageIndicator:" target="-2" id="wIO-Xd-Fz7"/>
                         </connections>
                     </button>
-                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57P-Xf-65n">
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57P-Xf-65n">
                         <rect key="frame" x="18" y="369" width="629" height="23"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="What’s New in Version 3.5" id="Dih-Go-912">
@@ -136,7 +136,7 @@
             <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4gk-fe-vQq">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4gk-fe-vQq">
                     <rect key="frame" x="18" y="289" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Filtering" id="LXN-RX-ZgC">
@@ -145,7 +145,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bGK-Us-rSz" customClass="iTermOnboardingTextField">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bGK-Us-rSz" customClass="iTermOnboardingTextField">
                     <rect key="frame" x="18" y="20" width="589" height="41"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" alignment="center" title="The new Filtering feature makes it easy to find what you’re looking for." id="0Bk-78-p2L">
@@ -169,7 +169,7 @@
             <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UXE-KQ-MEi">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UXE-KQ-MEi">
                     <rect key="frame" x="18" y="289" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Offscreen Command Line" id="hKz-h7-CcP">
@@ -183,7 +183,7 @@
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-OCL" id="Igz-7Y-Uwf"/>
                 </imageView>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jYX-nH-O5u" customClass="iTermOnboardingTextField">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jYX-nH-O5u" customClass="iTermOnboardingTextField">
                     <rect key="frame" x="49" y="20" width="558" height="41"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" id="Lvg-vI-G64">
@@ -203,7 +203,7 @@
             <rect key="frame" x="0.0" y="0.0" width="625" height="344"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Lc-G4-yGt">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Lc-G4-yGt">
                     <rect key="frame" x="18" y="290" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="AITerm" id="VcV-iJ-Nlq">
@@ -212,7 +212,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S6M-1Y-bvP" customClass="iTermOnboardingTextField">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S6M-1Y-bvP" customClass="iTermOnboardingTextField">
                     <rect key="frame" x="30" y="20" width="577" height="41"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" alignment="center" title="Use AI to write commands for you or even guide you step-by-step through complex workflows." id="d4H-cG-h3K">
@@ -232,23 +232,23 @@
             </subviews>
             <point key="canvasLocation" x="1166.5" y="-386"/>
         </customView>
-        <customView id="olY-Zn-0Bl" userLabel="Speed" customClass="iTermOnboardingView">
+        <customView id="olY-Zn-0Bl" userLabel="Command Selection" customClass="iTermOnboardingView">
             <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dAJ-jg-bJ2" userLabel="tmux Flow Control">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dAJ-jg-bJ2">
                     <rect key="frame" x="18" y="289" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Improved Performance" id="OAI-gn-AQ7" userLabel="tmux Flow Control">
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Command Selection" id="OAI-gn-AQ7" userLabel="tmux Flow Control">
                         <font key="font" metaFont="systemUltraLight" size="28"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Gmu-pM-bKu" customClass="iTermOnboardingTextField">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Gmu-pM-bKu" customClass="iTermOnboardingTextField">
                     <rect key="frame" x="30" y="28" width="577" height="20"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" alignment="center" title="Many operations are much faster thanks to increased parallelism." id="a2B-NS-5LJ">
+                    <textFieldCell key="cell" alignment="center" title="Select a command by clicking on it to restrict Find, Filter, and Select All to its output." id="a2B-NS-5LJ">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -258,9 +258,9 @@
                     </connections>
                 </textField>
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vtE-pO-lEk">
-                    <rect key="frame" x="87" y="41" width="451" height="275"/>
+                    <rect key="frame" x="53" y="8" width="530" height="310"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Speed" id="5d4-4e-NgE"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-SelectedCommand" id="5d4-4e-NgE"/>
                 </imageView>
             </subviews>
             <point key="canvasLocation" x="1866.5" y="-385.5"/>
@@ -270,6 +270,6 @@
         <image name="Onboarding-AI" width="668" height="284"/>
         <image name="Onboarding-Filtering" width="598" height="323"/>
         <image name="Onboarding-OCL" width="598" height="323"/>
-        <image name="Onboarding-Speed" width="1336" height="617"/>
+        <image name="Onboarding-SelectedCommand" width="697" height="366"/>
     </resources>
 </document>
