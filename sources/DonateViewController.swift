@@ -13,8 +13,24 @@ private class DonateView: NSView {
 
 @objc(iTermDonateViewController)
 class DonateViewController: NSTitlebarAccessoryViewController {
+    private static func textString() -> String {
+        return ["Donate",
+                "Support iTerm2",
+                "iTerm2 is the work of one person. Donate now!",
+                "Keep iTerm2 alive — Donate today!",
+                "Love using iTerm2? Help keep it thriving!",
+                "iTerm2 relies on your support – Donate here.",
+                "Your contribution powers iTerm2’s future – Donate now!",
+                "Every donation counts – Support iTerm2’s development.",
+                "Help iTerm2 grow – Consider donating.",
+                "Keep the iTerm2 dream alive – Donate!",
+                "Show your appreciation for iTerm2 – Donate today.",
+                "Support the creator of iTerm2 – Donate now!",
+        ].randomElement()!
+    }
+
     let innerVC = DismissableLinkViewController(userDefaultsKey: "NoSyncHideDonateLabel",
-                                                text: "Donate",
+                                                text: DonateViewController.textString(),
                                                 url: URL(string: "https://iterm2.com/donate.html")!,
                                                 clickToHide: true)
     init() {
