@@ -152,13 +152,15 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
         // Add outline
         NSImage *sfSymbol = [NSImage imageWithSystemSymbolName:outline accessibilityDescription:nil];
-        iTermTintedImage *tintedImage = [[iTermTintedImage alloc] initWithImage:sfSymbol];
-        [builder addImage:[tintedImage imageTintedWithColor:darkBackground ? [NSColor whiteColor] : [NSColor blackColor]
-                                                       size:[self fillingSizeFor:sfSymbol.size
-                                                                         filling:size]]];
+        if (sfSymbol) {
+            iTermTintedImage *tintedImage = [[iTermTintedImage alloc] initWithImage:sfSymbol];
+            [builder addImage:[tintedImage imageTintedWithColor:darkBackground ? [NSColor whiteColor] : [NSColor blackColor]
+                                                           size:[self fillingSizeFor:sfSymbol.size
+                                                                             filling:size]]];
 
-        NSImage *composite = [builder image];
-        return composite;
+            NSImage *composite = [builder image];
+            return composite;
+        }
     }
     return [NSImage it_imageNamed:legacyName forClass:self.class];
 }
