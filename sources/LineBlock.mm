@@ -260,7 +260,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             data = [dictionary[kLineBlockRawBufferV1Key] migrateV1ToV3:&migrationIndex];
             _generation = 1;
         }
-        if (!data) {
+        if (!data || data.length / sizeof(screen_char_t) >= INT_MAX) {
             return nil;
         }
         _characterBuffer = [[iTermCharacterBuffer alloc] initWithData:data];
