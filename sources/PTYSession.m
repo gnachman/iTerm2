@@ -15546,6 +15546,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [alert addButtonWithTitle:@"Cancel"];
 
     ShiftEnterTextView *input = [[[ShiftEnterTextView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)] autorelease];
+    input.richText = NO;
     [input setVerticallyResizable:YES];
     [input setHorizontallyResizable:NO];
     [input setAutoresizingMask:NSViewWidthSizable];
