@@ -43,6 +43,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // The most recent mouse-down was a "first mouse" (activated the window).
     BOOL _mouseDownWasFirstMouse;
 
+    // At the time of the most recent mouse-down, were we first responder?
+    BOOL _mouseDownWasFirstResponder;
+
     // Saves the monotonically increasing event number of a first-mouse click, which disallows
     // selection.
     NSInteger _firstMouseEventNumber;
@@ -150,6 +153,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return NO;  // Don't call super because we handled it.
     }
     _mouseDownWasFirstMouse = ([event eventNumber] == _firstMouseEventNumber) || ![NSApp keyWindow];
+    _mouseDownWasFirstResponder = [self.mouseDelegate mouseHandlerViewIsFirstResponder:self];
     _lastMouseDownOnSelectedText = NO;  // This may get updated to YES later.
     const BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
     BOOL cmdPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
@@ -557,7 +561,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [self.mouseDelegate mouseHandler:self
                                   clickPoint:event
                                allowOverflow:NO
-                                  firstMouse:_mouseDownWasFirstMouse];
+                                  firstMouse:_mouseDownWasFirstMouse || !_mouseDownWasFirstResponder];
             if (clickCoord.x >= 0 && clickCoord.y >= 0) {
                 [self.mouseDelegate mouseHandlerSetFindOnPageCursorCoord:clickCoord];
                 result |= iTermClickSideEffectsMoveFindOnPageCursor;
