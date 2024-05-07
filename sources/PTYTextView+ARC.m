@@ -1733,6 +1733,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
             }];
         }
     }
+    [self clearHighlights:YES];
 }
 
 - (void)removeContentNavigationShortcutView:(id<iTermContentNavigationShortcutView>)view {
@@ -1844,6 +1845,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [layerOuter layoutWithin:self.enclosingScrollView.documentVisibleRect];
     [self refresh];
     [self.delegate textViewEnterShortcutNavigationMode];
+    [self.window makeFirstResponder:self];
 }
 
 - (void)copyContentByShortcut:(NSString *)content
