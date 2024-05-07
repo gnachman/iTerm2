@@ -976,13 +976,25 @@ static NSString *const kArrangement = @"Arrangement";
     if (activatingOtherApp) {
         _rollOutCancelable = YES;
         DLog(@"Schedule order-out");
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (@available(macOS 14, *)) {
+            // I'm no longer able to reproduce the bad behavior mentioned in the else clause.
+            // In issue 11372 it's noted that the delay prevents you from typing in the previously
+            // active app.
             if (_rollingOut) {
                 DLog(@"Order out with secure keyboard entry=%@", @(IsSecureEventInputEnabled()));
                 _rollOutCancelable = NO;
                 [self orderOut];
             }
-        });
+        } else {
+            // Defer rolling out until the previous app is active. See issue 5313
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                if (_rollingOut) {
+                    DLog(@"Order out with secure keyboard entry=%@", @(IsSecureEventInputEnabled()));
+                    _rollOutCancelable = NO;
+                    [self orderOut];
+                }
+            });
+        }
     } else {
         [self orderOut];
     }
