@@ -11856,6 +11856,11 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     return [iTermProfilePreferences objectForKey:KEY_SNIPPETS_FILTER inProfile:self.currentSession.profile];
 }
 
+- (void)toolbeltMakeCurrentSessionFirstResponder {
+    [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [[self currentTab] recheckBlur];
+}
+
 #pragma mark - Quick Look panel support
 
 - (BOOL)acceptsPreviewPanelControl:(QLPreviewPanel *)panel {

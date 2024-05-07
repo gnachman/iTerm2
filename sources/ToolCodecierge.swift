@@ -422,6 +422,9 @@ class ToolCodecierge: NSView, ToolbeltTool {
         },
                                                   replyCallback: { [weak self] reply in
             self?.sendReply(reply)
+        },
+                                                  didCopyCallback: { [weak self] in
+            self?.didCopy()
         })
         addSubview(suggestionView)
         suggestionView.isHidden = true
@@ -432,6 +435,10 @@ class ToolCodecierge: NSView, ToolbeltTool {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    private func didCopy() {
+        toolWrapper()?.delegate?.delegate?.toolbeltMakeCurrentSessionFirstResponder()
     }
 
     @objc func relayout() {
@@ -744,6 +751,7 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
 class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
     private let endCallback: () -> ()
     private let replyCallback: (String) -> ()
+    private let didCopyCallback: () -> ()
     private let activityIndicator = NSProgressIndicator()
     private let goalLabel: NSTextField
     private let scrollView: NSScrollView
@@ -839,10 +847,14 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
                     ranges.append(range)
                 }
                 for range in ranges.reversed() {
-                    modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { point in
+                    modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { [weak self] point in
+                        guard let self else {
+                            return
+                        }
                         NSPasteboard.general.declareTypes([.string], owner: self)
                         NSPasteboard.general.setString(attributedString.string.substring(nsrange: range), forType: .string)
                         ToastWindowController.showToast(withMessage: "Copied", duration: 1, screenCoordinate: point, pointSize: 12)
+                        didCopyCallback()
                     }
                     modified.insert(
                         NSAttributedString(
@@ -861,7 +873,11 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
     }
     override var isFlipped: Bool { true }
 
-    init(goal: String, suggestion: String, endCallback: @escaping () -> (), replyCallback: @escaping (String) -> ()) {
+    init(goal: String, 
+         suggestion: String,
+         endCallback: @escaping () -> (),
+         replyCallback: @escaping (String) -> (),
+         didCopyCallback: @escaping () -> ()) {
         activityIndicator.isIndeterminate = true
         activityIndicator.style = .spinning
         activityIndicator.isHidden = true
@@ -869,6 +885,7 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
 
         self.endCallback = endCallback
         self.replyCallback = replyCallback
+        self.didCopyCallback = didCopyCallback
         goalLabel = NSTextField(labelWithString: ")")
         goalLabel.lineBreakMode = .byTruncatingTail
 

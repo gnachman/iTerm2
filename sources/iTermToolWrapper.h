@@ -46,6 +46,7 @@
 - (void)toolbeltRemoveNamedMark:(id<VT100ScreenMarkReading>)mark;
 - (void)toolbeltRenameNamedMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName;
 - (NSArray<NSString *> *)toolbeltSnippetTags;
+- (void)toolbeltMakeCurrentSessionFirstResponder;
 
 @end
 
