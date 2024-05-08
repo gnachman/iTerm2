@@ -219,6 +219,10 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
             [flippedView addSubview:view];
             [flippedView flipSubviews];
 
+            NSScroller *verticalScroller = [scrollView verticalScroller];
+            CGFloat scrollbarWidth = NSWidth([verticalScroller frame]);
+            flippedView.frame = NSMakeRect(flippedView.frame.origin.x, flippedView.frame.origin.y, view.frame.size.width - scrollbarWidth, flippedView.frame.size.height);
+
             [scrollView setDocumentView:flippedView];
             [sizeRememberingView addSubview:scrollView];
 
