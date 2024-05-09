@@ -261,8 +261,15 @@ static NSString *const kArrangement = @"Arrangement";
         return NSFloatingWindowLevel;
     }
     NSWindow *const keyWindow = [NSApp keyWindow];
-    if (keyWindow != nil && keyWindow != _windowController.window) {
-        DLog(@"Use normal window level. Key window is %@, my window is %@",
+    if (keyWindow != nil &&
+        keyWindow != _windowController.window &&
+        ![keyWindow conformsToProtocol:@protocol(PTYWindow)]) {
+        // Originally, this clause did not exist. That could cause alerts not attached to a window
+        // to be obscured by the hotkey window because it was at a higher level than the alert (Issue 6911).
+        // Then it was noticed that floating hotkey windows should obscure other terminal windows
+        // (Issue 11453). The compromise is to use a normal level when the key window is a non-
+        // terminal window.
+        DLog(@"Use normal window level because we are not the key window and the key window is not a terminal window. Key window is %@, my window is %@",
              keyWindow, _windowController.window);
         return NSNormalWindowLevel;
     }
@@ -311,16 +318,20 @@ static NSString *const kArrangement = @"Arrangement";
     // Mind you, this is all irrelevant if iTerm2's "auto-hide menu bar in non-native full screen"
     // is turned off. Then the window is just shifted down and the menu bar hangs around.
     if (self.hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
+        DLog(@"Is floating");
         if (![self menuBarAutoHides]) {
+            DLog(@"Menu bar does not auto-hide");
             if (![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:_windowController.window.screen]) {
                 // No menu bar currently. Optimistically take that as evidence that it won't suddenly
                 // appear on us overlapping the hotkey window. This is the case when on another app's
                 // full screen window. Do this to avoid overlapping notifications.
+                DLog(@"Go just below notifications because the menu var is not visible");
                 return windowLevelJustBelowNotificiations;
             }
             if (!self.windowController.fullScreen) {
                 // Non-fullscreen windows have their frame set below the menu bar so we can let
                 // notifications overlap them.
+                DLog(@"Go just below notifications because, while the menu bar is visible, the window is not fullscreen");
                 return windowLevelJustBelowNotificiations;
             }
             // Floating fullscreen panel and fixed menu bar — overlap the menu bar.
@@ -329,11 +340,13 @@ static NSString *const kArrangement = @"Arrangement";
             // presentation options. To move this below notifications we'd also need to adjust the
             // window's frame as the menu bar hides and shows (e.g., if iTerm2 is activated then
             // it gains the ability to hide the menu bar, and the frame would need to change).
+            DLog(@"Use status window level, overlapping the menu bar");
             return NSStatusWindowLevel;
         }
     }
     // Floating hotkey window that does not join all spaces. This doesn't seem to work well in the
     // presence of other apps' fullscreen windows, regardless of level.
+    DLog(@"Go just below notifications because it is not a floating window");
     return windowLevelJustBelowNotificiations;
 }
 
