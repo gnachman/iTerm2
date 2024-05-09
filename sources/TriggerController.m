@@ -604,7 +604,8 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     textField.drawsBackground = NO;
     textField.placeholderString = placeholder;
     textField.identifier = identifier;
-
+    textField.lineBreakMode = NSLineBreakByCharWrapping;
+    
     return textField;
 }
 
