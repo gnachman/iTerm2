@@ -16,7 +16,7 @@ class DonateViewController: NSTitlebarAccessoryViewController {
     private static func textString() -> String {
         return ["Donate",
                 "Support iTerm2",
-                "iTerm2 one person’s project. Donate now!",
+                "iTerm2 is one person’s project. Donate now!",
                 "Keep iTerm2 alive — Donate today!",
                 "Love using iTerm2? Help keep it thriving!",
                 "iTerm2 needs your support – Donate here.",
