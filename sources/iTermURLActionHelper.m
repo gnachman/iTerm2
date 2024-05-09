@@ -10,6 +10,8 @@
 #import "DebugLogging.h"
 #import "FileTransferManager.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermImageInfo.h"
 #import "iTermLaunchServices.h"
 #import "iTermSelection.h"
@@ -260,6 +262,12 @@
                                       lineNumber:lineNumber
                                     columnNumber:columnNumber
                                       completion:^(BOOL ignore) {}];
+        return;
+    }
+    if ([url.scheme isEqualToString:@"iterm2"]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[[iTermApplication sharedApplication] delegate] handleInternalURL:url];
+        });
         return;
     }
     if (background) {

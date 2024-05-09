@@ -35,6 +35,7 @@ fileprivate enum CommandAction {
     case runInNewWindow
     case runInNewTab
     case runInCurrentTab
+    case runSilently
     case cancel
 }
 
@@ -303,6 +304,7 @@ class CommandURLHandler: NSObject {
     @objc static let openInTab = "tab"
     @objc static let cancel = "cancel"
     @objc static let runInCurrentTab = "current"
+    @objc static let runSilently = "silent"
 
     @objc var action: String {
         switch _action {
@@ -314,6 +316,8 @@ class CommandURLHandler: NSObject {
             return Self.openInWindow
         case .runInCurrentTab:
             return Self.runInCurrentTab
+        case .runSilently:
+            return Self.runSilently
         }
     }
     private var _action = CommandAction.cancel
@@ -326,17 +330,45 @@ class CommandURLHandler: NSObject {
     private let offerCurrent: Bool
 
     @objc
-    init(command: String, hostname: String?, username: String?, directory: String?, offerTab: Bool) {
+    init(command: String, hostname: String?, username: String?, directory: String?, offerTab: Bool, silent: Bool) {
         self.command = command
         self.hostname = hostname
         self.username = username
         self.directory = directory
         self.offerTab = offerTab
         self.offerCurrent = offerTab
+        if silent {
+            _action = .runSilently
+        }
     }
 
     @objc
     func show() {
+        if _action == .runSilently {
+            var parts = ["Run command", "“" + self.command + "”"]
+            if let username {
+                parts.append("as \(username)")
+            }
+            if let hostname, !hostname.isEmpty {
+                parts.append("on \(hostname)")
+            }
+            if let directory {
+                parts.append("in \(directory)")
+            }
+            let selection = iTermWarning.show(withTitle: parts.joined(separator: " ") + "?",
+                                              actions: [ "OK", "Cancel"],
+                                              accessory: nil,
+                                              identifier: "NoSyncRunCommand_\(self.command)",
+                                              silenceable: .kiTermWarningTypePermanentlySilenceable,
+                                              heading: "Run Command?",
+                                              window: nil)
+            if selection == .kiTermWarningSelection0 {
+                _action = .runSilently
+            } else {
+                _action = .cancel
+            }
+            return
+        }
         let contentView = CommandOptionsView(
             command: command,
             options: [

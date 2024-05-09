@@ -1468,7 +1468,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         return YES;
     }
     if ([components.path isEqualToString:@"/command"]) {
-        [self runCommandFromURL:components];
+        [self runCommandFromURL:components internal:internal];
         return YES;
     }
     if (internal) {
@@ -1485,7 +1485,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyClickToSelectCommand];
 }
 
-- (void)runCommandFromURL:(NSURLComponents *)components {
+- (void)runCommandFromURL:(NSURLComponents *)components internal:(BOOL)internal {
     NSString *hostname = [components.host sanitizedHostname];
     NSString *username = [components.user sanitizedUsername];
     NSString *command = [[[components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
@@ -1494,13 +1494,16 @@ void TurnOnDebugLoggingAutomatically(void) {
     NSString *directory = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
         return [element.name isEqualToString:@"d"];
     }].value;
-
+    const BOOL silent = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
+        return [element.name isEqualToString:@"silent"];
+    }];
     if (@available(macOS 11, *)) {
         iTermCommandURLHandler *handler = [[[iTermCommandURLHandler alloc] initWithCommand:command
                                                                                   hostname:hostname
                                                                                   username:username
                                                                                  directory:directory
-                                                                                  offerTab:(iTermController.sharedInstance.currentTerminal != nil)] autorelease];
+                                                                                  offerTab:(iTermController.sharedInstance.currentTerminal != nil)
+                                                                                    silent:silent] autorelease];
         [handler show];
         if ([handler.action isEqualTo: iTermCommandURLHandler.openInWindow]) {
             [[iTermController sharedInstance] openWindow:YES
@@ -1519,6 +1522,13 @@ void TurnOnDebugLoggingAutomatically(void) {
                                                                                 inDirectory:handler.directory
                                                                                      onHost:handler.hostname
                                                                                      asUser:handler.username];
+        } else if ([handler.action isEqual:iTermCommandURLHandler.runSilently] && internal) {
+            NSArray<NSString *> *parts = [handler.command componentsInShellCommand];
+            if (parts.count > 0) {
+                [iTermBufferedCommandRunner runCommandWithPath:@"/bin/sh"
+                                                     arguments:@[ @"-c", handler.command ?: @"" ]
+                                                        window:[[[iTermController sharedInstance] currentTerminal] window]];
+            }
         }
     }
 }

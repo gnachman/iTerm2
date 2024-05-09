@@ -9,7 +9,10 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermController.h"
+#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSMutableData+iTerm.h"
 
 @interface iTermCommandRunner()
 @property (atomic) BOOL running;
@@ -306,6 +309,78 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
 
 @implementation iTermBufferedCommandRunner {
     NSMutableData *_output;
+}
+
+static NSMutableArray<iTermBufferedCommandRunner *> *gCommandRunners;
+
++ (void)runCommandWithPath:(NSString *)path
+                 arguments:(NSArray<NSString *> *)arguments
+                    window:(NSWindow *)window {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gCommandRunners = [NSMutableArray array];
+    });
+    iTermBufferedCommandRunner *runner =
+    [[iTermBufferedCommandRunner alloc] initWithCommand:path
+                                          withArguments:arguments
+                                                   path:[[NSFileManager defaultManager] currentDirectoryPath]];
+    DLog(@"Launch %@ %@ in runner %@", path, arguments, runner);
+    runner.maximumOutputSize = @(1024 * 10);
+    __weak __typeof(runner) weakRunner = runner;
+    __weak __typeof(self) weakSelf = self;
+    runner.completion = ^(int status) {
+        __strong __typeof(runner) strongRunner = weakRunner;
+        DLog(@"Command finished");
+        if (strongRunner) {
+            [gCommandRunners removeObject:strongRunner];
+            [iTermBufferedCommandRunner runnerDidFinish:strongRunner withStatus:status];
+        }
+    };
+    [gCommandRunners addObject:runner];
+    [runner run];
+}
+
++ (void)runnerDidFinish:(iTermBufferedCommandRunner *)runner withStatus:(int)status {
+    [gCommandRunners removeObject:runner];
+    DLog(@"Runner %@ finished with status %@. There are now %@ runners.", runner, @(status), @(gCommandRunners.count));
+    if (!status) {
+        return;
+    }
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.title = [NSString stringWithFormat:@"The following command returned a non-zero exit code:\n\n“%@ %@”",
+                     runner.command,
+                     [runner.arguments componentsJoinedByString:@" "]];
+    warning.heading = @"Command Failed";
+    static const iTermSingleUseWindowOptions options = iTermSingleUseWindowOptionsShortLived;
+    NSMutableData *inject = [runner.output mutableCopy];
+    NSString *truncationWarning = [NSString stringWithFormat:@"\n%c[m;[output truncated]\n", 27];
+    if (runner.truncated) {
+        [inject appendData:[truncationWarning dataUsingEncoding:NSUTF8StringEncoding]];
+    }
+    [inject it_replaceOccurrencesOfData:[NSData dataWithBytes:"\n" length:1]
+                               withData:[NSData dataWithBytes:"\r\n" length:2]];
+    warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil],
+                                [iTermWarningAction warningActionWithLabel:@"View" block:^(iTermWarningSelection selection) {
+                                    [[iTermController sharedInstance] openSingleUseWindowWithCommand:@"/usr/bin/true"
+                                                                                           arguments:nil
+                                                                                              inject:inject
+                                                                                         environment:nil
+                                                                                                 pwd:@"/"
+                                                                                             options:options
+                                                                                      didMakeSession:nil
+                                                                                          completion:nil];
+                                }] ];
+    warning.warningType = kiTermWarningTypePermanentlySilenceable;
+    NSString *name;
+    if ([runner.command isEqualToString:@"/bin/sh"] &&
+        [runner.arguments.firstObject isEqualToString:@"-c"] &&
+        runner.arguments.count > 1) {
+        name = runner.arguments[1];
+    } else {
+        name = runner.command;
+    }
+    warning.identifier = [@"NoSyncCommandFailed_" stringByAppendingString:name];
+    [warning runModal];
 }
 
 - (void)didReadData:(NSData *)inData completion:(void (^)(void))completion {

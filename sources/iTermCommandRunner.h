@@ -49,10 +49,17 @@ callbackQueue:(dispatch_queue_t)callbackQueue
 
 @end
 
+@class NSWindow;
+
 // Saves all data read into output.
 @interface iTermBufferedCommandRunner : iTermCommandRunner
 @property (nonatomic, readonly) NSData *output;
 @property (nonatomic, strong) NSNumber *maximumOutputSize;
 @property (nonatomic, readonly) BOOL truncated;
+
++ (void)runCommandWithPath:(NSString *)path
+                 arguments:(NSArray<NSString *> *)arguments
+                    window:(NSWindow *)window;
+
 @end
 
