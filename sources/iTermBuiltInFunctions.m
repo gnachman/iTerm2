@@ -168,6 +168,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     [iTermPasteBuiltInFunction registerBuiltInFunction];
     [iTermSavePanelBuiltInFunction registerBuiltInFunction];
     [iTermGetProfilePropertyBuiltInFunction registerBuiltInFunction];
+    [iTermURLEncodeBuiltInFunction registerBuiltInFunction];
 }
 
 + (instancetype)sharedInstance {
@@ -333,6 +334,51 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     }
 
     completion(@(array.count), nil);
+}
+
+@end
+
+@implementation iTermURLEncodeBuiltInFunction
+
++ (void)registerBuiltInFunction {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *const string = @"string";
+        iTermBuiltInFunction *func =
+        [[iTermBuiltInFunction alloc] initWithName:@"urlEncode"
+                                         arguments:@{ string: [NSString class] }
+                                 optionalArguments:[NSSet set]
+                                     defaultValues:@{}
+                                           context:iTermVariablesSuggestionContextNone
+                                             block:
+         ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
+            [self urlEncoded:parameters[string] completion:completion];
+        }];
+        [[iTermBuiltInFunctions sharedInstance] registerFunction:func
+                                                       namespace:@"iterm2"];
+    });
+}
+
++ (void)urlEncoded:(id)value completion:(iTermBuiltInFunctionCompletionBlock)completion {
+    if (!value) {
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.url-encode"
+                                             code:1
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"string argument must be non-null" }];
+        completion(nil, error);
+        return;
+    }
+
+    NSString *string = [NSString castFrom:value];
+    if (!string) {
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.url-encode"
+                                             code:2
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Argument must be a string (was %@)", [value class]] }];
+        completion(nil, error);
+        return;
+    }
+
+    completion([string stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]],
+               nil);
 }
 
 @end

@@ -99,4 +99,7 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
 @interface iTermArrayCountBuiltInFunction : NSObject<iTermBuiltInFunction>
 @end
 
+@interface iTermURLEncodeBuiltInFunction: NSObject<iTermBuiltInFunction>
+@end
+
 NS_ASSUME_NONNULL_END
