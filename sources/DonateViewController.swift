@@ -16,15 +16,12 @@ class DonateViewController: NSTitlebarAccessoryViewController {
     private static func textString() -> String {
         return ["Donate",
                 "Support iTerm2",
-                "iTerm2 is the work of one person. Donate now!",
+                "iTerm2 one person’s project. Donate now!",
                 "Keep iTerm2 alive — Donate today!",
                 "Love using iTerm2? Help keep it thriving!",
-                "iTerm2 relies on your support – Donate here.",
-                "Your contribution powers iTerm2’s future – Donate now!",
-                "Every donation counts – Support iTerm2’s development.",
+                "iTerm2 needs your support – Donate here.",
                 "Help iTerm2 grow – Consider donating.",
                 "Keep the iTerm2 dream alive – Donate!",
-                "Show your appreciation for iTerm2 – Donate today.",
                 "Support the creator of iTerm2 – Donate now!",
         ].randomElement()!
     }
@@ -64,7 +61,7 @@ class DonateViewController: NSTitlebarAccessoryViewController {
                                               toItem: subview,
                                               attribute: .height,
                                               multiplier: 1,
-                                              constant: 0))
+                                              constant: 7.5))
         view.addConstraint(NSLayoutConstraint(item: view,
                                               attribute: .leading,
                                               relatedBy: .equal,
@@ -78,7 +75,7 @@ class DonateViewController: NSTitlebarAccessoryViewController {
                                               toItem: subview,
                                               attribute: .top,
                                               multiplier: 1,
-                                              constant: -7
+                                              constant: -4
                                              ))
     }
 }
