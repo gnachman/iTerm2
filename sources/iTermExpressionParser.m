@@ -379,7 +379,7 @@
 
     NSInteger index = indexNumber.integerValue;
     if (index < 0 || index >= array.count) {
-        NSString *reason = [NSString stringWithFormat:@"Index %@ out of range of “%@”, which %@ values", @(index), path, @(array.count)];
+        NSString *reason = [NSString stringWithFormat:@"Index %@ out of range of “%@”, which has %@ value%@", @(index), path, @(array.count), array.count == 1 ? @"" : @"s"];
         return [iTermTriple tripleWithObject:nil andObject:reason object:path];
     }
 
