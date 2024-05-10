@@ -386,6 +386,7 @@ DEFINE_FLOAT(verticalBarCursorWidth, 1, SECTION_TERMINAL @"Width of vertical bar
 DEFINE_BOOL(acceptOSC7, YES, SECTION_TERMINAL @"Accept OSC 7 to set username, hostname, and path.");
 DEFINE_BOOL(detectPasswordInput, YES, SECTION_TERMINAL @"Show key at cursor at password prompt?");
 DEFINE_BOOL(tabsWrapAround, NO, SECTION_TERMINAL @"Tabs wrap around to the next line.\nThis is useful for preserving tabs for later copying to the pasteboard. It breaks backward compatibility and may cause layout problems with programs that don’t expect this behavior.");
+DEFINE_STRING(sshSchemePath, @"ssh", SECTION_TERMINAL @"Command to run when handling an ssh:// URL.");
 DEFINE_INT(defaultTabStopWidth, 8, SECTION_TERMINAL @"Default tab stop width for new sessions.\nNote: this will break drawing in emacs and other apps.");
 DEFINE_BOOL(convertItalicsToReverseVideoForTmux, YES, SECTION_TERMINAL @"Convert italics to reverse video in tmux integration?");
 DEFINE_FLOAT(bellRateLimit, 0.1, SECTION_TERMINAL @"Minimum time between beeping or flashing screen on bell, in seconds.\nIf the time interval between bells is less than this amount of time, it will be ignored.");
@@ -769,6 +770,7 @@ DEFINE_BOOL(autoSearch, NO, SECTION_EXPERIMENTAL @"Automatically search for sele
 DEFINE_BOOL(smartLoggingWithAutoComposer, NO, SECTION_EXPERIMENTAL @"Enable more compact logging when using auto composer?\nThis will avoid logging raw data in your prompt and your interactions with it. Instead, the prompt is logged once in plain text and the command is logged when sent.");
 DEFINE_BOOL(disclaimChildren, NO, SECTION_EXPERIMENTAL @"Disclaim ownership of children.\nBy enabling this, when launching a Cocoa app from a terminal window TCC should attribute ownership to the app, not iTerm2, for permissions. In order for changes to this setting to take effect, you must kill iTermServer.");
 DEFINE_BOOL(restoreKeyModeAutomaticallyOnHostChange, YES, SECTION_EXPERIMENTAL @"Automatically restore keyboard mode when an ssh session ends?");
+DEFINE_BOOL(useSSHIntegrationForURLOpening, NO, SECTION_EXPERIMENTAL @"Use SSH integration when opening an ssh: URL");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

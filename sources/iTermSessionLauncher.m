@@ -372,6 +372,16 @@
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url {
     DLog(@"modify profile to ssh to %@", url);
     NSMutableString *tempString = [NSMutableString string];
+    const BOOL useSSHIntegration = [iTermAdvancedSettingsModel useSSHIntegrationForURLOpening];
+    if (!useSSHIntegration) {
+        [tempString appendString:[iTermAdvancedSettingsModel sshSchemePath]];
+        NSCharacterSet *alphanumericSet = [NSMutableCharacterSet alphanumericCharacterSet];
+        if ([tempString rangeOfCharacterFromSet:alphanumericSet].location == NSNotFound) {
+            // if the setting is set to an empty string, we will default to "ssh" for safety reasons
+            tempString = [NSMutableString stringWithString:@"ssh"];
+        }
+        [tempString appendString:@" "];
+    }
     NSString *username = url.user;
     BOOL cd = ([iTermAdvancedSettingsModel sshURLsSupportPath] && url.path.length > 1);
     if (username) {
@@ -409,8 +419,13 @@
         }
     }
     DLog(@"Use command line: %@", tempString);
-    return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
-                                                       KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeSSHValue }];
+    if (useSSHIntegration) {
+        return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
+                                                           KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeSSHValue }];
+    } else {
+        return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
+                                                           KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeCustomValue }];
+    }
 }
 
 - (Profile *)profileByModifyingProfile:(Profile *)prototype toFtpTo:(NSString *)url {
