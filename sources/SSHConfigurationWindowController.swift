@@ -194,6 +194,10 @@ class SSHConfigurationWindowController: NSWindowController {
             removeFile()
         }
     }
+
+    @IBAction func sshIntegrationHelp(_ sender: Any) {
+        NSWorkspace.shared.open(URL(string: "https://gitlab.com/gnachman/iterm2/-/wikis/SSH-Integration")!)
+    }
 }
 
 extension SSHConfigurationWindowController: NSTableViewDataSource {
