@@ -50,11 +50,11 @@ class MutableArrayOfWeakObjects: NSObject {
     }
 
     @objc(compactMap:)
-    func compactMap(_ closure: (NSObject) -> (NSObject)) -> MutableArrayOfWeakObjects {
+    func compactMap(_ closure: (NSObject) -> (NSObject?)) -> MutableArrayOfWeakObjects {
         let result = MutableArrayOfWeakObjects()
         for box in array {
-            if let value = box.value {
-                result.append(value)
+            if let value = box.value, let mapped = closure(value) {
+                result.append(mapped)
             }
         }
         return result
