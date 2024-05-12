@@ -179,6 +179,7 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
             return
         }
         toolWrapper().delegate?.delegate?.toolbeltDidSelect(marks[row])
+        _tableView?.selectRowIndexes(IndexSet(), byExtendingSelection: false)
     }
 
     @objc func add(_ sender: Any) {
