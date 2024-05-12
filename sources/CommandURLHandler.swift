@@ -51,7 +51,7 @@ fileprivate class CommandOptionsView: NSView {
             username = usernameTextField.stringValue
             runOnSSH = runOnSSHToggle.state == .on
             directory = directoryTextField.stringValue
-            command = commandTextField.textStorage?.string ?? ""
+            command = textView.textStorage?.string ?? ""
         }
     }
     private(set) var directory = ""
@@ -62,7 +62,7 @@ fileprivate class CommandOptionsView: NSView {
     private var offerCurrent = false
     private let options: [CommandOption]
 
-    private var commandTextField: NSTextView!
+    private var textView: NSTextView!
     private var runOnSSHToggle: NSButton!
     private var usernameTextField: NSTextField!
     private var directoryTextField: NSTextField!
@@ -72,15 +72,18 @@ fileprivate class CommandOptionsView: NSView {
     private let buttonsContainerView = NSView()
     private let buttonsStackView = NSStackView()
     private let scrollView = NSScrollView()
+    private let finish: () -> ()
 
     let stackView = NSStackView()
 
     init(
         command: String,
-        options: [CommandOption]
+        options: [CommandOption],
+        completion: @escaping () -> ()
     ) {
         self.command = command
         self.options = options
+        self.finish = completion
 
         // Extract username and directory values from options
         for option in options {
@@ -108,7 +111,7 @@ fileprivate class CommandOptionsView: NSView {
             string: command,
             attributes: [ .foregroundColor: NSColor.textColor,
                           .font: NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize)! ])
-        commandTextField.textStorage?.append(attributedString)
+        textView.textStorage?.append(attributedString)
         runOnSSHToggle.state = runOnSSH ? .on : .off
         usernameTextField.stringValue = username
         directoryTextField.stringValue = directory
@@ -118,24 +121,59 @@ fileprivate class CommandOptionsView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    override func resizeSubviews(withOldSize oldSize: NSSize) {
+        super.resizeSubviews(withOldSize: oldSize)
+
+        layoutTextview()
+    }
+
+    private func layoutTextview() {
+        let containerWidth = scrollView.documentVisibleRect.width
+        textView.textContainer?.containerSize = NSSize(width: containerWidth, height: CGFloat.greatestFiniteMagnitude)
+        textView.layoutManager?.ensureLayout(for: textView.textContainer!)
+
+        let textBounds = textView.layoutManager?.usedRect(for: textView.textContainer!)
+        let desiredHeight = textBounds?.height ?? 0
+
+        textView.frame = CGRect(x: 0, y: 0, width: containerWidth, height: max(desiredHeight, 50))
+    }
+
+    override func layoutSubtreeIfNeeded() {
+        super.layoutSubtreeIfNeeded()
+        layoutTextview()
+    }
+
+    private func addHorizontalStackView(_ horizontalStackView: NSStackView) {
+        stackView.addArrangedSubview(horizontalStackView)
+        NSLayoutConstraint.activate([
+            horizontalStackView.leadingAnchor.constraint(equalTo: stackView.leadingAnchor),
+            horizontalStackView.trailingAnchor.constraint(equalTo: stackView.trailingAnchor)
+        ])
+    }
+
     private func setupSubviews() {
         stackView.orientation = .vertical
         stackView.spacing = 10
         stackView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stackView)
 
-        commandTextField = NSTextView()
-        commandTextField.font = NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize)
-        commandTextField.isEditable = true
-        commandTextField.isSelectable = true
-        commandTextField.translatesAutoresizingMaskIntoConstraints = false
-        commandTextField.textColor = NSColor.textColor
+        textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 1, height: 1))
+        textView.font = NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize)
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.drawsBackground = false
+        textView.textContainer?.widthTracksTextView = true
 
-        scrollView.documentView = commandTextField
+        scrollView.documentView = textView
         scrollView.hasVerticalScroller = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
-        stackView.addArrangedSubview(createHorizontalStackView(label: "Command:", view: scrollView))
+        
+        addHorizontalStackView(createHorizontalStackView(label: "Command:",
+                                                         view: scrollView,
+                                                         firstBaselineAnchor: scrollView.centerYAnchor))
 
         runOnSSHToggle = NSButton(checkboxWithTitle: "Run on \(hostname) via ssh", target: self, action: #selector(runOnSSHToggleValueChanged))
         usernameTextField = NSTextField()
@@ -152,15 +190,19 @@ fileprivate class CommandOptionsView: NSView {
             usernameTextField.placeholderString = "Username"
             usernameTextField.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .regular)
             usernameTextField.translatesAutoresizingMaskIntoConstraints = false
-            usernameStackView.addArrangedSubview(createHorizontalStackView(label: "Username:", view: usernameTextField))
-            stackView.addArrangedSubview(usernameStackView)
+            usernameStackView.addArrangedSubview(createHorizontalStackView(label: "Username:",
+                                                                           view: usernameTextField,
+                                                                           firstBaselineAnchor: usernameTextField.firstBaselineAnchor))
+            addHorizontalStackView(usernameStackView)
         }
 
         directoryTextField = NSTextField()
         directoryTextField.placeholderString = "Directory"
         directoryTextField.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         directoryTextField.translatesAutoresizingMaskIntoConstraints = false
-        stackView.addArrangedSubview(createHorizontalStackView(label: "Directory:", view: directoryTextField))
+        addHorizontalStackView(createHorizontalStackView(label: "Directory:",
+                                                         view: directoryTextField,
+                                                         firstBaselineAnchor: directoryTextField.firstBaselineAnchor))
 
         buttonsStackView.orientation = .horizontal
         buttonsStackView.spacing = 10
@@ -208,9 +250,25 @@ fileprivate class CommandOptionsView: NSView {
             buttonsStackView.bottomAnchor.constraint(equalTo: buttonsContainerView.bottomAnchor)
         ]
         NSLayoutConstraint.activate(buttonsConstraints)
+
+        // Constrain right-hand side views to have same leading edge.
+        let hsvs = stackView.arrangedSubviews.compactMap { view -> NSStackView? in
+            guard let hsv = view as? NSStackView else {
+                return nil
+            }
+            if hsv.arrangedSubviews.count != 2 {
+                return nil
+            }
+            return hsv
+        }
+        if let firstHSV = hsvs.first, hsvs.count > 1 {
+            NSLayoutConstraint.activate(hsvs[1...].map { hsv in
+                hsv.arrangedSubviews[1].leadingAnchor.constraint(equalTo: firstHSV.arrangedSubviews[1].leadingAnchor)
+            })
+        }
     }
 
-    private func createHorizontalStackView(label: String, view: NSView) -> NSStackView {
+    private func createHorizontalStackView(label: String, view: NSView, firstBaselineAnchor: NSLayoutYAxisAnchor) -> NSStackView {
         let horizontalStackView = NSStackView()
         horizontalStackView.orientation = .horizontal
         horizontalStackView.spacing = 10
@@ -224,9 +282,9 @@ fileprivate class CommandOptionsView: NSView {
 
         // Add constraints to align the label to the right and the text field/checkbox to the left
         let constraints = [
-            labelView.firstBaselineAnchor.constraint(equalTo: view.firstBaselineAnchor),
+            labelView.firstBaselineAnchor.constraint(equalTo: firstBaselineAnchor),
             labelView.widthAnchor.constraint(greaterThanOrEqualToConstant: 100), // Set a minimum width for the label
-            view.widthAnchor.constraint(greaterThanOrEqualToConstant: 200) // Set a minimum width for the text field/checkbox
+            view.widthAnchor.constraint(greaterThanOrEqualToConstant: 200), // Set a minimum width for the text field/checkbox
         ]
         NSLayoutConstraint.activate(constraints)
 
@@ -239,14 +297,13 @@ fileprivate class CommandOptionsView: NSView {
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -20),
-            commandTextField.widthAnchor.constraint(greaterThanOrEqualToConstant: 300),
             directoryTextField.widthAnchor.constraint(greaterThanOrEqualToConstant: 300),
             buttonsStackView.widthAnchor.constraint(equalTo: buttonsContainerView.widthAnchor),
             scrollView.heightAnchor.constraint(equalToConstant: 50)
         ]
         if runOnSSH {
             constraints += [usernameTextField.widthAnchor.constraint(greaterThanOrEqualToConstant: 300),
-                            runOnSSHToggle.leadingAnchor.constraint(equalTo: commandTextField.leadingAnchor, constant: 0)]
+                            runOnSSHToggle.leadingAnchor.constraint(equalTo: textView.leadingAnchor, constant: 0)]
         }
 
 
@@ -278,22 +335,22 @@ fileprivate class CommandOptionsView: NSView {
 
     @objc private func cancelButtonClicked() {
         action = .cancel
-        NSApp.stopModal()
+        finish()
     }
 
     @objc private func newWindowButtonClicked() {
         action = .runInNewWindow
-        NSApp.stopModal()
+        finish()
     }
 
     @objc private func newTabButtonClicked() {
         action = .runInNewTab
-        NSApp.stopModal()
+        finish()
     }
 
     @objc private func currentSessionButtonClicked() {
         action = .runInCurrentTab
-        NSApp.stopModal()
+        finish()
     }
 }
 
@@ -328,6 +385,10 @@ class CommandURLHandler: NSObject {
     @objc var directory: String?
     private let offerTab: Bool
     private let offerCurrent: Bool
+    private var completion: ((CommandURLHandler) -> ())?
+    private var window: NSWindow?
+    private var contentView: CommandOptionsView?
+    private static var instances = [CommandURLHandler]()
 
     @objc
     init(command: String, hostname: String?, username: String?, directory: String?, offerTab: Bool, silent: Bool) {
@@ -343,7 +404,7 @@ class CommandURLHandler: NSObject {
     }
 
     @objc
-    func show() {
+    func show(completion: ((CommandURLHandler) -> ())?) {
         if _action == .runSilently {
             var parts = ["Run command", "“" + self.command + "”"]
             if let username {
@@ -355,7 +416,7 @@ class CommandURLHandler: NSObject {
             if let directory {
                 parts.append("in \(directory)")
             }
-            let selection = iTermWarning.show(withTitle: parts.joined(separator: " ") + "?",
+            let selection = iTermWarning.show(withTitle: parts.joined(separator: " ") + "?\nIt will run silently in the background.",
                                               actions: [ "OK", "Cancel"],
                                               accessory: nil,
                                               identifier: "NoSyncRunCommand_\(self.command)",
@@ -367,8 +428,10 @@ class CommandURLHandler: NSObject {
             } else {
                 _action = .cancel
             }
+            completion?(self)
             return
         }
+        Self.instances.append(self)
         let contentView = CommandOptionsView(
             command: command,
             options: [
@@ -377,7 +440,9 @@ class CommandURLHandler: NSObject {
                 directory.map { .directory($0) },
                 offerTab ? .offerTab : nil,
                 offerCurrent ? .offerCurrent : nil
-            ].compactMap { $0 })
+            ].compactMap { $0 }) { [weak self] in
+                self?.finish()
+            }
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 400, height: 400),
@@ -386,14 +451,28 @@ class CommandURLHandler: NSObject {
             defer: false
         )
         window.contentView = contentView
-
+        window.title = "Run Command from URL"
         window.setContentSize(contentView.fittingSize)
 
         window.center()
         window.makeKeyAndOrderFront(nil)
+        self.completion = completion
+        self.window = window
+        self.contentView = contentView
+    }
 
-        NSApp.runModal(for: window)
-
+    func finish() {
+        defer {
+            Self.instances.removeAll { $0 === self }
+        }
+        guard let window, let contentView, let completion else {
+            return
+        }
+        defer {
+            self.window = nil
+            self.contentView = nil
+            self.completion = nil
+        }
         window.orderOut(nil)
 
         command = contentView.command
@@ -408,6 +487,11 @@ class CommandURLHandler: NSObject {
         }
         directory = contentView.directory
         _action = contentView.action
+        completion(self)
     }
 }
 
+class CommandOptionsWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
