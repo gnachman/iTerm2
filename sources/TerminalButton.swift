@@ -72,7 +72,7 @@ class TerminalButton: NSObject {
                 tintedBackgroundImage.tintedImage(color: backgroundColor, size: size))
     }
 
-    private func size(cellSize: NSSize) -> NSSize {
+    @objc func size(cellSize: NSSize) -> NSSize {
         let width = cellSize.width * 2
         var result = NSSize(width: width, height: aspectRatio * width);
         let scale = cellSize.height / result.height
@@ -229,8 +229,9 @@ class TerminalCopyButton: TerminalButton {
 class TerminalMarkButton: TerminalButton {
     @objc let screenMark: VT100ScreenMarkReading
     @objc let dx: Int32
+    @objc var shouldFloat = false
 
-    init?(identifier: Int, 
+    init?(identifier: Int,
           mark: VT100ScreenMarkReading,
           fgName: String,
           bgName: String,

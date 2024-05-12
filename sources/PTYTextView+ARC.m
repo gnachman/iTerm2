@@ -439,7 +439,7 @@ iTermCommandInfoViewControllerDelegate>
                                    mode:kiTermSelectionModeLine
                                  resume:NO
                                  append:NO];
-    [selection moveSelectionEndpointTo:VT100GridAbsCoordMake(0, coordRange.end.y + overflow - 1)];
+    [selection moveSelectionEndpointTo:VT100GridAbsCoordMake(self.dataSource.width, coordRange.end.y + overflow - 1)];
     [selection endLiveSelection];
     return [self promisedStringForSelectedTextCappedAtSize:INT_MAX
                                          minimumLineNumber:0

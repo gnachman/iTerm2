@@ -15809,6 +15809,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return !(alt && bottom);    
 }
 
+- (id<VT100ScreenMarkReading>)textViewSelectedCommandMark {
+    return _selectedCommandMark;
+}
+
 - (void)textViewSelectCommandRegionAtCoord:(VT100GridCoord)coord {
     if (_screen.terminalSoftAlternateScreenMode) {
         return;
@@ -15833,6 +15837,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             [self showCommandSelectionInfo];
         }
     }
+}
+
+- (VT100GridAbsCoordRange)textViewCoordRangeForCommandAndOutputAtMark:(id<iTermMark>)mark {
+    if ([mark conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+        return [self rangeOfCommandAndOutputForMark:(id<VT100ScreenMarkReading>)mark];
+    }
+    return [_screen absCoordRangeForInterval:mark.entry.interval];
 }
 
 - (void)showCommandSelectionInfo {
@@ -15872,22 +15883,27 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         _textview.findOnPageHelper.absLineRange = NSMakeRange(0, 0);
         return;
     }
-    VT100GridAbsCoordRange range;
-    range.start = [_screen absCoordRangeForInterval:_selectedCommandMark.entry.interval].start;
-
-    id<VT100ScreenMarkReading> successor = [_screen promptMarkAfterPromptMark:_selectedCommandMark];
-    if (successor) {
-        range.end = [_screen absCoordRangeForInterval:successor.entry.interval].start;
-        range.end.y -= 1;
-    } else {
-        range.end = VT100GridAbsCoordMake(_screen.width - 1, _screen.numberOfLines + _screen.totalScrollbackOverflow);
-    }
+    VT100GridAbsCoordRange range = [self rangeOfCommandAndOutputForMark:_selectedCommandMark];
     if (_selectedCommandMark.lineStyle) {
         _textview.findOnPageHelper.absLineRange = NSMakeRange(MAX(0, range.start.y - 1),
                                                               range.end.y - range.start.y + 1);
     } else {
         _textview.findOnPageHelper.absLineRange = NSMakeRange(range.start.y, range.end.y - range.start.y + 1);
     }
+}
+
+- (VT100GridAbsCoordRange)rangeOfCommandAndOutputForMark:(id<VT100ScreenMarkReading>)mark {
+    VT100GridAbsCoordRange range;
+    range.start = [_screen absCoordRangeForInterval:mark.entry.interval].start;
+
+    id<VT100ScreenMarkReading> successor = [_screen promptMarkAfterPromptMark:mark];
+    if (successor) {
+        range.end = [_screen absCoordRangeForInterval:successor.entry.interval].start;
+        range.end.y -= 1;
+    } else {
+        range.end = VT100GridAbsCoordMake(_screen.width - 1, _screen.numberOfLines + _screen.totalScrollbackOverflow);
+    }
+    return range;
 }
 
 #pragma mark - iTermHotkeyNavigableSession

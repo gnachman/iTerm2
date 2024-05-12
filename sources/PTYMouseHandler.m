@@ -43,7 +43,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // The most recent mouse-down was a "first mouse" (activated the window).
     BOOL _mouseDownWasFirstMouse;
 
-    // At the time of the most recent mouse-down, were we first responder?
+    // At the time of the most recent mouse-down, were we or the composer first responder?
     BOOL _mouseDownWasFirstResponder;
 
     // Saves the monotonically increasing event number of a first-mouse click, which disallows

@@ -1271,7 +1271,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         button.enclosingSessionWidth = _gridSize.width;
         VT100GridAbsCoord absCoord = [_delegate absCoordForButton:button];
         if (absCoord.x < 0) {
-            x = _scrollViewDocumentVisibleRect.size.width - margin;
+            x = _scrollViewDocumentVisibleRect.size.width - margin - [button sizeWithCellSize:_cellSize].width;
         } else {
             x = margin + absCoord.x * self.cellSize.width;
         }
@@ -1290,7 +1290,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             button.shift = 0;
         }
         if (absCoord.x < 0) {
-            absCoord.x =  1; //self.gridSize.width;
+            absCoord.x = self.gridSize.width - 1;
         }
         absCoord.y = MAX(absCoord.y, minAbsY);
         button.absCoordForDesiredFrame = absCoord;
