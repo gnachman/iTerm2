@@ -92,9 +92,9 @@ SparkleSign nightly_modern.xml nightly_modern_template.xml "$SIGNING_KEY"
 
 cp iTerm2-${NAME}.zip ~/Dropbox/NightlyBuilds/
 set -x
-retry scp -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@bryan.dreamhost.com:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
-retry ssh -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@bryan.dreamhost.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
-retry scp -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly_modern.xml gnachman@bryan.dreamhost.com:iterm2.com/appcasts/ || die "scp appcasts"
+retry scp -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@bryan:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
+retry ssh -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@bryan "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
+retry scp -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly_modern.xml gnachman@bryan:iterm2.com/appcasts/ || die "scp appcasts"
 
 retry curl -v -X POST "https://api.cloudflare.com/client/v4/zones/$CFZONE/purge_cache" \
      -H "X-Auth-Email: gnachman@gmail.com" \
