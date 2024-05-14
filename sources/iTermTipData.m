@@ -320,7 +320,7 @@
                         kTipBodyKey: @"Execute a series of actions in order with a single shortcut using “sequence” key bindings." },
 
             @"0092": @{ kTipTitleKey: @"Export/Import Settings",
-                        kTipBodyKey: @"Easily backup or transfer your iTerm2 settings using the Export/Import feature in “Settings > General > Preferences”." },
+                        kTipBodyKey: @"Easily backup or transfer your iTerm2 settings using the Export/Import feature in “Settings > General > Settings”." },
 
             @"0093": @{ kTipTitleKey: @"Multi-Session Bindings",
                         kTipBodyKey: @"Apply key bindings uniformly across multiple sessions for consistent control in different tabs or windows." },
