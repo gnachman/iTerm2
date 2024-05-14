@@ -1215,6 +1215,8 @@ class OpenAIMetadata: NSObject {
     }
 
     private let models = [
+        Model(name: "gpt-4o",
+             contextWindowTokens: 128_000),
         Model(name: "gpt-4",
               contextWindowTokens: 8192),
         Model(name: "gpt-4-turbo",
