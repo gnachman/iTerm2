@@ -6,7 +6,7 @@ protocol AITermControllerDelegate: AnyObject {
                                              completion: @escaping (AITermController.Registration) -> ())
 }
 
-fileprivate func isLegacy(model: String) -> Bool {
+fileprivate func openAIModelIsLegacy(model: String) -> Bool {
     return !model.hasPrefix("gpt-")
 }
 
@@ -372,9 +372,23 @@ class AITermController {
             case .error(reason: let reason):
                 DLog("error: \(reason)")
                 state = .ground
-                delegate?.aitermController(self, didFailWithErrorMessage: "Error from OpenAI: \(reason)")
+                let provider =
+                    if usingOpenAI {
+                        "OpenAI"
+                    } else {
+                        modelURL?.host ?? "the API provider"
+                    }
+                delegate?.aitermController(self, didFailWithErrorMessage: "Error from \(provider): \(reason)")
             }
         }
+    }
+
+    func hostIsOpenAIAPI(url: URL?) -> Bool {
+        return url?.host == "api.openai.com"
+    }
+
+    var usingOpenAI: Bool {
+        return hostIsOpenAIAPI(url: modelURL)
     }
 
     private func requestRegistration(continuation: State) {
@@ -387,7 +401,8 @@ class AITermController {
     }
 
     private func url(forModel model: String) -> URL? {
-        if !isLegacy(model: model) {
+        if hostIsOpenAIAPI(url: URL(string: iTermAdvancedSettingsModel.aitermURL())) &&
+            !openAIModelIsLegacy(model: model) {
             return URL(string: "https://api.openai.com/v1/chat/completions")
         }
         return URL(string: iTermAdvancedSettingsModel.aitermURL())
@@ -492,8 +507,16 @@ class AITermController {
         return bodyData
     }
 
+    private func shouldUseLegacyAPI(_ model: String) -> Bool {
+        if usingOpenAI {
+            return openAIModelIsLegacy(model: model)
+        } else {
+            return iTermAdvancedSettingsModel.aitermUseLegacyAPI()
+        }
+    }
+
     private func requestBody(model: String, messages: [Message]) -> Data {
-        if isLegacy(model: model) {
+        if shouldUseLegacyAPI(model) {
             return legacyRequestBody(model: model, messages: messages)
         }
         return modernRequestBody(model: model, messages: messages)
@@ -503,6 +526,10 @@ class AITermController {
         makeAPICall(messages: [Message(role: "user", content: query)], registration: registration)
     }
 
+    private var modelURL: URL? {
+        let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-3.5-turbo"
+        return url(forModel: model)
+    }
     private func makeAPICall(messages: [Message], registration: Registration) {
         let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-3.5-turbo"
         guard let url = url(forModel: model) else {
@@ -519,11 +546,11 @@ class AITermController {
 
         let bodyData = requestBody(model: model, messages: messages)
         request.httpBody = bodyData
-
+        let legacy = shouldUseLegacyAPI(model)
         let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
                 self?.handle(event: .apiResponse(data: data, response: response, error: error),
-                             legacy: isLegacy(model: model))
+                             legacy: legacy)
             }
         }
         state = .querySent(messages: messages)
