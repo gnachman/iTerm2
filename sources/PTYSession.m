@@ -15095,7 +15095,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                          [uniqueID base64EncodedWithEncoding:NSUTF8StringEncoding],
                          [encodedBA base64EncodedWithEncoding:NSUTF8StringEncoding],
                          [sshArgs base64EncodedWithEncoding:NSUTF8StringEncoding]];
-    [self writeTaskNoBroadcast:[[message base64EncodedWithEncoding:NSUTF8StringEncoding] chunkedWithLineLength:80 separator:@"\n"]];
+    [self writeTaskNoBroadcast:[@"\n-- BEGIN CONDUCTOR --\n" stringByAppendingString:[[message base64EncodedWithEncoding:NSUTF8StringEncoding] chunkedWithLineLength:80 separator:@"\n"]]];
     // Terminate with an esc on its own line.
     [self writeTaskNoBroadcast:@"\n\e\n"];
 }
