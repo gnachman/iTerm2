@@ -97,12 +97,12 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
         self.identity = identity
     }
 
-    public init?(stringIdentifier string: String) {
+    public init?(stringIdentifier string: String, hostnameFinder: SSHHostnameFinder) {
         let parts = string.components(separatedBy: ";")
         guard parts.count == 2 else {
             return nil
         }
-        guard let identity = SSHIdentity(stringIdentifier: parts[1]) else {
+        guard let identity = SSHIdentity(stringIdentifier: parts[1], hostnameFinder: hostnameFinder) else {
             return nil
         }
         self.identity = identity

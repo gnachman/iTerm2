@@ -7,6 +7,10 @@
 
 import Foundation
 
+public protocol SSHHostnameFinder: AnyObject {
+    func sshHostname(forHost host: String) -> String
+}
+
 public class SSHIdentity: NSObject, Codable {
     private struct State: Equatable, Codable, CustomDebugStringConvertible {
         var debugDescription: String {
@@ -30,6 +34,7 @@ public class SSHIdentity: NSObject, Codable {
             return hostport
         }
         
+        let host: String
         let hostname: String
         let username: String?
         let port: Int
@@ -75,7 +80,7 @@ public class SSHIdentity: NSObject, Codable {
         return state.compactDescription
     }
 
-    public init?(stringIdentifier: String)  {
+    public init?(stringIdentifier: String, hostnameFinder: SSHHostnameFinder)  {
         guard let at = stringIdentifier.range(of: "@"),
               let colon = stringIdentifier.range(of: ":") else {
             return nil
@@ -87,7 +92,9 @@ public class SSHIdentity: NSObject, Codable {
         guard let port = Int(stringIdentifier[colon.upperBound...]) else {
             return nil
         }
-        state = State(hostname: String(stringIdentifier[at.upperBound..<colon.lowerBound]),
+        let host = String(stringIdentifier[at.upperBound..<colon.lowerBound])
+        state = State(host: host,
+                      hostname: hostnameFinder.sshHostname(forHost: host),
                       username: username.isEmpty ? nil : String(username),
                       port: port)
     }
@@ -105,8 +112,8 @@ public class SSHIdentity: NSObject, Codable {
     }
 
     @objc
-    public init(_ hostname: String, username: String?, port: Int) {
-        state = State(hostname: hostname, username: username, port: port)
+    public init(host: String, hostname: String, username: String?, port: Int) {
+        state = State(host: host, hostname: hostname, username: username, port: port)
     }
 
     public override func isEqual(to object: Any?) -> Bool {

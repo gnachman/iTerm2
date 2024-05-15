@@ -1566,6 +1566,9 @@
 		A63EB059284DB14000B2AB89 /* ConductorRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB058284DB14000B2AB89 /* ConductorRegistry.swift */; };
 		A63EB05B284DCAF300B2AB89 /* WeakBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB05A284DCAF300B2AB89 /* WeakBox.swift */; };
 		A63EB05C284EC5F900B2AB89 /* SSHIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8094282DE46700493544 /* SSHIdentity.swift */; };
+		A63F0A5A2BF435200096633F /* iTermSSHHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F0A582BF435200096633F /* iTermSSHHelpers.h */; };
+		A63F0A5B2BF435200096633F /* iTermSSHHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F0A592BF435200096633F /* iTermSSHHelpers.m */; };
+		A63F0A5D2BF436850096633F /* iTermHostnameFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63F0A5C2BF436850096633F /* iTermHostnameFinder.swift */; };
 		A63F2A3923FA5698008DDEA4 /* iTermServer in CopyFiles */ = {isa = PBXBuildFile; fileRef = A663197822FF349700C502BD /* iTermServer */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A63F34D021E1E0F8000C9D52 /* iTermSessionPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F34CE21E1E0F8000C9D52 /* iTermSessionPicker.h */; };
 		A63F34D121E1E0F8000C9D52 /* iTermSessionPicker.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F34CF21E1E0F8000C9D52 /* iTermSessionPicker.m */; };
@@ -5902,6 +5905,9 @@
 		A63EB053284D836900B2AB89 /* SSHFileGateway.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFileGateway.swift; sourceTree = "<group>"; };
 		A63EB058284DB14000B2AB89 /* ConductorRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConductorRegistry.swift; sourceTree = "<group>"; };
 		A63EB05A284DCAF300B2AB89 /* WeakBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeakBox.swift; sourceTree = "<group>"; };
+		A63F0A582BF435200096633F /* iTermSSHHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSSHHelpers.h; sourceTree = "<group>"; };
+		A63F0A592BF435200096633F /* iTermSSHHelpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSSHHelpers.m; sourceTree = "<group>"; };
+		A63F0A5C2BF436850096633F /* iTermHostnameFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermHostnameFinder.swift; sourceTree = "<group>"; };
 		A63F2A3A23FA5951008DDEA4 /* it2run */ = {isa = PBXFileReference; lastKnownFileType = text; name = it2run; path = sources/it2run; sourceTree = "<group>"; };
 		A63F2A3B23FB8191008DDEA4 /* keyboard.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = keyboard.py; sourceTree = "<group>"; };
 		A63F2A3C23FB8191008DDEA4 /* arrangement.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = arrangement.py; sourceTree = "<group>"; };
@@ -10954,6 +10960,9 @@
 				A68A30DB186D1429007F550F /* VT100WorkingDirectory.m */,
 				A634817724AFC4AF0003C11B /* iTermFocusablePanel.h */,
 				A634817824AFC4AF0003C11B /* iTermFocusablePanel.m */,
+				A63F0A582BF435200096633F /* iTermSSHHelpers.h */,
+				A63F0A592BF435200096633F /* iTermSSHHelpers.m */,
+				A63F0A5C2BF436850096633F /* iTermHostnameFinder.swift */,
 			);
 			name = "File Transfer";
 			sourceTree = "<group>";
@@ -12904,6 +12913,7 @@
 				A63493E023E661B60047C31B /* iTermPresentationController.h in Headers */,
 				A61A85B924FC260700B03880 /* iTermTextViewContextMenuHelper.h in Headers */,
 				A6024B88254D367E0036D6CF /* iTermColorSuggester.h in Headers */,
+				A63F0A5A2BF435200096633F /* iTermSSHHelpers.h in Headers */,
 				A6A39EBB24B99AC000A64433 /* iTermGraphicsUtilities.h in Headers */,
 				A66719471DCE36C3000CE608 /* NSTableColumn+iTerm.h in Headers */,
 				A629F5A523AFF5BA00C2F16B /* iTermShellIntegrationSecondPageViewController.h in Headers */,
@@ -15577,6 +15587,7 @@
 				A621F10326F2B0FE001DD3A6 /* VT100LineInfo.m in Sources */,
 				A6EC80812828E9F600493544 /* Conductor.swift in Sources */,
 				A6CC7F5C274B6C570060C3C2 /* ToolJobs.m in Sources */,
+				A63F0A5D2BF436850096633F /* iTermHostnameFinder.swift in Sources */,
 				535D0915224DD13F00A79581 /* iTermPreferencesSearchEngineResultsWindowController.m in Sources */,
 				A6EC8073281F2C2900493544 /* ExternalSearchResult.swift in Sources */,
 				A626DF0C217D3034005600F9 /* iTermTabBarAccessoryViewController.m in Sources */,
@@ -15734,6 +15745,7 @@
 				A60E045D26DED32A00DD162B /* StatusBarFilterComponent.swift in Sources */,
 				A6EC47C121EC623D000E1321 /* iTermOnboardingWindowController.m in Sources */,
 				A6E7352B20EBF3270034FCFD /* iTermSetCurrentTerminalHelper.m in Sources */,
+				A63F0A5B2BF435200096633F /* iTermSSHHelpers.m in Sources */,
 				A629F59823AFF49E00C2F16B /* iTermShellIntegrationRootView.m in Sources */,
 				A6A4867A20B67DFF00493302 /* ProfilesSessionPreferencesViewController.m in Sources */,
 				A678FE7927F10B1700BEF8FA /* DismissableLinkViewController.swift in Sources */,

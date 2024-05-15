@@ -9,14 +9,46 @@ import Foundation
 import FileProviderService
 
 struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
+    // The string that matched a Host: entry in ~/.ssh/config, or the hostname
+    // otherwise. Those entries can have wildcards or be aliases, in which case
+    // this would be the string that matched the wildcard or the alias.
+    let host: String
+
+    // The actual hostname we're connected to.
     let hostname: String
     let username: String?
     let port: Int?
     private(set) var paramArgs = ParamArgs()
     private(set) var commandArgs = [String]()
 
+    enum CodingKeys: String, CodingKey {
+        case host, hostname, username, port, paramArgs, commandArgs
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let hostname = try container.decode(String.self, forKey: .hostname)
+        self.hostname = hostname
+        // host was added after 3.5.0beta26; for backward compatibility assume it was equal to hostname.
+        self.host = try container.decodeIfPresent(String.self, forKey: .host) ?? hostname
+        self.username = try container.decodeIfPresent(String.self, forKey: .username)
+        self.port = try container.decodeIfPresent(Int.self, forKey: .port)
+        self.paramArgs = try container.decode(ParamArgs.self, forKey: .paramArgs)
+        self.commandArgs = try container.decode([String].self, forKey: .commandArgs)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(host, forKey: .host)
+        try container.encode(hostname, forKey: .hostname)
+        try container.encode(username, forKey: .username)
+        try container.encode(port, forKey: .port)
+        try container.encode(paramArgs, forKey: .paramArgs)
+        try container.encode(commandArgs, forKey: .commandArgs)
+    }
+
     var debugDescription: String {
-        return "recognized params: \(paramArgs.debugDescription); username=\(String(describing: username)); hostname=\(hostname); port=\(String(describing: port)); command=\(commandArgs.joined(separator: ", "))"
+        return "recognized params: \(paramArgs.debugDescription); username=\(String(describing: username)); host=\(host); hostname=\(hostname); port=\(String(describing: port)); command=\(commandArgs.joined(separator: ", "))"
     }
 
     struct ParamArgs: Codable, OptionSet, CustomDebugStringConvertible {
@@ -79,12 +111,13 @@ struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
     }
 
     var identity: SSHIdentity {
-        return SSHIdentity(hostname, username: username, port: port ?? 22)
+        return SSHIdentity(host: host, hostname: hostname, username: username, port: port ?? 22)
     }
 
-    init(_ string: String, booleanArgs boolArgsString: String) {
+    init(_ string: String, booleanArgs boolArgsString: String, hostnameFinder: SSHHostnameFinder) {
         let booleanArgs = Set(Array<String.Element>(boolArgsString).map { String($0) })
         guard let args = (string as NSString).componentsInShellCommand() else {
+            host = ""
             hostname = ""
             username = nil
             port = nil
@@ -159,7 +192,8 @@ struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
         // ["ssh", "example.com", "cat", "'file with space"'] executes ["cat", "file with space"]
 
         commandArgs = (commandArgs.joined(separator: " ") as NSString).componentsInShellCommand()
-        hostname = destination ?? ""
+        host = destination ?? ""
+        hostname = hostnameFinder.sshHostname(forHost: host)
         username = preferredUser ?? paramArgs.value(for: .loginName)
         port = preferredPort ?? paramArgs.value(for: .port).map { Int($0) } ?? 22
     }

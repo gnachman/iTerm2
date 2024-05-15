@@ -16,6 +16,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermSlowOperationGateway.h"
 #import "iTermOpenDirectory.h"
+#import "iTermSSHHelpers.h"
 #import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -238,30 +239,10 @@ static NSError *SCPFileError(NSString *description) {
     return NO;
 }
 
+
 // This runs in a thread
-- (NSArray *)configs {
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *appSupport = [fileManager applicationSupportDirectory];
-    NSArray *paths = @[ [appSupport stringByAppendingPathComponent:@"ssh_config"] ?: @"",
-                        [@"~/.ssh/config" stringByExpandingTildeInPath] ?: @"",
-                        @"/etc/ssh/ssh_config",
-                        @"/etc/ssh_config" ];
-    NSMutableArray *configs = [NSMutableArray array];
-    for (NSString *path in paths) {
-        if (path.length == 0) {
-            DLog(@"Zero length path in configs paths %@", paths);
-            continue;
-        }
-        if ([fileManager fileExistsAtPath:path]) {
-            NMSSHConfig *config = [NMSSHConfig configFromFile:path];
-            if (config) {
-                [configs addObject:config];
-            } else {
-                XLog(@"Could not parse config file at %@", path);
-            }
-        }
-    }
-    return configs;
++ (NSArray<NMSSHConfig *> *)configs {
+    return [iTermSSHHelpers configs];
 }
 
 // This runs in a thread
@@ -333,9 +314,9 @@ static NSError *SCPFileError(NSString *description) {
         effectivePort = self.session.port.intValue;
     } else {
         DLog(@"Create seession to hostname=%@ configs=%@ port=%@ username=%@",
-             [self hostname], [self configs], @([self port]), self.path.username);
+             [self hostname], [SCPFile configs], @([self port]), self.path.username);
         self.session = [[NMSSHSession alloc] initWithHost:[self hostname]
-                                                  configs:[self configs]
+                                                  configs:[SCPFile configs]
                                           withDefaultPort:[self port]
                                           defaultUsername:self.path.username];
         effectivePort = self.session.port.intValue;

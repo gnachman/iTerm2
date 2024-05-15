@@ -20,7 +20,9 @@ extension NSDictionary {
         // booleanArgs comes from parsing the output of ssh's usage string. We know this only
         // applies to the macOS ssh since it must be run locally. I guess it would be better to
         // generate this at build time and load it from a resource but I'm not up to that today.
-        let parsed = ParsedSSHArguments(args, booleanArgs: "46AaCfGgKkMNnqsTtVvXxYy")
+        let parsed = ParsedSSHArguments(args, 
+                                        booleanArgs: "46AaCfGgKkMNnqsTtVvXxYy",
+                                        hostnameFinder: iTermHostnameFinder())
         return parsed.identity
     }
 }

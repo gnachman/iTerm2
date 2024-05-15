@@ -42,6 +42,7 @@
 #import "iTermRateLimitedUpdate.h"
 #import "iTermScriptArchive.h"
 #import "SIGIdentity.h"
+#import "iTermSSHHelpers.h"
 #import "iTermScriptExporter.h"
 #import "iTermScriptImporter.h"
 #import "iTermSelection.h"
@@ -74,6 +75,9 @@
 #import "LineBlock.h"
 #import "LineBufferHelpers.h"
 #import "MovePaneController.h"
+#import <NMSSH/NMSSH.h>
+#import <NMSSH/NMSSHConfig.h>
+#import <NMSSH/NMSSHHostConfig.h>
 #import "NSAlert+iTerm.h"
 #import "NSAppearance+iTerm.h"
 #import "NSBezierPath+iTerm.h"
@@ -101,6 +105,7 @@
 #import "PTYSession+ARC.h"
 #import "PTYTextView.h"
 #import "PTYTextView+Private.h"
+#import "SCPFile.h"
 #import "SCPPath.h"
 #import "ScreenChar.h"
 #import "ScreenCharArray.h"

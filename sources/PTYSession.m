@@ -11553,6 +11553,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     }
 }
 
+- (BOOL)textViewCanUploadOverSSHIntegrationTo:(SCPPath *)path {
+    if (@available(macOS 11, *)) {
+        return [_conductor canTransferFilesTo:path];
+    }
+    return NO;
+}
+
 - (void)startDownloadOverSCP:(SCPPath *)path
 {
     if (@available(macOS 11, *)) {

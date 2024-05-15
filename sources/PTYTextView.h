@@ -301,6 +301,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (NSCursor *)textViewDefaultPointer;
 - (BOOL)textViewOrComposerIsFirstResponder;
 - (VT100GridAbsCoordRange)textViewCoordRangeForCommandAndOutputAtMark:(id<iTermMark>)mark;
+- (BOOL)textViewCanUploadOverSSHIntegrationTo:(SCPPath *)path;
 
 @end
 

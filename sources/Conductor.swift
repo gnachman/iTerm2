@@ -796,7 +796,9 @@ class Conductor: NSObject, Codable {
         self.boolArgs = boolArgs
         self.dcsID = dcsID
         self.clientUniqueID = clientUniqueID
-        parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: boolArgs)
+        parsedSSHArguments = ParsedSSHArguments(sshargs,
+                                                booleanArgs: boolArgs,
+                                                hostnameFinder: iTermHostnameFinder())
         self.varsToSend = varsToSend
         self.clientVars = clientVars
 
@@ -841,7 +843,9 @@ class Conductor: NSObject, Codable {
         payloads = []
         initialDirectory = nil
         shouldInjectShellIntegration = false
-        parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: recovery.boolArgs)
+        parsedSSHArguments = ParsedSSHArguments(sshargs, 
+                                                booleanArgs: recovery.boolArgs,
+                                                hostnameFinder: iTermHostnameFinder())
         if let parent = recovery.parent {
             if parent.framing {
                 depth = parent.depth + 1

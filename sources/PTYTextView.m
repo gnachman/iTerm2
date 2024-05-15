@@ -3876,16 +3876,19 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 #pragma mark - File Transfer
 
 - (BOOL)confirmUploadOfFiles:(NSArray *)files toPath:(SCPPath *)path {
+    const BOOL useSSHIntegration = [_delegate textViewCanUploadOverSSHIntegrationTo:path];
     NSString *text;
     if (files.count == 0) {
         return NO;
     }
     if (files.count == 1) {
-        text = [NSString stringWithFormat:@"Ok to scp\n%@\nto\n%@@%@:%@?",
+        text = [NSString stringWithFormat:@"OK to %@\n%@\nto\n%@@%@:%@?",
+                useSSHIntegration ? @"copy" : @"scp",
                 [files componentsJoinedByString:@", "],
                 path.username, path.hostname, path.path];
     } else {
-        text = [NSString stringWithFormat:@"Ok to scp the following files:\n%@\n\nto\n%@@%@:%@?",
+        text = [NSString stringWithFormat:@"OK to %@ the following files:\n%@\n\nto\n%@@%@:%@?",
+                useSSHIntegration ? @"copy" : @"scp",
                 [files componentsJoinedByString:@", "],
                 path.username, path.hostname, path.path];
     }

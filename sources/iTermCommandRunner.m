@@ -327,7 +327,6 @@ static NSMutableArray<iTermBufferedCommandRunner *> *gCommandRunners;
     DLog(@"Launch %@ %@ in runner %@", path, arguments, runner);
     runner.maximumOutputSize = @(1024 * 10);
     __weak __typeof(runner) weakRunner = runner;
-    __weak __typeof(self) weakSelf = self;
     runner.completion = ^(int status) {
         __strong __typeof(runner) strongRunner = weakRunner;
         DLog(@"Command finished");
