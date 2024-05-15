@@ -667,6 +667,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const int y = clickPointGridCoord.y;
 
     NSPoint mouseDownLocation = [_mouseDownEvent locationInWindow];
+    const BOOL wasAlreadyDragging = _committedToDrag;
     if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
         dragThresholdMet = YES;
         _committedToDrag = YES;
@@ -702,6 +703,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            ([event it_modifierFlags] & NSEventModifierFlagCommand));
     if (okToDrag) {
         if (_mouseDownOnImage && dragThresholdMet) {
+            if (wasAlreadyDragging) {
+                DLog(@"Ignore duplicate drag");
+                return iTermClickSideEffectsIgnore;
+            }
             _committedToDrag = YES;
             [self.mouseDelegate mouseHandler:self
                                    dragImage:_imageBeingClickedOn
@@ -712,6 +717,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Drag and drop a selection
             NSString *theSelectedText = [self.mouseDelegate mouseHandlerSelectedText:self];
             if ([theSelectedText length] > 0) {
+                if (wasAlreadyDragging) {
+                    DLog(@"Ignore duplicate drag");
+                    return iTermClickSideEffectsIgnore;
+                }
                 _committedToDrag = YES;
                 [self.mouseDelegate mouseHandler:self dragText:theSelectedText forEvent:event];
                 DLog(@"Mouse drag. selection=%@", self.selection);
@@ -740,6 +749,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         pressingCmdOnly &&
         _semanticHistoryDragged == NO) {
         // Only one Semantic History check per drag
+        if (wasAlreadyDragging) {
+            DLog(@"Ignore duplicate drag");
+            return iTermClickSideEffectsIgnore;
+        }
         _semanticHistoryDragged = YES;
         [self.mouseDelegate mouseHandler:self
             dragSemanticHistoryWithEvent:event
