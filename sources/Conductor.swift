@@ -651,6 +651,30 @@ class Conductor: NSObject, Codable {
         }
         let handler: Handler
         var canceled = false
+
+        // Pipelining means many of these can be sent without waiting for the result.
+        // It's particularly important for keystrokes to reduce latency when typing quickly.
+        var supportsPipelining: Bool {
+            switch self.command {
+            case .framerSend:
+                return true
+            default:
+                return false
+            }
+        }
+
+        // Approximate number of bytes on the wire to send this command.
+        var size: Int {
+            precondition(supportsPipelining)
+            switch self.command {
+            case .framerSend(let data, pid: _):
+                // This only needs to be a rough approximation of the size (for example it doesn't
+                // include line breaks or try to account for UTF-8 encoding)
+                return command.stringValue.count * 4 / 3
+            default:
+                return .max
+            }
+        }
     }
 
     struct Nesting: Codable {
@@ -719,10 +743,10 @@ class Conductor: NSObject, Codable {
             switch self {
             case .ground:
                 return "<State: ground>"
-            case .willExecute(let context):
-                return "<State: willExecute(\(context))>"
-            case .executing(let context):
-                return "<State: executing(\(context))>"
+            case .willExecutePipeline(let contexts):
+                return "<State: willExecute(\(contexts.map { $0.debugDescription }.joined(separator: ", ")))>"
+            case .executingPipeline(let context, let pending):
+                return "<State: executing(context=\(context), pending=\(pending.map { $0.debugDescription }.joined(separator: ", "))>"
             case .unhooked:
                 return "<State: unhooked>"
             case .recovery(let recoveryState):
@@ -733,8 +757,8 @@ class Conductor: NSObject, Codable {
         }
 
         case ground  // Have not written, not expecting anything.
-        case willExecute(ExecutionContext)  // After writing, before parsing begin.
-        case executing(ExecutionContext)  // After parsing begin, before parsing end.
+        case willExecutePipeline([ExecutionContext])  // After writing, before parsing begin. All contexts in the pipeline will have been written. The array is never empty.
+        case executingPipeline(ExecutionContext, [ExecutionContext])  // After parsing begin, before parsing end. Only the first one has had parsing begin. The pending array may be empty.
         case unhooked  // Not using framer. IO is direct.
         case recovery(RecoveryState)  // In recovery mode. Will enter ground when done.
         case recovered // short-lived state while waiting for vt100parser to get updated.
@@ -843,7 +867,7 @@ class Conductor: NSObject, Codable {
         payloads = []
         initialDirectory = nil
         shouldInjectShellIntegration = false
-        parsedSSHArguments = ParsedSSHArguments(sshargs, 
+        parsedSSHArguments = ParsedSSHArguments(sshargs,
                                                 booleanArgs: recovery.boolArgs,
                                                 hostnameFinder: iTermHostnameFinder())
         if let parent = recovery.parent {
@@ -1511,8 +1535,11 @@ class Conductor: NSObject, Codable {
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
             DLog("Unexpected input: \(line)")
-        case .willExecute(let context), .executing(let context):
-            state = .executing(context)
+        case .willExecutePipeline(let contexts):
+            let pending = Array(contexts.dropFirst())
+            state = .executingPipeline(contexts.first!, pending)
+            update(executionContext: contexts.first!, result: .line(line))
+        case let .executingPipeline(context, _):
             update(executionContext: context, result: .line(line))
         }
     }
@@ -1520,8 +1547,10 @@ class Conductor: NSObject, Codable {
     @objc func handleUnhook() {
         DLog("< unhook")
         switch state {
-        case .executing(let context), .willExecute(let context):
+        case .executingPipeline(let context, _):
             update(executionContext: context, result: .abort)
+        case .willExecutePipeline(let contexts):
+            update(executionContext: contexts.first!, result: .abort)
         case .ground, .recovered, .unhooked, .recovery:
             break
         }
@@ -1547,7 +1576,7 @@ class Conductor: NSObject, Codable {
             expectFraming = true
         } else {
             switch state {
-            case .executing(let context):
+            case let .executingPipeline(context, _):
                 expectFraming = context.command.isFramer
             default:
                 expectFraming = false}
@@ -1568,11 +1597,29 @@ class Conductor: NSObject, Codable {
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
             DLog("Unexpected command end in \(state)")
-        case .willExecute(let context), .executing(let context):
+        case let .willExecutePipeline(contexts):
+            update(executionContext: contexts.first!, result: .end(status))
+            if contexts.count == 1 {
+                DLog("Command ended. Return to ground state.")
+                state = .ground
+                dequeue()
+            } else {
+                DLog("Command ended. Remain in willExecute with remaining commands.")
+                let pending = Array(contexts.dropFirst())
+                state = .willExecutePipeline(pending)
+                amendPipeline(pending)
+            }
+        case let .executingPipeline(context, pending):
             update(executionContext: context, result: .end(status))
             DLog("Command ended. Return to ground state.")
-            state = .ground
-            dequeue()
+            if pending.isEmpty {
+                DLog("Command ended. Return to ground state.")
+                state = .ground
+                dequeue()
+            } else {
+                DLog("Command ended. Return to willExecute with remaining commands.")
+                state = .willExecutePipeline(Array(pending.dropFirst()))
+            }
         }
     }
 
@@ -1592,7 +1639,10 @@ class Conductor: NSObject, Codable {
                 // Tolerate unexpected inputs - this is essential for getting back on your feet when
                 // restoring.
                 DLog("Unexpected termination of \(pid)")
-            case .willExecute(let context), .executing(let context):
+            case let .willExecutePipeline(contexts):
+                update(executionContext: contexts.first!, result: .end(UInt8(code)))
+                backgroundJobs.removeValue(forKey: pid)
+            case let .executingPipeline(context, _):
                 update(executionContext: context, result: .end(UInt8(code)))
                 backgroundJobs.removeValue(forKey: pid)
             }
@@ -1630,9 +1680,9 @@ class Conductor: NSObject, Codable {
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
             DLog("Unexpected input: \(string)")
-        case .willExecute(let context):
-            state = .executing(context)
-        case .executing(let context):
+        case let .willExecutePipeline(contexts):
+            state = .executingPipeline(contexts.first!, Array(contexts.dropFirst()))
+        case let .executingPipeline(context, _):
             update(executionContext: context,
                    result: .sideChannelLine(line: string, channel: channel, pid: pid))
         }
@@ -1783,7 +1833,7 @@ class Conductor: NSObject, Codable {
         switch state {
         case .ground, .recovery:
             dequeue()
-        case .willExecute(_), .executing(_), .unhooked, .recovered:
+        case .willExecutePipeline, .executingPipeline, .unhooked, .recovered:
             return
         }
     }
@@ -1802,15 +1852,50 @@ class Conductor: NSObject, Codable {
 
     private func dequeue() {
         log("dequeue")
-        guard let pending = takeNextContext() else {
-            return
-        }
-        state = .willExecute(pending)
-        let chunked = pending.command.stringValue.components(separatedBy: "\n").map(\.base64Encoded).joined(separator: "\n").chunk(128, continuation: pending.command.isFramer ? "\\" : "").joined(separator: "\n") + "\n"
-        write(chunked)
+        amendPipeline([])
     }
 
-    private func takeNextContext() -> ExecutionContext? {
+    private func amendPipeline(_ existing: [ExecutionContext]) {
+        log("amendPipeline")
+        if let last = existing.last, !last.supportsPipelining {
+            log("Can't pipeline \(last.debugDescription)")
+            return
+        }
+        let contexts = takeNextContextPipeline(existing)
+        guard !contexts.isEmpty else {
+            log("Nothing to take")
+            return
+        }
+        state = .willExecutePipeline(contexts)
+        for pending in contexts[existing.count...] {
+            let chunked = pending.command.stringValue.components(separatedBy: "\n").map(\.base64Encoded).joined(separator: "\n").chunk(128, continuation: pending.command.isFramer ? "\\" : "").joined(separator: "\n") + "\n"
+            write(chunked)
+        }
+    }
+
+    private func takeNextContextPipeline(_ existing: [ExecutionContext]) -> [ExecutionContext] {
+        if let first = existing.first {
+            precondition(first.supportsPipelining)
+        }
+        var size = existing.map(\.size).reduce(0, +)
+        var result = existing
+        let maxSize = 1024
+        log("Initial size is \(size)")
+        while size < maxSize, let context = takeNextContext(onlyIfSupportsPipelining: !result.isEmpty) {
+            log("taking \(context.debugDescription)")
+            result.append(context)
+            if !context.supportsPipelining {
+                log("stopping because it does not support pipelining")
+                break
+            }
+            size += context.size
+            log("size is now \(size)")
+        }
+        log("Done with \(result.map(\.debugDescription).joined(separator: ", "))")
+        return result
+    }
+
+    private func takeNextContext(onlyIfSupportsPipelining: Bool) -> ExecutionContext? {
         guard delegate != nil else {
             log("delegate is nil. clear queue and reset state.")
             while let pending = queue.first {
@@ -1827,6 +1912,9 @@ class Conductor: NSObject, Codable {
         }
         guard let pending = queue.first else {
             log("queue is empty")
+            return nil
+        }
+        if onlyIfSupportsPipelining && !pending.supportsPipelining {
             return nil
         }
         queue.removeFirst()
@@ -1858,10 +1946,18 @@ class Conductor: NSObject, Codable {
         switch state {
         case .ground:
             return "waiting"
-        case .executing(let context):
-            return context.command.operationDescription
-        case .willExecute(let context):
-            return context.command.operationDescription + " (preparation stage)"
+        case let .executingPipeline(context, pending):
+            if pending.isEmpty {
+                return context.command.operationDescription
+            } else {
+                return context.command.operationDescription + " and \(pending.count) more"
+            }
+        case .willExecutePipeline(let contexts):
+            if contexts.count > 1 {
+                return contexts.first!.command.operationDescription + " (preparation stage) and \(contexts.count - 1) more"
+            } else {
+                return contexts.first!.command.operationDescription + " (preparation stage)"
+            }
         case .unhooked:
             return "unhooked"
         case .recovery:
@@ -1934,7 +2030,7 @@ extension Conductor: SSHCommandRunning {
 
     private func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {
         let context = ExecutionContext(command: command, handler: .handleBackgroundJob(StringArray(), completion))
-        backgroundJobs[pid] = .executing(context)
+        backgroundJobs[pid] = .executingPipeline(context, [])
     }
 
     @objc
@@ -2020,7 +2116,7 @@ extension Data {
         let i = count - n
         return self[i...]
     }
-    
+
     var semiVerboseDescription: String {
         if count > 32 {
             return self[..<16].semiVerboseDescription + "…" + self.last(16).semiVerboseDescription
