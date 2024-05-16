@@ -1140,8 +1140,9 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
                                         width:(int)width
                                        offset:(int)offset {
+    ITBetaAssert(coord.y >= 0, @"Negative y coord to positionForCoordinate");
     VLog(@"positionForCoord:%@ width:%@ offset:%@", VT100GridCoordDescription(coord), @(width), @(offset));
-    
+
     int x = coord.x;
     int y = coord.y;
     int line = y;

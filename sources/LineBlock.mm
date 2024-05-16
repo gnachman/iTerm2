@@ -860,6 +860,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                withWidth:(int)width
                  yOffset:(int *)yOffsetPtr
                  extends:(BOOL *)extendsPtr {
+    ITBetaAssert(*lineNum >= 0, @"Negative lines to getWrappedLineWithWrapWidth");
     VLog(@"getPositionOfLine:%@ atX:%@ withWidth:%@ yOffset:%@ extends:%@",
           @(*lineNum), @(x), @(width), @(*yOffsetPtr), @(*extendsPtr));
 
@@ -1223,6 +1224,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                         continuation:(screen_char_t *)continuationPtr
                                 isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
                                             metadata:(out iTermImmutableMetadata *)metadataPtr {
+    ITBetaAssert(*lineNum >= 0, @"Negative lines to getWrappedLineWithWrapWidth");
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:lineNum];
     if (!location.found) {
         return NULL;

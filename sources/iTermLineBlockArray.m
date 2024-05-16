@@ -341,10 +341,12 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
         VLog(@"internalIndexOfBlockContainingLineNumber: Have a remainder pointer");
         if (index == 0) {
             VLog(@"internalIndexOfBlockContainingLineNumber: index==0: *remainderPtr <- %@", @(lineNumber));
+            ITBetaAssert(lineNumber >= 0, @"Negative remainder when index=0");
             *remainderPtr = lineNumber;
         } else {
             const NSInteger absoluteLineNumber = lineNumber - numLinesCache.offset;
             *remainderPtr = absoluteLineNumber - [numLinesCache sumAtIndex:index - 1];
+            ITBetaAssert(*remainderPtr >= 0, @"Negative remainder when index!=0. lineNumber=%@ numLinesCache.offset=%@ sum(at: %@)=%@ remainder=%@", @(lineNumber), @(numLinesCache.offset), @(index-1), @([numLinesCache sumAtIndex:index - 1]), @(*remainderPtr));
             VLog(@"internalIndexOfBlockContainingLineNumber: index!=0: absoluteLineNumber=%@, *remainderPtr <- %@",
                   @(absoluteLineNumber), @(*remainderPtr));
         }
