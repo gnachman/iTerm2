@@ -24,11 +24,7 @@ protocol MarkCacheReading: AnyObject {
 @objc(iTermMarkCache)
 class MarkCache: NSObject, NSCopying, MarkCacheReading {
     private var dict = [Int: iTermMarkProtocol]()
-    private let sorted = SortedArray<iTermMarkProtocol>(location: { mark in
-        mark.entry?.interval.location
-    }, equals: { lhs, rhs in
-        lhs === rhs
-    })
+    private let sorted = SortedArray<iTermMarkProtocol> { $0 === $1 }
 
     @objc private(set) var dirty = false
     @objc lazy var sanitizingAdapter: MarkCache = {
@@ -51,7 +47,10 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
             value.doppelganger() as! iTermMarkProtocol
         })
         for value in dict.values {
-            sorted.insert(object: value)
+            if let location = value.entry?.interval.location {
+                value.cachedLocation = location
+                sorted.insert(object: value, location: location)
+            }
         }
     }
 
@@ -59,7 +58,7 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
     func remove(mark: iTermMarkProtocol, line: Int) {
         dirty = true
         dict.removeValue(forKey: line)
-        sorted.remove(object: mark)
+        sorted.remove(entry: .init(value: mark, location: mark.cachedLocation))
     }
 
     @objc(removeMarks:onLines:)
@@ -68,7 +67,7 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
         for line in lines {
             dict.removeValue(forKey: line)
         }
-        sorted.remove(objects: marks)
+        sorted.remove(entries: marks.map { .init(value: $0, location: $0.cachedLocation )})
     }
 
     @objc
@@ -98,10 +97,13 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
             dirty = true
             if let newValue = newValue {
                 dict[line] = newValue
-                sorted.insert(object: newValue)
+                if let location = newValue.entry?.interval.location {
+                    newValue.cachedLocation = location
+                    sorted.insert(object: newValue, location: location)
+                }
             } else {
                 if let mark = dict[line] {
-                    sorted.remove(object: mark)
+                    sorted.remove(entry: .init(value: mark, location: mark.cachedLocation))
                 }
                 dict.removeValue(forKey: line)
             }

@@ -16,6 +16,7 @@
 }
 
 @synthesize entry;
+@synthesize cachedLocation;
 
 #pragma mark - IntervalTreeObject
 

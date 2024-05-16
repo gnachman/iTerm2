@@ -12,6 +12,7 @@
 @class iTermMark;
 
 @protocol iTermMark <NSObject, IntervalTreeImmutableObject>
+@property (nonatomic) long long cachedLocation;
 - (iTermMark *)progenitor;
 @end
 

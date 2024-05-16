@@ -32,11 +32,10 @@ class iTermSortedArray: NSObject, iTermSortedArrayReading {
     override var description: String {
         impl.debugDescription
     }
-    @objc(initWithLocationProvider:)
-    init(location: @escaping (NSObject) -> NSNumber?) {
-        impl = SortedArray(location: {
-            location($0)?.int64Value
-        }, equals: { return NSObject.object($0, isEqualTo: $1) })
+    @objc(init)
+    override init() {
+        impl = SortedArray { return NSObject.object($0, isEqualTo: $1) }
+        super.init()
     }
 
     @objc
@@ -45,13 +44,13 @@ class iTermSortedArray: NSObject, iTermSortedArrayReading {
     }
 
     @objc
-    func insert(object: NSObject) {
-        impl.insert(object: object)
+    func insert(object: NSObject, location: Int64) {
+        impl.insert(object: object, location: location)
     }
 
     @objc
-    func remove(object: NSObject) {
-        impl.remove(object: object)
+    func remove(object: NSObject, location: Int64) {
+        impl.remove(entry: .init(value: object, location: location))
     }
 
     @objc
@@ -82,34 +81,22 @@ class SortedArray<T>: CustomDebugStringConvertible {
     var debugDescription: String {
         return "<SortedArray count=\(s(count)) first=\(s(first))@\(s(firstLocation)) last=\(s(last))@\(s(lastLocation))"
     }
-    private var array: [T] = []
-
-    // Converts a value to its sort key.
-    private var location: (T) -> Int64?
+    struct Entry {
+        var value: T
+        var location: Int64
+    }
+    private var array: [Entry] = []
 
     // Compares two values for equality.
     private var equals: (T, T) -> Bool
     var count: Int { array.count }
     var isEmpty: Bool { count == 0 }
-    var first: T? { array.first }
-    var firstLocation: Int64? {
-        if let first {
-            return location(first)
-        }
-        return nil
-    }
+    var first: T? { array.first?.value }
+    var firstLocation: Int64? { array.first?.location }
+    var lastLocation: Int64? { array.last?.location }
+    var last: T? { array.last?.value }
 
-    var lastLocation: Int64? {
-        if let last {
-            return location(last)
-        }
-        return nil
-    }
-
-    var last: T? { array.last }
-    init(location: @escaping (T) -> Int64?,
-         equals: @escaping (T, T) -> Bool) {
-        self.location = location
+    init(equals: @escaping (T, T) -> Bool) {
         self.equals = equals
     }
 
@@ -125,24 +112,21 @@ class SortedArray<T>: CustomDebugStringConvertible {
 
         while start <= end {
             mid = (start + end) / 2
-            if let midLocation = self.location(array[mid]) {
-                if midLocation > desiredLocation {
-                    end = mid - 1
-                } else {
-                    // Found it
-                    start = mid + 1
-                    index = mid
-                }
-            } else {
+            let midLocation = array[mid].location
+            if midLocation > desiredLocation {
                 end = mid - 1
+            } else {
+                // Found it
+                start = mid + 1
+                index = mid
             }
         }
         if index < 0 {
             return nil
         }
         // Go backward to the first with this location
-        let l = location(array[index])!
-        while index > 0 && index < array.count && (location(array[index - 1]) == nil || location(array[index - 1]) == l) {
+        let l = array[index].location
+        while index > 0 && index < array.count && array[index - 1].location == l {
             index -= 1
         }
         return index
@@ -156,34 +140,31 @@ class SortedArray<T>: CustomDebugStringConvertible {
 
         while start <= end {
             mid = (start + end) / 2
-            if let midLocation = self.location(array[mid]) {
-                if midLocation < desiredLocation {
-                    start = mid + 1
-                } else {
-                    // Found it
-                    end = mid - 1
-                    index = mid
-                }
-            } else {
+            let midLocation = array[mid].location
+            if midLocation < desiredLocation {
                 start = mid + 1
+            } else {
+                // Found it
+                end = mid - 1
+                index = mid
             }
         }
         if index < 0 {
             return nil
         }
         // Go backward to the first with this location
-        let l = location(array[index])!
-        while index > 0 && index < array.count && (location(array[index - 1]) == nil || location(array[index - 1]) == l) {
+        let l = array[index].location
+        while index > 0 && index < array.count && array[index - 1].location == l {
             index -= 1
         }
         return index
     }
 
     struct ForwardIterator: IteratorProtocol, NextProviding {
-        private let array: [T]
+        private let array: [Entry]
         private var currentIndex: Int
 
-        init(array: [T], currentIndex: Int) {
+        init(array: [Entry], currentIndex: Int) {
             self.array = array
             self.currentIndex = currentIndex
         }
@@ -195,7 +176,7 @@ class SortedArray<T>: CustomDebugStringConvertible {
             defer {
                 currentIndex += 1
             }
-            return array[currentIndex]
+            return array[currentIndex].value
         }
 
         mutating func nextItem() -> Any? {
@@ -212,10 +193,8 @@ class SortedArray<T>: CustomDebugStringConvertible {
         if var index = firstIndexAtOrBefore(location: desiredLocation) {
             // Add all until we get past the desired location
             var result = [T]()
-            while index < array.count && (location(array[index]) ?? Int64.min) <= desiredLocation {
-                if location(array[index]) != nil {
-                    result.append(array[index])
-                }
+            while index < array.count && array[index].location <= desiredLocation {
+                result.append(array[index].value)
                 index += 1
             }
             return result
@@ -226,9 +205,7 @@ class SortedArray<T>: CustomDebugStringConvertible {
 
     func removeUpTo(location: Int64) {
         let firstIndexToKeep = (0..<array.count).first { i in
-            guard let l = self.location(array[i]) else {
-                return false
-            }
+            let l = array[i].location
             return l > location
         }
         guard let firstIndexToKeep else {
@@ -238,98 +215,88 @@ class SortedArray<T>: CustomDebugStringConvertible {
         array.removeSubrange(0..<firstIndexToKeep)
     }
 
-    func insert(object: T) {
-        if let location = location(object) {
-            if let last = array.last, let lastLocation = self.location(last), location >= lastLocation {
-                // Optimized path for append
-                array.append(object)
-                return
-            }
-            var start = 0
-            var end = array.count
-            var mid: Int
-
-            while start < end {
-                mid = (start + end) / 2
-                if let midLocation = self.location(array[mid]) {
-                    if midLocation < location {
-                        start = mid + 1
-                    } else {
-                        end = mid
-                    }
-                } else {
-                    end = mid
-                }
-            }
-            array.insert(object, at: start)
-        } else {
-            DLog("Declining to insert object \(object) that has a nil location")
+    func insert(object: T, location: Int64) {
+        if let last = array.last, location >= last.location {
+            // Optimized path for append
+            array.append(Entry(value: object, location: location))
+            return
         }
+        var start = 0
+        var end = array.count
+        var mid: Int
+
+        while start < end {
+            mid = (start + end) / 2
+            let midLocation = array[mid].location
+            if midLocation < location {
+                start = mid + 1
+            } else {
+                end = mid
+            }
+        }
+        array.insert(Entry(value: object, location: location), at: start)
     }
 
-    func remove(objects: [T]) {
-        array.remove(at: indexes(objects:objects))
+    func remove(entries: [Entry]) {
+        array.remove(at: indexes(entries: entries))
     }
 
-    private func indexes(objects: [T]) -> IndexSet {
+    private func indexes(entries: [Entry]) -> IndexSet {
         guard !isEmpty else {
             return IndexSet()
         }
-        let sortedTuples = objects.compactMap { obj -> (Int64, T)? in
-            guard let l = location(obj) else {
-                return nil
-            }
-            return (l, obj)
-        }.sorted { lhs, rhs in
-            return lhs.0 < rhs.0
+        let sortedEntries = entries.sorted { lhs, rhs in
+            lhs.location < rhs.location
         }
-        guard let tuple = sortedTuples.first else {
+        guard let entry = sortedEntries.first else {
             return IndexSet()
         }
-        let firstLocation = tuple.0
-        // i is an index into array which will increase monotonically as we search for sortedTuples[tupleIndex].
+        let firstLocation = entry.location
+        // i is an index into array which will increase monotonically as we search for sortedEntries[tupleIndex].
         guard var i = firstIndexAtOrAfter(location: firstLocation) else {
             return IndexSet()
         }
         var indexesToRemove = IndexSet()
-        // tupleIndex is an index into sortedTuples which increases monotonically.
-        var tupleIndex = 0
+        // tupleIndex is an index into sortedEntries which increases monotonically.
+        var entryIndex = 0
         var linearSearchCount = 0
         let maximumLinearSearchIterations = 7
-        while i < array.count && tupleIndex < sortedTuples.count {
+        while i < array.count && entryIndex < sortedEntries.count {
             // Check if we can remove array[i] to eliminate the object at desiredSortedLocations[tupleIndex]
-            let (desiredLocation, desiredObject) = sortedTuples[tupleIndex]
+            let desiredEntry = sortedEntries[entryIndex]
             // currentObject is what we're considering removing.
-            let currentObject = array[i]
-            guard let currentLocation = location(currentObject) else {
-                // The object at i has an undefined location so we won't remove it. Linear search forward.
-                i += 1
-                linearSearchCount += 1
-                continue
-            }
-            if currentLocation > desiredLocation {
+            let currentEntry = array[i]
+            let currentLocation = currentEntry.location
+            if currentLocation > desiredEntry.location {
                 // Failed to find the desired object.
-                tupleIndex += 1
+                entryIndex += 1
                 continue
             } 
-            if currentLocation == desiredLocation {
-                if equals(currentObject, desiredObject) {
-                    // Found the object.
-                    indexesToRemove.insert(i)
-                    tupleIndex += 1
-                    linearSearchCount = 0
-                    continue
-                } else {
-                    // Found an object with the right location. There might be more than one
-                    // with the same location so linear search forward without an iteration limit.
-                    tupleIndex += 1
-                    continue
+            if currentLocation == desiredEntry.location {
+                // Search all entries with this location until we find the one for this object.
+                var temp = i
+                var found = false
+                while temp < array.count && array[temp].location == currentLocation {
+                    if equals(array[temp].value, desiredEntry.value) {
+                        found = true
+                        break
+                    }
+                    temp += 1
                 }
+                if found {
+                    indexesToRemove.insert(temp)
+                    if temp == i {
+                        i += 1
+                    }
+                }
+                entryIndex += 1
+                linearSearchCount = 0
+                continue
             }
-            assert(currentLocation < desiredLocation)
+            assert(currentLocation < desiredEntry.location)
             if linearSearchCount > maximumLinearSearchIterations {
                 // Give up and do a binary search.
-                guard let nextIndex = firstIndexAtOrAfter(location: desiredLocation) else {
+                guard let nextIndex = firstIndexAtOrAfter(location: desiredEntry.location) else {
                     break
                 }
                 i = nextIndex
@@ -344,9 +311,10 @@ class SortedArray<T>: CustomDebugStringConvertible {
         return indexesToRemove
     }
 
-    func remove(object: T) {
-        if let desiredLocation = location(object), var i = firstIndexAtOrBefore(location: desiredLocation) {
-            if let first = array.first, let firstLocation = location(first), firstLocation > desiredLocation {
+    func remove(entry: Entry) {
+        let desiredLocation = entry.location
+        if var i = firstIndexAtOrBefore(location: desiredLocation) {
+            if let first = array.first, first.location > desiredLocation {
                 // Optimization for trying to remove one before the first.
                 return
             }
@@ -354,13 +322,11 @@ class SortedArray<T>: CustomDebugStringConvertible {
                 defer {
                     i += 1
                 }
-                guard let l = location(array[i]) else {
-                    continue
-                }
+                let l = array[i].location
                 if l > desiredLocation {
                     return
                 }
-                if l == desiredLocation && equals(array[i], object) {
+                if l == desiredLocation && equals(array[i].value, entry.value) {
                     array.remove(at: i)
                     return
                 }
