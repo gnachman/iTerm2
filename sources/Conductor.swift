@@ -667,7 +667,7 @@ class Conductor: NSObject, Codable {
         var size: Int {
             precondition(supportsPipelining)
             switch self.command {
-            case .framerSend(let data, pid: _):
+            case .framerSend:
                 // This only needs to be a rough approximation of the size (for example it doesn't
                 // include line breaks or try to account for UTF-8 encoding)
                 return command.stringValue.count * 4 / 3
