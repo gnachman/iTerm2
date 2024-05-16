@@ -2491,6 +2491,10 @@ ITERM_WEAKLY_REFERENCEABLE
         // title can be nil during loadWindowArrangement
         title = @"";
     }
+    if (title.length > 256) {
+        const NSRange range = [title makeRangeSafe:NSMakeRange(0, 256)];
+        title = [[title substringWithRange:range] stringByAppendingString:@"…"];
+    }
     assert(subtitle != nil);
 
     NSString *titleExWindowNumber = title;
