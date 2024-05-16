@@ -349,7 +349,7 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 - (NSRange)underlinedRangeOnLine:(long long)row;
 
 - (void)updateCachedMetrics;
-- (void)updateButtonFrames;
+- (void)updateButtonFrames NS_AVAILABLE_MAC(11);
 - (NSRange)rangeOfVisibleRows;
 
 @end

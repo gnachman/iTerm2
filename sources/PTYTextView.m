@@ -1556,8 +1556,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     // TODO: Don't leave find on page helper as the source of truth for this!
     _drawingHelper.selectedCommandRegion = [self relativeRangeFromAbsLineRange:self.findOnPageHelper.absLineRange];
     [_drawingHelper updateCachedMetrics];
-    [_drawingHelper updateButtonFrames];
-    
+    if (@available(macOS 11, *)) {
+        [_drawingHelper updateButtonFrames];
+    }
+
     const VT100GridRange range = [self rangeOfVisibleLines];
     const int topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     if ([_delegate textViewShouldShowOffscreenCommandLine] && self.enclosingScrollView.contentView.bounds.origin.y > topBottomMargin) {
