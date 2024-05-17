@@ -110,6 +110,7 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 - (double)approximateFractionOccluded;
 - (void)it_setNeedsInvalidateShadow;
 - (void)setUpdatingDividerLayer:(BOOL)value;
+- (void)it_moveToScreen:(NSScreen *)screen;
 
 @end
 

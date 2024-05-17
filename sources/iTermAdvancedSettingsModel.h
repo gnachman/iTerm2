@@ -79,6 +79,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)bordersOnlyInLightMode;
 + (BOOL)bounceOnInactiveBell;
 + (BOOL)bootstrapDaemon;
++ (BOOL)chaseAnchoredScreen;
 + (BOOL)clearBellIconAggressively;
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
 + (double)coloredSelectedTabOutlineStrength;

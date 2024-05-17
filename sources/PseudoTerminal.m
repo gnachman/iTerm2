@@ -4337,6 +4337,16 @@ ITERM_WEAKLY_REFERENCEABLE
         _backingScaleFactor = self.window.backingScaleFactor;
         [self.currentTab bounceMetal];
     }
+    if ([iTermAdvancedSettingsModel chaseAnchoredScreen]) {
+        if (_isAnchoredToScreen && _anchoredScreenNumber >= 0 && _anchoredScreenNumber < NSScreen.screens.count) {
+            const NSInteger i = [[NSScreen screens] indexOfObject:self.window.screen];
+            if (i != _anchoredScreenNumber) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self.ptyWindow it_moveToScreen:NSScreen.screens[_anchoredScreenNumber]];
+                });
+            }
+        }
+    }
 }
 
 - (void)windowOcclusionDidChange:(NSNotification *)notification {

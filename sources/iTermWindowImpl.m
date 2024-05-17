@@ -547,6 +547,11 @@ ITERM_WEAKLY_REFERENCEABLE
     return NSWindowTabbingModeDisallowed;
 }
 
+- (void)it_moveToScreen:(NSScreen *)screen {
+    [self _moveToScreen:screen];
+}
+
+
 - (void)_moveToScreen:(id)sender {
     if (![[THE_CLASS superclass] instancesRespondToSelector:_cmd]) {
         return;
