@@ -138,7 +138,7 @@ printf "1337;it2ssh=$TOKEN ${UNIQUEID} $ENCODED_BA $SSHARGS"
 printf "%s" "$st"
 
 printf "%s" "$osc"
-printf "1337;SendConductor=v=2"
+printf "1337;SendConductor=v=3"
 printf "%s" "$st"
 )
 

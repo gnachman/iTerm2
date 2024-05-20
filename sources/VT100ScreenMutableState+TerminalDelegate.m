@@ -2631,11 +2631,11 @@
     }
     NSDictionary<NSString *, NSString *> *params = [args it_keyValuePairsSeparatedBy:@";"];
     NSString *v = params[@"v"];
-    if (!v || [v integerValue] < 2) {
+    if (!v || [v integerValue] < 3) {
         _sshIntegrationFlags = nil;
         [self appendBannerMessage:@"Out-of-date version of it2ssh detected. Please upgrade it2ssh."];
         return;
-    } else if (v.integerValue > 2) {
+    } else if (v.integerValue > 3) {
         _sshIntegrationFlags = nil;
         [self appendBannerMessage:@"Future version of it2ssh detected. Please upgrade iTerm2."];
         return;
