@@ -773,6 +773,8 @@ DEFINE_BOOL(disclaimChildren, NO, SECTION_EXPERIMENTAL @"Disclaim ownership of c
 DEFINE_BOOL(restoreKeyModeAutomaticallyOnHostChange, YES, SECTION_EXPERIMENTAL @"Automatically restore keyboard mode when an ssh session ends?");
 DEFINE_BOOL(useSSHIntegrationForURLOpening, NO, SECTION_EXPERIMENTAL @"Use SSH integration when opening an ssh: URL");
 DEFINE_BOOL(chaseAnchoredScreen, NO, SECTION_EXPERIMENTAL @"Aggressively keep windows on the screen they were configured to be on");
+DEFINE_STRING(codeciergeGhostRidingPrompt, @"You operate a terminal emulator for me. My goal is $GOAL. $CONTEXT. Ask clarifying questions as needed and run commands using the execute function when you're ready. When I've reached my goal, remind me to click the End Task button.", SECTION_EXPERIMENTAL @"Prompt to send to LLM for Codecierge when it is able to execute commands automatically.\n$GOAL and $CONTEXT are replaced with the user-specified goal and info about the running environment, respectively." );
+DEFINE_STRING(codeciergeRegularPrompt, @"You help a me in a terminal emulator. My goal is $GOAL. $CONTEXT. Start by suggesting a command. Don't overwhelm me with too much information: just go one step at a time. When I've reached my goal, remind me to click the End Task button.", SECTION_EXPERIMENTAL @"Prompt to send to LLM for Codecierge when it is NOT able to execute commands automatically.\n$GOAL and $CONTEXT are replaced with the user-specified goal and info about the running environment, respectively." );
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

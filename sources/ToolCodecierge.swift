@@ -67,11 +67,16 @@ class ToolCodecierge: NSView, ToolbeltTool {
                 history = History()
                 if let window = iTermController.sharedInstance().windowForSession(withGUID: guid)?.window(), let goal {
                     var initialMessages = [AITermController.Message]()
+                    let format =
                     if ghostRiding {
-                        initialMessages.append(AITermController.Message(role: "system", content: "You operate a terminal emulator for me. My goal is \(goal). \(contextualInfo). Ask clarifying questions as needed and run commands using the execute function when you're ready. When I've reached my goal, remind me to click the End Task button."))
+                        iTermAdvancedSettingsModel.codeciergeGhostRidingPrompt()!
                     } else {
-                        initialMessages.append(AITermController.Message(role: "system", content: "You help a me in a terminal emulator. My goal is \(goal). \(contextualInfo) Start by suggesting a command. Don't overwhelm me with too much information: just go one step at a time. When I've reached my goal, remind me to click the End Task button."))
+                        iTermAdvancedSettingsModel.codeciergeRegularPrompt()!
                     }
+                    let content = format
+                        .replacingOccurrences(of: "$GOAL", with: goal)
+                        .replacingOccurrences(of: "$CONTEXT", with: contextualInfo)
+                    initialMessages.append(AITermController.Message(role: "system", content: content))
                     conversation = AIConversation(window: window, messages: initialMessages)
                     if ghostRiding {
                         do {

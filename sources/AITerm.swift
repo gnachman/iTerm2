@@ -501,7 +501,7 @@ class AITermController {
                         max_tokens: maxTokens(model: model, query: query, functions: maybeDecls ?? []),
                         functions: maybeDecls,
                         function_call: functions.isEmpty ? nil : "auto")
-        print("REQUEST:\n\(body)")
+        DLog("REQUEST:\n\(body)")
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
         return bodyData
@@ -641,7 +641,7 @@ class AITermController {
     private func parseModernResponse(data: Data) throws -> [String]? {
         let decoder = JSONDecoder()
         let response =  try decoder.decode(ModernResponse.self, from: data)
-        print("RESPONSE:\n\(response)")
+        DLog("RESPONSE:\n\(response)")
         let choices = response.choices.compactMap { choice -> String? in
             guard let content = choice.message.content else {
                 return nil
@@ -749,7 +749,7 @@ class AITermRegistrationWindowController: NSWindowController {
 
 extension AITermRegistrationWindowController: NSTextViewDelegate {
     func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
-        print(link)
+        DLog("\(link)")
         return true
     }
 }
