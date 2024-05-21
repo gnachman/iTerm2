@@ -1119,6 +1119,7 @@ DQ
                 <outlet property="_promptOnQuit" destination="4757" id="apf-8s-46r"/>
                 <outlet property="_pushToCustomFolder" destination="5620" id="o2m-78-Wc6"/>
                 <outlet property="_quitWhenAllWindowsClosed" destination="1950" id="g5I-3X-QQe"/>
+                <outlet property="_resetAIPrompt" destination="qEC-1B-FMn" id="fue-x8-aGi"/>
                 <outlet property="_restoreWindowsToSameSpaces" destination="bEQ-f0-BMG" id="ch0-Ng-2wL"/>
                 <outlet property="_saveChanges" destination="WKm-Jb-RMO" id="NZp-xg-An8"/>
                 <outlet property="_saveChangesLabel" destination="YYR-pl-zPM" id="DRc-0e-of0"/>

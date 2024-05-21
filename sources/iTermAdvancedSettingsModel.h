@@ -175,6 +175,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)fractionOfCharacterSelectingNextNeighbor;
 + (BOOL)fullHeightCursor;
 + (BOOL)fullWidthFlags;
++ (BOOL)generativeAIAllowed;
 + (NSString *)gitSearchPath;
 + (double)gitTimeout;
 + (BOOL)hdrCursor;

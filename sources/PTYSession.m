@@ -15546,6 +15546,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (NSString *)requestNaturalLanguageQuery {
+    if (![iTermAdvancedSettingsModel generativeAIAllowed]) {
+        [iTermWarning showWarningWithTitle:@"Generative AI features have been disabled. Check with your system administrator."
+                                   actions:@[ @"OK" ]
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                    window:self.delegate.realParentWindow.window];
+        return nil;
+    }
     NSAlert *alert = [[NSAlert alloc] init];
     [alert setMessageText:@"Describe the command you want to run in plain English. Press ⇧⏎ to send."];
     [alert addButtonWithTitle:@"OK"];

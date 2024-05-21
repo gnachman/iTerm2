@@ -595,6 +595,11 @@ class CodeciergeOnboardingView: NSView {
         startButton.action = #selector(startButtonPressed)
 
         layoutSubviews()
+
+        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
+            label.stringValue = "Generative AI has been disabled by the system administrator."
+            startButton.isEnabled = false
+        }
     }
 
     required init?(coder: NSCoder) {

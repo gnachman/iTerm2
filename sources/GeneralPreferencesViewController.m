@@ -179,7 +179,7 @@ enum {
     IBOutlet NSTextField *_aiTokenLimit;
     IBOutlet NSTextField *_aiModelLabel;
     IBOutlet NSTextField *_aiTokenLimitLabel;
-
+    IBOutlet NSButton *_resetAIPrompt;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -680,6 +680,14 @@ enum {
     [self updateEnabledState];
     [self commitControls];
     [self updateValueForInfo:allowSendingClipboardInfo];
+
+    if (!iTermAdvancedSettingsModel.generativeAIAllowed) {
+        _openAIAPIKey.enabled = NO;
+        _aiPrompt.enabled = NO;
+        _aiModel.enabled = NO;
+        _aiTokenLimit.enabled = NO;
+        _resetAIPrompt.enabled = NO;
+    }
 }
 
 - (void)customScriptsFolderDidChange {

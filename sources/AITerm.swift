@@ -15,6 +15,9 @@ class AITermControllerRegistrationHelper {
     private static let apiKeyUserDefaultsKey = "NoSyncOpenAIAPIKey"
 
     var registration: AITermController.Registration? {
+        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
+            return nil
+        }
         let maybeApiKey = UserDefaults.standard.string(forKey: Self.apiKeyUserDefaultsKey)
         return AITermController.Registration(apiKey: maybeApiKey)
     }
@@ -24,6 +27,17 @@ class AITermControllerRegistrationHelper {
     }
 
     func requestRegistration(in window: NSWindow, completion: @escaping (AITermController.Registration?) -> ()) {
+        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
+            iTermWarning.show(withTitle: "Generative AI features have been disabled. Check with your system administrator.",
+                              actions: ["OK"],
+                              accessory: nil,
+                              identifier: nil,
+                              silenceable: .kiTermWarningTypePersistent,
+                              heading: "Feature Unavailable",
+                              window: nil)
+            completion(nil)
+            return
+        }
         let windowController = AITermRegistrationWindowController.create()
         window.beginSheet(windowController.window!) { [weak self] response in
             windowController.window?.orderOut(nil)
