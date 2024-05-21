@@ -768,11 +768,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     [NSGraphicsContext setCurrentContext:graphicsContext];
     NSAffineTransform *transform = [NSAffineTransform transform];
 
-    const CGFloat scaledCellHeight = _descriptor.cellSize.height * _descriptor.scale;
-    const CGFloat scaledCellHeightWithoutSpacing = _descriptor.cellSizeWithoutSpacing.height * _descriptor.scale;
-    const float verticalShift = round((scaledCellHeight - scaledCellHeightWithoutSpacing) / (2 * _descriptor.scale)) * _descriptor.scale;
-
-    [transform translateXBy:offset.x yBy:offset.y + (_descriptor.baselineOffset + _descriptor.cellSize.height) * _descriptor.scale - verticalShift];
+    [transform translateXBy:offset.x yBy:offset.y + (_descriptor.baselineOffset + _descriptor.cellSize.height) * _descriptor.scale];
     [transform scaleXBy:1 yBy:-1];
     [transform concat];
     [self drawBoxInContext:_context offset:CGPointZero iteration:iteration];
@@ -816,6 +812,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                                 offset.y)];
                 CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, context);
             }
+        }
 
 #if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
             CGContextSetRGBStrokeColor(context, 0, 0, 1, 1);
@@ -830,7 +827,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                                  _descriptor.glyphSize.width,
                                                                  _descriptor.glyphSize.height));
 #endif
-        }
     }
 }
 
