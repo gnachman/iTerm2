@@ -598,7 +598,7 @@ class AITermController {
 
         struct Choice: Codable {
             var text: String
-            var index: Int
+            var index: Int?
             var logprobs: Int?
             var finish_reason: String
         }
