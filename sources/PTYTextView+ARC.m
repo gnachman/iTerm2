@@ -282,7 +282,7 @@ iTermCommandInfoViewControllerDelegate>
 // Update range of underlined chars indicating cmd-clickable url.
 - (void)updateUnderlinedURLs:(NSEvent *)event {
     const BOOL commandPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
-
+    DLog(@"command pressed=%@ flags=%llx", @(commandPressed), (unsigned long long)event.it_modifierFlags);
     // Optimization
     if (!commandPressed && ![self hasUnderline]) {
         return;

@@ -457,7 +457,7 @@
 - (CGEventRef)remappedEventFromEventTap:(iTermEventTap *)eventTap
                                withType:(CGEventType)type
                                   event:(CGEventRef)event {
-    DLog(@"Modifier remapper got an event: %@", [NSEvent eventWithCGEvent:event]);
+    DLog(@"Modifier remapper event tap got an event: %@", [NSEvent eventWithCGEvent:event]);
     if ([NSApp isActive]) {
         DLog(@"App is active, performing remapping");
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the

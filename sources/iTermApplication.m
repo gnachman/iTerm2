@@ -606,20 +606,26 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent *)event {
     switch (event.type) {
-        case NSEventTypeFlagsChanged:
+        case NSEventTypeFlagsChanged: {
+            DLog(@"begin flags-changed");
             if (_leader) {
                 [self makeCursorSparkles];
             }
+            const NSEventModifierFlags originalFlags = event.modifierFlags;
             event = [self eventByRemappingForSecureInput:event];
             if (!event) {
+                _it_modifierFlags = originalFlags;
                 DLog(@"Disard event");
                 return;
             }
+            _it_modifierFlags = event.modifierFlags;
             if ([self handleFlagsChangedEvent:event]) {
                 return;
             }
             break;
+        }
         case NSEventTypeKeyDown:
+            DLog(@"begin key-down");
             event = [self eventByRemappingForSecureInput:event];
             if (!event) {
                 DLog(@"Disard event");
@@ -631,12 +637,14 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             DLog(@"NSKeyDown event taking the regular path");
             break;
         case NSEventTypeKeyUp:
+            DLog(@"begin key-up");
             DLog(@"Key up: %@", event);
             if (_leader) {
                 [self makeCursorSparkles];
             }
             break;
         case NSEventTypeScrollWheel:
+            DLog(@"begin scroll-wheel");
             event = [self eventByRemappingEvent:event];
             if (event.momentumPhase == NSEventPhaseChanged ||
                 event.momentumPhase == NSEventPhaseEnded) {
@@ -655,6 +663,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         case NSEventTypeOtherMouseUp:
         case NSEventTypeOtherMouseDown:
         case NSEventTypeOtherMouseDragged:
+            DLog(@"begin mouse event");
             event = [self eventByRemappingEvent:event];
             break;
         default:
