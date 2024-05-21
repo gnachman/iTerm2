@@ -4384,7 +4384,7 @@ DQ
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button toolTip="When a password prompt appears, automatically open the password manager?" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CRE-cb-4lA">
+                <button toolTip="If a session ends immediately after starting and this setting is enabled, keep it open so you can see what went wrong." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CRE-cb-4lA">
                     <rect key="frame" x="319" y="442" width="222" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Warn about short-lived sessions" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="ols-UC-d82">
