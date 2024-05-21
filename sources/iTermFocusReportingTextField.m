@@ -6,6 +6,8 @@
 //
 
 #import "iTermFocusReportingTextField.h"
+
+#import "iTermApplication.h"
 #import "iTermSearchFieldCell.h"
 #import "NSObject+iTerm.h"
 #import "NSResponder+iTerm.h"
@@ -133,7 +135,7 @@
 @implementation ShiftEnterTextView
 
 - (void)insertNewline:(id)sender {
-    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift) != 0) {
+    if (([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagShift) != 0) {
         self.shiftEnterPressed();
         return;
     }

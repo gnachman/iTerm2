@@ -9,6 +9,7 @@
 #import "ToolDirectoriesView.h"
 
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermApplication.h"
 #import "iTermCompetentTableRowView.h"
 #import "iTermRecentDirectoryMO.h"
 #import "iTermRecentDirectoryMO+Additions.h"
@@ -300,7 +301,7 @@ static const CGFloat kHelpMargin = 5;
     } else {
         text = escapedPath;
     }
-    if (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift)) {
+    if (([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagShift)) {
         text = [text stringByAppendingString:@"\n"];
     }
     [wrapper.delegate.delegate toolbeltInsertText:text];

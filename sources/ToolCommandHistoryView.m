@@ -8,6 +8,7 @@
 
 #import "ToolCommandHistoryView.h"
 
+#import "iTermApplication.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermShellHistoryController.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
@@ -329,14 +330,14 @@ static const CGFloat kHelpMargin = 5;
     iTermCommandHistoryCommandUseMO *commandUse = filteredEntries_[selectedIndex];
     iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text = commandUse.command;
-    if (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagOption)) {
+    if (([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagOption)) {
         if (commandUse.directory) {
             text = [@"cd " stringByAppendingString:commandUse.directory];
         } else {
             return;
         }
     }
-    if (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift)) {
+    if (([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagShift)) {
         text = [text stringByAppendingString:@"\n"];
     }
     [wrapper.delegate.delegate toolbeltInsertText:text];

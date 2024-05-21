@@ -634,6 +634,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             if ([self handleKeyDownEvent:event]) {
                 return;
             }
+            _it_modifierFlags = event.it_modifierFlags;
             DLog(@"NSKeyDown event taking the regular path");
             break;
         case NSEventTypeKeyUp:
@@ -642,6 +643,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             if (_leader) {
                 [self makeCursorSparkles];
             }
+            _it_modifierFlags = event.it_modifierFlags;
             break;
         case NSEventTypeScrollWheel:
             DLog(@"begin scroll-wheel");

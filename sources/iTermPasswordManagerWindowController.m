@@ -305,7 +305,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 + (NSString *)randomPassword {
     NSString *characters;
     NSUInteger length = 16;
-    if ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption) {
+    if ([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagOption) {
         characters = @"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         length += 2;
     } else {

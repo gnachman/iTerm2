@@ -1809,7 +1809,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (BOOL)shouldRevealHotbox {
-    if ([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagCommand) {
+    if ([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagCommand) {
         return NO;
     }
     if (!self.window.isKeyWindow) {

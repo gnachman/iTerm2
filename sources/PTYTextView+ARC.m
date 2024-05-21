@@ -454,12 +454,12 @@ iTermCommandInfoViewControllerDelegate>
     NSString *hover = nil;
     VT100GridWindowedRange anchorRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1);
     BOOL changed = NO;
-    if (([event it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+    if (([[iTermApplication sharedApplication] it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         changed = [self setCursor:[NSCursor openHandCursor]];
-    } else if (([event it_modifierFlags] & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
+    } else if (([[iTermApplication sharedApplication] it_modifierFlags] & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
         changed = [self setCursor:[NSCursor crosshairCursor]];
     } else if (action &&
-               ([event it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand) {
+               ([[iTermApplication sharedApplication] it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand) {
         changed = [self setCursor:[NSCursor pointingHandCursor]];
         if (action.hover && action.string.length) {
             hover = action.string;
@@ -1594,8 +1594,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     if (!snippet) {
         return;
     }
-    NSEvent *event = [NSApp currentEvent];
-    const BOOL option = !!(event.modifierFlags & NSEventModifierFlagOption);
+    const BOOL option = !!([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagOption);
     if (option) {
         // Multiple call sites depend on this (open quickly, menu item, and possibly other stuff added later).
         [self.delegate openAdvancedPasteWithText:snippet.value escaping:snippet.escaping];

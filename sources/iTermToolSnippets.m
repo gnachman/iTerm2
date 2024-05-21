@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermActionsModel.h"
+#import "iTermApplication.h"
 #import "iTermEditSnippetWindowController.h"
 #import "iTermSearchField.h"
 #import "iTermSnippetsModel.h"
@@ -203,11 +204,11 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 #pragma mark - Snippets
 
 - (BOOL)optionPressed {
-    return !!([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption);
+    return !!([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagOption);
 }
 
 - (BOOL)shiftPressed {
-    return !!([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift);
+    return !!([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagShift);
 }
 
 - (iTermToolSnippetsAction)preferredAction {

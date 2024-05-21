@@ -366,7 +366,7 @@ static const CGFloat kFilterHeight = 30;
             break;
         case NSReturnTextMovement: {
             // Return key
-            const BOOL shiftPressed = !!([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift);
+            const BOOL shiftPressed = !!([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagShift);
             const BOOL swap = [iTermAdvancedSettingsModel swapFindNextPrevious];
             if  (!shiftPressed ^ swap) {
                 [self.driver searchNext];

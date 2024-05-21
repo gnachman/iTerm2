@@ -4661,7 +4661,7 @@ ITERM_WEAKLY_REFERENCEABLE
     const NSUInteger theMask =
         (NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
     BOOL modifierDown =
-        (([[NSApp currentEvent] it_modifierFlags] & theMask) == NSEventModifierFlagControl);
+        (([[iTermApplication sharedApplication] it_modifierFlags] & theMask) == NSEventModifierFlagControl);
     BOOL snapWidth = !modifierDown;
     BOOL snapHeight = !modifierDown;
     if (sender != [self window]) {
@@ -5779,7 +5779,7 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"Is due to keydown");
             verticalOnly = maxVerticallyPref;
         } else if (maxVerticallyPref ^
-                   (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift) != 0)) {
+                   (([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagShift) != 0)) {
             DLog(@"Not keydown, holding shift, pref is not for vertical only. maximize vertically only");
             verticalOnly = YES;
         }
@@ -7358,7 +7358,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView event:(NSEvent *)event {
-    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption) != 0) {
+    if (([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagOption) != 0) {
         // Pressing option converts drag to window drag.
         return YES;
     }

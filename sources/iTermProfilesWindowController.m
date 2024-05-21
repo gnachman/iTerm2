@@ -27,6 +27,7 @@
 #import "DebugLogging.h"
 #import "ProfileModel.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermSessionLauncher.h"
@@ -318,7 +319,7 @@ typedef enum {
     for (NSString *guid in guids) {
         PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
         Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        if ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift) {
+        if ([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagShift) {
             [self _openBookmarkInTab:NO firstInWindow:NO inPane:NO_PANE];
         } else {
             [iTermSessionLauncher launchBookmark:profile

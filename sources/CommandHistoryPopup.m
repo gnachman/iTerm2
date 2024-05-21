@@ -8,6 +8,7 @@
 
 #import "CommandHistoryPopup.h"
 
+#import "iTermApplication.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermShellHistoryController.h"
 #import "NSArray+iTerm.h"
@@ -123,7 +124,7 @@
 - (void)rowSelected:(id)sender {
     if ([_tableView selectedRow] >= 0) {
         NSString *const string = [self insertableString];
-        const NSEventModifierFlags flags = [[NSApp currentEvent] modifierFlags];
+        const NSEventModifierFlags flags = [[iTermApplication sharedApplication] it_modifierFlags];
         const NSEventModifierFlags mask = NSEventModifierFlagShift | NSEventModifierFlagOption;
         if (!_autocomplete || (flags & mask) == NSEventModifierFlagShift) {
             [self.delegate popupInsertText:string];

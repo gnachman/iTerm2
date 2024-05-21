@@ -9475,7 +9475,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     const NSEventModifierFlags mask = (NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift | NSEventModifierFlagControl);
 
     if (!_screen.terminalSoftAlternateScreenMode &&
-        (event.modifierFlags & mask) == 0 &&
+        ([[iTermApplication sharedApplication] it_modifierFlags] & mask) == 0 &&
         [iTermProfilePreferences boolForKey:KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS inProfile:self.profile]) {
         switch (event.keyCode) {
             case kVK_PageUp:

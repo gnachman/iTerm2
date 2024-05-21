@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
 #import "iTermFindDriver+Internal.h"
 #import "iTermFocusReportingTextField.h"
 #import "iTermSearchFieldCell.h"
@@ -371,7 +372,7 @@ doCommandBySelector:(SEL)commandSelector {
             break;
         case NSReturnTextMovement: {
             // Return key
-            const BOOL shiftPressed = !!([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift);
+            const BOOL shiftPressed = !!([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagShift);
             const BOOL swap = [iTermAdvancedSettingsModel swapFindNextPrevious];
             if  (!shiftPressed ^ swap) {
                 [self.driver searchNext];
