@@ -7073,8 +7073,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     DLog(@"Bounding rect for %@ is %@", _textview.fontTable.asciiFont, NSStringFromRect(rect));
     CGSize asciiOffset = CGSizeZero;
     if (rect.origin.y < 0) {
-        // Iosevka Light is the only font I've found that needs this.
-        // It rides *very* low in its box. The lineheight that PTYFontInfo calculates is actually too small
+        // Iosevka Light and CommitMono Nerd Font Mono are the only fonts I've found that need this.
+        // Each rides *very* low in its box. The lineheight that PTYFontInfo calculates is actually too small
         // to contain the glyphs (it uses a weird algorithm that was discovered "organically").
         // There are gobs of empty pixels at the top, so we shift all its ASCII glyphs a bit so they'll
         // fit. Non-ASCII characters may take multiple parts and so can properly extend beyond their
@@ -7107,8 +7107,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
         glyphSize.width = round(1 + MAX(cellSize.width, NSMaxX(rect)));
         glyphSize.height = round(1 + MAX(cellSize.height, NSMaxY(rect)));
-        glyphSize.width += asciiOffset.width;
-        glyphSize.height += asciiOffset.height;
+        glyphSize.width += asciiOffset.width * 2;
+        glyphSize.height += asciiOffset.height * 2;
     } else {
         glyphSize = cellSize;
     }

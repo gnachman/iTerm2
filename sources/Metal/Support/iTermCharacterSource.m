@@ -818,14 +818,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
             }
 
 #if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
-            CGContextSetRGBStrokeColor(_contexts[iteration], 0, 0, 1, 1);
-            CGContextStrokeRect(_contexts[iteration], CGRectMake(offset.x + positions[0].x,
+            CGContextSetRGBStrokeColor(context, 0, 0, 1, 1);
+            CGContextStrokeRect(context, CGRectMake(offset.x + positions[0].x,
                                                                  offset.y + positions[0].y,
                                                                  _descriptor.glyphSize.width,
                                                                  _descriptor.glyphSize.height));
 
-            CGContextSetRGBStrokeColor(_contexts[iteration], 1, 0, 1, 1);
-            CGContextStrokeRect(_contexts[iteration], CGRectMake(offset.x,
+            CGContextSetRGBStrokeColor(context, 1, 0, 1, 1);
+            CGContextStrokeRect(context, CGRectMake(offset.x,
                                                                  offset.y,
                                                                  _descriptor.glyphSize.width,
                                                                  _descriptor.glyphSize.height));
