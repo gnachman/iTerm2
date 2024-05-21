@@ -2594,6 +2594,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)broadcastScrollToEnd {
+    for (PTYSession *aSession in [self broadcastSessions]) {
+        [aSession.textview scrollEnd];
+        [(PTYScrollView *)[aSession.textview enclosingScrollView] detectUserScroll];
+    }
+}
+
 - (BOOL)broadcastInputToSession:(PTYSession *)session {
     return [_broadcastInputHelper shouldBroadcastToSessionWithID:session.guid];
 }

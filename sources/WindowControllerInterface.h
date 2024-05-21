@@ -337,6 +337,7 @@
 - (void)sendInputToAllSessions:(NSString *)string
                       encoding:(NSStringEncoding)optionalEncoding
                  forceEncoding:(BOOL)forceEncoding;
+- (void)broadcastScrollToEnd;
 
 - (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session;
 

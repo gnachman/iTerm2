@@ -9024,8 +9024,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [[iTermController sharedInstance] previousTerminal];
             break;
         case KEY_ACTION_SCROLL_END:
-            [_textview scrollEnd];
-            [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+            [[_delegate realParentWindow] broadcastScrollToEnd];
             break;
         case KEY_ACTION_SCROLL_HOME:
             [_textview scrollHome];
