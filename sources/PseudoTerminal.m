@@ -12136,6 +12136,8 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset identifier:(nonnull id)identifier {
+    DLog(@"swipeHandlerBeginSessionAtOffset:%@ identifier:%@", @(offset), identifier);
+
     assert(!_swipeContainerView);
     self.swipeIdentifier = identifier;
 
@@ -12179,13 +12181,20 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (void)swipeHandlerSetOffset:(CGFloat)rawOffset forSession:(id)session {
+    DLog(@"setOffset:%@ forSession:%@", @(rawOffset), session);
+
     NSRect frame = _swipeContainerView.frame;
     const CGFloat offset = -[self truncatedSwipeOffset:-rawOffset];
     frame.origin.x = offset;
+
+    DLog(@"_swipeContainerView.frame=%@", NSStringFromRect(frame));
     _swipeContainerView.frame = frame;
+
+    DLog(@"After setting frame:\n%@", [self.window.contentView iterm_recursiveDescription]);
 }
 
 - (void)swipeHandlerEndSession:(id)session atIndex:(NSInteger)index {
+    DLog(@"swipeHandlerEndSession:%@ atIndex:%@", session, @(index));
     self.swipeIdentifier = nil;
     [_contentView.tabView addSubview:self.currentTab.realRootView];
     self.currentTab.realRootView.frame = _contentView.tabView.bounds;

@@ -245,6 +245,7 @@ static const CGFloat gSwipeFriction = 0.1;
     _momentum = delta;
     DLog(@"set momentum to %@ because of drag", @(_momentum));
     DLog(@"After drag: %@", self);
+    DLog(@"swipeHandler=%@", self.swipeHandler);
     [self.swipeHandler swipeHandlerSetOffset:self.squashedOffset forSession:self.userInfo];
 }
 
