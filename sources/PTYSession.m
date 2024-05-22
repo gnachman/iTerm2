@@ -10281,6 +10281,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (void)textViewDidBecomeFirstResponder {
+    DLog(@"textViewDidBecomeFirstResponder for %@", self);
     [_delegate setActiveSession:self];
     [_view setNeedsDisplay:YES];
     [_view.findDriver owningViewDidBecomeFirstResponder];
@@ -15395,6 +15396,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)sessionViewMouseEntered:(NSEvent *)event {
+    DLog(@"sessionViewMouseEntered");
     [_textview mouseEntered:event];
     [_textview requestDelegateRedraw];
     [_textview updateCursor:event];

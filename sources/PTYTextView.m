@@ -558,6 +558,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (BOOL)becomeFirstResponder {
+    DLog(@"%@", [NSThread callStackSymbols]);
     if (!self.it_shouldIgnoreFirstResponderChanges) {
         [_mouseHandler didBecomeFirstResponder];
         [_delegate textViewDidBecomeFirstResponder];
@@ -1199,7 +1200,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         }
     }
     [self updateUnderlinedURLs:event];
-    if ([self hitTest:[self convertPoint:event.locationInWindow fromView:nil]] == nil) {
+    NSScrollView *scrollView = self.enclosingScrollView;
+    if ([scrollView hitTest:[scrollView convertPoint:event.locationInWindow fromView:nil]] == nil) {
+        DLog(@"hitTest at %@ in view (%@ in window) gives nil", NSStringFromPoint([self convertPoint:event.locationInWindow fromView:nil]),
+              NSStringFromPoint(event.locationInWindow));
         DLog(@"Event %@ at window coord %@ failed hit test for view with window coords %@",
              event, NSStringFromPoint(event.locationInWindow), NSStringFromRect([self convertRect:self.bounds toView:nil]));
         return;
@@ -1207,6 +1211,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
         [[self window] alphaValue] > 0 &&
         ![NSApp modalWindow]) {
+        DLog(@"Taking FFM path in PTYTextView.mouseEntered");
         // Some windows automatically close when they lose key status and are
         // incompatible with FFM. Check if the key window or its controller implements
         // disableFocusFollowsMouse and if it returns YES do nothing.
@@ -1219,16 +1224,24 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         if (!NSEqualPoints(_mouseLocationToRefuseFirstResponderAt, [NSEvent mouseLocation])) {
             DLog(@"%p Mouse location is %@, refusal point is %@", self, NSStringFromPoint([NSEvent mouseLocation]), NSStringFromPoint(_mouseLocationToRefuseFirstResponderAt));
             if ([iTermAdvancedSettingsModel stealKeyFocus]) {
+                DLog(@"steal");
                 if (![obj disableFocusFollowsMouse]) {
+                    DLog(@"makeKeyWindow");
                     [[self window] makeKeyWindow];
                 }
             } else {
                 if ([NSApp isActive] && ![obj disableFocusFollowsMouse]) {
+                    DLog(@"makeKeyWIndow without stealing");
                     [[self window] makeKeyWindow];
+                } else {
+                    DLog(@"Not making key window. NSApp.isActive=%@ obj.disableFocusFollowsMouse=%@", @(NSApp.isActive), @([obj disableFocusFollowsMouse]));
                 }
             }
             if ([self isInKeyWindow]) {
+                DLog(@"In key window so call textViewDidBecomeFirstResponder");
                 [_delegate textViewDidBecomeFirstResponder];
+            } else {
+                DLog(@"Not in key window");
             }
         } else {
             DLog(@"%p Refusing first responder on enter", self);
