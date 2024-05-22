@@ -32,20 +32,21 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "dispatchToPQ2<<",
 
         "cpu<",
-
         "mainQueue<<",
+
         "ExtractFromApp<<<",
         "GetDrawable<<<",
         "GetRenderPassD<<<",
         "dispatchToPQ<<<",
 
         "privateQueue<<",
+
         "BuildRowData<<<",
         "BuildIntermed<<<",
         "BuildTemp<<<",
         "UpdateRenderers<<<",
-
         "CreateTransient<<<",
+
         "badge<<<<",
         "backgroundImage<<<<",
         "backgroundColor<<<<",
@@ -68,8 +69,8 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "buttons<<<<",
 
         "PopulateTrans<<<",
-        "dispatchToMain<<<",
 
+        "dispatchToMain<<<",
         "EnqueueDrawCalls<<<",
         "Create1stRE<<<<",
         "DrawMargin<<<<",
@@ -84,11 +85,13 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "DrawCrGuide<<<<",
         "DrawOSCLBgPre<<<<",
         "DrawOSCLBg<<<<",
+        "DrawOSCLBgClr<<<<",
         "DrawOSCLFg<<<<",
         "DrawHighlight<<<<",
         "DrawImage<<<<",
         "DrawButtons<<<<",
         "EndEncodingInt<<<<",
+
         "Create2ndRE<<<<",
         "enqueueCopyBg<<<<",
         "enqueueDrawText<<<<",
@@ -96,6 +99,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "DrawTimestamps<<<<",
         "DrawFlash<<<<",
         "DrawCorners<<<<",
+
         "Create3rdRE<<<<",
         "SyncGetDrawable<<<<",
         "enqueueCopyToDr<<<<",

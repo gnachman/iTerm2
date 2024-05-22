@@ -113,6 +113,7 @@ typedef struct {
     iTermOffscreenCommandLineBackgroundRenderer *_offscreenCommandLineBackgroundRenderer;
     iTermTextRenderer *_textRenderer;
     iTermOffscreenCommandLineTextRenderer *_offscreenCommandLineTextRenderer;
+    iTermOffscreenCommandLineBackgroundColorRenderer *_offscreenCommandLineBackgroundColorRenderer;
     iTermMarkRenderer *_arrowStyleMarkRenderer;
     iTermLineStyleMarkRenderer *_lineStyleMarkRenderer;
     iTermBadgeRenderer *_badgeRenderer;
@@ -196,6 +197,7 @@ typedef struct {
         _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:device];
         _textRenderer = [[iTermTextRenderer alloc] initWithDevice:device];
         _offscreenCommandLineTextRenderer = [[iTermOffscreenCommandLineTextRenderer alloc] initWithDevice:device];
+        _offscreenCommandLineBackgroundColorRenderer = [[iTermOffscreenCommandLineBackgroundColorRenderer alloc] initWithDevice:device];
         _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:device];
         _offscreenCommandLineBackgroundRenderer = [[iTermOffscreenCommandLineBackgroundRenderer alloc] initWithDevice:device];
         _arrowStyleMarkRenderer = [[iTermMarkRenderer alloc] initWithDevice:device];
@@ -992,6 +994,9 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     }
 
 
+    [self drawCellRenderer:_offscreenCommandLineBackgroundColorRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineBgColors];
     [self drawCellRenderer:_offscreenCommandLineTextRenderer
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineFg];
@@ -1415,12 +1420,27 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         [textState willDraw];
     }
 
+    const float verticalOffset = frameData.scale * (frameData.vmargin - iTermOffscreenCommandLineVerticalPadding + 1);
     if (!_offscreenCommandLineTextRenderer.rendererDisabled) {
-        _offscreenCommandLineTextRenderer.verticalOffset = frameData.scale * (frameData.vmargin - iTermOffscreenCommandLineVerticalPadding + 1);
+        _offscreenCommandLineTextRenderer.verticalOffset = verticalOffset;
         if (frameData.perFrameState.haveOffscreenCommandLine) {
             textState = [self _populateTextRenderer:_offscreenCommandLineTextRenderer withFrameData:frameData drawOffscreenCommandLine:@YES];
             [textState willDraw];
         }
+    }
+    if (!_offscreenCommandLineBackgroundColorRenderer.rendererDisabled &&
+        frameData.perFrameState.haveOffscreenCommandLine) {
+        iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_offscreenCommandLineBackgroundColorRenderer];
+        backgroundState.verticalOffset = verticalOffset;
+        backgroundState.defaultBackgroundColor = frameData.perFrameState.offscreenCommandLineBackgroundColor;
+
+        const float verticalOffset = frameData.scale * (frameData.vmargin - iTermOffscreenCommandLineVerticalPadding + 1);
+
+        [backgroundState setColorRLEs:frameData.rows[0].backgroundColorRLEData.mutableBytes
+                                count:frameData.rows[0].numberOfBackgroundRLEs
+                                  row:0
+                        repeatingRows:1];
+        backgroundState.suppressedBottomHeight = frameData.perFrameState.pointsOnBottomToSuppressDrawing;
     }
 }
 
@@ -2154,6 +2174,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 - (NSArray<id<iTermMetalCellRenderer>> *)cellRenderers {
     return [@[ _marginRenderer,
               _textRenderer,
+               _offscreenCommandLineBackgroundColorRenderer,
               _offscreenCommandLineTextRenderer,
               _backgroundColorRenderer,
               _broadcastStripesRenderer,

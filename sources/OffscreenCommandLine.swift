@@ -30,6 +30,10 @@ struct OffscreenCommandLine {
         let bufferPointer = UnsafeMutableBufferPointer<screen_char_t>(start: mutableData.mutableBytes.assumingMemoryBound(to: screen_char_t.self),
                                                                       count: Int(characters.length))
         for i in 0..<characters.length {
+            if bufferPointer[Int(i)].backgroundColorMode != ColorModeAlternate.rawValue ||
+                bufferPointer[Int(i)].backgroundColor != ALTSEM_DEFAULT {
+                continue
+            }
             bufferPointer[Int(i)].backgroundColorMode = UInt32(ColorMode24bit.rawValue)
             bufferPointer[Int(i)].backgroundColor = clamp(red, min: 0, max: 255)
             bufferPointer[Int(i)].bgGreen = clamp(green, min: 0, max: 255)

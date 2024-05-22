@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 // default bg.
 @property (nonatomic) CGFloat suppressedBottomHeight;
 
+// Shifts draws up by this many pixels.
+@property (nonatomic) float verticalOffset;
+
 - (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
                count:(size_t)count
                  row:(int)row
@@ -26,6 +29,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
+@end
+
+@interface iTermOffscreenCommandLineBackgroundColorRenderer : iTermBackgroundColorRenderer
 @end
 
 NS_ASSUME_NONNULL_END

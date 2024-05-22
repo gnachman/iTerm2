@@ -3358,6 +3358,13 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                                        y:row * _cellSize.height
                                       nonSelectedCommand:NO];
 
+    const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    [self drawBackgroundForLine:0
+                            atY:row * _cellSize.height + iTermOffscreenCommandLineVerticalPadding - vmargin - 1
+                           runs:backgroundRuns.array
+                 equivalentRows:1
+                  virtualOffset:virtualOffset];
+
     if ([self textAppearanceDependsOnBackgroundColor]) {
         [self drawForegroundForBackgroundRunArrays:@[backgroundRuns]
                           drawOffscreenCommandLine:YES

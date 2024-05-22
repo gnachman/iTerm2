@@ -27,7 +27,7 @@
         piu.runLength = rles[i].count;
         piu.numRows = repeatingRows;
         piu.offset = simd_make_float2(cellSize.x * (float)rles[i].origin,
-                                      cellSize.y * (height - row - repeatingRows));
+                                      _verticalOffset + cellSize.y * (height - row - repeatingRows));
     }
 }
 
@@ -150,6 +150,9 @@
     id<MTLBuffer> infoBuffer = [self infoBufferForTransientState:tState];
     const NSUInteger suppressedPx = static_cast<NSUInteger>(tState.suppressedBottomHeight * tState.cellConfiguration.scale - tState.margins.top);
     [tState enumerateSegments:^(const iTermBackgroundColorPIU *pius, size_t numberOfInstances) {
+        if (numberOfInstances == 0) {
+            return;
+        }
         id<MTLBuffer> piuBuffer = [self->_piuPool requestBufferFromContext:tState.poolContext
                                                                       size:numberOfInstances * sizeof(*pius)
                                                                      bytes:pius];
@@ -274,3 +277,7 @@
 }
 
 @end
+
+@implementation iTermOffscreenCommandLineBackgroundColorRenderer
+@end
+
