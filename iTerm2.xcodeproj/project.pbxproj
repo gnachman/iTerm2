@@ -3364,6 +3364,7 @@
 		A6DC98A628A82608009D21C0 /* Window.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DC98A028A82608009D21C0 /* Window.png */; };
 		A6DCDD202560B410004EA8A1 /* NSAttributedString+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */; };
 		A6DCDD212560B410004EA8A1 /* NSAttributedString+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */; };
+		A6DCE3F22BFE8CB8005586F5 /* WebRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DCE3F12BFE8CB8005586F5 /* WebRequest.swift */; };
 		A6DEB2EB267BBE6C00192994 /* write_only_profile_prologue.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6DEB2EA267BBE6C00192994 /* write_only_profile_prologue.txt */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6DF91B52477B38700FB9F42 /* iTermMissionControlHacks.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF91B32477B38700FB9F42 /* iTermMissionControlHacks.h */; };
@@ -7183,6 +7184,7 @@
 		A6DC98A028A82608009D21C0 /* Window.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Window.png; path = images/Window.png; sourceTree = "<group>"; };
 		A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAttributedString+PSM.h"; sourceTree = "<group>"; };
 		A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAttributedString+PSM.m"; sourceTree = "<group>"; };
+		A6DCE3F12BFE8CB8005586F5 /* WebRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = WebRequest.swift; path = iTermAI/iTermAIPlugin/WebRequest.swift; sourceTree = SOURCE_ROOT; };
 		A6DDA88425B376D200AA55EE /* iTermActivityInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermActivityInfo.h; sourceTree = "<group>"; };
 		A6DEB2D5267BB8A600192994 /* profile_prologue.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = profile_prologue.txt; sourceTree = "<group>"; };
 		A6DEB2DF267BB95100192994 /* partial_profile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = partial_profile.txt; sourceTree = "<group>"; };
@@ -9388,6 +9390,7 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A6DCE3F12BFE8CB8005586F5 /* WebRequest.swift */,
 				A66C818B294E755C00452A11 /* AITerm.swift */,
 				A66C8187294E751800452A11 /* AITerm.xib */,
 			);
@@ -16174,6 +16177,7 @@
 				A631FC9220EDDBC600EB824F /* iTermFindDriver.m in Sources */,
 				A6A73D4127C7FAED002E4CCA /* NSFileManager+CommonAdditions.m in Sources */,
 				A61A85BA24FC260700B03880 /* iTermTextViewContextMenuHelper.m in Sources */,
+				A6DCE3F22BFE8CB8005586F5 /* WebRequest.swift in Sources */,
 				A645DD4727D5DA03003947CE /* PasteboardReporter.swift in Sources */,
 				A6EC8099282EBFC900493544 /* NSDictionary+Conductor.swift in Sources */,
 				A60C03682089897400FE2F1F /* iTermScriptConsole.m in Sources */,

@@ -182,6 +182,9 @@ enum {
     IBOutlet NSButton *_resetAIPrompt;
 
     IBOutlet NSButton *_enableAI;
+    IBOutlet NSTextField *_pluginStatus;
+    IBOutlet NSButton *_installPluginButton;
+    BOOL _pluginOK;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -692,6 +695,7 @@ enum {
     };
     PreferenceInfo *enableAIInfo = info;
 
+    [self validatePlugin];
     [self updateEnabledState];
     [self commitControls];
     [self updateValueForInfo:allowSendingClipboardInfo];
@@ -699,13 +703,44 @@ enum {
     [self updateAIEnabled];
 }
 
+- (void)validatePlugin {
+    DLog(@"validatePlugin");
+    _pluginStatus.stringValue = @"Checking plugin status…";
+    __weak __typeof(self) weakSelf = self;
+    [iTermAITermGatekeeper validatePlugin:^(NSString * _Nullable problem) {
+        [weakSelf setPluginProblem:problem];
+    }];
+}
+
+- (void)setPluginProblem:(NSString *)problem {
+    DLog(@"problem=%@", problem);
+    if (problem) {
+        _pluginStatus.stringValue = problem;
+        _installPluginButton.enabled = YES;
+        _pluginOK = NO;
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf validatePlugin];
+        });
+    } else {
+        _pluginStatus.stringValue = @"Plugin installed and working ✅";
+        _installPluginButton.enabled = NO;
+        _pluginOK = YES;
+    }
+    [self updateAIEnabled];
+}
+
+- (void)viewDidAppear {
+    NSLog(@"viewDidAppear");
+}
 - (void)updateAIEnabled {
-    const BOOL allowed = [iTermAITermGatekeeper allowed];
+    const BOOL allowed = _pluginOK && [iTermAITermGatekeeper allowed];
     _openAIAPIKey.enabled = allowed;
     _aiPrompt.enabled = allowed;
     _aiModel.enabled = allowed;
     _aiTokenLimit.enabled = allowed;
     _resetAIPrompt.enabled = allowed;
+    _enableAI.enabled = _pluginOK;
 }
 
 - (void)customScriptsFolderDidChange {
@@ -816,6 +851,10 @@ enum {
 }
 
 #pragma mark - Actions
+
+- (IBAction)installPlugin:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/downloads/ai-plugin"]];
+}
 
 - (IBAction)exportAllSettingsAndData:(id)sender {
     [self showMessage:[iTerm2ImportExport exportAll] title:@"Problem Exporting"];

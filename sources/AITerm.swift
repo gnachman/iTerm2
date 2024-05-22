@@ -1,3 +1,5 @@
+import Security
+
 protocol AITermControllerDelegate: AnyObject {
     func aitermControllerWillSendRequest(_ sender: AITermController)
     func aitermController(_ sender: AITermController, offerChoices: [String])
@@ -10,10 +12,255 @@ fileprivate func openAIModelIsLegacy(model: String) -> Bool {
     return !model.hasPrefix("gpt-")
 }
 
+class iTermAIClient {
+    let requiredVersion = "1.0"
+    private let executionQueue = DispatchQueue(label: "com.googlecode.iterm2.ai-execution")
+    private let outputQueue = DispatchQueue(label: "com.googlecode.iterm2.ai-output")
+    private let bundleID = "com.googlecode.iterm2.iTermAI"
+    static let instance = iTermAIClient()
+
+    var available: Bool {
+        if NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) == nil {
+            return false
+        }
+        return true
+    }
+
+    private func certificatePinningCheck() -> Bool {
+        DLog("certificatePinningCheck")
+        guard let bundleURL = self.bundleURL else {
+            DLog("No bundle URL")
+            return false
+        }
+        var staticCode: SecStaticCode?
+        let status = SecStaticCodeCreateWithPath(bundleURL as CFURL,
+                                                 [],
+                                                 &staticCode)
+        guard status == errSecSuccess else {
+            DLog("SecStaticCodeCreateWithPath failed with \(status)")
+            return false
+        }
+        var signingInfo: CFDictionary?
+        let infoStatus = SecCodeCopySigningInformation(staticCode!, SecCSFlags(rawValue: kSecCSSigningInformation), &signingInfo)
+        guard infoStatus == errSecSuccess, let infoDict = signingInfo as? [String: Any] else {
+            DLog("SecCodeCopySigningInformation failed with \(infoStatus)")
+            return false
+        }
+
+        var commonName: CFString?
+        if let certChain = infoDict[kSecCodeInfoCertificates as String] as? [SecCertificate],
+           SecCertificateCopyCommonName(certChain[0], &commonName) == errSecSuccess,
+           let commonName {
+            DLog("cn is \(commonName)")
+            let regexPattern = "^Developer ID Application: GEORGE NACHMAN \\(([A-Z0-9]*)\\)$"
+            return matchesRegex(string: commonName as String, pattern: regexPattern)
+        }
+        DLog("Failed to get common name")
+        return false
+    }
+
+    private func matchesRegex(string: String, pattern: String) -> Bool {
+        let regex = try! NSRegularExpression(pattern: pattern, options: [])
+        let range = NSRange(location: 0, length: string.utf16.count)
+        return regex.firstMatch(in: string, options: [], range: range) != nil
+    }
+
+    func validateSync() -> String? {
+        DLog("validateSync")
+        let (status, data) = runSync(arg: "v", stdin: Data())
+        return problem(status: status, data: data ?? Data())
+    }
+
+    func validate(_ completion: @escaping (String?) -> ()) {
+        DLog("validate")
+        run(arg: "v", stdin: Data()) { status, data in
+            let problem = self.problem(status: status, data: data)
+            DLog("problem=\(String(describing: problem))")
+            DispatchQueue.main.async {
+                completion(problem)
+            }
+        }
+    }
+
+    private func problem(status: AIPluginStatus, data: Data) -> String? {
+        DLog("status=\(status), data=\(data.stringOrHex)")
+        switch status {
+        case .badOutput:
+            return "Plugin malfunctioning"
+        case .executionError:
+            return "Unable to execute plugin"
+        case .pluginNotFound:
+            return "Plugin not found"
+        case .status(let status):
+            if status != 0 {
+                return "Failed to check plugin version"
+            }
+            guard let string = String(data: data, encoding: .utf8),
+                  let decimal = Decimal(string: string) else {
+                return "Plugin produced invalid output"
+            }
+            if decimal != Decimal(string: iTermAIClient.instance.requiredVersion)! {
+                return "Wrong version of plugin installed"
+            }
+            if iTermAIClient.instance.certificatePinningCheck() {
+                return nil
+            } else {
+                return "The plugin’s code signature is incorrect"
+            }
+        }
+    }
+
+    func version() -> Decimal? {
+        DLog("version")
+        switch runSync(arg: "v", stdin: Data()) {
+        case (.status(0), let data):
+            if let data, let string = String(data: data, encoding: .utf8) {
+                return Decimal(string: string)
+            }
+            return nil
+        default:
+            return nil
+        }
+    }
+
+    func runSync(arg: String, stdin: Data) -> (AIPluginStatus, Data?) {
+        DLog("runSync(\(arg), \(stdin.stringOrHex))")
+        var resultStatus: AIPluginStatus?
+        var resultData: Data?
+
+        let sema = DispatchSemaphore(value: 0)
+        run(arg: arg, stdin: stdin) { status, data in
+            resultStatus = status
+            resultData = data
+            DLog("signal")
+            sema.signal()
+        }
+        sema.wait()
+
+        DLog("return")
+        return (resultStatus!, resultData)
+    }
+
+    var bundleURL: URL? {
+        return NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+    }
+
+    func run(arg: String, stdin: Data, completion: @escaping (AIPluginStatus, Data) -> ()) {
+        DLog("run(\(arg), \(stdin.stringOrHex))")
+        // Find the application bundle
+        guard let bundleURL = self.bundleURL else {
+            DLog("no bundle")
+            completion(.pluginNotFound, "Application bundle not found.".data(using: .utf8)!)
+            return
+        }
+
+        // Construct the path to the executable
+        let executableURL = bundleURL.appendingPathComponent("Contents/MacOS/iTermAIPlugin")
+
+        // Prepare the process
+        let process = Process()
+        process.executableURL = executableURL
+        process.arguments = [arg]
+
+        // Handle stdin
+        let inputPipe = Pipe()
+        process.standardInput = inputPipe
+
+        // Handle stdout
+        let outputPipe = Pipe()
+        process.standardOutput = outputPipe
+
+        // Setup a queue to handle output data to prevent race conditions
+        var outputData = Data()
+        let outputQueue = self.outputQueue
+        
+        outputPipe.fileHandleForReading.readabilityHandler = { fileHandle in
+            let newData = fileHandle.availableData
+            DLog("read \(newData.stringOrHex)")
+            if !newData.isEmpty {
+                outputQueue.async {
+                    outputData.append(newData)
+                }
+            }
+        }
+
+        process.terminationHandler = { finishedProcess in
+            DLog("terminated with \(finishedProcess.terminationStatus)")
+            // Ensure we're also on the output queue to finalize outputData safely
+            outputQueue.async {
+                // Close the output pipe's readability handler
+                outputPipe.fileHandleForReading.readabilityHandler = nil
+
+                // Call completion handler
+                completion(.status(Int(finishedProcess.terminationStatus)), outputData)
+            }
+        }
+
+        executionQueue.async {
+            do {
+                DLog("Call run")
+                try process.run()
+                DLog("call write")
+                inputPipe.fileHandleForWriting.write(stdin)
+                DLog("call closeFile")
+                inputPipe.fileHandleForWriting.closeFile()
+            } catch {
+                DLog("Error \(error)")
+                // Handle errors: also switch to the output queue to clean up
+                outputQueue.async {
+                    outputPipe.fileHandleForReading.readabilityHandler = nil
+                    completion(.executionError,
+                               "Failed to start the process: \(error.localizedDescription)".data(using: .utf8)!)
+                }
+            }
+        }
+    }
+
+    func runiTermAIPlugin(withData data: Data, completion: @escaping (AIPluginStatus, Data?) -> Void) {
+        DLog("runiTermAIPlugin data=\(data.stringOrHex)")
+        run(arg: "request", stdin: data) { status, outputData in
+            DispatchQueue.main.async {
+                switch status {
+                case .status(let terminationStatus):
+                    let decoder = JSONDecoder()
+                    do {
+                        let response = try decoder.decode(WebResponse.self, from: outputData)
+                        if let error = response.error {
+                            DLog("response has error \(error)")
+                            completion(status, error.data(using: .utf8))
+                        } else {
+                            DLog("response is ok")
+                            completion(status, response.data)
+                        }
+                    } catch {
+                        if terminationStatus == 0 {
+                            DLog("can't parse response but status is 0. \(outputData.stringOrHex)")
+                            completion(.badOutput, outputData)
+                        } else {
+                            DLog("status=\(status) \(outputData.stringOrHex)")
+                            completion(status, outputData)
+                        }
+                    }
+                case .badOutput, .executionError, .pluginNotFound:
+                    DLog("fail \(status)")
+                    completion(status, outputData)
+                }
+            }
+        }
+    }
+}
+
 @objc
 class iTermAITermGatekeeper: NSObject {
     @objc
+    static func validatePlugin(_ completion: @escaping (String?) -> ()) {
+        DLog("validatePlugin")
+        iTermAIClient.instance.validate(completion)
+    }
+
+    @objc
     static func check() -> Bool {
+        DLog("check")
         if !iTermAdvancedSettingsModel.generativeAIAllowed() {
             iTermWarning.show(withTitle: "Generative AI features have been disabled. Check with your system administrator.",
                               actions: ["OK"],
@@ -37,11 +284,49 @@ class iTermAITermGatekeeper: NSObject {
             }
             return false
         }
+        let version = iTermAIClient.instance.version()
+        if let bundleURL = iTermAIClient.instance.bundleURL, let version, version != Decimal(string: iTermAIClient.instance.requiredVersion) {
+            iTermWarning.show(withTitle: "The version of the AI plugin at \(bundleURL.path) is incorrect. This version of iTerm2 expects \(iTermAIClient.instance.requiredVersion) but \(version) was found.",
+                              actions: ["OK"],
+                              accessory: nil,
+                              identifier: nil,
+                              silenceable: .kiTermWarningTypePersistent,
+                              heading: "Feature Unavailable",
+                              window: nil)
+            return false
+        }
+        if version == nil {
+            let selection = iTermWarning.show(withTitle: "The AI plugin could not be found.",
+                                              actions: ["Install", "Cancel"],
+                                              accessory: nil,
+                                              identifier: nil,
+                                              silenceable: .kiTermWarningTypePersistent,
+                                              heading: "Feature Unavailable",
+                                              window: nil)
+            if selection == .kiTermWarningSelection0 {
+                NSWorkspace.shared.open(URL(string: "https://iterm2.com/downloads/ai-plugin")!)
+            }
+            return false
+        }
+        if let problem = iTermAIClient.instance.validateSync() {
+            let selection = iTermWarning.show(withTitle: "The AI plugin's code signature was incorrect. Remove and resinstall it.",
+                                              actions: ["Install", "Cancel"],
+                                              accessory: nil,
+                                              identifier: nil,
+                                              silenceable: .kiTermWarningTypePersistent,
+                                              heading: "Feature Unavailable",
+                                              window: nil)
+            if selection == .kiTermWarningSelection0 {
+                NSWorkspace.shared.open(URL(string: "https://iterm2.com/downloads/ai-plugin")!)
+            }
+            return false
+        }
         return true
     }
 
     @objc
     static var allowed: Bool {
+        DLog("allowed")
         return iTermAdvancedSettingsModel.generativeAIAllowed() && SecureUserDefaults.instance.enableAI.value
     }
 }
@@ -264,6 +549,13 @@ struct Function<T: Codable>: AnyFunction {
     }
 }
 
+enum AIPluginStatus {
+    case pluginNotFound
+    case executionError
+    case status(Int)
+    case badOutput
+}
+
 class AITermController {
     var representedObject: String?
     private(set) fileprivate var functions = [AnyFunction]()
@@ -303,19 +595,22 @@ class AITermController {
             switch self {
             case .begin: return "begin"
             case .error(reason: let reason): return "error(\(reason))"
-            case .apiResponse(data: let data, response: _, error: let error):
-                if let error {
-                    return "apiResponse(error=\(error))"
+            case let .apiResponse(status: status, data: data):
+                switch status {
+                case .pluginNotFound:
+                    return "apiResponse(plugin not found)"
+                case .executionError:
+                    return "apiResponse(execution error: \(data.stringOrHex))"
+                case .status(let status):
+                    return "apiResponse(status=\(status): \(data.stringOrHex))"
+                case .badOutput:
+                    return "apiResponse(badOutput: \((data ?? Data()).stringOrHex))"
                 }
-                if let data {
-                    return "apiResponse(data=\(data.stringOrHex))"
-                }
-                return "apiResponse(neither data nor error)"
             }
         }
         case begin
         case error(reason: String)
-        case apiResponse(data: Data?, response: URLResponse?, error: Error?)
+        case apiResponse(status: AIPluginStatus, data: Data?)
     }
 
     private var state: State {
@@ -401,17 +696,35 @@ class AITermController {
             switch event {
             case .begin:
                 fatalError()
-            case .apiResponse(data: let data, response: _, error: let error):
-                DLog("Unexpected event \(event) in \(state)")
-                if let error {
-                    handle(event: .error(reason: "HTTP error from server: \(error)"), legacy: false)
-                    return
+            case .apiResponse(status: let status, data: let data):
+                DLog("Got event \(event) in \(state)")
+                switch status {
+                case .pluginNotFound:
+                    handle(event: .error(reason: "The iTermAI plugin was not found"), legacy: false)
+                case .executionError:
+                    handle(event: .error(reason: "There was a program running the iTermAI plugin: \(data.stringOrHex)"),
+                           legacy: false)
+                case .status(let status):
+                    if status == 0 {
+                        parseResponse(data: data ?? Data(), legacy: legacy)
+                        return
+                    }
+                    if let data {
+                        handle(event: .error(reason: "Error code \(status) from iTermAI plugin: \(data.stringOrHex)"),
+                               legacy: false)
+                    } else {
+                        handle(event: .error(reason: "Error code \(status) from iTermAI plugin"),
+                               legacy: false)
+                    }
+                case .badOutput:
+                    if let data {
+                        handle(event: .error(reason: "Invalid output from iTermAI plugin: \(data.stringOrHex)"),
+                               legacy: false)
+                    } else {
+                        handle(event: .error(reason: "Invalid output from iTermAI plugin"),
+                               legacy: false)
+                    }
                 }
-                guard let data else {
-                    handle(event: .error(reason: "Neither error nor data. This shouldn't happen."), legacy: false)
-                    return
-                }
-                parseResponse(data: data, legacy: legacy)
             case .error(reason: let reason):
                 DLog("error: \(reason)")
                 state = .ground
@@ -573,31 +886,29 @@ class AITermController {
         let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-3.5-turbo"
         return url(forModel: model)
     }
+
+    private let client = iTermAIClient()
+
     private func makeAPICall(messages: [Message], registration: Registration) {
         let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-3.5-turbo"
         guard let url = url(forModel: model) else {
             handle(event: .error(reason: "Invalid URL"), legacy: false)
             return
         }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        let headers = [("Content-Type", "application/json"),
-                       ("Authorization", "Bearer " + registration.apiKey)]
-        for (key, value) in headers {
-            request.addValue(value, forHTTPHeaderField: key)
-        }
-
-        let bodyData = requestBody(model: model, messages: messages)
-        request.httpBody = bodyData
+        let headers = ["Content-Type": "application/json",
+                       "Authorization": "Bearer " + registration.apiKey]
+        let request = WebRequest(headers: headers,
+                                 method: "POST",
+                                 body: requestBody(model: model, messages: messages),
+                                 url: url.absoluteString)
         let legacy = shouldUseLegacyAPI(model)
-        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+        client.runiTermAIPlugin(withData: try! JSONEncoder().encode(request)) { [weak self] status, data in
             DispatchQueue.main.async {
-                self?.handle(event: .apiResponse(data: data, response: response, error: error),
+                self?.handle(event: .apiResponse(status: status, data: data),
                              legacy: legacy)
             }
         }
         state = .querySent(messages: messages)
-        task.resume()
     }
 
     struct ModernResponse: Codable {
