@@ -180,6 +180,8 @@ enum {
     IBOutlet NSTextField *_aiModelLabel;
     IBOutlet NSTextField *_aiTokenLimitLabel;
     IBOutlet NSButton *_resetAIPrompt;
+
+    IBOutlet NSButton *_enableAI;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -220,43 +222,43 @@ enum {
             relatedView:_openWindowsAtStartupLabel
                    type:kPreferenceInfoTypeCheckbox
          settingChanged:^(id sender) {
-             __strong __typeof(weakSelf) strongSelf = weakSelf;
-             if (!strongSelf) {
-                 return;
-             }
-             switch ([strongSelf->_openWindowsAtStartup selectedTag]) {
-                 case kUseSystemWindowRestorationSettingTag:
-                     [strongSelf setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
-                     [strongSelf setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
-                     break;
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        switch ([strongSelf->_openWindowsAtStartup selectedTag]) {
+            case kUseSystemWindowRestorationSettingTag:
+                [strongSelf setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
+                [strongSelf setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                break;
 
-                 case kOpenDefaultWindowArrangementTag:
-                     [strongSelf setBool:YES forKey:kPreferenceKeyOpenArrangementAtStartup];
-                     [strongSelf setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
-                     break;
+            case kOpenDefaultWindowArrangementTag:
+                [strongSelf setBool:YES forKey:kPreferenceKeyOpenArrangementAtStartup];
+                [strongSelf setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                break;
 
-                 case kDontOpenAnyWindowsTag:
-                     [strongSelf setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
-                     [strongSelf setBool:YES forKey:kPreferenceKeyOpenNoWindowsAtStartup];
-                     break;
-             }
-             [strongSelf updateEnabledState];
-         } update:^BOOL{
-             __strong __typeof(weakSelf) strongSelf = weakSelf;
-             if (!strongSelf) {
-                 return NO;
-             }
-             if ([strongSelf boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
-                 [strongSelf->_openWindowsAtStartup selectItemWithTag:kDontOpenAnyWindowsTag];
-             } else if ([WindowArrangements count] &&
-                        [self boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
-                 [strongSelf->_openWindowsAtStartup selectItemWithTag:kOpenDefaultWindowArrangementTag];
-             } else {
-                 [strongSelf->_openWindowsAtStartup selectItemWithTag:kUseSystemWindowRestorationSettingTag];
-             }
-             [strongSelf updateEnabledState];
-             return YES;
-         }];
+            case kDontOpenAnyWindowsTag:
+                [strongSelf setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
+                [strongSelf setBool:YES forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                break;
+        }
+        [strongSelf updateEnabledState];
+    } update:^BOOL{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return NO;
+        }
+        if ([strongSelf boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+            [strongSelf->_openWindowsAtStartup selectItemWithTag:kDontOpenAnyWindowsTag];
+        } else if ([WindowArrangements count] &&
+                   [self boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+            [strongSelf->_openWindowsAtStartup selectItemWithTag:kOpenDefaultWindowArrangementTag];
+        } else {
+            [strongSelf->_openWindowsAtStartup selectItemWithTag:kUseSystemWindowRestorationSettingTag];
+        }
+        [strongSelf updateEnabledState];
+        return YES;
+    }];
     [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
 
     [self defineControl:_restoreWindowsToSameSpaces
@@ -329,13 +331,13 @@ enum {
     };
     [iTermPreferenceDidChangeNotification subscribe:self
                                               block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
-                                                  if ([notification.key isEqualToString:kPreferenceKeyEnableAPIServer]) {
-                                                      __typeof(self) strongSelf = weakSelf;
-                                                      if (strongSelf) {
-                                                          strongSelf->_enableAPI.state = NSControlStateValueOn;
-                                                      }
-                                                  }
-                                              }];
+        if ([notification.key isEqualToString:kPreferenceKeyEnableAPIServer]) {
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                strongSelf->_enableAPI.state = NSControlStateValueOn;
+            }
+        }
+    }];
 
     info = [self defineControl:_apiPermission
                            key:kPreferenceKeyAPIAuthentication
@@ -353,7 +355,7 @@ enum {
     info.shouldBeEnabled = ^BOOL{
         return [weakSelf boolForKey:kPreferenceKeyEnableAPIServer];
     };
-    
+
     _advancedGPUWindowController = [[iTermAdvancedGPUSettingsWindowController alloc] initWithWindowNibName:@"iTermAdvancedGPUSettingsWindowController"];
     [_advancedGPUWindowController window];
     _advancedGPUWindowController.viewController.disableWhenDisconnected.target = self;
@@ -677,17 +679,33 @@ enum {
         [weakSelf updateValueForInfo:tokenLimitInfo];
     };
 
+    info = [self defineControl:_enableAI
+                           key:kPreferenceKeyEnableAI
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.syntheticGetter = ^id{
+        return @(iTermSecureUserDefaults.instance.enableAI);
+    };
+    info.syntheticSetter = ^(id newValue) {
+        iTermSecureUserDefaults.instance.enableAI = [newValue boolValue];
+        [weakSelf updateAIEnabled];
+    };
+    PreferenceInfo *enableAIInfo = info;
+
     [self updateEnabledState];
     [self commitControls];
     [self updateValueForInfo:allowSendingClipboardInfo];
+    [self updateValueForInfo:enableAIInfo];
+    [self updateAIEnabled];
+}
 
-    if (!iTermAdvancedSettingsModel.generativeAIAllowed) {
-        _openAIAPIKey.enabled = NO;
-        _aiPrompt.enabled = NO;
-        _aiModel.enabled = NO;
-        _aiTokenLimit.enabled = NO;
-        _resetAIPrompt.enabled = NO;
-    }
+- (void)updateAIEnabled {
+    const BOOL allowed = [iTermAITermGatekeeper allowed];
+    _openAIAPIKey.enabled = allowed;
+    _aiPrompt.enabled = allowed;
+    _aiModel.enabled = allowed;
+    _aiTokenLimit.enabled = allowed;
+    _resetAIPrompt.enabled = allowed;
 }
 
 - (void)customScriptsFolderDidChange {

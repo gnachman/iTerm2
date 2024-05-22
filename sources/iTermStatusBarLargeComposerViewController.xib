@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21701"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22689"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermStatusBarLargeComposerViewController">
             <connections>
                 <outlet property="_accessories" destination="TX4-4b-piL" id="uwo-Hb-PlW"/>
+                <outlet property="_engageAI" destination="dkw-XI-f0G" id="Nnr-hr-MPh"/>
                 <outlet property="_help" destination="Due-Dn-30r" id="Uar-qV-wfj"/>
                 <outlet property="_scrollView" destination="INC-zV-2nU" id="WF8-pw-89c"/>
                 <outlet property="textView" destination="Gmj-Uu-ZiB" id="6iA-Qn-S8s"/>

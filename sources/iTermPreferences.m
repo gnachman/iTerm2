@@ -84,6 +84,7 @@ NSString *const kPreferenceKeyPreferIntegratedGPU = @"preferIntegratedGPU";
 NSString *const kPreferenceKeyMaximizeThroughput = @"metalMaximizeThroughput";  // Used to be metal-specific but not any more
 NSString *const kPreferenceKeyEnableAPIServer = @"EnableAPIServer";
 NSString *const kPreferenceKeyAPIAuthentication = @"API Authentication Method";
+NSString *const kPreferenceKeyEnableAI = @"Enable AI";
 
 NSString *const kPreferenceKeyTabStyle_Deprecated = @"TabStyle";  // Pre-10.14
 NSString *const kPreferenceKeyTabStyle = @"TabStyleWithAutomaticOption";  // Pre-10.14
@@ -389,6 +390,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyMaximizeThroughput: @YES,
                   kPreferenceKeyEnableAPIServer: @NO,
                   kPreferenceKeyAPIAuthentication: @0,  // ignored — synthetic value
+                  kPreferenceKeyEnableAI: @NO,  // ignored - synthetic value
                   kPreferenceKeyOpenAIAPIKey: @"",
                   kPreferenceKeyAIPrompt: iTermDefaultAIPrompt,
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,

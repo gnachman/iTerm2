@@ -910,7 +910,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="1" width="583" height="160"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="583" height="143"/>
@@ -1093,6 +1093,7 @@ DQ
                 <outlet property="_customScriptsFolderWarning" destination="I3s-Lg-hNk" id="fZi-iM-iXg"/>
                 <outlet property="_disableConfirmationOnShutdown" destination="OZb-Kv-fKa" id="u0v-RR-67h"/>
                 <outlet property="_doubleClickPerformsSmartSelection" destination="wgv-Ah-fFr" id="OZU-W2-nQN"/>
+                <outlet property="_enableAI" destination="VE4-PX-sWF" id="GkA-mF-teG"/>
                 <outlet property="_enableAPI" destination="hxX-te-qT5" id="37I-pK-Hmx"/>
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
                 <outlet property="_enterCopyModeAutomatically" destination="Nhj-1F-dbm" id="UCD-Es-h87"/>
@@ -5351,11 +5352,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KAL-YY-pcD">
-                                        <rect key="frame" x="111" y="193" width="569" height="275"/>
+                                        <rect key="frame" x="111" y="119" width="569" height="349"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xrd-YE-9w7">
-                                                <rect key="frame" x="180" y="240" width="369" height="21"/>
+                                                <rect key="frame" x="167" y="234" width="369" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">Go register for an account with openai and create an API key. Place the secret here. It probably will cost you money to use AI features.</string>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="euY-7d-vSJ">
@@ -5370,7 +5371,7 @@ DQ
                                                 </connections>
                                             </textField>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uwy-pf-9Wz" userLabel="AI Prompt text field">
-                                                <rect key="frame" x="180" y="103" width="369" height="106"/>
+                                                <rect key="frame" x="167" y="97" width="369" height="106"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">When you query the AI service, the prompt iTerm2 sends it is built by replacing \(ai.prompt) in this value with the text you entered. It is an interpolated string in the session context.</string>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Interpolated string" drawsBackground="YES" id="2G3-pu-wrn">
@@ -5385,7 +5386,7 @@ DQ
                                                 </connections>
                                             </textField>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RYR-Tl-aPi">
-                                                <rect key="frame" x="75" y="243" width="103" height="16"/>
+                                                <rect key="frame" x="62" y="237" width="103" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="OpenAI API Key:" id="b2B-Hj-edT">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5394,7 +5395,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EDh-lZ-wQE">
-                                                <rect key="frame" x="110" y="191" width="68" height="16"/>
+                                                <rect key="frame" x="97" y="185" width="68" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="AI Prompt:" id="Q2U-W0-BJ7">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5403,13 +5404,13 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LsQ-19-iaj">
-                                                <rect key="frame" x="455" y="79" width="16" height="16"/>
+                                                <rect key="frame" x="442" y="73" width="16" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">The prompt must contain the substring \(ai.prompt). The query you enter will replace it when speaking to the AI. For example: “Write a unix command to \(ai.prompt).</string>
                                                 <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="E8m-Gx-WjK"/>
                                             </imageView>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qEC-1B-FMn">
-                                                <rect key="frame" x="473" y="71" width="58" height="27"/>
+                                                <rect key="frame" x="460" y="65" width="58" height="27"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3bd-rH-r3u">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5420,7 +5421,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lIb-Jy-R1v">
-                                                <rect key="frame" x="532" y="76" width="18" height="19"/>
+                                                <rect key="frame" x="519" y="70" width="18" height="19"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="fWO-HA-eH0">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5431,7 +5432,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="P9E-Ju-OfU">
-                                                <rect key="frame" x="132" y="52" width="46" height="16"/>
+                                                <rect key="frame" x="119" y="46" width="46" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Model:" id="jNc-ho-tDq">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5440,7 +5441,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <comboBox verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mTj-eb-v1b">
-                                                <rect key="frame" x="179" y="48" width="373" height="23"/>
+                                                <rect key="frame" x="166" y="42" width="373" height="23"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="AWG-OL-PtP">
                                                     <font key="font" metaFont="system"/>
@@ -5453,7 +5454,7 @@ DQ
                                                 </connections>
                                             </comboBox>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fmU-E4-OGJ">
-                                                <rect key="frame" x="101" y="23" width="77" height="16"/>
+                                                <rect key="frame" x="88" y="17" width="77" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Token Limit:" id="pss-P2-pda">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5462,7 +5463,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LoW-Oy-QZ4">
-                                                <rect key="frame" x="180" y="20" width="96" height="21"/>
+                                                <rect key="frame" x="167" y="14" width="96" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="0io-pq-fwm">
                                                     <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="ogi-t7-LVi"/>
@@ -5475,10 +5476,39 @@ DQ
                                                 </connections>
                                             </textField>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Q5B-ar-uN1">
-                                                <rect key="frame" x="178" y="218" width="334" height="14"/>
+                                                <rect key="frame" x="165" y="212" width="334" height="14"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="You will be charged by OpenAI for each token sent or received." id="LEZ-sd-Ucb">
                                                     <font key="font" metaFont="smallSystem"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VE4-PX-sWF">
+                                                <rect key="frame" x="164" y="312" width="204" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Enable generative AI features" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Hbk-Br-E9I">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="DkJ-qv-nB5"/>
+                                                </connections>
+                                            </button>
+                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Kcp-2R-DJB">
+                                                <rect key="frame" x="164" y="289" width="387" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="No data is sent to third parties without your explicit permission." id="gXM-xm-pfL">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DIY-or-LGR">
+                                                <rect key="frame" x="165" y="271" width="311" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="You will always be prompted before data is shared." id="SsU-mJ-KFc">
+                                                    <font key="font" usesAppearanceFont="YES"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>

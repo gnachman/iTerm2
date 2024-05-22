@@ -78,16 +78,22 @@ struct SecureUserDefaults {
     lazy var allowPaste = { SecureUserDefault<Bool>("AllowPaste", defaultValue: false) }()
     lazy var requireAuthToOpenPasswordmanager = { SecureUserDefault<Bool>("RequireAuthenticationToOpenPasswordManager", defaultValue: true) }()
     lazy var enableSecureKeyboardEntryAutomatically = { SecureUserDefault<Bool>("EnableSecureKeyboardEntryAutomatically", defaultValue: true) }()
+    lazy var enableAI = { SecureUserDefault<Bool>("EnableAI", defaultValue: false) }()
 
     private mutating func serializables() -> [any SerializableUserDefault] {
         [allowPaste,
          requireAuthToOpenPasswordmanager,
-         enableSecureKeyboardEntryAutomatically]
+         enableSecureKeyboardEntryAutomatically,
+         enableAI]
     }
 }
 
+fileprivate let secureUserDefaultDidChange = NSNotification.Name("iTermSecureUserDefaultDidChange")
+
 @objc
 class iTermSecureUserDefaults: NSObject {
+    static let didChange = secureUserDefaultDidChange
+
     @objc static let instance = iTermSecureUserDefaults()
     @objc var requireAuthToOpenPasswordManager: Bool {
         get {
@@ -106,6 +112,14 @@ class iTermSecureUserDefaults: NSObject {
         }
         set {
             try? SecureUserDefaults.instance.enableSecureKeyboardEntryAutomatically.set(newValue)
+        }
+    }
+    @objc var enableAI: Bool {
+        get {
+            return SecureUserDefaults.instance.enableAI.value
+        }
+        set {
+            try? SecureUserDefaults.instance.enableAI.set(newValue)
         }
     }
 }
@@ -238,6 +252,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
             let maybeReason = error?[NSAppleScript.errorBriefMessage] as? String
             throw SecureUserDefaultError.scriptError(maybeReason)
         }
+        NotificationCenter.default.post(name: secureUserDefaultDidChange, object: key)
     }
 }
 

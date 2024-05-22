@@ -10,12 +10,48 @@ fileprivate func openAIModelIsLegacy(model: String) -> Bool {
     return !model.hasPrefix("gpt-")
 }
 
+@objc
+class iTermAITermGatekeeper: NSObject {
+    @objc
+    static func check() -> Bool {
+        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
+            iTermWarning.show(withTitle: "Generative AI features have been disabled. Check with your system administrator.",
+                              actions: ["OK"],
+                              accessory: nil,
+                              identifier: nil,
+                              silenceable: .kiTermWarningTypePersistent,
+                              heading: "Feature Unavailable",
+                              window: nil)
+            return false
+        }
+        if !SecureUserDefaults.instance.enableAI.value {
+            let selection = iTermWarning.show(withTitle: "You must enable AI features in settings before you can use this feature.",
+                                              actions: ["Reveal", "Cancel"],
+                                              accessory: nil,
+                                              identifier: nil,
+                                              silenceable: .kiTermWarningTypePersistent,
+                                              heading: "Feature Unavailable",
+                                              window: nil)
+            if selection == .kiTermWarningSelection0 {
+                PreferencePanel.sharedInstance().openToPreference(withKey: kPreferenceKeyEnableAI)
+            }
+            return false
+        }
+        return true
+    }
+
+    @objc
+    static var allowed: Bool {
+        return iTermAdvancedSettingsModel.generativeAIAllowed() && SecureUserDefaults.instance.enableAI.value
+    }
+}
+
 class AITermControllerRegistrationHelper {
     static var instance = AITermControllerRegistrationHelper()
     private static let apiKeyUserDefaultsKey = "NoSyncOpenAIAPIKey"
 
     var registration: AITermController.Registration? {
-        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
+        if !iTermAITermGatekeeper.allowed {
             return nil
         }
         let maybeApiKey = UserDefaults.standard.string(forKey: Self.apiKeyUserDefaultsKey)
@@ -27,14 +63,7 @@ class AITermControllerRegistrationHelper {
     }
 
     func requestRegistration(in window: NSWindow, completion: @escaping (AITermController.Registration?) -> ()) {
-        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
-            iTermWarning.show(withTitle: "Generative AI features have been disabled. Check with your system administrator.",
-                              actions: ["OK"],
-                              accessory: nil,
-                              identifier: nil,
-                              silenceable: .kiTermWarningTypePersistent,
-                              heading: "Feature Unavailable",
-                              window: nil)
+        if !iTermAITermGatekeeper.check() {
             completion(nil)
             return
         }

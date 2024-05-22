@@ -22,15 +22,23 @@ class ToolCodecierge: NSView, ToolbeltTool {
     private var goalView: CodeciergeGoalView!
     private var suggestionView: CodeciergeSuggestionView!
     override var isFlipped: Bool { true }
+    private var notificationObserver: (any NSObjectProtocol)?
 
     private class SessionRegistry {
         static var instance = SessionRegistry()
         var sessions = [String: Session]()
+        private var observer: (any NSObjectProtocol)?
         init() {
-            NotificationCenter.default.addObserver(forName: NSNotification.Name("PTYSessionDidDealloc"),
+            observer = NotificationCenter.default.addObserver(forName: NSNotification.Name("PTYSessionDidDealloc"),
                                                    object: nil,
-                                                   queue: nil) { [weak self] notification in
+                                                              queue: nil) { [weak self] notification in
                 self?.sessions.removeValue(forKey: notification.object as! String)
+            }
+        }
+
+        deinit {
+            if let observer {
+                NotificationCenter.default.removeObserver(observer)
             }
         }
     }
@@ -169,9 +177,11 @@ class ToolCodecierge: NSView, ToolbeltTool {
         var running = false
         private var conversation: AIConversation?
         var busy: Bool { conversation?.busy ?? false }
+        private var observer: (any NSObjectProtocol)?
+
         init(_ guid: String) {
             self.guid = guid
-            NotificationCenter.default.addObserver(forName: Notification.Name("PTYCommandDidExitNotification"),
+            observer = NotificationCenter.default.addObserver(forName: Notification.Name("PTYCommandDidExitNotification"),
                                                    object: guid,
                                                    queue: nil) { [weak self] notif in
                 guard let self, let delegate, delegate.sessionEnabled(self) else { return }
@@ -208,6 +218,12 @@ class ToolCodecierge: NSView, ToolbeltTool {
                               output: content,
                               remoteHost: remoteHost)
                 delegate.sessionDidReceiveCommand(session: self, command: command)
+            }
+        }
+
+        deinit {
+            if let observer {
+                NotificationCenter.default.removeObserver(observer)
             }
         }
 
@@ -395,6 +411,10 @@ class ToolCodecierge: NSView, ToolbeltTool {
             guard let self, let window else {
                 return
             }
+            if AITermControllerRegistrationHelper.instance.registration != nil {
+                state = .goalSetting
+                return
+            }
             AITermControllerRegistrationHelper.instance.requestRegistration(in: window) { [weak self] registration in
                 guard let self else {
                     return
@@ -436,10 +456,28 @@ class ToolCodecierge: NSView, ToolbeltTool {
 
         layoutSubviews()
         state = initialState
+
+        notificationObserver = NotificationCenter.default.addObserver(forName: iTermSecureUserDefaults.didChange,
+                                                                      object: nil,
+                                                                      queue: nil) { [weak self] _ in
+            self?.updateAIAllowed()
+        }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        if let notificationObserver {
+            NotificationCenter.default.removeObserver(notificationObserver)
+        }
+    }
+
+    private func updateAIAllowed() {
+        if !iTermAITermGatekeeper.allowed {
+            state = .onboarding
+        }
     }
 
     private func didCopy() {
@@ -577,33 +615,70 @@ class CodeciergeOnboardingView: NSView {
     private let startCallback: () -> ()
     private let label: NSTextField
     private let startButton: NSButton
+    private let revealButton: NSButton
+    private let originalLabelText = "Codecierge uses AI to help you in your terminal."
+    private var notificationObserver: (any NSObjectProtocol)?
 
     init(startCallback: @escaping () -> ()) {
         self.startCallback = startCallback
-        label = NSTextField(labelWithString: "Codecierge uses AI to help you in your terminal.")
+        label = NSTextField(labelWithString: originalLabelText)
         label.usesSingleLineMode = false
         label.lineBreakMode = .byWordWrapping
         label.alignment = .center
         startButton = NSButton(title: "Get Started", target: nil, action: nil)
 
+        revealButton = NSButton(title: "Reveal Setting", target: nil, action: nil)
+        revealButton.isHidden = true
+
         super.init(frame: .zero)
 
         addSubview(label)
         addSubview(startButton)
+        addSubview(revealButton)
 
         startButton.target = self
         startButton.action = #selector(startButtonPressed)
 
+        revealButton.target = self
+        revealButton.action = #selector(revealButtonPressed)
+
         layoutSubviews()
 
-        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
-            label.stringValue = "Generative AI has been disabled by the system administrator."
-            startButton.isEnabled = false
+        updateEnabled()
+        notificationObserver = NotificationCenter.default.addObserver(forName: iTermSecureUserDefaults.didChange,
+                                                                      object: nil,
+                                                                      queue: nil) { [weak self] _ in
+            self?.updateEnabled()
+        }
+    }
+
+    deinit {
+        if let notificationObserver {
+            NotificationCenter.default.removeObserver(notificationObserver)
         }
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    private func updateEnabled() {
+        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
+            label.stringValue = "Generative AI has been disabled by the system administrator."
+            startButton.isEnabled = false
+            startButton.isHidden = false
+            revealButton.isHidden = true
+        } else if !SecureUserDefaults.instance.enableAI.value {
+            label.stringValue = "You must enable AI features to use Codecierge."
+            startButton.isEnabled = false
+            startButton.isHidden = true
+            revealButton.isHidden = false
+        } else {
+            label.stringValue = originalLabelText
+            startButton.isEnabled = true
+            startButton.isHidden = false
+            revealButton.isHidden = true
+        }
     }
 
     override func resizeSubviews(withOldSize oldSize: NSSize) {
@@ -612,11 +687,18 @@ class CodeciergeOnboardingView: NSView {
     private func layoutSubviews() {
         let height = label.sizeThatFits(NSSize(width: bounds.width - 4, height: .infinity)).height
         label.frame = NSRect(x: 2, y: 0, width: bounds.width - 4, height: height)
+
         startButton.sizeToFit()
         startButton.frame = NSRect(x: (bounds.width - startButton.frame.width) / 2.0,
                                    y: label.frame.maxY + 8,
                                    width: startButton.bounds.width,
                                    height: startButton.bounds.height)
+
+        revealButton.sizeToFit()
+        revealButton.frame = NSRect(x: (bounds.width - revealButton.frame.width) / 2.0,
+                                    y: label.frame.maxY + 8,
+                                    width: revealButton.bounds.width,
+                                    height: revealButton.bounds.height)
     }
 
     override var fittingSize: NSSize {
@@ -627,6 +709,10 @@ class CodeciergeOnboardingView: NSView {
     override var isFlipped: Bool { true }
     @objc private func startButtonPressed() {
         startCallback()
+    }
+
+    @objc private func revealButtonPressed() {
+        PreferencePanel.sharedInstance().openToPreference(withKey: kPreferenceKeyEnableAI)
     }
 }
 

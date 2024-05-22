@@ -124,6 +124,7 @@ extern NSString *const kPreferenceKeyPreferIntegratedGPU;
 extern NSString *const kPreferenceKeyMaximizeThroughput;
 extern NSString *const kPreferenceKeyEnableAPIServer;
 extern NSString *const kPreferenceKeyAPIAuthentication;
+extern NSString *const kPreferenceKeyEnableAI;
 extern NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents;
 
 // Appearance

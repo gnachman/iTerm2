@@ -93,6 +93,7 @@
     IBOutlet NSButton *_help;
     IBOutlet NSView *_accessories;
     IBOutlet NSScrollView *_scrollView;
+    IBOutlet NSView *_engageAI;
     CommandHistoryPopupWindowController *_historyWindowController;
     NSInteger _completionGeneration;
     iTermTextPopoverViewController *_popoverVC;
@@ -104,6 +105,10 @@
     self.textView.textColor = [NSColor textColor];
     self.textView.insertionPointColor = [NSColor textColor];
     self.textView.font = [NSFont fontWithName:@"Menlo" size:11];
+
+    if (![iTermAdvancedSettingsModel generativeAIAllowed]) {
+        _engageAI.hidden = YES;
+    }
 }
 
 - (NSMutableDictionary<NSString *, iTermSearchPathsCacheEntry *> *)cache {
@@ -287,20 +292,25 @@
     style.defaultTabInterval = tabStop;
     _popoverVC.textView.defaultParagraphStyle = style;
 
-    [_popoverVC appendString:
-         @"^⇧↑\tAdd cursor above\n"
-         @"^⇧↓\tAdd cursor below\n"
-         @"^⇧-click\tAdd cursor\n"
-         @"⌥-drag\tAdd cursors\n"
-         @"⌘Y\tNatural language AI lookup\n"
-         @"⌘F\tOpen Find bar\n"
-         @"⌥⌘V\tOpen in Advanced Paste\n"
-         @"⌘-click\tOpen in explainshell.com\n"
-         @"⇧↩\tSend command\n"
-         @"⌥⇧↩\tSend command at cursor\n"
-         @"⌥↩\tEnqueue command at cursor\n"
-         @"⇧⌘;\tView command history"
+    NSArray<NSString*> *lines = @[
+        @"^⇧↑\tAdd cursor above",
+        @"^⇧↓\tAdd cursor below",
+        @"^⇧-click\tAdd cursor",
+        @"⌥-drag\tAdd cursors"
     ];
+    if ([iTermAdvancedSettingsModel generativeAIAllowed]) {
+        lines = [lines arrayByAddingObject:@"⌘Y\tNatural language AI lookup"];
+    }
+    lines = [lines arrayByAddingObjectsFromArray:@[
+        @"⌘F\tOpen Find bar",
+        @"⌥⌘V\tOpen in Advanced Paste",
+        @"⌘-click\tOpen in explainshell.com",
+        @"⇧↩\tSend command",
+        @"⌥⇧↩\tSend command at cursor",
+        @"⌥↩\tEnqueue command at cursor",
+        @"⇧⌘;\tView command history"
+    ]];
+    [_popoverVC appendString:[lines componentsJoinedByString:@"\n"]];
     [_popoverVC.textView.textStorage addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, _popoverVC.textView.textStorage.string.length)];
     [_popoverVC sizeToFit];
     [_popoverVC.popover showRelativeToRect:_help.bounds
