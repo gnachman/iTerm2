@@ -2557,8 +2557,9 @@ ITERM_WEAKLY_REFERENCEABLE
             NSString *lang = [iTermProfilePreferences stringForKey:KEY_CUSTOM_LOCALE inProfile:_profile];
             if (lang.length) {
                 env[@"LANG"] = lang;
+                break;
             }
-            break;
+            // FALL THROUGH INTENTIONALLY
         }
         case iTermSetLocalVarsModeSetAutomatically: {
             DLog(@"Setting locale vars...");
@@ -2573,21 +2574,34 @@ ITERM_WEAKLY_REFERENCEABLE
                     DLog(@"Disable remember");
                     prompt.allowRemember = NO;
                 }
-                localeVars = [prompt requestLocaleFromUserForProfile:self.originalProfile[KEY_NAME] ?: @"(Unnamed profile)"
-                                                            inWindow:self.view.window];
+                while (YES) {
+                    localeVars = [prompt requestLocaleFromUserForProfile:self.originalProfile[KEY_NAME] ?: @"(Unnamed profile)"
+                                                                inWindow:self.view.window];
+                    NSString *lang = localeVars[@"LANG"];
+                    if (lang && self.encoding == NSUTF8StringEncoding && ![lang containsString:@"UTF-8"]) {
+                        const iTermWarningSelection selection =
+                        [iTermWarning showWarningWithTitle:@"Warning! You chose a locale that doesn't use UTF-8, but your profile *is* using UTF-8. This can cause error messages and non-ASCII text to appear wrong. Reconsider your choice."
+                                                   actions:@[ @"Try Again", @"Keep my Choice"]
+                                                 accessory:nil
+                                                identifier:@"NoSyncUTF8Mismatch"
+                                               silenceable:kiTermWarningTypePersistent
+                                                   heading:@"Sus Encoding Detected"
+                                                    window:self.view.window];
+                        if (selection == kiTermWarningSelection1) {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
                 DLog(@"updated localeVars=%@", localeVars);
                 NSString *lang = localeVars[@"LANG"];
                 if (prompt.remember && localeVars != nil && lang != nil) {
                     DLog(@"Save");
                     // User chose a locale and wants us to keep using it.
-                    [iTermProfilePreferences setObject:lang
-                                                forKey:KEY_CUSTOM_LOCALE
-                                             inProfile:self.originalProfile
-                                                 model:[self profileModel]];
-                    [iTermProfilePreferences setUnsignedInteger:iTermSetLocalVarsModeCustom
-                                                         forKey:KEY_SET_LOCALE_VARS
-                                                      inProfile:self.originalProfile
-                                                          model:self.profileModel];
+                    [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_CUSTOM_LOCALE: lang,
+                                                                         KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeCustom) } inProfile:self.originalProfile
+                                                                model:self.profileModel];
                     [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
                                                                         object:self.originalProfile[KEY_GUID]];
                 }
