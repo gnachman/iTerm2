@@ -820,7 +820,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                      date:(out NSDate **)datePtr
            belongsToBlock:(out BOOL *)belongsToBlockPtr {
     NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_configuration->_useNativePowerlineGlyphs];
-    NSCharacterSet *blockCharacterSert = [iTermBoxDrawingBezierCurveFactory blockDrawingCharacters];
+    NSCharacterSet *blockCharacterSet = [iTermBoxDrawingBezierCurveFactory blockDrawingCharacters];
     if (_configuration->_timestampsEnabled) {
         *datePtr = _rows[row]->_date;
     }
@@ -940,7 +940,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         const BOOL isBlockCharacter = (characterIsDrawable &&
                                        !line[x].complexChar &&
                                        line[x].code > 127 &&
-                                       [blockCharacterSert characterIsMember:line[x].code]);
+                                       [blockCharacterSet characterIsMember:line[x].code]);
         // Foreground colors
         // Build up a compact key describing all the inputs to a text color
         currentColorKey->isMatch = findMatch;

@@ -25,6 +25,8 @@
 }
 
 // NOTE: If you change this also update bezierPathsForSolidBoxesForCode:cellSize:scale:
+// These characters are not affected by minimum contrast rules because they tend to be next to
+// an empty space whose background color should match.
 + (NSCharacterSet *)blockDrawingCharacters {
     static NSCharacterSet *characterSet;
     static dispatch_once_t onceToken;
@@ -63,6 +65,23 @@
             iTermLightShade,  // ░
             iTermMediumShade,  // ▒
             iTermDarkShade,  // ▓
+
+            // Powerline. See https://github.com/ryanoasis/powerline-extra-symbols
+            0xe0b0,
+            0xe0b2,
+            0xe0b4,
+            0xe0b6,
+            0xe0b8,
+            0xe0ba,
+            0xe0bc,
+            0xe0be,
+            0xe0c0,
+            0xe0c2,
+            0xe0c8,
+            0xe0ca,
+            0xe0d1,
+            0xe0d2,
+            0xe0d4,
         };
         for (size_t i = 0; i < sizeof(chars) / sizeof(*chars); i++) {
             [temp addCharactersInRange:NSMakeRange(chars[i], 1)];
