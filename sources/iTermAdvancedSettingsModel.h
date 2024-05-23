@@ -340,6 +340,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showLocationsInScrollbar;
 + (BOOL)showMarksInScrollbar;
 + (BOOL)showPinnedIndicator;
++ (BOOL)showSecureKeyboardEntryIndicator;
 + (BOOL)showSessionRestoredBanner;
 + (BOOL)showTimestampsByDefault;
 + (BOOL)showWindowTitleWhenTabBarInvisible;

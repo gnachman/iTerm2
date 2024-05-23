@@ -604,6 +604,7 @@ DEFINE_FLOAT(fakeNotchHeight, 0, SECTION_WINDOWS @"Simulated notch height");
 DEFINE_STRING(splitPaneColor, @"", SECTION_WINDOWS @"Custom color for split pane dividers. Leave empty to use default color.\nThis should be an HTML-style color, like #aabbcc.");
 DEFINE_BOOL(bordersOnlyInLightMode, YES, SECTION_WINDOWS @"Opaque windows have a border only in light mode.\nThis setting modifies “Show border around windows”. Borders in opaque windows in dark mode are ugly and the OS draws one that is pretty serviceable. Enable this if you have trouble seeing them.")
 DEFINE_BOOL(allowLiveResize, YES, SECTION_WINDOWS @"Allow window resizing by dragging edges and corners?");
+DEFINE_BOOL(showSecureKeyboardEntryIndicator, YES, SECTION_WINDOWS @"Show secure keyboard entry indicator?");
 
 #pragma mark tmux
 

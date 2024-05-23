@@ -1769,11 +1769,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
     const BOOL secureByUser = [[iTermSecureKeyboardEntryController sharedInstance] enabledByUserDefault];
     const BOOL secure = [[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
+    const BOOL allowSecureKeyboardEntryIndicator = [iTermAdvancedSettingsModel showSecureKeyboardEntryIndicator];
     [_indicatorsHelper setIndicator:kiTermIndicatorSecureKeyboardEntry_User
-                            visible:secure && secureByUser
+                            visible:secure && secureByUser && allowSecureKeyboardEntryIndicator
                      darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorSecureKeyboardEntry_Forced
-                            visible:secure && !secureByUser
+                            visible:secure && !secureByUser && allowSecureKeyboardEntryIndicator
                      darkBackground:isDark];
 
     NSRect rect = self.visibleRect;
