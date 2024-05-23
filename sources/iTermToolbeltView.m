@@ -619,32 +619,51 @@ static NSString *const kDynamicToolURL = @"URL";
     _inSplitViewDidResizeSubviews = NO;
 }
 
+// The minimum coordinate gives the smallest allowed distance between the top of the splitview and the `dividerIndex`th divider.
 - (CGFloat)splitView:(NSSplitView *)splitView
     constrainMinCoordinate:(CGFloat)proposedMinimumPosition
          ofSubviewAt:(NSInteger)dividerIndex {
-    CGFloat min = 0;
-    NSArray *subviews = [_splitter subviews];
-    for (int i = 0; i <= dividerIndex; i++) {
-        iTermToolWrapper *wrapper = subviews[i];
-        min += wrapper.minimumHeight;
-        min += [splitView dividerThickness];
+    NSArray<iTermToolWrapper *> *wrappers = _splitter.subviews;
+    CGFloat y = 0;
+    for (NSInteger i = 0; i <= dividerIndex; i++) {
+        if (i == dividerIndex) {
+            y += wrappers[i].minimumHeight;
+        } else {
+            y += wrappers[i].frame.size.height + splitView.dividerThickness;
+        }
     }
-    DLog(@"Constrain subview %@ to minY >= %@", @(dividerIndex), @(min));
-    return min;
+    NSLog(@"Constrain divider %@ (between %@ and %@) currently at %@ to minY >= %@. proposed=%@",
+          @(dividerIndex),
+          wrappers[dividerIndex].name,
+          wrappers[dividerIndex+1].name,
+          @(wrappers[dividerIndex+1].frame.origin.y),
+          @(y),
+          @(proposedMinimumPosition));
+    return y;
 }
 
+// The maximum coordinate gives the largest allowed distance between the top of the splitview and the `dividerIndex`th divider.
 - (CGFloat)splitView:(NSSplitView *)splitView
     constrainMaxCoordinate:(CGFloat)proposedMaximumPosition
          ofSubviewAt:(NSInteger)dividerIndex {
-    CGFloat height = splitView.frame.size.height;
-    NSArray *subviews = [_splitter subviews];
-    for (int i = subviews.count - 1; i >= dividerIndex; i--) {
-        iTermToolWrapper *wrapper = subviews[i];
-        height -= wrapper.minimumHeight;
-        height -= [splitView dividerThickness];
+    NSArray<iTermToolWrapper *> *wrappers = _splitter.subviews;
+    CGFloat y = 0;
+    for (NSInteger i = 0; i <= dividerIndex + 1; i++) {
+        if (i == dividerIndex + 1) {
+            y += MAX(0, wrappers[i].frame.size.height - wrappers[i].minimumHeight) + splitView.dividerThickness;
+        } else {
+            y += wrappers[i].frame.size.height + splitView.dividerThickness;
+        }
     }
-    DLog(@"Constrain subview %@ to maxY <= %@", @(dividerIndex), @(height));
-    return height;
+
+    NSLog(@"Constrain divider %@ (between %@ and %@) currently at %@ to maxY <= %@. proposed=%@",
+          @(dividerIndex),
+          wrappers[dividerIndex].name,
+          wrappers[dividerIndex + 1].name,
+          @(wrappers[dividerIndex+1].frame.origin.y),
+          @(y),
+          @(proposedMaximumPosition));
+    return y;
 }
 
 - (CGFloat)minimumHeightForSplitterSubviews {
