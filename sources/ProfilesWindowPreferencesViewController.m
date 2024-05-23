@@ -78,7 +78,7 @@
     info = [self defineControl:_useBlur
                            key:KEY_BLUR
                           type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^() { _blurRadius.enabled = (_useBlur.state == NSOnState); };
+    info.observer = ^() { _blurRadius.enabled = (_useBlur.state == NSControlStateValueOn); };
     
     [self defineControl:_blurRadius
                     key:KEY_BLUR_RADIUS

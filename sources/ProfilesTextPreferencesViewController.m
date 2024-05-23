@@ -165,7 +165,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                     [self setInteger:version forKey:KEY_UNICODE_VERSION];
                 }
                         update:^BOOL{
-                            _unicodeVersion9.state = [self integerForKey:KEY_UNICODE_VERSION] == 9 ? NSOnState : NSOffState;
+        _unicodeVersion9.state = [self integerForKey:KEY_UNICODE_VERSION] == 9 ? NSControlStateValueOn : NSControlStateValueOff;
                             return YES;
                         }];
 
@@ -250,23 +250,23 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [_nonAsciiFontDescription setStringValue:fontName];
 
     if (self.normalFont.it_defaultLigatures) {
-        _asciiLigatures.state = NSOnState;
+        _asciiLigatures.state = NSControlStateValueOn;
         _asciiLigatures.enabled = NO;
     } else if (self.normalFont.it_ligatureLevel == 0) {
-        _asciiLigatures.state = NSOffState;
+        _asciiLigatures.state = NSControlStateValueOff;
         _asciiLigatures.enabled = NO;
     } else {
-        _asciiLigatures.state = [self boolForKey:KEY_ASCII_LIGATURES] ? NSOnState : NSOffState;
+        _asciiLigatures.state = [self boolForKey:KEY_ASCII_LIGATURES] ? NSControlStateValueOn : NSControlStateValueOff;
         _asciiLigatures.enabled = YES;
     }
     if (self.nonAsciiFont.it_defaultLigatures) {
-        _nonAsciiLigatures.state = NSOnState;
+        _nonAsciiLigatures.state = NSControlStateValueOn;
         _nonAsciiLigatures.enabled = NO;
     } else if (self.nonAsciiFont.it_ligatureLevel == 0) {
-        _nonAsciiLigatures.state = NSOffState;
+        _nonAsciiLigatures.state = NSControlStateValueOff;
         _nonAsciiLigatures.enabled = NO;
     } else {
-        _nonAsciiLigatures.state = [self boolForKey:KEY_NON_ASCII_LIGATURES] ? NSOnState : NSOffState;
+        _nonAsciiLigatures.state = [self boolForKey:KEY_NON_ASCII_LIGATURES] ? NSControlStateValueOn : NSControlStateValueOff;
         _nonAsciiLigatures.enabled = YES;
     }
 
