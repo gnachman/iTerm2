@@ -3365,6 +3365,7 @@
 		A6DCDD202560B410004EA8A1 /* NSAttributedString+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */; };
 		A6DCDD212560B410004EA8A1 /* NSAttributedString+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */; };
 		A6DCE3F22BFE8CB8005586F5 /* WebRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DCE3F12BFE8CB8005586F5 /* WebRequest.swift */; };
+		A6DCE3F42BFFCA6E005586F5 /* PlaceholderTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DCE3F32BFFCA6E005586F5 /* PlaceholderTextView.swift */; };
 		A6DEB2EB267BBE6C00192994 /* write_only_profile_prologue.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6DEB2EA267BBE6C00192994 /* write_only_profile_prologue.txt */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6DF91B52477B38700FB9F42 /* iTermMissionControlHacks.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF91B32477B38700FB9F42 /* iTermMissionControlHacks.h */; };
@@ -7185,6 +7186,7 @@
 		A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAttributedString+PSM.h"; sourceTree = "<group>"; };
 		A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAttributedString+PSM.m"; sourceTree = "<group>"; };
 		A6DCE3F12BFE8CB8005586F5 /* WebRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = WebRequest.swift; path = iTermAI/iTermAIPlugin/WebRequest.swift; sourceTree = SOURCE_ROOT; };
+		A6DCE3F32BFFCA6E005586F5 /* PlaceholderTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderTextView.swift; sourceTree = "<group>"; };
 		A6DDA88425B376D200AA55EE /* iTermActivityInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermActivityInfo.h; sourceTree = "<group>"; };
 		A6DEB2D5267BB8A600192994 /* profile_prologue.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = profile_prologue.txt; sourceTree = "<group>"; };
 		A6DEB2DF267BB95100192994 /* partial_profile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = partial_profile.txt; sourceTree = "<group>"; };
@@ -8736,6 +8738,7 @@
 				A6D1C41D2861430D00B68526 /* FindIndicatorWindow.swift */,
 				A67A68FF2A00930F0027B550 /* AutoResizingTextView.swift */,
 				A602AAE92B16A8B600E6C965 /* DraggableNSBox.swift */,
+				A6DCE3F32BFFCA6E005586F5 /* PlaceholderTextView.swift */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -16141,6 +16144,7 @@
 				A6A73D4F27C80E6C002E4CCA /* iTermCancelable.m in Sources */,
 				A678C509279A87F000C59927 /* iTermMark.m in Sources */,
 				A653F6AD24D122440062377E /* iTermRestorableStateDriver.m in Sources */,
+				A6DCE3F42BFFCA6E005586F5 /* PlaceholderTextView.swift in Sources */,
 				A65B0401278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m in Sources */,
 				5370678921C9D2780088D0F3 /* SIGSHA2VerificationAlgorithm.m in Sources */,
 				A63011C520E85132008114B7 /* iTermStatusBarBaseComponent.m in Sources */,

@@ -437,6 +437,9 @@ class ToolCodecierge: NSView, ToolbeltTool {
             self.state = .running
             session.updateHistory(command: nil)
         })
+        goalView.goalDidChange = { [weak self] goal in
+            self?.currentSession()?.goal = goal
+        }
         addSubview(goalView)
         goalView.isHidden = true
 
@@ -500,7 +503,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                           height: height)
         }
         do {
-            let height = goalView.fittingSize.height
+            let height = bounds.height
             goalView.frame = NSRect(x: 2,
                                     y: (bounds.height - height) / 2,
                                     width: bounds.width - 4,
@@ -716,17 +719,19 @@ class CodeciergeOnboardingView: NSView {
     }
 }
 
-class CodeciergeGoalView: NSView, NSTextFieldDelegate {
+class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelegate {
     private let startCallback: (String, Bool) -> ()
     private let label: NSTextField
-    private let textField: NSTextField
+    private let scrollView: NSScrollView
+    private let textView: PlaceholderTextView
     private let startButton: NSButton
     private let autoButton: NSButton
+    var goalDidChange: ((String) -> ())?
 
     var goal: String {
-        get { textField.stringValue }
+        get { textView.string }
         set {
-            textField.stringValue = newValue
+            textView.string = newValue
             updateEnabled()
         }
     }
@@ -737,8 +742,22 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
         label = NSTextField(labelWithString: "What are you trying to do? I'll suggest commands and explain their output.")
         label.lineBreakMode = .byWordWrapping
         label.usesSingleLineMode = false
-        textField = NSTextField()
-        textField.placeholderString = "I want to…"
+
+        textView = PlaceholderTextView(frame: NSRect(x: 0, y: 0, width: 1, height: 1))
+        textView.it_placeholderString = "I want to…"
+        textView.font = NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize)
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.drawsBackground = false
+        textView.textContainer?.widthTracksTextView = true
+
+        scrollView = NSScrollView()
+        scrollView.documentView = textView
+        scrollView.hasVerticalScroller = true
+        scrollView.autoresizingMask = [.width, .height]
+
         autoButton = NSButton()
         autoButton.setButtonType(.switch)
         autoButton.title = "Run commands automatically"
@@ -749,18 +768,22 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
 
         super.init(frame: .zero)
 
-        addSubview(autoButton)
         addSubview(label)
-        addSubview(textField)
+        addSubview(scrollView)
+        addSubview(autoButton)
         addSubview(startButton)
+
+        textView.delegate = self
 
         autoButton.target = self
         autoButton.action = #selector(autoToggled(_:))
 
-        textField.delegate = self
         startButton.target = self
         startButton.action = #selector(startButtonPressed)
 
+        textView.shiftEnterPressed = { [weak self] in
+            self?.startButtonPressed()
+        }
         layoutSubviews()
     }
 
@@ -787,20 +810,31 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
         }
     }
 
+    private func layoutTextview() {
+        let containerWidth = scrollView.documentVisibleRect.width
+        textView.textContainer?.containerSize = NSSize(width: containerWidth, height: CGFloat.greatestFiniteMagnitude)
+        textView.layoutManager?.ensureLayout(for: textView.textContainer!)
+
+        let textBounds = textView.layoutManager?.usedRect(for: textView.textContainer!)
+        let desiredHeight = textBounds?.height ?? 0
+
+        textView.frame = CGRect(x: 0, y: 0, width: containerWidth, height: max(desiredHeight, scrollView.frame.size.height))
+    }
+
     private func layoutSubviews() {
         let height = label.sizeThatFits(NSSize(width: bounds.width - 4, height: .infinity)).height
         label.frame = NSRect(x: 2, y: 0, width: bounds.width - 4, height: height)
 
-        textField.sizeToFit()
-        textField.frame = NSRect(x: 2, y: label.frame.maxY + 4, width: bounds.width - 4, height: textField.bounds.height)
-
+        scrollView.frame = NSRect(x: 2, y: label.frame.maxY + 4, width: bounds.width - 4, height: bounds.height - 85)
         autoButton.sizeToFit()
-        autoButton.frame = NSRect(x: 0, y: textField.frame.maxY + 4, width: autoButton.bounds.width, height: autoButton.bounds.height)
+        autoButton.frame = NSRect(x: 0, y: scrollView.frame.maxY + 4, width: autoButton.bounds.width, height: autoButton.bounds.height)
         startButton.sizeToFit()
         startButton.frame = NSRect(x: (bounds.width - startButton.bounds.width) / 2,
                                    y: autoButton.frame.maxY + 4,
                                    width: startButton.bounds.width,
                                    height: startButton.bounds.height)
+
+        layoutTextview()
     }
 
     override var fittingSize: NSSize {
@@ -809,6 +843,7 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
     }
 
     private let codeciergeWarningAcknowledgedUserDefaultsKey = "NoSyncCodeciergeWarningAcknowledged"
+
     @objc private func startButtonPressed() {
         if !UserDefaults.standard.bool(forKey: codeciergeWarningAcknowledgedUserDefaultsKey) {
             let option = iTermWarning.show(withTitle: "Everything that happens in your terminal while Codecierge is running will be sent to OpenAI. Don't send them confidential information!",
@@ -824,23 +859,17 @@ class CodeciergeGoalView: NSView, NSTextFieldDelegate {
                 return
             }
         }
-        startCallback(textField.stringValue, autoButton.state == .on)
+        startCallback(textView.string, autoButton.state == .on)
     }
 
-    func controlTextDidChange(_ obj: Notification) {
+    // TODO: Shift-enter to start
+    @objc func textDidChange(_ notification: Notification) {
         updateEnabled()
+        goalDidChange?(textView.string)
     }
 
     private func updateEnabled() {
-        startButton.isEnabled = !textField.stringValue.isEmpty
-    }
-
-    func controlTextDidEndEditing(_ obj: Notification) {
-        if obj.userInfo?["NSTextMovement"] as? Int == NSTextMovement.return.rawValue {
-            if startButton.isEnabled {
-                startButtonPressed()
-            }
-        }
+        startButton.isEnabled = !textView.string.isEmpty
     }
 }
 
