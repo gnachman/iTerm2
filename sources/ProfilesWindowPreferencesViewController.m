@@ -81,6 +81,7 @@ CGFloat iTermMaxBlurRadius(void) {
                                              selector:@selector(reloadProfile)  // In superclass
                                                  name:kReloadAllProfiles
                                                object:nil];
+    _backgroundImagePreview.layer.masksToBounds = YES;
 
     __weak __typeof(self) weakSelf = self;
     PreferenceInfo *info;

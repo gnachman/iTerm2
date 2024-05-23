@@ -10,6 +10,13 @@
 
 @implementation iTermImageWell
 
+- (void)awakeFromNib {
+    self.wantsLayer = YES;
+    self.layer.borderColor = [[NSColor whiteColor] CGColor];
+    self.layer.borderWidth = 2.0;
+    self.layer.cornerRadius = 6.0;
+}
+
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)draggingInfo {
     if (![super performDragOperation:draggingInfo]) {
         return NO;
@@ -42,6 +49,10 @@
     if (theEvent.clickCount == 1) {
         [_delegate imageWellDidClick:self];
     }
+}
+
+- (BOOL)clipsToBounds {
+    return YES;
 }
 
 @end
