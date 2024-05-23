@@ -304,7 +304,7 @@ class iTermAITermGatekeeper: NSObject {
                                               heading: "Feature Unavailable",
                                               window: nil)
             if selection == .kiTermWarningSelection0 {
-                NSWorkspace.shared.open(URL(string: "https://iterm2.com/downloads/ai-plugin")!)
+                NSWorkspace.shared.open(URL(string: "https://iterm2.com/ai-plugin.html")!)
             }
             return false
         }
@@ -317,7 +317,7 @@ class iTermAITermGatekeeper: NSObject {
                                               heading: "Feature Unavailable",
                                               window: nil)
             if selection == .kiTermWarningSelection0 {
-                NSWorkspace.shared.open(URL(string: "https://iterm2.com/downloads/ai-plugin")!)
+                NSWorkspace.shared.open(URL(string: "https://iterm2.com/ai-plugin.html")!)
             }
             return false
         }

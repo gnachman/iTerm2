@@ -875,7 +875,7 @@ enum {
 #pragma mark - Actions
 
 - (IBAction)installPlugin:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/downloads/ai-plugin"]];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]];
 }
 
 - (IBAction)exportAllSettingsAndData:(id)sender {
