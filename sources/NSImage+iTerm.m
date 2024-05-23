@@ -124,6 +124,43 @@
                             size:(NSSize)size
                    bitsPerSample:(NSInteger)bitsPerSample
                  samplesPerPixel:(NSInteger)samplesPerPixel
+                     bytesPerRow:(NSInteger)bytesPerRow
+                        hasAlpha:(BOOL)hasAlpha
+                  colorSpaceName:(NSString *)colorSpaceName {
+    if (samplesPerPixel == 1) {
+        return [self imageWithRawData:[self dataWithFourBytesPerPixelFromDataWithOneBytePerPixel:data]
+                                 size:size
+                        bitsPerSample:8
+                      samplesPerPixel:4
+                             hasAlpha:YES
+                       colorSpaceName:colorSpaceName];
+    }
+
+    assert(data.length == bytesPerRow * size.height);
+    NSBitmapImageRep *bitmapImageRep =
+        [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil  // allocate the pixel buffer for us
+                                                pixelsWide:size.width
+                                                pixelsHigh:size.height
+                                             bitsPerSample:bitsPerSample
+                                           samplesPerPixel:samplesPerPixel
+                                                  hasAlpha:hasAlpha
+                                                  isPlanar:NO
+                                            colorSpaceName:colorSpaceName
+                                               bytesPerRow:bytesPerRow
+                                              bitsPerPixel:bitsPerSample * samplesPerPixel];  // 0 means OS infers it
+
+    memmove([bitmapImageRep bitmapData], data.bytes, data.length);
+
+    NSImage *theImage = [[NSImage alloc] initWithSize:size];
+    [theImage addRepresentation:bitmapImageRep];
+
+    return theImage;
+}
+
++ (instancetype)imageWithRawData:(NSData *)data
+                            size:(NSSize)size
+                   bitsPerSample:(NSInteger)bitsPerSample
+                 samplesPerPixel:(NSInteger)samplesPerPixel
                         hasAlpha:(BOOL)hasAlpha
                   colorSpaceName:(NSString *)colorSpaceName {
     if (samplesPerPixel == 1) {
@@ -661,9 +698,13 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
 
 @implementation NSBitmapImageRep(iTerm)
 - (NSBitmapImageRep *)it_bitmapScaledTo:(NSSize)size {
-    NSImage *image = [[NSImage alloc] initWithSize:self.size];
+    const CGFloat scale = NSScreen.mainScreen.backingScaleFactor;
+    NSSize points = size;
+    points.width /= scale;
+    points.height /= scale;
+    NSImage *image = [[NSImage alloc] initWithSize:points];
     [image addRepresentation:self];
-    return [[image it_imageOfSize:size] it_bitmapImageRep];
+    return [[image it_imageOfSize:points] it_bitmapImageRep];
 }
 
 // Assumes premultiplied alpha and little endian. Floating point must be 16 bit.

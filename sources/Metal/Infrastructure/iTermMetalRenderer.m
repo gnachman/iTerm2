@@ -510,26 +510,40 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
 
     if (width != bitmap.size.width || height != bitmap.size.height) {
         DLog(@"Rescale bitmap to new size");
+        // NOTE: There is no guarantee that the resulting bitmap has any particular size.
+        // Sometimes it'll be the size you asked for.
         bitmap = [bitmap it_bitmapScaledTo:NSMakeSize(width, height)];
         DLog(@"bitmap=%@", bitmap);
     }
     MTLTextureDescriptor *textureDescriptor =
     [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:[bitmap metalPixelFormat]
-                                                       width:width
-                                                      height:height
+                                                       width:bitmap.size.width
+                                                      height:bitmap.size.height
                                                    mipmapped:NO];
     id<MTLTexture> texture = nil;
     if (pool) {
-        texture = [pool requestTextureOfSize:simd_make_uint2(width, height)];
+        texture = [pool requestTextureOfSize:simd_make_uint2(bitmap.size.width,
+                                                             bitmap.size.height)];
     }
     if (!texture) {
         texture = [_device newTextureWithDescriptor:textureDescriptor];
     }
 
-    MTLRegion region = MTLRegionMake2D(0, 0, width, height);
+    MTLRegion region = MTLRegionMake2D(0, 0, bitmap.size.width, bitmap.size.height);
     const NSUInteger bytesPerRow = bitmap.bytesPerRow;
     [texture replaceRegion:region mipmapLevel:0 withBytes:bitmap.bitmapData bytesPerRow:bytesPerRow];
-
+#if 0
+    static int n;
+    n++;
+    [[NSImage imageWithRawData:[NSData dataWithBytes:bitmap.bitmapData length:bitmap.bytesPerRow * bitmap.size.height]
+                          size:NSMakeSize(bitmap.size.width, bitmap.size.height)
+                 bitsPerSample:bitmap.bitsPerSample
+               samplesPerPixel:bitmap.samplesPerPixel
+                   bytesPerRow:bitmap.bytesPerRow
+                      hasAlpha:bitmap.hasAlpha
+                colorSpaceName:bitmap.colorSpaceName]
+     saveAsPNGTo:[NSString stringWithFormat:@"/tmp/wtf%@.png", @(n)]];
+#endif
     [iTermTexture setBytesPerRow:bytesPerRow
                      rawDataSize:bytesPerRow * bitmap.size.height
                  samplesPerPixel:4
