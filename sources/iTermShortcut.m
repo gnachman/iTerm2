@@ -26,7 +26,7 @@ CGFloat kShortcutPreferredHeight = 22;
 
 // The numeric keypad mask is here so we can disambiguate between keys that
 // exist in both the numeric keypad and outside of it.
-const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
+const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
                                                   NSAlternateKeyMask |
                                                   NSShiftKeyMask |
                                                   NSControlKeyMask |

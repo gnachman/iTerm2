@@ -1,0 +1,28 @@
+name: therm
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  macos-x64:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: |
+        make -j4 CIFLAGS='CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO' | tee build.log
+    - name: Count Warnings
+      run: |
+        grep 'warning:' build.log | wc -l
+    - name: Packaging
+      run: make dist CIFLAGS='CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO'
+    - uses: actions/upload-artifact@v3
+      with:
+        name: Therm.zip
+        path: Therm-*.zip
+

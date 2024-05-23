@@ -9,6 +9,9 @@ COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt)
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
 
+# CIFLAGS=CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+CIFLAGS=
+
 .PHONY: clean all restart
 
 all: Development
@@ -31,25 +34,28 @@ install: | Deployment
 	cp -R build/Deployment/Therm.app $(APPS)
 
 Development: config.h
+	cp -f plists/Therm.plist.development plists/Therm.plist
 	rm -rf build/Development/Therm.app
 	echo "Using PATH for build: $(PATH)"
-	cd ColorPicker && xcodebuild
-	xcodebuild -parallelizeTargets -target Therm -configuration Development
+	cd ColorPicker && xcodebuild $(CIFLAGS)
+	-[ ! -d ColorPicker/ColorPicker.framework ] && mv ColorPicker/build/Release/ColorPicker.framework ColorPicker/
+	# xcodebuild -target Therm -configuration Development $(CIFLAGS)
+	xcodebuild -parallelizeTargets -target Therm -configuration Development $(CIFLAGS)
 	chmod -R go+rX build/Development
 	mkdir -p build/Development/Therm.app/Contents/Frameworks/
 	cp -rf ColorPicker/ColorPicker.framework build/Development/Therm.app/Contents/Frameworks/
-	sh version.sh -f
+	-sh version.sh -f
 
 Dep:
 	xcodebuild -parallelizeTargets -target Therm -configuration Deployment
 
 Deployment:
 	rm -rf build/Deployment/Therm.app
-	xcodebuild -parallelizeTargets -target Therm -configuration Deployment
+	xcodebuild -parallelizeTargets -target Therm -configuration Deployment $(CIFLAGS)
 	chmod -R go+rX build/Deployment
 	mkdir -p build/Deployment/Therm.app/Contents/Frameworks/
 	cp -rf ColorPicker/ColorPicker.framework build/Deployment/Therm.app/Contents/Frameworks/
-	sh version.sh -f
+	-sh version.sh -f
 
 run: Development
 	build/Development/Therm.app/Contents/MacOS/Therm
@@ -73,7 +79,7 @@ restart:
 	/bin/kill -TERM $(ITERM_PID)
 
 release:
-	cp plists/release-Therm.plist plists/Therm.plist
+	cp -f plists/Therm.plist.release plists/Therm.plist
 	$(MAKE) Deployment
 
 todo:

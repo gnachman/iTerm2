@@ -5063,7 +5063,7 @@ return;
     formattedDate = [formattedDate stringByReplacingOccurrencesOfString:@":" withString:@"-"];
     NSString *nowStr = [NSString stringWithFormat:@"Log at %@.txt", formattedDate];
 
-    if ([aSavePanel legacyRunModalForDirectory:path file:nowStr] == NSFileHandlingPanelOKButton) {
+    if ([aSavePanel legacyRunModalForDirectory:path file:nowStr] == NSModalResponseOK) {
         if (![aData writeToFile:[aSavePanel legacyFilename] atomically:YES]) {
             NSBeep();
         }

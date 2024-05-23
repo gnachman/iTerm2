@@ -976,7 +976,7 @@ int gMigrated;
     NSString* shortcut = [b objectForKey:KEY_SHORTCUT];
     if ([shortcut length]) {
         [item setKeyEquivalent:[shortcut lowercaseString]];
-        [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSControlKeyMask | (isAlternate ? NSAlternateKeyMask : 0)];
+        [item setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSControlKeyMask | (isAlternate ? NSAlternateKeyMask : 0)];
     } else if (isAlternate) {
         [item setKeyEquivalentModifierMask:NSAlternateKeyMask];
     }

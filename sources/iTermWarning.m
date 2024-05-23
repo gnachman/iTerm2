@@ -240,7 +240,7 @@ static BOOL gShowingWarning;
     }
 
     // Save info if suppression was enabled.
-    if (remember && alert.suppressionButton.state == NSOnState) {
+    if (remember && alert.suppressionButton.state == NSControlStateValueOn) {
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
         if (_warningType == kiTermWarningTypeTemporarilySilenceable) {
             NSString *theKey = [self.class temporarySilenceKeyForIdentifier:_identifier];

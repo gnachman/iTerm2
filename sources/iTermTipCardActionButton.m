@@ -135,7 +135,7 @@ static const CGFloat kStandardButtonHeight = 34;
 - (void)updateTitle {
     CGFloat width = NSWidth(self.bounds) - NSMinX(_textField.frame);
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
-    paragraphStyle.alignment = NSLeftTextAlignment;
+    paragraphStyle.alignment = NSTextAlignmentLeft;
 
     // For inscrutable reasons, putting the tab stop all the way at the right edge of the field
     // doesn't work--the tab seems to be ignored.

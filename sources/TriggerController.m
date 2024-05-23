@@ -30,7 +30,8 @@
 #import "StopTrigger.h"
 #import "Trigger.h"
 
-#import <ColorPicker/ColorPicker.h>
+// #import <ColorPicker/ColorPicker.h>
+#import "../ColorPicker/ColorPicker/ColorPicker.h"
 
 static NSString *const kiTermTriggerControllerPasteboardType =
     @"kiTermTriggerControllerPasteboardType";
