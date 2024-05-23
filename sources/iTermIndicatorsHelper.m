@@ -141,22 +141,35 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                            large:(BOOL)large
                   darkBackground:(BOOL)darkBackground {
     if (@available(macOS 11, *)) {
-        const NSSize size = large ? NSMakeSize(64, 64) : NSMakeSize(26, 26);
-        iTermCompositeImageBuilder *builder = [[iTermCompositeImageBuilder alloc] initWithSize:size];
-
-        NSImage *final = [NSImage imageOfSize:size drawBlock:^{
-            [darkBackground ? [NSColor blackColor] : [NSColor whiteColor] set];
-            [[NSBezierPath bezierPathWithRoundedRect:NSMakeRect(0, 0, size.width, size.height) xRadius:size.width / 8 yRadius:size.height / 8] fill];
-        }];
-        [builder addImage:final];
-
-        // Add outline
         NSImage *sfSymbol = [NSImage imageWithSystemSymbolName:outline accessibilityDescription:nil];
         if (sfSymbol) {
+            const NSSize size = large ? NSMakeSize(64, 64) : NSMakeSize(30, 30);
+            const NSSize insetSize = large ? NSMakeSize(64, 64) : NSMakeSize(26, 26);
+            iTermCompositeImageBuilder *builder = [[iTermCompositeImageBuilder alloc] initWithSize:size];
+
+            NSImage *background = [NSImage imageOfSize:size drawBlock:^{
+                const CGFloat radiusFraction = 6;
+
+                NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSMakeRect(0,
+                                                                                        0,
+                                                                                        size.width,
+                                                                                        size.height)
+                                                                     xRadius:size.width / radiusFraction
+                                                                     yRadius:size.height / radiusFraction];
+
+                [darkBackground ? [NSColor blackColor] : [NSColor whiteColor] set];
+                [path fill];
+
+                [darkBackground ? [NSColor lightGrayColor] : [NSColor darkGrayColor] set];
+                [path stroke];
+            }];
+            [builder addImage:background];
+
+            // Add outline
             iTermTintedImage *tintedImage = [[iTermTintedImage alloc] initWithImage:sfSymbol];
             [builder addImage:[tintedImage imageTintedWithColor:darkBackground ? [NSColor whiteColor] : [NSColor blackColor]
                                                            size:[self fillingSizeFor:sfSymbol.size
-                                                                             filling:size]]];
+                                                                             filling:insetSize]]];
 
             NSImage *composite = [builder image];
             return composite;
