@@ -956,43 +956,32 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
     [self drawCursorAfterTextWithFrameData:frameData];
 
+    if (_terminalButtonRenderer) {
+        [self drawCellRenderer:_terminalButtonRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawButtons];
+    }
+
+    [self drawCellRenderer:_rectangleRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawRectangles];
+
     if (!frameData.perFrameState.haveOffscreenCommandLine) {
         [self drawRenderer:_indicatorRenderer
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawIndicators];
+        [self drawRenderer:_flashRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash];
     }
 
     [self drawCellRenderer:_timestampsRenderer
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawTimestamps];
 
-    if (_terminalButtonRenderer) {
-        [self drawCellRenderer:_terminalButtonRenderer
-                     frameData:frameData
-                          stat:iTermMetalFrameDataStatPqEnqueueDrawButtons];
-    }
-    [self drawCellRenderer:_rectangleRenderer
-                 frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueDrawRectangles];
-
-    [self drawRenderer:_flashRenderer
-             frameData:frameData
-                  stat:iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash];
-
-    [self drawCellRenderer:_highlightRowRenderer
-                 frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueDrawHighlightRow];
-
     [self drawRenderer:_offscreenCommandLineBackgroundRenderer
              frameData:frameData
                   stat:iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineBg];
-
-    if (	frameData.perFrameState.haveOffscreenCommandLine) {
-        [self drawRenderer:_indicatorRenderer
-                 frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueDrawIndicators];
-    }
-
 
     [self drawCellRenderer:_offscreenCommandLineBackgroundColorRenderer
                  frameData:frameData
@@ -1000,6 +989,19 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     [self drawCellRenderer:_offscreenCommandLineTextRenderer
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineFg];
+
+    if (frameData.perFrameState.haveOffscreenCommandLine) {
+        [self drawRenderer:_indicatorRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawIndicators];
+        [self drawRenderer:_flashRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash];
+    }
+
+    [self drawCellRenderer:_highlightRowRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawHighlightRow];
 
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData];
@@ -1433,8 +1435,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_offscreenCommandLineBackgroundColorRenderer];
         backgroundState.verticalOffset = verticalOffset;
         backgroundState.defaultBackgroundColor = frameData.perFrameState.offscreenCommandLineBackgroundColor;
-
-        const float verticalOffset = frameData.scale * (frameData.vmargin - iTermOffscreenCommandLineVerticalPadding + 1);
 
         [backgroundState setColorRLEs:frameData.rows[0].backgroundColorRLEData.mutableBytes
                                 count:frameData.rows[0].numberOfBackgroundRLEs
