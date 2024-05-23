@@ -47,16 +47,27 @@ class iTermAIClient {
             return false
         }
 
-        var commonName: CFString?
-        if let certChain = infoDict[kSecCodeInfoCertificates as String] as? [SecCertificate],
-           SecCertificateCopyCommonName(certChain[0], &commonName) == errSecSuccess,
-           let commonName {
-            DLog("cn is \(commonName)")
-            let regexPattern = "^Developer ID Application: GEORGE NACHMAN \\(([A-Z0-9]*)\\)$"
-            return matchesRegex(string: commonName as String, pattern: regexPattern)
+        let reqStr = "anchor apple generic and certificate leaf[subject.OU] = \"H7V7XYVQ7D\""
+
+        var reqRef: SecRequirement? = nil
+        let reqErr = SecRequirementCreateWithString(reqStr as CFString, [], &reqRef)
+
+        guard reqErr == errSecSuccess, let requirement = reqRef else {
+            DLog("SecRequirementCreateWithString failed \(reqErr)")
+            return false
         }
-        DLog("Failed to get common name")
-        return false
+        var verifyErrors: Unmanaged<CFError>? = nil
+        let checkValidityErr = SecStaticCodeCheckValidityWithErrors(staticCode!, [], requirement, &verifyErrors)
+
+        guard checkValidityErr == errSecSuccess else {
+            DLog("CheckValidity failed with \(checkValidityErr)")
+            if let verifyError = verifyErrors?.takeRetainedValue() {
+                DLog("Detailed error: \(verifyError.localizedDescription)")
+            }
+            return false
+        }
+
+        return true
     }
 
     private func matchesRegex(string: String, pattern: String) -> Bool {
