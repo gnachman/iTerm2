@@ -60,6 +60,7 @@ Deployment:
 	-sh version.sh -f
 
 run: Development
+	cp -rf ColorPicker/ColorPicker.framework build/Development/Therm.app/Contents/MacOS/
 	build/Development/Therm.app/Contents/MacOS/Therm
 
 lldb:
