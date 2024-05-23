@@ -42,7 +42,7 @@ class iTermAIClient {
         }
         var signingInfo: CFDictionary?
         let infoStatus = SecCodeCopySigningInformation(staticCode!, SecCSFlags(rawValue: kSecCSSigningInformation), &signingInfo)
-        guard infoStatus == errSecSuccess, let infoDict = signingInfo as? [String: Any] else {
+        guard infoStatus == errSecSuccess else {
             DLog("SecCodeCopySigningInformation failed with \(infoStatus)")
             return false
         }
