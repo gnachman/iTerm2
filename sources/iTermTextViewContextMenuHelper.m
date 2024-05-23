@@ -888,9 +888,13 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 }
 
 - (void)contextMenuActionRunCommandInWindow:(id)sender {
-    NSString *command = [sender representedObject];
-    DLog(@"Run command in window: %@", command);
-    [self.delegate contextMenu:self runCommandInWindow:command];
+    [self evaluateCustomActionDictionary:[sender representedObject] completion:^(NSString *value) {
+        DLog(@"Run command: %@", value);
+        if (!value) {
+            return;
+        }
+        [self.delegate contextMenu:self runCommandInWindow:value];
+    }];
 }
 
 - (void)contextMenuActionCopy:(id)sender {
