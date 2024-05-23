@@ -43,7 +43,7 @@
   [button setTarget:self];
   [button setAction:@selector(openInBrowserButtonPressed:)];
   [button setTitle:[NSString stringWithFormat:@"Open in %@", [self browserName]]];
-    [button setBezelStyle:NSBezelStyleToolbar];
+    // [button setBezelStyle:NSBezelStyleToolbar];
   [button sizeToFit];
   NSRect frame = button.frame;
   frame.origin.x = self.view.frame.origin.x + 8;

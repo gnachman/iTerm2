@@ -186,7 +186,7 @@ static const CGFloat kMargin = 8;
         [button setAction:@selector(buttonPressed:)];
         [button setTag:i];
         [button setTitle:action];
-        [button setBezelStyle:NSBezelStyleToolbar];
+        // [button setBezelStyle:NSBezelStyleToolbar];
         [button sizeToFit];
         button.autoresizingMask = NSViewMinXMargin;
         _buttonWidth += kMargin;
