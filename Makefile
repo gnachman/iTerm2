@@ -10,7 +10,9 @@ VERSION = $(shell cat version.txt)
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
 
 # CIFLAGS=CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
-CIFLAGS=
+CIFLAGS?=
+CIFLAGS+=-arch arm64 -arch x86_64
+
 
 .PHONY: clean all restart
 
