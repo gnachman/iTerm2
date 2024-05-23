@@ -125,6 +125,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 - (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler blockIDOnLine:(int)line;
 - (BOOL)mouseHandlerMouseDownAt:(NSPoint)locationInWindow;
 - (BOOL)mouseHandlerMouseUp:(NSEvent *)event;
+- (void)mouseHandler:(PTYMouseHandler *)sender handleCommandShiftClickAtCoord:(VT100GridCoord)coord;
 
 @end
 

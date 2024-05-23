@@ -164,6 +164,10 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 // This is meant to be used after the view finishes animating.
 - (void)removeContentNavigationShortcutView:(id<iTermContentNavigationShortcutView>)view;
 
+#pragma mark - Marks
+
+- (VT100GridCoordRange)coordRangeForMark:(id<VT100ScreenMarkReading>)mark;
+
 @end
 
 NS_ASSUME_NONNULL_END

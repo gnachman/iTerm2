@@ -6031,6 +6031,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return VT100GridCoordMake(temp.x, temp.y);
 }
 
+- (void)mouseHandler:(PTYMouseHandler *)sender handleCommandShiftClickAtCoord:(VT100GridCoord)coord {
+    id<VT100ScreenMarkReading> mark = [_delegate textViewMarkForCommandAt:coord];
+    if (!mark) {
+        return;
+    }
+    const VT100GridCoordRange range = [self coordRangeForMark:mark];
+    if (!VT100GridCoordRangeContainsCoord(range, coord)) {
+        return;
+    }
+
+    const long long overflow = [_dataSource totalScrollbackOverflow];
+    [_selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(0, range.start.y + overflow)
+                                   mode:kiTermSelectionModeLine
+                                 resume:NO
+                                 append:NO];
+    [_selection moveSelectionEndpointTo:VT100GridAbsCoordMake(self.dataSource.width, range.end.y + overflow - 1)];
+    [_selection endLiveSelection];
+}
+
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler
       coordIsMutable:(VT100GridCoord)coord {
     return [self coordinateIsInMutableArea:coord];

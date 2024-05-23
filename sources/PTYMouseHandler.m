@@ -584,22 +584,29 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 result |= iTermClickSideEffectsOpenPasswordManager;
             }
         }
-    } else if (isShiftedSingleClick &&
-               [self.mouseDelegate mouseHandler:self getFindOnPageCursor:&findOnPageCursor] &&
-               ![self.selection hasSelection]) {
-        const long long overflow = [_mouseDelegate mouseHandlerTotalScrollbackOverflow:self];
-        [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordFromCoord(findOnPageCursor, overflow)
-                                            mode:kiTermSelectionModeCharacter
-                                          resume:NO
-                                          append:NO];
-
-        const VT100GridCoord newEndPoint =
-        [self.mouseDelegate mouseHandler:self clickPoint:event allowOverflow:YES firstMouse:_mouseDownWasFirstMouse];
-        [self.selection moveSelectionEndpointTo:VT100GridAbsCoordFromCoord(newEndPoint, overflow)];
-        [self.selection endLiveSelection];
-
-        [self.mouseDelegate mouseHandlerResetFindOnPageCursor:self];
-        result |= iTermClickSideEffectsMoveFindOnPageCursor | iTermClickSideEffectsModifySelection;
+    } else if (isShiftedSingleClick) {
+        const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                           NSEventModifierFlagCommand |
+                                           NSEventModifierFlagControl);
+        if ((event.it_modifierFlags & mask) == NSEventModifierFlagCommand) {
+            VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInWindow:[event locationInWindow]];
+            [self.mouseDelegate mouseHandler:self handleCommandShiftClickAtCoord:coord];
+        } else if ([self.mouseDelegate mouseHandler:self getFindOnPageCursor:&findOnPageCursor] &&
+                   ![self.selection hasSelection]) {
+            const long long overflow = [_mouseDelegate mouseHandlerTotalScrollbackOverflow:self];
+            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordFromCoord(findOnPageCursor, overflow)
+                                                mode:kiTermSelectionModeCharacter
+                                              resume:NO
+                                              append:NO];
+            
+            const VT100GridCoord newEndPoint =
+            [self.mouseDelegate mouseHandler:self clickPoint:event allowOverflow:YES firstMouse:_mouseDownWasFirstMouse];
+            [self.selection moveSelectionEndpointTo:VT100GridAbsCoordFromCoord(newEndPoint, overflow)];
+            [self.selection endLiveSelection];
+            
+            [self.mouseDelegate mouseHandlerResetFindOnPageCursor:self];
+            result |= iTermClickSideEffectsMoveFindOnPageCursor | iTermClickSideEffectsModifySelection;
+        }
     }
 
     DLog(@"Has selection=%@, delegate=%@ wasSelecting=%@", @([self.selection hasSelection]), self.mouseDelegate, @(wasSelecting));

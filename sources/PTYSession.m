@@ -15838,6 +15838,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _selectedCommandMark;
 }
 
+- (id<VT100ScreenMarkReading>)textViewMarkForCommandAt:(VT100GridCoord)coord {
+    return [_screen commandMarkAtOrBeforeLine:coord.y];
+}
+
 - (void)textViewSelectCommandRegionAtCoord:(VT100GridCoord)coord {
     if (_screen.terminalSoftAlternateScreenMode) {
         return;
