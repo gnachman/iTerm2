@@ -309,7 +309,7 @@ class iTermAITermGatekeeper: NSObject {
             return false
         }
         if let problem = iTermAIClient.instance.validateSync() {
-            let selection = iTermWarning.show(withTitle: "The AI plugin's code signature was incorrect. Remove and resinstall it.",
+            let selection = iTermWarning.show(withTitle: "The AI plugin's code signature was incorrect: \(problem). Remove and resinstall it.",
                                               actions: ["Install", "Cancel"],
                                               accessory: nil,
                                               identifier: nil,
@@ -756,12 +756,21 @@ class AITermController {
         }
     }
 
+    private var settingsURL: URL {
+        var value = iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? ""
+        if value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            value = iTermPreferences.defaultObject(forKey: kPreferenceKeyAITermURL) as! String
+        }
+        return URL(string: value) ?? URL(string: "about:empty")!
+    }
+
     private func url(forModel model: String) -> URL? {
-        if hostIsOpenAIAPI(url: URL(string: iTermAdvancedSettingsModel.aitermURL())) &&
+        let settingsURL = self.settingsURL
+        if hostIsOpenAIAPI(url: settingsURL) &&
             !openAIModelIsLegacy(model: model) {
             return URL(string: "https://api.openai.com/v1/chat/completions")
         }
-        return URL(string: iTermAdvancedSettingsModel.aitermURL())
+        return settingsURL
     }
 
     private func maxTokens(model: String,
@@ -867,7 +876,7 @@ class AITermController {
         if usingOpenAI {
             return openAIModelIsLegacy(model: model)
         } else {
-            return iTermAdvancedSettingsModel.aitermUseLegacyAPI()
+            return iTermPreferences.bool(forKey: kPreferenceKeyAITermUseLegacyAPI)
         }
     }
 

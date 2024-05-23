@@ -126,6 +126,8 @@ extern NSString *const kPreferenceKeyEnableAPIServer;
 extern NSString *const kPreferenceKeyAPIAuthentication;
 extern NSString *const kPreferenceKeyEnableAI;
 extern NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents;
+extern NSString *const kPreferenceKeyAITermURL;
+extern NSString *const kPreferenceKeyAITermUseLegacyAPI;
 
 // Appearance
 extern NSString *const kPreferenceKeyTabStyle_Deprecated;
@@ -289,6 +291,7 @@ extern NSString *const iTermDefaultAIPrompt;
 // This is used for ensuring that all controls have default values.
 + (BOOL)keyHasDefaultValue:(NSString *)key;
 + (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;
++ (id)defaultObjectForKey:(NSString *)key;
 
 // When the value held by |key| changes, the block is invoked with the old an
 // new values. Either may be nil, but they are guaranteed to be different by

@@ -42,8 +42,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)addUtilitiesToPATH;
 + (BOOL)aggressiveBaseCharacterDetection;
 + (BOOL)aggressiveFocusFollowsMouse;
-+ (NSString *)aitermURL;
-+ (BOOL)aitermUseLegacyAPI;
 + (int)aiResponseMaxTokens;
 + (double)alertTriggerRateLimit;
 + (BOOL)alertsIndicateShortcuts;

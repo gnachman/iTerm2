@@ -8,6 +8,7 @@
 
 #import "iTermProfilePreferencesBaseViewController.h"
 #import "iTermProfilePreferences.h"
+#import "NSObject+iTerm.h"
 
 @implementation iTermProfilePreferencesBaseViewController
 
@@ -232,6 +233,11 @@
 
 - (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type {
     return [iTermProfilePreferences defaultValueForKey:key isCompatibleWithType:type];
+}
+
+- (BOOL)valueOfKeyEqualsDefaultValue:(NSString *)key {
+    return [NSObject object:[iTermProfilePreferences defaultObjectForKey:key]
+            isEqualToObject:[self objectForKey:key]];
 }
 
 - (void)willReloadProfile {

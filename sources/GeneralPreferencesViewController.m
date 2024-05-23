@@ -185,6 +185,9 @@ enum {
     IBOutlet NSTextField *_pluginStatus;
     IBOutlet NSButton *_installPluginButton;
     BOOL _pluginOK;
+
+    IBOutlet NSTextField *_customAIEndpoint;
+    IBOutlet NSButton *_useLegacyCompletionsAPI;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -695,6 +698,21 @@ enum {
     };
     PreferenceInfo *enableAIInfo = info;
 
+    info = [self defineControl:_customAIEndpoint
+                           key:kPreferenceKeyAITermURL
+                   relatedView:nil
+                          type:kPreferenceInfoTypeStringTextField];
+    info.onUpdate = ^BOOL{
+        [weakSelf updateEnabledState];
+        return NO;
+    };
+    info = [self defineControl:_useLegacyCompletionsAPI
+                           key:kPreferenceKeyAITermUseLegacyAPI
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.shouldBeEnabled = ^BOOL{
+        return ![weakSelf valueOfKeyEqualsDefaultValue:kPreferenceKeyAITermURL] && [[weakSelf stringForKey:kPreferenceKeyAITermURL] length] > 0;
+    };
     [self validatePlugin];
     [self updateEnabledState];
     [self commitControls];
@@ -734,13 +752,17 @@ enum {
     NSLog(@"viewDidAppear");
 }
 - (void)updateAIEnabled {
+    _enableAI.enabled = _pluginOK;
+
     const BOOL allowed = _pluginOK && [iTermAITermGatekeeper allowed];
     _openAIAPIKey.enabled = allowed;
     _aiPrompt.enabled = allowed;
     _aiModel.enabled = allowed;
     _aiTokenLimit.enabled = allowed;
     _resetAIPrompt.enabled = allowed;
-    _enableAI.enabled = _pluginOK;
+    _customAIEndpoint.enabled = allowed;
+    _useLegacyCompletionsAPI.enabled = allowed;
+
 }
 
 - (void)customScriptsFolderDidChange {

@@ -148,6 +148,8 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 - (void)setObject:(NSObject *)object forKey:(NSString *)key;
 - (NSObject *)objectForKey:(NSString *)key;
 
+- (BOOL)valueOfKeyEqualsDefaultValue:(NSString *)key;
+
 // If this returns YES, then changes to this panel will post a notification causing other panels to
 // update their values for the affected preference.
 - (BOOL)shouldUpdateOtherPanels;

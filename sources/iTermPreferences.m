@@ -197,6 +197,8 @@ NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions = @"Alert On Marks
 NSString *const kPreferenceKeyCompressHistory = @"Compress History";
 NSString *const kPreferenceKeyAIModel = @"AiModel";
 NSString *const kPreferenceKeyAITokenLimit = @"AiMaxTokens";
+NSString *const kPreferenceKeyAITermURL = @"AitermURL";
+NSString *const kPreferenceKeyAITermUseLegacyAPI = @"AitermUseLegacyAPI";
 
 NSString *const iTermDefaultAIPrompt = @"Return commands suitable for copy/pasting into \\(shell) on \\(uname). Do NOT include commentary NOR Markdown triple-backtick code blocks as your whole response will be copied into my terminal automatically.\n"
 @"\n"
@@ -396,7 +398,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
                   kPreferenceKeyAIModel: @"gpt-3.5-turbo",
                   kPreferenceKeyAITokenLimit: @4000,
-                  
+                  kPreferenceKeyAITermURL: @"https://api.openai.com/v1/completions",
+                  kPreferenceKeyAITermUseLegacyAPI: @NO,
+
                   kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),
                   

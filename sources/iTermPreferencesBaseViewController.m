@@ -250,6 +250,11 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     return [iTermPreferences defaultValueForKey:key isCompatibleWithType:type];
 }
 
+- (BOOL)valueOfKeyEqualsDefaultValue:(NSString *)key {
+    return [NSObject object:[iTermPreferences defaultObjectForKey:key]
+            isEqualToObject:[self objectForKey:key]];
+}
+
 - (BOOL)shouldUpdateOtherPanels {
     return YES;
 }
