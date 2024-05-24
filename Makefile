@@ -56,7 +56,7 @@ Deployment:
 	xcodebuild -parallelizeTargets -target Therm -configuration Deployment $(CIFLAGS)
 	chmod -R go+rX build/Deployment
 	mkdir -p build/Deployment/Therm.app/Contents/Frameworks/
-	cp -rf ColorPicker/ColorPicker.framework build/Deployment/Therm.app/Contents/
+	cp -rf ColorPicker/ColorPicker.framework build/Deployment/Therm.app/Contents/MacOS
 	-sh version.sh -f
 
 run: Development
