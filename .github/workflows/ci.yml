@@ -25,4 +25,3 @@ jobs:
       with:
         name: Therm.zip
         path: Therm-*.zip
-
