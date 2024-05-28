@@ -26,6 +26,48 @@ class iTermAIClient {
         return true
     }
 
+    private let codeSigningRequirementString = "anchor apple generic and certificate leaf[subject.OU] = \"H7V7XYVQ7D\""
+
+    private func certificatePinningCheck(process: Process) -> Bool {
+        var code: SecCode?
+        do {
+            let status = SecCodeCopyGuestWithAttributes(
+                nil,
+                [kSecGuestAttributePid: process.processIdentifier] as CFDictionary,
+                SecCSFlags(rawValue: 0),
+                &code)
+            guard status == errSecSuccess else {
+                DLog("SecCodeCopyGuestWithAttributes failed with \(status)")
+                return false
+            }
+        }
+
+        var requirement: SecRequirement? = nil
+        do {
+            let status = SecRequirementCreateWithString(
+                codeSigningRequirementString as CFString,
+                [],
+                &requirement)
+
+            guard status == errSecSuccess, let requirement = requirement else {
+                DLog("SecRequirementCreateWithString failed \(status)")
+                return false
+            }
+        }
+
+        do {
+            let status = SecCodeCheckValidity(code!,
+                                              SecCSFlags(rawValue: 0),
+                                              requirement)
+            guard status == errSecSuccess else {
+                DLog("CheckValidity failed with \(status)")
+                return false
+            }
+        }
+
+        return true
+    }
+
     private func certificatePinningCheck() -> Bool {
         DLog("certificatePinningCheck")
         guard let bundleURL = self.bundleURL else {
@@ -47,10 +89,8 @@ class iTermAIClient {
             return false
         }
 
-        let reqStr = "anchor apple generic and certificate leaf[subject.OU] = \"H7V7XYVQ7D\""
-
         var reqRef: SecRequirement? = nil
-        let reqErr = SecRequirementCreateWithString(reqStr as CFString, [], &reqRef)
+        let reqErr = SecRequirementCreateWithString(codeSigningRequirementString as CFString, [], &reqRef)
 
         guard reqErr == errSecSuccess, let requirement = reqRef else {
             DLog("SecRequirementCreateWithString failed \(reqErr)")
@@ -70,21 +110,15 @@ class iTermAIClient {
         return true
     }
 
-    private func matchesRegex(string: String, pattern: String) -> Bool {
-        let regex = try! NSRegularExpression(pattern: pattern, options: [])
-        let range = NSRange(location: 0, length: string.utf16.count)
-        return regex.firstMatch(in: string, options: [], range: range) != nil
-    }
-
     func validateSync() -> String? {
         DLog("validateSync")
-        let (status, data) = runSync(arg: "v", stdin: Data())
+        let (status, data) = runSync(arg: "v", stdin: Data(), checkSignature: false)
         return problem(status: status, data: data ?? Data())
     }
 
     func validate(_ completion: @escaping (String?) -> ()) {
         DLog("validate")
-        run(arg: "v", stdin: Data()) { status, data in
+        run(arg: "v", stdin: Data(), checkSignature: false) { status, data in
             let problem = self.problem(status: status, data: data)
             DLog("problem=\(String(describing: problem))")
             DispatchQueue.main.async {
@@ -123,7 +157,7 @@ class iTermAIClient {
 
     func version() -> Decimal? {
         DLog("version")
-        switch runSync(arg: "v", stdin: Data()) {
+        switch runSync(arg: "v", stdin: Data(), checkSignature: false) {
         case (.status(0), let data):
             if let data, let string = String(data: data, encoding: .utf8) {
                 return Decimal(string: string)
@@ -134,13 +168,13 @@ class iTermAIClient {
         }
     }
 
-    func runSync(arg: String, stdin: Data) -> (AIPluginStatus, Data?) {
+    func runSync(arg: String, stdin: Data, checkSignature: Bool) -> (AIPluginStatus, Data?) {
         DLog("runSync(\(arg), \(stdin.stringOrHex))")
         var resultStatus: AIPluginStatus?
         var resultData: Data?
 
         let sema = DispatchSemaphore(value: 0)
-        run(arg: arg, stdin: stdin) { status, data in
+        run(arg: arg, stdin: stdin, checkSignature: checkSignature) { status, data in
             resultStatus = status
             resultData = data
             DLog("signal")
@@ -156,7 +190,10 @@ class iTermAIClient {
         return NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
     }
 
-    func run(arg: String, stdin: Data, completion: @escaping (AIPluginStatus, Data) -> ()) {
+    func run(arg: String,
+             stdin: Data,
+             checkSignature: Bool,
+             completion: @escaping (AIPluginStatus, Data) -> ()) {
         DLog("run(\(arg), \(stdin.stringOrHex))")
         // Find the application bundle
         guard let bundleURL = self.bundleURL else {
@@ -208,13 +245,36 @@ class iTermAIClient {
         }
 
         executionQueue.async {
+            struct CodeSignagureError: Error { }
             do {
                 DLog("Call run")
                 try process.run()
+
+                // The purpose of the following certificate check is to ensure we don't send the
+                // very sensistive data in `stdin` to a malicious program.
+                //
+                // Doing the code signature check by process ID in general suffers from a process ID
+                // reuse race, but pid reuse is not a concern for the threat model here. There are
+                // two cases, both of which are acceptable:
+                //
+                // 1. If `process` terminates then it cannot receive the write that occurs after the
+                //    cert check. The result of the cert check is irrelevant.
+                // 2. If `process` does not terminate then its pid cannot get reused. The result of
+                //    the cert check is relevant and trustworthy.
+                if checkSignature && !iTermAIClient.instance.certificatePinningCheck(process: process) {
+                    throw CodeSignagureError()
+                }
                 DLog("call write")
                 inputPipe.fileHandleForWriting.write(stdin)
                 DLog("call closeFile")
                 inputPipe.fileHandleForWriting.closeFile()
+            } catch let _error as CodeSignagureError {
+                DLog("Code signature error")
+                outputQueue.async {
+                    outputPipe.fileHandleForReading.readabilityHandler = nil
+                    completion(.executionError,
+                               "The AI plugin’s code signature check failed. Reinstall it and upgrade iTerm2.".data(using: .utf8)!)
+                }
             } catch {
                 DLog("Error \(error)")
                 // Handle errors: also switch to the output queue to clean up
@@ -229,7 +289,7 @@ class iTermAIClient {
 
     func runiTermAIPlugin(withData data: Data, completion: @escaping (AIPluginStatus, Data?) -> Void) {
         DLog("runiTermAIPlugin data=\(data.stringOrHex)")
-        run(arg: "request", stdin: data) { status, outputData in
+        run(arg: "request", stdin: data, checkSignature: true) { status, outputData in
             DispatchQueue.main.async {
                 switch status {
                 case .status(let terminationStatus):
@@ -713,7 +773,7 @@ class AITermController {
                 case .pluginNotFound:
                     handle(event: .error(reason: "The iTermAI plugin was not found"), legacy: false)
                 case .executionError:
-                    handle(event: .error(reason: "There was a program running the iTermAI plugin: \(data.stringOrHex)"),
+                    handle(event: .error(reason: "There was a problem running the iTermAI plugin: \(data.stringOrHex)"),
                            legacy: false)
                 case .status(let status):
                     if status == 0 {
