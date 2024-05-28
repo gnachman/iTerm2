@@ -28,12 +28,12 @@ class iTermAIClient {
 
     private let codeSigningRequirementString = "anchor apple generic and certificate leaf[subject.OU] = \"H7V7XYVQ7D\""
 
-    private func certificatePinningCheck(process: Process) -> Bool {
+    private func certificatePinningCheck(pid: Int32) -> Bool {
         var code: SecCode?
         do {
             let status = SecCodeCopyGuestWithAttributes(
                 nil,
-                [kSecGuestAttributePid: process.processIdentifier] as CFDictionary,
+                [kSecGuestAttributePid: pid] as CFDictionary,
                 SecCSFlags(rawValue: 0),
                 &code)
             guard status == errSecSuccess else {
@@ -118,7 +118,7 @@ class iTermAIClient {
 
     func validate(_ completion: @escaping (String?) -> ()) {
         DLog("validate")
-        run(arg: "v", stdin: Data(), checkSignature: false) { status, data in
+        _ = run(arg: "v", stdin: Data(), checkSignature: false) { status, data in
             let problem = self.problem(status: status, data: data)
             DLog("problem=\(String(describing: problem))")
             DispatchQueue.main.async {
@@ -130,6 +130,8 @@ class iTermAIClient {
     private func problem(status: AIPluginStatus, data: Data) -> String? {
         DLog("status=\(status), data=\(data.stringOrHex)")
         switch status {
+        case .canceled:
+            return nil
         case .badOutput:
             return "Plugin malfunctioning"
         case .executionError:
@@ -176,7 +178,7 @@ class iTermAIClient {
         var resultData: Data?
 
         let sema = DispatchSemaphore(value: 0)
-        run(arg: arg, stdin: stdin, checkSignature: checkSignature) { status, data in
+        _ = run(arg: arg, stdin: stdin, checkSignature: checkSignature) { status, data in
             resultStatus = status
             resultData = data
             DLog("signal")
@@ -192,106 +194,214 @@ class iTermAIClient {
         return NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
     }
 
+    // A Cancellation provides a way to cancel an asynchronous operation. The function to implement
+    // cancellation can be provided after creation.
+    // It safe to use concurrently.
+    // It guarantees that the code to perform cancellation is executed exactly once if canceled.
+    class Cancellation {
+        private var lock = Mutex()
+        private var _impl: (() -> ())?
+        private var _canceled = false
+
+        // Set this to a closure that implements cancellation. You can reassign to this as needed.
+        // If this was canceled prior to setting impl for the first time, the setter may run the
+        // closure synchronously.
+        var impl: (() -> ())? {
+            set {
+                lock.sync {
+                    if let f = newValue, _impl == nil, _canceled {
+                        // Canceled before the first impl was set so cancel immediately.
+                        f()
+                    } else {
+                        _impl = newValue
+                    }
+                }
+            }
+            get {
+                lock.sync { _impl }
+            }
+        }
+
+        // Has cancel() ever been called?
+        var canceled: Bool {
+            lock.sync { _canceled }
+        }
+
+        // Idempotent. Runs the cancellation handler eventually.
+        func cancel() {
+            lock.sync {
+                guard !_canceled else {
+                    return
+                }
+                _canceled = true
+                let f = _impl
+                _impl = nil
+                f?()
+            }
+        }
+    }
+
     func run(arg: String,
              stdin: Data,
              checkSignature: Bool,
-             completion: @escaping (AIPluginStatus, Data) -> ()) {
+             completion: @escaping (AIPluginStatus, Data) -> ()) -> Cancellation? {
         DLog("run(\(arg), \(stdin.stringOrHex))")
         // Find the application bundle
         guard let bundleURL = self.bundleURL else {
             DLog("no bundle")
             completion(.pluginNotFound, "Application bundle not found.".data(using: .utf8)!)
-            return
+            return nil
         }
+
+        let cancellation = Cancellation()
+        executionQueue.async {
+            self.runOnExecutionQueue(bundleURL: bundleURL,
+                                     arg: arg,
+                                     stdin: stdin,
+                                     checkSignature: checkSignature,
+                                     cancellation: cancellation,
+                                     completion: completion)
+        }
+        return cancellation
+    }
+
+    private func runOnExecutionQueue(bundleURL: URL,
+                                     arg: String,
+                                     stdin: Data,
+                                     checkSignature: Bool,
+                                     cancellation: Cancellation,
+                                     completion: @escaping (AIPluginStatus, Data) -> ()) {
+        dispatchPrecondition(condition: .onQueue(executionQueue))
 
         // Construct the path to the executable
         let executableURL = bundleURL.appendingPathComponent("Contents/MacOS/iTermAIPlugin")
 
-        // Prepare the process
-        let process = Process()
-        process.executableURL = executableURL
-        process.arguments = [arg]
-
-        // Handle stdin
-        let inputPipe = Pipe()
-        process.standardInput = inputPipe
-
-        // Handle stdout
-        let outputPipe = Pipe()
-        process.standardOutput = outputPipe
+        let childStdin = Pipe()
+        let childStdout = Pipe()
 
         // Setup a queue to handle output data to prevent race conditions
-        var outputData = Data()
+        var outputData = Data()  // only use on outputQueue
         let outputQueue = self.outputQueue
-        
-        outputPipe.fileHandleForReading.readabilityHandler = { fileHandle in
-            let newData = fileHandle.availableData
-            DLog("read \(newData.stringOrHex)")
-            if !newData.isEmpty {
-                outputQueue.async {
-                    outputData.append(newData)
-                }
-            }
-        }
 
-        process.terminationHandler = { finishedProcess in
-            DLog("terminated with \(finishedProcess.terminationStatus)")
-            // Ensure we're also on the output queue to finalize outputData safely
+        // I wish I could use Swift's Process class, but it doesn't give enough control over when
+        // the process is wait()ed on. See the note below about the certificate check.
+        let pid = iTermStartProcess(executableURL,
+                                    [executableURL.lastPathComponent, arg],
+                                    childStdin.fileHandleForReading.fileDescriptor,
+                                    childStdout.fileHandleForWriting.fileDescriptor)
+        guard pid > 0 else {
+            DLog("iTermStartProcess failed")
+            // Handle errors: also switch to the output queue to clean up
             outputQueue.async {
-                // Close the output pipe's readability handler
-                outputPipe.fileHandleForReading.readabilityHandler = nil
-
-                // Call completion handler
-                completion(.status(Int(finishedProcess.terminationStatus)), outputData)
+                completion(.executionError,
+                           "Failed to start the AI plugin".data(using: .utf8)!)
             }
+            return
         }
 
-        executionQueue.async {
-            struct CodeSignagureError: Error { }
-            do {
-                DLog("Call run")
-                try process.run()
+        cancellation.impl = {
+            kill(pid, SIGKILL)
+        }
+        if cancellation.canceled {
+            outputQueue.async {
+                completion(.canceled, Data())
+            }
+            return
+        }
 
-                // The purpose of the following certificate check is to ensure we don't send the
-                // very sensistive data in `stdin` to a malicious program.
-                //
-                // Doing the code signature check by process ID in general suffers from a process ID
-                // reuse race, but pid reuse is not a concern for the threat model here. There are
-                // two cases, both of which are acceptable:
-                //
-                // 1. If `process` terminates then it cannot receive the write that occurs after the
-                //    cert check. The result of the cert check is irrelevant.
-                // 2. If `process` does not terminate then its pid cannot get reused. The result of
-                //    the cert check is relevant and trustworthy.
-                if checkSignature && !iTermAIClient.instance.certificatePinningCheck(process: process) {
-                    throw CodeSignagureError()
+        try? childStdin.fileHandleForReading.close()
+        try? childStdout.fileHandleForWriting.close()
+
+        // The purpose of the following certificate check is to ensure we don't send the
+        // very sensistive data in `stdin` to a malicious program.
+        //
+        // Doing the code signature check by process ID in general suffers from a process ID
+        // reuse race. That is impossible here because we don't call waitpid until after
+        // the check finishes so the process ID cannot be reused.
+        if checkSignature && !iTermAIClient.instance.certificatePinningCheck(pid: pid) {
+            DLog("Code signature error")
+            outputQueue.async {
+                cancellation.cancel()
+                completion(.executionError,
+                           "The AI plugin’s code signature check failed. Reinstall it and upgrade iTerm2.".data(using: .utf8)!)
+            }
+            return
+        }
+
+        do {
+            // First, write. We know that the plugin will drain stdin until EOF so this is safe.
+            DLog("write: " + stdin.stringOrHex)
+            if #available(macOS 10.15.4, *) {
+                try childStdin.fileHandleForWriting.write(contentsOf: stdin)
+            } else {
+                try ObjCTry {
+                    childStdin.fileHandleForWriting.write(stdin)
                 }
-                DLog("call write")
-                inputPipe.fileHandleForWriting.write(stdin)
-                DLog("call closeFile")
-                inputPipe.fileHandleForWriting.closeFile()
-            } catch _ as CodeSignagureError {
-                DLog("Code signature error")
-                outputQueue.async {
-                    outputPipe.fileHandleForReading.readabilityHandler = nil
-                    completion(.executionError,
-                               "The AI plugin’s code signature check failed. Reinstall it and upgrade iTerm2.".data(using: .utf8)!)
+            }
+            DLog("Write finished")
+
+            try? childStdin.fileHandleForWriting.close()
+
+            // Read and append to outputData.
+            DLog("Begin reading")
+            let sema = DispatchSemaphore(value: 0)
+            childStdout.fileHandleForReading.readabilityHandler = { handle in
+                let data = handle.availableData
+                if data.isEmpty {
+                    DLog("EOF")
+                    sema.signal()
+                } else {
+                    DLog("read \(data.stringOrHex)")
+                    outputQueue.async {
+                        outputData.append(data)
+                    }
                 }
-            } catch {
-                DLog("Error \(error)")
-                // Handle errors: also switch to the output queue to clean up
-                outputQueue.async {
-                    outputPipe.fileHandleForReading.readabilityHandler = nil
-                    completion(.executionError,
-                               "Failed to start the process: \(error.localizedDescription)".data(using: .utf8)!)
+            }
+
+            // Block until reading completes. This avoids a race between waitpid and read.
+            sema.wait()
+
+            // At this point we assume waitpid will succeed immediately, so it is no longer cancelable.
+            // We can't wait until after waitpid to do this or else a cancellation might kill the
+            // wrong process when the PID gets reused.
+            cancellation.impl = nil
+
+            // Allow the process ID to be reused.
+            var status: Int32 = 0
+            while true {
+                DLog("Call waitpid")
+                let rc = waitpid(pid, &status, 0)
+                if rc >= 0 {
+                    DLog("rc=\(rc)")
+                    break
                 }
+                if errno != EINTR {
+                    DLog("error \(errno) from waitpid")
+                    throw NSError(domain: "com.googlecode.iterm2.ai-plugin", code: Int(errno))
+                }
+            }
+            DLog("terminated with \(iTermProcessExitStatus(status))")
+
+            // Finished.
+            outputQueue.async {
+                // Call completion handler
+                completion(.status(Int(iTermProcessExitStatus(status))), outputData)
+            }
+        } catch {
+            DLog("Error \(error)")
+            // Handle errors: also switch to the output queue to clean up
+            outputQueue.async {
+                cancellation.cancel()
+                completion(.executionError,
+                           "Failed to start the process: \(error.localizedDescription)".data(using: .utf8)!)
             }
         }
     }
 
-    func runiTermAIPlugin(withData data: Data, completion: @escaping (AIPluginStatus, Data?) -> Void) {
+    func runiTermAIPlugin(withData data: Data,
+                          completion: @escaping (AIPluginStatus, Data?) -> Void) -> Cancellation? {
         DLog("runiTermAIPlugin data=\(data.stringOrHex)")
-        run(arg: "request", stdin: data, checkSignature: true) { status, outputData in
+        return run(arg: "request", stdin: data, checkSignature: true) { status, outputData in
             DispatchQueue.main.async {
                 switch status {
                 case .status(let terminationStatus):
@@ -314,7 +424,7 @@ class iTermAIClient {
                             completion(status, outputData)
                         }
                     }
-                case .badOutput, .executionError, .pluginNotFound, .runtimeError:
+                case .badOutput, .executionError, .pluginNotFound, .runtimeError, .canceled:
                     DLog("fail \(status)")
                     completion(status, outputData)
                 }
@@ -460,10 +570,19 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
                                           message: "Thinking…",
                                           image: NSImage.it_imageNamed("aiterm", for: AITermControllerObjC.self))
         self.pleaseWait = pleaseWait
+        var cancel: (() -> ())?
+        var shouldCancel = false
         self.handler = { choices, error in
             if !pleaseWait.canceled {
                 handler(choices, error)
+            } else {
+                shouldCancel = true
+                cancel?()
             }
+        }
+        pleaseWait.didCancel = {
+            shouldCancel = true
+            cancel?()
         }
         self.ownerWindow = window
         self.query = query
@@ -485,7 +604,12 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         swiftyString.evaluateSynchronously(false, with: myScope) { maybeResult, maybeError, _ in
             if let prompt = maybeResult {
                 Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { _ in
-                    self.controller.request(query: prompt)
+                    if !shouldCancel {
+                        cancel = { [weak self] in
+                            self?.controller.cancel()
+                        }
+                        self.controller.request(query: prompt)
+                    }
                 }
             }
         }
@@ -628,6 +752,7 @@ enum AIPluginStatus {
     case status(Int)
     case badOutput
     case runtimeError
+    case canceled
 }
 
 class AITermController {
@@ -682,6 +807,8 @@ class AITermController {
                     return "apiResponse(badOutput: \((data ?? Data()).stringOrHex))"
                 case .runtimeError:
                     return "apiResponse(runtimeError: \((data ?? Data()).stringOrHex))"
+                case .canceled:
+                    return "apiResponse(canceled)"
                 }
             }
         }
@@ -723,6 +850,11 @@ class AITermController {
 
     fileprivate func define(functions: [AnyFunction]) {
         self.functions.append(contentsOf: functions)
+    }
+
+    func cancel() {
+        cancellation?.cancel()
+        cancellation = nil
     }
 
     private func handle(event: Event, legacy: Bool) {
@@ -808,6 +940,8 @@ class AITermController {
                         handle(event: .error(reason: "Invalid output from iTermAI plugin"),
                                legacy: false)
                     }
+                case .canceled:
+                    state = .ground
                 }
             case .error(reason: let reason):
                 DLog("error: \(reason)")
@@ -985,6 +1119,7 @@ class AITermController {
     }
 
     private let client = iTermAIClient()
+    private var cancellation: iTermAIClient.Cancellation?
 
     private func makeAPICall(messages: [Message], registration: Registration) {
         let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-3.5-turbo"
@@ -999,7 +1134,7 @@ class AITermController {
                                  body: requestBody(model: model, messages: messages),
                                  url: url.absoluteString)
         let legacy = shouldUseLegacyAPI(model)
-        client.runiTermAIPlugin(withData: try! JSONEncoder().encode(request)) { [weak self] status, data in
+        cancellation = client.runiTermAIPlugin(withData: try! JSONEncoder().encode(request)) { [weak self] status, data in
             DispatchQueue.main.async {
                 self?.handle(event: .apiResponse(status: status, data: data),
                              legacy: legacy)

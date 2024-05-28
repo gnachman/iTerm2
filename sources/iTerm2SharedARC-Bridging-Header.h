@@ -22,6 +22,7 @@
 #import "iTermImageInfo.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalCellRenderer.h"
+#import "iTermProcess.h"
 #import "iTermRemotePreferences.h"
 #import "iTermSearchFieldCell.h"
 #import "iTermSnippetsModel.h"

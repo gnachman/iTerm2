@@ -17,6 +17,7 @@ class PleaseWaitWindow: NSWindow {
     private var finished = false
     private weak var owningWindow: NSWindow?
     private(set) var canceled = false
+    var didCancel: (() -> ())?
 
     @objc
     init(owningWindow: NSWindow, message: String, image: NSImage) {
@@ -105,6 +106,7 @@ class PleaseWaitWindow: NSWindow {
     @objc func cancel(_ sender: Any?) {
         canceled = true
         stop()
+        didCancel?()
     }
 
     @objc func stop() {
