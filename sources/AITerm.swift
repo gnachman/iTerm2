@@ -49,7 +49,7 @@ class iTermAIClient {
                 [],
                 &requirement)
 
-            guard status == errSecSuccess, let requirement = requirement else {
+            guard status == errSecSuccess && requirement != nil else {
                 DLog("SecRequirementCreateWithString failed \(status)")
                 return false
             }
@@ -58,7 +58,7 @@ class iTermAIClient {
         do {
             let status = SecCodeCheckValidity(code!,
                                               SecCSFlags(rawValue: 0),
-                                              requirement)
+                                              requirement!)
             guard status == errSecSuccess else {
                 DLog("CheckValidity failed with \(status)")
                 return false
@@ -136,6 +136,8 @@ class iTermAIClient {
             return "Unable to execute plugin"
         case .pluginNotFound:
             return "Plugin not found"
+        case .runtimeError:
+            return data.stringOrHex
         case .status(let status):
             if status != 0 {
                 return "Failed to check plugin version"
@@ -268,7 +270,7 @@ class iTermAIClient {
                 inputPipe.fileHandleForWriting.write(stdin)
                 DLog("call closeFile")
                 inputPipe.fileHandleForWriting.closeFile()
-            } catch let _error as CodeSignagureError {
+            } catch _ as CodeSignagureError {
                 DLog("Code signature error")
                 outputQueue.async {
                     outputPipe.fileHandleForReading.readabilityHandler = nil
@@ -298,7 +300,7 @@ class iTermAIClient {
                         let response = try decoder.decode(WebResponse.self, from: outputData)
                         if let error = response.error {
                             DLog("response has error \(error)")
-                            completion(status, error.data(using: .utf8))
+                            completion(.runtimeError, error.data(using: .utf8))
                         } else {
                             DLog("response is ok")
                             completion(status, response.data)
@@ -312,7 +314,7 @@ class iTermAIClient {
                             completion(status, outputData)
                         }
                     }
-                case .badOutput, .executionError, .pluginNotFound:
+                case .badOutput, .executionError, .pluginNotFound, .runtimeError:
                     DLog("fail \(status)")
                     completion(status, outputData)
                 }
@@ -625,6 +627,7 @@ enum AIPluginStatus {
     case executionError
     case status(Int)
     case badOutput
+    case runtimeError
 }
 
 class AITermController {
@@ -666,6 +669,7 @@ class AITermController {
             switch self {
             case .begin: return "begin"
             case .error(reason: let reason): return "error(\(reason))"
+            case .apiError(reason: let reason): return "apiError(\(reason))"
             case let .apiResponse(status: status, data: data):
                 switch status {
                 case .pluginNotFound:
@@ -676,11 +680,14 @@ class AITermController {
                     return "apiResponse(status=\(status): \(data.stringOrHex))"
                 case .badOutput:
                     return "apiResponse(badOutput: \((data ?? Data()).stringOrHex))"
+                case .runtimeError:
+                    return "apiResponse(runtimeError: \((data ?? Data()).stringOrHex))"
                 }
             }
         }
         case begin
         case error(reason: String)
+        case apiError(reason: String)
         case apiResponse(status: AIPluginStatus, data: Data?)
     }
 
@@ -736,7 +743,7 @@ class AITermController {
                     makeAPICall(query: query, registration: registration)
                 }
                 delegate?.aitermControllerWillSendRequest(self)
-            case .error(reason: let reason):
+            case .error(reason: let reason), .apiError(reason: let reason):
                 DLog("error: \(reason)")
                 state = .ground
             case .apiResponse:
@@ -755,7 +762,7 @@ class AITermController {
                     makeAPICall(messages: messages, registration: registration)
                 }
                 delegate?.aitermControllerWillSendRequest(self)
-            case .error(reason: let reason):
+            case .error(reason: let reason), .apiError(reason: let reason):
                 DLog("error: \(reason)")
                 state = .ground
             case .apiResponse:
@@ -775,6 +782,12 @@ class AITermController {
                 case .executionError:
                     handle(event: .error(reason: "There was a problem running the iTermAI plugin: \(data.stringOrHex)"),
                            legacy: false)
+                case .runtimeError:
+                    if let data {
+                        handle(event: .error(reason: data.stringOrHex), legacy: false)
+                    } else {
+                        handle(event: .error(reason: "Unknown runtime error"), legacy: false)
+                    }
                 case .status(let status):
                     if status == 0 {
                         parseResponse(data: data ?? Data(), legacy: legacy)
@@ -798,6 +811,10 @@ class AITermController {
                 }
             case .error(reason: let reason):
                 DLog("error: \(reason)")
+                state = .ground
+                delegate?.aitermController(self, didFailWithErrorMessage: "Error: \(reason)")
+            case .apiError(reason: let reason):
+                DLog("API error: \(reason)")
                 state = .ground
                 let provider =
                     if usingOpenAI {
@@ -1054,7 +1071,7 @@ class AITermController {
         } catch {
             let decoder = JSONDecoder()
             if let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) {
-                handle(event: .error(reason: errorResponse.error.message),
+                handle(event: .apiError(reason: errorResponse.error.message),
                        legacy: legacy)
             } else {
                 handle(event: .error(reason: "Failed to decode API response: \(error). Data is: \(data.stringOrHex)"),
@@ -1116,7 +1133,7 @@ class AITermController {
                         return
                     case .failure(let error):
                         DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
-                        handle(event: .error(reason: error.localizedDescription),
+                        handle(event: .apiError(reason: error.localizedDescription),
                                legacy: false)
                         return
                     }
