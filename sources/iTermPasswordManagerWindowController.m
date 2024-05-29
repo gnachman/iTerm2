@@ -270,27 +270,38 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (void)selectAccountName:(NSString *)name {
+    DLog(@"selectAccountName:%@", name);
     if (!name) {
+        DLog(@"name is nil");
         return;
     }
     if (_entries) {
         [self reallySelectAccountName:name];
         return;
     }
+    DLog(@"reload and then select");
     __weak __typeof(self) weakSelf = self;
     [self reloadAccounts:^{
+        DLog(@"reload finished");
         [weakSelf reallySelectAccountName:name];
     }];
 }
 
 - (void)reallySelectAccountName:(NSString *)name {
+    DLog(@"reallySelectAccountName:%@", name);
     const NSUInteger index = [self indexOfDisplayName:name];
     if (index != NSNotFound) {
+        DLog(@"Select index %@", @(index));
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
                 byExtendingSelection:NO];
         [_tableView scrollRowToVisible:index];
     } else if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+        DLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
         _accountNameToSelectAfterAuthentication = [name copy];
+    } else {
+        DLog(@"failed to find %@ among %@", name, [[_entries mapWithBlock:^id _Nullable(id<PasswordManagerAccount>  _Nonnull anObject) {
+            return [anObject displayString];
+        }] componentsJoinedByString:@", "]);
     }
 }
 
@@ -794,10 +805,13 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (void)didBecomeReady {
+    DLog(@"didBecomeReady");
     if (_accountNameToSelectAfterAuthentication) {
+        DLog(@"will select %@", _accountNameToSelectAfterAuthentication);
         [self selectAccountName:_accountNameToSelectAfterAuthentication];
         _accountNameToSelectAfterAuthentication = nil;
     } else {
+        DLog(@"make search field first responder");
         [[self window] makeFirstResponder:_searchField];
     }
 }
