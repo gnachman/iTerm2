@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermEventTap.h"
@@ -37,15 +38,11 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
     CFRelease(_eventSource);
 }
 
-- (BOOL)isProcessTrustedWithPrompt:(BOOL)prompt {
-    return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)@{(__bridge id)kAXTrustedCheckOptionPrompt: @(prompt)});
-}
-
 - (void)secureInputDidChange:(NSNotification *)notification {
     // Avoid trying to enable it if the process is not trusted because this gets called when the
     // app is activated/deactivated
     const BOOL shouldBeEnabled = self.shouldBeEnabled;
-    if (!shouldBeEnabled || [self isProcessTrustedWithPrompt:NO]) {
+    if (!shouldBeEnabled || [[iTermPermissionsHelper accessibility] status]) {
         [self setEnabled:shouldBeEnabled];
     }
 }
@@ -241,7 +238,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
     if (!_machPort) {
         XLog(@"CGEventTapCreate failed");
         AppendPinnedDebugLogMessage(@"EventTap", @"CGEventTapCreate failed");
-        AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)@{(__bridge id)kAXTrustedCheckOptionPrompt: @YES});
+        [[iTermPermissionsHelper accessibility] request];
         goto error;
     }
 

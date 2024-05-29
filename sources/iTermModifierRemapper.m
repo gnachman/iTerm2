@@ -29,6 +29,7 @@
 #import "iTermModifierRemapper.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermEventTap.h"
@@ -442,14 +443,7 @@
     }
 
     DLog(@"Requesting accessibility permission");
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSDictionary *options = @{ (NSString *)kAXTrustedCheckOptionPrompt: @YES };
-        // Show a dialog prompting the user to open system prefs.
-        if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
-            return;
-        }
-    });
+    [[iTermPermissionsHelper accessibility] request];
 }
 
 #pragma mark - iTermEventTapRemappingDelegate

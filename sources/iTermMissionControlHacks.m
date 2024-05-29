@@ -6,6 +6,8 @@
 //
 
 #import "iTermMissionControlHacks.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermNotificationController.h"
 #import "NSObject+iTerm.h"
 
@@ -60,7 +62,7 @@
 }
 
 + (void)switchToSpace:(int)spaceNum {
-    if (!AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)@{(__bridge id)kAXTrustedCheckOptionPrompt: @YES})) {
+    if (![[iTermPermissionsHelper accessibility] request]) {
         [self complainThatCantSwitchToSpace:spaceNum
                                         fix:@"You must grant iTerm2 accessibility permission in System Settings > Security & Privacy."];
         return;
