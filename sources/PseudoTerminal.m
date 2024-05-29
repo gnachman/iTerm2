@@ -2594,8 +2594,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)broadcastScrollToEnd {
-    for (PTYSession *aSession in [self broadcastSessions]) {
+- (void)broadcastScrollToEnd:(PTYSession *)sender {
+    NSArray<PTYSession *> *sessions = [self broadcastSessions];
+    if (sessions.count == 0 && sender != nil) {
+        sessions = @[ sender ];
+    }
+    for (PTYSession *aSession in sessions) {
         [aSession.textview scrollEnd];
         [(PTYScrollView *)[aSession.textview enclosingScrollView] detectUserScroll];
     }

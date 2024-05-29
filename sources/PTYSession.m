@@ -9038,7 +9038,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [[iTermController sharedInstance] previousTerminal];
             break;
         case KEY_ACTION_SCROLL_END:
-            [[_delegate realParentWindow] broadcastScrollToEnd];
+            [[_delegate realParentWindow] broadcastScrollToEnd:self];
             break;
         case KEY_ACTION_SCROLL_HOME:
             [_textview scrollHome];
