@@ -23,7 +23,8 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
     kPreferenceInfoTypeColorWell,
     // a view whose children that are buttons are all radio buttons with distinct tags controlling the same preference
     kPreferenceInfoTypeRadioButton,
-    kPreferenceInfoTypeStringPopup
+    kPreferenceInfoTypeStringPopup,
+    kPreferenceInfoTypePasswordTextField
 };
 
 @class iTermPreferencesSearchDocument;

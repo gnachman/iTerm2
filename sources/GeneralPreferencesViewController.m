@@ -7,7 +7,6 @@
 //
 
 #import "GeneralPreferencesViewController.h"
-
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedGPUSettingsViewController.h"
@@ -27,6 +26,7 @@
 #import "RegexKitLite.h"
 #import "WindowArrangements.h"
 #import "NSImage+iTerm.h"
+#import <SSKeychain/SSKeychain.h>
 
 enum {
     kUseSystemWindowRestorationSettingTag = 0,
@@ -164,7 +164,7 @@ enum {
 
     IBOutlet NSButton *_disableConfirmationOnShutdown;
 
-    IBOutlet NSTextField *_openAIAPIKey;
+    IBOutlet iTermSettingsSecureTextField *_openAIAPIKey;
     IBOutlet NSTextField *_openAIAPIKeyLabel;
 
     IBOutlet NSTextField *_aiPrompt;
@@ -648,10 +648,24 @@ enum {
 
     /// -------
 
-    [self defineControl:_openAIAPIKey
-                    key:kPreferenceKeyOpenAIAPIKey
-            relatedView:_openAIAPIKeyLabel
-                   type:kPreferenceInfoTypeStringTextField];
+    info = [self defineControl:_openAIAPIKey
+                           key:kPreferenceKeyOpenAIAPIKey
+                   relatedView:_openAIAPIKeyLabel
+                          type:kPreferenceInfoTypePasswordTextField];
+    info.syntheticGetter = ^id{
+        return [AITermControllerObjC apiKey];
+    };
+    info.syntheticSetter = ^(id newValue) {
+        NSString *key = [NSString castFrom:newValue];
+        [AITermControllerObjC setAPIKeyAsync:key];
+    };
+    __weak PreferenceInfo *apiKeyInfo = info;
+    _openAIAPIKey.textFieldDidBecomeFirstResponder = ^(iTermSettingsSecureTextField *textfield) {
+        if (apiKeyInfo) {
+            [weakSelf updateValueForInfo:apiKeyInfo];
+        }
+    };
+
     info = [self defineControl:_aiPrompt
                            key:kPreferenceKeyAIPrompt
                    relatedView:_aiPromptLabel
@@ -718,6 +732,9 @@ enum {
     [self commitControls];
     [self updateValueForInfo:allowSendingClipboardInfo];
     [self updateValueForInfo:enableAIInfo];
+    if ([AITermControllerObjC haveCachedAPIKey]) {
+        [self updateValueForInfo:apiKeyInfo];
+    }
     [self updateAIEnabled];
 }
 

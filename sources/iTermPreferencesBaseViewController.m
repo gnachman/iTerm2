@@ -313,6 +313,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 break;
 
             case kPreferenceInfoTypeStringTextField:
+            case kPreferenceInfoTypePasswordTextField:
                 [self setString:[sender stringValue] forKey:info.key];
                 break;
 
@@ -590,6 +591,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         case kPreferenceInfoTypeIntegerTextField:
         case kPreferenceInfoTypeUnsignedIntegerPopup:
         case kPreferenceInfoTypeUnsignedIntegerTextField:
+        case kPreferenceInfoTypePasswordTextField:
             break;
 
         case kPreferenceInfoTypeRadioButton: {
@@ -665,6 +667,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
             break;
         }
 
+        case kPreferenceInfoTypePasswordTextField:
         case kPreferenceInfoTypeStringTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
@@ -815,6 +818,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 case kPreferenceInfoTypeUnsignedIntegerTextField:
                 case kPreferenceInfoTypeDoubleTextField:
                 case kPreferenceInfoTypeStringTextField:
+                case kPreferenceInfoTypePasswordTextField:
                 case kPreferenceInfoTypePopup:
                 case kPreferenceInfoTypeStringPopup:
                 case kPreferenceInfoTypeUnsignedIntegerPopup:
@@ -905,6 +909,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
             case kPreferenceInfoTypeStringPopup:
             case kPreferenceInfoTypeSlider:
             case kPreferenceInfoTypeStringTextField:
+            case kPreferenceInfoTypePasswordTextField:
             case kPreferenceInfoTypeTokenField:
             case kPreferenceInfoTypeUnsignedIntegerPopup:
             case kPreferenceInfoTypeUnsignedIntegerTextField:

@@ -1098,6 +1098,8 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     DLog(@"migrateApplicationSupportDirectoryIfNeeded");
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];
+    DLog(@"migrate OpenAI key");
+    [iTermMigrationHelper migrateOpenAIKeyIfNeeded];
     DLog(@"buildScriptMenu");
     [self buildScriptMenu:nil];
 

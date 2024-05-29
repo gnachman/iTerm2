@@ -11,5 +11,6 @@
 
 + (void)migrateApplicationSupportDirectoryIfNeeded;
 + (void)recursiveMigrateBookmarks:(NSDictionary*)node path:(NSArray*)path;
++ (void)migrateOpenAIKeyIfNeeded;
 
 @end

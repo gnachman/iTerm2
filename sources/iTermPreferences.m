@@ -539,6 +539,7 @@ static NSString *sPreviousVersion;
                     [defaultValue isKindOfClass:[NSNull class]]);
         case kPreferenceInfoTypeStringPopup:
         case kPreferenceInfoTypeStringTextField:
+        case kPreferenceInfoTypePasswordTextField:
             return ([defaultValue isKindOfClass:[NSString class]] ||
                     [defaultValue isKindOfClass:[NSNull class]]);
         case kPreferenceInfoTypeMatrix:

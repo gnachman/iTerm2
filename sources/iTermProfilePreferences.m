@@ -135,6 +135,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         case kPreferenceInfoTypeSlider:
             return [defaultValue isKindOfClass:[NSNumber class]];
         case kPreferenceInfoTypeStringPopup:
+        case kPreferenceInfoTypePasswordTextField:
         case kPreferenceInfoTypeStringTextField:
             return [defaultValue isKindOfClass:[NSString class]];
         case kPreferenceInfoTypeTokenField:

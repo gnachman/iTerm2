@@ -9,8 +9,11 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermDisclosableView.h"
+#import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 
 @implementation iTermMigrationHelper
@@ -42,6 +45,33 @@
     NSError *error = nil;
     [fileManager removeItemAtPath:legacy error:&error];
     return error == nil;
+}
+
++ (void)migrateOpenAIKeyIfNeeded {
+    NSString *key = [[NSUserDefaults standardUserDefaults] stringForKey:kPreferenceKeyOpenAIAPIKey];
+    if (!key) {
+        return;
+    }
+    NSString *trimmedKey = [key stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if ([trimmedKey length] == 0) {
+        return;
+    }
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:@"Move OpenAI API key into the keychain? It is currently stored in User Defaults, which is not as secure."
+                               actions:@[ @"OK", @"Erase from Settings" ]
+                             accessory:nil
+                            identifier:@"NoSyncMoveOpenAIAPIKeyIntoKeychain"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Move Key" 
+                                window:nil];
+    if (selection == kiTermWarningSelection0) {
+        [self addOpenAIKeyToKeychain:key];
+    }
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:kPreferenceKeyOpenAIAPIKey];
+}
+
++ (void)addOpenAIKeyToKeychain:(NSString *)key {
+    [AITermControllerObjC setApiKey:key];
 }
 
 + (void)migrateApplicationSupportDirectoryIfNeeded {

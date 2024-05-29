@@ -516,18 +516,16 @@ class iTermAITermGatekeeper: NSObject {
 
 class AITermControllerRegistrationHelper {
     static var instance = AITermControllerRegistrationHelper()
-    private static let apiKeyUserDefaultsKey = "NoSyncOpenAIAPIKey"
 
     var registration: AITermController.Registration? {
         if !iTermAITermGatekeeper.allowed {
             return nil
         }
-        let maybeApiKey = UserDefaults.standard.string(forKey: Self.apiKeyUserDefaultsKey)
-        return AITermController.Registration(apiKey: maybeApiKey)
+        return AITermController.Registration(apiKey: AITermControllerObjC.apiKey)
     }
 
     func setKey(_ key: String) {
-        UserDefaults.standard.set(key, forKey: Self.apiKeyUserDefaultsKey)
+        AITermControllerObjC.apiKey = key
     }
 
     func requestRegistration(in window: NSWindow, completion: @escaping (AITermController.Registration?) -> ()) {
@@ -552,11 +550,56 @@ class AITermControllerRegistrationHelper {
 
 @objc
 class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
+    private struct CachedKey {
+        var valid = false
+        var value: String?
+    }
     private let controller: AITermController
     private let handler: ([String]?, String?) -> ()
     private let ownerWindow: NSWindow
     private let query: String
     private let pleaseWait: PleaseWaitWindow
+    private static let apiKeyQueue = DispatchQueue(label: "com.iterm2.aiterm-set-key")
+    private static var cachedKey = MutableAtomicObject(CachedKey())
+
+    @objc static var haveCachedAPIKey: Bool {
+        return cachedKey.value.valid
+    }
+
+    @objc static var apiKey: String? {
+        get {
+            if cachedKey.value.valid {
+                return cachedKey.value.value
+            }
+            return apiKeyQueue.sync {
+                if !cachedKey.value.valid {
+                    let value = try? SSKeychain.password(forService: "iTerm2 API Keys",
+                                                         account: "OpenAI API Key for iTerm2")
+                    cachedKey.set(CachedKey(valid: true, value: value))
+                }
+                return cachedKey.value.value
+            }
+        }
+        set {
+            cachedKey.set(CachedKey(valid: true, value: newValue))
+            apiKeyQueue.sync {
+                cachedKey.set(CachedKey(valid: true, value: newValue))
+                _ = SSKeychain.setPassword(newValue ?? "",
+                                           forService: "iTerm2 API Keys",
+                                           account: "OpenAI API Key for iTerm2")
+            }
+        }
+    }
+
+    @objc static func setAPIKeyAsync(_ key: String?) {
+        cachedKey.set(CachedKey(valid: true, value: key))
+        apiKeyQueue.async {
+            cachedKey.set(CachedKey(valid: true, value: key))
+            _ = SSKeychain.setPassword(key ?? "",
+                                       forService: "iTerm2 API Keys",
+                                       account: "OpenAI API Key for iTerm2")
+        }
+    }
 
     // handler([…], nil): Valid response
     // handler(nil, …): Error
