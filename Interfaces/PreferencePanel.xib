@@ -1240,6 +1240,7 @@ DQ
                 <outlet property="_focusFollowsMouse" destination="6062" id="wHi-NP-8ue"/>
                 <outlet property="_focusOnRightOrMiddleClick" destination="j6a-ag-jgf" id="m8S-Wq-a1R"/>
                 <outlet property="_optionClickMovesCursor" destination="6407" id="hKN-R0-UCE"/>
+                <outlet property="_reportHorizontalScrollEvents" destination="cgK-BO-rKa" id="13W-yw-YvC"/>
                 <outlet property="_tabView" destination="kxy-pe-gzv" id="iKb-9p-k0h"/>
                 <outlet property="_threeFingerEmulatesMiddle" destination="6227" id="eEX-cI-LAf"/>
                 <outlet property="view" destination="qwf-ly-A8K" id="myg-rZ-Ivy"/>
@@ -7512,11 +7513,11 @@ instead of the system keyboard.</string>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="T59-Vc-DXx" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="253" y="228" width="352" height="140"/>
+                                        <rect key="frame" x="253" y="168" width="352" height="200"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6407">
-                                                <rect key="frame" x="18" y="78" width="314" height="18"/>
+                                                <rect key="frame" x="18" y="138" width="314" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">If enabled, option-click sends arrow keys to move the cursor's position. If Shell Integration is installed then it does not take effect at the command line.</string>
                                                 <buttonCell key="cell" type="check" title="⌥-Click moves cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6408">
@@ -7528,7 +7529,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6227">
-                                                <rect key="frame" x="18" y="58" width="314" height="18"/>
+                                                <rect key="frame" x="18" y="105" width="314" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Three-finger tap emulates middle click" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6228">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -7539,7 +7540,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6107">
-                                                <rect key="frame" x="18" y="118" width="314" height="18"/>
+                                                <rect key="frame" x="18" y="178" width="314" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="⌘-Click opens filename/URL (semantic history)" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6108">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -7550,7 +7551,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6111">
-                                                <rect key="frame" x="18" y="98" width="314" height="18"/>
+                                                <rect key="frame" x="18" y="158" width="314" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">For terminal applications that use mouse reporting, turning this on allows control-click to be reported instead of opening the context menu.</string>
                                                 <buttonCell key="cell" type="check" title="^-Click reported to apps, does not open menu" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6112">
@@ -7562,7 +7563,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6062">
-                                                <rect key="frame" x="18" y="38" width="314" height="18"/>
+                                                <rect key="frame" x="18" y="72" width="314" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Focus follows mouse" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6071">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -7573,7 +7574,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="j6a-ag-jgf">
-                                                <rect key="frame" x="18" y="18" width="314" height="18"/>
+                                                <rect key="frame" x="18" y="52" width="314" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Focus window after right or middle click" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="3Y4-p9-liW">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -7581,6 +7582,30 @@ instead of the system keyboard.</string>
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="settingChanged:" target="pwh-OY-l3e" id="BgQ-4b-CNP"/>
+                                                </connections>
+                                            </button>
+                                            <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="1e6-2y-PBd">
+                                                <rect key="frame" x="12" y="128" width="320" height="5"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            </box>
+                                            <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="ea2-Qw-xHn">
+                                                <rect key="frame" x="20" y="95" width="320" height="5"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            </box>
+                                            <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="lK2-ik-cv4">
+                                                <rect key="frame" x="20" y="42" width="320" height="5"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            </box>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cgK-BO-rKa">
+                                                <rect key="frame" x="18" y="19" width="314" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">When enabled, mouse reporting takes priority over swipe to switch tabs. Disable this if swiping to switch tabs sometimes doesn’t work.</string>
+                                                <buttonCell key="cell" type="check" title="Mouse reporting supports horizontal scrolling" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="hWJ-Ek-z7b">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="pwh-OY-l3e" id="wad-dj-7AX"/>
                                                 </connections>
                                             </button>
                                         </subviews>

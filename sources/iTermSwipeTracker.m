@@ -111,6 +111,10 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
 }
 
 - (BOOL)isSwipeTrackingDisabled {
+    return [iTermSwipeTracker isSwipeTrackingDisabled];
+}
+
++ (BOOL)isSwipeTrackingDisabled {
     // Based on the debug log in 10707 at timestamp 1666046431.466278 the osEnabled flag is changing
     // after the swipe begins. I blame Logitech for getting overly creative.
     const BOOL osEnabled = [NSEvent isSwipeTrackingFromScrollEventsEnabled];

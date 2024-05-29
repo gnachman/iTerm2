@@ -111,6 +111,7 @@
 #import "iTermStatusBarViewController.h"
 #import "iTermSwiftyString.h"
 #import "iTermSwiftyStringGraph.h"
+#import "iTermSwipeTracker.h"
 #import "iTermSystemVersion.h"
 #import "iTermTextExtractor.h"
 #import "iTermTheme.h"
@@ -10552,6 +10553,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                     if (testOnly) {
                         return delta.height != 0;
                     }
+
                     const CGFloat chosenDelta = (fabs(delta.width) > fabs(delta.height)) ? delta.width : delta.height;
                     int steps;
                     if ([iTermAdvancedSettingsModel proportionalScrollWheelReporting]) {
@@ -10569,6 +10571,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                         // "Mouse wheel events and server_client_assume_paste--the perfect storm of bugs?".
                         DLog(@"Double reporting");
                         steps = 2;
+                    }
+                    if (steps > 0 && (button == MOUSE_BUTTON_SCROLLLEFT || button == MOUSE_BUTTON_SCROLLRIGHT)) {
+                        [self showHorizontalScrollInfo];
                     }
                     DLog(@"steps=%d", steps);
                     for (int i = 0; i < steps; i++) {
@@ -15884,6 +15889,42 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                                          paragraphStyle:[NSParagraphStyle defaultParagraphStyle]];
     [_view it_showWarningWithAttributedString:attributedString
                                          rect:NSMakeRect(point.x, point.y, 1, 1)];
+}
+
+- (void)showHorizontalScrollInfo {
+    if ([iTermSwipeTracker isSwipeTrackingDisabled]) {
+        return;
+    }
+    if ([[[_delegate realParentWindow] tabs] count] < 2) {
+        return;
+    }
+    NSString *const warningKey = @"NoSyncScrollingHorizontally";
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:warningKey]) {
+        return;
+    }
+    NSString *identifier = @"HorizontalScrollWarning";
+    if (_announcements[identifier]) {
+        // Already showing it
+        return;
+    }
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:@"When mouse reporting is on, horizontal scrolling does not switch tabs.\nHold option while swiping or disable horizontal scroll reporting to switch tabs."
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"Settings…" ]
+                                                completion:^(int selection) {
+        switch (selection) {
+            case -2: // Dismiss programmatically
+            case -1:  // Closed
+                break;
+            case 0:
+                // Disable reporting
+                [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyReportHorizontalScrollEvents];
+                break;
+        }
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:warningKey];
+    }];
+    [self queueAnnouncement:announcement identifier:identifier];
+
 }
 
 - (void)textViewRemoveSelectedCommand {

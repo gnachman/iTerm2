@@ -23,6 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermSwipeTracker : NSObject
 @property (nonatomic, weak) id<iTermSwipeTrackerDelegate> delegate;
 
++ (BOOL)isSwipeTrackingDisabled;
+
 - (BOOL)handleEvent:(NSEvent *)event;
 
 @end

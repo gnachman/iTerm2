@@ -1302,6 +1302,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return NO;
     }
     if (event.type == NSEventTypeScrollWheel) {
+        if (![iTermPreferences boolForKey:kPreferenceKeyReportHorizontalScrollEvents] &&
+            fabs(event.scrollingDeltaX) > fabs(event.scrollingDeltaY)) {
+            DLog(@"Not reporting horizontal scroll");
+            return NO;
+        }
         return [self.mouseDelegate mouseHandlerShouldReportScroll:self];
     }
     return [self.mouseDelegate mouseHandlerViewHasFocus:self];

@@ -32,6 +32,8 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
 
     // Focus on right or middle click
     IBOutlet NSButton *_focusOnRightOrMiddleClick;
+
+    IBOutlet NSButton *_reportHorizontalScrollEvents;
 }
 
 - (void)awakeFromNib {
@@ -74,6 +76,10 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
                    type:kPreferenceInfoTypeCheckbox];
     [self defineControl:_focusOnRightOrMiddleClick
                     key:kPreferenceKeyFocusOnRightOrMiddleClick
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_reportHorizontalScrollEvents
+                    key:kPreferenceKeyReportHorizontalScrollEvents
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 }

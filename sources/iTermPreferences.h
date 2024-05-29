@@ -207,6 +207,7 @@ extern NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection;
 extern NSString *const kPreferenceKeyEnterCopyModeAutomatically;
 extern NSString *const kPreferenceKeyClickToSelectCommand;
 extern NSString *const kPreferenceKeyFocusOnRightOrMiddleClick;
+extern NSString *const kPreferenceKeyReportHorizontalScrollEvents;
 
 // Not in prefs
 // Stores the last CFBundleVersion run.
