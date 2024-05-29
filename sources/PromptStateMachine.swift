@@ -89,19 +89,42 @@ class PromptStateMachine: NSObject {
         private static let commandSoFarKey = "commandSoFar"
         private static let cursorCoordKey = "cursorCoord"
 
-        var dictionaryValue: [String: Any] {
-            var result: [String: Any] = [State.nameKey: name]
+        private static let nameKey_objc = nameKey as NSString
+        private static let promptKey_objc = promptKey as NSString
+        private static let commandSoFarKey_objc = commandSoFarKey as NSString
+        private static let cursorCoordKey_objc = cursorCoordKey as NSString
+
+        // I got an insane sample from a user where tons of time was spent doing dynamic casts.
+        // Since this is only used by Objective C, this implementation avoids going too close to
+        // Swift's type system. See the sample in issue 11496.
+        var dictionaryValue: NSDictionary {
+            let result = NSMutableDictionary()
             switch self {
             case .disabled, .ground, .receivingPrompt, .echoingBack, .executing:
                 break
             case .enteringCommand(prompt: let prompt):
-                result[State.promptKey] = prompt.map { $0.dictionaryValue }
+                let promptDicts = NSMutableArray()
+                for p in prompt {
+                    let dict = p.dictionaryValue as NSDictionary
+                    promptDicts.add(dict)
+                }
+                result[State.promptKey_objc] = promptDicts
             case .accruingAlreadyEnteredCommand(commandSoFar: let commandSoFar,
                                                 prompt: let prompt,
                                                 cursorCoord: let cursorCoord):
-                result[State.promptKey] = prompt.map { $0.dictionaryValue }
-                result[State.commandSoFarKey] = commandSoFar
-                result[State.cursorCoordKey] = ["x": Int64(cursorCoord.x), "y": Int64(cursorCoord.y)]
+                let promptDicts = NSMutableArray()
+                for p in prompt {
+                    let dict = p.dictionaryValue as NSDictionary
+                    promptDicts.add(dict)
+                }
+                result[State.promptKey_objc] = promptDicts
+                result[State.commandSoFarKey_objc] = commandSoFar
+                let coordDict = NSDictionary(
+                    objects: [NSNumber(value: cursorCoord.x),
+                              NSNumber(value: cursorCoord.y)],
+                    forKeys: [ "x" as NSString,
+                               "y" as NSString ])
+                result[State.cursorCoordKey_objc] = coordDict
             }
             return result
         }
@@ -467,7 +490,7 @@ class PromptStateMachine: NSObject {
 
     @objc
     var dictionaryValue: NSDictionary {
-        return state.dictionaryValue as NSDictionary
+        return state.dictionaryValue
     }
 }
 
