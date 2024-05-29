@@ -829,10 +829,20 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 - (NSArray<NSColor *> *)selectedCommandOutlineColors {
+    NSColor *selectedColor = [self.delegate drawingHelperColorForCode:ALTSEM_SELECTED
+                                                                green:0
+                                                                 blue:0
+                                                            colorMode:ColorModeAlternate
+                                                                 bold:NO
+                                                                faint:NO
+                                                         isBackground:YES];
+    if (!selectedColor) {
+        selectedColor = [NSColor colorWithDisplayP3Red:0.2 green:0.2 blue:1 alpha:1];
+    }
     NSColor *bg = [[self defaultBackgroundColor] colorWithAlphaComponent:1.0];
     return @[
-        [[NSColor colorWithDisplayP3Red:0.2 green:0.2 blue:1 alpha:1] blendedWithColor:bg weight:0.5],
-        [[NSColor colorWithDisplayP3Red:0 green:0 blue:0.8 alpha:1] blendedWithColor:bg weight:0.5]
+        selectedColor,
+        [selectedColor blendedWithColor:bg weight:0.25],
     ];
 }
 
@@ -848,14 +858,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                              _selectedCommandRegion.length * _cellSize.height + commandRegionOutlineThickness * 2);
 
     NSArray<NSColor *> *colors = self.selectedCommandOutlineColors;
-    [colors[0] set];
-
-    iTermFrameRect(rect, virtualOffset);
-
-    rect = NSInsetRect(rect, 1, 1);
-
-    [colors[1] set];
-    iTermFrameRect(rect, virtualOffset);
+    for (NSColor * color in colors) {
+        [color set];
+        iTermFrameRect(rect, virtualOffset);
+        rect = NSInsetRect(rect, 1, 1);
+    }
 }
 
 - (void)drawStripesInRect:(NSRect)rect
