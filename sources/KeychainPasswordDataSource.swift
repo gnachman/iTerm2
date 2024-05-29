@@ -9,24 +9,44 @@ import AppKit
 
 fileprivate let serviceName = "iTerm2"
 
-// Stores account name in label
+// Used to store account name in label and username in account. That was a mistake.
+// Now it stores username and account name in accountName and account name in label (just for looks in keychain access)
 fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
     private let accountNameUserNameSeparator = "\u{2002}—\u{2002}"
     let accountName: String
     let userName: String
-    private let keychainAccountName: String
+    private var keychainAccountName: String
+    private var defective: Bool
 
     fileprivate init(accountName: String, userName: String) {
         self.accountName = accountName
         self.userName = userName
-        keychainAccountName = userName.isEmpty ? accountName : accountName + accountNameUserNameSeparator + userName
+        defective = false
+        keychainAccountName = accountName + accountNameUserNameSeparator + userName
     }
 
     fileprivate init?(_ dict: NSDictionary) {
-        if let accountName = dict[kSecAttrLabel] as? String {
-            self.accountName = accountName
-            userName = (dict[kSecAttrAccount] as? String) ?? ""
-            keychainAccountName = accountName + accountNameUserNameSeparator + userName
+        if let combinedAccountName = dict[kSecAttrAccount] as? String {
+            if let range = combinedAccountName.range(of: accountNameUserNameSeparator) {
+                accountName = String(combinedAccountName[..<range.lowerBound])
+                userName = String(combinedAccountName[range.upperBound...])
+                // Code path for well formed entries in 3.5.1beta3 and later.
+                keychainAccountName = accountName + accountNameUserNameSeparator + userName
+                defective = false
+                DLog("Well-formed modern account username=\(userName) accountName=\(accountName) combined=\(combinedAccountName)")
+            } else if let label = dict[kSecAttrLabel] as? String {
+                // Code path for misbegotten entries created by 3.5.0.
+                // It stored username in account and accountName in label.
+                // But label is part of the value, not part of the key, so it's not a good place to store the account name.
+                // Unfortunately username ended up being the unique key.
+                DLog("Defective modern account label=\(label) combined=\(combinedAccountName)")
+                accountName = label
+                userName = combinedAccountName;
+                keychainAccountName = combinedAccountName
+                defective = true
+            } else {
+                return nil
+            }
         } else {
             return nil
         }
@@ -64,20 +84,36 @@ fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
 
     private func password() throws -> String {
         return try SSKeychain.password(forService: serviceName,
-                                       account: userName,
+                                       account: keychainAccountName,
                                        label: accountName)
     }
 
     private func set(password: String) throws {
-        try SSKeychain.setPassword(password,
-                                   forService: serviceName,
-                                   account: userName,
-                                   label: accountName)
+        if defective {
+            // Add a well-formed entry
+            let correctKeychainAccountName = userName.isEmpty ? accountName : accountName + accountNameUserNameSeparator + userName
+            try SSKeychain.setPassword(password,
+                                       forService: serviceName,
+                                       account: correctKeychainAccountName,
+                                       label: accountName)
+            // Delete the defective entry
+            try SSKeychain.deletePassword(forService: serviceName,
+                                          account: keychainAccountName,
+                                          label: accountName)
+            // Update internal state to be non-defective.
+            keychainAccountName = correctKeychainAccountName
+            defective = false
+        } else {
+            try SSKeychain.setPassword(password,
+                                       forService: serviceName,
+                                       account: keychainAccountName,
+                                       label: accountName)
+        }
     }
 
     private func delete() throws {
         try SSKeychain.deletePassword(forService: serviceName,
-                                      account: userName,
+                                      account: keychainAccountName,
                                       label: accountName)
     }
 
@@ -100,7 +136,9 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
             if let range = combinedAccountName.range(of: accountNameUserNameSeparator) {
                 accountName = String(combinedAccountName[..<range.lowerBound])
                 userName = String(combinedAccountName[range.upperBound...])
+                DLog("Two-part legacy username=\(userName) account=\(accountName) combined=\(combinedAccountName)")
             } else {
+                DLog("One-part legacy combined=\(combinedAccountName), using empty username")
                 accountName = combinedAccountName
                 userName = ""
             }

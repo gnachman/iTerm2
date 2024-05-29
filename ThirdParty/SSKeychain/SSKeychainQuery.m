@@ -60,7 +60,17 @@
     }
 
     NSMutableDictionary *query = [self query];
-    status = SecItemDelete((__bridge CFDictionaryRef)query);
+    CFTypeRef result = NULL;
+    status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result);
+    if (status == errSecSuccess) {
+        // SecKeychainItemDelete is deprecated. I tried using SecItemDelete but it sometimes failed
+        // with errSecItemNotFound even though the query was able to fetch it.
+        // In particular, it fails in trying to delete items created with 3.4.23.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        status = SecKeychainItemDelete((SecKeychainItemRef)result);
+#pragma clang diagnostic pop
+    }
 
     if (status != errSecSuccess && error != NULL) {
         *error = [[self class] errorWithCode:status];
