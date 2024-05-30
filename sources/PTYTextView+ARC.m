@@ -825,10 +825,11 @@ iTermCommandInfoViewControllerDelegate>
                                                                   minimumLineNumber:(int)minimumLineNumber
                                                                          timestamps:(BOOL)timestamps
                                                                           selection:(iTermSelection *)selection {
+    // Don't trim whitespace here because it's so useful to get an exact copy.
     iTermSGRSelectionExtractor *extractor =
     [[iTermSGRSelectionExtractor alloc] initWithSelection:selection
                                                  snapshot:[self.dataSource snapshotDataSource]
-                                                  options:[self commonSelectionOptions]
+                                                  options:[self commonSelectionOptions] & ~iTermSelectionExtractorOptionsTrimWhitespace
                                                  maxBytes:maxBytes
                                         minimumLineNumber:minimumLineNumber];
     extractor.addTimestamps = timestamps;
