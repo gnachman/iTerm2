@@ -188,10 +188,12 @@ static NSInteger gTakingSnapshot;
 }
 
 - (BOOL)containsDescendant:(NSView *)possibleDescendant {
-    for (NSView *subview in self.subviews) {
-        if (subview == possibleDescendant || [subview containsDescendant:possibleDescendant]) {
+    NSView *view = possibleDescendant;
+    while (view) {
+        if (view == self) {
             return YES;
         }
+        view = view.superview;
     }
     return NO;
 }
