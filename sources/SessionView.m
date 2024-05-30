@@ -1215,6 +1215,17 @@ typedef struct {
                                                                        userInfo:nil];
             [self addTrackingArea:trackingArea];
         }
+        if (_dropDownFindViewController.view.window &&
+            [self containsDescendant:_dropDownFindViewController.view]) {
+            const NSRect rect = [self convertRect:_dropDownFindViewController.view.bounds fromView:_dropDownFindViewController.view];
+            NSTrackingArea *trackingArea =
+                [[NSTrackingArea alloc] initWithRect:rect
+                                             options:(NSTrackingMouseEnteredAndExited |
+                                                      NSTrackingActiveAlways)
+                                               owner:self
+                                            userInfo:nil];
+            [self addTrackingArea:trackingArea];
+        }
     }
 }
 

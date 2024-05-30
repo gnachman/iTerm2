@@ -1231,7 +1231,11 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
             }
             if ([self isInKeyWindow]) {
                 DLog(@"In key window so call textViewDidBecomeFirstResponder");
-                [_delegate textViewDidBecomeFirstResponder];
+                if (self.window.firstResponder != self) {
+                    [self.window makeFirstResponder:self];
+                } else {
+                    [_delegate textViewDidBecomeFirstResponder];
+                }
             } else {
                 DLog(@"Not in key window");
             }
