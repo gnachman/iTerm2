@@ -56,22 +56,20 @@ class CommandShareMenuProvider: NSObject {
         menu.addSeparator()
 
         if let commandURL {
-            menu.addItem(title: "Copy Command URL to Clipboard") { [weak self, weak window] in
-                if let self {
-                    CommandShareMenuProvider.copyCommandURL(url: commandURL,
-                                                            window: window,
-                                                            locationInWindow: locationInWindow)
-                }
+            menu.addItem(title: "Copy Command URL to Clipboard") { [weak window] in
+                CommandShareMenuProvider.copyCommandURL(url: commandURL,
+                                                        window: window,
+                                                        locationInWindow: locationInWindow)
             }
-            menu.addItem(title: "Share Command URL…") { [weak self, weak view] in
-                if let self, let view {
+            menu.addItem(title: "Share Command URL…") { [weak view] in
+                if let view {
                     CommandShareMenuProvider.shareCommandURL(locationInWindow: locationInWindow,
                                                              url: commandURL,
                                                              view: view)
                 }
             }
-            menu.addItem(title: "Share Command Output…") { [weak self, weak view] in
-                if let self, let view {
+            menu.addItem(title: "Share Command Output…") { [weak view] in
+                if let view {
                     CommandShareMenuProvider.shareCommandOutput(locationInWindow: locationInWindow,
                                                                 promisedContent: promisedContent,
                                                                 view: view)
