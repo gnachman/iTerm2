@@ -3197,6 +3197,9 @@
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
 		A6CC498A2C06EB4E003484B2 /* SettingsSecureTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */; };
+		A6CC498C2C08E03A003484B2 /* AttributedStringSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */; };
+		A6CC498E2C08E567003484B2 /* CommandShareMenuProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC498D2C08E567003484B2 /* CommandShareMenuProvider.swift */; };
+		A6CC49902C08EFC1003484B2 /* CommandURLBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC498F2C08EFC1003484B2 /* CommandURLBuilder.swift */; };
 		A6CC7F59274ABCBF0060C3C2 /* NSScrollView+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC7F58274ABCBF0060C3C2 /* NSScrollView+iTerm.swift */; };
 		A6CC7F5C274B6C570060C3C2 /* ToolJobs.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D19C71314171F1D00617E08 /* ToolJobs.m */; };
 		A6CC7F60274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC7F5F274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift */; };
@@ -7041,6 +7044,9 @@
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
 		A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSecureTextField.swift; sourceTree = "<group>"; };
+		A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributedStringSaver.swift; sourceTree = "<group>"; };
+		A6CC498D2C08E567003484B2 /* CommandShareMenuProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandShareMenuProvider.swift; sourceTree = "<group>"; };
+		A6CC498F2C08EFC1003484B2 /* CommandURLBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandURLBuilder.swift; sourceTree = "<group>"; };
 		A6CC7F58274ABCBF0060C3C2 /* NSScrollView+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSScrollView+iTerm.swift"; sourceTree = "<group>"; };
 		A6CC7F5F274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSProcessInfo+iTerm.swift"; sourceTree = "<group>"; };
 		A6CD8A4022345427007C5B39 /* iTermNotificationCenter+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermNotificationCenter+Protected.h"; sourceTree = "<group>"; };
@@ -10946,6 +10952,9 @@
 				A6E2A62F2B9108FE00EC6070 /* TokenExecutorHelpers.m */,
 				A6D3985D2BDACC1300C4C1AD /* SFSymbolsHelpers.swift */,
 				A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */,
+				A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */,
+				A6CC498D2C08E567003484B2 /* CommandShareMenuProvider.swift */,
+				A6CC498F2C08EFC1003484B2 /* CommandURLBuilder.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -11042,6 +11051,7 @@
 		A6A2698B18FF850E00437DA9 /* Misc View Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				A67094502AD9F26B0044DB50 /* SimpleContextMenu.swift */,
 				A663011619CFE450004AF81C /* iTermAboutWindowController.m */,
 				A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */,
 				A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */,
@@ -11087,7 +11097,6 @@
 				A68ADA0429CCBE420008E092 /* CommandInfoViewController.swift */,
 				A68ADA0529CCBE420008E092 /* CommandInfoViewController.xib */,
 				A626DDE32AD627D3005EEB95 /* CommandURLHandler.swift */,
-				A67094502AD9F26B0044DB50 /* SimpleContextMenu.swift */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -15553,6 +15562,7 @@
 				A61ED2AA20E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.m in Sources */,
 				A6EED4622A804A2E006F0DB4 /* InputSourceForcer.swift in Sources */,
 				A6D10E3327F7C2BC0026DB56 /* MultiCursorTextView.swift in Sources */,
+				A6CC49902C08EFC1003484B2 /* CommandURLBuilder.swift in Sources */,
 				535EA4E720D04C2A00FC81E0 /* iTermTip.m in Sources */,
 				A6EC937A24E8545500EEADEF /* iTermPasteHelper.m in Sources */,
 				A6F718C22265AF1D0053488E /* iTermPathFinder.m in Sources */,
@@ -15945,6 +15955,7 @@
 				A6BF035521E179380097DA86 /* iTermVariableHistory.m in Sources */,
 				A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */,
 				A6B4140A211A5AEA00D28207 /* iTermStandardWindowButtonsView.m in Sources */,
+				A6CC498C2C08E03A003484B2 /* AttributedStringSaver.swift in Sources */,
 				A6FD5F9425AC2ADC00006234 /* iTermGitState+MainApp.m in Sources */,
 				A636C3B22288887600A83E2F /* iTermResourceLimitsHelper.c in Sources */,
 				A6D463E7240447AF005D073D /* iTermBackgroundColorView.m in Sources */,
@@ -16087,6 +16098,7 @@
 				A6F718D8226704920053488E /* PTYSession+ARC.m in Sources */,
 				A65C242727DD244A00EBF6A2 /* Coprocess.m in Sources */,
 				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,
+				A6CC498E2C08E567003484B2 /* CommandShareMenuProvider.swift in Sources */,
 				A629F5A623AFF5BA00C2F16B /* iTermShellIntegrationSecondPageViewController.m in Sources */,
 				5379C59823DBE9F100314F23 /* iTermFocusFollowsMouseController.m in Sources */,
 				A678C507279A3DE200C59927 /* ImageRegistry.swift in Sources */,

@@ -160,8 +160,10 @@ class SelectionExtractor: NSObject {
         selection.enumerateSelectedAbsoluteRanges { [unowned self] absRange, stopPtr, eol in
             let subselectionWeight = weight(absRange) / totalWeight
             if _canceled.value {
+                DLog("stop early")
                 return
             }
+            DLog("\(it_addressString) work on \(VT100GridAbsWindowedRangeDescription(absRange))")
             _ = self.withRelativeWindowedRange(absRange) { [unowned self] proposedRange in
                 if proposedRange.coordRange.end.y < minimumLineNumber {
                     return
@@ -202,13 +204,14 @@ class SelectionExtractor: NSObject {
                 atomicExtractor.set(nil)
                 result.appendSelectionContent(content, newline: eol)
             }
+            DLog("\(it_addressString) done with \(VT100GridAbsWindowedRangeDescription(absRange))")
             fractionSoFar += subselectionWeight
         }
         DLog("Finish extracting \(String(describing: selection.allSubSelections)). canceled=\(_canceled.value) self=\(self)")
     }
 
     fileprivate func cancel() {
-        DLog("Cancel self=\(self)")
+        DLog("cancel \(it_addressString)")
         _canceled.set(true)
         atomicExtractor.access { maybeExtractor in
             maybeExtractor?.stopAsSoonAsPossible = true

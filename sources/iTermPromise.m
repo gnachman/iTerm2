@@ -7,6 +7,7 @@
 
 #import "iTermPromise.h"
 
+#import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
@@ -221,6 +222,7 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
             block(seal);
         }
     }
+    DLog(@"create %@", self);
     return self;
 }
 
@@ -237,6 +239,7 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
 }
 
 - (void)didFulfill:(id)object {
+    DLog(@"fulfill %@", self);
     @synchronized (_lock) {
         assert(!self.value);
         self.value = [iTermOr first:object];
@@ -402,6 +405,11 @@ static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, vo
         promise->_renegeBlock = [renege copy];
     }
     return promise;
+}
+
+- (void)dealloc {
+    DLog(@"dealloc %@", self);
+    [self renege];
 }
 
 - (void)renege {

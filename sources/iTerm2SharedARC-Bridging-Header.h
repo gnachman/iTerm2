@@ -3,6 +3,7 @@
 //
 
 #import "DebugLogging.h"
+#import "NSSavePanel+iTerm.h"
 #import "ObjCExceptions.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"

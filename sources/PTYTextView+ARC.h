@@ -97,6 +97,10 @@ iTermURLActionHelperDelegate>
 
 - (iTermRenegablePromise<NSString *> *)promisedOutputForMark:(id<VT100ScreenMarkReading>)mark
                                                     progress:(iTermProgress * _Nullable)outputProgress;
+- (iTermRenegablePromise<NSAttributedString *> *)promisedAttributedStringForSelectedTextCappedAtSize:(int)maxBytes
+                                                                                   minimumLineNumber:(int)minimumLineNumber
+                                                                                          timestamps:(BOOL)timestamps
+                                                                                           selection:(iTermSelection *)selection;
 
 #pragma mark - Install Shell Integration
 

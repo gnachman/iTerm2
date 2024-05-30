@@ -9,14 +9,28 @@ import Foundation
 
 @objc(iTermSimpleContextMenu)
 class SimpleContextMenu: NSObject, NSMenuDelegate {
-    private struct Item {
+    private enum Item {
+        case regular(RegularItem)
+        case separator
+
+        func action() {
+            switch self {
+            case .regular(let item):
+                item.action()
+            case .separator:
+                break
+            }
+        }
+    }
+    private struct RegularItem {
         var title: String
         var action: () -> ()
     }
     private var items = [Item]()
     private let menu = NSMenu(title: "Context menu")
     private var cycle: SimpleContextMenu?
-
+    var isEmpty: Bool { items.isEmpty }
+    
     @objc
     override init() {
         super.init()
@@ -27,19 +41,27 @@ class SimpleContextMenu: NSObject, NSMenuDelegate {
 
     @objc(addItemWithTitle:action:)
     func addItem(title: String, action: @escaping () -> ()) {
-        items.append(Item(title: title, action: action))
+        items.append(.regular(RegularItem(title: title, action: action)))
     }
 
+    func addSeparator() {
+        items.append(.separator)
+    }
     @objc(showInView:forEvent:)
     func show(in view: NSView, for event: NSEvent) {
         if menu.items.isEmpty {
             for (i, item) in items.enumerated() {
-                let menuItem =  NSMenuItem(title: item.title,
-                                           action: #selector(action(_:)),
-                                           keyEquivalent: "")
-                menuItem.tag = i
-                menuItem.target = self
-                menu.addItem(menuItem)
+                switch item {
+                case .regular(let regularItem):
+                    let menuItem =  NSMenuItem(title: regularItem.title,
+                                               action: #selector(action(_:)),
+                                               keyEquivalent: "")
+                    menuItem.tag = i
+                    menuItem.target = self
+                    menu.addItem(menuItem)
+                case .separator:
+                    menu.addItem(NSMenuItem.separator())
+                }
             }
         }
         cycle = self

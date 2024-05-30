@@ -104,7 +104,7 @@ class CommandInfoViewController: NSViewController {
 
         let viewController = CommandInfoViewController(
             mark: mark,
-            command: mark.command,
+            command: mark.command ?? "",
             directory: directory,
             remoteHost: remoteHost,
             returnCode: codePromise,

@@ -35,7 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) BOOL hasCode;
 
 // Command for this mark.
-@property(nonatomic, copy, readonly) NSString *command;
+@property(nonatomic, copy, readonly, nullable) NSString *command;
 
 // Time the command was set at (and presumably began running).
 @property(nonatomic, strong, readonly, nullable) NSDate *startDate;
