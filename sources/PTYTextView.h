@@ -736,6 +736,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)setNeedsDisplayInRect:(NSRect)invalidRect NS_UNAVAILABLE;  // Use this instead of setNeedsDisplay:
 - (void)requestDelegateRedraw;  // Use this instead of setNeedsDisplay:
 
+- (iTermSelection *)selectionForCommandAndOutputOfMark:(id<VT100ScreenMarkReading>)mark;
+
 #pragma mark - Testing only
 
 typedef NS_ENUM(NSUInteger, iTermCopyTextStyle) {
