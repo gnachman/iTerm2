@@ -9,10 +9,6 @@
 
 @interface NSResponder (iTerm)
 
-@property (nonatomic, readonly) BOOL it_shouldIgnoreFirstResponderChanges;
-
-- (void)it_ignoreFirstResponderChangesInBlock:(void (^)(void))block;
-
 // For inscrutable reasons scrollWheel: is not called for "changed" or "ended" momentum phases.
 - (BOOL)it_wantsScrollWheelMomentumEvents;
 - (void)it_scrollWheelMomentum:(NSEvent *)event;

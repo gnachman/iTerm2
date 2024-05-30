@@ -541,16 +541,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (BOOL)resignFirstResponder {
     DLog(@"resign first responder: reset numTouches to 0");
     _mouseHandler.numTouches = 0;
-    if (!self.it_shouldIgnoreFirstResponderChanges) {
-        [_mouseHandler didResignFirstResponder];
-        [self removeUnderline];
-        [self placeFindCursorOnAutoHide];
-        [_delegate textViewDidResignFirstResponder];
-        DLog(@"resignFirstResponder %@", self);
-        DLog(@"%@", [NSThread callStackSymbols]);
-    } else {
-        DLog(@"%@ ignoring first responder changes in resignFirstResponder", self);
-    }
+    [_mouseHandler didResignFirstResponder];
+    [self removeUnderline];
+    [self placeFindCursorOnAutoHide];
+    [_delegate textViewDidResignFirstResponder];
+    DLog(@"resignFirstResponder %@", self);
+    DLog(@"%@", [NSThread callStackSymbols]);
     dispatch_async(dispatch_get_main_queue(), ^{
         [[iTermSecureKeyboardEntryController sharedInstance] update];
     });
@@ -559,14 +555,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 - (BOOL)becomeFirstResponder {
     DLog(@"%@", [NSThread callStackSymbols]);
-    if (!self.it_shouldIgnoreFirstResponderChanges) {
-        [_mouseHandler didBecomeFirstResponder];
-        [_delegate textViewDidBecomeFirstResponder];
-        DLog(@"becomeFirstResponder %@", self);
-        DLog(@"%@", [NSThread callStackSymbols]);
-    } else {
-        DLog(@"%@ ignoring first responder changes in becomeFirstResponder", self);
-    }
+    [_mouseHandler didBecomeFirstResponder];
+    [_delegate textViewDidBecomeFirstResponder];
+    DLog(@"becomeFirstResponder %@", self);
+    DLog(@"%@", [NSThread callStackSymbols]);
     [[iTermSecureKeyboardEntryController sharedInstance] update];
     return YES;
 }
