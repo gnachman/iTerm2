@@ -41,6 +41,8 @@ class CommandShareMenuProvider: NSObject {
             }
         }
 
+        menu.addSeparator()
+
         let mark = self.mark
         let promisedContent = self.promisedContent
         let defaultBackgroundColor = self.defaultBackgroundColor
@@ -61,11 +63,18 @@ class CommandShareMenuProvider: NSObject {
                                                             locationInWindow: locationInWindow)
                 }
             }
-            menu.addItem(title: "Open Share Sheet…") { [weak self, weak view] in
+            menu.addItem(title: "Share Command URL…") { [weak self, weak view] in
                 if let self, let view {
-                    CommandShareMenuProvider.openShareSheet(locationInWindow: locationInWindow,
-                                                            url: commandURL,
-                                                            view: view)
+                    CommandShareMenuProvider.shareCommandURL(locationInWindow: locationInWindow,
+                                                             url: commandURL,
+                                                             view: view)
+                }
+            }
+            menu.addItem(title: "Share Command Output…") { [weak self, weak view] in
+                if let self, let view {
+                    CommandShareMenuProvider.shareCommandOutput(locationInWindow: locationInWindow,
+                                                                promisedContent: promisedContent,
+                                                                view: view)
                 }
             }
         }
@@ -135,12 +144,26 @@ class CommandShareMenuProvider: NSObject {
                                         pointSize: 12)
     }
 
-    private static func openShareSheet(locationInWindow: NSPoint,
-                                       url: URL,
-                                       view: NSView) {
+    private static func shareCommandURL(locationInWindow: NSPoint,
+                                        url: URL,
+                                        view: NSView) {
         var viewRect = NSRect()
         viewRect.origin = locationInWindow
         let picker = NSSharingServicePicker(items: [url])
         picker.show(relativeTo: viewRect, of: view, preferredEdge: .minY)
+    }
+
+    private static func shareCommandOutput(locationInWindow: NSPoint,
+                                           promisedContent: iTermRenegablePromise<NSAttributedString>,
+                                           view: NSView) {
+        var viewRect = NSRect()
+        viewRect.origin = locationInWindow
+        promisedContent.wait().whenFirst { [weak view] attributedString in
+            guard let view else {
+                return
+            }
+            let picker = NSSharingServicePicker(items: [attributedString])
+            picker.show(relativeTo: viewRect, of: view, preferredEdge: .minY)
+        }
     }
 }

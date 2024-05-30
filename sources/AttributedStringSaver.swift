@@ -37,7 +37,6 @@ class AttributedStringSaver: NSObject {
             savePanel.allowedContentTypes = [ UTType.flatRTFD ]
         }
         savePanel.allowedFileTypes = [ "rtf" ]
-        let promise = self.promise
 
         savePanel.beginSheetModal(for: window) { response in
             self.finish(savePanel: savePanel, window: window, response: response)
