@@ -7841,6 +7841,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
             id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
             hasErrorCode = mark.code != 0;
+            if (mark.command != nil) {
+                [self selectCommandWithMarkIfSafe:mark];
+            } else {
+                [self selectCommandWithMark:nil];
+            }
         }
         [_textview highlightMarkOnLine:VT100GridRangeMax([_screen lineNumberRangeOfInterval:obj.entry.interval])
                           hasErrorCode:hasErrorCode];
@@ -15848,28 +15853,46 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)textViewSelectCommandRegionAtCoord:(VT100GridCoord)coord {
-    if (_screen.terminalSoftAlternateScreenMode) {
-        return;
-    }
     id<VT100ScreenMarkReading> mark = [_screen commandMarkAtOrBeforeLine:coord.y];
-    id<VT100ScreenMarkReading> previous = _selectedCommandMark;
+    if (mark == _selectedCommandMark) {
+        mark = nil;
+    }
     const BOOL allowed = [iTermPreferences boolForKey:kPreferenceKeyClickToSelectCommand];
-    if (!allowed || _selectedCommandMark == mark) {
-        _selectedCommandMark = nil;
-    } else {
-        _selectedCommandMark = mark;
+    if (!allowed) {
+        mark = nil;
     }
-    [self updateSearchRange];
-    _screen.savedFindContextAbsPos = 0;
-    if (previous != _selectedCommandMark) {
-        [_textview requestDelegateRedraw];
-    }
-    if (allowed) {
+    [self selectCommandWithMarkIfSafe:mark];
+    if (allowed && mark != nil) {
         NSString *const warningKey = @"NoSyncUserHasSelectedCommand";
         if (mark != nil && ![[NSUserDefaults standardUserDefaults] boolForKey:warningKey]) {
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:warningKey];
             [self showCommandSelectionInfo];
         }
+    }
+}
+
+// Does nothing if the selected command would include the mutable part of the alternate screen.
+- (void)selectCommandWithMarkIfSafe:(id<VT100ScreenMarkReading>)mark {
+    if (mark && _screen.terminalSoftAlternateScreenMode) {
+        const VT100GridAbsCoordRange absRange = [self rangeOfCommandAndOutputForMark:mark];
+        const NSRange markRange = NSMakeRange(absRange.start.y, MAX(0, absRange.end.y - absRange.start.y + 1));
+        const NSRange screenRange = NSMakeRange(_screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow,
+                                                _screen.height);
+        if (NSIntersectionRange(markRange, screenRange).length > 0) {
+            DLog(@"Not allowing selection that includes screen in alternate screen mode. markRange=%@ screenRange=%@", NSStringFromRange(markRange), NSStringFromRange(screenRange));
+            return;
+        }
+    }
+    [self selectCommandWithMark:mark];
+}
+
+- (void)selectCommandWithMark:(id<VT100ScreenMarkReading>)mark {
+    id<VT100ScreenMarkReading> previous = _selectedCommandMark;
+    _selectedCommandMark = mark;
+    [self updateSearchRange];
+    _screen.savedFindContextAbsPos = 0;
+    if (previous != _selectedCommandMark) {
+        [_textview requestDelegateRedraw];
     }
 }
 
