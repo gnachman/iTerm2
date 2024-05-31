@@ -1262,7 +1262,8 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 //   @NO - draw all but first line
 - (iTermTextRendererTransientState *)_populateTextRenderer:(iTermTextRenderer *)textRenderer
                                              withFrameData:(iTermMetalFrameData *)frameData
-                                  drawOffscreenCommandLine:(NSNumber *)drawOffscreenCommandLine {
+                                  drawOffscreenCommandLine:(NSNumber *)drawOffscreenCommandLine
+                                       suppressedTopHeight:(CGFloat)suppressedTopHeight {
     // Update the text renderer's transient state with current glyphs and colors.
     const CGFloat scale = frameData.scale;
     iTermTextRendererTransientState *textState = [frameData transientStateForRenderer:textRenderer];
@@ -1290,6 +1291,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
 
+    textState.suppressedTopHeight = suppressedTopHeight;
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRange markedRangeOnLine = NSMakeRange(NSNotFound, 0);
         if (drawOffscreenCommandLine) {
@@ -1382,9 +1384,11 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
             [backgroundState setColorRLEs:(const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.mutableBytes
                                     count:rowData.numberOfBackgroundRLEs
                                       row:rowData.y
-                            repeatingRows:count];
+                            repeatingRows:count
+                                omitClear:NO];
         }];
         backgroundState.suppressedBottomHeight = frameData.perFrameState.pointsOnBottomToSuppressDrawing;
+        backgroundState.suppressedTopHeight = [self offscreenCommandLineHeight:frameData];
     }
 }
 
@@ -1396,6 +1400,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         } else {
             offscreenState.shouldDraw = YES;
             [offscreenState setOutlineColor:frameData.perFrameState.offscreenCommandLineOutlineColor
+                     defaultBackgroundColor:frameData.perFrameState.processedDefaultBackgroundColor
                             backgroundColor:frameData.perFrameState.offscreenCommandLineBackgroundColor
                                   rowHeight:frameData.cellSize.height];
         }
@@ -1407,15 +1412,22 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         return;
     }
 
+    [self _populateOffscreenCommandLineBackgroundRendererWithFrameData:frameData];
+
     iTermTextRendererTransientState *textState;
     if (frameData.perFrameState.haveOffscreenCommandLine && !_offscreenCommandLineTextRenderer.rendererDisabled) {
-        textState = [self _populateTextRenderer:_textRenderer withFrameData:frameData drawOffscreenCommandLine:@NO];
+        textState = [self _populateTextRenderer:_textRenderer 
+                                  withFrameData:frameData
+                       drawOffscreenCommandLine:@NO
+                            suppressedTopHeight:[self offscreenCommandLineHeight:frameData]];
     } else {
-        textState = [self _populateTextRenderer:_textRenderer withFrameData:frameData drawOffscreenCommandLine:nil];
+        textState = [self _populateTextRenderer:_textRenderer
+                                  withFrameData:frameData
+                       drawOffscreenCommandLine:nil
+                            suppressedTopHeight:0];
     }
 
     [self _populateBackgroundRendererTransientStateWithFrameData:frameData];
-    [self _populateOffscreenCommandLineBackgroundRendererWithFrameData:frameData];
 
     // Tell the text state that it's done getting row data.
     if (!_textRenderer.rendererDisabled) {
@@ -1426,21 +1438,24 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     if (!_offscreenCommandLineTextRenderer.rendererDisabled) {
         _offscreenCommandLineTextRenderer.verticalOffset = verticalOffset;
         if (frameData.perFrameState.haveOffscreenCommandLine) {
-            textState = [self _populateTextRenderer:_offscreenCommandLineTextRenderer withFrameData:frameData drawOffscreenCommandLine:@YES];
+            textState = [self _populateTextRenderer:_offscreenCommandLineTextRenderer
+                                      withFrameData:frameData
+                           drawOffscreenCommandLine:@YES
+                                suppressedTopHeight:0];
             [textState willDraw];
         }
     }
     if (!_offscreenCommandLineBackgroundColorRenderer.rendererDisabled &&
         frameData.perFrameState.haveOffscreenCommandLine) {
-        iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_offscreenCommandLineBackgroundColorRenderer];
-        backgroundState.verticalOffset = verticalOffset;
-        backgroundState.defaultBackgroundColor = frameData.perFrameState.offscreenCommandLineBackgroundColor;
+        iTermBackgroundColorRendererTransientState *osclBottomState = [frameData transientStateForRenderer:_offscreenCommandLineBackgroundColorRenderer];
+        osclBottomState.verticalOffset = verticalOffset;
+        osclBottomState.defaultBackgroundColor = simd_make_float4(0, 0, 0, 0);
 
-        [backgroundState setColorRLEs:frameData.rows[0].backgroundColorRLEData.mutableBytes
+        [osclBottomState setColorRLEs:frameData.rows[0].backgroundColorRLEData.mutableBytes
                                 count:frameData.rows[0].numberOfBackgroundRLEs
                                   row:0
-                        repeatingRows:1];
-        backgroundState.suppressedBottomHeight = frameData.perFrameState.pointsOnBottomToSuppressDrawing;
+                        repeatingRows:1
+                            omitClear:YES];
     }
 }
 
@@ -1536,11 +1551,21 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     tState.color = frameData.perFrameState.fullScreenFlashColor;
 }
 
+- (CGFloat)offscreenCommandLineHeight:(iTermMetalFrameData *)frameData {
+    if (!_offscreenCommandLineBackgroundColorRenderer.rendererDisabled &&
+        frameData.perFrameState.haveOffscreenCommandLine) {
+        return [iTermOffscreenCommandLineBackgroundRendererTransientState heightForScale:frameData.scale
+                                                                               rowHeight:frameData.cellSize.height
+                                                                          topExtraMargin:frameData.perFrameState.extraMargins.top];
+    }
+    return 0;
+}
+
 - (void)populateMarginRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermMarginRendererTransientState *tState = [frameData transientStateForRenderer:_marginRenderer];
     vector_float4 color = frameData.perFrameState.processedDefaultBackgroundColor;
     tState.regularColor = color;
-    tState.suppressedBottomHeight = frameData.perFrameState.pointsOnBottomToSuppressDrawing;
+    tState.suppressedTopHeight = [self offscreenCommandLineHeight:frameData];
 }
 
 - (void)populateBlockRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1562,15 +1587,35 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     if (frameData.perFrameState.hasSelectedCommand) {
         VT100GridRect rect = frameData.perFrameState.selectedCommandRect;
         const CGFloat scale = tState.cellConfiguration.scale;
-        const CGFloat hmargin = tState.margins.left / scale;
+        const CGFloat leftMarginPt = tState.margins.left / scale;
+        const CGFloat rightMarginPt = tState.margins.right / scale;
         [tState addFrameRectangleWithRect:rect
                                 thickness:1.0
-                                   insets:NSEdgeInsetsMake(-1, 1 - hmargin, 0, 2 - hmargin)
-                                    color:frameData.perFrameState.selectedCommandOutlineColors[0]];
-        [tState addFrameRectangleWithRect:rect
-                                thickness:1.0
-                                   insets:NSEdgeInsetsMake(-2, 0 - hmargin, -1, 1 - hmargin)
+                                   insets:NSEdgeInsetsMake(-1, 1 - leftMarginPt, 0, 2 - leftMarginPt)
                                     color:frameData.perFrameState.selectedCommandOutlineColors[1]];
+        [tState addFrameRectangleWithRect:rect
+                                thickness:1.0
+                                   insets:NSEdgeInsetsMake(-2, 0 - leftMarginPt, -1, 1 - leftMarginPt)
+                                    color:frameData.perFrameState.selectedCommandOutlineColors[0]];
+        const vector_float4 shadeColor = frameData.perFrameState.shadeColor;
+        if (rect.origin.y > 0){
+            [tState addRectangleWithRect:VT100GridRectMake(0,
+                                                           0,
+                                                           tState.cellConfiguration.gridSize.width,
+                                                           rect.origin.y)
+                                  insets:NSEdgeInsetsMake(0, -leftMarginPt, 2, -rightMarginPt)
+                                   color:shadeColor];
+        }
+        const int firstRowBeneath = rect.origin.y + rect.size.height;
+        if (firstRowBeneath < tState.cellConfiguration.gridSize.height) {
+            [tState addRectangleWithRect:VT100GridRectMake(0,
+                                                           firstRowBeneath,
+                                                           tState.cellConfiguration.gridSize.width,
+                                                           tState.cellConfiguration.gridSize.height - firstRowBeneath)
+                                  insets:NSEdgeInsetsMake(2, -leftMarginPt, 0, -rightMarginPt)
+                                   color:shadeColor];
+        }
+
         if (frameData.perFrameState.pointsOnBottomToSuppressDrawing > 0) {
             const CGFloat y = frameData.perFrameState.pointsOnBottomToSuppressDrawing * frameData.scale;
             [tState setClipRect:NSMakeRect(0,

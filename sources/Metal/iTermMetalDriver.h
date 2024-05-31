@@ -94,6 +94,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) BOOL forceRegularBottomMargin;
 @property (nonatomic, readonly) const vector_float4 *selectedCommandOutlineColors;  // array of length 2
 
+// When a command is selected this color is drawn over other regions.
+@property (nonatomic, readonly) vector_float4 shadeColor;
+
 // Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes

@@ -18,10 +18,14 @@
 - (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
                count:(size_t)count
                  row:(int)row
-       repeatingRows:(int)repeatingRows {
+       repeatingRows:(int)repeatingRows
+           omitClear:(BOOL)omitClear {
     vector_float2 cellSize = simd_make_float2(self.cellConfiguration.cellSize.width, self.cellConfiguration.cellSize.height);
     const int height = self.cellConfiguration.gridSize.height;
     for (int i = 0; i < count; i++) {
+        if (omitClear && rles[i].color.w == 0) {
+            continue;
+        }
         iTermBackgroundColorPIU &piu = *_pius.get_next();
         piu.color = rles[i].color;
         piu.runLength = rles[i].count;
@@ -148,7 +152,7 @@
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundColorRendererTransientState *tState = transientState;
     id<MTLBuffer> infoBuffer = [self infoBufferForTransientState:tState];
-    const NSUInteger suppressedPx = static_cast<NSUInteger>(tState.suppressedBottomHeight * tState.cellConfiguration.scale - tState.margins.top);
+    const NSUInteger suppressedBottomPx = static_cast<NSUInteger>(tState.suppressedBottomHeight * tState.cellConfiguration.scale - tState.margins.top);
     [tState enumerateSegments:^(const iTermBackgroundColorPIU *pius, size_t numberOfInstances) {
         if (numberOfInstances == 0) {
             return;
@@ -159,16 +163,6 @@
         piuBuffer.label = @"PIUs";
         iTermMetalCellRenderer *cellRenderer = [self rendererForConfiguration:tState.cellConfiguration];
 
-        if (tState.suppressedBottomHeight > 0) {
-            // Don't do regular background drawing in the suppressed bottom.
-            MTLScissorRect scissorRect = {
-                .x = 0,
-                .y = 0,
-                .width = tState.cellConfiguration.viewportSize.x,
-                .height = tState.cellConfiguration.viewportSize.y - suppressedPx
-            };
-            [frameData.renderEncoder setScissorRect:scissorRect];
-        }
         [cellRenderer drawWithTransientState:tState
                                renderEncoder:frameData.renderEncoder
                             numberOfVertices:6
@@ -180,21 +174,14 @@
                                }
                              fragmentBuffers:@{}
                                     textures:@{} ];
-        if (tState.suppressedBottomHeight > 0) {
-            // Restore the original scissor rect.
-            MTLScissorRect scissorRect = {
-                .x = 0,
-                .y = 0,
-                .width = tState.cellConfiguration.viewportSize.x,
-                .height = tState.cellConfiguration.viewportSize.y
-            };
-            [frameData.renderEncoder setScissorRect:scissorRect];
-        }
     }];
     if (tState.suppressedBottomHeight > 0) {
         // Fill in the suppressed region with default background color.
         // Note that we also draw the margins for simplicity.
-        CGRect quad = CGRectMake(-tState.margins.left, 0, tState.cellConfiguration.viewportSize.x, suppressedPx);
+        CGRect quad = CGRectMake(0,
+                                 0,
+                                 tState.cellConfiguration.cellSize.width * tState.cellConfiguration.gridSize.width,
+                                 suppressedBottomPx);
         const CGRect textureFrame = CGRectMake(0, 0, 1, 1);
         const iTermVertex bottomRight = (iTermVertex) {
             .position = simd_make_float2(NSMaxX(quad), NSMinY(quad)),
@@ -240,6 +227,12 @@
         piuBuffer.label = @"PIUs for suppressed region";
 
         iTermMetalCellRenderer *cellRenderer = [self rendererForConfiguration:tState.cellConfiguration];
+
+        const CGFloat savedTop = tState.suppressedTopHeight;
+        const CGFloat savedBottom = tState.suppressedBottomHeight;
+        tState.suppressedTopHeight = 0;
+        tState.suppressedBottomHeight = 0;
+
         [cellRenderer drawWithTransientState:tState
                                renderEncoder:frameData.renderEncoder
                             numberOfVertices:6
@@ -251,6 +244,9 @@
                                }
                              fragmentBuffers:@{}
                                     textures:@{} ];
+
+        tState.suppressedTopHeight = savedTop;
+        tState.suppressedBottomHeight = savedBottom;
     }
 }
 

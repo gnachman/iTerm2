@@ -1562,6 +1562,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _drawingHelper.isCursorVisible = _cursorVisible && !autoComposerOpen;
     _drawingHelper.linesToSuppress = self.delegate.textViewLinesToSuppressDrawing;
     _drawingHelper.pointsOnBottomToSuppressDrawing = self.delegate.textViewPointsOnBottomToSuppressDrawing;
+    _drawingHelper.extraMargins = self.delegate.textViewExtraMargins;
     _drawingHelper.forceRegularBottomMargin = autoComposerOpen;
     // TODO: Don't leave find on page helper as the source of truth for this!
     _drawingHelper.selectedCommandRegion = [self relativeRangeFromAbsLineRange:self.findOnPageHelper.absLineRange];
@@ -1574,7 +1575,6 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     const int topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     if ([_delegate textViewShouldShowOffscreenCommandLine] && self.enclosingScrollView.contentView.bounds.origin.y > topBottomMargin) {
         _drawingHelper.offscreenCommandLine = [self.dataSource offscreenCommandLineBefore:range.location];
-        [_drawingHelper.offscreenCommandLine setBackgroundColor:[_drawingHelper offscreenCommandLineBackgroundColor]];
     } else {
         _drawingHelper.offscreenCommandLine = nil;
     }

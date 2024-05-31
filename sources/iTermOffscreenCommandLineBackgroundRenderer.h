@@ -13,7 +13,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) BOOL shouldDraw;
 
++ (CGFloat)heightForScale:(CGFloat)scale rowHeight:(CGFloat)rowHeight topExtraMargin:(CGFloat)topExtraMargin;
+
 - (void)setOutlineColor:(vector_float4)outlineColor
+ defaultBackgroundColor:(vector_float4)defaultBackgroundColor
         backgroundColor:(vector_float4)backgroundColor
               rowHeight:(CGFloat)rowHeight;
 

@@ -62,6 +62,11 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) NSImage *renderedOutputForDebugging;
 @property (nonatomic) NSUInteger sequenceNumber;
 
+// These values are in points. Scissor rect will be used to prevent drawing in these regions.
+// Use them to prevent drawing over the offscreen command line (top) and the auto composer (bottom).
+@property (nonatomic) CGFloat suppressedTopHeight;
+@property (nonatomic) CGFloat suppressedBottomHeight;
+
 // You don't generally need to assign to this unless you plan to make more than one draw call.
 // You can get a pipeline state from the iTermMetal[Cell]Renderer. See its comments for details.
 @property (nonatomic, strong) id<MTLRenderPipelineState> pipelineState;

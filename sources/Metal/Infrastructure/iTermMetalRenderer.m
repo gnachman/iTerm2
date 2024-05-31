@@ -593,6 +593,18 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     debugDrawInfo.vertexFunctionName = self.vertexFunctionName;
     [renderEncoder setRenderPipelineState:tState.pipelineState];
 
+    if (tState.suppressedBottomHeight > 0 || tState.suppressedTopHeight > 0) {
+        const NSUInteger suppressedBottomPx = (NSUInteger)(tState.suppressedBottomHeight * tState.configuration.scale);
+        const NSUInteger suppressedTopPx = (NSUInteger)(tState.suppressedTopHeight * tState.configuration.scale);
+        MTLScissorRect scissorRect = {
+            .x = 0,
+            .y = suppressedTopPx,
+            .width = tState.configuration.viewportSize.x,
+            .height = tState.configuration.viewportSize.y - suppressedBottomPx - suppressedTopPx
+        };
+        [renderEncoder setScissorRect:scissorRect];
+    }
+
     // Add viewport size to vertex buffers
     NSDictionary<NSNumber *, id<MTLBuffer>> *vertexBuffers;
     vertexBuffers =
@@ -629,6 +641,16 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
         [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
                           vertexStart:0
                           vertexCount:numberOfVertices];
+    }
+    if (tState.suppressedBottomHeight > 0 || tState.suppressedTopHeight > 0) {
+        // Restore the original scissor rect.
+        MTLScissorRect scissorRect = {
+            .x = 0,
+            .y = 0,
+            .width = tState.configuration.viewportSize.x,
+            .height = tState.configuration.viewportSize.y
+        };
+        [renderEncoder setScissorRect:scissorRect];
     }
 }
 

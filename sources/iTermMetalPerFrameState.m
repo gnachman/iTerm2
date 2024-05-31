@@ -732,6 +732,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_selectedCommandOutlineColors;
 }
 
+- (vector_float4)shadeColor {
+    return _configuration->_shadeColor;
+}
+
 - (BOOL)forceRegularBottomMargin {
     return _configuration->_forceRegularBottomMargin;
 }

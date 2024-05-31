@@ -537,7 +537,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 - (void)clipOutSuppressedBottomIfNeeded:(CGFloat)virtualOffset {
     if (_pointsOnBottomToSuppressDrawing > 0) {
-        NSRect clipRect = NSMakeRect(0, _visibleRectIncludingTopMargin.origin.y, _visibleRectIncludingTopMargin.size.width, _visibleRectIncludingTopMargin.size.height - _pointsOnBottomToSuppressDrawing);
+        NSRect clipRect = NSMakeRect(0,
+                                     _visibleRectIncludingTopMargin.origin.y,
+                                     _visibleRectIncludingTopMargin.size.width,
+                                     _visibleRectIncludingTopMargin.size.height - _pointsOnBottomToSuppressDrawing + _extraMargins.bottom);
         if (_debug) {
             [[NSColor redColor] set];
             iTermFrameRect(clipRect, virtualOffset);
@@ -577,6 +580,22 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     if ([self.delegate drawingHelperShouldPadBackgrounds:&padding]) {
         pad = YES;
     }
+    [self drawBackgroundForLine:line
+                            atY:yOrigin
+                           runs:runs
+                 equivalentRows:rows
+                  virtualOffset:virtualOffset
+                            pad:pad
+                        padding:padding];
+}
+
+- (void)drawBackgroundForLine:(int)line
+                          atY:(CGFloat)yOrigin
+                         runs:(NSArray<iTermBoxedBackgroundColorRun *> *)runs
+               equivalentRows:(NSInteger)rows
+                virtualOffset:(CGFloat)virtualOffset
+                          pad:(BOOL)pad
+                      padding:(NSSize)padding {
     const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
     for (iTermBoxedBackgroundColorRun *box in runs) {
         iTermBackgroundColorRun *run = box.valuePointer;
@@ -852,26 +871,27 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 const CGFloat commandRegionOutlineThickness = 2.0;
 
+- (NSColor *)shadeColor {
+    if ([[self defaultBackgroundColor] isDark]) {
+        return [NSColor colorWithDisplayP3Red:1 green:1 blue:1 alpha:0.25];
+    }
+    return [NSColor colorWithDisplayP3Red:0 green:0 blue:0 alpha:0.25];
+}
+
 - (void)drawShadeOverNonSelectedCommands:(CGFloat)virtualOffset {
     const NSRange visibleRange = [self rangeOfVisibleRows];
     const NSRange visibleSelectedRange = NSIntersectionRange(visibleRange, _selectedCommandRegion);
 
-    NSColor *color;
-    if ([[self defaultBackgroundColor] isDark]) {
-        color = [NSColor colorWithDisplayP3Red:1 green:1 blue:1 alpha:0.25];
-    } else {
-        color = [NSColor colorWithDisplayP3Red:0 green:0 blue:0 alpha:0.25];
-    }
+    NSColor *color = self.shadeColor;
     [color set];
 
-    const CGFloat hMargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
-    const CGFloat topHeight = MAX(0, visibleSelectedRange.location * _cellSize.height - commandRegionOutlineThickness - _scrollViewDocumentVisibleRect.origin.y);
+    const CGFloat topHeight = visibleSelectedRange.location * _cellSize.height - commandRegionOutlineThickness - _scrollViewDocumentVisibleRect.origin.y;
     CGFloat y = _scrollViewDocumentVisibleRect.origin.y;
 
     NSRect rect = NSMakeRect(0,
                              y,
                              _scrollViewDocumentVisibleRect.size.width,
-                             topHeight);
+                             MAX(0, topHeight));
     y += topHeight;
     iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
 
@@ -887,6 +907,9 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                       _scrollViewDocumentVisibleRect.size.width,
                       _scrollViewDocumentVisibleRect.size.height - topHeight - selectedHeight - savedBottom);
     iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
+
+    DLog(@"rect.origin.y=%@ because document origin=%@ + topHeight=%@ + selectedHeight=%@. Cell height is %@",
+          @(rect.origin.y-virtualOffset), @(_scrollViewDocumentVisibleRect.origin.y-virtualOffset), @(topHeight), @(selectedHeight), @(self.cellSize.height));
 }
 
 - (void)drawOutlineAroundSelectedCommand:(CGFloat)virtualOffset {
@@ -3367,11 +3390,13 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     if (!self.offscreenCommandLine) {
         return nil;
     }
+    NSColor *color;
     if ([[self defaultBackgroundColor] isDark]) {
-        return [[self defaultBackgroundColor] it_colorByDimmingByAmount:0.7];
+        color = [[self defaultBackgroundColor] it_colorByDimmingByAmount:0.7];
     } else {
-        return [[self defaultBackgroundColor] it_colorByDimmingByAmount:0.1];
+        color = [[self defaultBackgroundColor] it_colorByDimmingByAmount:0.1];
     }
+    return [color colorWithAlphaComponent:0.5];
 }
 
 - (NSColor *)offscreenCommandLineOutlineColor {
@@ -3403,15 +3428,18 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                                 anyBlink:&blink
                                                        y:row * _cellSize.height];
 
+    [self drawOffscreenCommandLineDecorationsInContext:ctx
+                                         virtualOffset:virtualOffset];
+
     const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    // Use padding to disable drawing default background color
     [self drawBackgroundForLine:0
                             atY:row * _cellSize.height + iTermOffscreenCommandLineVerticalPadding - vmargin - 1
                            runs:backgroundRuns.array
                  equivalentRows:1
-                  virtualOffset:virtualOffset];
-
-    [self drawOffscreenCommandLineDecorationsInContext:ctx
-                                         virtualOffset:virtualOffset];
+                  virtualOffset:virtualOffset
+                            pad:YES
+                        padding: NSZeroSize];
 
     if ([self textAppearanceDependsOnBackgroundColor]) {
         [self drawForegroundForBackgroundRunArrays:@[backgroundRuns]
@@ -3438,7 +3466,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     outline.origin.x = 0;
     outline.size.width = _visibleRectExcludingTopMargin.size.width;
 
-    [[[self offscreenCommandLineBackgroundColor] colorWithAlphaComponent:0.5] set];
+    [[self offscreenCommandLineBackgroundColor] set];
     iTermRectFill(outline, virtualOffset);
 
     [[self offscreenCommandLineOutlineColor] set];

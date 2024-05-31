@@ -37,7 +37,10 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
     }
 
     @objc(addFrameRectangleWithRect:thickness:insets:color:)
-    func add(frameRectangle rect: VT100GridRect, thickness: CGFloat, insets: NSEdgeInsets, color: vector_float4) {
+    func add(frameRectangle rect: VT100GridRect, 
+             thickness: CGFloat,
+             insets: NSEdgeInsets,
+             color: vector_float4) {
         // Top
         add(rectangle: VT100GridRect(origin: VT100GridCoord(x: rect.origin.x,
                                                             y: rect.origin.y),
@@ -102,7 +105,7 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
         renderer = iTermMetalCellRenderer(device: device,
                                           vertexFunctionName: "iTermRectangleVertexShader",
                                           fragmentFunctionName: "iTermRectangleFragmentShader",
-                                          blending: iTermMetalBlending(),
+                                          blending: iTermMetalBlending.atop(),
                                           piuElementSize: 1,
                                           transientStateClass: RectangleRendererTransientState.self)!
         colorPool = iTermMetalBufferPool(device: device, bufferSize: MemoryLayout<vector_float4>.size)

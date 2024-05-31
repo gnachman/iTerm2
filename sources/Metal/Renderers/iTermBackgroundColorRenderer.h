@@ -9,18 +9,17 @@ NS_ASSUME_NONNULL_BEGIN
 // Alpha value gives the value from iTermAlphaValueForTopView.
 @property (nonatomic) vector_float4 defaultBackgroundColor;
 
-// Only draw default background color in this many bottom points. This includes the
-// bottom margin. When nonzero this also draws the margin area there with
-// default bg.
-@property (nonatomic) CGFloat suppressedBottomHeight;
-
 // Shifts draws up by this many pixels.
 @property (nonatomic) float verticalOffset;
 
+// omitClear: When true, don't draw runs with alpha=0. Those do get drawn
+// otherwise because the specified color is combined with the default
+// background color.
 - (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
                count:(size_t)count
                  row:(int)row
-       repeatingRows:(int)repeatingRows;
+       repeatingRows:(int)repeatingRows
+           omitClear:(BOOL)omitClear;
 
 @end
 
