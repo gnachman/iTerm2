@@ -19,7 +19,6 @@
 - (CGFloat)backgroundDrawingHelperTransparency;
 - (iTermBackgroundImageMode)backgroundDrawingHelperBackgroundImageMode;
 - (NSColor *)backgroundDrawingHelperDefaultBackgroundColor;
-- (NSColor *)backgroundDrawingHelperDeselectedDefaultBackgroundColor;
 - (CGFloat)backgroundDrawingHelperBlending;
 @end
 
@@ -31,7 +30,6 @@
                         dirtyRect:(NSRect)rect
            visibleRectInContainer:(NSRect)visibleRectInContainer
            blendDefaultBackground:(BOOL)blendDefaultBackground
-                       deselected:(BOOL)deselected
                              flip:(BOOL)shouldFlip
                     virtualOffset:(CGFloat)virtualOffset;
 

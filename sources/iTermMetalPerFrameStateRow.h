@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _belongsToBlock;
     NSData *_matches;
     NSRange _underlinedRange;  // Underline for semantic history
-    BOOL _inDeselectedRegion;
+    BOOL _x_inDeselectedRegion;
     id<iTermExternalAttributeIndexReading> _eaIndex;
 }
 

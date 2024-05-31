@@ -63,7 +63,6 @@ typedef struct {
     BOOL selected;
     BOOL isMatch;
     BOOL image;
-    BOOL inDeselectedRegion;
 } iTermBackgroundColorKey;
 
 static vector_float4 VectorForColor(NSColor *colorInUnknownSpace, NSColorSpace *colorSpace) {
@@ -246,8 +245,7 @@ typedef struct {
 
 - (vector_float4)backgroundColorForCharacter:(screen_char_t)c
                                 selected:(BOOL)selected
-                               findMatch:(BOOL)findMatch
-                          inDeselectedRegion:(BOOL)inDeselectedRegion {
+                               findMatch:(BOOL)findMatch {
     iTermBackgroundColorKey backgroundKey = {
         .bgColor = c.backgroundColor,
         .bgGreen = c.bgGreen,
@@ -256,13 +254,11 @@ typedef struct {
         .selected = selected,
         .isMatch = findMatch,
         .image = c.image != 0,
-        .inDeselectedRegion = inDeselectedRegion
     };
     BOOL isDefaultBackgroundColor = NO;
     const vector_float4 unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey
                                                                    isDefault:&isDefaultBackgroundColor];
-    return [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor
-                                                                  inDeselectedRegion:inDeselectedRegion];
+    return [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
 
 }
 - (void)loadCursorInfoWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -304,8 +300,7 @@ typedef struct {
             iTermMetalPerFrameStateRow *row = _rows[_cursorInfo.coord.y];
             _cursorInfo.backgroundColor = [self backgroundColorForCharacter:screenChar
                                                                    selected:[row->_selectedIndexSet containsIndex:_cursorInfo.coord.x]
-                                                                  findMatch:row->_matches && CheckFindMatchAtIndex(row->_matches, _cursorInfo.coord.x)
-                                                         inDeselectedRegion:row->_inDeselectedRegion];
+                                                                  findMatch:row->_matches && CheckFindMatchAtIndex(row->_matches, _cursorInfo.coord.x)];
             if (_cursorInfo.type == CURSOR_BOX) {
                 _cursorInfo.shouldDrawText = YES;
                 const BOOL focused = ((_configuration->_isInKeyWindow && _configuration->_textViewIsActiveSession) || _configuration->_shouldDrawFilledInCursor);
@@ -733,25 +728,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                             alpha);
 }
 
-- (vector_float4)processedDeselectedDefaultBackgroundColor {
-    float alpha;
-    if (iTermTextIsMonochrome()) {
-        if (_backgroundImage) {
-            alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha,
-                                              _configuration->_backgroundImageBlend);
-        } else {
-            alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha, 0);
-        }
-    } else {
-        // Can assume transparencyAlpha is 1
-        alpha = iTermAlphaValueForTopView(0, _configuration->_backgroundImageBlend);
-    }
-    return simd_make_float4((float)_configuration->_processedDeselectedDefaultBackgroundColor.redComponent,
-                            (float)_configuration->_processedDeselectedDefaultBackgroundColor.greenComponent,
-                            (float)_configuration->_processedDeselectedDefaultBackgroundColor.blueComponent,
-                            alpha);
-}
-
 - (const vector_float4 *)selectedCommandOutlineColors {
     return _configuration->_selectedCommandOutlineColors;
 }
@@ -830,7 +806,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSData *findMatches = _rows[row]->_matches;
     NSIndexSet *selectedIndexes = _rows[row]->_selectedIndexSet;
     NSRange underlinedRange = _rows[row]->_underlinedRange;
-    const BOOL inDeselectedRegion = _rows[row]->_inDeselectedRegion;
     NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
     if (VT100GridRangeContains(_linesToSuppressDrawing, row)) {
         lineData = [ScreenCharArray emptyLineOfLength:width];
@@ -888,7 +863,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             .selected = selected,
             .isMatch = findMatch,
             .image = line[x].image,
-            .inDeselectedRegion = inDeselectedRegion
         };
 
         vector_float4 backgroundColor;
@@ -900,8 +874,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             backgroundKey.bgColorMode == lastBackgroundKey.bgColorMode &&
             backgroundKey.selected == lastBackgroundKey.selected &&
             backgroundKey.isMatch == lastBackgroundKey.isMatch &&
-            backgroundKey.image == lastBackgroundKey.image &&
-            backgroundKey.inDeselectedRegion == lastBackgroundKey.inDeselectedRegion) {
+            backgroundKey.image == lastBackgroundKey.image) {
 
             const int previousRLE = rles - 1;
             backgroundColor = backgroundRLE[previousRLE].color;
@@ -913,8 +886,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                                            isDefault:&isDefaultBackgroundColor];
             lastUnprocessedBackgroundColor = unprocessedBackgroundColor;
             // The unprocessed color is needed for minimum contrast computation for text color.
-            backgroundColor = [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor
-                                                                                     inDeselectedRegion:inDeselectedRegion];
+            backgroundColor = [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
             backgroundRLE[rles].color = backgroundColor;
             backgroundRLE[rles].origin = x;
             backgroundRLE[rles].count = 1;
@@ -1130,8 +1102,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (vector_float4)selectionColorForCurrentFocus {
     if (_configuration->_isFrontTextView) {
-        return VectorForColor([_configuration->_colorMap processedBackgroundColorForBackgroundColor:[_configuration->_colorMap colorForKey:kColorMapSelection]
-                                                                          inDeselectedCommandRegion:NO],
+        return VectorForColor([_configuration->_colorMap processedBackgroundColorForBackgroundColor:[_configuration->_colorMap colorForKey:kColorMapSelection]],
                               _configuration->_colorSpace);
     } else {
         return _configuration->_unfocusedSelectionColor;
@@ -1158,7 +1129,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             .selected = NO,
             .isMatch = NO,
             .image = NO,
-            .inDeselectedRegion = NO
         };
         return [self unprocessedColorForBackgroundColorKey:&temp isDefault:isDefault];
     } else if (colorKey->isMatch) {
@@ -1184,7 +1154,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                  faint:NO
                           isBackground:NO];
         } else {
-            *isDefault = (defaultBackground && !colorKey->inDeselectedRegion);
+            *isDefault = defaultBackground;
             // Use the regular background color.
             color = [self colorForCode:colorKey->bgColor
                                  green:colorKey->bgGreen

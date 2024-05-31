@@ -1540,10 +1540,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     iTermMarginRendererTransientState *tState = [frameData transientStateForRenderer:_marginRenderer];
     vector_float4 color = frameData.perFrameState.processedDefaultBackgroundColor;
     tState.regularColor = color;
-    tState.hasSelectedRegion = frameData.perFrameState.hasSelectedCommand;
-    tState.deselectedColor = frameData.perFrameState.processedDeselectedDefaultBackgroundColor;
-    tState.selectedCommandRect = frameData.perFrameState.selectedCommandRect;
-    tState.forceRegularBottomMargin = frameData.perFrameState.forceRegularBottomMargin;
     tState.suppressedBottomHeight = frameData.perFrameState.pointsOnBottomToSuppressDrawing;
 }
 

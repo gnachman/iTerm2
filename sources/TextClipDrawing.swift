@@ -277,7 +277,7 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
         return []
     }
     
-    func drawingHelperDrawBackgroundImage(in rect: NSRect, blendDefaultBackground: Bool, deselected: Bool, virtualOffset: CGFloat) {
+    func drawingHelperDrawBackgroundImage(in rect: NSRect, blendDefaultBackground: Bool, virtualOffset: CGFloat) {
     }
 
     func drawingHelperMark(onLine line: Int32) -> VT100ScreenMarkReading? {

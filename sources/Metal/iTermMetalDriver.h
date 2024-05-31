@@ -58,7 +58,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
 @property (nonatomic, readonly) vector_float4 defaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultBackgroundColor;
-@property (nonatomic, readonly) vector_float4 processedDeselectedDefaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultTextColor;
 @property (nonatomic, readonly) vector_float4 selectedBackgroundColor;
 @property (nonatomic, readonly) iTermLineStyleMarkColors lineStyleMarkColors;

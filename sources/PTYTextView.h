@@ -93,7 +93,6 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)rect
                    blendDefaultBackground:(BOOL)blendDefaultBackground
-                               deselected:(BOOL)deselected
                             virtualOffset:(CGFloat)virtualOffset;
 - (BOOL)textViewHasBackgroundImage;
 - (void)sendEscapeSequence:(NSString *)text;

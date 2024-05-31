@@ -13,8 +13,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                                         VT100GridCoord coord,
                                         NSIndexSet *selectedIndexes,
                                         NSData *matches,
-                                        int width,
-                                        BOOL nonSelectedCommand) {
+                                        int width) {
     if (ScreenCharIsDWC_SKIP(theLine[coord.x])) {
         run->selected = NO;
     } else {
@@ -39,7 +38,6 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
         run->bgColorMode = theLine[coord.x].backgroundColorMode;
         run->beneathFaintText = !!theLine[coord.x].faint;
     }
-    run->nonSelectedCommand = nonSelectedCommand;
 }
 
 @implementation iTermBackgroundColorRunsInLine
@@ -67,8 +65,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                          withinRange:(NSRange)charRange
                              matches:(NSData *)matches
                             anyBlink:(BOOL *)anyBlinkPtr
-                                   y:(CGFloat)y
-                  nonSelectedCommand:(BOOL)nonSelectedCommand {
+                                   y:(CGFloat)y {
     NSMutableArray *runs = [NSMutableArray array];
     iTermBackgroundColorRun previous;
     iTermBackgroundColorRun current;
@@ -88,8 +85,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                                     VT100GridCoordMake(x, displayLineNumber),
                                     selectedIndexes,
                                     matches,
-                                    width,
-                                    nonSelectedCommand);
+                                    width);
         if (theLine[x].blink) {
             *anyBlinkPtr = YES;
         }
@@ -119,8 +115,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
 
 + (instancetype)defaultRunOfLength:(int)width
                                row:(int)row
-                                 y:(CGFloat)y
-                nonSelectedCommand:(BOOL)nonSelectedCommand {
+                                 y:(CGFloat)y {
     const screen_char_t defaultCharacter = { 0 };
 
     iTermBackgroundColorRun run;
@@ -129,8 +124,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                                 VT100GridCoordMake(0, 0),
                                 nil,
                                 nil,
-                                width,
-                                nonSelectedCommand);
+                                width);
     run.range = NSMakeRange(0, width);
     NSMutableArray *runs = [NSMutableArray array];
     [self addBackgroundRun:&run toArray:runs endingAt:width];

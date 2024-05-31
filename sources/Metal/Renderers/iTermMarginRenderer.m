@@ -24,7 +24,6 @@ NS_ASSUME_NONNULL_BEGIN
 #endif
     iTermMetalBufferPool *_colorPool;
     iTermMetalBufferPool *_verticesPool;
-    iTermMetalBufferPool *_deselectedVerticesPool;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -53,8 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                             piuElementSize:0
                                                        transientStateClass:[iTermMarginRendererTransientState class]];
         _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
-        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float2) * 6 * 6];
-        _deselectedVerticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float2) * 6 * 8];
+        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float2) * 6 * 4];
     }
     return self;
 }
@@ -79,15 +77,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermMarginRendererTransientState *tState = transientState;
-    if (tState.hasSelectedRegion) {
-        [self drawWithSelectedRegionHavingFrameData:frameData tState:tState];
-    } else {
-        [self drawRegularHavingFrameData:frameData tState:tState];
-    }
+    [self drawWithFrameData:frameData tState:tState];
 }
 
-- (void)drawRegularHavingFrameData:(nonnull iTermMetalFrameData *)frameData
-                            tState:(nonnull iTermMarginRendererTransientState *)tState {
+- (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
+                   tState:(nonnull iTermMarginRendererTransientState *)tState {
     [self initializeRegularVertexBuffer:tState];
     vector_float4 regularColor = tState.regularColor;
     if (iTermTextIsMonochrome()) {
@@ -106,64 +100,6 @@ NS_ASSUME_NONNULL_BEGIN
                            vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
                          fragmentBuffers:@{ @(iTermFragmentBufferIndexMarginColor): colorBuffer }
                                 textures:@{}];
-}
-
-// Matches function in iTermBackgroundColor.metal
-static vector_float4 iTermBlendColors(vector_float4 src, vector_float4 dst) {
-    vector_float4 out;
-    out.w = src.w + dst.w * (1 - src.w);
-    if (out.w > 0) {
-        out.xyz = (src.xyz * src.w + dst.xyz * dst.w * (1 - src.w)) / out.w;
-    } else {
-        out.xyz = 0;
-    }
-    return out;
-}
-
-- (void)drawWithSelectedRegionHavingFrameData:(nonnull iTermMetalFrameData *)frameData
-                                       tState:(nonnull iTermMarginRendererTransientState *)tState {
-    // Do up to 8 separate draws
-    iTermMetalCellRenderer *cellRenderer = [self rendererForConfiguration:tState.cellConfiguration];
-
-    int n = [self initializeDeselected:NO vertexBuffer:tState];
-    [self drawWithRenderEncoder:frameData.renderEncoder
-                          color:tState.regularColor
-                    poolContext:tState.poolContext
-                   cellRenderer:cellRenderer
-                   vertexBuffer:tState.vertexBuffer
-                       numQuads:n
-                 transientState:tState];
-
-    const NSUInteger suppressedPx = tState.suppressedBottomHeight * tState.cellConfiguration.scale;
-    if (tState.suppressedBottomHeight > 0) {
-        // Avoid drawing margin in suppressed region. Background color renderer will handle it for us.
-        MTLScissorRect scissorRect = {
-            .x = 0,
-            .y = 0,
-            .width = tState.cellConfiguration.viewportSize.x,
-            .height = tState.cellConfiguration.viewportSize.y - suppressedPx
-        };
-        [frameData.renderEncoder setScissorRect:scissorRect];
-    }
-
-    n = [self initializeDeselected:YES vertexBuffer:tState];
-    const vector_float4 blendedColor = iTermBlendColors(tState.deselectedColor, tState.regularColor);
-    [self drawWithRenderEncoder:frameData.renderEncoder
-                          color:blendedColor
-                    poolContext:tState.poolContext
-                   cellRenderer:cellRenderer
-                   vertexBuffer:tState.vertexBuffer
-                       numQuads:n
-                 transientState:tState];
-    if (tState.suppressedBottomHeight > 0) {
-        MTLScissorRect scissorRect = {
-            .x = 0,
-            .y = 0,
-            .width = tState.cellConfiguration.viewportSize.x,
-            .height = tState.cellConfiguration.viewportSize.y
-        };
-        [frameData.renderEncoder setScissorRect:scissorRect];
-    }
 }
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
@@ -263,101 +199,50 @@ static vector_float4 iTermBlendColors(vector_float4 src, vector_float4 dst) {
                                                    checkIfChanged:YES];
 }
 
-- (int)initializeDeselected:(BOOL)deselected vertexBuffer:(iTermMarginRendererTransientState *)tState {
+- (int)initializeVertexBuffer:(iTermMarginRendererTransientState *)tState {
     CGSize size = CGSizeMake(tState.configuration.viewportSize.x,
                              tState.configuration.viewportSize.y);
     const NSEdgeInsets margins = tState.margins;
     vector_float2 vertices[6 * 8];
     vector_float2 *v = &vertices[0];
     const VT100GridRange visibleRange = VT100GridRangeMake(0, MAX(0, tState.cellConfiguration.gridSize.height));
-    const VT100GridRange selectedRange = VT100GridRangeMake(tState.selectedCommandRect.origin.y,
-                                                            tState.selectedCommandRect.size.height);
 
     int count = 0;
 
     // Top
-    const BOOL topDeselected = tState.selectedCommandRect.origin.y > 0;
-    if (deselected == topDeselected) {
-        v = [self appendVerticesForQuad:CGRectMake(0,
-                                                   size.height - margins.bottom,
-                                                   size.width,
-                                                   margins.bottom)
-                               vertices:v];
-        count += 1;
-    }
+    v = [self appendVerticesForQuad:CGRectMake(0,
+                                               size.height - margins.bottom,
+                                               size.width,
+                                               margins.bottom)
+                           vertices:v];
+    count += 1;
 
     // Bottom
-    const BOOL bottomDeselected = (!VT100GridRangeContains(selectedRange,
-                                                           tState.cellConfiguration.gridSize.height) &&
-                                   !tState.forceRegularBottomMargin);
-    if (deselected == bottomDeselected) {
-        v = [self appendVerticesForQuad:CGRectMake(0,
-                                                   0,
-                                                   size.width,
-                                                   margins.top)
-                               vertices:v];
-        count += 1;
-    }
+    v = [self appendVerticesForQuad:CGRectMake(0,
+                                               0,
+                                               size.width,
+                                               margins.top)
+                           vertices:v];
+    count += 1;
 
     const CGFloat gridWidth = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.cellSize.width;
     const CGFloat rightGutterWidth = tState.configuration.viewportSize.x - margins.left - margins.right - gridWidth;
 
-    // Left/Right bottom deselected
+    // Left/Right
     CGFloat y = margins.top;
-    CGFloat h = 0;
 
-    int lines = tState.cellConfiguration.gridSize.height - (tState.selectedCommandRect.origin.y + tState.selectedCommandRect.size.height);
-    h = MAX(0, lines) * tState.cellConfiguration.cellSize.height;
-
-    if (h > 0 && deselected) {
-        v = [self appendVerticesForQuad:CGRectMake(0,
-                                                   y,
-                                                   margins.left,
-                                                   h)
-                               vertices:v];
-        v = [self appendVerticesForQuad:CGRectMake(size.width - margins.right - rightGutterWidth,
-                                                   y,
-                                                   margins.right + rightGutterWidth,
-                                                   h)
+    CGFloat h = visibleRange.length * tState.cellConfiguration.cellSize.height;
+    v = [self appendVerticesForQuad:CGRectMake(0,
+                                               y,
+                                               margins.left,
+                                               h)
                            vertices:v];
-        count += 2;
-    }
-    y += h;
-
-    // Left/Right selected
-    const VT100GridRange visibleSelectedRange = VT100GridRangeIntersection(visibleRange, selectedRange);
-    h = visibleSelectedRange.length * tState.cellConfiguration.cellSize.height;
-    if (h > 0 && !deselected) {
-        v = [self appendVerticesForQuad:CGRectMake(0,
-                                                   y,
-                                                   margins.left,
-                                                   h)
-                               vertices:v];
-        v = [self appendVerticesForQuad:CGRectMake(size.width - margins.right - rightGutterWidth,
-                                                   y,
-                                                   margins.right + rightGutterWidth,
-                                                   h)
-                               vertices:v];
-        count += 2;
-    }
-    y += h;
-
-    // Left/Right top deselected
-    lines = tState.selectedCommandRect.origin.y;
-    h = MAX(0, lines * tState.cellConfiguration.cellSize.height);
-    if (h > 0 && deselected) {
-        v = [self appendVerticesForQuad:CGRectMake(0,
-                                                   y,
-                                                   margins.left,
-                                                   h)
-                               vertices:v];
-        v = [self appendVerticesForQuad:CGRectMake(size.width - margins.right - rightGutterWidth,
-                                                   y,
-                                                   margins.right + rightGutterWidth,
-                                                   h)
-                               vertices:v];
-        count += 2;
-    }
+    v = [self appendVerticesForQuad:CGRectMake(size.width - margins.right - rightGutterWidth,
+                                               y,
+                                               margins.right + rightGutterWidth,
+                                               h)
+                           vertices:v];
+    count += 2;
     y += h;
 
     tState.vertexBuffer = [_verticesPool requestBufferFromContext:tState.poolContext

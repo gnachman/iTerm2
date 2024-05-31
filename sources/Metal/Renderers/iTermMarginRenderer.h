@@ -12,12 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermMarginRendererTransientState : iTermMetalCellRendererTransientState
 @property (nonatomic) vector_float4 regularColor;
-@property (nonatomic) vector_float4 deselectedColor;
-@property (nonatomic) VT100GridRect selectedCommandRect;
-@property (nonatomic) BOOL hasSelectedRegion;
-
-// A regular bottom margin ignores whether it should be deselected.
-@property (nonatomic) BOOL forceRegularBottomMargin;
+@property (nonatomic) VT100GridRect x_selectedCommandRect;
 
 // Don't draw margins in this many points on the bottom. This includes the bottom margin.
 @property (nonatomic) CGFloat suppressedBottomHeight;

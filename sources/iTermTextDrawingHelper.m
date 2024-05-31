@@ -413,14 +413,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                      withinRange:charRange
                                                          matches:matches
                                                         anyBlink:&_blinkingFound
-                                                               y:y
-                                              nonSelectedCommand:[self lineIsInDeselectedRegion:line]];
+                                                               y:y];
             [backgroundRunArrays addObject:runsInLine];
         } else {
             [backgroundRunArrays addObject:[iTermBackgroundColorRunsInLine defaultRunOfLength:_gridSize.width
                                                                                           row:line
-                                                                                            y:y
-                                                                           nonSelectedCommand:[self lineIsInDeselectedRegion:line]]];
+                                                                                            y:y]];
         }
         iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
     }
@@ -430,7 +428,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     if (_hasBackgroundImage) {
         [self.delegate drawingHelperDrawBackgroundImageInRect:boundingRect
                                        blendDefaultBackground:NO
-                                                   deselected:NO
                                                 virtualOffset:virtualOffset];
     }
 
@@ -448,8 +445,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             cursorY < runArray.line + runArray.numberOfEquivalentRows) {
             NSColor *color = [self unprocessedColorForBackgroundRun:[runArray runAtIndex:self.cursorCoord.x] ?: runArray.lastRun
                                                      enableBlending:NO];
-            cursorBackgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color
-                                                                inDeselectedCommandRegion:NO];
+            cursorBackgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
         }
         [self drawBackgroundForLine:runArray.line
                                 atY:runArray.y
@@ -599,8 +595,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                  enableBlending:enableBlending];
         // The unprocessed color is needed for minimum contrast computation for text color.
         box.unprocessedBackgroundColor = color;
-        color = [_colorMap processedBackgroundColorForBackgroundColor:color
-                                            inDeselectedCommandRegion:run->nonSelectedCommand];
+        color = [_colorMap processedBackgroundColorForBackgroundColor:color];
         box.backgroundColor = color;
 
         [box.backgroundColor set];
@@ -666,8 +661,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         // consistent with their separator glyphs opacity(foreground).
         if (_transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
             alpha = 1;
-        } else if (run->nonSelectedCommand) {
-            alpha = _transparencyAlpha;
         }
         if (_reverseVideo && defaultBackground) {
             // Reverse video is only applied to default background-
@@ -690,7 +683,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                             isBackground:YES];
         }
 
-        if (defaultBackground && !run->nonSelectedCommand) {
+        if (defaultBackground) {
             alpha = iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(_hasBackgroundImage,
                                                                               enableBlending,
                                                                               _reverseVideo,
@@ -745,10 +738,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         excessRect.size.height = _excess;
     }
 
-    const NSRange range = [self rangeOfVisibleRows];
     [self.delegate drawingHelperDrawBackgroundImageInRect:excessRect
                                    blendDefaultBackground:YES
-                                               deselected:!_forceRegularBottomMargin && [self lineIsInDeselectedRegion:((NSInteger)NSMaxRange(range))]
                                             virtualOffset:virtualOffset];
 
     if (_debug) {
@@ -772,10 +763,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     topMarginRect.origin.y -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
 
     topMarginRect.size.height = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    NSInteger firstLine = [self rangeOfVisibleRows].location;
     [self.delegate drawingHelperDrawBackgroundImageInRect:topMarginRect
                                    blendDefaultBackground:YES
-                                               deselected:[self lineIsInDeselectedRegion:firstLine - 1]
                                             virtualOffset:virtualOffset];
 
     if (_showStripes) {
@@ -794,15 +783,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     rightMargin.size.width = visibleRect.size.width - rightMargin.origin.x;
     rightMargin.size.height = _cellSize.height;
 
-    const BOOL deselected = [self lineIsInDeselectedRegion:line];
     // Draw background in margins
     [self.delegate drawingHelperDrawBackgroundImageInRect:leftMargin
                                    blendDefaultBackground:YES
-                                               deselected:deselected
                                             virtualOffset:virtualOffset];
     [self.delegate drawingHelperDrawBackgroundImageInRect:rightMargin
                                    blendDefaultBackground:YES
-                                               deselected:deselected
                                             virtualOffset:virtualOffset];
 
     [self drawMarkIfNeededOnLine:line
@@ -1410,7 +1396,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                 previousRun = *run.valuePointer;
             } else if (run.valuePointer->selected == previousRun.selected &&
                        run.valuePointer->isMatch == previousRun.isMatch &&
-                       run.valuePointer->nonSelectedCommand == previousRun.nonSelectedCommand &&
                        !run.valuePointer->beneathFaintText &&
                        !previousRun.beneathFaintText) {
                 // Combine with preceding run.
@@ -3362,8 +3347,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                              withinRange:NSMakeRange(0, _gridSize.width)
                                                  matches:nil
                                                 anyBlink:&blink
-                                                       y:row * _cellSize.height
-                                      nonSelectedCommand:NO];
+                                                       y:row * _cellSize.height];
 
     const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     [self drawBackgroundForLine:0
@@ -3558,8 +3542,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         [[colorMap processedBackgroundColorForBackgroundColor:[NSColor colorWithCalibratedRed:1.0
                                                                                         green:1.0
                                                                                          blue:0
-                                                                                        alpha:1.0]
-                                    inDeselectedCommandRegion:NO] set];
+                                                                                        alpha:1.0]] set];
         iTermRectFill(cursorFrame, virtualOffset);
 
         return YES;
@@ -3976,22 +3959,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                                       bold:NO
                                                      faint:NO
                                               isBackground:YES];
-    aColor = [_colorMap processedBackgroundColorForBackgroundColor:aColor
-                                         inDeselectedCommandRegion:NO];
-    aColor = [aColor colorWithAlphaComponent:_transparencyAlpha];
-    return aColor;
-}
-
-- (NSColor *)deselectedDefaultBackgroundColor {
-    NSColor *aColor = [_delegate drawingHelperColorForCode:ALTSEM_DEFAULT
-                                                     green:0
-                                                      blue:0
-                                                 colorMode:ColorModeAlternate
-                                                      bold:NO
-                                                     faint:NO
-                                              isBackground:YES];
-    aColor = [_colorMap processedBackgroundColorForBackgroundColor:aColor
-                                         inDeselectedCommandRegion:YES];
+    aColor = [_colorMap processedBackgroundColorForBackgroundColor:aColor];
     aColor = [aColor colorWithAlphaComponent:_transparencyAlpha];
     return aColor;
 }
@@ -4004,8 +3972,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
 - (NSColor *)selectionColorForCurrentFocus {
     if (_isFrontTextView) {
-        return [_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapSelection]
-                                           inDeselectedCommandRegion:NO];
+        return [_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapSelection]];
     } else {
         return _unfocusedSelectionColor;
     }

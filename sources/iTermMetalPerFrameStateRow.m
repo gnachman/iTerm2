@@ -72,7 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
 
         const long long absoluteLine = totalScrollbackOverflow + i;
         _underlinedRange = [drawingHelper underlinedRangeOnLine:absoluteLine];
-        _inDeselectedRegion = drawingHelper.selectedCommandRegion.length > 0 && !NSLocationInRange(i, drawingHelper.selectedCommandRegion);
+        _x_inDeselectedRegion = drawingHelper.selectedCommandRegion.length > 0 && !NSLocationInRange(i, drawingHelper.selectedCommandRegion);
         _markStyle = @([self markStyleForLine:i
                                       enabled:drawingHelper.drawMarkIndicators
                                      textView:textView

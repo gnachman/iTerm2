@@ -9913,9 +9913,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (BOOL)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)dirtyRect
                    blendDefaultBackground:(BOOL)blendDefaultBackground
-                               deselected:(BOOL)deselected
                             virtualOffset:(CGFloat)virtualOffset NS_DEPRECATED_MAC(10_0, 10_16) {
-    if (!deselected && !self.shouldDrawBackgroundImageManually) {
+    if (!!self.shouldDrawBackgroundImageManually) {
         return NO;
     }
     if (!_backgroundDrawingHelper) {
@@ -9933,7 +9932,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                                   dirtyRect:dirtyRect
                                      visibleRectInContainer:NSMakeRect(0, 0, contentRect.size.width, contentRect.size.height)
                                      blendDefaultBackground:blendDefaultBackground
-                                                 deselected:deselected
                                                        flip:NO
                                               virtualOffset:virtualOffset];
     } else {
@@ -9950,7 +9948,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                                   dirtyRect:clippedDirtyRect
                                      visibleRectInContainer:windowVisibleRect
                                      blendDefaultBackground:blendDefaultBackground
-                                                 deselected:deselected
                                                        flip:YES
                                               virtualOffset:virtualOffset];
     }
@@ -10002,14 +9999,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (NSColor *)processedBackgroundColor {
     NSColor *unprocessedColor = [_screen.colorMap colorForKey:kColorMapBackground];
-    return [_screen.colorMap processedBackgroundColorForBackgroundColor:unprocessedColor
-                                              inDeselectedCommandRegion:NO];
-}
-
-- (NSColor *)processedDeselectedBackgroundColor {
-    NSColor *unprocessedColor = [_screen.colorMap colorForKey:kColorMapBackground];
-    return [_screen.colorMap processedBackgroundColorForBackgroundColor:unprocessedColor
-                                              inDeselectedCommandRegion:YES];
+    return [_screen.colorMap processedBackgroundColorForBackgroundColor:unprocessedColor];
 }
 
 - (void)textViewPostTabContentsChangedNotification
@@ -16660,10 +16650,6 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSColor *)backgroundDrawingHelperDefaultBackgroundColor {
     return [self processedBackgroundColor];
-}
-
-- (NSColor *)backgroundDrawingHelperDeselectedDefaultBackgroundColor {
-    return [self processedDeselectedBackgroundColor];
 }
 
 - (CGFloat)backgroundDrawingHelperBlending {

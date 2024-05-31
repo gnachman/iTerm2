@@ -260,7 +260,6 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property(nonatomic, readonly) iTermTimestampDrawHelper *timestampDrawHelper;
 
 @property(nonatomic, readonly) NSColor *defaultBackgroundColor;
-@property(nonatomic, readonly) NSColor *deselectedDefaultBackgroundColor;
 @property(nonatomic, readonly) NSColor *defaultTextColor;
 
 // Does the current ascii font have ligatures? Used to determine if ASCII

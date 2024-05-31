@@ -1618,8 +1618,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 - (NSColor *)defaultBackgroundColor {
     CGFloat alpha = [self useTransparency] ? 1 - _transparency : 1;
-    return [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapBackground]
-                                        inDeselectedCommandRegion:NO] colorWithAlphaComponent:alpha];
+    return [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapBackground]] colorWithAlphaComponent:alpha];
 }
 
 - (NSColor *)defaultTextColor {
@@ -5029,12 +5028,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (void)drawingHelperDrawBackgroundImageInRect:(NSRect)rect
                         blendDefaultBackground:(BOOL)blend
-                                    deselected:(BOOL)deselected
                                  virtualOffset:(CGFloat)virtualOffset {
     [_delegate textViewDrawBackgroundImageInView:self
                                         viewRect:rect
                           blendDefaultBackground:blend
-                                      deselected:deselected
                                    virtualOffset:virtualOffset];
 }
 
