@@ -18,6 +18,7 @@
 extern char **environ;
 
 pid_t iTermStartProcess(NSURL *url, NSArray<NSString *> *args, int fd_in, int fd_out) {
+    DLog(@"%@ %@", url.path, [args componentsJoinedByString:@" "]);
     posix_spawn_file_actions_t actions;
 
     // Initialize the file actions object
@@ -63,7 +64,7 @@ pid_t iTermStartProcess(NSURL *url, NSArray<NSString *> *args, int fd_in, int fd
         sigemptyset(&signals);
         posix_spawnattr_setsigmask(&attrs, &signals);
     }
-    
+
     // Redirect standard input
     status = posix_spawn_file_actions_adddup2(&actions, fd_in, STDIN_FILENO);
     if (status != 0) {
@@ -80,14 +81,24 @@ pid_t iTermStartProcess(NSURL *url, NSArray<NSString *> *args, int fd_in, int fd
         return -1;
     }
 
+    // Redirect standard error
+    status = posix_spawn_file_actions_adddup2(&actions, fd_out, STDERR_FILENO);
+    if (status != 0) {
+        DLog(@"posix_spawn_file_actions_adddup2 for stderr");
+        posix_spawn_file_actions_destroy(&actions);
+        return -1;
+    }
+
     // Make argv out of C strings.
     char **argv = [args nullTerminatedCStringArray];
+    char **environment = [@[ @"OS_ACTIVITY_MODE=disable", @"TERM=xterm", @"LANG=en_US.UTF-8" ] nullTerminatedCStringArray];
 
     // Spawn the process
     pid_t pid = 0;
-    status = posix_spawn(&pid, url.path.UTF8String, &actions, &attrs, argv, environ);
+    status = posix_spawn(&pid, url.path.UTF8String, &actions, &attrs, argv, environment);
 
     iTermFreeeNullTerminatedCStringArray(argv);
+    iTermFreeeNullTerminatedCStringArray(environment);
 
     if (status == 0) {
         DLog(@"Process spawned successfully, PID: %d\n", pid);

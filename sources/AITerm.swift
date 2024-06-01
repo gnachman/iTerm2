@@ -28,7 +28,16 @@ class iTermAIClient {
 
     private let codeSigningRequirementString = "anchor apple generic and certificate leaf[subject.OU] = \"H7V7XYVQ7D\""
 
-    private func certificatePinningCheck(pid: Int32) -> Bool {
+    // This is probably spoofable but it doesn't matter. When we see this we retry the cert check
+    // after a wait. This is here just so we can fail fast when the cert is wrong and it's definitely
+    // *not* sandbox-exec.
+    private let sandboxRequirementString = #"identifier "com.apple.sandbox-exec" and anchor apple"#
+
+    // Return true if the cert matches iTermAIPlugin
+    // Return nil if the cert matches sandbox-exec
+    // Return false if the cert matches neither or could not be determined (e.g., because the
+    // process is defunct).
+    private func certificatePinningCheck(pid: Int32) -> Bool? {
         var code: SecCode?
         do {
             let status = SecCodeCopyGuestWithAttributes(
@@ -55,12 +64,36 @@ class iTermAIClient {
             }
         }
 
+        var sandboxRequirement: SecRequirement? = nil
+        do {
+            let status = SecRequirementCreateWithString(
+                sandboxRequirementString as CFString,
+                [],
+                &sandboxRequirement)
+
+            guard status == errSecSuccess && sandboxRequirement != nil else {
+                DLog("SecRequirementCreateWithString failed \(status) for sandbox")
+                return false
+            }
+        }
+
         do {
             let status = SecCodeCheckValidity(code!,
                                               SecCSFlags(rawValue: 0),
                                               requirement!)
             guard status == errSecSuccess else {
                 DLog("CheckValidity failed with \(status)")
+
+                do {
+                    let status = SecCodeCheckValidity(code!,
+                                                      SecCSFlags(rawValue: 0),
+                                                      sandboxRequirement!)
+                    if status == errSecSuccess {
+                        DLog("Got sandbox")
+                        return nil
+                    }
+                }
+
                 return false
             }
         }
@@ -283,12 +316,53 @@ class iTermAIClient {
         var outputData = Data()  // only use on outputQueue
         let outputQueue = self.outputQueue
 
-        // I wish I could use Swift's Process class, but it doesn't give enough control over when
-        // the process is wait()ed on. See the note below about the certificate check.
-        let pid = iTermStartProcess(executableURL,
-                                    [executableURL.lastPathComponent, arg],
-                                    childStdin.fileHandleForReading.fileDescriptor,
-                                    childStdout.fileHandleForWriting.fileDescriptor)
+        // Run the app in a sandbox if we care about the signature check.
+        // That's important because the signature check is ineffective if the
+        // app is not sandboxed. See the discussion in issue 11470 with @dcow.
+        let sandbox = checkSignature
+
+        // Launch the program.
+        let pid = { () -> pid_t? in
+            if sandbox {
+                // Run the plugin in a sandbox so a malicious app posing as the plugin can't exec() the
+                // legit program before the cert check occurs.
+                guard let sbPath = Bundle(for: iTermAIClient.self).path(forResource: "ai-plugin",
+                                                                        ofType: "sb") else {
+                    outputQueue.async {
+                        completion(.executionError, "Could not find sandbox file in app bundle. Reinstall iTerm2.".data(using: .utf8)!)
+                    }
+                    return nil
+                }
+                guard let sbTemplate = try? String(contentsOfFile: sbPath) else {
+                    outputQueue.async {
+                        completion(.executionError, "Could not read sandbox file in app bundle. Reinstall iTerm2.".data(using: .utf8)!)
+                    }
+                    return nil
+                }
+                let sb = sbTemplate
+                    .components(separatedBy: "\n")
+                    .filter { !$0.starts(with: ";") }
+                    .joined(separator: " ")
+                    .replacingOccurrences(
+                        of: "@EXEC@",
+                        with: executableURL.path)
+
+                // I wish I could use Swift's Process class, but it doesn't give enough control over when
+                // the process is wait()ed on. See the note below about the certificate check.
+                return iTermStartProcess(URL(fileURLWithPath: "/usr/bin/sandbox-exec"),
+                                         ["/usr/bin/sandbox-exec", "-p", sb, executableURL.path, arg],
+                                         childStdin.fileHandleForReading.fileDescriptor,
+                                         childStdout.fileHandleForWriting.fileDescriptor)
+            } else {
+                return iTermStartProcess(executableURL,
+                                         [executableURL.lastPathComponent, arg],
+                                         childStdin.fileHandleForReading.fileDescriptor,
+                                         childStdout.fileHandleForWriting.fileDescriptor)
+            }
+        }()
+        guard let pid else {
+            return
+        }
         guard pid > 0 else {
             DLog("iTermStartProcess failed")
             // Handle errors: also switch to the output queue to clean up
@@ -318,14 +392,30 @@ class iTermAIClient {
         // Doing the code signature check by process ID in general suffers from a process ID
         // reuse race. That is impossible here because we don't call waitpid until after
         // the check finishes so the process ID cannot be reused.
-        if checkSignature && !iTermAIClient.instance.certificatePinningCheck(pid: pid) {
-            DLog("Code signature error")
-            outputQueue.async {
-                cancellation.cancel()
-                completion(.executionError,
-                           "The AI plugin’s code signature check failed. Reinstall it and upgrade iTerm2.".data(using: .utf8)!)
+        //
+        // If the program is run in a sandbox, there's a race between the cert check and
+        // sandbox-exec running the plugin. Loop until that race is over.
+        if checkSignature {
+            while true {
+                let status = iTermAIClient.instance.certificatePinningCheck(pid: pid)
+                if status == true {
+                    DLog("Cert check passed")
+                    break
+                } else if status == false || !sandbox {
+                    DLog("Failed cert check")
+                    DLog("Code signature error")
+                    outputQueue.async {
+                        cancellation.cancel()
+                        completion(.executionError,
+                                   "The AI plugin’s code signature check failed. Reinstall it and upgrade iTerm2.".data(using: .utf8)!)
+                    }
+                    return
+                } else if status == nil {
+                    precondition(sandbox)
+                    DLog("Retry check as it's still sandbox-exec")
+                    Thread.sleep(forTimeInterval: 0.1)
+                }
             }
-            return
         }
 
         do {
@@ -977,7 +1067,7 @@ class AITermController {
                     }
                 case .badOutput:
                     if let data {
-                        handle(event: .error(reason: "Invalid output from iTermAI plugin: \(data.stringOrHex)"),
+                        handle(event: .error(reason: "Invalid output from iTermAI plugin: \(data.stringOrHex.truncatedWithTrailingEllipsis(to: 200))"),
                                legacy: false)
                     } else {
                         handle(event: .error(reason: "Invalid output from iTermAI plugin"),

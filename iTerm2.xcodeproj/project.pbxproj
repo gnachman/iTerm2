@@ -2933,6 +2933,9 @@
 		A6B5134A18E779BB00D249A5 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
 		A6B540FA224838A100D3AD14 /* NSColor+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B540F8224838A100D3AD14 /* NSColor+PSM.h */; };
 		A6B540FB224838A100D3AD14 /* NSColor+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B540F9224838A100D3AD14 /* NSColor+PSM.m */; };
+		A6B577D62C0A9520003FEB4F /* ai-plugin.sb in Resources */ = {isa = PBXBuildFile; fileRef = A6B577D52C0A9520003FEB4F /* ai-plugin.sb */; };
+		A6B577D72C0A970E003FEB4F /* ai-plugin.sb in Resources */ = {isa = PBXBuildFile; fileRef = A6B577D52C0A9520003FEB4F /* ai-plugin.sb */; };
+		A6B577D82C0A970F003FEB4F /* ai-plugin.sb in Resources */ = {isa = PBXBuildFile; fileRef = A6B577D52C0A9520003FEB4F /* ai-plugin.sb */; };
 		A6B60CAB245E33C200DBD6A7 /* PSMCachedTitle.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B60CA9245E33C200DBD6A7 /* PSMCachedTitle.h */; };
 		A6B60CAC245E33C200DBD6A7 /* PSMCachedTitle.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B60CAA245E33C200DBD6A7 /* PSMCachedTitle.m */; };
 		A6B6178C287CC16C008A0C54 /* iTermServerDeleter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B6178A287CC001008A0C54 /* iTermServerDeleter.swift */; };
@@ -6950,6 +6953,7 @@
 		A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelper.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6B540F8224838A100D3AD14 /* NSColor+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSColor+PSM.h"; sourceTree = "<group>"; };
 		A6B540F9224838A100D3AD14 /* NSColor+PSM.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSColor+PSM.m"; sourceTree = "<group>"; };
+		A6B577D52C0A9520003FEB4F /* ai-plugin.sb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "ai-plugin.sb"; path = "OtherResources/ai-plugin.sb"; sourceTree = "<group>"; };
 		A6B60CA9245E33C200DBD6A7 /* PSMCachedTitle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PSMCachedTitle.h; sourceTree = "<group>"; };
 		A6B60CAA245E33C200DBD6A7 /* PSMCachedTitle.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PSMCachedTitle.m; sourceTree = "<group>"; };
 		A6B6178A287CC001008A0C54 /* iTermServerDeleter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermServerDeleter.swift; sourceTree = "<group>"; };
@@ -8331,6 +8335,7 @@
 		1D03D42719144C3B0049EB8F /* Other Assets */ = {
 			isa = PBXGroup;
 			children = (
+				A6B577D52C0A9520003FEB4F /* ai-plugin.sb */,
 				A6D3205629C492410088BBE1 /* nerd.itse */,
 				A64BD0DA296FDBF4001F3F7E /* conductor.sh */,
 				A65DF4A82849F2AA00AA29AB /* iterm2-shell-integration-loader.fish */,
@@ -13915,6 +13920,7 @@
 				1D6ED9C419AEA20D005A7799 /* DefaultPointerActions.plist in Resources */,
 				A6EFF2331D2049A400806EEF /* Erase.png in Resources */,
 				53BBA0FA214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
+				A6B577D62C0A9520003FEB4F /* ai-plugin.sb in Resources */,
 				A6E7AE82214394DD00DE9F3B /* graphic_curl@2x.png in Resources */,
 				A63011AD20E7EE06008114B7 /* iTermStatusBarKnobCheckboxViewController.xib in Resources */,
 				A67F6186214395A70093940A /* graphic_npm@2x.png in Resources */,
@@ -14145,6 +14151,7 @@
 				A67F616B214395990093940A /* graphic_micro@2x.png in Resources */,
 				A67F61E5214395D50093940A /* graphic_vim.png in Resources */,
 				A6B4833729D73DA10055E24A /* square.and.pencil.png in Resources */,
+				A6B577D82C0A970F003FEB4F /* ai-plugin.sb in Resources */,
 				A65E6F562547F1D5008A4866 /* WindowCorner_Square@2x.png in Resources */,
 				A62DBB9D20F47CFA008B63D1 /* GoForward.png in Resources */,
 				A67F61F92143976F0093940A /* graphic_icons.json in Resources */,
@@ -14571,6 +14578,7 @@
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */,
 				A65E6F522547F1D5008A4866 /* WindowCornerFull_Square@2x.png in Resources */,
+				A6B577D72C0A970E003FEB4F /* ai-plugin.sb in Resources */,
 				A6B3A7381AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				A61BB46822001E650027F47D /* iTermRecordingIcon.icns in Resources */,
 				A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */,
