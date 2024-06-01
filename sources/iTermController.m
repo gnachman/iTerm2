@@ -1486,6 +1486,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
 - (NSWindow *)openWindow:(BOOL)makeWindow 
                  command:(NSString *)command
+             initialText:(NSString *)initialText
                directory:(NSString *)directory
                 hostname:(NSString *)hostname
                 username:(NSString *)username {
@@ -1506,7 +1507,11 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             profile[KEY_COMMAND_LINE] = hostname;
         }
     }
-    profile[KEY_INITIAL_TEXT] = command;
+    if (command) {
+        profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeCustomValue;
+        profile[KEY_COMMAND_LINE] = command;
+    }
+    profile[KEY_INITIAL_TEXT] = initialText;
     PseudoTerminal *term = [self currentTerminal];
     if (makeWindow || !term) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES

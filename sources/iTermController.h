@@ -218,6 +218,7 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
 
 - (NSWindow *)openWindow:(BOOL)makeWindow
                  command:(NSString *)command
+             initialText:(NSString *)initialText
                directory:(NSString *)directory
                 hostname:(NSString *)hostname
                 username:(NSString *)username;

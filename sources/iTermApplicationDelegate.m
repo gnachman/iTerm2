@@ -1202,6 +1202,19 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
 }
 
+- (NSString *)parseCommandFromArguments {
+    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
+    NSString *commandPrefix = @"--command=";
+
+    for (NSString *arg in arguments) {
+        if ([arg hasPrefix:commandPrefix]) {
+            return [arg substringFromIndex:[commandPrefix length]];
+        }
+    }
+
+    return nil;
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     DLog(@"didFinishLaunching");
     [iTermLaunchExperienceController applicationDidFinishLaunching];
@@ -1315,6 +1328,16 @@ void TurnOnDebugLoggingAutomatically(void) {
     // This causes it to enable secure keyboard entry if needed.
     [iTermSecureKeyboardEntryController sharedInstance];
     [iTermUserDefaults setIgnoreSystemWindowRestoration:[iTermAdvancedSettingsModel useRestorableStateController]];
+
+    NSString *command = [self parseCommandFromArguments];
+    if (command) {
+        [[iTermController sharedInstance] openWindow:YES
+                                             command:command
+                                         initialText:nil
+                                           directory:nil
+                                            hostname:nil
+                                            username:nil];
+    }
 }
 
 - (NSMenu *)statusBarMenu {
@@ -1509,13 +1532,15 @@ void TurnOnDebugLoggingAutomatically(void) {
         [handler showWithCompletion:^(iTermCommandURLHandler *handler) {
             if ([handler.action isEqualTo: iTermCommandURLHandler.openInWindow]) {
                 [[iTermController sharedInstance] openWindow:YES
-                                                     command:handler.command
+                                                     command:nil
+                                                 initialText:handler.command
                                                    directory:handler.directory
                                                     hostname:handler.hostname
                                                     username:handler.username];
             } else if ([handler.action isEqualTo: iTermCommandURLHandler.openInTab]) {
                 [[iTermController sharedInstance] openWindow:NO
-                                                     command:handler.command
+                                                     command:nil
+                                                 initialText:handler.command
                                                    directory:handler.directory
                                                     hostname:handler.hostname
                                                     username:handler.username];
@@ -1753,6 +1778,9 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)checkForQuietMode {
+    if ([self parseCommandFromArguments]) {
+        quiet_ = YES;
+    }
     if ([self quietFileExists]) {
         NSError *error = nil;
         [[NSFileManager defaultManager] removeItemAtPath:[[NSFileManager defaultManager] quietFilePath]
