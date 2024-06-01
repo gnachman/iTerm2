@@ -1,0 +1,25 @@
+(version 1)
+
+; Allow outbound network access
+(allow network-outbound)
+
+; Allow reading
+(allow file-read-data)
+(allow file-read-metadata)
+(allow sysctl-read)
+(allow mach-lookup)
+
+; Allow writing to stdout
+(allow file-write-data
+    (literal "/dev/stdout"))
+
+; Allow executing the specific binary
+(allow process-exec
+    (literal "@EXEC@"))
+
+; Allow reading kern.bootargs
+(allow sysctl-read
+    (sysctl-name "kern.bootargs"))
+
+; Deny everything else
+(deny default)
