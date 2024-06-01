@@ -11,6 +11,7 @@
 #import "FMDatabase.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermGraphDeltaEncoder.h"
 #import "iTermGraphTableTransformer.h"
 #import "iTermThreadSafety.h"

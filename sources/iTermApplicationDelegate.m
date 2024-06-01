@@ -2941,13 +2941,17 @@ void TurnOnDebugLoggingAutomatically(void) {
     return [encoder encodeChildWithKey:@"app"
                             identifier:@""
                             generation:generation
-                                 block:^BOOL(iTermGraphEncoder * _Nonnull encoder) {
+                                 timer:encoder.timer
+                                 block:^BOOL(iTermGraphEncoder * _Nonnull encoder,
+                                             iTermTreeTimer *timer) {
         DLog(@"app encoding restorable state");
         NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
         [encoder encodeChildWithKey:kScreenCharRestorableStateKey
                          identifier:@""
                          generation:ScreenCharGeneration()
-                              block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+                              timer:timer
+                              block:^BOOL(iTermGraphEncoder * _Nonnull subencoder,
+                                          iTermTreeTimer *timer) {
             [subencoder mergeDictionary:ScreenCharEncodedRestorableState()];
             return YES;
         }];
@@ -2955,7 +2959,9 @@ void TurnOnDebugLoggingAutomatically(void) {
         [encoder encodeChildWithKey:kURLStoreRestorableStateKey
                          identifier:@""
                          generation:[[iTermURLStore sharedInstance] generation]
-                              block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+                              timer:timer
+                              block:^BOOL(iTermGraphEncoder * _Nonnull subencoder,
+                                          iTermTreeTimer *timer) {
             [[iTermURLStore sharedInstance] encodeGraphWithEncoder:subencoder];
             return YES;
         }];
@@ -2963,15 +2969,21 @@ void TurnOnDebugLoggingAutomatically(void) {
         [encoder encodeChildWithKey:kHotkeyWindowsRestorableStates
                          identifier:@""
                          generation:iTermGenerationAlwaysEncode
-                              block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+                              timer:timer
+                              block:^BOOL(iTermGraphEncoder * _Nonnull subencoder,
+                                          iTermTreeTimer *timer) {
             return [[iTermHotKeyController sharedInstance] encodeGraphWithEncoder:subencoder];
         }];
 
-        [PortholeRegistry.instance encodeAsChildWith:encoder key:kPortholeRestorableStateKey];
+        [PortholeRegistry.instance encodeAsChildWith:encoder
+                                                 key:kPortholeRestorableStateKey
+                                               timer:timer];
 
         if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count]) {
             // TODO: Why doesn't this encode window content?
-            [encoder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] key:iTermBuriedSessionState];
+            [encoder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState]
+                              key:iTermBuriedSessionState
+                            timer:timer];
         }
         DLog(@"Time to save app restorable state: %@",
              @([NSDate timeIntervalSinceReferenceDate] - start));

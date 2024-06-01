@@ -8,6 +8,7 @@
 #import "iTermRestorableStateSQLite.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermGraphDatabase.h"
 #import "iTermThreadSafety.h"
 #import "NSArray+iTerm.h"
@@ -239,28 +240,39 @@
         return identifiable.stringUniqueIdentifier;
     }];
     void (^update)(iTermGraphEncoder * _Nonnull) = ^(iTermGraphEncoder * _Nonnull encoder) {
-        // Encode state for each window.
-        [encoder encodeArrayWithKey:@"windows"
-                         generation:generation
-                        identifiers:identifiers
-                            options:0
-                              block:^BOOL(NSString * _Nonnull identifier,
-                                          NSInteger index,
-                                          iTermGraphEncoder * _Nonnull subencoder,
-                                          BOOL *stop) {
-            NSWindow *window = windows[index];
-            [subencoder encodeString:identifier forKey:@"__identifier"];
-            [subencoder encodeNumber:@(window.windowNumber) forKey:@"__windowNumber"];
-            id<iTermGraphCodable> codable = (id<iTermGraphCodable>)window.delegate;
-            return [codable encodeGraphWithEncoder:subencoder];
-        }];
+        iTermTreeTimer *timer = [[iTermTreeTimer alloc] init];
+        encoder.timer = timer;
+        [timer time:^{
+            // Encode state for each window.
+            [encoder encodeArrayWithKey:@"windows"
+                             generation:generation
+                            identifiers:identifiers
+                                options:0
+                                  timer:timer
+                                  block:^BOOL(NSString * _Nonnull identifier,
+                                              NSInteger index,
+                                              iTermGraphEncoder * _Nonnull subencoder,
+                                              iTermTreeTimer *timer,
+                                              BOOL *stop) {
+                NSWindow *window = windows[index];
+                [subencoder encodeString:identifier forKey:@"__identifier"];
+                [subencoder encodeNumber:@(window.windowNumber) forKey:@"__windowNumber"];
+                id<iTermGraphCodable> codable = (id<iTermGraphCodable>)window.delegate;
+                subencoder.timer = timer;
+                return [codable encodeGraphWithEncoder:subencoder];
+            }];
 
-        // Encode app-global state
-        id<NSApplicationDelegate> appDelegate = [NSApp delegate];
-        if ([appDelegate conformsToProtocol:@protocol(iTermGraphCodable)]) {
-            id<iTermGraphCodable> codable = (id<iTermGraphCodable>)appDelegate;
-            [codable encodeGraphWithEncoder:encoder];
-        }
+            // Encode app-global state
+            [timer enter:@"Encode app-global state" block:^(iTermTreeTimer *timer) {
+                encoder.timer = timer;
+                id<NSApplicationDelegate> appDelegate = [NSApp delegate];
+                if ([appDelegate conformsToProtocol:@protocol(iTermGraphCodable)]) {
+                    id<iTermGraphCodable> codable = (id<iTermGraphCodable>)appDelegate;
+                    [codable encodeGraphWithEncoder:encoder];
+                }
+            }];
+        }];
+        [timer dumpWithMinTime:0.08];
     };
 
     iTermCallback *callback =

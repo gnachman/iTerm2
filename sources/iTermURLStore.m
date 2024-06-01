@@ -177,11 +177,23 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
 }
 
 - (BOOL)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder {
-    [encoder encodeChildWithKey:@"store" identifier:@"" generation:_generation block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"store"
+                     identifier:@""
+                     generation:_generation
+                          timer:encoder.timer
+                          block:^BOOL(iTermGraphEncoder * _Nonnull subencoder,
+                                      iTermTreeTimer *timer) {
+        subencoder.timer = timer;
         [_store encodeGraphWithEncoder:subencoder];
         return YES;
     }];
-    [encoder encodeChildWithKey:@"referenceCounts" identifier:@"" generation:_generation block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"referenceCounts" 
+                     identifier:@""
+                     generation:_generation
+                          timer:encoder.timer
+                          block:^BOOL(iTermGraphEncoder * _Nonnull subencoder,
+                                      iTermTreeTimer *timer) {
+        subencoder.timer = timer;
         [_referenceCounts encodeGraphWithEncoder:subencoder];
         return YES;
     }];

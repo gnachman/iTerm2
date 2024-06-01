@@ -33,6 +33,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermHistogram.h"
 #import "iTermLineBlockArray.h"
 #import "iTermMalloc.h"
 #import "iTermOrderedDictionary.h"
@@ -1445,6 +1446,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         DLog(@"Maybe encode block %p with guid %@", block, block.stringUniqueIdentifier);
         return block.stringUniqueIdentifier;
     }];
+    NSLog(@"Encode line buffer with %@ blocks", @(_lineBlocks.blocks.count));
+    if (_lineBlocks.blocks.count > 1000) {
+        iTermHistogram *hog = [[iTermHistogram alloc] init];
+        for (LineBlock *block in _lineBlocks.blocks) {
+            [hog addValue:block.rawSpaceUsed];
+        }
+        NSLog(@"Raw space used distribution:\n%@", hog.stringValue);
+    }
     [encoder encodeArrayWithKey:kLineBufferBlocksKey
                     identifiers:index.keys
                      generation:iTermGenerationAlwaysEncode

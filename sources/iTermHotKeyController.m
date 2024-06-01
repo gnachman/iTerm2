@@ -195,11 +195,14 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
                      generation:iTermGenerationAlwaysEncode
                     identifiers:index.keys
                         options:0
+                          timer:encoder.timer
                           block:^BOOL(NSString * _Nonnull identifier,
                                       NSInteger i,
                                       iTermGraphEncoder * _Nonnull subencoder,
+                                      iTermTreeTimer *timer,
                                       BOOL *stop) {
         iTermProfileHotKey *profileHotKey = index[identifier];
+        subencoder.timer = timer;
         return [profileHotKey encodeGraphWithEncoder:subencoder];
     }];
     return YES;

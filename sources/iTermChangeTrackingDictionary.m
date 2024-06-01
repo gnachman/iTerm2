@@ -75,13 +75,17 @@
     [encoder encodeChildWithKey:@"changeTrackingDictionary"
                      identifier:@""
                      generation:_generation
-                          block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+                          timer:encoder.timer
+                          block:^BOOL(iTermGraphEncoder * _Nonnull subencoder,
+                                      iTermTreeTimer *timer) {
         [_impl enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
             [subencoder encodeChildWithKey:@""
                                 identifier:[key jsonEncoded]
                                 generation:_generations[key].integerValue
-                                     block:^BOOL(iTermGraphEncoder * _Nonnull subsubencoder) {
-                [subsubencoder encodeObject:obj key:@""];
+                                     timer:timer
+                                     block:^BOOL(iTermGraphEncoder * _Nonnull subsubencoder,
+                                                 iTermTreeTimer *timer) {
+                [subsubencoder encodeObject:obj key:@"" timer:timer];
                 return YES;
             }];
         }];

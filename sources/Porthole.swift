@@ -250,15 +250,17 @@ class PortholeRegistry: NSObject {
 
     // Note that marks are not restored. They go through the normal mark restoration process which
     // as a side-effect adds them to the porthole registry.
-    @objc func encodeAsChild(with encoder: iTermGraphEncoder, key: String) {
+    @objc func encodeAsChild(with encoder: iTermGraphEncoder, key: String, timer: TreeTimer) {
         mutex.sync {
             _ = encoder.encodeChild(withKey: key,
                                     identifier: "",
-                                    generation: _generation) { subencoder in
+                                    generation: _generation,
+                                    timer: timer) { subencoder, timer in
                 let keys = portholes.keys.sorted()
                 subencoder.encodeArray(withKey: "portholes",
                                        generation: iTermGenerationAlwaysEncode,
-                                       identifiers: keys) { identifier, index, subencoder, stop in
+                                       identifiers: keys,
+                                       timer: timer) { identifier, index, subencoder, timer, stop in
                     let adapter = iTermGraphEncoderAdapter(graphEncoder: subencoder)
                     let key = keys[index]
                     adapter.merge(portholes[key]!.dictionaryValue)

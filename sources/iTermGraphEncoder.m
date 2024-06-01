@@ -12,6 +12,7 @@
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermTuple.h"
 
 NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
@@ -73,16 +74,21 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     _pod[key] = data.copy;
 }
 
-- (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key {
+- (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key timer:(nonnull iTermTreeTimer *)timer {
     assert(_state == iTermGraphEncoderStateLive);
-    NSError *error;
-    NSData *data = [NSData it_dataWithSecurelyArchivedObject:plist error:&error];
-    if (error) {
-        DLog(@"Failed to serialize property list %@: %@", plist, error);
-        return NO;
-    }
-    _pod[key] = data;
-    return YES;
+    __block BOOL ok = NO;
+    [timer enter:[NSString stringWithFormat:@"Encode property list %@ to data", key] block:^(iTermTreeTimer *timer) {
+        NSError *error;
+        NSData *data = [NSData it_dataWithSecurelyArchivedObject:plist error:&error];
+        if (error) {
+            DLog(@"Failed to serialize property list %@: %@", plist, error);
+            ok = NO;
+            return;
+        }
+        _pod[key] = data;
+        ok = YES;
+    }];
+    return ok;
 }
 
 - (void)encodeDate:(NSDate *)date forKey:(NSString *)key {
@@ -95,7 +101,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     _pod[key] = [NSNull null];
 }
 
-- (BOOL)encodeObject:(id)obj key:(NSString *)key {
+- (BOOL)encodeObject:(id)obj key:(NSString *)key timer:(nonnull iTermTreeTimer *)timer {
     if ([obj conformsToProtocol:@protocol(iTermGraphEncodable)] &&
         [(id<iTermGraphEncodable>)obj graphEncoderShouldIgnore]) {
         return NO;
@@ -132,18 +138,20 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                       generation:_generation
                      identifiers:[NSArray stringSequenceWithRange:NSMakeRange(0, array.count)]
                          options:0
+                           timer:timer
                            block:^BOOL (NSString * _Nonnull identifier,
-                                   NSInteger index,
-                                   iTermGraphEncoder * _Nonnull subencoder,
+                                        NSInteger index,
+                                        iTermGraphEncoder * _Nonnull subencoder,
+                                        iTermTreeTimer *timer,
                                         BOOL *stop) {
-            [subencoder encodeObject:array[index] key:@"__arrayValue"];
+            [subencoder encodeObject:array[index] key:@"__arrayValue" timer:timer];
             return YES;
         }];
         return YES;
     }
     if ([obj isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dict = obj;
-        [self encodeDictionary:dict withKey:key generation:_generation];
+        [self encodeDictionary:dict withKey:key timer:timer generation:_generation];
         return YES;
     }
     assert(NO);
@@ -151,19 +159,22 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
 
 - (void)encodeDictionary:(NSDictionary *)dict
                  withKey:(NSString *)key
+                   timer:(iTermTreeTimer *)timer
               generation:(NSInteger)generation {
     [self encodeChildWithKey:@"__dict"
                   identifier:key
                   generation:generation
-                       block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+                       timer:timer
+                       block:^BOOL(iTermGraphEncoder * _Nonnull subencoder,
+                                   iTermTreeTimer *timer) {
         [dict enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-            [subencoder encodeObject:obj key:key];
+            [subencoder encodeObject:obj key:key timer:timer];
         }];
         return YES;
     }];
 }
 
-- (void)encodeGraph:(iTermEncoderGraphRecord *)record {
+- (void)encodeGraph:(iTermEncoderGraphRecord *)record timer:(nonnull iTermTreeTimer *)timer {
     assert(_state == iTermGraphEncoderStateLive);
     [_children addObject:record];
 }
@@ -175,36 +186,51 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
 - (BOOL)encodeChildWithKey:(NSString *)key
                 identifier:(NSString *)identifier
                 generation:(NSInteger)generation
-                     block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block {
+                     timer:(iTermTreeTimer *)timer
+                     block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder,
+                                                 iTermTreeTimer *timer))block {
     assert(_state == iTermGraphEncoderStateLive);
-    iTermGraphEncoder *encoder = [[iTermGraphEncoder alloc] initWithKey:key
-                                                             identifier:identifier
-                                                             generation:generation];
-    if (!block(encoder)) {
-        return NO;
-    }
-    [self encodeGraph:encoder.record];
-    return YES;
+    __block BOOL result = NO;
+    [timer enter:[NSString stringWithFormat:@"Encode child %@[%@]", key, identifier] block:^(iTermTreeTimer *timer) {
+        iTermGraphEncoder *encoder = [[iTermGraphEncoder alloc] initWithKey:key
+                                                                 identifier:identifier
+                                                                 generation:generation];
+        if (!block(encoder, timer)) {
+            return;
+        }
+        [self encodeGraph:encoder.record timer:timer];
+        result = YES;
+    }];
+    return result;
 }
 
 - (void)encodeChildrenWithKey:(NSString *)key
                   identifiers:(NSArray<NSString *> *)identifiers
                    generation:(NSInteger)generation
+                        timer:(iTermTreeTimer *)timer
                         block:(BOOL (^)(NSString *identifier,
                                         NSUInteger idx,
                                         iTermGraphEncoder *subencoder,
+                                        iTermTreeTimer *timer,
                                         BOOL *stop))block {
     if (identifiers.count > 16 && _children.count == 0) {
         _children = [[NSMutableArray alloc] initWithCapacity:identifiers.count];
     }
-    [identifiers enumerateObjectsUsingBlock:^(NSString * _Nonnull identifier,
-                                              NSUInteger idx,
-                                              BOOL * _Nonnull stop) {
-        // transaction is slow because it makes a copy in case of rollback.
-        // Do I need a transactio nfor each identifier?
-        [self transaction:^BOOL{
-            return [self encodeChildWithKey:key identifier:identifier generation:generation block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
-                return block(identifier, idx, subencoder, stop);
+    [timer enter:[NSString stringWithFormat:@"Encode children of %@ with %@ identifiers", key, @(identifiers.count)] block:^(iTermTreeTimer *timer) {
+        [identifiers enumerateObjectsUsingBlock:^(NSString * _Nonnull identifier,
+                                                  NSUInteger idx,
+                                                  BOOL * _Nonnull stop) {
+            // transaction is slow because it makes a copy in case of rollback.
+            // Do I need a transactio nfor each identifier?
+            [self transaction:^BOOL{
+                return [self encodeChildWithKey:key
+                                     identifier:identifier
+                                     generation:generation
+                                          timer:timer
+                                          block:^BOOL(iTermGraphEncoder * _Nonnull subencoder,
+                                                      iTermTreeTimer *timer) {
+                    return block(identifier, idx, subencoder, timer, stop);
+                }];
             }];
         }];
     }];
@@ -214,38 +240,46 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                 generation:(NSInteger)generation
                identifiers:(NSArray<NSString *> *)identifiers
                    options:(iTermGraphEncoderArrayOptions)options
+                     timer:(iTermTreeTimer *)timer
                      block:(BOOL (^ NS_NOESCAPE)(NSString *identifier,
                                                  NSInteger index,
                                                  iTermGraphEncoder *subencoder,
+                                                 iTermTreeTimer *timer,
                                                  BOOL *stop))block {
-    if (identifiers.count != [NSSet setWithArray:identifiers].count) {
-        ITBetaAssert(NO, @"Identifiers for %@ contains a duplicate: %@", key, identifiers);
-    }
-    [self encodeChildWithKey:@"__array"
-                  identifier:key
-                  generation:generation
-                       block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
-        NSMutableArray<NSString *> *savedIdentifiers = [NSMutableArray array];
-        [subencoder encodeChildrenWithKey:@""
-                              identifiers:identifiers
-                               generation:iTermGenerationAlwaysEncode
-                                    block:^BOOL (NSString * _Nonnull identifier,
-                                                 NSUInteger idx,
-                                                 iTermGraphEncoder * _Nonnull subencoder,
-                                                 BOOL * _Nonnull stop) {
-            const BOOL result = block(identifier, idx, subencoder, stop);
-            if (result) {
-                [savedIdentifiers addObject:identifier];
-            }
-            return result;
-        }];
-        NSArray<NSString *> *orderedIdentifiers = savedIdentifiers;
-        if (options & iTermGraphEncoderArrayOptionsReverse) {
-            orderedIdentifiers = orderedIdentifiers.reversed;
+    [timer enter:[NSString stringWithFormat:@"Encode array %@", key] block:^(iTermTreeTimer *timer) {
+        if (identifiers.count != [NSSet setWithArray:identifiers].count) {
+            ITBetaAssert(NO, @"Identifiers for %@ contains a duplicate: %@", key, identifiers);
         }
-        orderedIdentifiers = [orderedIdentifiers arrayByRemovingDuplicatesStably];
-        [subencoder encodeString:[orderedIdentifiers componentsJoinedByString:@"\t"] forKey:@"__order"];
-        return YES;
+        [self encodeChildWithKey:@"__array"
+                      identifier:key
+                      generation:generation
+                           timer:timer
+                           block:^BOOL(iTermGraphEncoder * _Nonnull subencoder,
+                                       iTermTreeTimer *timer) {
+            NSMutableArray<NSString *> *savedIdentifiers = [NSMutableArray array];
+            [subencoder encodeChildrenWithKey:@""
+                                  identifiers:identifiers
+                                   generation:iTermGenerationAlwaysEncode
+                                        timer:timer
+                                        block:^BOOL (NSString * _Nonnull identifier,
+                                                     NSUInteger idx,
+                                                     iTermGraphEncoder * _Nonnull subencoder,
+                                                     iTermTreeTimer *timer,
+                                                     BOOL * _Nonnull stop) {
+                const BOOL result = block(identifier, idx, subencoder, timer, stop);
+                if (result) {
+                    [savedIdentifiers addObject:identifier];
+                }
+                return result;
+            }];
+            NSArray<NSString *> *orderedIdentifiers = savedIdentifiers;
+            if (options & iTermGraphEncoderArrayOptionsReverse) {
+                orderedIdentifiers = orderedIdentifiers.reversed;
+            }
+            orderedIdentifiers = [orderedIdentifiers arrayByRemovingDuplicatesStably];
+            [subencoder encodeString:[orderedIdentifiers componentsJoinedByString:@"\t"] forKey:@"__order"];
+            return YES;
+        }];
     }];
 }
 

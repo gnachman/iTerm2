@@ -23,24 +23,30 @@
     if (!obj) {
         return;
     }
-    [_encoder encodeObject:obj key:key];
+    [_encoder encodeObject:obj key:key timer:_encoder.timer];
 }
 
 - (void)setObject:(id)obj forKey:(NSString *)key {
     if (!obj) {
         return;
     }
-    [_encoder encodeObject:obj key:key];
+    [_encoder encodeObject:obj key:key timer:_encoder.timer];
 }
 
 - (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key {
-    return [_encoder encodePropertyList:plist withKey:key];
+    return [_encoder encodePropertyList:plist withKey:key timer:_encoder.timer];
 }
 
 - (BOOL)encodeDictionaryWithKey:(NSString *)key
                      generation:(NSInteger)generation
                           block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder))block {
-    return [_encoder encodeChildWithKey:key identifier:@"" generation:generation block:^BOOL (iTermGraphEncoder * _Nonnull subencoder) {
+    return [_encoder encodeChildWithKey:key
+                             identifier:@""
+                             generation:generation
+                                  timer:_encoder.timer
+                                  block:^BOOL (iTermGraphEncoder * _Nonnull subencoder,
+                                               iTermTreeTimer *timer) {
+        subencoder.timer = timer;
         return block([[iTermGraphEncoderAdapter alloc] initWithGraphEncoder:subencoder]);
     }];
 }
@@ -71,10 +77,13 @@
                       generation:generation
                      identifiers:identifiers
                          options:options
+                           timer:_encoder.timer
                            block:^BOOL(NSString * _Nonnull identifier,
                                        NSInteger index,
                                        iTermGraphEncoder * _Nonnull subencoder,
+                                       iTermTreeTimer *timer,
                                        BOOL *stop) {
+        subencoder.timer = timer;
         return block([[iTermGraphEncoderAdapter alloc] initWithGraphEncoder:subencoder], index, identifier, stop);
     }];
 }

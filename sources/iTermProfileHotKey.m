@@ -739,7 +739,10 @@ static NSString *const kArrangement = @"Arrangement";
     [encoder encodeChildWithKey:kArrangement
                      identifier:@""
                      generation:iTermGenerationAlwaysEncode
-                          block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+                          timer:encoder.timer
+                          block:^BOOL(iTermGraphEncoder * _Nonnull subencoder,
+                                      iTermTreeTimer *timer) {
+        subencoder.timer = timer;
         return [codable encodeGraphWithEncoder:subencoder];
     }];
     return YES;

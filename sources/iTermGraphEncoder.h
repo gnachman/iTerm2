@@ -24,6 +24,8 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
     iTermGraphEncoderArrayOptionsReverse = (1 << 0)
 };
 
+@class iTermTreeTimer;
+
 @protocol iTermGraphEncodable<NSObject>
 - (BOOL)graphEncoderShouldIgnore;
 @end
@@ -32,15 +34,16 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
 // nil if rolled back.
 @property (nullable, nonatomic, readonly) iTermEncoderGraphRecord *record;
 @property (nonatomic, readonly) iTermGraphEncoderState state;
+@property (nonatomic, strong) iTermTreeTimer *timer;
 
 - (void)encodeString:(NSString *)string forKey:(NSString *)key;
 - (void)encodeNumber:(NSNumber *)number forKey:(NSString *)key;
 - (void)encodeData:(NSData *)data forKey:(NSString *)key;
 - (void)encodeDate:(NSDate *)date forKey:(NSString *)key;
 - (void)encodeNullForKey:(NSString *)key;
-- (BOOL)encodeObject:(id)obj key:(NSString *)key;
-- (void)encodeGraph:(iTermEncoderGraphRecord *)record;
-- (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key;
+- (BOOL)encodeObject:(id)obj key:(NSString *)key timer:(iTermTreeTimer *)timer;
+- (void)encodeGraph:(iTermEncoderGraphRecord *)record timer:(iTermTreeTimer *)timer;
+- (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key timer:(iTermTreeTimer *)timer;
 
 - (void)mergeDictionary:(NSDictionary *)dictionary;
 
@@ -54,14 +57,18 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
 - (BOOL)encodeChildWithKey:(NSString *)key
                 identifier:(NSString *)identifier
                 generation:(NSInteger)generation
-                     block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block;
+                     timer:(iTermTreeTimer *)timer
+                     block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder,
+                                                 iTermTreeTimer *timer))block;
 
 - (void)encodeChildrenWithKey:(NSString *)key
                   identifiers:(NSArray<NSString *> *)identifiers
                    generation:(NSInteger)generation
+                        timer:(iTermTreeTimer *)timer
                         block:(BOOL (^)(NSString *identifier,
                                         NSUInteger idx,
                                         iTermGraphEncoder *subencoder,
+                                        iTermTreeTimer *timer,
                                         BOOL *stop))block;
 
 // Return nil from block to stop adding elements. Otherwise, return identifier.
@@ -71,13 +78,16 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
                 generation:(NSInteger)generation
                identifiers:(NSArray<NSString *> *)identifiers
                    options:(iTermGraphEncoderArrayOptions)options
+                     timer:(iTermTreeTimer *)timer
                      block:(BOOL (^ NS_NOESCAPE)(NSString *identifier,
                                                  NSInteger i,
                                                  iTermGraphEncoder *subencoder,
+                                                 iTermTreeTimer *timer,
                                                  BOOL *stop))block;
 
 - (void)encodeDictionary:(NSDictionary *)dict
                  withKey:(NSString *)key
+                   timer:(iTermTreeTimer *)timer
               generation:(NSInteger)generation;
 
 - (instancetype)initWithKey:(NSString *)key

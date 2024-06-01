@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermOrderedDictionary.h"
 
 @implementation iTermGraphDeltaEncoder
@@ -38,51 +39,70 @@
 - (void)encodeChildrenWithKey:(NSString *)key
                   identifiers:(NSArray<NSString *> *)identifiers
                    generation:(NSInteger)generation
+                        timer:(iTermTreeTimer *)timer
                         block:(BOOL (^)(NSString * _Nonnull,
                                         NSUInteger,
                                         iTermGraphEncoder * _Nonnull,
+                                        iTermTreeTimer *timer,
                                         BOOL * _Nonnull))block {
     if (identifiers.count > 16 && _previousRevision.graphRecords.count > 16) {
         // Avoid quadratic complexity when encoding a big child into a big array.
         // Each of `identifiers` needs to check if it exists in `_previousRevision`.
         [_previousRevision ensureIndexOfGraphRecords];
     }
-    [super encodeChildrenWithKey:key identifiers:identifiers generation:generation block:block];
+    [super encodeChildrenWithKey:key 
+                     identifiers:identifiers
+                      generation:generation
+                           timer:timer
+                           block:block];
 }
 
 - (BOOL)encodeChildWithKey:(NSString *)key
                 identifier:(NSString *)identifier
                 generation:(NSInteger)generation
-                     block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block {
+                     timer:(nonnull iTermTreeTimer *)timer
+                     block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder,
+                                                 iTermTreeTimer *timer))block {
     // This is called N times for N identifiers in a single array `key`
     iTermEncoderGraphRecord *record = [_previousRevision childRecordWithKey:key
                                                                  identifier:identifier];
     if (!record) {
         // A wholly new key+identifier
-        [super encodeChildWithKey:key identifier:identifier generation:generation block:block];
+        [super encodeChildWithKey:key
+                       identifier:identifier
+                       generation:generation
+                            timer:timer
+                            block:block];
         return YES;
     }
     if (record.generation == generation) {
         // No change to generation
-        DLog(@"Record %@[%@] at generation %@ didn't change", key, identifier, @(generation));
-        [self encodeGraph:record];
+        DLog(@"Record  %@[%@] at generation %@ didn't change", key, identifier, @(generation));
+        [timer enter:[NSString stringWithFormat:@"Encode unchanged child %@[%@]", key, identifier] block:^(iTermTreeTimer *timer) {
+            [self encodeGraph:record timer:timer];
+        }];
         return YES;
     }
-    // Same key+id, new generation.
-    NSInteger realGeneration = generation;
-    if (generation == iTermGenerationAlwaysEncode) {
-        realGeneration = record.generation + 1;
-    }
-    assert(record.generation < generation);
-    iTermGraphEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithKey:key
-                                                                  identifier:identifier
-                                                                  generation:realGeneration
-                                                            previousRevision:record];
-    if (!block(encoder)) {
-        return NO;
-    }
-    [self encodeGraph:encoder.record];
-    return YES;
+    __block BOOL ok = NO;
+    [timer enter:[NSString stringWithFormat:@"Encode modified child %@[%@]", key, identifier] block:^(iTermTreeTimer *timer) {
+        // Same key+id, new generation.
+        NSInteger realGeneration = generation;
+        if (generation == iTermGenerationAlwaysEncode) {
+            realGeneration = record.generation + 1;
+        }
+        assert(record.generation < generation);
+        iTermGraphEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithKey:key
+                                                                      identifier:identifier
+                                                                      generation:realGeneration
+                                                                previousRevision:record];
+        if (!block(encoder, timer)) {
+            ok = NO;
+            return;
+        }
+        [self encodeGraph:encoder.record timer:timer];
+        ok = YES;
+    }];
+    return ok;
 }
 
 - (BOOL)enumerateRecords:(void (^)(iTermEncoderGraphRecord * _Nullable before,
