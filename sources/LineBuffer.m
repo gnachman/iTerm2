@@ -1694,6 +1694,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         // Can't have an interior block that is partial.
         return;
     }
+    if (_lineBlocks.lastBlock.rawSpaceUsed < 1024) {
+        // Avoid accruing lots of tiny blocks.
+        return;
+    }
     self.dirty = YES;
     if (_lineBlocks.lastBlock == nil || _lineBlocks.lastBlock.isEmpty) {
         return;
