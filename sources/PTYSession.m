@@ -15642,7 +15642,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)handleAIChoices:(NSArray<NSString *> *)choices error:(NSString *)error {
     if (error) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem with the AI query: %@", error]
+        [iTermWarning showWarningWithTitle:error
                                    actions:@[ @"OK" ]
                                  accessory:nil
                                 identifier:nil

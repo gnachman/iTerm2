@@ -1,5 +1,4 @@
 #!/bin/bash
-VERSION=1.0
 
 set -x
 
@@ -11,6 +10,17 @@ function die {
 echo Enter the notarization password
 read -s NOTPASS
 
+echo Enter the EdDSA private key for iTermAI
+read -s PRIVKEY
+
+echo Enter the version
+read VERSION
+
+pushd ../SignPlugin
+xcodebuild || die "Failed to build SignPlugin"
+popd
+
+../SignPlugin/Build/Release/SignPlugin sign $PRIVKEY iTermAI/iTermAIPlugin.js > iTermAI/iTermAIPlugin.sig
 xcodebuild -project iTermAI.xcodeproj -scheme iTermAI -configuration Release -destination 'generic/platform=macOS'
 
 cd Build/Release
