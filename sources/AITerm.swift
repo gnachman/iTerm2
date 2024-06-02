@@ -1,4 +1,5 @@
-import Security
+import CryptoKit
+import JavaScriptCore
 
 protocol AITermControllerDelegate: AnyObject {
     func aitermControllerWillSendRequest(_ sender: AITermController)
@@ -12,219 +13,125 @@ fileprivate func openAIModelIsLegacy(model: String) -> Bool {
     return !model.hasPrefix("gpt-")
 }
 
+struct WebRequest: Codable {
+    var headers: [String: String]
+    var method: String
+    var body: String
+    var url: String
+}
+
+struct WebResponse: Codable {
+    var data: String
+    var error: String
+}
+
+struct PluginError: Error {
+    var reason: String
+}
+
+
+struct Plugin {
+    static private var _instance = MutableAtomicObject<Result<Plugin, PluginError>?>(nil)
+    private static let publicKeyB64 = "fYLUx58QwucuPJRYxBjp7M//uVM0vTfgUo7d6u4TQR8="
+
+    static func instance() -> Result<Plugin, PluginError> {
+        return _instance.mutableAccess { result in
+            switch result {
+            case .success(let plugin):
+                return .success(plugin)
+            case .failure, .none:
+                break
+            }
+            do {
+                let temp = Result<Plugin, PluginError>.success(try Plugin())
+                result = temp
+                return temp
+            } catch {
+                let temp = Result<Plugin, PluginError>.failure(error as! PluginError)
+                result = temp
+                return temp
+            }
+        }
+    }
+
+    private let bundleID = "com.googlecode.iterm2.iTermAI"
+    private let code: String
+    init() throws {
+        guard let bundleURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            throw PluginError(reason: "Plugin not found")
+        }
+        let jsURL = bundleURL.appendingPathComponent("Contents/Resources/iTermAIPlugin.js")
+        guard let codeData = try? Data(contentsOf: jsURL) else {
+            throw PluginError(reason: "Plugin missing from app bundle or not readable")
+        }
+        guard let code = String(data: codeData, encoding: .utf8) else {
+            throw PluginError(reason: "Plugin code not valid UTF-8")
+        }
+        let signatureURL = bundleURL.appendingPathComponent("Contents/Resources/iTermAIPlugin.sig")
+        guard let signatureB64 = try? String(contentsOf: signatureURL) else {
+            throw PluginError(reason: "Signature missing from app bundle or not readable")
+        }
+        guard let signatureData = Data(base64Encoded: signatureB64.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            throw PluginError(reason: "Signature of AI plugin is malformed")
+        }
+        try Plugin.checkSignature(message: codeData, signature: signatureData)
+        self.code = code
+    }
+
+    private static func checkSignature(message: Data, signature: Data) throws {
+        let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: Data(base64Encoded: publicKeyB64)!)
+        guard publicKey.isValidSignature(signature, for: message) else {
+            throw PluginError(reason: "The plugin's signature was incorrect. Reinstall the plugin or upgrade iTerm2.")
+        }
+    }
+
+    func version() throws -> Decimal {
+        let string: String = try PluginClient.instance.call(code: code,
+                                                            functionName: "version",
+                                                            request: nil as Optional<String>,
+                                                            async: false)
+        guard let decimal = Decimal(string: string) else {
+            throw PluginError(reason: "Invalid version string: \(string)")
+        }
+        return decimal
+    }
+
+    func load(webRequest: WebRequest) throws -> WebResponse {
+        return try PluginClient.instance.call(code: code,
+                                              functionName: "request",
+                                              request: webRequest,
+                                              async: true)
+    }
+}
+
+extension Result {
+    var isSuccess: Bool {
+        switch self {
+        case .success:
+            return true
+        case .failure:
+            return false
+        }
+    }
+}
+
 class iTermAIClient {
-    let requiredVersion = "1.0"
     private let executionQueue = DispatchQueue(label: "com.googlecode.iterm2.ai-execution")
     private let outputQueue = DispatchQueue(label: "com.googlecode.iterm2.ai-output")
-    private let bundleID = "com.googlecode.iterm2.iTermAI"
     static let instance = iTermAIClient()
 
     var available: Bool {
-        if NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) == nil {
-            return false
-        }
-        return true
+        return Plugin.instance().isSuccess
     }
 
-    private let codeSigningRequirementString = "anchor apple generic and certificate leaf[subject.OU] = \"H7V7XYVQ7D\""
-
-    // This is probably spoofable but it doesn't matter. When we see this we retry the cert check
-    // after a wait. This is here just so we can fail fast when the cert is wrong and it's definitely
-    // *not* sandbox-exec.
-    private let sandboxRequirementString = #"identifier "com.apple.sandbox-exec" and anchor apple"#
-
-    // Return true if the cert matches iTermAIPlugin
-    // Return nil if the cert matches sandbox-exec
-    // Return false if the cert matches neither or could not be determined (e.g., because the
-    // process is defunct).
-    private func certificatePinningCheck(pid: Int32) -> Bool? {
-        var code: SecCode?
-        do {
-            let status = SecCodeCopyGuestWithAttributes(
-                nil,
-                [kSecGuestAttributePid: pid] as CFDictionary,
-                SecCSFlags(rawValue: 0),
-                &code)
-            guard status == errSecSuccess else {
-                DLog("SecCodeCopyGuestWithAttributes failed with \(status)")
-                return false
-            }
-        }
-
-        var requirement: SecRequirement? = nil
-        do {
-            let status = SecRequirementCreateWithString(
-                codeSigningRequirementString as CFString,
-                [],
-                &requirement)
-
-            guard status == errSecSuccess && requirement != nil else {
-                DLog("SecRequirementCreateWithString failed \(status)")
-                return false
-            }
-        }
-
-        var sandboxRequirement: SecRequirement? = nil
-        do {
-            let status = SecRequirementCreateWithString(
-                sandboxRequirementString as CFString,
-                [],
-                &sandboxRequirement)
-
-            guard status == errSecSuccess && sandboxRequirement != nil else {
-                DLog("SecRequirementCreateWithString failed \(status) for sandbox")
-                return false
-            }
-        }
-
-        do {
-            let status = SecCodeCheckValidity(code!,
-                                              SecCSFlags(rawValue: 0),
-                                              requirement!)
-            guard status == errSecSuccess else {
-                DLog("CheckValidity failed with \(status)")
-
-                do {
-                    let status = SecCodeCheckValidity(code!,
-                                                      SecCSFlags(rawValue: 0),
-                                                      sandboxRequirement!)
-                    if status == errSecSuccess {
-                        DLog("Got sandbox")
-                        return nil
-                    }
-                }
-
-                return false
-            }
-        }
-
-        return true
-    }
-
-    private func certificatePinningCheck() -> Bool {
-        DLog("certificatePinningCheck")
-        guard let bundleURL = self.bundleURL else {
-            DLog("No bundle URL")
-            return false
-        }
-        var staticCode: SecStaticCode?
-        let status = SecStaticCodeCreateWithPath(bundleURL as CFURL,
-                                                 [],
-                                                 &staticCode)
-        guard status == errSecSuccess else {
-            DLog("SecStaticCodeCreateWithPath failed with \(status)")
-            return false
-        }
-        var signingInfo: CFDictionary?
-        let infoStatus = SecCodeCopySigningInformation(staticCode!, SecCSFlags(rawValue: kSecCSSigningInformation), &signingInfo)
-        guard infoStatus == errSecSuccess else {
-            DLog("SecCodeCopySigningInformation failed with \(infoStatus)")
-            return false
-        }
-
-        var reqRef: SecRequirement? = nil
-        let reqErr = SecRequirementCreateWithString(codeSigningRequirementString as CFString, [], &reqRef)
-
-        guard reqErr == errSecSuccess, let requirement = reqRef else {
-            DLog("SecRequirementCreateWithString failed \(reqErr)")
-            return false
-        }
-        var verifyErrors: Unmanaged<CFError>? = nil
-        let checkValidityErr = SecStaticCodeCheckValidityWithErrors(staticCode!, [], requirement, &verifyErrors)
-
-        guard checkValidityErr == errSecSuccess else {
-            DLog("CheckValidity failed with \(checkValidityErr)")
-            if let verifyError = verifyErrors?.takeRetainedValue() {
-                DLog("Detailed error: \(verifyError.localizedDescription)")
-            }
-            return false
-        }
-
-        return true
-    }
-
-    func validateSync() -> String? {
-        DLog("validateSync")
-        let (status, data) = runSync(arg: "v", stdin: Data(), checkSignature: false)
-        return problem(status: status, data: data ?? Data())
-    }
-
-    func validate(_ completion: @escaping (String?) -> ()) {
-        DLog("validate")
-        _ = run(arg: "v", stdin: Data(), checkSignature: false) { status, data in
-            let problem = self.problem(status: status, data: data)
-            DLog("problem=\(String(describing: problem))")
-            DispatchQueue.main.async {
-                completion(problem)
-            }
-        }
-    }
-
-    private func problem(status: AIPluginStatus, data: Data) -> String? {
-        DLog("status=\(status), data=\(data.stringOrHex)")
-        switch status {
-        case .canceled:
-            return nil
-        case .badOutput:
-            return "Plugin malfunctioning"
-        case .executionError:
-            return "Unable to execute plugin"
-        case .pluginNotFound:
-            return "Plugin not found"
-        case .runtimeError:
-            return data.stringOrHex
-        case .status(let status):
-            if status != 0 {
-                return "Failed to check plugin version"
-            }
-            guard let string = String(data: data, encoding: .utf8),
-                  let decimal = Decimal(string: string) else {
-                return "Plugin produced invalid output"
-            }
-            if decimal != Decimal(string: iTermAIClient.instance.requiredVersion)! {
-                return "Wrong version of plugin installed"
-            }
-            if iTermAIClient.instance.certificatePinningCheck() {
-                return nil
-            } else {
-                return "The plugin’s code signature is incorrect"
-            }
-        }
-    }
-
-    func version() -> Decimal? {
+    func version() throws -> Decimal {
         DLog("version")
-        switch runSync(arg: "v", stdin: Data(), checkSignature: false) {
-        case (.status(0), let data):
-            if let data, let string = String(data: data, encoding: .utf8) {
-                return Decimal(string: string)
-            }
-            return nil
-        default:
-            return nil
+        switch Plugin.instance() {
+        case .success(let plugin):
+            return try plugin.version()
+        case .failure(let error):
+            throw error
         }
-    }
-
-    func runSync(arg: String, stdin: Data, checkSignature: Bool) -> (AIPluginStatus, Data?) {
-        DLog("runSync(\(arg), \(stdin.stringOrHex))")
-        var resultStatus: AIPluginStatus?
-        var resultData: Data?
-
-        let sema = DispatchSemaphore(value: 0)
-        _ = run(arg: arg, stdin: stdin, checkSignature: checkSignature) { status, data in
-            resultStatus = status
-            resultData = data
-            DLog("signal")
-            sema.signal()
-        }
-        sema.wait()
-
-        DLog("return")
-        return (resultStatus!, resultData)
-    }
-
-    var bundleURL: URL? {
-        return NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
     }
 
     // A Cancellation provides a way to cancel an asynchronous operation. The function to implement
@@ -274,252 +181,71 @@ class iTermAIClient {
         }
     }
 
-    func run(arg: String,
-             stdin: Data,
-             checkSignature: Bool,
-             completion: @escaping (AIPluginStatus, Data) -> ()) -> Cancellation? {
-        DLog("run(\(arg), \(stdin.stringOrHex))")
-        // Find the application bundle
-        guard let bundleURL = self.bundleURL else {
-            DLog("no bundle")
-            completion(.pluginNotFound, "Application bundle not found.".data(using: .utf8)!)
-            return nil
-        }
+    private let requiredVersion = "1.1"
 
+    // Runs on any queue. Throws a PluginError or does nothing.
+    func validate() throws {
+        switch Plugin.instance() {
+        case .success(let plugin):
+            guard let pluginVersion = try? plugin.version() else {
+                throw PluginError(reason: "Unable to determine version of AI plugin. Reinstall it and upgrade iTerm2 if possible.")
+            }
+
+            guard pluginVersion == Decimal(string: requiredVersion) else {
+                throw PluginError(reason: "Incorrect version of AI plugin found. It has version \(pluginVersion) but this version of iTerm2 expects \(requiredVersion). Upgrade the plugin and iTerm2 if possible.")
+            }
+            return
+        case .failure(let error):
+            throw error
+        }
+    }
+
+    func validate(_ completion: @escaping (String?) -> ()) {
+        executionQueue.async {
+            do {
+                try self.validate()
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+            } catch let error as PluginError {
+                DispatchQueue.main.async {
+                    completion(error.reason)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    func request(webRequest: WebRequest,
+                 completion: @escaping (Result<WebResponse, PluginError>) -> ()) -> Cancellation {
         let cancellation = Cancellation()
         executionQueue.async {
-            self.runOnExecutionQueue(bundleURL: bundleURL,
-                                     arg: arg,
-                                     stdin: stdin,
-                                     checkSignature: checkSignature,
-                                     cancellation: cancellation,
-                                     completion: completion)
+            switch Plugin.instance() {
+            case .success(let plugin):
+                do {
+                    let response = try plugin.load(webRequest: webRequest)
+                    DispatchQueue.main.async {
+                        completion(.success(response))
+                    }
+                } catch let error as PluginError {
+                    DispatchQueue.main.async {
+                        completion(.failure(error))
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        completion(.failure(PluginError(reason: "Unexpected exception: \(error.localizedDescription)")))
+                    }
+                }
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+            }
         }
         return cancellation
-    }
-
-    private func runOnExecutionQueue(bundleURL: URL,
-                                     arg: String,
-                                     stdin: Data,
-                                     checkSignature: Bool,
-                                     cancellation: Cancellation,
-                                     completion: @escaping (AIPluginStatus, Data) -> ()) {
-        dispatchPrecondition(condition: .onQueue(executionQueue))
-
-        // Construct the path to the executable
-        let executableURL = bundleURL.appendingPathComponent("Contents/MacOS/iTermAIPlugin")
-
-        let childStdin = Pipe()
-        let childStdout = Pipe()
-
-        // Setup a queue to handle output data to prevent race conditions
-        var outputData = Data()  // only use on outputQueue
-        let outputQueue = self.outputQueue
-
-        // Run the app in a sandbox if we care about the signature check.
-        // That's important because the signature check is ineffective if the
-        // app is not sandboxed. See the discussion in issue 11470 with @dcow.
-        let sandbox = checkSignature
-
-        // Launch the program.
-        let pid = { () -> pid_t? in
-            if sandbox {
-                // Run the plugin in a sandbox so a malicious app posing as the plugin can't exec() the
-                // legit program before the cert check occurs.
-                guard let sbPath = Bundle(for: iTermAIClient.self).path(forResource: "ai-plugin",
-                                                                        ofType: "sb") else {
-                    outputQueue.async {
-                        completion(.executionError, "Could not find sandbox file in app bundle. Reinstall iTerm2.".data(using: .utf8)!)
-                    }
-                    return nil
-                }
-                guard let sbTemplate = try? String(contentsOfFile: sbPath) else {
-                    outputQueue.async {
-                        completion(.executionError, "Could not read sandbox file in app bundle. Reinstall iTerm2.".data(using: .utf8)!)
-                    }
-                    return nil
-                }
-                let sb = sbTemplate
-                    .components(separatedBy: "\n")
-                    .filter { !$0.starts(with: ";") }
-                    .joined(separator: " ")
-                    .replacingOccurrences(
-                        of: "@EXEC@",
-                        with: executableURL.path)
-
-                // I wish I could use Swift's Process class, but it doesn't give enough control over when
-                // the process is wait()ed on. See the note below about the certificate check.
-                return iTermStartProcess(URL(fileURLWithPath: "/usr/bin/sandbox-exec"),
-                                         ["/usr/bin/sandbox-exec", "-p", sb, executableURL.path, arg],
-                                         childStdin.fileHandleForReading.fileDescriptor,
-                                         childStdout.fileHandleForWriting.fileDescriptor)
-            } else {
-                return iTermStartProcess(executableURL,
-                                         [executableURL.lastPathComponent, arg],
-                                         childStdin.fileHandleForReading.fileDescriptor,
-                                         childStdout.fileHandleForWriting.fileDescriptor)
-            }
-        }()
-        guard let pid else {
-            return
-        }
-        guard pid > 0 else {
-            DLog("iTermStartProcess failed")
-            // Handle errors: also switch to the output queue to clean up
-            outputQueue.async {
-                completion(.executionError,
-                           "Failed to start the AI plugin".data(using: .utf8)!)
-            }
-            return
-        }
-
-        cancellation.impl = {
-            kill(pid, SIGKILL)
-        }
-        if cancellation.canceled {
-            outputQueue.async {
-                completion(.canceled, Data())
-            }
-            return
-        }
-
-        try? childStdin.fileHandleForReading.close()
-        try? childStdout.fileHandleForWriting.close()
-
-        // The purpose of the following certificate check is to ensure we don't send the
-        // very sensistive data in `stdin` to a malicious program.
-        //
-        // Doing the code signature check by process ID in general suffers from a process ID
-        // reuse race. That is impossible here because we don't call waitpid until after
-        // the check finishes so the process ID cannot be reused.
-        //
-        // If the program is run in a sandbox, there's a race between the cert check and
-        // sandbox-exec running the plugin. Loop until that race is over.
-        if checkSignature {
-            while true {
-                let status = iTermAIClient.instance.certificatePinningCheck(pid: pid)
-                if status == true {
-                    DLog("Cert check passed")
-                    break
-                } else if status == false || !sandbox {
-                    DLog("Failed cert check")
-                    DLog("Code signature error")
-                    outputQueue.async {
-                        cancellation.cancel()
-                        completion(.executionError,
-                                   "The AI plugin’s code signature check failed. Reinstall it and upgrade iTerm2.".data(using: .utf8)!)
-                    }
-                    return
-                } else if status == nil {
-                    precondition(sandbox)
-                    DLog("Retry check as it's still sandbox-exec")
-                    Thread.sleep(forTimeInterval: 0.1)
-                }
-            }
-        }
-
-        do {
-            // First, write. We know that the plugin will drain stdin until EOF so this is safe.
-            DLog("write: " + stdin.stringOrHex)
-            if #available(macOS 10.15.4, *) {
-                try childStdin.fileHandleForWriting.write(contentsOf: stdin)
-            } else {
-                try ObjCTry {
-                    childStdin.fileHandleForWriting.write(stdin)
-                }
-            }
-            DLog("Write finished")
-
-            try? childStdin.fileHandleForWriting.close()
-
-            // Read and append to outputData.
-            DLog("Begin reading")
-            let sema = DispatchSemaphore(value: 0)
-            childStdout.fileHandleForReading.readabilityHandler = { handle in
-                let data = handle.availableData
-                if data.isEmpty {
-                    DLog("EOF")
-                    sema.signal()
-                } else {
-                    DLog("read \(data.stringOrHex)")
-                    outputQueue.async {
-                        outputData.append(data)
-                    }
-                }
-            }
-
-            // Block until reading completes. This avoids a race between waitpid and read.
-            sema.wait()
-
-            // At this point we assume waitpid will succeed immediately, so it is no longer cancelable.
-            // We can't wait until after waitpid to do this or else a cancellation might kill the
-            // wrong process when the PID gets reused.
-            cancellation.impl = nil
-
-            // Allow the process ID to be reused.
-            var status: Int32 = 0
-            while true {
-                DLog("Call waitpid")
-                let rc = waitpid(pid, &status, 0)
-                if rc >= 0 {
-                    DLog("rc=\(rc)")
-                    break
-                }
-                if errno != EINTR {
-                    DLog("error \(errno) from waitpid")
-                    throw NSError(domain: "com.googlecode.iterm2.ai-plugin", code: Int(errno))
-                }
-            }
-            DLog("terminated with \(iTermProcessExitStatus(status))")
-
-            // Finished.
-            outputQueue.async {
-                // Call completion handler
-                completion(.status(Int(iTermProcessExitStatus(status))), outputData)
-            }
-        } catch {
-            DLog("Error \(error)")
-            // Handle errors: also switch to the output queue to clean up
-            outputQueue.async {
-                cancellation.cancel()
-                completion(.executionError,
-                           "Failed to start the process: \(error.localizedDescription)".data(using: .utf8)!)
-            }
-        }
-    }
-
-    func runiTermAIPlugin(withData data: Data,
-                          completion: @escaping (AIPluginStatus, Data?) -> Void) -> Cancellation? {
-        DLog("runiTermAIPlugin data=\(data.stringOrHex)")
-        return run(arg: "request", stdin: data, checkSignature: true) { status, outputData in
-            DispatchQueue.main.async {
-                switch status {
-                case .status(let terminationStatus):
-                    let decoder = JSONDecoder()
-                    do {
-                        let response = try decoder.decode(WebResponse.self, from: outputData)
-                        if let error = response.error {
-                            DLog("response has error \(error)")
-                            completion(.runtimeError, error.data(using: .utf8))
-                        } else {
-                            DLog("response is ok")
-                            completion(status, response.data)
-                        }
-                    } catch {
-                        if terminationStatus == 0 {
-                            DLog("can't parse response but status is 0. \(outputData.stringOrHex)")
-                            completion(.badOutput, outputData)
-                        } else {
-                            DLog("status=\(status) \(outputData.stringOrHex)")
-                            completion(status, outputData)
-                        }
-                    }
-                case .badOutput, .executionError, .pluginNotFound, .runtimeError, .canceled:
-                    DLog("fail \(status)")
-                    completion(status, outputData)
-                }
-            }
-        }
     }
 }
 
@@ -557,9 +283,10 @@ class iTermAITermGatekeeper: NSObject {
             }
             return false
         }
-        let version = iTermAIClient.instance.version()
-        if let bundleURL = iTermAIClient.instance.bundleURL, let version, version != Decimal(string: iTermAIClient.instance.requiredVersion) {
-            iTermWarning.show(withTitle: "The version of the AI plugin at \(bundleURL.path) is incorrect. This version of iTerm2 expects \(iTermAIClient.instance.requiredVersion) but \(version) was found.",
+        do {
+            try iTermAIClient.instance.validate()
+        } catch let error as PluginError {
+            iTermWarning.show(withTitle: error.reason,
                               actions: ["OK"],
                               accessory: nil,
                               identifier: nil,
@@ -567,31 +294,14 @@ class iTermAITermGatekeeper: NSObject {
                               heading: "Feature Unavailable",
                               window: nil)
             return false
-        }
-        if version == nil {
-            let selection = iTermWarning.show(withTitle: "The AI plugin could not be found.",
-                                              actions: ["Install", "Cancel"],
-                                              accessory: nil,
-                                              identifier: nil,
-                                              silenceable: .kiTermWarningTypePersistent,
-                                              heading: "Feature Unavailable",
-                                              window: nil)
-            if selection == .kiTermWarningSelection0 {
-                NSWorkspace.shared.open(URL(string: "https://iterm2.com/ai-plugin.html")!)
-            }
-            return false
-        }
-        if let problem = iTermAIClient.instance.validateSync() {
-            let selection = iTermWarning.show(withTitle: "The AI plugin's code signature was incorrect: \(problem). Remove and resinstall it.",
-                                              actions: ["Install", "Cancel"],
-                                              accessory: nil,
-                                              identifier: nil,
-                                              silenceable: .kiTermWarningTypePersistent,
-                                              heading: "Feature Unavailable",
-                                              window: nil)
-            if selection == .kiTermWarningSelection0 {
-                NSWorkspace.shared.open(URL(string: "https://iterm2.com/ai-plugin.html")!)
-            }
+        } catch {
+            iTermWarning.show(withTitle: error.localizedDescription,
+                              actions: ["OK"],
+                              accessory: nil,
+                              identifier: nil,
+                              silenceable: .kiTermWarningTypePersistent,
+                              heading: "Feature Unavailable",
+                              window: nil)
             return false
         }
         return true
@@ -927,28 +637,16 @@ class AITermController {
             switch self {
             case .begin: return "begin"
             case .error(reason: let reason): return "error(\(reason))"
-            case .apiError(reason: let reason): return "apiError(\(reason))"
-            case let .apiResponse(status: status, data: data):
-                switch status {
-                case .pluginNotFound:
-                    return "apiResponse(plugin not found)"
-                case .executionError:
-                    return "apiResponse(execution error: \(data.stringOrHex))"
-                case .status(let status):
-                    return "apiResponse(status=\(status): \(data.stringOrHex))"
-                case .badOutput:
-                    return "apiResponse(badOutput: \((data ?? Data()).stringOrHex))"
-                case .runtimeError:
-                    return "apiResponse(runtimeError: \((data ?? Data()).stringOrHex))"
-                case .canceled:
-                    return "apiResponse(canceled)"
-                }
+            case .pluginError(let error): return "pluginError(\(error.reason))"
+            case .webResponse: return "webResponse"
+            case .cancel: return "Cancel"
             }
         }
         case begin
         case error(reason: String)
-        case apiError(reason: String)
-        case apiResponse(status: AIPluginStatus, data: Data?)
+        case pluginError(PluginError)
+        case webResponse(WebResponse)
+        case cancel
     }
 
     private var state: State {
@@ -1008,11 +706,17 @@ class AITermController {
                     makeAPICall(query: query, registration: registration)
                 }
                 delegate?.aitermControllerWillSendRequest(self)
-            case .error(reason: let reason), .apiError(reason: let reason):
+            case .error(reason: let reason):
                 DLog("error: \(reason)")
                 state = .ground
-            case .apiResponse:
+            case .pluginError(let error):
+                DLog("plugin error: \(error.reason)")
+                state = .ground
+            case .webResponse:
                 DLog("Unexpected event \(event) in \(state)")
+                state = .ground
+            case .cancel:
+                DLog("Cancel")
                 state = .ground
             }
 
@@ -1027,11 +731,17 @@ class AITermController {
                     makeAPICall(messages: messages, registration: registration)
                 }
                 delegate?.aitermControllerWillSendRequest(self)
-            case .error(reason: let reason), .apiError(reason: let reason):
+            case .pluginError(let error):
+                DLog("plugin error: \(error.reason)")
+                state = .ground
+            case .error(let reason):
                 DLog("error: \(reason)")
                 state = .ground
-            case .apiResponse:
+            case .webResponse:
                 DLog("Unexpected event \(event) in \(state)")
+                state = .ground
+            case .cancel:
+                DLog("Cancel")
                 state = .ground
             }
 
@@ -1039,57 +749,32 @@ class AITermController {
             switch event {
             case .begin:
                 fatalError()
-            case .apiResponse(status: let status, data: let data):
-                DLog("Got event \(event) in \(state)")
-                switch status {
-                case .pluginNotFound:
-                    handle(event: .error(reason: "The iTermAI plugin was not found"), legacy: false)
-                case .executionError:
-                    handle(event: .error(reason: "There was a problem running the iTermAI plugin: \(data.stringOrHex)"),
-                           legacy: false)
-                case .runtimeError:
-                    if let data {
-                        handle(event: .error(reason: data.stringOrHex), legacy: false)
-                    } else {
-                        handle(event: .error(reason: "Unknown runtime error"), legacy: false)
+            case .webResponse(let response):
+                if !response.error.isEmpty {
+                    let error = response.error
+                    let provider =
+                        if usingOpenAI {
+                            "OpenAI"
+                        } else {
+                            modelURL?.host ?? "the API provider"
+                        }
+                    let decoder = JSONDecoder()
+                    var message = "Error from \(provider): \(error)"
+                    if let errorResponse = try? decoder.decode(ErrorResponse.self, from: response.data.lossyData), !errorResponse.error.message.isEmpty {
+                        message += " " + errorResponse.error.message
                     }
-                case .status(let status):
-                    if status == 0 {
-                        parseResponse(data: data ?? Data(), legacy: legacy)
-                        return
-                    }
-                    if let data {
-                        handle(event: .error(reason: "Error code \(status) from iTermAI plugin: \(data.stringOrHex)"),
-                               legacy: false)
-                    } else {
-                        handle(event: .error(reason: "Error code \(status) from iTermAI plugin"),
-                               legacy: false)
-                    }
-                case .badOutput:
-                    if let data {
-                        handle(event: .error(reason: "Invalid output from iTermAI plugin: \(data.stringOrHex.truncatedWithTrailingEllipsis(to: 200))"),
-                               legacy: false)
-                    } else {
-                        handle(event: .error(reason: "Invalid output from iTermAI plugin"),
-                               legacy: false)
-                    }
-                case .canceled:
-                    state = .ground
+                    handle(event: .error(reason: message), legacy: false)
+                } else {
+                    parseResponse(data: response.data.data(using: .utf8)!, legacy: legacy)
                 }
+            case .pluginError(let error):
+                handle(event: .error(reason: error.reason), legacy: false)
+            case .cancel:
+                state = .ground
             case .error(reason: let reason):
                 DLog("error: \(reason)")
                 state = .ground
-                delegate?.aitermController(self, didFailWithErrorMessage: "Error: \(reason)")
-            case .apiError(reason: let reason):
-                DLog("API error: \(reason)")
-                state = .ground
-                let provider =
-                    if usingOpenAI {
-                        "OpenAI"
-                    } else {
-                        modelURL?.host ?? "the API provider"
-                    }
-                delegate?.aitermController(self, didFailWithErrorMessage: "Error from \(provider): \(reason)")
+                delegate?.aitermController(self, didFailWithErrorMessage: reason)
             }
         }
     }
@@ -1257,22 +942,26 @@ class AITermController {
     private func makeAPICall(messages: [Message], registration: Registration) {
         let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-3.5-turbo"
         guard let url = url(forModel: model) else {
-            handle(event: .error(reason: "Invalid URL"), legacy: false)
+            handle(event: .error(reason: "Invalid URL for AI provider of \(self.settingsURL.absoluteString)"), legacy: false)
             return
         }
         let headers = ["Content-Type": "application/json",
                        "Authorization": "Bearer " + registration.apiKey]
         let request = WebRequest(headers: headers,
                                  method: "POST",
-                                 body: requestBody(model: model, messages: messages),
+                                 body: requestBody(model: model, messages: messages).lossyString,
                                  url: url.absoluteString)
         let legacy = shouldUseLegacyAPI(model)
-        cancellation = client.runiTermAIPlugin(withData: try! JSONEncoder().encode(request)) { [weak self] status, data in
-            DispatchQueue.main.async {
-                self?.handle(event: .apiResponse(status: status, data: data),
+        cancellation = client.request(webRequest: request, completion: { [weak self] result in
+            switch result {
+            case .success(let response):
+                self?.handle(event: .webResponse(response),
+                             legacy: legacy)
+            case .failure(let error):
+                self?.handle(event: .pluginError(error),
                              legacy: legacy)
             }
-        }
+        })
         state = .querySent(messages: messages)
     }
 
@@ -1339,7 +1028,7 @@ class AITermController {
         } catch {
             let decoder = JSONDecoder()
             if let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) {
-                handle(event: .apiError(reason: errorResponse.error.message),
+                handle(event: .error(reason: "Could not decode response: " + errorResponse.error.message),
                        legacy: legacy)
             } else {
                 handle(event: .error(reason: "Failed to decode API response: \(error). Data is: \(data.stringOrHex)"),
@@ -1401,7 +1090,7 @@ class AITermController {
                         return
                     case .failure(let error):
                         DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
-                        handle(event: .apiError(reason: error.localizedDescription),
+                        handle(event: .error(reason: error.localizedDescription),
                                legacy: false)
                         return
                     }
@@ -1692,5 +1381,17 @@ extension String {
         let head = String(prefix(upTo: middleIndex))
         let tail = String(suffix(from: middleIndex))
         return (head, tail)
+    }
+}
+
+extension String {
+    var lossyData: Data {
+        return Data(utf8)
+    }
+}
+
+extension Data {
+    var lossyString: String {
+        return String(decoding: self, as: UTF8.self)
     }
 }
