@@ -3345,8 +3345,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                     self.currentPromptRange.start.y,
                                                                     commandStartLocation.x,
                                                                     commandStartLocation.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
+    DLog(@"Prompt range is %@", VT100GridAbsCoordRangeDescription(promptRange));
     const int maxPromptLines = 4;
     if (promptRange.end.y - promptRange.start.y > maxPromptLines) {
+        DLog(@"Reduce to last %d lines", maxPromptLines);
         promptRange.start.y = promptRange.end.y = maxPromptLines;
     }
     if (shortCircuitDups &&

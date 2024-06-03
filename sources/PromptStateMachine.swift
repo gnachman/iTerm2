@@ -47,9 +47,9 @@ class PromptStateMachine: NSObject {
             case .disabled: return "disabled"
             case .ground: return "ground"
             case .receivingPrompt: return "receivingPrompt"
-            case .enteringCommand: return "enteringCommand"
+            case .enteringCommand(let value): return "enteringCommand(\(value.map { "\($0.length ) cells" }.joined(separator: ", ")))"
             case let .accruingAlreadyEnteredCommand(commandSoFar: commandSoFar, prompt: prompt, cursorCoord: cursorCoord):
-                return "accruingAlreadyEnteredCommand(commandSoFar: \(commandSoFar), prompt: \(prompt), cursorCoord: \(cursorCoord))"
+                return "accruingAlreadyEnteredCommand(commandSoFar: \(commandSoFar), prompt: \(prompt.map { "\($0.length ) cells" }.joined(separator: ", ")), cursorCoord: \(cursorCoord))"
             case .echoingBack: return "echoingBack"
             case .executing: return "executing"
             }
@@ -163,7 +163,7 @@ class PromptStateMachine: NSObject {
     }
 
     private func set(state newValue: State, on event: String) {
-        DLog("\(event): \(state) -> \(newValue)")
+        DLog("\(event): \(state.debugDescription) -> \(newValue)")
         _state = newValue
     }
 
