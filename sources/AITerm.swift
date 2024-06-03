@@ -13,7 +13,10 @@ fileprivate func openAIModelIsLegacy(model: String) -> Bool {
     return !model.hasPrefix("gpt-")
 }
 
-struct WebRequest: Codable {
+struct WebRequest: Codable, CustomDebugStringConvertible {
+    var debugDescription: String {
+        return "\(method) \(url)\n\(headers.debugDescription)\n\n\(body)"
+    }
     var headers: [String: String]
     var method: String
     var body: String
@@ -25,7 +28,13 @@ struct WebResponse: Codable {
     var error: String
 }
 
-struct PluginError: Error {
+struct PluginError: Error, CustomDebugStringConvertible {
+    var debugDescription: String {
+        return "<PluginError \(reason)>"
+    }
+    var localizedDescription: String {
+        reason
+    }
     var reason: String
 }
 
@@ -46,8 +55,14 @@ struct Plugin {
                 let temp = Result<Plugin, PluginError>.success(try Plugin())
                 result = temp
                 return temp
+            } catch let error as PluginError {
+                let temp = Result<Plugin, PluginError>.failure(error)
+                DLog("\(error.reason)")
+                result = temp
+                return temp
             } catch {
-                let temp = Result<Plugin, PluginError>.failure(error as! PluginError)
+                DLog("\(error.localizedDescription)")
+                let temp = Result<Plugin, PluginError>.failure(PluginError(reason: error.localizedDescription))
                 result = temp
                 return temp
             }
@@ -83,6 +98,7 @@ struct Plugin {
         guard publicKey.isValidSignature(signature, for: message) else {
             throw PluginError(reason: "The plugin's signature was incorrect. Reinstall the plugin or upgrade iTerm2.")
         }
+        DLog("Signature is good")
     }
 
     func version() throws -> Decimal {
@@ -97,6 +113,7 @@ struct Plugin {
     }
 
     func load(webRequest: WebRequest) throws -> WebResponse {
+        DLog("load \(webRequest)")
         return try PluginClient.instance.call(code: code,
                                               functionName: "request",
                                               request: webRequest,
@@ -151,6 +168,7 @@ class iTermAIClient {
                 lock.sync {
                     if let f = newValue, _impl == nil, _canceled {
                         // Canceled before the first impl was set so cancel immediately.
+                        DLog("already canceled")
                         f()
                     } else {
                         _impl = newValue
@@ -169,6 +187,7 @@ class iTermAIClient {
 
         // Idempotent. Runs the cancellation handler eventually.
         func cancel() {
+            DLog("cancel")
             lock.sync {
                 guard !_canceled else {
                     return
@@ -185,6 +204,7 @@ class iTermAIClient {
 
     // Runs on any queue. Throws a PluginError or does nothing.
     func validate() throws {
+        DLog("validate")
         switch Plugin.instance() {
         case .success(let plugin):
             guard let pluginVersion = try? plugin.version() else {
@@ -196,6 +216,7 @@ class iTermAIClient {
             }
             return
         case .failure(let error):
+            DLog("\(error)")
             throw error
         }
     }
@@ -286,6 +307,7 @@ class iTermAITermGatekeeper: NSObject {
         do {
             try iTermAIClient.instance.validate()
         } catch let error as PluginError {
+            DLog("\(error.reason)")
             iTermWarning.show(withTitle: error.reason,
                               actions: ["OK"],
                               accessory: nil,
@@ -584,6 +606,7 @@ struct Function<T: Codable>: AnyFunction {
             let value = try JSONDecoder().decode(parameterType, from: json)
             call(value, llm, completion)
         } catch {
+            DLog("\(error.localizedDescription)")
             completion(.failure(error))
         }
     }

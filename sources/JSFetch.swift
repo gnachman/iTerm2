@@ -31,21 +31,25 @@ class PluginClient {
 
         func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
             if let error = error {
-                print("URLSession error: \(error)")
+                DLog("URLSession error: \(error)")
                 callback(receivedData.lossyString, "HTTP request failed with \(error.localizedDescription)")
             } else if let httpResponse = task.response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                DLog("HTTP status \(httpResponse.statusCode)")
                 callback(receivedData.lossyString,
                          "HTTP request failed with status \(httpResponse.statusCode).")
             } else {
+                DLog("Read \(receivedData.lossyString)")
                 callback(receivedData.lossyString, "")
             }
         }
     }
 
-    func call<RequestType: Codable, ResponseType: Codable>(code: String,
-                                                           functionName: String,
-                                                           request: RequestType?,
-                                                           async: Bool) throws -> ResponseType {
+    func call<RequestType: Codable & CustomDebugStringConvertible,
+              ResponseType: Codable>(code: String,
+                                     functionName: String,
+                                     request: RequestType?,
+                                     async: Bool) throws -> ResponseType {
+        DLog("Call \(functionName) with \(request?.debugDescription ?? "(nil)"), async=\(async)")
         let args: [String]
         if let request {
             let jsonData: Data
@@ -59,17 +63,22 @@ class PluginClient {
         } else {
             args = []
         }
-        if async {
-            return try callAsync(code: code, functionName: functionName, arguments: args)
-        } else {
-            return try callSync(code: code, functionName: functionName, arguments: args)
+        do {
+            if async {
+                return try callAsync(code: code, functionName: functionName, arguments: args)
+            } else {
+                return try callSync(code: code, functionName: functionName, arguments: args)
+            }
+        } catch {
+            DLog(error.localizedDescription)
+            throw error
         }
     }
 
     private func performHTTPRequest(method: String, url: String, headers: [String: String], body: String, callback: @escaping (String?, String?) -> Void) {
-        print("performHTTPRequest(\(method), \(url), \(headers), \(body)")
+        DLog("performHTTPRequest(\(method), \(url), \(headers), \(body)")
         guard let url = URL(string: url) else {
-            print("Invalid url \(url)")
+            DLog("Invalid url \(url)")
             callback(nil, "Invalid URL")
             return
         }
@@ -92,6 +101,7 @@ class PluginClient {
     }
 
     private func registerFunctions(context: JSContext) {
+        DLog("registerFunctions")
         let performRequest: @convention(block) (String, String, [String: String], String, JSValue) -> Void = { [weak self]
             method, url, headers, body, callback in
             guard let self else {
@@ -110,7 +120,7 @@ class PluginClient {
         context.setObject(performRequest, forKeyedSubscript: "performHTTPRequest" as (NSCopying & NSObjectProtocol))
 
         let logMessage: @convention(block) (JSValue) -> Void = { message in
-            print("JS: \(message.toString() ?? "(nil)")")
+            DLog("JS: \(message.toString() ?? "(nil)")")
         }
         context.setObject(logMessage, forKeyedSubscript: "log" as (NSCopying & NSObjectProtocol))
     }
@@ -118,6 +128,7 @@ class PluginClient {
     private func callSync<ResponseType: Codable>(code: String,
                                          functionName: String,
                                          arguments: [String]) throws -> ResponseType {
+        DLog("callSync \(functionName)")
         // Create a JSContext
         guard let context = JSContext() else {
             throw PluginError(reason: "Could not create context for plugin")
@@ -126,7 +137,7 @@ class PluginClient {
         context.evaluateScript(code)
         var exc: String?
         context.exceptionHandler = { context, exception in
-            print("JS EXCEPTION: \(exception?.toString() ?? "nil exception")")
+            DLog("JS EXCEPTION: \(exception?.toString() ?? "nil exception")")
             exc = exception?.toString()
         }
         if let exc {
@@ -154,6 +165,7 @@ class PluginClient {
     }
 
     private func callAsync<ResponseType: Codable>(code: String, functionName: String, arguments: [String]) throws -> ResponseType {
+        DLog("callAsync \(functionName)")
         // Create a JSContext
         guard let context = JSContext() else {
             throw PluginError(reason: "Could not create context for plugin")
@@ -164,7 +176,7 @@ class PluginClient {
 
         // Handle JavaScript errors
         context.exceptionHandler = { context, exception in
-            print("JS Error: \(exception?.toString() ?? "unknown error")")
+            DLog("JS Error: \(exception?.toString() ?? "unknown error")")
         }
 
         // Evaluate the provided JavaScript code
@@ -176,7 +188,7 @@ class PluginClient {
         }
 
         // Call the JavaScript function which returns a Promise
-        print("Call with arguments: \(arguments)")
+        DLog("Call with arguments: \(arguments)")
         guard let result = function.call(withArguments: arguments) else {
             throw PluginError(reason: "JavaScript function call failed")
         }
@@ -199,8 +211,8 @@ class PluginClient {
                     error = PluginError(reason: "Non-UTF-8 result from plugin: \(jsonResponse)")
                 }
             } catch let decodeError {
-                print("Response is:")
-                print(jsonResponse)
+                DLog("Response is:")
+                DLog(jsonResponse)
                 error = PluginError(reason: "Error decoding response: \(decodeError)")
             }
             semaphore.signal()
