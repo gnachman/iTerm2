@@ -992,9 +992,9 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
     [_cursorGuideColor set];
     NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + range.location * _cellSize.width, yOrigin);
-    NSRect rect = NSMakeRect(textOrigin.x,
+    NSRect rect = NSMakeRect(0,
                              textOrigin.y,
-                             range.length * _cellSize.width,
+                             _scrollViewDocumentVisibleRect.size.width,
                              _cellSize.height);
     iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
 

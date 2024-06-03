@@ -19,9 +19,9 @@
     CGSize cellSize = self.cellConfiguration.cellSize;
     VT100GridSize gridSize = self.cellConfiguration.gridSize;
 
-    const CGRect quad = CGRectMake(self.margins.left,
+    const CGRect quad = CGRectMake(0,
                                    self.margins.top + (gridSize.height - self.row - 1) * cellSize.height,
-                                   cellSize.width * gridSize.width,
+                                   self.configuration.viewportSize.x,
                                    cellSize.height);
     const CGRect textureFrame = CGRectMake(0, 0, 1, 1);
     const iTermVertex vertices[] = {
