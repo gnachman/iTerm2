@@ -152,7 +152,7 @@ send_conductor='printf "%s '"$intro"'"'
 # Run a command on the remote host that instructs iTerm2 to send a script, then reads the script and executes it.
 # I tried many ways to concatenate s and l and this is the only one that works on both Ubuntu 18 and Ubuntu 20.
 esc=$(printf "\033")
-sanitized="stty -echo; $send_conductor"';s="";IFS=""; while read -r l;do [ "$l" == "-- BEGIN CONDUCTOR --" ]&&break; done; while read -r l; do [ "$l" = "'$esc'" ]&&break; s=$(printf "%s\n%s" "$s" "$l"); done; unset IFS; s=$(echo "$s" | { command -v base64 > /dev/null 2> /dev/null && command base64 -d || { command -v b64encode > /dev/null 2> /dev/null && command fold -w 76 | command b64decode -r; } || echo "echo base64 not available on remote host"; }); eval "$s"'
+sanitized="stty -echo; $send_conductor"';s="";IFS=""; while read -r l;do [ "$l" = "-- BEGIN CONDUCTOR --" ]&&break; done; while read -r l; do [ "$l" = "'$esc'" ]&&break; s=$(printf "%s\n%s" "$s" "$l"); done; unset IFS; s=$(echo "$s" | { command -v base64 > /dev/null 2> /dev/null && command base64 -d || { command -v b64encode > /dev/null 2> /dev/null && command fold -w 76 | command b64decode -r; } || echo "echo base64 not available on remote host"; }); eval "$s"'
 
 # If ssh gets a signal, let it2ssh keep running.
 set +e
