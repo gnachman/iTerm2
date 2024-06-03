@@ -94,7 +94,10 @@
 typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
     iTermPowerlineDrawingOptionsNone = 0,
     iTermPowerlineDrawingOptionsMirrored = 1 << 0,
-    iTermPowerlineDrawingOptionsHalfWidth = 2 << 0,
+    iTermPowerlineDrawingOptionsHalfWidth = 1 << 1,
+
+    iTermPowerlineDrawingOptionsFullBleedLeft = 1 << 2,
+    iTermPowerlineDrawingOptionsFullBleedRight = 1 << 3,
 };
 
 + (NSDictionary<NSNumber *, NSArray *> *)powerlineExtendedSymbols {
@@ -102,35 +105,60 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
         return @{};
     }
     return @{ @(0xE0A3): @[@"uniE0A3_column-number", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0B0): @[@"uniE0B0_Powerline_normal-left", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0B2): @[@"uniE0B2_Powerline_normal-right", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0B4): @[@"uniE0B4_right-half-circle-thick", @(iTermPowerlineDrawingOptionsNone)],
+              @(0xE0B0): @[@"uniE0B0_Powerline_normal-left", 
+                           @(iTermPowerlineDrawingOptionsNone |
+                           iTermPowerlineDrawingOptionsFullBleedLeft)],
+              @(0xE0B2): @[@"uniE0B2_Powerline_normal-right", 
+                           @(iTermPowerlineDrawingOptionsNone |
+                           iTermPowerlineDrawingOptionsFullBleedRight)],
+              @(0xE0B4): @[@"uniE0B4_right-half-circle-thick", 
+                           @(iTermPowerlineDrawingOptionsNone |
+                           iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0B5): @[@"uniE0B5_right-half-circle-thin", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0B6): @[@"uniE0B6_left-half-circle-thick", @(iTermPowerlineDrawingOptionsNone)],
+              @(0xE0B6): @[@"uniE0B6_left-half-circle-thick", @(
+                           iTermPowerlineDrawingOptionsNone |
+                           iTermPowerlineDrawingOptionsFullBleedRight)],
               @(0xE0B7): @[@"uniE0B7_left-half-circle-thin", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0B8): @[@"uniE0B8_lower-left-triangle", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0C0): @[@"uniE0C0_flame-thick", @(iTermPowerlineDrawingOptionsNone)],
+              @(0xE0B8): @[@"uniE0B8_lower-left-triangle", 
+                           @(iTermPowerlineDrawingOptionsNone |
+                           iTermPowerlineDrawingOptionsFullBleedLeft)],
+              @(0xE0C0): @[@"uniE0C0_flame-thick", @(
+                           iTermPowerlineDrawingOptionsNone |
+                           iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0C1): @[@"uniE0C1_flame-thin", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0C2): @[@"uniE0C0_flame-thick", @(iTermPowerlineDrawingOptionsMirrored)],
+              @(0xE0C2): @[@"uniE0C0_flame-thick", @(
+                           iTermPowerlineDrawingOptionsMirrored |
+                           iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0C3): @[@"uniE0C1_flame-thin", @(iTermPowerlineDrawingOptionsMirrored)],
               @(0xE0CE): @[@"uniE0CE_lego_separator", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0CF): @[@"uniE0CF_lego_separator_thin", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0D1): @[@"uniE0D1_lego_block_sideways", @(iTermPowerlineDrawingOptionsNone)],
+              @(0xE0D1): @[@"uniE0D1_lego_block_sideways", @(
+                           iTermPowerlineDrawingOptionsNone |
+                           iTermPowerlineDrawingOptionsFullBleedLeft)],
 
               // These were exported to PDF using FontForge
               @(0xE0C4): @[@"uniE0C4_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0C5): @[@"uniE0C4_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsMirrored)],
               @(0xE0C6): @[@"uniE0C6_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0C7): @[@"uniE0C6_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsMirrored)],
-              @(0xE0C8): @[@"uniE0C8_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0C9): @[@"uniE0C9_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsNone)],
+              @(0xE0C8): @[@"uniE0C8_PowerlineExtraSymbols", 
+                           @(iTermPowerlineDrawingOptionsNone |
+                           iTermPowerlineDrawingOptionsFullBleedLeft)],
+              @(0xE0C9): @[@"uniE0C9_PowerlineExtraSymbols", @(
+                           iTermPowerlineDrawingOptionsNone |
+                           iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0CA): @[@"uniE0C8_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsMirrored)],
-              @(0xE0CB): @[@"uniE0C9_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsMirrored)],
+              @(0xE0CB): @[@"uniE0C9_PowerlineExtraSymbols", @(
+                           iTermPowerlineDrawingOptionsMirrored |
+                           iTermPowerlineDrawingOptionsFullBleedRight)],
               @(0xE0CC): @[@"uniE0CC_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0CD): @[@"uniE0CD_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0D0): @[@"uniE0D0_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0D2): @[@"uniE0D2_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsHalfWidth)],
-              @(0xE0D4): @[@"uniE0D2_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsHalfWidth | iTermPowerlineDrawingOptionsMirrored)],
+              @(0xE0D2): @[@"uniE0D2_PowerlineExtraSymbols", @(
+                           iTermPowerlineDrawingOptionsHalfWidth)],
+              @(0xE0D4): @[@"uniE0D2_PowerlineExtraSymbols", @(
+                           iTermPowerlineDrawingOptionsHalfWidth |
+                           iTermPowerlineDrawingOptionsMirrored)],
     };
 }
 
@@ -328,11 +356,12 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
 }
 
 + (void)drawPowerlineCode:(unichar)code
-                 cellSize:(NSSize)regularCellSize
-                    color:(CGColorRef)color
-                    scale:(CGFloat)scale
-                 isPoints:(BOOL)isPoints
-                   offset:(CGPoint)offset {
+cellSize:(NSSize)regularCellSize
+color:(CGColorRef)color
+scale:(CGFloat)scale
+isPoints:(BOOL)isPoints
+offset:(CGPoint)offset {
+
     NSSize cellSize = regularCellSize;
     if ([[iTermBoxDrawingBezierCurveFactory doubleWidthPowerlineSymbols] containsObject:@(code)]) {
         cellSize.width *= 2;
@@ -400,7 +429,11 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
     if (!paths) {
         return;
     }
+    CGContextRef cgContext = [[NSGraphicsContext currentContext] CGContext];
+    CGContextSaveGState(cgContext);
+    CGContextClipToRect(cgContext, CGRectMake(0, 0, cellSize.width, cellSize.height));
     [self drawPaths:paths color:color scale:scale isPoints:isPoints solid:solid];
+    CGContextRestoreGState(cgContext);
 }
 
 + (NSImage *)bitmapForImage:(NSImage *)image {
@@ -533,7 +566,25 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
                 fraction:1
           respectFlipped:YES
                    hints:nil];
+    [self drawBleedForImage:(NSImageRep *)imageRep
+                destination:destination
+                    options:options
+                      color:[NSColor colorWithCGColor:color]];
     [ctx restoreGraphicsState];
+}
+
++ (void)drawBleedForImage:imageRep 
+destination:(NSRect)destination
+options:(iTermPowerlineDrawingOptions)options
+color:(NSColor *)color {
+    const CGFloat size = 1;
+    [color set];
+    if (options & iTermPowerlineDrawingOptionsFullBleedLeft) {
+        NSRectFill(NSMakeRect(NSMinX(destination), NSMinY(destination), size, NSHeight(destination)));
+    }
+    if (options & iTermPowerlineDrawingOptionsFullBleedRight) {
+        NSRectFill(NSMakeRect(NSMaxX(destination) - size, NSMinY(destination), size, NSHeight(destination)));
+    }
 }
 
 + (BOOL)isPowerlineGlyph:(unichar)code {
