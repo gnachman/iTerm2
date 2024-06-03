@@ -181,6 +181,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     BOOL _cursorVisible;
     BOOL _haveVisibleBlock;
 
+    NSTimer *_selectCommandTimer;
+
     iTermTerminalCopyButton *_hoverBlockCopyButton NS_AVAILABLE_MAC(11);
     NSMutableArray<iTermTerminalButton *> *_buttons NS_AVAILABLE_MAC(11);
 }
@@ -402,6 +404,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [_trackingChildWindows release];
     [_hoverBlockCopyButton release];
     [_buttons release];
+    [_selectCommandTimer invalidate];
+    [_selectCommandTimer release];
 
     [super dealloc];
 }
@@ -1014,6 +1018,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (void)mouseDown:(NSEvent *)event {
+    [_selectCommandTimer invalidate];
+    [_selectCommandTimer release];
+    _selectCommandTimer = nil;
+    
     [self.delegate textViewWillHandleMouseDown:event];
     [_mouseHandler mouseDown:event superCaller:^{ [super mouseDown:event]; }];
 }
@@ -6019,12 +6027,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         if (!firstMouse) {
             const NSPoint temp =
             [self clickPoint:event allowRightMarginOverflow:allowRightMarginOverflow];
-            [_delegate textViewSelectCommandRegionAtCoord:VT100GridCoordMake(temp.x, temp.y)];
+            const VT100GridCoord selectAtCoord = VT100GridCoordMake(temp.x, temp.y);
+
+            [_selectCommandTimer invalidate];
+            [_selectCommandTimer release];
+            _selectCommandTimer = nil;
+
+            if ([iTermAdvancedSettingsModel useDoubleClickDelayForCommandSelection] &&
+                [_delegate textViewMarkForCommandAt:selectAtCoord] != [_delegate textViewSelectedCommandMark]) {
+                __weak __typeof(self) weakSelf = self;
+                _selectCommandTimer = [[NSTimer scheduledTimerWithTimeInterval:[NSEvent doubleClickInterval]
+                                                                       repeats:NO
+                                                                         block:^(NSTimer * _Nonnull timer) {
+                    [weakSelf selectCommandAt:selectAtCoord];
+                }] retain];
+            } else {
+                [self selectCommandAt:selectAtCoord];
+            }
         }
     }
     const NSPoint temp =
     [self clickPoint:event allowRightMarginOverflow:allowRightMarginOverflow];
     return VT100GridCoordMake(temp.x, temp.y);
+}
+
+- (void)selectCommandAt:(VT100GridCoord)coord {
+    [_delegate textViewSelectCommandRegionAtCoord:coord];
+    [_selectCommandTimer release];
+    _selectCommandTimer = nil;
 }
 
 - (void)mouseHandler:(PTYMouseHandler *)sender handleCommandShiftClickAtCoord:(VT100GridCoord)coord {
