@@ -26,10 +26,12 @@ class PluginClient {
         }
 
         func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+            DLog("HTTP append data")
             receivedData.append(data)
         }
 
         func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+            DLog("HTTP complete")
             if let error = error {
                 DLog("URLSession error: \(error)")
                 callback(receivedData.lossyString, "HTTP request failed with \(error.localizedDescription)")
@@ -97,6 +99,7 @@ class PluginClient {
 
         session = URLSession(configuration: .default, delegate: HTTPStreamDelegate(callback: callback), delegateQueue: nil)
         let task = session?.dataTask(with: request)
+        DLog("resume session")
         task?.resume()
     }
 
@@ -230,9 +233,11 @@ class PluginClient {
         result.invokeMethod("then", withArguments: [JSValue(object: thenClosure, in: context)!])
         result.invokeMethod("catch", withArguments: [JSValue(object: catchClosure, in: context)!])
 
+        DLog("wait for completion")
         // Wait for the semaphore
         semaphore.wait()
 
+        DLog("API call complete")
         // Return the response or throw the captured error
         if let response = response {
             return response

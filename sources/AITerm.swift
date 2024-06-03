@@ -9,9 +9,6 @@ protocol AITermControllerDelegate: AnyObject {
                                              completion: @escaping (AITermController.Registration) -> ())
 }
 
-fileprivate func openAIModelIsLegacy(model: String) -> Bool {
-    return !model.hasPrefix("gpt-")
-}
 
 struct WebRequest: Codable, CustomDebugStringConvertible {
     var debugDescription: String {
@@ -587,31 +584,6 @@ struct ChatGPTFunctionDeclaration: Codable {
     var parameters: JSONSchema
 }
 
-fileprivate protocol AnyFunction {
-    var typeErasedParameterType: Any.Type { get }
-    var decl: ChatGPTFunctionDeclaration { get }
-    func invoke(json: Data, llm: AITermController, completion: @escaping (Result<String, Error>) -> ())
-}
-
-struct Function<T: Codable>: AnyFunction {
-    typealias Impl = (T, AITermController, @escaping (Result<String, Error>) -> ()) -> ()
-
-    var decl: ChatGPTFunctionDeclaration
-    var call: Impl
-    var parameterType: T.Type
-
-    var typeErasedParameterType: Any.Type { parameterType }
-    func invoke(json: Data, llm: AITermController, completion: @escaping (Result<String, Error>) -> ()) {
-        do {
-            let value = try JSONDecoder().decode(parameterType, from: json)
-            call(value, llm, completion)
-        } catch {
-            DLog("\(error.localizedDescription)")
-            completion(.failure(error))
-        }
-    }
-}
-
 enum AIPluginStatus {
     case pluginNotFound
     case executionError
@@ -622,8 +594,9 @@ enum AIPluginStatus {
 }
 
 class AITermController {
+    typealias Message = LLM.Message
     var representedObject: String?
-    private(set) fileprivate var functions = [AnyFunction]()
+    private(set) fileprivate var functions = [LLM.AnyFunction]()
     var truncate: (([Message]) -> ([Message]))?
 
     struct Registration {
@@ -698,11 +671,11 @@ class AITermController {
         handle(event: .begin, legacy: false)
     }
 
-    func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, arguments: T.Type, implementation: @escaping Function<T>.Impl) {
-        functions.append(Function(decl: decl, call: implementation, parameterType: arguments))
+    func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, arguments: T.Type, implementation: @escaping LLM.Function<T>.Impl) {
+        functions.append(LLM.Function(decl: decl, call: implementation, parameterType: arguments))
     }
 
-    fileprivate func define(functions: [AnyFunction]) {
+    fileprivate func define(functions: [LLM.AnyFunction]) {
         self.functions.append(contentsOf: functions)
     }
 
@@ -775,16 +748,11 @@ class AITermController {
             case .webResponse(let response):
                 if !response.error.isEmpty {
                     let error = response.error
-                    let provider =
-                        if usingOpenAI {
-                            "OpenAI"
-                        } else {
-                            modelURL?.host ?? "the API provider"
-                        }
+                    let provider = llmProvider.displayName
                     let decoder = JSONDecoder()
                     var message = "Error from \(provider): \(error)"
-                    if let errorResponse = try? decoder.decode(ErrorResponse.self, from: response.data.lossyData), !errorResponse.error.message.isEmpty {
-                        message += " " + errorResponse.error.message
+                    if let reason = LLMErrorParser.errorReason(data: response.data.lossyData), !reason.isEmpty {
+                        message += " " + reason
                     }
                     handle(event: .error(reason: message), legacy: false)
                 } else {
@@ -802,13 +770,6 @@ class AITermController {
         }
     }
 
-    func hostIsOpenAIAPI(url: URL?) -> Bool {
-        return url?.host == "api.openai.com"
-    }
-
-    var usingOpenAI: Bool {
-        return hostIsOpenAIAPI(url: modelURL)
-    }
 
     private func requestRegistration(continuation: State) {
         state = .ground
@@ -827,154 +788,30 @@ class AITermController {
         return URL(string: value) ?? URL(string: "about:empty")!
     }
 
-    private func url(forModel model: String) -> URL? {
-        let settingsURL = self.settingsURL
-        if hostIsOpenAIAPI(url: settingsURL) &&
-            !openAIModelIsLegacy(model: model) {
-            return URL(string: "https://api.openai.com/v1/chat/completions")
-        }
-        return settingsURL
-    }
-
-    private func maxTokens(model: String,
-                           query: String,
-                           functions: [ChatGPTFunctionDeclaration]) -> Int {
-        let encodedFunctions = {
-            if functions.isEmpty {
-                return ""
-            }
-            guard let data = try? JSONEncoder().encode(functions) else {
-                return ""
-            }
-            return String(data: data, encoding: .utf8) ?? ""
-        }()
-        let naiveLimit = Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit)) - OpenAIMetadata.instance.tokens(in: query) - OpenAIMetadata.instance.tokens(in: encodedFunctions)
-        if let responseLimit = OpenAIMetadata.instance.maxResponseTokens(modelName: model) {
-            return min(responseLimit, naiveLimit)
-        }
-        return naiveLimit
-    }
-
-    private func legacyRequestBody(model: String, messages: [Message]) -> Data {
-        struct LegacyBody: Codable {
-            var model: String  // "text-davinci-003"
-            var prompt: String
-            var max_tokens: Int
-            var temperature = 0
-        }
-        let query = messages.compactMap { $0.content }.joined(separator: "\n")
-        let body = LegacyBody(model: model,
-                              prompt: query,
-                              max_tokens: maxTokens(model: model, query: query, functions: []))
-        let bodyEncoder = JSONEncoder()
-        let bodyData = try! bodyEncoder.encode(body)
-        return bodyData
-    }
-
-    struct Message: Codable, Equatable {
-        var role = "user"
-        var content: String?
-
-        // For function calling
-        var name: String?
-        var function_call: FunctionCall?
-
-        struct FunctionCall: Codable, Equatable {
-            var name: String
-            var arguments: String
-        }
-
-        enum CodingKeys: String, CodingKey {
-            case role
-            case name
-            case content
-            case function_call
-        }
-
-        func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-
-            try container.encode(role, forKey: .role)
-
-            if let name {
-                try container.encode(name, forKey: .name)
-            }
-
-            try container.encode(content, forKey: .content)
-
-            if let function_call {
-                try container.encode(function_call, forKey: .function_call)
-            }
-        }
-
-        var approximateTokenCount: Int { OpenAIMetadata.instance.tokens(in: (content ?? "")) + 1 }
-    }
-
-    struct Body: Codable {
-        var model: String  // "text-davinci-003"
-        var messages = [Message]()
-        var max_tokens: Int
-        var temperature = 0
-        var functions: [ChatGPTFunctionDeclaration]? = nil
-        var function_call: String? = nil  // "none" and "auto" also allowed
-    }
-
-    private func modernRequestBody(model: String, messages: [Message]) -> Data {
-        // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
-        // answer the same length as the query.
-        let query = messages.compactMap { $0.content }.joined(separator: "\n")
-        let maybeDecls = functions.isEmpty ? nil : functions.map { $0.decl }
-        let body = Body(model: model,
-                        messages: messages,
-                        max_tokens: maxTokens(model: model, query: query, functions: maybeDecls ?? []),
-                        functions: maybeDecls,
-                        function_call: functions.isEmpty ? nil : "auto")
-        DLog("REQUEST:\n\(body)")
-        let bodyEncoder = JSONEncoder()
-        let bodyData = try! bodyEncoder.encode(body)
-        return bodyData
-    }
-
-    private func shouldUseLegacyAPI(_ model: String) -> Bool {
-        if usingOpenAI {
-            return openAIModelIsLegacy(model: model)
-        } else {
-            return iTermPreferences.bool(forKey: kPreferenceKeyAITermUseLegacyAPI)
-        }
-    }
-
-    private func requestBody(model: String, messages: [Message]) -> Data {
-        if shouldUseLegacyAPI(model) {
-            return legacyRequestBody(model: model, messages: messages)
-        }
-        return modernRequestBody(model: model, messages: messages)
-    }
-
     private func makeAPICall(query: String, registration: Registration) {
         makeAPICall(messages: [Message(role: "user", content: query)], registration: registration)
-    }
-
-    private var modelURL: URL? {
-        let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-3.5-turbo"
-        return url(forModel: model)
     }
 
     private let client = iTermAIClient()
     private var cancellation: iTermAIClient.Cancellation?
 
-    private func makeAPICall(messages: [Message], registration: Registration) {
+    private var llmProvider: LLMProvider {
         let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-3.5-turbo"
-        guard let url = url(forModel: model) else {
-            handle(event: .error(reason: "Invalid URL for AI provider of \(self.settingsURL.absoluteString)"), legacy: false)
+        let platform = LLMProvider.Platform(rawValue: iTermAdvancedSettingsModel.llmPlatform()) ?? .openAI
+        return LLMProvider(platform: platform, model: model)
+    }
+    private func makeAPICall(messages: [Message], registration: Registration) {
+        let builder = LLMRequestBuilder(provider: llmProvider,
+                                        apiKey: registration.apiKey,
+                                        messages: messages,
+                                        functions: functions)
+        guard llmProvider.urlIsValid else {
+            handle(event: .error(reason: "Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")"),
+                   legacy: false)
             return
         }
-        let headers = ["Content-Type": "application/json",
-                       "Authorization": "Bearer " + registration.apiKey]
-        let request = WebRequest(headers: headers,
-                                 method: "POST",
-                                 body: requestBody(model: model, messages: messages).lossyString,
-                                 url: url.absoluteString)
-        let legacy = shouldUseLegacyAPI(model)
+        let request = builder.webRequest
+        let legacy = llmProvider.version == .legacy
         cancellation = client.request(webRequest: request, completion: { [weak self] result in
             switch result {
             case .success(let response):
@@ -988,103 +825,29 @@ class AITermController {
         state = .querySent(messages: messages)
     }
 
-    struct ModernResponse: Codable {
-        var id: String
-        var object: String
-        var created: Int
-        var model: String
-        var choices: [Choice]
-        var usage: Usage
-
-        struct Choice: Codable {
-            var index: Int
-            var message: Message
-            var finish_reason: String
-        }
-
-        struct Usage: Codable {
-            var prompt_tokens: Int
-            var completion_tokens: Int?
-            var total_tokens: Int
-        }
-    }
-
-    struct ErrorResponse: Codable {
-        var error: Error
-
-        struct Error: Codable {
-            var message: String
-            var type: String?
-            var code: String?
-        }
-    }
-
-    struct LegacyResponse: Codable {
-        var id: String
-        var object: String
-        var created: Int
-        var model: String
-        var choices: [Choice]
-        var usage: Usage
-
-        struct Choice: Codable {
-            var text: String
-            var index: Int?
-            var logprobs: Int?
-            var finish_reason: String
-        }
-
-        struct Usage: Codable {
-            var prompt_tokens: Int
-            var completion_tokens: Int?
-            var total_tokens: Int
-        }
-    }
-
     private func parseResponse(data: Data, legacy: Bool) {
         do {
-            let choices = legacy ? try parseLegacyResponse(data: data) : try parseModernResponse(data: data)
-            if let choices {
-                state = .ground
-                delegate?.aitermController(self, offerChoices: choices)
+            var parser = llmProvider.responseParser()
+            let response = try parser.parse(data: data)
+            if let topChoice = response.choiceMessages.first, let functionCall = topChoice.function_call {
+                doFunctionCall(topChoice, call: functionCall)
+                return
             }
+            let choices = response.choiceMessages.compactMap { $0.trimmedString }
+            guard !choices.isEmpty else {
+                return
+            }
+            state = .ground
+            delegate?.aitermController(self, offerChoices: choices)
         } catch {
-            let decoder = JSONDecoder()
-            if let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) {
-                handle(event: .error(reason: "Could not decode response: " + errorResponse.error.message),
+            if let reason = LLMErrorParser.errorReason(data: data) {
+                handle(event: .error(reason: "Could not decode response: " + reason),
                        legacy: legacy)
             } else {
                 handle(event: .error(reason: "Failed to decode API response: \(error). Data is: \(data.stringOrHex)"),
                        legacy: legacy)
             }
         }
-    }
-
-    private func parseLegacyResponse(data: Data) throws -> [String] {
-        let decoder = JSONDecoder()
-        let response = try decoder.decode(LegacyResponse.self, from: data)
-        let choices = response.choices.map {
-            $0.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        return choices
-    }
-
-    private func parseModernResponse(data: Data) throws -> [String]? {
-        let decoder = JSONDecoder()
-        let response =  try decoder.decode(ModernResponse.self, from: data)
-        DLog("RESPONSE:\n\(response)")
-        let choices = response.choices.compactMap { choice -> String? in
-            guard let content = choice.message.content else {
-                return nil
-            }
-            return String(content.trimmingLeadingCharacters(in: .whitespacesAndNewlines))
-        }
-        if let firstChoice = response.choices.first,
-           let functionCall = firstChoice.message.function_call {
-            doFunctionCall(firstChoice.message, call: functionCall)
-            return nil
-        }
-        return choices
     }
 
     private func doFunctionCall(_ message: Message, call functionCall: Message.FunctionCall) {
@@ -1316,7 +1079,7 @@ struct AIConversation {
 
     func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, 
                             arguments: T.Type,
-                            implementation: @escaping Function<T>.Impl) {
+                            implementation: @escaping LLM.Function<T>.Impl) {
         controller.define(function: decl, arguments: arguments, implementation: implementation)
     }
 

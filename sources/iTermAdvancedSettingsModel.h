@@ -199,6 +199,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)lastpassGroups;
 + (BOOL)laxNilPolicyInInterpolatedStrings;
 + (double)lightModeInactiveTabDarkness;
++ (NSString *)llmPlatform;
 + (BOOL)logDrawingPerformance;
 + (BOOL)logRestorableStateSize;
 + (BOOL)logTimestampsWithPlainText;

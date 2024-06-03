@@ -2531,6 +2531,7 @@
 		A686F3891D36A49100F08ED7 /* iTermPreciseTimer.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3871D36A49100F08ED7 /* iTermPreciseTimer.h */; };
 		A686F38D1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */; };
 		A68769502C0BE8CC00F7FFEC /* JSFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = A687694E2C0BE86800F7FFEC /* JSFetch.swift */; };
+		A68769562C0E5F2300F7FFEC /* LLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68769542C0E5DF700F7FFEC /* LLM.swift */; };
 		A687B66A25AD6FF600E0A658 /* iTermGitClient.m in Sources */ = {isa = PBXBuildFile; fileRef = A687B66925AD6FF600E0A658 /* iTermGitClient.m */; };
 		A688AA59298AFEE7007F4603 /* DoubleTapHotkeyStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A688AA58298AFEE7007F4603 /* DoubleTapHotkeyStateMachine.swift */; };
 		A688AA5A298B07BB007F4603 /* iTermBaseHotKey.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA26B1CF2C86800376F28 /* iTermBaseHotKey.m */; };
@@ -6607,6 +6608,7 @@
 		A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBoxDrawingBezierCurveFactory.h; sourceTree = "<group>"; };
 		A686F38C1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBoxDrawingBezierCurveFactory.m; sourceTree = "<group>"; };
 		A687694E2C0BE86800F7FFEC /* JSFetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSFetch.swift; sourceTree = "<group>"; };
+		A68769542C0E5DF700F7FFEC /* LLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLM.swift; sourceTree = "<group>"; };
 		A687B66825AD6FF600E0A658 /* iTermGitClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGitClient.h; sourceTree = "<group>"; };
 		A687B66925AD6FF600E0A658 /* iTermGitClient.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGitClient.m; sourceTree = "<group>"; };
 		A6889E84213274E600ABB237 /* iTerm2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iTerm2.entitlements; sourceTree = "<group>"; };
@@ -9418,6 +9420,7 @@
 				A6DCE3FB2C064932005586F5 /* iTermProcess.h */,
 				A6DCE3FC2C064932005586F5 /* iTermProcess.m */,
 				A687694E2C0BE86800F7FFEC /* JSFetch.swift */,
+				A68769542C0E5DF700F7FFEC /* LLM.swift */,
 			);
 			name = AITerm;
 			sourceTree = "<group>";
@@ -15689,6 +15692,7 @@
 				A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */,
 				A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */,
 				A62DBBA820F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m in Sources */,
+				A68769562C0E5F2300F7FFEC /* LLM.swift in Sources */,
 				A665396C26B71B880049F375 /* iTermIndicatorsHelper.m in Sources */,
 				A6DBC04220049CB100F1466D /* iTermImage.metal in Sources */,
 				A60E045F26DEEA5100DD162B /* MiniFilterViewController.swift in Sources */,
