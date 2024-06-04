@@ -115,32 +115,7 @@
 }
 
 - (void)trackClickForWindowMove:(NSEvent*)event {
-    NSWindow *window = self.window;
-    NSPoint origin = [window frame].origin;
-    NSPoint lastPointInScreenCoords = [NSEvent mouseLocation];
-    const NSEventMask eventMask = (NSEventMaskLeftMouseDown |
-                                   NSEventMaskLeftMouseDragged |
-                                   NSEventMaskLeftMouseUp);
-    event = [NSApp nextEventMatchingMask:eventMask
-                               untilDate:[NSDate distantFuture]
-                                  inMode:NSEventTrackingRunLoopMode
-                                 dequeue:YES];
-    while (event && event.type != NSEventTypeLeftMouseUp) {
-        @autoreleasepool {
-            NSPoint currentPointInScreenCoords = [NSEvent mouseLocation];
-            
-            origin.x += currentPointInScreenCoords.x - lastPointInScreenCoords.x;
-            origin.y += currentPointInScreenCoords.y - lastPointInScreenCoords.y;
-            lastPointInScreenCoords = currentPointInScreenCoords;
-            
-            [window setFrameOrigin:origin];
-            
-            event = [NSApp nextEventMatchingMask:eventMask
-                                       untilDate:[NSDate distantFuture]
-                                          inMode:NSEventTrackingRunLoopMode
-                                         dequeue:YES];
-        }
-    }
+    [self.window performWindowDragWithEvent:event];
 }
 
 @end
