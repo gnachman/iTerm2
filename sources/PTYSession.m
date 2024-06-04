@@ -15588,6 +15588,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
     [alert setAccessoryView:scrollview];
     alert.window.initialFirstResponder = input;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [input.window makeFirstResponder:input];
+    });
     const NSInteger button = [alert runSheetModalForWindow:self.view.window];
 
     if (button == NSAlertFirstButtonReturn) {
