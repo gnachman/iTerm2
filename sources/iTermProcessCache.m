@@ -325,6 +325,7 @@
     });
     for (NSNumber *root in trackedPIDs) {
         iTermProcessInfo *info = [collection infoForProcessID:root.integerValue].deepestForegroundJob;
+        DLog(@"iTermProcessCache: deepest fg job for %@ is %@", @(root.integerValue), @(info.processID));
         if (info) {
             cache[root] = info;
         }
