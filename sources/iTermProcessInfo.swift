@@ -125,16 +125,16 @@ class iTermProcessInfo: NSObject {
                               depth: Int) -> iTermProcessInfo? {
         if depth > 50 || visited.contains(processID) {
             cycle = true
+            DLog("Failed to find deepest foreground job at \(processID) because depth is \(depth) or found a cycle")
             return nil
         }
         visited.insert(processID)
 
         var bestLevel = levelInOut
         var bestProcessInfo: iTermProcessInfo? = nil
-        if childProcessIDs.isEmpty && isForegroundJob {
-            return self
+        if isForegroundJob {
+            bestProcessInfo = self
         }
-        bestProcessInfo = self
         for child in children {
             var level = levelInOut + 1
             let candidate = child.deepestForegroundJob(level: &level,
@@ -215,9 +215,11 @@ class iTermProcessInfo: NSObject {
         init(processID: pid_t, parent: iTermProcessInfo?, dataSource: ProcessDataSource) {
             var fg = ObjCBool(false)
             nameValue = dataSource.nameOfProcess(withPid: processID, isForeground: &fg)
+            DLog("Making expensive values for \(processID). fg=\(fg) parent.name=\(parent?.name ?? "(nil)")")
             if fg.boolValue || parent?.name == "login" || parent == nil {
                 // Full command line with hacked command name
                 let argv = dataSource.commandLineArguments(forProcess: processID, execName: nil)
+                DLog("argv=\(argv?.joined(separator: " ") ?? "(nil)")")
                 commandLineValue = argv?.joined(separator: " ")
                 if let argv0 = argv?.first, !argv0.isEmpty {
                     argv0Value = argv0
