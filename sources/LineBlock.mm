@@ -1372,6 +1372,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     if (cll_entries == first_entry) {
         return;
     }
+
     cll_entries -= 1;
     is_partial = NO;
     if (cll_entries == first_entry) {
@@ -1478,6 +1479,10 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             *metadataPtr = iTermMetadataMakeImmutable(metadata);
         }
         --cll_entries;
+        if (gEnableDoubleWidthCharacterLineCache) {
+            metadata_[cll_entries].double_width_characters = nil;
+            iTermMetadataSetExternalAttributes(&metadata_[cll_entries].lineMetadata, nil);
+        }
         is_partial = NO;
     }
 
