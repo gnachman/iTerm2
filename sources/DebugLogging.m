@@ -132,7 +132,12 @@ static void FlushDebugLog(void) {
         [fileHandle writeData:[log dataUsingEncoding:NSUTF8StringEncoding]];
         [fileHandle closeFile];
     } else {
-        [log writeToFile:kDebugLogFilename atomically:NO encoding:NSUTF8StringEncoding error:nil];
+        NSData *data = [log dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
+        NSError *error = nil;
+        const BOOL ok = [data writeToFile:kDebugLogFilename options:0 error:&error];
+        if (!ok) {
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to save debug log: %@", error.localizedDescription] actions:@[ @"OK" ] accessory:nil identifier:nil silenceable:kiTermWarningTypePersistent heading:@"Problem Saving Debug Log" window:nil];
+        }
     }
 
     [gDebugLogStr setString:@""];
