@@ -81,6 +81,24 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     return [[self alloc] initWithScreenChars:screenChars length:string.length];
 }
 
++ (instancetype)bell {
+    static iTermStringLine *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] initWithLength:1 stringValue:@"\a"];
+    });
+    return instance;
+}
+
+- (instancetype)initWithLength:(int)length stringValue:(NSString *)stringValue {
+    self = [super init];
+    if (self) {
+        _length = length;
+        _stringValue = stringValue;
+    }
+    return self;
+}
+
 - (instancetype)initWithScreenChars:(const screen_char_t *)screenChars
                              length:(NSInteger)length {
     self = [super init];

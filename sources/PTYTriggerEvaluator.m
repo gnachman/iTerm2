@@ -191,7 +191,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     // really make sense, especially in the new model, but it's so useful to be able to customize
     // the bell that I'll add this special case.
     if ([s isEqualToString:@"\a"]) {
-        iTermStringLine *stringLine = [iTermStringLine stringLineWithString:s];
+        iTermStringLine *stringLine = [iTermStringLine bell];
         [self checkTriggersOnPartialLine:YES stringLine:stringLine lineNumber:_triggerLineNumber];
     }
 }

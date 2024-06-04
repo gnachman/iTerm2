@@ -403,7 +403,9 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
 // characters. It's useful if you need a string line that doesn't represent actual characters on
 // the screen, though.
 + (instancetype)stringLineWithString:(NSString *)string;
++ (instancetype)bell;
 
+// Note: this strips controls and private use characters.
 - (instancetype)initWithScreenChars:(const screen_char_t *)screenChars
                              length:(NSInteger)length;
 
