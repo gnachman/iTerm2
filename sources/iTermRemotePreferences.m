@@ -253,6 +253,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
 
 - (void)saveLocalUserDefaultsToRemotePrefs
 {
+    DLog(@"saveLocalUserDefaultsToRemotePrefs\n%@", [NSThread callStackSymbols]);
     if ([self remotePrefsHaveChanged]) {
         NSString *theTitle =
             [NSString stringWithFormat:@"Settings at %@ changed since iTerm2 started. "
@@ -495,6 +496,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
                                        silenceable:kiTermWarningTypePermanentlySilenceable
                                             window:nil];
             if (selection == kiTermWarningSelection0) {
+                DLog(@"Save changes on quit");
                 [self saveLocalUserDefaultsToRemotePrefs];
             }
         }

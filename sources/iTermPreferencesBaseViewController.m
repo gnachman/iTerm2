@@ -279,7 +279,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         DLog(@"customSettingChangedHandler()");
         info.customSettingChangedHandler(sender);
     } else {
-        DLog(@"type=%@" @(info.type));
+        DLog(@"type=%@", @(info.type));
         switch (info.type) {
             case kPreferenceInfoTypeCheckbox:
                 [self setBool:([sender state] == NSControlStateValueOn) forKey:info.key];
