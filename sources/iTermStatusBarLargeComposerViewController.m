@@ -255,6 +255,7 @@
                                                          completion:^(NSArray<NSString *> *choices, NSString *error) {
         if (choices.count >= 1) {
             [weakSelf acceptSuggestion:choices[0]];
+            [weakSelf.textView.window makeFirstResponder:weakSelf.textView];
         } else if (error) {
             [iTermWarning showWarningWithTitle:error
                                        actions:@[ @"OK" ]
@@ -305,7 +306,7 @@
         @"⌘F\tOpen Find bar",
         @"⌥⌘V\tOpen in Advanced Paste",
         @"⌘-click\tOpen in explainshell.com",
-        @"⇧↩\tSend command",
+        @"⇧↩\tSend contents or selection",
         @"⌥⇧↩\tSend command at cursor",
         @"⌥↩\tEnqueue command at cursor",
         @"⇧⌘;\tView command history"
