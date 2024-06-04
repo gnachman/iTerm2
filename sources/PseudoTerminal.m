@@ -3970,7 +3970,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // Some users report that the first responder isn't always set properly. Let's try to fix that.
     // This attempt (4/20/13) is to fix bug 2431.
     if (!self.window.firstResponder.it_preferredFirstResponder) {
-        [self performSelector:@selector(makeCurrentSessionFirstResponder)
+        DLog(@"Window's first responder %@ is not preferred so schedule makeCurrentSessionFirstResponder",
+              self.window.firstResponder);
+        [self performSelector:@selector(makeCurrentSessionFirstResponderIfNoPreferred)
                    withObject:nil
                    afterDelay:0];
     }
@@ -3988,6 +3990,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.currentSession.view.findDriver owningViewDidBecomeFirstResponder];
     [_contentView updateTitleAndBorderViews];
     [[iTermSecureKeyboardEntryController sharedInstance] update];
+}
+
+- (void)makeCurrentSessionFirstResponderIfNoPreferred {
+    if (!self.window.firstResponder.it_preferredFirstResponder) {
+        [self makeCurrentSessionFirstResponder];
+    }
 }
 
 - (void)makeCurrentSessionFirstResponder {

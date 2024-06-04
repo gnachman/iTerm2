@@ -10280,11 +10280,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [_delegate setActiveSession:self];
     [_view setNeedsDisplay:YES];
     [_view.findDriver owningViewDidBecomeFirstResponder];
-    [self makeComposerFirstResponderIfAllowed];
+    if (self.haveAutoComposer) {
+        [self makeComposerFirstResponderIfAllowed];
+    }
 }
 
 - (void)makeComposerFirstResponderIfAllowed {
-    if (!self.copyMode && self.haveAutoComposer) {
+    if (!self.copyMode) {
         [_composerManager makeDropDownComposerFirstResponder];
     }
 }
@@ -15653,6 +15655,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     [self setComposerString:choices[0]];
     [self.composerManager toggle];
+    DLog(@"handleAIChoices -> makeComposerFirstResponder");
     [self makeComposerFirstResponderIfAllowed];
 }
 
