@@ -7,7 +7,6 @@
 
 #import "iTermSandboxedWorkerClient.h"
 #import "iTerm2SandboxedWorkerProtocol.h"
-#import "DebugLogging.h"
 
 
 @implementation iTermSandboxedWorkerClient
@@ -53,7 +52,7 @@
 + (iTermImage *)imageFromData:(NSData *)data {
     return [self performSynchronously:^(NSXPCConnection *connectionToService, void (^completion)(iTermImage *)) {
         [[connectionToService remoteObjectProxyWithErrorHandler:^(NSError * _Nonnull error) {
-            XLog(@"Failed to connect to service: %@", error);
+            NSLog(@"Failed to connect to service: %@", error);
             completion(nil);
         }] decodeImageFromData:data withReply:^(iTermImage * _Nullable image) {
             completion(image);
@@ -64,7 +63,7 @@
 + (iTermImage *)imageFromSixelData:(NSData *)data {
     return [self performSynchronously:^(NSXPCConnection *connectionToService, void (^completion)(iTermImage *)) {
         [[connectionToService remoteObjectProxyWithErrorHandler:^(NSError * _Nonnull error) {
-            XLog(@"Failed to connect to service: %@", error);
+            NSLog(@"Failed to connect to service: %@", error);
             completion(nil);
         }] decodeImageFromSixelData:data withReply:^(iTermImage * _Nullable image) {
             completion(image);

@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import FileProviderService
 
 extension NSDictionary {
     // For Profile dictionaries.

@@ -7,7 +7,7 @@
 //
 
 #import "DebugLogging.h"
-#import "FileProviderService/FileProviderService-Swift.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "NSData+iTerm.h"

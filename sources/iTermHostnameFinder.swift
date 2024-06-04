@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import FileProviderService
 
 class iTermHostnameFinder: SSHHostnameFinder {
     func sshHostname(forHost host: String) -> String {

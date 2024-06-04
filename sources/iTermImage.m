@@ -8,7 +8,12 @@
 
 #import "iTermImage.h"
 #import "iTermImage+Private.h"
+#ifdef SANDBOXED_WORKER
+#define DLog NSLog
+#else
 #import "DebugLogging.h"
+#endif
+
 #import "NSData+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "iTermSandboxedWorkerClient.h"
@@ -109,7 +114,11 @@ static const CGFloat kMaxDimension = 10000;
             return nil;
         }
     } @catch (NSException * exception) {
+#ifdef SANDBOXED_WORKER
+        NSLog(@"Failed to decode image: %@", exception);
+#else
         XLog(@"Failed to decode image: %@", exception);
+#endif
         return nil;
     }
     return self;

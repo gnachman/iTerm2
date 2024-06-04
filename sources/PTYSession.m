@@ -199,7 +199,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #import <CoreFoundation/CoreFoundation.h>
-#import <FileProviderService/FileProviderService.h>
 
 static const NSInteger kMinimumUnicodeVersion = 8;
 static const NSInteger kMaximumUnicodeVersion = 9;

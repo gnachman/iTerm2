@@ -147,7 +147,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 #endif  // ITERM2_SHARED_ARC
 
 + (BOOL)enableSemanticHistoryOnNetworkMounts;
-+ (BOOL)enableSSHFileProvider;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 + (BOOL)escapeWithQuotes;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;

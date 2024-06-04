@@ -626,8 +626,6 @@ DEFINE_BOOL(tmuxIncludeClientNameInWindowTitle, YES, SECTION_TMUX @"When using t
 
 #define SECTION_SSH @"SSH Integration: "
 
-DEFINE_BOOL(enableSSHFileProvider, NO, SECTION_SSH @"Enable cloud filesystem for SSH integration.\nThis feature is still in development and doesn't work well.");
-
 #pragma mark Warnings
 
 #define SECTION_WARNINGS @"Warnings: "

@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import FileProviderService
 
 struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
     // The string that matched a Host: entry in ~/.ssh/config, or the hostname
