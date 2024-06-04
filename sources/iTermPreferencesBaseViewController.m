@@ -7,6 +7,8 @@
 //
 
 #import "iTermPreferencesBaseViewController.h"
+
+#import "DebugLogging.h"
 #import "iTermPreferences.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -111,6 +113,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 - (void)setSyntheticValue:(id)value forKey:(NSString *)key {
     PreferenceInfo *info = [self infoForKey:key];
+    DLog(@"setSyntheticValue:%@ forKey:%@, info=%@", value, key, info);
     return info.syntheticSetter(value);
 }
 
@@ -224,6 +227,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         [self setSyntheticValue:value forKey:key];
         return;
     }
+    DLog(@"calling [iTermPreferences setString:%@ forKey:%@]", value, key);
     [iTermPreferences setString:value forKey:key];
 }
 
@@ -264,14 +268,18 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 - (IBAction)settingChanged:(id)sender {
     PreferenceInfo *info = [self infoForControl:sender];
     assert(info);
+    DLog(@"settingChanged:%@", info.key);
 
     if (info.willChange) {
+        DLog(@"willChange()");
         info.willChange();
     }
 
     if (info.customSettingChangedHandler) {
+        DLog(@"customSettingChangedHandler()");
         info.customSettingChangedHandler(sender);
     } else {
+        DLog(@"type=%@" @(info.type));
         switch (info.type) {
             case kPreferenceInfoTypeCheckbox:
                 [self setBool:([sender state] == NSControlStateValueOn) forKey:info.key];
@@ -888,6 +896,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     id control = [aNotification object];
     PreferenceInfo *info = [_keyMap objectForKey:control];
+    DLog(@"Control text did change for control, info.key=%@", control, info.key);
     if (info) {
         [self settingChanged:control];
     }

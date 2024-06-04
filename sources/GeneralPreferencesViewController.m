@@ -516,6 +516,7 @@ enum {
         return [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
     };
     info.onChange = ^() {
+        DLog(@"prefsCustomFolder did change");
         [iTermRemotePreferences sharedInstance].customFolderChanged = YES;
         [self updateRemotePrefsViews];
     };

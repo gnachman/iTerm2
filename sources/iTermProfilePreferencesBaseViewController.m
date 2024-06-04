@@ -7,6 +7,8 @@
 //
 
 #import "iTermProfilePreferencesBaseViewController.h"
+
+#import "DebugLogging.h"
 #import "iTermProfilePreferences.h"
 #import "NSObject+iTerm.h"
 
@@ -156,6 +158,7 @@
 }
 
 - (void)setString:(NSString *)value forKey:(NSString *)key {
+    DLog(@"setString:%@ forKey:%@", value,key);
     if ([self keyHasSyntheticSetter:key]) {
         [self setSyntheticValue:value forKey:key];
         return;

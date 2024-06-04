@@ -602,6 +602,7 @@ static NSString *sPreviousVersion;
 }
 
 + (void)setObject:(id)object forKey:(NSString *)key {
+    DLog(@"setObject:%@ forKey:%@", object, key);
     NSArray *observers = gObservers[key];
     id before = nil;
     if (observers) {
@@ -615,8 +616,10 @@ static NSString *sPreviousVersion;
         }
     }
     if (object) {
+        DLog(@"Set NSUserDefaults[%@] <- %@", key, object);
         [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
     } else {
+        DLog(@"Delete %@ from NSUserDefaults", key);
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
     }
 
