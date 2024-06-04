@@ -520,6 +520,11 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     return [self frameFlipped:YES];
 }
 
+// Shift box drawing characters down by the amount of interline spacing so they touch tip-to-tip.
+- (CGFloat)boxShift {
+    return _descriptor.cellSize.height - _descriptor.cellSizeWithoutSpacing.height;
+}
+
 - (CGRect)frameFlipped:(BOOL)flipped {
     if (_string.length == 0) {
         return CGRectZero;
@@ -528,7 +533,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         NSRect rect;
         const CGFloat inset = _descriptor.scale;
         rect.origin = NSMakePoint(_descriptor.glyphSize.width * _radius - inset,
-                                  _descriptor.glyphSize.height * _radius - inset);
+                                  _descriptor.glyphSize.height * _radius - inset + self.boxShift);
         rect.size = NSMakeSize(_descriptor.cellSize.width * _descriptor.scale + inset * 2,
                                _descriptor.cellSize.height * _descriptor.scale + inset * 2);
         if (_string.length > 0 &&
@@ -752,12 +757,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 - (void)drawBoxInContext:(CGContextRef)context offset:(CGPoint)offset iteration:(int)iteration {
     assert(context);
+    CGPoint adjustedOffset = offset;
+    adjustedOffset.y += self.boxShift;
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:[_string characterAtIndex:0]
                                                        cellSize:NSMakeSize(_descriptor.cellSize.width * _descriptor.scale,
                                                                            _descriptor.cellSize.height * _descriptor.scale)
                                                            scale:_descriptor.scale
                                                        isPoints:NO
-                                                          offset:offset
+                                                          offset:adjustedOffset
                                                           color:[[self textColorForIteration:iteration] CGColor]
                                                            useNativePowerlineGlyphs:_useNativePowerlineGlyphs];
 }

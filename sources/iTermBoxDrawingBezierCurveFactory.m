@@ -227,6 +227,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
 // NOTE: If you change this also update blockDrawingCharacters
 + (NSArray<NSBezierPath *> *)bezierPathsForSolidBoxesForCode:(unichar)code
                                                     cellSize:(NSSize)cellSize
+                                                      offset:(CGPoint)offset
                                                        scale:(CGFloat)scale {
     NSArray<NSString *> *parts = nil;
 
@@ -343,6 +344,9 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
         CGFloat yo = cellSize.height * (CGFloat)(bytes[1] - '0') / 8.0;
         CGFloat w = cellSize.width / 8.0 * (CGFloat)(bytes[2] - '0');
         CGFloat h = cellSize.height / 8.0 * (CGFloat)(bytes[3] - '0');
+
+        xo += offset.x;
+        yo += offset.y;
 
         return [NSBezierPath bezierPathWithRect:NSMakeRect(xo, yo, w, h)];
     }];
@@ -696,6 +700,7 @@ color:(NSColor *)color {
                                                     solid:(out BOOL *)solid {
     NSArray<NSBezierPath *> *solidBoxPaths = [self bezierPathsForSolidBoxesForCode:code
                                                                           cellSize:cellSize
+                                                                            offset:offset
                                                                              scale:scale];
     if (solidBoxPaths) {
         if (solid) {
