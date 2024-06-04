@@ -21,6 +21,14 @@
     return ScreenCharArrayToStringDebug(self.pointer, self.size);
 }
 
+- (NSString *)shortDescription {
+    const int maxLength = 40;
+    if (self.size > maxLength + 1) {
+        return [ScreenCharArrayToStringDebug(self.pointer, MIN(self.size, maxLength - 1)) stringByAppendingString:@"…"];
+    } else {
+        return [self description];
+    }
+}
 - (int)size {
     return _size;
 }

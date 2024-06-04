@@ -376,7 +376,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
             NSStringFromClass([self class]),
             self,
             @(_absoluteBlockNumber),
-            _characterBuffer.description];
+            _characterBuffer.shortDescription];
 }
 
 - (void)setBufferStartOffset:(ptrdiff_t)offset {

@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) screen_char_t *mutablePointer;
 @property(nonatomic, readonly) const screen_char_t *pointer;
 @property(nonatomic, readonly) NSData *data;
+@property(nonatomic, readonly) NSString *shortDescription;
 
 - (instancetype)initWithSize:(int)size;
 - (instancetype)initWithData:(NSData *)data;
