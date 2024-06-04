@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermMinimalComposerViewControllerDelegate<NSObject>
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
             sendCommand:(NSString *)command
+             addNewline:(BOOL)addNewlin
                 dismiss:(BOOL)dismiss;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
          enqueueCommand:(NSString *)command

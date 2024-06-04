@@ -17,6 +17,7 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewSendControl:) func composerTextViewSendControl(_ control: String)
     @objc(composerTextViewOpenHistoryWithPrefix:forSearch:) func composerTextViewOpenHistory(prefix: String,
                                                                                              forSearch: Bool)
+    @objc(composerTextViewSendSubstring:) func composerTextViewSendSubstring(_ string: String)
     @objc(composerTextViewShowCompletions) func composerTextViewShowCompletions()
     @objc(composerTextViewWantsKeyEquivalent:) func composerTextViewWantsKeyEquivalent(_ event: NSEvent) -> Bool
     @objc(composerTextViewPerformFindPanelAction:) func composerTextViewPerformFindPanelAction(_ sender: Any?)
@@ -100,6 +101,21 @@ class ComposerTextView: MultiCursorTextView {
             string = newValue
             updatePrefix()
         }
+    }
+
+    @objc
+    var selectedStrings: [String] {
+        return multiCursorSelectedRanges.compactMap { range in
+            guard let r = Range(range), range.length > 0 else {
+                return nil
+            }
+            return String(string.substring(utf16Range: r))
+        }
+    }
+
+    @objc
+    var hasSelection: Bool {
+        return multiCursorSelectedRanges.anySatisfies { $0.length > 0 }
     }
 
     @objc
@@ -367,7 +383,18 @@ class ComposerTextView: MultiCursorTextView {
 
     private func sendAction() {
         suggestion = nil
-        composerDelegate?.composerTextViewDidFinish(cancel: false)
+        if hasSelection {
+            let content = string as NSString
+            let strings = multiCursorSelectedRanges.filter { $0.length > 0}.map { content.substring(with: $0) }
+            for s in strings.dropLast() {
+                composerDelegate?.composerTextViewSendSubstring(s + "\n")
+            }
+            if let s = strings.last {
+                composerDelegate?.composerTextViewSendSubstring(s)
+            }
+        } else {
+            composerDelegate?.composerTextViewDidFinish(cancel: false)
+        }
     }
 
     private func sendEachAction() {

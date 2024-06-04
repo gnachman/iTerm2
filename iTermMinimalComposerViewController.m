@@ -218,7 +218,10 @@ workingDirectory:(NSString *)pwd
 }
 
 - (IBAction)performClose:(id)sender {
-    [self.delegate minimalComposer:self sendCommand:@"" dismiss:YES];
+    [self.delegate minimalComposer:self
+                       sendCommand:@""
+                        addNewline:YES
+                           dismiss:YES];
 }
 
 - (NSString *)stringValue {
@@ -258,9 +261,19 @@ workingDirectory:(NSString *)pwd
 
 #pragma mark - iTermComposerTextViewDelegate
 
+- (void)composerTextViewSendSubstring:(NSString*)string {
+    [self.delegate minimalComposer:self
+                       sendCommand:string
+                        addNewline:NO
+                           dismiss:NO];
+}
+
 - (void)composerTextViewDidFinishWithCancel:(BOOL)cancel {
     NSString *string = cancel ? @"" : _largeComposerViewController.textView.stringExcludingPrefix;
-    [self.delegate minimalComposer:self sendCommand:string ?: @"" dismiss:YES];
+    [self.delegate minimalComposer:self 
+                       sendCommand:string ?: @""
+                        addNewline:YES
+                           dismiss:YES];
 }
 
 - (BOOL)composerHandleKeyDownWithEvent:(NSEvent *)event {
@@ -279,7 +292,10 @@ workingDirectory:(NSString *)pwd
 }
 
 - (void)composerTextViewSend:(NSString *)string {
-    [self.delegate minimalComposer:self sendCommand:string dismiss:NO];
+    [self.delegate minimalComposer:self 
+                       sendCommand:string
+                        addNewline:YES
+                           dismiss:NO];
 }
 
 - (void)composerTextViewEnqueue:(NSString *)string {

@@ -280,6 +280,7 @@
 
 - (void)minimalComposer:(nonnull iTermMinimalComposerViewController *)composer
             sendCommand:(nonnull NSString *)command
+             addNewline:(BOOL)addNewline
                 dismiss:(BOOL)dismiss {
     NSString *string = composer.stringValue;
     const BOOL reset = dismiss && self.isAutoComposer;
@@ -291,7 +292,7 @@
         return;
     }
     _saved = nil;
-    [self.delegate composerManager:self sendCommand:[command stringByAppendingString:@"\n"]];
+    [self.delegate composerManager:self sendCommand:addNewline ? [command stringByAppendingString:@"\n"] : command];
     if (reset) {
         DLog(@"Erase composer content after sending command");
         [self setStringValue:@""];
