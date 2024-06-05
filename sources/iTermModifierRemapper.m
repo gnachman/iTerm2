@@ -474,8 +474,8 @@
                 }
                 _flags = CGEventGetFlags(remappedEvent);
             }
-            DLog(@"Return remapped event: %@", [NSEvent eventWithCGEvent:remappedEvent]);
         }
+        DLog(@"Return remapped event: %@", [NSEvent eventWithCGEvent:remappedEvent]);
         return remappedEvent;
     } else {
         DLog(@"iTerm2 not active. The active app is %@", [[NSWorkspace sharedWorkspace] frontmostApplication]);
@@ -535,7 +535,7 @@
 }
 
 - (KEY_ACTION)boundActionForEvent:(NSEvent *)cocoaEvent {
-    if (cocoaEvent.type != NSEventTypeKeyDown) {
+    if (cocoaEvent.type != NSEventTypeKeyDown && cocoaEvent.type != NSEventTypeKeyUp) {
         DLog(@"Not keydown %@", cocoaEvent);
         return -1;
     }
