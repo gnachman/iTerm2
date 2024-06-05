@@ -604,13 +604,17 @@ static void HandleSigChld(int n) {
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     extern char **environ;
     if (environ != NULL) {
+        NSSet<NSString *> *forbiddenKeys = [NSSet setWithArray:@[ @"NSZombieEnabled",
+                                                                  @"MallocStackLogging"]];
         for (int i = 0; environ[i]; i++) {
             NSString *kvp = [NSString stringWithUTF8String:environ[i]];
             NSRange equalsRange = [kvp rangeOfString:@"="];
             if (equalsRange.location != NSNotFound) {
                 NSString *key = [kvp substringToIndex:equalsRange.location];
                 NSString *value = [kvp substringFromIndex:equalsRange.location + 1];
-                result[key] = value;
+                if (![forbiddenKeys containsObject:key]) {
+                    result[key] = value;
+                }
             } else {
                 result[kvp] = @"";
             }
