@@ -6109,24 +6109,18 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
     CGFloat hs;
     CGFloat vs;
     iTermFontTable *newFontTable;
-    NSString *fontConfig;
     if (dir) {
         // Grow or shrink
         DLog(@"grow/shrink");
         newFontTable = [_textview.fontTable fontTableGrownBy:dir];
         hs = [_textview horizontalSpacing];
         vs = [_textview verticalSpacing];
-        fontConfig = newFontTable.configString;
     } else {
         // Restore original font size.
-        NSDictionary *abEntry = [self originalProfile];
-        NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
-        fontConfig = abEntry[KEY_FONT_CONFIG];
-        newFontTable = [[iTermFontTable alloc] initWithDefaultFont:[PTYFontInfo fontInfoWithFont:[ITAddressBookMgr fontWithDesc:fontDesc]]
-                                                      nonAsciiFont:[PTYFontInfo fontInfoWithFont:[ITAddressBookMgr fontWithDesc:abEntry[KEY_NON_ASCII_FONT]]]
-                                                      configString:fontConfig];
-        hs = [iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:abEntry];
-        vs = [iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:abEntry];
+        NSDictionary *originalProfile = [self originalProfile];
+        newFontTable = [iTermFontTable fontTableForProfile:originalProfile];
+        hs = [iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:originalProfile];
+        vs = [iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:originalProfile];
     }
     [self setFontTable:newFontTable horizontalSpacing:hs verticalSpacing:vs];
 
@@ -6138,7 +6132,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
         [self setSessionSpecificProfileValues:@{
                               KEY_NORMAL_FONT: [newFontTable.asciiFont.font stringValue],
                            KEY_NON_ASCII_FONT: [newFontTable.defaultNonASCIIFont.font stringValue] ?: [NSNull null],
-                              KEY_FONT_CONFIG: fontConfig ?: [NSNull null]
+                              KEY_FONT_CONFIG: newFontTable.configString ?: [NSNull null]
         }];
 
         // Update the model's copy of the bookmark.
