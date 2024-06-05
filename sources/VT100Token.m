@@ -201,6 +201,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(VT100CSI_DECSED):                 @"VT100CSI_DECSED",
                 @(VT100CSI_DECSEL):                 @"VT100CSI_DECSEL",
                 @(VT100CSI_DECSCA):                 @"VT100CSI_DECSCA",
+                @(VT100CSI_DECRQDE):                @"VT100CSI_DECRQDE",
                 @(VT100_DECFI):                     @"VT100_DECFI",
                 @(VT100_DECBI):                     @"VT100_DECBI",
                 @(VT100CSI_PUSH_KEY_REPORTING_MODE):@"VT100CSI_PUSH_KEY_REPORTING_MODE",

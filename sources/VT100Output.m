@@ -1000,7 +1000,6 @@ static int VT100OutputSafeAddInt(int l, int r) {
         VT100OutputPrimaryDAFeatureSelectiveErase,
         VT100OutputPrimaryDAFeatureANSIColor,
         VT100OutputPrimaryDAFeatureRectangularEditing
-
     };
     VT100OutputPrimaryDAFeature vt400Features[] = {
         VT100OutputPrimaryDAFeatureVT420,
@@ -1504,6 +1503,12 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
 - (NSData *)reportPasteboard:(NSString *)pasteboard contents:(NSString *)string {
     NSString *report = [NSString stringWithFormat:@"\e]52;%@;%@\e\\",
                         pasteboard, [string base64EncodedWithEncoding:NSUTF8StringEncoding]];
+    return [report dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+- (NSData *)reportDisplayedExtentOfSize:(VT100GridSize)size {
+    NSString *report = [NSString stringWithFormat:@"\e]%@;%@;1;1;1\"w",
+                        @(size.height), @(size.width)];
     return [report dataUsingEncoding:NSUTF8StringEncoding];
 }
 

@@ -2361,6 +2361,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalProtectedModeDidChangeTo:VT100TerminalProtectedModeDEC];
             break;
 
+        case VT100CSI_DECRQDE:
+            if ([self.delegate terminalShouldSendReport]) {
+                [_delegate terminalSendReport:[_output reportDisplayedExtentOfSize:_delegate.terminalSizeInCells]];
+            }
+            break;
         case VT100CSI_HVP:
             [_delegate terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;

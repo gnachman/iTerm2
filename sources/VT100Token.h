@@ -148,6 +148,7 @@ typedef enum {
     VT100CSI_DECSED,                // Selective Erase in Display
     VT100CSI_DECSEL,                // Selective Erase in Line
     VT100CSI_DECSCA,                // Select Character Protection Attribute
+    VT100CSI_DECRQDE,               // Request Displayed Extent
 
     // https://sw.kovidgoyal.net/kitty/keyboard-protocol.html
     VT100CSI_PUSH_KEY_REPORTING_MODE,
