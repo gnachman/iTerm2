@@ -85,6 +85,7 @@ private class TokenArray: IteratorProtocol {
     private var cvector: CVector
     private var nextIndex = Int32(0)
     let count: Int32
+    var numberRemaining: Int32 { count - nextIndex }
     static var destroyQueue: DispatchQueue = {
         return DispatchQueue(label: "com.iterm2.token-destroyer")
     }()
@@ -135,6 +136,7 @@ private class TokenArray: IteratorProtocol {
     }
 
     func skipToEnd() {
+        DLog("skipToEnd")
         if nextIndex >= count {
             return
         }
@@ -191,8 +193,8 @@ private class TwoTierTokenQueue {
         var isEmpty: Bool {
             return arrays.isEmpty
         }
-        var count: Int {
-            return arrays.map { Int($0.count) }.reduce(0, +)
+        var totalNumberRemaining: Int {
+            return arrays.map { Int($0.numberRemaining) }.reduce(0, +)
         }
     }
     static let numberOfPriorities = 2
@@ -218,16 +220,18 @@ private class TwoTierTokenQueue {
 
     // Closure returns false to stop, true to keep going
     func enumerateTokenArrays(_ closure: (TokenArray, Int) -> Bool) {
+        if gDebugLogging.boolValue { DLog("Begin number remaining=\(queues.map { $0.totalNumberRemaining })") }
         while let tuple = nextQueueAndTokenArray {
             let (queue, tokenArray, priority) = tuple
             let shouldContinue = closure(tokenArray, priority)
             if !tokenArray.hasNext {
+                if gDebugLogging.boolValue { DLog("Token array fully consumed") }
                 tokenArray.didFinish()
                 garbage.append(tokenArray)
                 queue.removeFirst()
             }
             if !shouldContinue {
-                if gDebugLogging.boolValue { DLog("Stopping early with counts=\(queues.map { $0.count })") }
+                if gDebugLogging.boolValue { DLog("Stopping early with number remaining=\(queues.map { $0.totalNumberRemaining })") }
                 break
             }
         }
@@ -247,12 +251,14 @@ private class TwoTierTokenQueue {
     }
 
     func removeAll() {
+        DLog("remove all")
         for i in 0..<queues.count {
             queues[i].removeAll()
         }
     }
 
     func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
+        if gDebugLogging.boolValue { DLog("add \(tokenArray.count) tokens, highpri=\(highPriority)") }
         queues[highPriority ? 0 : 1].append(tokenArray)
     }
 }
@@ -608,6 +614,7 @@ private class TokenExecutorImpl {
 #endif
 
     private func execute() {
+        DLog("execute()")
 #if DEBUG
         assertQueue()
 #endif
@@ -629,20 +636,22 @@ private class TokenExecutorImpl {
         if !delegate.tokenExecutorShouldQueueTokens() {
             slownessDetector.measure(event: PTYSessionSlownessEventExecute) {
                 var first = true
+                if gDebugLogging.boolValue { DLog("Will enumerate token arrays") }
                 tokenQueue.enumerateTokenArrays { (vector, priority) in
                     if first {
                         delegate.tokenExecutorWillExecuteTokens()
                         first = false
                     }
-                    if gDebugLogging.boolValue { DLog("Begin executing a batch of tokens") }
+                    if gDebugLogging.boolValue { DLog("Begin executing a batch of tokens of size \(vector.numberRemaining)") }
                     defer {
-                        if gDebugLogging.boolValue { DLog("Done executing a batch of tokens") }
+                        if gDebugLogging.boolValue { DLog("Done executing a batch of tokens. Vector has \(vector.numberRemaining) remaining.") }
                     }
                     return executeTokens(vector,
                                          priority: priority,
                                          accumulatedLength: &accumulatedLength,
                                          delegate: delegate)
                 }
+                if gDebugLogging.boolValue { DLog("Finished enumerating token arrays") }
             }
         }
         if accumulatedLength > 0 || hadTokens {
@@ -679,15 +688,16 @@ private class TokenExecutorImpl {
                 } else {
                     consume = commit
                 }
-                if gDebugLogging.boolValue { DLog("commit=\(commit) shouldCommit=\(consume)") }
                 if consume {
                     vectorHasNext = vector.consume()
                 } else {
                     vectorHasNext = false
                 }
+                if gDebugLogging.boolValue { DLog("commit=\(commit) consume=\(consume) remaining=\(vector.numberRemaining)") }
             }
         }
         if quitVectorEarly {
+            if gDebugLogging.boolValue { DLog("quitVectorEarly") }
             return true
         }
         if isPaused {
