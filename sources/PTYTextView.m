@@ -2903,7 +2903,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     DLog(@"-[PTYTextView copy:] called");
     DLog(@"%@", [NSThread callStackSymbols]);
 
-    if ([self selectionIsBig:selection]) {
+    if ([self selectionIsBig:selection] && [iTermAdvancedSettingsModel asyncCopy]) {
         [self asynchronouslyVendSelectedTextWithStyle:iTermCopyTextStylePlainText
                                          cappedAtSize:INT_MAX
                                     minimumLineNumber:0
@@ -2944,7 +2944,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (void)copySelectionWithStyles:(iTermSelection *)selection {
-    if ([self selectionIsBig:selection]) {
+    if ([self selectionIsBig:selection] && [iTermAdvancedSettingsModel asyncCopy]) {
         [self asynchronouslyVendSelectedTextWithStyle:iTermCopyTextStyleAttributed
                                          cappedAtSize:INT_MAX
                                     minimumLineNumber:0
@@ -2998,7 +2998,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     DLog(@"-[PTYTextView copyWithControlSequences:] called");
     DLog(@"%@", [NSThread callStackSymbols]);
 
-    if ([self selectionIsBig:selection]) {
+    if ([self selectionIsBig:selection] && [iTermAdvancedSettingsModel asyncCopy]) {
         [self asynchronouslyVendSelectedTextWithStyle:iTermCopyTextStyleWithControlSequences
                                          cappedAtSize:INT_MAX
                                     minimumLineNumber:0

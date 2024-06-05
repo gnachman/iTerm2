@@ -387,6 +387,7 @@ DEFINE_FLOAT(verticalBarCursorWidth, 1, SECTION_TERMINAL @"Width of vertical bar
 DEFINE_BOOL(acceptOSC7, YES, SECTION_TERMINAL @"Accept OSC 7 to set username, hostname, and path.");
 DEFINE_BOOL(detectPasswordInput, YES, SECTION_TERMINAL @"Show key at cursor at password prompt?");
 DEFINE_BOOL(tabsWrapAround, NO, SECTION_TERMINAL @"Tabs wrap around to the next line.\nThis is useful for preserving tabs for later copying to the pasteboard. It breaks backward compatibility and may cause layout problems with programs that don’t expect this behavior.");
+DEFINE_BOOL(asyncCopy, YES, SECTION_TERMINAL @"Copy large selections asynchronously?\nWhen you copy over 1000 lines, nothing is done until another app attempts to paste it. This fixes a problem where pressing Cmd-A causes a brief hang.");
 DEFINE_STRING(sshSchemePath, @"ssh", SECTION_TERMINAL @"Command to run when handling an ssh:// URL.");
 DEFINE_INT(defaultTabStopWidth, 8, SECTION_TERMINAL @"Default tab stop width for new sessions.\nNote: this will break drawing in emacs and other apps.");
 DEFINE_BOOL(convertItalicsToReverseVideoForTmux, YES, SECTION_TERMINAL @"Convert italics to reverse video in tmux integration?");

@@ -53,6 +53,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)alternateMouseScroll;
 + (BOOL)alwaysUseStatusBarComposer;
 + (BOOL)animateGraphStatusBarComponents;
++ (BOOL)asyncCopy;
 + (BOOL)autoSearch;
 + (void)setAlternateMouseScroll:(BOOL)value;
 + (NSString *)alternateMouseScrollStringForDown;
