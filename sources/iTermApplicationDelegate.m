@@ -1331,8 +1331,12 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     NSString *command = [self parseCommandFromArguments];
     if (command) {
+        NSString *fullCommand = [NSString stringWithFormat:@"/usr/bin/login -fpq %@ %@ -c %@",
+                                 [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+                                 [iTermOpenDirectory userShell] ?: @"/bin/zsh",
+                                 [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
         [[iTermController sharedInstance] openWindow:YES
-                                             command:command
+                                             command:fullCommand
                                          initialText:nil
                                            directory:nil
                                             hostname:nil
