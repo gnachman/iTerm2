@@ -374,6 +374,14 @@
     return [self.delegate composerManager:self syntaxHighlighterForAttributedString:attributedString];
 }
 
+- (void)minimalComposerForwardMenuItem:(NSMenuItem *)menuItem {
+    [self.delegate composerManager:self forwardMenuItem:menuItem];
+}
+
+- (BOOL)minimalComposerShouldForwardCopy:(iTermMinimalComposerViewController *)composer {
+    return [self.delegate composerManagerShouldForwardCopy:self];
+}
+
 - (void)minimalComposerDidBecomeFirstResponder:(iTermMinimalComposerViewController *)composer {
     [self.delegate composerManagerDidBecomeFirstResponder:self];
 }

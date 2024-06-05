@@ -349,6 +349,14 @@ workingDirectory:(NSString *)pwd
     return [self.delegate minimalComposer:self syntaxHighlighterForAttributedString:textStorage];
 }
 
+- (BOOL)composerTextViewShouldForwardCopy {
+    return [self.delegate minimalComposerShouldForwardCopy:self];
+}
+
+- (void)composerForwardMenuItem:(NSMenuItem *)menuItem {
+    [self.delegate minimalComposerForwardMenuItem:menuItem];
+}
+
 #pragma mark - iTermDragHandleViewDelegate
 
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)movement {

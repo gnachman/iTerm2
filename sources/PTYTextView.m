@@ -491,11 +491,13 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     if ([item action]==@selector(performFindPanelAction:) && item.tag == NSFindPanelActionShowFindPanel) {
         return YES;
     }
+
+    // NOTE: If you add more methods for copying also update ComposerTextView.
     if ([item action]==@selector(copy:) ||
         [item action]==@selector(copyWithStyles:) ||
         [item action]==@selector(copyWithControlSequences:)) {
         // These commands are allowed only if there is a selection.
-        return [_selection hasSelection] || [self anyPortholeHasSelection] || [self.delegate textViewSelectedCommandMark] != nil;
+        return [self canCopy];
     }
     if (([item action]==@selector(performFindPanelAction:) && item.tag == NSFindPanelActionSetFindString) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
@@ -2885,6 +2887,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     } else {
         [self copy:self];
     }
+}
+
+- (BOOL)canCopy {
+    return [_selection hasSelection] || [self anyPortholeHasSelection] || [self.delegate textViewSelectedCommandMark] != nil;
 }
 
 - (void)copy:(id)sender {

@@ -55,6 +55,8 @@ NS_ASSUME_NONNULL_BEGIN
        fetchSuggestions:(iTermSuggestionRequest *)request;
 - (BOOL)minimalComposerHandleKeyDown:(NSEvent *)event;
 - (NSResponder *)minimalComposerNextResponder;
+- (BOOL)minimalComposerShouldForwardCopy:(iTermMinimalComposerViewController *)composer;
+- (void)minimalComposerForwardMenuItem:(NSMenuItem *)menuItem;
 
 @end
 

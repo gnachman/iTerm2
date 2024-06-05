@@ -17755,6 +17755,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _textview;
 }
 
+- (void)composerManager:(iTermComposerManager *)composerManager
+        forwardMenuItem:(NSMenuItem *)menuItem {
+    [_textview performSelector:menuItem.action withObject:menuItem];
+}
+
+- (BOOL)composerManagerShouldForwardCopy:(iTermComposerManager *)composerManager {
+    if (![self haveAutoComposer]) {
+        return NO;
+    }
+    return _textview.canCopy;
+}
+
 - (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString {
     return [[[iTermSyntaxHighlighter alloc] init:attributedString

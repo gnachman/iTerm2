@@ -26,6 +26,8 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerSyntaxHighlighterForAttributedString:)
     func composerSyntaxHighlighter(textStorage: NSMutableAttributedString) -> SyntaxHighlighting
     @objc func composerHandleKeyDown(event: NSEvent) -> Bool
+    @objc func composerTextViewShouldForwardCopy() -> Bool
+    @objc func composerForwardMenuItem(_ menuItem: NSMenuItem)
 
     // Optional
     @objc(composerTextViewDidResignFirstResponder) optional func composerTextViewDidResignFirstResponder()
@@ -75,6 +77,20 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     @objc
+    override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        let superOk = super.validateMenuItem(menuItem)
+        if superOk {
+            return true
+        }
+        if menuItem.action == #selector(copy(_:)) ||
+            menuItem.action == #selector(copyWithStyles(_:)) ||
+            menuItem.action == #selector(copyWithControlSequences(_:)) {
+            return composerDelegate?.composerTextViewShouldForwardCopy() ?? false
+        }
+        return false
+    }
+
+    @objc
     var prefix: NSMutableAttributedString? {
         willSet {
             suggestion = nil
@@ -84,6 +100,29 @@ class ComposerTextView: MultiCursorTextView {
                 prefix.addAttribute(.promptKey, value: true, range: prefix.wholeRange)
             }
             updatePrefix()
+        }
+    }
+
+    @objc override func copy(_ sender: Any?) {
+        if let menuItem = sender as? NSMenuItem {
+            if super.validateMenuItem(menuItem) {
+                super.copy(sender)
+            } else {
+                composerDelegate?.composerForwardMenuItem(menuItem)
+            }
+        }
+    }
+
+
+    @objc func copyWithStyles(_ sender: Any) {
+        if let menuItem = sender as? NSMenuItem {
+            composerDelegate?.composerForwardMenuItem(menuItem)
+        }
+    }
+
+    @objc func copyWithControlSequences(_ sender: Any) {
+        if let menuItem = sender as? NSMenuItem {
+            composerDelegate?.composerForwardMenuItem(menuItem)
         }
     }
 
