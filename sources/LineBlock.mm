@@ -1759,6 +1759,7 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
     for (int i = 0; i < [originalRegex length]; i++) {
         BOOL nextCharIsFirstInSet = NO;
         unichar c = [originalRegex characterAtIndex:i];
+        const BOOL wasEscaped = escaped;
         switch (c) {
             case '\\':
                 escaped = !escaped;
@@ -1798,6 +1799,9 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
         prevChar = c;
         firstCharInSet = nextCharIsFirstInSet;
         [rewritten appendFormat:@"%C", c];
+        if (wasEscaped) {
+            escaped = NO;
+        }
     }
 
     return rewritten;
