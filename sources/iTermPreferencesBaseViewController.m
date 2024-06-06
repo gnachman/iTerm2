@@ -896,7 +896,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     id control = [aNotification object];
     PreferenceInfo *info = [_keyMap objectForKey:control];
-    DLog(@"Control text did change for control, info.key=%@", control, info.key);
+    DLog(@"Control text did change for control %@, info.key=%@", control, info.key);
     if (info) {
         [self settingChanged:control];
     }

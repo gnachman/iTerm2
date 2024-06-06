@@ -71,6 +71,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 @interface iTermFindDriver : NSObject
 
++ (iTermFindMode)mode;
+
 @property (nonatomic, weak) id<iTermFindDriverDelegate> delegate;
 @property (nonatomic, readonly) NSViewController<iTermFindViewController> *viewController;
 @property (nonatomic, readonly) NSViewController<iTermFilterViewController> *filterViewController;

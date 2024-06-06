@@ -57,6 +57,10 @@ static NSString *gSearchString;
     } _delayState;
 }
 
++ (iTermFindMode)mode {
+    return gFindMode;
+}
+
 + (void)loadUserDefaults {
     NSNumber *mode = [[NSUserDefaults standardUserDefaults] objectForKey:@"findMode_iTerm"];
     if (!mode) {

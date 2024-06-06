@@ -2174,6 +2174,21 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return result;
 }
 
+- (NSString *)stringByEscapingForRegex {
+    NSCharacterSet *specialCharacters = [NSCharacterSet characterSetWithCharactersInString:@"*?+[(){}^$|\\-&"];
+    NSMutableString *escapedString = [NSMutableString stringWithCapacity:[self length]];
+
+    for (NSUInteger i = 0; i < [self length]; i++) {
+        unichar character = [self characterAtIndex:i];
+        if ([specialCharacters characterIsMember:character]) {
+            [escapedString appendString:@"\\"];
+        }
+        [escapedString appendFormat:@"%C", character];
+    }
+
+    return escapedString;
+}
+
 - (NSString *)stringByKeepingLastCharacters:(NSInteger)count {
     if (count >= self.length) {
         return self;
