@@ -364,7 +364,21 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
     prompt.allowRemember = NO;
     [prompt requestLocaleFromUserForProfile:nil inWindow:self.view.window];
     NSString *locale = prompt.selectedLocale;
-    if (locale) {
+    if (locale && [self unsignedIntegerForKey:KEY_CHARACTER_ENCODING] == NSUTF8StringEncoding && ![locale containsString:@"UTF-8"]) {
+        NSString *guid = [self stringForKey:KEY_GUID] ?: @"";
+        const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"Warning! This profile uses a custom locale that doesn't use UTF-8 as its character encoding, but your profile *is* using UTF-8. This can cause error messages and non-ASCII text to appear wrong."
+                                   actions:@[ @"Change Locale", @"Keep This Locale"]
+                                 accessory:nil
+                                identifier:[@"NoSyncUTF8Mismatch_" stringByAppendingString:guid]
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:@"Wrong Encoding Detected"
+                                    window:self.view.window];
+        if (selection == kiTermWarningSelection0) {
+            [self changeCustomLocale:sender];
+            nil;
+        }
+
         [self setString:locale forKey:KEY_CUSTOM_LOCALE];
         [self updateCustomLocaleControls];
     }
