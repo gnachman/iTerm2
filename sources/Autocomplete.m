@@ -578,7 +578,6 @@ precededByWhitespace:(BOOL)precededByWhitespace
         int endX;
         int endY;
 
-        findContext_.hasWrapped = YES;
         AcLog(@"Continue search...");
 
         NSDate* cs = [NSDate date];
