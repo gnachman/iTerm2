@@ -755,16 +755,21 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 }
 
-- (void)drawBoxInContext:(CGContextRef)context offset:(CGPoint)offset iteration:(int)iteration {
+- (void)drawBoxInContext:(CGContextRef)context iteration:(int)iteration {
     assert(context);
-    CGPoint adjustedOffset = offset;
-    adjustedOffset.y += self.boxShift;
+    CGFloat systemScale = [NSImage systemScale];
+    if (systemScale < 1) {
+        systemScale = 1.0;
+    }
+    // For reasons I don't understand this can be off by one when there is vertical spacing.
+    CGPoint offset = CGPointMake(0, (self.boxShift * _descriptor.scale) / systemScale);
+    NSLog(@"Draw box %@ at scale %@ with offset %@ boxShift=%@ systemScale=%@ mainScreen=%@", _string, @(_descriptor.scale), NSStringFromPoint(offset), @(self.boxShift), @(systemScale), [[NSScreen mainScreen] it_uniqueName]);
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:[_string characterAtIndex:0]
                                                        cellSize:NSMakeSize(_descriptor.cellSize.width * _descriptor.scale,
                                                                            _descriptor.cellSize.height * _descriptor.scale)
                                                            scale:_descriptor.scale
                                                        isPoints:NO
-                                                          offset:adjustedOffset
+                                                          offset:offset
                                                           color:[[self textColorForIteration:iteration] CGColor]
                                                            useNativePowerlineGlyphs:_useNativePowerlineGlyphs];
 }
@@ -778,7 +783,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     [transform translateXBy:offset.x yBy:offset.y + (_descriptor.baselineOffset + _descriptor.cellSize.height) * _descriptor.scale];
     [transform scaleXBy:1 yBy:-1];
     [transform concat];
-    [self drawBoxInContext:_context offset:CGPointZero iteration:iteration];
+    [self drawBoxInContext:_context iteration:iteration];
     [NSGraphicsContext restoreGraphicsState];
 }
 

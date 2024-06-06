@@ -662,7 +662,7 @@ color:(NSColor *)color {
         // Fast path
         CGContextRef context = [[NSGraphicsContext currentContext] CGContext];
         CGContextSetFillColorWithColor(context, colorRef);
-        CGContextFillRect(context, CGRectMake(0, 0, cellSize.width, cellSize.height));
+        CGContextFillRect(context, CGRectMake(offset.x, offset.y, cellSize.width, cellSize.height));
         return;
     }
     BOOL solid = NO;

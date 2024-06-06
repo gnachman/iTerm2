@@ -23,6 +23,16 @@
 
 @implementation NSImage (iTerm)
 
+// When you draw an image into an image context, you get a mystery scale that
+// isn't necessarily the scale of NSScreen.main.
+// That assumption is made elsewhere in this file and I probably need to fix
+// it.
++ (CGFloat)systemScale {
+    NSImage *image = [NSImage imageOfSize:NSMakeSize(1, 1) drawBlock:^{}];
+    NSBitmapImageRep *rep = [image it_bitmapImageRep];
+    return rep.size.width;
+}
+
 + (NSSize)pointSizeOfGeneratedImageWithPixelSize:(NSSize)pixelSize {
     // This might make a 1x or a 2x bitmap depending on ✨something secret✨
     NSImage *test = [NSImage imageOfSize:NSMakeSize(1, 1) drawBlock:^{
