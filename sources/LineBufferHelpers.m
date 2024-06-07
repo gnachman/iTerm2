@@ -40,6 +40,22 @@
     return length;
 }
 
+- (id)mutableCopy {
+    return [[MutableResultRange alloc]initWithPosition:position length:length];
+}
+
+@end
+
+@implementation MutableResultRange
+
+- (void)setPosition:(int)position {
+    self->position = position;
+}
+
+- (void)setLength:(int)length {
+    self->length = length;
+}
+
 @end
 
 @implementation XYRange

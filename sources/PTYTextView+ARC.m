@@ -803,6 +803,20 @@ iTermCommandInfoViewControllerDelegate>
     return options;
 }
 
+- (NSString *)selectedTextWithTrailingWhitespace {
+    iTermStringSelectionExtractor *extractor =
+    [[iTermStringSelectionExtractor alloc] initWithSelection:self.selection
+                                                    snapshot:[self.dataSource snapshotDataSource]
+                                                     options:iTermSelectionExtractorOptionsCopyLastNewline
+                                                    maxBytes:INT_MAX
+                                           minimumLineNumber:0];
+
+    iTermRenegablePromise<NSString *> *promise =
+    [iTermSelectionPromise string:extractor
+                       allowEmpty:YES];
+    return [promise wait].maybeFirst;
+}
+
 - (iTermRenegablePromise<NSString *> *)promisedStringForSelectedTextCappedAtSize:(int)maxBytes
                                                                minimumLineNumber:(int)minimumLineNumber
                                                                       timestamps:(BOOL)timestamps

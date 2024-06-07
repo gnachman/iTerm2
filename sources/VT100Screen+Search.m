@@ -137,6 +137,9 @@
             if (multipleResults) {
                 opts |= FindMultipleResults;
             }
+            if ([aString containsString:@"\n"]) {
+                opts |= FindOptMultiLine;
+            }
             [tempLineBuffer prepareToSearchFor:aString startingAt:startPos options:opts mode:mode withContext:context];
             context.hasWrapped = NO;
         }];

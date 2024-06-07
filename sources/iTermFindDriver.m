@@ -8,6 +8,7 @@
 #import "iTermFindDriver.h"
 
 #import "DebugLogging.h"
+#import "FindContext.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermFindPasteboard.h"
 #import "iTermSearchHistory.h"
@@ -539,7 +540,7 @@ static NSString *gSearchString;
         } else {
             [_delegate findString:subString
                  forwardDirection:direction
-                             mode:mode
+                             mode:mode | ([subString containsString:@"\n"] ? FindOptMultiLine : 0)
                        withOffset:offset
               scrollToFirstResult:scrollToFirstResult
                             force:force];

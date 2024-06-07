@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "VT100GridTypes.h"
 
+@class MutableResultRange;
+
 // When receiving search results, you'll get an array of this class. Positions
 // can be converted to x,y coordinates with -convertPosition:withWidth:toX:toY.
 // length gives the number of screen_char_t elements matching the search (which
@@ -23,6 +25,14 @@
 @property (nonatomic, readonly) int length;
 
 - (instancetype)initWithPosition:(int)position length:(int)length;
+- (MutableResultRange *)mutableCopy;
+
+@end
+
+@interface MutableResultRange : ResultRange
+
+@property (nonatomic, readwrite) int position;
+@property (nonatomic, readwrite) int length;
 
 @end
 

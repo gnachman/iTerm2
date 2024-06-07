@@ -4296,7 +4296,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
             // This will be fixed over time.
             return;
         case NSFindPanelActionSetFindString: {
-            NSString *selection = [self selectedText];
+            NSString *selectedText = [self selectedTextWithTrailingWhitespace];
             switch ([iTermFindDriver mode]) {
                 case iTermFindModeSmartCaseSensitivity:
                 case iTermFindModeCaseSensitiveSubstring:
@@ -4304,12 +4304,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                     break;
                 case iTermFindModeCaseSensitiveRegex:
                 case iTermFindModeCaseInsensitiveRegex:
-                    selection = [selection stringByEscapingForRegex];
+                    selectedText = [selectedText stringByEscapingForRegex];
                     break;
 
             }
-            if (selection) {
-                [[iTermFindPasteboard sharedInstance] setStringValueUnconditionally:selection];
+            if (selectedText) {
+                [[iTermFindPasteboard sharedInstance] setStringValueUnconditionally:selectedText];
                 [[iTermFindPasteboard sharedInstance] updateObservers:_delegate internallyGenerated:YES];
             }
             break;
