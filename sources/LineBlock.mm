@@ -2363,7 +2363,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
                         DLog(@"Accept this result by initializing the range.");
                         multiLineRange = [range mutableCopy];
                     } else {
-                        DLog@("This is not the first line of the query");
+                        DLog(@"This is not the first line of the query");
                         const BOOL mustBeLast = (range.position + range.length) < lineLength;
                         if (mustBeLast && i + 1 < splitLines.count) {
                             DLog(@"The match does not extend to the end of the line and there is at least one more line after, so it doesn't match the newline.");
