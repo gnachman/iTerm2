@@ -15644,6 +15644,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (_modeHandler.mode == iTermSessionModeCopy) {
         return NO;
     }
+    if (![[self.view.scrollview ptyVerticalScroller] userScroll] && _screen.cursorY <= 3) {
+        // Would overlap cursor.
+        return NO;
+    }
+
     return [iTermProfilePreferences boolForKey:KEY_SHOW_OFFSCREEN_COMMANDLINE inProfile:self.profile];
 }
 

@@ -594,10 +594,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (iTermOffscreenCommandLine *)offscreenCommandLineBefore:(int)line {
+    DLog(@"offscreenCommandLineBefore:%@ numberOfScrollbackLines=%@ terminalSoftAlternateScreenMode=%@",
+         @(line), @(_state.numberOfScrollbackLines), @(_state.terminalSoftAlternateScreenMode));
     if (line >= _state.numberOfScrollbackLines && _state.terminalSoftAlternateScreenMode) {
         return nil;
     }
     id<VT100ScreenMarkReading> mark = [self screenMarkBeforeAbsLine:line + _state.totalScrollbackOverflow];
+    DLog(@"mark=%@ hasCode=%@", mark, @(mark.hasCode));
     if (!mark) {
         return nil;
     }
@@ -605,6 +608,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         return nil;
     }
     const long long absLine = mark.commandRange.start.y;
+    DLog(@"absLine=%@ totalScrollbackOverflow=%@ numberOfScrollbackLines=%@",
+         @(absLine), @(_state.totalScrollbackOverflow), @(_state.numberOfScrollbackLines));
     if (absLine >= _state.totalScrollbackOverflow + _state.numberOfScrollbackLines) {
         return nil;
     }
@@ -614,7 +619,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (absLine - _state.totalScrollbackOverflow == line) {
         return nil;
     }
-    if (VT100GridCoordRangeHeight([self rangeOfOutputForCommandMark:mark]) <= 3) {
+    const VT100GridCoordRange range = [self rangeOfOutputForCommandMark:mark];
+    DLog(@"range=%@", VT100GridCoordRangeDescription(range));
+    if (VT100GridCoordRangeHeight(range) <= 3) {
         // The UI will cover up the command output so it's counterproductive to show it.
         return nil;
     }
@@ -625,6 +632,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (timestamp) {
         date = [NSDate dateWithTimeIntervalSinceReferenceDate:timestamp];
     }
+    DLog(@"commandLineNumber=%@ sca=%@ date=%@", @(commandLineNumber), sca, date);
     return [[[iTermOffscreenCommandLine alloc] initWithCharacters:sca
                                                absoluteLineNumber:absLine
                                                              date:date

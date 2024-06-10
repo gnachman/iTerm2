@@ -101,6 +101,7 @@ iTermURLActionHelperDelegate>
                                                                                    minimumLineNumber:(int)minimumLineNumber
                                                                                           timestamps:(BOOL)timestamps
                                                                                            selection:(iTermSelection *)selection;
+- (NSString *)selectedTextWithTrailingWhitespace;
 
 #pragma mark - Install Shell Integration
 
