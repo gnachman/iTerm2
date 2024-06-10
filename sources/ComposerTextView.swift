@@ -322,6 +322,8 @@ class ComposerTextView: MultiCursorTextView {
     private struct Action {
         var modifiers: NSEvent.ModifierFlags
         var characters: String
+        var selector: Selector?
+
         // Return true if you handled it and don't want super.keyDown(with:) called.
         var closure: (ComposerTextView, NSEvent) -> (Bool)
     }
@@ -359,7 +361,7 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private let autoModeActions = [
-        Action(modifiers: [], characters: "\r", closure: { textView, _ in
+        Action(modifiers: [], characters: "\r", selector: #selector(insertNewline(_:)), closure: { textView, _ in
             textView.sendAction()
             return true
         }),
@@ -477,7 +479,7 @@ class ComposerTextView: MultiCursorTextView {
         let maskedModifiers = event.it_modifierFlags.intersection(mask)
 
         let action = actionsForCurrentMode.first { action in
-            action.characters == event.characters && action.modifiers == maskedModifiers
+            action.characters == event.characters && action.modifiers == maskedModifiers && action.selector == nil
         }
         if let action, action.closure(self, event) {
             return
@@ -486,6 +488,23 @@ class ComposerTextView: MultiCursorTextView {
             return
         }
         super.keyDown(with: event)
+    }
+
+    override func insertNewline(_ sender: Any?) {
+        let mask: NSEvent.ModifierFlags = [.command, .option, .shift, .control]
+        let maskedModifiers = iTermApplication.shared().it_modifierFlags.intersection(mask)
+        let action = actionsForCurrentMode.first { action in
+            return (action.characters == "\r" &&
+                    action.modifiers == maskedModifiers &&
+                    action.selector == #selector(insertNewline(_:)))
+        }
+        if let action,
+           let event = NSApp.currentEvent,
+           action.closure(self, event),
+           composerDelegate?.composerHandleKeyDown(event: event) ?? false {
+            return
+        }
+        super.insertNewline(sender)
     }
 
     private var canMoveUp: Bool {
