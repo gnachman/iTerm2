@@ -3973,6 +3973,7 @@ DQ
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bAl-3O-ik0">
                     <rect key="frame" x="20" y="19" width="313" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">When the command that produced output is partially invisible, this option shows the  last line of the prompt and the command that produced the output at the top of the session.</string>
                     <buttonCell key="cell" type="check" title="Show offscreen command line at top of session" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="Loo-aN-wrn">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
