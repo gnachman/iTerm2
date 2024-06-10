@@ -442,7 +442,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 
         // Preserve these so delta encoding will continue to work when you encode a copy.
         theCopy->_generation = _generation;
-        theCopy->_guid = [[NSUUID UUID] UUIDString];
+        theCopy->_guid = _guid;
         theCopy.hasBeenCopied = YES;
 
         return theCopy;
@@ -465,7 +465,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     theCopy->cached_numlines = cached_numlines;
     theCopy->cached_numlines_width = cached_numlines_width;
     theCopy->_generation = _generation;
-    theCopy->_guid = [[NSUUID UUID] UUIDString];
+    theCopy->_guid = _guid;
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
     theCopy.hasBeenCopied = YES;
     
