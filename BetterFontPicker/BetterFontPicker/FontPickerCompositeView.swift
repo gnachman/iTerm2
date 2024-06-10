@@ -251,6 +251,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         }
 
         for accessory in accessories {
+            (accessory as? AccessoryWrapper)?.layoutSubviews(containerHeight: bounds.height)
             let size = accessory.fittingSize
             accessory.frame = NSRect(x: x, y: CGFloat(0), width: size.width, height: size.height)
             x += size.width + margin
@@ -265,8 +266,11 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     }
 
     private var indexOfOptionsButton: Int? {
+        guard let optionsButton = optionsButtonController?.optionsButton else {
+            return nil
+        }
         return accessories.firstIndex { view in
-            (view as? AccessoryWrapper)?.subviews.first === optionsButtonController?.optionsButton
+            (view as? AccessoryWrapper)?.subviews.first === optionsButton
         }
     }
 

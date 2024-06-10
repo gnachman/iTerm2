@@ -65,7 +65,7 @@ class AccessoryWrapper: NSView {
         self.child = child
         super.init(frame: NSRect(x: 0, y: 0, width: child.bounds.width, height: height))
         addSubview(child)
-        child.frame = NSRect(x: 0, y: (height - child.bounds.height) / 2.0, width: child.bounds.width, height: child.bounds.height)
+        child.frame = NSRect(x: 0, y: 0, width: child.bounds.width, height: height)
     }
 
     required init?(coder: NSCoder) {
@@ -73,6 +73,11 @@ class AccessoryWrapper: NSView {
     }
 
     override var fittingSize: NSSize {
-        return bounds.size
+        return NSSize(width: child.fittingSize.width, height: child.frame.height)
+    }
+
+    func layoutSubviews(containerHeight height: CGFloat) {
+        NSLog("\(height)")
+        child.frame = NSRect(x: 0, y: 0, width: child.bounds.width, height: height)
     }
 }
