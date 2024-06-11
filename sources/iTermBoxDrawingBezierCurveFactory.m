@@ -372,27 +372,27 @@ offset:(CGPoint)offset {
     }
     switch (code) {
         case 0xE0A0:
-            [self drawPDFWithName:@"PowerlineVersionControlBranch" options:0 cellSize:cellSize stretch:NO color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlineVersionControlBranch" options:0 cellSize:cellSize stretch:NO color:color antialiased:YES offset:offset];
             break;
 
         case 0xE0A1:
-            [self drawPDFWithName:@"PowerlineLN" options:0 cellSize:cellSize stretch:NO color:color antialiased:NO];
+            [self drawPDFWithName:@"PowerlineLN" options:0 cellSize:cellSize stretch:NO color:color antialiased:NO offset:offset];
             break;
 
         case 0xE0A2:
-            [self drawPDFWithName:@"PowerlinePadlock" options:0 cellSize:cellSize stretch:NO color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlinePadlock" options:0 cellSize:cellSize stretch:NO color:color antialiased:YES offset:offset];
             break;
         case 0xE0B0:
-            [self drawPDFWithName:@"PowerlineSolidRightArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlineSolidRightArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B2:
-            [self drawPDFWithName:@"PowerlineSolidLeftArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlineSolidLeftArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B1:
-            [self drawPDFWithName:@"PowerlineLineRightArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlineLineRightArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B3:
-            [self drawPDFWithName:@"PowerlineLineLeftArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlineLineLeftArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B9:  // (Extended) Negative slope diagonal line
         case 0xE0BF:
@@ -542,7 +542,8 @@ offset:(CGPoint)offset {
                cellSize:(NSSize)cellSize
                 stretch:(BOOL)stretch
                   color:(CGColorRef)color
-            antialiased:(BOOL)antialiased {
+            antialiased:(BOOL)antialiased 
+                 offset:(CGPoint)offset {
     NSImage *image = [self imageForPDFNamed:pdfName
                                    cellSize:cellSize
                                 antialiased:antialiased
@@ -551,6 +552,8 @@ offset:(CGPoint)offset {
     NSRect destination = [self drawingDestinationForImageOfSize:imageRep.size
                                                 destinationSize:cellSize
                                                         stretch:stretch];
+    destination.origin.x += offset.x;
+    destination.origin.y += offset.y;
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     [ctx saveGraphicsState];
     if (options & iTermPowerlineDrawingOptionsMirrored) {
@@ -620,7 +623,7 @@ color:(NSColor *)color {
     return self.powerlineExtendedSymbols[@(code)] != nil;
 }
 
-+ (void)drawCustomGlyphForCode:(unichar)code cellSize:(NSSize)cellSize color:(CGColorRef)color {
++ (void)drawCustomGlyphForCode:(unichar)code cellSize:(NSSize)cellSize color:(CGColorRef)color offset:(CGPoint)offset {
     NSSize adjustedCellSize = cellSize;
     if ([[iTermBoxDrawingBezierCurveFactory doubleWidthPowerlineSymbols] containsObject:@(code)]) {
         adjustedCellSize.width *= 2;
@@ -633,7 +636,8 @@ color:(NSColor *)color {
                  cellSize:adjustedCellSize
                   stretch:NO
                     color:color
-              antialiased:YES];
+              antialiased:YES
+                   offset:offset];
 }
 
 + (void)drawCodeInCurrentContext:(unichar)code
@@ -655,7 +659,8 @@ color:(NSColor *)color {
     if (useNativePowerlineGlyphs && [self haveCustomGlyph:code]) {
         [self drawCustomGlyphForCode:code
                             cellSize:cellSize
-                               color:colorRef];
+                               color:colorRef
+                              offset:offset];
         return;
     }
     if (code == iTermFullBlock) {
