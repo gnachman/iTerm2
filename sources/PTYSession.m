@@ -2551,6 +2551,15 @@ ITERM_WEAKLY_REFERENCEABLE
 
     DLog(@"Begin locale logic");
     switch ([iTermProfilePreferences unsignedIntegerForKey:KEY_SET_LOCALE_VARS inProfile:_profile]) {
+        case iTermSetLocalVarsModeMinimal: {
+            iTermLocaleGuesser *localeGuesser = [[[iTermLocaleGuesser alloc] initWithEncoding:self.encoding] autorelease];
+            NSDictionary *localeVars = [localeGuesser dictionaryWithLC_CTYPE];
+            if (localeVars) {
+                DLog(@"Merge %@", localeVars);
+                [env it_mergeFrom:localeVars];
+            }
+            break;
+        }
         case iTermSetLocalVarsModeDoNotSet:
             break;
         case iTermSetLocalVarsModeCustom: {
@@ -2653,7 +2662,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     while (YES) {
         localeVars = [prompt requestLocaleFromUserForProfile:self.originalProfile[KEY_NAME] ?: @"(Unnamed profile)"
-                                                    inWindow:self.view.window];
+                                                    inWindow:self.view.window
+                                                 cancelUsesC:YES];
         NSString *lang = localeVars[@"LANG"];
         if ([self checkForSusLocale:lang guid:self.originalProfile[KEY_GUID]]) {
             break;
@@ -2666,6 +2676,12 @@ ITERM_WEAKLY_REFERENCEABLE
         // User chose a locale and wants us to keep using it.
         [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_CUSTOM_LOCALE: lang,
                                                              KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeCustom) } inProfile:self.originalProfile
+                                                    model:self.profileModel];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                            object:self.originalProfile[KEY_GUID]];
+    } else if (prompt.remember && localeVars == nil && lang == nil) {
+        DLog(@"Minimal");
+        [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeMinimal) } inProfile:self.originalProfile
                                                     model:self.profileModel];
         [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
                                                             object:self.originalProfile[KEY_GUID]];

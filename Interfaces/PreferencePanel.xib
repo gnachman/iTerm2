@@ -3944,6 +3944,7 @@ DQ
                                 <menuItem title="Set locale environment variables automatically" state="on" tag="1" id="L20-q0-Xgn"/>
                                 <menuItem title="Do not set locale environment variables" id="aSL-AW-Ix4"/>
                                 <menuItem title="Use custom locale…" tag="2" id="kUA-h2-qDj"/>
+                                <menuItem title="Use“POSIX” locale (LC_CTYPE=encoding)" tag="3" id="cYB-U2-o7i"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
