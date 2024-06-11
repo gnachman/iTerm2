@@ -763,7 +763,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
     // For reasons I don't understand this can be off by one when there is vertical spacing.
     CGPoint offset = CGPointMake(0, (self.boxShift * _descriptor.scale) / systemScale);
-    NSLog(@"Draw box %@ at scale %@ with offset %@ boxShift=%@ systemScale=%@ mainScreen=%@", _string, @(_descriptor.scale), NSStringFromPoint(offset), @(self.boxShift), @(systemScale), [[NSScreen mainScreen] it_uniqueName]);
+    DLog(@"Draw box %@ at scale %@ with offset %@ boxShift=%@ systemScale=%@ mainScreen=%@", _string, @(_descriptor.scale), NSStringFromPoint(offset), @(self.boxShift), @(systemScale), [[NSScreen mainScreen] it_uniqueName]);
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:[_string characterAtIndex:0]
                                                        cellSize:NSMakeSize(_descriptor.cellSize.width * _descriptor.scale,
                                                                            _descriptor.cellSize.height * _descriptor.scale)
