@@ -181,6 +181,7 @@ enum {
     IBOutlet NSTextField *_aiTokenLimitLabel;
     IBOutlet NSButton *_resetAIPrompt;
 
+    IBOutlet NSTextField *_aiPluginLabel;
     IBOutlet NSButton *_enableAI;
     IBOutlet NSTextField *_pluginStatus;
     IBOutlet NSButton *_installPluginButton;
@@ -705,6 +706,11 @@ enum {
         [weakSelf setObject:tokens forKey:kPreferenceKeyAITokenLimit];
         [weakSelf updateValueForInfo:tokenLimitInfo];
     };
+
+    [self addViewToSearchIndex:_aiPluginLabel
+                   displayName:@"Install AI Plugin"
+                       phrases:@[ @"AI Plugin" ]
+                           key:kPhonyPreferenceKeyInstallAIPlugin];
 
     info = [self defineControl:_enableAI
                            key:kPreferenceKeyEnableAI

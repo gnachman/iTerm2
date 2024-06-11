@@ -457,7 +457,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     } else {
         NSLog(@"Warning: no display name for %@", key);
     }
-    if (!key) {
+    if (!key || [key hasPrefix:@"NoUserDefault"]) {
         assert(!view.accessibilityIdentifier);
         view.accessibilityIdentifier = nonnilKey;
         [_otherSearchableViews addPointer:(__bridge void *)view];

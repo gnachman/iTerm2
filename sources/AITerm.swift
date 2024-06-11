@@ -288,6 +288,19 @@ class iTermAITermGatekeeper: NSObject {
                               window: nil)
             return false
         }
+        if !iTermAITermGatekeeper.pluginInstalled() {
+            let selection = iTermWarning.show(withTitle: "You must install the AI plugin before you can use this feature.",
+                                              actions: ["Reveal in Settings", "Cancel"],
+                                              accessory: nil,
+                                              identifier: nil,
+                                              silenceable: .kiTermWarningTypePersistent,
+                                              heading: "Plugin Missing",
+                                              window: nil)
+            if selection == .kiTermWarningSelection0 {
+                PreferencePanel.sharedInstance().openToPreference(withKey: kPhonyPreferenceKeyInstallAIPlugin)
+            }
+            return false
+        }
         if !SecureUserDefaults.instance.enableAI.value {
             let selection = iTermWarning.show(withTitle: "You must enable AI features in settings before you can use this feature.",
                                               actions: ["Reveal", "Cancel"],
@@ -324,6 +337,16 @@ class iTermAITermGatekeeper: NSObject {
             return false
         }
         return true
+    }
+
+    @objc
+    static func pluginInstalled() -> Bool {
+        switch Plugin.instance() {
+        case .success:
+            return true
+        case .failure:
+            return false
+        }
     }
 
     @objc
