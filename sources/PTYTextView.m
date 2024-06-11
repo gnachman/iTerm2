@@ -5297,6 +5297,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         };
         [updated addObject:button];
     }
+    x -= 3;
+    existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermCommandInfoButton class]];
+    if (existing) {
+        existing.shouldFloat = shouldFloat;
+        [updated addObject:existing];
+    } else {
+        iTermCommandInfoButton *button = [[iTermCommandInfoButton alloc] initWithMark:mark
+                                                                                     dx:x - width];
+        button.shouldFloat = shouldFloat;
+        const long long absLine = markLine + _dataSource.totalScrollbackOverflow;
+        __weak __typeof(mark) weakMark = mark;
+        button.action = ^(NSPoint locationInWindow) {
+            [weakSelf presentCommandInfoForMark:mark
+                             absoluteLineNumber:absLine
+                                           date:mark.startDate
+                                          point:locationInWindow
+                       fromOffscreenCommandLine:NO];
+        };
+        [updated addObject:button];
+    }
     return updated;
 }
 

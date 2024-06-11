@@ -301,3 +301,15 @@ class TerminalShareButton: TerminalMarkButton {
         super.init(original)
     }
 }
+
+@available(macOS 11, *)
+@objc(iTermCommandInfoButton)
+class TerminalCommandInfoButton: TerminalMarkButton {
+    @objc(initWithMark:dx:)
+    init?(mark: VT100ScreenMarkReading, dx: Int32) {
+        super.init(identifier: -5, mark: mark, fgName: "info.circle", bgName: "info.circle.fill", dx: dx)
+    }
+    required init?(_ original: TerminalButton) {
+        super.init(original)
+    }
+}
