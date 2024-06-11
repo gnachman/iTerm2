@@ -2646,7 +2646,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSDictionary *)promptForLocale {
     NSDictionary *localeVars = nil;
     // Failed to guess.
-    iTermLocalePrompt *prompt = [[[iTermLocalePrompt alloc] init] autorelease];
+    iTermLocalePrompt *prompt = [[[iTermLocalePrompt alloc] initWithEncoding:self.encoding] autorelease];
     if (self.originalProfile.profileIsDynamic) {
         DLog(@"Disable remember");
         prompt.allowRemember = NO;

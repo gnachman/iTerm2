@@ -358,7 +358,7 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 }
 
 - (IBAction)changeCustomLocale:(id)sender {
-    iTermLocalePrompt *prompt = [[iTermLocalePrompt alloc] init];
+    iTermLocalePrompt *prompt = [[iTermLocalePrompt alloc] initWithEncoding:[self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]];
     prompt.defaultLocale = [self stringForKey:KEY_CUSTOM_LOCALE];
     prompt.message = @"Select your preferred locale:";
     prompt.allowRemember = NO;
