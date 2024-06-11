@@ -1069,6 +1069,7 @@ DQ
                 <outlet property="_advancedGPUPrefsButton" destination="2nT-Ny-kwd" id="O9q-ng-5kk"/>
                 <outlet property="_aiModel" destination="mTj-eb-v1b" id="PLv-B3-Ios"/>
                 <outlet property="_aiModelLabel" destination="P9E-Ju-OfU" id="INC-hA-t0G"/>
+                <outlet property="_aiPluginLabel" destination="jc2-ao-oIw" id="gIa-Ux-eQS"/>
                 <outlet property="_aiPrompt" destination="uwy-pf-9Wz" id="USY-oL-VPf"/>
                 <outlet property="_aiPromptLabel" destination="EDh-lZ-wQE" id="Pi6-fR-pc0"/>
                 <outlet property="_aiPromptWarning" destination="LsQ-19-iaj" id="ydN-b3-I2R"/>

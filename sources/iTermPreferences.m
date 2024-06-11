@@ -85,6 +85,7 @@ NSString *const kPreferenceKeyMaximizeThroughput = @"metalMaximizeThroughput";  
 NSString *const kPreferenceKeyEnableAPIServer = @"EnableAPIServer";
 NSString *const kPreferenceKeyAPIAuthentication = @"API Authentication Method";
 NSString *const kPreferenceKeyEnableAI = @"Enable AI";
+NSString *const kPhonyPreferenceKeyInstallAIPlugin = @"NoUserDefault Install AI Plugin";  // Not a real preference, just used to reveal setting.
 
 NSString *const kPreferenceKeyTabStyle_Deprecated = @"TabStyle";  // Pre-10.14
 NSString *const kPreferenceKeyTabStyle = @"TabStyleWithAutomaticOption";  // Pre-10.14
