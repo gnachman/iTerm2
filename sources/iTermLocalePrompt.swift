@@ -16,12 +16,19 @@ class iTermLocalePrompt: NSObject {
     @objc var defaultLocale: String?
     @objc var message: String?
     @objc var allowRemember = true
+    let encoding: String.Encoding
+
+    @objc
+    init(encoding: UInt) {
+        self.encoding = .init(rawValue: encoding)
+    }
 
     @objc(requestLocaleFromUserForProfile:inWindow:)
     @discardableResult
     func requestLocaleFromUser(profileName: String?, window: NSWindow) -> [String: String]? {
         let alert = iTermLocalePromptAlert(languages: NSLocale.preferredLanguages,
-                                           profileName: profileName)
+                                           profileName: profileName,
+                                           encoding: encoding)
         alert.allowRemember = allowRemember
         if let defaultLocale {
             alert.select(locale: defaultLocale)
@@ -68,8 +75,8 @@ extension NSPopUpButton {
         return (String(data: data, encoding: .utf8) ?? "").components(separatedBy: "\n").filter { !$0.isEmpty }
     }()
 
-    @objc
-    func populateWithLocales() {
+    @nonobjc
+    func populateWithLocales(encoding: String.Encoding) {
         let sortedLocaleComponents = Self.validLocales.map {
             LocaleComponents($0)
         }.sorted { lhs, rhs in
@@ -82,7 +89,39 @@ extension NSPopUpButton {
         // If Locale.preferredLanguages is ["en-US", "en-CA", "fr-FR"] then index will be ["en": 0, "fr": 1].
         let grouped = Dictionary(grouping: 0..<preferredLanguages.count, by: { preferredLanguages[$0] })
         let index = grouped.mapValues { $0.first! }
+
+        var good: [LocaleComponents] = []
+        var bad: [LocaleComponents] = []
+
         for components in sortedLocaleComponents {
+            var title = components.title
+            if components.encoding != "UTF-8" && encoding == .utf8 {
+                bad.append(components)
+            } else {
+                good.append(components)
+            }
+        }
+        for components in good {
+            if let quality = index[components.languageCode], quality < defaultIndexQuality {
+                defaultIndex = menu!.items.count
+                defaultIndexQuality = quality
+            }
+            menu?.addItem(withTitle: components.title, action: nil, keyEquivalent: "")
+            menu?.items.last?.representedObject = components.locale
+        }
+        @objc class Placeholder: NSObject, NSMenuItemValidation {
+            static let instance = Placeholder()
+            @objc func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+                return false
+            }
+            @objc func placeholder(_ sender: Any) {
+                fatalError()
+            }
+        }
+        menu?.addItem(.separator())
+        menu?.addItem(withTitle: "Locales with wrong encoding", action: #selector(Placeholder.placeholder(_:)), keyEquivalent: "")
+        menu?.items.last?.target = Placeholder.instance
+        for components in bad {
             if let quality = index[components.languageCode], quality < defaultIndexQuality {
                 defaultIndex = menu!.items.count
                 defaultIndexQuality = quality
@@ -103,11 +142,11 @@ class iTermLocalePromptAlert {
     @objc var allowRemember = true
     private let profileName: String?
 
-    init(languages: [String], profileName: String?) {
+    init(languages: [String], profileName: String?, encoding: String.Encoding) {
         self.languages = languages
         self.profileName = profileName
         allowRemember = profileName != nil
-        popup.populateWithLocales()
+        popup.populateWithLocales(encoding: encoding)
     }
 
     func select(locale: String) {
@@ -120,7 +159,7 @@ class iTermLocalePromptAlert {
         let alert = NSAlert()
         alert.messageText = message
         alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "Use Minimal POSIX Locale")
 
         let wrapper = NSStackView()
         wrapper.orientation = .vertical
