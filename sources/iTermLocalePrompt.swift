@@ -23,9 +23,9 @@ class iTermLocalePrompt: NSObject {
         self.encoding = .init(rawValue: encoding)
     }
 
-    @objc(requestLocaleFromUserForProfile:inWindow:)
+    @objc(requestLocaleFromUserForProfile:inWindow:cancelUsesC:)
     @discardableResult
-    func requestLocaleFromUser(profileName: String?, window: NSWindow) -> [String: String]? {
+    func requestLocaleFromUser(profileName: String?, window: NSWindow, cancelUsesC: Bool) -> [String: String]? {
         let alert = iTermLocalePromptAlert(languages: NSLocale.preferredLanguages,
                                            profileName: profileName,
                                            encoding: encoding)
@@ -36,7 +36,7 @@ class iTermLocalePrompt: NSObject {
         if let message {
             alert.message = message
         }
-        let (locale, remember, title) = alert.run(window: window)
+        let (locale, remember, title) = alert.run(window: window, cancelUsesC: cancelUsesC)
         self.remember = remember
         selectedLocale = locale
         selectedTitle = title
@@ -155,11 +155,11 @@ class iTermLocalePromptAlert {
         }
     }
 
-    func run(window: NSWindow?) -> (String?, Bool, String?) {
+    func run(window: NSWindow?, cancelUsesC: Bool) -> (String?, Bool, String?) {
         let alert = NSAlert()
         alert.messageText = message
         alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Use Minimal POSIX Locale")
+        alert.addButton(withTitle: cancelUsesC ? "Use Minimal POSIX Locale" : "Cancel")
 
         let wrapper = NSStackView()
         wrapper.orientation = .vertical

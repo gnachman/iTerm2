@@ -450,7 +450,8 @@ typedef NS_ENUM(NSUInteger, iTermLoggingStyle) {
 typedef NS_ENUM(NSUInteger, iTermSetLocalVarsMode) {
     iTermSetLocalVarsModeDoNotSet = 0,
     iTermSetLocalVarsModeSetAutomatically = 1,
-    iTermSetLocalVarsModeCustom = 2
+    iTermSetLocalVarsModeCustom = 2,
+    iTermSetLocalVarsModeMinimal = 3
 };
 
 static inline iTermLoggingStyle iTermLoggingStyleFromUserDefaultsValue(NSUInteger value) {

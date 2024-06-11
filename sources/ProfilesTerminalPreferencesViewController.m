@@ -279,6 +279,22 @@
     _localeName.stringValue = @"";
 
     switch ((iTermSetLocalVarsMode)[self unsignedIntegerForKey:KEY_SET_LOCALE_VARS]) {
+        case iTermSetLocalVarsModeMinimal: {
+            iTermLocaleGuesser *guesser = [[iTermLocaleGuesser alloc] initWithEncoding:[self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]];
+            NSDictionary *env = guesser.dictionaryWithLC_CTYPE;
+            if (!env) {
+                _localeName.stringValue = @"Invalid encoding: neither $LC_CTYPE nor $LANG set.";
+                break;
+            }
+            NSString *ctype = [[guesser dictionaryWithLC_CTYPE] objectForKey:@"LC_CTYPE"];
+            if (ctype) {
+                _localeName.stringValue = [NSString stringWithFormat:@"LC_CTYPE=%@", ctype];
+            } else {
+                DLog(@"enc=%@ %@", @([self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]), [guesser dictionaryWithLC_CTYPE]);
+                _localeName.stringValue = @"Unexpectedly missing LC_CTYPE. Report a bug.";
+            }
+            break;
+        }
         case iTermSetLocalVarsModeCustom: {
             _changeLocale.hidden = NO;
             if ([self stringForKey:KEY_CUSTOM_LOCALE].length) {
@@ -362,7 +378,7 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
     prompt.defaultLocale = [self stringForKey:KEY_CUSTOM_LOCALE];
     prompt.message = @"Select your preferred locale:";
     prompt.allowRemember = NO;
-    [prompt requestLocaleFromUserForProfile:nil inWindow:self.view.window];
+    [prompt requestLocaleFromUserForProfile:nil inWindow:self.view.window cancelUsesC:NO];
     NSString *locale = prompt.selectedLocale;
     if (locale && [self unsignedIntegerForKey:KEY_CHARACTER_ENCODING] == NSUTF8StringEncoding && ![locale containsString:@"UTF-8"]) {
         NSString *guid = [self stringForKey:KEY_GUID] ?: @"";
@@ -379,6 +395,9 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
             nil;
         }
 
+        [self setString:locale forKey:KEY_CUSTOM_LOCALE];
+        [self updateCustomLocaleControls];
+    } else if (locale) {
         [self setString:locale forKey:KEY_CUSTOM_LOCALE];
         [self updateCustomLocaleControls];
     }
