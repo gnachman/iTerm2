@@ -7627,6 +7627,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                                       profile:profile
                                                  profileModel:model];
 
+    [_tmuxController sendControlC];
     [self.variablesScope setValue:_tmuxController.clientName forVariableNamed:iTermVariableKeySessionTmuxClientName];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     _tmuxController.unicodeVersion = _unicodeVersion;
@@ -8087,7 +8088,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 // opened. Initial window opening is always blocked on establishing the server version.
 - (void)kickOffTmux {
     _haveKickedOffTmux = YES;
-    [_tmuxController sendControlC];
     [_tmuxController ping];
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];
