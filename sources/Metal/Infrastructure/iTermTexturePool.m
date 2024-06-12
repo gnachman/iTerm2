@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermTexturePool {
     NSMutableArray<id<MTLTexture>> *_textures;
     vector_uint2 _size;
+    MTLPixelFormat _pixelFormat;
     NSNumber *_generation;
 }
 
@@ -30,10 +31,12 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
-- (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size {
+- (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size
+                                    pixelFormat:(MTLPixelFormat)pixelFormat {
     @synchronized(self) {
-        if (size.x != _size.x || size.y != _size.y) {
+        if (size.x != _size.x || size.y != _size.y || pixelFormat != _pixelFormat) {
             _size = size;
+            _pixelFormat = pixelFormat;
             [_textures removeAllObjects];
             return nil;
         }
@@ -48,8 +51,16 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+- (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size {
+    // We use this when we don't care about the pixel format.
+    return [self requestTextureOfSize:size pixelFormat:MTLPixelFormatInvalid];
+}
+
 - (void)returnTexture:(id<MTLTexture>)texture {
     @synchronized(self) {
+        if (_pixelFormat != MTLPixelFormatInvalid && texture.pixelFormat != _pixelFormat) {
+            return;
+        }
         if (texture.width == _size.x && texture.height == _size.y) {
             NSNumber *generation = [(NSObject *)texture it_associatedObjectForKey:iTermTexturePoolAssociatedObjectKeyGeneration];
             if ([NSObject object:generation isEqualToObject:_generation]) {

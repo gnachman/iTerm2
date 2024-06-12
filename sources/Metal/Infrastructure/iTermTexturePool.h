@@ -15,6 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTexturePool : NSObject
 - (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size;
+- (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size
+                                    pixelFormat:(MTLPixelFormat)pixelFormat;
 - (void)returnTexture:(id<MTLTexture>)texture;
 - (void)stampTextureWithGeneration:(id<MTLTexture>)texture;
 @end

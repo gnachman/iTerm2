@@ -469,6 +469,36 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     }
 }
 
+static void iTermSaveBitmap(NSBitmapImageRep *bitmap, NSString *name) {
+    static int n;
+    n++;
+    NSString *meta = [NSString stringWithFormat:@"%@x%@,%@,%@,%@,%@,%@,%@,%@,%@,%@,%@",
+                      @(bitmap.size.width),
+                      @(bitmap.size.height),
+                      @(bitmap.bitsPerSample),
+                      @(bitmap.samplesPerPixel),
+                      @(bitmap.hasAlpha),
+                      @(bitmap.isPlanar),
+                      bitmap.colorSpaceName,
+                      @(bitmap.bitmapFormat),
+                      @(bitmap.bytesPerRow),
+                      @(bitmap.bitsPerPixel),
+                      @(bitmap.numberOfPlanes),
+                      @(bitmap.bytesPerPlane)
+    ];
+    NSMutableData *data = [NSMutableData data];
+    unsigned char *planes[5] = { 0 };
+    [bitmap getBitmapDataPlanes:planes];
+    for (NSInteger i = 0; i < bitmap.numberOfPlanes; i++) {
+        if (!planes[i]) {
+            break;
+        }
+        NSData *part = [NSData dataWithBytes:planes[i] length:bitmap.bytesPerPlane];
+        [data appendData:part];
+    }
+    [data writeToFile:[NSString stringWithFormat:@"/tmp/iterm-%@-%@-%@.rawbitmap", name, @(n), meta] atomically:NO];
+}
+
 - (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)wrapper
                                     context:(iTermMetalBufferPoolContext *)context
                                        pool:(iTermTexturePool *)pool
@@ -480,6 +510,9 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     }
 
     NSBitmapImageRep *bitmap = [image bitmapInColorSpace:colorSpace];
+    if (_debugTextures) {
+        iTermSaveBitmap(bitmap, @"initial");
+    }
     DLog(@"bitmap in colorspace %@ is %@", colorSpace, bitmap);
     // You can get an alpha-first bitmap sometimes! If my mac decides to use the LG HDR WFHD display
     // as the main display then that's what you get. Metal doesn't support these, so we have to
@@ -487,6 +520,9 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     // MTKTextureLoader doesn't do the right thing either - the colors are screwed up - so screw
     // MTKTextureLoader.
     bitmap = [bitmap it_bitmapWithAlphaLast];
+    if (_debugTextures) {
+        iTermSaveBitmap(bitmap, @"alphalast");
+    }
     DLog(@"bitmap after moving alpha last=%@", bitmap);
     if ([bitmap metalPixelFormat] == MTLPixelFormatInvalid) {
         return [self legacyTextureFromImage:image
@@ -513,6 +549,9 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
         // NOTE: There is no guarantee that the resulting bitmap has any particular size.
         // Sometimes it'll be the size you asked for.
         bitmap = [bitmap it_bitmapScaledTo:NSMakeSize(width, height)];
+        if (_debugTextures) {
+            iTermSaveBitmap(bitmap, @"rescaled");
+        }
         DLog(@"bitmap=%@", bitmap);
     }
     MTLTextureDescriptor *textureDescriptor =
@@ -523,7 +562,8 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     id<MTLTexture> texture = nil;
     if (pool) {
         texture = [pool requestTextureOfSize:simd_make_uint2(bitmap.size.width,
-                                                             bitmap.size.height)];
+                                                             bitmap.size.height)
+                                 pixelFormat:textureDescriptor.pixelFormat];
     }
     if (!texture) {
         texture = [_device newTextureWithDescriptor:textureDescriptor];
@@ -532,18 +572,7 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     MTLRegion region = MTLRegionMake2D(0, 0, bitmap.size.width, bitmap.size.height);
     const NSUInteger bytesPerRow = bitmap.bytesPerRow;
     [texture replaceRegion:region mipmapLevel:0 withBytes:bitmap.bitmapData bytesPerRow:bytesPerRow];
-#if 0
-    static int n;
-    n++;
-    [[NSImage imageWithRawData:[NSData dataWithBytes:bitmap.bitmapData length:bitmap.bytesPerRow * bitmap.size.height]
-                          size:NSMakeSize(bitmap.size.width, bitmap.size.height)
-                 bitsPerSample:bitmap.bitsPerSample
-               samplesPerPixel:bitmap.samplesPerPixel
-                   bytesPerRow:bitmap.bytesPerRow
-                      hasAlpha:bitmap.hasAlpha
-                colorSpaceName:bitmap.colorSpaceName]
-     saveAsPNGTo:[NSString stringWithFormat:@"/tmp/wtf%@.png", @(n)]];
-#endif
+
     [iTermTexture setBytesPerRow:bytesPerRow
                      rawDataSize:bytesPerRow * bitmap.size.height
                  samplesPerPixel:4
@@ -561,6 +590,7 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
                                           context:(iTermMetalBufferPoolContext *)context
                                              pool:(iTermTexturePool *)pool
                                        colorSpace:(NSColorSpace *)colorSpace {
+    DLog(@"Using legacy method");
     NSImage *dest = [[NSImage alloc] initWithSize:image.image.size];
     [dest lockFocus];
     [image.image drawInRect:NSMakeRect(0, 0, image.image.size.width, image.image.size.height)];

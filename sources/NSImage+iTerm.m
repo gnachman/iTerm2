@@ -725,6 +725,7 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
                                                    NSBitmapFormatThirtyTwoBitLittleEndian |
                                                    NSBitmapFormatSixteenBitLittleEndian);  // Doesn't apply to 16-bit ints, not quite sure what this is for.
     if (self.bitmapFormat & unsupportedFormatsMask) {
+        DLog(@"Bitmap format %@ no good", @(self.bitmapFormat));
         return MTLPixelFormatInvalid;
     }
     if (self.bitmapFormat & NSBitmapFormatFloatingPointSamples) {
@@ -740,8 +741,10 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
 
 - (NSBitmapImageRep *)it_bitmapWithAlphaLast {
     if (!(self.bitmapFormat & NSBitmapFormatAlphaFirst)) {
+        DLog(@"Bitmap has alpha first so nothing to do");
         return self;
     }
+    DLog(@"Moving alpha from the first to the last place");
     const unsigned char *source = self.bitmapData;
     const NSUInteger samplesPerPixel = self.samplesPerPixel;
     const NSUInteger bytesPerSample = self.bitsPerSample / 8;

@@ -115,6 +115,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, copy) NSString *vertexFunctionName;
 @property (nonatomic, copy) NSString *fragmentFunctionName;
 @property (nonatomic, weak) id<iTermMetalDebugInfoFormatter> formatterDelegate;
+@property (nonatomic) BOOL debugTextures;
 
 // Pool of vertex buffers for quads of iTermVertex.
 @property (nonatomic, readonly) iTermMetalBufferPool *verticesPool;

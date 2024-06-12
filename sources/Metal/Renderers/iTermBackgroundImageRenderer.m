@@ -64,6 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                fragmentFunctionName:@"iTermBackgroundImageClampFragmentShader"
                                                            blending:nil
                                                 transientStateClass:[iTermBackgroundImageRendererTransientState class]];
+        _metalRenderer.debugTextures = YES;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
         if (iTermTextIsMonochrome()) {
             _alphaPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(float)];
