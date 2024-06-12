@@ -5482,8 +5482,12 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)echoProbeDidSucceed:(iTermEchoProbe *)echoProbe {
     __weak __typeof(self) weakSelf = self;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    // I have to use a paused side-effect here because it may want to change the echoProbeDelegate,
+    // which requires a trip through performBlockWithJoinedThreads:. It's unsafe to call
+    // performBlockWithJoinedThreads: during a non-paused side effect.
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [weakSelf.echoProbeDelegate echoProbeDidSucceed:echoProbe];
+        [unpauser unpause];
     }];
 }
 
