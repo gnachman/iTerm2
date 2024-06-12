@@ -491,7 +491,7 @@ class DraggableImageView: NSImageView {
 
     override func mouseUp(with event: NSEvent) {
         draggingState = .ground
-        if event.clickCount == 2, let url {
+        if event.clickCount == 1, let url {
             NSWorkspace.shared.open(url)
         }
     }
