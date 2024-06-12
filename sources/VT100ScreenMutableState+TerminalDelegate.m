@@ -890,6 +890,9 @@
 
 - (void)terminalReportIconTitle {
     DLog(@"begin");
+    if (!self.allowTitleReporting) {
+        return;
+    }
     [self willSendReport];
     __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
@@ -900,6 +903,9 @@
 
 - (void)terminalReportWindowTitle {
     DLog(@"begin");
+    if (!self.allowTitleReporting) {
+        return;
+    }
     [self willSendReport];
     __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
