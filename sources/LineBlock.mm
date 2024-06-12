@@ -87,12 +87,30 @@ static dispatch_queue_t gDeallocQueue;
 @end
 
 typedef struct {
+    // Is this structure valid?
     BOOL found;
+
+    // Offset of the start of the wrapped line from bufferStart.
     int prev;
+
+    // How many empty lines to skip at prev.
     int numEmptyLines;
+
+    // Raw line number.
     int index;
+
+    // Length of the raw line.
     int length;
 } LineBlockLocation;
+
+static NSString *LineBlockLocationDescription(LineBlockLocation location) {
+    return [NSString stringWithFormat:@"<LineBlockLocation found=%@ prev=%@ numEmptyLines=%@ index=%@ length=%@>",
+            @(location.found),
+            @(location.prev),
+            @(location.numEmptyLines),
+            @(location.index),
+            @(location.length)];
+}
 
 static LineBlockLocation LineBlockMakeLocation(int offset, int length, int index) {
     return (LineBlockLocation){
@@ -1097,6 +1115,14 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     if (*lineLength > width) {
         // return an infix of the full line
         const int i = location.prev + offset + width;
+        ITAssertWithMessage(i < _characterBuffer.size && i >= 0,
+                            @"i=%@ characterBuffer.size=%@ startOffset=%@ offset=%@ location=%@ width=%@",
+                            @(i),
+                            @(_characterBuffer.size),
+                            @(_startOffset),
+                            @(offset),
+                            LineBlockLocationDescription(location),
+                            @(width));
         const screen_char_t c = bufferStart[i];
 
         if (width > 1 && ScreenCharIsDWC_RIGHT(c)) {
