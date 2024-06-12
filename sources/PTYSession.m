@@ -13428,7 +13428,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     if (self.isTmuxClient) {
         return;
     }
-    if (!self.screenAllowTitleSetting || !self.terminalIsTrusted) {
+    if (!self.allowTitleReporting || !self.terminalIsTrusted) {
         return;
     }
     NSString *title = [self screenIconTitle] ?: @"";
@@ -13441,7 +13441,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     if (self.isTmuxClient) {
         return;
     }
-    if (!self.screenAllowTitleSetting || !self.terminalIsTrusted) {
+    if (!self.allowTitleReporting || !self.terminalIsTrusted) {
         return;
     }
     NSString *s = [NSString stringWithFormat:@"\033]l%@\033\\",
