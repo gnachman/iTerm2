@@ -523,6 +523,7 @@ DEFINE_BOOL(disableTopRightIndicators, NO, SECTION_DRAWING @"Disable indicator i
 DEFINE_STRING(nativeRenderingCSSLight, @"", SECTION_DRAWING @"Path to CSS file to customize native drawing (for light background colors).");
 DEFINE_STRING(nativeRenderingCSSDark, @"", SECTION_DRAWING @"Path to CSS file to customize native drawing (for dark background colors).");
 DEFINE_BOOL(supportPowerlineExtendedSymbols, YES, SECTION_DRAWING @"Include extended symbols when drawing Powerline natively.");
+DEFINE_BOOL(alwaysUseLineStyleMarks, NO, SECTION_DRAWING @"Always use line-style marks?");
 
 #pragma mark - Semantic History
 

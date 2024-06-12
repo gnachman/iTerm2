@@ -13830,7 +13830,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         _config.desiredComposerRows = desiredComposerRows;
         dirty = YES;
     }
-    const BOOL useLineStyleMarks = [iTermPreferences boolForKey:kPreferenceAutoComposer];
+    const BOOL useLineStyleMarks = [iTermPreferences boolForKey:kPreferenceAutoComposer] || [iTermAdvancedSettingsModel alwaysUseLineStyleMarks];
     if (useLineStyleMarks != _config.useLineStyleMarks) {
         _config.useLineStyleMarks = useLineStyleMarks;
         dirty = YES;

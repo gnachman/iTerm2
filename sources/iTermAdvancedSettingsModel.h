@@ -51,6 +51,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)allowTabbarInTitlebarAccessoryBigSur;
 + (BOOL)allowLiveResize;
 + (BOOL)alternateMouseScroll;
++ (BOOL)alwaysUseLineStyleMarks;
 + (BOOL)alwaysUseStatusBarComposer;
 + (BOOL)animateGraphStatusBarComponents;
 + (BOOL)autoSearch;

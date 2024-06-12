@@ -38,6 +38,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor);
 
 extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
+extern const int iTermTextDrawingHelperLineStileMarkRightInsetCells;
 
 @interface iTermTextDrawingHelper : NSObject
 

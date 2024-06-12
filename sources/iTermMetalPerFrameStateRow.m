@@ -99,7 +99,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     *lineStyleMark = mark.lineStyle;
     if (mark.command.length && mark.lineStyle) {
-        *lineStyleMarkRightInset = 9;
+        *lineStyleMarkRightInset = iTermTextDrawingHelperLineStileMarkRightInsetCells;
     } else {
         *lineStyleMarkRightInset = 0;
     }

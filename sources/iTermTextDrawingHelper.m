@@ -55,6 +55,7 @@ const CGFloat iTermOffscreenCommandLineVerticalPadding = 8.0;
 
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
+const int iTermTextDrawingHelperLineStileMarkRightInsetCells = 12;
 
 typedef struct {
     CGContextRef maskGraphicsContext;
@@ -1166,7 +1167,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             [merged set];
             NSRect rect;
             rect.origin.x = 0;
-            int buttonCells = 9;
+            int buttonCells = iTermTextDrawingHelperLineStileMarkRightInsetCells;
             if (!mark.command.length) {
                 buttonCells = 0;
             }
