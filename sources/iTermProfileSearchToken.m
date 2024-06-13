@@ -7,9 +7,9 @@
 //
 
 #import "iTermProfileSearchToken.h"
+#import "NSArray+iTerm.h"
 
-static NSString *const kTagRestrictionOperator = @"tag:";
-static NSString *const kTitleRestrictionOperator = @"name:";
+NSString *const kTagRestrictionOperator = @"tag:";
 
 @interface iTermProfileSearchToken()
 @property(nonatomic, copy) NSArray *strings;
@@ -20,6 +20,8 @@ static NSString *const kTitleRestrictionOperator = @"name:";
 
 @implementation iTermProfileSearchToken {
     NSRange _range;
+    NSArray<NSString *> *_operators;
+    NSArray<NSString *> *_nonTagOperators;
 }
 
 // Valid phrases look like
@@ -38,8 +40,17 @@ static NSString *const kTitleRestrictionOperator = @"name:";
 //
 // For backward compatibility, * may occur in place of ^, but it has no effect.
 - (instancetype)initWithPhrase:(NSString *)originalPhrase {
+    return [self initWithPhrase:originalPhrase operators:@[ kTagRestrictionOperator, @"name:" ]];
+}
+
+- (instancetype)initWithPhrase:(NSString *)originalPhrase operators:(NSArray<NSString *> *)operators {
     self = [super init];
     if (self) {
+        _operators = [operators copy];
+        _nonTagOperators = [operators filteredArrayUsingBlock:^BOOL(NSString *op) {
+            return ![op isEqualToString:kTagRestrictionOperator];
+        }];
+
         // First, parse an operator like tag: or name:, which must be at the beginning.
         NSString *phrase = originalPhrase;
         if ([phrase hasPrefix:@"-"]) {
@@ -47,7 +58,6 @@ static NSString *const kTitleRestrictionOperator = @"name:";
             phrase = [originalPhrase substringFromIndex:1];
         }
         NSString *string = phrase;
-        NSArray *operators = @[ kTagRestrictionOperator, kTitleRestrictionOperator ];
         for (NSString *operator in operators) {
             if ([phrase hasPrefix:operator]) {
                 string = [phrase substringFromIndex:operator.length];
@@ -80,15 +90,44 @@ static NSString *const kTitleRestrictionOperator = @"name:";
     return self;
 }
 
-- (BOOL)matchesAnyWordInNameWords:(NSArray *)titleWords {
-    if ([_operator isEqualToString:kTagRestrictionOperator]) {
+- (instancetype)initWithTag:(NSString *)tag {
+    return [self initWithTag:tag operators:@[ kTagRestrictionOperator, @"name:" ]];
+}
+
+- (instancetype)initWithTag:(NSString *)tag operators:(NSArray<NSString *> *)operators {
+    self = [super init];
+    if (self) {
+        _operators = [operators copy];
+        _nonTagOperators = [operators filteredArrayUsingBlock:^BOOL(NSString *op) {
+            return ![op isEqualToString:kTagRestrictionOperator];
+        }];
+        _negated = NO;
+        self.operator = kTagRestrictionOperator;
+        self.anchorStart = NO;
+        self.anchorEnd = NO;
+        self.strings = [tag componentsSeparatedByString:@" "];
+    }
+    return self;
+}
+
+- (BOOL)matchesAnyWordIn:(NSArray<NSString *> *)words operator:(NSString *)operator {
+    if (_operator != nil && ![operator isEqualToString:_operator]) {
+        // This query token has an operator but the words (correspnding to a phrase in the document)
+        // do not match it. For example, token is "title:foo" and words are "foo" with operator "text:".
+        return NO;
+    }
+    return [self matchesAnyWordInWords:words];
+}
+
+- (BOOL)matchesAnyWordInNameWords:(NSArray<NSString *> *)titleWords {
+    if (_operator != nil && ![_nonTagOperators containsObject:_operator]) {
         return NO;
     }
     return [self matchesAnyWordInWords:titleWords];
 }
 
 - (BOOL)matchesAnyWordInTagWords:(NSArray *)tagWords {
-    if ([_operator isEqualToString:kTitleRestrictionOperator]) {
+    if (_operator == nil || [_nonTagOperators containsObject:_operator]) {
         return NO;
     }
     return [self matchesAnyWordInWords:tagWords];
@@ -121,10 +160,8 @@ static NSString *const kTitleRestrictionOperator = @"name:";
     return NO;
 }
 
-- (void)dealloc {
-    [_strings release];
-    [_operator release];
-    [super dealloc];
+- (BOOL)isTag {
+    return ([_operator isEqualToString:kTagRestrictionOperator]);
 }
 
 @end

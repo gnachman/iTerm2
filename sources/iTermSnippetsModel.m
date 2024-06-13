@@ -7,6 +7,7 @@
 
 #import "iTermSnippetsModel.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermNotificationCenter+Protected.h"
 #import "iTermPreferences.h"
 #import "iTermWarning.h"
@@ -297,6 +298,56 @@
     return [_snippets objectPassingTest:^BOOL(iTermSnippet *snippet, NSUInteger index, BOOL *stop) {
         return [snippet matchesActionKey:actionKey];
     }];
+}
+
++ (BOOL)snippet:(iTermSnippet *)snippet matchesQuery:(NSString *)queryString {
+    if (queryString.length == 0) {
+        return YES;
+    }
+    NSArray<NSString *> *operators = @[ @"tag:", @"title:", @"text:" ];
+    iTermProfileStyleSearchEngineQuery *query =
+        [[iTermProfileStyleSearchEngineQuery alloc] initWithQuery:queryString
+                                                        operators:operators];
+    iTermProfileStyleSearchEngine *engine = [[iTermProfileStyleSearchEngine alloc] initWithQuery:query];
+
+    NSDictionary<NSString *, NSString *> *phrases = @{ @"title:": snippet.title ?: @"",
+                                                       @"text:": snippet.value ?: @"" };
+    iTermProfileStyleSearchEngineDocument *doc =
+    [[iTermProfileStyleSearchEngineDocument alloc] initWithPhrases:phrases
+                                                              tags:snippet.tags];
+    iTermProfileStyleSearchEngineResult *result = [engine searchWithDocument:doc sloppy:NO];
+    return result != nil;
+}
+
+- (NSArray<iTermSnippet *> *)snippetsMatchingSearchQuery:(NSString *)queryString
+                                          additionalTags:(NSArray<NSString *> *)additionalTags
+                                               tagsFound:(out BOOL *)tagsFoundPtr {
+    if (queryString.length == 0 && additionalTags.count == 0) {
+        return [self.snippets copy];
+    }
+    NSArray<NSString *> *operators = @[ @"tag:", @"title:", @"text:" ];
+    iTermProfileStyleSearchEngineQuery *query =
+        [[iTermProfileStyleSearchEngineQuery alloc] initWithQuery:queryString
+                                                        operators:operators];
+    for (NSString *tag in additionalTags) {
+        [query addTag:tag];
+    }
+    iTermProfileStyleSearchEngine *engine = [[iTermProfileStyleSearchEngine alloc] initWithQuery:query];
+
+    NSArray<iTermSnippet *> *filteredSnippets =
+    [self.snippets filteredArrayUsingBlock:^BOOL(iTermSnippet *snippet) {
+        NSDictionary<NSString *, NSString *> *phrases = @{ @"title:": snippet.title ?: @"",
+                                                           @"text:": snippet.value ?: @"" };
+        iTermProfileStyleSearchEngineDocument *doc =
+        [[iTermProfileStyleSearchEngineDocument alloc] initWithPhrases:phrases
+                                                                  tags:snippet.tags];
+        iTermProfileStyleSearchEngineResult *result = [engine searchWithDocument:doc sloppy:NO];
+        return result != nil;
+    }];
+    if (tagsFoundPtr) {
+        *tagsFoundPtr = [additionalTags count] > 0 || query.hasTags;
+    }
+    return filteredSnippets;
 }
 
 - (void)moveSnippetsWithGUIDs:(NSArray<NSString *> *)guids

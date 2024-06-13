@@ -103,7 +103,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Same as componentsInShellCommand but \r, \n, \t, and \a map to the letters r, n, t, and a,
 // not to controls.
-- (NSArray *)componentsBySplittingProfileListQuery;
+- (NSArray<NSString *> *)componentsBySplittingProfileListQuery;
 
 - (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s;
 - (NSString *)stringByReplacingEscapedChar:(unichar)echar withString:(NSString *)s;

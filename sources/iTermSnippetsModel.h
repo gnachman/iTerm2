@@ -67,6 +67,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable iTermSnippet *)snippetWithGUID:(NSString *)guid;
 - (nullable iTermSnippet *)snippetWithActionKey:(id)actionKey;
 
+- (NSArray<iTermSnippet *> *)snippetsMatchingSearchQuery:(NSString *)query
+                                          additionalTags:(NSArray<NSString *> *)additionalTags
+                                               tagsFound:(out BOOL * _Nullable)tagsFoundPtr;
++ (BOOL)snippet:(iTermSnippet *)snippet matchesQuery:(NSString *)queryString;
+
 @end
 
 @interface iTermSnippetsDidChangeNotification : iTermBaseNotification

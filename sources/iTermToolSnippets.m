@@ -12,6 +12,7 @@
 #import "iTermActionsModel.h"
 #import "iTermApplication.h"
 #import "iTermEditSnippetWindowController.h"
+#import "iTermProfileSearchToken.h"
 #import "iTermSearchField.h"
 #import "iTermSnippetsModel.h"
 #import "iTermTuple.h"
@@ -281,20 +282,58 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 - (void)updateModel {
     _unfilteredSnippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
-    [self setFilteredSnippetsFrom:_unfilteredSnippets];
+    _filteredSnippets = [[iTermSnippetsModel sharedInstance] snippetsMatchingSearchQuery:_searchField.stringValue
+                                                                          additionalTags:[self.toolWrapper.delegate.delegate toolbeltSnippetTags]
+                                                                               tagsFound:&_haveTags];
 }
 
-// Also updates _haveTags
-- (void)setFilteredSnippetsFrom:(NSArray<iTermSnippet *> *)unfilteredSnippets {
-    NSArray<NSString *> *tags = [self.toolWrapper.delegate.delegate toolbeltSnippetTags];
-    NSString *query = _searchField.stringValue;
-    _filteredSnippets = [unfilteredSnippets filteredArrayUsingBlock:^BOOL(iTermSnippet *snippet) {
-        if (![snippet hasTags:tags]) {
+- (NSArray<iTermProfileSearchToken *> *)parseFilter:(NSString*)filter {
+    NSArray *phrases = [filter componentsBySplittingProfileListQuery];
+    NSMutableArray<iTermProfileSearchToken *> *tokens = [NSMutableArray array];
+    for (NSString *phrase in phrases) {
+        iTermProfileSearchToken *token = [[iTermProfileSearchToken alloc] initWithPhrase:phrase];
+        [tokens addObject:token];
+    }
+    return tokens;
+}
+
+- (BOOL)doesSnippetWithText:(NSString *)text
+                       tags:(NSArray *)tags
+                matchFilter:(NSArray<iTermProfileSearchToken *> *)tokens
+               nameIndexSet:(NSMutableIndexSet *)nameIndexSet
+               tagIndexSets:(NSArray *)tagIndexSets {
+    NSArray* nameWords = [text componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    for (iTermProfileSearchToken *token in tokens) {
+        // Search each word in tag until one has this token as a prefix.
+        // First see if this token occurs in the title
+        BOOL found = [token matchesAnyWordInNameWords:nameWords];
+
+        if (found) {
+            if (token.negated) {
+                return NO;
+            }
+            [nameIndexSet addIndexesInRange:token.range];
+        }
+        // If not try each tag.
+        for (int j = 0; !found && j < [tags count]; ++j) {
+            // Expand the jth tag into an array of the words in the tag
+            NSArray* tagWords = [[tags objectAtIndex:j] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+            found = [token matchesAnyWordInTagWords:tagWords];
+            if (found) {
+                if (token.negated) {
+                    return NO;
+                }
+                NSMutableIndexSet *indexSet = tagIndexSets[j];
+                [indexSet addIndexesInRange:token.range];
+            }
+        }
+        if (!token.negated && !found && text != nil) {
+            // Failed to match a non-negated token. If name is nil then we don't really care about the
+            // answer and we just want index sets.
             return NO;
         }
-        return query.length == 0 || [snippet.title containsString:query] || [snippet.value containsString:query];
-    }];
-    _haveTags = [[self.toolWrapper.delegate.delegate toolbeltSnippetTags] count] > 0;
+    }
+    return YES;
 }
 
 - (NSSet<NSString *> *)filteredGUIDs {

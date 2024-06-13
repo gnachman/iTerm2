@@ -72,48 +72,13 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 
 - (void)load {
     _allSnippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
-    _filteredSnippets = [_allSnippets filteredArrayUsingBlock:^BOOL(iTermSnippet *snippet) {
-        return [self snippetMatchesQuery:snippet];
-    }];
-}
-
-- (iTermTuple<NSString *, NSSet<NSString *> *> *)phraseAndTagsFromQuery {
-    NSString *query = self.query;
-    if (query.length == 0) {
-        return [iTermTuple tupleWithObject:@"" andObject:nil];
-    }
-    NSMutableSet<NSString *> *tags = [NSMutableSet set];
-    NSRange tagRange = [query rangeOfString:@"tag:"];
-    while (tagRange.location != NSNotFound) {
-        if (tagRange.location == 0 || [query characterAtIndex:tagRange.location - 1] == ' ') {
-            NSString *tag = [[[query substringFromIndex:tagRange.location + @"tag:".length] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] firstObject];
-            if (tag.length) {
-                NSString *before = [[query substringToIndex:tagRange.location] stringByTrimmingTrailingWhitespace];
-                NSString *after = [[query substringFromIndex:NSMaxRange(tagRange) + tag.length] stringByTrimmingLeadingWhitespace];
-                query = [before stringByAppendingString:after];
-            }
-            [tags addObject:tag];
-            tagRange = [query rangeOfString:@"tag:"];
-        } else {
-            break;
-        }
-    }
-    return [iTermTuple tupleWithObject:query andObject:tags];
+    _filteredSnippets = [[iTermSnippetsModel sharedInstance] snippetsMatchingSearchQuery:self.query
+                                                                          additionalTags:@[]
+                                                                               tagsFound:nil];
 }
 
 - (BOOL)snippetMatchesQuery:(iTermSnippet *)snippet {
-    iTermTuple<NSString *, NSSet<NSString *> *> *phraseTags = [self phraseAndTagsFromQuery];
-    NSString *query = phraseTags.firstObject;
-    NSSet<NSString *> *tags = phraseTags.secondObject;
-    if (tags.count && ![tags isSubsetOfSet:[NSSet setWithArray:snippet.tags]]) {
-        return NO;
-    }
-    if (query.length == 0) {
-        return YES;
-    }
-    return ([snippet.tags containsObject:query] ||
-            [snippet.title localizedCaseInsensitiveContainsString:query] ||
-            [snippet.value localizedCaseInsensitiveContainsString:query]);
+    return [iTermSnippetsModel snippet:snippet matchesQuery:self.query];
 }
 
 - (NSInteger)filteredIndex:(NSInteger)unfilteredIndex {
@@ -454,7 +419,8 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     NSAttributedString *titleAttributedString =
     [NSAttributedString attributedStringWithString:[@" " stringByAppendingString:trimmedTitle]
                                         attributes:attributes];
-    titleAttributedString = [self attributedString:titleAttributedString byHighlightingSubstring:self.query];
+    titleAttributedString = [titleAttributedString highlightMatchesForQuery:self.query
+                                                           phraseIdentifier:@"title:"];
 
     if (_filteredSnippets[row].tags.count) {
         NSArray<NSAttributedString *> *substrings = [_filteredSnippets[row].tags flatMapWithBlock:^id _Nullable(NSString * _Nonnull tag) {
@@ -475,32 +441,6 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
         textField.attributedStringValue = titleAttributedString;
     }
     return cellView;
-}
-
-- (NSAttributedString *)attributedString:(NSAttributedString *)document byHighlightingSubstring:(NSString *)query {
-    const NSRange range = [document.string rangeOfString:query
-                                                 options:NSCaseInsensitiveSearch
-                                                   range:NSMakeRange(0, document.string.length)];
-    if (range.location == NSNotFound) {
-        return document;
-    }
-
-    NSFontManager *fontManager = [NSFontManager sharedFontManager];
-    NSMutableAttributedString *result = [document mutableCopy];
-    [result enumerateAttributesInRange:range options:0 usingBlock:^(NSDictionary<NSAttributedStringKey,id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop) {
-        NSMutableDictionary *modifiedAttrs = [attrs mutableCopy];
-        modifiedAttrs[NSBackgroundColorAttributeName] = [NSColor yellowColor];
-        modifiedAttrs[NSForegroundColorAttributeName] = [NSColor blackColor];
-        NSFont *font = attrs[NSFontAttributeName];
-        if (font) {
-            NSFont *boldFont = [fontManager convertFont:font toHaveTrait:NSBoldFontMask];
-            if (boldFont) {
-                modifiedAttrs[NSFontAttributeName] = boldFont;
-            }
-        }
-        [result setAttributes:modifiedAttrs range:range];
-    }];
-    return result;
 }
 
 - (NSView *)viewForValueColumnOnRow:(NSInteger)row {
@@ -545,9 +485,8 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     NSAttributedString *unhighlightedAttributedString =
     [NSAttributedString attributedStringWithString:string
                                         attributes:attributes];
-    textField.attributedStringValue = [self attributedString:unhighlightedAttributedString
-                                     byHighlightingSubstring:self.query];
-
+    textField.attributedStringValue = [unhighlightedAttributedString highlightMatchesForQuery:self.query
+                                                                             phraseIdentifier:@"text:"];
     return cellView;
 }
 

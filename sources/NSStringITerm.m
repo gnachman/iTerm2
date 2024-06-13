@@ -205,8 +205,81 @@
             stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"];
 }
 
-- (NSArray *)componentsBySplittingProfileListQuery {
-    return [self componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+- (NSArray<NSString *> *)componentsBySplittingProfileListQuery {
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+
+    BOOL inDoubleQuotes = NO; // Are we inside double quotes?
+    BOOL escape = NO;  // Should this char be escaped?
+    NSMutableString *currentValue = [NSMutableString string];
+    BOOL isFirstCharacterOfWord = YES;
+
+    for (NSInteger i = 0; i <= self.length; i++) {
+        unichar c;
+        if (i < self.length) {
+            c = [self characterAtIndex:i];
+            if (c == 0) {
+                // Pretty sure this can't happen, but better to be safe.
+                c = ' ';
+            }
+        } else {
+            // Signifies end-of-string.
+            c = 0;
+            escape = NO;
+        }
+
+        if (c == '\\' && !escape) {
+            escape = YES;
+            continue;
+        }
+
+        if (escape) {
+            isFirstCharacterOfWord = NO;
+            escape = NO;
+            if (inDoubleQuotes) {
+                // Determined by testing with bash.
+                if (c == '"') {
+                    [currentValue appendString:@"\""];
+                } else if (c == '\\') {
+                    [currentValue appendString:@"\\"];
+                } else {
+                    [currentValue appendFormat:@"\\%C", c];
+                }
+            } else {
+                [currentValue appendFormat:@"%C", c];
+            }
+            continue;
+        }
+
+        if (c == '"') {
+            inDoubleQuotes = !inDoubleQuotes;
+            isFirstCharacterOfWord = NO;
+            continue;
+        }
+        if (c == 0) {
+            inDoubleQuotes = NO;
+        }
+
+        // Treat end-of-string like whitespace.
+        BOOL isWhitespace = (c == 0 || iswspace(c));
+
+        if (!inDoubleQuotes && isWhitespace) {
+            if (!isFirstCharacterOfWord) {
+                [result addObject:currentValue];
+
+                currentValue = [NSMutableString string];
+                isFirstCharacterOfWord = YES;
+            }
+            // Ignore whitespace not in quotes or escaped.
+            continue;
+        }
+
+        if (isFirstCharacterOfWord) {
+            isFirstCharacterOfWord = NO;
+        }
+        [currentValue appendFormat:@"%C", c];
+    }
+
+    return result;
 }
 
 - (NSString *)it_substringToIndex:(NSInteger)index {
