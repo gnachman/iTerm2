@@ -202,6 +202,9 @@ class iTermAIClient {
     // Runs on any queue. Throws a PluginError or does nothing.
     func validate() throws {
         DLog("validate")
+        if (!iTermAdvancedSettingsModel.generativeAIAllowed()) {
+            throw PluginError(reason: "Plugin not allowed by administator.")
+        }
         switch Plugin.instance() {
         case .success(let plugin):
             guard let pluginVersion = try? plugin.version() else {

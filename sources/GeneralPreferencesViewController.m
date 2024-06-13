@@ -764,7 +764,7 @@ enum {
     DLog(@"problem=%@", problem);
     if (problem) {
         _pluginStatus.stringValue = problem;
-        _installPluginButton.enabled = YES;
+        _installPluginButton.enabled = [iTermAdvancedSettingsModel generativeAIAllowed];
         _pluginOK = NO;
         __weak __typeof(self) weakSelf = self;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -792,6 +792,7 @@ enum {
     _resetAIPrompt.enabled = allowed;
     _customAIEndpoint.enabled = allowed;
     _useLegacyCompletionsAPI.enabled = allowed;
+    _enableAI.enabled = [iTermAdvancedSettingsModel generativeAIAllowed];
 
 }
 
