@@ -61,6 +61,17 @@ void *iTermRealloc(void *p, NSInteger count, size_t unitSize)
     return replacement;
 }
 
+void *iTermZeroingRealloc(void *p, NSInteger formerCount, NSInteger count, size_t size) {
+    char *newPointer = (char *)iTermRealloc(p, count, size);
+    if (count <= formerCount) {
+        return (void *)newPointer;
+    }
+    memset(newPointer + iTermSafeSignedNonnegativeMultiply(formerCount, size),
+           0,
+           iTermSafeSignedNonnegativeMultiply(count - formerCount, size));
+    return newPointer;
+}
+
 void *iTermMemdup(const void *data, size_t count, size_t size) {
     void *dest = iTermUninitializedCalloc(count, size);
     const size_t numBytes = count * size;

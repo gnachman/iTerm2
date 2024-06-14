@@ -21,6 +21,9 @@ void *iTermUninitializedCalloc(NSInteger count, size_t unitSize);
 // Stubbornly refuses to allow signed integers to overflow. Use `free` to dispose of this pointer.
 void *iTermRealloc(void *p, NSInteger count, size_t size);
 
+// Prefer this. It zeros out newly allocated memory.
+void *iTermZeroingRealloc(void *p, NSInteger formerCount, NSInteger count, size_t size);
+
 // Copy a chunk of data into a newly malloced region.
 void *iTermMemdup(const void *data, size_t count, size_t size);
 

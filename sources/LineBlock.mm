@@ -534,10 +534,14 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
                        continuation:(screen_char_t)continuation
                                cert:(id<iTermLineBlockMutationCertificate>)cert {
     if (cll_entries == cll_capacity) {
+        const int formerCapacity = cll_capacity;
         cll_capacity *= 2;
         cll_capacity = MAX(1, cll_capacity);
         [cert setCumulativeLineLengthsCapacity:cll_capacity];
-        metadata_ = (LineBlockMetadata *)iTermRealloc((void *)metadata_, cll_capacity, sizeof(LineBlockMetadata));
+        metadata_ = (LineBlockMetadata *)iTermZeroingRealloc((void *)metadata_,
+                                                             formerCapacity,
+                                                             cll_capacity,
+                                                             sizeof(LineBlockMetadata));
         if (gEnableDoubleWidthCharacterLineCache) {
             memset((LineBlockMetadata *)metadata_ + cll_entries,
                    0,
