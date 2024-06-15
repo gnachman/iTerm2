@@ -303,7 +303,11 @@ iTermCommandInfoViewControllerDelegate>
         }
         return;
     }
+    [self updateCursorAndUnderlinedRange:event];
+}
 
+- (void)updateCursorAndUnderlinedRange:(NSEvent *)event {
+    const VT100GridCoord coord = [self coordForEvent:event];
     __weak __typeof(self) weakSelf = self;
     DLog(@"updateUnderlinedURLs in screen:\n%@", [self.dataSource compactLineDumpWithContinuationMarks]);
     [self.lastUrlActionCanceler cancelOperation];

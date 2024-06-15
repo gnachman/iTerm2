@@ -46,6 +46,7 @@
     URLAction *action = [self urlAction];
     action.string = filename;
     action.actionType = kURLActionOpenURL;
+    action.hover = YES;
     return action;
 }
 

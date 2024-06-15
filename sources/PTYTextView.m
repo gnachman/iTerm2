@@ -3390,7 +3390,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 #pragma mark - Cursor
 
 - (void)updateCursor:(NSEvent *)event {
-    [self updateCursor:event action:nil];
+    [self updateCursorAndUnderlinedRange:event];
 }
 
 - (VT100GridCoord)moveCursorHorizontallyTo:(VT100GridCoord)target from:(VT100GridCoord)cursor {
