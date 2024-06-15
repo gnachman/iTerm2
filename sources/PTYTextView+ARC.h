@@ -80,6 +80,7 @@ iTermURLActionHelperDelegate>
 
 // Returns whether any change was made.
 - (BOOL)updateCursor:(NSEvent *)event action:(nullable URLAction *)action;
+- (void)updateCursorAndUnderlinedRange:(NSEvent *)event;
 - (BOOL)setCursor:(NSCursor *)cursor;
 - (BOOL)mouseIsOverImageInEvent:(NSEvent *)event;
 
