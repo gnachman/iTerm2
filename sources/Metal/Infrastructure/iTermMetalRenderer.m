@@ -514,22 +514,6 @@ static void iTermSaveBitmap(NSBitmapImageRep *bitmap, NSString *name) {
         iTermSaveBitmap(bitmap, @"initial");
     }
     DLog(@"bitmap in colorspace %@ is %@", colorSpace, bitmap);
-    // You can get an alpha-first bitmap sometimes! If my mac decides to use the LG HDR WFHD display
-    // as the main display then that's what you get. Metal doesn't support these, so we have to
-    // manually twiddle the bits around. There doesn't seem to be a better system. And
-    // MTKTextureLoader doesn't do the right thing either - the colors are screwed up - so screw
-    // MTKTextureLoader.
-    bitmap = [bitmap it_bitmapWithAlphaLast];
-    if (_debugTextures) {
-        iTermSaveBitmap(bitmap, @"alphalast");
-    }
-    DLog(@"bitmap after moving alpha last=%@", bitmap);
-    if ([bitmap metalPixelFormat] == MTLPixelFormatInvalid) {
-        return [self legacyTextureFromImage:image
-                                    context:context
-                                       pool:pool
-                                 colorSpace:colorSpace];
-    }
 
     // Calculate a safe size for the image while preserving its aspect ratio.
     NSUInteger width, height;
@@ -554,6 +538,24 @@ static void iTermSaveBitmap(NSBitmapImageRep *bitmap, NSString *name) {
         }
         DLog(@"bitmap=%@", bitmap);
     }
+
+    // You can get an alpha-first bitmap sometimes! If my mac decides to use the LG HDR WFHD display
+    // as the main display then that's what you get. Metal doesn't support these, so we have to
+    // manually twiddle the bits around. There doesn't seem to be a better system. And
+    // MTKTextureLoader doesn't do the right thing either - the colors are screwed up - so screw
+    // MTKTextureLoader.
+    bitmap = [bitmap it_bitmapWithAlphaLast];
+    if (_debugTextures) {
+        iTermSaveBitmap(bitmap, @"alphalast");
+    }
+    DLog(@"bitmap after moving alpha last=%@", bitmap);
+    if ([bitmap metalPixelFormat] == MTLPixelFormatInvalid) {
+        return [self legacyTextureFromImage:image
+                                    context:context
+                                       pool:pool
+                                 colorSpace:colorSpace];
+    }
+
     MTLTextureDescriptor *textureDescriptor =
     [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:[bitmap metalPixelFormat]
                                                        width:bitmap.size.width
