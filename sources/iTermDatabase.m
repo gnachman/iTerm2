@@ -110,7 +110,6 @@
         return;
     }
     NSString *statement = [self formatSQL:sql vaList:args];
-    NSLog(@"%@", statement);
     DebugLogImpl(__FILE__,
                  __LINE__,
                  __FUNCTION__,
