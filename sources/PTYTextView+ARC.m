@@ -279,25 +279,42 @@ iTermCommandInfoViewControllerDelegate>
 
 #pragma mark - Underlined Actions
 
+- (BOOL)shouldUnderlineLinkUnderCursorForEvent:(NSEvent *)event {
+    const BOOL commandPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
+    if (!commandPressed) {
+        return NO;
+    }
+    const VT100GridCoord coord = [self coordForEvent:event];
+    const BOOL semanticHistoryAllowed = (self.window.isKeyWindow ||
+                                         [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory]);
+    if (!semanticHistoryAllowed) {
+        return NO;
+    }
+    if (VT100GridCoordEquals(coord, VT100GridCoordInvalid)) {
+        return NO;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]) {
+        return NO;
+    }
+    if (coord.y < 0) {
+        return NO;
+    }
+    return YES;
+}
+
 // Update range of underlined chars indicating cmd-clickable url.
 - (void)updateUnderlinedURLs:(NSEvent *)event {
     const BOOL commandPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
     DLog(@"command pressed=%@ flags=%llx", @(commandPressed), (unsigned long long)event.it_modifierFlags);
     // Optimization
     if (!commandPressed && ![self hasUnderline]) {
+        DLog(@"Command not pressed AND I don't have an underline");
         return;
     }
-    const BOOL semanticHistoryAllowed = (self.window.isKeyWindow ||
-                                         [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory]);
-    const VT100GridCoord coord = [self coordForEvent:event];
-
-    if (!commandPressed ||
-        !semanticHistoryAllowed ||
-        VT100GridCoordEquals(coord, VT100GridCoordInvalid) ||
-        ![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] ||
-        coord.y < 0) {
+    if (!commandPressed || ![self shouldUnderlineLinkUnderCursorForEvent:event]) {
         const BOOL changedUnderline = [self removeUnderline];
         const BOOL cursorChanged = [self updateCursor:event action:nil];
+        DLog(@"Don't want an underline. changedUnderline=%@ cursorChanged=%@", @(changedUnderline), @(cursorChanged));
         if (changedUnderline || cursorChanged) {
             [self requestDelegateRedraw];
         }
@@ -307,12 +324,20 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (void)updateCursorAndUnderlinedRange:(NSEvent *)event {
+    DLog(@"updateCursorAndUnderlinedRange:%@", event);
     const VT100GridCoord coord = [self coordForEvent:event];
     __weak __typeof(self) weakSelf = self;
     DLog(@"updateUnderlinedURLs in screen:\n%@", [self.dataSource compactLineDumpWithContinuationMarks]);
     [self.lastUrlActionCanceler cancelOperation];
+    self.lastUrlActionCanceler = nil;
+    DLog(@"Request action for click at %@", VT100GridCoordDescription(coord));
+    if (![self shouldUnderlineLinkUnderCursorForEvent:event]) {
+        [self finishUpdatingUnderlinesWithAction:nil event:event];
+        return;
+    }
     self.lastUrlActionCanceler =
     [_urlActionHelper urlActionForClickAtCoord:coord completion:^(URLAction *action) {
+        DLog(@"Action for click at %@ is %@", VT100GridCoordDescription(coord), action);
         [weakSelf finishUpdatingUnderlinesWithAction:action
                                                event:event];
     }];
@@ -320,22 +345,27 @@ iTermCommandInfoViewControllerDelegate>
 
 - (void)finishUpdatingUnderlinesWithAction:(URLAction *)action
                                      event:(NSEvent *)event {
+    DLog(@"finishUpdatingUnderlinesWithAction:%@", action);
     if (!action) {
+        DLog(@"No action: remove underline");
         [self removeUnderline];
         [self updateCursor:event action:action];
         return;
     }
-
+    DLog(@"There is an action");
     const VT100GridCoord coord = [self coordForMouseLocation:[NSEvent mouseLocation]];
     if (!VT100GridWindowedRangeContainsCoord(action.range, coord)) {
+        DLog(@"Mouse not in action's range");
         return;
     }
 
     if ([iTermAdvancedSettingsModel enableUnderlineSemanticHistoryOnCmdHover]) {
+        DLog(@"Setting underlined range to %@", VT100GridWindowedRangeDescription(action.range));
         self.drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.range,
                                                                                    [self.dataSource totalScrollbackOverflow]);
     }
 
+    DLog(@"Request redraw and update cursor");
     [self requestDelegateRedraw];  // It would be better to just display the underlined/formerly underlined area.
     [self updateCursor:event action:action];
 }
