@@ -598,9 +598,7 @@ static void HandleSigChld(int n) {
 
 #pragma mark Task Launching Helpers
 
-// Returns a NSMutableDictionary containing the key-value pairs defined in the
-// global "environ" variable.
-- (NSMutableDictionary *)mutableEnvironmentDictionary {
++ (NSMutableDictionary *)mutableEnvironmentDictionary {
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     extern char **environ;
     if (environ != NULL) {
@@ -621,6 +619,12 @@ static void HandleSigChld(int n) {
         }
     }
     return result;
+}
+
+// Returns a NSMutableDictionary containing the key-value pairs defined in the
+// global "environ" variable.
+- (NSMutableDictionary *)mutableEnvironmentDictionary {
+    return [PTYTask mutableEnvironmentDictionary];
 }
 
 - (NSArray<NSString *> *)environWithOverrides:(NSDictionary *)env {

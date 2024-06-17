@@ -173,6 +173,8 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 @property(nonatomic) BOOL ttySizeInitialized;
 @property (nonatomic, readonly) iTermWinSizeController *winSizeController;
 
++ (NSMutableDictionary *)mutableEnvironmentDictionary;
+
 - (instancetype)init;
 
 - (BOOL)hasBrokenPipe;
