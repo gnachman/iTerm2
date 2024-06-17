@@ -2542,7 +2542,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if ([iTermAdvancedSettingsModel addUtilitiesToPATH]) {
-        NSString *path = env[PATH_ENVNAME] ?: [NSString stringWithUTF8String:_PATH_STDPATH];
+        NSString *path = env[PATH_ENVNAME] ?: [[PTYTask mutableEnvironmentDictionary] objectForKey:PATH_ENVNAME] ?: [NSString stringWithUTF8String:_PATH_STDPATH];
         NSArray *pathComponents = [path componentsSeparatedByString:@":"] ?: @[];
         pathComponents = [pathComponents arrayByAddingObject:[iTermPathToSSH() stringByDeletingLastPathComponent]];
         path = [pathComponents componentsJoinedByString:@":"];
