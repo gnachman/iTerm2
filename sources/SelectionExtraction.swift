@@ -377,6 +377,13 @@ class AsyncSelectionProvider: NSObject, NSPasteboardWriting {
         let or = promise.wait()
         let result = or.maybeFirst
         if let obj = result as? NSObject {
+            if let attributedString = obj as? NSAttributedString {
+                if let data = try? attributedString.data(from: NSRange(from: 0, to: attributedString.length),
+                                                         documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]) {
+                    DLog("Return data from attributed string \(attributedString)")
+                    return data
+                }
+            }
             let length = (result as? Destination)?.length ?? -1
             DLog("Return result of length \(length), type \(NSStringFromClass(type(of: obj)))")
             return result
