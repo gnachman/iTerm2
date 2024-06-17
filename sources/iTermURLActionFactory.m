@@ -208,6 +208,10 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 }
 
 - (void)tryPrompt {
+    if (![iTermAdvancedSettingsModel enableCmdClickPromptForShowCommandInfo]) {
+        [self fail];
+        return;
+    }
     URLAction *action = [self urlActionForPrompt];
     if (action) {
         [self completeWithAction:action];
@@ -314,7 +318,10 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     }
     VT100GridWindowedRange range = { 0 };
     id<VT100ScreenMarkReading> mark = [self.extractor.dataSource commandMarkAt:self.coord range:&range];
-    if (!mark || mark.promptRange.start.x < 0 || !mark.command) {
+    if (!mark ||
+        mark.promptRange.start.x < 0 ||
+        !mark.command ||
+        !VT100GridWindowedRangeContainsCoord(range, self.coord)) {
         return nil;
     }
     URLAction *action = [URLAction actionToShowCommandInfoForMark:mark

@@ -608,6 +608,11 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent {
+    DLog(@"flagsChanged: cmd=%d opt=%d shift=%d ctrl=%d",
+          !!(theEvent.it_modifierFlags & NSEventModifierFlagCommand),
+          !!(theEvent.it_modifierFlags & NSEventModifierFlagOption),
+          !!(theEvent.it_modifierFlags & NSEventModifierFlagShift),
+          !!(theEvent.it_modifierFlags & NSEventModifierFlagControl));
     [_delegate textViewDidReceiveFlagsChangedEvent:theEvent];
     [self updateUnderlinedURLs:theEvent];
     NSString *string = [_keyboardHandler.keyMapper keyMapperStringForPreCocoaEvent:theEvent];
@@ -6160,10 +6165,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (void)mouseHandlerOpenTargetWithEvent:(NSEvent *)event
                            inBackground:(BOOL)inBackground {
-    if ([iTermAdvancedSettingsModel enableCmdClickPromptForShowCommandInfo]
-        && [self showCommandInfoForEvent:event]) {
-        return;
-    }
     [_urlActionHelper openTargetWithEvent:event inBackground:inBackground];
 }
 
