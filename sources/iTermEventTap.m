@@ -122,7 +122,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
                                         CGEventRef event,
                                         void *refcon) {
     iTermEventTap *eventTap = (__bridge id)refcon;
-    DLog(@"event tap %@ for %@", eventTap, event);
+    DLog(@"event tap %@ for %@", eventTap, [NSEvent eventWithCGEvent:event]);
     return [eventTap eventTapCallbackWithProxy:proxy type:type event:event];
 }
 
