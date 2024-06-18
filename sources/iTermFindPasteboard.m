@@ -53,6 +53,12 @@
     return YES;
 }
 
+- (void)clearContents {
+    _localValue = nil;
+    NSPasteboard *findPasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
+    [findPasteboard clearContents];
+}
+
 - (void)setStringValueUnconditionally:(NSString *)stringValue {
     _localValue = [stringValue copy];
     [self reallySetStringValueUnconditionally:stringValue];

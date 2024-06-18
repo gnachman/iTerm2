@@ -218,6 +218,8 @@ static NSString *gSearchString;
 - (void)highlightWithoutSelectingSearchResultsForQuery:(NSString *)string {
     self.findString = string;
     if (string.length == 0) {
+        DLog(@"clear search");
+        [_delegate findViewControllerClearSearch];
         return;
     }
     [[iTermSearchHistory sharedInstance] addQuery:string];

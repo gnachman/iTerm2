@@ -459,6 +459,16 @@ static BOOL hasBecomeActive = NO;
     } else if (menuItem.action == @selector(toggleAlertOnMarksInOffscreenSessions:)) {
         menuItem.state = [iTermPreferences boolForKey:kPreferenceKeyAlertOnMarksInOffscreenSessions];
         return YES;
+    } else if (menuItem.action == @selector(clearFindString:)) {
+        NSPasteboard *findPasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
+        NSString *content = [findPasteboard stringForType:NSPasteboardTypeString];
+        if (content == nil) {
+            return findPasteboard.pasteboardItems.count > 0;
+        }
+        if ([content isEqualToString:@""]) {
+            return NO;
+        }
+        return YES;
     } else {
         return YES;
     }
@@ -1965,6 +1975,12 @@ void TurnOnDebugLoggingAutomatically(void) {
         ![[currentTerminal window] isKeyWindow]) {
         return;
     }
+}
+
+- (IBAction)clearFindString:(id)sender {
+    [[iTermFindPasteboard sharedInstance] clearContents];
+    [[iTermFindPasteboard sharedInstance] updateObservers:[[[iTermController sharedInstance] currentTerminal] currentSession]
+                                      internallyGenerated:YES];
 }
 
 #pragma mark - Actions

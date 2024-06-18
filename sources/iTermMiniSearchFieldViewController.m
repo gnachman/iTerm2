@@ -217,7 +217,7 @@
 }
 
 - (BOOL)shouldSearchAutomatically {
-    return [_searchField textFieldIsFirstResponder];
+    return YES;
 }
 
 - (NSString *)filter {

@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)addObserver:(id)observer block:(void (^)(id sender, NSString *newValue, BOOL internallyGenerated))block;
 - (void)setStringValueUnconditionally:(nullable NSString *)stringValue;
 - (BOOL)setStringValueIfAllowed:(nullable NSString *)stringValue;
+- (void)clearContents;
 
 @end
 

@@ -585,6 +585,12 @@ DQ
                                                 <action selector="performFindPanelAction:" target="-1" id="Vts-fb-OCE"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Clear Find" tag="7" keyEquivalent="E" identifier="Find.Clear Find" id="VDU-gj-HpO">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="clearFindString:" target="201" id="Eod-sA-cqH"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem title="Find Globally..." keyEquivalent="F" identifier="Find.Find Globally..." id="yIL-PC-jnC">
                                             <connections>
                                                 <action selector="findGlobally:" target="201" id="Oyc-5J-YYw"/>
