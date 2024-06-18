@@ -619,12 +619,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }];
 
     NSArray<iTermSessionTitleProvider *> *funcs = [iTermAPIHelper sessionTitleFunctions];
-    if (funcs.count) {
+    NSString *uniqueIdentifier = [self titleFunctionUniqueIdentifier];
+    if (funcs.count || uniqueIdentifier) {
         NSMenuItem *separator = [NSMenuItem separatorItem];
         separator.identifier = @"";
         [titleSettings.menu addItem:separator];
     }
-    NSString *uniqueIdentifier = [self titleFunctionUniqueIdentifier];
     NSString *funcName = [self titleFunctionDisplayName];
     for (iTermSessionTitleProvider *provider in funcs) {
         NSMenuItem *item = [[NSMenuItem alloc] init];
@@ -1196,12 +1196,6 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         newValue = nonTitleBits | selectedBit;
     }
 
-    if (newValue == 0 && originalValue != 0) {
-        newValue = originalValue;
-    } else if (newValue == 0) {
-        // Shouldn't happen
-        newValue = iTermTitleComponentsSessionName;
-    }
     [self setUnsignedInteger:newValue forKey:KEY_TITLE_COMPONENTS];
     [self updateSelectedTitleComponents];
 }
