@@ -5191,7 +5191,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
     {
         id<VT100ScreenMarkReading> mark = [_delegate textViewSelectedCommandMark];
-        if (!mark.lineStyle && mark.command.length > 0) {
+        if (!mark.lineStyle && mark.command.length > 0 && [iTermAdvancedSettingsModel showButtonsForSelectedCommand]) {
             const NSRange intersectionRange = NSIntersectionRange(self.findOnPageHelper.absLineRange,
                                                                   [self visibleAbsoluteRangeIncludingOffscreenCommandLineIfVisible:NO]);
             if (intersectionRange.length > 0) {
@@ -5314,11 +5314,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         const long long absLine = markLine + _dataSource.totalScrollbackOverflow;
         __weak __typeof(mark) weakMark = mark;
         button.action = ^(NSPoint locationInWindow) {
-            [weakSelf presentCommandInfoForMark:mark
-                             absoluteLineNumber:absLine
-                                           date:mark.startDate
-                                          point:locationInWindow
-                       fromOffscreenCommandLine:NO];
+            if (weakMark) {
+                [weakSelf presentCommandInfoForMark:weakMark
+                                 absoluteLineNumber:absLine
+                                               date:mark.startDate
+                                              point:locationInWindow
+                           fromOffscreenCommandLine:NO];
+            }
         };
         [updated addObject:button];
     }

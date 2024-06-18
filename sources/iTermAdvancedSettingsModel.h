@@ -336,6 +336,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)shouldSetTerminfoDirs;
 + (BOOL)showAutomaticProfileSwitchingBanner;
 + (BOOL)showBlockBoundaries;
++ (BOOL)showButtonsForSelectedCommand;
 + (BOOL)showHintsInSplitPaneMenuItems;
 + (BOOL)showMetalFPSmeter;
 + (BOOL)showLocationsInScrollbar;
