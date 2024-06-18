@@ -447,7 +447,7 @@ static iTermController *gSharedInstance;
 - (void)repairSavedArrangementNamed:(NSString *)savedArrangementName
                replacingMissingGUID:(NSString *)guidToReplace
                            withGUID:(NSString *)replacementGuid {
-    NSArray *terminalArrangements = [WindowArrangements arrangementWithName:savedArrangementName];
+    NSArray<NSDictionary *> *terminalArrangements = [WindowArrangements arrangementWithName:savedArrangementName];
     Profile *goodProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:replacementGuid];
     if (goodProfile) {
         NSMutableArray *repairedArrangements = [NSMutableArray array];

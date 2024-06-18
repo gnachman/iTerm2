@@ -16,6 +16,7 @@ class iTermLocalePrompt: NSObject {
     @objc var defaultLocale: String?
     @objc var message: String?
     @objc var allowRemember = true
+    @objc var arrangementName: String?
     let encoding: String.Encoding
 
     @objc
@@ -30,6 +31,7 @@ class iTermLocalePrompt: NSObject {
                                            profileName: profileName,
                                            encoding: encoding)
         alert.allowRemember = allowRemember
+        alert.arrangementName = arrangementName
         if let defaultLocale {
             alert.select(locale: defaultLocale)
         }
@@ -141,6 +143,7 @@ class iTermLocalePromptAlert {
     var message = "No valid UNIX locale exists for your computer’s current language and country. This may cause command-line apps to misbehave. Please select one from the list below."
     @objc var allowRemember = true
     private let profileName: String?
+    var arrangementName: String?
 
     init(languages: [String], profileName: String?, encoding: String.Encoding) {
         self.languages = languages
@@ -178,7 +181,11 @@ class iTermLocalePromptAlert {
         alert.accessoryView = wrapper
         alert.showsSuppressionButton = allowRemember
         if allowRemember, let profileName {
-            alert.suppressionButton?.title = "Save selection to profile \(profileName)"
+            if let arrangementName {
+                alert.suppressionButton?.title = "Save selection to arrangement \(arrangementName)"
+            } else {
+                alert.suppressionButton?.title = "Save selection to profile \(profileName)"
+            }
         }
         let popup = self.popup
         let timer = Timer(timeInterval: 0, repeats: false) { _ in

@@ -2943,6 +2943,22 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 
++ (NSDictionary *)recursiveRepairedArrangementNode:(NSDictionary *)arrangement
+                               settingCustomLocale:(NSString *)lang {
+    if ([arrangement[TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        NSArray *subviews = arrangement[SUBVIEWS];
+        NSArray *repairedSubviews = [subviews mapWithBlock:^id(NSDictionary<NSString *, id> *subArrangement) {
+            return [PTYTab recursiveRepairedArrangementNode:subArrangement
+                                        settingCustomLocale:lang];
+        }];
+        return [arrangement dictionaryBySettingObject:repairedSubviews forKey:SUBVIEWS];
+    }
+
+    return [arrangement dictionaryBySettingObject:[PTYSession repairedArrangement:arrangement[TAB_ARRANGEMENT_SESSION]
+                                                              settingCustomLocale:lang]
+                                           forKey:TAB_ARRANGEMENT_SESSION];
+}
+
 - (PTYSession *)_recursiveRestoreSessions:(NSDictionary<NSString *, id> *)arrangement
                                     named:(NSString *)arrangementName
                                    atNode:(__kindof NSView *)view
@@ -3195,6 +3211,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSDictionary *newRoot = [PTYTab recursiveRepairedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
                                     replacingOldCWDOfSessionWithGUID:guid
                                                           withOldCWD:replacementOldCWD];
+    NSMutableDictionary *result = [arrangement mutableCopy];
+    result[TAB_ARRANGEMENT_ROOT] = newRoot;
+    return result;
+}
+
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                  settingCustomLocale:(NSString *)lang {
+    NSDictionary *newRoot = [PTYTab recursiveRepairedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
+                                                 settingCustomLocale:lang];
     NSMutableDictionary *result = [arrangement mutableCopy];
     result[TAB_ARRANGEMENT_ROOT] = newRoot;
     return result;

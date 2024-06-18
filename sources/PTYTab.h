@@ -129,6 +129,9 @@ extern NSString *const PTYTabVariableTitleOverride;
      replacingOldCWDOfSessionWithGUID:(NSString *)guid
                            withOldCWD:(NSString *)replacementOldCWD;
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                  settingCustomLocale:(NSString *)lang;
+
 + (NSDictionary *)arrangementForSessionWithGUID:(NSString *)sessionGUID
                                   inArrangement:(NSDictionary *)arrangement;
 
