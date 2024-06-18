@@ -3312,6 +3312,17 @@ ITERM_WEAKLY_REFERENCEABLE
     return result;
 }
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                  settingCustomLocale:(NSString *)lang {
+    NSMutableDictionary *result = [[arrangement mutableCopy] autorelease];
+    NSArray *tabs = result[TERMINAL_ARRANGEMENT_TABS];
+    result[TERMINAL_ARRANGEMENT_TABS] = [tabs mapWithBlock:^id(NSDictionary *tabArrangement) {
+        return [PTYTab repairedArrangement:tabArrangement
+                       settingCustomLocale:lang];
+    }];
+    return result;
+}
+
 + (NSDictionary *)arrangementForSessionWithGUID:(NSString *)sessionGUID
                             inWindowArrangement:(NSDictionary *)arrangement {
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {

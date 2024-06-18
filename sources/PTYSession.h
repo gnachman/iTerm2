@@ -595,6 +595,8 @@ backgroundColor:(NSColor *)backgroundColor;
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
      replacingOldCWDOfSessionWithGUID:(NSString *)guid
                            withOldCWD:(NSString *)replacementOldCWD;
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                  settingCustomLocale:(NSString *)lang;
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 + (void)selectMenuItem:(NSString*)theName;

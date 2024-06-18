@@ -1305,6 +1305,74 @@ ITERM_WEAKLY_REFERENCEABLE
     return arrangement;
 }
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                  settingCustomLocale:(NSString *)lang {
+    DLog(@"Repair arrangement for %@", self);
+    Profile *theBookmark =
+        [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
+    if (theBookmark) {
+        DLog(@"Update underlying profile %@", theBookmark[KEY_GUID]);
+        // Just change the underlying profile.
+        [PTYSession setCustomLocale:lang inProfile:theBookmark model:[ProfileModel sharedInstance]];
+        return arrangement;
+    }
+
+    NSString *originalGuid = arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_ORIGINAL_GUID];
+    theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:originalGuid];
+    if (theBookmark) {
+        NSMutableDictionary *modifiedArrangement = [[arrangement mutableCopy] autorelease];
+
+        DLog(@"Update underlying profile of original guid %@", originalGuid);
+        NSArray<NSString *> *overrides = [NSArray castFrom:arrangement[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS]];
+        if ([overrides containsObject:KEY_CUSTOM_LOCALE] || [overrides containsObject:KEY_SET_LOCALE_VARS]) {
+            DLog(@"Locale stuff already overridden");
+            // Locale stuff is overridden in the arrangement's copy of the profile.
+            // I believe this is generally unreachable because you can't modify locale settings
+            // in Edit Session but you probably could with the Python API.
+            [PTYSession setCustomLocale:lang inProfile:theBookmark model:[ProfileModel sessionsInstance]];
+
+            NSMutableSet<NSString *> *set = [NSMutableSet setWithArray:overrides];
+            [set addObject:KEY_CUSTOM_LOCALE];
+            [set addObject:KEY_SET_LOCALE_VARS];
+            modifiedArrangement[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = set.allObjects;
+        }
+        MutableProfile *modifiedProfile = [[theBookmark mutableCopy] autorelease];
+        modifiedProfile[KEY_CUSTOM_LOCALE] = lang;
+        modifiedProfile[KEY_SET_LOCALE_VARS] = @(iTermSetLocalVarsModeCustom);
+        modifiedArrangement[SESSION_ARRANGEMENT_BOOKMARK] = modifiedProfile;
+        return modifiedArrangement;
+    }
+
+    // You can get here if the original profile was deleted.
+    theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
+    if (theBookmark) {
+        DLog(@"Modify arrangement's profile in place");
+        NSMutableDictionary *modifiedArrangement = [[arrangement mutableCopy] autorelease];
+        MutableProfile *modifiedProfile = [[theBookmark mutableCopy] autorelease];
+        modifiedProfile[KEY_CUSTOM_LOCALE] = lang;
+        modifiedProfile[KEY_SET_LOCALE_VARS] = @(iTermSetLocalVarsModeCustom);
+        modifiedArrangement[SESSION_ARRANGEMENT_BOOKMARK] = modifiedProfile;
+        [PTYSession setCustomLocale:lang inProfile:theBookmark model:[ProfileModel sessionsInstance]];
+        return modifiedArrangement;
+    }
+
+    // I suspect you can't get here without a malformed arrangement.
+    if (![[ProfileModel sharedInstance] defaultBookmark]) {
+        // Things are really messed up. Give up.
+        DLog(@"No default profile");
+        return arrangement;
+    }
+
+    DLog(@"Modify default profile");
+    // The default profile is in use so modify it.
+    [PTYSession setCustomLocale:lang
+                      inProfile:[[ProfileModel sharedInstance] defaultBookmark]
+                          model:[ProfileModel sharedInstance]];
+    NSMutableDictionary *modifiedArrangement = [[arrangement mutableCopy] autorelease];
+    modifiedArrangement[SESSION_ARRANGEMENT_BOOKMARK] = [[ProfileModel sharedInstance] defaultBookmark];
+    return modifiedArrangement;
+}
+
 + (void)finishInitializingArrangementOriginatedSession:(PTYSession *)aSession
                                            arrangement:(NSDictionary *)arrangement
                                        arrangementName:(NSString *)arrangementName
@@ -2526,7 +2594,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSDictionary *)environmentForNewJobFromEnvironment:(NSDictionary *)environment
-                                        substitutions:(NSDictionary *)substitutions {
+                                        substitutions:(NSDictionary *)substitutions
+                                          arrangement:(NSString *)arrangementName
+                                      fromArrangement:(BOOL)fromArrangement {
     DLog(@"environmentForNewJobFromEnvironment:%@ substitutions:%@",
          environment, substitutions);
     NSMutableDictionary *env = environment ? [[environment mutableCopy] autorelease] : [NSMutableDictionary dictionary];
@@ -2569,7 +2639,8 @@ ITERM_WEAKLY_REFERENCEABLE
                     env[@"LANG"] = lang;
                     break;
                 } else {
-                    NSDictionary *localeVars = [self promptForLocale];
+                    NSDictionary *localeVars = [self promptForLocaleForArrangement:arrangementName
+                                                                   fromArrangement:fromArrangement];
                     env[@"LANG"] = localeVars[@"LANG"];
                     break;
                 }
@@ -2583,7 +2654,8 @@ ITERM_WEAKLY_REFERENCEABLE
             NSDictionary *localeVars = [localeGuesser dictionaryWithLANG];
             DLog(@"localeVars=%@", localeVars);
             if (!localeVars) {
-                localeVars = [self promptForLocale];
+                localeVars = [self promptForLocaleForArrangement:arrangementName
+                                                 fromArrangement:fromArrangement];
             }
             if (!localeVars) {
                 DLog(@"Using LC_CTYPE");
@@ -2652,11 +2724,25 @@ ITERM_WEAKLY_REFERENCEABLE
     return NO;
 }
 
-- (NSDictionary *)promptForLocale {
++ (void)setCustomLocale:(NSString *)lang inProfile:(Profile *)originalProfile model:(ProfileModel *)model {
+    NSString *guid = [[originalProfile[KEY_GUID] copy] autorelease];
+    [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_CUSTOM_LOCALE: lang,
+                                                         KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeCustom) } 
+                                            inProfile:originalProfile
+                                                model:model];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                        object:guid];
+}
+
+- (NSDictionary *)promptForLocaleForArrangement:(NSString *)arrangementName
+                                fromArrangement:(BOOL)fromArrangement {
     NSDictionary *localeVars = nil;
     // Failed to guess.
     iTermLocalePrompt *prompt = [[[iTermLocalePrompt alloc] initWithEncoding:self.encoding] autorelease];
-    if (self.originalProfile.profileIsDynamic) {
+    if (fromArrangement && arrangementName) {
+        prompt.arrangementName = arrangementName;
+    }
+    if (self.originalProfile.profileIsDynamic || (arrangementName == nil && fromArrangement)) {
         DLog(@"Disable remember");
         prompt.allowRemember = NO;
     }
@@ -2674,11 +2760,19 @@ ITERM_WEAKLY_REFERENCEABLE
     if (prompt.remember && localeVars != nil && lang != nil) {
         DLog(@"Save");
         // User chose a locale and wants us to keep using it.
-        [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_CUSTOM_LOCALE: lang,
-                                                             KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeCustom) } inProfile:self.originalProfile
-                                                    model:self.profileModel];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
-                                                            object:self.originalProfile[KEY_GUID]];
+        if (fromArrangement) {
+            NSMutableArray *repairedArrangements = [NSMutableArray array];
+            NSArray *terminalArrangements = [WindowArrangements arrangementWithName:arrangementName];
+            for (NSDictionary *terminalArrangement in terminalArrangements) {
+                [repairedArrangements addObject:[PseudoTerminal repairedArrangement:terminalArrangement
+                                                                settingCustomLocale:lang]];
+            }
+            [WindowArrangements setArrangement:repairedArrangements withName:arrangementName];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                                object:self.originalProfile[KEY_GUID]];
+        } else {
+            [PTYSession setCustomLocale:lang inProfile:self.originalProfile model:self.profileModel];
+        }
     } else if (prompt.remember && localeVars == nil && lang == nil) {
         DLog(@"Minimal");
         [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeMinimal) } inProfile:self.originalProfile
@@ -2733,7 +2827,10 @@ ITERM_WEAKLY_REFERENCEABLE
     _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
-        NSDictionary *env = [self environmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions];
+        NSDictionary *env = [self environmentForNewJobFromEnvironment:environment ?: @{} 
+                                                        substitutions:substitutions
+                                                          arrangement:arrangementName
+                                                      fromArrangement:fromArrangement];
         [self fetchAutoLogFilenameWithCompletion:^(NSString * _Nonnull autoLogFilename) {
             [_logging stop];
             [_logging autorelease];
