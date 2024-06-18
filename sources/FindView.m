@@ -28,6 +28,7 @@
 #import "FindView.h"
 #import "PseudoTerminal.h"
 #import "NSBezierPath+iTerm.h"
+#import "NSResponder+iTerm.h"
 
 @implementation FindView
 
@@ -105,6 +106,10 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+}
+
+- (BOOL)it_focusFollowsMouseImmune {
+    return YES;
 }
 
 @end

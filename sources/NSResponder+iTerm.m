@@ -36,4 +36,15 @@
     return NO;
 }
 
+- (BOOL)it_focusFollowsMouseImmune {
+    NSView *view = [NSView castFrom:self];
+    while (view) {
+        if ([view it_isTerminalResponder]) {
+            return YES;
+        }
+        view = view.superview;
+    }
+    return NO;
+}
+
 @end

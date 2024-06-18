@@ -14,7 +14,8 @@
 - (void)it_scrollWheelMomentum:(NSEvent *)event;
 - (BOOL)it_preferredFirstResponder;
 - (BOOL)it_isTerminalResponder;
-
+// FFM won't cause focus to be taken to controlling terminal except on mouse exit.
+- (BOOL)it_focusFollowsMouseImmune;
 @end
 
 @interface NSResponder (iTermFirstResponder)
