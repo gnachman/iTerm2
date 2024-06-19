@@ -1594,6 +1594,9 @@
     [self commandDidStart];
 }
 
+// FTCS C
+// <A>prompt<B>command user types<C>
+// output<D>
 - (void)terminalCommandDidEnd {
     DLog(@"begin");
     [self commandDidEnd];

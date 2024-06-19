@@ -798,6 +798,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return nil;
 }
 
+// Range from start of last command to the cursor.
 - (VT100GridCoordRange)commandRange {
     const long long offset = self.cumulativeScrollbackOverflow;
     if (self.commandStartCoord.x < 0) {

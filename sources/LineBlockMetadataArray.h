@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Initialization
 
-- (instancetype)initWithCapacity:(int)capacity useDWCCache:(BOOL)useDWCCache NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithCapacity:(int)capacity useDWCCache:(BOOL)useDWCCache;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)setEntry:(int)i fromComponents:(NSArray *)components externalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex;
@@ -51,6 +51,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray *)encodedArray;
 
 #pragma mark - Mutation
+
+// Force a deep copy.
+- (void)willMutate;
 
 - (void)increaseCapacityTo:(int)newCapacity;
 // You must have erased all entries before calling reset.

@@ -2757,6 +2757,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             }];
         }
     }
+#warning TODO: We spend a lot of time here in commands with big output. I noticed in when using tmux w/ shell integration.
     NSString *command = haveCommand ? [self commandInRange:current] : @"";
 
     __weak __typeof(self) weakSelf = self;

@@ -437,6 +437,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             (const void *)cumulative_line_lengths,
             cll_size);
     [self copyMetadataTo:theCopy];
+    [theCopy->_metadataArray willMutate];
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
     assert(theCopy->_metadataArray.first == first_entry);
@@ -494,6 +495,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
                            metadata:(iTermImmutableMetadata)lineMetadata
                        continuation:(screen_char_t)continuation
                                cert:(id<iTermLineBlockMutationCertificate>)cert {
+    assert(_metadataArray.numEntries == cll_entries);
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
         [cert setCumulativeLineLengthsCapacity:cll_capacity];
@@ -2522,6 +2524,8 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 
     {
         std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
+
+        [_metadataArray willMutate];
 
         if (!_cachedMutationCert) {
             _cachedMutationCert = [[iTermLineBlockMutator alloc] initWithLineBlock:self];
