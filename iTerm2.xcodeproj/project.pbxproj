@@ -3274,6 +3274,8 @@
 		A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		A6D7E0712C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */; };
 		A6D7E0722C1B6AF5007D0A37 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
+		A6D7E0772C236D54007D0A37 /* LineBlockMetadataArray.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */; };
+		A6D7E0782C236D54007D0A37 /* LineBlockMetadataArray.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */; };
 		A6D8973A22154A8800325F6A /* AnnotateTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D8973822154A8800325F6A /* AnnotateTrigger.h */; };
 		A6D8973B22154A8800325F6A /* AnnotateTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D8973922154A8800325F6A /* AnnotateTrigger.m */; };
 		A6D8CC3220CE417000E79512 /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
@@ -7038,6 +7040,8 @@
 		A6D5984F21B78B9700B59C94 /* iTermBroadcastInputHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBroadcastInputHelper.h; sourceTree = "<group>"; };
 		A6D5985021B78B9700B59C94 /* iTermBroadcastInputHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBroadcastInputHelper.m; sourceTree = "<group>"; };
 		A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStyleSearchEngine.swift; sourceTree = "<group>"; };
+		A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineBlockMetadataArray.h; sourceTree = "<group>"; };
+		A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineBlockMetadataArray.m; sourceTree = "<group>"; };
 		A6D8973822154A8800325F6A /* AnnotateTrigger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnnotateTrigger.h; sourceTree = "<group>"; };
 		A6D8973922154A8800325F6A /* AnnotateTrigger.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AnnotateTrigger.m; sourceTree = "<group>"; };
 		A6DBC0361FF9B30000F1466D /* iTermTexturePool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTexturePool.h; path = Metal/Infrastructure/iTermTexturePool.h; sourceTree = "<group>"; };
@@ -9758,6 +9762,8 @@
 				A6E2A63E2B91413700EC6070 /* LineBlock+SwiftInterop.h */,
 				A6E2A63F2B91413700EC6070 /* LineBlock+SwiftInterop.m */,
 				A6A5162B2BCDE6C7006F3F09 /* PTYSessionHostState.swift */,
+				A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */,
+				A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -12540,6 +12546,7 @@
 				A653F68024CF4EC70062377E /* FMDatabaseAdditions.h in Headers */,
 				A66719251DCE36C3000CE608 /* iTermBoxDrawingBezierCurveFactory.h in Headers */,
 				A666D5E8221A191600D6184A /* iTermVariableScope+Session.h in Headers */,
+				A6D7E0772C236D54007D0A37 /* LineBlockMetadataArray.h in Headers */,
 				A63011C420E85132008114B7 /* iTermStatusBarBaseComponent.h in Headers */,
 				A66719261DCE36C3000CE608 /* iTermCommandHistoryEntryMO.h in Headers */,
 				A6C1FD511FC2AC9B006B9A69 /* iTermMarginRenderer.h in Headers */,
@@ -15947,6 +15954,7 @@
 				537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */,
 				A6F9EF3820850C41005530F7 /* iTermCompetentTableRowView.m in Sources */,
 				A6D10E3427F7C2BC0026DB56 /* NSRange+MultiCursor.swift in Sources */,
+				A6D7E0782C236D54007D0A37 /* LineBlockMetadataArray.m in Sources */,
 				A6891DCB2818605500751F40 /* JSONPortholeRenderer.swift in Sources */,
 				A630117720E6971D008114B7 /* iTermStatusBarTextComponent.m in Sources */,
 				A6D1C420286192F600B68526 /* TextClipDrawing.swift in Sources */,

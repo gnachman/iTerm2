@@ -12,19 +12,7 @@
 #import "iTermEncoderAdapter.h"
 #import "iTermFindViewController.h"
 #import "iTermMetadata.h"
-
-typedef struct {
-    iTermMetadata lineMetadata;
-    screen_char_t continuation;
-    int number_of_wrapped_lines;
-    int width_for_number_of_wrapped_lines;
-
-    // Remembers the offsets at which double-width characters that are wrapped
-    // to the next line occur for a pane of width
-    // width_for_double_width_characters_cache.
-    NSMutableIndexSet *double_width_characters;
-    int width_for_double_width_characters_cache;
-} LineBlockMetadata;
+#import "LineBlockMetadataArray.h"
 
 @class LineBlock;
 

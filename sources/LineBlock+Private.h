@@ -7,6 +7,7 @@
 
 #import "LineBlock.h"
 
+@class LineBlockMetadataArray;
 @class iTermLegacyAtomicMutableArrayOfWeakObjects;
 @protocol iTermLineBlockMutationCertificate;
 @class iTermCharacterBuffer;
@@ -29,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
     // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
     //    const int * const cumulative_line_lengths;
     int *cumulative_line_lengths;
-    LineBlockMetadata *metadata_;
+    LineBlockMetadataArray *_metadataArray;
 
     // The number of elements allocated for cumulative_line_lengths.
     int cll_capacity;
