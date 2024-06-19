@@ -426,14 +426,18 @@ static struct {
 
 #pragma mark - Private
 
-// Return the unshifted character in a keypress event (e.g., . for shift+.i
+// Return the unshifted character in a keypress event (e.g., . for shift+.
 // (which produces ">") on a US keyboard). This may return nil.
 - (NSString *)charactersIgnoringAllModifiersInEvent:(NSEvent *)event {
+    DLog(@"Want to figure out what %@ would be without shift", event);
     CGKeyCode keyCode = [event keyCode];
+    DLog(@"keyCode=%@", @(keyCode));
     TISInputSourceRef keyboard = TISCopyCurrentKeyboardInputSource();
+    DLog(@"keyboard=%@", keyboard);
     CFDataRef layoutData = TISGetInputSourceProperty(keyboard,
                                                      kTISPropertyUnicodeKeyLayoutData);
     if (!layoutData) {
+        DLog(@"No layout data found for keyboard");
         return nil;
     }
     const UCKeyboardLayout *keyboardLayout = (const UCKeyboardLayout *)CFDataGetBytePtr(layoutData);
@@ -441,6 +445,8 @@ static struct {
     UniChar unicodeString[4];
     UniCharCount actualStringLength;
 
+    DLog(@"Translating keycode");
+    const OSStatus status =
     UCKeyTranslate(keyboardLayout,
                    keyCode,
                    kUCKeyActionDisplay,
@@ -453,9 +459,14 @@ static struct {
                    unicodeString);
     CFRelease(keyboard);
 
+    if (status) {
+        DLog(@"UCKeyTranslate failed with %@", @(status));
+        return nil;
+    }
     NSString *theString = (__bridge_transfer NSString *)CFStringCreateWithCharacters(kCFAllocatorDefault,
                                                                                      unicodeString,
                                                                                      1);
+    DLog(@"Result is %@", theString);
     return theString;
 }
 
@@ -478,7 +489,8 @@ static struct {
     NSString *charactersIgnoringAllModifiers = [self charactersIgnoringAllModifiersInEvent:event];
     if (charactersIgnoringAllModifiers &&
         (flags & NSEventModifierFlagShift) &&
-        [charactersIgnoringAllModifiers isEqualToString:charactersIgnoringAllModifiers]) {
+        ![charactersIgnoringAllModifiers isEqualToString:charactersIgnoringModifiersExceptShift]) {
+        DLog(@"%@ != %@", charactersIgnoringAllModifiers, charactersIgnoringModifiersExceptShift);
         // The shifted version differs from the unshifted version (e.g., A vs a) so add
         // "A" since we already have "$A" ("A" is a lower priority than "$A").
         theKey =
