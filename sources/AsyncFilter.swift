@@ -405,10 +405,6 @@ class AsyncFilter: NSObject {
 
 extension AsyncFilter: ContentSubscriber {
     func deliver(_ array: ScreenCharArray, metadata: iTermImmutableMetadata, lineBufferGeneration: Int64) {
-        if lineBufferGeneration <= initialLineBufferGeneration {
-            DLog("\(it_addressString): AsyncFilter: deliver: ignore update to append \(array.debugStringValue) at generation \(lineBufferGeneration) <= initial generation of \(initialLineBufferGeneration)")
-            return
-        }
         lineBufferCopy.appendLine(array.line,
                                   length: array.length,
                                   partial: array.eol != EOL_HARD,
