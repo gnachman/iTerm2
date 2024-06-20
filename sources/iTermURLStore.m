@@ -62,6 +62,9 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSApp invalidateRestorableState];
         });
+        DLog(@"Retain %@. New rc=%@",
+              [_reverseStore[@(code)] firstObject],
+              @(_referenceCounts[@(code)].integerValue + 1));
         _referenceCounts[@(code)] = @(_referenceCounts[@(code)].integerValue + 1);
     }
 }
@@ -72,8 +75,12 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSApp invalidateRestorableState];
         });
-        [_referenceCounts removeObjectForKey:@(code)];
-        if (!_referenceCounts[@(code)]) {
+        DLog(@"Release %@. New rc=%@",
+              [_reverseStore[@(code)] firstObject],
+              @(_referenceCounts[@(code)].integerValue - 1));
+        NSNumber *count = _referenceCounts[@(code)];
+        if (count.integerValue <= 1) {
+            [_referenceCounts removeObjectForKey:@(code)];
             iTermTuple<NSURL *, NSString *> *tuple = _reverseStore[@(code)];
             [_reverseStore removeObjectForKey:@(code)];
             NSString *url = [tuple.firstObject absoluteString];
@@ -81,6 +88,8 @@
             if (url) {
                 [_store removeObjectForKey:[iTermTuple tupleWithObject:url andObject:params]];
             }
+        } else {
+            _referenceCounts[@(code)] = @(count.integerValue - 1);
         }
     }
 }
