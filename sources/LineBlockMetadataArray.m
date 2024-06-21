@@ -165,7 +165,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p guts=%p first=%d>", NSStringFromClass([self class]), self, _guts, _guts.first];
+    return [NSString stringWithFormat:@"<%@: %p guts=%p first=%d>", NSStringFromClass([self class]), self, _guts, _guts->_first];
 }
 
 - (BOOL)useDWCCache {
@@ -181,7 +181,7 @@
 }
 
 - (int)first {
-    return _guts.first;
+    return _guts->_first;
 }
 
 - (void)setEntry:(int)i
