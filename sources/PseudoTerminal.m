@@ -81,6 +81,7 @@
 #import "iTermVariableScope+Tab.h"
 #import "iTermVariableScope+Window.h"
 #import "iTermWarning.h"
+#import "iTermWindowHacks.h"
 #import "iTermWindowOcclusionChangeMonitor.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
@@ -4430,7 +4431,11 @@ ITERM_WEAKLY_REFERENCEABLE
         shouldAutoHideHotkeyWindow = NO;
         DLog(@"windowDidResignKey not auto-hiding hotkey window because the character panel is open.");
     }
-
+    DLog(@"Active app = %@", [[NSWorkspace sharedWorkspace] activeApplication]);
+    if ([[NSWorkspace sharedWorkspace] it_securityAgentIsActive]) {
+        shouldAutoHideHotkeyWindow = NO;
+        DLog(@"windowDidResignKey not auto-hiding because SecurityAgent is open");
+    }
     NSWindow *newKeyWindow = [NSApp keyWindow] ?: [[iTermApplication sharedApplication] it_windowBecomingKey];
     DLog(@"Window %@ resiging key. New key window (or key-window-elect) is %@", self, newKeyWindow);
     if (shouldAutoHideHotkeyWindow) {
@@ -4488,7 +4493,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _shortcutAccessoryViewController.isMain = NO;
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
           __FILE__, __LINE__, aNotification);
-    if (![iTermApplication sharedApplication].it_characterPanelIsOpen) {
+    if (![iTermApplication sharedApplication].it_characterPanelIsOpen &&
+        ![[NSWorkspace sharedWorkspace] it_securityAgentIsActive]) {
         NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
         NSWindowController *newMainWindowController = [[NSApp mainWindow] windowController];
         if (![siblings containsObject:newMainWindowController]) {

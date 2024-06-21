@@ -35,4 +35,10 @@
     return filename;
 }
 
+- (BOOL)it_securityAgentIsActive {
+    NSRunningApplication *activeApplication = [[NSWorkspace sharedWorkspace] frontmostApplication];
+    NSString *bundleIdentifier = activeApplication.bundleIdentifier;
+    return [bundleIdentifier isEqualToString:@"com.apple.SecurityAgent"];
+}
+
 @end

@@ -13,8 +13,10 @@
 #import "iTermProfilePreferences.h"
 #import "iTermSecureKeyboardEntryController.h"
 #import "iTermSessionLauncher.h"
+#import "iTermWindowHacks.h"
 #import "NSArray+iTerm.h"
 #import "NSScreen+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "PseudoTerminal.h"
 #import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
@@ -254,7 +256,7 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (NSWindowLevel)floatingLevel {
     iTermApplication *app = [iTermApplication sharedApplication];
-    if (app.it_characterPanelIsOpen || app.it_modalWindowOpen || app.it_imeOpen) {
+    if (app.it_characterPanelIsOpen || app.it_modalWindowOpen || app.it_imeOpen || [[NSWorkspace sharedWorkspace] it_securityAgentIsActive]) {
         DLog(@"Use floating window level. characterPanelIsOpen=%@, modalWindowOpen=%@ imeOpen=%@",
              @(app.it_characterPanelIsOpen), @(app.it_modalWindowOpen),
              @(app.it_imeOpen));
