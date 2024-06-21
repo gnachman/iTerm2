@@ -369,7 +369,7 @@ static struct {
     if (possibleKeys.count == 0) {
         self.currentDict = _root;
         DLog(@"Couldn't normalize event to key!");
-        NSLog(@"WARNING: Unexpected charactersIgnoringModifiers=%@ in event %@",
+        DLog(@"WARNING: Unexpected charactersIgnoringModifiers=%@ in event %@",
               event.charactersIgnoringModifiers, event);
         [_savedEvents removeAllObjects];
         return NO;
@@ -438,7 +438,7 @@ static struct {
                                                      kTISPropertyUnicodeKeyLayoutData);
     if (!layoutData) {
         DLog(@"No layout data found for keyboard");
-        return nil;
+        return [self fallbackCharactersIgnoringAllModifiersInEvent:event];
     }
     const UCKeyboardLayout *keyboardLayout = (const UCKeyboardLayout *)CFDataGetBytePtr(layoutData);
     UInt32 deadKeyState = 0;
@@ -461,13 +461,32 @@ static struct {
 
     if (status) {
         DLog(@"UCKeyTranslate failed with %@", @(status));
-        return nil;
+        return [self fallbackCharactersIgnoringAllModifiersInEvent:event];
     }
     NSString *theString = (__bridge_transfer NSString *)CFStringCreateWithCharacters(kCFAllocatorDefault,
                                                                                      unicodeString,
                                                                                      1);
     DLog(@"Result is %@", theString);
     return theString;
+}
+
+// This is probably a good enough replacement for the -charactersIgnoringAllModifiersInEvent but
+// it's basically impossible to test this change thoroughly so I'll leave it as a backup for systems
+// that don't have a keyboard layout. See issue 11611.
+- (NSString *)fallbackCharactersIgnoringAllModifiersInEvent:(NSEvent *)event {
+    DLog(@"Using fallback for %@", event);
+    // This uses the current keyboard.
+    CGEventRef cgEvent = CGEventCreateKeyboardEvent(NULL, event.keyCode, YES);
+    const CGEventFlags mask = (kCGEventFlagMaskHelp |
+                               kCGEventFlagMaskSecondaryFn |
+                               kCGEventFlagMaskNumericPad |
+                               kCGEventFlagMaskNonCoalesced);
+    const CGEventFlags modifiedFlags = CGEventGetFlags(event.CGEvent) & mask;
+    DLog(@"modified flags=%@", @(modifiedFlags));
+    CGEventSetFlags(cgEvent, modifiedFlags);
+    NSEvent *nsevent = [NSEvent eventWithCGEvent:cgEvent];
+    DLog(@"Resulting event is %@", nsevent);
+    return nsevent.charactersIgnoringModifiers;
 }
 
 // Returns all possible keys for an event, from most preferred to least.
