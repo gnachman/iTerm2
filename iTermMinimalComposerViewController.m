@@ -152,7 +152,14 @@ workingDirectory:(NSString *)pwd
 }
 
 - (CGFloat)lineHeight {
-    return [@" " sizeWithAttributes:@{ NSFontAttributeName: _largeComposerViewController.textView.font } ].height;
+    if (self.delegate) {
+        const CGFloat height = [self.delegate minimalComposerLineHeight:self];
+        DLog(@"Using delegate-provided line height of %@", @(height));
+        return height;
+    }
+    const CGFloat height = [@" " sizeWithAttributes:@{ NSFontAttributeName: _largeComposerViewController.textView.font } ].height;
+    DLog(@"Using fallback line height of %@", @(height));
+    return height;
 }
 
 - (CGFloat)minHeight {
@@ -190,10 +197,16 @@ workingDirectory:(NSString *)pwd
 
 - (CGFloat)desiredHeight {
     if (self.isAutoComposer) {
+        DLog(@"Computing desired height for autocomposer");
         iTermComposerTextView *textView = _largeComposerViewController.textView;
         const NSUInteger numberOfLines = [self numberOfLinesInTextView:textView];
+        DLog(@"textView has %@ lines. Its contents are:\n%@",
+             @(numberOfLines), textView.textStorage.string);
         const CGFloat lineHeight = [self.delegate minimalComposerLineHeight:self];
-        return MAX(1, numberOfLines) * lineHeight;
+        DLog(@"Line height is %@", @(lineHeight));
+        const CGFloat height = MAX(1, numberOfLines) * lineHeight;
+        DLog(@"Desired height is %@", @(height));
+        return height;
     }
     return _manualHeight;
 }
@@ -203,6 +216,7 @@ workingDirectory:(NSString *)pwd
     if (NSEqualRects(desiredFrame, self.view.frame)) {
         return;
     }
+    DLog(@"desiredFrame=%@", NSStringFromRect(desiredFrame));
     self.view.frame = desiredFrame;
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     self.view.animator.alphaValue = 1;
