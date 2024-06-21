@@ -287,7 +287,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         _characterBuffer = [[iTermCharacterBuffer alloc] initWithData:data];
 
         [self setBufferStartOffset:[dictionary[kLineBlockBufferStartOffsetKey] intValue]];
-        first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
+        _firstEntry = [dictionary[kLineBlockFirstEntryKey] intValue];
         if (dictionary[kLineBlockGuid]) {
             _guid = [dictionary[kLineBlockGuid] copy];
             DLog(@"Restore block %p with guid %@", self, _guid);
@@ -303,28 +303,18 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         int *mutableCLL = (int *)cumulative_line_lengths;
         for (int i = 0; i < cll_capacity; i++) {
             mutableCLL[i] = [cllArray[i] intValue];
-            int j = 0;
             NSArray *components = metadataArray[i];
 
-            // If a migration index is present, use it. Migration loses external attributes, but
-            // at least for the v1->v2 transition it's not important because only underline colors
-            // get lost when they occur on the same line as a URL.
-            iTermExternalAttributeIndex *eaIndex =
-                [migrationIndex subAttributesFromIndex:startOffset
-                                         maximumLength:cumulative_line_lengths[i] - startOffset];
-            if (!eaIndex.attributes.count) {
-                NSDictionary *encodedExternalAttributes = components.count > j ? components[j++] : nil;
-                if ([encodedExternalAttributes isKindOfClass:[NSDictionary class]]) {
-                    eaIndex = [[iTermExternalAttributeIndex alloc] initWithDictionary:encodedExternalAttributes];
-                }
-            }
-
-            [_metadataArray setEntry:i fromComponents:components externalAttributeIndex:eaIndex];
+            [_metadataArray setEntry:i
+                      fromComponents:components
+                      migrationIndex:migrationIndex
+                         startOffset:startOffset
+                              length:cumulative_line_lengths[i] - startOffset];
             startOffset = cumulative_line_lengths[i];
         }
         [_metadataArray increaseCapacityTo:cll_capacity];
-        [_metadataArray setFirstIndex:first_entry];
-        assert(_metadataArray.first == first_entry);
+        [_metadataArray setFirstIndex:_firstEntry];
+        assert(_metadataArray.first == _firstEntry);
 
         cll_entries = cll_capacity;
         assert(_metadataArray.numEntries == cll_entries);
@@ -404,13 +394,13 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         theCopy = [[LineBlock alloc] initWithCharacterBuffer:_characterBuffer guid:_guid];
         theCopy->_absoluteBlockNumber = absoluteBlockNumber;
         [theCopy setBufferStartOffset:self.bufferStartOffset];
-        theCopy->first_entry = first_entry;
+        theCopy->_firstEntry = _firstEntry;
         iTermAssignToConstPointer((void **)&theCopy->cumulative_line_lengths, (void *)cumulative_line_lengths);
         [self copyMetadataTo:theCopy];
         theCopy->cll_capacity = cll_capacity;
         theCopy->cll_entries = cll_entries;
         assert(theCopy->_metadataArray.numEntries == cll_entries);
-        assert(theCopy->_metadataArray.first == first_entry);
+        assert(theCopy->_metadataArray.first == _firstEntry);
 
         theCopy->is_partial = is_partial;
         theCopy->cached_numlines = cached_numlines;
@@ -429,7 +419,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
                                                     guid:_guid];
     theCopy->_absoluteBlockNumber = absoluteBlockNumber;
     [theCopy setBufferStartOffset:self.bufferStartOffset];
-    theCopy->first_entry = first_entry;
+    theCopy->_firstEntry = _firstEntry;
     size_t cll_size = sizeof(int) * cll_capacity;
     iTermAssignToConstPointer((void **)&theCopy->cumulative_line_lengths, iTermMalloc(cll_size));
 
@@ -440,7 +430,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     [theCopy->_metadataArray willMutate];
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
-    assert(theCopy->_metadataArray.first == first_entry);
+    assert(theCopy->_metadataArray.first == _firstEntry);
     assert(theCopy->_metadataArray.numEntries == cll_entries);
     theCopy->is_partial = is_partial;
     theCopy->cached_numlines = cached_numlines;
@@ -463,7 +453,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     if (self.bufferStartOffset != other.bufferStartOffset) {
         return NO;
     }
-    if (first_entry != other->first_entry) {
+    if (_firstEntry != other->_firstEntry) {
         return NO;
     }
     if (_characterBuffer.size != other->_characterBuffer.size) {
@@ -523,12 +513,12 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     char temp[1000];
     int i;
     int prev;
-    if (first_entry > 0) {
-        prev = cumulative_line_lengths[first_entry - 1];
+    if (_firstEntry > 0) {
+        prev = cumulative_line_lengths[_firstEntry - 1];
     } else {
         prev = 0;
     }
-    for (i = first_entry; i < cll_entries; ++i) {
+    for (i = _firstEntry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
         formatsct(_characterBuffer.pointer + _startOffset + prev - self.bufferStartOffset,
                   cumulative_line_lengths[i] - prev,
@@ -551,12 +541,12 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     int i;
     int rawOffset = 0;
     int prev;
-    if (first_entry > 0) {
-        prev = cumulative_line_lengths[first_entry - 1];
+    if (_firstEntry > 0) {
+        prev = cumulative_line_lengths[_firstEntry - 1];
     } else {
         prev = 0;
     }
-    for (i = first_entry; i < cll_entries; ++i) {
+    for (i = _firstEntry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
         NSString *md = iTermMetadataShortDescription([_metadataArray metadataAtIndex:i]->lineMetadata,
                                                      cumulative_line_lengths[i] - prev);
@@ -584,12 +574,12 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     char temp[1000];
     int i;
     int prev;
-    if (first_entry > 0) {
-        prev = cumulative_line_lengths[first_entry - 1];
+    if (_firstEntry > 0) {
+        prev = cumulative_line_lengths[_firstEntry - 1];
     } else {
         prev = 0;
     }
-    for (i = first_entry; i < cll_entries; ++i) {
+    for (i = _firstEntry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
         NSString *md = iTermMetadataShortDescription([_metadataArray metadataAtIndex:i]->lineMetadata,
                                                      cumulative_line_lengths[i] - prev);
@@ -760,7 +750,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
         } else {
-            int prev_cll = cll_entries > first_entry + 1 ? cumulative_line_lengths[cll_entries - 2] - self.bufferStartOffset : 0;
+            int prev_cll = cll_entries > _firstEntry + 1 ? cumulative_line_lengths[cll_entries - 2] - self.bufferStartOffset : 0;
             int cll = cumulative_line_lengths[cll_entries - 1] - self.bufferStartOffset;
             int old_length = cll - prev_cll;
             int oldnum = [self numberOfFullLinesFromOffset:self.bufferStartOffset + prev_cll
@@ -773,7 +763,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
         }
 
         int originalLength = cumulative_line_lengths[cll_entries - 1];
-        if (cll_entries != first_entry + 1) {
+        if (cll_entries != _firstEntry + 1) {
             const int start = cumulative_line_lengths[cll_entries - 2] - self.bufferStartOffset;
             originalLength -= start;
         }
@@ -1124,7 +1114,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     ITBetaAssert(*lineNum >= 0, @"Negative lines to getWrappedLineWithWrapWidth");
     int prev = 0;
     int numEmptyLines = 0;
-    for (int i = first_entry; i < cll_entries; ++i) {
+    for (int i = _firstEntry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - self.bufferStartOffset;
         const int length = cll - prev;
         if (*lineNum > 0) {
@@ -1308,7 +1298,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     int i;
     // Count the number of wrapped lines in the block by computing the sum of the number
     // of wrapped lines each raw line would use.
-    for (i = first_entry; i < cll_entries; ++i) {
+    for (i = _firstEntry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - self.bufferStartOffset;
         int length = cll - prev;
         const int marginalLines = [self numberOfFullLinesFromOffset:self.bufferStartOffset + prev
@@ -1346,21 +1336,24 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (void)removeLastRawLine {
-    if (cll_entries == first_entry) {
+    if (cll_entries == _firstEntry) {
         return;
     }
 
+    [_metadataArray willMutate];
+
     cll_entries -= 1;
+    [_metadataArray removeLast];
+
     is_partial = NO;
-    if (cll_entries == first_entry) {
+    if (cll_entries == _firstEntry) {
         // Popped the last line. Reset everything.
         [self setBufferStartOffset:0];
-        first_entry = 0;
+        _firstEntry = 0;
         cll_entries = 0;
+        [_metadataArray reset];
     }
-    // refresh cache
-    [_metadataArray removeLast];
-    assert(_metadataArray.first == first_entry);
+    assert(_metadataArray.first == _firstEntry);
     assert(_metadataArray.numEntries == cll_entries);
 
     cached_numlines_width = -1;
@@ -1390,13 +1383,13 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                      metadata:(out iTermImmutableMetadata *)metadataPtr
                  continuation:(screen_char_t *)continuationPtr
                          cert:(id<iTermLineBlockMutationCertificate>)cert {
-    if (cll_entries == first_entry) {
+    if (cll_entries == _firstEntry) {
         // There is no last line to pop.
         return NO;
     }
     _numberOfFullLinesCache.clear();
     int start;
-    if (cll_entries == first_entry + 1) {
+    if (cll_entries == _firstEntry + 1) {
         start = 0;
     } else {
         start = cumulative_line_lengths[cll_entries - 2] - self.bufferStartOffset;
@@ -1444,19 +1437,18 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             *metadataPtr = [_metadataArray immutableLineMetadataAtIndex:cll_entries - 1];
         }
         [_metadataArray removeLast];
-#warning TODO: Ensure _metadataArray.count always equals cll_entries
         --cll_entries;
         assert(_metadataArray.numEntries == cll_entries);
         is_partial = NO;
     }
 
-    if (cll_entries == first_entry) {
+    if (cll_entries == _firstEntry) {
         // Popped the last line. Reset everything.
         [self setBufferStartOffset:0];
-        first_entry = 0;
+        _firstEntry = 0;
         cll_entries = 0;
         [_metadataArray reset];
-        assert(_metadataArray.first == first_entry);
+        assert(_metadataArray.first == _firstEntry);
         assert(_metadataArray.numEntries == cll_entries);
     }
     // refresh cache
@@ -1466,7 +1458,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (BOOL)isEmpty {
-    return cll_entries == first_entry;
+    return cll_entries == _firstEntry;
 }
 
 - (BOOL)allLinesAreEmpty {
@@ -1477,7 +1469,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (int)numRawLines {
-    return cll_entries - first_entry;
+    return cll_entries - _firstEntry;
 }
 
 - (int)numEntries {
@@ -1574,6 +1566,9 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (int)dropLines:(int)orig_n withWidth:(int)width chars:(int *)charsDropped {
+    // Note that there's no mutation certificate because we aren't touching the character buffer.
+    [_metadataArray willMutate];
+
     int n = orig_n;
     int prev = 0;
     int length;
@@ -1592,7 +1587,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         _numberOfFullLinesCache.clear();
     }
 
-    for (i = first_entry; i < cll_entries; ++i) {
+    for (i = _firstEntry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - self.bufferStartOffset;
         length = cll - prev;
         // Get the number of full-length wrapped lines in this raw line. If there
@@ -1620,11 +1615,10 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                 cached_numlines -= orig_n;
             }
             [self setBufferStartOffset:self.bufferStartOffset + prev + offset];
-#warning TODO: Ensure metadata's _first always equals first_entry.
-            assert(_metadataArray.first == first_entry);
-            first_entry = i;
-            [_metadataArray removeFirst:first_entry - _metadataArray.first];
-            assert(_metadataArray.first == first_entry);
+
+            _firstEntry = i;
+            [_metadataArray removeFirst:_firstEntry - _metadataArray.first];
+            assert(_metadataArray.first == _firstEntry);
 
             *charsDropped = self.bufferStartOffset - initialOffset;
 
@@ -1642,10 +1636,10 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     cached_numlines_width = -1;
     cll_entries = 0;
     [self setBufferStartOffset:0];
-    first_entry = 0;
+    _firstEntry = 0;
     *charsDropped = [self rawSpaceUsed];
     iTermLineBlockDidChange(self);
-    assert(_metadataArray.first == first_entry);
+    assert(_metadataArray.first == _firstEntry);
     assert(_metadataArray.numEntries == cll_entries);
     return orig_n - n;
 }
@@ -1656,24 +1650,27 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 - (void)dropMirroringProgenitor:(LineBlock *)other {
     assert(_progenitor == other);
     assert(cll_capacity <= other->cll_capacity);
+    assert(_metadataArray.first == _firstEntry);
 
     if (self.bufferStartOffset == other.bufferStartOffset &&
-        first_entry == other->first_entry) {
+        _firstEntry == other->_firstEntry) {
         DLog(@"No change");
         return;
     }
+
+    [_metadataArray willMutate];
 
     DLog(@"start_offset %@ -> %@", @(self.bufferStartOffset), @(other.bufferStartOffset));
     [self setBufferStartOffset:other.bufferStartOffset];
     cached_numlines_width = -1;
 
-    while (first_entry < other->first_entry && first_entry < cll_capacity) {
+    while (_firstEntry < other->_firstEntry && _firstEntry < cll_capacity) {
         DLog(@"Drop entry");
         [_metadataArray removeFirst];
-        first_entry += 1;
-        assert(_metadataArray.first == first_entry);
+        _firstEntry += 1;
+        assert(_metadataArray.first == _firstEntry);
     }
-    if (first_entry < cll_entries) {
+    if (_firstEntry < cll_entries) {
         // Force number_of_wrapped_lines to be recomputed for the first line in this block since it
         // may have experienced a partial drop (the first raw line was shorted by removing some from
         // its start).
@@ -1697,7 +1694,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (int)_lineRawOffset:(int) anIndex {
-    if (anIndex == first_entry) {
+    if (anIndex == _firstEntry) {
         return self.bufferStartOffset;
     } else {
         return cumulative_line_lengths[anIndex - 1];
@@ -2193,7 +2190,7 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
 
 - (int) _lineLength:(int)anIndex {
     int prev;
-    if (anIndex == first_entry) {
+    if (anIndex == _firstEntry) {
         prev = self.bufferStartOffset;
     } else {
         prev = cumulative_line_lengths[anIndex - 1];
@@ -2207,7 +2204,7 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
     }
 
     int i;
-    for (i = first_entry; i < cll_entries; ++i) {
+    for (i = _firstEntry; i < cll_entries; ++i) {
         if (cumulative_line_lengths[i] > offset) {
             return i;
         }
@@ -2240,10 +2237,10 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
             // Maybe there were no lines or offset was <= self.bufferStartOffset.
             return;
         }
-        limit = first_entry - 1;
+        limit = _firstEntry - 1;
         dir = -1;
     } else {
-        entry = first_entry;
+        entry = _firstEntry;
         limit = cll_entries;
         dir = 1;
     }
@@ -2383,7 +2380,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
     *y = 0;
     int prev = self.bufferStartOffset;
     const screen_char_t *p = _characterBuffer.pointer;
-    for (i = first_entry; i < cll_entries; ++i) {
+    for (i = _firstEntry; i < cll_entries; ++i) {
         int eol = cumulative_line_lengths[i];
         int line_length = eol - prev;
         if ((wrapOnEOL && position >= eol) || (!wrapOnEOL && position > eol)) {
@@ -2455,7 +2452,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
     return @{ kLineBlockRawBufferV3Key: _characterBuffer.data,
               kLineBlockBufferStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockStartOffsetKey: @(self.bufferStartOffset),
-              kLineBlockFirstEntryKey: @(first_entry),
+              kLineBlockFirstEntryKey: @(_firstEntry),
               kLineBlockBufferSizeKey: @(_characterBuffer.size),
               kLineBlockCLLKey: [self cumulativeLineLengthsArray],
               kLineBlockIsPartialKey: @(is_partial),
@@ -2478,7 +2475,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 
 - (int)numberOfTrailingEmptyLines {
     int count = 0;
-    for (int i = cll_entries - 1; i >= first_entry; i--) {
+    for (int i = cll_entries - 1; i >= _firstEntry; i--) {
         if ([self lengthOfLine:i] == 0) {
             count++;
         } else {
@@ -2490,7 +2487,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 
 - (int)numberOfLeadingEmptyLines {
     int count = 0;
-    for (int i = first_entry; i < cll_entries; i++) {
+    for (int i = _firstEntry; i < cll_entries; i++) {
         if ([self lengthOfLine:i] == 0) {
             count++;
         } else {

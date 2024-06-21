@@ -9,16 +9,26 @@
 
 #import "iTermMalloc.h"
 
-@interface CopyOnWriteRefCount: NSObject {
-    os_unfair_lock _lock;
-    int _count;
-}
+// This is a shareable reference count.
+// It is used to implement copy-on-write.
+// After initialization its count is 1.
+@interface CopyOnWriteRefCount: NSObject
+
 - (CopyOnWriteRefCount *)increment;
 - (CopyOnWriteRefCount *)decrement;
+
+// If the count less than 2, this does nothing.
+// Otherwise, decrement the count and while the lock is still held invoke closure().
+// To implement copy on write, `closure` should copy the underlying data and
+// allocate a new reference count for its owning object. Other instances will
+// retain a pointer to this reference count and the original data.
 - (void)ifPluralDecrementThen:(void (^NS_NOESCAPE)(void))closure;
 @end
 
-@implementation CopyOnWriteRefCount
+@implementation CopyOnWriteRefCount {
+    os_unfair_lock _lock;
+    int _count;  // guarded by _lock
+}
 
 - (instancetype)init {
     self = [super init];
@@ -54,11 +64,15 @@
 
 @end
 
+// The underlying data for LineBlockMetadataArray.
+// This has no logic except for how to copy and free memory.
 @interface LineBlockMetadataArrayGuts: NSObject {
+    // Members are public for performance.
 @public
     LineBlockMetadata *_array;
     int _numEntries;  // Inclusive of _first.
     int _first;
+    int _firstCheck;
     BOOL _useDWCCache;
     int _capacity;
 }
@@ -117,6 +131,8 @@
 
 @end
 
+// This is a CoW "proxy" for LineBlockMetadataArrayGuts.
+// It has the logic for manipulating the guts and managing reference counts.
 @implementation LineBlockMetadataArray {
     LineBlockMetadataArrayGuts *_guts;
     CopyOnWriteRefCount *_ref;
@@ -148,6 +164,10 @@
     [_ref decrement];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p guts=%p first=%d>", NSStringFromClass([self class]), self, _guts, _guts.first];
+}
+
 - (BOOL)useDWCCache {
     return _guts->_useDWCCache;
 }
@@ -161,12 +181,14 @@
 }
 
 - (int)first {
-    return _guts->_first;
+    return _guts.first;
 }
 
 - (void)setEntry:(int)i
   fromComponents:(NSArray *)components
-externalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
+  migrationIndex:(iTermExternalAttributeIndex *)migrationIndex
+     startOffset:(int)startOffset
+          length:(int)length {
     assert(i == _guts->_numEntries);
     assert(i < _guts->_capacity);
     _guts->_numEntries += 1;
@@ -179,6 +201,20 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
     _guts->_array[i].continuation.backgroundColorMode = [components[j++] unsignedCharValue];
 
     NSNumber *timestamp = components.count > j ? components[j++] : @0;
+
+    // If a migration index is present, use it. Migration loses external attributes, but
+    // at least for the v1->v2 transition it's not important because only underline colors
+    // get lost when they occur on the same line as a URL.
+    iTermExternalAttributeIndex *eaIndex =
+        [migrationIndex subAttributesFromIndex:startOffset
+                                 maximumLength:length];
+    if (!eaIndex.attributes.count) {
+        NSDictionary *encodedExternalAttributes = components.count > j ? components[j++] : nil;
+        if ([encodedExternalAttributes isKindOfClass:[NSDictionary class]]) {
+            eaIndex = [[iTermExternalAttributeIndex alloc] initWithDictionary:encodedExternalAttributes];
+        }
+    }
+
     iTermMetadataInit(&_guts->_array[i].lineMetadata,
                       timestamp.doubleValue,
                       eaIndex);
@@ -202,6 +238,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
 - (void)willMutate {
     [_ref ifPluralDecrementThen:^{
         _guts = [_guts copy];
+        // The single-thread-mutation limitation described in the header exists
+        // because _ref itself is not atomic. Reading ref during this
+        // assignment is a data race.
         _ref = [[CopyOnWriteRefCount alloc] init];
     }];
 }
@@ -243,14 +282,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
 
 #pragma mark - Mutation
 
-- (void)append:(const LineBlockMetadata *)value {
-    if (_guts->_numEntries + 1 >= _guts->_capacity) {
-        [self increaseCapacityTo:_guts->_capacity * 2];
-    }
-    _guts->_numEntries += 1;
-    [self setEntry:_guts->_numEntries - 1 value:value];
-}
-
 - (void)setEntry:(int)i value:(const LineBlockMetadata *)value {
     LineBlockMetadata *destination = (LineBlockMetadata *)&_guts->_array[i];
 
@@ -285,6 +316,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
         additionalLength:(int)additionalLength 
             continuation:(screen_char_t)continuation {
     assert(_guts->_numEntries > 0);
+    assert(_guts->_numEntries > _guts->_first);
+
     iTermMetadataAppend(&_guts->_array[_guts->_numEntries - 1].lineMetadata,
                         originalLength,
                         metadataToAppend,
@@ -322,9 +355,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
         _guts->_array[_guts->_numEntries].double_width_characters = nil;
         iTermMetadataSetExternalAttributes(&_guts->_array[_guts->_numEntries].lineMetadata, nil);
     }
-    if (_guts->_numEntries == _guts->_first) {
-        [self reset];
-    }
 }
 
 - (void)eraseLastLineCache {
@@ -344,6 +374,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
 
 - (void)setLastExternalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
     assert(_guts->_numEntries > 0);
+    assert(_guts->_numEntries > _guts->_first);
+
     iTermMetadataSetExternalAttributes(&_guts->_array[_guts->_numEntries - 1].lineMetadata,
                                        eaIndex);
 
@@ -355,12 +387,13 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
 
 - (void)removeFirst:(int)n {
     for (int i = 0; i < n; i++) {
-        assert(_guts->_numEntries >= _guts->_first);
-        _guts->_array[_guts->_first].number_of_wrapped_lines = 0;
+        const int first = _guts->_first;
+        assert(_guts->_numEntries >= first);
+        _guts->_array[first].number_of_wrapped_lines = 0;
         if (_guts->_useDWCCache) {
-            _guts->_array[_guts->_first].double_width_characters = nil;
+            _guts->_array[first].double_width_characters = nil;
         }
-        iTermMetadataSetExternalAttributes(&_guts->_array[_guts->_first].lineMetadata, nil);
+        iTermMetadataSetExternalAttributes(&_guts->_array[first].lineMetadata, nil);
         _guts->_first += 1;
         assert(_guts->_first <= _guts->_numEntries);
     }

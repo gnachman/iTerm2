@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
     // The raw lines, end-to-end. There is no delimiter between each line.
     iTermCharacterBuffer *_characterBuffer;
 
-    int first_entry;  // first valid cumulative_line_length
+    int _firstEntry;  // first valid cumulative_line_length
 
 
     // There will be as many entries in this array as there are lines in _characterBuffer.
