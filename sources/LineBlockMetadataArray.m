@@ -8,6 +8,7 @@
 #import "LineBlockMetadataArray.h"
 
 #import "iTermMalloc.h"
+#import "DebugLogging.h"
 
 // This is a shareable reference count.
 // It is used to implement copy-on-write.
@@ -139,6 +140,8 @@
 }
 
 - (instancetype)initWithCapacity:(int)capacity useDWCCache:(BOOL)useDWCCache {
+    ITAssertWithMessage(capacity >= 0, @"Initial capacity is negative: %@", @(capacity));
+
     self = [super init];
     if (self) {
         _ref = [[CopyOnWriteRefCount alloc] init];
@@ -189,8 +192,8 @@
   migrationIndex:(iTermExternalAttributeIndex *)migrationIndex
      startOffset:(int)startOffset
           length:(int)length {
-    assert(i == _guts->_numEntries);
-    assert(i < _guts->_capacity);
+    ITAssertWithMessage(i == _guts->_numEntries, @"i=%@ != numEntries=%@", @(i), @(_guts->_numEntries));
+    ITAssertWithMessage(i < _guts->_capacity, @"i=%@ >= capacity=%@", @(i), @(_guts->_capacity));
     _guts->_numEntries += 1;
 
     int j = 0;
@@ -225,8 +228,8 @@
 }
 
 - (void)setFirstIndex:(int)i {
-    assert(i <= _guts->_numEntries);
-    assert(i <= _guts->_capacity);
+    ITAssertWithMessage(i <= _guts->_numEntries, @"i=%@ > numEntries=%@", @(i), @(_guts->_numEntries));
+    ITAssertWithMessage(i <= _guts->_capacity, @"i=%@ > capacity=%@", @(i), @(_guts->_capacity));
 
     _guts->_first = i;
 }
@@ -246,7 +249,7 @@
 }
 
 - (const LineBlockMetadata *)metadataAtIndex:(int)i {
-    assert(i >= 0 && i < _guts->_numEntries);
+    ITAssertWithMessage(i >= 0 && i < _guts->_numEntries, @"i=%@ < 0 || i < numEntries=%@", @(i), @(_guts->_numEntries));
     return &_guts->_array[i];
 }
 
@@ -256,7 +259,7 @@
 }
 
 - (screen_char_t)lastContinuation {
-    assert(_guts->_numEntries > 0);
+    ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
     return _guts->_array[_guts->_numEntries - 1].continuation;
 }
 
@@ -301,7 +304,8 @@
 }
 
 - (void)append:(iTermImmutableMetadata)lineMetadata continuation:(screen_char_t)continuation {
-    assert(_guts->_numEntries < _guts->_capacity);
+    ITAssertWithMessage(_guts->_capacity > 0, @"capacity=%@ <= 0", @(_guts->_capacity));
+    ITAssertWithMessage(_guts->_numEntries < _guts->_capacity, @"numEntries=%@ >= capacity=%@", @(_guts->_numEntries), @(_guts->_capacity));
 
     iTermMetadataAutorelease(_guts->_array[_guts->_numEntries].lineMetadata);
     _guts->_array[_guts->_numEntries].lineMetadata = iTermImmutableMetadataMutableCopy(lineMetadata);
@@ -315,8 +319,8 @@
           originalLength:(int)originalLength
         additionalLength:(int)additionalLength 
             continuation:(screen_char_t)continuation {
-    assert(_guts->_numEntries > 0);
-    assert(_guts->_numEntries > _guts->_first);
+    ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
+    ITAssertWithMessage(_guts->_numEntries > _guts->_first, @"numEntries=%@ <= first=%@", @(_guts->_numEntries), @(_guts->_first));
 
     iTermMetadataAppend(&_guts->_array[_guts->_numEntries - 1].lineMetadata,
                         originalLength,
@@ -336,7 +340,6 @@
     }
     const int formerCapacity = _guts->_capacity;
     _guts->_capacity = newCapacity;
-    _guts->_capacity = MAX(1, _guts->_capacity);
     _guts->_array = (LineBlockMetadata *)iTermZeroingRealloc((void *)_guts->_array,
                                                          formerCapacity,
                                                       _guts->_capacity,
@@ -348,7 +351,7 @@
 }
 
 - (void)removeLast {
-    assert(_guts->_numEntries > 0);
+    ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
     _guts->_numEntries -= 1;
     _guts->_array[_guts->_numEntries].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
@@ -373,8 +376,8 @@
 }
 
 - (void)setLastExternalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
-    assert(_guts->_numEntries > 0);
-    assert(_guts->_numEntries > _guts->_first);
+    ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
+    ITAssertWithMessage(_guts->_numEntries > _guts->_first, @"numEntries=%@ <= first=%@", @(_guts->_numEntries), @(_guts->_first));
 
     iTermMetadataSetExternalAttributes(&_guts->_array[_guts->_numEntries - 1].lineMetadata,
                                        eaIndex);
@@ -388,14 +391,15 @@
 - (void)removeFirst:(int)n {
     for (int i = 0; i < n; i++) {
         const int first = _guts->_first;
-        assert(_guts->_numEntries >= first);
+        ITAssertWithMessage(_guts->_numEntries >= first, @"numEntries=%@ < first=%@", @(_guts->_numEntries), @(first));
         _guts->_array[first].number_of_wrapped_lines = 0;
         if (_guts->_useDWCCache) {
             _guts->_array[first].double_width_characters = nil;
         }
         iTermMetadataSetExternalAttributes(&_guts->_array[first].lineMetadata, nil);
         _guts->_first += 1;
-        assert(_guts->_first <= _guts->_numEntries);
+        ITAssertWithMessage(_guts->_first <= _guts->_numEntries,
+                            @"first=%@ > numEntries=%@", @(_guts->_first), @(_guts->_numEntries));
     }
 }
 

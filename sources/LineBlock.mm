@@ -486,10 +486,12 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
                        continuation:(screen_char_t)continuation
                                cert:(id<iTermLineBlockMutationCertificate>)cert {
     assert(_metadataArray.numEntries == cll_entries);
+    assert(_metadataArray.capacity >= cll_capacity);
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
         [cert setCumulativeLineLengthsCapacity:cll_capacity];
         [_metadataArray increaseCapacityTo:cll_capacity];
+        assert(_metadataArray.capacity >= cll_capacity);
     }
     ((int *)cumulative_line_lengths)[cll_entries] = cumulativeLength;
     [_metadataArray append:lineMetadata continuation:continuation];
