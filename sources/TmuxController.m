@@ -1081,6 +1081,20 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommandList:commands];
 }
 
+- (void)sendReport:(NSData *)report pane:(int)pane {
+    if (![self versionAtLeastDecimalNumberWithString:@"3.4"]) {
+        return;
+    }
+    NSString *escapedReport =
+    [[report stringWithEncoding:NSUTF8StringEncoding] stringByEscapingForTmux];
+
+    [gateway_ sendCommand:[NSString stringWithFormat:@"refresh-client -r \"%%%d:%@\"", pane, escapedReport]
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
 - (void)sendControlC {
     [gateway_ sendCommand:[NSString stringWithFormat:@"%cphony-command", 3]
            responseTarget:nil

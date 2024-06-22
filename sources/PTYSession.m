@@ -7510,6 +7510,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                 [self installTmuxForegroundJobMonitor];
                 [self installOtherTmuxMonitors];
                 [self replaceWorkingDirectoryPollerWithTmuxWorkingDirectoryPoller];
+                [self sendTmuxPerPaneReports:PTYSessionTmuxReportAll];
                 break;
         }
         [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionTmuxRole];
@@ -7545,6 +7546,43 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [_tmuxClientWritePipe release];
     _tmuxClientWritePipe = [[NSFileHandle alloc] initWithFileDescriptor:fds[1]
                                                          closeOnDealloc:YES];
+}
+
+typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
+    PTYSessionTmuxReportForeground = (1 << 0),
+    PTYSessionTmuxReportBackground = (1 << 1),
+
+    PTYSessionTmuxReportAll = (PTYSessionTmuxReportForeground |
+                               PTYSessionTmuxReportBackground)
+};
+
+- (void)sendTmuxPerPaneReports:(PTYSessionTmuxReport)reports {
+    NSColor *fgColor = [_textview.colorMap colorForKey:kColorMapForeground];
+    NSColor *bgColor = [_textview.colorMap colorForKey:kColorMapBackground];
+
+    __block NSData *fgReport = nil;
+    __block NSData *bgReport = nil;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        // 10 and 11 correspond to the OSC codes that would normally request these values.
+        if (reports & PTYSessionTmuxReportForeground) {
+            fgReport = [[terminal.output reportColor:fgColor
+                                             atIndex:10
+                                              prefix:@""] copy];
+        }
+        if (reports & PTYSessionTmuxReportBackground) {
+            bgReport = [[terminal.output reportColor:bgColor
+                                             atIndex:11
+                                              prefix:@""] copy];
+        }
+    }];
+    if (fgReport) {
+        [_tmuxController sendReport:fgReport pane:self.tmuxPane];
+    }
+    if (bgReport) {
+        [_tmuxController sendReport:bgReport pane:self.tmuxPane];
+    }
+    [fgReport autorelease];
+    [bgReport autorelease];
 }
 
 - (void)loadTmuxProcessID {
@@ -10887,9 +10925,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [self updateAutoComposerSeparatorVisibility];
     // Can't call this synchronously because we could get here from a side effect and
     // viewDidChangeEffectiveAppearance can cause performBlockWithJoinedThreads to be called.
+    // Also, sending a report requires joining the mutation thread.
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf updateAppearanceForMinimalTheme];
+        if (weakSelf.tmuxMode == TMUX_CLIENT) {
+            [weakSelf sendTmuxPerPaneReports:PTYSessionTmuxReportBackground];
+        }
     });
 }
 
@@ -10972,6 +11014,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         self.needsJiggle = YES;
     }
     [_composerManager updateFont];
+    __weak __typeof(self) weakSelf = self;
+    // Can't call this synchronously because we could get here from a side effect and
+    // sending a report requires joining the mutation thread.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (weakSelf.tmuxMode == TMUX_CLIENT) {
+            [weakSelf sendTmuxPerPaneReports:PTYSessionTmuxReportForeground];
+        }
+    });
 }
 
 - (void)textViewCursorColorDidChangeFrom:(NSColor *)before to:(NSColor *)after {

@@ -268,6 +268,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Escape special characters.
 - (NSString *)stringByEscapingForXML;
 
+// Escape tmux special characters.
+- (NSString *)stringByEscapingForTmux;
+
 // Returns an array of numbers giving code points for each character in the string. Surrogate pairs
 // get combined. Combining marks do not.
 - (NSArray<NSNumber *> *)codePoints;
