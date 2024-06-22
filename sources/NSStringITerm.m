@@ -1841,6 +1841,22 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
+- (NSString *)stringByEscapingForTmux {
+    NSMutableString *result = [NSMutableString string];
+    for (NSUInteger i = 0; i < self.length; i++) {
+        unichar c = [self characterAtIndex:i];
+        if (c < 32) {
+            [result appendFormat:@"\\%03o", c];
+            continue;
+        }
+        if (c == '\\' || c == '"') {
+            [result appendString:@"\\"];
+        }
+        [result appendCharacter:c];
+    }
+    return result;
+}
+
 - (NSString *)stringByEscapingForJSON {
     // Escape backslash and " with unicode literals.
     NSString *escaped =
