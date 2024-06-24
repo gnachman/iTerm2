@@ -1,11 +1,13 @@
 #import <Cocoa/Cocoa.h>
+
+#import "ComparableNSObject.h"
 #import "VT100GridTypes.h"
 
 @class iTermExternalSearchResult;
 
 // Represents a search result when searching the screen and scrollback history
 // contents.
-@interface SearchResult : NSObject
+@interface SearchResult : ComparableNSObject
 
 @property(nonatomic, readonly) BOOL isExternal;
 

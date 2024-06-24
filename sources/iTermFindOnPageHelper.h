@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermFindDriver.h"
 #import "iTermSearchResultsMinimapView.h"
+#import "BTree.h"
 #import "VT100GridTypes.h"
 
 @class FindContext;
@@ -83,7 +84,7 @@ typedef NS_ENUM(NSUInteger, FindCursorType) {
 @property(nonatomic, assign) NSView<iTermFindOnPageHelperDelegate> *delegate;
 @property(nonatomic, readonly) NSDictionary *highlightMap;
 @property(nonatomic, readonly) FindContext *copiedContext;
-@property(nonatomic, readonly) NSOrderedSet<SearchResult *> *searchResults;
+@property(nonatomic, readonly) iTermSortedBag<SearchResult *> *searchResults;
 @property(nonatomic, readonly) NSInteger numberOfSearchResults;
 @property(nonatomic, readonly) NSInteger currentIndex;
 // This is used to select which search result should be highlighted. If searching forward, it'll
