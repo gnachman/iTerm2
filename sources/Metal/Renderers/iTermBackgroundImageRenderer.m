@@ -1,6 +1,7 @@
 #import "iTermBackgroundImageRenderer.h"
 
 #import "ITAddressBookMgr.h"
+#import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBackgroundDrawingHelper.h"
@@ -92,7 +93,10 @@ NS_ASSUME_NONNULL_BEGIN
            color:(vector_float4)defaultBackgroundColor
       colorSpace:(NSColorSpace *)colorSpace
          context:(nullable iTermMetalBufferPoolContext *)context {
+    DLog(@"setImage:%@ mode:%@ frame:%@ containerRect:%@", 
+         image.image, @(mode), NSStringFromRect(frame), NSStringFromRect(containerRect));
     if (image != _image) {
+        DLog(@"Will create texture from image");
         _texture = image ? [_metalRenderer textureFromImage:image context:context colorSpace:colorSpace] : nil;
     }
     _frame = frame;
@@ -236,10 +240,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)loadVertexBuffer:(iTermBackgroundImageRendererTransientState *)tState {
     const CGFloat scale = tState.configuration.scale;
-    const CGSize nativeTextureSize = NSMakeSize(tState.imageSize.width * tState.imageScale,
-                                                tState.imageSize.height * tState.imageScale);
+    DLog(@"image size=%@ image scale=%@", NSStringFromSize(tState.imageSize), @(tState.imageScale));
+    const CGSize nativeTextureSize = NSMakeSize(tState.texture.width,
+                                                tState.texture.height);
+    DLog(@"nativeTextureSize=%@", NSStringFromSize(nativeTextureSize));
     const CGSize viewportSize = CGSizeMake(tState.configuration.viewportSize.x,
                                            tState.configuration.viewportSize.y);
+    DLog(@"viewport size=%@", NSStringFromSize(viewportSize));
     NSEdgeInsets insets;
     CGFloat vmargin;
     vmargin = 0;
@@ -250,7 +257,8 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat rightMargin = insets.right;
 
     const CGFloat imageAspectRatio = nativeTextureSize.width / nativeTextureSize.height;
-    
+    DLog(@"image aspect ratio=%@", @(imageAspectRatio));
+
     // pixel coordinates
     const CGFloat viewHeight = viewportSize.height + topMargin + bottomMargin;
     const CGFloat viewWidth = viewportSize.width + leftMargin + rightMargin;
@@ -264,6 +272,7 @@ NS_ASSUME_NONNULL_BEGIN
     // pixel coordinates
     CGRect textureFrame;
     const CGRect frame = tState.frame;
+    DLog(@"tState.frame=%@", NSStringFromRect(frame));
     const CGRect containerRect = CGRectMake(tState.containerFrame.origin.x * scale,
                                             tState.containerFrame.origin.y * scale,
                                             tState.containerFrame.size.width * scale,
@@ -271,7 +280,8 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat containerHeight = viewHeight / frame.size.height;
     const CGFloat containerWidth = viewWidth / frame.size.width;
     const CGFloat containerAspectRatio = containerWidth / containerHeight;
-
+    DLog(@"Container rect=%@, container aspect ratio=%@, mode=%@",
+         NSStringFromRect(containerRect), @(containerAspectRatio), @(_mode));
     switch (_mode) {
         case iTermBackgroundImageModeStretch:
             textureFrame = CGRectMake(frame.origin.x * nativeTextureSize.width,
@@ -318,23 +328,28 @@ NS_ASSUME_NONNULL_BEGIN
             
         case iTermBackgroundImageModeScaleAspectFill: {
             CGRect globalTextureFrame;
+            DLog(@"Image aspect ratio=%@, container aspect ratio=%@",
+                 @(imageAspectRatio), @(containerAspectRatio));
             if (imageAspectRatio > containerAspectRatio) {
-                // Image is wide relative to view.
-                // Crop left and right.
+                DLog(@"Image is wide relative to view.");
+                DLog(@"Crop left and right.");
                 const CGFloat width = nativeTextureSize.height * containerAspectRatio;
                 const CGFloat crop = (nativeTextureSize.width - width) / 2.0;
                 globalTextureFrame = CGRectMake(crop, 0, width, nativeTextureSize.height);
             } else {
-                // Image is tall relative to view.
-                // Crop top and bottom.
+                DLog(@"Image is tall relative to view.");
+                DLog(@"Crop top and bottom.");
                 const CGFloat height = nativeTextureSize.width / containerAspectRatio;
                 const CGFloat crop = (nativeTextureSize.height - height) / 2.0;
                 globalTextureFrame = CGRectMake(0, crop, nativeTextureSize.width, height);
             }
+            DLog(@"globalTextureFrame=%@", NSStringFromRect(globalTextureFrame));
+            DLog(@"frame=%@", NSStringFromRect(frame));
             textureFrame = CGRectMake(frame.origin.x * globalTextureFrame.size.width + globalTextureFrame.origin.x,
                                       frame.origin.y * globalTextureFrame.size.height + globalTextureFrame.origin.y,
                                       frame.size.width * globalTextureFrame.size.width,
                                       frame.size.height * globalTextureFrame.size.height);
+            DLog(@"textureFrame=%@", NSStringFromRect(textureFrame));
             break;
         }
     }
