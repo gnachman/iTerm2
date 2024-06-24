@@ -440,7 +440,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 - (NSArray<iTermSnippet *> *)selectedSnippets {
     DLog(@"selected row indexes are %@", _tableView.selectedRowIndexes);
-    NSArray<iTermSnippet *> *snippets = [[iTermSnippetsModel sharedInstance] snippets];
+    NSArray<iTermSnippet *> *snippets = _filteredSnippets;
     DLog(@"Snippets are:\n%@", snippets);
     return [[_tableView.selectedRowIndexes it_array] mapWithBlock:^id(NSNumber *indexNumber) {
         DLog(@"Add snippet at %@", indexNumber);
