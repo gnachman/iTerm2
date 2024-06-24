@@ -3271,6 +3271,27 @@
 		A6D5724127BCDAA1002E6E9F /* CharacterAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D5724027BCDAA1002E6E9F /* CharacterAttributes.swift */; };
 		A6D5985121B78B9700B59C94 /* iTermBroadcastInputHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D5984F21B78B9700B59C94 /* iTermBroadcastInputHelper.h */; };
 		A6D5985221B78B9700B59C94 /* iTermBroadcastInputHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D5985021B78B9700B59C94 /* iTermBroadcastInputHelper.m */; };
+		A6D644522C29D7E000D40FED /* BTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D644502C29D7E000D40FED /* BTree.h */; };
+		A6D644532C29D7E000D40FED /* BTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D644512C29D7E000D40FED /* BTree.m */; };
+		A6D644542C29D99B00D40FED /* BTreeObjC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D6444C2C29C92200D40FED /* BTreeObjC.swift */; };
+		A6D644552C29D9AB00D40FED /* Weak.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D6442A2C29C8C700D40FED /* Weak.swift */; };
+		A6D644562C29D9AB00D40FED /* BTreePath.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D644392C29C8CA00D40FED /* BTreePath.swift */; };
+		A6D644572C29D9AB00D40FED /* BTreeNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D6442C2C29C8C700D40FED /* BTreeNode.swift */; };
+		A6D644582C29D9AB00D40FED /* SortedBag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D6442F2C29C8C800D40FED /* SortedBag.swift */; };
+		A6D644592C29D9AB00D40FED /* BTreeIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D6442B2C29C8C700D40FED /* BTreeIterator.swift */; };
+		A6D6445A2C29D9AB00D40FED /* List.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D6442E2C29C8C800D40FED /* List.swift */; };
+		A6D6445B2C29D9AB00D40FED /* BTreeComparisons.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D6442D2C29C8C800D40FED /* BTreeComparisons.swift */; };
+		A6D6445C2C29D9AB00D40FED /* BTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D644302C29C8C800D40FED /* BTree.swift */; };
+		A6D6445D2C29D9AB00D40FED /* BTreeMerger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D644312C29C8C800D40FED /* BTreeMerger.swift */; };
+		A6D6445E2C29D9AB00D40FED /* SortedSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D644332C29C8C900D40FED /* SortedSet.swift */; };
+		A6D6445F2C29D9AB00D40FED /* Compatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D6443A2C29C8CA00D40FED /* Compatibility.swift */; };
+		A6D644602C29D9AB00D40FED /* BTreeCursor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D644382C29C8CA00D40FED /* BTreeCursor.swift */; };
+		A6D644612C29D9AB00D40FED /* BridgedList.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D644342C29C8C900D40FED /* BridgedList.swift */; };
+		A6D644622C29D9AB00D40FED /* BTreeBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D644352C29C8C900D40FED /* BTreeBuilder.swift */; };
+		A6D644632C29D9AB00D40FED /* BTreeIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D644362C29C8C900D40FED /* BTreeIndex.swift */; };
+		A6D644642C29D9AB00D40FED /* Map.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D644322C29C8C900D40FED /* Map.swift */; };
+		A6D644672C29E1A700D40FED /* ComparableNSObject.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D644652C29E1A700D40FED /* ComparableNSObject.h */; };
+		A6D644682C29E1A700D40FED /* ComparableNSObject.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D644662C29E1A700D40FED /* ComparableNSObject.m */; };
 		A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		A6D7E0712C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */; };
 		A6D7E0722C1B6AF5007D0A37 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
@@ -7039,6 +7060,27 @@
 		A6D5724227BCE06C002E6E9F /* iTermTextDataSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTextDataSource.h; sourceTree = "<group>"; };
 		A6D5984F21B78B9700B59C94 /* iTermBroadcastInputHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBroadcastInputHelper.h; sourceTree = "<group>"; };
 		A6D5985021B78B9700B59C94 /* iTermBroadcastInputHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBroadcastInputHelper.m; sourceTree = "<group>"; };
+		A6D6442A2C29C8C700D40FED /* Weak.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Weak.swift; path = BTree/Weak.swift; sourceTree = "<group>"; };
+		A6D6442B2C29C8C700D40FED /* BTreeIterator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTreeIterator.swift; path = BTree/BTreeIterator.swift; sourceTree = "<group>"; };
+		A6D6442C2C29C8C700D40FED /* BTreeNode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTreeNode.swift; path = BTree/BTreeNode.swift; sourceTree = "<group>"; };
+		A6D6442D2C29C8C800D40FED /* BTreeComparisons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTreeComparisons.swift; path = BTree/BTreeComparisons.swift; sourceTree = "<group>"; };
+		A6D6442E2C29C8C800D40FED /* List.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = List.swift; path = BTree/List.swift; sourceTree = "<group>"; };
+		A6D6442F2C29C8C800D40FED /* SortedBag.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SortedBag.swift; path = BTree/SortedBag.swift; sourceTree = "<group>"; };
+		A6D644302C29C8C800D40FED /* BTree.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTree.swift; path = BTree/BTree.swift; sourceTree = "<group>"; };
+		A6D644312C29C8C800D40FED /* BTreeMerger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTreeMerger.swift; path = BTree/BTreeMerger.swift; sourceTree = "<group>"; };
+		A6D644322C29C8C900D40FED /* Map.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Map.swift; path = BTree/Map.swift; sourceTree = "<group>"; };
+		A6D644332C29C8C900D40FED /* SortedSet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SortedSet.swift; path = BTree/SortedSet.swift; sourceTree = "<group>"; };
+		A6D644342C29C8C900D40FED /* BridgedList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BridgedList.swift; path = BTree/BridgedList.swift; sourceTree = "<group>"; };
+		A6D644352C29C8C900D40FED /* BTreeBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTreeBuilder.swift; path = BTree/BTreeBuilder.swift; sourceTree = "<group>"; };
+		A6D644362C29C8C900D40FED /* BTreeIndex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTreeIndex.swift; path = BTree/BTreeIndex.swift; sourceTree = "<group>"; };
+		A6D644382C29C8CA00D40FED /* BTreeCursor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTreeCursor.swift; path = BTree/BTreeCursor.swift; sourceTree = "<group>"; };
+		A6D644392C29C8CA00D40FED /* BTreePath.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTreePath.swift; path = BTree/BTreePath.swift; sourceTree = "<group>"; };
+		A6D6443A2C29C8CA00D40FED /* Compatibility.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Compatibility.swift; path = BTree/Compatibility.swift; sourceTree = "<group>"; };
+		A6D6444C2C29C92200D40FED /* BTreeObjC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BTreeObjC.swift; sourceTree = "<group>"; };
+		A6D644502C29D7E000D40FED /* BTree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BTree.h; sourceTree = "<group>"; };
+		A6D644512C29D7E000D40FED /* BTree.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BTree.m; sourceTree = "<group>"; };
+		A6D644652C29E1A700D40FED /* ComparableNSObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ComparableNSObject.h; sourceTree = "<group>"; };
+		A6D644662C29E1A700D40FED /* ComparableNSObject.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ComparableNSObject.m; sourceTree = "<group>"; };
 		A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStyleSearchEngine.swift; sourceTree = "<group>"; };
 		A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineBlockMetadataArray.h; sourceTree = "<group>"; };
 		A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineBlockMetadataArray.m; sourceTree = "<group>"; };
@@ -8150,6 +8192,7 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				A6D644292C29C8BC00D40FED /* BTree */,
 				A6EA071B24EA440600DD6E17 /* NSURL-IDN */,
 				A653F67224CF4EBA0062377E /* fmdb */,
 				A6EB203F223EC53F00E928C3 /* ini */,
@@ -10809,6 +10852,11 @@
 				A6CC498D2C08E567003484B2 /* CommandShareMenuProvider.swift */,
 				A6CC498F2C08EFC1003484B2 /* CommandURLBuilder.swift */,
 				A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */,
+				A6D6444C2C29C92200D40FED /* BTreeObjC.swift */,
+				A6D644502C29D7E000D40FED /* BTree.h */,
+				A6D644512C29D7E000D40FED /* BTree.m */,
+				A6D644652C29E1A700D40FED /* ComparableNSObject.h */,
+				A6D644662C29E1A700D40FED /* ComparableNSObject.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -11429,6 +11477,29 @@
 				A62C3B221BCC24AB00B5629D /* iTermRecentDirectoryMO.m */,
 			);
 			name = NSManagedObjects;
+			sourceTree = "<group>";
+		};
+		A6D644292C29C8BC00D40FED /* BTree */ = {
+			isa = PBXGroup;
+			children = (
+				A6D644342C29C8C900D40FED /* BridgedList.swift */,
+				A6D644302C29C8C800D40FED /* BTree.swift */,
+				A6D644352C29C8C900D40FED /* BTreeBuilder.swift */,
+				A6D6442D2C29C8C800D40FED /* BTreeComparisons.swift */,
+				A6D644382C29C8CA00D40FED /* BTreeCursor.swift */,
+				A6D644362C29C8C900D40FED /* BTreeIndex.swift */,
+				A6D6442B2C29C8C700D40FED /* BTreeIterator.swift */,
+				A6D644312C29C8C800D40FED /* BTreeMerger.swift */,
+				A6D6442C2C29C8C700D40FED /* BTreeNode.swift */,
+				A6D644392C29C8CA00D40FED /* BTreePath.swift */,
+				A6D6443A2C29C8CA00D40FED /* Compatibility.swift */,
+				A6D6442E2C29C8C800D40FED /* List.swift */,
+				A6D644322C29C8C900D40FED /* Map.swift */,
+				A6D6442F2C29C8C800D40FED /* SortedBag.swift */,
+				A6D644332C29C8C900D40FED /* SortedSet.swift */,
+				A6D6442A2C29C8C700D40FED /* Weak.swift */,
+			);
+			name = BTree;
 			sourceTree = "<group>";
 		};
 		A6EA071B24EA440600DD6E17 /* NSURL-IDN */ = {
@@ -12703,6 +12774,7 @@
 				A648DABE2427E7E000C2FF02 /* iTermPreferenceDidChangeNotification.h in Headers */,
 				A6F718CE2266E71E0053488E /* iTermUserDefaults.h in Headers */,
 				A6B41409211A5AEA00D28207 /* iTermStandardWindowButtonsView.h in Headers */,
+				A6D644522C29D7E000D40FED /* BTree.h in Headers */,
 				A673A62A23A2096B00869A95 /* iTermNaggingController.h in Headers */,
 				A66719401DCE36C3000CE608 /* iTermOpenQuicklyCommands.h in Headers */,
 				A6E180EA23D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h in Headers */,
@@ -12753,6 +12825,7 @@
 				A69C93412121140100531438 /* iTermStatusBarLargeComposerViewController.h in Headers */,
 				A6A39EBF24B9A96B00A64433 /* iTermUnobtrusiveMessage.h in Headers */,
 				5312269A20CB1D3A004831C6 /* iTermBuiltInFunctions.h in Headers */,
+				A6D644672C29E1A700D40FED /* ComparableNSObject.h in Headers */,
 				A63493E023E661B60047C31B /* iTermPresentationController.h in Headers */,
 				A61A85B924FC260700B03880 /* iTermTextViewContextMenuHelper.h in Headers */,
 				A6024B88254D367E0036D6CF /* iTermColorSuggester.h in Headers */,
@@ -15354,6 +15427,7 @@
 				A6CC7F5C274B6C570060C3C2 /* ToolJobs.m in Sources */,
 				A63F0A5D2BF436850096633F /* iTermHostnameFinder.swift in Sources */,
 				535D0915224DD13F00A79581 /* iTermPreferencesSearchEngineResultsWindowController.m in Sources */,
+				A6D644542C29D99B00D40FED /* BTreeObjC.swift in Sources */,
 				A6EC8073281F2C2900493544 /* ExternalSearchResult.swift in Sources */,
 				A626DF0C217D3034005600F9 /* iTermTabBarAccessoryViewController.m in Sources */,
 				A6E5110E24C1729E00D6552D /* iTermAttributedStringProxy.m in Sources */,
@@ -15431,6 +15505,22 @@
 				5370679121C9D2780088D0F3 /* SIGTrust.m in Sources */,
 				A6B4639E2C0EAF9A00B9352D /* SSHIdentity.swift in Sources */,
 				A69D6AE527B649B5006E3991 /* RunLengthEncoder.swift in Sources */,
+				A6D644552C29D9AB00D40FED /* Weak.swift in Sources */,
+				A6D644562C29D9AB00D40FED /* BTreePath.swift in Sources */,
+				A6D644572C29D9AB00D40FED /* BTreeNode.swift in Sources */,
+				A6D644582C29D9AB00D40FED /* SortedBag.swift in Sources */,
+				A6D644592C29D9AB00D40FED /* BTreeIterator.swift in Sources */,
+				A6D6445A2C29D9AB00D40FED /* List.swift in Sources */,
+				A6D6445B2C29D9AB00D40FED /* BTreeComparisons.swift in Sources */,
+				A6D6445C2C29D9AB00D40FED /* BTree.swift in Sources */,
+				A6D6445D2C29D9AB00D40FED /* BTreeMerger.swift in Sources */,
+				A6D6445E2C29D9AB00D40FED /* SortedSet.swift in Sources */,
+				A6D6445F2C29D9AB00D40FED /* Compatibility.swift in Sources */,
+				A6D644602C29D9AB00D40FED /* BTreeCursor.swift in Sources */,
+				A6D644612C29D9AB00D40FED /* BridgedList.swift in Sources */,
+				A6D644622C29D9AB00D40FED /* BTreeBuilder.swift in Sources */,
+				A6D644632C29D9AB00D40FED /* BTreeIndex.swift in Sources */,
+				A6D644642C29D9AB00D40FED /* Map.swift in Sources */,
 				A67F62022143A1650093940A /* iTermGraphicSource.m in Sources */,
 				A605943F2583305E00CACEE6 /* iTermSharedImageStore.m in Sources */,
 				A68ADA0629CCBE420008E092 /* CommandInfoViewController.swift in Sources */,
@@ -15787,6 +15877,7 @@
 				A6153D4E21F30A9C002976FC /* iTermJobTreeViewController.m in Sources */,
 				A6F1B3B92690EA9700546767 /* iTermOptionallyBordered.m in Sources */,
 				A6EC937F24E85CEF00EEADEF /* PasteboardHistory.m in Sources */,
+				A6D644532C29D7E000D40FED /* BTree.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
 				A6AB55E52173E18900142244 /* iTermCumulativeSumCache.mm in Sources */,
 				A603EA01283EEAE60028B648 /* ObjCExceptions.swift in Sources */,
@@ -15797,6 +15888,7 @@
 				A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */,
 				53197E7F220528E40000D95D /* iTermNotificationCenter.m in Sources */,
 				A6D10E3627F7C2BC0026DB56 /* Logging.swift in Sources */,
+				A6D644682C29E1A700D40FED /* ComparableNSObject.m in Sources */,
 				A618FFC22243E91900B8FD88 /* iTermToolActions.m in Sources */,
 				A6A4866D20B679E700493302 /* iTermProfilePreferencesBaseViewController.m in Sources */,
 				A69A260C21640F3F0091C16D /* iTermFlexibleView.m in Sources */,
