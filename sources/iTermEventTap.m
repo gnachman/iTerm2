@@ -122,7 +122,15 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
                                         CGEventRef event,
                                         void *refcon) {
     iTermEventTap *eventTap = (__bridge id)refcon;
-    DLog(@"event tap %@ for %@", eventTap, [NSEvent eventWithCGEvent:event]);
+    if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
+        DLog(@"event tap special type %@", @(type));
+    } else {
+        @try {
+            DLog(@"event tap %@ for %@", eventTap, [NSEvent eventWithCGEvent:event]);
+        } @catch (NSException *exception) {
+            DLog(@"Exception while trying to log event");
+        }
+    }
     return [eventTap eventTapCallbackWithProxy:proxy type:type event:event];
 }
 
