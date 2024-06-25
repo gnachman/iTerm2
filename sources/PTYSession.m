@@ -7370,9 +7370,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute {
     DLog(@"Launch coprocess with command %@. Mute=%@", command, @(mute));
+    NSDictionary *env = [self environmentForNewJobFromEnvironment:self.environment
+                                                    substitutions:self.substitutions
+                                                      arrangement:nil
+                                                  fromArrangement:NO];
+
     Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command
-                                                       environment:[self environmentForNewJobFromEnvironment:self.environment
-                                                                                               substitutions:self.substitutions]];
+                                                       environment:env];
     coprocess.delegate = self.weakSelf;
     coprocess.mute = mute;
     [_shell setCoprocess:coprocess];
