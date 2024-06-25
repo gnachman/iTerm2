@@ -4431,7 +4431,7 @@ ITERM_WEAKLY_REFERENCEABLE
         shouldAutoHideHotkeyWindow = NO;
         DLog(@"windowDidResignKey not auto-hiding hotkey window because the character panel is open.");
     }
-    DLog(@"Active app = %@", [[NSWorkspace sharedWorkspace] activeApplication]);
+    DLog(@"Active app = %@", [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier);
     if ([[NSWorkspace sharedWorkspace] it_securityAgentIsActive]) {
         shouldAutoHideHotkeyWindow = NO;
         DLog(@"windowDidResignKey not auto-hiding because SecurityAgent is open");

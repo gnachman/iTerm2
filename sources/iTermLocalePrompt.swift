@@ -96,7 +96,6 @@ extension NSPopUpButton {
         var bad: [LocaleComponents] = []
 
         for components in sortedLocaleComponents {
-            var title = components.title
             if components.encoding != "UTF-8" && encoding == .utf8 {
                 bad.append(components)
             } else {

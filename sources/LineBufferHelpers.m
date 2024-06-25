@@ -48,6 +48,9 @@
 
 @implementation MutableResultRange
 
+@dynamic position;
+@dynamic length;
+
 - (void)setPosition:(int)position {
     self->position = position;
 }

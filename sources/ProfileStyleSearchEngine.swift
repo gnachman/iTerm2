@@ -183,7 +183,7 @@ class ProfileStyleSearchEngine: NSObject {
                                phrases: [String: String],
                                result: ProfileStyleSearchEngineResult) -> SearchStatus {
         var status = SearchStatus.none
-        for (i, kvp) in phrases.enumerated() {
+        for kvp in phrases {
             let (op, content) = (kvp.key, kvp.value)
             guard let matchingIndexes = search(queryToken: queryToken, phrase: content, operator: op) else {
                 return .excluded
@@ -201,7 +201,7 @@ class ProfileStyleSearchEngine: NSObject {
                             tags: [String],
                             result: ProfileStyleSearchEngineResult) -> SearchStatus {
         var status = SearchStatus.none
-        for (j, tag) in tags.enumerated() {
+        for tag in tags {
             let tagWords = tag.components(separatedBy: .whitespaces)
             let found = queryToken.matchesAnyWord(inTagWords: tagWords)
             if found {
