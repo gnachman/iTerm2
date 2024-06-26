@@ -316,28 +316,10 @@
   return instance;
 }
 
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(applicationDidBecomeActive:)
-                                                     name:NSApplicationDidBecomeActiveNotification
-                                                   object:nil];
-    }
-    return self;
-}
-
 - (void)dealloc {
     [_keyDown release];
     [_keyUp release];
     [super dealloc];
-}
-
-#pragma mark - Notifications
-
-- (void)applicationDidBecomeActive:(NSNotification *)notification {
-    [_keyUp reinsertAtHead];
-    [_keyDown reinsertAtHead];
 }
 
 #pragma mark - APIs

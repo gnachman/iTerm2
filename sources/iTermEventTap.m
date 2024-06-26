@@ -208,15 +208,6 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
     return YES;
 }
 
-- (void)reinsertAtHead {
-    if (!self.isEnabled || !_eventSource) {
-        return;
-    }
-    DLog(@"Reinsert event tap %@", self);
-    [self stopEventTap];
-    [self startEventTap];
-}
-
 - (void)stopEventTap {
     DLog(@"Stop event tap %@", [NSThread callStackSymbols]);
     assert(self.isEnabled);
@@ -238,7 +229,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
 
     AppendPinnedDebugLogMessage(@"EventTap", @"Register event tap.");
     _machPort = CGEventTapCreate(kCGHIDEventTap,
-                                 kCGHeadInsertEventTap,
+                                 kCGTailAppendEventTap,
                                  kCGEventTapOptionDefault,
                                  _types,
                                  (CGEventTapCallBack)iTermEventTapCallback,
