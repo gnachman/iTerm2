@@ -53,6 +53,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)alternateMouseScroll;
 + (BOOL)alwaysUseLineStyleMarks;
 + (BOOL)alwaysUseStatusBarComposer;
++ (double)alphaForDeselectedCommandShade;
 + (BOOL)animateGraphStatusBarComponents;
 + (BOOL)autoSearch;
 + (void)setAlternateMouseScroll:(BOOL)value;

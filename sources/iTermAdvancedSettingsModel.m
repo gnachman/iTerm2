@@ -524,6 +524,7 @@ DEFINE_STRING(nativeRenderingCSSLight, @"", SECTION_DRAWING @"Path to CSS file t
 DEFINE_STRING(nativeRenderingCSSDark, @"", SECTION_DRAWING @"Path to CSS file to customize native drawing (for dark background colors).");
 DEFINE_BOOL(supportPowerlineExtendedSymbols, YES, SECTION_DRAWING @"Include extended symbols when drawing Powerline natively.");
 DEFINE_BOOL(alwaysUseLineStyleMarks, NO, SECTION_DRAWING @"Always use line-style marks?");
+DEFINE_FLOAT(alphaForDeselectedCommandShade, 0.25, SECTION_DRAWING @"Alpha value for shade that covers areas outside the currently selected command.");
 
 #pragma mark - Semantic History
 

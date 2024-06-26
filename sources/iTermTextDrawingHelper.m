@@ -873,10 +873,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 const CGFloat commandRegionOutlineThickness = 2.0;
 
 - (NSColor *)shadeColor {
+    const CGFloat alpha = [iTermAdvancedSettingsModel alphaForDeselectedCommandShade];
     if ([[self defaultBackgroundColor] isDark]) {
-        return [NSColor colorWithDisplayP3Red:1 green:1 blue:1 alpha:0.25];
+        return [NSColor colorWithDisplayP3Red:1 green:1 blue:1 alpha:alpha];
     }
-    return [NSColor colorWithDisplayP3Red:0 green:0 blue:0 alpha:0.25];
+    return [NSColor colorWithDisplayP3Red:0 green:0 blue:0 alpha:alpha];
 }
 
 - (void)drawShadeOverNonSelectedCommands:(CGFloat)virtualOffset {
