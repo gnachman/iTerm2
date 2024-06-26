@@ -101,7 +101,7 @@ iTermCommandInfoViewControllerDelegate>
         }
     }
     if (item.action == @selector(performNaturalLanguageQuery:)) {
-        return YES;
+        return [iTermAdvancedSettingsModel generativeAIAllowed];
     }
     return NO;
 }
