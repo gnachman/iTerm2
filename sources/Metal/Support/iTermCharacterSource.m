@@ -464,10 +464,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 - (NSArray<NSNumber *> *)newParts {
     CGRect boundingBox = self.frame;
-    if (_isAscii) {
-        boundingBox.size.width += _descriptor.asciiOffset.width;
-        boundingBox.size.height += _descriptor.asciiOffset.height;
-    }
     const int radius = _radius;
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
     for (int y = 0; y < self.maxParts; y++) {

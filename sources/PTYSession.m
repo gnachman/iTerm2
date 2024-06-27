@@ -7212,7 +7212,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                                         usesNonAsciiFont:_textview.useNonAsciiFont
                                                                  context:[PTYSession onePixelContext]];
     DLog(@"Bounding rect for %@ is %@", _textview.fontTable.asciiFont, NSStringFromRect(rect));
+    // When the overage is below or to the right, increase extraGlyphSize.
+    // When it's above or to the left, increase asciiOffset.
+    // asciiOffset has no effect on the glyph size. For fonts that have pixels
+    // in negative X territory, we have to draw them into the texture with an
+    // offset to avoid clipping and then draw them into the framebuffer with
+    // the opposite offset so they end up in the right place (i.e., the same
+    // place as the legacy renderer).
     CGSize asciiOffset = CGSizeZero;
+    CGSize extraGlyphSize = CGSizeZero;
     if (rect.origin.y < 0) {
         // Iosevka Light and CommitMono Nerd Font Mono are the only fonts I've found that need this.
         // Each rides *very* low in its box. The lineheight that PTYFontInfo calculates is actually too small
@@ -7225,7 +7233,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         // In a monochrome world, this is still necessary because even though glyph size and cell
         // size are no longer required to be the same, part of the glyph will be drawn outside its
         // bounds and get clipped in the texture.
-        asciiOffset.height = -floor(rect.origin.y * scale);
+        extraGlyphSize.height = -floor(rect.origin.y * scale);
     }
     if (iTermTextIsMonochrome() && rect.origin.x < 0) {
         // AnonymousPro has a similar problem (issue 8185), e.g. with "W".
@@ -7241,6 +7249,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         // Changing the assumption that glyphs are left-aligned would be very complex, and I can't
         // afford to add more risk right now. This is less than beautiful, but it's quite safe.
         asciiOffset.width = -floor(rect.origin.x * scale);
+        extraGlyphSize.width = fabs(asciiOffset.width);
     }
     DLog(@"Ascii offset is %@", NSStringFromSize(asciiOffset));
     if (iTermTextIsMonochrome()) {
@@ -7248,8 +7257,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
         glyphSize.width = round(1 + MAX(cellSize.width, NSMaxX(rect)));
         glyphSize.height = round(1 + MAX(cellSize.height, NSMaxY(rect)));
-        glyphSize.width += asciiOffset.width * 2;
-        glyphSize.height += asciiOffset.height * 2;
+        glyphSize.width += extraGlyphSize.width * 2;
+        glyphSize.height += extraGlyphSize.height * 2;
     } else {
         glyphSize = cellSize;
     }
