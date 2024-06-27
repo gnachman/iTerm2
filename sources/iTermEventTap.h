@@ -48,7 +48,6 @@
 
 // For testing. Returns the transformed event.
 - (NSEvent *)runEventTapHandler:(NSEvent *)event;
-- (void)reinsertAtHead;
 
 @end
 
