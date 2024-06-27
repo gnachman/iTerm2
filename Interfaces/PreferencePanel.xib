@@ -4082,7 +4082,7 @@ DQ
                     </connections>
                 </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5687">
-                    <rect key="frame" x="445" y="163" width="102" height="32"/>
+                    <rect key="frame" x="440" y="163" width="107" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Change" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5690">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -4093,8 +4093,8 @@ DQ
                     </connections>
                 </button>
                 <imageView hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5688">
-                    <rect key="frame" x="416" y="172" width="16" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                    <rect key="frame" x="421" y="172" width="16" height="16"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="Warning" id="5689"/>
                 </imageView>
                 <button toolTip="Only use this if you really know what you’re doing!" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5697">
@@ -4346,7 +4346,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3CY-jo-bCe">
-                    <rect key="frame" x="449" y="195" width="95" height="25"/>
+                    <rect key="frame" x="444" y="195" width="100" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Raw data" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Qag-mH-b4L" id="fzS-g7-P5q">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -4365,7 +4365,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XBK-8v-aud">
-                    <rect key="frame" x="101" y="139" width="339" height="21"/>
+                    <rect key="frame" x="101" y="143" width="339" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="Interpolated String" drawsBackground="YES" id="zrh-qF-3Iv">
                         <font key="font" usesAppearanceFont="YES"/>
@@ -4386,7 +4386,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9fS-YJ-ldf">
-                    <rect key="frame" x="32" y="141" width="63" height="16"/>
+                    <rect key="frame" x="32" y="145" width="63" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Filename:" id="YpV-Mh-UE0">
                         <font key="font" usesAppearanceFont="YES"/>
@@ -4856,7 +4856,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>
