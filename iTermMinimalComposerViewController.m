@@ -15,6 +15,17 @@
 static float kAnimationDuration = 0.25;
 static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"ComposerHeight";
 
+@interface iTermMinimalComposerView : NSView
+@end
+
+@implementation iTermMinimalComposerView
+
+- (BOOL)it_focusFollowsMouseImmune {
+    return YES;
+}
+
+@end
+
 @interface iTermMinimalComposerViewController ()<PopupDelegate, iTermComposerTextViewDelegate, iTermDragHandleViewDelegate, iTermPopupWindowPresenter, iTermStatusBarLargeComposerViewControllerDelegate>
 @end
 
