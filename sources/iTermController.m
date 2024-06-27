@@ -1071,7 +1071,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (PseudoTerminal *)openTmuxIntegrationWindowUsingProfile:(Profile *)profile
-                                         perWindowSetting:(NSString *)perWindowSetting {
+                                         perWindowSetting:(NSString *)perWindowSetting
+                                           tmuxController:(TmuxController *)tmuxController {
     [iTermController switchToSpaceInBookmark:profile];
     iTermWindowType windowType;
     if ([iTermAdvancedSettingsModel serializeOpeningMultipleFullScreenWindows]) {
@@ -1099,7 +1100,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     }
 
     [self addTerminalWindow:term];
-    [term setTmuxPerWindowSetting:perWindowSetting];
+    [term setTmuxPerWindowSetting:perWindowSetting
+                   tmuxController:tmuxController];
     return term;
 }
 

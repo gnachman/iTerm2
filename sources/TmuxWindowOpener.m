@@ -457,7 +457,8 @@ static int OctalValue(const char *bytes) {
         if (!term) {
             DLog(@"Creating a new term with guid %@", self.windowGUID);
             term = [[iTermController sharedInstance] openTmuxIntegrationWindowUsingProfile:self.profile
-                                                                          perWindowSetting:self.perWindowSettings[self.windowGUID]];
+                                                                          perWindowSetting:self.perWindowSettings[self.windowGUID]
+                                                                            tmuxController:self.controller];
             if (self.newWindowBlock) {
                 self.newWindowBlock(term.terminalGuid);
             }
@@ -523,6 +524,7 @@ static int OctalValue(const char *bytes) {
             BOOL isFullScreen = [term anyFullScreen];
             if (wantFullScreen && !isFullScreen) {
                 if (windowPos) {
+                    DLog(@"Set initial frame of tmux window %@ to %@", term, windowPos);
                     [[term window] setFrameOrigin:[windowPos pointValue]];
                     windowPos = nil;
                 }
@@ -547,6 +549,7 @@ static int OctalValue(const char *bytes) {
         if (!useOriginalWindow || initialTabs < 2 || !self.initial) {
             // Do this after calling the completion selector because it may affect the window's
             // frame (e.g., when burying a session and that causes the number of tabs to change).
+            DLog(@"Set initial frame of tmux window %@ to %@", term, windowPos);
             [[term window] setFrameOrigin:[windowPos pointValue]];
         }
     }

@@ -4902,15 +4902,27 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)tmuxPerWindowSetting {
-    if (_contentView.shouldShowToolbelt == [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT inProfile:self.currentSession.profile]) {
+    NSMutableDictionary<NSString *, id> *settings = [NSMutableDictionary dictionary];
+    if (_contentView.shouldShowToolbelt != [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT inProfile:self.currentSession.profile]) {
+        settings[@"toolbelt"] = @(_contentView.shouldShowToolbelt);
+    }
+    if (![self anyFullScreen]) {
+        settings[@"size"] = NSStringFromSize(self.window.frame.size);
+    } else {
+        settings[@"size"] = @"fs";
+    }
+
+    if (settings.count == 0) {
         return nil;
     }
-    // key=value&key=value&...
-    // Semicolon is reserved. Don't use it.
-    return [NSString stringWithFormat:@"toolbelt=%@", @(_contentView.shouldShowToolbelt)];
+
+    return [[settings.allKeys mapWithBlock:^id _Nullable(NSString * _Nonnull key) {
+        return [NSString stringWithFormat:@"%@=%@", key, settings[key]];
+    }] componentsJoinedByString:@";"];
 }
 
-- (void)setTmuxPerWindowSetting:(NSString *)setting {
+- (void)setTmuxPerWindowSetting:(NSString *)setting 
+                 tmuxController:(TmuxController *)tmuxController {
     DLog(@"SET per-window settings %@ for %@", setting, self.terminalGuid);
     NSArray<NSString *> *parts = [setting componentsSeparatedByString:@"&"];
     for (NSString *part in parts) {
@@ -4923,6 +4935,24 @@ ITERM_WEAKLY_REFERENCEABLE
             if (shouldShow != [self shouldShowToolbelt]) {
                 DLog(@"TOGGLE toolbelt");
                 [self toggleToolbeltVisibilityWithSideEffects:NO];
+            }
+        } else if ([iTermAdvancedSettingsModel rememberTmuxWindowSizes] &&
+                   tmuxController.variableWindowSize &&
+                   [kvp.firstObject isEqualToString:@"size"]) {
+            if ([kvp.secondObject isEqualToString:@"fs"] && ![self anyFullScreen]) {
+                [self toggleFullScreenMode:nil];
+            } else {
+                const NSSize size = NSSizeFromString(kvp.secondObject);
+                if (size.width > 0 && size.height > 0) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        NSRect frame = self.window.frame;
+                        frame.size = size;
+                        DLog(@"Recorded size for %@ is %@. Will set frame to %@",
+                             self, kvp.secondObject, NSStringFromRect(frame));
+
+                        [self.window setFrame:frame display:YES];
+                    });
+                }
             }
         }
     }

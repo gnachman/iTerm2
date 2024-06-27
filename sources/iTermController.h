@@ -47,6 +47,7 @@ extern NSString *const iTermSnippetsTagsDidChange;
 @class PTYSession;
 @class PTYTab;
 @class PTYTextView;
+@class TmuxController;
 
 @interface iTermController : NSObject
 
@@ -129,7 +130,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 // Does not enter fullscreen automatically; that is left to the caller, since tmux has special
 // logic around this. Call -didFinishCreatingTmuxWindow: after it is doing being set up.
 - (PseudoTerminal *)openTmuxIntegrationWindowUsingProfile:(Profile *)profile
-                                         perWindowSetting:(NSString *)perWindowSetting;
+                                         perWindowSetting:(NSString *)perWindowSetting
+                                           tmuxController:(TmuxController *)tmuxController;
 
 // This is called when the window created by -openTmuxIntegrationWindowUsingProfile is done being initialized.
 - (void)didFinishCreatingTmuxWindow:(PseudoTerminal *)windowController;

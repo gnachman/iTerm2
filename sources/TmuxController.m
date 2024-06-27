@@ -60,6 +60,9 @@ static NSString *const iTermTmuxControllerEncodingPrefixBuriedIndexes = @"b_";
 static NSString *const iTermTmuxControllerEncodingPrefixOrigins = @"o_";
 static NSString *const iTermTmuxControllerEncodingPrefixHidden = @"i_";
 static NSString *const iTermTmuxControllerEncodingPrefixUserVars = @"u_";
+
+// terminalGuid:settings;terminalGuid:settings;…
+// Where `settings` is key=value&key=value&…
 static NSString *const iTermTmuxControllerEncodingPrefixPerWindowSettings = @"w_";
 static NSString *const iTermTmuxControllerEncodingPrefixPerTabSettings = @"T_";
 
@@ -2562,6 +2565,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             [settings addObject:[NSString stringWithFormat:@"%@:%@", term.terminalGuid, setting]];
         }
     }
+
     NSString *arg = [settings componentsJoinedByString:@";"];
     DLog(@"Save per-window settings: %@", arg);
     NSString *command = [NSString stringWithFormat:@"set -t $%d @per_window_settings \"%@\"",
