@@ -632,13 +632,13 @@ static NSString *const kDynamicToolURL = @"URL";
             y += wrappers[i].frame.size.height + splitView.dividerThickness;
         }
     }
-    NSLog(@"Constrain divider %@ (between %@ and %@) currently at %@ to minY >= %@. proposed=%@",
-          @(dividerIndex),
-          wrappers[dividerIndex].name,
-          wrappers[dividerIndex+1].name,
-          @(wrappers[dividerIndex+1].frame.origin.y),
-          @(y),
-          @(proposedMinimumPosition));
+    DLog(@"Constrain divider %@ (between %@ and %@) currently at %@ to minY >= %@. proposed=%@",
+         @(dividerIndex),
+         wrappers[dividerIndex].name,
+         wrappers[dividerIndex+1].name,
+         @(wrappers[dividerIndex+1].frame.origin.y),
+         @(y),
+         @(proposedMinimumPosition));
     return y;
 }
 
@@ -656,13 +656,13 @@ static NSString *const kDynamicToolURL = @"URL";
         }
     }
 
-    NSLog(@"Constrain divider %@ (between %@ and %@) currently at %@ to maxY <= %@. proposed=%@",
-          @(dividerIndex),
-          wrappers[dividerIndex].name,
-          wrappers[dividerIndex + 1].name,
-          @(wrappers[dividerIndex+1].frame.origin.y),
-          @(y),
-          @(proposedMaximumPosition));
+    DLog(@"Constrain divider %@ (between %@ and %@) currently at %@ to maxY <= %@. proposed=%@",
+         @(dividerIndex),
+         wrappers[dividerIndex].name,
+         wrappers[dividerIndex + 1].name,
+         @(wrappers[dividerIndex+1].frame.origin.y),
+         @(y),
+         @(proposedMaximumPosition));
     return y;
 }
 
