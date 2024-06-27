@@ -3956,9 +3956,9 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 }
 
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect {
-    return VT100GridCoordRangeMake(floor((rect.origin.x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width),
+    return VT100GridCoordRangeMake(MAX(0, floor((rect.origin.x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width)),
                                    floor(rect.origin.y / _cellSize.height),
-                                   ceil((NSMaxX(rect) - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width),
+                                   MAX(0, ceil((NSMaxX(rect) - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width)),
                                    ceil(NSMaxY(rect) / _cellSize.height));
 }
 
