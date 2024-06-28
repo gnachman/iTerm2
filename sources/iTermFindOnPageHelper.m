@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "FindContext.h"
 #import "iTermSelection.h"
+#import "iTermMutableOrderedSet.h"
 #import "SearchResult.h"
 
 @interface FindCursor()
@@ -54,7 +55,7 @@ typedef struct {
 
     // The set of SearchResult objects for which matches have been found.
     // Sorted by reverse position (last in the buffer is first in the array).
-    NSMutableOrderedSet<SearchResult *> *_searchResults;
+    iTermMutableOrderedSet<SearchResult *> *_searchResults;
 
     // The next offset into _searchResults where values from _searchResults should
     // be added to the map.
@@ -226,7 +227,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
         // Initialize state with new values.
         _mode = mode;
-        _searchResults = [[NSMutableOrderedSet alloc] init];
+        [self createNewSearchResultsContainer];
         _searchingForNextResult = scrollToFirstResult;
         _lastStringSearchedFor = [aString copy];
 
@@ -235,13 +236,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     }
 }
 
+- (void)createNewSearchResultsContainer {
+    _searchResults = [[iTermMutableOrderedSet alloc] initWithComparator:^NSComparisonResult(SearchResult *lhs, SearchResult *rhs) {
+        // Backwards comparison because we store them sorted descending. I don't recall why. Changing it is hard.
+        return [rhs compare:lhs];
+    }];
+}
+
 - (void)clearHighlights {
     _lastStringSearchedFor = nil;
 
     [_locations removeAllIndexes];
     [self locationsDidChange];
 
-    _searchResults = [[NSMutableOrderedSet alloc] init];
+    [self createNewSearchResultsContainer];
     _cachedCounts.valid = NO;
 
     _numberOfProcessedSearchResults = 0;
@@ -328,26 +336,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (void)addSearchResult:(SearchResult *)searchResult width:(int)width {
-    if ([_searchResults containsObject:searchResult]) {
-        // Tail find produces duplicates sometimes. This can break monotonicity.
+    if (![_searchResults insertObject:searchResult]) {
         return;
     }
-
-    NSInteger insertionIndex = [_searchResults indexOfObject:searchResult
-                                               inSortedRange:NSMakeRange(0, _searchResults.count)
-                                                     options:NSBinarySearchingInsertionIndex
-                                             usingComparator:^NSComparisonResult(SearchResult  * _Nonnull obj1, SearchResult  * _Nonnull obj2) {
-                                                 NSComparisonResult result = [obj1 compare:obj2];
-                                                 switch (result) {
-                                                     case NSOrderedAscending:
-                                                         return NSOrderedDescending;
-                                                     case NSOrderedDescending:
-                                                         return NSOrderedAscending;
-                                                     default:
-                                                         return result;
-                                                 }
-                                             }];
-    [_searchResults insertObject:searchResult atIndex:insertionIndex];
     if (searchResult.isExternal) {
         [_locations addIndex:searchResult.externalAbsY];
     } else {
@@ -400,6 +391,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [self.delegate findOnPageSelectedResultDidChange];
 }
 
+// Search results include items that are no longer present because they scrolled off.
+// Those are always at the end of the list because it's sorted in reverse order.
+// Return the range of search results that are still accessible.
+- (NSRange)validRangeForOverflow:(long long)overflow {
+    SearchResult *r = [[SearchResult alloc] init];
+    r.internalAbsStartY = overflow;
+    const NSInteger lastValidIndex =
+    [_searchResults indexOfObject:r
+                    inSortedRange:NSMakeRange(0, _searchResults.count)
+                          options:NSBinarySearchingInsertionIndex];
+    if (lastValidIndex == NSNotFound) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+    return NSMakeRange(0, lastValidIndex);
+}
+
 // Select the next highlighted result by searching findResults_ for a match just before/after the
 // current selection.
 - (BOOL)selectNextResultForward:(BOOL)forward
@@ -440,13 +447,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     long long wrapAroundResultPosition = -1;
     SearchResult *wrapAroundResult = nil;
     BOOL haveFoundExternalCursor = NO;
-    for (int j = 0, i = start; !found && j < [_searchResults count]; j++) {
+    NSRange validRange = [self validRangeForOverflow:overflowAdjustment];
+    if (start >= NSMaxRange(validRange)) {
+        if (stride > 0) {
+            start = 0;
+        } else {
+            start = NSMaxRange(validRange) - 1;
+        }
+    }
+    for (int j = 0, i = start; !found && j < validRange.length; j++) {
         SearchResult* r = _searchResults[i];
         i += stride;
         if (i < 0) {
-            i += _searchResults.count;
-        } else if (i >= _searchResults.count) {
-            i -= _searchResults.count;
+            i = NSMaxRange(validRange) - 1;
+        } else if (i >= NSMaxRange(validRange)) {
+            i = 0;
         }
         if (found) {
             continue;
@@ -563,10 +578,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     querySearchResult.internalAbsStartY = query;
     NSInteger index = [_searchResults indexOfObject:querySearchResult
                                       inSortedRange:NSMakeRange(0, _searchResults.count)
-                                            options:(NSBinarySearchingInsertionIndex | NSBinarySearchingFirstEqual)
-                                    usingComparator:^NSComparisonResult(SearchResult * _Nonnull obj1, SearchResult * _Nonnull obj2) {
-                                        return [@(obj2.safeAbsStartY) compare:@(obj1.safeAbsStartY)];
-                                    }];
+                                            options:(NSBinarySearchingInsertionIndex | NSBinarySearchingFirstEqual)];
     if (index == _searchResults.count) {
         index--;
     }
@@ -584,10 +596,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     querySearchResult.internalAbsStartY = query;
     NSInteger index = [_searchResults indexOfObject:querySearchResult
                                       inSortedRange:NSMakeRange(0, _searchResults.count)
-                                            options:(NSBinarySearchingInsertionIndex | NSBinarySearchingLastEqual)
-                                    usingComparator:^NSComparisonResult(SearchResult * _Nonnull obj1, SearchResult * _Nonnull obj2) {
-                                        return [@(obj2.safeAbsStartY) compare:@(obj1.safeAbsStartY)];
-                                    }];
+                                            options:(NSBinarySearchingInsertionIndex | NSBinarySearchingLastEqual)];
     if (index == _searchResults.count) {
         index--;
     }
@@ -696,7 +705,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (void)updateCachedCounts {
     _cachedCounts.overflowAdjustment = [self.delegate findOnPageOverflowAdjustment];
-    SearchResult *temp = [SearchResult searchResultFromX:0 y:_cachedCounts.overflowAdjustment toX:0 y:_cachedCounts.overflowAdjustment];
 
     _cachedCounts.valid = YES;
     if (!_searchResults.count) {
@@ -709,13 +717,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         // All search results are valid.
         _cachedCounts.count = _searchResults.count;
     } else {
-        // Some search results at the end of the list have been lost to scrollback. Find where the
-        // valid ones end. Because search results are sorted descending, a prefix of _searchResults
-        // will contain the valid ones.
-        const NSInteger index = [_searchResults indexOfObject:temp inSortedRange:NSMakeRange(0, _searchResults.count) options:NSBinarySearchingInsertionIndex usingComparator:^NSComparisonResult(SearchResult *_Nonnull obj1, SearchResult *_Nonnull obj2) {
-            return [@(-obj1.safeAbsEndY) compare:@(-obj2.safeAbsEndY)];
-        }];
-        if (index == NSNotFound) {
+        if ([self validRangeForOverflow:_cachedCounts.overflowAdjustment].length == 0) {
             _cachedCounts.count = 0;
             _cachedCounts.index = 0;
             return;
@@ -729,18 +731,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     }
 
     // Do a binary search to find the current result.
-    _cachedCounts.index = [_searchResults indexOfObject:self.selectedResult inSortedRange:NSMakeRange(0, _searchResults.count) options:NSBinarySearchingFirstEqual usingComparator:^NSComparisonResult(SearchResult *_Nonnull obj1, SearchResult *_Nonnull obj2) {
-        const NSComparisonResult result = [obj1 compare:obj2];
-        // Swap ascending and descending because the values or ordered descending.
-        switch (result) {
-        case NSOrderedSame:
-            return result;
-        case NSOrderedAscending:
-            return NSOrderedDescending;
-        case NSOrderedDescending:
-            return NSOrderedAscending;
-        }
-    }];
+    _cachedCounts.index = [_searchResults indexOfObject:self.selectedResult
+                                          inSortedRange:NSMakeRange(0, _searchResults.count)
+                                                options:NSBinarySearchingFirstEqual];
 
     // Rewrite the index to be 1-based for valid results and 0 if none is selected.
     if (_cachedCounts.index == NSNotFound) {

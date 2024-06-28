@@ -775,7 +775,6 @@ class AITermController {
                 if !response.error.isEmpty {
                     let error = response.error
                     let provider = llmProvider.displayName
-                    let decoder = JSONDecoder()
                     var message = "Error from \(provider): \(error)"
                     if let reason = LLMErrorParser.errorReason(data: response.data.lossyData), !reason.isEmpty {
                         message += " " + reason
