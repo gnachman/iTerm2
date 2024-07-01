@@ -717,12 +717,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         // All search results are valid.
         _cachedCounts.count = _searchResults.count;
     } else {
-        if ([self validRangeForOverflow:_cachedCounts.overflowAdjustment].length == 0) {
+        const NSRange validRange = [self validRangeForOverflow:_cachedCounts.overflowAdjustment];
+        if (validRange.length == 0) {
             _cachedCounts.count = 0;
             _cachedCounts.index = 0;
             return;
         }
-        _cachedCounts.count = index + 1;
+        _cachedCounts.count = NSMaxRange(validRange);
     }
     
     if (self.selectedResult == nil) {
