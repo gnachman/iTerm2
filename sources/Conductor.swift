@@ -91,6 +91,7 @@ class Conductor: NSObject, Codable {
     // If non-nil, a jump that I haven't done yet.
     private var myJump: SSHReconnectionInfo?
     private var suggestionCache = SuggestionCache()
+    @objc private(set) var environmentVariables = [String: String]()
 
     @objc
     lazy var fileChecker: FileChecker? = {
@@ -362,6 +363,7 @@ class Conductor: NSObject, Codable {
         case framerAutopoll
         case framerSave([String:String])
         case framerFile(FileSubcommand)
+        case framerGetenv(String)
 
         var isFramer: Bool {
             switch self {
@@ -371,7 +373,7 @@ class Conductor: NSObject, Codable {
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
                     .framerDeregister(_), .framerPoll, .framerReset, .framerAutopoll, .framerSave(_),
-                    .framerFile(_), .framerEval:
+                    .framerFile(_), .framerEval, .framerGetenv:
                 return true
             }
         }
@@ -411,6 +413,8 @@ class Conductor: NSObject, Codable {
                 return (["send", String(pid), data.base64EncodedString()]).joined(separator: "\n")
             case .framerKill(pid: let pid):
                 return ["kill", String(pid)].joined(separator: "\n")
+            case .framerGetenv(let name):
+                return ["getenv", name].joined(separator: "\n")
             case .framerQuit:
                 return "quit"
             case .framerRegister(pid: let pid):
@@ -467,6 +471,8 @@ class Conductor: NSObject, Codable {
                 return "send \(data.semiVerboseDescription) to \(pid)"
             case .framerKill(pid: let pid):
                 return "kill \(pid)"
+            case .framerGetenv(let name):
+                return "getenv \(name)"
             case .framerQuit:
                 return "quit"
             case .framerRegister(pid: let pid):
@@ -525,6 +531,8 @@ class Conductor: NSObject, Codable {
                     return "handleFile"
                 case .handleNonFramerLogin:
                     return "handleNonFramerLogin"
+                case .handleGetenv:
+                    return "handleGetenv"
                 }
             }
 
@@ -540,7 +548,7 @@ class Conductor: NSObject, Codable {
             case handleGetShell(StringArray)
             case handleFile(StringArray, (String, Int32) -> ())
             case handleNonFramerLogin
-
+            case handleGetenv(String, StringArray)
             private enum Key: CodingKey {
                 case rawValue
                 case stringArray
@@ -560,6 +568,7 @@ class Conductor: NSObject, Codable {
                 case handleGetShell
                 case handleFile
                 case handleNonFramerLogin
+                case handleGetenv
             }
 
             private var rawValue: Int {
@@ -574,6 +583,8 @@ class Conductor: NSObject, Codable {
                     return RawValues.handleFramerLogin.rawValue
                 case .handleJump:
                     return RawValues.handleJump.rawValue
+                case .handleGetenv:
+                    return RawValues.handleGetenv.rawValue
                 case .writeOnSuccess(_):
                     return RawValues.writeOnSuccess.rawValue
                 case .handleRunRemoteCommand(_, _):
@@ -596,7 +607,7 @@ class Conductor: NSObject, Codable {
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
                 case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin(_), .handlePoll(_, _),
-                        .handleJump, .handleNonFramerLogin:
+                        .handleJump, .handleNonFramerLogin, .handleGetenv:
                     break
                 case .handleCheckForPython(let value):
                     try container.encode(value, forKey: .stringArray)
@@ -644,6 +655,9 @@ class Conductor: NSObject, Codable {
                     self = .handleFile(StringArray(), { _, _ in })
                 case .handleNonFramerLogin:
                     self = .handleNonFramerLogin
+                case .handleGetenv:
+                    self = .handleGetenv(try container.decode(String.self, forKey: .string),
+                                         try container.decode(StringArray.self, forKey: .stringArray))
                 }
             }
         }
@@ -1164,6 +1178,7 @@ class Conductor: NSObject, Codable {
                 self?.delegate?.conductorStateDidChange()
             }
         }
+        framerGetenv("PATH")
         if myJump != nil {
             framerJump()
         } else {
@@ -1215,6 +1230,10 @@ class Conductor: NSObject, Codable {
 
     private func framerKill(pid: Int) {
         send(.framerKill(pid: pid), .fireAndForget)
+    }
+
+    private func framerGetenv(_ name: String) {
+        send(.framerGetenv(name), .handleGetenv(name, StringArray()))
     }
 
     private func framerQuit() {
@@ -1383,6 +1402,17 @@ class Conductor: NSObject, Codable {
                 return
             case .abort, .sideChannelLine, .canceled:
                 break
+            }
+        case .handleGetenv(let name, let lines):
+            switch result {
+            case .line(let message):
+                lines.strings.append(message)
+            case .sideChannelLine, .abort, .canceled:
+                break
+            case .end:
+                if let line = lines.strings.first {
+                    environmentVariables[name] = line
+                }
             }
         case .writeOnSuccess(let code):
             switch result {

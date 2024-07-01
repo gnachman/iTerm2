@@ -131,7 +131,7 @@
 - (void)setScope:(iTermVariableScope *)scope {
     _scope = scope;
 
-    NSString *shell = [scope valueForVariableName:@"shell"] ?: @"zsh";
+    NSString *shell = [iTermOpenDirectory userShell];
     iTermSearchPathsCacheEntry *entry = self.cache[shell];
     if (entry) {
         if ([NSDate it_timeSinceBoot] - entry.timestamp < 60) {
@@ -515,13 +515,18 @@
     NSArray<NSString *> *directories;
     if (onFirstWord) {
         // TODO: Get search paths from remote host when ssh integration is in use.
-        NSString *shell = [self.scope valueForVariableName:iTermVariableKeyTabID] ?: @"zsh";
-        iTermSearchPathsCacheEntry *entry = self.cache[shell];
-        NSArray<NSString *> *paths = nil;
-        if (entry.ready) {
-            paths = entry.paths;
+        if (self.host.isLocalhost) {
+            NSString *shell = [iTermOpenDirectory userShell];
+            iTermSearchPathsCacheEntry *entry = self.cache[shell];
+            NSArray<NSString *> *paths = nil;
+            if (entry.ready) {
+                paths = entry.paths;
+            }
+            directories = paths ?: @[self.workingDirectory ?: NSHomeDirectory()];
+        } else {
+            directories = [[self.delegate largeComposerViewController:self
+                                           valueOfEnvironmentVariable:@"PATH"] componentsSeparatedByString:@":"];
         }
-        directories = paths ?: @[self.workingDirectory ?: NSHomeDirectory()];
     } else {
         directories = @[self.workingDirectory ?: NSHomeDirectory()];
     }

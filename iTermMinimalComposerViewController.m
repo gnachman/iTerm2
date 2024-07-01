@@ -436,6 +436,11 @@ workingDirectory:(NSString *)pwd
     [self.delegate minimalComposer:self fetchSuggestions:request];
 }
 
+- (NSString *)largeComposerViewController:(iTermStatusBarLargeComposerViewController *)controller
+               valueOfEnvironmentVariable:(NSString *)name {
+    return [self.delegate minimalComposer:self valueOfEnvironmentVariable:name];
+}
+
 #pragma mark - PopupDelegate
 
 - (BOOL)popupWindowShouldAvoidChangingWindowOrderOnClose {

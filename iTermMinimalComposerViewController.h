@@ -57,7 +57,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSResponder *)minimalComposerNextResponder;
 - (BOOL)minimalComposerShouldForwardCopy:(iTermMinimalComposerViewController *)composer;
 - (void)minimalComposerForwardMenuItem:(NSMenuItem *)menuItem;
-
+- (NSString * _Nullable)minimalComposer:(iTermMinimalComposerViewController *)composer
+             valueOfEnvironmentVariable:(NSString *)name;
 @end
 
 @interface iTermMinimalComposerViewController : NSViewController

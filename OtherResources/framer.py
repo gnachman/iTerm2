@@ -532,6 +532,37 @@ def procmon_parse(output):
     return list(diff())
 
 
+async def get_env_var(var_name):
+    # Get the user's shell
+    user_shell = os.environ.get('SHELL', '/bin/bash')
+    known_shells = ['bash', 'sh', 'zsh', 'ksh', 'dash', 'fish', 'csh', 'tcsh']
+
+    # Extract the last path component of the user's shell
+    shell_name = os.path.basename(user_shell)
+    log(f'Shell is {user_shell}')
+
+    if shell_name not in known_shells:
+        log(f'Unknown shell {shell_name}')
+        return None
+
+    command = f'echo ${var_name}'
+
+    try:
+        process = await asyncio.create_subprocess_exec(
+            user_shell, '-c', command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        # Print the value of the environment variable
+        return stdout.decode().strip()
+    except Exception as e:
+        log(f'get_env_var({var_name}) threw: {traceback.format_exc()}')
+
+# Run the async function
+asyncio.run(get_env_var('FOO'))
 async def save_and_exec(identifier, code):
     log("begin save_and_exec")
     try:
@@ -638,6 +669,14 @@ async def handle_save(identifier, args):
         code = 1
     q = begin(identifier)
     end(q, identifier, code)
+
+async def handle_getenv(identifier, args):
+    log(f'handle_getenv {identifier} {args}')
+    q = begin(identifier)
+    value = await get_env_var(args[0])
+    if q:
+        send_esc(q, value)
+    end(q, identifier, 0)
 
 async def handle_eval(identifier, args):
     log(f'handle_eval {identifier} [{len(args[0])} bytes]')
@@ -1377,7 +1416,8 @@ HANDLERS = {
     "recover": handle_recover,
     "save": handle_save,
     "file": handle_file,
-    "eval": handle_eval
+    "eval": handle_eval,
+    "getenv": handle_getenv
 }
 
 def main():

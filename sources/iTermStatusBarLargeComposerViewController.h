@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
                                            tmuxController:(TmuxController *)tmuxController;
 - (void)largeComposerViewController:(iTermStatusBarLargeComposerViewController *)controller
                    fetchSuggestions:(iTermSuggestionRequest *)request;
+- (NSString * _Nullable)largeComposerViewController:(iTermStatusBarLargeComposerViewController *)controller
+                         valueOfEnvironmentVariable:(NSString *)name;
 @end
 
 @interface iTermStatusBarLargeComposerViewController : NSViewController

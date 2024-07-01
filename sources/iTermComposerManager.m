@@ -397,6 +397,11 @@
     [self.delegate composerManager:self fetchSuggestions:request];
 }
 
+- (NSString * _Nullable)minimalComposer:(iTermMinimalComposerViewController *)composer
+             valueOfEnvironmentVariable:(NSString *)name {
+    return [self.delegate composerManager:self valueOfEnvironmentVariable:name];
+}
+
 - (void)dismissMinimalViewAnimated:(BOOL)animated {
     DLog(@"dismissMinimalViewAnimated:%@", @(animated));
     iTermMinimalComposerViewController *vc = _minimalViewController;

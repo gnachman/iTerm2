@@ -17993,15 +17993,20 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return YES;
 }
 
+- (NSString * _Nullable)composerManager:(iTermComposerManager *)composerManager
+             valueOfEnvironmentVariable:(NSString *)name {
+    // This is implicitly only for remote hosts.
+    if (@available(macOS 11, *)) {
+        if ([_conductor framing]) {
+            return _conductor.environmentVariables[name];
+        }
+    }
+    return nil;
+}
+
 - (void)composerManager:(iTermComposerManager *)composerManager
        fetchSuggestions:(iTermSuggestionRequest *)request {
-    if (request.executable && ![request.prefix containsString:@"/"]) {
-        // In the future it would be nice to search $PATH and shell builtins for command suggestions.
-        dispatch_async(dispatch_get_main_queue(), ^{
-            request.completion(@[]);
-        });
-        return;
-    }
+
     if (@available(macOS 11, *)) {
         if ([_conductor framing]) {
             [_conductor fetchSuggestions:[request requestWithReducedLimitBy:8]];
