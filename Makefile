@@ -132,10 +132,14 @@ fatopenssl: force x86openssl armopenssl
 
 x86libssh2: force fatopenssl
 	mkdir -p submodules/libssh2/build_x86_64
+        # Add this flag to enable tracing:
+	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
 	cd submodules/libssh2/build_x86_64 && $(CMAKE) -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" .. && $(MAKE) libssh2_static
 
 armlibssh2: force fatopenssl
 	mkdir -p submodules/libssh2/build_arm64
+        # Add this flag to enable tracing:
+	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
 	cd submodules/libssh2/build_arm64 && $(CMAKE) -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 .. && $(MAKE) libssh2_static
 
 fatlibssh2: force x86libssh2 armlibssh2
