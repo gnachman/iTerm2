@@ -95,6 +95,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     if (self) {
         _length = length;
         _stringValue = stringValue;
+        _deltas = iTermCalloc(length, sizeof(int));
     }
     return self;
 }
