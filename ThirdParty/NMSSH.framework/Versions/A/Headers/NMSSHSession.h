@@ -3,6 +3,8 @@
 @class NMSSHHostConfig, NMSFTP;
 @protocol NMSSHSessionDelegate;
 
+extern void (^ _Nullable gNMSSHTraceCallback)(NSData * _Nonnull);
+
 typedef NS_ENUM(NSInteger, NMSSHSessionHash) {
     NMSSHSessionHashMD5,
     NMSSHSessionHashSHA1

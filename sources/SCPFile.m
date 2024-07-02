@@ -296,6 +296,12 @@ static NSError *SCPFileError(NSString *description) {
 
 // This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gNMSSHTraceCallback = ^(NSData *data) {
+            DLog(@"libssh2 trace: %@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+        };
+    });
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
     DLog(@"performTransfer download=%@ agentAllowed=%@ path=%@ baseName=%@",
          @(isDownload), @(agentAllowed), self.path, baseName);
