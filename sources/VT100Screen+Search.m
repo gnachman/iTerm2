@@ -258,7 +258,7 @@
             }
             if (absLineRange.length > 0) {
                 if (!stopAt) {
-                    int y = 0;
+                    long long y = 0;
                     if (context.dir > 0) {
                         DLog(@"Continue searching until the end of the selected command");
                         y = NSMaxRange(absLineRange) - _state.totalScrollbackOverflow;
@@ -266,6 +266,7 @@
                         DLog(@"Continue searching until the start of the selected command");
                         y = absLineRange.location - _state.totalScrollbackOverflow;
                     }
+                    y = MAX(0, y);
                     stopAt = [temporaryLineBuffer positionForCoordinate:VT100GridCoordMake(0, y)
                                                                   width:_state.currentGrid.size.width
                                                                  offset:0];
@@ -414,7 +415,7 @@
                                     x = 0;
                                     offset = -1;
                                 }
-                                const int y = absY - self.totalScrollbackOverflow;
+                                const int y = MAX(0, absY - self.totalScrollbackOverflow);
                                 startPos = [temporaryLineBuffer positionForCoordinate:VT100GridCoordMake(x, y)
                                                                                 width:width
                                                                                offset:offset];
