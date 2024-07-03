@@ -25,7 +25,7 @@ import zipfile
 PROCESSES = {}
 # List of pids that are completed. Their tasks can be awaited and removed.
 COMPLETED = []
-VERBOSE=0
+VERBOSE=1
 LOGFILE=None
 RUNLOOP=None
 TASKS=[]
@@ -682,6 +682,9 @@ async def handle_eval(identifier, args):
     log(f'handle_eval {identifier} [{len(args[0])} bytes]')
     await save_and_exec(identifier, base64.b64decode(args[0]).decode('latin1'))
 
+def make_path(b64path):
+    return os.path.expanduser(base64.b64decode(b64path)).decode('latin1')
+
 async def handle_file(identifier, args):
     log(f'handle_file {identifier} {args}')
     if len(args) < 2:
@@ -691,23 +694,23 @@ async def handle_file(identifier, args):
     q = begin(identifier)
     sub = args[0]
     if sub == "ls":
-        await handle_file_ls(q, identifier, base64.b64decode(args[1]).decode('latin1'), args[2])
+        await handle_file_ls(q, identifier, make_path(args[1]), args[2])
         return
     if sub == "fetch":
         if len(args) >= 4:
-            await handle_file_fetch(q, identifier, base64.b64decode(args[1]).decode('latin1'), int(args[2]), int(args[3]))
+            await handle_file_fetch(q, identifier, make_path(args[1]), int(args[2]), int(args[3]))
         else:
-            await handle_file_fetch(q, identifier, base64.b64decode(args[1]).decode('latin1'), 0, float('inf'))
+            await handle_file_fetch(q, identifier, make_path(args[1]), 0, float('inf'))
         return
     if sub == "stat":
-        await handle_file_stat(q, identifier, base64.b64decode(args[1]).decode('latin1'))
+        await handle_file_stat(q, identifier, make_path(args[1]))
         return
     if sub == "suggest":
         await handle_file_suggest(q,
                                   identifier,
-                                  base64.b64decode(args[1]).decode('latin1'),
+                                  make_path(args[1]),
                                   args[2],
-                                  base64.b64decode(args[3]).decode('latin1'),
+                                  make_path(args[3]),
                                   args[4],
                                   int(args[5]))
         return
@@ -721,53 +724,53 @@ async def handle_file(identifier, args):
         if i == len(args):
             end(q, identifier, 1)
             return
-        await handle_file_rm(q, identifier, base64.b64decode(args[i]).decode('latin1'), recursive)
+        await handle_file_rm(q, identifier, make_path(args[i]), recursive)
         return
     if sub == "ln":
         await handle_file_ln(
             q,
             identifier,
-            base64.b64decode(args[1]).decode('latin1'),
-            base64.b64decode(args[2]).decode('latin1'))
+            make_path(args[1]),
+            make_path(args[2]))
         return
     if sub == "mv":
         await handle_file_mv(
             q,
             identifier,
-            base64.b64decode(args[1]).decode('latin1'),
-            base64.b64decode(args[2]).decode('latin1'))
+            make_path(args[1]),
+            make_path(args[2]))
         return
     if sub == "mkdir":
-        await handle_file_mkdir(q, identifier, base64.b64decode(args[1]).decode('latin1'))
+        await handle_file_mkdir(q, identifier, make_path(args[1]))
         return
     if sub == "create":
         await handle_file_create(q,
                                  identifier,
-                                 base64.b64decode(args[1]).decode('latin1'),
+                                 make_path(args[1]),
                                  base64.b64decode("".join(args[2:])))
         return
     if sub == "append":
         await handle_file_append(q,
                                  identifier,
-                                 base64.b64decode(args[1]).decode('latin1'),
+                                 make_path(args[1]),
                                  base64.b64decode("".join(args[2:])))
         return
     if sub == "utime":
         await handle_file_utime(q,
                                 identifier,
-                                base64.b64decode(args[1]).decode('latin1'),
+                                make_path(args[1]),
                                 int(float(args[2])))
         return
     if sub == "chmod-u":
         await handle_file_chmod_u(q,
                                   identifier,
-                                  base64.b64decode(args[1]).decode('latin1'),
+                                  make_path(args[1]),
                                   args[2])
         return
     if sub == "zip":
         await handle_file_zip(q,
                               identifier,
-                              base64.b64decode(args[1]).decode('latin1'))
+                              make_path(args[1]))
         return
     log(f'unrecognized subcommand {sub}')
     end(q, identifier, 1)

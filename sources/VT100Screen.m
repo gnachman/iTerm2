@@ -525,8 +525,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         return nil;
     }
     NSString *path;
-    if ([filename hasPrefix:@"/"]) {
-        DLog(@"Filename is absolute path, so that's easy");
+    if ([filename hasPrefix:@"/"] || [filename hasPrefix:@"~"]) {
+        DLog(@"Filename is absolute path or home directory, so that's easy");
         path = filename;
     } else {
         DLog(@"Use working directory of %@", workingDirectory);

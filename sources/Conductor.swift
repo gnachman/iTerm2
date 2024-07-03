@@ -1027,6 +1027,7 @@ class Conductor: NSObject, Codable {
         guard framing else {
             return false
         }
+        DLog("\(sshIdentity.hostname) == \(path.hostname ?? "(nil)") && \(sshIdentity.username ?? "(nil)") == \(path.username ?? "(nil)")")
         return sshIdentity.hostname == path.hostname && (sshIdentity.username == nil || sshIdentity.username == path.username)
     }
 
