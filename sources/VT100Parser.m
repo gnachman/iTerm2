@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTermMalloc.h"
+#import "NSStringITerm.h"
 #import "VT100ControlParser.h"
 #import "VT100StringParser.h"
 
@@ -115,144 +116,150 @@
             ParseString(datap, datalen, &rmlen, token, encoding);
             position = datap;
         } else if (iscontrol(datap[0]) || _dcsHooked || (support8BitControlCharacters && isc1(datap[0]))) {
-            [_controlParser parseControlWithData:datap
-                                         datalen:datalen
-                                           rmlen:&rmlen
-                                     incidentals:vector
-                                           token:token
-                                        encoding:encoding
-                                      savedState:_savedStateForPartialParse
-                                       dcsHooked:&_dcsHooked];
-            DLog(@"%@: control parser produced %@", self, token);
-            if (token->type != VT100_WAIT) {
-                [_savedStateForPartialParse removeAllObjects];
-            }
-            // Some tokens have synchronous side-effects.
-            switch (token->type) {
-                case XTERMCC_SET_KVP:
-                    if ([token.kvpKey isEqualToString:@"CopyToClipboard"]) {
-                        _saveData = YES;
-                    } else if ([token.kvpKey isEqualToString:@"EndCopy"]) {
-                        _saveData = NO;
-                    }
-                    break;
-
-                case SSH_TERMINATE: {
-                    // TODO: Make sure we don't leak sshparsers when connections end
-                    const int pid = token.csi->p[0];
-                    DLog(@"Remove ssh parser for pid %@", @(pid));
-                    [_sshParsers removeObjectForKey:@(pid)];
-                    if (pid == _mainSSHParserPID) {
-                        DLog(@"Lost main SSH process %d", pid);
-                        _mainSSHParserPID = -1;
-                    }
-                    break;
+            if (self.literalMode) {
+                token->type = VT100_LITERAL;
+                token->code = datap[0];
+                rmlen = 1;
+            } else {
+                [_controlParser parseControlWithData:datap
+                                             datalen:datalen
+                                               rmlen:&rmlen
+                                         incidentals:vector
+                                               token:token
+                                            encoding:encoding
+                                          savedState:_savedStateForPartialParse
+                                           dcsHooked:&_dcsHooked];
+                DLog(@"%@: control parser produced %@", self, token);
+                if (token->type != VT100_WAIT) {
+                    [_savedStateForPartialParse removeAllObjects];
                 }
-
-                case SSH_UNHOOK:
-                    [_sshParsers removeAllObjects];
-                    break;
-
-                case SSH_OUTPUT: {
-                    const int pid = token.csi->p[0];
-                    DLog(@"%@: handling SSH_OUTPUT", self);
-                    VT100Parser *sshParser = _sshParsers[@(pid)];
-                    if (!sshParser) {
-                        DLog(@"%@: I lack a parser for pid %@. Existing parsers:\n%@",
-                              self,@(pid), _sshParsers);
-                        if (_sshParsers.count == 0 && token.csi->p[1] == -1) {
-                            DLog(@"Inferring %d is the main SSH process", pid);
-                            _mainSSHParserPID = pid;
+                // Some tokens have synchronous side-effects.
+                switch (token->type) {
+                    case XTERMCC_SET_KVP:
+                        if ([token.kvpKey isEqualToString:@"CopyToClipboard"]) {
+                            _saveData = YES;
+                        } else if ([token.kvpKey isEqualToString:@"EndCopy"]) {
+                            _saveData = NO;
                         }
-                        sshParser = [[[VT100Parser alloc] init] autorelease];
-                        sshParser.encoding = self.encoding;
-                        sshParser.depth = self.depth + 1;
-                        DLog(@"%@: Allocate ssh parser %@", self, sshParser);
-                        _sshParsers[@(pid)] = sshParser;
-                    }
-                    DLog(@"%@: Using child %@, begin reparsing SSH output in token %@ at depth %@: %@",
-                          self, sshParser, token, @(self.depth), token.savedData);
-                    NSData *data = token.savedData;
-                    [sshParser putStreamData:data.bytes length:data.length];
-                    const int start = CVectorCount(vector);
-                    DLog(@"count before adding parsed tokens is %@", @(start));
-                    [sshParser addParsedTokensToVector:vector];
-                    const int end = CVectorCount(vector);
-                    DLog(@"count after adding parsed tokens is %@", @(end));
-                    const SSHInfo myInfo = {
-                        .pid = pid,
-                        .channel = token.csi->p[1],
-                        .valid = 1,
-                        .depth = self.depth
-                    };
-                    const SSHInfo childInfo = {
-                        .pid = pid,
-                        .channel = token.csi->p[1],
-                        .valid = 1,
-                        .depth = self.depth + 1
-                    };
-                    DLog(@"%@: reparsing yielded %d tokens", self, end - start);
-                    for (int i = start; i < end; i++) {
-                        VT100Token *token = CVectorGet(vector, i);
-                        SSHInfo sshInfo = token.sshInfo;
-                        if (!sshInfo.valid) {
-                            DLog(@"%@: Update ssh info in rewritten token %@ to %@", self, token, SSHInfoDescription(myInfo));
-                            switch (token.type) {
-                                case SSH_OUTPUT:
-                                    // VT100Parser cannot emit SSH_OUTPUT.
-                                    assert(NO);
-                                case SSH_INIT:
-                                case SSH_LINE:
-                                case SSH_UNHOOK:
-                                case SSH_BEGIN:
-                                case SSH_END:
-                                case SSH_TERMINATE:
-                                    // Meta-tokens, when emitted as the product of %output, belong
-                                    // to the child but will not be properly marked up with ssh info.
-                                    token.sshInfo = childInfo;
-                                    break;
-                                default:
-                                    // Regular tokens (e.g., VT100_STRING) belong to this parser's
-                                    // depth. The extra parser just decoded the output that belongs
-                                    // to us.
-                                    token.sshInfo = myInfo;
-                                    break;
-                            }
-                        } else {
-                            DLog(@"%@: Rewritten token %@ has valid SSH info %@ so not rewriting it",
-                                  self, token, SSHInfoDescription(token.sshInfo));
-                        }
-                        DLog(@"%@: Emit subtoken %@ with info %@", self, token, SSHInfoDescription(token.sshInfo));
-                    }
-                    DLog(@"%@: done reparsing SSH output at depth %@", self, @(self.depth));
-                    if (pid == SSH_OUTPUT_AUTOPOLL_PID|| pid == SSH_OUTPUT_NOTIF_PID) {
-                        // No need to keep this around, especially since it may carry some state we don't want.
+                        break;
+
+                    case SSH_TERMINATE: {
+                        // TODO: Make sure we don't leak sshparsers when connections end
+                        const int pid = token.csi->p[0];
+                        DLog(@"Remove ssh parser for pid %@", @(pid));
                         [_sshParsers removeObjectForKey:@(pid)];
+                        if (pid == _mainSSHParserPID) {
+                            DLog(@"Lost main SSH process %d", pid);
+                            _mainSSHParserPID = -1;
+                        }
+                        break;
                     }
-                    break;
+
+                    case SSH_UNHOOK:
+                        [_sshParsers removeAllObjects];
+                        break;
+
+                    case SSH_OUTPUT: {
+                        const int pid = token.csi->p[0];
+                        DLog(@"%@: handling SSH_OUTPUT", self);
+                        VT100Parser *sshParser = _sshParsers[@(pid)];
+                        if (!sshParser) {
+                            DLog(@"%@: I lack a parser for pid %@. Existing parsers:\n%@",
+                                 self,@(pid), _sshParsers);
+                            if (_sshParsers.count == 0 && token.csi->p[1] == -1) {
+                                DLog(@"Inferring %d is the main SSH process", pid);
+                                _mainSSHParserPID = pid;
+                            }
+                            sshParser = [[[VT100Parser alloc] init] autorelease];
+                            sshParser.encoding = self.encoding;
+                            sshParser.depth = self.depth + 1;
+                            DLog(@"%@: Allocate ssh parser %@", self, sshParser);
+                            _sshParsers[@(pid)] = sshParser;
+                        }
+                        DLog(@"%@: Using child %@, begin reparsing SSH output in token %@ at depth %@: %@",
+                             self, sshParser, token, @(self.depth), token.savedData);
+                        NSData *data = token.savedData;
+                        [sshParser putStreamData:data.bytes length:data.length];
+                        const int start = CVectorCount(vector);
+                        DLog(@"count before adding parsed tokens is %@", @(start));
+                        [sshParser addParsedTokensToVector:vector];
+                        const int end = CVectorCount(vector);
+                        DLog(@"count after adding parsed tokens is %@", @(end));
+                        const SSHInfo myInfo = {
+                            .pid = pid,
+                            .channel = token.csi->p[1],
+                            .valid = 1,
+                            .depth = self.depth
+                        };
+                        const SSHInfo childInfo = {
+                            .pid = pid,
+                            .channel = token.csi->p[1],
+                            .valid = 1,
+                            .depth = self.depth + 1
+                        };
+                        DLog(@"%@: reparsing yielded %d tokens", self, end - start);
+                        for (int i = start; i < end; i++) {
+                            VT100Token *token = CVectorGet(vector, i);
+                            SSHInfo sshInfo = token.sshInfo;
+                            if (!sshInfo.valid) {
+                                DLog(@"%@: Update ssh info in rewritten token %@ to %@", self, token, SSHInfoDescription(myInfo));
+                                switch (token.type) {
+                                    case SSH_OUTPUT:
+                                        // VT100Parser cannot emit SSH_OUTPUT.
+                                        assert(NO);
+                                    case SSH_INIT:
+                                    case SSH_LINE:
+                                    case SSH_UNHOOK:
+                                    case SSH_BEGIN:
+                                    case SSH_END:
+                                    case SSH_TERMINATE:
+                                        // Meta-tokens, when emitted as the product of %output, belong
+                                        // to the child but will not be properly marked up with ssh info.
+                                        token.sshInfo = childInfo;
+                                        break;
+                                    default:
+                                        // Regular tokens (e.g., VT100_STRING) belong to this parser's
+                                        // depth. The extra parser just decoded the output that belongs
+                                        // to us.
+                                        token.sshInfo = myInfo;
+                                        break;
+                                }
+                            } else {
+                                DLog(@"%@: Rewritten token %@ has valid SSH info %@ so not rewriting it",
+                                     self, token, SSHInfoDescription(token.sshInfo));
+                            }
+                            DLog(@"%@: Emit subtoken %@ with info %@", self, token, SSHInfoDescription(token.sshInfo));
+                        }
+                        DLog(@"%@: done reparsing SSH output at depth %@", self, @(self.depth));
+                        if (pid == SSH_OUTPUT_AUTOPOLL_PID|| pid == SSH_OUTPUT_NOTIF_PID) {
+                            // No need to keep this around, especially since it may carry some state we don't want.
+                            [_sshParsers removeObjectForKey:@(pid)];
+                        }
+                        break;
+                    }
+
+                    case DCS_TMUX_CODE_WRAP: {
+                        VT100Parser *tempParser = [[[VT100Parser alloc] init] autorelease];
+                        tempParser.encoding = encoding;
+                        NSData *data = [token.string dataUsingEncoding:encoding];
+                        [tempParser putStreamData:data.bytes length:data.length];
+                        [tempParser addParsedTokensToVector:vector];
+                        break;
+                    }
+
+                    case ISO2022_SELECT_LATIN_1:
+                        _encoding = NSISOLatin1StringEncoding;
+                        break;
+
+                    case ISO2022_SELECT_UTF_8:
+                        _encoding = NSUTF8StringEncoding;
+                        break;
+
+                    default:
+                        break;
                 }
-
-                case DCS_TMUX_CODE_WRAP: {
-                    VT100Parser *tempParser = [[[VT100Parser alloc] init] autorelease];
-                    tempParser.encoding = encoding;
-                    NSData *data = [token.string dataUsingEncoding:encoding];
-                    [tempParser putStreamData:data.bytes length:data.length];
-                    [tempParser addParsedTokensToVector:vector];
-                    break;
-                }
-
-                case ISO2022_SELECT_LATIN_1:
-                    _encoding = NSISOLatin1StringEncoding;
-                    break;
-
-                case ISO2022_SELECT_UTF_8:
-                    _encoding = NSUTF8StringEncoding;
-                    break;
-
-                default:
-                    break;
+                position = datap;
             }
-            position = datap;
         } else {
             if (isString(datap, encoding)) {
                 ParseString(datap, datalen, &rmlen, token, encoding);

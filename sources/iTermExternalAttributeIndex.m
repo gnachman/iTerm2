@@ -294,21 +294,35 @@
 static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
 static NSString *const iTermExternalAttributeKeyURLCode = @"url";
 static NSString *const iTermExternalAttributeKeyBlockID = @"b";
+static NSString *const iTermExternalAttributeKeyControlCode = @"cc";
 
 @interface iTermExternalAttribute()
 @property (atomic, readwrite) BOOL hasUnderlineColor;
 @property (atomic, readwrite) VT100TerminalColorValue underlineColor;
 @property (atomic, readwrite) unsigned int urlCode;
 @property (atomic, copy, readwrite) NSString *blockID;
+@property (atomic, readwrite) iTermControlCodeAttribute controlCode;
 @end
 
 @implementation iTermExternalAttribute
 
+static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribute *attr,
+                                                  NSNumber *number) {
+    if (!number && !attr->valid) {
+        return YES;
+    }
+    if (number && attr->valid && number.intValue == attr->code) {
+        return YES;
+    }
+    return NO;
+}
+
 + (iTermExternalAttribute *)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
                                            underlineColor:(VT100TerminalColorValue)underlineColor
                                                   urlCode:(unsigned int)urlCode 
-                                                  blockID:(NSString *)blockID {
-    if (!hasUnderlineColor && urlCode == 0 && blockID == nil) {
+                                                  blockID:(NSString *)blockID
+                                              controlCode:(NSNumber *)code {
+    if (!hasUnderlineColor && urlCode == 0 && blockID == nil && !code) {
         return nil;
     }
     static iTermExternalAttribute *last;
@@ -316,14 +330,18 @@ static NSString *const iTermExternalAttributeKeyBlockID = @"b";
         last.hasUnderlineColor == hasUnderlineColor &&
         !memcmp(&last->_underlineColor, &underlineColor, sizeof(underlineColor)) &&
         last.urlCode == urlCode &&
-        [NSObject object:last.blockID isEqualToObject:blockID]) {
+        [NSObject object:last.blockID isEqualToObject:blockID] &&
+        iTermControlCodeAttributeEqualsNumber(&last->_controlCode, code)) {
         // Since this class is immutable, there's a nice optimization in reusing the last one created.
         return last;
     }
     if (hasUnderlineColor) {
-        return [[self alloc] initWithUnderlineColor:underlineColor urlCode:urlCode blockID:blockID];
+        return [[self alloc] initWithUnderlineColor:underlineColor
+                                            urlCode:urlCode
+                                            blockID:blockID
+                                        controlCode:code];
     }
-    last = [[self alloc] initWithURLCode:urlCode blockID:blockID];
+    last = [[self alloc] initWithURLCode:urlCode blockID:blockID controlCode:code];
     return last;
 }
 
@@ -370,9 +388,14 @@ static NSString *const iTermExternalAttributeKeyBlockID = @"b";
             blockID = nil;
         }
     }
+
+    int cc = -1;
+    [decoder decodeInt:&cc];
+
     return [[self alloc] initWithUnderlineColor:underlineColor
                                         urlCode:urlCode
-                                        blockID:blockID];
+                                        blockID:blockID
+                                    controlCode:cc >= 0 && cc < 256 ? @(cc) : nil];
 }
 
 - (instancetype)init {
@@ -381,24 +404,44 @@ static NSString *const iTermExternalAttributeKeyBlockID = @"b";
 
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
                                urlCode:(unsigned int)urlCode
-                               blockID:(NSString *)blockID {
+                               blockID:(NSString *)blockID
+                           controlCode:(nonnull NSNumber *)code {
     self = [self init];
     if (self) {
         self.hasUnderlineColor = YES;
         self.underlineColor = color;
         self.urlCode = urlCode;
         self.blockID = blockID;
+        if (code) {
+            self.controlCode = (iTermControlCodeAttribute){ .valid = YES, .code = code.intValue };
+        } else {
+            self.controlCode = (iTermControlCodeAttribute){ .valid = NO };
+        }
     }
     return self;
 }
 
-- (instancetype)initWithURLCode:(unsigned int)urlCode blockID:(NSString *)blockID {
+- (instancetype)initWithURLCode:(unsigned int)urlCode
+                        blockID:(NSString *)blockID
+                    controlCode:(nonnull NSNumber *)code {
     self = [self init];
     if (self) {
         self.urlCode = urlCode;
         self.blockID = blockID;
+        if (code) {
+            self.controlCode = (iTermControlCodeAttribute){ .valid = YES, .code = code.intValue };
+        } else {
+            self.controlCode = (iTermControlCodeAttribute){ .valid = NO };
+        }
     }
     return self;
+}
+
+- (NSNumber *)controlCodeNumber {
+    if (_controlCode.valid) {
+        return @(_controlCode.code);
+    }
+    return nil;
 }
 
 // This is intended for users, so don't make it too wonky.
@@ -417,6 +460,9 @@ static NSString *const iTermExternalAttributeKeyBlockID = @"b";
     if (parts.count == 0) {
         return @"none";
     }
+    if (_controlCode.valid) {
+        [parts addObject:@"Control Code"];
+    }
     return [parts componentsJoinedByString:@","];
 }
 
@@ -431,6 +477,9 @@ static NSString *const iTermExternalAttributeKeyBlockID = @"b";
     }
     if (_blockID) {
         [parts addObject:[NSString stringWithFormat:@"block=%@", _blockID]];
+    }
+    if (_controlCode.valid) {
+        [parts addObject:[NSString stringWithFormat:@"cc=%d", _controlCode.code]];
     }
     if (parts.count == 0) {
         return @"none";
@@ -449,7 +498,11 @@ static NSString *const iTermExternalAttributeKeyBlockID = @"b";
     }
     [encoder encodeUnsignedInt:_urlCode];
     [encoder encodeData:[_blockID dataUsingEncoding:NSUTF8StringEncoding] ?: [NSData data]];
-
+    if (_controlCode.valid) {
+        [encoder encodeInt:_controlCode.code];
+    } else {
+        [encoder encodeInt:-1];
+    }
     return encoder.data;
 }
 
@@ -470,7 +523,13 @@ static NSString *const iTermExternalAttributeKeyBlockID = @"b";
             _underlineColor.blue = [values[3] intValue];
         }
         _urlCode = [dict[iTermExternalAttributeKeyURLCode] unsignedIntValue];
-        if (!_hasUnderlineColor && _urlCode == 0 && !self.blockID) {
+        NSNumber *cc = [NSNumber castFrom:dict[iTermExternalAttributeKeyControlCode]];
+        if (cc && cc.intValue >= 0 && cc.intValue < 256) {
+            _controlCode = (iTermControlCodeAttribute){ .valid = YES, .code = cc.intValue };
+        } else {
+            _controlCode = (iTermControlCodeAttribute){ .valid = NO };
+        }
+        if (!_hasUnderlineColor && _urlCode == 0 && !self.blockID && !_controlCode.valid) {
             return nil;
         }
     }
@@ -484,7 +543,9 @@ static NSString *const iTermExternalAttributeKeyBlockID = @"b";
         iTermExternalAttributeKeyUnderlineColor: _hasUnderlineColor ? @[ @(_underlineColor.mode),
                                                                          @(_underlineColor.red),
                                                                          @(_underlineColor.green),
-                                                                         @(_underlineColor.blue) ] : [NSNull null] };
+                                                                         @(_underlineColor.blue) ] : [NSNull null] ,
+        iTermExternalAttributeKeyControlCode: _controlCode.valid ? @(_controlCode.code) : [NSNull null]
+    };
 }
 
 - (id)copyWithZone:(NSZone *)zone {
@@ -500,6 +561,12 @@ static NSString *const iTermExternalAttributeKeyBlockID = @"b";
     }
     if (!_hasUnderlineColor && !rhs.hasUnderlineColor) {
         return YES;
+    }
+    if (_controlCode.valid != rhs.controlCode.valid) {
+        return NO;
+    }
+    if (_controlCode.valid && _controlCode.code != rhs.controlCode.code) {
+        return NO;
     }
     return !memcmp(&_underlineColor, &rhs->_underlineColor, sizeof(_underlineColor));
 }
@@ -676,7 +743,8 @@ static NSString *const iTermExternalAttributeKeyBlockID = @"b";
             iTermExternalAttribute *ea = [iTermExternalAttribute attributeHavingUnderlineColor:NO
                                                                                 underlineColor:(VT100TerminalColorValue){}
                                                                                        urlCode:dest[i].urlCode
-                                                                                       blockID:nil];
+                                                                                       blockID:nil
+                                                                                   controlCode:nil];
             eaIndex[i] = ea;
             // This is a little hinky. dest goes from being a pointer to legacy_screen_char_t to screen_char_t at this point.
             // There's a rule that you can safely initialize a screen_char_t with 0s, so regardless of what future changes

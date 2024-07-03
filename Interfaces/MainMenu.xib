@@ -1176,6 +1176,13 @@ DQ
                                                 <action selector="terminalStateReset:" target="-1" id="kp5-e3-wFY"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="pFO-R4-QBV"/>
+                                        <menuItem title="Literal Controls" tag="13" identifier="Terminal State.Literal Mode" id="vdB-Qh-wxH">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleLiteralMode:" target="-1" id="vIj-Vm-M73"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>

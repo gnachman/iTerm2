@@ -1499,6 +1499,10 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                                                                  at:coord];
                 }
             }
+        } else if (ea.controlCode.valid) {
+            if (theChar.code != '^') {
+                appendString([NSString stringWithLongCharacter:ea.controlCode.code], theChar, ea, coord);
+            }
         } else if (theChar.code == TAB_FILLER && !theChar.complexChar) {
             // Convert orphan tab fillers (those without a subsequent
             // tab character) into spaces.

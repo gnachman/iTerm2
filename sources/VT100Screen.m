@@ -1569,6 +1569,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.terminalKeyReportingFlags;
 }
 
+- (BOOL)terminalLiteralMode {
+    return _state.terminalLiteralMode;
+}
+
 - (BOOL)terminalReportFocus {
     return _state.terminalReportFocus;
 }

@@ -11201,6 +11201,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
         case 12:
             return !!(_screen.terminalKeyReportingFlags & VT100TerminalKeyReportingFlagsDisambiguateEscape);
+
+        case 13:
+            return _screen.terminalLiteralMode;
     }
 
     return NO;
@@ -11270,6 +11273,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             case 12:
                 [terminal toggleDisambiguateEscape];
                 [self updateKeyMapper];
+                break;
+
+            case 13:
+                terminal.literalMode = !terminal.literalMode;
                 break;
         }
     }];

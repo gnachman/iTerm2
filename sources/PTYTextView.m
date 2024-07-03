@@ -522,7 +522,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         item.action == @selector(terminalStateTogglePasteBracketing:) ||
         item.action == @selector(terminalStateToggleApplicationCursor:) ||
         item.action == @selector(terminalStateToggleApplicationKeypad:) ||
-        item.action == @selector(terminalToggleKeyboardMode:)) {
+        item.action == @selector(terminalToggleKeyboardMode:) ||
+        item.action == @selector(terminalStateToggleLiteralMode:)) {
         item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
@@ -3223,6 +3224,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 #pragma mark - Miscellaneous Actions
+
+- (IBAction)terminalStateToggleLiteralMode:(id)sender {
+    [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
+}
 
 - (IBAction)terminalStateToggleAlternateScreen:(id)sender {
     [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];

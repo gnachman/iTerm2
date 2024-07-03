@@ -497,6 +497,10 @@ static _Atomic int gPerformingJoinedBlock;
     return self.terminal.keyReportingFlags;
 }
 
+- (BOOL)terminalLiteralMode {
+    return self.terminal.literalMode;
+}
+
 - (BOOL)terminalReportFocus {
     return self.terminal.reportFocus;
 }
@@ -1281,7 +1285,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         *eaOut = [iTermExternalAttribute attributeHavingUnderlineColor:(*eaOut).hasUnderlineColor
                                                         underlineColor:(*eaOut).underlineColor
                                                                urlCode:0
-                                                               blockID:nil];
+                                                               blockID:nil
+                                                           controlCode:nil];
     }
 }
 
