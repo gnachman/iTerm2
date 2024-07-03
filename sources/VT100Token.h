@@ -273,7 +273,9 @@ typedef enum {
     SSH_END,   // At the end of a command
     SSH_OUTPUT,  // %output
     SSH_TERMINATE,  // %terminate
-    SSH_RECOVERY_BOUNDARY
+    SSH_RECOVERY_BOUNDARY,
+
+    VT100_LITERAL
 } VT100TerminalTokenType;
 
 // A preinitialized array of screen_char_t. When ASCII data is present, it will have the codes
@@ -335,7 +337,7 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
     // always set for ascii strings regardless of mode.
     BOOL savingData;
 
-    unsigned char code;  // For VT100_UNKNOWNCHAR and VT100CSI_SCS0...SCS3.
+    unsigned char code;  // For VT100_UNKNOWNCHAR, VT100CSI_SCS0...SCS3, and VT100_LITERAL.
 }
 
 // For VT100_STRING

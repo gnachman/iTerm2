@@ -906,7 +906,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
                                                           underlineColor:old.underlineColor
                                                                  urlCode:code
-                                                                 blockID:old.blockID];
+                                                                 blockID:old.blockID
+                                                             controlCode:old.controlCodeNumber];
         }];
         [self markCharsDirty:YES
                   inRectFrom:VT100GridCoordMake(from.x, y)
@@ -923,7 +924,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
                                                       underlineColor:old.underlineColor
                                                              urlCode:old.urlCode
-                                                             blockID:blockID];
+                                                             blockID:blockID
+                                                         controlCode:old.controlCodeNumber];
     }];
     [self markCharsDirty:YES
               inRectFrom:VT100GridCoordMake(0, line)

@@ -296,6 +296,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(SSH_OUTPUT):                      @"SSH_OUTPUT",
                 @(SSH_TERMINATE):                   @"SSH_TERMINATE",
                 @(SSH_RECOVERY_BOUNDARY):           @"SSH_RECOVERY_BOUNDARY",
+                @(VT100_LITERAL):                   @"VT100_LITERAL"
         };
         [map retain];
     });

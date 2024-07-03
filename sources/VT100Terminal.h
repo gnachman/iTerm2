@@ -120,6 +120,9 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 // DECSET 1036. This can be overridden by modifyOtherKeys, CSI u mode, and raw key reporting.
 @property(nonatomic) BOOL metaSendsEscape;
 
+// Convert input to printable characters.
+@property(nonatomic) BOOL literalMode;
+
 @property(nonatomic, readonly) VT100TerminalKeyReportingFlags keyReportingFlags;
 @property(nonatomic, readonly) BOOL synchronizedUpdates;
 @property(nonatomic, readonly) BOOL preserveScreenOnDECCOLM;

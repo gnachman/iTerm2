@@ -17,6 +17,7 @@
 @property(nonatomic, readonly) NSData *streamData;
 @property(atomic, assign) NSStringEncoding encoding;
 @property(nonatomic, readonly) int streamLength;
+@property(atomic) BOOL literalMode;
 
 - (void)putStreamData:(const char *)buffer length:(int)length;
 - (void)clearStream;

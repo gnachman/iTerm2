@@ -32,6 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)terminalStateToggleApplicationCursor:(id)sender;
 - (void)terminalStateToggleApplicationKeypad:(id)sender;
 - (void)terminalToggleKeyboardMode:(id)sender;
+- (IBAction)terminalStateToggleLiteralMode:(id)sender;
 @end
 
 @protocol iTermContextMenuHelperDelegate<NSObject>

@@ -651,6 +651,8 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
         { @"CSI u Mode", @selector(terminalToggleKeyboardMode:) },
         { @"Raw Key Reporting Mode", @selector(terminalToggleKeyboardMode:) },
         { @"Disambiguate Escape", @selector(terminalToggleKeyboardMode:) },
+        { nil, nil },
+        { @"Literal Controls", @selector(terminalStateToggleLiteralMode:)}
     };
     NSInteger j = 1;
     for (size_t i = 0; i < sizeof(terminalStateDecls) / sizeof(*terminalStateDecls); i++) {

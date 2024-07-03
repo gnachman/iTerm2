@@ -105,6 +105,7 @@ NSString *const kTerminalStateSGRStack = @"SGR Stack";
 NSString *const kTerminalStateDECSACE = @"DECSACE";
 NSString *const kTerminalStateProtectedMode = @"Protected Mode";
 NSString *const kTerminalStateBlockID = @"Block ID";
+NSString *const kTerminalStateLiteralMode = @"Literal Mode";
 
 static const size_t VT100TerminalMaxSGRStackEntries = 10;
 
@@ -190,6 +191,8 @@ typedef struct {
     int _sgrStackSize;
     BOOL _isScreenLike;
     BOOL _receivingMultipartFile;
+
+    NSNumber *_currentLiteral;
 }
 
 @synthesize receivingFile = receivingFile_;
@@ -702,13 +705,14 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)updateExternalAttributes {
-    if (!graphicRendition_.hasUnderlineColor && _currentURLCode == 0 && self.currentBlockID == nil) {
+    if (!graphicRendition_.hasUnderlineColor && _currentURLCode == 0 && self.currentBlockID == nil && _currentLiteral == nil) {
         _externalAttributes = nil;
         return;
     }
     _externalAttributes = [[iTermExternalAttribute alloc] initWithUnderlineColor:graphicRendition_.underlineColor
                                                                          urlCode:_currentURLCode
-                                                                         blockID:self.currentBlockID];
+                                                                         blockID:self.currentBlockID
+                                                                     controlCode:_currentLiteral];
 }
 
 - (void)setCurrentBlockID:(NSString *)currentBlockID {
@@ -1068,6 +1072,14 @@ static const int kMaxScreenRows = 4096;
     }
     _protectedMode = protectedMode;
     [self.delegate terminalProtectedModeDidChangeTo:_protectedMode];
+}
+
+- (void)setLiteralMode:(BOOL)literalMode {
+    if (literalMode == _literalMode) {
+        return;
+    }
+    _literalMode = literalMode;
+    _parser.literalMode = literalMode;
 }
 
 - (void)resetGraphicRendition {
@@ -2302,6 +2314,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                     break;
             }
             break;
+        case VT100_LITERAL:
+            graphicRendition_.reversed = !graphicRendition_.reversed;
+            _currentLiteral = @(token->code);
+            [self updateExternalAttributes];
+            [_delegate terminalAppendString:[[NSString stringWithLongCharacter:token->code] stringByReplacingControlCharactersWithCaretLetter]];
+            _currentLiteral = nil;
+            [self updateExternalAttributes];
+            graphicRendition_.reversed = !graphicRendition_.reversed;
+            break;
+
         case VT100CSI_EL:
             switch (token.csi->p[0]) {
                 case 1:
@@ -5290,7 +5312,8 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStatePreserveScreenOnDECCOLM: @(self.preserveScreenOnDECCOLM),
            kTerminalStateSavedColors: _savedColors.plist,
            kTerminalStateProtectedMode: @(_protectedMode),
-           kTerminalStateBlockID: self.currentBlockID ?: [NSNull null]
+           kTerminalStateBlockID: self.currentBlockID ?: [NSNull null],
+           kTerminalStateLiteralMode: @(self.literalMode)
         };
     return [dict dictionaryByRemovingNullValues];
 }
@@ -5335,6 +5358,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];
     self.protectedMode = [dict[kTerminalStateProtectedMode] unsignedIntegerValue];
     self.currentBlockID = [NSString castFrom:dict[kTerminalStateBlockID]];
+    self.literalMode = [dict[kTerminalStateLiteralMode] boolValue];
 
     if (!_sendModifiers) {
         self.sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];

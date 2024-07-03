@@ -173,6 +173,7 @@ extern NSString *const kScreenStateBlockStartAbsLineKey;
 @property (nonatomic, readonly) BOOL terminalBracketedPasteMode;
 @property (nonatomic, readonly) NSArray<NSNumber *> *terminalSendModifiers;
 @property (nonatomic, readonly) VT100TerminalKeyReportingFlags terminalKeyReportingFlags;
+@property (nonatomic, readonly) BOOL terminalLiteralMode;
 @property (nonatomic, readonly) BOOL terminalReportFocus;
 @property (nonatomic, readonly) BOOL terminalReportKeyUp;
 @property (nonatomic, readonly) BOOL terminalCursorMode;

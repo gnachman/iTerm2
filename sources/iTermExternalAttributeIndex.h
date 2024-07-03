@@ -15,6 +15,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermExternalAttributeIndex;
 
+typedef struct {
+    BOOL valid;
+    int code;
+} iTermControlCodeAttribute;
+
 // Immutable
 @interface iTermExternalAttribute: NSObject<NSCopying>
 @property (atomic, readonly) BOOL hasUnderlineColor;
@@ -22,19 +27,23 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, readonly) unsigned int urlCode;
 @property (atomic, copy, readonly) NSString *blockID;
 @property (nonatomic, readonly) NSString *humanReadableDescription;
+@property (atomic, readonly) iTermControlCodeAttribute controlCode;
+@property (atomic, readonly, nullable) NSNumber *controlCodeNumber;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
 + (iTermExternalAttribute * _Nullable)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
                                                      underlineColor:(VT100TerminalColorValue)underlineColor
                                                             urlCode:(unsigned int)urlCode
-                                                            blockID:(NSString * _Nullable)blockID;
+                                                            blockID:(NSString * _Nullable)blockID
+                                                        controlCode:(NSNumber * _Nullable)code;
 
 + (instancetype _Nullable)fromData:(NSData *)data;
 - (instancetype)init;
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
                                urlCode:(unsigned int)urlCode
-                               blockID:(NSString * _Nullable)blocokID;
+                               blockID:(NSString * _Nullable)blocokID
+                           controlCode:(NSNumber *)code;
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
 - (NSData *)data;
