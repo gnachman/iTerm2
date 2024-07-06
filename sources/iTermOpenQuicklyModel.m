@@ -571,10 +571,6 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 }
 
 - (void)updateWithQuery:(NSString *)queryString {
-    if (queryString.length == 0) {
-        self.items = [NSMutableArray array];
-        return;
-    }
     id<iTermOpenQuicklyCommand> command = [self commandForQuery:[queryString lowercaseString]];
 
     iTermMinimumSubsequenceMatcher *matcher =
