@@ -8,6 +8,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermDynamicProfileManager.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "iTermUserDefaultsObserver.h"
 #import "iTermWarning.h"
 #import "NSDictionary+iTerm.h"
@@ -429,8 +430,15 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
     return copy;
 }
 
-- (BOOL)localPrefsDifferFromSavedRemotePrefs
-{
+- (BOOL)localPrefsDifferFromSavedRemotePrefsRespectingDefaults {
+    return [self localPrefsDifferFromSavedRemotePrefsRespectingDefaults:YES];
+}
+
+- (BOOL)localPrefsDifferFromSavedRemotePrefs {
+    return [self localPrefsDifferFromSavedRemotePrefsRespectingDefaults:NO];
+}
+
+- (BOOL)localPrefsDifferFromSavedRemotePrefsRespectingDefaults:(BOOL)respectDefaults {
     if (!self.shouldLoadRemotePrefs) {
         return NO;
     }
@@ -444,21 +452,47 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
 
         // Iterate over each set of prefs and validate that the other has the same value for each
         // key.
-        for (NSString *key in localPrefs) {
-            if ([self preferenceKeyIsSyncable:key] &&
-                ![[saved objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
-                return YES;
-            }
-        }
+        NSSet<NSString *> *allKeys = [NSSet setWithArray:[localPrefs.allKeys arrayByAddingObjectsFromArray:saved.allKeys]];
+        for (NSString *key in allKeys) {
+            id savedValue = [self valueInDictionary:saved forKey:key respectingDefaults:respectDefaults];
+            id localValue = [self valueInDictionary:localPrefs forKey:key respectingDefaults:respectDefaults];
 
-        for (NSString *key in saved) {
             if ([self preferenceKeyIsSyncable:key] &&
-                ![[saved objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
+                ![savedValue isEqual:localValue]) {
                 return YES;
             }
         }
     }
     return NO;
+}
+
+- (id)valueInDictionary:(NSDictionary *)dict
+                 forKey:(NSString *)key
+     respectingDefaults:(BOOL)respectDefaults {
+    if (!respectDefaults) {
+        return dict[key];
+    }
+
+    if ([key isEqualToString:KEY_NEW_BOOKMARKS]) {
+        return [self saturatedBookmarkValueInDictionary:dict];
+    } else {
+        id value = dict[key];
+        if (value) {
+            return value;
+        }
+        return [iTermPreferences defaultObjectForKey:key];
+    }
+}
+
+- (NSArray<NSDictionary *> *)saturatedBookmarkValueInDictionary:(NSDictionary *)settings {
+    NSDictionary *defaults = [iTermProfilePreferences defaultValueMap];
+    NSMutableArray *bookmarks = [[NSArray castFrom:settings[KEY_NEW_BOOKMARKS]] ?: @[] mutableCopy];
+    for (NSInteger i = 0; i < bookmarks.count; i++) {
+        NSDictionary *bookmark = [NSDictionary castFrom:bookmarks[i]] ?: @{};
+        bookmarks[i] = [defaults dictionaryByMergingDictionary:bookmark];
+    }
+
+    return bookmarks;
 }
 
 - (BOOL)remotePrefsHaveChanged {

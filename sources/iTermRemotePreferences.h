@@ -31,6 +31,9 @@ NS_ASSUME_NONNULL_BEGIN
 // overwrite local user defaults. If something goes wrong a modal alert will be presented.
 - (void)copyRemotePrefsToLocalUserDefaultsPreserving:(NSArray<NSString *> *)preservedKeys;
 
+- (BOOL)localPrefsDifferFromSavedRemotePrefsRespectingDefaults;
+- (BOOL)shouldSaveAutomatically;
+
 @end
 
 NS_ASSUME_NONNULL_END

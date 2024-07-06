@@ -23,6 +23,7 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 + (NSArray<NSString *> *)allKeys;
 + (BOOL)valueIsLegal:(id)value forKey:(NSString *)key;
 + (id _Nullable)defaultObjectForKey:(NSString *)key;
++ (NSDictionary *)defaultValueMap;
 
 // Sets a bunch of values at once (just one notification posted).
 + (void)setObjectsFromDictionary:(NSDictionary *)dictionary

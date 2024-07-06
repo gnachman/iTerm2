@@ -36,7 +36,7 @@
 @implementation iTermPreferencesInnerTabContainerView
 @end
 
-static NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChangeFromOtherPanel";
+NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChangeFromOtherPanel";
 
 // key for userInfo dictionary of kPreferenceDidChangeFromOtherPanel notification having
 // key of changed preference.

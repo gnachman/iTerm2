@@ -4180,6 +4180,7 @@
 		A6FB633423DE802900026D52 /* SearchableComboListView.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6FB633023DE7DEB00026D52 /* SearchableComboListView.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6FB633523DE803100026D52 /* SearchableComboListView.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6FB633023DE7DEB00026D52 /* SearchableComboListView.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6FB633623DE803A00026D52 /* SearchableComboListView.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6FB633023DE7DEB00026D52 /* SearchableComboListView.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6FBEFC12C361BAA00FA73BD /* UserDefaultsUnsavedController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FBEFC02C361BAA00FA73BD /* UserDefaultsUnsavedController.swift */; };
 		A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */; };
 		A6FC49871C3A31840061B3BA /* iTermSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */; };
 		A6FC49881C3A44390061B3BA /* iTermPrintAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4BAFEA1BFE77E4004FF52B /* iTermPrintAccessoryViewController.m */; };
@@ -7447,6 +7448,7 @@
 		A6F9EF3520850C41005530F7 /* iTermCompetentTableRowView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCompetentTableRowView.h; sourceTree = "<group>"; };
 		A6F9EF3620850C41005530F7 /* iTermCompetentTableRowView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCompetentTableRowView.m; sourceTree = "<group>"; };
 		A6FB633023DE7DEB00026D52 /* SearchableComboListView.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SearchableComboListView.framework; path = SearchableComboListView/SearchableComboListView.framework; sourceTree = "<group>"; };
+		A6FBEFC02C361BAA00FA73BD /* UserDefaultsUnsavedController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsUnsavedController.swift; sourceTree = "<group>"; };
 		A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSystemVersion.h; sourceTree = "<group>"; };
 		A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSystemVersion.m; sourceTree = "<group>"; };
 		A6FCAF63250D4D6500B89EB0 /* iTermModifyOtherKeysMapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermModifyOtherKeysMapper.h; sourceTree = "<group>"; };
@@ -8592,6 +8594,7 @@
 				A6D3205429C29EE30088BBE1 /* NerdFontInstaller.swift */,
 				A6121D2E2A04875C005D469C /* ImportExport.swift */,
 				A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */,
+				A6FBEFC02C361BAA00FA73BD /* UserDefaultsUnsavedController.swift */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -15922,6 +15925,7 @@
 				A6A9838C27E5A83C003319D1 /* PasswordManagerDataSource.swift in Sources */,
 				A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */,
 				A63819D11FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.m in Sources */,
+				A6FBEFC12C361BAA00FA73BD /* UserDefaultsUnsavedController.swift in Sources */,
 				A65EC0341F3181E700AC0A6B /* NSTimer+iTerm.m in Sources */,
 				A60D21F4259C66D9004AC979 /* NSPopUpButton+iTerm.m in Sources */,
 				A67D197A2238D50800BD0D4D /* iTermSetFindStringNotification.m in Sources */,

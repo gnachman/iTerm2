@@ -447,6 +447,13 @@ static iTermPreferencesSearchEngine *gSearchEngine;
                                                object:nil];
     iTermDonateViewController *vc = [[iTermDonateViewController alloc] init];
     [self.window addTitlebarAccessoryViewController:vc];
+
+    if (@available(macOS 11, *)) {
+        if (!_editCurrentSessionMode && iTermUserDefaultsUnsavedController.allowed) {
+            iTermUserDefaultsUnsavedController *unsaved = [[iTermUserDefaultsUnsavedController alloc] init];
+            [self.window addTitlebarAccessoryViewController:unsaved];
+        }
+    }
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {

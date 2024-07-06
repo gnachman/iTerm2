@@ -15,6 +15,10 @@
 - (CGFloat)preferencePanelMinimumWidth;
 @end
 
+// Post this notif if you change a setting that the settings panel should pick up. See the userinfo
+// key below.
+extern NSString *const kPreferenceDidChangeFromOtherPanel;
+
 // Used in preferenceDidChangeFromOtherPanel:'s notification's user info dictionary.
 extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 

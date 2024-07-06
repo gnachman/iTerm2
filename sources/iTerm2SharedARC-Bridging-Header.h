@@ -37,6 +37,7 @@
 #import "iTermObject.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermPreferences.h"
+#import "iTermPreferencesBaseViewController.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfileSearchToken.h"
 #import "iTermPromise.h"
