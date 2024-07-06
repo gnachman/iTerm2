@@ -19,12 +19,15 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
-static NSString *const kDebugLogFilename = @"/tmp/debuglog.txt";
 static NSString* gDebugLogHeader = nil;
 static NSMutableString* gDebugLogStr = nil;
 
 static NSMutableDictionary *gPinnedMessages;
 BOOL gDebugLogging = NO;
+
+static NSString *DebugLogFilename(void) {
+    return [NSHomeDirectory() stringByAppendingPathComponent:@"debuglog.txt"];
+}
 
 static NSRecursiveLock *GetDebugLogLock(void) {
     static NSRecursiveLock *gDebugLogLock = nil;
@@ -126,15 +129,15 @@ static void FlushDebugLog(void) {
     [log appendString:gDebugLogStr ?: @""];
 
     if ([iTermAdvancedSettingsModel appendToExistingDebugLog] &&
-        [[NSFileManager defaultManager] fileExistsAtPath:kDebugLogFilename]) {
-        NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:kDebugLogFilename];
+        [[NSFileManager defaultManager] fileExistsAtPath:DebugLogFilename()]) {
+        NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:DebugLogFilename()];
         [fileHandle seekToEndOfFile];
         [fileHandle writeData:[log dataUsingEncoding:NSUTF8StringEncoding]];
         [fileHandle closeFile];
     } else {
         NSData *data = [log dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
         NSError *error = nil;
-        const BOOL ok = [data writeToFile:kDebugLogFilename options:0 error:&error];
+        const BOOL ok = [data writeToFile:DebugLogFilename() options:0 error:&error];
         if (!ok) {
             [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to save debug log: %@", error.localizedDescription] actions:@[ @"OK" ] accessory:nil identifier:nil silenceable:kiTermWarningTypePersistent heading:@"Problem Saving Debug Log" window:nil];
         }
@@ -287,7 +290,7 @@ static void StartDebugLogging(void) {
             };
         });
         if (![iTermAdvancedSettingsModel appendToExistingDebugLog]) {
-            [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:kDebugLogFilename]
+            [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:DebugLogFilename()]
                                                       error:nil];
         }
         gDebugLogStr = [[NSMutableString alloc] init];
@@ -333,7 +336,7 @@ void ToggleDebugLogging(void) {
         StopDebugLogging();
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Debug Logging Stopped";
-        alert.informativeText = @"Please send /tmp/debuglog.txt to the developers.";
+        alert.informativeText = [NSString stringWithFormat:@"Please send %@ to the developers.", DebugLogFilename()];
         [alert addButtonWithTitle:@"OK"];
         [alert runModal];
     }
