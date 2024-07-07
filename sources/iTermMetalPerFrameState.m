@@ -901,14 +901,14 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         attributes[x].annotation = annotated;
 
         iTermExternalAttribute *ea = eaIndex[x];
-        const unsigned int urlCode = ea.urlCode;
+        iTermURL *url = ea.url;
         const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[x],
                                                                                    x > 0 ? &line[x - 1] : NULL,
                                                                                    line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
                                                                                    _configuration->_blinkingItemsVisible,
                                                                                    _configuration->_blinkAllowed,
                                                                                    NO /* preferSpeedToFullLigatureSupport */,
-                                                                                   urlCode);
+                                                                                   url != nil);
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
                                             !line[x].complexChar &&
                                             line[x].code > 127 &&
@@ -960,7 +960,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
         } else if (line[x].underline || inUnderlinedRange) {
             const BOOL curly = line[x].underline && line[x].underlineStyle == VT100UnderlineStyleCurly;
-            if (urlCode) {
+            if (url != nil) {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineHyperlink;
             } else if (line[x].underline && line[x].underlineStyle == VT100UnderlineStyleDouble && !inUnderlinedRange) {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
@@ -969,7 +969,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             } else {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
             }
-        } else if (urlCode && underlineHyperlinks) {
+        } else if (url != nil && underlineHyperlinks) {
             attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
         } else {
             attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;

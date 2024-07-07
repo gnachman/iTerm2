@@ -119,7 +119,6 @@
 #import "iTermTmuxStatusBarMonitor.h"
 #import "iTermTmuxOptionMonitor.h"
 #import "iTermUpdateCadenceController.h"
-#import "iTermURLMark.h"
 #import "iTermURLStore.h"
 #import "iTermUserDefaultsObserver.h"
 #import "iTermVariableReference.h"

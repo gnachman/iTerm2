@@ -2733,7 +2733,7 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
     if (ea) {
         attributes->hasUnderlineColor = ea.hasUnderlineColor;
         attributes->underlineColor = ea.underlineColor;
-        attributes->isURL = (ea.urlCode != 0);
+        attributes->isURL = (ea.url != nil);
     } else {
         attributes->hasUnderlineColor = NO;
         attributes->isURL = NO;
@@ -2975,7 +2975,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                                                         _blinkingItemsVisible,
                                                                         _blinkAllowed,
                                                                         _preferSpeedToFullLigatureSupport,
-                                                                        ea.urlCode);
+                                                                        ea.url != nil);
         predecessor = c;
         if (!drawable) {
             if ((characterAttributes.drawable && ScreenCharIsDWC_RIGHT(c)) ||

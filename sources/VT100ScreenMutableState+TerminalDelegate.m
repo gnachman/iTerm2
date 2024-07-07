@@ -1123,14 +1123,12 @@
     [self setWorkingDirectoryFromURLString:URLString];
 }
 
-- (void)terminalWillStartLinkWithCode:(unsigned int)code {
-    DLog(@"begin");
-    [self addURLMarkAtLineAfterCursorWithCode:code];
+- (void)terminalWillStartLinkWithURL:(iTermURL *)url {
+    DLog(@"begin %@", url.url);
 }
 
-- (void)terminalWillEndLinkWithCode:(unsigned int)code {
-    DLog(@"begin");
-    [self addURLMarkAtLineAfterCursorWithCode:code];
+- (void)terminalWillEndLinkWithURL:(iTermURL *)url {
+    DLog(@"begin %@", url.url);
 }
 
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {

@@ -17,7 +17,6 @@
 #import "iTermGCD.h"
 #import "iTermImageMark.h"
 #import "iTermSelection.h"
-#import "iTermURLMark.h"
 
 @implementation VT100ScreenMutableState (Resizing)
 
@@ -402,7 +401,6 @@ static void SwapInt(int *a, int *b) {
     return ([note isKindOfClass:[VT100RemoteHost class]] ||
             [note isKindOfClass:[VT100WorkingDirectory class]] ||
             [note isKindOfClass:[iTermImageMark class]] ||
-            [note isKindOfClass:[iTermURLMark class]] ||
             [note isKindOfClass:[PTYAnnotation class]]);
 }
 

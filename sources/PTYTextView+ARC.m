@@ -701,7 +701,7 @@ iTermCommandInfoViewControllerDelegate>
     if (!c.invisible) {
         fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
     }
-    int underlineStyle = (ea.urlCode || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWord) : 0;
+    int underlineStyle = (ea.url != nil || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWord) : 0;
 
     BOOL isItalic = c.italic;
     UTF32Char remapped = 0;
@@ -754,11 +754,8 @@ iTermCommandInfoViewControllerDelegate>
     if ([iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]) {
         attributes = [attributes dictionaryByRemovingObjectForKey:NSBackgroundColorAttributeName];
     }
-    if (ea.urlCode) {
-        NSURL *url = [[iTermURLStore sharedInstance] urlForCode:ea.urlCode];
-        if (url != nil) {
-            attributes = [attributes dictionaryBySettingObject:url forKey:NSLinkAttributeName];
-        }
+    if (ea.url != nil) {
+        attributes = [attributes dictionaryBySettingObject:ea.url.url forKey:NSLinkAttributeName];
     }
 
     return attributes;

@@ -907,7 +907,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     if (!predecessor) {
         return nil;
     }
-    const long long pos = predecessor.entry.interval.limit;
+    const long long pos = MAX(0, predecessor.entry.interval.limit);
 
     for (NSArray *objects in [self.intervalTree forwardLocationEnumeratorAt:pos]) {
         id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
@@ -1165,6 +1165,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     const int width = self.width;
     ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:line
                                                             length:width
+                                                          metadata:[self.currentGrid immutableMetadataAtLineNumber:index]
                                                       continuation:line[width]];
     return array;
 }

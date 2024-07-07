@@ -297,12 +297,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)linkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                URLCode:(unsigned int)code;
+                    URL:(iTermURL *)url;
 
 - (void)linkRun:(VT100GridRun)run
-    withURLCode:(unsigned int)code;
-
-- (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code;
+        withURL:(iTermURL *)url;
 
 #pragma mark - Highlighting
 
