@@ -65,8 +65,6 @@ extension iTermMutableOrderedSetImpl: NSFastEnumeration {
         with state: UnsafeMutablePointer<NSFastEnumerationState>,
         objects buffer: AutoreleasingUnsafeMutablePointer<AnyObject?>,
         count len: Int) -> Int {
-            var count = 0
-
             withUnsafeMutablePointer(to: &state.pointee.extra.0) { ptr in
                 state.pointee.mutationsPtr = ptr
             }

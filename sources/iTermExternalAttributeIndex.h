@@ -14,6 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermExternalAttributeIndex;
+@class iTermURL;
 
 typedef struct {
     BOOL valid;
@@ -24,24 +25,24 @@ typedef struct {
 @interface iTermExternalAttribute: NSObject<NSCopying>
 @property (atomic, readonly) BOOL hasUnderlineColor;
 @property (atomic, readonly) VT100TerminalColorValue underlineColor;
-@property (atomic, readonly) unsigned int urlCode;
 @property (atomic, copy, readonly) NSString *blockID;
 @property (nonatomic, readonly) NSString *humanReadableDescription;
 @property (atomic, readonly) iTermControlCodeAttribute controlCode;
 @property (atomic, readonly, nullable) NSNumber *controlCodeNumber;
+@property (atomic, readonly, nullable) iTermURL *url;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
 + (iTermExternalAttribute * _Nullable)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
                                                      underlineColor:(VT100TerminalColorValue)underlineColor
-                                                            urlCode:(unsigned int)urlCode
+                                                                url:(iTermURL * _Nullable)url
                                                             blockID:(NSString * _Nullable)blockID
                                                         controlCode:(NSNumber * _Nullable)code;
 
 + (instancetype _Nullable)fromData:(NSData *)data;
 - (instancetype)init;
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
-                               urlCode:(unsigned int)urlCode
+                                   url:(iTermURL * _Nullable)url
                                blockID:(NSString * _Nullable)blocokID
                            controlCode:(NSNumber *)code;
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
@@ -109,4 +110,17 @@ typedef struct {
 - (NSData *)legacyScreenCharArrayWithExternalAttributes:(iTermExternalAttributeIndex * _Nullable)eaIndex;
 @end
 
+// Represents an OSC 8 URL.
+@interface iTermURL: NSObject
+@property (nonatomic, readonly) NSURL *url;
+@property (nonatomic, readonly) NSString *identifier;
+@property (nonatomic, readonly) NSData *data;
+
++ (instancetype _Nullable)urlWithData:(NSData * _Nullable)data code:(int)code;
++ (instancetype)urlWithURL:(NSURL *)url identifier:(NSString * _Nullable)identifier;
+
+@end
+
+
 NS_ASSUME_NONNULL_END
+

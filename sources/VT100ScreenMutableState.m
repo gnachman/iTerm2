@@ -34,7 +34,6 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermTextExtractor.h"
-#import "iTermURLMark.h"
 #import "iTermURLStore.h"
 
 #import <stdatomic.h>
@@ -1281,10 +1280,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     sct->code = ' ';
     sct->complexChar = NO;
     sct->image = NO;
-    if ((*eaOut).urlCode) {
+    if ((*eaOut).url) {
         *eaOut = [iTermExternalAttribute attributeHavingUnderlineColor:(*eaOut).hasUnderlineColor
                                                         underlineColor:(*eaOut).underlineColor
-                                                               urlCode:0
+                                                                   url:nil
                                                                blockID:nil
                                                            controlCode:nil];
     }
@@ -3851,35 +3850,26 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)linkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                URLCode:(unsigned int)code {
+                    URL:(iTermURL *)url {
     long long lineNumber = absoluteLineNumber - self.cumulativeScrollbackOverflow - self.numberOfScrollbackLines;
     if (lineNumber < 0) {
         return;
     }
     VT100GridRun gridRun = [self.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
     if (gridRun.length > 0) {
-        [self linkRun:gridRun withURLCode:code];
+        [self linkRun:gridRun withURL:url];
     }
 }
 
 - (void)linkRun:(VT100GridRun)run
-    withURLCode:(unsigned int)code {
+        withURL:(iTermURL *)url {
     for (NSValue *value in [self.currentGrid rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
-        [self.currentGrid setURLCode:code
+        [self.currentGrid setURL:url
                           inRectFrom:rect.origin
                                   to:VT100GridRectMax(rect)];
     }
 }
-
-- (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code {
-    long long absLine = (self.cumulativeScrollbackOverflow +
-                         self.numberOfScrollbackLines +
-                         self.currentGrid.cursor.y + 1);
-    iTermURLMark *mark = [[iTermURLMark alloc] initWithCode:code];
-    [self addMark:mark onLine:absLine singleLine:YES];
-}
-
 
 #pragma mark - Highlighting
 
@@ -5275,15 +5265,9 @@ launchCoprocessWithCommand:(NSString *)command
     makeHyperlinkToURL:(NSURL *)url
                inRange:(NSRange)rangeInString
                   line:(long long)lineNumber {
-    // Add URL to URL Store and retrieve URL code for later reference.
-    unsigned int code = [[iTermURLStore sharedInstance] codeForURL:url withParams:@""];
-
     // Modify grid to add URL attribute to affected cells.
-    [self linkTextInRange:rangeInString basedAtAbsoluteLineNumber:lineNumber URLCode:code];
-
-    // Add invisible URL Mark so the URL can automatically freed.
-    iTermURLMark *mark = [[iTermURLMark alloc] initWithCode:code];
-    [self addMark:mark onLine:lineNumber singleLine:YES];
+    [self linkTextInRange:rangeInString basedAtAbsoluteLineNumber:lineNumber
+                      URL:[iTermURL urlWithURL:url identifier:nil]];
 }
 
 - (void)triggerSession:(Trigger *)trigger

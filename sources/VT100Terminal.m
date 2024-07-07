@@ -180,8 +180,10 @@ typedef struct {
 
     NSMutableArray *_unicodeVersionStack;
 
-    // Code for the current hypertext link, or 0 if not in a hypertext link.
-    unsigned int _currentURLCode;
+    // URL of the current hypertext link (while between OSC 8 marking the start
+    // of a link and empty OSC 8 marking the end of a link), or nil if not in a
+    // hypertext link.
+    iTermURL *_currentURL;
 
     BOOL _softAlternateScreenMode;
     NSMutableArray<NSNumber *> *_mainKeyReportingModeStack;
@@ -705,12 +707,12 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)updateExternalAttributes {
-    if (!graphicRendition_.hasUnderlineColor && _currentURLCode == 0 && self.currentBlockID == nil && _currentLiteral == nil) {
+    if (!graphicRendition_.hasUnderlineColor && _currentURL == nil && self.currentBlockID == nil && _currentLiteral == nil) {
         _externalAttributes = nil;
         return;
     }
     _externalAttributes = [[iTermExternalAttribute alloc] initWithUnderlineColor:graphicRendition_.underlineColor
-                                                                         urlCode:_currentURLCode
+                                                                             url:_currentURL
                                                                          blockID:self.currentBlockID
                                                                      controlCode:_currentLiteral];
 }
@@ -1950,7 +1952,7 @@ static const int kMaxScreenRows = 4096;
 
     self.url = nil;
     self.urlParams = nil;
-    _currentURLCode = 0;
+    _currentURL = nil;
     self.currentBlockID = nil;
 
     // (Not supported: Reset INVISIBLE)
@@ -4020,6 +4022,20 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     }
 }
 
+static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
+    NSArray<NSString *> *parts = [params componentsSeparatedByString:@":"];
+    for (NSString *part in parts) {
+        NSInteger i = [part rangeOfString:@"="].location;
+        if (i != NSNotFound) {
+            NSString *partKey = [part substringToIndex:i];
+            if ([partKey isEqualToString:key]) {
+                return [part substringFromIndex:i + 1];
+            }
+        }
+    }
+    return nil;
+}
+
 - (void)executeLink:(VT100Token *)token {
     NSInteger index = [token.string rangeOfString:@";"].location;
     if (index == NSNotFound) {
@@ -4032,21 +4048,21 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     }
     self.url = urlString.length ? [NSURL URLWithUserSuppliedString:urlString] : nil;
     if (self.url == nil) {
-        if (_currentURLCode) {
-            [_delegate terminalWillEndLinkWithCode:_currentURLCode];
+        if (_currentURL) {
+            [_delegate terminalWillEndLinkWithURL:_currentURL];
         }
-        _currentURLCode = 0;
+        _currentURL = nil;
         self.urlParams = nil;
     } else {
         self.urlParams = params;
-        unsigned int code = [[iTermURLStore sharedInstance] codeForURL:self.url withParams:params];
-        if (code) {
-            if (_currentURLCode) {
-                [_delegate terminalWillEndLinkWithCode:_currentURLCode];
+        iTermURL *url = [iTermURL urlWithURL:self.url identifier:VT100GetURLParamForKey(params, @"id")];
+        if (url) {
+            if (_currentURL) {
+                [_delegate terminalWillEndLinkWithURL:_currentURL];
             } else {
-                [_delegate terminalWillStartLinkWithCode:code];
+                [_delegate terminalWillStartLinkWithURL:url];
             }
-            _currentURLCode = code;
+            _currentURL = url;
         }
     }
     [self updateExternalAttributes];

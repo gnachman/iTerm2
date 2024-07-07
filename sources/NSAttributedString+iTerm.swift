@@ -100,7 +100,7 @@ class AttributeToControlSequenceConverter {
             underlineColor = nil
         }
 
-        let urlCode = { () -> UInt32 in
+        let url = { () -> iTermURL? in
             let href: URL? = { () -> URL? in
                 if let link = attributes[.link] {
                     if let url = link as? URL {
@@ -111,14 +111,14 @@ class AttributeToControlSequenceConverter {
                 }
                 return nil
             }()
-            guard let href = href else {
-                return 0
+            guard let href else {
+                return nil
             }
-            return iTermURLStore.sharedInstance().code(for: href, withParams: nil)
+            return iTermURL(url: href, identifier: nil)
         }()
         let ea = iTermExternalAttribute(havingUnderlineColor: underlineColor != nil,
                                         underlineColor: underlineColor ?? VT100TerminalColorValue(),
-                                        urlCode: urlCode,
+                                        url: url,
                                         blockID: nil,
                                         controlCode: nil)
         return VT100Terminal.sgrCodes(forCharacter: c, externalAttributes: ea).array as! [String]

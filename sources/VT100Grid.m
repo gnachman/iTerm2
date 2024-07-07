@@ -896,16 +896,16 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     }
 }
 
-- (void)setURLCode:(unsigned int)code
+- (void)setURL:(iTermURL *)url
         inRectFrom:(VT100GridCoord)from
                 to:(VT100GridCoord)to {
     for (int y = from.y; y <= to.y; y++) {
         VT100LineInfo *info = [self lineInfoAtLineNumber:y];
-        iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:code != 0];
+        iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:url != nil];
         [eaIndex mutateAttributesFrom:from.x to:to.x block:^iTermExternalAttribute * _Nullable(iTermExternalAttribute * _Nullable old) {
             return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
                                                           underlineColor:old.underlineColor
-                                                                 urlCode:code
+                                                                     url:url
                                                                  blockID:old.blockID
                                                              controlCode:old.controlCodeNumber];
         }];
@@ -923,7 +923,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                             block:^iTermExternalAttribute * _Nullable(iTermExternalAttribute * _Nullable old) {
         return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
                                                       underlineColor:old.underlineColor
-                                                             urlCode:old.urlCode
+                                                                 url:old.url
                                                              blockID:blockID
                                                          controlCode:old.controlCodeNumber];
     }];

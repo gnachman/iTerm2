@@ -7,6 +7,7 @@
 
 #import "iTermExternalAttributeIndex.h"
 #import "iTermTLVCodec.h"
+#import "iTermURLStore.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSMutableData+iTerm.h"
@@ -95,6 +96,7 @@
 }
 
 - (NSDictionary *)dictionaryValue {
+    // TODO: Consider runlength encoding this to save space, e.g. for long hyperlinks
     return [_attributes mapValuesWithBlock:^id(NSNumber *key, iTermExternalAttribute *attribute) {
         return attribute.dictionaryValue;
     }];
@@ -292,14 +294,14 @@
 @end
 
 static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
-static NSString *const iTermExternalAttributeKeyURLCode = @"url";
+static NSString *const iTermExternalAttributeKeyURLCode_Deprecated = @"url";
 static NSString *const iTermExternalAttributeKeyBlockID = @"b";
 static NSString *const iTermExternalAttributeKeyControlCode = @"cc";
+static NSString *const iTermExternalAttributeKeyURL = @"u";
 
 @interface iTermExternalAttribute()
 @property (atomic, readwrite) BOOL hasUnderlineColor;
 @property (atomic, readwrite) VT100TerminalColorValue underlineColor;
-@property (atomic, readwrite) unsigned int urlCode;
 @property (atomic, copy, readwrite) NSString *blockID;
 @property (atomic, readwrite) iTermControlCodeAttribute controlCode;
 @end
@@ -319,17 +321,17 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 
 + (iTermExternalAttribute *)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
                                            underlineColor:(VT100TerminalColorValue)underlineColor
-                                                  urlCode:(unsigned int)urlCode 
+                                                      url:(iTermURL * _Nullable)url
                                                   blockID:(NSString *)blockID
                                               controlCode:(NSNumber *)code {
-    if (!hasUnderlineColor && urlCode == 0 && blockID == nil && !code) {
+    if (!hasUnderlineColor && !url && blockID == nil && !code) {
         return nil;
     }
     static iTermExternalAttribute *last;
     if (last &&
         last.hasUnderlineColor == hasUnderlineColor &&
         !memcmp(&last->_underlineColor, &underlineColor, sizeof(underlineColor)) &&
-        last.urlCode == urlCode &&
+        [NSObject object:last.url isEqualToObject:url] &&
         [NSObject object:last.blockID isEqualToObject:blockID] &&
         iTermControlCodeAttributeEqualsNumber(&last->_controlCode, code)) {
         // Since this class is immutable, there's a nice optimization in reusing the last one created.
@@ -337,11 +339,11 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     }
     if (hasUnderlineColor) {
         return [[self alloc] initWithUnderlineColor:underlineColor
-                                            urlCode:urlCode
+                                                url:url
                                             blockID:blockID
                                         controlCode:code];
     }
-    last = [[self alloc] initWithURLCode:urlCode blockID:blockID controlCode:code];
+    last = [[self alloc] initWithURL:url blockID:blockID controlCode:code];
     return last;
 }
 
@@ -375,10 +377,6 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     unsigned int urlCode = 0;
     [decoder decodeUnsignedInt:&urlCode];
     
-    if (!hasUnderlineColor && urlCode == 0) {
-        return nil;
-    }
-
     // V3
     NSData *blockData = [decoder decodeData];
     NSString *blockID = nil;
@@ -392,8 +390,18 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     int cc = -1;
     [decoder decodeInt:&cc];
 
+    NSData *urlData = [decoder decodeData];
+    iTermURL *url = nil;
+    if (urlData || urlCode) {
+        url = [iTermURL urlWithData:urlData code:urlCode];
+    }
+
+    if (!hasUnderlineColor && !blockID && !url) {
+        return nil;
+    }
+
     return [[self alloc] initWithUnderlineColor:underlineColor
-                                        urlCode:urlCode
+                                            url:url
                                         blockID:blockID
                                     controlCode:cc >= 0 && cc < 256 ? @(cc) : nil];
 }
@@ -403,14 +411,14 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 }
 
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
-                               urlCode:(unsigned int)urlCode
+                                   url:(iTermURL * _Nullable)url
                                blockID:(NSString *)blockID
                            controlCode:(nonnull NSNumber *)code {
     self = [self init];
     if (self) {
         self.hasUnderlineColor = YES;
         self.underlineColor = color;
-        self.urlCode = urlCode;
+        _url = url;
         self.blockID = blockID;
         if (code) {
             self.controlCode = (iTermControlCodeAttribute){ .valid = YES, .code = code.intValue };
@@ -421,12 +429,12 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     return self;
 }
 
-- (instancetype)initWithURLCode:(unsigned int)urlCode
+- (instancetype)initWithURL:(iTermURL *)url
                         blockID:(NSString *)blockID
                     controlCode:(nonnull NSNumber *)code {
     self = [self init];
     if (self) {
-        self.urlCode = urlCode;
+        _url = url;
         self.blockID = blockID;
         if (code) {
             self.controlCode = (iTermControlCodeAttribute){ .valid = YES, .code = code.intValue };
@@ -451,7 +459,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
         [parts addObject:[NSString stringWithFormat:@"underline=%@",
                           VT100TerminalColorValueDescription(_underlineColor, YES)]];
     }
-    if (_urlCode) {
+    if (_url) {
         [parts addObject:@"URL"];
     }
     if (_blockID) {
@@ -472,8 +480,8 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
         [parts addObject:[NSString stringWithFormat:@"ulc=%@",
                           VT100TerminalColorValueDescription(_underlineColor, YES)]];
     }
-    if (_urlCode) {
-        [parts addObject:[NSString stringWithFormat:@"url=%@", @(_urlCode)]];
+    if (_url) {
+        [parts addObject:[NSString stringWithFormat:@"url=%@", _url]];
     }
     if (_blockID) {
         [parts addObject:[NSString stringWithFormat:@"block=%@", _blockID]];
@@ -496,12 +504,15 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
         [encoder encodeInt:_underlineColor.blue];
         [encoder encodeInt:_underlineColor.mode];
     }
-    [encoder encodeUnsignedInt:_urlCode];
+    [encoder encodeUnsignedInt:-1];  // urlCode, which is now deprecated and replaced with the URL itself.
     [encoder encodeData:[_blockID dataUsingEncoding:NSUTF8StringEncoding] ?: [NSData data]];
     if (_controlCode.valid) {
         [encoder encodeInt:_controlCode.code];
     } else {
         [encoder encodeInt:-1];
+    }
+    if (_url) {
+        [encoder encodeData:_url.data];
     }
     return encoder.data;
 }
@@ -522,14 +533,19 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
             _underlineColor.green = [values[2] intValue];
             _underlineColor.blue = [values[3] intValue];
         }
-        _urlCode = [dict[iTermExternalAttributeKeyURLCode] unsignedIntValue];
+        const int urlCode = [dict[iTermExternalAttributeKeyURLCode_Deprecated] unsignedIntValue];
+        if (urlCode) {
+            _url = [iTermURL urlWithData:nil code:urlCode];
+        } else {
+            _url = [iTermURL urlWithData:dict[iTermExternalAttributeKeyURL] code:0];
+        }
         NSNumber *cc = [NSNumber castFrom:dict[iTermExternalAttributeKeyControlCode]];
         if (cc && cc.intValue >= 0 && cc.intValue < 256) {
             _controlCode = (iTermControlCodeAttribute){ .valid = YES, .code = cc.intValue };
         } else {
             _controlCode = (iTermControlCodeAttribute){ .valid = NO };
         }
-        if (!_hasUnderlineColor && _urlCode == 0 && !self.blockID && !_controlCode.valid) {
+        if (!_hasUnderlineColor && !_url && !self.blockID && !_controlCode.valid) {
             return nil;
         }
     }
@@ -538,7 +554,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 
 - (NSDictionary *)dictionaryValue {
     return @{
-        iTermExternalAttributeKeyURLCode: @(_urlCode),
+        iTermExternalAttributeKeyURL: _url.data ?: [NSNull null],
         iTermExternalAttributeKeyBlockID: self.blockID ?: [NSNull null],
         iTermExternalAttributeKeyUnderlineColor: _hasUnderlineColor ? @[ @(_underlineColor.mode),
                                                                          @(_underlineColor.red),
@@ -553,7 +569,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 }
 
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs {
-    if (_urlCode != rhs.urlCode) {
+    if (![NSObject object:_url isEqualToObject:rhs.url]) {
         return NO;
     }
     if (_hasUnderlineColor != rhs.hasUnderlineColor) {
@@ -740,9 +756,11 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
             if (!eaIndex) {
                 eaIndex = [[iTermExternalAttributeIndex alloc] init];
             }
+
+            iTermURL *url = [iTermURL urlWithData:nil code:dest[i].urlCode];
             iTermExternalAttribute *ea = [iTermExternalAttribute attributeHavingUnderlineColor:NO
                                                                                 underlineColor:(VT100TerminalColorValue){}
-                                                                                       urlCode:dest[i].urlCode
+                                                                                           url:url
                                                                                        blockID:nil
                                                                                    controlCode:nil];
             eaIndex[i] = ea;
@@ -770,15 +788,105 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     assert(length < NSUIntegerMax);
     assert(length % sizeof(screen_char_t) == 0);
     assert(sizeof(legacy_screen_char_t) == sizeof(screen_char_t));
-    const NSUInteger count = length / sizeof(screen_char_t);
 
     NSMutableData *legacyData = [self mutableCopy];
-    legacy_screen_char_t *dest = (legacy_screen_char_t *)legacyData.mutableBytes;
-    for (NSUInteger i = 0; i < count; i++) {
-        dest[i].urlCode = eaIndex[i].urlCode;
-    }
     [self migrateV2ToV1:legacyData];
+    // The deprecation of URL codes means that they won't survive downgrading.
+
     return legacyData;
+}
+
+@end
+
+@implementation iTermURL
+
++ (instancetype _Nullable)urlWithData:(NSData * _Nullable)data code:(int)code {
+    return [[self alloc] initWithData:data code:code];
+}
+
+- (instancetype)initWithData:(NSData *)data code:(int)code {
+    if (!data.length && code == 0) {
+        return nil;
+    }
+
+    static NSData *lastData;
+    static int lastCode;
+    static iTermURL *lastURL;
+
+    self = [super init];
+    if (self) {
+        if (data) {
+            if (lastURL != nil && [NSObject object:data isEqualToObject:lastData]) {
+                return lastURL;
+            }
+            iTermTLVDecoder *decoder = [[iTermTLVDecoder alloc] initWithData:data];
+            NSData *urlData = [decoder decodeData];
+            if (!urlData) {
+                return nil;
+            }
+            NSString *urlString = [[NSString alloc] initWithData:urlData encoding:NSUTF8StringEncoding];
+            if (!urlString) {
+                return nil;
+            }
+            _url = [NSURL URLWithString:urlString];
+            if (!_url) {
+                return nil;
+            }
+
+            NSData *idData = [decoder decodeData];
+            if (idData) {
+                _identifier = [[NSString alloc] initWithData:idData encoding:NSUTF8StringEncoding];
+            }
+        } else {
+            if (code == lastCode && lastURL != nil) {
+                return lastURL;
+            }
+            _url = [[iTermURLStore sharedInstance] urlForCode:code];
+            if (!_url) {
+                return nil;
+            }
+            _identifier = [[iTermURLStore sharedInstance] paramWithKey:@"id" forCode:code];
+        }
+    }
+
+    lastData = [data copy];
+    lastCode = code;
+    lastURL = self;
+    
+    return self;
+}
+
++ (instancetype)urlWithURL:(NSURL *)url identifier:(NSString * _Nullable)identifier {
+    return [[iTermURL alloc] initWithURL:url identifier:identifier];
+}
+
+- (instancetype)initWithURL:(NSURL *)url identifier:(NSString *)identifier {
+    static iTermURL *lastObject;
+
+    if (lastObject != nil &&
+        [lastObject.url isEqual:url] &&
+        [NSObject object:identifier isEqualToObject:lastObject.identifier]) {
+        return lastObject;
+    }
+
+    self = [super init];
+    if (self) {
+        _url = url;
+        _identifier = [identifier copy];
+    }
+
+    lastObject = self;
+
+    return self;
+}
+
+- (NSData *)data {
+    iTermTLVEncoder *encoder = [[iTermTLVEncoder alloc] init];
+    [encoder encodeData:[_url.absoluteString dataUsingEncoding:NSUTF8StringEncoding]];
+    if (_identifier) {
+        [encoder encodeData:[_identifier dataUsingEncoding:NSUTF8StringEncoding]];
+    }
+    return [encoder data];
 }
 
 @end

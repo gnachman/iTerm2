@@ -458,8 +458,8 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalPasteboardReceiptEndedUnexpectedly;
 
 // Links
-- (void)terminalWillEndLinkWithCode:(unsigned int)code;
-- (void)terminalWillStartLinkWithCode:(unsigned int)code;
+- (void)terminalWillEndLinkWithURL:(iTermURL *)url;
+- (void)terminalWillStartLinkWithURL:(iTermURL *)url;
 
 // Custom escape sequences
 - (void)terminalCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters

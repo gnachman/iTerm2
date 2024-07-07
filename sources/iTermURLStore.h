@@ -16,7 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) NSInteger generation;
 
 + (instancetype)sharedInstance;
-- (unsigned int)codeForURL:(NSURL *)url withParams:(NSString * _Nullable)params;
 - (NSURL * _Nullable)urlForCode:(unsigned int)code;
 - (NSString * _Nullable)paramWithKey:(NSString *)key forCode:(unsigned int)code;
 - (void)releaseCode:(unsigned int)code;

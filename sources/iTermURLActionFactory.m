@@ -345,14 +345,14 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
                                                passingTest:^BOOL(screen_char_t *c,
                                                                  iTermExternalAttribute *ea,
                                                                  VT100GridCoord coord) {
-                                                   if (ea.urlCode == oea.urlCode) {
-                                                       return YES;
-                                                   }
-                                                   NSString *thisId;
-                                                   NSURL *thisURL = [extractor urlOfHypertextLinkAt:coord urlId:&thisId];
-                                                   // Hover together only if URL and ID are equal.
-                                                   return ([thisURL isEqual:url] && (thisId == urlId || [thisId isEqualToString:urlId]));
-                                               }];
+            if ([NSObject object:ea.url isEqualToObject:oea.url]) {
+                return YES;
+            }
+            NSString *thisId;
+            NSURL *thisURL = [extractor urlOfHypertextLinkAt:coord urlId:&thisId];
+            // Hover together only if URL and ID are equal.
+            return ([thisURL isEqual:url] && (thisId == urlId || [thisId isEqualToString:urlId]));
+        }];
         return action;
     } else {
         return nil;

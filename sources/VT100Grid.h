@@ -314,9 +314,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                         to:(VT100GridCoord)to;
 
 // Set URLCode in a range.
-- (void)setURLCode:(unsigned int)code
-        inRectFrom:(VT100GridCoord)from
-                to:(VT100GridCoord)to;
+- (void)setURL:(iTermURL *)url
+    inRectFrom:(VT100GridCoord)from
+            to:(VT100GridCoord)to;
 
 - (void)setBlockID:(NSString *)blockID onLine:(int)line;
 

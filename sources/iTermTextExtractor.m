@@ -205,8 +205,10 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 - (NSURL *)urlOfHypertextLinkAt:(VT100GridCoord)coord urlId:(out NSString **)urlId {
     iTermExternalAttribute *ea = [self externalAttributesAt:coord];
-    *urlId = [[iTermURLStore sharedInstance] paramWithKey:@"id" forCode:ea.urlCode];
-    return [[iTermURLStore sharedInstance] urlForCode:ea.urlCode];
+    if (urlId) {
+        *urlId = ea.url.identifier;
+    }
+    return ea.url.url;
 }
 
 - (VT100GridWindowedRange)rangeOfCoordinatesAround:(VT100GridCoord)origin

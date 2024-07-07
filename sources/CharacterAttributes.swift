@@ -73,7 +73,7 @@ class CharacterAttributesProvider: NSObject {
                                      useCustomBoldColor: useCustomBoldColor,
                                      brightenBold: brightenBold)!.premultiplyingAlpha(with: bgColor)
         }
-        let underlineStyle: NSUnderlineStyle = (externalAttributes.urlCode != 0 || c.underline != 0) ? [.single, .byWord] : []
+        let underlineStyle: NSUnderlineStyle = (externalAttributes.url != nil || c.underline != 0) ? [.single, .byWord] : []
         var isItalic = ObjCBool(c.italic != 0)
 
         var remapped = UTF32Char(0)
@@ -112,10 +112,8 @@ class CharacterAttributesProvider: NSObject {
         if excludeBackgroundColorsFromCopiedStyle {
             attributes.removeValue(forKey: .backgroundColor)
         }
-        if externalAttributes.urlCode != 0 {
-            if let url = iTermURLStore.sharedInstance().url(forCode: externalAttributes.urlCode) {
-                attributes[.link] = url
-            }
+        if let url = externalAttributes.url {
+            attributes[.link] = url.url
         }
         return attributes;
     }
