@@ -4,6 +4,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 
@@ -114,6 +115,33 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
                                                         object:nil];
+}
+
+
++ (double)differenceBetweenColorDicts:(NSDictionary *)lhs :(NSDictionary *)rhs {
+    NSColor *color1 = [lhs colorValue];
+    NSColor *color2 = [rhs colorValue];
+    if (!color1 || !color2) {
+        return 1.0;
+    }
+    return [color1 perceptualDistanceTo:color2];
+}
+
++ (double)differenceBetweenPreset:(NSDictionary *)p1
+                        andPreset:(NSDictionary *)p2
+                        usingKeys:(NSArray<NSString *> *)keys {
+    double loss = 0;
+    for (NSString *key in keys) {
+        if (!p1[key] || !p2[key]) {
+            loss += 1;
+            continue;
+        }
+        NSDictionary *lhsDict = p1[key];
+        NSDictionary *rhsDict = p2[key];
+
+        loss += [self differenceBetweenColorDicts:lhsDict :rhsDict];
+    }
+    return loss;
 }
 
 @end

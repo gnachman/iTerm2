@@ -113,6 +113,7 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 @end
 
 NSString *iTermAmendedColorKey(NSString *baseKey, Profile *profile, BOOL dark);
+NSString *iTermAmendedColorKey2(NSString *baseKey, BOOL separate, BOOL dark);
 
 NS_ASSUME_NONNULL_END
 

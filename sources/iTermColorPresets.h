@@ -36,6 +36,13 @@ typedef NSDictionary<NSString *, iTermColorPreset *> iTermColorPresetDictionary;
 // Remove a loaded preset
 + (void)deletePresetWithName:(NSString *)name;
 
++ (void)addColorPreset:(NSString *)presetName withColors:(NSDictionary *)theDict;
+
++ (double)differenceBetweenPreset:(NSDictionary *)p1
+                        andPreset:(NSDictionary *)p2
+                        usingKeys:(NSArray<NSString *> *)keys;
+
+
 @end
 
 @interface NSDictionary(iTermColorPreset)

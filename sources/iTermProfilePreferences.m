@@ -1032,7 +1032,13 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 @end
 
 NSString *iTermAmendedColorKey(NSString *baseKey, Profile *profile, BOOL dark) {
-    if (![iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:profile]) {
+    return iTermAmendedColorKey2(baseKey,
+                                 [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:profile],
+                                 dark);
+}
+
+NSString *iTermAmendedColorKey2(NSString *baseKey, BOOL separate, BOOL dark) {
+    if (!separate) {
         return baseKey;
     }
     if (dark) {

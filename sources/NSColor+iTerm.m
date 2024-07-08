@@ -177,6 +177,62 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
                 pow(lhs.b - rhs.b, 2)) / 100.0;
 }
 
+// CIEDE2000 difference
+CGFloat iTermLABDeltaE2000(iTermLABColor lab1, iTermLABColor lab2) {
+    CGFloat kL = 1.0, kC = 1.0, kH = 1.0;
+
+    CGFloat deltaLPrime = lab2.l - lab1.l;
+    CGFloat LBar = (lab1.l + lab2.l) / 2.0;
+    CGFloat C1 = sqrt(lab1.a * lab1.a + lab1.b * lab1.b);
+    CGFloat C2 = sqrt(lab2.a * lab2.a + lab2.b * lab2.b);
+    CGFloat CBar = (C1 + C2) / 2.0;
+    CGFloat CBar7 = pow(CBar, 7.0);
+    CGFloat G = 0.5 * (1.0 - sqrt(CBar7 / (CBar7 + pow(25.0, 7.0))));
+
+    CGFloat a1Prime = lab1.a * (1.0 + G);
+    CGFloat a2Prime = lab2.a * (1.0 + G);
+    CGFloat C1Prime = sqrt(a1Prime * a1Prime + lab1.b * lab1.b);
+    CGFloat C2Prime = sqrt(a2Prime * a2Prime + lab2.b * lab2.b);
+    CGFloat CBarPrime = (C1Prime + C2Prime) / 2.0;
+
+    CGFloat h1Prime = atan2(lab1.b, a1Prime);
+    if (h1Prime < 0.0) {
+        h1Prime += 2.0 * M_PI;
+    }
+    CGFloat h2Prime = atan2(lab2.b, a2Prime);
+    if (h2Prime < 0.0) {
+        h2Prime += 2.0 * M_PI;
+    }
+
+    CGFloat HBarPrime = (fabs(h1Prime - h2Prime) > M_PI) ?
+        (h1Prime + h2Prime + 2.0 * M_PI) / 2.0 :
+        (h1Prime + h2Prime) / 2.0;
+
+    CGFloat deltaHPrime = h2Prime - h1Prime;
+    if (fabs(deltaHPrime) > M_PI) {
+        deltaHPrime += (deltaHPrime > 0.0) ? -2.0 * M_PI : 2.0 * M_PI;
+    }
+    deltaHPrime = 2.0 * sqrt(C1Prime * C2Prime) * sin(deltaHPrime / 2.0);
+
+    CGFloat T = 1.0 - 0.17 * cos(HBarPrime - M_PI / 6.0) + 0.24 * cos(2.0 * HBarPrime) +
+        0.32 * cos(3.0 * HBarPrime + M_PI / 30.0) - 0.20 * cos(4.0 * HBarPrime - 21.0 * M_PI / 60.0);
+
+    CGFloat SL = 1.0 + ((0.015 * pow(LBar - 50.0, 2.0)) / sqrt(20.0 + pow(LBar - 50.0, 2.0)));
+    CGFloat SC = 1.0 + 0.045 * CBarPrime;
+    CGFloat SH = 1.0 + 0.015 * CBarPrime * T;
+
+    CGFloat deltaTheta = (30.0 * M_PI / 180.0) * exp(-pow((HBarPrime * 180.0 / M_PI - 275.0) / 25.0, 2.0));
+    CGFloat RC = 2.0 * sqrt(CBar7 / (CBar7 + pow(25.0, 7.0)));
+    CGFloat RT = -sin(2.0 * deltaTheta) * RC;
+
+    CGFloat deltaE = (sqrt(pow(deltaLPrime / (kL * SL), 2.0) +
+                           pow((C2Prime - C1Prime) / (kC * SC), 2.0) +
+                           pow(deltaHPrime / (kH * SH), 2.0) +
+                           RT * (C2Prime - C1Prime) * deltaHPrime / (kC * SC * kH * SH)));
+
+    return deltaE;
+}
+
 @implementation NSColor (iTerm)
 
 - (iTermSRGBColor)itermSRGBColor {
@@ -191,6 +247,10 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
 + (instancetype)colorWithVector:(vector_float4)vector colorSpace:(NSColorSpace *)colorSpace {
     CGFloat components[4] = { vector.x, vector.y, vector.z, vector.w };
     return [NSColor colorWithColorSpace:colorSpace components:components count:4];
+}
+
+- (double)perceptualDistanceTo:(NSColor *)other {
+    return MAX(0, iTermLABDeltaE2000([self labColor], [other labColor]) / 100.0);
 }
 
 - (iTermLABColor)labColor {

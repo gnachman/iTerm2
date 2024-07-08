@@ -16,6 +16,8 @@
 #import "iTermTextPopoverViewController.h"
 #import "iTermWarning.h"
 #import "NSAppearance+iTerm.h"
+#import "NSAlert+iTerm.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
@@ -472,6 +474,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     [self addPresetItemWithTitle:@"Import..." action:@selector(importColorPreset:)];
     [self addPresetItemWithTitle:@"Export..." action:@selector(exportColorPreset:)];
+    [self addPresetItemWithTitle:@"Save As..." action:@selector(saveColorPreset:)];
     [self addPresetItemWithTitle:@"Delete Preset..." action:@selector(deleteColorPreset:)];
     [self addPresetItemWithTitle:@"Visit Online Gallery" action:@selector(visitGallery:)];
     _presetsMenu.delegate = self;
@@ -531,6 +534,62 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     }
 }
 
+- (void)saveColorPreset:(id)sender {
+    iTermColorPresetDictionary *customPresets = [iTermColorPresets customColorPresets];
+    NSString *name = [self showSaveColorPresetAlertWithItems:customPresets.allKeys];
+    if (!name) {
+        return;
+    }
+    if (customPresets[name]) {
+        [iTermColorPresets deletePresetWithName:name];
+    }
+    [iTermColorPresets addColorPreset:name withColors:[self presetDictionaryForCurrentColors]];
+    [self rebuildColorPresetsMenu];
+}
+
+- (double)differenceFromPreset:(NSDictionary *)preset {
+    return [iTermColorPresets differenceBetweenPreset:[self presetDictionaryForCurrentColors]
+                                            andPreset:preset
+                                            usingKeys:preset.allKeys];
+}
+- (NSString *)mostSimilarCustomPresetName {
+    NSDictionary *presets = [iTermColorPresets customColorPresets];
+    NSString *best = [[presets allKeys] minWithBlock:^NSComparisonResult(NSString *key1, NSString *key2) {
+        const double diff1 = [self differenceFromPreset:presets[key1]];
+        const double diff2 = [self differenceFromPreset:presets[key2]];
+        return [@(diff1) compare:@(diff2)];
+    }];
+    if (best && [self differenceFromPreset:presets[best]] > 5) {
+        return nil;
+    }
+    return best;
+}
+
+- (NSString *)showSaveColorPresetAlertWithItems:(NSArray<NSString *> *)items {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Save Color Preset";
+    alert.informativeText = @"Select preset name";
+    alert.alertStyle = NSAlertStyleInformational;
+
+    // Add the ComboBox
+    NSComboBox *comboBox = [[NSComboBox alloc] initWithFrame:NSMakeRect(0, 0, 300, 25)];
+    [comboBox addItemsWithObjectValues:items];
+    comboBox.stringValue = [self mostSimilarCustomPresetName] ?: @"";
+
+    alert.accessoryView = comboBox;
+
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    NSInteger response = [alert runSheetModalForWindow:self.view.window];
+
+    if (response == NSAlertFirstButtonReturn) {
+        NSString *selectedName = [comboBox stringValue];
+        return selectedName;
+    }
+    return nil;
+}
+
 - (void)exportColorPreset:(id)sender {
     // Create the File Open Dialog class.
     NSSavePanel *savePanel = [NSSavePanel savePanel];
@@ -571,7 +630,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     }
 }
 
-- (void)exportColorPresetToFile:(NSString*)filename {
+- (NSDictionary *)presetDictionaryForCurrentColors {
     NSMutableDictionary* theDict = [NSMutableDictionary dictionaryWithCapacity:24];
     NSDictionary *colorWellDictionary = [self colorWellDictionary];
     if ([self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
@@ -592,6 +651,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
             theDict[key] = [[colorWellDictionary[key] color] dictionaryValue];
         }
     }
+    return theDict;
+}
+
+- (void)exportColorPresetToFile:(NSString *)filename {
+    NSDictionary *theDict = [self presetDictionaryForCurrentColors];
     if (![theDict iterm_writePresetToFileWithName:filename]) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Save Failed.";
@@ -703,8 +767,17 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (NSDictionary *)currentColors {
     NSMutableDictionary<NSString *, id> *dict = [NSMutableDictionary dictionary];
-    for (NSString *key in [ProfileModel colorKeysWithModes:[self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]]) {
-        dict[key] = [self objectForKey:key] ?: [NSNull null];
+    const BOOL separate = [self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
+    for (NSString *key in [ProfileModel colorKeysWithModes:NO]) {
+        dict[key] = [self objectForKey:key];
+    }
+    if (separate) {
+        for (NSString *key in [ProfileModel colorKeysWithModes:YES]) {
+            id value = [self objectForKey:key];
+            if (value) {
+                dict[key] = value;
+            }
+        }
     }
     return dict;
 }
