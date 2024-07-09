@@ -37,7 +37,7 @@
             if (!x) {
                 return;
             }
-            NSDictionary *dict = [NSDictionary castFrom:obj];
+            NSDictionary *dict = [[NSDictionary castFrom:obj] dictionaryByRemovingNullValues];
             if (!dict) {
                 return;
             }
@@ -553,7 +553,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 }
 
 - (NSDictionary *)dictionaryValue {
-    return @{
+    return [@{
         iTermExternalAttributeKeyURL: _url.data ?: [NSNull null],
         iTermExternalAttributeKeyBlockID: self.blockID ?: [NSNull null],
         iTermExternalAttributeKeyUnderlineColor: _hasUnderlineColor ? @[ @(_underlineColor.mode),
@@ -561,7 +561,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
                                                                          @(_underlineColor.green),
                                                                          @(_underlineColor.blue) ] : [NSNull null] ,
         iTermExternalAttributeKeyControlCode: _controlCode.valid ? @(_controlCode.code) : [NSNull null]
-    };
+    } dictionaryByRemovingNullValues];
 }
 
 - (id)copyWithZone:(NSZone *)zone {
