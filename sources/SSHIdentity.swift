@@ -122,4 +122,21 @@ public class SSHIdentity: NSObject, Codable {
         }
         return other.state == state
     }
+
+    // We make an effort to figure out the real hostname, but there's no guarantee that we succeed.
+    // For example, the user could do `it2ssh foo` where `foo` is only defined in /etc/hosts.
+    // The remote host could report itself as either `foo` or `foo.example.com`. In the case where
+    // they are both `foo` it's wise to match state.host (derived from the it2ssh command line)
+    // against the `host` parameter (derived from shell integration control sequences from the
+    // remote host).
+    public func matches(host: String?, user: String?) -> Bool {
+        DLog("matches: \(hostname) or \(state.host) == \(host ?? "(nil)") && \(state.username ?? "(nil)") == \(user ?? "(nil)")")
+        guard (hostname == host || state.host == host) else {
+            return false
+        }
+        if state.username == nil {
+            return true
+        }
+        return state.username == user
+    }
 }
