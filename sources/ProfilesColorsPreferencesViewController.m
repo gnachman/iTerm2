@@ -748,18 +748,34 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:kColorGalleryURL]];
 }
 
-- (BOOL)currentColorsEqualPreset:(NSDictionary *)preset {
+- (BOOL)currentColorsEqualPreset:(NSDictionary *)preset 
+                           modal:(BOOL)modal
+                            dark:(BOOL)dark {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     const BOOL presetUsesModes = iTermColorPresetHasModes(preset);
-    if (presetUsesModes != [self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
-        return NO;
-    }
-    for (NSString *colorName in [ProfileModel colorKeysWithModes:presetUsesModes]) {
-        iTermColorDictionary *presetColorDict = [preset iterm_presetColorWithName:colorName];
-        NSDictionary *profileColorDict = [iTermProfilePreferences objectForKey:colorName
-                                                                     inProfile:profile];
-        if (![presetColorDict isEqual:profileColorDict] && presetColorDict != profileColorDict) {
+    const BOOL separate = [self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
+    if (!modal) {
+        // Check both modes
+        if (presetUsesModes != separate) {
             return NO;
+        }
+        for (NSString *colorName in [ProfileModel colorKeysWithModes:presetUsesModes]) {
+            iTermColorDictionary *presetColorDict = [preset iterm_presetColorWithName:colorName];
+            NSDictionary *profileColorDict = [iTermProfilePreferences objectForKey:colorName
+                                                                         inProfile:profile];
+            if (![presetColorDict isEqual:profileColorDict] && presetColorDict != profileColorDict) {
+                return NO;
+            }
+        }
+    } else {
+        // Check only specified mode
+        for (NSString *baseName in [ProfileModel colorKeysWithModes:NO]) {
+            iTermColorDictionary *presetColorDict = [preset iterm_presetColorWithName:iTermAmendedColorKey2(baseName, presetUsesModes, dark)];
+            NSDictionary *profileColorDict = [iTermProfilePreferences objectForKey:iTermAmendedColorKey2(baseName, separate, dark)
+                                                                         inProfile:profile];
+            if (![presetColorDict isEqual:profileColorDict] && presetColorDict != profileColorDict) {
+                return NO;
+            }
         }
     }
     return YES;
@@ -798,15 +814,30 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     iTermColorPresetDictionary *allPresets = [iTermColorPresets allColorPresets];
 
     _savedColors = [self currentColors];
+    const BOOL separate = [self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
 
     for (NSMenuItem *item in _presetsMenu.itemArray) {
         if (item.action == @selector(loadColorPreset:)) {
             NSString *name = item.identifier;
-            if (!found && [self currentColorsEqualPreset:allPresets[name]]) {
+            if (!found && [self currentColorsEqualPreset:allPresets[name] modal:NO dark:NO]) {
                 item.state = NSControlStateValueOn;
                 found = YES;
             } else {
                 item.state = NSControlStateValueOff;
+            }
+        }
+    }
+
+    if (!found && separate) {
+        // Search for partial matches. These are monomode presets that match exactly one of the
+        // light mode or dark mode settings.
+        for (NSMenuItem *item in _presetsMenu.itemArray) {
+            if (item.action == @selector(loadColorPreset:)) {
+                NSString *name = item.identifier;
+                if ([self currentColorsEqualPreset:allPresets[name] modal:YES dark:YES] ||
+                    [self currentColorsEqualPreset:allPresets[name] modal:YES dark:NO]) {
+                    item.state = NSControlStateValueMixed;
+                }
             }
         }
     }
