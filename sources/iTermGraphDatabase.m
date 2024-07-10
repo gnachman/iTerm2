@@ -13,6 +13,7 @@
 #import "NSObject+iTerm.h"
 #import "iTermGraphDeltaEncoder.h"
 #import "iTermGraphTableTransformer.h"
+#import "iTermPromise.h"
 #import "iTermThreadSafety.h"
 #import <stdatomic.h>
 
@@ -20,46 +21,18 @@
 
 @interface iTermGraphDatabaseState: iTermSynchronizedState<iTermGraphDatabaseState *>
 @property (nonatomic, strong) id<iTermDatabase> db;
-// Load complete means that the initial attempt to load the DB has finished. It may have failed, leaving
-// us without any state, but it is now safe to proceed to use the graph DB as it won't change out
-// from under you after this point.
-@property (nonatomic) BOOL loadComplete;
+
 - (instancetype)initWithQueue:(dispatch_queue_t)queue database:(id<iTermDatabase>)db;
-- (void)addLoadCompleteBlock:(void (^)(void))block;
 @end
 
-@implementation iTermGraphDatabaseState {
-    NSMutableArray<void (^)(void)> *_loadCompleteBlocks;
-}
+@implementation iTermGraphDatabaseState
+
 - (instancetype)initWithQueue:(dispatch_queue_t)queue database:(id<iTermDatabase>)db {
     self = [super initWithQueue:queue];
     if (self) {
         _db = db;
-        _loadCompleteBlocks = [NSMutableArray array];
     }
     return self;
-}
-
-- (void)addLoadCompleteBlock:(void (^)(void))block {
-    if (self.loadComplete) {
-        dispatch_async(dispatch_get_main_queue(), block);
-    } else {
-        [_loadCompleteBlocks addObject:[block copy]];
-    }
-}
-
-- (void)setLoadComplete:(BOOL)loadComplete {
-    if (loadComplete == _loadComplete) {
-        return;
-    }
-    if (loadComplete && !_loadComplete) {
-        NSArray<void (^)(void)> *blocks = [_loadCompleteBlocks copy];
-        [_loadCompleteBlocks removeAllObjects];
-        [blocks enumerateObjectsUsingBlock:^(void (^ _Nonnull block)(void), NSUInteger idx, BOOL * _Nonnull stop) {
-            dispatch_async(dispatch_get_main_queue(), block);
-        }];
-    }
-    _loadComplete = loadComplete;
 }
 
 @end
@@ -72,6 +45,12 @@
     NSInteger _recoveryCount;
     _Atomic int _updating;
     _Atomic int _invalid;
+
+    // Load complete means that the initial attempt to load the DB has finished. It may have failed, leaving
+    // us without any state, but it is now safe to proceed to use the graph DB as it won't change out
+    // from under you after this point.
+    // There is no promised value. This is just used as a barrier.
+    iTermPromise *_loadCompletePromise;
 }
 
 - (instancetype)initWithDatabase:(id<iTermDatabase>)db {
@@ -90,9 +69,11 @@
         }];
 
         _url = [db url];
-        [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
-            [self finishInitialization:state];
-            state.loadComplete = YES;
+        _loadCompletePromise = [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+            [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
+                [self finishInitialization:state];
+                [seal fulfill:[NSNull null]];
+            }];
         }];
     }
     return self;
@@ -150,6 +131,9 @@
     }
     DLog(@"beginUpdate");
     [self beginUpdate];
+    // You have to wait for loading to complete before initializing the delta encoder or you can end
+    // up with two root nodes when a second instance of iTerm2 just quit and this races against loading.
+    [_loadCompletePromise wait];
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:self.record];
     block(encoder);
     __weak __typeof(self) weakSelf = self;
@@ -192,9 +176,7 @@
 }
 
 - (void)whenReady:(void (^)(void))readyBlock {
-    [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
-        [state addLoadCompleteBlock:readyBlock];
-    }];
+    [_loadCompletePromise onQueue:dispatch_get_main_queue() then:^(id value){ readyBlock(); }];
 }
 
 #pragma mark - Private
