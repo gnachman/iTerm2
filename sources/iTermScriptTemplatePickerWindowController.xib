@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22689"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -22,7 +22,7 @@
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="F0z-JX-Cv5" customClass="NSPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="480" height="332"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1728" height="1079"/>
             <view key="contentView" wantsLayer="YES" id="se5-gp-TjO" userLabel="Content View">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="332"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -43,7 +43,7 @@
                             <box fixedFrame="YES" boxType="custom" title="Box" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="tXz-uS-5p0" customClass="iTermSelectableBox">
                                 <rect key="frame" x="20" y="130" width="440" height="110"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <view key="contentView" ambiguous="YES" id="Kn6-xX-Fkp">
+                                <view key="contentView" id="Kn6-xX-Fkp">
                                     <rect key="frame" x="1" y="1" width="438" height="108"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
@@ -84,7 +84,7 @@
                             <box fixedFrame="YES" boxType="custom" title="Box" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="2sA-HX-RoK" customClass="iTermSelectableBox">
                                 <rect key="frame" x="20" y="14" width="440" height="108"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <view key="contentView" ambiguous="YES" id="Dds-OL-gJX">
+                                <view key="contentView" id="Dds-OL-gJX">
                                     <rect key="frame" x="1" y="1" width="438" height="106"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
@@ -166,7 +166,7 @@ Gw
                 <box fixedFrame="YES" boxType="custom" title="Box" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="JSO-Dq-LjB" customClass="iTermSelectableBox">
                     <rect key="frame" x="20" y="130" width="440" height="110"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <view key="contentView" ambiguous="YES" id="Rss-t9-jKm">
+                    <view key="contentView" id="Rss-t9-jKm">
                         <rect key="frame" x="1" y="1" width="438" height="108"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
@@ -207,7 +207,7 @@ Gw
                 <box fixedFrame="YES" boxType="custom" title="Box" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="y6b-6d-y5d" customClass="iTermSelectableBox">
                     <rect key="frame" x="20" y="12" width="440" height="110"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <view key="contentView" ambiguous="YES" id="l1T-IZ-1Ei">
+                    <view key="contentView" id="l1T-IZ-1Ei">
                         <rect key="frame" x="1" y="1" width="438" height="108"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
@@ -245,20 +245,6 @@ Gw
                         <outlet property="delegate" destination="-2" id="Yfz-iN-dg5"/>
                     </connections>
                 </box>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HeB-oM-fRx">
-                    <rect key="frame" x="384" y="-48" width="82" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="f0h-Lu-82t">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-Gw
-</string>
-                    </buttonCell>
-                    <connections>
-                        <action selector="cancel:" target="-2" id="a9O-pN-4Lp"/>
-                    </connections>
-                </button>
             </subviews>
             <point key="canvasLocation" x="732" y="292.5"/>
         </customView>
