@@ -65,6 +65,8 @@ int launch_shell(const char *customShell, int num_extra_args, const char **extra
     }
     argv[i + 1] = NULL;
 
+    printf("shell_launcher: Will execute %s. PATH=%s\n", shell, getenv("PATH"));
+
     execvp(shell, argv);
     err(1, "Failed to exec %s with arg %s", shell, argv0);
 }

@@ -2611,11 +2611,17 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if ([iTermAdvancedSettingsModel addUtilitiesToPATH]) {
+        DLog(@"Adding utilities. env=%@ med=%@ stdpath=%s", env, [PTYTask mutableEnvironmentDictionary], _PATH_STDPATH);
         NSString *path = env[PATH_ENVNAME] ?: [[PTYTask mutableEnvironmentDictionary] objectForKey:PATH_ENVNAME] ?: [NSString stringWithUTF8String:_PATH_STDPATH];
+        DLog(@"path=%@", path);
         NSArray *pathComponents = [path componentsSeparatedByString:@":"] ?: @[];
+        DLog(@"components=%@", pathComponents);
         pathComponents = [pathComponents arrayByAddingObject:[iTermPathToSSH() stringByDeletingLastPathComponent]];
         path = [pathComponents componentsJoinedByString:@":"];
         env[PATH_ENVNAME] = path;
+        DLog(@"Set path to %@", path);
+    } else {
+        DLog(@"Not adding utilities. env=%@", env);
     }
 
     DLog(@"Begin locale logic");
