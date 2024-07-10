@@ -209,6 +209,8 @@
 
 // PTYTextView deselect
 - (void)screenRemoveSelection;
+- (void)screenMoveSelectionUpBy:(int)n
+                       inRegion:(VT100GridRect)region;
 
 - (void)screenResetTailFind;
 

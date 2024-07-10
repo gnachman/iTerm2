@@ -806,6 +806,108 @@ iTermCommandInfoViewControllerDelegate>
     return promise;
 }
 
+// When a scrolling region moves vertically we make a good-faith effort to move the selection with it.
+// This is complicated because some, all, or none of a selection could be in the scrolling region.
+- (void)moveSelectionUpBy:(int)n
+                 inRegion:(VT100GridRect)region {
+    if (self.selection.live) {
+        // This might be nice to do some day.
+        return;
+    }
+    if (self.selection.allSubSelections.count == 0) {
+        return;
+    }
+    const int width = self.dataSource.width;
+    NSArray<iTermSubSelection *> *subs = [self.selection.allSubSelections copy];
+    [self.selection clearSelection];
+    const long long overflow = self.dataSource.totalScrollbackOverflow;
+    // Scrolling region rows in absolute line numbers.
+    const NSRange regionAbsRowRange = NSMakeRange(region.origin.y + self.dataSource.numberOfScrollbackLines + overflow,
+                                                  region.size.height);
+    const NSRange regionColumnRange = NSMakeRange(region.origin.x, region.size.width);
+
+    // Re-add subselections that can stay, possibly with modifications.
+    for (iTermSubSelection *sub in subs) {
+        const NSRange selectionRowRange = NSMakeRange(sub.absRange.coordRange.start.y,
+                                                      sub.absRange.coordRange.end.y - sub.absRange.coordRange.start.y + 1);
+        if (NSIntersectionRange(regionAbsRowRange, selectionRowRange).length == 0) {
+            // The whole subselection is outside the mutable range and is unaffected by the changes
+            // happening so it can stay.
+            [self.selection addSubSelection:sub];
+            continue;
+        }
+
+        // This is the range of columns the selection spans.
+        NSRange selectionColumnRange;
+        if (sub.absRange.columnWindow.length <= 0) {
+            selectionColumnRange = NSMakeRange(0, width);
+        } else {
+            selectionColumnRange = NSMakeRange(sub.absRange.columnWindow.location,
+                                      sub.absRange.columnWindow.length);
+        }
+        if (sub.absRange.coordRange.start.y == sub.absRange.coordRange.end.y) {
+            // This is a single-line selection so the actual range of columns could be less than the
+            // column window.
+            const int minX = MAX(selectionColumnRange.location, sub.absRange.coordRange.start.x);
+            const int maxX = MIN(NSMaxRange(selectionColumnRange), sub.absRange.coordRange.end.x);
+            selectionColumnRange = NSMakeRange(minX, MAX(0, maxX - minX));
+        }
+        if (selectionColumnRange.location < regionColumnRange.location ||
+            NSMaxRange(selectionColumnRange) > NSMaxRange(regionColumnRange)) {
+            // The selection is at least partially outside the moving region's columns.
+
+            const NSRange intersection = NSIntersectionRange(selectionColumnRange, regionColumnRange);
+            if (intersection.length == 0) {
+                // The selection is entirely outside the area that's moving so it can stay.
+                [self.selection addSubSelection:sub];
+            }
+            continue;
+        }
+
+        // Adjust the start and end lines of the range. We will modify `range` to take the new value.
+        VT100GridAbsWindowedRange range = sub.absRange;
+        range.coordRange.start.y -= n;
+
+        if (range.coordRange.start.y < regionAbsRowRange.location) {
+            // Remove the part of the selection that would be above the scrolling region.
+            // That content got erased anyway.
+            range.coordRange.start.y = regionAbsRowRange.location;
+
+            // Adjust the starting X coordinate if needed.
+            switch (sub.selectionMode) {
+                case kiTermSelectionModeBox:
+                case kiTermSelectionModeLine:
+                case kiTermSelectionModeWholeLine:
+                    // Don't change start.x.
+                    break;
+                case kiTermSelectionModeWord:
+                case kiTermSelectionModeSmart:
+                case kiTermSelectionModeCharacter:
+                    // Move start of selection to start of next line.
+                    range.coordRange.start.x = MAX(range.columnWindow.location, region.origin.x);
+                    break;
+            }
+        }
+
+        // Move the end up. This is simpler because end.x won't change.
+        range.coordRange.end.y -= n;
+
+        if (range.coordRange.end.y < regionAbsRowRange.location) {
+            // The whole thing has scrolled off.
+            continue;
+        }
+
+        if (VT100GridAbsWindowedRangeLength(range, width) <= 0) {
+            // The range has collapsed to empty.
+            continue;
+        }
+
+        // Re-add the modified range.
+        sub.absRange = range;
+        [self.selection addSubSelection:sub];
+    }
+}
+
 - (BOOL)selectionIsBig {
     return [self selectionIsBig:self.selection];
 }

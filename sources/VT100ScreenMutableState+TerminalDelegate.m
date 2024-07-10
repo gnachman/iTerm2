@@ -842,18 +842,27 @@
 
 - (void)terminalScrollUp:(int)n {
     DLog(@"begin %@", @(n));
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        DLog(@"begin side-effect");
-        [delegate screenRemoveSelection];
-    }];
+    const VT100GridRect rect = [self.currentGrid scrollRegionRect];
 
+    BOOL anySent = NO;
     for (int i = 0;
          i < MIN(self.currentGrid.size.height, n);
          i++) {
+        BOOL sent = NO;
         [self incrementOverflowBy:[self.currentGrid scrollUpIntoLineBuffer:self.linebuffer
                                                        unlimitedScrollback:self.unlimitedScrollback
                                                    useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                 softBreak:NO]];
+                                                                 softBreak:NO
+                                                          sentToLineBuffer:&sent]];
+        if (sent) {
+            anySent = YES;
+        }
+    }
+    if (n > 0 && !anySent && self.currentGrid.haveScrollRegion) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            DLog(@"begin side-effect");
+            [delegate screenMoveSelectionUpBy:n inRegion:rect];
+        }];
     }
     [self clearTriggerLine];
 }

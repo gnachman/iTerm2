@@ -583,10 +583,23 @@ static _Atomic int gPerformingJoinedBlock;
     if (_currentBlockID) {
         [self.currentGrid setBlockID:_currentBlockID onLine:self.currentGrid.cursor.y];
     }
+    const BOOL haveScrollRegion = self.currentGrid.haveScrollRegion;
+    const BOOL shouldMoveSelectionIfUnsent = haveScrollRegion && self.currentGrid.cursor.y == VT100GridRangeMax(self.currentGrid.scrollRegionRows);
+    BOOL sent = NO;
     [self incrementOverflowBy:[self.currentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
                                                                          unlimitedScrollback:self.unlimitedScrollback
                                                                      useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                                  willScroll:nil]];
+                                                                                  willScroll:nil
+                                                                            sentToLineBuffer:&sent]];
+
+    if (!sent && shouldMoveSelectionIfUnsent) {
+        const VT100GridRect rect = [self.currentGrid scrollRegionRect];
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            DLog(@"begin side-effect");
+            [delegate screenMoveSelectionUpBy:1 inRegion:rect];
+        }];
+    }
+
     // BE CAREFUL! This condition must match the implementation of -screenDidReceiveLineFeedAtLineBufferGeneration.
     // See the more detailed note there.
     if (self.config.publishing || self.config.loggingEnabled) {
@@ -2157,7 +2170,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self incrementOverflowBy:[self.currentGrid scrollUpIntoLineBuffer:self.linebuffer
                                                        unlimitedScrollback:self.unlimitedScrollback
                                                    useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                 softBreak:YES]];
+                                                                 softBreak:YES
+                                                          sentToLineBuffer:nil]];
     }
     self.currentGrid.cursorX = self.currentGrid.leftMargin;
     self.currentGrid.cursorY++;

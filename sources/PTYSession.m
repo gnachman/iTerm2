@@ -12526,6 +12526,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_textview deselect];
 }
 
+- (void)screenMoveSelectionUpBy:(int)n
+                       inRegion:(VT100GridRect)region {
+    [_textview moveSelectionUpBy:n inRegion:region];
+}
+
 - (iTermSelection *)screenSelection {
     return _textview.selection;
 }

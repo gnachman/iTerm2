@@ -206,7 +206,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (int)moveCursorDownOneLineScrollingIntoLineBuffer:(LineBuffer *)lineBuffer
                                 unlimitedScrollback:(BOOL)unlimitedScrollback
                             useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
-                                         willScroll:(void (^)(void))willScroll;
+                                         willScroll:(void (^)(void))willScroll
+                                   sentToLineBuffer:(out BOOL *)sentToLineBuffer;
 
 - (void)mutateCellsInRect:(VT100GridRect)rect
                     block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, iTermExternalAttribute **, BOOL *))block;
@@ -241,7 +242,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (int)scrollUpIntoLineBuffer:(LineBuffer *)lineBuffer
           unlimitedScrollback:(BOOL)unlimitedScrollback
       useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
-                    softBreak:(BOOL)softBreak;
+                    softBreak:(BOOL)softBreak
+             sentToLineBuffer:(out BOOL *)sentToLineBuffer;
 
 // Scroll the whole screen into the line buffer by one line. Returns the number of lines dropped.
 // Scroll regions are ignored.

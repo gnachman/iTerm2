@@ -578,7 +578,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 - (int)scrollUpIntoLineBuffer:(LineBuffer *)lineBuffer
           unlimitedScrollback:(BOOL)unlimitedScrollback
       useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
-                    softBreak:(BOOL)softBreak {
+                    softBreak:(BOOL)softBreak
+             sentToLineBuffer:(out BOOL *)sentToLineBuffer {
     const int scrollTop = self.topMargin;
     const int scrollBottom = self.bottomMargin;
     const int scrollLeft = self.leftMargin;
@@ -590,6 +591,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 
     if (![self haveScrollRegion]) {
         // Scroll the whole screen. This is the fast path.
+        if (sentToLineBuffer) {
+            *sentToLineBuffer = YES;
+        }
         return [self scrollWholeScreenUpIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:unlimitedScrollback];
     } else {
@@ -598,8 +602,15 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         if (scrollTop == 0 && useScrollbackWithRegion && ![self haveColumnScrollRegion]) {
             // A line is being scrolled off the top of the screen so add it to
             // the scrollback buffer.
+            if (sentToLineBuffer) {
+                *sentToLineBuffer = YES;
+            }
             numLinesDropped = [self appendLineToLineBuffer:lineBuffer
                                        unlimitedScrollback:unlimitedScrollback];
+        } else {
+            if (sentToLineBuffer) {
+                *sentToLineBuffer = NO;
+            }
         }
         // TODO: formerly, scrollTop==scrollBottom was a no-op but I think that's wrong. See what other terms do.
         [self scrollRect:VT100GridRectMake(scrollLeft,
@@ -630,7 +641,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         numLinesDropped += [self scrollUpIntoLineBuffer:lineBuffer
                                     unlimitedScrollback:unlimitedScrollback
                                 useScrollbackWithRegion:NO
-                                              softBreak:NO];
+                                              softBreak:NO
+                                       sentToLineBuffer:nil];
     }
     self.cursor = VT100GridCoordMake(0, 0);
 
@@ -658,10 +670,13 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 - (int)moveCursorDownOneLineScrollingIntoLineBuffer:(LineBuffer *)lineBuffer
                                 unlimitedScrollback:(BOOL)unlimitedScrollback
                             useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
-                                         willScroll:(void (^)(void))willScroll {
+                                         willScroll:(void (^)(void))willScroll
+                                   sentToLineBuffer:(out BOOL *)sentToLineBuffer {
     // This doesn't call -bottomMargin because it was a hotspot in profiling.
     const int scrollBottom = VT100GridRangeMax(scrollRegionRows_);
-
+    if (sentToLineBuffer) {
+        *sentToLineBuffer = NO;
+    }
     if (cursor_.y != scrollBottom) {
         // Do not scroll the screen; just move the cursor.
         self.cursorY = cursor_.y + 1;
@@ -676,7 +691,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         return [self scrollUpIntoLineBuffer:lineBuffer
                         unlimitedScrollback:unlimitedScrollback
                     useScrollbackWithRegion:useScrollbackWithRegion
-                                  softBreak:YES];
+                                  softBreak:YES
+                           sentToLineBuffer:sentToLineBuffer];
     }
 }
 
@@ -1044,7 +1060,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                 numDropped += [self moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                                              unlimitedScrollback:unlimitedScrollback
                                                          useScrollbackWithRegion:useScrollbackWithRegion
-                                                                      willScroll:nil];
+                                                                      willScroll:nil
+                                                                sentToLineBuffer:nil];
 
 #ifdef VERBOSE_STRING
                 NSLog(@"Advance cursor to next line");
@@ -1243,7 +1260,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                 numDropped += [self moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                                              unlimitedScrollback:unlimitedScrollback
                                                          useScrollbackWithRegion:useScrollbackWithRegion
-                                                                      willScroll:nil];
+                                                                      willScroll:nil
+                                                                sentToLineBuffer:nil];
             } else {
                 self.cursorX = rightMargin - 1;
                 if (idx < len - 1) {
