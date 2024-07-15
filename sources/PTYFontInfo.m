@@ -31,6 +31,9 @@
                                             @"SFMono" ]] retain];
     });
     NSString *myName = self.fontName;
+    if ([myName hasPrefix:@"MenloNF"]) {
+        return NO;
+    }
     for (NSString *blacklistedNamePrefix in blacklist) {
         if ([myName hasPrefix:blacklistedNamePrefix]) {
             return YES;
