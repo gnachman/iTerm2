@@ -127,7 +127,7 @@ NSString *const kTagRestrictionOperator = @"tag:";
 }
 
 - (BOOL)matchesAnyWordInTagWords:(NSArray *)tagWords {
-    if (_operator == nil || [_nonTagOperators containsObject:_operator]) {
+    if (_operator != nil && [_nonTagOperators containsObject:_operator]) {
         return NO;
     }
     return [self matchesAnyWordInWords:tagWords];
