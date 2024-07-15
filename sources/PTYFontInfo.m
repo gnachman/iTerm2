@@ -22,7 +22,6 @@
         blacklist = [[NSSet setWithArray:@[ @"AndaleMono",
                                             @"Courier",
                                             @"LetterGothicStd",
-                                            @"Menlo",
                                             @"Monaco",
                                             @"OCRAStd",
                                             @"OratorStd",
@@ -42,6 +41,12 @@
     return NO;
 }
 
+// This function is obviously an embarrassment.
+// You might think you could look at the font's features (which you can get through
+// fontAttributes[NSFontFeatureSettingsAttribute] and thn looking for the
+// attribute with type kLigaturesType) but it often lies. For example, MenloNF
+// and FiraCode don't indicate ligature support there.
+// All we do here is mitigate the worst outcomes.
 - (NSInteger)it_ligatureLevel {
     if ([self.fontName hasPrefix:@"Iosevka"]) {
         return 2;
