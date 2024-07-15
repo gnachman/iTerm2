@@ -72,7 +72,7 @@ class BlockRenderer: NSObject, iTermMetalCellRendererProtocol {
     func draw(with frameData: iTermMetalFrameData,
               transientState: iTermMetalCellRendererTransientState) {
         let tState = transientState as! BlockRendererTransientState
-        guard !tState.isEmpty else {
+        guard !tState.isEmpty, let renderEncoder = frameData.renderEncoder else {
             return
         }
         var color = tState.color
@@ -86,7 +86,7 @@ class BlockRenderer: NSObject, iTermMetalCellRendererProtocol {
                                                       withBytes: UnsafeRawPointer($0),
                                                       checkIfChanged: true)
             renderer.draw(with: tState,
-                          renderEncoder: frameData.renderEncoder,
+                          renderEncoder: renderEncoder,
                           numberOfVertices: 6,
                           numberOfPIUs: tState.count,
                           vertexBuffers: [ NSNumber(value: iTermVertexInputIndexVertices.rawValue): tState.vertexBuffer,

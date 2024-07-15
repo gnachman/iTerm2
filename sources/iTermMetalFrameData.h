@@ -14,6 +14,8 @@
 #import <Metal/Metal.h>
 #import <simd/simd.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @protocol iTermMetalRenderer;
 @class NSColorSpace;
 
@@ -123,8 +125,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalFrameData : NSObject
 @property (atomic, readonly) iTermTexturePool *fullSizeTexturePool;
-@property (atomic, strong) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
-@property (atomic, strong) NSMutableArray<iTermMetalRowData *> *rows;
+@property (atomic, strong, nullable) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
+@property (atomic, strong, nullable) NSMutableArray<iTermMetalRowData *> *rows;
 @property (atomic) vector_uint2 viewportSize;
 @property (atomic) unsigned int legacyScrollbarWidth;
 @property (atomic) VT100GridSize gridSize;
@@ -135,27 +137,27 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic) BOOL hasBackgroundImage;
 @property (atomic) NSEdgeInsets extraMargins;
 @property (atomic) CGSize asciiOffset;
-@property (atomic, strong) NSString *status;
+@property (atomic, strong, nullable) NSString *status;
 @property (atomic, strong) id<MTLDevice> device;
 @property (atomic, strong, readonly) MTKView *view;
-@property (atomic, strong) NSColorSpace *colorSpace;
+@property (atomic, strong, nullable) NSColorSpace *colorSpace;
 @property (nonatomic, readonly) NSInteger frameNumber;
 #if ENABLE_STATS
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;
 @property (nonatomic, readonly) NSArray<iTermHistogram *> *statHistograms;
 #endif
-@property (nonatomic, strong) id<CAMetalDrawable> destinationDrawable;
-@property (nonatomic, strong) id<MTLTexture> destinationTexture;
-@property (nonatomic, strong) MTLRenderPassDescriptor *renderPassDescriptor;
-@property (nonatomic, strong) MTLRenderPassDescriptor *debugRealRenderPassDescriptor;
-@property (nonatomic, readonly) iTermMetalBufferPoolContext *framePoolContext;
-@property (nonatomic, strong) iTermMetalDebugInfo *debugInfo;
+@property (nonatomic, strong, nullable) id<CAMetalDrawable> destinationDrawable;
+@property (nonatomic, strong, nullable) id<MTLTexture> destinationTexture;
+@property (nonatomic, strong, nullable) MTLRenderPassDescriptor *renderPassDescriptor;
+@property (nonatomic, strong, nullable) MTLRenderPassDescriptor *debugRealRenderPassDescriptor;
+@property (nonatomic, readonly, nullable) iTermMetalBufferPoolContext *framePoolContext;
+@property (nonatomic, strong, nullable) iTermMetalDebugInfo *debugInfo;
 @property (nonatomic, readonly) iTermCellRenderConfiguration *cellConfiguration;
-@property (nonatomic, strong) id<MTLCommandBuffer> commandBuffer;
-@property (nonatomic, strong) id<MTLRenderCommandEncoder> renderEncoder;
-@property (nonatomic, strong) dispatch_group_t group;  // nonnil implies synchronous
+@property (nonatomic, strong, nullable) id<MTLCommandBuffer> commandBuffer;
+@property (nonatomic, strong, nullable) id<MTLRenderCommandEncoder> renderEncoder;
+@property (nonatomic, strong, nullable) dispatch_group_t group;  // nonnil implies synchronous
 @property (nonatomic) BOOL deferCurrentDrawable;
-@property (nonatomic, strong) MTLCaptureDescriptor *captureDescriptor NS_AVAILABLE_MAC(10_15);
+@property (nonatomic, strong, nullable) MTLCaptureDescriptor *captureDescriptor NS_AVAILABLE_MAC(10_15);
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 @property (nonatomic) BOOL textureIsFamiliar;
 #endif  // ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
@@ -169,12 +171,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) int numberOfRenderersDrawn;
 
 // When using subpixel AA, all draw stages prior to Text write to this descriptor.
-@property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
+@property (nonatomic, strong, nullable) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
 
 // When using subpixel AA, the intermediate rpd's texture is copied to the temporary rpd's texture
 // and then text is rendered to this rpd while sampling from the intermediate rpd's texture.
 // Eventually this gets copied to the drawable.
-@property (nonatomic, strong) MTLRenderPassDescriptor *temporaryRenderPassDescriptor;
+@property (nonatomic, strong, nullable) MTLRenderPassDescriptor *temporaryRenderPassDescriptor;
 
 - (instancetype)initWithView:(MTKView *)view
          fullSizeTexturePool:(iTermTexturePool *)fullSizeTexturePool NS_DESIGNATED_INITIALIZER;
@@ -192,7 +194,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                            histograms:(NSArray<iTermHistogram *> *)aggregateHistograms
                                 owner:(NSString *)owner;
 
-- (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer;
+- (__kindof iTermMetalRendererTransientState * _Nullable)transientStateForRenderer:(NSObject *)renderer;
 - (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer;
 - (MTLRenderPassDescriptor *)newRenderPassDescriptorWithLabel:(NSString *)label
                                                          fast:(BOOL)fast;
@@ -203,3 +205,4 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
+NS_ASSUME_NONNULL_END

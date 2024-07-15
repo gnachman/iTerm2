@@ -212,8 +212,9 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
     }
 
     func draw(with frameData: iTermMetalFrameData, transientState: iTermMetalCellRendererTransientState) {
-        let tState = transientState as! RectangleRendererTransientState
-        guard !tState.isEmpty else {
+        guard let tState = transientState as? RectangleRendererTransientState,
+              !tState.isEmpty,
+              let renderEncoder = frameData.renderEncoder else {
             return
         }
         for rect in tState.rectangles {
@@ -235,7 +236,7 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
                                                           withBytes: UnsafeRawPointer($0),
                                                           checkIfChanged: true)
                 renderer.draw(with: tState,
-                              renderEncoder: frameData.renderEncoder,
+                              renderEncoder: renderEncoder,
                               numberOfVertices: numVertices,
                               numberOfPIUs: 0,
                               vertexBuffers: [ NSNumber(value: iTermVertexInputIndexVertices.rawValue): vertexBuffer,
