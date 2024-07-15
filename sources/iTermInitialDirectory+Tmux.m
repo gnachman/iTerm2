@@ -75,6 +75,7 @@
     // Custom
     [self evaluateWithOldPWD:nil
                        scope:scope
+               substitutions:nil
                   completion:
      ^(NSString *result) {
          NSString *escaped = [result stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];

@@ -8,6 +8,7 @@
 
 #import "iTermInitialDirectory.h"
 
+#import "NSStringITerm.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermProfilePreferences.h"
 
@@ -77,6 +78,7 @@
 
 - (void)evaluateWithOldPWD:(NSString *)oldPWD
                      scope:(iTermVariableScope *)scope
+             substitutions:(NSDictionary<NSString *, NSString *> *)substitutions
                 completion:(void (^)(NSString *))completion {
     if (_evaluated) {
         completion(_evaluated);
@@ -97,7 +99,9 @@
         return;
     }
 
-    iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:self.customDirectoryFormat
+    NSString *modified = [self.customDirectoryFormat stringByPerformingSubstitutions:substitutions];
+
+    iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:modified
                                                                                                  scope:scope];
     [evaluator evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
         self->_evaluated = evaluator.value;

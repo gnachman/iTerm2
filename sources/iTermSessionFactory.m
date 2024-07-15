@@ -39,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL ssh;
 @property (nullable, nonatomic, readonly) NSString *name;
 @property (nullable, nonatomic, readonly) NSString *workingDirectory;
+@property (nullable, nonatomic, readonly) NSString *customWorkingDirectory;
 @end
 
 @implementation iTermSessionAttachOrLaunchRequest
@@ -93,7 +94,9 @@ NS_ASSUME_NONNULL_BEGIN
     }
     request.customShell = customShell ?: [ITAddressBookMgr customShellForProfile:request.profileForComputingCommand];
     request->_name = [request.profile[KEY_NAME] copy];
-
+    if ([request.profile[KEY_CUSTOM_DIRECTORY] isEqualToString:@"Yes"]) {
+        request->_customWorkingDirectory = [request.profile[KEY_WORKING_DIRECTORY] copy];
+    }
     return request;
 }
 
@@ -180,6 +183,7 @@ NS_ASSUME_NONNULL_BEGIN
     DLog(@"  evaluating with old pwd %@", self.oldCWD);
     [initialDirectory evaluateWithOldPWD:self.oldCWD
                                    scope:self.session.variablesScope
+                           substitutions:self.substitutions
                               completion:^(NSString *pwd) {
         DLog(@"  evaluation finished with result %@", pwd);
         [self.session it_setAssociatedObject:nil forKey:key];
@@ -251,8 +255,11 @@ NS_ASSUME_NONNULL_BEGIN
     baseSubstitutions = [baseSubstitutions dictionaryByMergingDictionary:@{ @"$$$$": @"$$" }];
     NSSet *cmdVars = [self.computedCommand doubleDollarVariables];
     NSSet *nameVars = [self.name doubleDollarVariables];
+    NSSet *pwdVars = [self.customWorkingDirectory doubleDollarVariables];
+
     NSMutableSet *allVars = [cmdVars mutableCopy];
     [allVars unionSet:nameVars];
+    [allVars unionSet:pwdVars];
     NSMutableDictionary *allSubstitutions = [baseSubstitutions mutableCopy];
     for (NSString *var in allVars) {
         if (!baseSubstitutions[var]) {
