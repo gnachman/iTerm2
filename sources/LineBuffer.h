@@ -92,6 +92,11 @@ NS_ASSUME_NONNULL_BEGIN
                                    paddedTo:(int)paddedSize
                              eligibleForDWC:(BOOL)eligibleForDWC;
 
+- (ScreenCharArray * _Nullable)maybeScreenCharArrayForLine:(int)line
+                                                     width:(int)width
+                                                  paddedTo:(int)paddedSize
+                                            eligibleForDWC:(BOOL)eligibleForDWC;
+
 - (ScreenCharArray * _Nonnull)rawLineAtWrappedLine:(int)lineNum width:(int)width;
 
 // This is the fast way to get a bunch of lines at once.
