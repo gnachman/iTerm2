@@ -56,12 +56,12 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.flags = textInfo->flags;
     out.predecessorWasUnderlined = (iid > 0 &&
                                     perInstanceUniforms[iid - 1].offset.y == perInstanceUniforms[iid].offset.y &&
-                                    perInstanceUniforms[iid - 1].offset.x >= perInstanceUniforms[iid].offset.x - textInfo->glyphWidth &&
+                                    perInstanceUniforms[iid - 1].offset.x >= perInstanceUniforms[iid].offset.x - textInfo->cellWidth &&
                                     perInstanceUniforms[iid - 1].offset.x <= perInstanceUniforms[iid].offset.x &&
                                     (perInstanceUniforms[iid - 1].underlineStyle == perInstanceUniforms[iid].underlineStyle));
     out.successorWillBeUnderlined = (iid + 1 < textInfo->numInstances &&
                                      perInstanceUniforms[iid].offset.y == perInstanceUniforms[iid + 1].offset.y &&
-                                     perInstanceUniforms[iid].offset.x >= perInstanceUniforms[iid + 1].offset.x - textInfo->glyphWidth &&
+                                     perInstanceUniforms[iid].offset.x >= perInstanceUniforms[iid + 1].offset.x - textInfo->cellWidth &&
                                      perInstanceUniforms[iid].offset.x <= perInstanceUniforms[iid + 1].offset.x &&
                                      (perInstanceUniforms[iid].underlineStyle == perInstanceUniforms[iid + 1].underlineStyle));
     return out;

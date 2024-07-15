@@ -403,6 +403,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
         textInfo.flags |= iTermTextVertexInfoFlagsSolidUnderlines;
     }
     textInfo.glyphWidth = tState.cellConfiguration.glyphSize.width;
+    textInfo.cellWidth = tState.cellConfiguration.cellSize.width;
     textInfo.numInstances = numInstances;
     textInfo.verticalOffset = tState.verticalOffset;
     id<MTLBuffer> buffer = [self->_textInfoPool requestBufferFromContext:tState.poolContext
