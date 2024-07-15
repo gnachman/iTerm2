@@ -214,7 +214,7 @@ private class ComplexCharRegistryImpl: NSObject {
             return code
         }
         guard let string = complexCharMap[NSNumber(value: code)] else {
-            fatalError("No string for code \(code)")
+            iTermFatalError("No string for code \(code)")
         }
         if string.length >= kMaxParts {
             DLog("<<\(string)>> with code \(code) reached max length \(kMaxParts)")
