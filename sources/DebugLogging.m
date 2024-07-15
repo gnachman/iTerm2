@@ -192,6 +192,11 @@ void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
     [GetDebugLogLock() unlock];
 }
 
+void iTermFatalError(NSString *s) {
+    __assert_rtn("iTermFatalError", __FILE__, __LINE__, s.UTF8String);
+}
+
+
 int CDebugLogImpl(const char *file, int line, const char *function, const char *format, ...) {
     va_list args;
     va_start(args, format);
