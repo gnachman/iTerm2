@@ -44,7 +44,7 @@
 @property (nonatomic, readwrite) BOOL reduceFlicker;
 @property (nonatomic, readwrite) int maxScrollbackLines;
 @property (nonatomic, readwrite) BOOL loggingEnabled;
-@property (nonatomic, copy, readwrite) NSDictionary<NSNumber *, id> *stringForKeypress;
+@property (nonatomic, copy, readwrite) NSDictionary<NSString *, id> *terminfoValues;
 @property (nonatomic, readwrite) BOOL alertOnNextMark;
 @property (nonatomic, readwrite) double dimmingAmount;
 @property (nonatomic, readwrite) BOOL publishing;
@@ -98,7 +98,7 @@
 @synthesize useLineStyleMarks = _useLineStyleMarks;
 
 @synthesize isDirty = _isDirty;
-@synthesize stringForKeypress = _stringForKeypress;
+@synthesize terminfoValues = _terminfoValues;
 
 - (instancetype)initFrom:(VT100ScreenConfiguration *)other {
     self = [super init];
@@ -136,7 +136,7 @@
         _reduceFlicker = other.reduceFlicker;
         _maxScrollbackLines = other.maxScrollbackLines;
         _loggingEnabled = other.loggingEnabled;
-        _stringForKeypress = other.stringForKeypress;
+        _terminfoValues = other.terminfoValues;
         _alertOnNextMark = other.alertOnNextMark;
         _dimmingAmount = other.dimmingAmount;
         _publishing = other.publishing;
@@ -192,7 +192,7 @@
                             @"reduceFlicker": @(_reduceFlicker),
                             @"maxScrollbackLines": @(_maxScrollbackLines),
                             @"loggingEnabled": @(_loggingEnabled),
-                            @"stringForKeypress": _stringForKeypress ?: @"",
+                            @"terminfoValues": _terminfoValues ?: @"",
                             @"alertOnNextMark": @(_alertOnNextMark),
                             @"dimmingAmount": @(_dimmingAmount),
                             @"publishing": @(_publishing),
@@ -251,7 +251,7 @@
 @dynamic reduceFlicker;
 @dynamic maxScrollbackLines;
 @dynamic loggingEnabled;
-@dynamic stringForKeypress;
+@dynamic terminfoValues;
 @dynamic alertOnNextMark;
 @dynamic dimmingAmount;
 @dynamic publishing;

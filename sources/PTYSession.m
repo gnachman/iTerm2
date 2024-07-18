@@ -13948,10 +13948,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _config.loggingEnabled = loggingEnabled;
         dirty = YES;
     }
-    NSDictionary *stringForKeypressConfig = [self stringForKeypressConfig];
-    if (![_config.stringForKeypressConfig isEqual:stringForKeypressConfig]) {
-        _config.stringForKeypressConfig = stringForKeypressConfig;
-        _config.stringForKeypress = [self stringForKeypress];
+    NSDictionary *terminalValuesDigest = [self terminalValuesDigest];
+    if (![_config.terminalValuesDigest isEqual:terminalValuesDigest]) {
+        _config.terminalValuesDigest = terminalValuesDigest;
+        _config.terminfoValues = [self stringForKeypress];
         dirty = YES;
     }
     const BOOL compoundAlertOnNextMark = [self shouldAlert];
@@ -14063,7 +14063,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 // As long as this is constant, stringForKeypress will return the same value.
-- (NSDictionary *)stringForKeypressConfig {
+- (NSDictionary *)terminalValuesDigest {
     return _textview.keyboardHandler.dictionaryValue ?: @{};
 }
 
@@ -14082,41 +14082,41 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return [NSString stringWithLongCharacter:c];
     };
     return @{
-        @(kDcsTermcapTerminfoRequestKey_kb):  stringForKeypress(kVK_Delete, 0, @"\x7f", @"\x7f"),
-        @(kDcsTermcapTerminfoRequestKey_kD):  stringForKeypress(kVK_ForwardDelete, NSEventModifierFlagFunction, c(NSDeleteFunctionKey), c(NSDeleteFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_kd):  stringForKeypress(kVK_DownArrow, NSEventModifierFlagFunction, c(NSDownArrowFunctionKey), c(NSDownArrowFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_at_7):  stringForKeypress(kVK_End, NSEventModifierFlagFunction, c(NSEndFunctionKey), c(NSEndFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_at_8):  stringForKeypress(kVK_Return, NSEventModifierFlagFunction, @"\r", @"\r"),
-        @(kDcsTermcapTerminfoRequestKey_k1):  stringForKeypress(kVK_F1, NSEventModifierFlagFunction, c(NSF1FunctionKey), c(NSF1FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_k2):  stringForKeypress(kVK_F2, NSEventModifierFlagFunction, c(NSF2FunctionKey), c(NSF2FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_k3):  stringForKeypress(kVK_F3, NSEventModifierFlagFunction, c(NSF3FunctionKey), c(NSF3FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_k4):  stringForKeypress(kVK_F4, NSEventModifierFlagFunction, c(NSF4FunctionKey), c(NSF4FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_k5):  stringForKeypress(kVK_F5, NSEventModifierFlagFunction, c(NSF5FunctionKey), c(NSF5FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_k6):  stringForKeypress(kVK_F6, NSEventModifierFlagFunction, c(NSF6FunctionKey), c(NSF6FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_k7):  stringForKeypress(kVK_F7, NSEventModifierFlagFunction, c(NSF7FunctionKey), c(NSF7FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_k8):  stringForKeypress(kVK_F8, NSEventModifierFlagFunction, c(NSF8FunctionKey), c(NSF8FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_k9):  stringForKeypress(kVK_F9, NSEventModifierFlagFunction, c(NSF9FunctionKey), c(NSF9FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_k_semi):  stringForKeypress(kVK_F10, NSEventModifierFlagFunction, c(NSF10FunctionKey), c(NSF10FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_F1):  stringForKeypress(kVK_F11, NSEventModifierFlagFunction, c(NSF11FunctionKey), c(NSF11FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_F2):  stringForKeypress(kVK_F12, NSEventModifierFlagFunction, c(NSF12FunctionKey), c(NSF12FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_F3):  stringForKeypress(kVK_F13, NSEventModifierFlagFunction, c(NSF13FunctionKey), c(NSF13FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_F4):  stringForKeypress(kVK_F14, NSEventModifierFlagFunction, c(NSF14FunctionKey), c(NSF14FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_F5):  stringForKeypress(kVK_F15, NSEventModifierFlagFunction, c(NSF15FunctionKey), c(NSF15FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_F6):  stringForKeypress(kVK_F16, NSEventModifierFlagFunction, c(NSF16FunctionKey), c(NSF16FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_F7):  stringForKeypress(kVK_F17, NSEventModifierFlagFunction, c(NSF17FunctionKey), c(NSF17FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_F8):  stringForKeypress(kVK_F18, NSEventModifierFlagFunction, c(NSF18FunctionKey), c(NSF18FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_F9):  stringForKeypress(kVK_F19, NSEventModifierFlagFunction, c(NSF19FunctionKey), c(NSF19FunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_kh):  stringForKeypress(kVK_Home, NSEventModifierFlagFunction, c(NSHomeFunctionKey), c(NSHomeFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_kl):  stringForKeypress(kVK_LeftArrow, NSEventModifierFlagFunction, c(NSLeftArrowFunctionKey), c(NSLeftArrowFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_kN):  stringForKeypress(kVK_PageDown, NSEventModifierFlagFunction, c(NSPageDownFunctionKey), c(NSPageDownFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_kP):  stringForKeypress(kVK_PageUp, NSEventModifierFlagFunction, c(NSPageUpFunctionKey), c(NSPageUpFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_kr):  stringForKeypress(kVK_RightArrow, NSEventModifierFlagFunction, c(NSRightArrowFunctionKey), c(NSRightArrowFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_star_4):  stringForKeypress(kVK_ForwardDelete,NSEventModifierFlagFunction |  NSEventModifierFlagShift, c(NSDeleteFunctionKey), c(NSDeleteFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_star_7):  stringForKeypress(kVK_End, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSEndFunctionKey), c(NSEndFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_pound_2):  stringForKeypress(kVK_Home, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSHomeFunctionKey), c(NSHomeFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_pound_4):  stringForKeypress(kVK_LeftArrow, NSEventModifierFlagFunction | NSEventModifierFlagNumericPad | NSEventModifierFlagShift, c(NSLeftArrowFunctionKey), c(NSLeftArrowFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_pct_i):  stringForKeypress(kVK_RightArrow, NSEventModifierFlagFunction | NSEventModifierFlagNumericPad | NSEventModifierFlagShift, c(NSRightArrowFunctionKey), c(NSRightArrowFunctionKey)),
-        @(kDcsTermcapTerminfoRequestKey_ku):  stringForKeypress(kVK_UpArrow, NSEventModifierFlagFunction, c(NSUpArrowFunctionKey), c(NSUpArrowFunctionKey)),
+        @"kb": stringForKeypress(kVK_Delete, 0, @"\x7f", @"\x7f"),
+        @"kD": stringForKeypress(kVK_ForwardDelete, NSEventModifierFlagFunction, c(NSDeleteFunctionKey), c(NSDeleteFunctionKey)),
+        @"kd": stringForKeypress(kVK_DownArrow, NSEventModifierFlagFunction, c(NSDownArrowFunctionKey), c(NSDownArrowFunctionKey)),
+        @"@7": stringForKeypress(kVK_End, NSEventModifierFlagFunction, c(NSEndFunctionKey), c(NSEndFunctionKey)),
+        @"@8": stringForKeypress(kVK_Return, NSEventModifierFlagFunction, @"\r", @"\r"),
+        @"k1": stringForKeypress(kVK_F1, NSEventModifierFlagFunction, c(NSF1FunctionKey), c(NSF1FunctionKey)),
+        @"k2": stringForKeypress(kVK_F2, NSEventModifierFlagFunction, c(NSF2FunctionKey), c(NSF2FunctionKey)),
+        @"k3": stringForKeypress(kVK_F3, NSEventModifierFlagFunction, c(NSF3FunctionKey), c(NSF3FunctionKey)),
+        @"k4": stringForKeypress(kVK_F4, NSEventModifierFlagFunction, c(NSF4FunctionKey), c(NSF4FunctionKey)),
+        @"k5": stringForKeypress(kVK_F5, NSEventModifierFlagFunction, c(NSF5FunctionKey), c(NSF5FunctionKey)),
+        @"k6": stringForKeypress(kVK_F6, NSEventModifierFlagFunction, c(NSF6FunctionKey), c(NSF6FunctionKey)),
+        @"k7": stringForKeypress(kVK_F7, NSEventModifierFlagFunction, c(NSF7FunctionKey), c(NSF7FunctionKey)),
+        @"k8": stringForKeypress(kVK_F8, NSEventModifierFlagFunction, c(NSF8FunctionKey), c(NSF8FunctionKey)),
+        @"k9": stringForKeypress(kVK_F9, NSEventModifierFlagFunction, c(NSF9FunctionKey), c(NSF9FunctionKey)),
+        @"k;": stringForKeypress(kVK_F10, NSEventModifierFlagFunction, c(NSF10FunctionKey), c(NSF10FunctionKey)),
+        @"F1": stringForKeypress(kVK_F11, NSEventModifierFlagFunction, c(NSF11FunctionKey), c(NSF11FunctionKey)),
+        @"F2": stringForKeypress(kVK_F12, NSEventModifierFlagFunction, c(NSF12FunctionKey), c(NSF12FunctionKey)),
+        @"F3": stringForKeypress(kVK_F13, NSEventModifierFlagFunction, c(NSF13FunctionKey), c(NSF13FunctionKey)),
+        @"F4": stringForKeypress(kVK_F14, NSEventModifierFlagFunction, c(NSF14FunctionKey), c(NSF14FunctionKey)),
+        @"F5": stringForKeypress(kVK_F15, NSEventModifierFlagFunction, c(NSF15FunctionKey), c(NSF15FunctionKey)),
+        @"F6": stringForKeypress(kVK_F16, NSEventModifierFlagFunction, c(NSF16FunctionKey), c(NSF16FunctionKey)),
+        @"F7": stringForKeypress(kVK_F17, NSEventModifierFlagFunction, c(NSF17FunctionKey), c(NSF17FunctionKey)),
+        @"F8": stringForKeypress(kVK_F18, NSEventModifierFlagFunction, c(NSF18FunctionKey), c(NSF18FunctionKey)),
+        @"F9": stringForKeypress(kVK_F19, NSEventModifierFlagFunction, c(NSF19FunctionKey), c(NSF19FunctionKey)),
+        @"kh": stringForKeypress(kVK_Home, NSEventModifierFlagFunction, c(NSHomeFunctionKey), c(NSHomeFunctionKey)),
+        @"kl": stringForKeypress(kVK_LeftArrow, NSEventModifierFlagFunction, c(NSLeftArrowFunctionKey), c(NSLeftArrowFunctionKey)),
+        @"kN": stringForKeypress(kVK_PageDown, NSEventModifierFlagFunction, c(NSPageDownFunctionKey), c(NSPageDownFunctionKey)),
+        @"kP": stringForKeypress(kVK_PageUp, NSEventModifierFlagFunction, c(NSPageUpFunctionKey), c(NSPageUpFunctionKey)),
+        @"kr": stringForKeypress(kVK_RightArrow, NSEventModifierFlagFunction, c(NSRightArrowFunctionKey), c(NSRightArrowFunctionKey)),
+        @"*4": stringForKeypress(kVK_ForwardDelete, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSDeleteFunctionKey), c(NSDeleteFunctionKey)),
+        @"*7": stringForKeypress(kVK_End, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSEndFunctionKey), c(NSEndFunctionKey)),
+        @"#2": stringForKeypress(kVK_Home, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSHomeFunctionKey), c(NSHomeFunctionKey)),
+        @"#4": stringForKeypress(kVK_LeftArrow, NSEventModifierFlagFunction | NSEventModifierFlagNumericPad | NSEventModifierFlagShift, c(NSLeftArrowFunctionKey), c(NSLeftArrowFunctionKey)),
+        @"%i": stringForKeypress(kVK_RightArrow, NSEventModifierFlagFunction | NSEventModifierFlagNumericPad | NSEventModifierFlagShift, c(NSRightArrowFunctionKey), c(NSRightArrowFunctionKey)),
+        @"ku": stringForKeypress(kVK_UpArrow, NSEventModifierFlagFunction, c(NSUpArrowFunctionKey), c(NSUpArrowFunctionKey))
     };
 }
 

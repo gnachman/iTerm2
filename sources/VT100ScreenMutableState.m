@@ -404,7 +404,7 @@ static _Atomic int gPerformingJoinedBlock;
     if (config.useLineStyleMarks) {
         [self movePromptUnderComposerIfNeeded];
     }
-    _terminal.stringForKeypress = config.stringForKeypress;
+    _terminal.terminfoValues = config.terminfoValues;
     _alertOnNextMark = config.alertOnNextMark;
 
     _autoComposerEnabled = config.autoComposerEnabled;

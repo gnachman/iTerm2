@@ -4,8 +4,7 @@
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 #import "iTermAdvancedSettingsModel.h"
-
-#include <term.h>
+#import "iTermTerminfo.h"
 
 #define MEDIAN(min_, mid_, max_) MAX(MIN(mid_, max_), min_)
 
@@ -155,34 +154,69 @@ typedef enum {
     _standard = [[VT100Output standardTerminals] containsObject:term];
     _termType = [term copy];
     int r = 0;
-    setupterm((char *)[_termType UTF8String], fileno(stdout), &r);
-    const BOOL termTypeIsValid = (r == 1);
 
-    DLog(@"setTermTypeIsValid:%@ cur_term=%p", @(termTypeIsValid), cur_term);
-    if (termTypeIsValid && cur_term) {
-        char *key_names[] = {
-            key_left, key_right, key_up, key_down,
-            key_home, key_end, key_npage, key_ppage,
-            key_f0, key_f1, key_f2, key_f3, key_f4,
-            key_f5, key_f6, key_f7, key_f8, key_f9,
-            key_f10, key_f11, key_f12, key_f13, key_f14,
-            key_f15, key_f16, key_f17, key_f18, key_f19,
-            key_f20, key_f21, key_f22, key_f23, key_f24,
-            key_f25, key_f26, key_f27, key_f28, key_f29,
-            key_f30, key_f31, key_f32, key_f33, key_f34,
-            key_f35,
-            key_backspace, key_btab,
-            tab,
-            key_dc, key_ic,
-            key_help,
+    iTermTerminfo *ti = [iTermTerminfo forTerm:term];
+    if (ti.isValid) {
+        iTermTerminfoString stringKeys[] = {
+            iTermTerminfoString_key_left,
+            iTermTerminfoString_key_right,
+            iTermTerminfoString_key_up,
+            iTermTerminfoString_key_down,
+            iTermTerminfoString_key_home,
+            iTermTerminfoString_key_end,
+            iTermTerminfoString_key_npage,
+            iTermTerminfoString_key_ppage,
+            iTermTerminfoString_key_f0,
+            iTermTerminfoString_key_f1,
+            iTermTerminfoString_key_f2,
+            iTermTerminfoString_key_f3,
+            iTermTerminfoString_key_f4,
+            iTermTerminfoString_key_f5,
+            iTermTerminfoString_key_f6,
+            iTermTerminfoString_key_f7,
+            iTermTerminfoString_key_f8,
+            iTermTerminfoString_key_f9,
+            iTermTerminfoString_key_f10,
+            iTermTerminfoString_key_f11,
+            iTermTerminfoString_key_f12,
+            iTermTerminfoString_key_f13,
+            iTermTerminfoString_key_f14,
+            iTermTerminfoString_key_f15,
+            iTermTerminfoString_key_f16,
+            iTermTerminfoString_key_f17,
+            iTermTerminfoString_key_f18,
+            iTermTerminfoString_key_f19,
+            iTermTerminfoString_key_f20,
+            iTermTerminfoString_key_f21,
+            iTermTerminfoString_key_f22,
+            iTermTerminfoString_key_f23,
+            iTermTerminfoString_key_f24,
+            iTermTerminfoString_key_f25,
+            iTermTerminfoString_key_f26,
+            iTermTerminfoString_key_f27,
+            iTermTerminfoString_key_f28,
+            iTermTerminfoString_key_f29,
+            iTermTerminfoString_key_f30,
+            iTermTerminfoString_key_f31,
+            iTermTerminfoString_key_f32,
+            iTermTerminfoString_key_f33,
+            iTermTerminfoString_key_f34,
+            iTermTerminfoString_key_f35,
+            iTermTerminfoString_key_backspace,
+            iTermTerminfoString_key_btab,
+            iTermTerminfoString_tab,
+            iTermTerminfoString_key_dc,
+            iTermTerminfoString_key_ic,
+            iTermTerminfoString_key_help
         };
 
         for (int i = 0; i < TERMINFO_KEYS; i ++) {
             if (_keyStrings[i]) {
                 free(_keyStrings[i]);
             }
-            _keyStrings[i] = key_names[i] ? strdup(key_names[i]) : NULL;
-            DLog(@"Set key string %d (%s) to %s", i, key_names[i], _keyStrings[i]);
+            NSString *s = [ti stringForKey:stringKeys[i]];
+            _keyStrings[i] = s ? strdup(s.UTF8String) : NULL;
+            DLog(@"Set key string %@ to %@", @(stringKeys[i]), s);
         }
     } else {
         for (int i = 0; i < TERMINFO_KEYS; i ++) {

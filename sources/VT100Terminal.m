@@ -7,6 +7,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermParser.h"
 #import "iTermPromise.h"
+#import "iTermTerminfo.h"
 #import "iTermURLStore.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -3207,7 +3208,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 }
 
 - (void)executeRequestTermcapTerminfo:(VT100Token *)token {
-    iTermPromise<NSString *> *(^key)(unsigned short, NSEventModifierFlags, NSString *, NSString *) =
+    iTermTerminfo *ti = [iTermTerminfo forTerm:_tmuxMode ? @"screen-256color" : @"xterm-256color"];
+
+    iTermPromise<NSString *> *(^keyPromise)(unsigned short, NSEventModifierFlags, NSString *, NSString *) =
     ^iTermPromise<NSString *> *(unsigned short keyCode,
                                 NSEventModifierFlags flags,
                                 NSString *characters,
@@ -3229,227 +3232,253 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         return [NSString stringWithLongCharacter:c];
     };
     static NSString *const kFormat = @"%@=%@";
-    __block BOOL ok = NO;
+    NSArray<NSString *> *keys = [[token.string componentsSeparatedByString:@";"] mapWithBlock:^id _Nullable(NSString * _Nonnull hex) {
+        NSString *decoded = [NSString stringWithHexEncodedString:hex];
+        return decoded ?: @"";
+    }];
+    BOOL (^add)(NSString *,
+                NSMutableArray<iTermPromise<NSString *> *> *,
+                unsigned short,
+                NSEventModifierFlags,
+                NSString *,
+                NSString *) =
+    ^BOOL(NSString *hexEncodedKey,
+          NSMutableArray<iTermPromise<NSString *> *> *parts,
+          unsigned short keyCode,
+          NSEventModifierFlags flags,
+          NSString *characters,
+          NSString *charactersIgnoringModifiers) {
+        // First get the value. This is legit async.
+        iTermPromise<NSString *> *keyStringPromise = keyPromise(keyCode, flags, characters, charactersIgnoringModifiers);
+
+        // Once the value is computed, format it into key=value.
+        iTermPromise<NSString *> *promise =
+        [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+            [[keyStringPromise then:^(NSString * _Nonnull value) {
+                NSString *kvp = [NSString stringWithFormat:kFormat, hexEncodedKey, value];
+                [seal fulfill:kvp];
+            }] catchError:^(NSError * _Nonnull error) {
+                [seal rejectWithDefaultError];
+            }];
+        }];
+        DLog(@"Add %@", promise.maybeValue);
+        [parts addObject:promise];
+        return YES;
+    };
     NSMutableArray<iTermPromise<NSString *> *> *parts = [NSMutableArray array];
-    NSDictionary *inverseMap = [VT100DCSParser termcapTerminfoInverseNameDictionary];
-    for (int i = 0; i < token.csi->count; i++) {
-        NSString *cached = self.stringForKeypress[@(token.csi->p[i])];
+    __block BOOL ok = NO;
+
+    NSDictionary<id, BOOL (^)(NSString *, NSMutableArray<iTermPromise<NSString *> *> *)> *handlers = @{
+        @"name": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                         hexEncodedKey,
+                                                         [self->_termType hexEncodedString]]]];
+            return YES;
+        },
+        @"TN": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                         hexEncodedKey,
+                                                         [self->_termType hexEncodedString]]]];
+            return YES;
+        },
+        @"iTerm2Profile": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                         hexEncodedKey,
+                                                         [[self->_delegate terminalProfileName] hexEncodedString]]]];
+            return YES;
+        },
+        [NSNull null]: ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return NO;
+        },
+        @"Co": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                         hexEncodedKey,
+                                                         [@"256" hexEncodedString]]]];
+            return YES;
+        },
+        @"colors": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                         hexEncodedKey,
+                                                         [@"256" hexEncodedString]]]];
+            return YES;
+        },
+        @"RGB": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                         hexEncodedKey,
+                                                         [@"8" hexEncodedString]]]];
+            return YES;
+        },
+        // key_backspace               kbs       kb     backspace key
+        @"kb": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_Delete, 0, @"\x7f", @"\x7f");
+        },
+        // key_dc                      kdch1     kD     delete-character key
+        @"kD": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_ForwardDelete, NSEventModifierFlagFunction, c(NSDeleteFunctionKey), c(NSDeleteFunctionKey));
+        },
+        // key_down                    kcud1     kd     down-arrow key
+        @"kd": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_DownArrow, NSEventModifierFlagFunction, c(NSDownArrowFunctionKey), c(NSDownArrowFunctionKey));
+        },
+        // key_end                     kend      @7     end key
+        @"@7": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_End, NSEventModifierFlagFunction, c(NSEndFunctionKey), c(NSEndFunctionKey));
+        },
+        // key_enter                   kent      @8     enter/send key
+        @"@8": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_Return, NSEventModifierFlagFunction, @"\r", @"\r");
+        },
+        // key_f1                      kf1       k1     F1 function key
+        @"k1": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F1, NSEventModifierFlagFunction, c(NSF1FunctionKey), c(NSF1FunctionKey));
+        },
+        // key_f2                      kf2       k2     F2 function key
+        @"k2": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F2, NSEventModifierFlagFunction, c(NSF2FunctionKey), c(NSF2FunctionKey));
+        },
+        // key_f3                      kf3       k3     F3 function key
+        @"k3": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F3, NSEventModifierFlagFunction, c(NSF3FunctionKey), c(NSF3FunctionKey));
+        },
+        // key_f4                      kf4       k4     F4 function key
+        @"k4": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F4, NSEventModifierFlagFunction, c(NSF4FunctionKey), c(NSF4FunctionKey));
+        },
+        // key_f5                      kf5       k5     F5 function key
+        @"k5": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F5, NSEventModifierFlagFunction, c(NSF5FunctionKey), c(NSF5FunctionKey));
+        },
+        // key_f6                      kf6       k6     F6 function key
+        @"k6": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F6, NSEventModifierFlagFunction, c(NSF6FunctionKey), c(NSF6FunctionKey));
+        },
+        // key_f7                      kf7       k7     F7 function key
+        @"k7": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F7, NSEventModifierFlagFunction, c(NSF7FunctionKey), c(NSF7FunctionKey));
+        },
+        // key_f8                      kf8       k8     F8 function key
+        @"k8": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F8, NSEventModifierFlagFunction, c(NSF8FunctionKey), c(NSF8FunctionKey));
+        },
+        // key_f9                      kf9       k9     F9 function key
+        @"k9": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F9, NSEventModifierFlagFunction, c(NSF9FunctionKey), c(NSF9FunctionKey));
+        },
+        // key_f10                     kf10      k;     F10 function key
+        @"k;": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F10, NSEventModifierFlagFunction, c(NSF10FunctionKey), c(NSF10FunctionKey));
+        },
+        // key_f11                     kf11      F1     F11 function key
+        @"F1": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F11, NSEventModifierFlagFunction, c(NSF11FunctionKey), c(NSF11FunctionKey));
+        },
+        // key_f12                     kf12      F2     F12 function key
+        @"F2": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F12, NSEventModifierFlagFunction, c(NSF12FunctionKey), c(NSF12FunctionKey));
+        },
+        // key_f13                     kf13      F3     F13 function key
+        @"F3": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F13, NSEventModifierFlagFunction, c(NSF13FunctionKey), c(NSF13FunctionKey));
+        },
+        // key_f14                     kf14      F4     F14 function key
+        @"F4": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F14, NSEventModifierFlagFunction, c(NSF14FunctionKey), c(NSF14FunctionKey));
+        },
+        // key_f15                     kf15      F5     F15 function key
+        @"F5": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F15, NSEventModifierFlagFunction, c(NSF15FunctionKey), c(NSF15FunctionKey));
+        },
+        // key_f16                     kf16      F6     F16 function key
+        @"F6": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F16, NSEventModifierFlagFunction, c(NSF16FunctionKey), c(NSF16FunctionKey));
+        },
+        // key_f17                     kf17      F7     F17 function key
+        @"F7": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F17, NSEventModifierFlagFunction, c(NSF17FunctionKey), c(NSF17FunctionKey));
+        },
+        // key_f18                     kf18      F8     F18 function key
+        @"F8": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F18, NSEventModifierFlagFunction, c(NSF18FunctionKey), c(NSF18FunctionKey));
+        },
+        // key_f19                     kf19      F9     F19 function key
+        @"F9": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_F19, NSEventModifierFlagFunction, c(NSF19FunctionKey), c(NSF19FunctionKey));
+        },
+        // key_home                    khome     kh     home key
+        @"kh": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_Home, NSEventModifierFlagFunction, c(NSHomeFunctionKey), c(NSHomeFunctionKey));
+        },
+        // key_left                    kcub1     kl     left-arrow key
+        @"kl": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_LeftArrow, NSEventModifierFlagFunction, c(NSLeftArrowFunctionKey), c(NSLeftArrowFunctionKey));
+        },
+        // key_npage                   knp       kN     next-page key
+        @"kN": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_PageDown, NSEventModifierFlagFunction, c(NSPageDownFunctionKey), c(NSPageDownFunctionKey));
+        },
+        // key_ppage                   kpp       kP     previous-page key
+        @"kP": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_PageUp, NSEventModifierFlagFunction, c(NSPageUpFunctionKey), c(NSPageUpFunctionKey));
+        },
+        // key_right                   kcuf1     kr     right-arrow key
+        @"kr": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_RightArrow, NSEventModifierFlagFunction, c(NSRightArrowFunctionKey), c(NSRightArrowFunctionKey));
+        },
+        // key_sdc                     kDC       *4     shifted delete-character key
+        @"*4": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_ForwardDelete,NSEventModifierFlagFunction |  NSEventModifierFlagShift, c(NSDeleteFunctionKey), c(NSDeleteFunctionKey));
+        },
+        // key_send                    kEND      *7     shifted end key
+        @"*7": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_End, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSEndFunctionKey), c(NSEndFunctionKey));
+        },
+        // key_shome                   kHOM      #2     shifted home key
+        @"#2": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_Home, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSHomeFunctionKey), c(NSHomeFunctionKey));
+        },
+        // key_sleft                   kLFT      #4     shifted left-arrow key
+        @"#4": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_LeftArrow, NSEventModifierFlagFunction | NSEventModifierFlagNumericPad | NSEventModifierFlagShift, c(NSLeftArrowFunctionKey), c(NSLeftArrowFunctionKey));
+        },
+        // key_sright                  kRIT      %i     shifted right-arrow key
+        @"%i": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_RightArrow, NSEventModifierFlagFunction | NSEventModifierFlagNumericPad | NSEventModifierFlagShift, c(NSRightArrowFunctionKey), c(NSRightArrowFunctionKey));
+        },
+        // key_up                      kcuu1     ku     up-arrow key
+        @"ku": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
+            return add(hexEncodedKey, parts, kVK_UpArrow, NSEventModifierFlagFunction, c(NSUpArrowFunctionKey), c(NSUpArrowFunctionKey));
+        },
+    };
+
+    for (NSString *key in keys) {
+        NSString *hexEncodedKey = [key hexEncodedString];
+        NSString *cached = self.terminfoValues[key];
         if (cached) {
             if ([cached isKindOfClass:[NSNull class]]) {
                 [parts addObject:[iTermPromise promiseDefaultError]];
             } else {
-                DLog(@"Use cached value %@ -> %@", @(token.csi->p[i]), cached);
-                [parts addObject:[iTermPromise promiseValue:cached]];
+                DLog(@"Use cached value %@ -> %@", key, cached);
+                NSString *response = [NSString stringWithFormat:kFormat, hexEncodedKey, cached.hexEncodedString];
+                [parts addObject:[iTermPromise promiseValue:response]];
             }
             ok = YES;
             continue;
         }
-        NSString *stringKey = inverseMap[@(token.csi->p[i])];
-        NSString *hexEncodedKey = [stringKey hexEncodedString];
-        DLog(@"requestTermcapTerminfo key=%@ for %@", stringKey, token);
-        void (^add)(unsigned short, NSEventModifierFlags, NSString *, NSString *) =
-            ^void(unsigned short keyCode,
-                  NSEventModifierFlags flags,
-                  NSString *characters,
-                  NSString *charactersIgnoringModifiers) {
-                // First get the value. This is legit async.
-                iTermPromise<NSString *> *keyStringPromise = key(keyCode, flags, characters, charactersIgnoringModifiers);
-
-                // Once the value is computed, format it into key=value.
-                iTermPromise<NSString *> *promise =
-                [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
-                    [[keyStringPromise then:^(NSString * _Nonnull value) {
-                        NSString *kvp = [NSString stringWithFormat:kFormat, hexEncodedKey, value];
-                        [seal fulfill:kvp];
-                    }] catchError:^(NSError * _Nonnull error) {
-                        [seal rejectWithDefaultError];
-                    }];
-                }];
-                DLog(@"Add %@", promise.maybeValue);
-                [parts addObject:promise];
+        DLog(@"requestTermcapTerminfo key=%@ for %@", key, token);
+        BOOL (^handler)(NSString *, NSMutableArray<iTermPromise<NSString *> *> *) = handlers[key];
+        if (handler) {
+            if (handler(hexEncodedKey, parts)) {
                 ok = YES;
-            };
-        switch (token.csi->p[i]) {
-            case kDcsTermcapTerminfoRequestTerminfoName:
-                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
-                                                             hexEncodedKey,
-                                                             [_termType hexEncodedString]]]];
+            }
+        } else {
+            NSString *value = [ti stringForStringKey:key];
+            NSString *response = [NSString stringWithFormat:kFormat, hexEncodedKey, value.hexEncodedString];
+            if (value) {
                 ok = YES;
-                break;
-            case kDcsTermcapTerminfoRequestTerminalName:
-                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
-                                                             hexEncodedKey,
-                                                             [_termType hexEncodedString]]]];
-                ok = YES;
-                break;
-            case kDcsTermcapTerminfoRequestiTerm2ProfileName:
-                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
-                                                             hexEncodedKey,
-                                                             [[_delegate terminalProfileName] hexEncodedString]]]];
-                ok = YES;
-                break;
-            case kDcsTermcapTerminfoRequestUnrecognizedName:
-                break;
-            case kDcsTermcapTerminfoRequestNumberOfColors:
-                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
-                                                             hexEncodedKey,
-                                                             [@"256" hexEncodedString]]]];
-                ok = YES;
-                break;
-            case kDcsTermcapTerminfoRequestNumberOfColors2:
-                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
-                                                             hexEncodedKey,
-                                                             [@"256" hexEncodedString]]]];
-                ok = YES;
-                break;
-            case kDcsTermcapTerminfoRequestDirectColorWidth:
-                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
-                                                             hexEncodedKey,
-                                                             [@"8" hexEncodedString]]]];
-                ok = YES;
-                break;
-
-            // key_backspace               kbs       kb     backspace key
-            case kDcsTermcapTerminfoRequestKey_kb:
-                add(kVK_Delete, 0, @"\x7f", @"\x7f");
-                break;
-            // key_dc                      kdch1     kD     delete-character key
-            case kDcsTermcapTerminfoRequestKey_kD:
-                add(kVK_ForwardDelete, NSEventModifierFlagFunction, c(NSDeleteFunctionKey), c(NSDeleteFunctionKey));
-                  break;
-            // key_down                    kcud1     kd     down-arrow key
-            case kDcsTermcapTerminfoRequestKey_kd:
-                add(kVK_DownArrow, NSEventModifierFlagFunction, c(NSDownArrowFunctionKey), c(NSDownArrowFunctionKey));
-                  break;
-            // key_end                     kend      @7     end key
-            case kDcsTermcapTerminfoRequestKey_at_7:
-                add(kVK_End, NSEventModifierFlagFunction, c(NSEndFunctionKey), c(NSEndFunctionKey));
-                  break;
-            // key_enter                   kent      @8     enter/send key
-            case kDcsTermcapTerminfoRequestKey_at_8:
-                 add(kVK_Return, NSEventModifierFlagFunction, @"\r", @"\r");
-                break;
-            // key_f1                      kf1       k1     F1 function key
-            case kDcsTermcapTerminfoRequestKey_k1:
-                add(kVK_F1, NSEventModifierFlagFunction, c(NSF1FunctionKey), c(NSF1FunctionKey));
-                break;
-            // key_f2                      kf2       k2     F2 function key
-            case kDcsTermcapTerminfoRequestKey_k2:
-                add(kVK_F2, NSEventModifierFlagFunction, c(NSF2FunctionKey), c(NSF2FunctionKey));
-                break;
-            // key_f3                      kf3       k3     F3 function key
-            case kDcsTermcapTerminfoRequestKey_k3:
-                add(kVK_F3, NSEventModifierFlagFunction, c(NSF3FunctionKey), c(NSF3FunctionKey));
-                break;
-            // key_f4                      kf4       k4     F4 function key
-            case kDcsTermcapTerminfoRequestKey_k4:
-                add(kVK_F4, NSEventModifierFlagFunction, c(NSF4FunctionKey), c(NSF4FunctionKey));
-                break;
-            // key_f5                      kf5       k5     F5 function key
-            case kDcsTermcapTerminfoRequestKey_k5:
-                add(kVK_F5, NSEventModifierFlagFunction, c(NSF5FunctionKey), c(NSF5FunctionKey));
-                break;
-            // key_f6                      kf6       k6     F6 function key
-            case kDcsTermcapTerminfoRequestKey_k6:
-                add(kVK_F6, NSEventModifierFlagFunction, c(NSF6FunctionKey), c(NSF6FunctionKey));
-                break;
-            // key_f7                      kf7       k7     F7 function key
-            case kDcsTermcapTerminfoRequestKey_k7:
-                add(kVK_F7, NSEventModifierFlagFunction, c(NSF7FunctionKey), c(NSF7FunctionKey));
-                break;
-            // key_f8                      kf8       k8     F8 function key
-            case kDcsTermcapTerminfoRequestKey_k8:
-                add(kVK_F8, NSEventModifierFlagFunction, c(NSF8FunctionKey), c(NSF8FunctionKey));
-                break;
-            // key_f9                      kf9       k9     F9 function key
-            case kDcsTermcapTerminfoRequestKey_k9:
-                add(kVK_F9, NSEventModifierFlagFunction, c(NSF9FunctionKey), c(NSF9FunctionKey));
-                break;
-            // key_f10                     kf10      k;     F10 function key
-            case kDcsTermcapTerminfoRequestKey_k_semi:
-                add(kVK_F10, NSEventModifierFlagFunction, c(NSF10FunctionKey), c(NSF10FunctionKey));
-                break;
-            // key_f11                     kf11      F1     F11 function key
-            case kDcsTermcapTerminfoRequestKey_F1:
-                add(kVK_F11, NSEventModifierFlagFunction, c(NSF11FunctionKey), c(NSF11FunctionKey));
-                break;
-            // key_f12                     kf12      F2     F12 function key
-            case kDcsTermcapTerminfoRequestKey_F2:
-                add(kVK_F12, NSEventModifierFlagFunction, c(NSF12FunctionKey), c(NSF12FunctionKey));
-                break;
-                // key_f13                     kf13      F3     F13 function key
-            case kDcsTermcapTerminfoRequestKey_F3:
-                add(kVK_F13, NSEventModifierFlagFunction, c(NSF13FunctionKey), c(NSF13FunctionKey));
-                break;
-                // key_f14                     kf14      F4     F14 function key
-            case kDcsTermcapTerminfoRequestKey_F4:
-                add(kVK_F14, NSEventModifierFlagFunction, c(NSF14FunctionKey), c(NSF14FunctionKey));
-                break;
-            // key_f15                     kf15      F5     F15 function key
-            case kDcsTermcapTerminfoRequestKey_F5:
-                add(kVK_F15, NSEventModifierFlagFunction, c(NSF15FunctionKey), c(NSF15FunctionKey));
-                break;
-            // key_f16                     kf16      F6     F16 function key
-            case kDcsTermcapTerminfoRequestKey_F6:
-                add(kVK_F16, NSEventModifierFlagFunction, c(NSF16FunctionKey), c(NSF16FunctionKey));
-                break;
-            // key_f17                     kf17      F7     F17 function key
-            case kDcsTermcapTerminfoRequestKey_F7:
-                add(kVK_F17, NSEventModifierFlagFunction, c(NSF17FunctionKey), c(NSF17FunctionKey));
-                break;
-            // key_f18                     kf18      F8     F18 function key
-            case kDcsTermcapTerminfoRequestKey_F8:
-                add(kVK_F18, NSEventModifierFlagFunction, c(NSF18FunctionKey), c(NSF18FunctionKey));
-                break;
-            // key_f19                     kf19      F9     F19 function key
-            case kDcsTermcapTerminfoRequestKey_F9:
-                add(kVK_F19, NSEventModifierFlagFunction, c(NSF19FunctionKey), c(NSF19FunctionKey));
-                break;
-            // key_home                    khome     kh     home key
-            case kDcsTermcapTerminfoRequestKey_kh:
-                add(kVK_Home, NSEventModifierFlagFunction, c(NSHomeFunctionKey), c(NSHomeFunctionKey));
-                break;
-            // key_left                    kcub1     kl     left-arrow key
-            case kDcsTermcapTerminfoRequestKey_kl:
-                add(kVK_LeftArrow, NSEventModifierFlagFunction, c(NSLeftArrowFunctionKey), c(NSLeftArrowFunctionKey));
-                break;
-            // key_npage                   knp       kN     next-page key
-            case kDcsTermcapTerminfoRequestKey_kN:
-                add(kVK_PageDown, NSEventModifierFlagFunction, c(NSPageDownFunctionKey), c(NSPageDownFunctionKey));
-                break;
-            // key_ppage                   kpp       kP     previous-page key
-            case kDcsTermcapTerminfoRequestKey_kP:
-                add(kVK_PageUp, NSEventModifierFlagFunction, c(NSPageUpFunctionKey), c(NSPageUpFunctionKey));
-                break;
-            // key_right                   kcuf1     kr     right-arrow key
-            case kDcsTermcapTerminfoRequestKey_kr:
-                add(kVK_RightArrow, NSEventModifierFlagFunction, c(NSRightArrowFunctionKey), c(NSRightArrowFunctionKey));
-                break;
-            // key_sdc                     kDC       *4     shifted delete-character key
-            case kDcsTermcapTerminfoRequestKey_star_4:
-                add(kVK_ForwardDelete,NSEventModifierFlagFunction |  NSEventModifierFlagShift, c(NSDeleteFunctionKey), c(NSDeleteFunctionKey));
-                break;
-            // key_send                    kEND      *7     shifted end key
-            case kDcsTermcapTerminfoRequestKey_star_7:
-                add(kVK_End, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSEndFunctionKey), c(NSEndFunctionKey));
-                break;
-            // key_shome                   kHOM      #2     shifted home key
-            case kDcsTermcapTerminfoRequestKey_pound_2:
-                add(kVK_Home, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSHomeFunctionKey), c(NSHomeFunctionKey));
-                break;
-            // key_sleft                   kLFT      #4     shifted left-arrow key
-            case kDcsTermcapTerminfoRequestKey_pound_4:
-                add(kVK_LeftArrow, NSEventModifierFlagFunction | NSEventModifierFlagNumericPad | NSEventModifierFlagShift, c(NSLeftArrowFunctionKey), c(NSLeftArrowFunctionKey));
-                break;
-            // key_sright                  kRIT      %i     shifted right-arrow key
-            case kDcsTermcapTerminfoRequestKey_pct_i:
-                add(kVK_RightArrow, NSEventModifierFlagFunction | NSEventModifierFlagNumericPad | NSEventModifierFlagShift, c(NSRightArrowFunctionKey), c(NSRightArrowFunctionKey));
-                break;
-            // key_up                      kcuu1     ku     up-arrow key
-            case kDcsTermcapTerminfoRequestKey_ku:
-                add(kVK_UpArrow, NSEventModifierFlagFunction, c(NSUpArrowFunctionKey), c(NSUpArrowFunctionKey));
-                break;
-
+                [parts addObject:[iTermPromise promiseValue:response]];
+            } else {
+                [parts addObject:[iTermPromise promiseDefaultError]];
+            }
         }
     }
 

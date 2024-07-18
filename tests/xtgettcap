@@ -1,0 +1,86 @@
+#!/bin/bash
+
+hex_encode() {
+  local input="$1"
+  local hex_output=""
+  local i
+
+  for ((i=0; i<${#input}; i++)); do
+    hex_output+=$(printf '%02X' "'${input:i:1}")
+  done
+
+  printf "%s" "$hex_output"
+}
+
+printf '\033P+q'
+
+# Initialize an empty array to hold hex-encoded arguments
+hex_encoded_args=()
+
+# Iterate over each argument
+for arg in "$@"; do
+  hex_encoded_arg=$(hex_encode "$arg")
+  hex_encoded_args+=("$hex_encoded_arg")
+done
+
+stty -echo -icanon time 0 min 1
+# Join the array elements with semicolons and print the result
+IFS=';'
+printf "%s" "${hex_encoded_args[*]}"
+printf '\033\\'
+
+# Read the entire input into a variable
+read_raw_input() {
+    input=""
+    while IFS= read -r -n1 char; do
+        input+="$char"
+        if [[ $input == *$'\033\\' ]]; then
+            break
+        fi
+    done
+    echo "$input"
+}
+input=$(read_raw_input)
+stty sane
+if [[ $input =~ ^$'\033P0' ]]; then
+  echo "No values"
+  exit 1
+fi
+
+# Check for the start and end sequences
+# Extract the sequence between the start and end markers
+sequence=${input#$'\eP1+r'}
+sequence=${sequence%$'\e\\'}
+
+# Split the sequence into key-value pairs
+IFS=';' read -r -a pairs <<< "$sequence"
+
+# Function to decode a hex string
+decode_hex() {
+    echo -n "$1" | xxd -r -p
+}
+
+escape_control_and_non_ascii() {
+    local input="$1"
+    local output=""
+    local char
+
+    for (( i=0; i<${#input}; i++ )); do
+        char="${input:$i:1}"
+        if [[ "$char" =~ [[:print:]] ]]; then
+            output+="$char"
+        else
+            output+=$(printf '\\x%02x' "'$char")
+        fi
+    done
+
+    echo "$output"
+}
+
+# Iterate over the key-value pairs
+for pair in "${pairs[@]}"; do
+    IFS='=' read -r key_hex value_hex <<< "$pair"
+    key=$(decode_hex "$key_hex")
+    value=$(decode_hex "$value_hex")
+    echo $(escape_control_and_non_ascii "$key = $value")
+done

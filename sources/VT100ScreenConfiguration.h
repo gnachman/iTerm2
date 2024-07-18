@@ -54,7 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL reduceFlicker;
 @property (nonatomic, readonly) int maxScrollbackLines;
 @property (nonatomic, readonly) BOOL loggingEnabled;
-@property (nonatomic, copy, readonly) NSDictionary<NSNumber *, id> *stringForKeypress;
+@property (nonatomic, copy, readonly) NSDictionary<NSString *, id> *terminfoValues;
 @property (nonatomic, readonly) BOOL alertOnNextMark;
 @property (nonatomic, readonly) double dimmingAmount;
 @property (nonatomic, readonly) BOOL publishing;
@@ -107,8 +107,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL reduceFlicker;
 @property (nonatomic, readwrite) int maxScrollbackLines;
 @property (nonatomic, readwrite) BOOL loggingEnabled;
-@property (nonatomic, copy, readwrite) NSDictionary<NSNumber *, id> *stringForKeypress;
-@property (nonatomic, copy) NSDictionary *stringForKeypressConfig;  // Used to tell if stringForKeypress needs to be updated.
+@property (nonatomic, copy, readwrite) NSDictionary<NSString *, id> *terminfoValues;
+@property (nonatomic, copy) NSDictionary *terminalValuesDigest;  // Used to tell if terminfoValues needs to be updated.
 @property (nonatomic, readwrite) BOOL alertOnNextMark;
 @property (nonatomic, readwrite) double dimmingAmount;
 @property (nonatomic, readwrite) BOOL publishing;
