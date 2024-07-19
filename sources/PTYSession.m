@@ -7768,6 +7768,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (self.tmuxMode != TMUX_NONE) {
         return;
     }
+    // Write a ^C to make it hard to use tmux mode for RCE because we'll soon write a newline.
+    // The next thing we send will be a phony command so that if we're actually talking to tmux it
+    // will ignore the ^C.
+    [self writeTaskImpl:[NSString stringWithLongCharacter:3] encoding:NSUTF8StringEncoding forceEncoding:NO canBroadcast:NO reporting:NO];
+
     NSString *preferredTmuxClientName = [self preferredTmuxClientName];
     self.tmuxMode = TMUX_GATEWAY;
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self dcsID:dcsID];
@@ -7790,7 +7795,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                                       profile:profile
                                                  profileModel:model];
 
-    [_tmuxController sendControlC];
     [self.variablesScope setValue:_tmuxController.clientName forVariableNamed:iTermVariableKeySessionTmuxClientName];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     _tmuxController.unicodeVersion = _unicodeVersion;
@@ -8251,6 +8255,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 // opened. Initial window opening is always blocked on establishing the server version.
 - (void)kickOffTmux {
     _haveKickedOffTmux = YES;
+    // This must be first. See the note in -startTmuxMode:.
+    [_tmuxController sendPhonyCommand];
     [_tmuxController ping];
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];
@@ -8261,10 +8267,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)tmuxInitialCommandDidFailWithError:(NSString *)error {
-    // Let the user know what went wrong. Do it async because this runs as a side-effect.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self printTmuxMessage:[NSString stringWithFormat:@"tmux failed with error: “%@”", error]];
-    });
+    [self printTmuxMessage:[NSString stringWithFormat:@"tmux failed with error: “%@”", error]];
 }
 
 - (void)tmuxPrintLine:(NSString *)line {

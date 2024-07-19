@@ -1098,8 +1098,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                     flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
-- (void)sendControlC {
-    [gateway_ sendCommand:[NSString stringWithFormat:@"%cphony-command", 3]
+- (void)sendPhonyCommand {
+    [gateway_ sendCommand:@"phony-command"
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
