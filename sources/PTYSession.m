@@ -14755,11 +14755,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if ([self hasAnnouncementWithIdentifier:identifier]) {
         return;
     }
-    NSString *notice = @"The terminal attempted to access the clipboard but it was denied. Enable clipboard access in “Prefs > General > Selection > Applications in terminal may access clipboard”.";
+    NSString *notice = @"The terminal attempted to access the clipboard but it was denied. Enable clipboard access in “Settings > General > Selection > Applications in terminal may access clipboard”.";
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:notice
                                                      style:kiTermAnnouncementViewStyleWarning
-                                               withActions:@[ @"_Open Prefs", @"Don't Show This Again" ]
+                                               withActions:@[ @"_Open Settings", @"Don't Show This Again" ]
                                                 completion:^(int selection) {
         if (selection == 0) {
             [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
@@ -17801,7 +17801,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
     [iTermProfilePreferences setObjectsFromDictionary:update inProfile:self.profile model:[ProfileModel sharedInstance]];
     [[iTermNotificationController sharedInstance] notify:@"Profile Updated"
-                                         withDescription:@"Triggers disabled in interactive apps. You can change this in Prefs > Profiles > Advanced."];
+                                         withDescription:@"Triggers disabled in interactive apps. You can change this in Settings > Profiles > Advanced."];
 }
 
 #pragma mark - iTermComposerManagerDelegate

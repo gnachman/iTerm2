@@ -378,7 +378,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             DLog(@"Failed to create the config directory: %@", error);
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating the config directory. You can set “Prefs > Advanced > Folder for config files“ to set a custom location for this directory. Until this is fixed, some features will be disabled.\n%@", error.localizedDescription]
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating the config directory. You can set “Settings > Advanced > Folder for config files“ to set a custom location for this directory. Until this is fixed, some features will be disabled.\n%@", error.localizedDescription]
                                        actions:@[ @"OK" ]
                                      accessory:nil
                                     identifier:@"NoSyncErrorCreatingConfigFolder"

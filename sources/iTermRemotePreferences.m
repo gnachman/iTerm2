@@ -197,7 +197,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
         error = nil;
         if (![data writeToFile:tempFile options:0 error:&error]) {
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Failed to write to temp file while getting remote prefs. Falling back to local copy.";
+            alert.messageText = @"Failed to write to temp file while getting remote settings. Falling back to local copy.";
             alert.informativeText = [NSString stringWithFormat:@"Error on file %@: %@", tempFile,
                                      [error localizedDescription]];
             [alert runModal];

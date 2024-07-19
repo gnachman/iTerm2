@@ -195,7 +195,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
     }
     [entry addOutput:message completion:^{}];
     if ([self errorIsUnregisteredFunctionCall:error]) {
-        [self logMessage:[NSString stringWithFormat:@"Could not make a function call into a script. Either its unique identifier changed (in which case you should update your settings in Prefs > Profiles > General > Title) or the script is not running. The failed invocation was:\n%@", invocation]
+        [self logMessage:[NSString stringWithFormat:@"Could not make a function call into a script. Either its unique identifier changed (in which case you should update your settings in Settings > Profiles > General > Title) or the script is not running. The failed invocation was:\n%@", invocation]
               invocation:invocation];
     } else {
         [self logMessage:error.localizedDescription

@@ -342,7 +342,7 @@ DEFINE_FLOAT(scrollWheelAcceleration, 1, SECTION_MOUSE @"Speed up scroll gesture
 //  '       : :      :
 //   `-----'  :      :
 DEFINE_FLOAT(fractionOfCharacterSelectingNextNeighbor, 0.35, SECTION_MOUSE @"Fraction of character’s width on its right side that can be used to select the character to its right.");
-DEFINE_BOOL(naturalScrollingAffectsHorizontalMouseReporting, NO, SECTION_MOUSE @"Horizontal scrolling is reversed when “Natural scrolling” is enabled in system prefs");
+DEFINE_BOOL(naturalScrollingAffectsHorizontalMouseReporting, NO, SECTION_MOUSE @"Horizontal scrolling is reversed when “Natural scrolling” is enabled in System Settings");
 DEFINE_FLOAT(horizontalScrollingSensitivity, 0.1, SECTION_MOUSE @"Sensitivity of mouse wheel for horizontal scrolling.\nUse 0 to disable. Value should be between 0 and 1. Changes to this setting only affect new sessions.");
 DEFINE_BOOL(useDoubleClickDelayForCommandSelection, NO, SECTION_MOUSE @"Wait to be sure it's not a double click before selecting a command");
 
@@ -412,7 +412,7 @@ DEFINE_SECURE_BOOL(enableSecureKeyboardEntryAutomatically, EnableSecureKeyboardE
 #define SECTION_HOTKEY @"Hotkey: "
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, SECTION_HOTKEY @"Duration in seconds of the hotkey window animation.\nWarning: reducing this value may cause problems if you have multiple displays.");
 DEFINE_BOOL(dockIconTogglesWindow, NO, SECTION_HOTKEY @"If the only window is a hotkey window, then clicking the dock icon shows or hides it.");
-DEFINE_BOOL(hotkeyWindowFloatsAboveOtherWindows, NO, SECTION_HOTKEY @"The hotkey window floats above other windows even when another application is active.\nYou must disable “Prefs > Keys > Hotkey window hides when focus is lost” for this setting to be effective.");
+DEFINE_BOOL(hotkeyWindowFloatsAboveOtherWindows, NO, SECTION_HOTKEY @"The hotkey window floats above other windows even when another application is active.\nYou must disable “Settings > Keys > Hotkey window hides when focus is lost” for this setting to be effective.");
 DEFINE_FLOAT(hotKeyDoubleTapMaxDelay, 0.3, SECTION_HOTKEY @"The maximum amount of time allowed between presses of a modifier key when performing a modifier double-tap.");
 DEFINE_FLOAT(hotKeyDoubleTapMinDelay, 0.01, SECTION_HOTKEY @"The minimum amount of time required between presses of a modifier key when performing a modifier double-tap.");
 DEFINE_BOOL(showPinnedIndicator, NO, SECTION_HOTKEY @"Show indicator for pinned hotkey windows.");
@@ -490,7 +490,7 @@ DEFINE_BOOL(showButtonsForSelectedCommand, YES, SECTION_GENERAL @"Show buttons a
 
 #define SECTION_DRAWING @"Drawing: "
 
-DEFINE_BOOL(zippyTextDrawing, YES, SECTION_DRAWING @"Use zippy text drawing algorithm?\nThis draws non-ASCII text more quickly but with lower fidelity. This setting is ignored if ligatures are enabled in Prefs > Profiles > Text.");
+DEFINE_BOOL(zippyTextDrawing, YES, SECTION_DRAWING @"Use zippy text drawing algorithm?\nThis draws non-ASCII text more quickly but with lower fidelity. This setting is ignored if ligatures are enabled in Settings > Profiles > Text.");
 DEFINE_BOOL(lowFiCombiningMarks, NO, SECTION_DRAWING @"Prefer speed to accuracy for characters with combining marks?");
 DEFINE_BOOL(useAdaptiveFrameRate, YES, SECTION_DRAWING @"Use adaptive framerate.\nWhen throughput is low, the screen will update at 60 frames per second. When throughput is higher, it will drop to a configurable rate (15 fps by default).");
 DEFINE_BOOL(disableAdaptiveFrameRateInInteractiveApps, YES, SECTION_DRAWING @"Disable adaptive framerate in interactive apps.\nTurn off adaptive frame rate while in alternate screen mode for more consistent refresh rate. This works even if alternate screen mode is disabled.");
@@ -618,7 +618,7 @@ DEFINE_BOOL(noSyncNewWindowFromTmuxOpensTmux, NO, SECTION_TMUX @"Suppress alert 
 DEFINE_BOOL(noSyncNewTabFromTmuxOpensTmux, NO, SECTION_TMUX @"Suppress alert asking what kind of tab to open in tmux integration.\nNOTE: This only takes effect if the now-deprecated “Suppress alert asking what kind of tab/window to open in tmux integration” setting is off.");
 DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, NO, SECTION_TMUX @"Tolerate unrecognized commands from server.\nIf disabled, an unknown command from tmux (such as output from ssh or wall) will end the session. Turning this off helps detect dead ssh sessions.");
 DEFINE_BOOL(useBlackFillerColorForTmuxInFullScreen, NO, SECTION_TMUX @"Use black for filler area in tmux windows in full screen.");
-DEFINE_SETTABLE_OPTIONAL_BOOL(tmuxWindowsShouldCloseAfterDetach, TmuxWindowsShouldCloseAfterDetach, nil, SECTION_TMUX @"Close tmux windows after detaching?\nThis only takes effect when “Prefs > Profiles > Session > After a session ends” is set to “No Action”.");
+DEFINE_SETTABLE_OPTIONAL_BOOL(tmuxWindowsShouldCloseAfterDetach, TmuxWindowsShouldCloseAfterDetach, nil, SECTION_TMUX @"Close tmux windows after detaching?\nThis only takes effect when “Settings > Profiles > Session > After a session ends” is set to “No Action”.");
 DEFINE_BOOL(disableTmuxWindowPositionRestoration, NO, SECTION_TMUX @"Disable window position restoration in tmux integration.");
 DEFINE_BOOL(disableTmuxWindowResizing, YES, SECTION_TMUX @"Don't automatically resize tmux windows");
 DEFINE_BOOL(anonymousTmuxWindowsOpenInCurrentWindow, YES, SECTION_TMUX @"Should new tmux windows not created by iTerm2 open in the current window?\nIf set to No, they will open in new windows.");
@@ -633,12 +633,12 @@ DEFINE_BOOL(rememberTmuxWindowSizes, YES, SECTION_TMUX @"Remember window sizes i
 
 #define SECTION_WARNINGS @"Warnings: "
 
-DEFINE_BOOL(neverWarnAboutMeta, NO, SECTION_WARNINGS @"Suppress a warning when ⌥ Key Acts as Meta is enabled in Prefs>Profiles>Keys.");
+DEFINE_BOOL(neverWarnAboutMeta, NO, SECTION_WARNINGS @"Suppress a warning when ⌥ Key Acts as Meta is enabled in Settings > Profiles > Keys.");
 DEFINE_BOOL(neverWarnAboutSpaces, NO, SECTION_WARNINGS @"Suppress a warning about how to configure Spaces when setting a window's Space.");
 DEFINE_BOOL(neverWarnAboutOverrides, NO, SECTION_WARNINGS @"Suppress a warning about a change to a Profile key setting that overrides a global setting.");
 DEFINE_BOOL(neverWarnAboutPossibleOverrides, NO, SECTION_WARNINGS @"Suppress a warning about a change to a global key that's overridden by a Profile.");
-DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForUrl, NO, SECTION_WARNINGS @"Suppress changed-setting warning when prefs are loaded from a URL.");
-DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForFile, NO, SECTION_WARNINGS @"Suppress changed-setting warning when prefs are loaded from a custom folder.");
+DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForUrl, NO, SECTION_WARNINGS @"Suppress changed-setting warning when settings are loaded from a URL.");
+DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForFile, NO, SECTION_WARNINGS @"Suppress changed-setting warning when settings are loaded from a custom folder.");
 DEFINE_BOOL(noSyncSuppressAnnyoingBellOffer, NO, SECTION_WARNINGS @"Suppress offer to silence bell when it rings too much.");
 
 DEFINE_BOOL(suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline, NO, SECTION_WARNINGS @"Suppress warning about multi-line paste when pasting a single line ending with a newline.\nThis suppresses all multi-line paste warnings when a single line is being pasted.");
