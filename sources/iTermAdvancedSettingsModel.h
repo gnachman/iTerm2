@@ -116,6 +116,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disableMetalWhenIdle;
 + (BOOL)disablePasswordManagerAnimations;
 + (BOOL)disablePotentiallyInsecureEscapeSequences;
++ (BOOL)disableSmartSelectionActionsOnClick;
 + (BOOL)disableTabBarTooltips;
 + (BOOL)disableTopRightIndicators;
 + (BOOL)disableTmuxWindowPositionRestoration;

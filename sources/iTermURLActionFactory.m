@@ -143,6 +143,30 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 }
 
 - (iTermURLActionFactoryPhase)phaseAfter:(iTermURLActionFactoryPhase)phase {
+    if ([iTermAdvancedSettingsModel disableSmartSelectionActionsOnClick]) {
+        switch (phase) {
+            case iTermURLActionFactoryPhasePrompt:
+                return iTermURLActionFactoryPhaseHypertextLink;
+            case iTermURLActionFactoryPhaseHypertextLink:
+                return iTermURLActionFactoryPhaseExistingFile;
+            case iTermURLActionFactoryPhaseExistingFile:
+                return iTermURLActionFactoryPhaseExistingFileRespectingHardNewlines;
+            case iTermURLActionFactoryPhaseExistingFileRespectingHardNewlines:
+                return iTermURLActionFactoryPhaseAnyStringSemanticHistory;
+            case iTermURLActionFactoryPhaseAnyStringSemanticHistory:
+                return iTermURLActionFactoryPhaseURLLike;
+            case iTermURLActionFactoryPhaseURLLike:
+                return iTermURLActionFactoryPhaseSecureCopy;
+            case iTermURLActionFactoryPhaseSecureCopy:
+                return iTermURLActionFactoryPhaseFailed;
+            case iTermURLActionFactoryPhaseFailed:
+                return iTermURLActionFactoryPhaseFailed;
+
+            case iTermURLActionFactoryPhaseSmartSelectionAction:
+            default:
+                return iTermURLActionFactoryPhaseFailed;
+        }
+    }
     if ([iTermAdvancedSettingsModel prioritizeSmartSelectionActions]) {
         switch (phase) {
             case iTermURLActionFactoryPhasePrompt:
