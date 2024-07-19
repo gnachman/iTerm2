@@ -178,5 +178,7 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
 
 - (NSData *)reportCapabilities:(VT100Capabilities)capabilities;
 + (NSString *)encodedTermFeaturesForCapabilities:(VT100Capabilities)capabilities;
+- (NSData *)windowResizeNotificationWithGridSize:(VT100GridSize)gridSize
+                                       pixelSize:(NSSize)pixelSize;
 
 @end

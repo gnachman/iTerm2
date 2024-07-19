@@ -98,6 +98,7 @@ NSString *const kTerminalStateSendModifiers = @"Send Modifiers";
 NSString *const kTerminalStateKeyReportingModeStack_Deprecated = @"Key Reporting Mode Stack";  // deprecated
 NSString *const kTerminalStateKeyReportingModeStack_Main = @"Main Key Reporting Mode Stack";
 NSString *const kTerminalStateKeyReportingModeStack_Alternate = @"Alternate Key Reporting Mode Stack";
+NSString *const kTerminalStateResizeNotifications = @"Resize Notifications";
 NSString *const kTerminalStateSynchronizedUpdates = @"Synchronized Updates";
 NSString *const kTerminalStatePreserveScreenOnDECCOLM = @"Preserve Screen On DECCOLM";
 NSString *const kTerminalStateSavedColors = @"Saved Colors";  // For XTPUSHCOLORS/XTPOPCOLORS
@@ -419,6 +420,7 @@ static const int kMaxScreenRows = 4096;
     self.metaSendsEscape = NO;
     self.alternateScrollMode = NO;
     self.synchronizedUpdates = NO;
+    self.sendResizeNotifications = NO;
     self.preserveScreenOnDECCOLM = NO;
     self.insertMode = NO;
     self.sendReceiveMode = NO;
@@ -1059,8 +1061,18 @@ static const int kMaxScreenRows = 4096;
                 // https://github.com/microsoft/terminal/issues/8331
                 self.synchronizedUpdates = mode;
                 break;
+
+            case 2048:
+                // https://gist.github.com/rockorager/e695fb2924d36b2bcf1fff4a3704bd83
+                self.sendResizeNotifications = mode;
+                break;
         }
     }
+}
+
+- (void)setSendResizeNotifications:(BOOL)sendResizeNotifications {
+    self.dirty = YES;
+    _sendResizeNotifications = sendResizeNotifications;
 }
 
 - (void)setSynchronizedUpdates:(BOOL)synchronizedUpdates {
@@ -1919,6 +1931,7 @@ static const int kMaxScreenRows = 4096;
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
     self.alternateScrollMode = NO;
+    self.sendResizeNotifications = NO;
     self.synchronizedUpdates = NO;
     self.preserveScreenOnDECCOLM = NO;
 
@@ -2025,7 +2038,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     } else if (token.sshInfo.valid) {
         DLog(@"Not unwrapping. token info=%@", SSHInfoDescription(token.sshInfo));
     }
+    _isExecutingToken = YES;
     [self reallyExecuteToken:token];
+    _isExecutingToken = NO;
     if (_wantsDidExecuteCallback) {
         _wantsDidExecuteCallback = NO;
         [_delegate terminalDidExecuteToken:token];
@@ -5175,6 +5190,9 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
 
         case 2026:
             return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.synchronizedUpdates);
+
+        case 2048:
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.sendResizeNotifications);
     }
     return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
         [seal fulfill:@(iTermDECRPMSettingPermanentlyReset)];
@@ -5354,6 +5372,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStateInCommandKey: @(inCommand_),
            kTerminalStateUnicodeVersionStack: _unicodeVersionStack,
            kTerminalStateSynchronizedUpdates: @(self.synchronizedUpdates),
+           kTerminalStateResizeNotifications: @(self.sendResizeNotifications),
            kTerminalStatePreserveScreenOnDECCOLM: @(self.preserveScreenOnDECCOLM),
            kTerminalStateSavedColors: _savedColors.plist,
            kTerminalStateProtectedMode: @(_protectedMode),
@@ -5398,6 +5417,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     self.alternateScrollMode = [dict[kTerminalStateAlternateScrollMode] boolValue];
     [self setSGRStack:dict[kTerminalStateSGRStack]];
     _decsaceRectangleMode = [dict[kTerminalStateDECSACE] boolValue];
+    self.sendResizeNotifications = [dict[kTerminalStateResizeNotifications] boolValue];
     self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
     self.preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];

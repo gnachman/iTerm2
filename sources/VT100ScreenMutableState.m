@@ -532,6 +532,10 @@ static _Atomic int gPerformingJoinedBlock;
     return self.terminal.alternateScrollMode;
 }
 
+- (BOOL)terminalSendResizeNotifications {
+    return self.terminal.sendResizeNotifications && !self.config.isTmuxClient;
+}
+
 - (BOOL)terminalAutorepeatMode {
     return self.terminal.autorepeatMode;
 }

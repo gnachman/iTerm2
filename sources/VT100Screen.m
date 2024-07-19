@@ -1604,6 +1604,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.terminalAlternateScrollMode;
 }
 
+- (BOOL)terminalSendResizeNotifications {
+    return _state.terminalSendResizeNotifications;
+}
+
 - (BOOL)terminalAutorepeatMode {
     return _state.terminalAutorepeatMode;
 }

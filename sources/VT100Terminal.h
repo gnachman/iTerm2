@@ -124,6 +124,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic) BOOL literalMode;
 
 @property(nonatomic, readonly) VT100TerminalKeyReportingFlags keyReportingFlags;
+@property(nonatomic, readonly) BOOL sendResizeNotifications;
 @property(nonatomic, readonly) BOOL synchronizedUpdates;
 @property(nonatomic, readonly) BOOL preserveScreenOnDECCOLM;
 @property(nonatomic, readonly) BOOL alternateScrollMode;
@@ -147,6 +148,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
 
 @property(nonatomic) VT100TerminalFramerRecoveryMode framerRecoveryMode;
 @property(nonatomic) NSInteger framerBoundaryNumber;
+@property(nonatomic, readonly) BOOL isExecutingToken;
 
 + (NSOrderedSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
                                 externalAttributes:(iTermExternalAttribute *)ea;

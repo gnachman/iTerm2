@@ -109,6 +109,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) BOOL terminalReverseVideo;
 @property (nonatomic, readonly) BOOL terminalAlternateScrollMode;
 @property (nonatomic, readonly) BOOL terminalAutorepeatMode;
+@property (nonatomic, readonly) BOOL terminalSendResizeNotifications;
 @property (nonatomic, readonly) int terminalCharset;
 @property (nonatomic, readonly) NSDictionary *terminalState;
 

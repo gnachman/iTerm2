@@ -886,6 +886,8 @@ static void HandleSigChld(int n) {
                                            pointSize.height * scaleFactor)
     };
     iTermSetTerminalSize(self.fd, desiredSize);
+    [self.delegate taskDidResizeToGridSize:gridSize pixelSize:NSMakeSize(desiredSize.pixelSize.width,
+                                                                         desiredSize.pixelSize.height)];
 }
 
 @end

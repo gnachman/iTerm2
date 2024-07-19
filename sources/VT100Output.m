@@ -153,7 +153,6 @@ typedef enum {
 - (void)setTermType:(NSString *)term {
     _standard = [[VT100Output standardTerminals] containsObject:term];
     _termType = [term copy];
-    int r = 0;
 
     iTermTerminfo *ti = [iTermTerminfo forTerm:term];
     if (ti.isValid) {
@@ -1197,6 +1196,15 @@ static int VT100OutputSafeAddInt(int l, int r) {
 
 - (NSData *)reportSGRCodes:(NSArray<NSString *> *)codes {
     NSString *string = [NSString stringWithFormat:@"%c[%@m", ESC, [codes componentsJoinedByString:@";"]];
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+- (NSData *)windowResizeNotificationWithGridSize:(VT100GridSize)gridSize
+                                       pixelSize:(NSSize)pixelSize {
+    NSString *string = [NSString stringWithFormat:@"%c[48;%d;%d;%d;%d",
+                        ESC,
+                        gridSize.height, gridSize.width,
+                        (int)pixelSize.height, (int)pixelSize.width];
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 

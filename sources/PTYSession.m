@@ -3646,6 +3646,15 @@ ITERM_WEAKLY_REFERENCEABLE
     }];
 }
 
+- (void)taskDidResizeToGridSize:(VT100GridSize)gridSize pixelSize:(NSSize)pixelSize {
+    if (!_screen.terminalSendResizeNotifications) {
+        return;
+    }
+    NSData *data = [_screen.terminalOutput windowResizeNotificationWithGridSize:gridSize
+                                                                      pixelSize:pixelSize];
+    [self screenSendReportData:data];
+}
+
 - (void)taskDiedImmediately {
     // Let initial creation finish, then report the broken pipe. This happens if the file descriptor
     // server dies immediately.
