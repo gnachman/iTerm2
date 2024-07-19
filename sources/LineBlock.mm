@@ -188,8 +188,14 @@ static inline void ModifyLineBlock(LineBlock *self,
 @synthesize progenitor = _progenitor;
 @synthesize absoluteBlockNumber = _absoluteBlockNumber;
 
-NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock) {
-    lineBlock->_generation += 1;
+static std::atomic<NSInteger> nextGeneration(0);
+
+NS_INLINE NSInteger iTermAllocateGeneration(void) {
+    return nextGeneration.fetch_add(1, std::memory_order_relaxed);
+}
+
+NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock, const char * reason) {
+    lineBlock->_generation = iTermAllocateGeneration();
 }
 
 - (instancetype)initWithCharacterBuffer:(iTermCharacterBuffer *)characterBuffer 
@@ -276,10 +282,10 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             data = dictionary[kLineBlockRawBufferV3Key];
         } else if (dictionary[kLineBlockRawBufferV2Key]) {
             data = [dictionary[kLineBlockRawBufferV2Key] migrateV2ToV3];
-            _generation = 1;
+            _generation = iTermAllocateGeneration();
         } else if (dictionary[kLineBlockRawBufferV1Key]) {
             data = [dictionary[kLineBlockRawBufferV1Key] migrateV1ToV3:&migrationIndex];
-            _generation = 1;
+            _generation = iTermAllocateGeneration();
         }
         if (!data || data.length / sizeof(screen_char_t) >= INT_MAX) {
             return nil;
@@ -438,7 +444,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     theCopy->_generation = _generation;
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
     theCopy.hasBeenCopied = YES;
-    
+
     return theCopy;
 }
 
@@ -801,7 +807,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     }
     is_partial = partial;
 
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "append line");
     return YES;
 }
 
@@ -1363,7 +1369,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     assert(_metadataArray.numEntries == cll_entries);
 
     cached_numlines_width = -1;
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "remove last raw line");
 }
 
 - (BOOL)popLastLineInto:(screen_char_t const **)ptr
@@ -1459,7 +1465,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
     // refresh cache
     cached_numlines_width = -1;
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "pop");
     return YES;
 }
 
@@ -1555,7 +1561,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         return;
     }
     is_partial = partial;
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "set partial");
 }
 
 - (void)shrinkToFit {
@@ -1631,7 +1637,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 #ifdef TEST_LINEBUFFER_SANITY
             [self checkAndResetCachedNumlines:"dropLines" width:width];
 #endif
-            iTermLineBlockDidChange(self);
+            iTermLineBlockDidChange(self, "drop");
             return orig_n;
         }
         prev = cll;
@@ -1644,7 +1650,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     [self setBufferStartOffset:0];
     _firstEntry = 0;
     *charsDropped = [self rawSpaceUsed];
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "drop lines");
     assert(_metadataArray.first == _firstEntry);
     assert(_metadataArray.numEntries == cll_entries);
     return orig_n - n;
@@ -1685,7 +1691,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 #ifdef TEST_LINEBUFFER_SANITY
     [self checkAndResetCachedNumlines:"dropLines" width:width];
 #endif
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "drop mirroring progenitor");
 }
 
 - (BOOL)isSynchronizedWithProgenitor {
