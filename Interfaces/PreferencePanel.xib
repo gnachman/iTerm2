@@ -3997,7 +3997,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -6191,7 +6191,7 @@ DQ
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="awA-hH-ziY">
                                                 <rect key="frame" x="144" y="58" width="306" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                                                <string key="toolTip">For this setting to take effect you must disable "Native full screen windows" in Prefs&gt;General. If this setting is enabled, the menu bar will remain visible. This is useful for multi-monitor systems.</string>
+                                                <string key="toolTip">For this setting to take effect you must disable "Native full screen windows" in Settings &gt; General. If this setting is enabled, the menu bar will remain visible. This is useful for multi-monitor systems.</string>
                                                 <buttonCell key="cell" type="check" title="Auto-hide menu bar in non-native fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="MM6-3I-2ep">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>

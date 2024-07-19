@@ -1463,7 +1463,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         return YES;
     }
     if (![iTermAPIHelper requireApplescriptAuth]) {
-        *reason = @"All apps are allowed to use the API, per “Prefs > General > Magic > Allow all apps to connect”.";
+        *reason = @"All apps are allowed to use the API, per “Settings > General > Magic > Allow all apps to connect”.";
         return YES;
     }
     if (disableAuthUI) {
