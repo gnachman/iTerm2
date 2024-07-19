@@ -291,7 +291,8 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     NSArray *phrases = [filter componentsBySplittingProfileListQuery];
     NSMutableArray<iTermProfileSearchToken *> *tokens = [NSMutableArray array];
     for (NSString *phrase in phrases) {
-        iTermProfileSearchToken *token = [[iTermProfileSearchToken alloc] initWithPhrase:phrase];
+        iTermProfileSearchToken *token = [[iTermProfileSearchToken alloc] initWithPhrase:phrase
+                                                                               operators:@[ kTagRestrictionOperator, @"name:"]];
         [tokens addObject:token];
     }
     return tokens;

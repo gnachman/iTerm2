@@ -13,7 +13,7 @@ NSString *const kTagRestrictionOperator = @"tag:";
 
 @interface iTermProfileSearchToken()
 @property(nonatomic, copy) NSArray *strings;
-@property(nonatomic, copy) NSString *operator;
+@property(nonatomic, readwrite, copy) NSString *operator;
 @property(nonatomic, assign) BOOL anchorStart;
 @property(nonatomic, assign) BOOL anchorEnd;
 @end
@@ -40,7 +40,7 @@ NSString *const kTagRestrictionOperator = @"tag:";
 //
 // For backward compatibility, * may occur in place of ^, but it has no effect.
 - (instancetype)initWithPhrase:(NSString *)originalPhrase {
-    return [self initWithPhrase:originalPhrase operators:@[ kTagRestrictionOperator, @"name:" ]];
+    return [self initWithPhrase:originalPhrase operators:@[ kTagRestrictionOperator, @"name:", @"command:" ]];
 }
 
 - (instancetype)initWithPhrase:(NSString *)originalPhrase operators:(NSArray<NSString *> *)operators {

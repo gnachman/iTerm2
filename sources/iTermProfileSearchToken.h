@@ -17,7 +17,10 @@ extern NSString *const kTagRestrictionOperator;
 @property(nonatomic, readonly) NSRange range;
 @property(nonatomic, readonly) BOOL negated;
 @property(nonatomic, readonly) BOOL isTag;
+// The actual operator for this token, if any.
+@property(nonatomic, readonly, copy, nullable) NSString *operator;
 
+/// operators gives the list of defined operators.
 - (instancetype)initWithPhrase:(NSString *)phrase operators:(NSArray<NSString *> *)operators;
 - (instancetype)initWithTag:(NSString *)tag operators:(NSArray<NSString *> *)operators;
 

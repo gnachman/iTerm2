@@ -58,6 +58,10 @@ extern NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix;
 + (NSString*)freshGuid;
 + (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict;
 + (BOOL)migrated;
++ (NSAttributedString *)attributedStringForCommand:(NSString *)command
+                      highlightingMatchesForFilter:(NSString *)filter
+                                 defaultAttributes:(NSDictionary *)defaultAttributes
+                             highlightedAttributes:(NSDictionary *)highlightedAttributes;
 + (NSAttributedString *)attributedStringForName:(NSString *)name
                    highlightingMatchesForFilter:(NSString *)filter
                               defaultAttributes:(NSDictionary *)defaultAttributes

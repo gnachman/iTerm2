@@ -700,6 +700,35 @@ const CGFloat kDefaultTagsWidth = 80;
     return theAttributedString;
 }
 
+- (NSAttributedString *)attributedStringForCommand:(NSString *)command
+                                          selected:(BOOL)selected
+                                            filter:(NSString *)filter {
+    NSColor *highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
+
+    NSColor *textColor = [self regularTextColor];
+    NSColor *highlightedTextColor = [NSColor blackColor];
+    NSColor *tagColor = [self regularTagColor];
+    NSColor *selectedActiveTextColor = [self selectedActiveTextColor];
+    NSColor *selectedActiveTagColor = [self selectedActiveTagColor];
+
+    NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+
+    NSDictionary* plainAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTextColor,
+                                       iTermRegularForegroundColor: textColor,
+                                       NSParagraphStyleAttributeName: paragraphStyle,
+                                       NSFontAttributeName: self.mainFont };
+    NSDictionary* highlightedNameAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTextColor,
+                                                 iTermRegularForegroundColor: highlightedTextColor,
+                                                 NSParagraphStyleAttributeName: paragraphStyle,
+                                                 NSBackgroundColorAttributeName: highlightedBackgroundColor,
+                                                 NSFontAttributeName: self.mainFont };
+    return [[[ProfileModel attributedStringForCommand:command
+                         highlightingMatchesForFilter:filter
+                                    defaultAttributes:plainAttributes
+                                highlightedAttributes:highlightedNameAttributes] mutableCopy] autorelease];
+}
+
 - (NSAttributedString *)attributedStringForString:(NSString *)string selected:(BOOL)selected {
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
@@ -756,8 +785,9 @@ const CGFloat kDefaultTagsWidth = 80;
         } else if ([customCommand isEqualToString:kProfilePreferenceCommandTypeLoginShellValue]) {
             theString = @"Login shell";
         }
-        return [self attributedStringForString:theString
-                                      selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]];
+        return [self attributedStringForCommand:theString
+                                       selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
+                                         filter:searchField_.stringValue];
     } else if (aTableColumn == shortcutColumn_) {
         NSString* key = [bookmark objectForKey:KEY_SHORTCUT];
         if ([key length]) {

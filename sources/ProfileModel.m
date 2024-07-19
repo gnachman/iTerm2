@@ -185,13 +185,41 @@ static NSMutableArray<NSString *> *_combinedLog;
     return [bookmarks_ count];
 }
 
++ (NSAttributedString *)attributedStringForCommand:(NSString *)command
+                      highlightingMatchesForFilter:(NSString *)filter
+                                 defaultAttributes:(NSDictionary *)defaultAttributes
+                             highlightedAttributes:(NSDictionary *)highlightedAttributes {
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    NSArray<iTermProfileSearchToken *> *tokens = [self parseFilter:filter];
+    [self doesProfileWithName:nil
+                         tags:@[]
+                      command:command
+                  matchFilter:tokens
+                 nameIndexSet:nil
+              commandIndexSet:indexes
+                 tagIndexSets:nil];
+    NSMutableAttributedString *result =
+        [[[NSMutableAttributedString alloc] initWithString:command
+                                                attributes:defaultAttributes] autorelease];
+    [indexes enumerateRangesUsingBlock:^(NSRange range, BOOL *stop) {
+        [result setAttributes:highlightedAttributes range:range];
+    }];
+    return result;
+}
+
 + (NSAttributedString *)attributedStringForName:(NSString *)name
                    highlightingMatchesForFilter:(NSString *)filter
                               defaultAttributes:(NSDictionary *)defaultAttributes
                           highlightedAttributes:(NSDictionary *)highlightedAttributes {
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     NSArray<iTermProfileSearchToken *> *tokens = [self parseFilter:filter];
-    [self doesProfileWithName:name tags:@[] matchFilter:tokens nameIndexSet:indexes tagIndexSets:nil];
+    [self doesProfileWithName:name 
+                         tags:@[]
+                      command:nil
+                  matchFilter:tokens
+                 nameIndexSet:indexes
+              commandIndexSet:nil
+                 tagIndexSets:nil];
     NSMutableAttributedString *result =
         [[[NSMutableAttributedString alloc] initWithString:name
                                                 attributes:defaultAttributes] autorelease];
@@ -212,8 +240,10 @@ static NSMutableArray<NSString *> *_combinedLog;
     NSArray* tokens = [self parseFilter:filter];
     [self doesProfileWithName:nil
                          tags:tags
+                      command:nil
                   matchFilter:tokens
                  nameIndexSet:nil
+              commandIndexSet:nil
                  tagIndexSets:indexSets];
     NSMutableArray *result = [NSMutableArray array];
     for (int i = 0; i < tags.count; i++) {
@@ -230,19 +260,29 @@ static NSMutableArray<NSString *> *_combinedLog;
 }
 
 + (BOOL)doesProfile:(Profile *)profile matchFilter:(NSArray *)tokens {
+    NSString *command = @"";
+    if (![profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeLoginShellValue]) {
+        command = profile[KEY_COMMAND_LINE];
+    }
     return [self.class doesProfileWithName:profile[KEY_NAME]
                                       tags:profile[KEY_TAGS]
+                                   command:command
                                matchFilter:tokens
                               nameIndexSet:nil
+                           commandIndexSet:nil
                               tagIndexSets:nil];
 }
 
 + (BOOL)doesProfileWithName:(NSString *)name
                        tags:(NSArray *)tags
+                    command:(NSString *)command
                 matchFilter:(NSArray<iTermProfileSearchToken *> *)tokens
                nameIndexSet:(NSMutableIndexSet *)nameIndexSet
+            commandIndexSet:(NSMutableIndexSet *)commandIndexSet
                tagIndexSets:(NSArray *)tagIndexSets {
     NSArray* nameWords = [name componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSArray<NSString *> *commandWordsWithSyms = [command componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSArray<NSString *> *commandWordsWithoutSyms = [command componentsSeparatedByCharactersInSet:[[NSCharacterSet alphanumericCharacterSet] invertedSet]];
     for (iTermProfileSearchToken *token in tokens) {
         // Search each word in tag until one has this token as a prefix.
         // First see if this token occurs in the title
@@ -267,8 +307,19 @@ static NSMutableArray<NSString *> *_combinedLog;
                 [indexSet addIndexesInRange:token.range];
             }
         }
-        if (!token.negated && !found && name != nil) {
-            // Failed to match a non-negated token. If name is nil then we don't really care about the
+        // Only search commands if the command: operator is explicitly specified.
+        if ([token.operator isEqualToString:@"command:"]) {
+            if ([token matchesAnyWordIn:commandWordsWithSyms operator:@"command:"] ||
+                [token matchesAnyWordIn:commandWordsWithoutSyms operator:@"command:"]) {
+                if (token.negated) {
+                    return NO;
+                }
+                [commandIndexSet addIndexesInRange:token.range];
+                found = YES;
+            }
+        }
+        if (!token.negated && !found && name != nil && command != nil) {
+            // Failed to match a non-negated token. If name/command is nil then we don't really care about the
             // answer and we just want index sets.
             return NO;
         }
