@@ -5597,15 +5597,15 @@ DQ
                         </tabViewItem>
                         <tabViewItem label="Services" identifier="" id="hxz-xY-wbF">
                             <view key="view" id="QRB-QZ-Yoo">
-                                <rect key="frame" x="10" y="33" width="755" height="461"/>
+                                <rect key="frame" x="10" y="33" width="755" height="478"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="agx-XH-Dlv" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="155" y="300" width="445" height="170"/>
+                                        <rect key="frame" x="165" y="360" width="445" height="127"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5051">
-                                                <rect key="frame" x="67" y="134" width="202" height="18"/>
+                                                <rect key="frame" x="94" y="91" width="202" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Add Bonjour hosts to Profiles" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5063">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5617,7 +5617,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="swc-Bv-Lbu">
-                                                <rect key="frame" x="67" y="110" width="310" height="18"/>
+                                                <rect key="frame" x="94" y="67" width="310" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Notify only for critical shell integration updates" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="jvo-OV-rbu">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5629,7 +5629,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button toolTip="Selects whether to install the beta or release build when updating." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5049">
-                                                <rect key="frame" x="67" y="62" width="199" height="18"/>
+                                                <rect key="frame" x="94" y="19" width="199" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Update to Beta test releases" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5065">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5640,7 +5640,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5048">
-                                                <rect key="frame" x="67" y="86" width="222" height="18"/>
+                                                <rect key="frame" x="94" y="43" width="222" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Check for updates automatically" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5066">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5652,7 +5652,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="12T-17-tZZ">
-                                                <rect key="frame" x="38" y="44" width="369" height="11"/>
+                                                <rect key="frame" x="38" y="1" width="369" height="11"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" controlSize="mini" lineBreakMode="clipping" title="This build is in the nightly build channel. It cannot update to beta or release builds." id="XaQ-Gu-7BD">
                                                     <font key="font" metaFont="miniSystem"/>
