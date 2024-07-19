@@ -99,6 +99,8 @@ static NSString *kCommandTimestamp = @"timestamp";
     BOOL _initialized;
     NSMutableDictionary<NSString *, iTermTmuxSubscriptionHandle *> *_subscriptions;
     int _sessionID;  // -1 if uninitialized
+    BOOL _canWrite;
+    NSMutableString *_writeQueue;
 }
 
 @synthesize delegate = delegate_;
@@ -112,6 +114,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         commandQueue_ = [[NSMutableArray alloc] init];
         strayMessages_ = [[NSMutableString alloc] init];
         _subscriptions = [[NSMutableDictionary alloc] init];
+        _writeQueue = [NSMutableString string];
         _dcsID = [dcsID copy];
         _sessionID = -1;
     }
@@ -406,6 +409,11 @@ static NSString *kCommandTimestamp = @"timestamp";
     }
     _sessionID = [[components objectAtIndex:1] intValue];
     [delegate_ tmuxSessionChanged:[components objectAtIndex:2] sessionId:[[components objectAtIndex:1] intValue]];
+    if (!_canWrite) {
+        // Don't write until we get session-changed. This way we know it's not a one-and-done command (e.g., tmux -CC list-windows).
+        _canWrite = YES;
+        [self flushWriteQueue];
+    }
 }
 
 - (void)parseSessionsChangedCommand:(NSString *)command
@@ -802,7 +810,7 @@ static NSString *kCommandTimestamp = @"timestamp";
             [delegate_ tmuxPrintLine:command];
         }
         if ([self versionAtLeastDecimalNumberWithString:@"3.2"]) {
-            [delegate_ tmuxWriteString:NEWLINE];
+            [self write:NEWLINE];
         }
         [self hostDisconnected];
     } else if ([command hasPrefix:@"%begin"]) {
@@ -1058,7 +1066,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         return;
     }
     TmuxLog(@"Send command: %@", commandWithNewline);
-    [delegate_ tmuxWriteString:commandWithNewline];
+    [self write:commandWithNewline];
     TmuxLog(@"Send command: %@", [dict objectForKey:kCommandString]);
 }
 
@@ -1096,7 +1104,26 @@ static NSString *kCommandTimestamp = @"timestamp";
     TmuxLog(@"-- End command list --");
     [cmd appendString:NEWLINE];
     TmuxLog(@"Send command: %@", cmd);
-    [delegate_ tmuxWriteString:cmd];
+    [self write:cmd];
+}
+
+- (void)write:(NSString *)string {
+    if (_canWrite) {
+        [delegate_ tmuxWriteString:string];
+        return;
+    }
+    DLog(@"Defer writing %@", string);
+    [_writeQueue appendString:string];
+}
+
+- (void)flushWriteQueue {
+    DLog(@"flushWriteQueue: %@", _writeQueue);
+    if (!_writeQueue.length) {
+        return;
+    }
+    assert(_canWrite);
+    [delegate_ tmuxWriteString:_writeQueue];
+    _writeQueue = nil;
 }
 
 - (NSWindowController<iTermWindowController> *)window {

@@ -1052,11 +1052,6 @@
         return;
     }
 
-    // For performance, non-exit tmux lines are handled as side-effects. If tmux mode
-    // is exited because of an unexpected token, some number of subsequent tokens may take
-    // this path since the call to forceUnhookDCS happens concurrent to future token
-    // execution. But weird things always happens when tmux mode unexpectedly exits and
-    // it's worth the perf win.
     dispatch_async(dispatch_get_main_queue(), ^{
         DLog(@"on main queue for %@", token);
         id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
