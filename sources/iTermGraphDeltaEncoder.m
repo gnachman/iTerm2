@@ -11,6 +11,8 @@
 #import "NSArray+iTerm.h"
 #import "iTermOrderedDictionary.h"
 
+#import <AppKit/AppKit.h>
+
 @implementation iTermGraphDeltaEncoder
 
 - (instancetype)initWithPreviousRevision:(iTermEncoderGraphRecord * _Nullable)previousRevision {
@@ -73,7 +75,9 @@
     if (generation == iTermGenerationAlwaysEncode) {
         realGeneration = record.generation + 1;
     }
-    assert(record.generation < generation);
+    if (record.generation >= generation) {
+        ITCriticalError(NO, @"Generation mismatch detected!");
+    }
     iTermGraphEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithKey:key
                                                                   identifier:identifier
                                                                   generation:realGeneration

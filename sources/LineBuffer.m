@@ -138,6 +138,11 @@ static const NSInteger kUnicodeVersion = 9;
     max_lines = -1;
     num_wrapped_lines_width = -1;
     num_dropped_blocks = 0;
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Init line buffer %p", self);
+}
+
+- (void)dealloc {
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Dealloc line buffer %p", self);
 }
 
 // The designated initializer. We prefer not to expose the notion of block sizes to
@@ -1453,6 +1458,8 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     __block BOOL truncated = NO;
     __block NSInteger numLines = 0;
 
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Begin encoding blocks in linebuffer");
+
     iTermOrderedDictionary<NSString *, LineBlock *> *index =
     [iTermOrderedDictionary byMappingEnumerator:_lineBlocks.blocks.reverseObjectEnumerator
                                           block:^id _Nonnull(NSUInteger index,
@@ -1485,6 +1492,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
             return YES;
         }];
     }];
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Finished encoding blocks in linebuffer");
 
     return truncated;
 }
@@ -1547,6 +1555,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         [_lineBlocks sanityCheck:droppedChars];
     }
 
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Make temporary copy of line buffer %p", self);
     LineBlock *lastBlock = [_lineBlocks.blocks.lastObject cowCopy];
     const int savedMaxLines = max_lines;
     const int savedNumLines = num_wrapped_lines_cache;
@@ -1593,6 +1602,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (id)copyWithZone:(NSZone *)zone {
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Make shallow copy of line buffer %p", self);
     LineBuffer *theCopy = [[LineBuffer alloc] initWithBlockSize:block_size];
     theCopy->_lineBlocks = [_lineBlocks copy];
     theCopy->cursor_x = cursor_x;
@@ -1726,6 +1736,8 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (void)mergeFrom:(LineBuffer *)source {
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Merge line buffer %p into %p", source, self);
+
     // State used when debugging
     NSSet<NSNumber *> *commonWidths = nil;
     NSString *before = nil;

@@ -188,8 +188,15 @@ static inline void ModifyLineBlock(LineBlock *self,
 @synthesize progenitor = _progenitor;
 @synthesize absoluteBlockNumber = _absoluteBlockNumber;
 
-NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock) {
-    lineBlock->_generation += 1;
+static std::atomic<NSInteger> nextGeneration(0);
+
+NS_INLINE NSInteger iTermAllocateGeneration(void) {
+    return nextGeneration.fetch_add(1, std::memory_order_relaxed);
+}
+
+NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock, const char * reason) {
+    lineBlock->_generation = iTermAllocateGeneration();
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Set generation of %p to %@ for %s", lineBlock, @(lineBlock->_generation), reason);
 }
 
 - (instancetype)initWithCharacterBuffer:(iTermCharacterBuffer *)characterBuffer 
@@ -276,10 +283,10 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             data = dictionary[kLineBlockRawBufferV3Key];
         } else if (dictionary[kLineBlockRawBufferV2Key]) {
             data = [dictionary[kLineBlockRawBufferV2Key] migrateV2ToV3];
-            _generation = 1;
+            _generation = iTermAllocateGeneration();
         } else if (dictionary[kLineBlockRawBufferV1Key]) {
             data = [dictionary[kLineBlockRawBufferV1Key] migrateV1ToV3:&migrationIndex];
-            _generation = 1;
+            _generation = iTermAllocateGeneration();
         }
         if (!data || data.length / sizeof(screen_char_t) >= INT_MAX) {
             return nil;
@@ -321,12 +328,14 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 
         is_partial = [dictionary[kLineBlockIsPartialKey] boolValue];
         _mayHaveDoubleWidthCharacter = [dictionary[kLineBlockMayHaveDWCKey] boolValue];
+        AppendPinnedDebugLogMessage(@"LineBlockGen", @"Initialized %p at generation %@", self, @(_generation));
     }
     return self;
 }
 
 // NOTE: You must not acquire a lock in dealloc. Assume it is reentrant.
 - (void)dealloc {
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Dealloc %p", self);
     if ([self deinitializeClients]) {
         if (cumulative_line_lengths) {
             free((void *)cumulative_line_lengths);
@@ -411,6 +420,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         // Preserve these so delta encoding will continue to work when you encode a copy.
         theCopy->_generation = _generation;
         theCopy.hasBeenCopied = YES;
+        AppendPinnedDebugLogMessage(@"LineBlockGen", @"Make shallow copy %p -> %p with generation %@", self, theCopy, @(_generation));
 
         return theCopy;
     }
@@ -438,7 +448,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     theCopy->_generation = _generation;
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
     theCopy.hasBeenCopied = YES;
-    
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Make deep copy %p -> %p with generation %@", self, theCopy, @(_generation));
+
     return theCopy;
 }
 
@@ -801,7 +812,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     }
     is_partial = partial;
 
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "append line");
     return YES;
 }
 
@@ -1363,7 +1374,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     assert(_metadataArray.numEntries == cll_entries);
 
     cached_numlines_width = -1;
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "remove last raw line");
 }
 
 - (BOOL)popLastLineInto:(screen_char_t const **)ptr
@@ -1459,7 +1470,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
     // refresh cache
     cached_numlines_width = -1;
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "pop");
     return YES;
 }
 
@@ -1555,7 +1566,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         return;
     }
     is_partial = partial;
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "set partial");
 }
 
 - (void)shrinkToFit {
@@ -1631,7 +1642,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 #ifdef TEST_LINEBUFFER_SANITY
             [self checkAndResetCachedNumlines:"dropLines" width:width];
 #endif
-            iTermLineBlockDidChange(self);
+            iTermLineBlockDidChange(self, "drop");
             return orig_n;
         }
         prev = cll;
@@ -1644,7 +1655,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     [self setBufferStartOffset:0];
     _firstEntry = 0;
     *charsDropped = [self rawSpaceUsed];
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "drop lines");
     assert(_metadataArray.first == _firstEntry);
     assert(_metadataArray.numEntries == cll_entries);
     return orig_n - n;
@@ -1685,7 +1696,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 #ifdef TEST_LINEBUFFER_SANITY
     [self checkAndResetCachedNumlines:"dropLines" width:width];
 #endif
-    iTermLineBlockDidChange(self);
+    iTermLineBlockDidChange(self, "drop mirroring progenitor");
 }
 
 - (BOOL)isSynchronizedWithProgenitor {
@@ -2455,6 +2466,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 }
 
 - (NSDictionary *)dictionary {
+    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Dictionary for %p has generation %@", self, @(_generation));
     return @{ kLineBlockRawBufferV3Key: _characterBuffer.data,
               kLineBlockBufferStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockStartOffsetKey: @(self.bufferStartOffset),
@@ -2540,6 +2552,8 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
             [self.clients prune];
             return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
         }
+
+        AppendPinnedDebugLogMessage(@"LineBlockGen", @"Doing COW for block %p", self);
 
         NSArray<LineBlock *> *myClients = (NSArray<LineBlock *> *)self.clients.strongObjects;
         const NSUInteger numberOfClients = myClients.count;
