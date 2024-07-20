@@ -236,7 +236,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         dispatch_once(&onceToken, ^{
             mylog = os_log_create("com.googlecode.iterm2", "general");
         });
-        os_log(mylog, "%s", message.UTF8String);
+        os_log(mylog, "%{public}s", message.UTF8String);
         [GetDebugLogLock() unlock];
     }
     return 1;
