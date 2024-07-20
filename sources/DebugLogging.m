@@ -18,6 +18,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#import <os/log.h>
 
 static NSString *const kDebugLogFilename = @"/tmp/debuglog.txt";
 static NSString* gDebugLogHeader = nil;
@@ -221,15 +222,21 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         } else {
             lastSlash++;
         }
-        [gDebugLogStr appendFormat:@"%lld.%06lld %s:%d (%s): ",
-            (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
-        [gDebugLogStr appendString:value];
+        NSString *message = [NSString stringWithFormat:@"%lld.%06lld %s:%d (%s): %@",
+                             (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function, value];
+        [gDebugLogStr appendString:message];
         [gDebugLogStr appendString:@"\n"];
         static const NSInteger kMaxLogSize = 1000000000;
         if ([gDebugLogStr length] > kMaxLogSize) {
             [gDebugLogStr replaceCharactersInRange:NSMakeRange(0, kMaxLogSize / 2)
                                         withString:@"*GIANT LOG TRUNCATED*\n"];
         }
+        static os_log_t mylog;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            mylog = os_log_create("com.googlecode.iterm2", "general");
+        });
+        os_log(mylog, "%s", message.UTF8String);
         [GetDebugLogLock() unlock];
     }
     return 1;
