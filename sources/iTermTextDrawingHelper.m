@@ -1711,6 +1711,8 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                  withAttributes:(NSDictionary *)attributes
                              at:(NSPoint)pos
                   virtualOffset:(CGFloat)virtualOffset {
+    DLog(@"draw box character U+%04x. cell size is %@. Cell size without spacing is %@.", (int)theCharacter,
+         NSStringFromSize(self.cellSize), NSStringFromSize(self.cellSizeWithoutSpacing));
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     [ctx saveGraphicsState];
     NSAffineTransform *transform = [NSAffineTransform transform];

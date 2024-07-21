@@ -8,6 +8,7 @@
 
 #import "iTermBoxDrawingBezierCurveFactory.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "charmaps.h"
 #import "iTermImageCache.h"
@@ -689,8 +690,10 @@ color:(NSColor *)color {
     [color set];
     for (NSBezierPath *path in paths) {
         if (solid) {
+            DLog(@"fill %@", path);
             [path fill];
         } else {
+            DLog(@"stroke %@", path);
             [path setLineWidth:isPoints ? 1.0 : scale];
             [path stroke];
         }
@@ -1096,7 +1099,7 @@ color:(NSColor *)color {
             components = @"c1c4 e1e4 d4d7";
             break;
     }
-
+    DLog(@"Components for U+%04x are %@", code, components);
     if (!components) {
         return nil;
     }
@@ -1112,6 +1115,8 @@ color:(NSColor *)color {
                                                 scale:(CGFloat)scale
                                              isPoints:(BOOL)isPoints
                                                offset:(CGPoint)offset {
+    DLog(@"bezierPathForComponents:%@ cellSize:%@ scale:%f isPoints:%@ offset:%@",
+         components, NSStringFromSize(cellSize), scale, @(isPoints), NSStringFromPoint(offset));
     CGFloat horizontalCenter = cellSize.width / 2.0;
     CGFloat verticalCenter = cellSize.height / 2.0;
 
@@ -1185,24 +1190,34 @@ color:(NSColor *)color {
                            centerPoint(y) + offset.y);
     };
     while (i + 4 <= length) {
+        DLog(@"handle components %c, %c, %c, %c", bytes[i], bytes[i+1], bytes[i+2], bytes[i+3]);
         int x1 = bytes[i++] - 'a';
         int y1 = bytes[i++] - '1';
         int x2 = bytes[i++] - 'a';
         int y2 = bytes[i++] - '1';
-
+        DLog(@"(%d,%d) - (%d,%d) -> (%f,%f) - (%f,%f)", x1, y1, x2, y2,
+             xs[x1], ys[y1], xs[x2], ys[y2]);
         if (x1 != lastX || y1 != lastY) {
+            DLog(@"move to point");
             [path moveToPoint:makePoint((xs[x1]),
                                           (ys[y1]))];
         }
         if (i < length && isalpha(bytes[i])) {
+            DLog(@"handle controls %c, %c, %c, %c", bytes[i], bytes[i+1], bytes[i+2], bytes[i+3]);
+
             int cx1 = bytes[i++] - 'a';
             int cy1 = bytes[i++] - '1';
             int cx2 = bytes[i++] - 'a';
             int cy2 = bytes[i++] - '1';
+
+            DLog(@"controls: (%d,%d) ; (%d,%d) -> (%f,%f) ; (%f,%f)", cx1, cy1, cx2, cy2,
+                 xs[cx1], ys[cy1], xs[cx2], ys[cy2]);
+
             [path curveToPoint:makePoint((xs[x2]), (ys[y2]))
                  controlPoint1:makePoint((xs[cx1]), (ys[cy1]))
                  controlPoint2:makePoint((xs[cx2]), (ys[cy2]))];
         } else {
+            DLog(@"line to point");
             [path lineToPoint:makePoint((xs[x2]), (ys[y2]))];
         }
 
@@ -1211,7 +1226,7 @@ color:(NSColor *)color {
         lastX = x2;
         lastY = y2;
     }
-
+    DLog(@"return path %@", path);
     return @[ path ];
 }
 
