@@ -426,40 +426,57 @@ static double TimespecToSeconds(struct timespec* ts) {
     dispatch_async(dispatch_get_main_queue(), ^{ reply(@(rc), result); });
 }
 
+// When folders is true we only return folders. When it's false, we return anything.
 - (NSArray<NSString *> *)contentsOfDirectory:(NSString *)directory
                                   withPrefix:(NSString *)prefix
-                                  executable:(BOOL)executable {
+                                  executable:(BOOL)executable 
+                                     folders:(BOOL)folders {
     NSArray<NSString *> *relative = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:directory error:nil] ?: @[];
     NSMutableArray<NSString*> *result = [NSMutableArray array];
     for (NSString *path in relative) {
         if (prefix.length == 0 || [path.lastPathComponent hasPrefix:prefix]) {
             NSString *fullPath = [directory stringByAppendingPathComponent:path];
             if (!executable || [[NSFileManager defaultManager] isExecutableFileAtPath:fullPath]) {
-                [result addObject:fullPath];
+                if (!folders || [self fileIsFolder:fullPath]) {
+                    [result addObject:fullPath];
+                }
             }
         }
     }
     return result;
 }
 
+- (BOOL)fileIsFolder:(NSString *)path {
+    BOOL isFolder = NO;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isFolder]) {
+        return NO;
+    }
+    return isFolder;
+}
+
 - (NSArray<NSString *> *)reallyFindCompletionsWithPrefix:(NSString *)prefix
                                              inDirectory:(NSString *)directory
                                                 maxCount:(NSInteger)maxCount
-                                              executable:(BOOL)executable {
+                                              executable:(BOOL)executable
+                                                 folders:(BOOL)folders {
     if (![prefix hasPrefix:@"/"] && [directory hasPrefix:@"/"]) {
         // Can't use stringByAppendingPathComponent: because it doesn't do anything if prefix is
         // empty and we always want to append a / to directory.
         NSArray<NSString *> *temp = [self reallyFindCompletionsWithPrefix:[NSString stringWithFormat:@"%@/%@", directory, prefix]
                                                               inDirectory:@""
                                                                  maxCount:maxCount
-                                                               executable:executable];
+                                                               executable:executable
+                                                                  folders:folders];
         NSString *prefixToRemove = [directory hasSuffix:@"/"] ? directory : [directory stringByAppendingString:@"/"];
         return [self array:temp byRemovingPrefix:prefixToRemove];
     }
 
     // If prefix is the exact name of a directory, return its contents.
     if ([prefix hasSuffix:@"/"]) {
-        return [self contentsOfDirectory:prefix withPrefix:@"" executable:executable];
+        return [self contentsOfDirectory:prefix 
+                              withPrefix:@""
+                              executable:executable
+                                 folders:folders];
     }
 
     NSMutableArray<NSString *> *results = [NSMutableArray array];
@@ -477,7 +494,8 @@ static double TimespecToSeconds(struct timespec* ts) {
 
     [results addObjectsFromArray:[self contentsOfDirectory:container
                                                 withPrefix:prefix.lastPathComponent
-                                                executable:executable]];
+                                                executable:executable
+                                                   folders:folders]];
     return results;
 }
 
@@ -498,6 +516,16 @@ static double TimespecToSeconds(struct timespec* ts) {
             return;
         }
         NSMutableArray<NSString *> *combined = [NSMutableArray array];
+
+        // Seach for subdirectories.
+        NSArray<NSString *> *temp = [[self reallyFindCompletionsWithPrefix:prefix
+                                                               inDirectory:pwd
+                                                                  maxCount:maxCount
+                                                                executable:YES
+                                                                   folders:YES] sortedArrayUsingSelector:@selector(compare:)];
+        [combined addObjectsFromArray:[self array:temp byRemovingPrefix:prefix]];
+
+        // Search each provided directory.
         for (NSString *relativeDirectory in directories) {
             NSString *directory;
             if ([relativeDirectory hasPrefix:@"/"]) {
@@ -511,7 +539,8 @@ static double TimespecToSeconds(struct timespec* ts) {
             NSArray<NSString *> *temp = [[self reallyFindCompletionsWithPrefix:prefix
                                                                    inDirectory:directory
                                                                       maxCount:maxCount
-                                                                    executable:executable] sortedArrayUsingSelector:@selector(compare:)];
+                                                                    executable:executable
+                                                                       folders:NO] sortedArrayUsingSelector:@selector(compare:)];
             [combined addObjectsFromArray:[self array:temp byRemovingPrefix:prefix]];
             if (combined.count > maxCount) {
                 break;

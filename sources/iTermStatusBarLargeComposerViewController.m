@@ -494,6 +494,7 @@
                              completion:(void (^)(NSArray<NSString *> *, NSArray<NSString *> *))completionBlock {
     const BOOL autocompleteSupported = [self.delegate largeComposerViewControllerShouldFetchSuggestions:self forHost:self.host tmuxController:self.tmuxController];
     if (!autocompleteSupported) {
+        DLog(@"Autocomplete not supported");
         NSString *historySuggestion = [[self historySuggestionForPrefix:command] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]];
 
         if (historySuggestion) {
@@ -508,24 +509,30 @@
         return 0;
     }
 
+    DLog(@"Autocomplete is supported");
     NSArray<NSString *> *words = [command componentsInShellCommand];
     const BOOL onFirstWord = words.count < 2;
     NSString *const prefix = [command hasSuffix:@" "] ? @"" : words.lastObject;
     const NSInteger generation = ++_completionGeneration;
     NSArray<NSString *> *directories;
     if (onFirstWord) {
-        // TODO: Get search paths from remote host when ssh integration is in use.
+        DLog(@"On first word");
         if (self.host.isLocalhost) {
+            DLog(@"On localhost");
             NSString *shell = [iTermOpenDirectory userShell];
             iTermSearchPathsCacheEntry *entry = self.cache[shell];
             NSArray<NSString *> *paths = nil;
             if (entry.ready) {
                 paths = entry.paths;
             }
-            directories = paths ?: @[self.workingDirectory ?: NSHomeDirectory()];
+            directories = paths ?: @[NSHomeDirectory()];
         } else {
+            DLog(@"On remote host %@", self.host);
             directories = [[self.delegate largeComposerViewController:self
                                            valueOfEnvironmentVariable:@"PATH"] componentsSeparatedByString:@":"];
+        }
+        if ([command containsString:@"/"]) {
+            directories = [@[self.workingDirectory] arrayByAddingObjectsFromArray:directories];
         }
     } else {
         directories = @[self.workingDirectory ?: NSHomeDirectory()];

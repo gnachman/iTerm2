@@ -245,13 +245,19 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                               pwd:(NSString *)pwd
                          maxCount:(NSInteger)maxCount
                        executable:(BOOL)executable
-                       completion:(void (^)(NSArray<NSString *> *))completions {
+                       completion:(void (^)(NSArray<NSString *> *))completion {
+    DLog(@"findCompletionsWithPrefix:%@ inDirectories:%@ pwd:%@ maxCount:%@ executable:%@",
+         prefix, directories, pwd, @(maxCount), @(executable));
     [[_connectionToService remoteObjectProxy] findCompletionsWithPrefix:prefix
                                                           inDirectories:directories
                                                                     pwd:pwd
                                                                maxCount:maxCount
                                                              executable:executable
-                                                              withReply:completions];
+                                                              withReply:^(NSArray<NSString *> * completions) {
+        DLog(@"findCompletionsWithPrefix:%@ inDirectories:%@ pwd:%@ maxCount:%@ executable:%@ -> %@",
+             prefix, directories, pwd, @(maxCount), @(executable), completions);
+        completion(completions);
+    }];
 }
 
 - (void)requestGitStateForPath:(NSString *)path
