@@ -2751,6 +2751,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (!term.window.isVisible) {
         return NO;
     }
+    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
+        // Issue 11739
+        return NO;
+    }
     return term.currentSession.isTmuxClient && term.currentSession.tmuxController == self;
 }
 
