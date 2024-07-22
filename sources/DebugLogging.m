@@ -54,9 +54,11 @@ static NSString *iTermMachineInfo(void) {
 static NSString *iTermScreensInfo(void) {
     NSMutableArray<NSString *> *infos = [NSMutableArray array];
     for (NSScreen *screen in [NSScreen screens]) {
-        [infos addObject:NSStringFromRect(screen.frame)];
+        [infos addObject:[NSString stringWithFormat:@"%@%@: %@ @ %@x",
+                          [screen isEqual:NSScreen.mainScreen] ? @"[Main] " : @"",
+                          screen.localizedName, NSStringFromRect(screen.frame), @(screen.backingScaleFactor)]];
     }
-    return [infos componentsJoinedByString:@"     "];
+    return [infos componentsJoinedByString:@"; "];
 }
 
 static NSString *iTermOSVersionInfo(void) {
