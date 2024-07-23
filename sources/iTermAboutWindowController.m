@@ -42,9 +42,11 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
                                                           owner:container
                                                        userInfo:nil];
     [view addTrackingArea:sponsor.trackingArea];
-    NSDictionary *underlineAttribute = @{NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle)};
-    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:[textField stringValue] attributes:underlineAttribute];
-    [textField setAttributedStringValue:attributedString];
+    if (textField) {
+        NSDictionary *underlineAttribute = @{NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle)};
+        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:[textField stringValue] attributes:underlineAttribute];
+        [textField setAttributedStringValue:attributedString];
+    }
     return sponsor;
 }
 
@@ -63,8 +65,9 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     IBOutlet NSTextView *_sponsorsHeading;
 
     IBOutlet NSView *_whitebox;
-
     IBOutlet NSTextField *_whiteboxText;
+
+    IBOutlet NSView *_latchBio;
 
     NSArray<iTermSponsor *> *_sponsors;
 }
@@ -90,7 +93,11 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     _sponsors = @[ [iTermSponsor sponsorWithView:_whitebox
                                        textField:_whiteboxText
                                        container:self
-                                             url:@"https://whitebox.so/?utm_source=iTerm2"] ];
+                                             url:@"https://whitebox.so/?utm_source=iTerm2"],
+                   [iTermSponsor sponsorWithView:_latchBio
+                                       textField:nil
+                                       container:self
+                                             url:@"https://latch.bio/"]];
 }
 
 
