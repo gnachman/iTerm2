@@ -18,6 +18,8 @@
 static const CGFloat iTermNetworkUtilizationWidth = 170;
 static NSString *const iTermStatusBarNetworkUtilizationComponentKnobKeyDownloadColor = @"Network download color";
 static NSString *const iTermStatusBarNetworkUtilizationComponentKnobKeyUploadColor = @"Network upload color";
+static NSString *const iTermStatusBarNetworkUtilizationComponentKnobKeyDownloadTextColor = @"Network download text color";
+static NSString *const iTermStatusBarNetworkUtilizationComponentKnobKeyUploadTextColor = @"Network upload text color";
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -47,6 +49,13 @@ NS_ASSUME_NONNULL_BEGIN
                                                    placeholder:nil
                                                   defaultValue:nil
                                                            key:iTermStatusBarNetworkUtilizationComponentKnobKeyDownloadColor];
+
+    iTermStatusBarComponentKnob *downloadTextColorKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Download Text Color:"
+                                                          type:iTermStatusBarComponentKnobTypeColor
+                                                   placeholder:nil
+                                                  defaultValue:nil
+                                                           key:iTermStatusBarNetworkUtilizationComponentKnobKeyDownloadTextColor];
     iTermStatusBarComponentKnob *uploadColorKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Upload Color:"
                                                           type:iTermStatusBarComponentKnobTypeColor
@@ -54,7 +63,14 @@ NS_ASSUME_NONNULL_BEGIN
                                                   defaultValue:nil
                                                            key:iTermStatusBarNetworkUtilizationComponentKnobKeyUploadColor];
 
-    return [knobs arrayByAddingObjectsFromArray:@[downloadColorKnob, uploadColorKnob]];
+    iTermStatusBarComponentKnob *uploadTextColorKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Upload Text Color:"
+                                                          type:iTermStatusBarComponentKnobTypeColor
+                                                   placeholder:nil
+                                                  defaultValue:nil
+                                                           key:iTermStatusBarNetworkUtilizationComponentKnobKeyUploadTextColor];
+
+    return [knobs arrayByAddingObjectsFromArray:@[downloadColorKnob, downloadTextColorKnob, uploadColorKnob, uploadTextColorKnob]];
 }
 
 - (nullable NSImage *)statusBarComponentIcon {
@@ -136,15 +152,21 @@ NS_ASSUME_NONNULL_BEGIN
     return self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
 }
 
+- (NSColor *)colorForKey:(NSString *)key {
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    return [knobValues[key] colorValue];
+}
+
 - (NSDictionary *)leftAttributes {
     NSMutableParagraphStyle *leftAlignStyle =
         [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
     [leftAlignStyle setAlignment:NSTextAlignmentLeft];
     [leftAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
 
+    NSColor *textColor = [self colorForKey:iTermStatusBarNetworkUtilizationComponentKnobKeyDownloadTextColor] ?: self.textColor;
     return @{ NSParagraphStyleAttributeName: leftAlignStyle,
               NSFontAttributeName: self.font,
-              NSForegroundColorAttributeName: self.textColor };
+              NSForegroundColorAttributeName: textColor };
 }
 
 - (NSDictionary *)rightAttributes {
@@ -152,9 +174,10 @@ NS_ASSUME_NONNULL_BEGIN
         [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
     [rightAlignStyle setAlignment:NSTextAlignmentRight];
     [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+    NSColor *textColor = [self colorForKey:iTermStatusBarNetworkUtilizationComponentKnobKeyUploadTextColor] ?: self.textColor;
     return @{ NSParagraphStyleAttributeName: rightAlignStyle,
               NSFontAttributeName: self.font,
-              NSForegroundColorAttributeName: self.textColor };
+              NSForegroundColorAttributeName: textColor };
 }
 
 - (NSString * _Nullable)leftText {
