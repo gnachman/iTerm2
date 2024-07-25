@@ -48,9 +48,24 @@ static inline void CDLogImpl(const int level, const char *func, const char *file
     free(temp);
 }
 
+static inline void iTermConsoleLogImpl(const int level, const char *func, const char *file, int line, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    char *temp = NULL;
+
+    asprintf(&temp, "iTerm2Log(pid=%d) %s:%d %s: %s", getpid(), file, line, func, format);
+    vsyslog(level, temp, args);
+
+    va_end(args);
+    free(temp);
+}
+
 // Unified client-server logging function.
 // If client, writes to the debug log.
 // If server, writes to syslog.
 #define FDLog(level, args...) CDLogImpl(level, __FUNCTION__, __FILE__, __LINE__, args)
+
+// This logs unconditionally, even if debug logging is off.
+#define iTermConsoleLog(level, args...) iTermConsoleLogImpl(level, __FUNCTION__, __FILE__, __LINE__, args)
 
 #endif  // ITERMCELOGGING_H

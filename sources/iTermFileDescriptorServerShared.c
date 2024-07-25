@@ -7,6 +7,7 @@
 
 #include "iTermFileDescriptorServerShared.h"
 
+#include "DebugLogging.h"
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -348,6 +349,13 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
 
     struct sockaddr_un local;
     local.sun_family = AF_UNIX;
+
+    iTermConsoleLog(LOG_NOTICE,
+          "Desired path %s has length+1 of %ld and sizeof sockaddr_un.sun_family is %lld",
+          path,
+          strlen(path) + 1,
+          (uint64_t)sizeof(local.sun_path));
+
     assert((uint64_t)strlen(path) + 1 < (uint64_t)sizeof(local.sun_path));
     strcpy(local.sun_path, path);
     unlink(local.sun_path);
