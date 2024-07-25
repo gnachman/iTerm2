@@ -1,5 +1,2 @@
 #!/bin/bash
 
-if tools/check-xcode-version; then
-#  make -j$(sysctl -n hw.ncpu) paranoiddeps && xcodebuild -version > last-xcode-version
-fi
