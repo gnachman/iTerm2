@@ -196,7 +196,7 @@ NS_INLINE NSInteger iTermAllocateGeneration(void) {
 
 NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock, const char * reason) {
     lineBlock->_generation = iTermAllocateGeneration();
-    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Set generation of %p to %@ for %s", lineBlock, @(lineBlock->_generation), reason);
+    iTermConsoleLogObjC(@"Set generation of %p to %@ for %s", lineBlock, @(lineBlock->_generation), reason);
 }
 
 - (instancetype)initWithCharacterBuffer:(iTermCharacterBuffer *)characterBuffer 
@@ -328,14 +328,14 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
 
         is_partial = [dictionary[kLineBlockIsPartialKey] boolValue];
         _mayHaveDoubleWidthCharacter = [dictionary[kLineBlockMayHaveDWCKey] boolValue];
-        AppendPinnedDebugLogMessage(@"LineBlockGen", @"Initialized %p at generation %@", self, @(_generation));
+        iTermConsoleLogObjC(@"Initialized %p at generation %@", self, @(_generation));
     }
     return self;
 }
 
 // NOTE: You must not acquire a lock in dealloc. Assume it is reentrant.
 - (void)dealloc {
-    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Dealloc %p", self);
+    iTermConsoleLogObjC(@"Dealloc %p", self);
     if ([self deinitializeClients]) {
         if (cumulative_line_lengths) {
             free((void *)cumulative_line_lengths);
@@ -420,7 +420,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
         // Preserve these so delta encoding will continue to work when you encode a copy.
         theCopy->_generation = _generation;
         theCopy.hasBeenCopied = YES;
-        AppendPinnedDebugLogMessage(@"LineBlockGen", @"Make shallow copy %p -> %p with generation %@", self, theCopy, @(_generation));
+        iTermConsoleLogObjC(@"Make shallow copy %p -> %p with generation %@", self, theCopy, @(_generation));
 
         return theCopy;
     }
@@ -448,7 +448,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     theCopy->_generation = _generation;
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
     theCopy.hasBeenCopied = YES;
-    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Make deep copy %p -> %p with generation %@", self, theCopy, @(_generation));
+    iTermConsoleLogObjC(@"Make deep copy %p -> %p with generation %@", self, theCopy, @(_generation));
 
     return theCopy;
 }
@@ -2466,7 +2466,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 }
 
 - (NSDictionary *)dictionary {
-    AppendPinnedDebugLogMessage(@"LineBlockGen", @"Dictionary for %p has generation %@", self, @(_generation));
+    iTermConsoleLogObjC(@"Dictionary for %p has generation %@", self, @(_generation));
     return @{ kLineBlockRawBufferV3Key: _characterBuffer.data,
               kLineBlockBufferStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockStartOffsetKey: @(self.bufferStartOffset),
@@ -2553,7 +2553,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
             return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
         }
 
-        AppendPinnedDebugLogMessage(@"LineBlockGen", @"Doing COW for block %p", self);
+        iTermConsoleLogObjC(@"Doing COW for block %p", self);
 
         NSArray<LineBlock *> *myClients = (NSArray<LineBlock *> *)self.clients.strongObjects;
         const NSUInteger numberOfClients = myClients.count;

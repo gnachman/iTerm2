@@ -60,6 +60,22 @@ static inline void iTermConsoleLogImpl(const int level, const char *func, const 
     free(temp);
 }
 
+#ifdef __OBJC__
+static inline void iTermConsoleLogObjCImpl(const int level, const char *func, const char *file, int line, NSString *format, ...) {
+    va_list args;
+    va_start(args, format);
+    NSString *formattedString = [[NSString alloc] initWithFormat:format arguments:args];
+
+    char *temp = NULL;
+    asprintf(&temp, "iTerm2Log(pid=%d) %s:%d %s: %s", getpid(), file, line, func, formattedString.UTF8String);
+    syslog(level, "%s", temp);
+
+    va_end(args);
+    free(temp);
+}
+#define iTermConsoleLogObjC(args...) iTermConsoleLogObjCImpl(LOG_NOTICE, __FUNCTION__, __FILE__, __LINE__, args)
+#endif
+
 // Unified client-server logging function.
 // If client, writes to the debug log.
 // If server, writes to syslog.
@@ -67,5 +83,6 @@ static inline void iTermConsoleLogImpl(const int level, const char *func, const 
 
 // This logs unconditionally, even if debug logging is off.
 #define iTermConsoleLog(level, args...) iTermConsoleLogImpl(level, __FUNCTION__, __FILE__, __LINE__, args)
+
 
 #endif  // ITERMCELOGGING_H
