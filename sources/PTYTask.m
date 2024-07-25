@@ -85,11 +85,14 @@ static void HandleSigChld(int n) {
         writeLock = [[NSLock alloc] init];
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
             if ([iTermMultiServerJobManager available]) {
+                iTermConsoleLog(LOG_NOTICE, "Multi-server job manager is available");
                 self.jobManager = [[iTermMultiServerJobManager alloc] initWithQueue:_jobManagerQueue];
             } else {
+                iTermConsoleLog(LOG_NOTICE, "Multi-server job manager is not available. Fall back to monoserver.");
                 self.jobManager = [[iTermMonoServerJobManager alloc] initWithQueue:_jobManagerQueue];
             }
         } else {
+            iTermConsoleLog(LOG_NOTICE, "Not using servers at all");
             self.jobManager = [[iTermLegacyJobManager alloc] initWithQueue:_jobManagerQueue];
         }
         self.fd = -1;

@@ -14,6 +14,7 @@
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "TaskNotifier.h"
+#import <os/log.h>
 #include <sys/un.h>
 
 @class iTermMultiServerConnectionState;
@@ -247,7 +248,14 @@
 
 + (BOOL)pathIsSafe:(NSString *)path {
     struct sockaddr_un addr;
-    return (strlen(path.UTF8String) + 1 <= sizeof(addr.sun_path));
+    BOOL result = (strlen(path.UTF8String) + 1 <= sizeof(addr.sun_path));
+    iTermConsoleLog(LOG_NOTICE,
+          "Check if path %s is safe. UTF-8 strlen + 1 is %lu, sizeof sockaddr_un.sun_path is %lu, result is %d",
+          path.UTF8String,
+          strlen(path.UTF8String) + 1,
+          sizeof(addr.sun_path),
+          (int)result);
+    return result;
 }
 
 + (NSString *)pathForNumber:(int)number {
@@ -258,13 +266,17 @@
     NSString *normalFilename = [NSString stringWithFormat:@"iterm2-daemon-%d.socket", number];
     NSURL *normalURL = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:normalFilename];
     if ([self pathIsSafe:normalURL.path] && [[NSFileManager defaultManager] directoryIsWritable:appSupportPath]) {
+        iTermConsoleLog(LOG_NOTICE,
+              "Using %s for number %d", normalURL.path.UTF8String, number);
         return normalURL.path;
     }
+    iTermConsoleLog(LOG_NOTICE, "Normal URL %s is too long", normalURL.absoluteString.UTF8String);
 
     NSString *homedir = NSHomeDirectory();
     NSString *dotdir = [homedir stringByAppendingPathComponent:@".iterm2"];
     NSString *shortFilename = [NSString stringWithFormat:@"%d.socket", number];
     NSURL *shortURL = [[NSURL fileURLWithPath:dotdir] URLByAppendingPathComponent:shortFilename];
+    iTermConsoleLog(LOG_NOTICE, "Short URL is %@", shortURL.absoluteString.UTF8String);
 
     BOOL isdir = NO;
 
@@ -272,19 +284,23 @@
     // NOTE: If this fails we return the known-to-be-too-long normal path. It is important to check
     // that the path is legal before using it.
     if (![[NSFileManager defaultManager] fileExistsAtPath:dotdir isDirectory:&isdir]) {
+        iTermConsoleLog(LOG_NOTICE, "Short URL folder doesn't exist");
         NSError *error = nil;
         [[NSFileManager defaultManager] createDirectoryAtPath:dotdir withIntermediateDirectories:NO attributes:nil error:&error];
         if (error) {
+            iTermConsoleLog(LOG_NOTICE, "Failed to create %s: %s", dotdir.UTF8String, error.debugDescription.UTF8String);
             // Failed to create it.
             // check.
             return normalURL.path;
         }
     }
     if (!isdir) {
+        iTermConsoleLog(LOG_NOTICE, "Short URL is a regular file");
         // Can't put a directory there because a file already exists.
         return normalURL.path;
     }
 
+    iTermConsoleLog(LOG_NOTICE, "Use short url's path %@", shortURL.path.UTF8String);
     return shortURL.path;
 }
 
