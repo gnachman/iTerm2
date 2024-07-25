@@ -5153,11 +5153,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return NO;
 }
 
-- (NSArray<iTermTerminalButton *> *)drawingHelperTerminalButtons  API_AVAILABLE(macos(11)){
+- (NSArray<iTermTerminalButton *> *)drawingHelperTerminalButtons NS_AVAILABLE_MAC(11_0) {
     return [self terminalButtons];
 }
 
-- (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11)) {
+- (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button NS_AVAILABLE_MAC(11_0) {
     if (!button.mark) {
         NSInteger y = button.transientAbsY;
         if (y >= 0) {

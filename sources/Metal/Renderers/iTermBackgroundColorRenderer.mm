@@ -38,6 +38,9 @@
 - (void)enumerateSegments:(void (^NS_NOESCAPE)(const iTermBackgroundColorPIU *, size_t))block {
     const int n = _pius.get_number_of_segments();
     for (int segment = 0; segment < n; segment++) {
+        if (_pius.size_of_segment(segment) == 0) {
+            continue;
+        }
         const iTermBackgroundColorPIU *array = _pius.start_of_segment(segment);
         size_t size = _pius.size_of_segment(segment);
         block(array, size);

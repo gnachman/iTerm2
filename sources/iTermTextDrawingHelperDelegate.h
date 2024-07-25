@@ -67,8 +67,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSScrollView * _Nullable)enclosingScrollView;
 
 - (BOOL)drawingHelperShouldPadBackgrounds:(out NSSize *)padding;
-- (NSArray<iTermTerminalButton *> *)drawingHelperTerminalButtons;
-- (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11));
+- (NSArray<iTermTerminalButton *> *)drawingHelperTerminalButtons NS_AVAILABLE_MAC(11_0);
+- (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button NS_AVAILABLE_MAC(11_0);
 
 @end
 
