@@ -678,16 +678,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *getHotkeysCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hotkeys", sessionId_];
     NSString *getTabColorsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @tab_colors", sessionId_];
     NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hidden", sessionId_];
+    const BOOL autoHideGateway = [iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession];
     NSArray *commands = @[ [gateway_ dictionaryForCommand:getSessionGuidCommand
                                            responseTarget:self
                                          responseSelector:@selector(getSessionGuidResponse:)
                                            responseObject:nil
                                                     flags:0],
-			   [gateway_ dictionaryForCommand:setSizeCommand
-                               responseTarget:nil
-                             responseSelector:nil
-                               responseObject:nil
-                                        flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           autoHideGateway ? [NSNull null] : [gateway_ dictionaryForCommand:setSizeCommand
+                                                                             responseTarget:nil
+                                                                           responseSelector:nil
+                                                                             responseObject:nil
+                                                                                      flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:getHiddenWindowsCommand
                                            responseTarget:self
                                          responseSelector:@selector(getHiddenWindowsResponse:)
