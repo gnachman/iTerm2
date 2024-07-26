@@ -247,7 +247,7 @@
 
 + (BOOL)pathIsSafe:(NSString *)path {
     struct sockaddr_un addr;
-    return (strlen(path.UTF8String) + 1 <= sizeof(addr.sun_path));
+    return (strlen(path.UTF8String) + 1 < sizeof(addr.sun_path));
 }
 
 + (NSString *)pathForNumber:(int)number {
