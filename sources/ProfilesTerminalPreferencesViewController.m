@@ -45,6 +45,7 @@
     IBOutlet NSButton *_forceCommandPromptToFirstColumn;
     IBOutlet NSButton *_showMarkIndicators;
     IBOutlet NSButton *_showOffscreenCommandLine;
+    IBOutlet NSButton *_shellIntegrationRequiredButton;
     IBOutlet NSButton *_allowCursorBlinkControlSequence;
 
     IBOutlet NSPanel *_filterAlertsPanel;
@@ -249,7 +250,9 @@
                     key:KEY_SHOW_OFFSCREEN_COMMANDLINE
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-
+    if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
+        _shellIntegrationRequiredButton.hidden = YES;
+    }
     [self addViewToSearchIndex:_filterAlertsButton
                    displayName:@"Filter alerts"
                        phrases:@[ @"bell", @"idle", @"session ended", @"new output"]
@@ -401,6 +404,15 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
         [self setString:locale forKey:KEY_CUSTOM_LOCALE];
         [self updateCustomLocaleControls];
     }
+}
+
+- (IBAction)shellIntegrationRequired:(id)sender {
+    NSString *html = @"This feature requires shell integration to be installed. <a href=\"https://iterm2.com/documentation-shell-integration.html\">Learn more.</a>";
+    NSAttributedString *attributedString = [NSAttributedString attributedStringWithHTML:html
+                                                                                   font:[NSFont systemFontOfSize:[NSFont systemFontSize]]
+                                                                         paragraphStyle:[NSParagraphStyle defaultParagraphStyle]];
+    [_shellIntegrationRequiredButton it_showWarningWithAttributedString:attributedString
+                                                                   rect:_shellIntegrationRequiredButton.bounds];
 }
 
 @end
