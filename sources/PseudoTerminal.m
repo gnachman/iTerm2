@@ -2251,6 +2251,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *session = self.currentSession;
     MutableProfile *profile = [[session.profile mutableCopy] autorelease];
     NSArray<iTermSSHReconnectionInfo *> *pendingJumps = nil;
+    Profile *original = [profile copy];
     if (session.sshIdentity) {
         NSArray<iTermSSHReconnectionInfo *> *sequence = session.sshCommandLineSequence;
         if ([profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
@@ -2280,6 +2281,14 @@ ITERM_WEAKLY_REFERENCEABLE
     } else if (session.currentLocalWorkingDirectory) {
         profile[KEY_CUSTOM_DIRECTORY] = @"Yes";
         profile[KEY_WORKING_DIRECTORY] = session.currentLocalWorkingDirectory;
+    }
+    if (session.isDivorced || ![profile isEqual:original]) {
+        if (!session.isDivorced && !profile[KEY_ORIGINAL_GUID]) {
+            profile[KEY_ORIGINAL_GUID] = profile[KEY_GUID];
+        }
+        // This will cause it to get a new sessions-instance profile and be divorced when the
+        // session is created from the arrangement. See +[PTYSession sessionFromArrangement:…].
+        profile[KEY_GUID] = [[NSUUID UUID] UUIDString];
     }
     DLog(@"Will use profile:\n%@", profile);
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
