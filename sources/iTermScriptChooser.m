@@ -54,8 +54,15 @@
         _identityButton.translatesAutoresizingMaskIntoConstraints = NO;
         _identityButton.enabled = NO;
         [self addSubview:_identityButton];
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"MM-dd-yyyy"
+                                                                   options:0
+                                                                    locale:[NSLocale currentLocale]];
         [_identities enumerateObjectsUsingBlock:^(SIGIdentity * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:obj.signingCertificate.longDescription
+            NSString *formattedDate = [dateFormatter stringFromDate:obj.signingCertificate.expirationDate];
+            NSString *title = [NSString stringWithFormat:@"%@, expires %@",
+                               obj.signingCertificate.longDescription, formattedDate];
+            NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:title
                                                               action:nil
                                                        keyEquivalent:@""];
             menuItem.tag = idx;

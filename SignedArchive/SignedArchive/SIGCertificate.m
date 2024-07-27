@@ -94,6 +94,23 @@
     return value;
 }
 
+- (NSDate *)expirationDate {
+    CFArrayRef keys = CFArrayCreate(NULL, (const void **)&kSecOIDInvalidityDate, 1, &kCFTypeArrayCallBacks);
+    CFDictionaryRef result = SecCertificateCopyValues(_secCertificate, keys, NULL);
+    NSDate *date = nil;
+    if (result != NULL) {
+        CFDictionaryRef invalidityDateDictionary = CFDictionaryGetValue(result, kSecOIDInvalidityDate);
+        if (invalidityDateDictionary) {
+            CFTypeRef value = CFDictionaryGetValue(invalidityDateDictionary, kSecPropertyKeyValue);
+            date = (__bridge NSDate *)value;
+        }
+        CFRelease(result);
+    }
+    CFRelease(keys);
+
+    return date;
+}
+
 - (NSData *)serialNumber {
     CFErrorRef error = NULL;
     NSData *value;
