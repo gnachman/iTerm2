@@ -527,6 +527,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
+    if (item.action == @selector(terminalStateSetEmulationLevel:)) {
+        item.state = [self.delegate textViewTerminalStateEmulationLevel] == item.tag;
+        return YES;
+    }
     if (item.action == @selector(terminalStateReset:)) {
         return YES;
     }
@@ -3224,6 +3228,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 #pragma mark - Miscellaneous Actions
+
+- (IBAction)terminalStateSetEmulationLevel:(id)sender {
+    [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
+}
 
 - (IBAction)terminalStateToggleLiteralMode:(id)sender {
     [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];

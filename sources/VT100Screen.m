@@ -1572,6 +1572,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.terminalLiteralMode;
 }
 
+- (iTermEmulationLevel)terminalEmulationLevel {
+    return _state.terminalEmulationLevel;
+}
 - (BOOL)terminalReportFocus {
     return _state.terminalReportFocus;
 }

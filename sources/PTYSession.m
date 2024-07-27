@@ -11174,6 +11174,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _screen.terminalSoftAlternateScreenMode;
 }
 
+- (iTermEmulationLevel)textViewTerminalStateEmulationLevel {
+    return _screen.terminalEmulationLevel;
+}
+
 // NOTE: Make sure to update both the context menu and the main menu when modifying these.
 - (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem {
     switch (menuItem.tag) {
@@ -11215,6 +11219,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
         case 13:
             return _screen.terminalLiteralMode;
+
+        case iTermEmulationLevel100:
+        case iTermEmulationLevel200:
+        case iTermEmulationLevel300:
+        case iTermEmulationLevel400:
+        case iTermEmulationLevel500:
+            return _screen.terminalEmulationLevel == menuItem.tag;
     }
 
     return NO;
@@ -11288,6 +11299,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
             case 13:
                 terminal.literalMode = !terminal.literalMode;
+                break;
+
+            case iTermEmulationLevel100:
+            case iTermEmulationLevel200:
+            case iTermEmulationLevel300:
+            case iTermEmulationLevel400:
+            case iTermEmulationLevel500:
+                [terminal setEmulationLevel:(iTermEmulationLevel)tag];
                 break;
         }
     }];

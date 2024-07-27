@@ -213,4 +213,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalResetReason) {
 // Call this after changing the graphic rendition externally;
 - (void)updateDefaultChar;
 
+@property (nonatomic) iTermEmulationLevel emulationLevel;
+
 @end

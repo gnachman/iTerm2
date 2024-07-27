@@ -202,11 +202,15 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(VT100CSI_DECSEL):                 @"VT100CSI_DECSEL",
                 @(VT100CSI_DECSCA):                 @"VT100CSI_DECSCA",
                 @(VT100CSI_DECRQDE):                @"VT100CSI_DECRQDE",
+                @(VT100CSI_DECSCL):                 @"VT100CSI_DECSCL",
+
                 @(VT100_DECFI):                     @"VT100_DECFI",
                 @(VT100_DECBI):                     @"VT100_DECBI",
                 @(VT100CSI_PUSH_KEY_REPORTING_MODE):@"VT100CSI_PUSH_KEY_REPORTING_MODE",
                 @(VT100CSI_POP_KEY_REPORTING_MODE): @"VT100CSI_POP_KEY_REPORTING_MODE",
                 @(VT100CSI_QUERY_KEY_REPORTING_MODE):@"VT100CSI_QUERY_KEY_REPORTING_MODE",
+                @(VT100CSI_DECST8C):                @"VT100CSI_DECST8C",
+
                 @(XTERMCC_WIN_TITLE):               @"XTERMCC_WIN_TITLE",
                 @(XTERMCC_ICON_TITLE):              @"XTERMCC_ICON_TITLE",
                 @(XTERMCC_WINICON_TITLE):           @"XTERMCC_WINICON_TITLE",
@@ -274,6 +278,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(ANSICSI_RCP):                     @"ANSICSI_RCP",
                 @(ANSICSI_CBT):                     @"ANSICSI_CBT",
                 @(ANSI_RIS):                        @"ANSI_RIS",
+
                 @(STRICT_ANSI_MODE):                @"STRICT_ANSI_MODE",
                 @(ITERM_USER_NOTIFICATION):                     @"ITERM_USER_NOTIFICATION",
                 @(DCS_TMUX_HOOK):                   @"DCS_TMUX_HOOK",

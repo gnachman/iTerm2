@@ -228,6 +228,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewDidHighlightMark;
 - (BOOL)textViewInInteractiveApplication;
 - (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem;
+- (iTermEmulationLevel)textViewTerminalStateEmulationLevel;
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (void)textViewResetTerminal;
 - (CGRect)textViewRelativeFrame;

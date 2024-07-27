@@ -1169,18 +1169,56 @@ DQ
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="ZES-6p-vhi"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="JGI-zr-cwU"/>
-                                        <menuItem title="Reset" identifier="Reset Terminal State" id="Hb6-C9-aDf" userLabel="Application Cursor Keys">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="terminalStateReset:" target="-1" id="kp5-e3-wFY"/>
-                                            </connections>
-                                        </menuItem>
                                         <menuItem isSeparatorItem="YES" id="pFO-R4-QBV"/>
                                         <menuItem title="Literal Controls" tag="13" identifier="Terminal State.Literal Mode" id="vdB-Qh-wxH">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleLiteralMode:" target="-1" id="vIj-Vm-M73"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="JGI-zr-cwU"/>
+                                        <menuItem title="Emulation Level" id="uco-jF-Gq5">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <menu key="submenu" title="Emulation Level" id="VOZ-Xj-fTA">
+                                                <items>
+                                                    <menuItem title="VT100" tag="100" id="Xze-0w-34U">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="terminalStateSetEmulationLevel:" target="-1" id="2KW-nW-gpn"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="VT200" tag="200" id="Yat-BG-Cr5">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="terminalStateSetEmulationLevel:" target="-1" id="fKD-Gf-3K0"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="VT300" tag="300" id="P4S-PI-zKU">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="terminalStateSetEmulationLevel:" target="-1" id="fke-dG-S4L"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="VT400" tag="400" id="AfM-Tg-ZYT">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="terminalStateSetEmulationLevel:" target="-1" id="cxJ-Df-XhR"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="VT500" tag="500" id="CLa-er-Pr0">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="terminalStateSetEmulationLevel:" target="-1" id="IHH-UN-FXK"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                </items>
+                                            </menu>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="Ub4-an-xKd"/>
+                                        <menuItem title="Reset" identifier="Reset Terminal State" id="Hb6-C9-aDf" userLabel="Application Cursor Keys">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateReset:" target="-1" id="kp5-e3-wFY"/>
                                             </connections>
                                         </menuItem>
                                     </items>

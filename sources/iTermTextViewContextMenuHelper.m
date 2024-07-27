@@ -632,6 +632,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     [theMenu addItem:[NSMenuItem separatorItem]];
     NSMenuItem *terminalState = [[NSMenuItem alloc] initWithTitle:@"Terminal State" action:nil keyEquivalent:@""];
     terminalState.submenu = [[NSMenu alloc] initWithTitle:@"Terminal State"];
+
     struct {
         NSString *title;
         SEL action;
@@ -652,7 +653,9 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
         { @"Raw Key Reporting Mode", @selector(terminalToggleKeyboardMode:) },
         { @"Disambiguate Escape", @selector(terminalToggleKeyboardMode:) },
         { nil, nil },
-        { @"Literal Controls", @selector(terminalStateToggleLiteralMode:)}
+        { @"Literal Controls", @selector(terminalStateToggleLiteralMode:)},
+        { nil, nil },
+        { @"Emulation Level", nil }
     };
     NSInteger j = 1;
     for (size_t i = 0; i < sizeof(terminalStateDecls) / sizeof(*terminalStateDecls); i++) {
@@ -667,6 +670,35 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
         j += 1;
         item.state = [self.delegate contextMenu:self terminalStateForMenuItem:item];
     }
+
+    NSMenuItem *levelItem = terminalState.submenu.itemArray.lastObject;
+    NSMenu *levelMenu = [[NSMenu alloc] init];
+    levelItem.submenu = levelMenu;
+
+    struct {
+        NSString *title;
+        SEL action;
+    } emulationLevelDecls[] = {
+        { @"VT100", @selector(terminalStateSetEmulationLevel:) },
+        { @"VT200", @selector(terminalStateSetEmulationLevel:) },
+        { @"VT300", @selector(terminalStateSetEmulationLevel:) },
+        { @"VT400", @selector(terminalStateSetEmulationLevel:) },
+        { @"VT500", @selector(terminalStateSetEmulationLevel:) },
+    };
+    j = 100;
+    for (size_t i = 0; i < sizeof(emulationLevelDecls) / sizeof(*emulationLevelDecls); i++) {
+        if (!emulationLevelDecls[i].title) {
+            [levelMenu addItem:[NSMenuItem separatorItem]];
+            continue;
+        }
+        NSMenuItem *item = [levelMenu addItemWithTitle:emulationLevelDecls[i].title
+                                                action:emulationLevelDecls[i].action
+                                         keyEquivalent:@""];
+        item.tag = j;
+        j += 100;
+        item.state = [self.delegate contextMenu:self terminalStateForMenuItem:item];
+    }
+
     [theMenu addItem:terminalState];
 
     [self.delegate contextMenu:self addContextMenuItems:theMenu];

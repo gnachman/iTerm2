@@ -500,6 +500,10 @@ static _Atomic int gPerformingJoinedBlock;
     return self.terminal.literalMode;
 }
 
+- (iTermEmulationLevel)terminalEmulationLevel {
+    return self.terminal.emulationLevel;
+}
+
 - (BOOL)terminalReportFocus {
     return self.terminal.reportFocus;
 }
