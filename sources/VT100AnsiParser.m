@@ -21,6 +21,29 @@
                 result->type = ANSI_RIS;
                 *rmlen = 2;
                 break;
+
+            case ' ':
+                if (datalen < 3) {
+                    result->type = VT100_WAIT;
+                    return;
+                }
+                switch (datap[2]) {
+                    case 'L':
+                        result->type = ANSI_LEVEL1;
+                        *rmlen = 3;
+                        return;
+                    case 'M':
+                        result->type = ANSI_LEVEL2;
+                        *rmlen = 3;
+                        return;
+                    case 'N':
+                        result->type = ANSI_LEVEL3;
+                        *rmlen = 3;
+                        return;
+                }
+                result->type = VT100_NOTSUPPORT;
+                *rmlen = 3;
+                return;
         }
     }
 }

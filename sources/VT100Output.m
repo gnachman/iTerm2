@@ -71,8 +71,6 @@ typedef enum {
 // Reporting formats
 #define KEY_FUNCTION_FORMAT  @"\033[%d~"
 
-#define REPORT_POSITION      "\033[%d;%dR"
-#define REPORT_POSITION_Q    "\033[?%d;%dR"
 #define REPORT_STATUS        "\033[0n"
 
 // Secondary Device Attribute: VT100
@@ -112,7 +110,7 @@ typedef enum {
         _mouseFormat = source->_mouseFormat;
         _cursorMode = source->_cursorMode;
         _optionIsMetaForSpecialKeys = source->_optionIsMetaForSpecialKeys;
-        _vtLevel = source->_vtLevel;
+        _emulationLevel = source->_emulationLevel;
     }
     return self;
 }
@@ -123,7 +121,7 @@ typedef enum {
               @"mouseFormat": @(_mouseFormat),
               @"cursorMode": @(_cursorMode),
               @"optionIsMetaForSpecialKeys": @(_optionIsMetaForSpecialKeys),
-              @"vtLevel": @(_vtLevel)
+              @"emulationLevel": @(_emulationLevel)
     };
 }
 
@@ -928,13 +926,21 @@ static int VT100OutputSafeAddInt(int l, int r) {
     return [[NSString stringWithFormat:@"%c[?%du", ESC, mode] dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-- (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q
-{
-    char buf[64];
-
-    snprintf(buf, sizeof(buf), q?REPORT_POSITION_Q:REPORT_POSITION, y, x);
-
-    return [NSData dataWithBytes:buf length:strlen(buf)];
+- (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q vt330OrLater:(BOOL)vt330OrLater {
+NSArray<NSString *> *parts = @[ [@(y) stringValue],
+                                [@(x) stringValue] ];
+    if (q && vt330OrLater) {
+        // DECXCPR
+        parts = [parts arrayByAddingObject:@"1"];
+    }
+    NSString *prefix;
+    if (q) {
+        prefix = @"\033[?";
+    } else {
+        prefix = @"\033[";
+    }
+    NSString *string = [NSString stringWithFormat:@"%@%@R", prefix, [parts componentsJoinedByString:@";"]];
+    return [string dataUsingEncoding:NSISOLatin1StringEncoding];
 }
 
 - (NSData *)reportStatus
@@ -1072,16 +1078,18 @@ static int VT100OutputSafeAddInt(int l, int r) {
     //     NOTE: This restores state using the response from DECRQTSR.
     VT100OutputPrimaryDAFeature *features;
     size_t count;
-    switch (_vtLevel) {
-        case VT100EmulationLevel100:
+    switch (_emulationLevel) {
+        case iTermEmulationLevel100:
             features = vt100Features;
             count = sizeof(vt100Features) / sizeof(*vt100Features);
             break;
-        case VT100EmulationLevel200:
+        case iTermEmulationLevel200:
+        case iTermEmulationLevel300:
             features = vt200Features;
             count = sizeof(vt200Features) / sizeof(*vt200Features);
             break;
-        case VT100EmulationLevel400:
+        case iTermEmulationLevel400:
+        case iTermEmulationLevel500:
             features = vt400Features;
             count = sizeof(vt400Features) / sizeof(*vt400Features);
             break;
@@ -1095,17 +1103,24 @@ static int VT100OutputSafeAddInt(int l, int r) {
 - (NSData *)reportSecondaryDeviceAttribute {
     const int xtermVersion = [iTermAdvancedSettingsModel xtermVersion];
     int vt = 0;
-    switch (_vtLevel) {
-        case VT100EmulationLevel100:
+    switch (_emulationLevel) {
+        case iTermEmulationLevel100:
             vt = 0;
             break;
-        case VT100EmulationLevel200:
+        case iTermEmulationLevel200:
             vt = 1;
             break;
-        case VT100EmulationLevel400:
+        case iTermEmulationLevel300:
+            vt = 32;  // 18, 19, and 24 are also options for 330, 340, and 320. Not sure which is best.
+            break;
+        case iTermEmulationLevel400:
             vt = 41;
             break;
+        case iTermEmulationLevel500:
+            vt = 64;  // Could also be 65 (VT525), but see the note below.
+            break;
     }
+
     // Beware of responding with 65 in the first position! Emacs will downgrade you for a response
     // with 65 in th4e first place and any value over 2000 in the second place. It's useful to
     // put 2500+ in the second place to trick vim into giving us undeline RGB.
@@ -1147,11 +1162,13 @@ static int VT100OutputSafeAddInt(int l, int r) {
 }
 
 - (NSData *)reportTertiaryDeviceAttribute {
-    switch (_vtLevel) {
-        case VT100EmulationLevel100:
-        case VT100EmulationLevel200:
+    switch (_emulationLevel) {
+        case iTermEmulationLevel100:
+        case iTermEmulationLevel200:
+        case iTermEmulationLevel300:
             return nil;
-        case VT100EmulationLevel400:
+        case iTermEmulationLevel400:
+        case iTermEmulationLevel500:
             return [[NSString stringWithFormat:@"\eP!|%02X%02X%02X%02X\e\\", 'i', 'T', 'r', 'm'] dataUsingEncoding:NSUTF8StringEncoding];
     }
     return nil;
@@ -1332,7 +1349,10 @@ VT100OutputCursorInformation VT100OutputCursorInformationCreate(int row,  // 1-b
     };
 }
 
-VT100OutputCursorInformation VT100OutputCursorInformationFromString(NSString *string, BOOL *ok) {
+// row;column;page;rendition;attributes;flags;set1;set2;set-size;scs-designators...
+VT100OutputCursorInformation VT100OutputCursorInformationFromString(NSString *string,
+                                                                    BOOL vt500OrLater,
+                                                                    BOOL *ok) {
     NSArray<NSString *> *parts = [string componentsSeparatedByString:@";"];
     if (parts.count < 10 ||
         [parts[3] length] < 1 ||
@@ -1363,6 +1383,18 @@ VT100OutputCursorInformation VT100OutputCursorInformationFromString(NSString *st
     for (int i = 0; i < 4; i++) {
         s = consume(i, s, sdesig);
         if (!s) {
+            *ok = NO;
+            return (VT100OutputCursorInformation) { 0 };
+        }
+    }
+    if ((srend & 0xf0) != 0x40) {
+        if (srend & 0x10) {
+            // See comments in xterm's restore_DECCIR()
+            if (!vt500OrLater) {
+                *ok = NO;
+                return (VT100OutputCursorInformation) { 0 };
+            }
+        } else if (!(srend & 0x40)) {
             *ok = NO;
             return (VT100OutputCursorInformation) { 0 };
         }

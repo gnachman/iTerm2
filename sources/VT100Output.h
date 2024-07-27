@@ -26,10 +26,19 @@ typedef NS_ENUM(NSInteger, MouseFormat) {
     MOUSE_FORMAT_SGR_PIXEL = 4,   // xterm's SGR 1016 mode (like 1006 but pixels instead of cells)
 };
 
-typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
-    VT100EmulationLevel100,
-    VT100EmulationLevel200,
-    VT100EmulationLevel400
+// This is deprecated in favor of iTermEmulationLevel. This state is restorable so it has to be kept around.
+typedef NS_ENUM(NSInteger, VT100OutputEmulationLevel) {
+    VT100OutputEmulationLevel100,
+    VT100OutputEmulationLevel200,
+    VT100OutputEmulationLevel400
+};
+
+typedef NS_ENUM(NSUInteger, iTermEmulationLevel) {
+    iTermEmulationLevel100 = 100,
+    iTermEmulationLevel200 = 200,
+    iTermEmulationLevel300 = 300,
+    iTermEmulationLevel400 = 400,
+    iTermEmulationLevel500 = 500
 };
 
 typedef struct {
@@ -54,7 +63,7 @@ VT100OutputCursorInformation VT100OutputCursorInformationCreate(int row,  // 1-b
                                                                 BOOL autowrapPending,
                                                                 BOOL lineDrawingMode,  // ss2: g2 mapped into gl
                                                                 BOOL originMode);
-VT100OutputCursorInformation VT100OutputCursorInformationFromString(NSString *string, BOOL *ok);
+VT100OutputCursorInformation VT100OutputCursorInformationFromString(NSString *string, BOOL vt500OrLater, BOOL *ok);
 int VT100OutputCursorInformationGetCursorX(VT100OutputCursorInformation info);
 int VT100OutputCursorInformationGetCursorY(VT100OutputCursorInformation info);
 BOOL VT100OutputCursorInformationGetReverseVideo(VT100OutputCursorInformation info);
@@ -75,7 +84,8 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 @property(nonatomic, assign) MouseFormat mouseFormat;
 @property(nonatomic, assign) BOOL cursorMode;
 @property(nonatomic, assign) BOOL optionIsMetaForSpecialKeys;
-@property(nonatomic, assign) VT100EmulationLevel vtLevel;
+@property(nonatomic, assign) VT100OutputEmulationLevel deprecatedVTLevel;
+@property(nonatomic, assign) iTermEmulationLevel emulationLevel;
 
 - (NSDictionary *)configDictionary;
 
@@ -101,7 +111,7 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
                                  point:(NSPoint)point
                              lastPoint:(NSPoint)lastReportedPoint;
 
-- (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q;
+- (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q vt330OrLater:(BOOL)vt330OrLater;
 - (NSData *)reportStatus;
 - (NSData *)reportDeviceAttribute;
 - (NSData *)reportSecondaryDeviceAttribute;

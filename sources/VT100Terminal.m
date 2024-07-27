@@ -17,6 +17,7 @@
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
 #import "VT100DCSParser.h"
+#import "VT100Output.h"
 #import "VT100Parser.h"
 
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
@@ -108,6 +109,8 @@ NSString *const kTerminalStateDECSACE = @"DECSACE";
 NSString *const kTerminalStateProtectedMode = @"Protected Mode";
 NSString *const kTerminalStateBlockID = @"Block ID";
 NSString *const kTerminalStateLiteralMode = @"Literal Mode";
+NSString *const kTerminalStateVTLevel = @"VT Level";
+NSString *const kTerminalStateAnsiLevel = @"ANSI Level";
 
 static const size_t VT100TerminalMaxSGRStackEntries = 10;
 
@@ -171,6 +174,12 @@ typedef struct {
 @property (nonatomic, strong, readwrite) NSMutableArray<NSNumber *> *sendModifiers;
 @end
 
+typedef NS_ENUM(NSUInteger, VT100AnsiLevel) {
+    VT100AnsiLevel1 = 1,
+    VT100AnsiLevel2 = 2,
+    VT100AnsiLevel3 = 3
+};
+
 @implementation VT100Terminal {
     // In FinalTerm command mode (user is at the prompt typing a command).
     BOOL inCommand_;
@@ -197,6 +206,8 @@ typedef struct {
     BOOL _receivingMultipartFile;
 
     NSNumber *_currentLiteral;
+    iTermEmulationLevel _vtLevel;
+    VT100AnsiLevel _ansiLevel;
 }
 
 @synthesize receivingFile = receivingFile_;
@@ -301,6 +312,8 @@ static const int kMaxScreenRows = 4096;
         [self saveCursor];  // initialize save area
         _unicodeVersionStack = [[NSMutableArray alloc] init];
         _savedColors = [[VT100SavedColors alloc] init];
+        _vtLevel = iTermEmulationLevel500;
+        _ansiLevel = VT100AnsiLevel3;
         [self updateDefaultChar];
     }
     return self;
@@ -333,12 +346,17 @@ static const int kMaxScreenRows = 4096;
     self.allowKeypadMode = [_termType rangeOfString:@"xterm"].location != NSNotFound;
     _output.termType = _termType;
     if ([termtype isEqualToString:@"VT100"]) {
-        _output.vtLevel = VT100EmulationLevel100;
-    } else if ([termtype hasPrefix:@"VT2"] || [termtype hasPrefix:@"VT3"]) {
-        _output.vtLevel = VT100EmulationLevel200;
+        _vtLevel = iTermEmulationLevel100;
+    } else if ([termtype hasPrefix:@"VT2"]) {
+        _vtLevel = iTermEmulationLevel200;
+    } else if ([termtype hasPrefix:@"VT3"]) {
+        _vtLevel = iTermEmulationLevel300;
+    } else if ([termtype hasPrefix:@"VT4"]) {
+        _vtLevel = iTermEmulationLevel400;
     } else {
-        _output.vtLevel = VT100EmulationLevel400;
+        _vtLevel = iTermEmulationLevel500;
     }
+    _output.emulationLevel = _vtLevel;
     self.isAnsi = [_termType rangeOfString:@"ANSI"
                                    options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location !=  NSNotFound;
     [_delegate terminalTypeDidChange];
@@ -905,12 +923,16 @@ static const int kMaxScreenRows = 4096;
                 self.keypadMode = mode;
                 break;
             case 69:
-                [_delegate terminalSetUseColumnScrollRegion:mode];
+                if (_vtLevel >= iTermEmulationLevel400) {
+                    [_delegate terminalSetUseColumnScrollRegion:mode];
+                }
                 break;
 
                 // TODO: 80 - DECSDM
-            case 95:
-                self.preserveScreenOnDECCOLM = mode;
+            case 95:  // DECNCSM
+                if (_vtLevel >= iTermEmulationLevel500) {
+                    self.preserveScreenOnDECCOLM = mode;
+                }
                 break;
             case 1000:
             // case 1001:
@@ -1566,53 +1588,72 @@ static const int kMaxScreenRows = 4096;
                 [_delegate terminalSendReport:[self.output reportStatus]];
                 break;
 
-            case 6: // Command from host -- Please report active position
+            case 6: { // Command from host -- Please report active position
                 if (self.originMode) {
                     // This is compatible with Terminal but not old xterm :(. it always did what
                     // we do in the else clause. This behavior of xterm is fixed by Patch #297.
                     [_delegate terminalSendReport:[self.output reportActivePositionWithX:[_delegate terminalRelativeCursorX]
-                                                                                Y:[_delegate terminalRelativeCursorY]
-                                                                     withQuestion:withQuestion]];
+                                                                                       Y:[_delegate terminalRelativeCursorY]
+                                                                            withQuestion:withQuestion
+                                                                            vt330OrLater:_vtLevel >= iTermEmulationLevel300]];
                 } else {
                     [_delegate terminalSendReport:[self.output reportActivePositionWithX:[_delegate terminalCursorX]
-                                                                                Y:[_delegate terminalCursorY]
-                                                                     withQuestion:withQuestion]];
+                                                                                       Y:[_delegate terminalCursorY]
+                                                                            withQuestion:withQuestion
+                                                                            vt330OrLater:_vtLevel >= iTermEmulationLevel300]];
+                }
+                break;
+            }
+
+            case 15:  // Printer status
+                if (withQuestion && _vtLevel >= iTermEmulationLevel200) {
+                    [_delegate terminalSendReport:[self.output reportDECDSR:13]];  // "No printer" since printing is unsupported.
                 }
                 break;
 
-            case 15:  // Printer status
-                [_delegate terminalSendReport:[self.output reportDECDSR:13]];  // "No printer" since printing is unsupported.
-                break;
-
             case 25:
-                [_delegate terminalSendReport:[self.output reportDECDSR:20]];  //  Locking is unsupported so report unlocked.
+                if (withQuestion && _vtLevel >= iTermEmulationLevel200) {
+                    [_delegate terminalSendReport:[self.output reportDECDSR:20]];  //  Locking is unsupported so report unlocked.
+                }
                 break;
 
             // 26 might be nice to support some day.
 
             case 53:
             case 55:
-                [_delegate terminalSendReport:[self.output reportDECDSR:50]];  // Locator unavailable becuase DEC locator support unimplemented.
+                if (withQuestion && _vtLevel >= iTermEmulationLevel300) {
+                    [_delegate terminalSendReport:[self.output reportDECDSR:50]];  // Locator unavailable becuase DEC locator support unimplemented.
+                }
                 break;
 
             case 56:
-                [_delegate terminalSendReport:[self.output reportDECDSR:57 :0]];  // No locator support
+                if (withQuestion && _vtLevel >= iTermEmulationLevel300) {
+                    [_delegate terminalSendReport:[self.output reportDECDSR:57 :0]];  // No locator support
+                }
                 break;
 
             case 62:  // Request DECMSR
-                [_delegate terminalSendReport:[self.output reportMacroSpace:0]];  // Macros are unsupported so report 0 space
+                if (withQuestion && _vtLevel >= iTermEmulationLevel400) {
+                    [_delegate terminalSendReport:[self.output reportMacroSpace:0]];  // Macros are unsupported so report 0 space
+                }
                 break;
 
             case 63:  // Request DECCKSR
-                [_delegate terminalSendReport:[self.output reportMemoryChecksum:0 id:token.csi->p[1]]];  // Memory checksum
+                if (withQuestion && _vtLevel >= iTermEmulationLevel400) {
+                    [_delegate terminalSendReport:[self.output reportMemoryChecksum:0 id:token.csi->p[1]]];  // Memory checksum
+                }
                 break;
 
             case 75: // Data integrity check
-                [_delegate terminalSendReport:[self.output reportDECDSR:70]];
+                if (withQuestion && _vtLevel >= iTermEmulationLevel400) {
+                    [_delegate terminalSendReport:[self.output reportDECDSR:70]];
+                }
                 break;
 
             case 85:  // Multi-session configuration
-                [_delegate terminalSendReport:[self.output reportDECDSR:83]];
+                if (withQuestion && _vtLevel >= iTermEmulationLevel400) {
+                    [_delegate terminalSendReport:[self.output reportDECDSR:83]];
+                }
                 break;
 
             case 1337:  // iTerm2 extension
@@ -2233,6 +2274,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             break;
         case VT100CSI_DA3:
+            if (_vtLevel < iTermEmulationLevel400) {
+                break;
+            }
             if ([_delegate terminalShouldSendReport]) {
                 [_delegate terminalSendReport:[self.output reportTertiaryDeviceAttribute]];
             }
@@ -2298,14 +2342,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [self handleDeviceStatusReportWithToken:token withQuestion:NO];
             break;
         case VT100CSI_DECRQCRA: {
-            if ([_delegate terminalIsTrusted]) {
-                if (![_delegate terminalCanUseDECRQCRA]) {
-                    break;
+            if (_vtLevel >= iTermEmulationLevel400) {
+                if ([_delegate terminalIsTrusted]) {
+                    if (![_delegate terminalCanUseDECRQCRA]) {
+                        break;
+                    }
+                    [self sendChecksumReportWithId:token.csi->p[0]
+                                         rectangle:[self rectangleInToken:token
+                                                          startingAtIndex:2
+                                                         defaultRectangle:[self defaultRectangle]]];
                 }
-                [self sendChecksumReportWithId:token.csi->p[0]
-                                     rectangle:[self rectangleInToken:token
-                                                      startingAtIndex:2
-                                                     defaultRectangle:[self defaultRectangle]]];
             }
             break;
         }
@@ -2371,9 +2417,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_DECSERA:
-            [_delegate terminalSelectiveEraseRectangle:[self rectangleInToken:token
-                                                              startingAtIndex:0
-                                                             defaultRectangle:[self defaultRectangle]]];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [_delegate terminalSelectiveEraseRectangle:[self rectangleInToken:token
+                                                                  startingAtIndex:0
+                                                                 defaultRectangle:[self defaultRectangle]]];
+            }
             break;
 
         case VT100CSI_DECSED:
@@ -2401,11 +2449,29 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalProtectedModeDidChangeTo:VT100TerminalProtectedModeDEC];
             break;
 
+        case ANSI_LEVEL1:
+            [self executeSetAnsiLevel:1];
+            break;
+        case ANSI_LEVEL2:
+            [self executeSetAnsiLevel:2];
+            break;
+        case ANSI_LEVEL3:
+            [self executeSetAnsiLevel:3];
+            break;
+
         case VT100CSI_DECRQDE:
-            if ([self.delegate terminalShouldSendReport]) {
-                [_delegate terminalSendReport:[_output reportDisplayedExtentOfSize:_delegate.terminalSizeInCells]];
+            if (_vtLevel >= iTermEmulationLevel300) {
+                if ([self.delegate terminalShouldSendReport]) {
+                    [_delegate terminalSendReport:[_output reportDisplayedExtentOfSize:_delegate.terminalSizeInCells]];
+                }
             }
             break;
+        case VT100CSI_DECSCL:
+            if (_vtLevel >= iTermEmulationLevel200) {
+                [self executeSetConformanceLevel:token.csi->p[0]];
+            }
+            break;
+
         case VT100CSI_HVP:
             [_delegate terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
@@ -2587,27 +2653,39 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_DECCARA:
-            [self executeDECCARA:token];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [self executeDECCARA:token];
+            }
             break;
 
         case VT100CSI_DECRARA:
-            [self executeDECRARA:token];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [self executeDECRARA:token];
+            }
             break;
 
         case VT100CSI_DECSACE:
-            [self executeDECSACE:token];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [self executeDECSACE:token];
+            }
             break;
 
         case VT100CSI_DECCRA:
-            [self executeDECCRA:token];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [self executeDECCRA:token];
+            }
             break;
 
         case VT100CSI_DECFRA:
-            [self executeDECFRA:token];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [self executeDECFRA:token];
+            }
             break;
 
         case VT100CSI_DECERA:
-            [self executeDECERA:token];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [self executeDECERA:token];
+            }
             break;
 
         case VT100CSI_TBC:
@@ -2630,16 +2708,36 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalRepeatPreviousCharacter:MIN(65535, token.csi->p[0])];
             break;
 
+        case VT100CSI_DECST8C:
+#warning TODO: Test this
+            if (_vtLevel >= iTermEmulationLevel500) {
+                if (token.csi->p[0] == 5) {
+                    const int width = [_delegate terminalScreenWidthInCells];
+                    NSMutableArray<NSNumber *> *stops = [NSMutableArray array];
+                    for (int i = 8; i < width; i += 8) {
+                        [stops addObject:@(i + 1)];
+                    }
+                    [_delegate terminalSetTabStops:stops];
+                }
+            }
+            break;
+
         case VT100CSI_DECRQPSR:
-            [self executeDECRQPSR:token.csi->p[0]];
+            if (_vtLevel >= iTermEmulationLevel300) {
+                [self executeDECRQPSR:token.csi->p[0]];
+            }
             break;
 
         case VT100_DECFI:
-            [self forwardIndex];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [self forwardIndex];
+            }
             break;
 
         case VT100_DECBI:
-            [self backIndex];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [self backIndex];
+            }
             break;
 
         case VT100CSI_PUSH_KEY_REPORTING_MODE:
@@ -2657,11 +2755,15 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_DECRQM_DEC:  // CSI ? Pd $ p
-            [self executeDECRequestMode:token.csi->p[0]];
+            if (_vtLevel >= iTermEmulationLevel300) {
+                [self executeDECRequestMode:token.csi->p[0]];
+            }
             break;
 
         case VT100CSI_DECRQM_ANSI:  // CSI Pa $ p
-            [self executeANSIRequestMode:token.csi->p[0]];
+            if (_vtLevel >= iTermEmulationLevel300) {
+                [self executeANSIRequestMode:token.csi->p[0]];
+            }
             break;
 
         case VT100CSI_HPR:
@@ -3056,19 +3158,27 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         }
 
         case VT100CSI_DECSCPP:
-            [self executeDECSCPP:token.csi->p[0]];
+            if (_vtLevel >= iTermEmulationLevel300) {
+                [self executeDECSCPP:token.csi->p[0]];
+            }
             break;
 
         case VT100CSI_DECSNLS:
-            [self executeDECSNLS:token.csi->p[0]];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [self executeDECSNLS:token.csi->p[0]];
+            }
             break;
 
         case VT100CSI_DECIC:
-            [_delegate terminalInsertColumns:token.csi->p[0]];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [_delegate terminalInsertColumns:token.csi->p[0]];
+            }
             break;
 
         case VT100CSI_DECDC:
-            [_delegate terminalDeleteColumns:token.csi->p[0]];
+            if (_vtLevel >= iTermEmulationLevel400) {
+                [_delegate terminalDeleteColumns:token.csi->p[0]];
+            }
             break;
 
         case XTERMCC_PROPRIETARY_ETERM_EXT:
@@ -3160,7 +3270,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case DCS_SIXEL:
-            [_delegate terminalAppendSixelData:token.savedData];
+            if (_vtLevel >= iTermEmulationLevel200) {
+                [_delegate terminalAppendSixelData:token.savedData];
+            }
             break;
 
         case DCS_DECRQSS: {
@@ -3172,12 +3284,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
         }
 
-        case DCS_DECRSPS_DECCIR:
-            [self executeDECRSPS_DECCIR:token.string];
+        case DCS_DECRSPS_DECCIR:  // DCS 1 $ t
+            if (_vtLevel >= iTermEmulationLevel300) {
+                [self executeDECRSPS_DECCIR:token.string];
+            }
             break;
 
-        case DCS_DECRSPS_DECTABSR:
-            [self executeDECRSPS_DECTABSR:token.string];
+        case DCS_DECRSPS_DECTABSR:  // DCS 2 $ t
+            if (_vtLevel >= iTermEmulationLevel300) {
+                [self executeDECRSPS_DECTABSR:token.string];
+            }
             break;
 
         case DCS_XTSETTCAP:
@@ -3558,13 +3674,17 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 }
 
 - (NSString *)decrqssDECSCL {
-    switch (_output.vtLevel) {
-        case VT100EmulationLevel100:
+    switch (_vtLevel) {
+        case iTermEmulationLevel100:
             return @"61";
-        case VT100EmulationLevel200:
+        case iTermEmulationLevel200:
             return @"62";
-        case VT100EmulationLevel400:
+        case iTermEmulationLevel300:
+            return @"63";
+        case iTermEmulationLevel400:
             return @"64";
+        case iTermEmulationLevel500:
+            return @"65";
     }
     return @"61";
 }
@@ -3615,7 +3735,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     if ([pt isEqualToString:@"m"]) {
         return [iTermPromise promiseValue:[self decrqssSGR]];
     }
-    if ([pt isEqualToString:@"\"p"]) {
+    if ([pt isEqualToString:@"\"p"] && _vtLevel >= iTermEmulationLevel200) {
         return [iTermPromise promiseValue:[self decrqssDECSCL]];
     }
     if ([pt isEqualToString:@" q"]) {
@@ -3627,7 +3747,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     if ([pt isEqualToString:@"r"]) {
         return [iTermPromise promiseValue:[self decrqssDECSTBM]];
     }
-    if ([pt isEqualToString:@"s"]) {
+    if ([pt isEqualToString:@"s"] && _vtLevel >= iTermEmulationLevel400) {
         return [iTermPromise promiseValue:[self decrqssDECSLRM]];
     }
     if ([pt isEqualToString:@"t"]) {
@@ -4655,7 +4775,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 - (void)executeDECRSPS_DECCIR:(NSString *)string {
     self.dirty = YES;
     BOOL ok = NO;
-    const VT100OutputCursorInformation info = VT100OutputCursorInformationFromString(string, &ok);
+    const VT100OutputCursorInformation info = VT100OutputCursorInformationFromString(string, _vtLevel >= iTermEmulationLevel500, &ok);
     if (!ok) {
         return;
     }
@@ -5008,6 +5128,30 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     [_delegate terminalSetRows:rows andColumns:-1];
 }
 
+- (void)executeSetAnsiLevel:(int)level {
+    if (_vtLevel >= iTermEmulationLevel300) {
+        DLog(@"set ansi level to %d", level);
+        _ansiLevel = level;
+    }
+}
+
+- (void)executeSetConformanceLevel:(int)level {
+    if (level < 61 || level > 65) {
+        return;
+    }
+    // See note in xterm's code for CASE_DECSCL. There is conflicting info about whether this should
+    // do a soft or hard reset. They do a soft reset.
+    [self softReset];
+    _vtLevel = 100 * (level - 60);
+    _output.emulationLevel = _vtLevel;
+    DLog(@"Set vt level to %@", @(_vtLevel));
+    if (_vtLevel > iTermEmulationLevel100) {
+        _ansiLevel = VT100AnsiLevel3;
+    }
+    _ansiLevel = VT100AnsiLevel1;
+    DLog(@"as a side effect, set ansi level to %@", @(_ansiLevel));
+}
+
 - (void)sendGraphicsAttributeReportForToken:(VT100Token *)token
                                      status:(int)status
                                       value:(NSString *)value {
@@ -5147,9 +5291,15 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
             return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.keypadMode);
 
         case 69:
-            return VT100TerminalPromiseOfDECRPMSettingFromBoolean([_delegate terminalUseColumnScrollRegion]);
-        case 95:
-            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.preserveScreenOnDECCOLM);
+            if (_vtLevel >= iTermEmulationLevel400) {
+                return VT100TerminalPromiseOfDECRPMSettingFromBoolean([_delegate terminalUseColumnScrollRegion]);
+            }
+            break;
+        case 95:  // DECNCSM
+            if (_vtLevel >= iTermEmulationLevel500) {
+                return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.preserveScreenOnDECCOLM);
+            }
+            break;
         case 1000:
         case 1001:
         case 1002:
@@ -5377,7 +5527,9 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStateSavedColors: _savedColors.plist,
            kTerminalStateProtectedMode: @(_protectedMode),
            kTerminalStateBlockID: self.currentBlockID ?: [NSNull null],
-           kTerminalStateLiteralMode: @(self.literalMode)
+           kTerminalStateLiteralMode: @(self.literalMode),
+           kTerminalStateVTLevel: @(_vtLevel),
+           kTerminalStateAnsiLevel: @(_ansiLevel)
         };
     return [dict dictionaryByRemovingNullValues];
 }
@@ -5424,6 +5576,8 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     self.protectedMode = [dict[kTerminalStateProtectedMode] unsignedIntegerValue];
     self.currentBlockID = [NSString castFrom:dict[kTerminalStateBlockID]];
     self.literalMode = [dict[kTerminalStateLiteralMode] boolValue];
+    _vtLevel = [dict[kTerminalStateVTLevel] integerValue] ?: iTermEmulationLevel500;
+    _ansiLevel = [dict[kTerminalStateAnsiLevel] integerValue] ?: VT100AnsiLevel3;
 
     if (!_sendModifiers) {
         self.sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];

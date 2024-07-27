@@ -149,11 +149,13 @@ typedef enum {
     VT100CSI_DECSEL,                // Selective Erase in Line
     VT100CSI_DECSCA,                // Select Character Protection Attribute
     VT100CSI_DECRQDE,               // Request Displayed Extent
+    VT100CSI_DECSCL,                // Set conformance level
 
     // https://sw.kovidgoyal.net/kitty/keyboard-protocol.html
     VT100CSI_PUSH_KEY_REPORTING_MODE,
     VT100CSI_POP_KEY_REPORTING_MODE,
     VT100CSI_QUERY_KEY_REPORTING_MODE,
+    VT100CSI_DECST8C,             // Reset tab stops to start at 9, space at 8
 
     // some xterm extensions
     XTERMCC_WIN_TITLE,            // Set window title
@@ -231,6 +233,10 @@ typedef enum {
     ANSICSI_CBT,     // Back tab
 
     ANSI_RIS,        // Reset to initial state (there's also a CSI version)
+
+    ANSI_LEVEL1,
+    ANSI_LEVEL2,
+    ANSI_LEVEL3,
 
     // DCS
     DCS_REQUEST_TERMCAP_TERMINFO,  // Request Termcap/Terminfo String
