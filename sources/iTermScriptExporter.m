@@ -37,6 +37,7 @@
           signingIdentity:(SIGIdentity *)sigIdentity
             callbackQueue:(dispatch_queue_t)callbackQueue
               destination:(NSURL *)destination
+               autolaunch:(BOOL)autolaunch
                completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion {
     NSURL *relativeURL = [self relativeURLFromFullURL:fullURL];
     if (!relativeURL) {
@@ -57,7 +58,8 @@
                               named:[name stringByDeletingPathExtension]
                 toFullEnvironmentIn:temp];
         [self writeMetadataTo:[NSURL fileURLWithPath:temp]
-                    sourceURL:fullURL];
+                    sourceURL:fullURL
+                   autolaunch:autolaunch];
         NSURL *tempURL = [NSURL fileURLWithPath:temp];
         [self exportFullEnvironmentScriptAtURL:tempURL
                                    relativeURL:[NSURL fileURLWithPath:scriptName]
@@ -74,7 +76,8 @@
 
     // Export full environment script
     [self writeMetadataTo:fullURL
-                sourceURL:fullURL];
+                sourceURL:fullURL
+               autolaunch:autolaunch];
     [self exportFullEnvironmentScriptAtURL:fullURL
                                relativeURL:relativeURL
                                       name:name
@@ -85,9 +88,9 @@
 }
 
 + (void)writeMetadataTo:(NSURL *)destinationURL
-              sourceURL:(NSURL *)sourceURL {
-    NSString *autoLaunchPath = [[NSFileManager defaultManager] autolaunchScriptPath];
-    NSDictionary *metadata = @{ @"AutoLaunch": @([sourceURL.path.stringByResolvingSymlinksInPath hasPrefix:autoLaunchPath.stringByResolvingSymlinksInPath]) };
+              sourceURL:(NSURL *)sourceURL
+             autolaunch:(BOOL)autolaunch {
+    NSDictionary *metadata = @{ @"AutoLaunch": @(autolaunch) };
     [[NSJSONSerialization it_jsonStringForObject:metadata] writeToURL:[destinationURL URLByAppendingPathComponent:@"metadata.json"]
                                                            atomically:NO
                                                              encoding:NSUTF8StringEncoding

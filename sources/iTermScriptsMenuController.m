@@ -397,9 +397,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)chooseAndExportScript {
     NSString *autoLaunchPath = [[[NSFileManager defaultManager] autolaunchScriptPath] stringByResolvingSymlinksInPath];
-    [iTermScriptChooser chooseMultipleWithValidator:^BOOL(NSURL *url) {
+    [iTermScriptChooser chooseMultipleWithValidator:
+     ^BOOL(NSURL *url) {
         return [url.path.stringByResolvingSymlinksInPath isEqualToString:autoLaunchPath] || [iTermScriptExporter urlIsScript:url];
-    } completion:^(NSArray<NSURL *> *urls, SIGIdentity *signingIdentity) {
+    }
+                                autoLaunchByDefault:NO
+                                         completion:
+     ^(NSArray<NSURL *> *urls, SIGIdentity *signingIdentity, BOOL autolaunch) {
         if (!urls) {
             return;
         }
@@ -408,6 +412,7 @@ NS_ASSUME_NONNULL_BEGIN
                                    signingIdentity:signingIdentity
                                      callbackQueue:dispatch_get_main_queue()
                                        destination:nil
+                                        autolaunch:autolaunch
                                         completion:^(NSString *errorMessage, NSURL *zipURL) {
                 if (errorMessage || !zipURL) {
                     NSAlert *alert = [[NSAlert alloc] init];

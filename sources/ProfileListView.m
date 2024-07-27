@@ -707,9 +707,7 @@ const CGFloat kDefaultTagsWidth = 80;
 
     NSColor *textColor = [self regularTextColor];
     NSColor *highlightedTextColor = [NSColor blackColor];
-    NSColor *tagColor = [self regularTagColor];
     NSColor *selectedActiveTextColor = [self selectedActiveTextColor];
-    NSColor *selectedActiveTagColor = [self selectedActiveTagColor];
 
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;

@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
           signingIdentity:(SIGIdentity * _Nullable)sigIdentity
             callbackQueue:(dispatch_queue_t)callbackQueue
               destination:(NSURL * _Nullable)destination
+               autolaunch:(BOOL)autolaunch
                completion:(void (^)(NSString * _Nullable errorMessage, NSURL * _Nullable zipURL))completion;
 + (BOOL)urlIsScript:(NSURL *)url;
 

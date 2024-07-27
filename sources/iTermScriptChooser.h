@@ -11,10 +11,10 @@
 
 @interface iTermScriptChooser : NSObject
 
-+ (void)chooseWithValidator:(BOOL (^)(NSURL *))validator
-                 completion:(void (^)(NSURL *, SIGIdentity *))completion;
-
 + (void)chooseMultipleWithValidator:(BOOL (^)(NSURL *))validator
-                         completion:(void (^)(NSArray<NSURL *> *, SIGIdentity *))completion;
+                autoLaunchByDefault:(BOOL)autoLaunchByDefault
+                         completion:(void (^)(NSArray<NSURL *> *,
+                                              SIGIdentity *,
+                                              BOOL autolaunch))completion;
 
 @end

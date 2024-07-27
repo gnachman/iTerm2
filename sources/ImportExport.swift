@@ -713,7 +713,8 @@ private struct ScriptsImporterExporter {
         iTermScriptExporter.exportScript(at: item,
                                          signing: nil,
                                          callbackQueue: DispatchQueue.global(),
-                                         destination: zip) { maybeError, maybeZip in
+                                         destination: zip,
+                                         autolaunch: autolaunch) { maybeError, maybeZip in
             error = maybeError
             group.leave()
         }
