@@ -45,6 +45,9 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 - (void)offerToTurnOffBracketedPasteOnHostChange;
 @end
 
+@interface PTYSession(ARCPrivate)<iTermModernKeyMapperDelegate>
+@end
+
 @implementation PTYSession (ARC)
 
 #pragma mark - Arrangements
@@ -304,6 +307,15 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 
 @end
 
+@implementation PTYSession(ARCPrivate)
+
+#pragma mark - iTermModernKeyMapperDelegate
+
+- (NSUInteger)modernKeyMapperDelegateStringEncoding {
+    return self.encoding;
+}
+
+@end
 
 @implementation PTYSessionPublishRequest
 

@@ -15,6 +15,9 @@
 @property(nonatomic, readonly) BOOL it_isNumericKeypadKey;
 @property(nonatomic, readonly) BOOL it_isVerticalScroll;
 
++ (unichar)unicharForKeyWithKeycode:(CGKeyCode)virtualKeyCode
+                          modifiers:(UInt32)carbonModifiers;
+
 // Returns a new event with the mouse button number set to `buttonNumber`, and
 // other values the same as self.
 - (NSEvent *)eventWithButtonNumber:(NSInteger)buttonNumber;

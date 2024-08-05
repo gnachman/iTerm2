@@ -53,6 +53,7 @@ iTermIntervalTreeObserver,
 iTermLogging,
 iTermMetaFrustrationDetector,
 iTermMetalGlueDelegate,
+iTermModernKeyMapperDelegate,
 iTermModifyOtherKeysMapperDelegate,
 iTermNaggingControllerDelegate,
 iTermObject,
@@ -112,6 +113,7 @@ TriggerDelegate> {
 @property(nonatomic, copy) NSString *cookie;
 @property(nonatomic, strong) NSDate *lastNonFocusReportingWrite;
 @property(nonatomic, strong) NSDate *lastFocusReportDate;
+@property(nonatomic) NSStringEncoding encoding;
 
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;

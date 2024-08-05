@@ -152,6 +152,7 @@ typedef enum {
     VT100CSI_DECSCL,                // Set conformance level
 
     // https://sw.kovidgoyal.net/kitty/keyboard-protocol.html
+    VT100CSI_SET_KEY_REPORTING_MODE,
     VT100CSI_PUSH_KEY_REPORTING_MODE,
     VT100CSI_POP_KEY_REPORTING_MODE,
     VT100CSI_QUERY_KEY_REPORTING_MODE,

@@ -197,4 +197,55 @@
     return fabs(self.scrollingDeltaX) < fabs(self.scrollingDeltaY);
 }
 
++ (unichar)unicharForKeyWithKeycode:(CGKeyCode)virtualKeyCode
+                          modifiers:(UInt32)carbonModifiers {
+    TISInputSourceRef inputSource = NULL;
+    unichar result = -1;
+
+    inputSource = TISCopyCurrentKeyboardInputSource();
+    if (inputSource == NULL) {
+        goto exit;
+    }
+
+    CFDataRef keyLayoutData = TISGetInputSourceProperty(inputSource,
+                                                        kTISPropertyUnicodeKeyLayoutData);
+    if (keyLayoutData == NULL) {
+        goto exit;
+    }
+
+    const UCKeyboardLayout *keyLayoutPtr = (const UCKeyboardLayout *)CFDataGetBytePtr(keyLayoutData);
+    if (keyLayoutPtr == NULL) {
+        goto exit;
+    }
+
+    UInt32 deadKeyState = 0;
+    UniChar unicodeString[4];
+    UniCharCount actualStringLength;
+
+    OSStatus status = UCKeyTranslate(keyLayoutPtr,
+                                     virtualKeyCode,
+                                     kUCKeyActionDisplay,
+                                     carbonModifiers,
+                                     LMGetKbdType(),
+                                     kUCKeyTranslateNoDeadKeysBit,
+                                     &deadKeyState,
+                                     sizeof(unicodeString) / sizeof(*unicodeString),
+                                     &actualStringLength,
+                                     unicodeString);
+    if (status != noErr) {
+        goto exit;
+    }
+
+    if (actualStringLength == 0) {
+        goto exit;
+    }
+
+    result = unicodeString[0];
+
+exit:
+    if (inputSource != NULL) {
+        CFRelease(inputSource);
+    }
+    return result;
+}
 @end

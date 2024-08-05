@@ -8,6 +8,7 @@
 #import "iTermStandardKeyMapper.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermKeyboardHandler.h"
 #import "NSData+iTerm.h"
 #import "NSEvent+iTerm.h"
@@ -16,6 +17,10 @@
 
 @implementation iTermStandardKeyMapper {
     NSEvent *_event;
+}
+
+- (BOOL)keyMapperWantsKeyUp {
+    return NO;
 }
 
 - (void)updateConfigurationWithEvent:(NSEvent *)event {
@@ -455,22 +460,9 @@
         return YES;
     }
 
-    const BOOL isNonEmpty = [[event charactersIgnoringModifiers] length] > 0;  // Dead keys have length 0
-    const BOOL rightAltPressed = (modifiers & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
-    const BOOL leftAltPressed = (modifiers & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
-    const BOOL leftOptionModifiesKey = (leftAltPressed && _configuration.leftOptionKey != OPT_NORMAL);
-    const BOOL rightOptionModifiesKey = (rightAltPressed && _configuration.rightOptionKey != OPT_NORMAL);
-    const BOOL optionModifiesKey = (leftOptionModifiesKey || rightOptionModifiesKey);
-    const BOOL willSendOptionModifiedKey = (isNonEmpty && optionModifiesKey);
-    if (willSendOptionModifiedKey) {
+    if ([event it_shouldSendOptionModifiedKeyWithLeftOptionConfig:_configuration.leftOptionKey
+                                                rightOptionConfig:_configuration.rightOptionKey]) {
         // Meta+key or Esc+ key
-        DLog(@"isNonEmpty=%@ rightAltPressed=%@ leftAltPressed=%@ leftOptionModifiesKey=%@ rightOptionModifiesKey=%@ willSendOptionModifiedKey=%@ -> bypass pre-cocoa",
-             @(isNonEmpty),
-             @(rightAltPressed),
-             @(leftAltPressed),
-             @(leftOptionModifiesKey),
-             @(rightOptionModifiesKey),
-             @(willSendOptionModifiedKey));
         return YES;
     }
 

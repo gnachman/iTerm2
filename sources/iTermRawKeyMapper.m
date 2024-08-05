@@ -12,6 +12,10 @@
 
 @implementation iTermRawKeyMapper
 
+- (BOOL)keyMapperWantsKeyUp {
+    return NO;  // Goes through DECSET 1337 instead
+}
+
 - (void)keyMapperSetEvent:(NSEvent *)event {
 }
 

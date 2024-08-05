@@ -96,6 +96,7 @@ NSString *const kTerminalStateURLParams_DEPRECATED = @"URL Params";
 NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
 NSString *const kTerminalStateMetaSendsEscape = @"Meta Sends Escape";
 NSString *const kTerminalStateSendModifiers = @"Send Modifiers";
+NSString *const kTerminalStateKeyReportingFlags = @"Key Reporting Flags";
 NSString *const kTerminalStateKeyReportingModeStack_Deprecated = @"Key Reporting Mode Stack";  // deprecated
 NSString *const kTerminalStateKeyReportingModeStack_Main = @"Main Key Reporting Mode Stack";
 NSString *const kTerminalStateKeyReportingModeStack_Alternate = @"Alternate Key Reporting Mode Stack";
@@ -171,6 +172,7 @@ typedef struct {
 
 @interface VT100Terminal()
 @property (nonatomic, strong, readwrite) NSMutableArray<NSNumber *> *sendModifiers;
+@property (nonatomic, readwrite) VT100TerminalKeyReportingFlags keyReportingFlags;
 @end
 
 @implementation VT100Terminal {
@@ -200,6 +202,7 @@ typedef struct {
 
     NSNumber *_currentLiteral;
     iTermEmulationLevel _vtLevel;
+    VT100TerminalKeyReportingFlags _keyReportingFlags;
 }
 
 @synthesize receivingFile = receivingFile_;
@@ -298,6 +301,7 @@ static const int kMaxScreenRows = 4096;
         _allowKeypadMode = YES;
         self.allowPasteBracketing = YES;
         _sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];
+        _keyReportingFlags = 0;
         _mainKeyReportingModeStack = [[NSMutableArray alloc] init];
         _alternateKeyReportingModeStack = [[NSMutableArray alloc] init];
         numLock_ = YES;
@@ -460,6 +464,7 @@ static const int kMaxScreenRows = 4096;
     [self resetSavedCursorPositions];
     [_delegate terminalShowPrimaryBuffer];
     self.softAlternateScreenMode = NO;
+    _keyReportingFlags = 0;
     [self resetSendModifiersWithSideEffects:NO];
     [self.delegate terminalDidChangeSendModifiers];
 }
@@ -470,6 +475,7 @@ static const int kMaxScreenRows = 4096;
     for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
         _sendModifiers[i] = @-1;
     }
+    _keyReportingFlags = 0;
     self.dirty = YES;
     [_mainKeyReportingModeStack removeAllObjects];
     [_alternateKeyReportingModeStack removeAllObjects];
@@ -682,20 +688,13 @@ static const int kMaxScreenRows = 4096;
     [self.delegate terminalReportKeyUpDidChange:reportKeyUp];
 }
 
-- (void)toggleDisambiguateEscape {
+- (void)toggleKeyReportingFlag:(VT100TerminalKeyReportingFlags)flag {
     if (self.currentKeyReportingModeStack.count) {
         const int value = self.currentKeyReportingModeStack.lastObject.intValue;
         [self.currentKeyReportingModeStack removeLastObject];
-        [self.currentKeyReportingModeStack addObject:@(value == 1 ? 0 : 1)];
+        [self.currentKeyReportingModeStack addObject:@(value ^ flag)];
     } else {
-        switch (_sendModifiers[4].intValue) {
-            case 1:
-                _sendModifiers[4] = @(VT100TerminalKeyReportingFlagsNone);
-                break;
-            default:
-                _sendModifiers[4] = @(VT100TerminalKeyReportingFlagsDisambiguateEscape);
-                break;
-        }
+        _keyReportingFlags ^= flag;
     }
     [self.delegate terminalKeyReportingFlagsDidChange];
 }
@@ -704,14 +703,7 @@ static const int kMaxScreenRows = 4096;
     if (self.currentKeyReportingModeStack.count) {
         return self.currentKeyReportingModeStack.lastObject.intValue;
     }
-    switch (_sendModifiers[4].intValue) {
-        case 0:
-            return VT100TerminalKeyReportingFlagsNone;
-        case 1:
-            return VT100TerminalKeyReportingFlagsDisambiguateEscape;
-        default:
-            return VT100TerminalKeyReportingFlagsNone;
-    }
+    return _keyReportingFlags;
 }
 
 - (NSMutableArray<NSNumber *> *)currentKeyReportingModeStack {
@@ -2773,6 +2765,23 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             break;
 
+        case VT100CSI_SET_KEY_REPORTING_MODE:
+            self.dirty = YES;
+            [self.currentKeyReportingModeStack removeAllObjects];
+            switch (token.csi->p[1]) {
+                case 1:  // all set bits are set and all unset bits are reset
+                    _keyReportingFlags = token.csi->p[0];
+                    break;
+                case 2:  // all set bits are set, unset bits are left unchanged
+                    _keyReportingFlags |= token.csi->p[0];
+                    break;
+                case 3:  // all set bits are reset, unset bits are left unchanged
+                    _keyReportingFlags &= ~token.csi->p[0];
+                    break;
+            }
+            [self.delegate terminalKeyReportingFlagsDidChange];
+            break;
+
         case VT100CSI_PUSH_KEY_REPORTING_MODE:
             [self pushKeyReportingFlags:token.csi->p[0]];
             break;
@@ -2783,7 +2792,13 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case VT100CSI_QUERY_KEY_REPORTING_MODE:
             if ([_delegate terminalShouldSendReport]) {
-                [_delegate terminalSendReport:[_output reportKeyReportingMode:self.currentKeyReportingModeStack.lastObject.intValue]];
+                VT100TerminalKeyReportingFlags flags;
+                if (self.currentKeyReportingModeStack.count) {
+                    flags = self.currentKeyReportingModeStack.lastObject.unsignedIntegerValue;
+                } else {
+                    flags = _keyReportingFlags;
+                }
+                [_delegate terminalSendReport:[_output reportKeyReportingMode:flags]];
             }
             break;
 
@@ -3183,6 +3198,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             self.dirty = YES;
             _sendModifiers[resource] = @(value);
+            _keyReportingFlags = 0;
             // The protocol described here:
             // https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
             // is flawed because if CSI > 4 ; 0 m pops the stack it would leave
@@ -5565,6 +5581,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStateSGRStack: [self sgrStack],
            kTerminalStateDECSACE: @(_decsaceRectangleMode),
            kTerminalStateSendModifiers: _sendModifiers ?: @[],
+           kTerminalStateKeyReportingFlags: @(_keyReportingFlags),
            kTerminalStateKeyReportingModeStack_Main: _mainKeyReportingModeStack.copy,
            kTerminalStateKeyReportingModeStack_Alternate: _alternateKeyReportingModeStack.copy,
            kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
@@ -5643,6 +5660,12 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
         while (_sendModifiers.count < NUM_MODIFIABLE_RESOURCES) {
             [_sendModifiers addObject:@-1];
         }
+    }
+    NSNumber *krf = dict[kTerminalStateKeyReportingFlags];
+    if (!krf) {
+        _keyReportingFlags = [self.sendModifiers[4] unsignedIntegerValue];
+    } else {
+        _keyReportingFlags = krf.unsignedIntegerValue;
     }
     if ([dict[kTerminalStateKeyReportingModeStack_Deprecated] isKindOfClass:[NSArray class]]) {
         // Migration code path for deprecated key.

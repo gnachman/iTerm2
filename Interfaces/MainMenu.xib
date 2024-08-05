@@ -1163,14 +1163,39 @@ DQ
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="Io8-vc-lTj"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="Rr9-Ff-Vjq"/>
                                         <menuItem title="Disambiguate Escape" tag="12" identifier="Terminal State.Disambiguate Escape" id="KSe-b9-e6z">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="ZES-6p-vhi"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Report All Event Types" tag="13" identifier="Terminal State.Report All Event Types" id="xAJ-2s-wRO">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="BF0-Kr-bXN"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Report Alternate Keys" tag="14" identifier="Terminal State.Report Alternate Keys" id="OeA-3R-GMn">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="NVR-92-dOb"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Report All Keys as Escape Codes" tag="15" identifier="Terminal State.Report All Keys as Escape Codes" id="Hnr-VA-NP8">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="5IO-5e-QkP"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Report Associated Text" tag="16" identifier="Terminal State.Report Associated Text" id="dP6-Qg-oWM">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="gTF-zY-2mi"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem isSeparatorItem="YES" id="pFO-R4-QBV"/>
-                                        <menuItem title="Literal Controls" tag="13" identifier="Terminal State.Literal Mode" id="vdB-Qh-wxH">
+                                        <menuItem title="Literal Controls" tag="17" identifier="Terminal State.Literal Mode" id="vdB-Qh-wxH">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleLiteralMode:" target="-1" id="vIj-Vm-M73"/>

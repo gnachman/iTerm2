@@ -57,6 +57,7 @@
 #import "iTermSlowOperationGateway.h"
 #import "iTermSocket.h"
 #import "iTermSocketAddress.h"
+#import "iTermStandardKeyMapper.h"
 #import "iTermStatusBarTextComponent.h"
 #import "iTermStoplightHotbox.h"
 #import "iTermSwiftHelpers.h"

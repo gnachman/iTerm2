@@ -572,6 +572,10 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
 
 #pragma mark - iTerm
 
+- (BOOL)keyMapperWantsKeyUp {
+    return NO;
+}
+
 - (void)keyMapperSetEvent:(NSEvent *)event {
     [self updateConfigurationWithEvent:event];
 }

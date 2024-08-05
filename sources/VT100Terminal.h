@@ -38,13 +38,14 @@ typedef struct {
     VT100TerminalColorValue underlineColor;
 } VT100GraphicRendition;
 
+// https://sw.kovidgoyal.net/kitty/keyboard-protocol/
 typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
     VT100TerminalKeyReportingFlagsNone = 0,
-    VT100TerminalKeyReportingFlagsDisambiguateEscape = (1 << 0),  // CSI > 1u
-    VT100TerminalKeyReportingFlagsReportAllEventTypes = (1 << 1),  // TODO
-    VT100TerminalKeyReportingFlagsReportAlternateKeys = (1 << 2),  // TODO
-    VT100TerminalKeyReportingFlagsReportAllKeysAsEscapeCodes = (1 << 3),  // TODO
-    VT100TerminalKeyReportingFlagsReportAssociatedText = (1 << 4)  // TODO
+    VT100TerminalKeyReportingFlagsDisambiguateEscape = (1 << 0),
+    VT100TerminalKeyReportingFlagsReportAllEventTypes = (1 << 1),
+    VT100TerminalKeyReportingFlagsReportAlternateKeys = (1 << 2),
+    VT100TerminalKeyReportingFlagsReportAllKeysAsEscapeCodes = (1 << 3),
+    VT100TerminalKeyReportingFlagsReportAssociatedText = (1 << 4)
 };
 
 @interface VT100Terminal : NSObject
@@ -208,7 +209,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalResetReason) {
 
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects;
 - (void)toggleAlternateScreen;
-- (void)toggleDisambiguateEscape;
+- (void)toggleKeyReportingFlag:(VT100TerminalKeyReportingFlags)flag;
 
 // Call this after changing the graphic rendition externally;
 - (void)updateDefaultChar;

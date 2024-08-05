@@ -26,6 +26,8 @@
  */
 
 #import "iTermApplication.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
@@ -88,6 +90,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     BOOL _leader;
     BOOL _activated;
     NSTimeInterval _activationStartTime;
+    NSEventModifierFlags _previousFlags;
 }
 
 - (void)dealloc {
@@ -524,6 +527,8 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 
 - (BOOL)handleFlagsChangedEvent:(NSEvent *)event {
+    event.it_previousFlags = _previousFlags;
+    _previousFlags = event.it_modifierFlags;
     if (_leader && !(event.modifierFlags & iTermLeaderModifierFlag)) {
         DLog(@"Flags changed while leader on. Rewrite event with leader flag and resend");
         NSEvent *flagChangedPlusHelp = [NSEvent keyEventWithType:NSEventTypeFlagsChanged

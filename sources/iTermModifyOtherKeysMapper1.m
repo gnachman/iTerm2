@@ -41,6 +41,10 @@ typedef enum {
     _modifyOther.delegate = delegate;
 }
 
+- (BOOL)keyMapperWantsKeyUp {
+    return NO;
+}
+
 - (nullable NSString *)keyMapperStringForPreCocoaEvent:(NSEvent *)originalEvent {
     NSEvent *event = originalEvent;
     if ([self shouldModifyOtherKeysForEvent:event modifiedEvent:&event]) {
