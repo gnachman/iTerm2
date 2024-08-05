@@ -37,8 +37,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSData *)keyMapperDataForKeyUp:(NSEvent *)event;
 
 // If this returns YES then the event will be sent to the controller which, if it does not handle
-// the event itself, will send the event to the post-cocoa handler here. Don't return YES if the
-// event should go through the IME.
+// the event itself, will send the event to the post-cocoa handler here.
+//
+// If this returns NO, keyMapperStringForPreCocoaEvent is usually called (except for unusual cases
+// like cmd is pressed, it's a dead key, or marked text existed) and if it returns a nonnil value
+// it is sent.
+//
+// Most importantly: if you want the event to go through the IME, return NO.
 - (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event;
 
 // Prepare to handle this event. Update config from delegate.
@@ -49,8 +54,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event;
 
 - (NSDictionary *)keyMapperDictionaryValue;
-@optional
-- (void)setDelegate:(id)delegate;
+//@optional
+//- (void)setDelegate:(id)delegate;
 
 @end
 

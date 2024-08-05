@@ -8,10 +8,12 @@
 #import "iTermModifyOtherKeysMapper.h"
 
 #import "DebugLogging.h"
-#import "iTermKeyboardHandler.h"
 #import "NSEvent+iTerm.h"
 #import "NSStringITerm.h"
 #import "VT100Output.h"
+
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermKeyboardHandler.h"
 
 static BOOL CodePointInPrivateUseArea(unichar c) {
     return c >= 0xE000 && c <= 0xF8FF;
@@ -20,42 +22,7 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
 @implementation iTermModifyOtherKeysMapper
 
 - (BOOL)eventIsControlCodeWithOption:(NSEvent *)event {
-    if (event.keyCode == kVK_Escape) {
-        // esc doesn't get treated like other control characters.
-        return NO;
-    }
-    const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
-                                                        NSEventModifierFlagOption |
-                                                        NSEventModifierFlagShift |
-                                                        NSEventModifierFlagCommand);
-    const NSEventModifierFlags controlOption = (NSEventModifierFlagControl | NSEventModifierFlagOption);
-    if ((event.it_modifierFlags & allEventModifierFlags) != controlOption) {
-        return NO;
-    }
-    if (event.characters.length != 1) {
-        return NO;
-    }
-    if ([event.characters characterAtIndex:0] >= 32) {
-        return NO;
-    }
-    const unichar controlCode = [event.characters characterAtIndex:0] + '@';
-    if ([[NSString stringWithCharacters:&controlCode length:1] isEqualTo:event.charactersIgnoringModifiers]) {
-        // On US keyboards, when you just press control+opt+<char> you get:
-        //  event.characters="<control code>" event.charactersIgnoringModifiers="<char>"
-        // On Spanish ISO (and presumably all others like it) when you press control+opt+<char> you can get:
-        //  event.characters="<control code>" event.charactersIgnoringModifiers="<some random other thing on the key>"
-        // This code path prevents control-opt-char from ignoring the Option modifier on US-style
-        // keyboards. Those should not be treated as control keys. The reason I think this is correct
-        // is that on a keyboard that *requires* you to press option to get a control, it must be
-        // because the default character for the key is not the one that goes with the control. For
-        // example, on Spanish ISO the key labeled + becomes ] when you press option. So to send
-        // C-] you have to press C-Opt-], and modifyOtherKeys should treat it as C-].
-        return NO;
-    }
-    // This is a control key. We can't just send it in modifyOtherKeys=2 mode. For example,
-    // in issue 9279 @elias.baixas notes that on a Spanish ISO keyboard you press control-alt-+
-    // to get control-]. characters="<0x1d>".
-    return YES;
+    return event.it_isControlCodeWithOption;
 }
 
 - (UTF32Char)codePointForEvent:(NSEvent *)event {
@@ -345,6 +312,7 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
         // Always handle control+anything ourselves. We certainly don't want
         // cocoa to get ahold of it and call insertText: or
         // performKeyEquivalent:, which bypasses all the modifyOtherKeys goodness.
+        // TODO: Shouldn't this return YES given the comment above?
         return NO;
     }
 

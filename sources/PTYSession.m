@@ -4813,37 +4813,42 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateKeyMapper {
     Class mapperClass = [iTermStandardKeyMapper class];
 
-    switch (_keyMappingMode) {
-        case iTermKeyMappingModeStandard:
-            mapperClass = [iTermStandardKeyMapper class];
-            break;
-        case iTermKeyMappingModeCSIu:
-            mapperClass = [iTermTermkeyKeyMapper class];
-            break;
-        case iTermKeyMappingModeRaw:
-            mapperClass = [iTermRawKeyMapper class];
-            break;
-        case iTermKeyMappingModeModifyOtherKeys1:
-            mapperClass = [iTermModifyOtherKeysMapper1 class];
-            break;
-        case iTermKeyMappingModeModifyOtherKeys2:
-            mapperClass = [iTermModifyOtherKeysMapper2 class];
-            break;
+    if (_screen.terminalKeyReportingFlags != 0) {
+        mapperClass = [iTermModernKeyMapper class];
+    } else {
+        switch (_keyMappingMode) {
+            case iTermKeyMappingModeStandard:
+                mapperClass = [iTermStandardKeyMapper class];
+                break;
+            case iTermKeyMappingModeCSIu:
+                mapperClass = [iTermTermkeyKeyMapper class];
+                break;
+            case iTermKeyMappingModeRaw:
+                mapperClass = [iTermRawKeyMapper class];
+                break;
+            case iTermKeyMappingModeModifyOtherKeys1:
+                mapperClass = [iTermModifyOtherKeysMapper1 class];
+                break;
+            case iTermKeyMappingModeModifyOtherKeys2:
+                mapperClass = [iTermModifyOtherKeysMapper2 class];
+                break;
+        }
     }
-
     if (![_keyMapper isKindOfClass:mapperClass]) {
         [_keyMapper release];
         _keyMapper = nil;
 
-        id<iTermKeyMapper> keyMapper = [[mapperClass alloc] init];
+        NSObject<iTermKeyMapper> *keyMapper = [[mapperClass alloc] init];
         if ([keyMapper respondsToSelector:@selector(setDelegate:)]) {
-            [keyMapper setDelegate:self];
+            [keyMapper it_performNonObjectReturningSelector:@selector(setDelegate:) withObject:self];
         }
         _keyMapper = keyMapper;
         _textview.keyboardHandler.keyMapper = _keyMapper;
     }
     iTermTermkeyKeyMapper *termkey = [iTermTermkeyKeyMapper castFrom:_keyMapper];
     termkey.flags = _screen.terminalKeyReportingFlags;
+
+    [[iTermModernKeyMapper castFrom:_keyMapper] setFlags:_screen.terminalKeyReportingFlags];
 }
 
 - (NSString *)badgeFormat {
@@ -14751,6 +14756,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenSendModifiersDidChange {
+    if (_screen.terminalKeyReportingFlags != 0) {
+        return;
+    }
     const BOOL allowed = [iTermProfilePreferences boolForKey:KEY_ALLOW_MODIFY_OTHER_KEYS
                                                    inProfile:self.profile];
     if (!allowed) {
@@ -14767,6 +14775,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenKeyReportingFlagsDidChange {
+    if (_screen.terminalKeyReportingFlags == 0) {
+        [self screenSendModifiersDidChange];
+        return;
+    }
     const BOOL profileWantsTickit = [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL
                                                               inProfile:self.profile];
     if ((_screen.terminalKeyReportingFlags & VT100TerminalKeyReportingFlagsDisambiguateEscape) || profileWantsTickit) {
@@ -17272,6 +17284,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                     token:[[mutableState.setWorkingDirectoryOrderEnforcer newToken] autorelease]];
     }];
 
+}
+
+#pragma mark - iTermModernKeyMapperDelegate
+
+- (iTermModernKeyMapperConfiguration *)modernKeyMapperWillMapKey {
+    iTermModernKeyMapperConfiguration *configuration = [[[iTermModernKeyMapperConfiguration alloc] initWithLeftOptionKey:self.optionKey
+                                                                                                          rightOptionKey:self.rightOptionKey] autorelease];
+    return configuration;
 }
 
 #pragma mark - iTermStandardKeyMapperDelegate
