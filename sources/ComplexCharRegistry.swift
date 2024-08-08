@@ -25,11 +25,11 @@ class ComplexCharRegistry: NSObject {
         return mutex.sync { impl.spacingCombiningMarkCodeNumbers }
     }
 
-    @objc var nextCode: Int {
+    @objc var nextCode: unichar {
         return mutex.sync { impl.nextCode }
     }
 
-    @objc var peekNextCode: Int {
+    @objc var peekNextCode: unichar {
         return mutex.sync { impl.peekNextCode }
     }
 
@@ -41,7 +41,7 @@ class ComplexCharRegistry: NSObject {
     func load(charMap: [NSNumber: NSString]?,
               spacingCombiningMarks: [NSNumber]?,
               inverseMap: [NSString: NSNumber]?,
-              nextKey: Int,
+              nextKey: unichar,
               hasWrapped: Bool) {
         mutex.sync {
             impl.load(charMap: charMap,
@@ -61,7 +61,7 @@ class ComplexCharRegistry: NSObject {
     }
 
     @objc(appendCodePoint:to:)
-    func append(codePoint: unichar, to code: Int) -> Int {
+    func append(codePoint: unichar, to code: unichar) -> unichar {
         return mutex.sync { impl.append(codePoint: codePoint, to: code) }
     }
 
@@ -77,7 +77,7 @@ class ComplexCharRegistry: NSObject {
 
     @objc
     func lazilyCreatedCode(for string: NSString,
-                           isSpacingCombiningMark: iTermTriState) -> Int {
+                           isSpacingCombiningMark: iTermTriState) -> unichar {
         return mutex.sync { impl.lazilyCreatedCode(for: string,
                                                       isSpacingCombiningMark: isSpacingCombiningMark) }
     }
@@ -123,7 +123,7 @@ class ComplexCharRegistry: NSObject {
         }
         let code = lazilyCreatedCode(for: normalizedString,
                                         isSpacingCombiningMark: iTermTriStateFromBool(isSpacingCombiningMark))
-        screenChar[0].code = unichar(code)
+        screenChar[0].code = code
         screenChar[0].complexChar = 1
     }
 
@@ -148,11 +148,15 @@ private class ComplexCharRegistryImpl: NSObject {
     // Limiting the maxKey to 0xf000 allows users to downgrade to older versions (3.5.0beta5 and
     // earlier) that placed DWC_SKIP and friends in the private use area and didn't check for
     // complexChar when testing for those special characters.
-    private let maxKey = 0xf000
-    private var _nextCode = 1
+    private let maxKey = unichar(0xf000)
+    private var _nextCode = unichar(1)
 
-    var nextCode: Int {
+    var nextCode: unichar {
         while (true) {
+            if _nextCode >= maxKey {
+                _nextCode = 0
+                hasWrapped = true
+            }
             let candidate = _nextCode
             if _nextCode == maxKey {
                 _nextCode = 0
@@ -165,7 +169,7 @@ private class ComplexCharRegistryImpl: NSObject {
         }
     }
 
-    var peekNextCode: Int {
+    var peekNextCode: unichar {
         return _nextCode
     }
 
@@ -177,7 +181,7 @@ private class ComplexCharRegistryImpl: NSObject {
     func load(charMap: [NSNumber: NSString]?,
               spacingCombiningMarks: [NSNumber]?,
               inverseMap: [NSString: NSNumber]?,
-              nextKey: Int,
+              nextKey: unichar,
               hasWrapped: Bool) {
         if let charMap = charMap {
             self.complexCharMap = charMap
@@ -209,7 +213,7 @@ private class ComplexCharRegistryImpl: NSObject {
         return inverseComplexCharMap[string]
     }
 
-    func append(codePoint: unichar, to code: Int) -> Int {
+    func append(codePoint: unichar, to code: unichar) -> unichar {
         if code == UNICODE_REPLACEMENT_CHAR {
             return code
         }
@@ -239,9 +243,15 @@ private class ComplexCharRegistryImpl: NSObject {
     }
 
     func lazilyCreatedCode(for string: NSString,
-                           isSpacingCombiningMark: iTermTriState) -> Int {
+                           isSpacingCombiningMark: iTermTriState) -> unichar {
         if let number = code(for: string) {
-            return number.intValue
+            if let uc = UInt16(exactly: number.intValue) {
+                return uc
+            } else {
+                inverseComplexCharMap.removeValue(forKey: string)
+                complexCharMap.removeValue(forKey: number)
+                spacingCombiningMarkCodeNumbers.remove(number)
+            }
         }
         ScreenCharGeneration.counter.advance()
         let newCode = nextCode;
@@ -275,7 +285,7 @@ private class ComplexCharRegistryImpl: NSObject {
     }
     // MARK:- Private
 
-    private func reserved(_ code: Int) -> Bool {
+    private func reserved(_ code: unichar) -> Bool {
         return code >= iTermBoxDrawingCodeMin && code <= iTermBoxDrawingCodeMax;
     }
 }
