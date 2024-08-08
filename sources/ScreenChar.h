@@ -428,7 +428,7 @@ int ExpandScreenChar(const screen_char_t *sct, unichar* dest);
 
 // Add a code point to the end of an existing complex char. A replacement key is
 // returned.
-int AppendToComplexChar(int key, unichar codePoint);
+unichar AppendToComplexChar(unichar key, unichar codePoint);
 
 // Add a code point to the end of an existing char, whether complex or not.
 void AppendToChar(screen_char_t *dest, unichar c);

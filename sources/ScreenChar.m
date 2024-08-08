@@ -177,7 +177,7 @@ screen_char_t ImageCharForNewImage(NSString *name,
                                    BOOL preserveAspectRatio,
                                    NSEdgeInsets inset) {
     [[iTermScreenCharGeneration counter] advance];
-    const int newKey = [GetComplexCharRegistry() nextCode];
+    const unichar newKey = [GetComplexCharRegistry() nextCode];
 
     screen_char_t c;
     memset(&c, 0, sizeof(c));
@@ -227,7 +227,7 @@ VT100GridCoord GetPositionOfImageInChar(screen_char_t c) {
                               c.backgroundColor);
 }
 
-int AppendToComplexChar(int key, unichar codePoint) {
+unichar AppendToComplexChar(unichar key, unichar codePoint) {
     return [GetComplexCharRegistry() appendCodePoint:codePoint to:key];
 }
 
@@ -640,7 +640,7 @@ void ScreenCharDecodeRestorableState(NSDictionary *state) {
     [GetComplexCharRegistry() loadCharMap:state[kScreenCharComplexCharMapKey]
                     spacingCombiningMarks:state[kScreenCharSpacingCombiningMarksKey]
                                inverseMap:state[kScreenCharInverseComplexCharMapKey]
-                                  nextKey:[state[kScreenCharCCMNextKeyKey] intValue]
+                                  nextKey:[state[kScreenCharCCMNextKeyKey] unsignedShortValue]
                                hasWrapped:[state[kScreenCharHasWrappedKey] boolValue]];
     [[iTermImageRegistry sharedInstance] restoreFrom:state[kScreenCharImageMapKey]];
 }
