@@ -112,7 +112,7 @@ if [[ -o interactive ]]; then
       ITERM2_SHOULD_DECORATE_PROMPT=""
 
       # Add our escape sequences just before the prompt is shown.
-      # Use ITERM2_SQUELCH_MARK for people who can't mdoify PS1 directly, like powerlevel9k users.
+      # Use ITERM2_SQUELCH_MARK for people who can't modify PS1 directly, like powerlevel9k users.
       # This is gross but I had a heck of a time writing a correct if statetment for zsh 5.0.2.
       local PREFIX=""
       if [[ $PS1 == *"$(iterm2_prompt_mark)"* ]]; then
