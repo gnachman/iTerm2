@@ -1619,6 +1619,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     if (_cursorBlinking &&
         _configuration->_isInKeyWindow &&
         _configuration->_textViewIsActiveSession &&
+        _configuration->_textViewIsFirstResponder &&
         _timeSinceCursorMoved > 0.5) {
         // Allow the cursor to blink if it is configured, the window is key, this session is active
         // in the tab, and the cursor has not moved for half a second.

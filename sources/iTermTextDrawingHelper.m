@@ -3872,6 +3872,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     if (_cursorBlinking &&
         self.isInKeyWindow &&
         _textViewIsActiveSession &&
+        _textViewIsFirstResponder &&
         [NSDate timeIntervalSinceReferenceDate] - _lastTimeCursorMoved > 0.5) {
         // Allow the cursor to blink if it is configured, the window is key, this session is active
         // in the tab, and the cursor has not moved for half a second.

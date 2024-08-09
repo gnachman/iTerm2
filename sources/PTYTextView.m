@@ -1545,6 +1545,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _drawingHelper.numberOfScrollbackLines = [_dataSource numberOfScrollbackLines];
     _drawingHelper.reverseVideo = _dataSource.terminalReverseVideo;
     _drawingHelper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
+    _drawingHelper.textViewIsFirstResponder = self.window.firstResponder == self;
     _drawingHelper.isInKeyWindow = [self isInKeyWindow];
     // Draw the cursor filled in when we're inactive if there's a popup open or key focus was stolen.
     _drawingHelper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _keyFocusStolenCount);

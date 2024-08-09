@@ -66,6 +66,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _isFrontTextView;
     BOOL _isInKeyWindow;
     BOOL _textViewIsActiveSession;
+    BOOL _textViewIsFirstResponder;
 
     // Screen
     BOOL _isRetina;

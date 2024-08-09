@@ -126,6 +126,9 @@ extern const int iTermTextDrawingHelperLineStileMarkRightInsetCells;
 // Is this view active (receiving user input)?
 @property(nonatomic, assign) BOOL textViewIsActiveSession;
 
+// Is the textview the first responder?
+@property(nonatomic, assign) BOOL textViewIsFirstResponder;
+
 // Is "smart cursor color" on?
 @property(nonatomic, assign) BOOL useSmartCursorColor;
 
