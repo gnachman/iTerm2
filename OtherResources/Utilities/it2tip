@@ -1,0 +1,546 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+
+tips = [
+    {
+      "title": "Shell Integration",
+      "body": "The big new feature of iTerm2 version 3 is Shell Integration. Click “Learn More” for all the details.",
+      "url": "https://iterm2.com/shell_integration.html"
+      },
+    {
+      "title": "Timestamps",
+      "body": "“View > Show Timestamps” shows the time (and date, if appropriate) when each line was last modified."
+      },
+    {
+      "title": "Password Manager",
+      "body": "Did you know iTerm2 has a password manager? Open it with “Window > Password Manager.” You can define a Trigger to open it for you at a password prompt in “Prefs > Profiles > Advanced > Triggers.”"
+      },
+    {
+      "title": "Open Quickly",
+      "body": "You can quickly search through your sessions with “View > Open Quickly” (⇧⌘O). You can type a query and sessions whose name, badge, current hostname, current user name, recent commands, and recent working directories match will be surfaced. It works best with Shell Integration so the user name, hostname, command, and directories can be known even while sshed.",
+      "url": "https://iterm2.com/shell_integration.html"
+      },
+    {
+      "title": "Undo Close",
+      "body": "If you close a session, tab, or window by accident you can undo it with “Edit > Undo” (⌘Z). By default you have five seconds to undo, but you can adjust that timeout in “Prefs > Profiles > Session.”"
+      },
+    {
+      "title": "Annotations",
+      "body": "Want to mark up your scrollback history? Right click on a selection and choose “Annotate Selection” to add a personal note to it. Use “View > Show Annotations” to show or hide them, and look in “Edit > Marks and Annotations” for more things you can do."
+      },
+    {
+      "title": "Copy with Styles",
+      "body": "Copy a selection with ⌥⌘C to include styles such as colors and fonts. You can make this the default action for Copy in “Prefs > Advanced.”"
+      },
+    {
+      "title": "Inline Images",
+      "body": "iTerm2 can display images (even animated GIFs) inline.",
+      "url": "https://iterm2.com/images.html"
+      },
+    {
+      "title": "Automatic Profile Switching",
+      "body": "Automatic Profile Switching changes the current profile when the username, hostname, or directory changes. Set it up in “Prefs > Profiles > Advanced.” It requires Shell Integration to be installed.",
+      "url": "https://iterm2.com/shell_integration.html"
+      },
+    {
+      "title": "Captured Output",
+      "body": "iTerm2 can act like an IDE using the Captured Output feature. When it sees text matching a regular expression you define, like compiler errors, it shows the matching lines in the Toolbelt. You can click to jump to the line in your terminal and double-click to perform an action like opening an editor to the line with the error.",
+      "url": "https://iterm2.com/captured_output.html"
+      },
+    {
+      "title": "Badges",
+      "body": "You can display a status message in the top right of your session in the background. It’s called a “Badge.” If you install Shell Integration you can include info like user name, hostname, current directory, and more.",
+      "url": "https://iterm2.com/badges.html"
+      },
+    {
+        "title": "Dynamic Profiles",
+        "body": "Dynamic Profiles let you store your profiles as one or more JSON files. It’s great for batch creating and editing profiles.",
+        "url": "https://iterm2.com/dynamic-profiles.html"
+        },
+    {
+        "title": "Advanced Paste",
+        "body": "“Edit > Paste Special > Advanced Paste” lets you preview and edit text before you paste. You get to tweak options, like how to handle control codes, or even to base-64 encode before pasting."
+        },
+    {
+        "title": "Zoom",
+        "body": "Ever wanted to focus on a block of lines without distraction, or limit Find to a single command’s output? Select the lines and choose “View > Zoom In on Selection.” The session’s contents will be temporarily replaced with the selection. Press “esc” to unzoom."
+        },
+    {
+        "title": "Semantic History",
+        "body": "The “Semantic History” feature allows you to ⌘-click on a file or URL to open it."
+        },
+    {
+        "title": "Tmux Integration",
+        "body": "If you use tmux, try running “tmux -CC” to get iTerm2’s tmux integration mode. The tmux windows show up as native iTerm2 windows, and you can use iTerm2’s keyboard shortcuts. It even works over ssh!",
+        "url": "https://gitlab.com/gnachman/iterm2/wikis/TmuxIntegration"
+        },
+    {
+        "title": "Triggers",
+        "body": "iTerm2 can automatically perform actions you define when text matching a regular expression is received. For example, you can highlight text or show an alert box. Set it up in “Prefs > Profiles > Advanced > Triggers.”",
+        "url": "https://www.iterm2.com/documentation-triggers.html"
+        },
+    {
+        "title": "Smart Selection",
+        "body": "Quadruple click to perform Smart Selection. It figures out if you’re selecting a URL, filename, email address, etc. based on prioritized regular expressions.",
+        "url": "https://www.iterm2.com/smartselection.html"
+        },
+    {
+        "title": "Instant Replay",
+        "body": "Press ⌥⌘B to step back in time in a terminal window. Use arrow keys to go frame by frame. Hold ⇧ and press arrow keys to go faster."
+        },
+    {
+        "title": "Hotkey Window",
+        "body": "You can have a terminal window open with a keystroke, even while in other apps. Click “Create a Dedicated Hotkey Window” in “Prefs > Keys.”"
+        },
+    {
+        "title": "Hotkey Window",
+        "body": "Hotkey windows can stay open after losing focus. Turn it on in “Window > Pin Hotkey Window.”"
+        },
+    {
+        "title": "Cursor Guide",
+        "body": "The cursor guide is a horizontal line that follows your cursor. You can turn it on in “Prefs > Profiles > Colors” or toggle it with the ⌥⌘; shortcut."
+        },
+    {
+        "title": "Shell Integration: Alerts",
+        "body": "The Shell Integration feature lets you ask to be alerted (⌥⌘A) when a long-running command completes.",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Cursor Blink Rate",
+        "body": "You can configure how quickly the cursor blinks in “Prefs > Advanced.”"
+        },
+    {
+        "title": "Shell Integration: Navigation",
+        "body": "The Shell Integration feature lets you navigate among shell prompts with ⇧⌘↑ and ⇧⌘↓.",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Shell Integration: Status",
+        "body": "The Shell Integration feature puts a blue arrow next to your shell prompt. If you run a command that fails, it turns red. Right click on it to get the running time and status.",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Shell Integration: Selection",
+        "body": "With Shell Integration installed, you can select the output of the last command with ⇧⌘A.",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Bells",
+        "body": "The dock icon shows a count of the number of bells rung and notifications posted since the app was last active."
+        },
+    {
+        "title": "Shell Integration: Downloads",
+        "body": "If you install Shell Integration on a machine you ssh to, you can right click on a filename (for example, in the output of “ls”) and choose “Download with scp” to download the file.",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Find Your Cursor",
+        "body": "Press ⌘/ to locate your cursor. It’s fun!"
+        },
+    {
+        "title": "Customize Smart Selection",
+        "body": "You can edit Smart Selection regular expressions in “Prefs > Profiles > Advanced > Smart Selection.”",
+        "url": "https://www.iterm2.com/smartselection.html"
+        },
+    {
+        "title": "Smart Selection Actions",
+        "body": "Assign an action to a Smart Selection rule in “Prefs > Profiles > Advanced > Smart Selection > Edit Actions.” They go in the context menu and override semantic history on ⌘-click.",
+        "url": "https://www.iterm2.com/smartselection.html"
+        },
+    {
+        "title": "Visual Bell",
+        "body": "If you want the visual bell to flash the whole screen instead of show a bell icon, you can turn that on in “Prefs > Advanced.”"
+        },
+    {
+        "title": "Tab Menu",
+        "body": "Right click on a tab to change its color, close tabs after it, or to close all other tabs."
+        },
+    {
+        "title": "Tags",
+        "body": "You can assign tags to your profiles, and by clicking “Tags>” anywhere you see a list of profiles you can browse those tags."
+        },
+    {
+        "title": "Tag Hierarchy",
+        "body": "If you put a slash in a profile’s tag, that implicitly defines a hierarchy. You can see it in the Profiles menu as nested submenus."
+        },
+    {
+        "title": "Downloads",
+        "body": "iTerm2 can download files by base-64 encoding them. Click “Learn More” to download a shell script that makes it easy.",
+        "url": "https://iterm2.com/download.sh"
+        },
+    {
+        "title": "Command Completion",
+        "body": "If you install Shell Integration, ⇧⌘; helps you complete commands. It remembers the commands you’ve run on each host that has Shell Integration installed. It knows how often that command was run and how recently to help make the best suggestions.",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Recent Directories",
+        "body": "iTerm2 remembers which directories you use the most on each host that has Shell Integration installed. There’s a Toolbelt tool to browse them, and ⌥⌘/ gives you a popup sorted by frequency and recency of use.",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Favorite Directories",
+        "body": "If you have Shell Integration installed, you can “star” a directory to keep it always at the bottom of the Recent Directories tool in the Toolbelt. Right click and choose “Toggle Star.”",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Shell Integration History",
+        "body": "Install Shell Integration and turn on “Prefs > General > Save copy/paste and command history to disk” to remember command history per host across restarts of iTerm2.",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Paste File as Base64",
+        "body": "Copy a file to the pasteboard in Finder and then use “Edit > Paste Special > Paste File Base64-Encoded” for easy uploads of binary files. Use ”base64 -D” (or -d on Linux) on the remote host to decode it."
+        },
+    {
+        "title": "Split Panes",
+        "body": "You can split a tab into multiple panes with ⌘D and ⇧⌘D."
+        },
+    {
+        "title": "Adjust Split Panes",
+        "body": "Resize split panes with the keyboard using ^⌘-Arrow Key."
+        },
+    {
+        "title": "Move Cursor",
+        "body": "Hold ⌥ and click to move your cursor. It works best with Shell Integration installed (to avoid sending up/down arrow keys to your shell).",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Edge Windows",
+        "body": "You can tell your profile to create windows that are attached to one edge of the screen in “Prefs > Profiles > Window.” You can resize them by dragging the edges."
+        },
+    {
+        "title": "Tab Color",
+        "body": "You can assign colors to tabs in “Prefs > Profiles > Colors,” or in the View menu."
+        },
+    {
+        "title": "Rectangular Selection",
+        "body": "Hold ⌥⌘ while dragging to make a rectangular selection."
+        },
+    {
+        "title": "Multiple Selection",
+        "body": "Hold ⌘ while dragging to make multiple discontinuous selections."
+        },
+    {
+        "title": "Dragging Panes",
+        "body": "Hold ⇧⌥⌘ and drag a session into another session to create or change split panes."
+        },
+    {
+        "title": "Cursor Boost",
+        "body": "Adjust Cursor Boost in “Prefs > Profiles > Colors” to make all colors more muted, except the cursor. Use a bright white cursor and it pops!"
+        },
+    {
+        "title": "Minimum Contrast",
+        "body": "Adjust “Minimum Contrast” in “Prefs > Profiles > Colors” to ensure text is always legible regardless of text/background color combination."
+        },
+    {
+        "title": "Tabs",
+        "body": "Normally, new tabs appear at the end of the tab bar. There’s a setting in “Prefs > Advanced” to place them next to your current tab."
+        },
+    {
+        "title": "Base Conversion",
+        "body": "Right-click on a number and the context menu shows it converted to hex or decimal as appropriate."
+        },
+    {
+        "title": "Saved Searches",
+        "body": "In “Prefs > Keys” you can assign a keystroke to a search for a regular expression with the “Find Regular Expression…” action."
+        },
+    {
+        "title": "Find URLs",
+        "body": "Search for URLs using “Edit > Find > Find URLs.” Navigate search results with ⌘G and ⇧⌘G. Open the current selection with ⌥⌘O."
+        },
+    {
+        "title": "Triggers",
+        "body": "The “instant” checkbox in a Trigger allows it to fire while the cursor is on the same line as the text that matches your regular expression."
+        },
+    {
+        "title": "Soft Boundaries",
+        "body": "Turn on “Edit > Selection Respects Soft Boundaries” to recognize split pane dividers in programs like vi, emacs, and tmux so you can select multiple lines of text."
+        },
+    {
+        "title": "Select Without Dragging",
+        "body": "Single click where you want to start a selection and ⇧-click where you want it to end to select text without dragging."
+        },
+    {
+        "title": "Smooth Window Resizing",
+        "body": "Hold ^ while resizing a window and it won’t snap to the character grid: you can make it any size you want."
+        },
+    {
+        "title": "Pasting Tabs",
+        "body": "If you paste text containing tabs, you’ll be asked if you want to convert them to spaces. It’s handy at the shell prompt to avoid triggering filename completion."
+        },
+    {
+        "title": "Bell Silencing",
+        "body": "Did you know? If the bell rings too often, you’ll be asked if you’d like to silence it temporarily. iTerm2 cares about your comfort."
+        },
+    {
+        "title": "Profile Search",
+        "body": "Every list of profiles has a search field (e.g., in ”Prefs > Profiles.”) You can use various operators to restrict your search query. Click “Learn More” for all the details.",
+        "url": "https://iterm2.com/search_syntax.html"
+        },
+    {
+        "title": "Color Schemes",
+        "body": "The online color gallery features over one hundred beautiful color schemes you can download.",
+        "url": "https://www.iterm2.com/colorgallery"
+        },
+    {
+        "title": "ASCII/Non-Ascii Fonts",
+        "body": "You can have a separate font for ASCII versus non-ASCII text. Enable it in “Prefs > Profiles > Text.”"
+        },
+    {
+        "title": "Coprocesses",
+        "body": "A coprocess is a job, such as a shell script, that has a special relationship with a particular iTerm2 session. All output in a terminal window (that is, what you see on the screen) is also input to the coprocess. All output from the coprocess acts like text that the user is typing at the keyboard.",
+        "url": "https://iterm2.com/coprocesses.html"
+        },
+    {
+        "title": "Touch Bar Customization",
+        "body": "You can customize the touch bar by selecting “View > Customize Touch Bar.” You can add a tab bar for full-screen mode, a user-customizable status button, and you can even define your own touch bar buttons in Prefs > Keys. There’s also a new shell integration tool to customize touch bar function key labels."
+        },
+    {
+        "title": "Ligatures",
+        "body": "If you use a font that supports ligatures, you can enable ligature support in Prefs > Profiles > Text."
+        },
+    {
+        "title": "Floating Hotkey Window",
+        "body": "New in 3.1: You can configure your hotkey window to appear over other apps’ full screen windows. Turn on “Floating Window” in “Prefs > Profiles > Keys > Customize Hotkey Window.”"
+        },
+    {
+        "title": "Multiple Hotkey Windows",
+        "body": "New in 3.1: You can have multiple hotkey windows. Each profile can have one or more hotkeys."
+        },
+    {
+        "title": "Double-Tap Hotkey",
+        "body": "New in 3.1: You can configure a hotkey window to open on double-tap of a modifier in “Prefs > Profiles > Keys > Customize Hotkey Window.”"
+        },
+    {
+        "title": "Buried Sessions",
+        "body": "You can “bury” a session with “Session > Bury Session.” It remains hidden until you restore it by selecting it from “Session > Buried Sessions > Your session.”"
+        },
+    {
+        "title": "Python API",
+        "body": "You can add custom behavior to iTerm2 using the Python API.",
+        "url": "https://iterm2.com/python-api"
+        },
+    {
+        "title": "Status Bar",
+        "body": "You can add a configurable status bar to your terminal windows.",
+        "url": "https://iterm2.com/3.3/documentation-status-bar.html"
+        },
+    {
+        "title": "Minimal Theme",
+        "body": "Try the “Minimal” and “Compact” themes to reduce visual clutter. You can set it in “Prefs > Appearance > General.”"
+        },
+    {
+        "title": "Session Titles",
+        "body": "You can configure which elements are present in session titles in “Prefs > Profiles > General > Title.”"
+        },
+    {
+        "title": "Tab Icons",
+        "body": "Tabs can show an icon indicating the current application. Configure it in “Prefs > Profiles > General > Icon.”"
+        },
+    {
+        "title": "Drag Window by Tab",
+        "body": "Hold ⌥ while dragging a tab to move the window. This is useful in the Compact and Minimal themes, which have a very small area for dragging the window."
+        },
+    {
+        "title": "Composer",
+        "body": "Press ⇧⌘. to open the Composer. It gives you a scratchpad to edit a command before sending it to the shell."
+        },
+    {
+        "title": "Shell Integration: Uploads",
+        "body": "If you install Shell Integration on a machine you ssh to, you can drag-drop from Finder into the remote host by holding ⌥ while dragging. The destination directory is determined by where you drop the file in the terminal window: run cd foo, then drop the file below the cd command, and the file will go into the foo directory.",
+        "url": "https://iterm2.com/shell_integration.html"
+        },
+    {
+        "title": "Composer Power Features",
+        "body": "The composer supports multiple cursors. It also has the ability to send just one command out of a list, making it easy to walk through a list of commands one-by-one. Click the help button in the composer for details."
+        },
+
+    { "title": "Render Selection",
+        "body": "Transform selected text into a prettified, syntax-highlighted view with the “Render Selection” command, ideal for JSON, Markdown, or source code. This feature includes horizontal scrolling for easy log navigation."
+        },
+
+    { "title": "SSH Integration",
+        "body": "Export environment variables and copy files to remote hosts seamlessly with SSH integration. Either configure a profile to use ssh or use it2ssh in place of ssh."
+        },
+
+    { "title": "Auto Composer",
+        "body": "Improve your command line with the “auto composer”, which replaces the command line with a native control for ease of use. Requires shell integration."
+        },
+
+    { "title": "AI Command Writing",
+        "body": "Generate commands using AI by entering a prompt in the composer and selecting “Edit > Engage Artificial Intelligence”. An OpenAI API key is required for this functionality."
+        },
+
+    { "title": "Codecierge Tool",
+        "body": "Set and achieve terminal goals with “Codecierge”, a Toolbelt feature that guides you step-by-step based on your terminal activity. An OpenAI API key is necessary for this feature."
+        },
+
+    { "title": "Named Marks",
+        "body": "Navigate your command history effortlessly with “named marks” by assigning names to lines in the terminal."
+        },
+
+    { "title": "Font Assignments",
+        "body": "You can assign specific fonts to Unicode ranges. Use 'Settings > Profiles > Text > Manage Special Exceptions' to manage it and to install a huge set of Powerline symbols."
+        },
+
+    { "title": "Disable Transparency",
+        "body": "Maintain clarity in your active window while enjoying transparency in background windows by using 'View > Disable transparency in key window'."
+        },
+
+    { "title": "Leader Shortcut",
+        "body": "Create two-keystroke shortcuts with a “leader”: a special keystroke that precedes a custom key binding."
+        },
+
+    { "title": "Sequence Binding",
+        "body": "Execute a series of actions in order with a single shortcut using “sequence” key bindings."
+        },
+
+    { "title": "Export/Import Settings",
+        "body": "Easily backup or transfer your iTerm2 settings using the Export/Import feature in “Settings > General > Preferences”."
+        },
+
+    { "title": "Multi-Session Bindings",
+        "body": "Apply key bindings uniformly across multiple sessions for consistent control in different tabs or windows."
+        },
+
+    { "title": "Inject Trigger",
+        "body": "Simulate terminal input as if it were output from a running app with the “Inject” trigger."
+        },
+
+    { "title": "Trigger Status Bar",
+        "body": "Easily manage your triggers using the new Triggers status bar component."
+        },
+
+    { "title": "Session Size in Tab",
+        "body": "Display session size directly in tab titles for convenient at-a-glance information."
+        },
+
+    { "title": "Advanced Snippet Editing",
+        "body": "Edit snippets in Advanced Paste by holding the ⌥ key, or open them in the composer with ⇧."
+        },
+
+    { "title": "HTML Logs",
+        "body": "Save your terminal logs in HTML format for enhanced readability and sharing capabilities."
+        },
+
+    { "title": "ASCIICast Logs",
+        "body": "Create and play back terminal recordings with ASCIICast logs, compatible with asciinema."
+        },
+
+    { "title": "Timestamped Logs",
+        "body": "Include timestamps in your logs for better tracking and event correlation."
+        },
+
+    { "title": "LastPass & 1Password",
+        "body": "Utilize LastPass or 1Password with the password manager by configuring it in the menu next to the search field."
+        },
+
+    { "title": "Password Manager Access",
+        "body": "Access your password manager without authentication by adjusting the settings via the menu next to its search field."
+        },
+
+    { "title": "Password Generation",
+        "body": "Generate strong, secure passwords using the password manager’s new password generation feature."
+        },
+
+    { "title": "it2tip Utility",
+        "body": "Access tips of the day with the it2tip utility, a command line app. Enable it by installing shell integration and utilities."
+        },
+
+    { "title": "Auto Shell Integration",
+        "body": "Experience automatic shell integration when creating a login shell, removing the need for explicit setup on your Mac."
+        },
+
+    { "title": "Command Prompt Info",
+        "body": "Get detailed information about commands by ⌘-clicking on the command prompt."
+        },
+
+    { "title": "tmux Integration",
+        "body": "Use tmux integration for automatic key bindings that emulate tmux’s shortcuts, configurable via the Leader settings."
+        },
+
+    { "title": "tmux Clipboard Mirroring",
+        "body": "Sync your tmux paste buffer with the local clipboard for seamless integration (requires tmux 3.4)."
+        },
+
+    { "title": "Multi-Cursor in Composer",
+        "body": "Enhance your editing in the Composer with multiple cursors, created using ^⇧-up/down or ⌥-drag."
+        },
+
+    { "title": "Advanced Paste from Composer",
+        "body": "Move content from the Composer to the Advanced Paste window with ⌥⌘V for additional editing options."
+        },
+
+    { "title": "Composer Search",
+        "body": "Search within the Composer using ⌘F to quickly find specific text."
+        },
+
+    { "title": "Resize Composer",
+        "body": "Adjust the Composer’s height to suit your needs by dragging its bottom edge."
+        },
+
+    { "title": "Explain Command",
+        "body": "Learn more about your commands by ⌘-clicking in the Composer to open them in explainshell.com."
+        },
+
+    { "title": "Quick Command Send",
+        "body": "Quickly send and remove commands in the Composer using ⌥⇧-enter."
+        },
+
+    { "title": "Queue Commands",
+        "body": "Queue up a command in the Composer to be sent after the current command finishes with ⌥-Enter."
+        },
+
+    { "title": "Draggable Tip Window",
+        "body": "Reposition the Tip of the Day window conveniently on your screen, as it is now draggable."
+        },
+
+  ]
+
+
+home = os.getenv("XDG_DATA_HOME")
+if not home:
+  home = "~"
+
+RCFILE = os.path.expanduser(os.path.join(home, '.it2totd'))
+
+def last_index():
+  try:
+    with open(RCFILE) as f:
+      lines = f.readlines()
+      return int(lines[0].rstrip())
+  except:
+    return -1
+
+def print_tip(i):
+  def dcs(args):
+    return "\x1bP" + ";".join(args)
+
+  def osc(args):
+    term = os.getenv("TERM")
+    if term.startswith("screen"):
+      return dcs(["tmux", "\x1b\x1b]"]) + ";".join(args) + "\a\x1b\\"
+    else:
+      return "\x1b]" + ";".join(args) + "\x1b\\"
+
+  tip = tips[i]
+  print(f'iTerm2 tip - {tip["title"]}:')
+  print(tip["body"])
+  if "url" in tip:
+    print("Learn more: " + osc(["8", "", tip["url"]]) + tip["url"] + osc(["8", "", ""]))
+
+def save_index(i):
+  with open(RCFILE, "w") as f:
+    f.write(str(i))
+
+i = last_index() + 1
+if i >= len(tips) and len(sys.argv) > 1 and sys.argv[1] == "-w":
+  i = 0
+
+if i < len(tips):
+  print_tip(i)
+  save_index(i)
+

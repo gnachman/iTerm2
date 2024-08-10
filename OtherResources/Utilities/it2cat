@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+
+# tmux requires unrecognized OSC sequences to be wrapped with DCS tmux;
+# <sequence> ST, and for all ESCs in <sequence> to be replaced with ESC ESC. It
+# only accepts ESC backslash for ST. We use TERM instead of TMUX because TERM
+# gets passed through ssh.
+function print_osc() {
+    if [[ $TERM == screen* || $TERM == tmux* ]]; then
+        printf "\033Ptmux;\033\033]"
+    else
+        printf "\033]"
+    fi
+}
+
+# More of the tmux workaround described above.
+function print_st() {
+    if [[ $TERM == screen* || $TERM == tmux* ]]; then
+        printf "\a\033\\"
+    else
+        printf "\a"
+    fi
+}
+
+function load_version() {
+    if [ -z ${IT2CAT_BASE64_VERSION+x} ]; then
+        IT2CAT_BASE64_VERSION=$(base64 --version 2>&1)
+        export IT2CAT_BASE64_VERSION
+    fi
+}
+
+function b64_encode() {
+    load_version
+    if [[ $IT2CAT_BASE64_VERSION =~ GNU ]]; then
+        # Disable line wrap
+        base64 -w0
+    else
+        base64
+    fi
+}
+
+function b64_decode() {
+    load_version
+    if [[ $IT2CAT_BASE64_VERSION =~ fourmilab ]]; then
+        BASE64ARG=-d
+    elif [[ $IT2CAT_BASE64_VERSION =~ GNU ]]; then
+        BASE64ARG=-di
+    else
+        BASE64ARG=-D
+    fi
+    base64 $BASE64ARG
+}
+
+# print_file filename base64contents type mode
+#   filename: Filename to convey to client
+#   base64contents: Base64-encoded contents
+#   type: type hint
+#   mode: wide or regular
+function print_file() {
+    print_osc
+    printf "1337;File=inline=1"
+    printf ";size=%d" $(printf "%s" "$2" | b64_decode | wc -c)
+    [ -n "$1" ] && printf ";name=%s" "$(printf "%s" "$1" | b64_encode)"
+    [ -n "$3" ] && printf ";type=%s" "$3"
+    [ -n "$4" ] && printf ";mode=%s" "$4"
+    printf ":%s" "$2"
+    print_st
+    printf '\n'
+    did_print=t
+}
+
+function error() {
+    errcho "ERROR: $*"
+}
+
+function errcho() {
+    echo "$@" >&2
+}
+
+function show_help() {
+    errcho
+    errcho "Usage: it2cat [-w] [-t file-type] [-u] [-f] filename ..."
+    errcho "       cat filename | it2cat [-w] [-t file-type]"
+    errcho
+    errcho "Display a text file with native rendering."
+    errcho
+    errcho "Options:"
+    errcho
+    errcho "    -h, --help                      Display help message"
+    errcho "    -u, --url                       Interpret following filename arguments as remote URLs"
+    errcho "    -f, --file                      Interpret following filename arguments as regular Files"
+    errcho "    -t, --type file-type            Provides a type hint"
+    errcho "    -w, --wide                      Render in wide mode with a horizontal scrollbar"
+    errcho
+    errcho "    If a type is provided, it is used as a hint to disambiguate."
+    errcho "    The file type can be a mime type like text/markdown, a language name like Java, or a file extension like .c"
+    errcho "    The file type can usually be inferred from the extension or its contents. -t is most useful when"
+    errcho "    a filename is not available, such as whe input comes from a pipe."
+    errcho
+    errcho "Examples:"
+    errcho
+    errcho "    $ it2cat file.txt"
+    errcho "    $ cat graph.png | it2cat"
+    errcho "    $ it2cat -u http://example.com/path/to/file.txt -f otherfile.txt"
+    errcho "    $ cat url_list.txt | xargs it2cat -u"
+    errcho "    $ it2cat -w -t application/json config.json"
+    errcho
+}
+
+function check_dependency() {
+    if ! (builtin command -V "$1" >/dev/null 2>&1); then
+        error "missing dependency: can't find $1"
+        exit 1
+    fi
+}
+
+## Main
+
+if [ -t 0 ]; then
+    has_stdin=f
+else
+    has_stdin=t
+fi
+
+# Show help if no arguments and no stdin.
+if [ $has_stdin = f ] && [ $# -eq 0 ]; then
+    show_help
+    exit
+fi
+
+check_dependency base64
+check_dependency wc
+file_type=""
+mode=regular
+
+# Look for command line flags.
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h | --h | --help)
+        show_help
+        exit
+        ;;
+    -w | --w | --wide)
+        mode=wide
+        ;;
+    -f | --f | --file)
+        has_stdin=f
+        is_url=f
+        ;;
+    -u | --u | --url)
+        check_dependency curl
+        has_stdin=f
+        is_url=t
+        ;;
+    -t | --t | --type)
+         file_type="$2"
+         shift
+         ;;
+    -*)
+        error "Unknown option flag: $1"
+        show_help
+        exit 1
+        ;;
+    *)
+        if [ "$is_url" == "t" ]; then
+            encoded_file=$(curl -fs "$1" | b64_encode) || {
+                error "Could not retrieve file from URL $1, error_code: $?"
+                exit 2
+            }
+        elif [ -r "$1" ]; then
+            encoded_file=$(cat "$1" | b64_encode)
+        else
+            error "it2cat: $1: No such file or directory"
+            exit 2
+        fi
+        has_stdin=f
+        print_file "$1" "$encoded_file" "$file_type" "$mode"
+        ;;
+    esac
+    shift
+done
+
+# Read and print stdin
+if [ $has_stdin = t ]; then
+    print_file "" "$(cat | b64_encode)" "$file_type" "$mode"
+fi
+
+if [ "$did_print" != "t" ]; then
+    error "No file provided. Check command line options."
+    show_help
+    exit 1
+fi
+
+exit 0

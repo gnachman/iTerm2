@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+
+# tmux requires unrecognized OSC sequences to be wrapped with DCS tmux;
+# <sequence> ST, and for all ESCs in <sequence> to be replaced with ESC ESC. It
+# only accepts ESC backslash for ST.
+function print_osc() {
+    if [[ $TERM == screen* || $TERM == tmux* ]] ; then
+        printf "\033Ptmux;\033\033]"
+    else
+        printf "\033]"
+    fi
+}
+
+# More of the tmux workaround described above.
+function print_st() {
+    if [[ $TERM == screen* || $TERM == tmux* ]] ; then
+        printf "\a\033\\"
+    else
+        printf "\a"
+    fi
+}
+
+function get_b64_version() {
+    if [[ -z "${BASE64_VERSION+x}" ]]; then
+        BASE64_VERSION=$(base64 --version 2>&1)
+        export BASE64_VERSION
+    fi
+}
+
+function b64_encode() {
+    get_b64_version
+    if [[ $BASE64_VERSION =~ GNU ]]; then
+        # Disable line wrap
+        base64 -w0
+    else
+        base64
+    fi
+}
+
+function b64_decode() {
+    get_b64_version
+    if [[ $BASE64_VERSION =~ fourmilab ]]; then
+        BASE64_ARG=-d
+    elif [[ $BASE64_VERSION =~ GNU ]]; then
+        BASE64_ARG=-di
+    else
+        BASE64_ARG=-D
+    fi
+    base64 $BASE64_ARG
+}
+
+function error() {
+    errcho "ERROR: $*"
+}
+
+function errcho() {
+    echo "$@" >&2
+}
+
+function show_help() {
+    errcho
+    errcho "Usage: it2profile -s profile_name"
+    errcho "       it2profile -g"
+    errcho
+    errcho "Change iTerm2 session profile on the fly"
+    errcho
+    errcho "Options:"
+    errcho
+    errcho "    -s      Set current iTerm2 session profile to specified profile name"
+    errcho "                empty string refers to profile marked as Default"
+    errcho "    -g      Get current iTerm2 session profile name"
+    errcho "    -r      Reset to the session initial profile"
+    errcho
+}
+
+function check_dependency() {
+    if ! (builtin command -V "$1" >/dev/null 2>&1); then
+        error "missing dependency: can't find $1"
+        exit 1
+    fi
+}
+
+# get_profile / set_profile
+#
+# These functions uses POSIX standard synonym for the controlling terminal
+# associated with the current process group - /dev/tty. It is useful for programs 
+# that wish to be sure of writing or reading data from the terminal 
+# no matter how STDIN/STDOUT/STDERR has been redirected.
+# 
+# get_profile uses iTerm2 Session Context variable "profileName" to 
+# get currently active profile name.
+#
+function get_profile() {
+    trap 'cleanup' EXIT
+    stty -echo < /dev/tty
+    exec 9<> /dev/tty
+    print_osc >&9
+    printf "1337;ReportVariable=cHJvZmlsZU5hbWU=" >&9
+    print_st >&9
+    read -r -t 5 -d $'\a' iterm_response <&9
+    exec 9>&-
+    stty echo < /dev/tty
+    [[ "$iterm_response" =~ ReportVariable= ]] || {
+        error "Failed to read response from iTerm2"
+        exit 2
+    }
+    echo "$(b64_decode <<< ${iterm_response#*=})"
+}
+
+function cleanup() {
+    stty echo < /dev/tty
+}
+
+function set_profile() {
+    exec 9> /dev/tty
+    print_osc >&9
+    printf '1337;SetProfile=%s' "$1" >&9
+    print_st >&9
+    exec 9>&-
+}
+
+# Show help if no arguments
+if [ $# -eq 0 ]; then
+    show_help
+    exit
+fi
+
+check_dependency stty
+check_dependency base64
+
+# Process command line arguments
+case "$1" in
+    -h|--h|--help)
+        show_help
+        exit
+        ;;
+    -s|--s|--set)
+        [[ $# -eq 2 ]] || {
+            error "-s option requires exactly 1 argument - profile name"
+            show_help
+            exit 1
+        }
+        set_profile "$2"
+        ;;
+    -g|--g|--get)
+        [[ $# -eq 1 ]] || {
+            error "-g option does not accept any argument"
+            show_help
+            exit 1
+        }
+        get_profile
+        ;;
+    -r|--r|--reset)
+        [[ $# -eq 1 ]] || {
+            error "-r option does not accept any argument"
+            show_help
+            exit 1
+        }
+        set_profile "${ITERM_PROFILE:-}"
+        ;;
+    *)
+        error "Unknown option: $1"
+        show_help
+        exit 1
+        ;;
+esac
+
+exit 0

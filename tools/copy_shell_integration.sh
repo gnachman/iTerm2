@@ -28,11 +28,13 @@ cp $SUBMODULE/shell_integration/fish Resources/shell_integration/iterm2_shell_in
 cp $SUBMODULE/shell_integration/tcsh Resources/shell_integration/iterm2_shell_integration.tcsh
 cp $SUBMODULE/shell_integration/zsh  Resources/shell_integration/iterm2_shell_integration.zsh
 DEST=$PWD/Resources/utilities
+ALLDEST=$PWD/OtherResources/utilities
 
 pushd $SUBMODULE/utilities
 files=$(find . -type f)
 tar cvfz $DEST/utilities.tgz *
 echo * > $DEST/utilities-manifest.txt
+cp * $ALLDEST
 popd
 
 HEADER="sources/iTermLatestVersionByShell.h"

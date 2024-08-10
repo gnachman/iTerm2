@@ -1,0 +1,727 @@
+#!/usr/bin/env python3
+
+import argparse
+import asyncio
+try:
+  import iterm2
+except ModuleNotFoundError:
+  print("The current version of Python doesn't have the 'iterm2' module installed. Please run:")
+  print("\n    $ python3 -m pip install iterm2\n")
+  exit()
+import logging
+import re
+import sys
+import traceback
+
+async def list_sessions(connection, args):
+  a = await iterm2.async_get_app(connection)
+  for w in a.terminal_windows:
+    for t in w.tabs:
+      sessions = t.sessions
+      for s in sessions:
+        print(s.pretty_str(), end='')
+  print("")
+  print("Buried sessions:")
+  for s in a.buried_sessions:
+    print(s.pretty_str(), end='')
+
+async def show_hierarchy(connection, args):
+  a = await iterm2.async_get_app(connection)
+  print(a.pretty_str())
+
+async def send_text(connection, args):
+  a = await iterm2.async_get_app(connection)
+  s = a.get_session_by_id(args.session)
+  await s.async_send_text(args.text)
+
+async def create_tab(connection, args):
+  a = await iterm2.async_get_app(connection)
+  if args.window is not None:
+    window_id = args.window
+    try:
+      window = next(window for window in a.terminal_windows if window.window_id == window_id)
+      tab = await window.async_create_tab(profile=args.profile, command=args.command, index=args.index)
+    except:
+      print("bad window id {}".format(window_id))
+      sys.exit(1)
+  else:
+    window = await iterm2.Window.async_create(connection, profile=args.profile, command=args.command)
+    if not window:
+        return
+    tab = window.tabs[0]
+  session = tab.sessions[0]
+  print(session.pretty_str())
+
+async def split_pane(connection, args):
+  a = await iterm2.async_get_app(connection)
+  s = a.get_session_by_id(args.session)
+  session = await s.async_split_pane(vertical=args.vertical, before=args.before, profile=args.profile)
+  print(session.pretty_str())
+
+async def get_buffer(connection, args):
+  a = await iterm2.async_get_app(connection)
+  s = a.get_session_by_id(args.session)
+  contents = await s.async_get_screen_contents()
+  for i in range(contents.number_of_lines):
+    line = contents.line(i)
+    print(line.string)
+
+async def get_prompt(connection, args):
+  a = await iterm2.async_get_app(connection)
+  s = a.get_session_by_id(args.session)
+  result = await iterm2.async_get_last_prompt(connection, s.session_id)
+  print("working_directory: \"{}\"".format(result.working_directory))
+  print("command: \"{}\"".format(result.command))
+
+def profile_property_type_map():
+  map = {
+      "allow_title_reporting":                       "bool",
+      "allow_title_setting":                         "bool",
+      "ambiguous_double_width":                      "bool",
+      "ansi_0_color":                                "color",
+      "ansi_10_color":                               "color",
+      "ansi_11_color":                               "color",
+      "ansi_12_color":                               "color",
+      "ansi_13_color":                               "color",
+      "ansi_14_color":                               "color",
+      "ansi_15_color":                               "color",
+      "ansi_1_color":                                "color",
+      "ansi_2_color":                                "color",
+      "ansi_3_color":                                "color",
+      "ansi_4_color":                                "color",
+      "ansi_5_color":                                "color",
+      "ansi_6_color":                                "color",
+      "ansi_7_color":                                "color",
+      "ansi_8_color":                                "color",
+      "ansi_9_color":                                "color",
+      "answerback_string":                           "str",
+      "application_keypad_allowed":                  "bool",
+      "ascii_anti_aliased":                          "bool",
+      "ascii_ligatures":                             "bool",
+      "background_color":                            "color",
+      "background_image_is_tiled":                   "bool",
+      "badge_color":                                 "color",
+      "badge_text":                                  "str",
+      "blend":                                       "float",
+      "blink_allowed":                               "bool",
+      "blinking_cursor":                             "bool",
+      "blur":                                        "float",
+      "blur_radius":                                 "float",
+      "bm_growl":                                    "bool",
+      "bold_color":                                  "color",
+      "character_encoding":                          "int",
+      "close_sessions_on_end":                       "bool",
+      "cursor_boost":                                "float",
+      "cursor_color":                                "color",
+      "cursor_guide_color":                          "color",
+      "cursor_text_color":                           "color",
+      "cursor_type":                                 "int",
+      "disable_printing":                            "bool",
+      "disable_smcup_rmcup":                         "bool",
+      "disable_window_resizing":                     "bool",
+      "flashing_bell":                               "bool",
+      "foreground_color":                            "color",
+      "horizontal_spacing":                          "float",
+      "idle_code":                                   "int",
+      "idle_period":                                 "float",
+      "link_color":                                  "color",
+      "minimum_contrast":                            "float",
+      "mouse_reporting":                             "bool",
+      "mouse_reporting_allow_mouse_wheel":           "bool",
+      "name":                                        "str",
+      "non_ascii_anti_aliased":                      "bool",
+      "non_ascii_ligatures":                         "bool",
+      "only_the_default_bg_color_uses_transparency": "bool",
+      "left_option_key_sends":                       "int",
+      "place_prompt_at_first_column":                "bool",
+      "prompt_before_closing":                       "bool",
+      "reduce_flicker":                              "bool",
+      "right_option_key_sends":                      "int",
+      "scrollback_in_alternate_screen":              "bool",
+      "scrollback_lines":                            "int",
+      "scrollback_with_status_bar":                  "bool",
+      "selected_text_color":                         "color",
+      "selection_color":                             "color",
+      "send_bell_alert":                             "bool",
+      "send_code_when_idle":                         "bool",
+      "send_idle_alert":                             "bool",
+      "send_new_output_alert":                       "bool",
+      "send_session_ended_alert":                    "bool",
+      "send_terminal_generated_alerts":              "bool",
+      "session_close_undo_timeout":                  "float",
+      "show_mark_indicators":                        "bool",
+      "silence_bell":                                "bool",
+      "smart_cursor_color":                          "color",
+      "smart_cursor_color":                          "color",
+      "sync_title":                                  "str",
+      "tab_color":                                   "color",
+      "thin_strokes":                                "int",
+      "transparency":                                "float",
+      "underline_color":                             "color",
+      "unicode_normalization":                       "int",
+      "unicode_version":                             "int",
+      "unlimited_scrollback":                        "bool",
+      "use_bold_font":                               "bool",
+      "use_bright_bold":                             "bool",
+      "use_cursor_guide":                            "bool",
+      "use_italic_font":                             "bool",
+      "use_non_ascii_font":                          "bool",
+      "use_tab_color":                               "bool",
+      "use_underline_color":                         "bool",
+      "vertical_spacing":                            "float",
+      "visual_bell":                                 "bool",
+      "triggers":                                    "dict",
+      "smart_selection_rules":                       "list",
+      "semantic_history":                            "dict",
+      "automatic_profile_switching_rules":           "list",
+      "advanced_working_directory_window_setting":   "string",
+      "advanced_working_directory_window_directory": "string",
+      "advanced_working_directory_tab_setting":      "string",
+      "advanced_working_directory_tab_directory":    "string",
+      "advanced_working_directory_pane_setting":     "string",
+      "advanced_working_directory_pane_directory":   "string",
+      "normal_font":                                 "string",
+      "non_ascii_font":                              "string",
+      "background_image_location":                   "string",
+      "key_mappings":                                "dict",
+      "touchbar_mappings":                           "dict" }
+  return map
+
+def profile_properties():
+  return list(profile_property_type_map().keys())
+
+def profile_property_type(key):
+  return profile_property_type_map()[key]
+
+async def get_profile_property(connection, args):
+  a = await iterm2.async_get_app(connection)
+  s = a.get_session_by_id(args.session)
+  profile = await s.async_get_profile()
+  if args.keys is not None:
+    keys = args.keys.split(",")
+  else:
+    keys = profile_properties()
+  for prop in keys:
+    fname = prop
+    value = getattr(profile, fname)
+    print("{}: {}".format(prop, value))
+
+def encode_property_value(key, value):
+  type = profile_property_type(key)
+  if type == "bool":
+    assert value == "true" or value == "false"
+    return value == "true"
+  elif type == "str":
+    return value
+  elif type == "float":
+    return float(value)
+  elif type == "int":
+    return int(value)
+  elif type == "dict" or type == "list":
+    class TypeNotSupportedException(Exception): Pass
+    raise TypeNotSupportedException("this property's type is not supported")
+  elif type == "color":
+    # Accepted values look like: "(0,0,0,255 sRGB)"
+    regex = r"\(([0-9]+), *([0-9]+), *([0-9]+), *([0-9]+)  *([A-Za-z]+)\)"
+    match = re.search(regex, value)
+    assert match is not None
+    return iterm2.Color(
+        float(match.group(1)),
+        float(match.group(2)),
+        float(match.group(3)),
+        float(match.group(4)),
+        iterm2.ColorSpace(match.group(5)))
+
+async def set_profile_property(connection, args):
+  a = await iterm2.async_get_app(connection)
+  s = a.get_session_by_id(args.session)
+
+  encoded_value = encode_property_value(args.key, args.value)
+  profile = await s.async_get_profile()
+  fname = "async_set_" + args.key
+  f = getattr(profile, fname)
+  await f(encoded_value)
+
+async def read(connection, args):
+  a = await iterm2.async_get_app(connection)
+  s = a.get_session_by_id(args.session)
+  if args.mode == "char":
+    async with iterm2.KeystrokeMonitor(connection) as mon:
+      keystroke = await mon.async_get()
+      print(keystroke)
+  elif args.mode == "line":
+    async with s.get_keystroke_reader() as reader:
+      eol = False
+      line = ""
+      while not eol:
+        k = await reader.get()
+        for e in k:
+          c = e.characters
+          if c == "\r" or c == "\n":
+            eol = True
+            break
+          line += c
+
+      print(line)
+
+async def get_window_property(connection, args):
+  a = await iterm2.async_get_app(connection)
+  w = a.get_window_by_id(args.id)
+  if w is None:
+    print("bad window ID")
+  else:
+    if args.name == "frame":
+      frame = await w.async_get_frame()
+      print("{},{},{},{}".format(frame.origin.x,frame.origin.y,frame.size.width,frame.size.height))
+    elif args.name == "fullscreen":
+      print(await w.async_get_fullscreen(connection))
+
+async def set_window_property(connection, args):
+  a = await iterm2.async_get_app(connection)
+  w = a.get_window_by_id(args.id)
+  if w is None:
+    print("bad window ID")
+  else:
+    if args.name == "frame":
+      parts = args.value.split(",")
+      frame = iterm2.Frame(iterm2.Point(int(parts[0]), int(parts[1])), iterm2.Size(int(parts[2]), int(parts[3])))
+      await w.async_set_frame(frame)
+    elif args.name == "fullscreen":
+      await w.async_set_fullscreen(args.value == "true")
+
+async def inject(connection, args):
+  a = await iterm2.async_get_app(connection)
+  s = a.get_session_by_id(args.session)
+  if s is None:
+    print("bad session ID")
+  else:
+    await s.async_inject(args.data.encode())
+
+async def activate(connection, args):
+  a = await iterm2.async_get_app(connection)
+  if args.mode == "session":
+    s = a.get_session_by_id(args.id)
+    if s is None:
+      print("bad session ID")
+    else:
+      await s.async_activate()
+  elif args.mode == "tab":
+    t = a.get_tab_by_id(args.id)
+    if t is None:
+      print("bad tab ID")
+    else:
+      await t.async_select()
+  elif args.mode == "window":
+    w = a.get_window_by_id(args.id)
+    if w is None:
+      print("bad window ID")
+    else:
+      await w.async_activate()
+
+async def activate_app(connection, args):
+  a = await iterm2.async_get_app(connection)
+  await a.async_activate(raise_all_windows=args.raise_all_windows, ignoring_other_apps=args.ignoring_other_apps)
+
+async def set_variable(connection, args):
+  a = await iterm2.async_get_app(connection)
+  if args.session:
+    s = a.get_session_by_id(args.session)
+    if s is None:
+      print("bad session ID")
+      return
+    await s.async_set_variable(args.name, args.value)
+  elif args.tab:
+    t = a.get_tab_by_id(args.tab)
+    if t is None:
+      print("bad tab ID")
+      return
+    await t.async_set_variable(args.name, args.value)
+  else:
+    await a.async_set_variable(args.name, args.value)
+
+async def get_variable(connection, args):
+  a = await iterm2.async_get_app(connection)
+  if args.session:
+    s = a.get_session_by_id(args.session)
+    if s is None:
+      print("bad session ID")
+      return
+    value = await s.async_get_variable(args.name)
+    print(value)
+  elif args.tab:
+    t = a.get_tab_by_id(args.tab)
+    if t is None:
+      print("bad tab ID")
+      return
+    value = await t.async_get_variable(args.name)
+    print(value)
+  else:
+    value = await a.async_get_variable(args.name)
+    print(value)
+
+async def list_variables(connection, args):
+  a = await iterm2.async_get_app(connection)
+  if args.session:
+    s = a.get_session_by_id(args.session)
+    if s is None:
+      print("bad session ID")
+      return
+    value = await s.async_get_variable("*")
+    for name in value:
+      print(name)
+  elif args.tab:
+    t = a.get_tab_by_id(args.tab)
+    if t is None:
+      print("bad tab ID")
+      return
+    value = await t.async_get_variable("*")
+    for name in value:
+      print(name)
+  else:
+    value = await a.async_get_variable("*")
+    for name in value:
+      print(name)
+
+async def saved_arrangement(connection, args):
+  if args.window is not None:
+    a = await iterm2.async_get_app(connection)
+    w = a.get_window_by_id(args.window)
+    if w is None:
+      print("bad window ID")
+      return
+    if args.action == "save":
+      await w.async_save_window_as_arrangement(args.name)
+    elif args.action == "restore":
+      await w.async_restore_window_arrangement(args.name)
+  else:
+    if args.action == "save":
+      await iterm2.Arrangement.async_save(connection, args.name)
+    elif args.action == "restore":
+      await iterm2.Arrangement.async_restore(connection, args.name)
+
+async def show_focus(connection, args):
+  a = await iterm2.async_get_app(connection)
+  if a.app_active:
+    print("App is active")
+  w = a.current_terminal_window
+  print("Key window: {}".format(w.window_id))
+  print("")
+  for w in a.terminal_windows:
+    t = a.get_tab_by_id(w.selected_tab_id)
+    print("Selected tab in {}: {}".format(w.window_id, t.tab_id))
+    s = a.get_session_by_id(t.active_session_id)
+    print("  Active session is: {}".format(s.pretty_str()))
+
+async def list_profiles(connection, args):
+  guids = args.guids.split(",") if args.guids is not None else None
+  properties = args.properties.split(",") if args.properties is not None else None
+  profiles = await iterm2.PartialProfile.async_query(connection, guids=guids, properties=properties)
+  for profile in profiles:
+    keys = list(profile.all_properties.keys())
+    keys.sort()
+    for k in keys:
+      v = profile.all_properties[k]
+      print("{}: {}".format(k, v))
+    print("")
+
+async def set_grid_size(connection, args):
+  a = await iterm2.async_get_app(connection)
+  s = a.get_session_by_id(args.session)
+  await s.async_set_grid_size(iterm2.Size(args.width, args.height))
+
+async def list_tmux_connections(connection, args):
+  connections = await iterm2.async_get_tmux_connections(connection)
+  for connection in connections:
+    print("Connection ID: {}\nOwning session: {}".format(connection.connection_id, connection.owning_session))
+
+async def send_tmux_command(connection, args):
+  connections = await iterm2.async_get_tmux_connections(connection)
+  ids = []
+  for connection in connections:
+    if connection.connection_id == args.connection_id:
+      print(await connection.async_send_command(args.command))
+      return;
+    ids.append(connection.connection_id)
+  print("No connection with id {} found. Have: {}".format(args.connection_id, ", ".join(ids)))
+
+async def set_tmux_window_visible(connection, args):
+  connections = await iterm2.async_get_tmux_connections(connection)
+  ids = []
+  for connection in connections:
+    if connection.connection_id == args.connection_id:
+      await connection.async_set_tmux_window_visible(args.window_id, args.visible)
+      return;
+    ids.append(connection.connection_id)
+  print("No connection with id {} found. Have: {}".format(args.connection_id, ", ".join(ids)))
+
+async def sort_tabs(connection, args):
+  app = await iterm2.async_get_app(connection)
+  for w in app.terminal_windows:
+    tabs = w.tabs
+    for t in tabs:
+      t.tab_name = await t.async_get_variable("currentSession.session.name")
+    def tab_name(t):
+      return t.tab_name
+    sorted_tabs = sorted(tabs, key=tab_name)
+    await w.async_set_tabs(sorted_tabs)
+
+async def list_color_presets(connection, args):
+  presets = await iterm2.ColorPreset.async_get_list(connection)
+  for preset in presets:
+    print(preset)
+
+async def set_color_preset(connection, args):
+  preset = await iterm2.ColorPreset.async_get(connection, args.preset)
+  profiles = await iterm2.PartialProfile.async_query(connection, properties=['Guid', 'Name'])
+  for partial in profiles:
+    if partial.name == args.profile:
+      profile = await partial.async_get_full_profile()
+      await profile.async_set_color_preset(preset)
+
+async def monitor_variable(connection, args):
+  if args.session:
+    scope = iterm2.VariableScopes.SESSION
+    identifier = args.session
+  elif args.tab:
+    scope = iterm2.VariableScopes.TAB
+    identifier = args.tab
+  elif args.window:
+    scope = iterm2.VariableScopes.WINDOW
+    identifier = args.window
+  elif args.app:
+    scope = iterm2.VariableScopes.APP
+    identifier = ''
+  else:
+    assert False
+  async with iterm2.VariableMonitor(connection, scope, args.name, identifier) as monitor:
+    value = await monitor.async_get()
+    print(f"New value: {value}")
+
+async def monitor_focus(connection, args):
+    async with iterm2.FocusMonitor(connection) as monitor:
+        update = await monitor.async_get_next_update()
+        print("Update: {}".format(update))
+
+async def set_cursor_color(connection, args):
+    a = await iterm2.async_get_app(connection)
+    s = a.get_session_by_id(args.session)
+    partial = iterm2.LocalWriteOnlyProfile()
+    r, g, b = list(map(int, args.color.split(",")))
+    c = iterm2.Color(r, g, b)
+    partial.set_cursor_color(c)
+    await s.async_set_profile_properties(partial)
+
+async def monitor_screen(connection, args):
+    a = await iterm2.async_get_app(connection)
+    s = a.get_session_by_id(args.session)
+    async with s.get_screen_streamer() as streamer:
+        done = False
+        while not done:
+            contents = await streamer.async_get()
+            for i in range(contents.number_of_lines):
+                line = contents.line(i)
+                if args.query in line.string:
+                    return
+    
+async def show_selection(connection, args):
+    a = await iterm2.async_get_app(connection)
+    s = a.get_session_by_id(args.session)
+    selection = await s.async_get_selection()
+    for sub in selection.subSelections:
+        print("Sub selection: {}".format(await sub.async_get_string(connection, s.session_id)))
+    print("Text: {}".format(await selection.async_get_string(connection, s.session_id, s.grid_size.width)))
+
+def make_parser():
+  parser = argparse.ArgumentParser(description='iTerm2 CLI')
+  subparsers = parser.add_subparsers(help='Commands')
+
+  list_sessions_parser = subparsers.add_parser("list-sessions", help="List sessions")
+  list_sessions_parser.set_defaults(func=list_sessions)
+
+  show_hierarchy_parser = subparsers.add_parser("show-hierarchy", help="Show all windows, tabs, and sessions")
+  show_hierarchy_parser.set_defaults(func=show_hierarchy)
+
+  send_text_parser = subparsers.add_parser("send-text", help="Send text as though the user had typed it")
+  send_text_parser.add_argument('session', type=str, help='Session ID')
+  send_text_parser.add_argument("text", type=str, help='Text to send')
+  send_text_parser.set_defaults(func=send_text)
+
+  create_tab_parser = subparsers.add_parser("create-tab", help="Create a new tab or window")
+  create_tab_parser.add_argument('--profile', type=str, nargs='?', help='Profile name')
+  create_tab_parser.add_argument('--window', type=str, nargs='?', help='Window ID')
+  create_tab_parser.add_argument('--index', type=int, nargs='?', help='Desired tab index')
+  create_tab_parser.add_argument('--command', type=str, nargs='?', help='Command')
+  create_tab_parser.set_defaults(func=create_tab)
+
+  split_pane_parser = subparsers.add_parser("split-pane", help="Split a pane into two")
+  split_pane_parser.add_argument('session', type=str, help='Session ID')
+  split_pane_parser.add_argument('--vertical', action='store_true', help='Split vertically?', default=False)
+  split_pane_parser.add_argument('--before', action='store_true', help='Spilt left or above target', default=False)
+  split_pane_parser.add_argument('--profile', type=str, nargs='?', help='Profile name')
+  split_pane_parser.set_defaults(func=split_pane)
+
+  get_buffer_parser = subparsers.add_parser("get-buffer", help="Get screen contents")
+  get_buffer_parser.add_argument("session", type=str, help="Session ID")
+  get_buffer_parser.set_defaults(func=get_buffer)
+
+  get_prompt_parser = subparsers.add_parser("get-prompt", help="Get info about prompt, if available. Gives either the current prompt or the last prompt if a command is being run. Requires shell integration for prompt detection.")
+  get_prompt_parser.add_argument("session", type=str, help="Session ID")
+  get_prompt_parser.set_defaults(func=get_prompt)
+
+  get_profile_property_parser = subparsers.add_parser("get-profile-property", help="Get a session's profile settings")
+  get_profile_property_parser.add_argument("session", type=str, help="Session ID")
+  get_profile_property_parser.add_argument("keys", type=str, nargs='?', help="Comma separated keys. Omit to get all. Valid keys are: " + ", ".join(profile_properties()))
+  get_profile_property_parser.set_defaults(func=get_profile_property)
+
+  set_profile_parser = subparsers.add_parser("set-profile-property", help="Set a session's profile setting")
+  set_profile_parser.add_argument("session", type=str, help="Session ID")
+  set_profile_parser.add_argument("key", type=str, help="Key to set. Valid keys are: " + ", ".join(profile_properties()))
+  set_profile_parser.add_argument("value", type=str, help="New value.")
+  set_profile_parser.set_defaults(func=set_profile_property)
+
+  read_parser = subparsers.add_parser("read", help="Wait for a input.")
+  read_parser.add_argument("session", type=str, help="Session ID")
+  read_parser.add_argument("mode", type=str, help="What to read", choices=[ "char", "line" ])
+  read_parser.set_defaults(func=read)
+
+  get_window_property_parser = subparsers.add_parser("get-window-property", help="Get a property of a window")
+  get_window_property_parser.add_argument("id", type=str, help="Window ID")
+  get_window_property_parser.add_argument("name", type=str, help="Property name", choices=["frame", "fullscreen"])
+  get_window_property_parser.set_defaults(func=get_window_property)
+
+  set_window_property_parser = subparsers.add_parser("set-window-property", help="Set a property of a window")
+  set_window_property_parser.add_argument("id", type=str, help="Window ID")
+  set_window_property_parser.add_argument("name", type=str, help="Property name", choices=["frame", "fullscreen"])
+  set_window_property_parser.add_argument("value", type=str, help="New value. For frame: x,y,width,height; for fullscreen: true or false")
+  set_window_property_parser.set_defaults(func=set_window_property)
+
+  inject_parser = subparsers.add_parser("inject", help="Inject a string as though it were program output")
+  inject_parser.add_argument("session", type=str, help="Session ID")
+  inject_parser.add_argument("data", type=str, help="Data to inject")
+  inject_parser.set_defaults(func=inject)
+
+  activate_parser = subparsers.add_parser("activate", help="Activate a session, tab, or window.")
+  activate_parser.add_argument("mode", type=str, help="What kind of object to activate", choices=["session", "tab", "window"])
+  activate_parser.add_argument("id", type=str, help="ID of object to activate")
+  activate_parser.set_defaults(func=activate)
+
+  activate_app_parser = subparsers.add_parser("activate-app", help="Activate the app")
+  activate_app_parser.add_argument('--raise_all_windows', action='store_true', help='Raise all windows?', default=False)
+  activate_app_parser.add_argument('--ignoring_other_apps', action='store_true', help='Activate ignoring other apps (may steal focus)', default=False)
+  activate_app_parser.set_defaults(func=activate_app)
+
+  set_variable_parser = subparsers.add_parser("set-variable", help="Set a user-defined variable in a session. See Badges documentation for details.")
+  set_variable_parser.add_argument("--session", type=str, nargs='?', help="Session ID")
+  set_variable_parser.add_argument("--tab", type=str, nargs='?', help="Tab ID")
+  set_variable_parser.add_argument("name", type=str, help="Variable name. Starts with \"user.\"")
+  set_variable_parser.add_argument("value", type=str, help="New value")
+  set_variable_parser.set_defaults(func=set_variable)
+
+  get_variable_parser = subparsers.add_parser("get-variable", help="Get a variable in a session. See Badges documentation for details.")
+  get_variable_parser.add_argument("--session", type=str, nargs='?', help="Session ID")
+  get_variable_parser.add_argument("--tab", type=str, nargs='?', help="Tab ID")
+  get_variable_parser.add_argument("name", type=str, help="Variable name. Starts with \"user.\"")
+  get_variable_parser.set_defaults(func=get_variable)
+
+  list_variables_parser = subparsers.add_parser("list-variables", help="Lists variable names available in a session.")
+  list_variables_parser.add_argument("--session", type=str, nargs='?', help="Session ID")
+  list_variables_parser.add_argument("--tab", type=str, nargs='?', help="Tab ID")
+  list_variables_parser.set_defaults(func=list_variables)
+
+  saved_arrangement_parser = subparsers.add_parser("saved-arrangement", help="Saves and restores window arrangements")
+  saved_arrangement_parser.add_argument("action", type=str, help="Action to perform", choices=["save", "restore"])
+  saved_arrangement_parser.add_argument("name", type=str, help="Arrangement name")
+  saved_arrangement_parser.add_argument('--window', type=str, nargs='?', help='Window ID to save/restore to')
+  saved_arrangement_parser.set_defaults(func=saved_arrangement)
+
+  show_focus_parser = subparsers.add_parser("show-focus", help="Show active windows, tabs, and panes")
+  show_focus_parser.set_defaults(func=show_focus)
+
+  list_profiles_parser = subparsers.add_parser("list-profiles", help="List profiles")
+  list_profiles_parser.add_argument("--guids", type=str, nargs='?', help="Comma-delimited list of profiles to list. Omit to get all of them.")
+  list_profiles_parser.add_argument("--properties", type=str, nargs='?', help="Comma-delimited list of properties to request. Omit to get all of them.")
+  list_profiles_parser.set_defaults(func=list_profiles)
+
+  set_grid_size_parser = subparsers.add_parser("set-grid-size", help="Set size of session")
+  set_grid_size_parser.add_argument("session", type=str, help="Session ID")
+  set_grid_size_parser.add_argument("width", type=int, help="Width in columns")
+  set_grid_size_parser.add_argument("height", type=int, help="Height in rows")
+  set_grid_size_parser.set_defaults(func=set_grid_size)
+
+  list_tmux_connections_parser = subparsers.add_parser("list-tmux-connections", help="List tmux integration connections")
+  list_tmux_connections_parser.set_defaults(func=list_tmux_connections)
+
+  send_tmux_command_parser = subparsers.add_parser("send-tmux-command", help="Send a tmux command to a tmux integration connection")
+  send_tmux_command_parser.add_argument("connection_id", type=str, help="tmux connection ID")
+  send_tmux_command_parser.add_argument("command", type=str, help="Command to send")
+  send_tmux_command_parser.set_defaults(func=send_tmux_command)
+
+  set_tmux_window_visible_parser = subparsers.add_parser("set-tmux-window-visible", help="Show or hide a tmux integration window (represented as a tab in iTerm2)")
+  set_tmux_window_visible_parser.add_argument("connection_id", type=str, help="tmux connection ID")
+  set_tmux_window_visible_parser.add_argument("window_id", type=str, help="tmux window ID (number)")
+  set_tmux_window_visible_parser.add_argument('--visible', dest='visible', action='store_true')
+  set_tmux_window_visible_parser.add_argument('--no-visible', dest='visible', action='store_false')
+  set_tmux_window_visible_parser.set_defaults(visible=True)
+  set_tmux_window_visible_parser.set_defaults(func=set_tmux_window_visible)
+
+  sort_tabs_parser = subparsers.add_parser("sort-tabs", help="Sort tabs alphabetically by name")
+  sort_tabs_parser.set_defaults(func=sort_tabs)
+
+  list_color_presets_parser = subparsers.add_parser("list-color-presets", help="Lists names of color presets")
+  list_color_presets_parser.set_defaults(func=list_color_presets)
+
+  set_color_preset_parser = subparsers.add_parser("set-color-preset", help="Lists names of color presets")
+  set_color_preset_parser.add_argument("profile", type=str, help="Profile name")
+  set_color_preset_parser.add_argument("preset", type=str, help="Color preset name")
+  set_color_preset_parser.set_defaults(func=set_color_preset)
+
+  monitor_variable_parser = subparsers.add_parser("monitor-variable", help="Monitor changes to a variable")
+  monitor_variable_parser.add_argument("name", type=str, help="variable name")
+  monitor_variable_parser.add_argument('--session', type=str, nargs='?', help='Session ID for the variable scope')
+  monitor_variable_parser.add_argument('--tab', type=str, nargs='?', help='Tab ID for the variable scope')
+  monitor_variable_parser.add_argument('--window', type=str, nargs='?', help='Window ID for the variable scope')
+  monitor_variable_parser.add_argument('--app', action='store_true', help='App scope', default=False)
+  monitor_variable_parser.set_defaults(func=monitor_variable)
+
+  monitor_focus_parser = subparsers.add_parser("monitor-focus", help="Monitor changes to focus")
+  monitor_focus_parser.set_defaults(func=monitor_focus)
+
+  set_cursor_color_parser = subparsers.add_parser("set-cursor-color", help="Set cursor color")
+  set_cursor_color_parser.add_argument("session", type=str, help="Session ID")
+  set_cursor_color_parser.add_argument("color", type=str, help="Color as red,green,blue where each value is in 0-255")
+  set_cursor_color_parser.set_defaults(func=set_cursor_color)
+
+  monitor_screen_parser = subparsers.add_parser("monitor-screen", help="Monitor screen contents")
+  monitor_screen_parser.add_argument("session", type=str, help="Session ID")
+  monitor_screen_parser.add_argument("query", type=str, help="Stop when this text is seen")
+  monitor_screen_parser.set_defaults(func=monitor_screen)
+
+  show_selection_parser = subparsers.add_parser("show-selection", help="Shows the selected text in a session")
+  show_selection_parser.add_argument("session", type=str, help="Session ID")
+  show_selection_parser.set_defaults(func=show_selection)
+
+  return parser
+
+def main(argv):
+  logging.basicConfig()
+
+  parser = make_parser()
+  args = parser.parse_args(argv[1:])
+  if "func" not in args:
+    print(parser.format_help())
+    raise argparse.ArgumentTypeError('Missing command')
+
+  async def wrapper(connection):
+    try:
+      await args.func(connection, args)
+    except Exception as e:
+      print(traceback.format_exc())
+
+  iterm2.run_until_complete(wrapper)
+
+if __name__ == "__main__":
+  try:
+    main(sys.argv)
+  except Exception as e:
+    print(traceback.format_exc())
+    sys.exit(1)

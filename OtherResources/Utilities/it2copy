@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+trap clean_up EXIT
+trap clean_up INT
+
+inosc=0
+
+function clean_up() {
+  if [[ $inosc == 1 ]]
+  then
+    print_st
+  fi
+}
+
+function show_help() {
+  echo "Usage: $(basename $0)" 1>& 2
+  echo "          Copies to clipboard from standard input" 1>& 2
+  echo "       $(basename $0) filename" 1>& 2
+  echo "          Copies to clipboard from file" 1>& 2
+}
+
+# tmux requires unrecognized OSC sequences to be wrapped with DCS tmux;
+# <sequence> ST, and for all ESCs in <sequence> to be replaced with ESC ESC. It
+# only accepts ESC backslash for ST.
+function print_osc() {
+    if [[ $TERM == screen* || $TERM == tmux* ]] ; then
+        printf "\033Ptmux;\033\033]"
+    else
+        printf "\033]"
+    fi
+}
+
+# More of the tmux workaround described above.
+function print_st() {
+    if [[ $TERM == screen* || $TERM == tmux* ]] ; then
+        printf "\a\033\\"
+    else
+        printf "\a"
+    fi
+}
+
+send_tmux() {
+    uid=$RANDOM$RANDOM
+    print_osc
+    inosc=1
+    printf '1337;Copy=2;%s' "$uid"
+    print_st
+    inosc=0
+    fold | while read line
+    do
+        print_osc
+        inosc=1
+        printf '1337;Copy=3;%s:%s' "$uid" "$line"
+        print_st
+        inosc=0
+    done
+
+    print_osc
+    inosc=1
+    printf '1337;Copy=4;%s' "$uid"
+    print_st
+    inosc=0
+}
+
+send_regular() {
+    print_osc
+    inosc=1
+    printf '1337;Copy=:%s'
+    cat
+    print_st
+    inosc=0
+}
+
+send() {
+    if [[ $TERM == tmux* ]]; then
+        send_tmux
+    else
+        send_regular
+    fi
+}
+
+# Look for command line flags.
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h|--h|--help)
+        show_help
+        exit
+        ;;
+    -*)
+        error "Unknown option flag: $1"
+        show_help
+        exit 1
+      ;;
+    *)
+        if [ -r "$1" ] ; then
+            base64 < $1 | send
+            exit 0
+        else
+            error "it2copy: $1: No such file or directory"
+            exit 2
+        fi
+        ;;
+    esac
+    shift
+done
+
+base64 | send
