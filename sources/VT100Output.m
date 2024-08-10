@@ -1579,7 +1579,7 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
 }
 
 - (NSData *)reportDisplayedExtentOfSize:(VT100GridSize)size {
-    NSString *report = [NSString stringWithFormat:@"\e]%@;%@;1;1;1\"w",
+    NSString *report = [NSString stringWithFormat:@"\e[%@;%@;1;1;1\"w",
                         @(size.height), @(size.width)];
     return [report dataUsingEncoding:NSUTF8StringEncoding];
 }
