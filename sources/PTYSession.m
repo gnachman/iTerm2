@@ -13405,12 +13405,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             }
         }
         if (terminal.reportFocus) {
-            NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
-            if ([number boolValue]) {
-                terminal.reportFocus = NO;
-            } else if (!number) {
-                [self offerToTurnOffFocusReporting];
-            }
+            [self offerToTurnOffFocusReportingRespectingSavedPreference:terminal];
         }
         if (terminal.bracketedPasteMode && ![self shellIsFishForHost:newRemoteHost]) {
             [self maybeTurnOffPasteBracketing];
@@ -13499,6 +13494,23 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }
     }];
     [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier];
+}
+
+- (void)offerToTurnOffFocusReportingRespectingSavedPreference:(VT100Terminal *)terminal {
+    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+    if ([number boolValue]) {
+        if (terminal) {
+            terminal.reportFocus = NO;
+        } else {
+            [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                     VT100ScreenMutableState *mutableState,
+                                                     id<VT100ScreenDelegate> delegate) {
+                terminal.reportFocus = NO;
+            }];
+        }
+    } else if (!number) {
+        [self offerToTurnOffFocusReporting];
+    }
 }
 
 - (void)offerToTurnOffFocusReporting {
@@ -14368,8 +14380,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             [self queueAnnouncement:announcement identifier:identifier];
         }
     }
-    if ([self wasFocusReportedVeryRecently] && ![self haveWrittenAnythingBesidesFocusReportVeryRecently]) {
-        [self offerToTurnOffFocusReporting];
+    if ([self wasFocusReportedVeryRecently] &&
+        ![self haveWrittenAnythingBesidesFocusReportVeryRecently]) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf offerToTurnOffFocusReportingRespectingSavedPreference:nil];
+        });
         return NO;
     }
     return NO;
