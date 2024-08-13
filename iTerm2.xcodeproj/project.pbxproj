@@ -3183,6 +3183,7 @@
 		A6CB24BD2C68155800005824 /* it2tip in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6CB24922C68148E00005824 /* it2tip */; };
 		A6CB24BE2C68155800005824 /* it2ul in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6CB249D2C68149000005824 /* it2ul */; };
 		A6CB24BF2C68155800005824 /* it2universion in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6CB249B2C68149000005824 /* it2universion */; };
+		A6CB24C12C682B6300005824 /* HueVisualizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CB24C02C682B6300005824 /* HueVisualizationView.swift */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7010,6 +7011,7 @@
 		A6CB249B2C68149000005824 /* it2universion */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = it2universion; path = OtherResources/Utilities/it2universion; sourceTree = "<group>"; };
 		A6CB249C2C68149000005824 /* it2profile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = it2profile; path = OtherResources/Utilities/it2profile; sourceTree = "<group>"; };
 		A6CB249D2C68149000005824 /* it2ul */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = it2ul; path = OtherResources/Utilities/it2ul; sourceTree = "<group>"; };
+		A6CB24C02C682B6300005824 /* HueVisualizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HueVisualizationView.swift; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -8722,6 +8724,7 @@
 				A67A68FF2A00930F0027B550 /* AutoResizingTextView.swift */,
 				A602AAE92B16A8B600E6C965 /* DraggableNSBox.swift */,
 				A6DCE3F32BFFCA6E005586F5 /* PlaceholderTextView.swift */,
+				A6CB24C02C682B6300005824 /* HueVisualizationView.swift */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -15679,6 +15682,7 @@
 				A6EC937524E78A5100EEADEF /* iTermEditSnippetWindowController.m in Sources */,
 				53FF98272092A079008688D7 /* iTermScriptsMenuController.m in Sources */,
 				53A96ED12322040C00AEA8E0 /* iTermOpenDirectory.m in Sources */,
+				A6CB24C12C682B6300005824 /* HueVisualizationView.swift in Sources */,
 				A69C93452121140100531438 /* iTermStatusBarLargeComposerViewController.m in Sources */,
 				A63493F923F2685A0047C31B /* iTermPromise.m in Sources */,
 				A6FF3F332435C8E5003CCB03 /* iTermSplitViewAnimation.m in Sources */,

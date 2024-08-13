@@ -30,6 +30,13 @@ static inline float SIMDPerceivedBrightness(vector_float4 x) {
     return simd_dot(x, y);
 }
 
+// Note: nonlinear values, like NSColor
+typedef struct {
+    CGFloat r;
+    CGFloat g;
+    CGFloat b;
+} iTermP3Color;
+
 // Note: these are in 0…1. These represent LINEAR values. NSColor has sRGB values which are not linear.
 typedef struct {
     CGFloat r;
@@ -50,6 +57,12 @@ typedef struct {
     CGFloat b;  // -100…100
 } iTermLABColor;
 
+typedef struct {
+    CGFloat x;
+    CGFloat y;
+    CGFloat z;
+} iTermXYZColor;
+
 iTermRGBColor iTermLinearizeSRGB(iTermSRGBColor srgb);
 iTermSRGBColor iTermCompressRGB(iTermRGBColor rgb);
 
@@ -67,6 +80,15 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs);
 // This is a more sophisticated perceptual distance function.
 // This is roughly in [0, 100]
 CGFloat iTermLABDeltaE2000(iTermLABColor lab1, iTermLABColor lab2);
+
+iTermSRGBColor iTermP3ColorToSRGBColor(iTermP3Color p3);
+iTermP3Color iTermSRGBColorToP3Color(iTermSRGBColor srgb);
+
+iTermXYZColor iTermP3ToXYZ(iTermP3Color p3);
+iTermP3Color iTermXYZToP3(iTermXYZColor xyz);
+iTermP3Color iTermXYZToLinearP3(iTermXYZColor xyz);
+iTermRGBColor iTermXYZToLinearSRGB(iTermXYZColor xyz);
+iTermXYZColor iTermLinearSRGBToXYZ(iTermRGBColor linearRGB);
 
 @interface NSColor (iTerm)
 

@@ -8,6 +8,7 @@
 
 #import "ProfilesColorsPreferencesViewController.h"
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "iTermColorPresets.h"
 #import "iTermPreferenceDidChangeNotification.h"
@@ -19,6 +20,7 @@
 #import "NSAlert+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
 #import "PreferencePanel.h"
@@ -27,7 +29,7 @@
 
 static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery";
 
-@interface ProfilesColorsPreferencesViewController()<iTermSizeRememberingViewDelegate, NSMenuDelegate>
+@interface ProfilesColorsPreferencesViewController()<iTermHueVisualizationViewDelegate, iTermSizeRememberingViewDelegate, NSMenuDelegate>
 @end
 
 @implementation ProfilesColorsPreferencesViewController {
@@ -106,9 +108,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSView *_bwWarning2;
 
     IBOutlet NSButton *_modeWarning;
+    IBOutlet iTermHueVisualizationView *_hueVisualization;
 
     NSDictionary<NSString *, id> *_savedColors;
     NSTimer *_timer;
+    BOOL _visualizationNeedsUpdate;
 }
 
 + (NSArray<NSString *> *)presetNames {
@@ -184,7 +188,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         CPKColorWell *colorWell = colorWellDictionary[key];
         colorWell.colorSpace = [NSColorSpace it_defaultColorSpace];
         NSTextField *relatedView = relatedViews[key];
-        [self defineControl:colorWell
+        PreferenceInfo *info = [self defineControl:colorWell
                         key:key
                 relatedView:nil
                 displayName:[NSString stringWithFormat:@"%@ color", relatedView.stringValue]
@@ -205,6 +209,12 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
             // this changes its conception of who was the previous first
             // responder and prevents the crash.
             [weakColorWell.window makeFirstResponder:nil];
+        };
+        __weak __typeof(self) weakSelf = self;
+        info.observer = ^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf setVisualizationNeedsUpdate:YES];
+            });
         };
     }
 
@@ -290,6 +300,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     [self maybeWarnAboutExcessiveContrast];
     [self updateColorControlsEnabled];
+    _hueVisualization.delegate = self;
 }
 
 - (void)reloadProfile {
@@ -404,7 +415,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     _cursorTextColorLabel.labelEnabled = shouldEnableCursorColor;
 }
 
-- (NSDictionary *)colorWellDictionary {
+- (NSDictionary<NSString *, CPKColorWell *> *)colorWellDictionary {
     return @{ KEY_ANSI_0_COLOR: _ansi0Color,
               KEY_ANSI_1_COLOR: _ansi1Color,
               KEY_ANSI_2_COLOR: _ansi2Color,
@@ -452,6 +463,54 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
               KEY_CURSOR_COLOR: _cursorColorLabel,
               KEY_CURSOR_TEXT_COLOR: _cursorTextColorLabel,
               KEY_BADGE_COLOR: _badgeColorLabel };
+}
+
+- (NSArray<NSString *> *)chromaHueVisualizationKeys {
+    return @[// skip black (0)
+             KEY_ANSI_1_COLOR,
+             KEY_ANSI_2_COLOR,
+             KEY_ANSI_3_COLOR,
+             KEY_ANSI_4_COLOR,
+             KEY_ANSI_5_COLOR,
+             KEY_ANSI_6_COLOR,
+             // skip white (7)
+             // skip light black (8)
+             KEY_ANSI_9_COLOR,
+             KEY_ANSI_10_COLOR,
+             KEY_ANSI_11_COLOR,
+             KEY_ANSI_12_COLOR,
+             KEY_ANSI_13_COLOR,
+             KEY_ANSI_14_COLOR
+             // skip light white (15)
+    ];
+}
+
+- (void)setVisualizationNeedsUpdate:(BOOL)needsUpdate {
+    if (_visualizationNeedsUpdate && needsUpdate) {
+        return;
+    }
+    _visualizationNeedsUpdate = needsUpdate;
+    if (needsUpdate) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf updateHueChromaVisualization];
+        });
+    }
+}
+
+- (void)updateHueChromaVisualization {
+    if (!_visualizationNeedsUpdate) {
+        return;
+    }
+    _visualizationNeedsUpdate = NO;
+
+    for (NSString *key in [self chromaHueVisualizationKeys]) {
+        NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:key]];
+        NSColor *color = [dict colorValue];
+        if (color) {
+            [_hueVisualization setColor:color forKey:key];
+        }
+    }
 }
 
 #pragma mark - Color Presets
@@ -632,7 +691,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (NSDictionary *)presetDictionaryForCurrentColors {
     NSMutableDictionary* theDict = [NSMutableDictionary dictionaryWithCapacity:24];
-    NSDictionary *colorWellDictionary = [self colorWellDictionary];
+    NSDictionary<NSString *, CPKColorWell *> *colorWellDictionary = [self colorWellDictionary];
     if ([self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
         for (NSString *baseKey in colorWellDictionary) {
             // For compatibility with older versions of iTerm2 - just use the current mode.
@@ -934,6 +993,12 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     const BOOL dark = [NSApp effectiveAppearance].it_isDark;
     [_mode selectItemWithTag:dark ? 1 : 0];
     [self modeDidChange:_mode];
+}
+
+#pragma mark - iTermHueVisualizationViewDelegate
+
+- (void)hueVisualizationDidModifyColorWithKey:(NSString *)key to:(NSColor *)color {
+    [self setObject:[color dictionaryValue] forKey:key];
 }
 
 @end

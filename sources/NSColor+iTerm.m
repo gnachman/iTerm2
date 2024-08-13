@@ -44,21 +44,17 @@ CGFloat iTermPerceptualBrightnessSRGB(iTermSRGBColor srgb) {
     return 0.2126 * linearColor.r + 0.7152 * linearColor.g + 0.0722 * linearColor.b;
 }
 
-typedef struct {
-    CGFloat x;
-    CGFloat y;
-    CGFloat z;
-} iTermXYZColor;
+static CGFloat iTermLinearize(CGFloat n) {
+    if (n > 0.04045) {
+        return pow((n + 0.055) / 1.055, 2.4);
+    } else {
+        return n / 12.92;
+    }
+}
 
 iTermRGBColor iTermLinearizeSRGB(iTermSRGBColor srgb) {
     CGFloat (^pivot)(CGFloat) = ^CGFloat(CGFloat n) {
-        CGFloat x;
-        if (n > 0.04045) {
-            x = pow((n + 0.055) / 1.055, 2.4);
-        } else {
-            x =  n / 12.92;
-        }
-        return x;
+        return iTermLinearize(n);
     };
     return (iTermRGBColor) {
         .r = pivot(srgb.r),
@@ -121,12 +117,11 @@ static iTermXYZColor iTermLinearizeXYZ(iTermXYZColor linear) {
 
 iTermLABColor iTermLABFromSRGB(iTermSRGBColor srgb) {
     const iTermRGBColor rgb = iTermLinearizeSRGB(srgb);
+    iTermXYZColor xyz = iTermLinearSRGBToXYZ(rgb);
     const iTermXYZColor reference = iTermD65Reference();
-    iTermXYZColor xyz = {
-        .x = (rgb.r * 0.4124 + rgb.g * 0.3576 + rgb.b * 0.1805) / reference.x,
-        .y = (rgb.r * 0.2126 + rgb.g * 0.7152 + rgb.b * 0.0722) / reference.y,
-        .z = (rgb.r * 0.0193 + rgb.g * 0.1192 + rgb.b * 0.9505) / reference.z
-    };
+    xyz.x /= reference.x;
+    xyz.y /= reference.y;
+    xyz.z /= reference.z;
     xyz = iTermCompressXYZ(xyz);
     return (iTermLABColor) {
         .l = (116.0 * xyz.y) - 16.0,
@@ -233,6 +228,128 @@ CGFloat iTermLABDeltaE2000(iTermLABColor lab1, iTermLABColor lab2) {
     return deltaE;
 }
 
+static CGFloat iTermCompressP3(CGFloat linearValue) {
+    return pow(linearValue, 1.0 / 2.2);
+}
+
+// Remove gamma correction (linearize)
+static CGFloat iTermLinearizeP3(CGFloat gammaCorrectedValue) {
+    return pow(gammaCorrectedValue, 2.2);
+}
+
+// Expects nonlinear p3.
+iTermXYZColor iTermP3ToXYZ(iTermP3Color p3) {
+    // P3 to XYZ transformation matrix
+    const CGFloat P3ToXYZ[3][3] = {
+        {0.4865709486482162, 0.26566769316909306, 0.1982172852343625},
+        {0.2289745640697488, 0.6917385218365064, 0.079286914093745},
+        {0.0000000000000000, 0.0451133818589026, 1.0439443689009760}
+    };
+    iTermXYZColor xyz;
+    xyz.x = P3ToXYZ[0][0] * iTermLinearizeP3(p3.r) + P3ToXYZ[0][1] * iTermLinearizeP3(p3.g) + P3ToXYZ[0][2] * iTermLinearizeP3(p3.b);
+    xyz.y = P3ToXYZ[1][0] * iTermLinearizeP3(p3.r) + P3ToXYZ[1][1] * iTermLinearizeP3(p3.g) + P3ToXYZ[1][2] * iTermLinearizeP3(p3.b);
+    xyz.z = P3ToXYZ[2][0] * iTermLinearizeP3(p3.r) + P3ToXYZ[2][1] * iTermLinearizeP3(p3.g) + P3ToXYZ[2][2] * iTermLinearizeP3(p3.b);
+
+    return xyz;
+}
+
+static CGFloat iTermClampToUnitInterval(CGFloat value) {
+    if (value < 0) {
+        return 0;
+    }
+    if (value > 1) {
+        return 1;
+    }
+    return value;
+}
+
+iTermP3Color iTermXYZToLinearP3(iTermXYZColor xyz) {
+    // XYZ to P3 transformation matrix (D65 illuminant)
+    const CGFloat XYZToP3[3][3] = {
+        {2.493496911941425, -0.9313836179191239, -0.40271078445071684},
+        {-0.8294889695615747, 1.7626640603183463, 0.023624685841943577},
+        {0.03584583024378447, -0.07617238926804182, 0.9568845240076872}
+    };
+
+    iTermP3Color p3;
+
+    // Convert XYZ to P3
+    p3.r = XYZToP3[0][0] * xyz.x + XYZToP3[0][1] * xyz.y + XYZToP3[0][2] * xyz.z;
+    p3.g = XYZToP3[1][0] * xyz.x + XYZToP3[1][1] * xyz.y + XYZToP3[1][2] * xyz.z;
+    p3.b = XYZToP3[2][0] * xyz.x + XYZToP3[2][1] * xyz.y + XYZToP3[2][2] * xyz.z;
+
+    return p3;
+}
+
+iTermP3Color iTermXYZToP3(iTermXYZColor xyz) {
+    iTermP3Color p3 = iTermXYZToLinearP3(xyz);
+
+    p3.r = iTermCompressP3(iTermClampToUnitInterval(p3.r));
+    p3.g = iTermCompressP3(iTermClampToUnitInterval(p3.g));
+    p3.b = iTermCompressP3(iTermClampToUnitInterval(p3.b));
+
+    return p3;
+}
+
+iTermRGBColor iTermXYZToLinearSRGB(iTermXYZColor xyz) {
+    // XYZ to sRGB transformation matrix
+    const CGFloat XYZToSRGB[3][3] = {
+        { 3.2404542, -1.5371385, -0.4985314 },
+        {-0.9692660,  1.8760108,  0.0415560 },
+        { 0.0556434, -0.2040259,  1.0572252 },
+    };
+
+    iTermRGBColor linearRGB;
+    linearRGB.r = XYZToSRGB[0][0] * xyz.x + XYZToSRGB[0][1] * xyz.y + XYZToSRGB[0][2] * xyz.z;
+    linearRGB.g = XYZToSRGB[1][0] * xyz.x + XYZToSRGB[1][1] * xyz.y + XYZToSRGB[1][2] * xyz.z;
+    linearRGB.b = XYZToSRGB[2][0] * xyz.x + XYZToSRGB[2][1] * xyz.y + XYZToSRGB[2][2] * xyz.z;
+    return linearRGB;
+}
+
+iTermXYZColor iTermLinearSRGBToXYZ(iTermRGBColor linearRGB) {
+    // sRGB to XYZ transformation matrix (D65 illuminant)
+    const CGFloat SRGBToXYZ[3][3] = {
+        {0.4124564, 0.3575761, 0.1804375},
+        {0.2126729, 0.7151522, 0.0721750},
+        {0.0193339, 0.1191920, 0.9503041}
+    };
+
+    iTermXYZColor xyz;
+
+    // Convert linear sRGB to XYZ
+    xyz.x = SRGBToXYZ[0][0] * linearRGB.r + SRGBToXYZ[0][1] * linearRGB.g + SRGBToXYZ[0][2] * linearRGB.b;
+    xyz.y = SRGBToXYZ[1][0] * linearRGB.r + SRGBToXYZ[1][1] * linearRGB.g + SRGBToXYZ[1][2] * linearRGB.b;
+    xyz.z = SRGBToXYZ[2][0] * linearRGB.r + SRGBToXYZ[2][1] * linearRGB.g + SRGBToXYZ[2][2] * linearRGB.b;
+
+    return xyz;
+}
+//
+// Note that this can return out-of-gamut values.
+iTermSRGBColor iTermP3ColorToSRGBColor(iTermP3Color p3) {
+    // P3 -> linear XYZ
+    iTermXYZColor xyz = iTermP3ToXYZ(p3);
+
+    // XYZ -> linear sRGB
+    iTermRGBColor linearRGB = iTermXYZToLinearSRGB(xyz);
+
+    // Linear sRGB -> gamma corrected
+    iTermSRGBColor srgb = iTermCompressRGB(linearRGB);
+
+    return srgb;
+}
+
+iTermP3Color iTermSRGBColorToP3Color(iTermSRGBColor srgb) {
+    // Gamma corrected sRGB -> Linear sRGB
+    iTermRGBColor linearRGB = iTermLinearizeSRGB(srgb);
+
+    // Linear sRGB -> XYZ
+    iTermXYZColor xyz = iTermLinearSRGBToXYZ(linearRGB);
+
+    // XYZ -> P3
+    iTermP3Color p3 = iTermXYZToP3(xyz);
+
+    return p3;
+}
 @implementation NSColor (iTerm)
 
 - (iTermSRGBColor)itermSRGBColor {

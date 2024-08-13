@@ -306,7 +306,7 @@
     self.popover =
         [CPKPopover presentRelativeToRect:presentationRect
                                    ofView:presentingView
-                            preferredEdge:NSRectEdgeMinY
+                            preferredEdge:NSRectEdgeMaxY
                              initialColor:self.color
                                colorSpace:self.colorSpace
                                   options:options
