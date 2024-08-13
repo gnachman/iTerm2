@@ -397,7 +397,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyOpenAIAPIKey: @"",
                   kPreferenceKeyAIPrompt: iTermDefaultAIPrompt,
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
-                  kPreferenceKeyAIModel: @"gpt-3.5-turbo",
+                  kPreferenceKeyAIModel: @"gpt-4o-mini",
                   kPreferenceKeyAITokenLimit: @4000,
                   kPreferenceKeyAITermURL: @"https://api.openai.com/v1/completions",
                   kPreferenceKeyAITermUseLegacyAPI: @NO,
