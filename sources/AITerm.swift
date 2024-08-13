@@ -821,7 +821,7 @@ class AITermController {
     private var cancellation: iTermAIClient.Cancellation?
 
     private var llmProvider: LLMProvider {
-        let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-3.5-turbo"
+        let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-4o-mini"
         let platform = LLMProvider.Platform(rawValue: iTermAdvancedSettingsModel.llmPlatform()) ?? .openAI
         return LLMProvider(platform: platform, model: model)
     }
