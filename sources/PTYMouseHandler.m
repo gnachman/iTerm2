@@ -1321,6 +1321,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Not reporting mouse event because you pressed option");
         return NO;
     }
+    if ([self.mouseDelegate mouseHandlerInUnderlinedRangeForEvent:event]) {
+        DLog(@"In underlined range so don't report");
+        return NO;
+    }
     return YES;
 }
 

@@ -537,6 +537,18 @@ NS_INLINE BOOL VT100GridAbsCoordRangeContainsAbsCoord(VT100GridAbsCoordRange ran
   return (order == NSOrderedDescending);
 }
 
+NS_INLINE BOOL VT100GridAbsWindowedRangeContainsAbsCoord(VT100GridAbsWindowedRange range,
+                                                         VT100GridAbsCoord coord) {
+    if (range.columnWindow.length > 0 &&
+        !VT100GridRangeContains(range.columnWindow, coord.x)) {
+        // The coord is outside the column window so it cannot be in the windowed range.
+        return NO;
+    }
+    // Since the coord is in the window (or there is no window) this is equivalent to a non-
+    // windowed range.
+    return VT100GridAbsCoordRangeContainsAbsCoord(range.coordRange, coord);
+}
+
 NS_INLINE BOOL VT100GridCoordRangeContainsCoord(VT100GridCoordRange range, VT100GridCoord coord) {
   NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(range), coord);
   if (order == NSOrderedDescending) {

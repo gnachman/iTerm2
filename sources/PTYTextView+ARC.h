@@ -45,6 +45,7 @@ iTermURLActionHelperDelegate>
 - (NSPoint)pointForCoord:(VT100GridCoord)coord;
 
 - (VT100GridCoord)coordForPointInWindow:(NSPoint)point;
+- (VT100GridCoord)coordForEvent:(NSEvent *)event;
 
 #pragma mark - Inline Images
 

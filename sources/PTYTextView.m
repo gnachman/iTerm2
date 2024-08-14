@@ -6134,6 +6134,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [_selection endLiveSelection];
 }
 
+- (BOOL)mouseHandlerInUnderlinedRangeForEvent:(NSEvent *)event {
+    const VT100GridCoord coord = [self coordForEvent:event];
+    DLog(@"coord=%@", VT100GridCoordDescription(coord));
+    if (VT100GridCoordEquals(coord, VT100GridCoordInvalid)) {
+        return NO;
+    }
+    const VT100GridAbsCoord absCoord = VT100GridAbsCoordFromCoord(coord, self.dataSource.totalScrollbackOverflow);
+    const VT100GridAbsWindowedRange underlinedRange = _drawingHelper.underlinedRange;
+    DLog("underlinedRange=%@", VT100GridAbsWindowedRangeDescription(underlinedRange));
+    return VT100GridAbsWindowedRangeContainsAbsCoord(underlinedRange, absCoord);
+}
+
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler
       coordIsMutable:(VT100GridCoord)coord {
     return [self coordinateIsInMutableArea:coord];
