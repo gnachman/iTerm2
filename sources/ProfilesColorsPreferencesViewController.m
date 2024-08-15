@@ -189,13 +189,13 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         colorWell.colorSpace = [NSColorSpace it_defaultColorSpace];
         NSTextField *relatedView = relatedViews[key];
         PreferenceInfo *info = [self defineControl:colorWell
-                        key:key
-                relatedView:nil
-                displayName:[NSString stringWithFormat:@"%@ color", relatedView.stringValue]
-                       type:kPreferenceInfoTypeColorWell
-             settingChanged:nil
-                     update:nil
-                 searchable:relatedView != nil];
+                                               key:key
+                                       relatedView:nil
+                                       displayName:[NSString stringWithFormat:@"%@ color", relatedView.stringValue]
+                                              type:kPreferenceInfoTypeColorWell
+                                    settingChanged:nil
+                                            update:nil
+                                        searchable:relatedView != nil];
         colorWell.action = @selector(settingChanged:);
         colorWell.target = self;
         colorWell.continuous = YES;
@@ -951,7 +951,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     if ([key isEqualToString:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
         return key;
     }
-    if (_useSeparateColorsForLightAndDarkMode.state == NSControlStateValueOff) {
+    if (![super boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
         return key;
     }
     switch (_mode.selectedTag) {
