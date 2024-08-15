@@ -6142,7 +6142,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     }
     const VT100GridAbsCoord absCoord = VT100GridAbsCoordFromCoord(coord, self.dataSource.totalScrollbackOverflow);
     const VT100GridAbsWindowedRange underlinedRange = _drawingHelper.underlinedRange;
-    DLog("underlinedRange=%@", VT100GridAbsWindowedRangeDescription(underlinedRange));
+    DLog(@"underlinedRange=%@", VT100GridAbsWindowedRangeDescription(underlinedRange));
     return VT100GridAbsWindowedRangeContainsAbsCoord(underlinedRange, absCoord);
 }
 
