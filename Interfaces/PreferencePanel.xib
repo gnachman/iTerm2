@@ -2135,7 +2135,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4889">
-                            <rect key="frame" x="159" y="29" width="165" height="18"/>
+                            <rect key="frame" x="161" y="29" width="165" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Smart box cursor color" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4890">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
