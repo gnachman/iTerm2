@@ -2833,5 +2833,9 @@ willExecuteToken:(VT100Token *)token
     }];
 }
 
+- (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand {
+    [_kittyImageController executeCommand:kittyImageCommand];
+}
+
 @end
 

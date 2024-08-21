@@ -20,6 +20,7 @@
 @class iTermFontTable;
 @protocol iTermExternalAttributeIndexReading;
 @class iTermFindOnPageHelper;
+@class iTermKittyImageDraw;
 @class iTermOffscreenCommandLine;
 @class iTermSelection;
 @class iTermTextExtractor;
@@ -296,6 +297,7 @@ extern const int iTermTextDrawingHelperLineStileMarkRightInsetCells;
 
 // Color for shade over deselected commands
 @property (nonatomic, readonly) NSColor *shadeColor;
+@property (nonatomic, copy) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;

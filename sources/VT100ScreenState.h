@@ -48,6 +48,7 @@ extern NSString *const kScreenStatePromptStateKey;
 extern NSString *const kScreenStateProtectedMode;
 extern NSString *const kScreenStateExfiltratedEnvironmentKey;
 extern NSString *const kScreenStateBlockStartAbsLineKey;
+extern NSString *const kScreenStateKittyImageDrawsKey;
 
 @class IntervalTree;
 @class iTermMutableArrayOfWeakObjects;
@@ -196,6 +197,7 @@ extern NSString *const kScreenStateBlockStartAbsLineKey;
 @property (nonatomic, readonly) iTermMutableArrayOfWeakObjects *namedMarks;
 @property (nonatomic, readonly, copy) NSDictionary<NSString *, NSNumber *> *blockStartAbsLine;
 @property (nonatomic, readonly) NSInteger blocksGeneration;
+@property (nonatomic, readonly) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
 
 @end
 
@@ -254,6 +256,7 @@ extern NSString *const kScreenStateBlockStartAbsLineKey;
 @property (nullable, nonatomic, strong, readwrite) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
 @property (nonatomic, readwrite, copy) NSMutableDictionary<NSString *, NSNumber *> *blockStartAbsLine;
 @property (nonatomic, readwrite) NSInteger blocksGeneration;
+@property (nonatomic, copy, readwrite) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
 
 @end
 

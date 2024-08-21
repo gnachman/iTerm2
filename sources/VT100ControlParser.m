@@ -63,7 +63,6 @@
     return _dcsParser.isHooked;
 }
 
-
 - (void)parseControlWithData:(unsigned char *)datap
                      datalen:(int)datalen
                        rmlen:(int *)rmlen

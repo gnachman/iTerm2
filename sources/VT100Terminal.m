@@ -3269,6 +3269,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case DCS_SSH_HOOK:
             break;
 
+        case VT100_APC:
+            [self executeAPC:token];
+            break;
+
         case SSH_INIT:
             [self.delegate terminalDidHookSSHConductorWithParams:token.string];
             break;
@@ -5212,6 +5216,21 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     // do a soft or hard reset. They do a soft reset.
     [self softReset];
     [self setEmulationLevel:100 * (level - 60)];
+}
+
+- (void)executeAPC:(VT100Token *)token {
+    if (_tmuxMode) {
+        // tmux uses/used to use APC for setting the title.
+        [_delegate terminalSetWindowTitle:[[self sanitizedTitle:[self stringBeforeNewline:token.string]] stringByReplacingControlCharactersWithCaretLetter]];
+        return;
+    }
+    if ([token.string hasPrefix:@"G"]) {
+        iTermKittyImageCommand *command = [[iTermKittyImageCommand alloc] initWithAPCString:[token.string substringFromIndex:1]];
+        if (!command) {
+            return;
+        }
+        [_delegate terminalDidReceiveKittyImageCommand:command];
+    }
 }
 
 - (iTermEmulationLevel)emulationLevel {

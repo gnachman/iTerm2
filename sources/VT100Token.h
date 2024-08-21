@@ -256,6 +256,8 @@ typedef enum {
     // Wraps an escape code. The escape code is in csi.string.
     DCS_TMUX_CODE_WRAP,
 
+    VT100_APC,
+
     TMUX_LINE,  // A line of input from tmux
     TMUX_EXIT,  // Exit tmux mode
 

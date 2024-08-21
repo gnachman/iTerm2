@@ -21,6 +21,8 @@
 
 extern const int64_t VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed;
 
+@class iTermKittyImageDraw;
+
 @interface VT100ScreenMutableState()<
 PTYAnnotationDelegate,
 PTYTriggerEvaluatorDelegate,
@@ -29,6 +31,7 @@ VT100InlineImageHelperDelegate,
 iTermColorMapDelegate,
 iTermEchoProbeDelegate,
 iTermEventuallyConsistentIntervalTreeSideEffectPerformer,
+iTermKittyImageControllerDelegate,
 iTermLineBufferDelegate,
 iTermMarkDelegate,
 iTermPromptStateMachineDelegate,
@@ -49,6 +52,7 @@ iTermTriggerScopeProvider> {
     NSString *_currentBlockID;;
     BOOL _triggerDidDetectPrompt;
     BOOL _autoComposerEnabled;
+    iTermKittyImageController *_kittyImageController;
 }
 
 @property (atomic) BOOL hadCommand;

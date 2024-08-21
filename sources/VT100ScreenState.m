@@ -46,6 +46,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
 NSString *const kScreenStatePromptStateKey = @"Prompt State";
 NSString *const kScreenStateBlockStartAbsLineKey = @"Block start lines";
+NSString *const kScreenStateKittyImageDrawsKey = @"Kitty Image Draws";
 
 NSString *VT100ScreenTerminalStateKeyVT100Terminal = @"VT100Terminal";
 NSString *VT100ScreenTerminalStateKeySavedColors = @"SavedColors";
@@ -134,6 +135,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 @synthesize terminalState = _terminalState;
 @synthesize config = _config;
 @synthesize exfiltratedEnvironment = _exfiltratedEnvironment;
+@synthesize kittyImageDraws = _kittyImageDraws;
 @synthesize promptStateDictionary = _promptStateDictionary;
 @synthesize namedMarks = _namedMarks;
 @synthesize blockStartAbsLine = _blockStartAbsLine;
@@ -235,6 +237,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
     _config = source.config;
     _exfiltratedEnvironment = [source.exfiltratedEnvironment copy];
+    _kittyImageDraws = [source.kittyImageDraws copy];
     _promptStateDictionary = [source.promptStateDictionary copy];
     if (source.blocksGeneration > _blocksGeneration) {
         _blocksGeneration = source.blocksGeneration;

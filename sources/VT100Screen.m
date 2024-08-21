@@ -646,6 +646,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state rangeOfBlockWithID:blockID];
 }
 
+- (NSArray<iTermKittyImageDraw *> *)kittyImageDraws {
+    return [_state kittyImageDraws];
+}
+
 - (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range {
     VT100GridRange historyRange;
     VT100GridRange screenRange;

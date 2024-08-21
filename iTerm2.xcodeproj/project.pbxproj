@@ -3184,6 +3184,7 @@
 		A6CB24BE2C68155800005824 /* it2ul in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6CB249D2C68149000005824 /* it2ul */; };
 		A6CB24BF2C68155800005824 /* it2universion in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6CB249B2C68149000005824 /* it2universion */; };
 		A6CB24C12C682B6300005824 /* HueVisualizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CB24C02C682B6300005824 /* HueVisualizationView.swift */; };
+		A6CB24CB2C6EC13000005824 /* KittyImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CB24CA2C6EC13000005824 /* KittyImage.swift */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7012,6 +7013,7 @@
 		A6CB249C2C68149000005824 /* it2profile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = it2profile; path = OtherResources/Utilities/it2profile; sourceTree = "<group>"; };
 		A6CB249D2C68149000005824 /* it2ul */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = it2ul; path = OtherResources/Utilities/it2ul; sourceTree = "<group>"; };
 		A6CB24C02C682B6300005824 /* HueVisualizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HueVisualizationView.swift; sourceTree = "<group>"; };
+		A6CB24CA2C6EC13000005824 /* KittyImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KittyImage.swift; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -10925,6 +10927,7 @@
 				A6396B022C4722210064BCFD /* iTermTerminfo.m */,
 				A6A93F562C49BD2F00F07BAB /* iTermTerminfoHelper.h */,
 				A6A93F572C49BD2F00F07BAB /* iTermTerminfoHelper.m */,
+				A6CB24CA2C6EC13000005824 /* KittyImage.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -16065,6 +16068,7 @@
 				A6B1476521334D3900D0814F /* iTermTmuxStatusBarMonitor.m in Sources */,
 				530AB8A020B08CAF00D2AA08 /* NSJSONSerialization+iTerm.m in Sources */,
 				A6D009602AF6AD1700AA8F49 /* GetProfilePropertyBuiltInFunction.swift in Sources */,
+				A6CB24CB2C6EC13000005824 /* KittyImage.swift in Sources */,
 				A6587A4821D82B4200794775 /* iTermStandardKeyMapper.m in Sources */,
 				A6E1524727602FFE00D0F41C /* iTermWeakBox.m in Sources */,
 				A6A5162C2BCDE6C7006F3F09 /* PTYSessionHostState.swift in Sources */,

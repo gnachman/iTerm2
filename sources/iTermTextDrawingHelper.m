@@ -50,6 +50,20 @@
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #define MEDIAN(min_, mid_, max_) MAX(MIN(mid_, max_), min_)
 
+typedef struct {
+    NSInteger minValue;
+    NSInteger halfOpenUpperBound;
+} iTermSignedRange;
+
+static BOOL iTermSignedRangeContainsValue(iTermSignedRange range, NSInteger value) {
+    return value >= range.minValue && value < range.halfOpenUpperBound;
+}
+
+// Not inclusive of maxValue
+static iTermSignedRange iTermSignedRangeWithBounds(NSInteger minValue, NSInteger halfOpenUpperBound) {
+    return (iTermSignedRange) { .minValue = minValue, .halfOpenUpperBound = halfOpenUpperBound };
+}
+
 static const int kBadgeMargin = 4;
 const CGFloat iTermOffscreenCommandLineVerticalPadding = 8.0;
 
@@ -150,6 +164,12 @@ typedef struct iTermTextColorContext {
     CGFloat minimumContrast;
     NSColor *previousForegroundColor;
 } iTermTextColorContext;
+
+typedef NS_ENUM(NSUInteger, iTermBackgroundDrawingMode) {
+    iTermBackgroundDrawingModeDefault,
+    iTermBackgroundDrawingModeOmitTransparent,
+    iTermBackgroundDrawingModeOnlyTransparent,
+};
 
 static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL hasBackgroundImage,
                                                                          BOOL enableBlending,
@@ -437,32 +457,37 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [NSGraphicsContext saveGraphicsState];
     [self clipOutSuppressedBottomIfNeeded:virtualOffset];
 
-    NSColor *cursorBackgroundColor = nil;
     const int cursorY = self.cursorCoord.y + origin.y;
-    // Now iterate over the lines and paint the backgrounds.
-    for (NSInteger i = 0; i < backgroundRunArrays.count; ) {
-        NSInteger rows = [self numberOfEquivalentBackgroundColorLinesInRunArrays:backgroundRunArrays fromIndex:i];
-        iTermBackgroundColorRunsInLine *runArray = backgroundRunArrays[i];
-        runArray.numberOfEquivalentRows = rows;
-        if (cursorY >= runArray.line &&
-            cursorY < runArray.line + runArray.numberOfEquivalentRows) {
-            NSColor *color = [self unprocessedColorForBackgroundRun:[runArray runAtIndex:self.cursorCoord.x] ?: runArray.lastRun
-                                                     enableBlending:NO];
-            cursorBackgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
-        }
-        [self drawBackgroundForLine:runArray.line
-                                atY:runArray.y
-                               runs:runArray.array
-                     equivalentRows:rows
-                      virtualOffset:virtualOffset];
 
-        for (NSInteger j = i; j < i + rows; j++) {
-            [self drawMarginsAndMarkForLine:backgroundRunArrays[j].line
-                                          y:backgroundRunArrays[j].y
-                              virtualOffset:virtualOffset];
+    NSColor *cursorBackgroundColor;
+    if ([self haveAnyImagesUnderText]) {
+        if ([self blendManually]) {
+            [self drawBackgroundRunArrays:backgroundRunArrays
+                                  cursorY:-1
+                              drawingMode:iTermBackgroundDrawingModeOnlyTransparent
+                            virtualOffset:virtualOffset];
         }
-        i += rows;
+        // Negative z-index values below INT32_MIN/2 (-1,073,741,824) will be drawn under cells with
+        // non-default background colors
+        [self drawKittyImagesInRange:iTermSignedRangeWithBounds(NSIntegerMin, -1073741824)
+                       virtualOffset:virtualOffset];
+        cursorBackgroundColor = [self drawBackgroundRunArrays:backgroundRunArrays
+                                                      cursorY:cursorY
+                                                  drawingMode:iTermBackgroundDrawingModeOmitTransparent
+                                                virtualOffset:virtualOffset];
+    } else {
+        cursorBackgroundColor = [self drawBackgroundRunArrays:backgroundRunArrays
+                                                      cursorY:cursorY
+                                                  drawingMode:iTermBackgroundDrawingModeDefault
+                                                virtualOffset:virtualOffset];
     }
+    // Negative z-index values mean that the images will be drawn under the text. This allows
+    // rendering of text on top of images.
+    // NOTE: The spec doesn't match Kitty, where z=0 is also drawn under the text.
+    [self drawKittyImagesInRange:iTermSignedRangeWithBounds(-1073741824, 1)
+                   virtualOffset:virtualOffset];
+
+
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_DRAW_BACKGROUND]);
     [NSGraphicsContext restoreGraphicsState];
 
@@ -503,6 +528,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [NSGraphicsContext restoreGraphicsState];
     [self drawTopMarginWithVirtualOffset:virtualOffset];
     [self clipOutSuppressedBottomIfNeeded:virtualOffset];
+
+    [self drawKittyImagesInRange:iTermSignedRangeWithBounds(1, NSIntegerMax)
+                   virtualOffset:virtualOffset];
 
     // If the IME is in use, draw its contents over top of the "real" screen
     // contents.
@@ -571,10 +599,46 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 #pragma mark - Drawing: Background
 
+- (NSColor *)drawBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
+                             cursorY:(int)cursorY
+                         drawingMode:(iTermBackgroundDrawingMode)drawingMode
+                       virtualOffset:(CGFloat)virtualOffset {
+    NSColor *cursorBackgroundColor = nil;
+    for (NSInteger i = 0; i < backgroundRunArrays.count; ) {
+        iTermBackgroundColorRunsInLine *runArray = backgroundRunArrays[i];
+        NSInteger rows = runArray.numberOfEquivalentRows;
+        if (rows == 0) {
+            rows = [self numberOfEquivalentBackgroundColorLinesInRunArrays:backgroundRunArrays fromIndex:i];
+            runArray.numberOfEquivalentRows = rows;
+        }
+        if (cursorY >= runArray.line &&
+            cursorY < runArray.line + runArray.numberOfEquivalentRows) {
+            NSColor *color = [self unprocessedColorForBackgroundRun:[runArray runAtIndex:self.cursorCoord.x] ?: runArray.lastRun
+                                                     enableBlending:NO];
+            cursorBackgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
+        }
+        [self drawBackgroundForLine:runArray.line
+                                atY:runArray.y
+                               runs:runArray.array
+                     equivalentRows:rows
+                        drawingMode:drawingMode
+                      virtualOffset:virtualOffset];
+
+        for (NSInteger j = i; j < i + rows; j++) {
+            [self drawMarginsAndMarkForLine:backgroundRunArrays[j].line
+                                          y:backgroundRunArrays[j].y
+                              virtualOffset:virtualOffset];
+        }
+        i += rows;
+    }
+    return cursorBackgroundColor;
+}
+
 - (void)drawBackgroundForLine:(int)line
                           atY:(CGFloat)yOrigin
                          runs:(NSArray<iTermBoxedBackgroundColorRun *> *)runs
                equivalentRows:(NSInteger)rows
+                  drawingMode:(iTermBackgroundDrawingMode)drawingMode
                 virtualOffset:(CGFloat)virtualOffset {
     BOOL pad = NO;
     NSSize padding = { 0 };
@@ -587,7 +651,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                  equivalentRows:rows
                   virtualOffset:virtualOffset
                             pad:pad
-                        padding:padding];
+                        padding:padding
+                    drawingMode:drawingMode];
+}
+
+- (BOOL)blendManually {
+    return !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
 }
 
 - (void)drawBackgroundForLine:(int)line
@@ -596,8 +665,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                equivalentRows:(NSInteger)rows
                 virtualOffset:(CGFloat)virtualOffset
                           pad:(BOOL)pad
-                      padding:(NSSize)padding {
-    const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
+                      padding:(NSSize)padding
+                  drawingMode:(iTermBackgroundDrawingMode)bgMode {
+    const BOOL enableBlending = [self blendManually];
     for (iTermBoxedBackgroundColorRun *box in runs) {
         iTermBackgroundColorRun *run = box.valuePointer;
 
@@ -631,10 +701,23 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
             rect = temp;
         }
-        [self drawBackgroundColor:color
-                           inRect:rect
-                   enableBlending:enableBlending
-                    virtualOffset:virtualOffset];
+        BOOL draw = YES;
+        switch (bgMode) {
+            case iTermBackgroundDrawingModeDefault:
+                break;
+            case iTermBackgroundDrawingModeOmitTransparent:
+                draw = color.alphaComponent > 0;
+                break;
+            case iTermBackgroundDrawingModeOnlyTransparent:
+                draw = color.alphaComponent == 0;
+                break;
+        }
+        if (draw) {
+            [self drawBackgroundColor:color
+                               inRect:rect
+                       enableBlending:enableBlending
+                        virtualOffset:virtualOffset];
+        }
         if (_debug) {
             [[NSColor yellowColor] set];
             NSBezierPath *path = [NSBezierPath bezierPath];
@@ -649,6 +732,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                      inRect:(NSRect)rect
              enableBlending:(BOOL)enableBlending
               virtualOffset:(CGFloat)virtualOffset {
+    if (color.alphaComponent == 0 && !enableBlending) {
+        return;
+    }
     [color set];
     iTermRectFillUsingOperation(rect,
                                 enableBlending ? NSCompositingOperationSourceOver : NSCompositingOperationCopy,
@@ -3319,6 +3405,49 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     return floor(scaleFactor * value) / scaleFactor;
 }
 
+- (BOOL)haveAnyImagesUnderText {
+    return [_kittyImageDraws anyWithBlock:^BOOL(iTermKittyImageDraw *draw) {
+        return draw.zIndex <= 0;
+    }];
+}
+
+- (void)drawKittyImagesInRange:(iTermSignedRange)zIndexRange virtualOffset:(CGFloat)virtualOffset {
+    [_kittyImageDraws enumerateObjectsUsingBlock:^(iTermKittyImageDraw * _Nonnull draw, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (!iTermSignedRangeContainsValue(zIndexRange, draw.zIndex)) {
+            return;
+        }
+        [self drawKittyImage:draw virtualOffset:virtualOffset];
+    }];
+}
+
+- (void)drawKittyImage:(iTermKittyImageDraw *)draw virtualOffset:(CGFloat)virtualOffset {
+    NSRect destination = draw.destinationFrame;
+    if (self.isRetina) {
+        destination.origin.x /= 2;
+        destination.origin.y /= 2;
+        destination.size.width /= 2;
+        destination.size.height /= 2;
+    }
+    destination.origin.y -= self.cellSize.height * self.totalScrollbackOverflow;
+    if (!NSIntersectsRect(destination, _scrollViewDocumentVisibleRect)) {
+        return;
+    }
+
+    [NSGraphicsContext saveGraphicsState];
+    NSAffineTransform *transform = [NSAffineTransform transform];
+    [transform translateXBy:destination.origin.x yBy:NSMaxY(destination) - virtualOffset];
+    [transform scaleXBy:1.0 yBy:-1.0];
+    [transform concat];
+
+    destination.origin = NSZeroPoint;
+    [draw.image.images[draw.index] drawInRect:destination
+                                     fromRect:draw.sourceFrame
+                                    operation:NSCompositingOperationSourceOver
+                                     fraction:1];
+
+    [NSGraphicsContext restoreGraphicsState];
+}
+
 // origin is the first location onscreen
 - (void)drawImageWithCode:(unichar)code
                    origin:(VT100GridCoord)origin
@@ -3441,7 +3570,8 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                  equivalentRows:1
                   virtualOffset:virtualOffset
                             pad:YES
-                        padding: NSZeroSize];
+                        padding:NSZeroSize
+                    drawingMode:iTermBackgroundDrawingModeDefault];
 
     if ([self textAppearanceDependsOnBackgroundColor]) {
         [self drawForegroundForBackgroundRunArrays:@[backgroundRuns]

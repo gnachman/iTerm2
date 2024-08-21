@@ -1587,6 +1587,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _drawingHelper.forceRegularBottomMargin = autoComposerOpen;
     // TODO: Don't leave find on page helper as the source of truth for this!
     _drawingHelper.selectedCommandRegion = [self relativeRangeFromAbsLineRange:self.findOnPageHelper.absLineRange];
+    _drawingHelper.kittyImageDraws = [self.dataSource kittyImageDraws];
     [_drawingHelper updateCachedMetrics];
     if (@available(macOS 11, *)) {
         [_drawingHelper updateButtonFrames];
