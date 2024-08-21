@@ -154,6 +154,10 @@ BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code) {
     return [GetComplexCharRegistry() codeIsSpacingCombiningMark:code];
 }
 
+NSString* ScreenCharToKittyPlaceholder(const screen_char_t *const sct) {
+    return [GetComplexCharRegistry() charToKittyPlaceholder:*sct];
+}
+
 NSString *ScreenCharToStr(const screen_char_t *const sct) {
     return [GetComplexCharRegistry() charToString:*sct];
 }
@@ -182,6 +186,7 @@ screen_char_t ImageCharForNewImage(NSString *name,
     screen_char_t c;
     memset(&c, 0, sizeof(c));
     c.image = 1;
+    c.virtualPlaceholder = 0;
     c.code = newKey;
 
     iTermImageInfo *imageInfo = [[iTermImageInfo alloc] initWithCode:c.code];
@@ -414,7 +419,7 @@ int EffectiveLineLength(screen_char_t* theLine, int totalLength) {
 
 NSString *DebugStringForScreenChar(screen_char_t c) {
     NSArray *modes = @[ @"default", @"selected", @"altsem", @"altsem-reversed" ];
-    return [NSString stringWithFormat:@"code=%x (%@) foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ foregroundColorMode=%@ backgroundColorMode=%@ complexChar=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ underlineStyle=%@ strikethrough=%@ image=%@ invisible=%@ inverse=%@ guarded=%@ unused=%@",
+    return [NSString stringWithFormat:@"code=%x (%@) foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ foregroundColorMode=%@ backgroundColorMode=%@ complexChar=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ underlineStyle=%@ strikethrough=%@ image=%@ virtualPlaceholder=%@ invisible=%@ inverse=%@ guarded=%@ unused=%@",
             (int)c.code,
             ScreenCharToStr(&c),
             @(c.foregroundColor),
@@ -434,6 +439,7 @@ NSString *DebugStringForScreenChar(screen_char_t c) {
             @(c.underlineStyle),
             @(c.strikethrough),
             @(c.image),
+            @(c.virtualPlaceholder),
             @(c.invisible),
             @(c.inverse),
             @(c.guarded),
@@ -530,7 +536,13 @@ void StringToScreenChars(NSString *s,
                 }
             }
             BOOL disambiguated = NO;
-            if (unicodeVersion >= 9) {  // really should be 16 but there's no UI to choose that.
+            if (baseChar == 0x10EEEE) {
+                // Kitty image placeholder
+                buf[j].image = YES;
+                buf[j].virtualPlaceholder = YES;
+                disambiguated = YES;
+                isDoubleWidth = NO;
+            } else if (unicodeVersion >= 9) {  // really should be 16 but there's no UI to choose that.
                 if (baseChar == 0x2018 ||
                     baseChar == 0x2019 ||
                     baseChar == 0x201C ||
@@ -606,6 +618,7 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->strikethrough = fg.strikethrough;
     s->underlineStyle = fg.underlineStyle;
     s->image = NO;
+    s->virtualPlaceholder = NO;
     s->inverse = fg.inverse;
     s->guarded = fg.guarded;
     s->unused = 0;

@@ -12,6 +12,8 @@
 #import "iTermTextRendererTransientState.h"
 
 @import MetalKit;
+@class iTermKittyImageDraw;
+@class iTermKittyImageRun;
 @class iTermTerminalButton;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -52,7 +54,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState<NSObject>
-
+@property (nonatomic, readonly) NSRect adjustedDocumentVisibleRect;
 @property (nonatomic, readonly) VT100GridSize gridSize;
 @property (nonatomic, readonly) CGSize cellSize;
 @property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
@@ -93,6 +95,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSRange selectedCommandRegion;  // absolute line numbers
 @property (nonatomic, readonly) BOOL forceRegularBottomMargin;
 @property (nonatomic, readonly) const vector_float4 *selectedCommandOutlineColors;  // array of length 2
+@property (nonatomic, readonly) long long totalScrollbackOverflow;
 
 // When a command is selected this color is drawn over other regions.
 @property (nonatomic, readonly) vector_float4 shadeColor;
@@ -101,6 +104,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
                 imageRuns:(NSMutableArray<iTermMetalImageRun *> *)imageRuns
+           kittyImageRuns:(NSMutableArray<iTermKittyImageRun *> *)kittyImageRuns
                background:(iTermMetalBackgroundColorRLE *)backgrounds
                  rleCount:(int *)rleCount
                 markStyle:(out iTermMarkStyle *)markStylePtr
@@ -145,6 +149,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (CGRect)relativeFrame;
 - (CGRect)containerRect;
+- (NSArray<iTermKittyImageDraw *> *)kittyImageDraws;
 
 @end
 

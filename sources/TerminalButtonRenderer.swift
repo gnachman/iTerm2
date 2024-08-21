@@ -48,13 +48,6 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
     }
 }
 
-extension NSSize: Hashable {
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(width)
-        hasher.combine(height)
-    }
-}
-
 @available(macOS 11, *)
 @objc(iTermTerminalButtonRenderer)
 class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {

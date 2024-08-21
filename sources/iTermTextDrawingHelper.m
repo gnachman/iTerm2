@@ -50,6 +50,20 @@
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #define MEDIAN(min_, mid_, max_) MAX(MIN(mid_, max_), min_)
 
+typedef struct {
+    NSInteger minValue;
+    NSInteger halfOpenUpperBound;
+} iTermSignedRange;
+
+static BOOL iTermSignedRangeContainsValue(iTermSignedRange range, NSInteger value) {
+    return value >= range.minValue && value < range.halfOpenUpperBound;
+}
+
+// Not inclusive of maxValue
+static iTermSignedRange iTermSignedRangeWithBounds(NSInteger minValue, NSInteger halfOpenUpperBound) {
+    return (iTermSignedRange) { .minValue = minValue, .halfOpenUpperBound = halfOpenUpperBound };
+}
+
 static const int kBadgeMargin = 4;
 const CGFloat iTermOffscreenCommandLineVerticalPadding = 8.0;
 
@@ -134,6 +148,11 @@ static NSString *const iTermUnderlineLengthAttribute = @"iTermUnderlineLengthAtt
 static NSString *const iTermHasUnderlineColorAttribute = @"iTermHasUnderlineColorAttribute";
 static NSString *const iTermUnderlineColorAttribute = @"iTermUnderlineColorAttribute";  // @[r,g,b,mode]
 
+static NSString *const iTermKittyImageRowAttribute = @"iTermKittyImageRowAttribute";
+static NSString *const iTermKittyImageColumnAttribute = @"iTermKittyImageColumnAttribute";
+static NSString *const iTermKittyImageIDAttribute = @"iTermKittyImageIDAttribute";
+static NSString *const iTermKittyImagePlacementIDAttribute = @"iTermKittyImagePlacementIDAttribute";
+
 typedef struct iTermTextColorContext {
     NSColor *lastUnprocessedColor;
     CGFloat dimmingAmount;
@@ -150,6 +169,12 @@ typedef struct iTermTextColorContext {
     CGFloat minimumContrast;
     NSColor *previousForegroundColor;
 } iTermTextColorContext;
+
+typedef NS_ENUM(NSUInteger, iTermBackgroundDrawingMode) {
+    iTermBackgroundDrawingModeDefault,
+    iTermBackgroundDrawingModeOmitTransparent,
+    iTermBackgroundDrawingModeOnlyTransparent,
+};
 
 static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL hasBackgroundImage,
                                                                          BOOL enableBlending,
@@ -437,32 +462,39 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [NSGraphicsContext saveGraphicsState];
     [self clipOutSuppressedBottomIfNeeded:virtualOffset];
 
-    NSColor *cursorBackgroundColor = nil;
     const int cursorY = self.cursorCoord.y + origin.y;
-    // Now iterate over the lines and paint the backgrounds.
-    for (NSInteger i = 0; i < backgroundRunArrays.count; ) {
-        NSInteger rows = [self numberOfEquivalentBackgroundColorLinesInRunArrays:backgroundRunArrays fromIndex:i];
-        iTermBackgroundColorRunsInLine *runArray = backgroundRunArrays[i];
-        runArray.numberOfEquivalentRows = rows;
-        if (cursorY >= runArray.line &&
-            cursorY < runArray.line + runArray.numberOfEquivalentRows) {
-            NSColor *color = [self unprocessedColorForBackgroundRun:[runArray runAtIndex:self.cursorCoord.x] ?: runArray.lastRun
-                                                     enableBlending:NO];
-            cursorBackgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
-        }
-        [self drawBackgroundForLine:runArray.line
-                                atY:runArray.y
-                               runs:runArray.array
-                     equivalentRows:rows
-                      virtualOffset:virtualOffset];
 
-        for (NSInteger j = i; j < i + rows; j++) {
-            [self drawMarginsAndMarkForLine:backgroundRunArrays[j].line
-                                          y:backgroundRunArrays[j].y
-                              virtualOffset:virtualOffset];
+    NSColor *cursorBackgroundColor;
+    if ([self haveAnyImagesUnderText]) {
+        if ([self blendManually]) {
+            [self drawBackgroundRunArrays:backgroundRunArrays
+                                  cursorY:-1
+                              drawingMode:iTermBackgroundDrawingModeOnlyTransparent
+                            virtualOffset:virtualOffset];
         }
-        i += rows;
+        // Negative z-index values below INT32_MIN/2 (-1,073,741,824) will be drawn under cells with
+        // non-default background colors
+        // Kitty has an insane bug where it treats ansi colors that happen to have the same rgb value
+        // as the default background color the same as the default background color.
+        [self drawKittyImagesInRange:iTermSignedRangeWithBounds(NSIntegerMin, -1073741824)
+                       virtualOffset:virtualOffset];
+        cursorBackgroundColor = [self drawBackgroundRunArrays:backgroundRunArrays
+                                                      cursorY:cursorY
+                                                  drawingMode:iTermBackgroundDrawingModeOmitTransparent
+                                                virtualOffset:virtualOffset];
+    } else {
+        cursorBackgroundColor = [self drawBackgroundRunArrays:backgroundRunArrays
+                                                      cursorY:cursorY
+                                                  drawingMode:iTermBackgroundDrawingModeDefault
+                                                virtualOffset:virtualOffset];
     }
+    // Negative z-index values mean that the images will be drawn under the text. This allows
+    // rendering of text on top of images.
+    // NOTE: The spec doesn't match Kitty, where z=0 is also drawn under the text.
+    [self drawKittyImagesInRange:iTermSignedRangeWithBounds(-1073741824, 1)
+                   virtualOffset:virtualOffset];
+
+
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_DRAW_BACKGROUND]);
     [NSGraphicsContext restoreGraphicsState];
 
@@ -503,6 +535,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [NSGraphicsContext restoreGraphicsState];
     [self drawTopMarginWithVirtualOffset:virtualOffset];
     [self clipOutSuppressedBottomIfNeeded:virtualOffset];
+
+    [self drawKittyImagesInRange:iTermSignedRangeWithBounds(1, NSIntegerMax)
+                   virtualOffset:virtualOffset];
 
     // If the IME is in use, draw its contents over top of the "real" screen
     // contents.
@@ -571,10 +606,46 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 #pragma mark - Drawing: Background
 
+- (NSColor *)drawBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
+                             cursorY:(int)cursorY
+                         drawingMode:(iTermBackgroundDrawingMode)drawingMode
+                       virtualOffset:(CGFloat)virtualOffset {
+    NSColor *cursorBackgroundColor = nil;
+    for (NSInteger i = 0; i < backgroundRunArrays.count; ) {
+        iTermBackgroundColorRunsInLine *runArray = backgroundRunArrays[i];
+        NSInteger rows = runArray.numberOfEquivalentRows;
+        if (rows == 0) {
+            rows = [self numberOfEquivalentBackgroundColorLinesInRunArrays:backgroundRunArrays fromIndex:i];
+            runArray.numberOfEquivalentRows = rows;
+        }
+        if (cursorY >= runArray.line &&
+            cursorY < runArray.line + runArray.numberOfEquivalentRows) {
+            NSColor *color = [self unprocessedColorForBackgroundRun:[runArray runAtIndex:self.cursorCoord.x] ?: runArray.lastRun
+                                                     enableBlending:NO];
+            cursorBackgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
+        }
+        [self drawBackgroundForLine:runArray.line
+                                atY:runArray.y
+                               runs:runArray.array
+                     equivalentRows:rows
+                        drawingMode:drawingMode
+                      virtualOffset:virtualOffset];
+
+        for (NSInteger j = i; j < i + rows; j++) {
+            [self drawMarginsAndMarkForLine:backgroundRunArrays[j].line
+                                          y:backgroundRunArrays[j].y
+                              virtualOffset:virtualOffset];
+        }
+        i += rows;
+    }
+    return cursorBackgroundColor;
+}
+
 - (void)drawBackgroundForLine:(int)line
                           atY:(CGFloat)yOrigin
                          runs:(NSArray<iTermBoxedBackgroundColorRun *> *)runs
                equivalentRows:(NSInteger)rows
+                  drawingMode:(iTermBackgroundDrawingMode)drawingMode
                 virtualOffset:(CGFloat)virtualOffset {
     BOOL pad = NO;
     NSSize padding = { 0 };
@@ -587,7 +658,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                  equivalentRows:rows
                   virtualOffset:virtualOffset
                             pad:pad
-                        padding:padding];
+                        padding:padding
+                    drawingMode:drawingMode];
+}
+
+- (BOOL)blendManually {
+    return !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
 }
 
 - (void)drawBackgroundForLine:(int)line
@@ -596,8 +672,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                equivalentRows:(NSInteger)rows
                 virtualOffset:(CGFloat)virtualOffset
                           pad:(BOOL)pad
-                      padding:(NSSize)padding {
-    const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
+                      padding:(NSSize)padding
+                  drawingMode:(iTermBackgroundDrawingMode)bgMode {
+    const BOOL enableBlending = [self blendManually];
     for (iTermBoxedBackgroundColorRun *box in runs) {
         iTermBackgroundColorRun *run = box.valuePointer;
 
@@ -631,10 +708,23 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
             rect = temp;
         }
-        [self drawBackgroundColor:color
-                           inRect:rect
-                   enableBlending:enableBlending
-                    virtualOffset:virtualOffset];
+        BOOL draw = YES;
+        switch (bgMode) {
+            case iTermBackgroundDrawingModeDefault:
+                break;
+            case iTermBackgroundDrawingModeOmitTransparent:
+                draw = color.alphaComponent > 0;
+                break;
+            case iTermBackgroundDrawingModeOnlyTransparent:
+                draw = color.alphaComponent == 0;
+                break;
+        }
+        if (draw) {
+            [self drawBackgroundColor:color
+                               inRect:rect
+                       enableBlending:enableBlending
+                        virtualOffset:virtualOffset];
+        }
         if (_debug) {
             [[NSColor yellowColor] set];
             NSBezierPath *path = [NSBezierPath bezierPath];
@@ -649,6 +739,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                      inRect:(NSRect)rect
              enableBlending:(BOOL)enableBlending
               virtualOffset:(CGFloat)virtualOffset {
+    if (color.alphaComponent == 0 && !enableBlending) {
+        return;
+    }
     [color set];
     iTermRectFillUsingOperation(rect,
                                 enableBlending ? NSCompositingOperationSourceOver : NSCompositingOperationCopy,
@@ -1812,7 +1905,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
         // Handle cells that are part of an image.
         VT100GridCoord originInImage = VT100GridCoordMake([attributes[iTermImageColumnAttribute] intValue],
                                                           [attributes[iTermImageLineAttribute] intValue]);
-        int displayColumn = [attributes[iTermImageDisplayColumnAttribute] intValue];
+        const int displayColumn = [attributes[iTermImageDisplayColumnAttribute] intValue];
         [self drawImageWithCode:[attributes[iTermImageCodeAttribute] shortValue]
                          origin:VT100GridCoordMake(displayColumn, origin.y)
                          length:cheapString.length
@@ -1820,6 +1913,18 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                   originInImage:originInImage
                   virtualOffset:virtualOffset];
         return cheapString.length;
+    } else if (attributes[iTermKittyImageIDAttribute]) {
+        // Handle cells that are part of a Kitty image.
+        const VT100GridCoord coord = VT100GridCoordMake([attributes[iTermKittyImageColumnAttribute] intValue],
+                                                          [attributes[iTermKittyImageRowAttribute] intValue]);
+        const int displayColumn = [attributes[iTermImageDisplayColumnAttribute] intValue];
+        [self drawKittyImageInPlaceholderWithCoord:coord
+                                            origin:VT100GridCoordMake(displayColumn, origin.y)
+                                           atPoint:NSMakePoint(positions[0] + point.x, point.y)
+                                           imageID:[attributes[iTermKittyImageIDAttribute] unsignedIntegerValue]
+                                       placementID:[attributes[iTermKittyImagePlacementIDAttribute] unsignedIntegerValue]
+                                     virtualOffset:virtualOffset];
+        return 1;
     }
 
     CGGlyph glyphs[cheapString.length];
@@ -2802,13 +2907,101 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
               NSParagraphStyleAttributeName: paragraphStyle };
 }
 
-- (NSDictionary *)imageAttributesForCharacter:(screen_char_t *)c displayColumn:(int)displayColumn {
-    if (c->image) {
-        return @{ iTermImageCodeAttribute: @(c->code),
-                  iTermImageColumnAttribute: @(c->foregroundColor),
-                  iTermImageLineAttribute: @(c->backgroundColor),
-                  iTermImageDisplayColumnAttribute: @(displayColumn) };
+static unsigned int VT100TerminalColorValueToKittyImageNumber(VT100TerminalColorValue colorValue,
+                                                              int msb) {
+    unsigned int shiftedMSB = ((unsigned int)msb) << 24;
+
+    if (colorValue.mode == ColorModeNormal) {
+        return shiftedMSB | (unsigned int)colorValue.red;
+    }
+
+    if (colorValue.mode == ColorMode24bit) {
+        return (shiftedMSB |
+                (((unsigned int)colorValue.red) << 16) |
+                (((unsigned int)colorValue.green) << 8) |
+                (((unsigned int)colorValue.blue) << 0));
+    }
+
+    // If the color mode is not valid, return the error code 0xffffffff
+    return 0xffffffff;
+}
+
+void iTermKittyUnicodePlaceholderStateInit(iTermKittyUnicodePlaceholderState *state) {
+    state->previousCoord = VT100GridCoordMake(-1, -1);
+    state->previousImageMSB = -1;
+    state->runLength = 0;
+}
+
+BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
+                                        iTermExternalAttribute *ea,
+                                        iTermKittyUnicodePlaceholderState *state,
+                                        iTermKittyUnicodePlaceholderInfo *info) {
+    NSString *s = ScreenCharToKittyPlaceholder(c);
+    VT100GridCoord coord;
+    int imageMSB = -1;
+    if (![s parseKittyUnicodePlaceholder:&coord imageMSB:&imageMSB]) {
+        return NO;
+    }
+    if (coord.x == -1 && state->previousCoord.x != -1) {
+        coord.x = state->previousCoord.x + 1;
+    }
+    if (coord.y == -1 && state->previousCoord.y != -1) {
+        coord.y = state->previousCoord.y;
+    }
+    state->previousCoord = coord;
+    if (state->previousImageMSB != -1 && imageMSB == -1) {
+        imageMSB = state->previousImageMSB;
+    } else if (imageMSB != -1) {
+        state->previousImageMSB = imageMSB;
+    }
+    if (coord.y != -1) {
+        state->runLength = 1;
     } else {
+        state->runLength += 1;
+    }
+    VT100TerminalColorValue colorValue = {
+        .red = c->foregroundColor,
+        .green = c->fgGreen,
+        .blue = c->fgBlue,
+        .mode = c->foregroundColorMode
+    };
+    unsigned int imageID = VT100TerminalColorValueToKittyImageNumber(colorValue, imageMSB);
+    unsigned int placementID = ea.hasUnderlineColor ? VT100TerminalColorValueToKittyImageNumber(ea.underlineColor, 0) : 0;
+
+    *info = (iTermKittyUnicodePlaceholderInfo) {
+        .row = coord.y,
+        .column = coord.x,
+        .imageID = imageID,
+        .placementID = placementID,
+        .runLength = state->runLength
+    };
+    return YES;
+}
+
+- (NSDictionary *)imageAttributesForCharacter:(screen_char_t *)c
+                           externalAttributes:(iTermExternalAttribute *)ea
+                                        state:(iTermKittyUnicodePlaceholderState *)state
+                                displayColumn:(int)displayColumn {
+    if (c->image) {
+        if (c->virtualPlaceholder) {
+            iTermKittyUnicodePlaceholderInfo info;
+            if (!iTermDecodeKittyUnicodePlaceholder(c, ea, state, &info)) {
+                return nil;
+            }
+            return @{ iTermKittyImageRowAttribute: @(info.row),
+                      iTermKittyImageColumnAttribute: @(info.column),
+                      iTermKittyImageIDAttribute: @(info.imageID),
+                      iTermKittyImagePlacementIDAttribute: @(info.placementID),
+                      iTermImageDisplayColumnAttribute: @(displayColumn)
+            };
+        } else {
+            return @{ iTermImageCodeAttribute: @(c->code),
+                      iTermImageColumnAttribute: @(c->foregroundColor),
+                      iTermImageLineAttribute: @(c->backgroundColor),
+                      iTermImageDisplayColumnAttribute: @(displayColumn) };
+        }
+    } else {
+        iTermKittyUnicodePlaceholderStateInit(state);
         return nil;
     }
 }
@@ -2847,6 +3040,11 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         return NO;
     }
     if ([_fontTable haveSpecialExceptionFor:*c orCharacter:*pc]) {
+        return NO;
+    }
+    if (c->virtualPlaceholder) {
+        // Anti-optimization: each unicode placeholder gets its own attributed string for now.
+        // I can improve this later.
         return NO;
     }
     if (ea1 == nil && ea2 == nil) {
@@ -2904,6 +3102,11 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     screen_char_t predecessor = { 0 };
     BOOL lastCharacterImpartsEmojiPresentation = NO;
     iTermExternalAttribute *prevEa = nil;
+    iTermKittyUnicodePlaceholderState kittyPlaceholderState;
+    VT100GridCoord previousKittyImageCoord = VT100GridCoordMake(-1, -1);
+    int previousImageMSB = -1;
+
+    iTermKittyUnicodePlaceholderStateInit(&kittyPlaceholderState);
 
     // Only defined if not preferring speed to full ligature support.
     BOOL lastWasNull = NO;
@@ -2927,7 +3130,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
         NSString *charAsString;
 
-        if (isComplex) {
+        if (isComplex && !c.image) {
             charAsString = ComplexCharToStr(code);
 
             if (i > indexRange.location &&
@@ -3032,7 +3235,10 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_SHOULD_SEGMENT]);
 
-        NSDictionary *imageAttributes = [self imageAttributesForCharacter:&c displayColumn:i];
+        NSDictionary *imageAttributes = [self imageAttributesForCharacter:&c
+                                                       externalAttributes:ea
+                                                                    state:&kittyPlaceholderState
+                                                            displayColumn:i];
         BOOL combinedAttributesChanged = NO;
 
         // I tried segmenting when fastpath eligibility changes so we can use the fast path as much
@@ -3319,6 +3525,203 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     return floor(scaleFactor * value) / scaleFactor;
 }
 
+- (BOOL)haveAnyImagesUnderText {
+    return [_kittyImageDraws anyWithBlock:^BOOL(iTermKittyImageDraw *draw) {
+        return draw.zIndex <= 0;
+    }];
+}
+
+- (void)drawKittyImagesInRange:(iTermSignedRange)zIndexRange virtualOffset:(CGFloat)virtualOffset {
+    [_kittyImageDraws enumerateObjectsUsingBlock:^(iTermKittyImageDraw * _Nonnull draw, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (draw.virtual) {
+            // These are drawn in unicode placeholders.
+            return;
+        }
+        if (!iTermSignedRangeContainsValue(zIndexRange, draw.zIndex)) {
+            return;
+        }
+        [self drawKittyImage:draw virtualOffset:virtualOffset];
+    }];
+}
+
+- (void)drawKittyImage:(iTermKittyImageDraw *)draw virtualOffset:(CGFloat)virtualOffset {
+    NSRect destination = draw.destinationFrame;
+    if (self.isRetina) {
+        destination.origin.x /= 2;
+        destination.origin.y /= 2;
+        destination.size.width /= 2;
+        destination.size.height /= 2;
+    }
+    destination.origin.y -= self.cellSize.height * self.totalScrollbackOverflow;
+    if (!NSIntersectsRect(destination, _scrollViewDocumentVisibleRect)) {
+        return;
+    }
+
+    [NSGraphicsContext saveGraphicsState];
+    NSAffineTransform *transform = [NSAffineTransform transform];
+    [transform translateXBy:destination.origin.x yBy:NSMaxY(destination) - virtualOffset];
+    [transform scaleXBy:1.0 yBy:-1.0];
+    [transform concat];
+    destination.origin = NSZeroPoint;
+
+    NSImage *image = draw.image.images[draw.index];
+    [image drawInRect:destination
+             fromRect:draw.sourceFrame
+            operation:NSCompositingOperationSourceOver
+             fraction:1];
+
+    [NSGraphicsContext restoreGraphicsState];
+}
+
++ (NSSize)sizeForKittyImageCellInPlacementOfSize:(VT100GridSize)placementSize
+                                        cellSize:(NSSize)cellSize
+                                sourceImageSize:(NSSize)sourceImageSize {
+    // Calculate the aspect ratios
+    CGFloat imageAspectRatio = sourceImageSize.width / sourceImageSize.height;
+    CGFloat gridAspectRatio = (placementSize.width * cellSize.width) / (placementSize.height * cellSize.height);
+
+    // The size of the source rectangle in the image that will be drawn to a single cell
+    NSSize sourceRectSize;
+
+    if (imageAspectRatio > gridAspectRatio) {
+        // Image is wider than the grid, scale based on width
+        sourceRectSize.width = sourceImageSize.width / placementSize.width;
+        sourceRectSize.height = sourceRectSize.width * (cellSize.height / cellSize.width);
+    } else {
+        // Image is taller than the grid, scale based on height
+        sourceRectSize.height = sourceImageSize.height / placementSize.height;
+        sourceRectSize.width = sourceRectSize.height * (cellSize.width / cellSize.height);
+    }
+
+    return sourceRectSize;
+}
+
+iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreate(iTermKittyImageDraw *draw,
+                                                                                  NSSize cellSize,
+                                                                                  VT100GridCoord sourceCoord,
+                                                                                  VT100GridCoord destCoord,
+                                                                                  NSPoint point,
+                                                                                  unsigned int imageID,
+                                                                                  unsigned int placementID,
+                                                                                  CGFloat virtualOffset) {
+    iTermKittyPlaceholderDrawInstructions result = { 0 };
+    result.valid = NO;
+
+    if (draw.placementSize.width <= 0 || draw.placementSize.height <= 0) {
+        return result;
+    }
+    const NSSize sourceCellSize = [iTermTextDrawingHelper sizeForKittyImageCellInPlacementOfSize:draw.placementSize
+                                                                                        cellSize:cellSize
+                                                                                 sourceImageSize:draw.sourceFrame.size];
+    const NSRect destRect = NSMakeRect(0, 0, cellSize.width, cellSize.height);
+    const NSRect sourceRect = [iTermTextDrawingHelper sourceRectangleForKittyPlaceholderAtSourceCoord:sourceCoord
+                                                                                       sourceCellSize:sourceCellSize
+                                                                                        placementSize:draw.placementSize
+                                                                                             cellSize:cellSize
+                                                                                          sourceFrame:draw.sourceFrame];
+
+    result.valid = YES;
+    result.translation = NSMakePoint(point.x, point.y + cellSize.height - virtualOffset);
+    result.destRect = destRect;
+    result.sourceRect = sourceRect;
+    return result;
+}
+
+iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermKittyImageDraw *> *draws,
+                                                                  unsigned int placementID,
+                                                                  unsigned int imageID) {
+    iTermKittyImageDraw *draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *draw, NSUInteger index, BOOL *stop) {
+        return draw.placementID == placementID;
+    }];
+    if (!draw) {
+        // Look up placement by image ID. Must include a size.
+        draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
+            return draw.imageID == imageID && draw.placementSize.width > 0 && draw.placementSize.height > 0;
+        }];
+    }
+    return draw;
+}
+
+- (void)drawKittyImageInPlaceholderWithCoord:(VT100GridCoord)sourceCoord
+                                      origin:(VT100GridCoord)destCoord
+                                     atPoint:(NSPoint)point
+                                     imageID:(unsigned int)imageID
+                                 placementID:(unsigned int)placementID
+                               virtualOffset:(CGFloat)virtualOffset {
+    // Look up the placement
+    iTermKittyImageDraw *draw = iTermFindKittyImageDrawForVirtualPlaceholder(_kittyImageDraws,
+                                                                             placementID,
+                                                                             imageID);
+    if (!draw) {
+        return;
+    }
+    if (draw.placementSize.width <= 0 || draw.placementSize.height <= 0) {
+        return;
+    }
+    NSImage *image = draw.image.images[0];
+    iTermKittyPlaceholderDrawInstructions instructions =
+        iTermKittyPlaceholderDrawInstructionsCreate(draw,
+                                                    _cellSize,
+                                                    sourceCoord,
+                                                    destCoord,
+                                                    point,
+                                                    imageID,
+                                                    placementID,
+                                                    virtualOffset);
+    [NSGraphicsContext saveGraphicsState];
+    NSAffineTransform *transform = [NSAffineTransform transform];
+    [transform translateXBy:instructions.translation.x yBy:instructions.translation.y];
+    [transform scaleXBy:1.0 yBy:-1.0];
+    [transform concat];
+
+    [image drawInRect:instructions.destRect
+             fromRect:instructions.sourceRect
+            operation:NSCompositingOperationSourceOver
+             fraction:1.0];
+
+    [NSGraphicsContext restoreGraphicsState];
+}
+
++ (NSRect)sourceRectangleForKittyPlaceholderAtSourceCoord:(VT100GridCoord)sourceCoord
+                                           sourceCellSize:(NSSize)sourceCellSize
+                                            placementSize:(VT100GridSize)placementSize
+                                                 cellSize:(NSSize)cellSize
+                                              sourceFrame:(NSRect)sourceFrame {
+    const NSSize imageSize = sourceFrame.size;
+    const CGFloat totalPlacementWidth = placementSize.width * cellSize.width;
+    const CGFloat totalPlacementHeight = placementSize.height * cellSize.height;
+
+    // Calculate the actual scaled size of the image to fit within the placement
+    const CGFloat imageAspectRatio = imageSize.width / imageSize.height;
+    const CGFloat placementAspectRatio = totalPlacementWidth / totalPlacementHeight;
+
+    CGFloat scaledWidth;
+    CGFloat scaledHeight;
+    if (imageAspectRatio > placementAspectRatio) {
+        // Image is wider than the placement grid, scale by width
+        scaledWidth = totalPlacementWidth;
+        scaledHeight = scaledWidth / imageAspectRatio;
+    } else {
+        // Image is taller than the placement grid, scale by height
+        scaledHeight = totalPlacementHeight;
+        scaledWidth = scaledHeight * imageAspectRatio;
+    }
+
+    // Calculate the padding to center the image within the placement grid
+    CGFloat horizontalPadding = (totalPlacementWidth - scaledWidth) / 2.0;
+    CGFloat verticalPadding = (totalPlacementHeight - scaledHeight) / 2.0;
+
+    // Adjust the source rectangle to account for the padding
+    CGFloat adjustedSourceX = sourceCoord.x * sourceCellSize.width - horizontalPadding * (sourceCellSize.width / cellSize.width);
+    CGFloat adjustedSourceY = sourceCoord.y * sourceCellSize.height - verticalPadding * (sourceCellSize.height / cellSize.height);
+
+    const NSRect sourceRect = NSMakeRect(adjustedSourceX + sourceFrame.origin.x,
+                                         imageSize.height - (adjustedSourceY + sourceFrame.origin.y) - sourceCellSize.height,
+                                         sourceCellSize.width,
+                                         sourceCellSize.height);
+    return sourceRect;
+}
+
 // origin is the first location onscreen
 - (void)drawImageWithCode:(unichar)code
                    origin:(VT100GridCoord)origin
@@ -3441,7 +3844,8 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                  equivalentRows:1
                   virtualOffset:virtualOffset
                             pad:YES
-                        padding: NSZeroSize];
+                        padding:NSZeroSize
+                    drawingMode:iTermBackgroundDrawingModeDefault];
 
     if ([self textAppearanceDependsOnBackgroundColor]) {
         [self drawForegroundForBackgroundRunArrays:@[backgroundRuns]

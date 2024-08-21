@@ -16,10 +16,12 @@
 #import "VT100GridTypes.h"
 
 @class iTermColorMap;
+@class iTermExternalAttribute;
 @class iTermExternalAttributeIndex;
 @class iTermFontTable;
 @protocol iTermExternalAttributeIndexReading;
 @class iTermFindOnPageHelper;
+@class iTermKittyImageDraw;
 @class iTermOffscreenCommandLine;
 @class iTermSelection;
 @class iTermTextExtractor;
@@ -33,6 +35,45 @@ typedef NS_ENUM(NSUInteger, iTermMarkIndicatorType) {
     iTermMarkIndicatorTypeError,
     iTermMarkIndicatorTypeOther
 };
+
+typedef struct {
+    VT100GridCoord previousCoord;
+    int previousImageMSB;
+    int runLength;
+} iTermKittyUnicodePlaceholderState;
+
+typedef struct {
+    int row;
+    int column;
+    unsigned int imageID;
+    unsigned int placementID;
+    int runLength;
+} iTermKittyUnicodePlaceholderInfo;
+
+typedef struct {
+    BOOL valid;
+    NSPoint translation;
+    NSRect destRect;
+    NSRect sourceRect;
+} iTermKittyPlaceholderDrawInstructions;
+
+iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreate(iTermKittyImageDraw *draw,
+                                                                                  NSSize cellSize,
+                                                                                  VT100GridCoord sourceCoord,
+                                                                                  VT100GridCoord destCoord,
+                                                                                  NSPoint point,
+                                                                                  unsigned int imageID,
+                                                                                  unsigned int placementID,
+                                                                                  CGFloat virtualOffset);
+iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermKittyImageDraw *> *draws,
+                                                                  unsigned int placementID,
+                                                                  unsigned int imageID);
+
+void iTermKittyUnicodePlaceholderStateInit(iTermKittyUnicodePlaceholderState *state);
+BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
+                                        iTermExternalAttribute *ea,
+                                        iTermKittyUnicodePlaceholderState *state,
+                                        iTermKittyUnicodePlaceholderInfo *info);
 
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor);
@@ -296,6 +337,7 @@ extern const int iTermTextDrawingHelperLineStileMarkRightInsetCells;
 
 // Color for shade over deselected commands
 @property (nonatomic, readonly) NSColor *shadeColor;
+@property (nonatomic, copy) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;

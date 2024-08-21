@@ -365,14 +365,3 @@ class ContentNavigationShortcutLayerOuter: NSObject {
     }
 }
 
-extension NSRect {
-    var center: NSPoint {
-        return NSPoint(x: midX, y: midY)
-    }
-}
-
-extension NSPoint {
-    func distance(_ point: NSPoint) -> CGFloat {
-        return sqrt(pow(point.x - x, 2) + pow(point.y - y, 2))
-    }
-}

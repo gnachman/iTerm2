@@ -440,7 +440,30 @@
     return rep;
 }
 
-- (NSImageRep *)bestRepresentationForScale:(CGFloat)desiredScale {
+- (NSSize)it_sizeInPointsForScale:(CGFloat)scaleFactor {
+    NSBitmapImageRep *bitmapRep = [NSBitmapImageRep castFrom:[self bestRepresentationForScale:scaleFactor
+                                                                                 mustBeBitmap:YES]];
+
+    // If no bitmap representation exists, return the original image size
+    if (!bitmapRep) {
+        return self.size;
+    }
+
+    const NSInteger pixelWidth = bitmapRep.pixelsWide;
+    const NSInteger pixelHeight = bitmapRep.pixelsHigh;
+
+    NSSize sizeInPoints;
+    sizeInPoints.width = pixelWidth / scaleFactor;
+    sizeInPoints.height = pixelHeight / scaleFactor;
+
+    return sizeInPoints;
+}
+
+- (NSBitmapImageRep *)bestBitmapRepresentationForScale:(CGFloat)desiredScale {
+    return [NSBitmapImageRep castFrom:[self bestRepresentationForScale:desiredScale mustBeBitmap:YES]];
+}
+
+- (NSImageRep *)bestRepresentationForScale:(CGFloat)desiredScale mustBeBitmap:(BOOL)bitmap {
     NSImageRep *best = nil;
     double bestScale = 0;
     CGFloat width = self.size.width;
@@ -448,6 +471,9 @@
         return nil;
     }
     for (NSImageRep *rep in self.representations) {
+        if (bitmap && ![rep isKindOfClass:[NSBitmapImageRep class]]) {
+            continue;
+        }
         const double scale = best.pixelsWide / width;
         if (!best || fabs(desiredScale - scale) < fabs(desiredScale - bestScale)) {
             best = rep;
@@ -455,6 +481,10 @@
         }
     }
     return best;
+}
+
+- (NSImageRep *)bestRepresentationForScale:(CGFloat)desiredScale {
+    return [self bestRepresentationForScale:desiredScale mustBeBitmap:NO];
 }
 
 - (NSImage *)it_imageWithTintColor:(NSColor *)tintColor size:(NSSize)size {

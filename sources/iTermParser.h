@@ -117,7 +117,7 @@ NS_INLINE int iTermParserLength(iTermParserContext *context) {
     return context->datalen;
 }
 
-NS_INLINE unsigned char *iTermParserPeekRawBytes(iTermParserContext *context, int length) {
+NS_INLINE unsigned char *iTermParserPeekRawBytes(const iTermParserContext *context, int length) {
     if (context->datalen < length) {
         return NULL;
     } else {

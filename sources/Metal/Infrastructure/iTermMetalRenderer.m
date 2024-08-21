@@ -330,15 +330,17 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
 - (id<MTLBuffer>)newQuadWithFrame:(CGRect)quad
                      textureFrame:(CGRect)textureFrame
                       poolContext:(iTermMetalBufferPoolContext *)poolContext {
+    // I can't use CGRectGet{Max,Min}Y because the textureFrame might have a negative hight to flip
+    // the image vertically. Those functions always return a minY <= maxY.
     const iTermVertex vertices[] = {
         // Pixel Positions                              Texture Coordinates
-        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-        { { CGRectGetMinX(quad), CGRectGetMinY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
-        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), textureFrame.origin.y } },
+        { { CGRectGetMinX(quad), CGRectGetMinY(quad) }, { CGRectGetMinX(textureFrame), textureFrame.origin.y } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), textureFrame.origin.y + textureFrame.size.height } },
 
-        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
-        { { CGRectGetMaxX(quad), CGRectGetMaxY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), textureFrame.origin.y } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), textureFrame.origin.y + textureFrame.size.height } },
+        { { CGRectGetMaxX(quad), CGRectGetMaxY(quad) }, { CGRectGetMaxX(textureFrame), textureFrame.origin.y + textureFrame.size.height } },
     };
     return [_verticesPool requestBufferFromContext:poolContext
                                          withBytes:vertices

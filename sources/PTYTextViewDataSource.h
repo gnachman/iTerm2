@@ -12,6 +12,7 @@
 @class Interval;
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
+@class iTermKittyImageDraw;
 @protocol iTermMark;
 @class iTermOffscreenCommandLine;
 @class iTermTerminalButtonPlace;
@@ -159,5 +160,6 @@
 - (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range;
 - (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range;
 - (VT100GridCoordRange)rangeOfBlockWithID:(NSString *)blockID;
+- (NSArray<iTermKittyImageDraw *> *)kittyImageDraws;
 
 @end

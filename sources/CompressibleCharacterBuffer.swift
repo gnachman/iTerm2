@@ -137,6 +137,7 @@ extension screen_char_t: DefaultInitializable {
                              invisible: 0,
                              inverse: 0,
                              guarded: 0,
+                             virtualPlaceholder: 0,
                              unused: 0)
     }
 }

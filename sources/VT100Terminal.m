@@ -756,6 +756,7 @@ static const int kMaxScreenRows = 4096;
     result.blink = graphicRendition_.blink;
     result.invisible = graphicRendition_.invisible;
     result.image = NO;
+    result.virtualPlaceholder = NO;
     result.inverse = graphicRendition_.reversed;
     result.guarded = _protectedMode != VT100TerminalProtectedModeNone;
     result.unused = 0;
@@ -1344,6 +1345,7 @@ static const int kMaxScreenRows = 4096;
     c.strikethrough = NO;
     c.underlineStyle = VT100UnderlineStyleSingle;
     c.image = 0;
+    c.virtualPlaceholder = NO;
     _defaultChar = c;
 
     CopyForegroundColor(&c, self.foregroundColorCode);
@@ -3267,6 +3269,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case DCS_SSH_HOOK:
+            break;
+
+        case VT100_APC:
+            [self executeAPC:token];
             break;
 
         case SSH_INIT:
@@ -5212,6 +5218,21 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     // do a soft or hard reset. They do a soft reset.
     [self softReset];
     [self setEmulationLevel:100 * (level - 60)];
+}
+
+- (void)executeAPC:(VT100Token *)token {
+    if (_tmuxMode) {
+        // tmux uses/used to use APC for setting the title.
+        [_delegate terminalSetWindowTitle:[[self sanitizedTitle:[self stringBeforeNewline:token.string]] stringByReplacingControlCharactersWithCaretLetter]];
+        return;
+    }
+    if ([token.string hasPrefix:@"G"]) {
+        iTermKittyImageCommand *command = [[iTermKittyImageCommand alloc] initWithAPCString:[token.string substringFromIndex:1]];
+        if (!command) {
+            return;
+        }
+        [_delegate terminalDidReceiveKittyImageCommand:command];
+    }
 }
 
 - (iTermEmulationLevel)emulationLevel {

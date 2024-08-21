@@ -265,7 +265,7 @@ typedef enum {
     dispatch_once(&onceToken, ^{
         theMap =
             @{
-               @(kAPCMode): @(XTERMCC_WIN_TITLE),  // tmux treats APC like OSC 2. We must as well for tmux integration.
+               @(kAPCMode): @(VT100_APC),
                @(kLinuxSetPaletteMode): @(XTERMCC_SET_PALETTE),
                @0: @(XTERMCC_WINICON_TITLE),
                @1: @(XTERMCC_ICON_TITLE),

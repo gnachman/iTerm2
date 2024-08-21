@@ -129,6 +129,8 @@ static _Atomic int gPerformingJoinedBlock;
         self.linebuffer.delegate = self;
         _promptStateMachine = [[iTermPromptStateMachine alloc] init];
         _promptStateMachine.delegate = self;
+        _kittyImageController = [[iTermKittyImageController alloc] init];
+        _kittyImageController.delegate = self;
     }
     return self;
 }
@@ -1058,6 +1060,24 @@ static _Atomic int gPerformingJoinedBlock;
     }
 }
 
+// Returns -1 if none
+- (int)lastGridLineWithKittyImage {
+    // I use the delegate because this needs to be pixels, not points.
+    const NSSize cellSize = [self kittyImageControllerCellSize];
+    iTermKittyImageDraw *last = [self.kittyImageDraws maxWithBlock:^NSComparisonResult(iTermKittyImageDraw *lhs, iTermKittyImageDraw *rhs) {
+        return [@(VT100GridRectMax([lhs gridRectWithCellSize:cellSize]).y) compare:@(VT100GridRectMax([rhs gridRectWithCellSize:cellSize]).y)];
+    }];
+    if (!last) {
+        return -1;
+    }
+    const int y = VT100GridRectMax([last gridRectWithCellSize:cellSize]).y;
+    const int history = self.numberOfScrollbackLines;
+    if (y < history) {
+        return -1;
+    }
+    return MIN(self.height, y - history);
+}
+
 // Returns -1 if none.
 - (int)lastGridLineWithVisibleMarkOrAnnotation {
     const int firstGridLine = [self numberOfScrollbackLines];
@@ -1089,8 +1109,9 @@ static _Atomic int gPerformingJoinedBlock;
     } else {
         lineBuffer = self.linebuffer;
     }
-    const int n = MAX(self.lastGridLineWithVisibleMarkOrAnnotation + 1,
-                      [self.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES]);
+    const int n = MAX(self.lastGridLineWithKittyImage,
+                      MAX(self.lastGridLineWithVisibleMarkOrAnnotation + 1,
+                      [self.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES]));
     for (int i = 0; i < n; i++) {
         [self incrementOverflowBy:
          [self.currentGrid scrollWholeScreenUpIntoLineBuffer:lineBuffer
@@ -1301,6 +1322,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     sct->code = ' ';
     sct->complexChar = NO;
     sct->image = NO;
+    sct->virtualPlaceholder = NO;
     if ((*eaOut).url) {
         *eaOut = [iTermExternalAttribute attributeHavingUnderlineColor:(*eaOut).hasUnderlineColor
                                                         underlineColor:(*eaOut).underlineColor
@@ -1484,6 +1506,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self clearAndResetScreenSavingLines:linesToSave];
     // Erase history.
     [self clearScrollbackBuffer];
+    [_kittyImageController clear];
 
     // Redraw soon.
     [self redrawSoon];
@@ -2134,6 +2157,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                     *eaOut = ea;
                 } else {
                     c->image = NO;
+                    c->virtualPlaceholder = NO;
                     c->complexChar = NO;
                     c->code = '\t';
                 }
@@ -5752,6 +5776,47 @@ launchCoprocessWithCommand:(NSString *)command
         [_triggerEvaluator resetRateLimit];
         [self performPeriodicTriggerCheck];
     }
+}
+
+#pragma mark - iTermKittyImageControllerDelegate
+
+- (void)kittyImageControllerReportWithMessage:(NSString *)string {
+    [self willSendReport];
+    __weak __typeof(self) weakSelf = self;
+    const NSStringEncoding encoding = self.terminal.encoding;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        DLog(@"begin side-effect");
+        [delegate screenSendReportData:[string dataUsingEncoding:encoding]];
+        [weakSelf didSendReport:delegate];
+    }];
+}
+
+- (void)kittyImageControllerPlacementsDidChange {
+    self.kittyImageDraws = [_kittyImageController draws];
+    [self setNeedsRedraw];
+}
+
+- (VT100GridAbsCoord)kittyImageControllerCursorCoord {
+    return VT100GridAbsCoordFromCoord(self.currentGrid.cursor, self.numberOfScrollbackLines + self.totalScrollbackOverflow);
+}
+
+- (void)kittyImageControllerMoveCursorWithDx:(NSInteger)dx dy:(NSInteger)dy {
+    [self.currentGrid moveCursorRight:dx];
+    for (int i = 0; i < dy; i++) {
+        [self appendLineFeed];
+    }
+}
+
+- (NSSize)kittyImageControllerCellSize {
+    const CGFloat scale = MAX(1.0, self.config.backingScaleFactor);
+    NSSize size = self.config.cellSize;
+    size.width *= scale;
+    size.height *= scale;
+    return size;
+}
+
+- (long long)kittyImageControllerScreenAbsLine {
+    return self.numberOfScrollbackLines + self.totalScrollbackOverflow;
 }
 
 @end

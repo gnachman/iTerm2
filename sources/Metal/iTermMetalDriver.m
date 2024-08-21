@@ -138,6 +138,7 @@ typedef struct {
     iTermBlockRenderer *_blockRenderer;
     iTermTerminalButtonRenderer *_terminalButtonRenderer NS_AVAILABLE_MAC(11);
     iTermRectangleRenderer *_rectangleRenderer;
+    iTermKittyImageRenderer *_kittyImageRenderer;
 
     // This one is special because it's debug only
     iTermCopyOffscreenRenderer *_copyOffscreenRenderer;
@@ -228,6 +229,7 @@ typedef struct {
             _terminalButtonRenderer = [[iTermTerminalButtonRenderer alloc] initWithDevice:device];
         }
         _rectangleRenderer = [[iTermRectangleRenderer alloc] initWithDevice:device];
+        _kittyImageRenderer = [[iTermKittyImageRenderer alloc] initWithDevice:device];
 
         _commandQueue = [device newCommandQueue];
 #if ENABLE_PRIVATE_QUEUE
@@ -710,6 +712,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         [frameData.perFrameState metalGetGlyphKeys:glyphKeys
                                         attributes:rowData.attributesData.mutableBytes
                                          imageRuns:rowData.imageRuns
+                                    kittyImageRuns:rowData.kittyImageRuns
                                         background:rowData.backgroundColorRLEData.mutableBytes
                                           rleCount:&rles
                                          markStyle:&markStyle
@@ -819,6 +822,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         [self populateTerminalButtonRendererTransientStateWithFrameData:frameData];
     }
     [self populateRectangleRendererTransientStateWithFrameData:frameData];
+    [self populateKittyImageRendererTransientStateWithFrameData:frameData];
 }
 
 - (id<MTLTexture>)destinationTextureForFrameData:(iTermMetalFrameData *)frameData {
@@ -949,6 +953,12 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     [self drawCellRenderer:_textRenderer
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawText];
+
+    _kittyImageRenderer.minZ = 1;
+    _kittyImageRenderer.maxZ = INT32_MAX;
+    [self drawCellRenderer:_kittyImageRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawImage];
 
     [self drawCellRenderer:_imageRenderer
                  frameData:frameData
@@ -1579,6 +1589,23 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     }];
 }
 
+- (void)populateKittyImageRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    if (!_kittyImageRenderer) {
+        return;
+    }
+    iTermKittyImageRendererTransientState *tState = [frameData transientStateForRenderer:_kittyImageRenderer];
+    tState.visibleRect = frameData.perFrameState.adjustedDocumentVisibleRect;
+    tState.totalScrollbackOverflow = frameData.perFrameState.totalScrollbackOverflow;
+    for (iTermKittyImageDraw *draw in frameData.perFrameState.kittyImageDraws) {
+        [tState addDraw:draw];
+    }
+    [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (rowData.kittyImageRuns.count) {
+            [tState addRuns:rowData.kittyImageRuns];
+        }
+    }];
+}
+
 - (void)populateRectangleRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     if (!_rectangleRenderer) {
         return;
@@ -1927,9 +1954,30 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawMargin];
 
+    if (frameData.perFrameState.kittyImageDraws.count) {
+        _backgroundColorRenderer.mode = iTermBackgroundColorRendererModeDefaultOnly;
+        [self drawCellRenderer:_backgroundColorRenderer
+                    frameData:frameData
+                         stat:iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor];
+        _backgroundColorRenderer.mode = iTermBackgroundColorRendererModeNondefaultOnly;
+    } else {
+        _backgroundColorRenderer.mode = iTermBackgroundColorRendererModeAll;
+    }
+    _kittyImageRenderer.minZ = INT32_MIN;
+    _kittyImageRenderer.maxZ = -1073741825;
+    [self drawCellRenderer:_kittyImageRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawImage];
+
      [self drawCellRenderer:_backgroundColorRenderer
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor];
+
+    _kittyImageRenderer.minZ = -1073741824;
+    _kittyImageRenderer.maxZ = 0;
+    [self drawCellRenderer:_kittyImageRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawImage];
 
     [self drawCellRenderer:_lineStyleMarkRenderer
                  frameData:frameData
@@ -2214,29 +2262,30 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
 - (NSArray<id<iTermMetalCellRenderer>> *)cellRenderers {
     return [@[ _marginRenderer,
-              _textRenderer,
+               _textRenderer,
                _offscreenCommandLineBackgroundColorRenderer,
-              _offscreenCommandLineTextRenderer,
-              _backgroundColorRenderer,
-              _broadcastStripesRenderer,
-              _arrowStyleMarkRenderer,
-              _lineStyleMarkRenderer,
-              _cursorGuideRenderer,
-              _highlightRowRenderer,
-              _imageRenderer,
-              _underlineCursorRenderer,
-              _barCursorRenderer,
-              _horizontalShadowCursorRenderer,
-              _verticalShadowCursorRenderer,
-              _imeCursorRenderer,
-              _blockCursorRenderer,
-              _frameCursorRenderer,
-              _copyModeCursorRenderer,
-              _keyCursorRenderer,
-              _timestampsRenderer,
-              _blockRenderer,
-              _terminalButtonRenderer ?: [NSNull null],
-               _rectangleRenderer] arrayByRemovingNulls];
+               _offscreenCommandLineTextRenderer,
+               _backgroundColorRenderer,
+               _broadcastStripesRenderer,
+               _arrowStyleMarkRenderer,
+               _lineStyleMarkRenderer,
+               _cursorGuideRenderer,
+               _highlightRowRenderer,
+               _imageRenderer,
+               _underlineCursorRenderer,
+               _barCursorRenderer,
+               _horizontalShadowCursorRenderer,
+               _verticalShadowCursorRenderer,
+               _imeCursorRenderer,
+               _blockCursorRenderer,
+               _frameCursorRenderer,
+               _copyModeCursorRenderer,
+               _keyCursorRenderer,
+               _timestampsRenderer,
+               _blockRenderer,
+               _terminalButtonRenderer ?: [NSNull null],
+               _rectangleRenderer,
+               _kittyImageRenderer] arrayByRemovingNulls];
 }
 
 - (NSArray<id<iTermMetalRenderer>> *)nonCellRenderers {

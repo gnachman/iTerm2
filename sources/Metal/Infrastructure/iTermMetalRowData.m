@@ -18,6 +18,7 @@
     self = [super init];
     if (self) {
         _imageRuns = [NSMutableArray array];
+        _kittyImageRuns = [NSMutableArray array];
     }
     return self;
 }

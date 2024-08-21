@@ -512,6 +512,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     ITBetaAssert(remainder >= 0, @"Negative lineNum BEFORE consuming block_lines");
     if (!block) {
         NSLog(@"Couldn't find line %d", lineNum);
+        // TODO: I've started hitting this because the cached number of lines is wrong
         ITAssertWithMessage(NO, @"Tried to get non-existent line");
         return NO;
     }
@@ -548,6 +549,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             buffer[i].code = 'X';
             buffer[i].complexChar = NO;
             buffer[i].image = NO;
+            buffer[i].virtualPlaceholder = NO;
         }
     }
     return eol;

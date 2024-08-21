@@ -1,5 +1,6 @@
 #import "iTermMetalCellRenderer.h"
 
+#import "iTermShaderTypes.h"
 #import "iTermTextRenderer.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -24,6 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface iTermBackgroundColorRenderer : NSObject<iTermMetalCellRenderer>
+
+@property (nonatomic) iTermBackgroundColorRendererMode mode;
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

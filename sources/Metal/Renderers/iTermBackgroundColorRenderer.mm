@@ -32,6 +32,7 @@
         piu.numRows = repeatingRows;
         piu.offset = simd_make_float2(cellSize.x * (float)rles[i].origin,
                                       _verticalOffset + cellSize.y * (height - row - repeatingRows));
+        piu.isDefault = rles[i].isDefault;
     }
 }
 
@@ -141,6 +142,7 @@
     iTermMetalBackgroundColorInfo info;
     memset(&info, 0, sizeof(info));
     info.defaultBackgroundColor = tState.defaultBackgroundColor;
+    info.mode = self.mode;
     id<MTLBuffer> buffer = [self->_infoPool requestBufferFromContext:tState.poolContext
                                                            withBytes:&info
                                                       checkIfChanged:YES];
@@ -218,7 +220,8 @@
             .offset = simd_make_float2(0, 0),
             .runLength = 1,
             .numRows = 1,
-            .color = tState.defaultBackgroundColor
+            .color = tState.defaultBackgroundColor,
+            .isDefault = 1
         };
         piu.color.w = 0;
         id<MTLBuffer> piuBuffer = [self->_piuPool requestBufferFromContext:tState.poolContext

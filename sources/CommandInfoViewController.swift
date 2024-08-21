@@ -503,7 +503,7 @@ class DraggableImageView: NSImageView {
         case .pending(let draggingStart):
             let windowPoint = event.locationInWindow
             let point = convert(windowPoint, from: nil)
-            let distance = draggingStart.distance(point)
+            let distance = draggingStart.distance(to: point)
             return distance > 2
         }
     }

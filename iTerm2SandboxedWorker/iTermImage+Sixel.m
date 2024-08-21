@@ -124,6 +124,7 @@ static NSImage *ImageFromSixelData(NSData *data) {
         }
         [self.images addObject:image];
         self.size = image.size;
+        self.scaledSize = image.size;
     }
     return self;
 }

@@ -44,6 +44,7 @@ struct iTermMetalBackgroundColorRLE {
     vector_float4 color;
     unsigned short origin;  // Not strictly needed but this is needed to binary search the RLEs
     unsigned short count;
+    unsigned char isDefault;  // Is this the default background color?
 #if __cplusplus
     bool operator<(const iTermMetalBackgroundColorRLE &other) const {
         return origin < other.origin;

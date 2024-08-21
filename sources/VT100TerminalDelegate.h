@@ -13,6 +13,7 @@
 
 @class ParsedSSHOutput;
 @class VT100SavedColorsSlot;
+@class iTermKittyImageCommand;
 @class iTermTokenExecutorUnpauser;
 
 typedef NS_ENUM(NSInteger, MouseMode) {
@@ -538,5 +539,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalBlock:(NSString *)blockID start:(BOOL)start type:(NSString *)type render:(BOOL)render;
 - (void)terminalInsertCopyButtonForBlock:(NSString *)blockID;
 - (void)terminalSetPointerShape:(NSString *)pointerShape;
+- (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand;
 
 @end

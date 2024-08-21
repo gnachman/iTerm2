@@ -8,6 +8,7 @@ using namespace metal;
 typedef struct {
     float4 clipSpacePosition [[position]];
     float4 color;
+    bool cancel;
 } iTermBackgroundColorVertexFunctionOutput;
 
 // Matches function in iTermOffscreenCommandLineBackgroundRenderer.m
@@ -38,6 +39,19 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
                                  unsigned int iid [[instance_id]]) {
     iTermBackgroundColorVertexFunctionOutput out;
 
+    switch (info->mode) {
+        case iTermBackgroundColorRendererModeAll:
+            out.cancel = false;
+            break;
+        case iTermBackgroundColorRendererModeDefaultOnly:
+            out.cancel = !perInstanceUniforms[iid].isDefault;
+            break;
+        case iTermBackgroundColorRendererModeNondefaultOnly:
+            out.cancel = perInstanceUniforms[iid].isDefault;
+            break;
+
+    }
+
     // Stretch it horizontally and vertically. Vertex coordinates are 0 or the width/height of
     // a cell, so this works.
     const float runLength = perInstanceUniforms[iid].runLength;
@@ -56,7 +70,12 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
     return out;
 }
 
+// Trivial changes in this implementation trigger metal compiler bugs (like putting `return in.color` in an else clause).
 fragment float4
 iTermBackgroundColorFragmentShader(iTermBackgroundColorVertexFunctionOutput in [[stage_in]]) {
+    if (in.cancel) {
+        discard_fragment();
+        return float4(0, 0, 0, 0);
+    }
     return in.color;
 }

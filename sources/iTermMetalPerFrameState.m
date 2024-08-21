@@ -93,6 +93,8 @@ typedef struct {
 
     // Geometry
     CGRect _documentVisibleRect;
+    NSRect _adjustedDocumentVisibleRect;
+    long long _totalScrollbackOverflow;
     VT100GridCoordRange _visibleRange;
     NSInteger _numberOfScrollbackLines;
     long long _firstVisibleAbsoluteLineNumber;
@@ -117,6 +119,7 @@ typedef struct {
     NSTimeInterval _startTime;
     NSEdgeInsets _extraMargins;
     BOOL _haveOffscreenCommandLine;
+    NSArray<iTermKittyImageDraw *> *_kittyImageDraws;
 
     VT100GridRange _linesToSuppressDrawing;
     CGFloat _pointsOnBottomToSuppressDrawing;
@@ -169,6 +172,11 @@ typedef struct {
     [self loadHighlightedRowsFromTextView:textView];
     [self loadAnnotationRangesFromTextView:textView];
     [self loadOffscreenCommandLine:textView screen:screen drawingHelper:drawingHelper];
+    [self loadImagesFromTextView:textView];
+}
+
+- (void)loadImagesFromTextView:(PTYTextView *)textView {
+    _kittyImageDraws = [textView.dataSource.kittyImageDraws copy];
 }
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -181,7 +189,10 @@ typedef struct {
 - (void)loadMetricsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                             textView:(PTYTextView *)textView
                               screen:(VT100Screen *)screen {
+    const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
     _documentVisibleRect = textView.textDrawingHelperVisibleRectExcludingTopMargin;
+    _adjustedDocumentVisibleRect = textView.textDrawingHelperVisibleRectIncludingTopMargin;
+    _totalScrollbackOverflow = totalScrollbackOverflow;
 
     _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
     DLog(@"Visible range for document visible rect %@ is %@",
@@ -191,7 +202,6 @@ typedef struct {
     _visibleRange.end.x = _visibleRange.start.x + _configuration->_gridSize.width;
     _visibleRange.end.y = _visibleRange.start.y + _configuration->_gridSize.height;
     DLog(@"Safe visible range is %@", VT100GridCoordRangeDescription(_visibleRange));
-    const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
     _firstVisibleAbsoluteLineNumber = _visibleRange.start.y + totalScrollbackOverflow;
     _lastVisibleAbsoluteLineNumber = _visibleRange.end.y + totalScrollbackOverflow;
     _relativeFrame = textView.delegate.textViewRelativeFrame;
@@ -253,7 +263,7 @@ typedef struct {
         .bgColorMode = c.backgroundColorMode,
         .selected = selected,
         .isMatch = findMatch,
-        .image = c.image != 0,
+        .image = c.image != 0 && c.virtualPlaceholder == 0,
     };
     BOOL isDefaultBackgroundColor = NO;
     const vector_float4 unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey
@@ -789,6 +799,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
                 imageRuns:(NSMutableArray<iTermMetalImageRun *> *)imageRuns
+           kittyImageRuns:(NSMutableArray<iTermKittyImageRun *> *)kittyImageRuns
                background:(iTermMetalBackgroundColorRLE *)backgroundRLE
                  rleCount:(int *)rleCount
                 markStyle:(out iTermMarkStyle *)markStylePtr
@@ -829,8 +840,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     VT100GridCoord previousImageCoord;
     vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
     BOOL lastSelected = NO;
+    iTermKittyUnicodePlaceholderState kittyPlaceholderState;
     const BOOL underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
     iTermMetalPerFrameStateCaches caches;
+
+    iTermKittyUnicodePlaceholderStateInit(&kittyPlaceholderState);
     memset(&caches, 0, sizeof(caches));
 
     *markStylePtr = [_rows[row]->_markStyle intValue];
@@ -866,7 +880,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             .bgColorMode = line[x].backgroundColorMode,
             .selected = selected,
             .isMatch = findMatch,
-            .image = line[x].image,
+            .image = line[x].image && !line[x].virtualPlaceholder,
         };
 
         vector_float4 backgroundColor;
@@ -894,6 +908,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             backgroundRLE[rles].color = backgroundColor;
             backgroundRLE[rles].origin = x;
             backgroundRLE[rles].count = 1;
+            backgroundRLE[rles].isDefault = isDefaultBackgroundColor;
             rles++;
         }
         lastBackgroundKey = backgroundKey;
@@ -998,21 +1013,43 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         previousColorKey = temp;
 
         if (line[x].image) {
-            if (line[x].code == previousImageCode &&
-                line[x].foregroundColor == ((previousImageCoord.x + 1) & 0xff) &&
-                line[x].backgroundColor == previousImageCoord.y) {
-                imageRuns.lastObject.length = imageRuns.lastObject.length + 1;
-                previousImageCoord.x++;
+            if (line[x].virtualPlaceholder) {
+                iTermKittyUnicodePlaceholderInfo info;
+                if (iTermDecodeKittyUnicodePlaceholder(&line[x], ea, &kittyPlaceholderState, &info)) {
+                    if (info.runLength > 1) {
+                        kittyImageRuns.lastObject.length += 1;
+                    } else {
+                        iTermKittyImageDraw *draw = [_kittyImageDraws objectPassingTest:^BOOL(iTermKittyImageDraw *draw, NSUInteger index, BOOL *stop) {
+                            return draw.placementID == info.placementID;
+                        }];
+                        if (draw) {
+                            iTermKittyImageRun *run =
+                            [[iTermKittyImageRun alloc] initWithDraw:draw
+                                                         sourceCoord:VT100GridCoordMake(info.column,
+                                                                                        info.row)
+                                                           destCoord:VT100GridCoordMake(x, row)
+                                                              length:1];
+                            [kittyImageRuns addObject:run];
+                        }
+                    }
+                }
             } else {
-                previousImageCode = line[x].code;
-                iTermMetalImageRun *run = [[iTermMetalImageRun alloc] init];
-                previousImageCoord = GetPositionOfImageInChar(line[x]);
-                run.code = line[x].code;
-                run.startingCoordInImage = previousImageCoord;
-                run.startingCoordOnScreen = VT100GridCoordMake(x, row);
-                run.length = 1;
-                run.imageInfo = GetImageInfo(line[x].code);
-                [imageRuns addObject:run];
+                if (line[x].code == previousImageCode &&
+                    line[x].foregroundColor == ((previousImageCoord.x + 1) & 0xff) &&
+                    line[x].backgroundColor == previousImageCoord.y) {
+                    imageRuns.lastObject.length = imageRuns.lastObject.length + 1;
+                    previousImageCoord.x++;
+                } else {
+                    previousImageCode = line[x].code;
+                    iTermMetalImageRun *run = [[iTermMetalImageRun alloc] init];
+                    previousImageCoord = GetPositionOfImageInChar(line[x]);
+                    run.code = line[x].code;
+                    run.startingCoordInImage = previousImageCoord;
+                    run.startingCoordOnScreen = VT100GridCoordMake(x, row);
+                    run.length = 1;
+                    run.imageInfo = GetImageInfo(line[x].code);
+                    [imageRuns addObject:run];
+                }
             }
             glyphKeys[x].drawable = NO;
             glyphKeys[x].combiningSuccessor = 0;
@@ -1392,11 +1429,23 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _containerRect;
 }
 
+- (NSRect)adjustedDocumentVisibleRect {
+    return _adjustedDocumentVisibleRect;
+}
+
+- (long long)totalScrollbackOverflow {
+    return _totalScrollbackOverflow;
+}
+
 - (CGRect)relativeFrame {
     return NSMakeRect(_relativeFrame.origin.x,
                       1 - _relativeFrame.size.height - _relativeFrame.origin.y,
                       _relativeFrame.size.width,
                       _relativeFrame.size.height);
+}
+
+- (NSArray<iTermKittyImageDraw *> *)kittyImageDraws {
+    return _kittyImageDraws;
 }
 
 - (NSEdgeInsets)extraMargins {

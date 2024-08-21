@@ -11,6 +11,7 @@
 #import "iTermMarkRenderer.h"
 
 @class ScreenCharArray;
+@class iTermKittyImageRun;
 @class iTermMetalImageRun;
 
 NS_CLASS_AVAILABLE(10_11, NA)
@@ -44,6 +45,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @property (nonatomic, readonly) NSMutableArray<iTermMetalImageRun *> *imageRuns;
 @property (nonatomic) BOOL belongsToBlock;
+@property (nonatomic, readonly) NSMutableArray<iTermKittyImageRun *> *kittyImageRuns;
 
 - (void)writeDebugInfoToFolder:(NSURL *)folder;
 

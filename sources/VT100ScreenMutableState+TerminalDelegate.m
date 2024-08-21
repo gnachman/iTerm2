@@ -2344,6 +2344,7 @@
 
     // Only preserve SGR attributes. image is OSC, not SGR.
     c.image = 0;
+    c.virtualPlaceholder = NO;
 
     [self fillRectangle:rect
                    with:c
@@ -2831,6 +2832,10 @@ willExecuteToken:(VT100Token *)token
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetPointerShape:pointerShape];
     }];
+}
+
+- (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand {
+    [_kittyImageController executeCommand:kittyImageCommand];
 }
 
 @end

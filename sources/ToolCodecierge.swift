@@ -1159,17 +1159,6 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
     }
 }
 
-extension NSRect {
-    func safeInsetBy(dx: CGFloat, dy: CGFloat) -> NSRect {
-        let safeDx = max(0, dx)
-        let safeDy = max(0, dy)
-        return NSRect(x: origin.x + safeDx,
-                      y: safeDy,
-                      width: max(0, size.width - dx * 2),
-                      height: max(0, size.height - dy * 2))
-    }
-}
-
 extension NSMutableAttributedString {
     func insertButton(withImage dynamicImage: DynamicImage, at index: Int, action: @escaping (NSPoint) -> Void) {
         let attachment = NSTextAttachment()

@@ -37,6 +37,7 @@
 #import "iTermOrderedDictionary.h"
 #import "iTermTuple.h"
 #import "NSString+CommonAdditions.h"
+#import "VT100GridTypes.h"
 
 @class iTermVariableScope;
 
@@ -368,6 +369,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringByEscapingForRegex;
 
 - (NSString *)chunkedWithLineLength:(NSInteger)length separator:(NSString *)separator;
+- (BOOL)parseKittyUnicodePlaceholder:(out VT100GridCoord *)coord
+                            imageMSB:(out int *)imageMSB;
 
 @end
 

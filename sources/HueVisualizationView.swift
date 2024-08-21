@@ -322,8 +322,3 @@ class HueVisualizationView: NSView {
     }
 }
 
-extension NSPoint {
-    func distance(to other: NSPoint) -> CGFloat {
-        return sqrt(pow(x - other.x, 2) + pow(y - other.y, 2))
-    }
-}

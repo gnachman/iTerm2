@@ -164,5 +164,12 @@ extension Substring {
     }
 }
 
-
+extension String {
+    func keyValuePair(_ separator: Character) -> (Substring, Substring)? {
+        guard let i = firstIndex(of: separator) else {
+            return nil
+        }
+        return (self[..<i], self[index(after: i)...])
+    }
+}
 

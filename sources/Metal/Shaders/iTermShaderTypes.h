@@ -53,8 +53,15 @@ typedef enum {
     iTermMetalGlyphAttributesUnderlineStrikethroughAndCurly = iTermMetalGlyphAttributesUnderlineStrikethroughFlag + 4,
 } iTermMetalGlyphAttributesUnderline;
 
+typedef enum {
+    iTermBackgroundColorRendererModeAll = 0,
+    iTermBackgroundColorRendererModeDefaultOnly = 1,
+    iTermBackgroundColorRendererModeNondefaultOnly = 2
+} iTermBackgroundColorRendererMode;
+
 typedef struct {
     vector_float4 defaultBackgroundColor;  // Emulates the iTermBackgroundColorView.
+    iTermBackgroundColorRendererMode mode;
 } iTermMetalBackgroundColorInfo;
 
 typedef struct {
@@ -111,6 +118,9 @@ typedef struct {
 
     // Background color
     vector_float4 color;
+
+    // Is default background color?
+    unsigned char isDefault;
 } iTermBackgroundColorPIU;
 
 typedef struct {

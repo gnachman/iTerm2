@@ -80,46 +80,6 @@ public func logging<T>(_ prefix: String, closure: () throws -> T) rethrows -> T 
     }
 }
 
-
-public extension Optional where Wrapped: CustomDebugStringConvertible {
-    var debugDescriptionOrNil: String {
-        switch self {
-        case .none:
-            return "(nil)"
-        case .some(let obj):
-            return obj.debugDescription
-        }
-    }
-}
-
-public extension Optional where Wrapped: CustomStringConvertible {
-    var descriptionOrNil: String {
-        switch self {
-        case .none:
-            return "(nil)"
-        case .some(let obj):
-            return obj.description
-        }
-    }
-}
-
-public extension Optional where Wrapped == Data {
-    var stringOrHex: String {
-        switch self {
-        case .some(let data):
-            return data.stringOrHex
-        case .none:
-            return "(nil)"
-        }
-    }
-}
-
-extension Int: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        return String(self)
-    }
-}
-
 public extension DataProtocol {
     var hexified: String { map { .init(format: "%02x", $0) }.joined() }
 }
