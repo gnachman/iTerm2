@@ -511,7 +511,7 @@ class FontTable: NSObject, FontProviderProtocol {
     @objc(haveSpecialExceptionFor:orCharacter:)
     func haveSpecialException(for c1: screen_char_t, orCharacter c2: screen_char_t) -> Bool {
         for c in [c1, c2] {
-            if c.image != 0 {
+            if c.x_image != 0 {
                 continue
             }
             if rangeMap[Int(c.baseCharacter)] != nil {

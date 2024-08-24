@@ -534,7 +534,7 @@
               decodedImage:(VT100DecodedImage *)decodedImage {
     iTermImageInfo *imageInfo = GetMutableImageInfo(screenChar.code);
     imageInfo.broken = decodedImage.isBroken;
-    DLog(@"Append %d rows of image characters with %d columns. The value of c.image is %@", height, width, @(screenChar.image));
+    DLog(@"Append %d rows of image characters with %d columns. The value of c.image is %@", height, width, @(screenChar.x_image));
     const int xOffset = grid.cursorX;
     const int screenWidth = grid.sizeRespectingRegionConditionally.width;
     screen_char_t c = screenChar;

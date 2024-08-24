@@ -231,6 +231,9 @@ typedef struct screen_char_t {
     //   DWC_SKIP, TAB_FILLER, BOGUS_CHAR, or DWC_RIGHT: See comments above.
     // In the WIDTH+1 position on a line, this takes the value of EOL_HARD,
     //  EOL_SOFT, or EOL_DWC. See the comments for those constants.
+    // If this is an image:
+    //   - If it is a virtualPlacement, it acts like a complexChar (code indexes into string table)
+    //   - If it is *not* a virtualPlacement, code is an image number.
     unichar code;
 
     // With normal background semantics:
@@ -249,12 +252,12 @@ typedef struct screen_char_t {
     // With 24-bit semantics:
     //   foreground/backgroundColor gives red component and fg/bgGreen, fg/bgBlue
     //     give the rest of the color's components
-    // For images, foregroundColor doubles as the x index.
+    // For non-virtualPlacement images, foregroundColor doubles as the x index.
     unsigned int foregroundColor : 8;
     unsigned int fgGreen : 8;
     unsigned int fgBlue  : 8;
 
-    // For images, backgroundColor doubles as the y index.
+    // For non-virtualPlacement images, backgroundColor doubles as the y index.
     unsigned int backgroundColor : 8;
     unsigned int bgGreen : 8;
     unsigned int bgBlue  : 8;
@@ -267,6 +270,7 @@ typedef struct screen_char_t {
     // key into a string table of more complex chars (combined, surrogate pairs,
     // etc.). Valid 'code' values for a complex char are in [1, 0xefff] and will
     // be recycled as needed.
+    // See the notes in `code` about how this interacts with images.
     unsigned int complexChar : 1;
 
     // Various bits affecting text appearance. The bold flag here is semantic
@@ -278,9 +282,9 @@ typedef struct screen_char_t {
     unsigned int blink : 1;
     unsigned int underline : 1;
 
-    // Is this actually an image? Changes the semantics of code,
+    // Is this actually an image? Changes the semantics of code, complexChar,
     // foregroundColor, and backgroundColor (see notes above).
-    unsigned int image : 1;
+    unsigned int x_image : 1;  // See also virtualPlaceholder, below.
 
     unsigned int strikethrough : 1;
     VT100UnderlineStyle underlineStyle : 2;  // VT100UnderlineStyle
@@ -294,7 +298,10 @@ typedef struct screen_char_t {
     // Character can't be erased when screen is in protected mode. See DECSCA, SPA, and EPA.
     unsigned int guarded : 1;
 
-    unsigned int unused : 15;
+    // Only valid when this is an image. If set, this is a Kitty-style virtual placeholder.
+    unsigned int virtualPlaceholder : 1;
+
+    unsigned int unused : 14;
 } screen_char_t;
 
 
@@ -321,7 +328,8 @@ static inline BOOL ScreenCharacterAttributesEqual(const screen_char_t c1, const 
             c1.underline == c2.underline &&
             c1.underlineStyle == c2.underlineStyle &&
             c1.strikethrough == c2.strikethrough &&
-            c1.image == c2.image);
+            c1.x_image == c2.x_image &&
+            c1.virtualPlaceholder == c2.virtualPlaceholder);
 }
 
 // Copy foreground color from one char to another.
@@ -340,7 +348,8 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->underlineStyle = from.underlineStyle;
     to->strikethrough = from.strikethrough;
     to->unused = from.unused;
-    to->image = from.image;
+    to->x_image = from.x_image;
+    to->virtualPlaceholder = from.virtualPlaceholder;
     to->inverse = from.inverse;
     to->guarded = from.guarded;
 }
@@ -421,6 +430,7 @@ BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code);
 // be complex.
 NSString* ScreenCharToStr(const screen_char_t *const sct);
 NSString* CharToStr(unichar code, BOOL isComplex);
+NSString* ScreenCharToKittyPlaceholder(const screen_char_t *const sct);
 
 // This is a faster version of ScreenCharToStr if what you want is an array of
 // unichars. Returns the number of code points appended to dest.
@@ -545,7 +555,7 @@ NS_INLINE BOOL ScreenCharIsDWC_SKIP(screen_char_t c) {
     if (c.complexChar) {
         return NO;
     }
-    if (c.image) {
+    if (c.x_image) {
         return NO;
     }
     return c.code == DWC_SKIP;
@@ -559,7 +569,7 @@ NS_INLINE BOOL ScreenCharIsDWC_RIGHT(screen_char_t c) {
     if (c.complexChar) {
         return NO;
     }
-    if (c.image) {
+    if (c.x_image) {
         return NO;
     }
     return YES;
@@ -569,7 +579,7 @@ NS_INLINE BOOL ScreenCharIsTAB_FILLER(screen_char_t c) {
     if (c.complexChar) {
         return NO;
     }
-    if (c.image) {
+    if (c.x_image) {
         return NO;
     }
     return c.code == TAB_FILLER;
@@ -577,18 +587,21 @@ NS_INLINE BOOL ScreenCharIsTAB_FILLER(screen_char_t c) {
 
 NS_INLINE void ScreenCharSetDWC_SKIP(screen_char_t *c) {
     c->complexChar = NO;
-    c->image = NO;
+    c->x_image = NO;
+    c->virtualPlaceholder = NO;
     c->code = DWC_SKIP;
 }
 
 NS_INLINE void ScreenCharSetTAB_FILLER(screen_char_t *c) {
     c->complexChar = NO;
-    c->image = NO;
+    c->x_image = NO;
+    c->virtualPlaceholder = NO;
     c->code = TAB_FILLER;
 }
 
 NS_INLINE void ScreenCharSetDWC_RIGHT(screen_char_t *c) {
     c->complexChar = NO;
-    c->image = NO;
+    c->x_image = NO;
+    c->virtualPlaceholder = NO;
     c->code = DWC_RIGHT;
 }

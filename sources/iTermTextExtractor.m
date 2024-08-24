@@ -271,7 +271,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     __block int result = 0;
     [self enumerateCharsInRange:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, line, [_dataSource width], line), _logicalWindow.location, _logicalWindow.length) charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
         if (!theChar.complexChar &&
-            !theChar.image &&
+            !theChar.x_image &&
             (theChar.code == ' ' || theChar.code == '\t' || theChar.code == 0 || theChar.code == TAB_FILLER)) {
             result++;
             return NO;
@@ -713,7 +713,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     const screen_char_t *theLine = [_dataSource screenCharArrayForLine:line].line;
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     for (int i = range.location; i < range.location + range.length; i++) {
-        if (theLine[i].code == c && !theLine[i].complexChar && !theLine[i].image) {
+        if (theLine[i].code == c && !theLine[i].complexChar && !theLine[i].x_image) {
             [indexes addIndex:i];
         }
     }
@@ -846,10 +846,10 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter
                     definitionOfAlphanumeric:(iTermAlphaNumericDefinition)definition {
-    if (theCharacter.image) {
+    if (theCharacter.x_image) {
         return kTextExtractorClassOther;
     }
-    if (!theCharacter.complexChar && !theCharacter.image) {
+    if (!theCharacter.complexChar && !theCharacter.x_image) {
         if (theCharacter.code == TAB_FILLER) {
             return kTextExtractorClassWhitespace;
         } else if (theCharacter.code == DWC_RIGHT || theCharacter.complexChar == DWC_SKIP) {
@@ -1215,7 +1215,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                        !theChar.complexChar) {
                                        // Is a backslash at the right edge of a window.
                                        // no-op
-                                   } else if (theChar.image) {
+                                   } else if (theChar.x_image) {
                                        // Treat images as nulls.
                                        return YES;
                                    } else if (theChar.complexChar ||
@@ -1257,7 +1257,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                               !theChar.complexChar) {
                               // Is a backslash at the right edge of a window.
                               // no-op
-                          } else if (theChar.image) {
+                          } else if (theChar.x_image) {
                               // Treat images as nulls.
                               return YES;
                           } else if (theChar.complexChar ||
@@ -1337,7 +1337,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 
     [self enumerateCharsInRange:windowedRange
                       charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
-                          if (theChar.image) {
+                          if (theChar.x_image) {
                               return NO;
                           }
                           if (theChar.complexChar) {
@@ -1480,16 +1480,17 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     [self enumerateCharsInRange:windowedRange
                       charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
         if (needsTimestamps) {
-            appendString([self formattedTimestampForLine:coord.y], (screen_char_t) { .code = 0, .complexChar = 0, .image = 0}, nil, coord);
+            appendString([self formattedTimestampForLine:coord.y], (screen_char_t) { .code = 0, .complexChar = 0, .x_image = 0}, nil, coord);
             needsTimestamps = NO;
         }
-        if (theChar.image) {
+        if (theChar.x_image) {
             lineContainsImage = YES;
         } else {
             lineContainsNonImage = YES;
         }
-        if (theChar.image) {
-            if (attributeProvider && theChar.foregroundColor == 0 && theChar.backgroundColor == 0) {
+        if (theChar.x_image) {
+            // TODO: Support virtual placeholders
+            if (attributeProvider && theChar.foregroundColor == 0 && theChar.backgroundColor == 0 && theChar.virtualPlaceholder == 0) {
                 id<iTermImageInfoReading> imageInfo = GetImageInfo(theChar.code);
                 NSImage *image = imageInfo.image.images.firstObject;
                 if (image) {
@@ -1742,7 +1743,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 
 - (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord {
     screen_char_t sct = [self characterAt:coord];
-    return !sct.complexChar && !sct.image && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP);
+    return !sct.complexChar && !sct.x_image && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP);
 }
 
 - (BOOL)coord:(VT100GridCoord)coord1 isEqualToCoord:(VT100GridCoord)coord2 {
@@ -1839,7 +1840,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     // non-tab character.
     int xLimit = [self xLimit];
     for (int i = index + 1; i < xLimit; i++) {
-        if (line[i].complexChar || line[i].image) {
+        if (line[i].complexChar || line[i].x_image) {
             return YES;
         }
         unichar c = line[i].code;

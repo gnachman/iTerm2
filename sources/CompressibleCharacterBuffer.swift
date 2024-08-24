@@ -90,7 +90,7 @@ extension UnsafeReallocatableMutableBuffer where T == screen_char_t {
 
     private func debugDescription(maxLength: Int) -> String {
         return buffer.prefix(maxLength).map { c in
-            if c.image != 0 {
+            if c.x_image != 0 {
                 return "🌆"
             }
             var temp = c
@@ -131,12 +131,13 @@ extension screen_char_t: DefaultInitializable {
                              italic: 0,
                              blink: 0,
                              underline: 0,
-                             image: 0,
+                             x_image: 0,
                              strikethrough: 0,
                              underlineStyle: .single,
                              invisible: 0,
                              inverse: 0,
                              guarded: 0,
+                             virtualPlaceholder: 0,
                              unused: 0)
     }
 }
@@ -281,7 +282,7 @@ struct CompressedScreenCharBuffer: Equatable, CustomDebugStringConvertible {
         }
 
         var debugDescription: String {
-            if base.image != 0 {
+            if base.x_image != 0 {
                 return Array(repeating: "🌆", count: codes.count).joined()
             }
             return codes.compactMap {
@@ -449,7 +450,7 @@ struct CompressedScreenCharBuffer: Equatable, CustomDebugStringConvertible {
 
 extension screen_char_t {
     var isRegularCharacter: Bool {
-        if image != 0 {
+        if x_image != 0 {
             return false
         }
         if complexChar != 0 {

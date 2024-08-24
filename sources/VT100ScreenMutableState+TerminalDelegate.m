@@ -1762,7 +1762,7 @@
         id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
         for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
             const screen_char_t c = theLine[x];
-            if (c.code == 0 && !c.complexChar && !c.image) {
+            if (c.code == 0 && !c.complexChar && !c.x_image) {
                 continue;
             }
             NSOrderedSet<NSString *> *charCodes = [VT100Terminal sgrCodesForCharacter:c
@@ -2343,7 +2343,8 @@
     CopyBackgroundColor(&c, [self.terminal backgroundColorCode]);
 
     // Only preserve SGR attributes. image is OSC, not SGR.
-    c.image = 0;
+    c.x_image = 0;
+    c.virtualPlaceholder = NO;
 
     [self fillRectangle:rect
                    with:c

@@ -34,6 +34,7 @@ static const CGFloat kMaxDimension = 10000;
 + (instancetype)imageWithNativeImage:(NSImage *)nativeImage {
     iTermImage *image = [[iTermImage alloc] init];
     image.size = nativeImage.size;
+    image->_scaledSize = nativeImage.size;
     [image.images addObject:nativeImage];
     return image;
 }

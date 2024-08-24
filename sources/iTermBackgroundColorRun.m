@@ -28,7 +28,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     } else {
         run->isMatch = NO;
     }
-    if (theLine[coord.x].image) {
+    if (theLine[coord.x].x_image && !theLine[coord.x].virtualPlaceholder) {
         run->bgColor = run->bgGreen = run->bgBlue = ALTSEM_DEFAULT;
         run->bgColorMode = ColorModeAlternate;
     } else {

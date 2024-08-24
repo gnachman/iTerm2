@@ -178,7 +178,7 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     const screen_char_t *line = self.line;
     for (int i = 0; i < self.length; i++) {
         const screen_char_t c = line[i];
-        if (c.image) {
+        if (c.x_image) {
             continue;
         }
         if (!c.complexChar) {
@@ -230,7 +230,7 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     id<iTermExternalAttributeIndexReading> eaindex = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
     for (int i = 0; i < self.length; i++) {
         const screen_char_t c = line[i];
-        if (c.image) {
+        if (c.x_image) {
             continue;
         }
         NSString *string = nil;
@@ -350,7 +350,7 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
 }
 
 static BOOL ScreenCharIsNull(screen_char_t c) {
-    return c.code == 0 && !c.complexChar && !c.image;
+    return c.code == 0 && !c.complexChar && !c.x_image;
 }
 
 - (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline {
@@ -485,7 +485,7 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
     if (ScreenCharIsNull(c)) {
         return YES;
     }
-    if (c.image) {
+    if (c.x_image) {
         return NO;
     }
     if (!c.complexChar && c.code == TAB_FILLER) {

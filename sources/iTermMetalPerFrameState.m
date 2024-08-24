@@ -253,7 +253,7 @@ typedef struct {
         .bgColorMode = c.backgroundColorMode,
         .selected = selected,
         .isMatch = findMatch,
-        .image = c.image != 0,
+        .image = c.x_image != 0 && c.virtualPlaceholder == 0,
     };
     BOOL isDefaultBackgroundColor = NO;
     const vector_float4 unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey
@@ -866,7 +866,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             .bgColorMode = line[x].backgroundColorMode,
             .selected = selected,
             .isMatch = findMatch,
-            .image = line[x].image,
+            .image = line[x].x_image && !line[x].virtualPlaceholder,
         };
 
         vector_float4 backgroundColor;
@@ -997,22 +997,26 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         currentColorKey = previousColorKey;
         previousColorKey = temp;
 
-        if (line[x].image) {
-            if (line[x].code == previousImageCode &&
-                line[x].foregroundColor == ((previousImageCoord.x + 1) & 0xff) &&
-                line[x].backgroundColor == previousImageCoord.y) {
-                imageRuns.lastObject.length = imageRuns.lastObject.length + 1;
-                previousImageCoord.x++;
+        if (line[x].x_image) {
+            if (line[x].virtualPlaceholder) {
+                // TODO
             } else {
-                previousImageCode = line[x].code;
-                iTermMetalImageRun *run = [[iTermMetalImageRun alloc] init];
-                previousImageCoord = GetPositionOfImageInChar(line[x]);
-                run.code = line[x].code;
-                run.startingCoordInImage = previousImageCoord;
-                run.startingCoordOnScreen = VT100GridCoordMake(x, row);
-                run.length = 1;
-                run.imageInfo = GetImageInfo(line[x].code);
-                [imageRuns addObject:run];
+                if (line[x].code == previousImageCode &&
+                    line[x].foregroundColor == ((previousImageCoord.x + 1) & 0xff) &&
+                    line[x].backgroundColor == previousImageCoord.y) {
+                    imageRuns.lastObject.length = imageRuns.lastObject.length + 1;
+                    previousImageCoord.x++;
+                } else {
+                    previousImageCode = line[x].code;
+                    iTermMetalImageRun *run = [[iTermMetalImageRun alloc] init];
+                    previousImageCoord = GetPositionOfImageInChar(line[x]);
+                    run.code = line[x].code;
+                    run.startingCoordInImage = previousImageCoord;
+                    run.startingCoordOnScreen = VT100GridCoordMake(x, row);
+                    run.length = 1;
+                    run.imageInfo = GetImageInfo(line[x].code);
+                    [imageRuns addObject:run];
+                }
             }
             glyphKeys[x].drawable = NO;
             glyphKeys[x].combiningSuccessor = 0;

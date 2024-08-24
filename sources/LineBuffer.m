@@ -547,7 +547,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         for (int i = 0; i < width; i++) {
             buffer[i].code = 'X';
             buffer[i].complexChar = NO;
-            buffer[i].image = NO;
+            buffer[i].x_image = NO;
+            buffer[i].virtualPlaceholder = NO;
         }
     }
     return eol;

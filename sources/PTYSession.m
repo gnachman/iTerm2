@@ -16560,7 +16560,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         unichar c = screenChars[i].code;
         if (!screenChars[i].complexChar && c >= ITERM2_PRIVATE_BEGIN && c <= ITERM2_PRIVATE_END) {
             numCodePoints = 0;
-        } else if (screenChars[i].image) {
+        } else if (screenChars[i].x_image) {
             numCodePoints = 0;
         } else {
             const int len = ExpandScreenChar(&screenChars[i], characters + o);

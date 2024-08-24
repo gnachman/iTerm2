@@ -24,6 +24,11 @@ extension NSRect {
     var yRange: Range<CGFloat> {
         minY..<maxY
     }
+    func flipped(in height: CGFloat) -> NSRect {
+        var flippedRect = self
+        flippedRect.origin.y = height - self.origin.y - self.size.height
+        return flippedRect
+    }
 }
 
 extension Int {
@@ -131,8 +136,8 @@ class KittyImageCommand: NSObject {
         }
         enum Verbosity: String {
             case normal = "0"  // the documented behavior I guess?
-            case query = "1"  // undocumented behavior
-            case quiet = "2"  // don't produce output when creating a Unicode placeholder
+            case query = "1"  // suppress success response
+            case quiet = "2"  // supress error response
         }
         var format: Format  // f
         var medium: Medium  // t
@@ -146,6 +151,7 @@ class KittyImageCommand: NSObject {
         var compression: Compression  // o
         var more: More  // m
         var verbosity: Verbosity  // q
+        var allocationAllowed = true
 
         init?(_ dict: [String: String]) {
             width = dict["s"].compactMap { UInt($0) } ?? 0
@@ -226,7 +232,9 @@ class KittyImageCommand: NSObject {
         var parentPlacement: UInt32? // Q
         var H: Int32
         var V: Int32
+        var q: UInt32
         var identifier: UInt32  // i — undocumented
+        var number: UInt32 // I - undocumented
         var placement: UInt32 // p — undocumented
 
         init?(_ dict: [String: String]) {
@@ -238,7 +246,9 @@ class KittyImageCommand: NSObject {
             Y = dict["Y"].compactMap { UInt32($0) } ?? 0
             c = dict["c"].compactMap { UInt32($0) } ?? 0
             r = dict["r"].compactMap { UInt32($0) } ?? 0
+            q = dict["q"].compactMap { UInt32($0) } ?? 0
             identifier = dict["i"].compactMap { UInt32($0) } ?? 0
+            number = dict["I"].compactMap { UInt32($0) } ?? 0
             placement = dict["p"].compactMap { UInt32($0) } ?? 0
             if let cursorMovementPolicy = extractEnum(from: dict, key: "C", defaultValue: CursorMovementPolicy.moveCursorToAfterImage) {
                 self.cursorMovementPolicy = cursorMovementPolicy
@@ -259,21 +269,46 @@ class KittyImageCommand: NSObject {
     }
 
     struct AnimationFrameLoading {
+        enum AnimationComposition: String {
+            case fullAlphaBlend = "0"
+            case simpleReplacement = "1"
+        }
+        // Region of image to replace
         var x: UInt32
         var y: UInt32
+        var s: UInt32 // undocumented
+        var v: UInt32 // undocumented
+
+        // 1-based frame number to initialize with.
         var c: UInt32
+
+        // Gives the 1-based frame number to edit.
         var r: UInt32
+
+        // If positive, delay in milliseconds before displaying this frame.
+        // If negative, skip over the frame without displaying it.
+        // If 0, the spec doesn't say what to do.
         var z: Int32
-        var X: UInt32
+
+        var animationComposition: AnimationComposition  // X
+
+        // Background color including alpha channel.
+        // For example: 0xff0000ff is opaque red. 0x00ff0088 is translucent green
         var Y: UInt32
 
-        init(_ dict: [String: String]) {
+        init?(_ dict: [String: String]) {
             x = dict["x"].compactMap { UInt32($0) } ?? 0
             y = dict["y"].compactMap { UInt32($0) } ?? 0
+            s = dict["s"].compactMap { UInt32($0) } ?? 0
+            v = dict["v"].compactMap { UInt32($0) } ?? 0
             c = dict["c"].compactMap { UInt32($0) } ?? 0
             r = dict["r"].compactMap { UInt32($0) } ?? 0
             z = dict["z"].compactMap { Int32($0) } ?? 0
-            X = dict["X"].compactMap { UInt32($0) } ?? 0
+            if let animationComposition = extractEnum(from: dict, key: "X", defaultValue: AnimationComposition.fullAlphaBlend) {
+                self.animationComposition = animationComposition
+            } else {
+                return nil
+            }
             Y = dict["Y"].compactMap { UInt32($0) } ?? 0
         }
     }
@@ -370,7 +405,7 @@ class KittyImageCommand: NSObject {
     @objc(initWithAPCString:)
     init?(_ string: String) {
         let parts = string.components(separatedBy: ";")
-        guard parts.count >= 2 else {
+        guard parts.count >= 1 else {
             return nil
         }
         let controls = parts[0].components(separatedBy: ",")
@@ -389,7 +424,9 @@ class KittyImageCommand: NSObject {
         let category: Category? =
             switch action {
             case .animationFrame:  // transmit data for animation frames
-                Category.animationFrameLoading(AnimationFrameLoading(dict))
+                AnimationFrameLoading(dict).compactMap { afl in
+                    Category.animationFrameLoading(afl)
+                }
             case .query, .transmit:
                 ImageTransmission(dict).map { Category.imageTransmission($0) }
             case .transmitAndDisplay:  // transmit data and display image
@@ -412,7 +449,7 @@ class KittyImageCommand: NSObject {
         } else {
             return nil
         }
-        payload = parts[1]
+        payload = parts.count > 1 ? parts[1] : ""
     }
 }
 
@@ -431,7 +468,19 @@ protocol KittyImageControllerDelegate: AnyObject {
 class KittyImageController: NSObject {
     @objc weak var delegate: KittyImageControllerDelegate?
 
+    private class AutoincrementingNumber {
+        private var next = 0
+        func allocate() -> Int {
+            let value = next
+            next += 1
+            return value
+        }
+    }
+
     fileprivate struct Image {
+        private static let autoincrement = AutoincrementingNumber()
+        let sequence = Self.autoincrement.allocate()
+        let uuid = UUID()
         var metadata: KittyImageCommand.ImageTransmission
         var rawData: Data?
         var decompressedData: Data?
@@ -558,7 +607,7 @@ class KittyImageController: NSObject {
         }
 
         // In pixels, not points.
-        private func pixelSize(forCellSize cellSize: NSSize) -> NSSize {
+        func pixelSize(forCellSize cellSize: NSSize) -> NSSize {
             if let rows, let columns {
                 return NSSize(width: cellSize.width * CGFloat(columns),
                               height: cellSize.height * CGFloat(rows))
@@ -576,6 +625,9 @@ class KittyImageController: NSObject {
             if image.metadata.width > 0 && image.metadata.height > 0 {
                 return NSSize(width: CGFloat(image.metadata.width),
                               height: CGFloat(image.metadata.height))
+            }
+            if let sourceRect {
+                return sourceRect.size
             }
             return image.image.size
         }
@@ -625,7 +677,7 @@ class KittyImageController: NSObject {
     }
 
     // Identifier -> Image
-    private var images = [UInt32: [Image]]()
+    private var images = [UInt32: Image]()
     private var lastImage: Image?
     private var accumulator: Accumulator?
     private var placements = [Placement]()
@@ -634,16 +686,16 @@ class KittyImageController: NSObject {
     func execute(command: KittyImageCommand) {
         switch command.category {
         case .imageTransmission(let imageTransmission):
-            responseToTransmit(imageTransmission,
-                               error: executeTransmit(imageTransmission, 
-                                                      payload: command.payload,
-                                                      query: command.action == .query))
+            _ = executeTransmit(imageTransmission,
+                                display: nil,
+                                payload: command.payload,
+                                query: command.action == .query)
         case .imageDisplay(let imageDisplay):
             executeDisplay(imageDisplay)
         case .transmitAndDisplay(let imageTransmission, let imageDisplay):
             let hadAccumulator = (accumulator != nil)
             let savedDisplay = accumulator?.display
-            if executeTransmit(imageTransmission, payload: command.payload, query: false) == nil {
+            if executeTransmit(imageTransmission, display: imageDisplay, payload: command.payload, query: false) {
                 if (imageTransmission.more == .finalChunk) {
                     if let savedDisplay {
                         // If transmission was split up into multiple parts use the display commands
@@ -683,7 +735,47 @@ class KittyImageController: NSObject {
 
     // MARK: - Transmit
 
-    func executeTransmit(_ command: KittyImageCommand.ImageTransmission, payload: String, query: Bool) -> String? {
+    private func allocateIdentifier() -> UInt32 {
+        for i in 1..<UInt32.max {
+            if images[i] == nil {
+                return i
+            }
+        }
+        return 0
+    }
+
+    private func executeTransmit(_ command: KittyImageCommand.ImageTransmission, 
+                                 display: KittyImageCommand.ImageDisplay?,
+                                 payload: String,
+                                 query: Bool) -> Bool {
+        var modifiedCommand = command
+
+        if command.allocationAllowed && command.imageNumber > 0 {
+            // Have not yet recursed after allocating an image ID.
+            if command.identifier > 0 {
+                responseToTransmit(command, display: display, error: "EINVAL:Can't give both i and I")
+                return false
+            }
+
+            // Rewrite command to have an identifier and recurse.
+            modifiedCommand.identifier = allocateIdentifier()
+            if modifiedCommand.identifier == 0 {
+                responseToTransmit(command, display: display, error: "ENOSPC:Out of identifiers")
+                return false
+            }
+            modifiedCommand.allocationAllowed = false
+        }
+
+        let error = reallyExecuteTransmit(modifiedCommand, payload: payload, query: query)
+        if error != nil || display == nil {
+            responseToTransmit(modifiedCommand, display: display, error: error)
+        }
+        return error == nil
+    }
+
+    private func reallyExecuteTransmit(_ command: KittyImageCommand.ImageTransmission,
+                                       payload: String,
+                                       query: Bool) -> String? {
         if let accumulator {
             if command.more == .expectMore {
                 self.accumulator?.payload += payload
@@ -692,7 +784,7 @@ class KittyImageController: NSObject {
             self.accumulator = nil
             var modifiedCommand = accumulator.transmission
             modifiedCommand.more = .finalChunk
-            return executeTransmit(modifiedCommand,
+            return reallyExecuteTransmit(modifiedCommand,
                                    payload: accumulator.payload + payload,
                                    query: accumulator.query)
         } else if command.more == .expectMore {
@@ -713,9 +805,9 @@ class KittyImageController: NSObject {
     }
 
     // Direct (the data is transmitted within the escape code itself)
-    func executeTransmitDirect(_ command: KittyImageCommand.ImageTransmission,
-                               payload: String,
-                               query: Bool) -> String? {
+    private func executeTransmitDirect(_ command: KittyImageCommand.ImageTransmission,
+                                       payload: String,
+                                       query: Bool) -> String? {
         guard let data = decodeDirectTransmission(command, payload: payload) else {
             return "could not decode payload"
         }
@@ -738,8 +830,17 @@ class KittyImageController: NSObject {
     private func transmissionDidFinish(image: Image, query: Bool) {
         lastImage = image
         if !query && image.metadata.identifier != 0 {
-            images[image.metadata.identifier, default: []].append(image)
+            images[image.metadata.identifier] = image
         }
+    }
+
+    private func dataByAddingAlphaTo3bppData(_ data: Data, _ alpha: UInt8) -> Data {
+        var rgbaData = Data(capacity: (data.count / 3) * 4)
+        for i in stride(from: 0, to: data.count, by: 3) {
+            rgbaData.append(contentsOf: data[i..<i+3])
+            rgbaData.append(alpha)
+        }
+        return rgbaData
     }
 
     private func image(data: Data, bpp: UInt, width: UInt, height: UInt) -> iTermImage? {
@@ -747,22 +848,30 @@ class KittyImageController: NSObject {
             return nil
         }
 
-        let bytesPerPixel = Int(bpp)
-        let bytesPerRow = Int(width) * bytesPerPixel
+        let bytesPerPixel = 4
+        let bytesPerRow = Int(clamping: width) * bytesPerPixel
         let totalBytes = bytesPerRow * Int(height)
+        let unpaddedBytes = Int(clamping: bpp) * Int(clamping: width) * Int(clamping: height)
 
-        guard data.count == totalBytes else {
+        guard data.count == unpaddedBytes else {
             return nil
         }
 
         let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
-        let bitmapInfo: CGBitmapInfo = bpp == 4 ? [.byteOrder32Big, CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue)] : [.byteOrder32Big]
+        let bitmapInfo: CGBitmapInfo = [.byteOrder32Big, CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue)]
 
-        guard let provider = CGDataProvider(data: data as CFData) else { return nil }
+        let rgbaData =
+            if bpp == 4 {
+                data
+            } else {
+                dataByAddingAlphaTo3bppData(data, 0xff)
+            }
+
+        guard let provider = CGDataProvider(data: rgbaData as CFData) else { return nil }
 
         let cgImage = CGImage(
-            width: Int(width),
-            height: Int(height),
+            width: Int(clamping: width),
+            height: Int(clamping: height),
             bitsPerComponent: 8,
             bitsPerPixel: bytesPerPixel * 8,
             bytesPerRow: bytesPerRow,
@@ -851,28 +960,48 @@ class KittyImageController: NSObject {
     func executeTransmitFile(_ command: KittyImageCommand.ImageTransmission,
                              payload: String,
                              query: Bool) -> String? {
-        return "Unimplemented"  // TODO
+        return "EBADF:Unimplemented"  // TODO
     }
 
     func executeTransmitTemporaryFile(_ command: KittyImageCommand.ImageTransmission,
                                       payload: String,
                                       query: Bool) -> String? {
-        return "Unimplemented"  // TODO
+        return "EBADF:Unimplemented"  // TODO
     }
 
     func executeTransmitSharedMemory(_ command: KittyImageCommand.ImageTransmission,
                                      payload: String,
                                      query: Bool) -> String? {
-        return "Unimplemented"  // TODO
+        return "EBADF:Unimplemented"  // TODO
     }
 
-    func responseToTransmit(_ imageTransmission: KittyImageCommand.ImageTransmission, error: String?) {
+    func responseToTransmit(_ imageTransmission: KittyImageCommand.ImageTransmission,
+                            display: KittyImageCommand.ImageDisplay?,
+                            error: String?) {
+        if imageTransmission.more == .expectMore {
+            // This is undocumented by the spec.
+            return
+        }
+        var args = [String]()
+        if imageTransmission.imageNumber > 0 {
+            args.append("i=\(imageTransmission.identifier)")
+            args.append("I=\(imageTransmission.imageNumber)")
+        } else if error != nil {
+            args.append("i=\(imageTransmission.identifier)")
+        }
+        if let p = display?.placement {
+            args.append("p=\(p)")
+        }
+        let semi = args.isEmpty ? "" : ";"
+        let payload = args.joined(separator: ",") + semi + (error ?? "OK")
+        let message = "\u{1B}_G\(payload)\u{1B}\\"
         switch imageTransmission.verbosity {
         case .normal:
-            let message = error ?? "OK"
-            delegate?.kittyImageControllerReport(message: "\u{1B}_Gi=\(imageTransmission.identifier);\(message))\u{1B}\\")
+            delegate?.kittyImageControllerReport(message: message)
         case .query:
-            // TODO: Figure out what this is supposed to do
+            if let error {
+                delegate?.kittyImageControllerReport(message: message)
+            }
             return
         case .quiet:
             return
@@ -885,19 +1014,22 @@ class KittyImageController: NSObject {
         if command.identifier != 0 {
             // The spec alludes to multiple images having the same ID but doesn't say what to do
             // when you try to display that ID ("Delete newest image with the specified number…")
-            if let imageList = images[command.identifier], let image = imageList.last {
+            if let image = images[command.identifier] {
                 respondToDisplay(error: executeDisplay(command, image: image),
                                  identifier: command.identifier,
-                                 placement: command.placement)
+                                 placement: command.placement,
+                                 q: command.q)
             } else {
-                respondToDisplay(error: "Unrecognized identifier",
+                respondToDisplay(error: "ENOENT:Put command refers to non-existent image with id: \(command.identifier) and number: 0",
                                  identifier: command.identifier,
-                                 placement: command.placement)
+                                 placement: command.placement,
+                                 q: command.q)
             }
         } else if let lastImage {
             respondToDisplay(error: executeDisplay(command, image: lastImage),
                              identifier: command.identifier,
-                             placement: command.placement)
+                             placement: command.placement,
+                             q: command.q)
         }
     }
 
@@ -916,8 +1048,8 @@ class KittyImageController: NSObject {
             if command.x > 0 || command.y > 0 || command.w > 0 || command.h > 0 {
                 NSRect(x: CGFloat(command.x),
                        y: CGFloat(command.y),
-                       width: CGFloat(command.w),
-                       height: CGFloat(command.h))
+                       width: command.w > 0 ? CGFloat(command.w) : (image.image.size.width - CGFloat(command.x)),
+                       height: command.h > 0 ? CGFloat(command.h) : (image.image.size.height - CGFloat(command.y)))
             } else {
                 nil
             }
@@ -959,10 +1091,18 @@ class KittyImageController: NSObject {
         case .doNotMoveCursor:
             break
         case .moveCursorToAfterImage:
-            let cellSize = delegate.kittyImageControllerCellSize()
-            if let rect = placement.absRect(cellSize: cellSize, finder: finder) {
-                delegate.kittyImageControllerMoveCursor(dx: Int(rect.width),
-                                                        dy: Int(rect.height))
+            if command.parentPlacement == nil && !placement.virtual {
+                // Since a relative placement gets its position specified based on another placement,
+                // instead of the cursor, the cursor must not move after a relative position, 
+                // regardless of the value of the C key to control cursor movement.
+                //
+                // It is not written in the spec, but I assume you don't move the cursor for virtual
+                // placements either as that doesn't make any sense.
+                let cellSize = delegate.kittyImageControllerCellSize()
+                if let rect = placement.absRect(cellSize: cellSize, finder: finder) {
+                    delegate.kittyImageControllerMoveCursor(dx: Int(rect.width),
+                                                            dy: Int(rect.height))
+                }
             }
         }
         return nil
@@ -995,7 +1135,13 @@ class KittyImageController: NSObject {
         return placements.first { $0.placementId == placement }
     }
 
-    private func respondToDisplay(error: String?, identifier: UInt32, placement: UInt32) {
+    private func respondToDisplay(error: String?, identifier: UInt32, placement: UInt32, q: UInt32) {
+        if q == 2 {
+            return
+        }
+        if q == 1 && error == nil {
+            return
+        }
         let parameters = {
             let dict = ["i": identifier, "p": placement]
             return dict.keys.compactMap { key in
@@ -1008,7 +1154,16 @@ class KittyImageController: NSObject {
                 return "\(key)=\(value)"
             }.joined(separator: ",")
         }()
-        delegate?.kittyImageControllerReport(message: "\u{1B}_G\(parameters);\(error ?? "OK")\u{1B}\\")
+        let pre = "\u{1B}_G"
+        let post = "\u{1B}\\"
+        let errorOrOK = error ?? "OK"
+        let message =
+            if parameters.isEmpty {
+                errorOrOK
+            } else {
+                parameters + ";" + errorOrOK
+            }
+        delegate?.kittyImageControllerReport(message: pre + message + post)
     }
 
     func executeLoadAnimationFrame(_ command: KittyImageCommand.AnimationFrameLoading) {
@@ -1033,44 +1188,60 @@ class KittyImageController: NSObject {
         guard let delegate else {
             return
         }
-        let idsBefore = Set(placements.map { $0.placementId })
-        let count = idsBefore.count
+        let count = placements.count
         switch command.d {
+        case "":
+            // Delete all images visible on the screen
+            // I don't know if the spec means all images or all images in the mutable area. And I
+            // don't know if dangling placements are allowed.
+            // I'll make the simplifying assumption that it is all images and placements.
+            images = [:]
+            placements = []
+
         case "a", "A":
             // Delete all placements visible on screen
             removePlacements(where: { _ in true })
-            break
 
         case "i", "I":
             // Delete all images with the specified id, specified using the i key. If you specify a
             // p key for the placement id as well, then only the placement with the specified image
             // id and placement id will be deleted.
             if command.placementId != 0 {
-                placements.removeAll {
-                    $0.image.metadata.identifier == command.imageId && $0.placementId == command.placementId
+                removePlacements { placement in
+                    placement.image.metadata.identifier == command.imageId && placement.placementId == command.placementId
                 }
             } else {
                 images.removeValue(forKey: command.imageId)
+                // I assume you have to remove dangingling placements, but the spec is silent.
+                removePlacements { placement in
+                    placement.image.metadata.identifier == command.imageId
+                }
             }
-            break
 
         case "n", "N":
             // Delete newest image with the specified number, specified using the I key. If you
             // specify a p key for the placement id as well, then only the placement with the 
             // specified number and placement id will be deleted.
-            if command.placementId != 0 {
-                removePlacements {
-                    // This may be wrong. I can't parse the sentence in the spec.
-                    $0.placementId == command.I && $0.placementId == command.placementId
+            let candidates = images.keys.filter {
+                images[$0]!.metadata.imageNumber == command.I
+            }
+            let identifier = candidates.max { lhs, rhs in
+                images[lhs]!.sequence < images[rhs]!.sequence
+            }
+            if let identifier {
+                if command.placementId == 0 {
+                    images.removeValue(forKey: identifier)
                 }
-            } else if let list = images[command.imageId] {
-                if list.count > 1 {
-                    images[command.imageId] = list.dropLast()
-                } else {
-                    images.removeValue(forKey: command.imageId)
+                removePlacements { placement in
+                    if placement.image.metadata.identifier != identifier {
+                        return false
+                    }
+                    if command.placementId != 0 {
+                        return command.placementId == placement.placementId
+                    }
+                    return true
                 }
             }
-            break
 
         case "c", "C":
             // Delete all placements that intersect with the current cursor position.
@@ -1079,7 +1250,6 @@ class KittyImageController: NSObject {
             removePlacements { placement in
                 placement.intersects(coord: cursorCoord, cellSize: cellSize, finder: self.finder(placementId:))
             }
-            break
 
         case "f", "F":
             // Delete animation frames.
@@ -1089,13 +1259,12 @@ class KittyImageController: NSObject {
         case "p", "P":
             // Delete all placements that intersect a specific cell, the cell is specified using the x and y keys
             let offset = delegate.kittyImageControllerScreenAbsLine()
-            let coord = VT100GridAbsCoord(x: Int32(clamping: command.x),
-                                          y: Int64(command.y) + offset)
+            let coord = VT100GridAbsCoord(x: Int32(clamping: command.x) - 1,
+                                          y: Int64(command.y) - 1 + offset)
             let cellSize = delegate.kittyImageControllerCellSize()
             removePlacements { placement in
                 placement.intersects(coord: coord, cellSize: cellSize, finder: self.finder(placementId:))
             }
-            break
 
         case "q", "Q":
             // Delete all placements that intersect a specific cell having a specific z-index. 
@@ -1108,39 +1277,43 @@ class KittyImageController: NSObject {
             removePlacements { placement in
                 placement.zIndex == command.z && placement.intersects(coord: coord, cellSize: cellSize, finder: self.finder(placementId:))
             }
-            break
 
         case "r", "R":
             // Delete all images whose id is greater than or equal to the value of the x key and
             // less than or equal to the value of the y (added in kitty version 0.33.0).
-            removePlacements { placement in
-                placement.placementId >= command.x && placement.placementId <= command.y
+            let imagesToRemove = images.keys.filter { key in
+                key >= command.x && key <= command.y
             }
-            break
+            var uuids = Set<UUID>(imagesToRemove.map { images[$0]!.uuid })
+            for id in imagesToRemove {
+                images.removeValue(forKey: id)
+            }
+            // I don't know if this is supposed to remove placements as well, but it seems as though
+            // it should.
+            removePlacements { placement in
+                uuids.contains(placement.image.uuid)
+            }
 
         case "x", "X":
             // Delete all placements that intersect the specified column, specified using the x key.
             let cellSize = delegate.kittyImageControllerCellSize()
             removePlacements { placement in
-                placement.intersects(column: Int32(clamping: command.x), cellSize: cellSize, finder: self.finder(placementId:))
+                placement.intersects(column: Int32(clamping: command.x) - 1, cellSize: cellSize, finder: self.finder(placementId:))
             }
-            break
 
         case "y", "Y":
             // Delete all placements that intersect the specified row, specified using the y key.
             let offset = delegate.kittyImageControllerScreenAbsLine()
             let cellSize = delegate.kittyImageControllerCellSize()
             removePlacements { placement in
-                placement.intersects(row: Int64(command.y) + offset, cellSize: cellSize, finder: self.finder(placementId:))
+                placement.intersects(row: Int64(command.y) - 1 + offset, cellSize: cellSize, finder: self.finder(placementId:))
             }
-            break
 
         case "z", "Z":
             // Delete all placements that have the specified z-index, specified using the z key.
             removePlacements { placement in
                 placement.zIndex == command.z
             }
-            break
 
         default:
             // Undocumented
@@ -1198,6 +1371,10 @@ class iTermKittyImageDraw: NSObject {
     @objc var image: iTermImage
     @objc var index: UInt
     @objc var zIndex: Int32
+    @objc var virtual: Bool
+    @objc var placementID: UInt32
+    @objc var imageID: UInt32
+    @objc var placementSize: VT100GridSize
 
     fileprivate init?(placement: KittyImageController.Placement,
                       cellSize: NSSize,
@@ -1205,11 +1382,31 @@ class iTermKittyImageDraw: NSObject {
         guard let destinationFrame = placement.pixelRect(cellSize: cellSize, finder: finder) else {
             return nil
         }
+        self.virtual = placement.virtual
+        self.placementID = placement.placementId
+        self.imageID = placement.image.metadata.imageNumber
         self.destinationFrame = destinationFrame
-        sourceFrame = placement.sourceRect ?? NSRect(origin: .zero, size: placement.image.image.size)
+        // Size in pixels
+        let pixelSize = placement.image.image.size
+        // Size in physical units (i.e., NSImage.size, which is pixel size divided by DPI or whatever)
+        let physicalSize = placement.image.image.scaledSize
+        // Multiply by this to convert pixels to physical size.
+        let pxToPhys = physicalSize.multiplied(by: pixelSize.inverted)
+        // sourceFrame is in physical units.
+        sourceFrame = if let sourceRect = placement.sourceRect {
+            NSRect(x: sourceRect.origin.x * pxToPhys.width,
+                   y: sourceRect.origin.y * pxToPhys.height,
+                   width: sourceRect.width * pxToPhys.width,
+                   height: sourceRect.height * pxToPhys.height).flipped(in: physicalSize.height)
+        } else {
+            NSRect(origin: .zero,
+                   size: placement.image.image.scaledSize)
+        }
         self.image = placement.image.image
         self.index = 0
         self.zIndex = placement.zIndex
+        placementSize = VT100GridSize(width: Int32(clamping: placement.columns ?? 0),
+                                      height: Int32(clamping: placement.rows ?? 0))
     }
 
     @objc
@@ -1219,5 +1416,14 @@ class iTermKittyImageDraw: NSObject {
         return VT100GridRect(origin: origin,
                              size: VT100GridSize(width: Int32(clamping: ceil(destinationFrame.maxX / cellSize.width)),
                                                  height: Int32(clamping: ceil(destinationFrame.maxY / cellSize.height))))
+    }
+}
+
+extension NSSize {
+    func multiplied(by other: NSSize) -> NSSize {
+        return NSSize(width: width * other.width, height: height * other.height)
+    }
+    var inverted: NSSize {
+        return NSSize(width: 1.0 / width, height: 1.0 / height)
     }
 }

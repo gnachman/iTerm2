@@ -1321,7 +1321,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     sct->code = ' ';
     sct->complexChar = NO;
-    sct->image = NO;
+    sct->x_image = NO;
+    sct->virtualPlaceholder = NO;
     if ((*eaOut).url) {
         *eaOut = [iTermExternalAttribute attributeHavingUnderlineColor:(*eaOut).hasUnderlineColor
                                                         underlineColor:(*eaOut).underlineColor
@@ -2155,7 +2156,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                     *c = tab;
                     *eaOut = ea;
                 } else {
-                    c->image = NO;
+                    c->x_image = NO;
+                    c->virtualPlaceholder = NO;
                     c->complexChar = NO;
                     c->code = '\t';
                 }
@@ -5779,11 +5781,19 @@ launchCoprocessWithCommand:(NSString *)command
 #pragma mark - iTermKittyImageControllerDelegate
 
 - (void)kittyImageControllerReportWithMessage:(NSString *)string {
-    // TODO
+    [self willSendReport];
+    __weak __typeof(self) weakSelf = self;
+    const NSStringEncoding encoding = self.terminal.encoding;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        DLog(@"begin side-effect");
+        [delegate screenSendReportData:[string dataUsingEncoding:encoding]];
+        [weakSelf didSendReport:delegate];
+    }];
 }
 
 - (void)kittyImageControllerPlacementsDidChange {
     self.kittyImageDraws = [_kittyImageController draws];
+    [self setNeedsRedraw];
 }
 
 - (VT100GridAbsCoord)kittyImageControllerCursorCoord {

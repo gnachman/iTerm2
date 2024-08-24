@@ -83,8 +83,16 @@ class ComplexCharRegistry: NSObject {
     }
 
     @objc
+    func charToKittyPlaceholder(_ char: screen_char_t) -> NSString? {
+        if char.x_image == 0 || char.virtualPlaceholder == 0 {
+            return ""
+        }
+        return string(for: char.code, isComplex: char.complexChar != 0)
+    }
+
+    @objc
     func charToString(_ char: screen_char_t) -> NSString? {
-        if char.image != 0 {
+        if char.x_image != 0 {
             return ""
         }
         return string(for: char.code, isComplex: char.complexChar != 0)
@@ -310,7 +318,7 @@ extension NSString {
 
 extension screen_char_t {
     var baseCharacter: UTF32Char {
-        if image != 0 {
+        if x_image != 0 {
             return 0
         }
         if complexChar == 0 {

@@ -343,7 +343,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     const int width = sca.length;
     const screen_char_t *line = sca.line;
     for (int i = 0; i < width; i++) {
-        if (line[i].image && line[i].code == code) {
+        if (line[i].x_image && line[i].code == code && !line[i].virtualPlaceholder) {
             DLog(@"Found code %d at column %d", code, i);
             return YES;
         }
@@ -828,7 +828,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
     iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:self];
     const VT100GridCoord firstNull = [extractor searchFrom:basicRange.end forward:YES forCharacterMatchingFilter:^BOOL(screen_char_t c, VT100GridCoord coord) {
-        return c.code == 0 && !c.complexChar && !c.image;
+        return c.code == 0 && !c.complexChar && !c.x_image;
     }];
     if (firstNull.x < 0) {
         return basicRange;

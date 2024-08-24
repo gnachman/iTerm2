@@ -209,7 +209,7 @@ NS_INLINE screen_char_t *VT100GridScreenCharsAtLine(VT100Grid *self, int lineNum
     __block NSInteger sum = 0;
 
     [self enumerateCellsInRect:VT100GridRectMake(0, range.location, self.size.width, range.length) block:^(VT100GridCoord coord, screen_char_t c, iTermExternalAttribute *ea, BOOL *stop) {
-        if (c.complexChar || c.code || c.image) {
+        if (c.complexChar || c.code || c.x_image) {
             sum += 1;
         }
     }];
@@ -401,7 +401,7 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
         int i;
         for (i = 0; i < size_.width; i++) {
             if (line[i].complexChar ||
-                line[i].image ||
+                line[i].x_image ||
                 ![allowedCharacters characterIsMember:line[i].code]) {
                 break;
             }
@@ -418,7 +418,7 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     const screen_char_t *line = [self screenCharsAtLineNumber:n];
     for (int i = 0; i < size_.width; i++) {
         if (line[i].complexChar ||
-            line[i].image ||
+            line[i].x_image ||
             line[i].code) {
             return NO;
         }
@@ -1656,7 +1656,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                     d = ':';
                 }
             }
-            if (p[x].image) {
+            if (p[x].x_image) {
                 c = 'I';
             } else if (p[x].code && !p[x].complexChar) {
                 if (p[x].code > 0 && p[x].code < 128) {
@@ -2445,7 +2445,7 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
     if (theChar.code == 0 && !theChar.complexChar) {
         return nil;
     }
-    if (theChar.image) {
+    if (theChar.x_image) {
         return nil;
     }
     if (theChar.complexChar) {

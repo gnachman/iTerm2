@@ -80,6 +80,7 @@
 - (NSImage *)it_verticallyFlippedImage;
 - (NSImage *)it_horizontallyFlippedImage;
 - (NSImage *)it_imageOfSize:(NSSize)size;
+- (NSSize)it_sizeInPointsForScale:(CGFloat)scaleFactor;
 
 // Returns an image of size `size`, with the receiver zoomed and cropped so it at least fills the
 // resulting image.

@@ -2607,7 +2607,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
             lineY = result.start.y;
             line = [_dataSource screenCharArrayForLine:lineY].line;
         }
-        if (line[result.start.x].complexChar || line[result.start.x].image) {
+        if (line[result.start.x].complexChar || line[result.start.x].x_image) {
             break;
         }
         unichar code = line[result.start.x].code;
@@ -2636,7 +2636,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
             lineY = y;
             line = [_dataSource screenCharArrayForLine:y].line;
         }
-        if (line[x].complexChar || line[x].image) {
+        if (line[x].complexChar || line[x].x_image) {
             break;
         }
         unichar code = line[x].code;
@@ -3848,7 +3848,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     const screen_char_t* theLine = [_dataSource screenCharArrayForLine:coord.y].line;
     if (theLine &&
         coord.x < [_dataSource width] &&
-        theLine[coord.x].image &&
+        theLine[coord.x].x_image &&
+        !theLine[coord.x].virtualPlaceholder &&
         theLine[coord.x].code == imageInfo.code) {
         // Get the cell you clicked on (small y at top of view)
         VT100GridCoord pos = GetPositionOfImageInChar(theLine[coord.x]);

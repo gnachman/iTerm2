@@ -371,7 +371,7 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
                                                          BOOL preferSpeedToFullLigatureSupport,
                                                          BOOL isURL) {
     const unichar code = c->code;
-    if (c->image) {
+    if (c->x_image) {
         return YES;
     }
     if (c->invisible) {

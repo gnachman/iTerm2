@@ -62,7 +62,8 @@
         NSImage *image = [[NSImage alloc] initWithData:data];
         NSImageRep *rep = [[image representations] firstObject];
         NSSize imageSize = NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
-
+        self.scaledSize = image.size;
+        
         if (imageSize.width == 0 && imageSize.height == 0) {
             // PDFs can hit this case.
             if (image.size.width != 0 && image.size.height != 0) {

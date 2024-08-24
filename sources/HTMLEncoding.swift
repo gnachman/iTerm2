@@ -62,7 +62,7 @@ class HTMLEncoder {
                 foreground: screen_char_t,
                 background: screen_char_t,
                 configuration: Configuration) -> Data {
-        guard foreground.image == 0 else {
+        guard foreground.x_image == 0 else {
             return Data()
         }
         var stack: [(tag: String?, attributes: String?, text: Data?)] = []

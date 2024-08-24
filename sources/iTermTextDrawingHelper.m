@@ -148,6 +148,11 @@ static NSString *const iTermUnderlineLengthAttribute = @"iTermUnderlineLengthAtt
 static NSString *const iTermHasUnderlineColorAttribute = @"iTermHasUnderlineColorAttribute";
 static NSString *const iTermUnderlineColorAttribute = @"iTermUnderlineColorAttribute";  // @[r,g,b,mode]
 
+static NSString *const iTermKittyImageRowAttribute = @"iTermKittyImageRowAttribute";
+static NSString *const iTermKittyImageColumnAttribute = @"iTermKittyImageColumnAttribute";
+static NSString *const iTermKittyImageIDAttribute = @"iTermKittyImageIDAttribute";
+static NSString *const iTermKittyImagePlacementIDAttribute = @"iTermKittyImagePlacementIDAttribute";
+
 typedef struct iTermTextColorContext {
     NSColor *lastUnprocessedColor;
     CGFloat dimmingAmount;
@@ -469,6 +474,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         }
         // Negative z-index values below INT32_MIN/2 (-1,073,741,824) will be drawn under cells with
         // non-default background colors
+        // Kitty has an insane bug where it treats ansi colors that happen to have the same rgb value
+        // as the default background color the same as the default background color.
         [self drawKittyImagesInRange:iTermSignedRangeWithBounds(NSIntegerMin, -1073741824)
                        virtualOffset:virtualOffset];
         cursorBackgroundColor = [self drawBackgroundRunArrays:backgroundRunArrays
@@ -1898,7 +1905,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
         // Handle cells that are part of an image.
         VT100GridCoord originInImage = VT100GridCoordMake([attributes[iTermImageColumnAttribute] intValue],
                                                           [attributes[iTermImageLineAttribute] intValue]);
-        int displayColumn = [attributes[iTermImageDisplayColumnAttribute] intValue];
+        const int displayColumn = [attributes[iTermImageDisplayColumnAttribute] intValue];
         [self drawImageWithCode:[attributes[iTermImageCodeAttribute] shortValue]
                          origin:VT100GridCoordMake(displayColumn, origin.y)
                          length:cheapString.length
@@ -1906,6 +1913,18 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                   originInImage:originInImage
                   virtualOffset:virtualOffset];
         return cheapString.length;
+    } else if (attributes[iTermKittyImageIDAttribute]) {
+        // Handle cells that are part of a Kitty image.
+        const VT100GridCoord coord = VT100GridCoordMake([attributes[iTermKittyImageColumnAttribute] intValue],
+                                                          [attributes[iTermKittyImageRowAttribute] intValue]);
+        const int displayColumn = [attributes[iTermImageDisplayColumnAttribute] intValue];
+        [self drawKittyImageInPlaceholderWithCoord:coord
+                                            origin:VT100GridCoordMake(displayColumn, origin.y)
+                                           atPoint:NSMakePoint(positions[0] + point.x, point.y)
+                                           imageID:[attributes[iTermKittyImageIDAttribute] unsignedIntegerValue]
+                                       placementID:[attributes[iTermKittyImagePlacementIDAttribute] unsignedIntegerValue]
+                                     virtualOffset:virtualOffset];
+        return 1;
     }
 
     CGGlyph glyphs[cheapString.length];
@@ -2888,13 +2907,74 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
               NSParagraphStyleAttributeName: paragraphStyle };
 }
 
-- (NSDictionary *)imageAttributesForCharacter:(screen_char_t *)c displayColumn:(int)displayColumn {
-    if (c->image) {
-        return @{ iTermImageCodeAttribute: @(c->code),
-                  iTermImageColumnAttribute: @(c->foregroundColor),
-                  iTermImageLineAttribute: @(c->backgroundColor),
-                  iTermImageDisplayColumnAttribute: @(displayColumn) };
+static unsigned int VT100TerminalColorValueToKittyImageNumber(VT100TerminalColorValue colorValue,
+                                                              int msb) {
+    unsigned int shiftedMSB = ((unsigned int)msb) << 24;
+
+    if (colorValue.mode == ColorModeNormal) {
+        return shiftedMSB | (unsigned int)colorValue.red;
+    }
+
+    if (colorValue.mode == ColorMode24bit) {
+        return (shiftedMSB |
+                (((unsigned int)colorValue.red) << 16) |
+                (((unsigned int)colorValue.green) << 8) |
+                (((unsigned int)colorValue.blue) << 0));
+    }
+
+    // If the color mode is not valid, return the error code 0xffffffff
+    return 0xffffffff;
+}
+
+- (NSDictionary *)imageAttributesForCharacter:(screen_char_t *)c 
+                           externalAttributes:(iTermExternalAttribute *)ea
+                                previousCoord:(inout VT100GridCoord *)previousCoord
+                             previousImageMSB:(inout int *)previousImageMSB
+                                displayColumn:(int)displayColumn {
+    if (c->x_image) {
+        if (c->virtualPlaceholder) {
+            NSString *s = ScreenCharToKittyPlaceholder(c);
+            VT100GridCoord coord;
+            int imageMSB = -1;
+            if (![s parseKittyUnicodePlaceholder:&coord imageMSB:&imageMSB]) {
+                return  nil;
+            }
+            if (coord.x == -1 && previousCoord->x != -1) {
+                coord.x = previousCoord->x + 1;
+            }
+            if (coord.y == -1 && previousCoord->y != -1) {
+                coord.y = previousCoord->y;
+            }
+            *previousCoord = coord;
+            if (*previousImageMSB != -1 && imageMSB == -1) {
+                imageMSB = *previousImageMSB;
+            } else if (imageMSB != -1) {
+                *previousImageMSB = imageMSB;
+            }
+            VT100TerminalColorValue colorValue = {
+                .red = c->foregroundColor,
+                .green = c->fgGreen,
+                .blue = c->fgBlue,
+                .mode = c->foregroundColorMode
+            };
+            unsigned int imageID = VT100TerminalColorValueToKittyImageNumber(colorValue, imageMSB);
+            unsigned int placementID = ea.hasUnderlineColor ? VT100TerminalColorValueToKittyImageNumber(ea.underlineColor, 0) : 0;
+
+            return @{ iTermKittyImageRowAttribute: @(coord.y),
+                      iTermKittyImageColumnAttribute: @(coord.x),
+                      iTermKittyImageIDAttribute: @(imageID),
+                      iTermKittyImagePlacementIDAttribute: @(placementID),
+                      iTermImageDisplayColumnAttribute: @(displayColumn)
+            };
+        } else {
+            return @{ iTermImageCodeAttribute: @(c->code),
+                      iTermImageColumnAttribute: @(c->foregroundColor),
+                      iTermImageLineAttribute: @(c->backgroundColor),
+                      iTermImageDisplayColumnAttribute: @(displayColumn) };
+        }
     } else {
+        *previousCoord = VT100GridCoordMake(-1, -1);
+        *previousImageMSB = -1;
         return nil;
     }
 }
@@ -2933,6 +3013,11 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         return NO;
     }
     if ([_fontTable haveSpecialExceptionFor:*c orCharacter:*pc]) {
+        return NO;
+    }
+    if (c->virtualPlaceholder) {
+        // Anti-optimization: each unicode placeholder gets its own attributed string for now.
+        // I can improve this later.
         return NO;
     }
     if (ea1 == nil && ea2 == nil) {
@@ -2990,6 +3075,8 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     screen_char_t predecessor = { 0 };
     BOOL lastCharacterImpartsEmojiPresentation = NO;
     iTermExternalAttribute *prevEa = nil;
+    VT100GridCoord previousKittyImageCoord = VT100GridCoordMake(-1, -1);
+    int previousImageMSB = -1;
 
     // Only defined if not preferring speed to full ligature support.
     BOOL lastWasNull = NO;
@@ -3013,7 +3100,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
         NSString *charAsString;
 
-        if (isComplex) {
+        if (isComplex && !c.x_image) {
             charAsString = ComplexCharToStr(code);
 
             if (i > indexRange.location &&
@@ -3040,7 +3127,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             } else {
                 lastCharacterImpartsEmojiPresentation = [emojiWithDefaultEmojiPresentationCharacterSet longCharacterIsMember:base];
             }
-        } else if (!c.image) {
+        } else if (!c.x_image) {
             charAsString = nil;
             if (lastCharacterImpartsEmojiPresentation && [emojiWithDefaultTextPresentation characterIsMember:code]) {
                 unichar chars[2] = { code, 0xfe0e };
@@ -3105,7 +3192,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                              attributes:&characterAttributes
                                remapped:&remapped];
         prevEa = ea;
-        if (!c.image && remapped) {
+        if (!c.x_image && remapped) {
             if (c.complexChar) {
                 charAsString = [charAsString stringByReplacingBaseCharacterWith:remapped];
             } else if (remapped <= 0xffff) {
@@ -3118,7 +3205,11 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_SHOULD_SEGMENT]);
 
-        NSDictionary *imageAttributes = [self imageAttributesForCharacter:&c displayColumn:i];
+        NSDictionary *imageAttributes = [self imageAttributesForCharacter:&c
+                                                       externalAttributes:ea
+                                                            previousCoord:&previousKittyImageCoord
+                                                         previousImageMSB:&previousImageMSB
+                                                            displayColumn:i];
         BOOL combinedAttributesChanged = NO;
 
         // I tried segmenting when fastpath eligibility changes so we can use the fast path as much
@@ -3413,6 +3504,10 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
 - (void)drawKittyImagesInRange:(iTermSignedRange)zIndexRange virtualOffset:(CGFloat)virtualOffset {
     [_kittyImageDraws enumerateObjectsUsingBlock:^(iTermKittyImageDraw * _Nonnull draw, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (draw.virtual) {
+            // These are drawn in unicode placeholders.
+            return;
+        }
         if (!iTermSignedRangeContainsValue(zIndexRange, draw.zIndex)) {
             return;
         }
@@ -3438,14 +3533,123 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     [transform translateXBy:destination.origin.x yBy:NSMaxY(destination) - virtualOffset];
     [transform scaleXBy:1.0 yBy:-1.0];
     [transform concat];
-
     destination.origin = NSZeroPoint;
-    [draw.image.images[draw.index] drawInRect:destination
-                                     fromRect:draw.sourceFrame
-                                    operation:NSCompositingOperationSourceOver
-                                     fraction:1];
+
+    NSImage *image = draw.image.images[draw.index];
+    [image drawInRect:destination
+             fromRect:draw.sourceFrame
+            operation:NSCompositingOperationSourceOver
+             fraction:1];
 
     [NSGraphicsContext restoreGraphicsState];
+}
+
+- (NSSize)sizeForKittyImageCellInPlacementOfSize:(VT100GridSize)placementSize
+                                        cellSize:(NSSize)cellSize
+                                sourceImageSize:(NSSize)sourceImageSize {
+    // Calculate the aspect ratios
+    CGFloat imageAspectRatio = sourceImageSize.width / sourceImageSize.height;
+    CGFloat gridAspectRatio = (placementSize.width * cellSize.width) / (placementSize.height * cellSize.height);
+
+    // The size of the source rectangle in the image that will be drawn to a single cell
+    NSSize sourceRectSize;
+
+    if (imageAspectRatio > gridAspectRatio) {
+        // Image is wider than the grid, scale based on width
+        sourceRectSize.width = sourceImageSize.width / placementSize.width;
+        sourceRectSize.height = sourceRectSize.width * (cellSize.height / cellSize.width);
+    } else {
+        // Image is taller than the grid, scale based on height
+        sourceRectSize.height = sourceImageSize.height / placementSize.height;
+        sourceRectSize.width = sourceRectSize.height * (cellSize.width / cellSize.height);
+    }
+
+    return sourceRectSize;
+}
+
+- (void)drawKittyImageInPlaceholderWithCoord:(VT100GridCoord)sourceCoord
+                                      origin:(VT100GridCoord)destCoord
+                                     atPoint:(NSPoint)point
+                                     imageID:(unsigned int)imageID
+                                 placementID:(unsigned int)placementID
+                               virtualOffset:(CGFloat)virtualOffset {
+    // Look up the placement
+    iTermKittyImageDraw *draw = [_kittyImageDraws objectPassingTest:^BOOL(iTermKittyImageDraw *draw, NSUInteger index, BOOL *stop) {
+        return draw.placementID == placementID;
+    }];
+    if (!draw) {
+        // Look up placement by image ID. Must include a size.
+        draw = [_kittyImageDraws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
+            return draw.imageID == imageID && draw.placementSize.width > 0 && draw.placementSize.height > 0;
+        }];
+    }
+    if (!draw) {
+        return;
+    }
+    if (draw.placementSize.width <= 0 || draw.placementSize.height <= 0) {
+        return;
+    }
+    NSImage *image = draw.image.images[0];
+    const NSSize sourceCellSize = [self sizeForKittyImageCellInPlacementOfSize:draw.placementSize
+                                                                      cellSize:_cellSize
+                                                               sourceImageSize:draw.sourceFrame.size];
+    const NSRect destRect = NSMakeRect(0, 0, _cellSize.width, _cellSize.height);
+    const NSRect sourceRect = [self sourceRectangleForKittyPlaceholderAtSourceCoord:sourceCoord
+                                                                     sourceCellSize:sourceCellSize
+                                                                      placementSize:draw.placementSize
+                                                                           cellSize:_cellSize
+                                                                        sourceFrame:draw.sourceFrame];
+    [NSGraphicsContext saveGraphicsState];
+    NSAffineTransform *transform = [NSAffineTransform transform];
+    [transform translateXBy:point.x yBy:point.y + _cellSize.height - virtualOffset];
+    [transform scaleXBy:1.0 yBy:-1.0];
+    [transform concat];
+
+    [image drawInRect:destRect
+             fromRect:sourceRect
+            operation:NSCompositingOperationSourceOver
+             fraction:1.0];
+    [NSGraphicsContext restoreGraphicsState];
+}
+
+- (NSRect)sourceRectangleForKittyPlaceholderAtSourceCoord:(VT100GridCoord)sourceCoord
+                                           sourceCellSize:(NSSize)sourceCellSize
+                                            placementSize:(VT100GridSize)placementSize
+                                                 cellSize:(NSSize)cellSize
+                                              sourceFrame:(NSRect)sourceFrame {
+    const NSSize imageSize = sourceFrame.size;
+    const CGFloat totalPlacementWidth = placementSize.width * cellSize.width;
+    const CGFloat totalPlacementHeight = placementSize.height * cellSize.height;
+
+    // Calculate the actual scaled size of the image to fit within the placement
+    const CGFloat imageAspectRatio = imageSize.width / imageSize.height;
+    const CGFloat placementAspectRatio = totalPlacementWidth / totalPlacementHeight;
+
+    CGFloat scaledWidth;
+    CGFloat scaledHeight;
+    if (imageAspectRatio > placementAspectRatio) {
+        // Image is wider than the placement grid, scale by width
+        scaledWidth = totalPlacementWidth;
+        scaledHeight = scaledWidth / imageAspectRatio;
+    } else {
+        // Image is taller than the placement grid, scale by height
+        scaledHeight = totalPlacementHeight;
+        scaledWidth = scaledHeight * imageAspectRatio;
+    }
+
+    // Calculate the padding to center the image within the placement grid
+    CGFloat horizontalPadding = (totalPlacementWidth - scaledWidth) / 2.0;
+    CGFloat verticalPadding = (totalPlacementHeight - scaledHeight) / 2.0;
+
+    // Adjust the source rectangle to account for the padding
+    CGFloat adjustedSourceX = sourceCoord.x * sourceCellSize.width - horizontalPadding * (sourceCellSize.width / cellSize.width);
+    CGFloat adjustedSourceY = sourceCoord.y * sourceCellSize.height - verticalPadding * (sourceCellSize.height / cellSize.height);
+
+    const NSRect sourceRect = NSMakeRect(adjustedSourceX + sourceFrame.origin.x,
+                                         imageSize.height - (adjustedSourceY + sourceFrame.origin.y) - sourceCellSize.height,
+                                         sourceCellSize.width,
+                                         sourceCellSize.height);
+    return sourceRect;
 }
 
 // origin is the first location onscreen

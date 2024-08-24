@@ -218,7 +218,7 @@ iTermCommandInfoViewControllerDelegate>
         return nil;
     }
     const screen_char_t *theLine = [self.dataSource screenCharArrayForLine:coord.y].line;
-    if (theLine && theLine[coord.x].image) {
+    if (theLine && theLine[coord.x].x_image && !theLine[coord.x].virtualPlaceholder) {
         return GetImageInfo(theLine[coord.x].code);
     } else {
         return nil;
@@ -1290,7 +1290,7 @@ iTermCommandInfoViewControllerDelegate>
     for (int y = 0; y < [self.dataSource height]; y++) {
         const screen_char_t *theLine = [self.dataSource screenCharArrayForLine:y + firstVisibleLine].line;
         for (int x = 0; x < width; x++) {
-            if (theLine && theLine[x].image && GetImageInfo(theLine[x].code) == image) {
+            if (theLine && theLine[x].x_image && !theLine[x].virtualPlaceholder && GetImageInfo(theLine[x].code) == image) {
                 return YES;
             }
         }

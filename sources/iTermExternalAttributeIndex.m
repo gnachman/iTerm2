@@ -702,7 +702,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     screen_char_t *chars = (screen_char_t *)self.mutableBytes;
     for (NSUInteger i = 0; i < self.length / sizeof(screen_char_t); i++) {
         if (!chars[i].complexChar &&
-            !chars[i].image &&
+            !chars[i].x_image &&
             chars[i].code >= ITERM2_LEGACY_PRIVATE_BEGIN &&
             chars[i].code <= ITERM2_LEGACY_PRIVATE_END) {
             chars[i].code = ITERM2_PRIVATE_BEGIN + (chars[i].code - ITERM2_LEGACY_PRIVATE_BEGIN);
@@ -717,7 +717,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     screen_char_t *chars = (screen_char_t *)modern.mutableBytes;
     for (NSUInteger i = 0; i < self.length / sizeof(screen_char_t); i++) {
         if (!chars[i].complexChar &&
-            !chars[i].image &&
+            !chars[i].x_image &&
             chars[i].code >= ITERM2_PRIVATE_BEGIN &&
             chars[i].code <= ITERM2_PRIVATE_END) {
             chars[i].code = ITERM2_LEGACY_PRIVATE_BEGIN + (chars[i].code - ITERM2_PRIVATE_BEGIN);
