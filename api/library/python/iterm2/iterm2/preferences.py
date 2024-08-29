@@ -127,10 +127,11 @@ async def async_set_preference(
     """
     Set a preference by key.
 
-    :param key: The preference key, from the `PreferenceKey` enum.
+    :param key: The preference key, either from the `PreferenceKey` enum or a string.
     :param value: An object with the preference value, or `None` to unset.
     """
-    proto = await iterm2.rpc.async_set_preference(connection, key, json.dumps(value))
+    key_value = key.value if isinstance(key, PreferenceKey) else key
+    proto = await iterm2.rpc.async_set_preference(connection, key_value, json.dumps(value))
     status = proto.preferences_response.results[0].set_preference_result.status
     if status == iterm2.api_pb2.PreferencesResponse.Result.SetPreferenceResult.Status.Value("OK"):
         return

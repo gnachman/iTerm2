@@ -7,6 +7,7 @@ Preferences
    :members:
 
 .. autofunction:: iterm2.async_get_preference
+.. autofunction:: iterm2.async_set_preference
 
 ----
 
