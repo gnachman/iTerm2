@@ -537,7 +537,9 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     if (item.action == @selector(revealContentNavigationShortcuts:)) {
         return self.findOnPageHelper.searchResults.count > 0;
     }
-
+    if (item.action == @selector(movePane:)) {
+        return YES;
+    }
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
         return YES;
@@ -3266,7 +3268,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [self.delegate textViewResetTerminal];
 }
 
-- (void)movePane:(id)sender {
+- (IBAction)movePane:(id)sender {
     [_delegate textViewMovePane];
 }
 

@@ -1516,6 +1516,12 @@ DQ
                                     <action selector="moveSessionToTab:" target="-1" id="gBR-Yc-45o"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Move Session to Split Pane" identifier="Move Session to Split Pane" id="3uK-At-K7k">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="movePane:" target="-1" id="dpH-EE-K3B"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="wb3-aB-v5h">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
