@@ -123,11 +123,14 @@ async def async_get_preference(
     return json.loads(j)
 
 async def async_set_preference(
-        connection, key: PreferenceKey, value: typing.Union[None, typing.Any]) -> None:
+        connection, key: typing.Union[PreferenceKey, str], value: typing.Union[None, typing.Any]) -> None:
     """
     Set a preference by key.
 
-    :param key: The preference key, either from the `PreferenceKey` enum or a string.
+    :param key: The preference key, either from the `PreferenceKey` enum or a
+        string. Note that older versions of the API expect a `str` here. You
+        may want to use the `PreferenceKey`'s `value` for backward
+        compatibility.
     :param value: An object with the preference value, or `None` to unset.
     """
     key_value = key.value if isinstance(key, PreferenceKey) else key
