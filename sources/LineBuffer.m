@@ -1590,6 +1590,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 // Note that the current implementation restores appends but not other kinds of
 // changes like deleting from the start or end.
 - (void)performBlockWithTemporaryChanges:(void (^ NS_NOESCAPE)(void))block {
+    _deferSanityCheck++;
     if (gDebugLogging) {
         [_lineBlocks sanityCheck:droppedChars];
     }
@@ -1630,6 +1631,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     if (gDebugLogging) {
         [_lineBlocks sanityCheck:droppedChars];
     }
+    _deferSanityCheck--;
     [self sanityCheck];
 }
 
