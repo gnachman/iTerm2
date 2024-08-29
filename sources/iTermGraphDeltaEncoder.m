@@ -73,7 +73,13 @@
     if (generation == iTermGenerationAlwaysEncode) {
         realGeneration = record.generation + 1;
     }
+    // For reasons I don't entirely understand we were hitting this assertion. My guess is that
+    // it is nondeterminism in copy-on-write behavior in LineBlock that sometimes you get the
+    // mutation thread's instance and sometimes you get a copy. I don't think it's harmful to go
+    // backwards in generation; as long as they are unequal we'll simply encode it. Issue 11819.
+#if DEBUG
     assert(record.generation < generation);
+#endif
     iTermGraphEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithKey:key
                                                                   identifier:identifier
                                                                   generation:realGeneration
