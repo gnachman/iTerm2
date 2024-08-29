@@ -152,6 +152,7 @@ class HueVisualizationView: NSView {
                 return
             }
             entries[i].color = color
+            entries[i].oklab = OKLab(color) ?? OKLab(l: 0, a: 0, b: 0)
         } else {
             entries.append(Entry(key: key, color: color, oklab: OKLab(color) ?? OKLab(l: 0, a: 0, b: 0)))
         }

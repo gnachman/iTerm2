@@ -112,7 +112,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     NSDictionary<NSString *, id> *_savedColors;
     NSTimer *_timer;
-    BOOL _visualizationNeedsUpdate;
 }
 
 + (NSArray<NSString *> *)presetNames {
@@ -212,9 +211,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         };
         __weak __typeof(self) weakSelf = self;
         info.observer = ^{
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [weakSelf setVisualizationNeedsUpdate:YES];
-            });
+            [weakSelf updateHueChromaVisualizationForKey:key];
         };
     }
 
@@ -485,31 +482,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     ];
 }
 
-- (void)setVisualizationNeedsUpdate:(BOOL)needsUpdate {
-    if (_visualizationNeedsUpdate && needsUpdate) {
-        return;
-    }
-    _visualizationNeedsUpdate = needsUpdate;
-    if (needsUpdate) {
-        __weak __typeof(self) weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf updateHueChromaVisualization];
-        });
-    }
-}
-
-- (void)updateHueChromaVisualization {
-    if (!_visualizationNeedsUpdate) {
-        return;
-    }
-    _visualizationNeedsUpdate = NO;
-
-    for (NSString *key in [self chromaHueVisualizationKeys]) {
-        NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:key]];
-        NSColor *color = [dict colorValue];
-        if (color) {
-            [_hueVisualization setColor:color forKey:key];
-        }
+- (void)updateHueChromaVisualizationForKey:(NSString *)key {
+    NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:key]];
+    NSColor *color = [dict colorValue];
+    if (color) {
+        [_hueVisualization setColor:color forKey:key];
     }
 }
 
