@@ -12,6 +12,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class LineBlock;
+@class iTermLineBlockArray;
+
+@protocol iTermLineBlockArrayDelegate <NSObject>
+- (void)lineBlockArrayDidChange:(iTermLineBlockArray *)lineBlockArray;
+@end
 
 @interface iTermLineBlockArray : NSObject<NSCopying>
 
@@ -21,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) LineBlock *firstBlock;
 @property (nonatomic) BOOL resizing;
 @property (nonatomic, readonly) NSString *dumpForCrashlog;
+@property (nonatomic, weak) id<iTermLineBlockArrayDelegate> delegate;
 
 - (NSString *)dumpWidths:(NSSet<NSNumber *> *)widths;
 

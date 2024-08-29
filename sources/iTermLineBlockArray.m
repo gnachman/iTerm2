@@ -739,6 +739,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
             [self updateCacheForBlock:block];
         }
     }
+    [_delegate lineBlockArrayDidChange:self];
 }
 
 - (void)removeFirstBlock {
@@ -752,6 +753,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     _lastHeadGeneration = [self generationOf:_head];
     _tail = _blocks.lastObject;
     _lastTailGeneration = [self generationOf:_tail];
+    [_delegate lineBlockArrayDidChange:self];
 }
 
 - (void)removeFirstBlocks:(NSInteger)count {
@@ -771,6 +773,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     _lastHeadGeneration = [self generationOf:_head];
     _tail = _blocks.lastObject;
     _lastTailGeneration = [self generationOf:_tail];
+    [_delegate lineBlockArrayDidChange:self];
 }
 
 - (NSUInteger)count {

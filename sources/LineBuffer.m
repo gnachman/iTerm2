@@ -76,6 +76,9 @@ static const NSInteger kUnicodeVersion = 9;
 //                    [CharacterBuffer]                     [CharacterBuffer]
 //
 
+@interface LineBuffer()<iTermLineBlockArrayDelegate>
+@end
+
 @implementation LineBuffer {
     // An array of LineBlock*s.
     iTermLineBlockArray *_lineBlocks;
@@ -104,6 +107,7 @@ static const NSInteger kUnicodeVersion = 9;
     long long droppedChars;
 
     BOOL _wantsSeal;
+    int _deferSanityCheck;
 }
 
 @synthesize mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
@@ -135,6 +139,9 @@ static const NSInteger kUnicodeVersion = 9;
 
 - (void)commonInit {
     _lineBlocks = [[iTermLineBlockArray alloc] init];
+#if DEBUG
+    _lineBlocks.delegate = self;
+#endif
     max_lines = -1;
     num_wrapped_lines_width = -1;
     num_dropped_blocks = 0;
@@ -181,6 +188,24 @@ static const NSInteger kUnicodeVersion = 9;
         }
     }
     return self;
+}
+
+// Sanity check that the cached number of wrapped lines is correct.
+- (void)sanityCheck {
+#if DEBUG
+    if (_deferSanityCheck) {
+        return;
+    }
+    int width = num_wrapped_lines_width;
+    if (width == -1) {
+        return;
+    }
+    int count = [_lineBlocks numberOfWrappedLinesForWidth:width];
+    if (count != num_wrapped_lines_cache) {
+        [_lineBlocks numberOfWrappedLinesForWidth:width];
+        ITAssertWithMessage(count == num_wrapped_lines_cache, @"Cached number of wrapped lines is incorrect");
+    }
+#endif
 }
 
 - (void)setMayHaveDoubleWidthCharacter:(BOOL)mayHaveDoubleWidthCharacter {
@@ -234,6 +259,14 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (int)dropExcessLinesWithWidth:(int)width {
+    _deferSanityCheck++;
+    const int result = [self reallyDropExcessLinesWithWidth:width];
+    _deferSanityCheck--;
+    [self sanityCheck];
+    return result;
+}
+
+- (int)reallyDropExcessLinesWithWidth:(int)width {
     self.dirty = YES;
     int nl = RawNumLines(self, width);
     int totalDropped = 0;
@@ -386,6 +419,18 @@ static int RawNumLines(LineBuffer* buffer, int width) {
              width:(int)width
           metadata:(iTermImmutableMetadata)metadataObj
       continuation:(screen_char_t)continuation {
+    _deferSanityCheck++;
+    [self reallyAppendLine:buffer length:length partial:partial width:width metadata:metadataObj continuation:continuation];
+    _deferSanityCheck--;
+    [self sanityCheck];
+}
+
+- (void)reallyAppendLine:(const screen_char_t *)buffer
+                  length:(int)length
+                 partial:(BOOL)partial
+                   width:(int)width
+                metadata:(iTermImmutableMetadata)metadataObj
+            continuation:(screen_char_t)continuation {
     self.dirty = YES;
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
@@ -1569,6 +1614,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     max_lines = savedMaxLines;
     num_wrapped_lines_cache = savedNumLines;
     num_wrapped_lines_width = savedNumLinesWidth;
+    [self sanityCheck];
     cursor_rawline = savedCursorRawline;
     droppedChars = savedDroppedChars;
     num_dropped_blocks = savedNumDroppedBlocks;
@@ -1597,6 +1643,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (id)copyWithZone:(NSZone *)zone {
     LineBuffer *theCopy = [[LineBuffer alloc] initWithBlockSize:block_size];
     theCopy->_lineBlocks = [_lineBlocks copy];
+    theCopy->_lineBlocks.delegate = theCopy;
     theCopy->cursor_x = cursor_x;
     theCopy->cursor_rawline = cursor_rawline;
     theCopy->max_lines = max_lines;
@@ -1605,6 +1652,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     theCopy->num_wrapped_lines_width = num_wrapped_lines_width;
     theCopy->droppedChars = droppedChars;
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
+    [theCopy sanityCheck];
 
     return theCopy;
 }
@@ -1728,6 +1776,13 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (void)mergeFrom:(LineBuffer *)source {
+    _deferSanityCheck++;
+    [self reallyMergeFrom:source];
+    _deferSanityCheck--;
+    [self sanityCheck];
+}
+
+- (void)reallyMergeFrom:(LineBuffer *)source {
     // State used when debugging
     NSSet<NSNumber *> *commonWidths = nil;
     NSString *before = nil;
@@ -1816,6 +1871,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
             DLog(@"Stage 4:\n%@", stage4);
         }
     }
+    [self sanityCheck];
 }
 
 - (BOOL)isEqual:(LineBuffer *)other {
@@ -1891,6 +1947,12 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         sum += size;
     }
     return sum;
+}
+
+#pragma mark - iTermLineBlockArrayDelegate
+
+- (void)lineBlockArrayDidChange:(iTermLineBlockArray *)lineBlockArray {
+    [self sanityCheck];
 }
 
 @end

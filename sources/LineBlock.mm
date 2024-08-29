@@ -188,14 +188,15 @@ static inline void ModifyLineBlock(LineBlock *self,
 @synthesize progenitor = _progenitor;
 @synthesize absoluteBlockNumber = _absoluteBlockNumber;
 
-static std::atomic<NSInteger> nextGeneration(0);
+static std::atomic<NSInteger> nextGeneration(1);
 
 NS_INLINE NSInteger iTermAllocateGeneration(void) {
     return nextGeneration.fetch_add(1, std::memory_order_relaxed);
 }
 
 NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock, const char * reason) {
-    lineBlock->_generation = iTermAllocateGeneration();
+    const NSInteger g = iTermAllocateGeneration();
+    lineBlock->_generation = g;
 }
 
 - (instancetype)initWithCharacterBuffer:(iTermCharacterBuffer *)characterBuffer 
