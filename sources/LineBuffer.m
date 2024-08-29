@@ -203,7 +203,7 @@ static const NSInteger kUnicodeVersion = 9;
     int count = [_lineBlocks numberOfWrappedLinesForWidth:width];
     if (count != num_wrapped_lines_cache) {
         [_lineBlocks numberOfWrappedLinesForWidth:width];
-        ITAssertWithMessage(count == num_wrapped_lines_cache, @"Cached number of wrapped lines is incorrect");
+         ITAssertWithMessage(count == num_wrapped_lines_cache, @"Cached number of wrapped lines is incorrect");
     }
 #endif
 }
@@ -1614,7 +1614,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     max_lines = savedMaxLines;
     num_wrapped_lines_cache = savedNumLines;
     num_wrapped_lines_width = savedNumLinesWidth;
-    [self sanityCheck];
     cursor_rawline = savedCursorRawline;
     droppedChars = savedDroppedChars;
     num_dropped_blocks = savedNumDroppedBlocks;
@@ -1631,6 +1630,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     if (gDebugLogging) {
         [_lineBlocks sanityCheck:droppedChars];
     }
+    [self sanityCheck];
 }
 
 
