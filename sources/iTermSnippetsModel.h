@@ -48,6 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)titleEqualsValueUpToLength:(NSInteger)maxLength;
 - (BOOL)matchesActionKey:(id)actionKey;
 - (BOOL)hasTags:(NSArray<NSString *> *)tags;
+- (NSComparisonResult)compareTitle:(iTermSnippet *)other;
 
 @end
 

@@ -182,6 +182,10 @@
     return YES;
 }
 
+- (NSComparisonResult)compareTitle:(iTermSnippet *)other {
+    return [self.title compare:other.title];
+}
+
 @end
 
 @implementation iTermSnippetsModel {

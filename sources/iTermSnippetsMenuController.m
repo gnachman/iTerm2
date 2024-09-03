@@ -8,6 +8,7 @@
 #import "iTermSnippetsMenuController.h"
 #import "iTermController.h"
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
 @implementation iTermSnippetsMenuController {
@@ -47,30 +48,7 @@
 }
 
 - (void)snippetsDidChange:(iTermSnippetsDidChangeNotification *)notification {
-    if ([self checkForTagsChange]) {
-        return;
-    }
-    if (_tags.count) {
-        [self reload];
-        return;
-    }
-    switch (notification.mutationType) {
-        case iTermSnippetsDidChangeMutationTypeEdit:
-            [self reloadIndex:notification.index];
-            break;
-        case iTermSnippetsDidChangeMutationTypeDeletion:
-            [self deleteIndexes:notification.indexSet];
-            break;
-        case iTermSnippetsDidChangeMutationTypeInsertion:
-            [self insertAtIndex:notification.index];
-            break;
-        case iTermSnippetsDidChangeMutationTypeMove:
-            [self moveIndexes:notification.indexSet to:notification.index];
-            break;
-        case iTermSnippetsDidChangeMutationTypeFullReplacement:
-            [self reload];
-            break;
-    }
+    [self reload];
 }
 
 - (void)reload {
@@ -78,13 +56,101 @@
     [self.menu addItemWithTitle:@"Press Option to Edit Before Sending" action:@selector(bogus) keyEquivalent:@""];
     [self.menu addItem:[NSMenuItem separatorItem]];
 
+    NSMutableArray *tagTree = [NSMutableArray array];
     _tags = [[iTermController sharedInstance] currentSnippetsFilter];
     [[[iTermSnippetsModel sharedInstance] snippets] enumerateObjectsUsingBlock:
      ^(iTermSnippet * _Nonnull snippet, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([snippet hasTags:_tags]) {
             [self add:snippet];
+            if (snippet.tags) {
+                [self addTags:snippet.tags snippet:snippet toTree:tagTree];
+            }
         }
     }];
+    if (tagTree.count) {
+        [self.menu addItem:[NSMenuItem separatorItem]];
+        [self addTree:tagTree toMenu:self.menu path:@[]];
+    }
+}
+
+- (void)addTree:(NSArray *)tree toMenu:(NSMenu *)menu path:(NSArray<NSString *> *)path {
+    NSArray *sortedNodes = [tree sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *lhs, NSDictionary *rhs) {
+        return [lhs[@"tag"] compare:rhs[@"tag"]];
+    }];
+    [sortedNodes enumerateObjectsUsingBlock:^(NSDictionary *node, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSString *name = node[@"tag"];
+        NSMutableArray *container = node[@"container"];
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:name action:nil keyEquivalent:@""];
+        [menu addItem:item];
+        item.submenu = [[NSMenu alloc] init];
+        if (container.count > 0) {
+            [self addTree:container toMenu:item.submenu path:[path arrayByAddingObject:name]];
+        }
+        NSArray<iTermSnippet *> *snippets = node[@"snippets"];
+        snippets = [snippets sortedArrayUsingSelector:@selector(compareTitle:)];
+        if (container.count > 0 && snippets.count > 0) {
+            [item.submenu addItem:[NSMenuItem separatorItem]];
+        }
+        [snippets enumerateObjectsUsingBlock:^(iTermSnippet *snippet, NSUInteger idx, BOOL * _Nonnull stop) {
+            [self addSnippet:snippet toMenu:item.submenu];
+        }];
+    }];
+}
+
+- (void)addSnippet:(iTermSnippet *)snippet toMenu:(NSMenu *)menu {
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:snippet.displayTitle
+                                                  action:@selector(sendSnippet:)
+                                           keyEquivalent:@""];
+    item.representedObject = snippet;
+    [menu addItem:item];
+}
+
+- (void)addTags:(NSArray<NSString *> *)tags snippet:(iTermSnippet *)snippet toTree:(NSMutableArray *)tree {
+    [tags enumerateObjectsUsingBlock:^(NSString * _Nonnull tag, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self addTagComponents:[tag componentsSeparatedByString:@"/"]
+                       snippet:snippet
+                        toTree:tree];
+    }];
+}
+
+- (id)nodeForFolderNamed:(NSString *)name {
+    return @{ @"tag": name, @"container": [NSMutableArray array] };
+}
+
+- (id)nodeForTagNamed:(NSString *)name snippet:(iTermSnippet *)snippet {
+    return @{ @"tag": name, @"snippets": @[snippet].mutableCopy, @"container": [NSMutableArray array] };
+}
+
+- (void)addTagComponents:(NSArray<NSString *> *)components
+                 snippet:(iTermSnippet *)snippet
+                  toTree:(NSMutableArray *)tree {
+    if (components.count == 1) {
+        NSDictionary *entry = [tree objectPassingTest:^BOOL(NSDictionary *element, NSUInteger index, BOOL *stop) {
+            return [element[@"tag"] isEqual:components[0]];
+        }];
+        if (entry) {
+            NSMutableArray *snippets = entry[@"snippets"];
+            [snippets addObject:snippet];
+        } else {
+            [tree addObject:[self nodeForTagNamed:components[0] snippet:snippet]];
+        }
+    } else {
+        NSString *folderName = components[0];
+        NSDictionary *child = [tree objectPassingTest:^BOOL(NSDictionary *element, NSUInteger index, BOOL *stop) {
+            return [element[@"tag"] isEqual:folderName];
+        }];
+        NSMutableArray *container;
+        id node = [self nodeForFolderNamed:folderName];
+        if (!child) {
+            [tree addObject:node];
+            container = node[@"container"];
+        } else {
+            container = child[@"container"];
+        }
+        [self addTagComponents:[components subarrayFromIndex:1] 
+                       snippet:snippet
+                        toTree:container];
+    }
 }
 
 - (IBAction)bogus {
@@ -103,38 +169,7 @@
 }
 
 - (void)add:(iTermSnippet *)snippet {
-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:snippet.displayTitle
-                                                  action:@selector(sendSnippet:)
-                                           keyEquivalent:@""];
-    item.representedObject = snippet;
-    [self.menu addItem:item];
-}
-
-- (void)reloadIndex:(NSInteger)index {
-    iTermSnippet *snippet = [[[iTermSnippetsModel sharedInstance] snippets] objectAtIndex:index];
-    NSMenuItem *item = [self.menu itemAtIndex:index];
-    item.title = snippet.title;
-    item.representedObject = snippet;
-}
-
-- (void)deleteIndexes:(NSIndexSet *)indexes {
-    [indexes enumerateIndexesWithOptions:NSEnumerationReverse usingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
-        [self.menu removeItemAtIndex:idx];
-    }];
-}
-
-- (void)insertAtIndex:(NSInteger)index {
-    NSMenuItem *item = [[NSMenuItem alloc] init];
-    item.action = @selector(sendSnippet:);
-    [self.menu insertItem:item atIndex:index];
-    [self reloadIndex:index];
-}
-
-- (void)moveIndexes:(NSIndexSet *)sourceIndexes to:(NSInteger)destinationIndex {
-    [self deleteIndexes:sourceIndexes];
-    for (NSInteger i = 0; i < sourceIndexes.count; i++) {
-        [self insertAtIndex:destinationIndex + i];
-    }
+    [self addSnippet:snippet toMenu:self.menu];
 }
 
 @end
