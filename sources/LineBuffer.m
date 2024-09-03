@@ -766,6 +766,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (void)removeLastRawLine {
+    _deferSanityCheck++;
     self.dirty = YES;
     [_lineBlocks.lastBlock removeLastRawLine];
     if (_lineBlocks.lastBlock.numRawLines == 0 && _lineBlocks.count > 1) {
@@ -773,6 +774,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
     // Invalidate the cache
     num_wrapped_lines_width = -1;
+    _deferSanityCheck--;
 }
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
@@ -818,10 +820,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (void)removeTrailingEmptyBlocks {
+    _deferSanityCheck++;
     while (_lineBlocks.count && _lineBlocks.lastBlock.isEmpty) {
         [_lineBlocks removeLastBlock];
         num_wrapped_lines_width = -1;
     }
+    _deferSanityCheck--;
 }
 
 - (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr
@@ -832,6 +836,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if ([self numLinesWithWidth:width] == 0) {
         return NO;
     }
+    _deferSanityCheck++;
     [self removeTrailingEmptyBlocks];
     self.dirty = YES;
     num_wrapped_lines_width = -1;
@@ -872,6 +877,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 #ifdef LOG_MUTATIONS
     NSLog(@"Pop: %@\n", ScreenCharArrayToStringDebug(ptr, width));
 #endif
+    _deferSanityCheck--;
     return YES;
 }
 
@@ -1691,6 +1697,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
     // Make a copy of the whole thing (cheap)
     LineBuffer *theCopy = [self copy];
+    theCopy->_deferSanityCheck++;
 
     // Remove the blocks we don't need.
     [theCopy->_lineBlocks removeFirstBlocks:numDroppedBlocks];
@@ -1699,6 +1706,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     theCopy->num_dropped_blocks += numDroppedBlocks;
     theCopy->num_wrapped_lines_width = -1;
     theCopy->droppedChars += [self numCharsInRangeOfBlocks:NSMakeRange(0, numDroppedBlocks)];
+    theCopy->_deferSanityCheck--;
 
     return theCopy;
 }
