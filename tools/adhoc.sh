@@ -20,7 +20,9 @@ function die {
 # - notarize -
 PRENOTARIZED_ZIP=iTerm2-${NAME}-prenotarized.zip
 zip -ry $PRENOTARIZED_ZIP iTerm.app
-xcrun notarytool info --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $UUID > /tmp/upload.out 2>&1 || die "Notarization failed"
+set -x
+xcrun notarytool submit --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1 || die "Notarization failed"
+cat /tmp/upload.out
 UUID=$(grep RequestUUID /tmp/upload.out | sed -e 's/RequestUUID = //')
 echo "uuid is $UUID"
 xcrun notarytool info --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $UUID
