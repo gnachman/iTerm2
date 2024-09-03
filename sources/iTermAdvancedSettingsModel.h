@@ -205,6 +205,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)logDrawingPerformance;
 + (BOOL)logRestorableStateSize;
 + (BOOL)logTimestampsWithPlainText;
++ (BOOL)logToSyslog;
 + (BOOL)lowFiCombiningMarks;
 + (BOOL)makeSomePowerlineSymbolsWide;
 + (int)maxURLLength;

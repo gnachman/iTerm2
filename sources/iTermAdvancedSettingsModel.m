@@ -555,6 +555,7 @@ DEFINE_BOOL(appendToExistingDebugLog, NO, SECTION_DEBUGGING @"Append to existing
 DEFINE_BOOL(logDrawingPerformance, NO, SECTION_DEBUGGING @"Log stats about text drawing performance to console.\nUsed for performance testing.");
 DEFINE_BOOL(logRestorableStateSize, NO, SECTION_DEBUGGING @"Log restorable state size info to /tmp/statesize.*.txt.");
 DEFINE_BOOL(showBlockBoundaries, NO, SECTION_DEBUGGING @"Show line buffer block boundaries (issue 6207)");
+DEFINE_BOOL(logToSyslog, NO, SECTION_DEBUGGING @"Debug logs also write to the system log.");
 
 #pragma mark - Session
 

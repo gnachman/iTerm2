@@ -15,6 +15,7 @@
 #import "NSView+RecursiveDescription.h"
 #import <Cocoa/Cocoa.h>
 
+#import <os/log.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -223,6 +224,14 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         } else {
             lastSlash++;
         }
+        if ([iTermAdvancedSettingsModel logToSyslog]) {
+            // Stream with:
+            // log stream --predicate 'eventMessage contains "iTerm2DebugLog"' --level=debug
+            NSString *message = [NSString stringWithFormat:@"%lld.%06lld %s:%d (%s): ",
+                                 (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
+            os_log_with_type(OS_LOG_DEFAULT, OS_LOG_TYPE_DEBUG, "iTerm2DebugLog: %{public}s", message.UTF8String);
+        }
+
         [gDebugLogStr appendFormat:@"%lld.%06lld %s:%d (%s): ",
             (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
         [gDebugLogStr appendString:value];
