@@ -32,6 +32,7 @@ class TextViewPorthole: NSObject {
         }
     }
     var changeLanguageCallback: ((String, TextViewPorthole) -> ())? = nil
+    fileprivate var needsUpdateColors = false
 
     struct VisualAttributes: Equatable {
         static func == (lhs: TextViewPorthole.VisualAttributes, rhs: TextViewPorthole.VisualAttributes) -> Bool {
@@ -468,8 +469,23 @@ extension TextViewPorthole: NSTextViewDelegate {
         return true
     }
 
-    func updateColors(useSelectedTextColor: Bool) {
+    func updateColors(useSelectedTextColor: Bool, deferUpdate: Bool) {
         config.useSelectedTextColor = useSelectedTextColor
+        if !deferUpdate {
+            reallyUpdateColors()
+            return
+        }
+        if needsUpdateColors {
+            return
+        }
+        needsUpdateColors = true
+        DispatchQueue.main.async { [weak self] in
+            self?.reallyUpdateColors()
+        }
+    }
+
+    private func reallyUpdateColors() {
+        needsUpdateColors = false
         let visualAttributes = VisualAttributes(colorMap: config.colorMap,
                                                 font: config.font)
         guard visualAttributes != savedVisualAttributes else {

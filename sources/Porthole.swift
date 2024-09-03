@@ -99,7 +99,7 @@ protocol ObjCPorthole: AnyObject {
     @objc var dictionaryValue: [String: AnyObject] { get }
     @objc func fit(toWidth width: CGFloat) -> CGFloat
     @objc func removeSelection()
-    @objc func updateColors(useSelectedTextColor: Bool)
+    @objc func updateColors(useSelectedTextColor: Bool, deferUpdate: Bool)
     @objc var savedLines: [ScreenCharArray] { get set }
     // Inset the view by this amount top and bottom.
     @objc var outerMargin: CGFloat { get }

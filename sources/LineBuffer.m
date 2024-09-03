@@ -618,6 +618,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (int)appendContentsOfLineBuffer:(LineBuffer *)other width:(int)width includingCursor:(BOOL)cursor {
+    _deferSanityCheck += 1;
     self.dirty = YES;
     int offset = 0;
     if (cursor) {
@@ -635,6 +636,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 
     num_wrapped_lines_width = -1;
+    _deferSanityCheck -= 1;
     return [self dropExcessLinesWithWidth:width];
 }
 

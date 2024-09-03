@@ -4473,7 +4473,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen setColorsFromDictionary:colorTable];
 
     if (didUseSelectedTextColor != willUseSelectedTextColor) {
-        [_textview updatePortholeColorsWithUseSelectedTextColor:willUseSelectedTextColor];
+        [_textview updatePortholeColorsWithUseSelectedTextColor:willUseSelectedTextColor
+                                                    deferUpdate:YES];
     }
     self.cursorGuideColor = [[iTermProfilePreferences objectForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark)
                                                          inProfile:aDict] colorValueForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark)];

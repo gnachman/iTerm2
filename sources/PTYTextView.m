@@ -4974,7 +4974,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         _drawingHelper.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
                                                                               towardsGrayLevel:0.5];
     }
-    [self updatePortholeColorsWithUseSelectedTextColor:[_delegate textViewShouldUseSelectedTextColor]];
+    [self updatePortholeColorsWithUseSelectedTextColor:[_delegate textViewShouldUseSelectedTextColor]
+                                           deferUpdate:YES];
     [self requestDelegateRedraw];
 }
 

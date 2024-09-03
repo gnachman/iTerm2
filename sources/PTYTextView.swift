@@ -338,10 +338,11 @@ extension PTYTextView: ExternalSearchResultsController {
 
 
     @objc
-    func updatePortholeColors(useSelectedTextColor: Bool) {
+    func updatePortholeColors(useSelectedTextColor: Bool, deferUpdate: Bool) {
         DLog("updatePortholeColors(useSelectedTextColor: \(useSelectedTextColor))")
         for porthole in typedPortholes {
-            porthole.updateColors(useSelectedTextColor: useSelectedTextColor)
+            porthole.updateColors(useSelectedTextColor: useSelectedTextColor,
+                                  deferUpdate: deferUpdate)
         }
     }
 
