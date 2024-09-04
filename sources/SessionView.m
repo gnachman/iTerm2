@@ -2241,6 +2241,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                         force:NO];
 }
 
+- (BOOL)findDriverBottomUpValidateMenuItem:(NSMenuItem *)menuItem {
+    return [self.delegate findDriverBottomUpValidateMenuItem:menuItem];
+}
+
+- (void)findDriverBottomUpPerformFindPanelAction:(id)sender {
+    [self.delegate findDriverBottomUpPerformFindPanelAction:sender];
+}
+
 - (void)findDriverFilterVisibilityDidChange:(BOOL)visible {
     [self.delegate findDriverFilterVisibilityDidChange:visible];
 }

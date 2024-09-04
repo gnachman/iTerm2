@@ -17,6 +17,7 @@
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PSMTabBarControl.h"
 
@@ -144,6 +145,17 @@
         }
     }
     [self updateSubviews];
+}
+
+- (void)performFindPanelAction:(id)sender {
+    [self.driver bottomUpPerformFindPanelAction:sender];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if ([self.driver bottomUpValidateMenuItem:menuItem]) {
+        return YES;
+    }
+    return [super validateMenuItem:menuItem];
 }
 
 #pragma mark - iTermFindViewController

@@ -66,6 +66,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)findDriverSetFilter:(NSString *)filter withSideEffects:(BOOL)withSideEffects;
 - (void)findDriverInvalidateFrame;
 - (void)findDriverFilterVisibilityDidChange:(BOOL)visible;
+- (void)findDriverBottomUpPerformFindPanelAction:(id)sender;
+- (BOOL)findDriverBottomUpValidateMenuItem:(NSMenuItem *)menuItem;
 
 @end
 
@@ -119,5 +121,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)filterVisibilityDidChange;
 - (void)setFilterProgress:(double)progress;
 - (void)highlightWithoutSelectingSearchResultsForQuery:(NSString *)string;
+- (void)bottomUpPerformFindPanelAction:(id)sender;
+- (BOOL)bottomUpValidateMenuItem:(NSMenuItem *)menuItem;
 
 @end

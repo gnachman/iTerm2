@@ -6721,6 +6721,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     _statusBarViewController.filterViewController.filterProgress = progress;
 }
 
+- (void)findDriverBottomUpPerformFindPanelAction:(id)sender {
+    [_textview performFindPanelAction:sender];
+}
+
+- (BOOL)findDriverBottomUpValidateMenuItem:(NSMenuItem *)menuItem {
+    return [_textview validateMenuItem:menuItem];
+}
+
 - (void)findDriverFilterVisibilityDidChange:(BOOL)visible {
     if (!visible) {
         [_asyncFilter cancel];

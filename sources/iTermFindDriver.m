@@ -232,6 +232,14 @@ static NSString *gSearchString;
                   force:YES];
 }
 
+- (void)bottomUpPerformFindPanelAction:(id)sender {
+    [self.delegate findDriverBottomUpPerformFindPanelAction:sender];
+}
+
+- (BOOL)bottomUpValidateMenuItem:(NSMenuItem *)menuItem {
+    return [self.delegate findDriverBottomUpValidateMenuItem:menuItem];
+}
+
 - (BOOL)shouldSearchAutomatically {
     return [_viewController shouldSearchAutomatically];
 }
