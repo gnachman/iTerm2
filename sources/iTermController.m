@@ -500,8 +500,15 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
 - (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name {
     if (allWindows) {
-        NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
-        for (PseudoTerminal *terminal in _terminalWindows) {
+        NSArray<PseudoTerminal *> *sortedTerminalWindows = [_terminalWindows sortedArrayUsingComparator:^NSComparisonResult(PseudoTerminal *lhs, PseudoTerminal *rhs) {
+            if (lhs.number == rhs.number) {
+                // I don't believe this is reachable
+                return [lhs.terminalGuid compare:rhs.terminalGuid];
+            }
+            return [@(lhs.number) compare:@(rhs.number)];
+        }];
+        NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[sortedTerminalWindows count]];
+        for (PseudoTerminal *terminal in sortedTerminalWindows) {
             NSDictionary *arrangement = [terminal arrangement];
             if (arrangement) {
                 [terminalArrangements addObject:arrangement];
