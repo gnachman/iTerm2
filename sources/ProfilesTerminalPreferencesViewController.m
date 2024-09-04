@@ -29,6 +29,7 @@
     IBOutlet NSButton *_xtermMouseReportingAllowMouseWheel;
     IBOutlet NSButton *_xtermMouseReportingAllowClicksAndDrags;
     IBOutlet NSButton *_allowTitleReporting;
+    IBOutlet NSButton *_allowAlternateMouseScroll;
     IBOutlet NSButton *_allowPasteBracketing;
     IBOutlet NSButton *_disablePrinting;
     IBOutlet NSButton *_disableAltScreen;
@@ -153,6 +154,11 @@
 
     [self defineControl:_allowTitleReporting
                     key:KEY_ALLOW_TITLE_REPORTING
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_allowAlternateMouseScroll
+                    key:KEY_ALLOW_ALTERNATE_MOUSE_SCROLL
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

@@ -1511,6 +1511,10 @@
     return [iTermAdvancedSettingsModel focusReportingEnabled];
 }
 
+- (BOOL)terminalAllowAlternateMouseScroll {
+    return self.allowAlternateMouseScroll;
+}
+
 - (BOOL)terminalCursorVisible {
     DLog(@"begin");
     return self.cursorVisible;

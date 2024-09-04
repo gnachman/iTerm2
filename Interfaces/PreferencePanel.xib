@@ -1537,6 +1537,7 @@ DQ
         </customObject>
         <customObject id="gMD-DK-gev" userLabel="Prefs&gt;Profiles&gt;Terminal View Controller" customClass="ProfilesTerminalPreferencesViewController">
             <connections>
+                <outlet property="_allowAlternateMouseScroll" destination="3PU-hM-DSB" id="Ojl-xt-rgO"/>
                 <outlet property="_allowCursorBlinkControlSequence" destination="fwC-LQ-VKF" id="lB8-tL-ypZ"/>
                 <outlet property="_allowPasteBracketing" destination="4Ha-Ub-4AS" id="0m4-El-bQ1"/>
                 <outlet property="_allowTitleReporting" destination="6387" id="ET9-YF-B1M"/>
@@ -3548,7 +3549,7 @@ DQ
             <point key="canvasLocation" x="-902.5" y="518"/>
         </customView>
         <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="578" height="635"/>
+            <rect key="frame" x="0.0" y="0.0" width="592" height="635"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2390">
@@ -3930,7 +3931,7 @@ DQ
                     </connections>
                 </button>
                 <button toolTip="Allow control sequences to enable or disable cursor blink?" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fwC-LQ-VKF">
-                    <rect key="frame" x="20" y="291" width="229" height="18"/>
+                    <rect key="frame" x="20" y="293" width="229" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Terminal may change cursor blink" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="akw-8K-q2d">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4002,9 +4003,21 @@ DQ
                         <action selector="shellIntegrationRequired:" target="gMD-DK-gev" id="0OZ-Kp-OYl"/>
                     </connections>
                 </button>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3PU-hM-DSB">
+                    <rect key="frame" x="284" y="293" width="288" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">Alternate Mouse Scroll is a feature that sends arrow keys in response to scroll wheel/scroll gestures. It is toggled by a control sequence.</string>
+                    <buttonCell key="cell" type="check" title="Terminal may enable alternate mouse scroll" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="dW7-gR-D6W">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="KCZ-dn-NO5"/>
+                    </connections>
+                </button>
             </subviews>
             <accessibility identifier="prefsProfilesTerminal"/>
-            <point key="canvasLocation" x="90" y="-861.5"/>
+            <point key="canvasLocation" x="97" y="-861.5"/>
         </customView>
         <customView id="ayN-Cl-pQs" userLabel="Prefs - Profiles - Session" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="486"/>
@@ -4015,7 +4028,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>

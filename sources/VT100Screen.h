@@ -58,6 +58,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, assign) BOOL postUserNotifications;
 @property(nonatomic, assign) BOOL cursorBlinks;
 @property(nonatomic, assign) BOOL allowTitleReporting;
+@property(nonatomic, assign) BOOL allowAlternateMouseScroll;
 @property(nonatomic, readonly) unsigned int maxScrollbackLines;
 @property(nonatomic, readonly) BOOL unlimitedScrollback;
 @property(nonatomic, readonly) BOOL useColumnScrollRegion;

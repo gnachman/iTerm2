@@ -70,6 +70,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 
 // OK to report window title?
 @property (nonatomic, readonly) BOOL allowTitleReporting;
+@property (nonatomic, readonly) BOOL allowAlternateMouseScroll;
 
 @property (nonatomic, readonly) NSTimeInterval lastBell;
 
@@ -210,6 +211,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 @property (nonatomic, readwrite) BOOL collectInputForPrinting;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *printBuffer;
 @property (nonatomic, readwrite) BOOL allowTitleReporting;
+@property (nonatomic, readwrite) BOOL allowAlternateMouseScroll;
 @property (nonatomic, readwrite) NSTimeInterval lastBell;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *pasteboardString;
 @property (nonatomic, strong, readwrite) id<IntervalTreeReading> intervalTree;

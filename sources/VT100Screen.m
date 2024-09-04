@@ -1753,6 +1753,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     _mutableState.allowTitleReporting = allowTitleReporting;
 }
 
+- (void)setAllowAlternateMouseScroll:(BOOL)allowAlternateMouseScroll {
+    _mutableState.allowAlternateMouseScroll = allowAlternateMouseScroll;
+}
+
+- (BOOL)allowAlternateMouseScroll {
+    return _state.allowAlternateMouseScroll;
+}
+
 - (NSIndexSet *)animatedLines {
     return _animatedLines;
 }

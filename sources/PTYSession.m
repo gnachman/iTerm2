@@ -4657,6 +4657,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                              inProfile:aDict]];
     [_screen setAllowTitleReporting:[iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING
                                                               inProfile:aDict]];
+    [_screen setAllowAlternateMouseScroll:[iTermProfilePreferences boolForKey:KEY_ALLOW_ALTERNATE_MOUSE_SCROLL
+                                                                    inProfile:aDict]];
     const BOOL didAllowPasteBracketing = _screen.terminalAllowPasteBracketing;
     [terminal setAllowPasteBracketing:[iTermProfilePreferences boolForKey:KEY_ALLOW_PASTE_BRACKETING
                                                                 inProfile:aDict]];

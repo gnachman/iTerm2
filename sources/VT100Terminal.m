@@ -959,7 +959,9 @@ static const int kMaxScreenRows = 4096;
                 break;
 
             case 1007:
-                self.alternateScrollMode = mode;
+                if (!mode || [self.delegate terminalAllowAlternateMouseScroll]) {
+                    self.alternateScrollMode = mode;
+                }
                 break;
 
             case 1015:

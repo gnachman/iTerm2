@@ -439,6 +439,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 - (BOOL)terminalFocusReportingAllowed;
 - (BOOL)terminalCursorVisible;
+- (BOOL)terminalAllowAlternateMouseScroll;
 
 - (BOOL)terminalIsTrusted;
 - (BOOL)terminalCanUseDECRQCRA;

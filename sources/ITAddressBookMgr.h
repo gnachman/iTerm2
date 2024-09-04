@@ -192,6 +192,7 @@
 #define KEY_UNICODE_VERSION                   @"Unicode Version"
 #define KEY_DISABLE_SMCUP_RMCUP               @"Disable Smcup Rmcup"
 #define KEY_ALLOW_TITLE_REPORTING             @"Allow Title Reporting"
+#define KEY_ALLOW_ALTERNATE_MOUSE_SCROLL      @"Allow Alternate Mouse Scroll"
 #define KEY_ALLOW_PASTE_BRACKETING            @"Allow Paste Bracketing"
 #define KEY_ALLOW_TITLE_SETTING               @"Allow Title Setting"
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
