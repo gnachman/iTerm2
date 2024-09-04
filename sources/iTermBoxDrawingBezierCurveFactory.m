@@ -82,6 +82,8 @@
             0xe0d1,
             0xe0d2,
             0xe0d4,
+            0xe0d6,
+            0xe0d7
         };
         for (size_t i = 0; i < sizeof(chars) / sizeof(*chars); i++) {
             [temp addCharactersInRange:NSMakeRange(chars[i], 1)];
@@ -106,24 +108,18 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
     }
     return @{ @(0xE0A3): @[@"uniE0A3_column-number", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0B0): @[@"uniE0B0_Powerline_normal-left", 
-                           @(iTermPowerlineDrawingOptionsNone |
-                           iTermPowerlineDrawingOptionsFullBleedLeft)],
+                           @(iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0B2): @[@"uniE0B2_Powerline_normal-right", 
-                           @(iTermPowerlineDrawingOptionsNone |
-                           iTermPowerlineDrawingOptionsFullBleedRight)],
+                           @(iTermPowerlineDrawingOptionsFullBleedRight)],
               @(0xE0B4): @[@"uniE0B4_right-half-circle-thick", 
-                           @(iTermPowerlineDrawingOptionsNone |
-                           iTermPowerlineDrawingOptionsFullBleedLeft)],
+                           @(iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0B5): @[@"uniE0B5_right-half-circle-thin", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0B6): @[@"uniE0B6_left-half-circle-thick", @(
-                           iTermPowerlineDrawingOptionsNone |
                            iTermPowerlineDrawingOptionsFullBleedRight)],
               @(0xE0B7): @[@"uniE0B7_left-half-circle-thin", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0B8): @[@"uniE0B8_lower-left-triangle", 
-                           @(iTermPowerlineDrawingOptionsNone |
-                           iTermPowerlineDrawingOptionsFullBleedLeft)],
+                           @(iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0C0): @[@"uniE0C0_flame-thick", @(
-                           iTermPowerlineDrawingOptionsNone |
                            iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0C1): @[@"uniE0C1_flame-thin", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0C2): @[@"uniE0C0_flame-thick", @(
@@ -133,7 +129,6 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
               @(0xE0CE): @[@"uniE0CE_lego_separator", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0CF): @[@"uniE0CF_lego_separator_thin", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0D1): @[@"uniE0D1_lego_block_sideways", @(
-                           iTermPowerlineDrawingOptionsNone |
                            iTermPowerlineDrawingOptionsFullBleedLeft)],
 
               // These were exported to PDF using FontForge
@@ -142,10 +137,8 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
               @(0xE0C6): @[@"uniE0C6_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0C7): @[@"uniE0C6_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsMirrored)],
               @(0xE0C8): @[@"uniE0C8_PowerlineExtraSymbols", 
-                           @(iTermPowerlineDrawingOptionsNone |
-                           iTermPowerlineDrawingOptionsFullBleedLeft)],
+                           @(iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0C9): @[@"uniE0C9_PowerlineExtraSymbols", @(
-                           iTermPowerlineDrawingOptionsNone |
                            iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0CA): @[@"uniE0C8_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsMirrored)],
               @(0xE0CB): @[@"uniE0C9_PowerlineExtraSymbols", @(
@@ -159,6 +152,10 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
               @(0xE0D4): @[@"uniE0D2_PowerlineExtraSymbols", @(
                            iTermPowerlineDrawingOptionsHalfWidth |
                            iTermPowerlineDrawingOptionsMirrored)],
+              @(0xE0D6): @[@"uniE0D6_Powerline_normal-right-inverse-cutout", @(
+                           iTermPowerlineDrawingOptionsFullBleedLeft)],
+              @(0xE0D7): @[@"uniE0D7_Powerline_normal-left-inverse-cutout", @(
+                           iTermPowerlineDrawingOptionsFullBleedRight)],
     };
 }
 
