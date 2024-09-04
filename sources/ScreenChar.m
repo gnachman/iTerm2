@@ -463,7 +463,9 @@ void StringToScreenChars(NSString *s,
     __block BOOL foundCursor = NO;
     NSCharacterSet *ignorableCharacters = [NSCharacterSet ignorableCharactersForUnicodeVersion:unicodeVersion];
     NSCharacterSet *spacingCombiningMarks = [NSCharacterSet spacingCombiningMarksForUnicodeVersion:12];
+    NSCharacterSet *modifierCharactersForcingFullWidthRendition = [NSCharacterSet modifierCharactersForcingFullWidthRendition];
     const BOOL shouldSupportVS16 = [iTermAdvancedSettingsModel vs16Supported] || (!softAlternateScreenMode && [iTermAdvancedSettingsModel vs16SupportedInPrimaryScreen]);
+    NSCharacterSet *emojiAcceptingVS16 = [NSCharacterSet emojiAcceptingVS16];
     const BOOL fullWidthFlags = [iTermAdvancedSettingsModel fullWidthFlags];
 
     [s enumerateComposedCharacters:^(NSRange range,
@@ -556,20 +558,17 @@ void StringToScreenChars(NSString *s,
                     }
                 }
             }
-
             if (!disambiguated) {
                 isDoubleWidth = [NSString isDoubleWidthCharacter:baseChar
                                           ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
                                                   unicodeVersion:unicodeVersion
                                                   fullWidthFlags:fullWidthFlags];
-                if (!isDoubleWidth && composedLength > next) {
-                    const unichar peek = [composedOrNonBmpChar characterAtIndex:next];
-                    if (peek == 0xfe0f) {
-                        // VS16
-                        if ([[NSCharacterSet emojiAcceptingVS16] longCharacterIsMember:baseChar] && shouldSupportVS16) {
-                            isDoubleWidth = YES;
-                        }
-                    }
+                if (!isDoubleWidth &&
+                    shouldSupportVS16 &&
+                    [emojiAcceptingVS16 longCharacterIsMember:baseChar] &&
+                    [composedOrNonBmpChar rangeOfCharacterFromSet:modifierCharactersForcingFullWidthRendition].location != NSNotFound) {
+                    isDoubleWidth = YES;
+                    disambiguated = YES;
                 }
             }
         }

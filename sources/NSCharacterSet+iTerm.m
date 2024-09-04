@@ -2497,6 +2497,21 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
     return emojiPresentation;
 }
 
++ (NSCharacterSet *)modifierCharactersForcingFullWidthRendition {
+    static NSMutableCharacterSet *characters;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        characters = [[NSMutableCharacterSet alloc] init];
+        // From TR51. The presence of any of these characters as a modifier is sufficient to imply
+        // emoji presentation.
+        // VS16
+        [characters addCharactersInRange:NSMakeRange(0xfe0f, 1)];
+        // Skintone Modifiers
+        [characters addCharactersInRange:NSMakeRange(0x1f3fb, 5)];
+    });
+    return characters;
+}
+
 + (instancetype)emojiAcceptingVS16 {
     static dispatch_once_t onceToken;
     static NSMutableCharacterSet *emoji;

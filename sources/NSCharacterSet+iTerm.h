@@ -37,5 +37,6 @@ extern unichar iTermMinimumDefaultEmojiPresentationCodePoint;
 + (NSCharacterSet *)emojiWithDefaultEmojiPresentation;
 + (NSCharacterSet *)emojiWithDefaultTextPresentation;
 + (NSCharacterSet *)flagCharactersForUnicodeVersion:(NSInteger)version;
++ (NSCharacterSet *)modifierCharactersForcingFullWidthRendition;
 
 @end
