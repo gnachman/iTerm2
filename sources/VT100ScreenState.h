@@ -149,6 +149,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 @property (nonatomic, weak, readonly) id<iTermIntervalTreeObserver> intervalTreeObserver;
 // Note that the ivar for lastCommandMark *is* mutable because it is used as a cache.
 @property (nullable, nonatomic, strong, readonly) id<VT100ScreenMarkReading> lastCommandMark;
+@property (nullable, nonatomic, strong, readonly) id<VT100ScreenMarkReading> penultimateCommandMark;
 @property (nonatomic, strong, readonly) id<iTermColorMapReading> colorMap;
 @property (nonatomic, strong, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
 
@@ -198,7 +199,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 @property (nonatomic, readonly) iTermMutableArrayOfWeakObjects *namedMarks;
 @property (nonatomic, readonly, copy) NSDictionary<NSString *, NSNumber *> *blockStartAbsLine;
 @property (nonatomic, readonly) NSInteger blocksGeneration;
-@property (nonatomic, readonly) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
+@property (nonatomic, readonly, copy) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
 
 @end
 

@@ -119,6 +119,7 @@
 - (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
                                       range:(out VT100GridWindowedRange *)range;
 - (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval;
+- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
 

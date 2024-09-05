@@ -1039,6 +1039,13 @@ static NSString *const kIntervalLengthKey = @"Length";
     return [self objectsWithSmallestLimitAfter:limit fromNode:_tree.root];
 }
 
+- (NSEnumerator *)reverseEnumerator {
+    IntervalTreeReverseEnumerator *enumerator =
+        [[[IntervalTreeReverseEnumerator alloc] initWithTree:self] autorelease];
+    enumerator.previousLocation = INT64_MAX;
+    return enumerator;
+}
+
 - (NSEnumerator *)reverseEnumeratorAt:(long long)start {
     assert(start >= 0);
     IntervalTreeReverseEnumerator *enumerator =
@@ -1249,6 +1256,10 @@ static NSString *const kIntervalLengthKey = @"Length";
     return [[_source objectsWithSmallestLimitAfter:limit] mapWithBlock:^id(id<IntervalTreeImmutableObject> anObject) {
         return [anObject doppelganger];
     }];
+}
+
+- (NSEnumerator<IntervalTreeImmutableObject> *)reverseEnumerator {
+    return [IntervalTreeSanitizingEnumerator<IntervalTreeImmutableObject> with:[_source reverseEnumerator]];
 }
 
 - (NSEnumerator<IntervalTreeImmutableObject> *)reverseEnumeratorAt:(long long)start {

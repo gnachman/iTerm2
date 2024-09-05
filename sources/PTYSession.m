@@ -15904,7 +15904,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self.view updateTrackingAreas];
 }
 
-- (BOOL)textViewShouldShowOffscreenCommandLine {
+- (BOOL)textViewShouldShowOffscreenCommandLineAt:(int)location {
     if (_screen.height < 5) {
         return NO;
     }
@@ -15915,8 +15915,26 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         // Would overlap cursor.
         return NO;
     }
-
-    return [iTermProfilePreferences boolForKey:KEY_SHOW_OFFSCREEN_COMMANDLINE inProfile:self.profile];
+    if (![iTermProfilePreferences boolForKey:KEY_SHOW_OFFSCREEN_COMMANDLINE inProfile:self.profile]) {
+        return NO;
+    }
+    iTermOffscreenCommandLine *ocl = [_screen offscreenCommandLineBefore:location];
+    if (!ocl || !ocl.mark) {
+        return NO;
+    }
+    // See issue 11818.
+    // Don't show an offscreen command line over output of clear;command.
+    id<VT100ScreenMarkReading> lastCommandMark = _screen.lastCommandMark;
+    if (ocl.mark ==  lastCommandMark ||
+        (ocl.mark == _screen.penultimateCommandMark &&
+         lastCommandMark.isRunning == NO &&
+         lastCommandMark.endDate == nil)) {
+        const VT100GridCoordRange commandRange = [_screen coordRangeForInterval:ocl.mark.entry.interval];
+        if (commandRange.end.y + 1 == location) {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 - (BOOL)textViewShouldUseSelectedTextColor {

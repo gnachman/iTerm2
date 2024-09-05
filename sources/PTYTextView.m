@@ -876,13 +876,14 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (NSRange)visibleAbsoluteRangeIncludingOffscreenCommandLineIfVisible:(BOOL)includeOffscreenCommandLine {
-    NSRange range = [self visibleRelativeRange];
+    const NSRange relativeRange = [self visibleRelativeRange];
+    NSRange range = relativeRange;
     range.location += _dataSource.totalScrollbackOverflow;
     if (includeOffscreenCommandLine) {
         return range;
     }
     const int topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    if (![_delegate textViewShouldShowOffscreenCommandLine]) {
+    if (![_delegate textViewShouldShowOffscreenCommandLineAt:relativeRange.location]) {
         return range;
     }
     if (self.enclosingScrollView.contentView.bounds.origin.y <= topBottomMargin) {
@@ -1597,7 +1598,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
     const VT100GridRange range = [self rangeOfVisibleLines];
     const int topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    if ([_delegate textViewShouldShowOffscreenCommandLine] && self.enclosingScrollView.contentView.bounds.origin.y > topBottomMargin) {
+    if ([_delegate textViewShouldShowOffscreenCommandLineAt:range.location] &&
+        self.enclosingScrollView.contentView.bounds.origin.y > topBottomMargin) {
         _drawingHelper.offscreenCommandLine = [self.dataSource offscreenCommandLineBefore:range.location];
     } else {
         _drawingHelper.offscreenCommandLine = nil;

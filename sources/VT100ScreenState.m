@@ -888,6 +888,27 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return [VT100ScreenMark castFrom:self.markCache[self.cumulativeScrollbackOverflow + line]];
 }
 
+- (id<VT100ScreenMarkReading>)penultimateCommandMark {
+    int skip = 1;
+    for (NSArray *objects in [self.intervalTree reverseEnumerator]) {
+        id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+            if (![element conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+                return NO;
+            }
+            id<VT100ScreenMarkReading> temp = element;
+            return temp.isPrompt;
+        }];
+        if (mark) {
+            if (skip == 0) {
+                return mark;
+            } else {
+                skip -= 1;
+            }
+        }
+    }
+    return nil;
+}
+
 - (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line {
     const int width = self.width;
     long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(width - 1,

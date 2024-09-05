@@ -1020,6 +1020,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return NO;
 }
 
+- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
+    return [_state coordRangeForInterval:interval];
+}
+
 - (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval {
     return [_state absCoordRangeForInterval:interval];
 }
@@ -1064,6 +1068,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (id<VT100ScreenMarkReading>)lastCommandMark {
     return [_state lastCommandMark];
+}
+
+- (id<VT100ScreenMarkReading>)penultimateCommandMark {
+    return [_state penultimateCommandMark];
 }
 
 - (void)saveFindContextAbsPos {

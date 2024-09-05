@@ -89,6 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Enumerates backwards by location (NOT LIMIT)
 - (NSEnumerator<IntervalTreeImmutableObject> *)reverseEnumeratorAt:(long long)start;
+- (NSEnumerator<IntervalTreeImmutableObject> *)reverseEnumerator;
 
 - (NSEnumerator<IntervalTreeImmutableObject> *)reverseLimitEnumeratorAt:(long long)start;
 - (NSEnumerator<IntervalTreeImmutableObject> *)forwardLocationEnumeratorAt:(long long)start;

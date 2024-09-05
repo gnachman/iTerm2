@@ -282,7 +282,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (NSString *)textViewNaturalLanguageQuery;
 - (void)textViewPerformNaturalLanguageQuery;
 - (void)textViewUpdateTrackingAreas;
-- (BOOL)textViewShouldShowOffscreenCommandLine;
+- (BOOL)textViewShouldShowOffscreenCommandLineAt:(int)location;
 - (BOOL)textViewShouldUseSelectedTextColor;
 - (void)textViewOpenComposer:(NSString *)string;
 - (BOOL)textViewIsAutoComposerOpen;
