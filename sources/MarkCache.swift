@@ -46,7 +46,7 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
         self.dict = dict.mapValues({ value in
             value.doppelganger() as! iTermMarkProtocol
         })
-        for value in dict.values {
+        for value in self.dict.values {
             if let location = value.entry?.interval.location {
                 value.cachedLocation = location
                 sorted.insert(object: value, location: location)
