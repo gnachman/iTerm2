@@ -3103,9 +3103,6 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     BOOL lastCharacterImpartsEmojiPresentation = NO;
     iTermExternalAttribute *prevEa = nil;
     iTermKittyUnicodePlaceholderState kittyPlaceholderState;
-    VT100GridCoord previousKittyImageCoord = VT100GridCoordMake(-1, -1);
-    int previousImageMSB = -1;
-
     iTermKittyUnicodePlaceholderStateInit(&kittyPlaceholderState);
 
     // Only defined if not preferring speed to full ligature support.
