@@ -377,6 +377,19 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     [self launchTaskWithPath:xedPath arguments:args completion:nil];
 }
 
+- (void)openDocumentInCursor:(NSString *)path line:(NSString *)line column:(NSString *)column {
+    NSURLComponents *components = [[NSURLComponents alloc] init];
+    components.scheme = @"cursor";
+    components.host = @"file";
+    NSString *pathWithLine = path;
+    NSArray<NSString *> *parts = [@[ path, 
+                                     line ?: [NSNull null],
+                                     (line != nil && column != nil) ? column : [NSNull null] ] arrayByRemovingNulls];
+    components.path = [parts componentsJoinedByString:@":"];
+
+    [self openURL:components.URL editorIdentifier:kCursorAppIdentifier];
+}
+
 + (NSArray *)bundleIdsThatSupportOpeningToLineNumber {
     return @[ kAtomIdentifier,
               kVSCodeIdentifier,
@@ -397,6 +410,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kRiderIdentifier,
               kNovaAppIdentifier,
               kXcodeAppIdentifier,
+              kCursorAppIdentifier,
     ];
 }
 
@@ -474,6 +488,10 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
     if ([identifier isEqualToString:kXcodeAppIdentifier]) {
         [self openDocumentInXcode:path line:lineNumber];
+        return;
+    }
+    if ([identifier isEqualToString:kCursorAppIdentifier]) {
+        [self openDocumentInCursor:path line:lineNumber column:columnNumber];
         return;
     }
     // WebStorm doesn't actually support --line, but it's harmless to try.
