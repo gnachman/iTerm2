@@ -347,10 +347,9 @@ typedef enum {
                                        NSEventModifierFlagControl);
     const NSEventModifierFlags flags = event.it_modifierFlags & mask;
     const BOOL control = !!(flags & NSEventModifierFlagControl);
-    const BOOL meta = !!(flags & NSEventModifierFlagOption);
     const BOOL shift = !!(flags & NSEventModifierFlagShift);
-    DLog(@"control=%@ meta=%@ shift=%@", @(control), @(meta), @(shift));
-    if (control || shift || meta) {
+    DLog(@"control=%@ shift=%@", @(control), @(shift));
+    if (control || shift) {
         return YES;
     }
     return NO;
