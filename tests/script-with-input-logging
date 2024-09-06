@@ -14,14 +14,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', dest='append', action='store_true')
     parser.add_argument('-p', dest='use_python', action='store_true')
-    parser.add_argument('filename', nargs='?', default='typescript')
+    parser.add_argument('filename', nargs='?', default='/tmp/stdout.txt')
     options = parser.parse_args()
 
     shell = sys.executable if options.use_python else os.environ.get('SHELL', 'sh')
     filename = options.filename
     mode = 'ab' if options.append else 'wb'
 
-    with open("/tmp/keys.txt", mode) as log:
+    with open("/tmp/stdin.txt", mode) as log:
         with open(filename, mode) as script:
             master_fd, slave_fd = pty.openpty()
             pid = os.fork()
