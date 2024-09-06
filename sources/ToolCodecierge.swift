@@ -1326,28 +1326,43 @@ class OpenAIMetadata: NSObject {
         var name: String
         var contextWindowTokens: Int
         var maxResponseTokens: Int?
+        var url: String?
     }
 
     private let models = [
         Model(name: "gpt-4o",
               contextWindowTokens: 128_000,
-              maxResponseTokens: 4096),
+              maxResponseTokens: 4096,
+              url: "https://api.openai.com/v1/completions"),
         Model(name: "gpt-4o-mini",
               contextWindowTokens: 128000,
-              maxResponseTokens: 16384),
+              maxResponseTokens: 16384,
+              url: "https://api.openai.com/v1/completions"),
         Model(name: "gpt-4",
-              contextWindowTokens: 8192),
+              contextWindowTokens: 8192,
+              url: "https://api.openai.com/v1/completions"),
         Model(name: "gpt-4-turbo",
               contextWindowTokens: 128000,
-              maxResponseTokens: 4096),
+              maxResponseTokens: 4096,
+              url: "https://api.openai.com/v1/completions"),
         Model(name: "gpt-3.5-turbo",
               contextWindowTokens: 16384,
-              maxResponseTokens: 4096),
+              maxResponseTokens: 4096,
+              url: "https://api.openai.com/v1/completions"),
+
+        Model(name: "llama2:latest",
+             contextWindowTokens: 4_096,
+             maxResponseTokens: 4_096,
+              url: "http://localhost:11434/v1/chat/completions"),
+        Model(name: "llama3:latest",
+             contextWindowTokens: 8_192,
+             maxResponseTokens: 8_192,
+              url: "http://localhost:11434/v1/chat/completions")
         ]
 
-    @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int) -> ()) {
+    @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int, String?) -> ()) {
         for model in models {
-            closure(model.name, model.contextWindowTokens)
+            closure(model.name, model.contextWindowTokens, model.url)
         }
     }
 
@@ -1356,6 +1371,11 @@ class OpenAIMetadata: NSObject {
             return NSNumber(value: model.contextWindowTokens)
         }
         return nil
+    }
+
+    @objc(urlForModelName:)
+    func objc_url(modelName: String) -> String? {
+        return models.first(where: { $0.name == modelName })?.url
     }
 
     func maxResponseTokens(modelName: String) -> Int? {

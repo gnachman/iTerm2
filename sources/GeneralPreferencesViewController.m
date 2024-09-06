@@ -675,7 +675,7 @@ enum {
         [weakSelf updateAIPromptWarning];
     };
 
-    [OpenAIMetadata.instance enumerateModels:^(NSString * _Nonnull name, NSInteger context) {
+    [OpenAIMetadata.instance enumerateModels:^(NSString * _Nonnull name, NSInteger context, NSString *url) {
         [_aiModel addItemWithObjectValue:name];
     }];
 
@@ -683,21 +683,21 @@ enum {
                                                      key:kPreferenceKeyAITokenLimit
                                              relatedView:_aiTokenLimitLabel
                                                     type:kPreferenceInfoTypeIntegerTextField];
+    PreferenceInfo *urlInfo = [self defineControl:_customAIEndpoint
+                           key:kPreferenceKeyAITermURL
+                   relatedView:nil
+                          type:kPreferenceInfoTypeStringTextField];
+    urlInfo.onUpdate = ^BOOL{
+        [weakSelf updateEnabledState];
+        return NO;
+    };
+
     info = [self defineControl:_aiModel
                            key:kPreferenceKeyAIModel
                    relatedView:_aiModelLabel
                           type:kPreferenceInfoTypeStringTextField];
     info.onChange = ^{
-        NSString *model = [weakSelf stringForKey:kPreferenceKeyAIModel];
-        if (!model) {
-            return;
-        }
-        NSNumber *tokens = [OpenAIMetadata.instance contextWindowTokensForModelName:model];
-        if (!tokens) {
-            return;
-        }
-        [weakSelf setObject:tokens forKey:kPreferenceKeyAITokenLimit];
-        [weakSelf updateValueForInfo:tokenLimitInfo];
+        [weakSelf aiModelDidChange:tokenLimitInfo urlInfo:urlInfo];
     };
 
     [self addViewToSearchIndex:_aiPluginLabel
@@ -718,14 +718,6 @@ enum {
     };
     PreferenceInfo *enableAIInfo = info;
 
-    info = [self defineControl:_customAIEndpoint
-                           key:kPreferenceKeyAITermURL
-                   relatedView:nil
-                          type:kPreferenceInfoTypeStringTextField];
-    info.onUpdate = ^BOOL{
-        [weakSelf updateEnabledState];
-        return NO;
-    };
     info = [self defineControl:_useLegacyCompletionsAPI
                            key:kPreferenceKeyAITermUseLegacyAPI
                    relatedView:nil
@@ -742,6 +734,24 @@ enum {
         [self updateValueForInfo:apiKeyInfo];
     }
     [self updateAIEnabled];
+}
+
+- (void)aiModelDidChange:(PreferenceInfo *)tokenLimitInfo urlInfo:(PreferenceInfo *)urlInfo {
+    NSString *model = [self stringForKey:kPreferenceKeyAIModel];
+    if (!model) {
+        return;
+    }
+    NSNumber *tokens = [OpenAIMetadata.instance contextWindowTokensForModelName:model];
+    if (!tokens) {
+        return;
+    }
+    [self setObject:tokens forKey:kPreferenceKeyAITokenLimit];
+    NSString *url = [OpenAIMetadata.instance urlForModelName:model];
+    if (url) {
+        [self setObject:url forKey:kPreferenceKeyAITermURL];
+        [self updateValueForInfo:urlInfo];
+    }
+    [self updateValueForInfo:tokenLimitInfo];
 }
 
 - (void)validatePlugin {
