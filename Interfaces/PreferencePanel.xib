@@ -5817,7 +5817,7 @@ DQ
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2Pt-rH-WYj">
                                                 <rect key="frame" x="143" y="19" width="378" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <string key="toolTip">When this is enabled, you can click on a command or its output to restrict Find and Filter to its output. This requires shell integration to be installed.</string>
+                                                <string key="toolTip">When this is enabled, you can click on a command or its output to restrict Find and Filter to its output. The selected command gets highlighted and other commands get dimmed. This requires shell integration to be installed.</string>
                                                 <buttonCell key="cell" type="check" title="Clicking on a command selects it to restrict Find and Filter" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="U7X-fp-NxP">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
