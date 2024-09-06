@@ -782,7 +782,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                                                       userInfo:nil];
 }
 
-- (NSArray *)keysForBulkCopy {
+- (NSArray<NSString *> *)keysForBulkCopy {
     return [_keys allObjects];
 }
 

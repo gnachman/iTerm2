@@ -29,7 +29,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 @interface iTermPreferencesBaseViewController : NSViewController<iTermSearchableViewController, NSTabViewDelegate>
 
 @property(nonatomic, readonly) NSMapTable *keyMap;
-@property(nonatomic, readonly) NSArray *keysForBulkCopy;
+@property(nonatomic, readonly) NSArray<NSString *> *keysForBulkCopy;
 
 @property(nonatomic, weak) NSWindowController<iTermPreferencePanelSizing> *preferencePanel;
 

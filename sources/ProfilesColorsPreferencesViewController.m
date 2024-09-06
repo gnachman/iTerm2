@@ -924,11 +924,28 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 #pragma mark - Overrides
 
-- (NSString *)amendedKey:(NSString *)key {
+- (NSArray *)keysForBulkCopy {
+    return [[super keysForBulkCopy] flatMapWithBlock:^NSArray *(NSString *key) {
+        if (![self shouldAmendKey:key]) {
+            return @[ key ];
+        }
+        return @[ [key stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX],
+                  [key stringByAppendingString:COLORS_DARK_MODE_SUFFIX] ];
+    }];
+}
+
+- (BOOL)shouldAmendKey:(NSString *)key {
     if ([key isEqualToString:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
-        return key;
+        return NO;
     }
     if (![super boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
+        return NO;
+    }
+    return YES;
+}
+
+- (NSString *)amendedKey:(NSString *)key {
+    if (![self shouldAmendKey:key]) {
         return key;
     }
     switch (_mode.selectedTag) {
