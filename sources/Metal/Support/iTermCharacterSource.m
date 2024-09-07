@@ -407,8 +407,25 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     bitmap.data = [NSMutableData uninitializedDataWithLength:length];
     bitmap.size = NSMakeSize(glyphWidth, glyphHeight);
 
+    char *dest = (char *)bitmap.data.mutableBytes;
+
+    // Flip vertically and copy. The vertical flip is for historical reasons
+    // (i.e., if I had more time I'd undo it but it's annoying because there
+    // are assumptions about vertical flipping all over the fragment shader).
+    ssize_t destOffset = (glyphHeight - 1) * destRowSize;
+    ssize_t sourceOffset = (dx * 4 * glyphWidth) + (dy * glyphHeight * sourceRowSize);
+    for (int i = 0;
+         (destOffset >= 0 &&
+          i < glyphHeight &&
+          sourceOffset + destRowSize <= sourceLength);
+         i++) {
+        memcpy(dest + destOffset, bitmapBytes + sourceOffset, destRowSize);
+        sourceOffset += sourceRowSize;
+        destOffset -= destRowSize;
+    }
+
     if (_debug) {
-        NSImage *image = [NSImage imageWithRawData:[NSData dataWithBytes:bitmapBytes length:bitmap.data.length]
+        NSImage *image = [NSImage imageWithRawData:bitmap.data
                                               size:bitmap.size
                                      bitsPerSample:8
                                    samplesPerPixel:4
@@ -428,24 +445,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                  hasAlpha:YES
                            colorSpaceName:NSDeviceRGBColorSpace];
         [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/big-%@.png", _string]];
-    }
-
-
-    char *dest = (char *)bitmap.data.mutableBytes;
-
-    // Flip vertically and copy. The vertical flip is for historical reasons
-    // (i.e., if I had more time I'd undo it but it's annoying because there
-    // are assumptions about vertical flipping all over the fragment shader).
-    ssize_t destOffset = (glyphHeight - 1) * destRowSize;
-    ssize_t sourceOffset = (dx * 4 * glyphWidth) + (dy * glyphHeight * sourceRowSize);
-    for (int i = 0;
-         (destOffset >= 0 &&
-          i < glyphHeight &&
-          sourceOffset + destRowSize <= sourceLength);
-         i++) {
-        memcpy(dest + destOffset, bitmapBytes + sourceOffset, destRowSize);
-        sourceOffset += sourceRowSize;
-        destOffset -= destRowSize;
     }
 
     return bitmap;
@@ -516,26 +515,31 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     return [self frameFlipped:YES];
 }
 
-// Shift box drawing characters down by the amount of interline spacing so they touch tip-to-tip.
-- (CGFloat)boxShift {
-    return _descriptor.cellSize.height - _descriptor.cellSizeWithoutSpacing.height;
-}
-
 - (CGRect)frameFlipped:(BOOL)flipped {
     if (_string.length == 0) {
         return CGRectZero;
     }
     if (_boxDrawing) {
-        NSRect rect;
-        const CGFloat inset = _descriptor.scale;
-        rect.origin = NSMakePoint(_descriptor.glyphSize.width * _radius - inset,
-                                  _descriptor.glyphSize.height * _radius - inset + self.boxShift);
-        rect.size = NSMakeSize(_descriptor.cellSize.width * _descriptor.scale + inset * 2,
-                               _descriptor.cellSize.height * _descriptor.scale + inset * 2);
+        // yOffset should equal offset.y in drawWithOffset:iteration:
+        const CGFloat yOffset = _descriptor.glyphSize.height * _radius;
+
+        // ty should equal ty in drawWithOffset:iteration:
+        const CGFloat ty = yOffset - _descriptor.baselineOffset * _descriptor.scale;
+
+        // y should equal rect.origin.y in drawBoxAtOffset:iteration:
+        const CGFloat y = ty + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift;
+
+        NSRect rect = NSMakeRect(_descriptor.glyphSize.width * _radius,
+                                 y,
+                                 _descriptor.cellSize.width * _descriptor.scale,
+                                 _descriptor.cellSize.height * _descriptor.scale);
         if (_string.length > 0 &&
             _useNativePowerlineGlyphs &&
             [iTermBoxDrawingBezierCurveFactory isDoubleWidthPowerlineGlyph:[_string characterAtIndex:0]]) {
             rect.size.width *= 2;
+        }
+        if (flipped) {
+            rect.origin.y = _size.height - rect.origin.y - rect.size.height;
         }
         return rect;
     }
@@ -757,17 +761,26 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (systemScale < 1) {
         systemScale = 1.0;
     }
-    // For reasons I don't understand this can be off by one when there is vertical spacing.
-    CGPoint offset = CGPointMake(0, (self.boxShift * _descriptor.scale) / systemScale);
-    DLog(@"Draw box %@ at scale %@ with offset %@ boxShift=%@ systemScale=%@ mainScreen=%@. descriptor=%@", _string, @(_descriptor.scale), NSStringFromPoint(offset), @(self.boxShift), @(systemScale), [[NSScreen mainScreen] it_uniqueName], _descriptor);
+    DLog(@"Draw box %@ at scale %@ with systemScale=%@ mainScreen=%@. descriptor=%@",
+         _string, @(_descriptor.scale), @(systemScale), [[NSScreen mainScreen] it_uniqueName], _descriptor);
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:[_string characterAtIndex:0]
                                                        cellSize:NSMakeSize(_descriptor.cellSize.width * _descriptor.scale,
                                                                            _descriptor.cellSize.height * _descriptor.scale)
                                                            scale:_descriptor.scale
                                                        isPoints:NO
-                                                          offset:offset
+                                                          offset:CGPointZero
                                                           color:[[self textColorForIteration:iteration] CGColor]
                                                            useNativePowerlineGlyphs:_useNativePowerlineGlyphs];
+}
+
+// NOTE: This must match the logic in -[iTermTextRendererTransientState setGlyphKeysData:…] where
+// verticalShift is computed.
+- (CGFloat)verticalShift {
+    const CGFloat cellHeight = (_descriptor.cellSize.height * _descriptor.scale);
+    const CGFloat cellHeightWithoutSpacing = _descriptor.cellSizeWithoutSpacing.height * _descriptor.scale;
+    const CGFloat scale = _descriptor.scale;
+
+    return round((cellHeight - cellHeightWithoutSpacing) / (2 * scale)) * scale;
 }
 
 - (void)drawBoxAtOffset:(CGPoint)offset iteration:(int)iteration {
@@ -776,10 +789,25 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     [NSGraphicsContext setCurrentContext:graphicsContext];
     NSAffineTransform *transform = [NSAffineTransform transform];
 
-    [transform translateXBy:offset.x yBy:offset.y + (_descriptor.baselineOffset + _descriptor.cellSize.height) * _descriptor.scale];
+    NSRect rect = NSMakeRect(offset.x,
+                             offset.y + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift,
+                             _descriptor.cellSize.width * _descriptor.scale,
+                             _descriptor.cellSize.height * _descriptor.scale);
+    if (_debug) {
+        [[NSColor whiteColor] set];
+        NSFrameRect(rect);
+        NSBezierPath *diag = [NSBezierPath bezierPath];
+        [diag moveToPoint:rect.origin];
+        [diag lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
+        [diag stroke];
+    }
+
+    [transform translateXBy:NSMinX(rect)
+                        yBy:NSMaxY(rect)];
     [transform scaleXBy:1 yBy:-1];
     [transform concat];
     [self drawBoxInContext:_context iteration:iteration];
+
     [NSGraphicsContext restoreGraphicsState];
 }
 

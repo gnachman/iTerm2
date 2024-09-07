@@ -524,6 +524,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     CGSize glyphSize = self.cellConfiguration.glyphSize;
     const float cellHeight = self.cellConfiguration.cellSize.height;
     const float cellWidth = self.cellConfiguration.cellSize.width;
+    // NOTE: This must match logic in -[iTermCharacterSource drawBoxAtOffset:iteration:]
     const float verticalShift = round((cellHeight - self.cellConfiguration.cellSizeWithoutSpacing.height) / (2 * self.configuration.scale)) * self.configuration.scale;
     const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight + verticalShift;
     const float asciiYOffset = -self.asciiOffset.height;
