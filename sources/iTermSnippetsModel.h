@@ -49,6 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)matchesActionKey:(id)actionKey;
 - (BOOL)hasTags:(NSArray<NSString *> *)tags;
 - (NSComparisonResult)compareTitle:(iTermSnippet *)other;
+- (iTermSnippet *)clone;
 
 @end
 

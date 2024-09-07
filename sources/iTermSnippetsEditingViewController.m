@@ -29,7 +29,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 @implementation iTermSnippetsEditingView
 @end
 
-@interface iTermSnippetsEditingViewController ()<NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate>
+@interface iTermSnippetsEditingViewController ()<NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate, NSMenuDelegate>
 @end
 
 @implementation iTermSnippetsEditingViewController {
@@ -45,6 +45,129 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     NSArray<iTermSnippet *> *_allSnippets;
     NSArray<iTermSnippet *> *_filteredSnippets;
     iTermEditSnippetWindowController *_windowController;
+}
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    NSMenu *menu = [[NSMenu alloc] init];
+    menu.delegate = self;
+    [menu addItem:[[NSMenuItem alloc] initWithTitle:@"Duplicate"
+                                             action:@selector(duplicateSnippets:)
+                                      keyEquivalent:@""]];
+    [menu addItem:[[NSMenuItem alloc] initWithTitle:@"Delete"
+                                             action:@selector(deleteSnippets:)
+                                      keyEquivalent:@""]];
+    [menu addItem:[[NSMenuItem alloc] initWithTitle:@"Add Above"
+                                             action:@selector(addSnippetAbove:)
+                                      keyEquivalent:@""]];
+    [menu addItem:[[NSMenuItem alloc] initWithTitle:@"Add Below"
+                                             action:@selector(addSnippetBelow:)
+                                      keyEquivalent:@""]];
+    [menu addItem:[[NSMenuItem alloc] initWithTitle:@"Edit"
+                                             action:@selector(editClickedSnippet:)
+                                      keyEquivalent:@""]];
+    _tableView.menu = menu;
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.action == @selector(duplicateSnippets:) ||
+        menuItem.action == @selector(deleteSnippets:)) {
+        return [self targetSnippetIndexesForContextMenuAction].count > 0;
+    }
+    if (menuItem.action == @selector(editClickedSnippet:) ||
+        menuItem.action == @selector(addSnippetAbove:) ||
+        menuItem.action == @selector(addSnippetBelow:)) {
+        return [_tableView clickedRow] >= 0;
+    }
+    return NO;
+}
+
+- (NSIndexSet *)targetSnippetIndexesForContextMenuAction {
+    const NSInteger i = _tableView.clickedRow;
+    if (i >= 0) {
+        if ([[_tableView selectedRowIndexes] containsIndex:i]) {
+            // Clicked on a selected snippet so apply the action to all selected snippets.
+            return _tableView.selectedRowIndexes;
+        }
+        // Clicked on a non-selected snippet so apply the action only to the clicked one.
+        return [NSIndexSet indexSetWithIndex:i];
+    } else {
+        // You didn't actually click on any row so apply the action to selected snippets.
+        // I'm not sure this is reachable but you never know with AppKit.
+        return _tableView.selectedRowIndexes;
+    }
+}
+
+- (NSArray<iTermSnippet *> *)targetSnippetsForContextMenuAction {
+    return [_filteredSnippets objectsAtIndexes:[self targetSnippetIndexesForContextMenuAction]];
+}
+
+- (void)duplicateSnippets:(id)sender {
+    NSIndexSet *indexes = [self targetSnippetIndexesForContextMenuAction];
+    NSArray<iTermSnippet *> *original = [_filteredSnippets objectsAtIndexes:indexes];
+    const NSInteger lastIndex = indexes.lastIndex;
+    if (lastIndex == NSNotFound) {
+        return;
+    }
+    const NSInteger destinationIndex = lastIndex + 1;
+
+    [self pushUndo];
+
+    // Make copies of the snippets with new GUIDs
+    NSArray<iTermSnippet *> *copies = [original mapWithBlock:^id _Nullable(iTermSnippet *snippet) {
+        return [snippet clone];
+    }];
+    // Add them to the model
+    [copies enumerateObjectsUsingBlock:^(iTermSnippet *snippet, NSUInteger idx, BOOL *stop) {
+        [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
+    }];
+    // Move them to the desired index.
+    NSArray<NSString *> *guids = [copies mapWithBlock:^id _Nullable(iTermSnippet *snippet) {
+        return snippet.guid;
+    }];
+    [[iTermSnippetsModel sharedInstance] moveSnippetsWithGUIDs:guids toIndex:destinationIndex];
+}
+
+- (void)deleteSnippets:(id)sender {
+    [self pushUndo];
+    [[iTermSnippetsModel sharedInstance] removeSnippets:[self targetSnippetsForContextMenuAction]];
+}
+
+- (void)addSnippetAbove:(id)sender {
+    const NSInteger i = _tableView.clickedRow;
+    if (i < 0) {
+        return;
+    }
+    [self addSnippetAtIndex:i];
+}
+
+- (void)addSnippetAtIndex:(NSInteger)i {
+    [self pushUndo];
+    _windowController = [[iTermEditSnippetWindowController alloc] initWithSnippet:nil
+                                                                       completion:^(iTermSnippet * _Nullable snippet) {
+        if (!snippet) {
+            return;
+        }
+        [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
+        [[iTermSnippetsModel sharedInstance] moveSnippetsWithGUIDs:@[ snippet.guid ] toIndex:i];
+    }];
+    [self.view.window beginSheet:_windowController.window completionHandler:^(NSModalResponse returnCode) {}];
+}
+
+- (void)addSnippetBelow:(id)sender {
+    const NSInteger i = _tableView.clickedRow;
+    if (i < 0) {
+        return;
+    }
+    [self addSnippetAtIndex:i + 1];
+}
+
+- (void)editClickedSnippet:(id)sender {
+    const NSInteger i = _tableView.clickedRow;
+    if (i < 0) {
+        return;
+    }
+    [self editSnippet:_filteredSnippets[i]];
 }
 
 - (void)defineControlsInContainer:(iTermPreferencesBaseViewController *)container
@@ -239,15 +362,19 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 - (IBAction)edit:(id)sender {
     iTermSnippet *snippet = [[self selectedSnippets] firstObject];
     if (snippet) {
-        _windowController = [[iTermEditSnippetWindowController alloc] initWithSnippet:snippet
-                                                                           completion:^(iTermSnippet * _Nullable updatedSnippet) {
-            if (!updatedSnippet) {
-                return;
-            }
-            [[iTermSnippetsModel sharedInstance] replaceSnippet:snippet withSnippet:updatedSnippet];
-        }];
-        [self.view.window beginSheet:_windowController.window completionHandler:^(NSModalResponse returnCode) {}];
+        [self editSnippet:snippet];
     }
+}
+
+- (void)editSnippet:(iTermSnippet *)snippet {
+    _windowController = [[iTermEditSnippetWindowController alloc] initWithSnippet:snippet
+                                                                       completion:^(iTermSnippet * _Nullable updatedSnippet) {
+        if (!updatedSnippet) {
+            return;
+        }
+        [[iTermSnippetsModel sharedInstance] replaceSnippet:snippet withSnippet:updatedSnippet];
+    }];
+    [self.view.window beginSheet:_windowController.window completionHandler:^(NSModalResponse returnCode) {}];
 }
 
 - (IBAction)import:(id)sender {

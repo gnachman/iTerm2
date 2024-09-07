@@ -186,6 +186,17 @@
     return [self.title compare:other.title];
 }
 
+- (iTermSnippet *)clone {
+    NSMutableDictionary *dict = [[self dictionaryValue] mutableCopy];
+
+    return [[iTermSnippet alloc] initWithTitle:self.title
+                                         value:self.value
+                                          guid:[[NSUUID UUID] UUIDString]
+                                          tags:self.tags
+                                      escaping:self.escaping
+                                       version:[iTermSnippet currentVersion]];
+}
+
 @end
 
 @implementation iTermSnippetsModel {
