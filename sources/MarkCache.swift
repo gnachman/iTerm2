@@ -20,16 +20,13 @@ protocol MarkCacheReading: AnyObject {
     @objc(enumerateFrom:)
     func enumerate(from location: Int64) -> NSEnumerator
 }
-
 @objc(iTermMarkCache)
-class MarkCache: NSObject, NSCopying, MarkCacheReading {
+class MarkCache: NSObject, MarkCacheReading {
+    // Contains progenitors
     private var dict = [Int: iTermMarkProtocol]()
     private let sorted = SortedArray<iTermMarkProtocol> { $0 === $1 }
 
     @objc private(set) var dirty = false
-    @objc lazy var sanitizingAdapter: MarkCache = {
-        return MarkCacheSanitizingAdapter(self)
-    }()
 
     override var description: String {
         let dictDescription = dict.keys.sorted().map {
@@ -42,11 +39,9 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
         super.init()
     }
 
-    private init(dict: [Int: iTermMarkProtocol]) {
-        self.dict = dict.mapValues({ value in
-            value.doppelganger() as! iTermMarkProtocol
-        })
-        for value in self.dict.values {
+    fileprivate init(dict: [Int: iTermMarkProtocol]) {
+        self.dict = dict
+        for value in dict.values {
             if let location = value.entry?.interval.location {
                 value.cachedLocation = location
                 sorted.insert(object: value, location: location)
@@ -120,44 +115,74 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
         DLog("Erase up to \(location)")
         sorted.removeUpTo(location: location)
     }
+
+    @objc
+    func readOnlyCopy() -> ReadOnlyMarkCache {
+        defer {
+            dirty = false
+        }
+        return ReadOnlyMarkCache(progenitorDict: dict)
+    }
 }
 
-fileprivate class MarkCacheSanitizingAdapter: MarkCache {
-    private weak var source: MarkCache?
-    init(_ source: MarkCache) {
-        self.source = source
+// This solves the problem that new marks are created this way:
+//
+// 1. Construct mark, add to mutable state's interval tree, add to mutable state's mark cache.
+// 2. Enqueue a side-effect to add the mark to the main thread's interval tree
+// 3. Sync mutable state to readonly state. A copy of the mark cache is made. But at this time
+//    doppelgangers won't have entries because the side effect from the previous step didn't execute
+//    yet.
+// *** At this point it is unsafe to use the main thread's mark cache because without entries in
+// *** doppelgangers, it doesn't have a correct sorted list of marks.
+// 4. Side effects execute and the main thread's interval tree has doppelgangers added.
+// 5. Main thread makes read-only access to the mark cache.
+//
+// In order to defer accessing doppelgangers' entries before they are added to the main thread's
+// mark cache, this placeholder keeps references to progenitors from which a good mark cache could
+// be created.
+@objc(iTermReadOnlyMarkCache)
+class ReadOnlyMarkCache: NSObject, MarkCacheReading {
+    private var dict: [Int: iTermMarkProtocol]
+    private var realInstance: MarkCache?
+
+    init(progenitorDict: [Int: iTermMarkProtocol]) {
+        // Get doppelgangers right away to remove any chance of the first chance of access to the
+        // mark cache being after a progenitor mutates.
+        self.dict = progenitorDict.mapValues({ mark in
+            if mark.isDoppelganger {
+                return mark
+            } else {
+                return mark.doppelganger()
+            }
+        })
     }
 
-    @objc(removeMark:onLine:)
-    override func remove(mark: iTermMarkProtocol, line: Int) {
-        fatalError()
+    private var realized: MarkCache {
+        if let realInstance {
+            return realInstance
+        }
+        let instance = MarkCache(dict: dict)
+        realInstance = instance
+        return instance
+    }
+
+    @objc(enumerateFrom:)
+    func enumerate(from location: Int64) -> NSEnumerator {
+        return realized.enumerate(from: location)
     }
 
     @objc
-    override func removeAll() {
-        fatalError()
-    }
-
-    @objc
-    override func copy(with zone: NSZone? = nil) -> Any {
-        fatalError()
-    }
-
-    @objc
-    override subscript(line: Int) -> iTermMarkProtocol? {
+    subscript(line: Int) -> iTermMarkProtocol? {
         get {
-            guard let source = source else {
-                return nil
-            }
-            let maybeMark: iTermMarkProtocol? = source[line]
-            guard let downcast = maybeMark as? iTermMark else {
-                return maybeMark
-            }
-            return downcast.doppelganger() as iTermMarkProtocol
+            return realized[line]
         }
         set {
-            fatalError()
+            realized[line] = newValue
         }
     }
-}
 
+    @objc
+    func findAtOrBefore(location desiredLocation: Int64) -> [iTermMarkProtocol] {
+        return realized.findAtOrBefore(location: desiredLocation)
+    }
+}

@@ -34,10 +34,6 @@
     // You'd get here with reentrant joined threads. Only the real state should do a merge.
 }
 
-- (id<iTermMarkCacheReading>)markCache {
-    return [[_source markCache] sanitizingAdapter];
-}
-
 - (id<IntervalTreeReading>)intervalTree {
     return _intervalTreeSanitizingAdapter;
 }

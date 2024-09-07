@@ -13,6 +13,7 @@
 @implementation iTermMark {
     iTermMark *_doppelganger;
     __weak iTermMark *_progenitor;
+    BOOL _isDoppelganger;
 }
 
 @synthesize entry;
@@ -30,6 +31,12 @@
 
 - (instancetype)copyOfIntervalTreeObject {
     return [[self.class alloc] init];
+}
+
+- (BOOL)isDoppelganger {
+    @synchronized ([iTermMark class]) {
+        return _isDoppelganger;
+    }
 }
 
 - (id<iTermMark>)doppelganger {

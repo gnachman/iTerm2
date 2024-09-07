@@ -255,7 +255,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
 - (void)copySlowStuffFrom:(VT100ScreenMutableState *)source {
     if (!_markCache || source.markCache.dirty) {
-        _markCache = source.markCache.copy;
+        _markCache = source.markCache.readOnlyCopy;
     }
     if (!_colorMap) {
         _colorMap = [source.colorMap copy];

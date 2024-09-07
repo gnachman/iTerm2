@@ -13,7 +13,9 @@
 
 @protocol iTermMark <NSObject, IntervalTreeImmutableObject>
 @property (nonatomic) long long cachedLocation;
+@property (nonatomic, readonly) BOOL isDoppelganger;
 - (iTermMark *)progenitor;
+- (id<iTermMark>)doppelganger;
 @end
 
 // This is a base class for marks but should never be used directly.
