@@ -96,7 +96,9 @@ function Build {
   rm -f /tmp/sum /tmp/sum.asc
   shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' > /tmp/sum
   gpg --clearsign /tmp/sum
-  echo "You can use the following to verify the zip file on https://keybase.io/verify:" > $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+  echo "Version $VERSION of iTerm2 was built on $BUILDDATE." > $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
+  echo '' >> $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
+  echo "You can use the following to verify the zip file on https://keybase.io/verify:" >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   echo "" >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   cat /tmp/sum.asc >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
