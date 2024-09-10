@@ -1820,12 +1820,18 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
 }
 
-- (screen_char_t *)resultLine {
+- (NSMutableData *)resultLineData {
+    assert(size_.width < INT_MAX);
+    assert(size_.width >= 0);
     const int length = sizeof(screen_char_t) * (size_.width + 1);
     if (resultLine_.length != length) {
         resultLine_ = [[NSMutableData alloc] initWithLength:length];
     }
-    return (screen_char_t *)[resultLine_ mutableBytes];
+    return resultLine_;
+}
+
+- (screen_char_t *)resultLine {
+    return (screen_char_t *)resultLine_.mutableBytes;
 }
 
 - (void)moveCursorToLeftMargin {

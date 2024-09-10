@@ -80,6 +80,7 @@
 
 // Returns temp storage for one line. While this is mutable, it's trivial because it's used only temporarily as a convenience to the caller.
 - (screen_char_t *)resultLine;
+- (NSMutableData *)resultLineData;
 
 // Returns a human-readable string with the screen contents and dirty lines interspersed.
 - (NSString *)debugString;
@@ -334,6 +335,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 
 // Returns temp storage for one line.
 - (screen_char_t *)resultLine;
+- (NSMutableData *)resultLineData;
 
 // Reset scroll regions to whole screen. NOTE: It does not reset useScrollRegionCols.
 - (void)resetScrollRegions;

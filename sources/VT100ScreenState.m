@@ -17,6 +17,7 @@
 #import "iTermTextExtractor.h"
 #import "LineBuffer.h"
 #import "NSArray+iTerm.h"
+#import "VT100Grid.h"
 #import "NSDictionary+iTerm.h"
 #import "VT100RemoteHost.h"
 #import "VT100WorkingDirectory.h"
@@ -629,20 +630,37 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 }
 
 - (const screen_char_t *)getLineAtIndex:(int)theIndex {
-    return [self getLineAtIndex:theIndex withBuffer:[self.currentGrid resultLine]];
+    return [self getLineAtIndex:theIndex 
+                    destination:[self.currentGrid resultLineData]
+                          width:self.currentGrid.size.width];
 }
 
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {
+    return [self getLineAtIndex:theIndex
+                    destination:[NSMutableData dataWithBytesNoCopy:buffer
+                                                            length:(self.currentGrid.size.width + 1) * sizeof(screen_char_t)
+                                                      freeWhenDone:NO]
+                          width:self.currentGrid.size.width];
+}
+
+- (const screen_char_t *)getLineAtIndex:(int)theIndex
+                            destination:(NSMutableData *)dataBuffer
+                                  width:(int)width {
     ITBetaAssert(theIndex >= 0, @"Negative index to getLineAtIndex");
+    assert(dataBuffer.length >= (width + 1) * sizeof(screen_char_t));
     int numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    screen_char_t *buffer = dataBuffer.mutableBytes;
     if (theIndex >= numLinesInLineBuffer) {
         // Get a line from the circular screen buffer
         return [self.currentGrid screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
     } else {
         // Get a line from the scrollback buffer.
         screen_char_t continuation;
-        int cont = [self.linebuffer copyLineToBuffer:buffer
-                                               width:self.currentGrid.size.width
+        ITAssertWithMessage(width == self.currentGrid.size.width,
+                            @"width is %@, data length is %@, current grid %@ has width %@",
+                            @(width), @(dataBuffer.length), self.currentGrid, @(self.currentGrid.size.width));
+        int cont = [self.linebuffer copyLineToBuffer:dataBuffer.mutableBytes
+                                               width:width
                                              lineNum:theIndex
                                         continuation:&continuation];
         if (cont == EOL_SOFT &&
@@ -681,7 +699,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     // Max radius of lines to search above and below absoluteLineNumber
     const int kMaxRadius = [iTermAdvancedSettingsModel triggerRadius];
     BOOL foundStart = NO;
-    for (i = lineNumber - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
+    const int numLines = [self numberOfLines];
+    for (i = MIN(numLines, lineNumber) - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
         const screen_char_t *line = [self getLineAtIndex:i];
         if (line[self.width].code == EOL_HARD) {
             *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
