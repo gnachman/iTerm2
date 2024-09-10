@@ -68,6 +68,11 @@ NS_ASSUME_NONNULL_BEGIN
                 lineNum:(int)lineNum
            continuation:(screen_char_t * _Nullable)continuationPtr;
 
+- (int)copyLineToData:(NSMutableData *)destinationData
+                width:(int)width
+              lineNum:(int)lineNum
+         continuation:(screen_char_t * _Nullable)continuationPtr;
+
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
                         block:(void (^ _Nonnull)(int,

@@ -506,14 +506,31 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                   width:(int)width
                 lineNum:(int)lineNum
            continuation:(screen_char_t *)continuationPtr {
+    NSMutableData *data = [NSMutableData dataWithBytesNoCopy:buffer
+                                                      length:(width + 1) * sizeof(screen_char_t)
+                                                freeWhenDone:NO];
+    return [self copyLineToData:data
+                          width:width
+                        lineNum:lineNum
+                   continuation:continuationPtr];
+}
+
+- (int)copyLineToData:(NSMutableData *)destinationData
+                width:(int)width
+              lineNum:(int)lineNum
+         continuation:(screen_char_t * _Nullable)continuationPtr {
+    screen_char_t *buffer = destinationData.mutableBytes;
     ITBetaAssert(lineNum >= 0, @"Negative lineNum to copyLineToBuffer");
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
     ITBetaAssert(remainder >= 0, @"Negative lineNum BEFORE consuming block_lines");
     if (!block) {
         NSLog(@"Couldn't find line %d", lineNum);
-        ITAssertWithMessage(NO, @"Tried to get non-existent line");
-        return NO;
+#if DEBUG
+        [self sanityCheck];
+#endif
+        memset(destinationData.mutableBytes, 0, width * sizeof(screen_char_t));
+        return EOL_HARD;
     }
 
     int length;
@@ -527,7 +544,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                                    continuation:&continuation];
     if (p == nil) {
         ITAssertWithMessage(NO, @"Nil wrapped line %@ for block with width %@", @(requestedLine), @(width));
-        return NO;
+#if DEBUG
+        [self sanityCheck];
+#endif
+        memset(destinationData.mutableBytes, 0, width * sizeof(screen_char_t));
+        return EOL_HARD;
     }
 
     if (continuationPtr) {
@@ -540,6 +561,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // If it crashes in memcpy/memmove below it's on the write side.
         DLog(@"*p");
     }
+    ITAssertWithMessage(destinationData.length >= length * sizeof(screen_char_t),
+                        @"Destination data has length %@ but I have %@ chars totaling %@ bytes to copy. width=%@",
+                        @(destinationData.length), @(length), @(length * sizeof(screen_char_t)), @(width));
     memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
     [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
 
