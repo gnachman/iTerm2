@@ -173,3 +173,50 @@ extension String {
     }
 }
 
+extension String {
+    // "foo|bar".split(separator: "|", escape: "_")   -> ["foo", "bar"]
+    // "foo_|bar".split(separator: "|", escape: "_")  -> ["foo|bar"]
+    // "foo__|bar".split(separator: "|", escape: "_") -> ["foo_", "bar"]
+    // "foo_bar".split(separator: "|", escape: "_")   -> ["foobar"]
+    func split(separator: Character, escape: Character) -> [String] {
+        if isEmpty {
+            return []
+        }
+        var result = [String]()
+        var current = ""
+        var isEscaped = false
+
+        for char in self {
+            if isEscaped {
+                if char == separator || char == escape {
+                    current.append(char)  // Treat escaped separator or escape as a literal
+                } else {
+                    // Drop the escape character before non-special characters
+                    current.append(char)
+                }
+                isEscaped = false
+                continue
+            }
+
+            // Not escaped.
+            if char == escape {
+                isEscaped = true  // Next character should be treated as escaped
+                continue
+            }
+
+            if char == separator {
+                // Split on unescaped separator
+                result.append(current)
+                current = ""
+            } else {
+                // Regular character
+                current.append(char)
+            }
+        }
+
+        // Append the last part
+        result.append(current)
+
+        return result
+    }
+}

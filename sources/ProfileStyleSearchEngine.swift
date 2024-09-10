@@ -71,12 +71,57 @@ class ProfileStyleSearchEngineResult: NSObject {
     }
 }
 
+fileprivate enum ProfileSearchNode {
+    // Regular token in a query.
+    case token(iTermProfileSearchToken)
+
+    // Accepts any of multiple tokens, like foo|bar or tag:foo|tag:bar or -tag:foo|-tag:bar
+    case disjunction([iTermProfileSearchToken])
+
+    var tokens: [iTermProfileSearchToken] {
+        switch self {
+        case .token(let token):
+            return [token]
+        case .disjunction(let tokens):
+            return tokens
+        }
+    }
+
+    init?(phrase: String, operators: [String]) {
+        let tokens = phrase.split(separator: "|", escape: "\\").map { subphrase in
+            iTermProfileSearchToken(phrase: subphrase, operators: operators)
+        }
+        self.init(tokens: tokens)
+    }
+
+    // tagPhrase is a tag name or disjunction of tag names.
+    init?(tagPhrase: String) {
+        let tokens = tagPhrase.split(separator: "|", escape: "\\").map { subphrase in
+            iTermProfileSearchToken(tag: subphrase)
+        }
+        self.init(tokens: tokens)
+    }
+
+    private init?(tokens: [iTermProfileSearchToken]) {
+        if tokens.isEmpty {
+            return nil
+        }
+        if tokens.count == 1, let token = tokens.first {
+            self = .token(token)
+        } else {
+            self = .disjunction(tokens)
+        }
+    }
+}
+
 @objc(iTermProfileStyleSearchEngineQuery)
 class ProfileStyleSearchEngineQuery: NSObject {
-    private(set) var tokens: [iTermProfileSearchToken]
+    fileprivate private(set) var nodes: [ProfileSearchNode]
 
     @objc var hasTags: Bool {
-        return tokens.anySatisfies { token in
+        return nodes.flatMap {
+            $0.tokens
+        }.anySatisfies { token in
             token.isTag
         }
     }
@@ -84,14 +129,16 @@ class ProfileStyleSearchEngineQuery: NSObject {
     @objc
     init(query: String, operators: [String]) {
         let phrases = (query as NSString).componentsBySplittingProfileListQuery() ?? []
-        tokens = phrases.map {
-            iTermProfileSearchToken(phrase: $0, operators: operators)
+        nodes = phrases.compactMap {
+            ProfileSearchNode(phrase: $0, operators: operators)
         }
     }
 
     @objc(addTag:)
     func add(tag: String) {
-        tokens.append(iTermProfileSearchToken(tag: tag))
+        if let node = ProfileSearchNode(tagPhrase: tag) {
+            nodes.append(node)
+        }
     }
 }
 
@@ -124,33 +171,56 @@ class ProfileStyleSearchEngine: NSObject {
     func search(document: ProfileStyleSearchEngineDocument,
                 sloppy: Bool = false) -> ProfileStyleSearchEngineResult? {
         let result = ProfileStyleSearchEngineResult()
-        if query.tokens.isEmpty {
+        if query.nodes.isEmpty {
             return result
         }
         // First iterate over query tokens because all must be satisfied.
-        for queryToken in query.tokens {
-            let status = search(queryToken: queryToken, document: document, result: result)
+        for node in query.nodes {
+            let status = search(node: node, document: document, result: result)
             if sloppy {
                 continue
             }
             switch status {
             case .excluded:
                 return nil
-            case .matched:
+            case .matched, .none:
                 break
-            case .none:
-                if !queryToken.negated {
-                    return nil
-                }
             }
         }
         return result
     }
 
-    private enum SearchStatus {
-        case none
-        case matched
-        case excluded
+    private enum SearchStatus: Int {
+        // Failed to exclude (such as not having a negated token)
+        case none = 0
+
+        // Matched (non-excluded token was found)
+        case matched = 1
+
+        // Excluded (excluded token was found or non-excluded token was not found)
+        case excluded = -1
+    }
+
+    // .matched means there was an affirmative match while .none means we
+    // failed to exclude the document (e.g., because all tokens were negated).
+    // You might want to treat them the same.
+    private func search(node: ProfileSearchNode,
+                        document: ProfileStyleSearchEngineDocument,
+                        result: ProfileStyleSearchEngineResult) -> SearchStatus {
+        let statuses =
+            switch node {
+            case .token(let token):
+                [search(queryToken: token, document: document, result: result)]
+            case .disjunction(let tokens):
+                tokens.map { 
+                    search(queryToken: $0,
+                           document: document,
+                           result: result)
+                }
+            }
+        return statuses.max { lhs, rhs in
+            lhs.rawValue < rhs.rawValue
+        } ?? .none
     }
 
     private func search(queryToken: iTermProfileSearchToken,
@@ -160,6 +230,7 @@ class ProfileStyleSearchEngine: NSObject {
 
         switch searchPhrases(queryToken: queryToken, phrases: document.phrases, result: result) {
         case .none:
+            // No phrase in the document matches queryToken. queryToken may or may not be negated.
             break
         case .matched:
             foundAnyMatches = true
@@ -169,14 +240,25 @@ class ProfileStyleSearchEngine: NSObject {
 
         switch searchTags(queryToken: queryToken, tags: document.tags, result: result) {
         case .none:
-            break
+            // No tag in the document matches queryToken. queryToken may or may not be negated.
+            if foundAnyMatches {
+                // ...but queryToken did match on text, which is sufficient!
+                return .matched
+            }
         case .matched:
-            foundAnyMatches = true
+            return .matched
         case .excluded:
             return .excluded
         }
 
-        return foundAnyMatches ? .matched : .none
+        // No matches on either text or tags.
+        if queryToken.negated {
+            // Failed to exclude the document but not an affirmative match.
+            return .none
+        }
+
+        // No hits in document. It is not a match.
+        return .excluded
     }
 
     private func searchPhrases(queryToken: iTermProfileSearchToken,
@@ -232,20 +314,4 @@ class ProfileStyleSearchEngine: NSObject {
         return Range(queryToken.range)
     }
 
-    private func search(phrase: String) -> IndexSet? {
-        let documentTokens = phrase.components(separatedBy: .whitespacesAndNewlines)
-        var result = IndexSet()
-        for queryToken in query.tokens {
-            let found = queryToken.matchesAnyWord(inNameWords: documentTokens)
-            if found {
-                if queryToken.negated {
-                    return nil
-                }
-                if let range = Range(queryToken.range) {
-                    result.insert(integersIn: range)
-                }
-            }
-        }
-        return result
-    }
 }
