@@ -25,6 +25,7 @@
 #import "NSStringITerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSView+iTerm.h"
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
@@ -49,6 +50,7 @@ typedef NS_ENUM(NSUInteger, iTermToolSnippetsAction) {
     NSButton *_removeButton;
     NSButton *_editButton;
     iTermSearchField *_searchField;
+    NSButton *_help;
 
     NSArray<iTermSnippet *> *_unfilteredSnippets;
     NSArray<iTermSnippet *> *_filteredSnippets;
@@ -129,6 +131,21 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
         [self addSubview:_searchField];
         [_searchField setArrowHandler:_tableView];
 
+        _help = [[NSButton alloc] initWithFrame:CGRectZero];
+        [_help setBezelStyle:NSBezelStyleHelpButton];
+        [_help setButtonType:NSButtonTypeMomentaryPushIn];
+        [_help setBordered:YES];
+        if (@available(macOS 10.16, *)) {
+            _help.controlSize = NSControlSizeSmall;
+        }
+        [_help sizeToFit];
+        _help.target = self;
+        _help.action = @selector(help:);
+        _help.title = @"";
+        [_help setAutoresizingMask:NSViewMinXMargin];
+        [self addSubview:_help];
+
+
         [self relayout];
         [self updateEnabled];
         [self registerForDraggedTypes:@[ NSPasteboardTypeString ]];
@@ -153,9 +170,11 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     // Search field
     NSRect searchFieldFrame = NSMakeRect(0,
                                          0,
-                                         frame.size.width - 2 * kMargin,
+                                         frame.size.width - 3 * kMargin - _help.frame.size.width,
                                          _searchField.frame.size.height);
     _searchField.frame = searchFieldFrame;
+
+    _help.frame = NSMakeRect(NSMaxX(searchFieldFrame) + kMargin, NSMinY(searchFieldFrame), NSWidth(_help.frame), NSHeight(_help.frame));
 
     [_applyButton sizeToFit];
     [_applyButton setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, _applyButton.frame.size.width, kButtonHeight)];
@@ -220,6 +239,11 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
         return iTermToolSnippetsActionComposer;
     }
     return iTermToolSnippetsActionSend;
+}
+
+- (void)help:(id)sender {
+    NSView *view = [NSView castFrom:sender];
+    [_help it_showWarningWithMarkdown:iTermSnippetHelpMarkdown];
 }
 
 - (void)doubleClickOnTableView:(id)sender {

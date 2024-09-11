@@ -406,7 +406,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 
 - (IBAction)help:(id)sender {
     NSView *view = [NSView castFrom:sender];
-    [view it_showWarningWithMarkdown:@"Terms in the search query are used to prefix search snippet titles, content, and tags.\n\nYou can use the following operators to restrict what attributes of snippets a term searches:\n * `tag:` to search only tags.\n * `title:` to search only snippet titles.\n * `text:` to search only the text of a snippet.\nFor example, `tag:linux`.\n\nTo search only for snippets that do *not* match a term, use the `-` operator. For example, `-linux` or `-tag:linux`.\n\nYou can use `|` as logical OR. For example, `linux|bsd` or `tag:linux|tag:bsd`."];
+    [view it_showWarningWithMarkdown:iTermSnippetHelpMarkdown];
 }
 
 #pragma mark - Import
