@@ -32,6 +32,7 @@ CF_EXTERN_C_BEGIN
 @class ITMActivateResponse;
 @class ITMBroadcastDomain;
 @class ITMBroadcastDomainsChangedNotification;
+@class ITMCellStyle;
 @class ITMCloseRequest;
 @class ITMCloseRequest_CloseSessions;
 @class ITMCloseRequest_CloseTabs;
@@ -121,6 +122,7 @@ CF_EXTERN_C_BEGIN
 @class ITMPromptNotificationCommandEnd;
 @class ITMPromptNotificationCommandStart;
 @class ITMPromptNotificationPrompt;
+@class ITMRGBColor;
 @class ITMRPCRegistrationRequest;
 @class ITMRPCRegistrationRequest_ContextMenuAttributes;
 @class ITMRPCRegistrationRequest_RPCArgument;
@@ -188,6 +190,7 @@ CF_EXTERN_C_BEGIN
 @class ITMTmuxResponse_SetWindowVisible;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
+@class ITMURL;
 @class ITMVariableChangedNotification;
 @class ITMVariableMonitorRequest;
 @class ITMVariableRequest;
@@ -299,6 +302,38 @@ GPBEnumDescriptor *ITMPromptMonitorMode_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMPromptMonitorMode_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMAlternateColor
+
+typedef GPB_ENUM(ITMAlternateColor) {
+  ITMAlternateColor_Default = 0,
+  ITMAlternateColor_ReversedDefault = 3,
+  ITMAlternateColor_SystemMessage = 4,
+};
+
+GPBEnumDescriptor *ITMAlternateColor_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMAlternateColor_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMImagePlaceholderType
+
+typedef GPB_ENUM(ITMImagePlaceholderType) {
+  ITMImagePlaceholderType_None = 0,
+  ITMImagePlaceholderType_Iterm2 = 1,
+  ITMImagePlaceholderType_Kitty = 2,
+};
+
+GPBEnumDescriptor *ITMImagePlaceholderType_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMImagePlaceholderType_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMInvokeFunctionResponse_Status
 
@@ -4240,6 +4275,7 @@ GPB_FINAL @interface ITMLayoutChangedNotification : GPBMessage
 typedef GPB_ENUM(ITMGetBufferRequest_FieldNumber) {
   ITMGetBufferRequest_FieldNumber_Session = 1,
   ITMGetBufferRequest_FieldNumber_LineRange = 2,
+  ITMGetBufferRequest_FieldNumber_IncludeStyles = 3,
 };
 
 /**
@@ -4257,6 +4293,10 @@ GPB_FINAL @interface ITMGetBufferRequest : GPBMessage
 /** Test to see if @c lineRange has been set. */
 @property(nonatomic, readwrite) BOOL hasLineRange;
 
+/** Populate `style` field of `LineContents`? */
+@property(nonatomic, readwrite) BOOL includeStyles;
+
+@property(nonatomic, readwrite) BOOL hasIncludeStyles;
 @end
 
 #pragma mark - ITMGetBufferResponse
@@ -4722,12 +4762,176 @@ GPB_FINAL @interface ITMCoord : GPBMessage
 @property(nonatomic, readwrite) BOOL hasY;
 @end
 
+#pragma mark - ITMRGBColor
+
+typedef GPB_ENUM(ITMRGBColor_FieldNumber) {
+  ITMRGBColor_FieldNumber_Red = 1,
+  ITMRGBColor_FieldNumber_Green = 2,
+  ITMRGBColor_FieldNumber_Blue = 3,
+};
+
+GPB_FINAL @interface ITMRGBColor : GPBMessage
+
+@property(nonatomic, readwrite) uint32_t red;
+
+@property(nonatomic, readwrite) BOOL hasRed;
+@property(nonatomic, readwrite) uint32_t green;
+
+@property(nonatomic, readwrite) BOOL hasGreen;
+@property(nonatomic, readwrite) uint32_t blue;
+
+@property(nonatomic, readwrite) BOOL hasBlue;
+@end
+
+#pragma mark - ITMURL
+
+typedef GPB_ENUM(ITMURL_FieldNumber) {
+  ITMURL_FieldNumber_URL = 1,
+  ITMURL_FieldNumber_Identifier = 2,
+};
+
+GPB_FINAL @interface ITMURL : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *URL;
+/** Test to see if @c URL has been set. */
+@property(nonatomic, readwrite) BOOL hasURL;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *identifier;
+/** Test to see if @c identifier has been set. */
+@property(nonatomic, readwrite) BOOL hasIdentifier;
+
+@end
+
+#pragma mark - ITMCellStyle
+
+typedef GPB_ENUM(ITMCellStyle_FieldNumber) {
+  ITMCellStyle_FieldNumber_FgStandard = 1,
+  ITMCellStyle_FieldNumber_FgAlternate = 2,
+  ITMCellStyle_FieldNumber_FgRgb = 3,
+  ITMCellStyle_FieldNumber_FgAlternatePlacementX = 4,
+  ITMCellStyle_FieldNumber_BgStandard = 5,
+  ITMCellStyle_FieldNumber_BgAlternate = 6,
+  ITMCellStyle_FieldNumber_BgRgb = 7,
+  ITMCellStyle_FieldNumber_BgAlternatePlacementY = 8,
+  ITMCellStyle_FieldNumber_Bold = 9,
+  ITMCellStyle_FieldNumber_Faint = 10,
+  ITMCellStyle_FieldNumber_Italic = 11,
+  ITMCellStyle_FieldNumber_Blink = 12,
+  ITMCellStyle_FieldNumber_Underline = 13,
+  ITMCellStyle_FieldNumber_Strikethrough = 14,
+  ITMCellStyle_FieldNumber_Invisible = 15,
+  ITMCellStyle_FieldNumber_Inverse = 16,
+  ITMCellStyle_FieldNumber_Guarded = 17,
+  ITMCellStyle_FieldNumber_Image = 18,
+  ITMCellStyle_FieldNumber_UnderlineColor = 19,
+  ITMCellStyle_FieldNumber_BlockId = 20,
+  ITMCellStyle_FieldNumber_URL = 21,
+  ITMCellStyle_FieldNumber_Repeats = 22,
+};
+
+typedef GPB_ENUM(ITMCellStyle_FgColor_OneOfCase) {
+  ITMCellStyle_FgColor_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMCellStyle_FgColor_OneOfCase_FgStandard = 1,
+  ITMCellStyle_FgColor_OneOfCase_FgAlternate = 2,
+  ITMCellStyle_FgColor_OneOfCase_FgRgb = 3,
+  ITMCellStyle_FgColor_OneOfCase_FgAlternatePlacementX = 4,
+};
+
+typedef GPB_ENUM(ITMCellStyle_BgColor_OneOfCase) {
+  ITMCellStyle_BgColor_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMCellStyle_BgColor_OneOfCase_BgStandard = 5,
+  ITMCellStyle_BgColor_OneOfCase_BgAlternate = 6,
+  ITMCellStyle_BgColor_OneOfCase_BgRgb = 7,
+  ITMCellStyle_BgColor_OneOfCase_BgAlternatePlacementY = 8,
+};
+
+GPB_FINAL @interface ITMCellStyle : GPBMessage
+
+@property(nonatomic, readonly) ITMCellStyle_FgColor_OneOfCase fgColorOneOfCase;
+
+@property(nonatomic, readwrite) uint32_t fgStandard;
+
+@property(nonatomic, readwrite) ITMAlternateColor fgAlternate;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMRGBColor *fgRgb;
+
+@property(nonatomic, readwrite) uint32_t fgAlternatePlacementX;
+
+@property(nonatomic, readonly) ITMCellStyle_BgColor_OneOfCase bgColorOneOfCase;
+
+@property(nonatomic, readwrite) uint32_t bgStandard;
+
+@property(nonatomic, readwrite) ITMAlternateColor bgAlternate;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMRGBColor *bgRgb;
+
+@property(nonatomic, readwrite) uint32_t bgAlternatePlacementY;
+
+@property(nonatomic, readwrite) BOOL bold;
+
+@property(nonatomic, readwrite) BOOL hasBold;
+@property(nonatomic, readwrite) BOOL faint;
+
+@property(nonatomic, readwrite) BOOL hasFaint;
+@property(nonatomic, readwrite) BOOL italic;
+
+@property(nonatomic, readwrite) BOOL hasItalic;
+@property(nonatomic, readwrite) BOOL blink;
+
+@property(nonatomic, readwrite) BOOL hasBlink;
+@property(nonatomic, readwrite) BOOL underline;
+
+@property(nonatomic, readwrite) BOOL hasUnderline;
+@property(nonatomic, readwrite) BOOL strikethrough;
+
+@property(nonatomic, readwrite) BOOL hasStrikethrough;
+@property(nonatomic, readwrite) BOOL invisible;
+
+@property(nonatomic, readwrite) BOOL hasInvisible;
+@property(nonatomic, readwrite) BOOL inverse;
+
+@property(nonatomic, readwrite) BOOL hasInverse;
+@property(nonatomic, readwrite) BOOL guarded;
+
+@property(nonatomic, readwrite) BOOL hasGuarded;
+@property(nonatomic, readwrite) ITMImagePlaceholderType image;
+
+@property(nonatomic, readwrite) BOOL hasImage;
+/** External attributes */
+@property(nonatomic, readwrite, strong, null_resettable) ITMRGBColor *underlineColor;
+/** Test to see if @c underlineColor has been set. */
+@property(nonatomic, readwrite) BOOL hasUnderlineColor;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *blockId;
+/** Test to see if @c blockId has been set. */
+@property(nonatomic, readwrite) BOOL hasBlockId;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMURL *URL;
+/** Test to see if @c URL has been set. */
+@property(nonatomic, readwrite) BOOL hasURL;
+
+/** Number of times this exact style repeats. */
+@property(nonatomic, readwrite) uint32_t repeats;
+
+@property(nonatomic, readwrite) BOOL hasRepeats;
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'fgColor'.
+ **/
+void ITMCellStyle_ClearFgColorOneOfCase(ITMCellStyle *message);
+/**
+ * Clears whatever value was set for the oneof 'bgColor'.
+ **/
+void ITMCellStyle_ClearBgColorOneOfCase(ITMCellStyle *message);
+
 #pragma mark - ITMLineContents
 
 typedef GPB_ENUM(ITMLineContents_FieldNumber) {
   ITMLineContents_FieldNumber_Text = 1,
   ITMLineContents_FieldNumber_CodePointsPerCellArray = 2,
   ITMLineContents_FieldNumber_Continuation = 3,
+  ITMLineContents_FieldNumber_StyleArray = 4,
 };
 
 /**
@@ -4796,6 +5000,11 @@ GPB_FINAL @interface ITMLineContents : GPBMessage
 @property(nonatomic, readwrite) ITMLineContents_Continuation continuation;
 
 @property(nonatomic, readwrite) BOOL hasContinuation;
+/** This will be 1:1 with cells, but it is run-length encoded by its `repeats` field. */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMCellStyle*> *styleArray;
+/** The number of items in @c styleArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger styleArray_Count;
+
 @end
 
 #pragma mark - ITMCodePointsPerCell

@@ -16576,16 +16576,133 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self sync];
 }
 
+- (ITMCellStyle *)protoStyleForCharacter:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
+    ITMCellStyle *style = [[[ITMCellStyle alloc] init] autorelease];
+    switch (c.foregroundColorMode) {
+        case ColorModeAlternate: {
+            switch ((ITMAlternateColor)c.foregroundColor) {
+                case ITMAlternateColor_Default:
+                case ITMAlternateColor_SystemMessage:
+                case ITMAlternateColor_ReversedDefault:
+                    style.fgAlternate = (ITMAlternateColor)c.foregroundColor;
+                    break;
+            }
+            break;
+        }
+        case ColorModeNormal: {
+            style.fgStandard = c.foregroundColor;
+            break;
+        }
+        case ColorMode24bit: {
+            ITMRGBColor *rgb = [[[ITMRGBColor alloc] init] autorelease];
+            rgb.red = c.foregroundColor;
+            rgb.green = c.fgGreen;
+            rgb.blue = c.fgBlue;
+            style.fgRgb = rgb;
+            break;
+        }
+        case ColorModeInvalid: {
+            break;
+        }
+    }
+
+    switch (c.backgroundColorMode) {
+        case ColorModeAlternate: {
+            switch ((ITMAlternateColor)c.foregroundColor) {
+                case ITMAlternateColor_Default:
+                case ITMAlternateColor_SystemMessage:
+                case ITMAlternateColor_ReversedDefault:
+                    style.bgAlternate = (ITMAlternateColor)c.backgroundColor;
+                    break;
+            }
+            break;
+        }
+        case ColorModeNormal: {
+            style.bgStandard = c.backgroundColor;
+            break;
+        }
+        case ColorMode24bit: {
+            ITMRGBColor *rgb = [[[ITMRGBColor alloc] init] autorelease];
+            rgb.red = c.backgroundColor;
+            rgb.green = c.bgGreen;
+            rgb.blue = c.bgBlue;
+            style.bgRgb = rgb;
+            break;
+        }
+        case ColorModeInvalid: {
+            break;
+        }
+    }
+
+    style.bold = c.bold;
+    style.faint = c.faint;
+    style.italic = c.italic;
+    style.blink = c.blink;
+    style.underline = c.underline;
+    style.strikethrough = c.strikethrough;
+    style.invisible = c.invisible;
+    style.inverse = c.inverse;
+    style.guarded = c.guarded;
+
+    if (c.image) {
+        style.image = ITMImagePlaceholderType_Iterm2;
+    } else if (c.virtualPlaceholder) {
+        style.image = ITMImagePlaceholderType_Kitty;
+    } else {
+        style.image = ITMImagePlaceholderType_None;
+    }
+
+    if (ea.hasUnderlineColor) {
+        ITMRGBColor *rgb = [[[ITMRGBColor alloc] init] autorelease];
+        rgb.red = ea.underlineColor.red;
+        rgb.green = ea.underlineColor.green;
+        rgb.blue = ea.underlineColor.blue;
+        style.underlineColor = rgb;
+    }
+    if (ea.blockID) {
+        style.blockId = ea.blockID;
+    }
+    if (ea.url) {
+        ITMURL *url = [[[ITMURL alloc] init] autorelease];
+        url.URL = ea.url.url.absoluteString;
+        url.identifier = ea.url.identifier;
+    }
+    style.repeats = 1;
+    return style;
+}
+
 - (NSString *)stringForLine:(const screen_char_t *)screenChars
                      length:(int)length
-                  cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray {
+                    eaIndex:(iTermExternalAttributeIndex *)eaIndex
+                  cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray
+                stylesArray:(NSMutableArray<ITMCellStyle *> *)styleArray {
     unichar *characters = iTermMalloc(sizeof(unichar) * length * kMaxParts + 1);
     ITMCodePointsPerCell *cpps = [[[ITMCodePointsPerCell alloc] init] autorelease];
     cpps.numCodePoints = 1;
     cpps.repeats = 0;
+
+    ITMCellStyle *style = nil;
+
+    iTermExternalAttribute *prevAttr = nil;
+    screen_char_t prev = { 0 };
+
     int o = 0;
     for (int i = 0; i < length; ++i) {
         int numCodePoints;
+
+        if (style != nil) {
+            if (ScreenCharacterAttributesEqual(screenChars[i], prev) &&
+                [NSObject object:prevAttr isEqualToObject:eaIndex[i]]) {
+                style.repeats += 1;
+            } else {
+                [styleArray addObject:style];
+                style = nil;
+            }
+        }
+        if (style == nil) {
+            style = [self protoStyleForCharacter:screenChars[i] externalAttributes:eaIndex[i]];
+        }
+        prev = screenChars[i];
 
         unichar c = screenChars[i].code;
         if (!screenChars[i].complexChar && c >= ITERM2_PRIVATE_BEGIN && c <= ITERM2_PRIVATE_END) {
@@ -16608,6 +16725,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     if (cpps.repeats > 0) {
         [cppsArray addObject:cpps];
+    }
+    if (style) {
+        [styleArray addObject:style];
     }
     NSString *string = [[[NSString alloc] initWithCharacters:characters length:o] autorelease];
     free(characters);
@@ -16664,10 +16784,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     __block int lastIndex = -1;
     __block const screen_char_t *line = nil;
     BOOL (^handleEol)(unichar, int, int) = ^BOOL(unichar code, int numPreceedingNulls, int linenumber) {
+        iTermExternalAttributeIndex *eaIndex = [_screen externalAttributeIndexForLine:linenumber];
         ITMLineContents *lineContents = [[[ITMLineContents alloc] init] autorelease];
         lineContents.text = [self stringForLine:line + firstIndex
                                          length:lastIndex - firstIndex
-                                      cppsArray:lineContents.codePointsPerCellArray];
+                                        eaIndex:eaIndex
+                                      cppsArray:lineContents.codePointsPerCellArray
+                                    stylesArray:lineContents.styleArray];
         switch (code) {
             case EOL_HARD:
                 lineContents.continuation = ITMLineContents_Continuation_ContinuationHardEol;

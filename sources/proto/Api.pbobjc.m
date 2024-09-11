@@ -32,6 +32,7 @@ GPBObjCClassDeclaration(ITMActivateRequest_App);
 GPBObjCClassDeclaration(ITMActivateResponse);
 GPBObjCClassDeclaration(ITMBroadcastDomain);
 GPBObjCClassDeclaration(ITMBroadcastDomainsChangedNotification);
+GPBObjCClassDeclaration(ITMCellStyle);
 GPBObjCClassDeclaration(ITMCloseRequest);
 GPBObjCClassDeclaration(ITMCloseRequest_CloseSessions);
 GPBObjCClassDeclaration(ITMCloseRequest_CloseTabs);
@@ -121,6 +122,7 @@ GPBObjCClassDeclaration(ITMPromptNotification);
 GPBObjCClassDeclaration(ITMPromptNotificationCommandEnd);
 GPBObjCClassDeclaration(ITMPromptNotificationCommandStart);
 GPBObjCClassDeclaration(ITMPromptNotificationPrompt);
+GPBObjCClassDeclaration(ITMRGBColor);
 GPBObjCClassDeclaration(ITMRPCRegistrationRequest);
 GPBObjCClassDeclaration(ITMRPCRegistrationRequest_ContextMenuAttributes);
 GPBObjCClassDeclaration(ITMRPCRegistrationRequest_RPCArgument);
@@ -188,6 +190,7 @@ GPBObjCClassDeclaration(ITMTmuxResponse_SendCommand);
 GPBObjCClassDeclaration(ITMTmuxResponse_SetWindowVisible);
 GPBObjCClassDeclaration(ITMTransactionRequest);
 GPBObjCClassDeclaration(ITMTransactionResponse);
+GPBObjCClassDeclaration(ITMURL);
 GPBObjCClassDeclaration(ITMVariableChangedNotification);
 GPBObjCClassDeclaration(ITMVariableMonitorRequest);
 GPBObjCClassDeclaration(ITMVariableRequest);
@@ -442,6 +445,80 @@ BOOL ITMPromptMonitorMode_IsValidValue(int32_t value__) {
     case ITMPromptMonitorMode_Prompt:
     case ITMPromptMonitorMode_CommandStart:
     case ITMPromptMonitorMode_CommandEnd:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - Enum ITMAlternateColor
+
+GPBEnumDescriptor *ITMAlternateColor_EnumDescriptor(void) {
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Default\000ReversedDefault\000SystemMessage\000";
+    static const int32_t values[] = {
+        ITMAlternateColor_Default,
+        ITMAlternateColor_ReversedDefault,
+        ITMAlternateColor_SystemMessage,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMAlternateColor)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMAlternateColor_IsValidValue];
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMAlternateColor_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMAlternateColor_Default:
+    case ITMAlternateColor_ReversedDefault:
+    case ITMAlternateColor_SystemMessage:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - Enum ITMImagePlaceholderType
+
+GPBEnumDescriptor *ITMImagePlaceholderType_EnumDescriptor(void) {
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
+  if (!descriptor) {
+    static const char *valueNames =
+        "None\000Iterm2\000Kitty\000";
+    static const int32_t values[] = {
+        ITMImagePlaceholderType_None,
+        ITMImagePlaceholderType_Iterm2,
+        ITMImagePlaceholderType_Kitty,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMImagePlaceholderType)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMImagePlaceholderType_IsValidValue];
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMImagePlaceholderType_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMImagePlaceholderType_None:
+    case ITMImagePlaceholderType_Iterm2:
+    case ITMImagePlaceholderType_Kitty:
       return YES;
     default:
       return NO;
@@ -10259,6 +10336,7 @@ typedef struct ITMLayoutChangedNotification__storage_ {
 
 @dynamic hasSession, session;
 @dynamic hasLineRange, lineRange;
+@dynamic hasIncludeStyles, includeStyles;
 
 typedef struct ITMGetBufferRequest__storage_ {
   uint32_t _has_storage_[1];
@@ -10289,6 +10367,15 @@ typedef struct ITMGetBufferRequest__storage_ {
         .offset = (uint32_t)offsetof(ITMGetBufferRequest__storage_, lineRange),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "includeStyles",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMGetBufferRequest_FieldNumber_IncludeStyles,
+        .hasIndex = 2,
+        .offset = 3,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -11730,6 +11817,425 @@ typedef struct ITMCoord__storage_ {
 
 @end
 
+#pragma mark - ITMRGBColor
+
+@implementation ITMRGBColor
+
+@dynamic hasRed, red;
+@dynamic hasGreen, green;
+@dynamic hasBlue, blue;
+
+typedef struct ITMRGBColor__storage_ {
+  uint32_t _has_storage_[1];
+  uint32_t red;
+  uint32_t green;
+  uint32_t blue;
+} ITMRGBColor__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "red",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMRGBColor_FieldNumber_Red,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRGBColor__storage_, red),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt32,
+      },
+      {
+        .name = "green",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMRGBColor_FieldNumber_Green,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMRGBColor__storage_, green),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt32,
+      },
+      {
+        .name = "blue",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMRGBColor_FieldNumber_Blue,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMRGBColor__storage_, blue),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt32,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRGBColor class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRGBColor__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMURL
+
+@implementation ITMURL
+
+@dynamic hasURL, URL;
+@dynamic hasIdentifier, identifier;
+
+typedef struct ITMURL__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *URL;
+  NSString *identifier;
+} ITMURL__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "URL",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMURL_FieldNumber_URL,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMURL__storage_, URL),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "identifier",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMURL_FieldNumber_Identifier,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMURL__storage_, identifier),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMURL class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMURL__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+#if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    static const char *extraTextFormatInfo =
+        "\001\001!!!\000";
+    [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
+#endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMCellStyle
+
+@implementation ITMCellStyle
+
+@dynamic fgColorOneOfCase;
+@dynamic bgColorOneOfCase;
+@dynamic fgStandard;
+@dynamic fgAlternate;
+@dynamic fgRgb;
+@dynamic fgAlternatePlacementX;
+@dynamic bgStandard;
+@dynamic bgAlternate;
+@dynamic bgRgb;
+@dynamic bgAlternatePlacementY;
+@dynamic hasBold, bold;
+@dynamic hasFaint, faint;
+@dynamic hasItalic, italic;
+@dynamic hasBlink, blink;
+@dynamic hasUnderline, underline;
+@dynamic hasStrikethrough, strikethrough;
+@dynamic hasInvisible, invisible;
+@dynamic hasInverse, inverse;
+@dynamic hasGuarded, guarded;
+@dynamic hasImage, image;
+@dynamic hasUnderlineColor, underlineColor;
+@dynamic hasBlockId, blockId;
+@dynamic hasURL, URL;
+@dynamic hasRepeats, repeats;
+
+typedef struct ITMCellStyle__storage_ {
+  uint32_t _has_storage_[3];
+  uint32_t fgStandard;
+  ITMAlternateColor fgAlternate;
+  uint32_t fgAlternatePlacementX;
+  uint32_t bgStandard;
+  ITMAlternateColor bgAlternate;
+  uint32_t bgAlternatePlacementY;
+  ITMImagePlaceholderType image;
+  uint32_t repeats;
+  ITMRGBColor *fgRgb;
+  ITMRGBColor *bgRgb;
+  ITMRGBColor *underlineColor;
+  NSString *blockId;
+  ITMURL *URL;
+} ITMCellStyle__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "fgStandard",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_FgStandard,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, fgStandard),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeUInt32,
+      },
+      {
+        .name = "fgAlternate",
+        .dataTypeSpecific.enumDescFunc = ITMAlternateColor_EnumDescriptor,
+        .number = ITMCellStyle_FieldNumber_FgAlternate,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, fgAlternate),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "fgRgb",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRGBColor),
+        .number = ITMCellStyle_FieldNumber_FgRgb,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, fgRgb),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "fgAlternatePlacementX",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_FgAlternatePlacementX,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, fgAlternatePlacementX),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeUInt32,
+      },
+      {
+        .name = "bgStandard",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_BgStandard,
+        .hasIndex = -2,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, bgStandard),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeUInt32,
+      },
+      {
+        .name = "bgAlternate",
+        .dataTypeSpecific.enumDescFunc = ITMAlternateColor_EnumDescriptor,
+        .number = ITMCellStyle_FieldNumber_BgAlternate,
+        .hasIndex = -2,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, bgAlternate),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "bgRgb",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRGBColor),
+        .number = ITMCellStyle_FieldNumber_BgRgb,
+        .hasIndex = -2,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, bgRgb),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "bgAlternatePlacementY",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_BgAlternatePlacementY,
+        .hasIndex = -2,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, bgAlternatePlacementY),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeUInt32,
+      },
+      {
+        .name = "bold",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_Bold,
+        .hasIndex = 0,
+        .offset = 1,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "faint",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_Faint,
+        .hasIndex = 2,
+        .offset = 3,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "italic",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_Italic,
+        .hasIndex = 4,
+        .offset = 5,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "blink",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_Blink,
+        .hasIndex = 6,
+        .offset = 7,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "underline",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_Underline,
+        .hasIndex = 8,
+        .offset = 9,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "strikethrough",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_Strikethrough,
+        .hasIndex = 10,
+        .offset = 11,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "invisible",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_Invisible,
+        .hasIndex = 12,
+        .offset = 13,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "inverse",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_Inverse,
+        .hasIndex = 14,
+        .offset = 15,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "guarded",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_Guarded,
+        .hasIndex = 16,
+        .offset = 17,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "image",
+        .dataTypeSpecific.enumDescFunc = ITMImagePlaceholderType_EnumDescriptor,
+        .number = ITMCellStyle_FieldNumber_Image,
+        .hasIndex = 18,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, image),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "underlineColor",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRGBColor),
+        .number = ITMCellStyle_FieldNumber_UnderlineColor,
+        .hasIndex = 19,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, underlineColor),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "blockId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_BlockId,
+        .hasIndex = 20,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, blockId),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "URL",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMURL),
+        .number = ITMCellStyle_FieldNumber_URL,
+        .hasIndex = 21,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, URL),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "repeats",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCellStyle_FieldNumber_Repeats,
+        .hasIndex = 22,
+        .offset = (uint32_t)offsetof(ITMCellStyle__storage_, repeats),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt32,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMCellStyle class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMCellStyle__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    static const char *oneofs[] = {
+      "fgColor",
+      "bgColor",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+#if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    static const char *extraTextFormatInfo =
+        "\013\001\n\000\002\013\000\003\005\000\004\025\000\005\n\000\006\013\000\007\005\000\010\025\000\023\016\000\024\006A\000\025!!!\000";
+    [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
+#endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMCellStyle_ClearFgColorOneOfCase(ITMCellStyle *message) {
+  GPBDescriptor *descriptor = [ITMCellStyle descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBClearOneof(message, oneof);
+}
+void ITMCellStyle_ClearBgColorOneOfCase(ITMCellStyle *message) {
+  GPBDescriptor *descriptor = [ITMCellStyle descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:1];
+  GPBClearOneof(message, oneof);
+}
 #pragma mark - ITMLineContents
 
 @implementation ITMLineContents
@@ -11737,12 +12243,14 @@ typedef struct ITMCoord__storage_ {
 @dynamic hasText, text;
 @dynamic codePointsPerCellArray, codePointsPerCellArray_Count;
 @dynamic hasContinuation, continuation;
+@dynamic styleArray, styleArray_Count;
 
 typedef struct ITMLineContents__storage_ {
   uint32_t _has_storage_[1];
   ITMLineContents_Continuation continuation;
   NSString *text;
   NSMutableArray *codePointsPerCellArray;
+  NSMutableArray *styleArray;
 } ITMLineContents__storage_;
 
 // This method is threadsafe because it is initially called
@@ -11780,6 +12288,16 @@ typedef struct ITMLineContents__storage_ {
         .core.offset = (uint32_t)offsetof(ITMLineContents__storage_, continuation),
         .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue | GPBFieldHasEnumDescriptor),
         .core.dataType = GPBDataTypeEnum,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "styleArray",
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMCellStyle),
+        .core.number = ITMLineContents_FieldNumber_StyleArray,
+        .core.hasIndex = GPBNoHasBit,
+        .core.offset = (uint32_t)offsetof(ITMLineContents__storage_, styleArray),
+        .core.flags = GPBFieldRepeated,
+        .core.dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =

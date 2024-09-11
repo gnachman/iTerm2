@@ -108,6 +108,30 @@ PROMPT = PromptMonitorMode.V(1)
 COMMAND_START = PromptMonitorMode.V(2)
 COMMAND_END = PromptMonitorMode.V(3)
 
+global___AlternateColor = AlternateColor
+class _AlternateColor(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[AlternateColor.V], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor = ...
+    DEFAULT = AlternateColor.V(0)
+    REVERSED_DEFAULT = AlternateColor.V(3)
+    SYSTEM_MESSAGE = AlternateColor.V(4)
+class AlternateColor(metaclass=_AlternateColor):
+    V = typing.NewType('V', builtins.int)
+DEFAULT = AlternateColor.V(0)
+REVERSED_DEFAULT = AlternateColor.V(3)
+SYSTEM_MESSAGE = AlternateColor.V(4)
+
+global___ImagePlaceholderType = ImagePlaceholderType
+class _ImagePlaceholderType(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ImagePlaceholderType.V], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor = ...
+    NONE = ImagePlaceholderType.V(0)
+    ITERM2 = ImagePlaceholderType.V(1)
+    KITTY = ImagePlaceholderType.V(2)
+class ImagePlaceholderType(metaclass=_ImagePlaceholderType):
+    V = typing.NewType('V', builtins.int)
+NONE = ImagePlaceholderType.V(0)
+ITERM2 = ImagePlaceholderType.V(1)
+KITTY = ImagePlaceholderType.V(2)
+
 class ClientOriginatedMessage(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor = ...
     ID_FIELD_NUMBER: builtins.int
@@ -3074,7 +3098,9 @@ class GetBufferRequest(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor = ...
     SESSION_FIELD_NUMBER: builtins.int
     LINE_RANGE_FIELD_NUMBER: builtins.int
+    INCLUDE_STYLES_FIELD_NUMBER: builtins.int
     session: typing.Text = ...
+    include_styles: builtins.bool = ...
 
     @property
     def line_range(self) -> global___LineRange: ...
@@ -3083,9 +3109,10 @@ class GetBufferRequest(google.protobuf.message.Message):
         *,
         session : typing.Optional[typing.Text] = ...,
         line_range : typing.Optional[global___LineRange] = ...,
+        include_styles : typing.Optional[builtins.bool] = ...,
         ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal[u"line_range",b"line_range",u"session",b"session"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal[u"line_range",b"line_range",u"session",b"session"]) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal[u"include_styles",b"include_styles",u"line_range",b"line_range",u"session",b"session"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal[u"include_styles",b"include_styles",u"line_range",b"line_range",u"session",b"session"]) -> None: ...
 global___GetBufferRequest = GetBufferRequest
 
 class GetBufferResponse(google.protobuf.message.Message):
@@ -3519,6 +3546,129 @@ class Coord(google.protobuf.message.Message):
     def ClearField(self, field_name: typing_extensions.Literal[u"x",b"x",u"y",b"y"]) -> None: ...
 global___Coord = Coord
 
+class RGBColor(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor = ...
+    RED_FIELD_NUMBER: builtins.int
+    GREEN_FIELD_NUMBER: builtins.int
+    BLUE_FIELD_NUMBER: builtins.int
+    red: builtins.int = ...
+    green: builtins.int = ...
+    blue: builtins.int = ...
+
+    def __init__(self,
+        *,
+        red : typing.Optional[builtins.int] = ...,
+        green : typing.Optional[builtins.int] = ...,
+        blue : typing.Optional[builtins.int] = ...,
+        ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal[u"blue",b"blue",u"green",b"green",u"red",b"red"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal[u"blue",b"blue",u"green",b"green",u"red",b"red"]) -> None: ...
+global___RGBColor = RGBColor
+
+class URL(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor = ...
+    URL_FIELD_NUMBER: builtins.int
+    IDENTIFIER_FIELD_NUMBER: builtins.int
+    url: typing.Text = ...
+    identifier: typing.Text = ...
+
+    def __init__(self,
+        *,
+        url : typing.Optional[typing.Text] = ...,
+        identifier : typing.Optional[typing.Text] = ...,
+        ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal[u"identifier",b"identifier",u"url",b"url"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal[u"identifier",b"identifier",u"url",b"url"]) -> None: ...
+global___URL = URL
+
+class CellStyle(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor = ...
+    FGSTANDARD_FIELD_NUMBER: builtins.int
+    FGALTERNATE_FIELD_NUMBER: builtins.int
+    FGRGB_FIELD_NUMBER: builtins.int
+    FGALTERNATEPLACEMENTX_FIELD_NUMBER: builtins.int
+    BGSTANDARD_FIELD_NUMBER: builtins.int
+    BGALTERNATE_FIELD_NUMBER: builtins.int
+    BGRGB_FIELD_NUMBER: builtins.int
+    BGALTERNATEPLACEMENTY_FIELD_NUMBER: builtins.int
+    BOLD_FIELD_NUMBER: builtins.int
+    FAINT_FIELD_NUMBER: builtins.int
+    ITALIC_FIELD_NUMBER: builtins.int
+    BLINK_FIELD_NUMBER: builtins.int
+    UNDERLINE_FIELD_NUMBER: builtins.int
+    STRIKETHROUGH_FIELD_NUMBER: builtins.int
+    INVISIBLE_FIELD_NUMBER: builtins.int
+    INVERSE_FIELD_NUMBER: builtins.int
+    GUARDED_FIELD_NUMBER: builtins.int
+    IMAGE_FIELD_NUMBER: builtins.int
+    UNDERLINECOLOR_FIELD_NUMBER: builtins.int
+    BLOCKID_FIELD_NUMBER: builtins.int
+    URL_FIELD_NUMBER: builtins.int
+    REPEATS_FIELD_NUMBER: builtins.int
+    fgStandard: builtins.int = ...
+    fgAlternate: global___AlternateColor.V = ...
+    fgAlternatePlacementX: builtins.int = ...
+    bgStandard: builtins.int = ...
+    bgAlternate: global___AlternateColor.V = ...
+    bgAlternatePlacementY: builtins.int = ...
+    bold: builtins.bool = ...
+    faint: builtins.bool = ...
+    italic: builtins.bool = ...
+    blink: builtins.bool = ...
+    underline: builtins.bool = ...
+    strikethrough: builtins.bool = ...
+    invisible: builtins.bool = ...
+    inverse: builtins.bool = ...
+    guarded: builtins.bool = ...
+    image: global___ImagePlaceholderType.V = ...
+    blockID: typing.Text = ...
+    repeats: builtins.int = ...
+
+    @property
+    def fgRgb(self) -> global___RGBColor: ...
+
+    @property
+    def bgRgb(self) -> global___RGBColor: ...
+
+    @property
+    def underlineColor(self) -> global___RGBColor: ...
+
+    @property
+    def url(self) -> global___URL: ...
+
+    def __init__(self,
+        *,
+        fgStandard : typing.Optional[builtins.int] = ...,
+        fgAlternate : typing.Optional[global___AlternateColor.V] = ...,
+        fgRgb : typing.Optional[global___RGBColor] = ...,
+        fgAlternatePlacementX : typing.Optional[builtins.int] = ...,
+        bgStandard : typing.Optional[builtins.int] = ...,
+        bgAlternate : typing.Optional[global___AlternateColor.V] = ...,
+        bgRgb : typing.Optional[global___RGBColor] = ...,
+        bgAlternatePlacementY : typing.Optional[builtins.int] = ...,
+        bold : typing.Optional[builtins.bool] = ...,
+        faint : typing.Optional[builtins.bool] = ...,
+        italic : typing.Optional[builtins.bool] = ...,
+        blink : typing.Optional[builtins.bool] = ...,
+        underline : typing.Optional[builtins.bool] = ...,
+        strikethrough : typing.Optional[builtins.bool] = ...,
+        invisible : typing.Optional[builtins.bool] = ...,
+        inverse : typing.Optional[builtins.bool] = ...,
+        guarded : typing.Optional[builtins.bool] = ...,
+        image : typing.Optional[global___ImagePlaceholderType.V] = ...,
+        underlineColor : typing.Optional[global___RGBColor] = ...,
+        blockID : typing.Optional[typing.Text] = ...,
+        url : typing.Optional[global___URL] = ...,
+        repeats : typing.Optional[builtins.int] = ...,
+        ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal[u"bgAlternate",b"bgAlternate",u"bgAlternatePlacementY",b"bgAlternatePlacementY",u"bgColor",b"bgColor",u"bgRgb",b"bgRgb",u"bgStandard",b"bgStandard",u"blink",b"blink",u"blockID",b"blockID",u"bold",b"bold",u"faint",b"faint",u"fgAlternate",b"fgAlternate",u"fgAlternatePlacementX",b"fgAlternatePlacementX",u"fgColor",b"fgColor",u"fgRgb",b"fgRgb",u"fgStandard",b"fgStandard",u"guarded",b"guarded",u"image",b"image",u"inverse",b"inverse",u"invisible",b"invisible",u"italic",b"italic",u"repeats",b"repeats",u"strikethrough",b"strikethrough",u"underline",b"underline",u"underlineColor",b"underlineColor",u"url",b"url"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal[u"bgAlternate",b"bgAlternate",u"bgAlternatePlacementY",b"bgAlternatePlacementY",u"bgColor",b"bgColor",u"bgRgb",b"bgRgb",u"bgStandard",b"bgStandard",u"blink",b"blink",u"blockID",b"blockID",u"bold",b"bold",u"faint",b"faint",u"fgAlternate",b"fgAlternate",u"fgAlternatePlacementX",b"fgAlternatePlacementX",u"fgColor",b"fgColor",u"fgRgb",b"fgRgb",u"fgStandard",b"fgStandard",u"guarded",b"guarded",u"image",b"image",u"inverse",b"inverse",u"invisible",b"invisible",u"italic",b"italic",u"repeats",b"repeats",u"strikethrough",b"strikethrough",u"underline",b"underline",u"underlineColor",b"underlineColor",u"url",b"url"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal[u"bgColor",b"bgColor"]) -> typing_extensions.Literal["bgStandard","bgAlternate","bgRgb","bgAlternatePlacementY"]: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal[u"fgColor",b"fgColor"]) -> typing_extensions.Literal["fgStandard","fgAlternate","fgRgb","fgAlternatePlacementX"]: ...
+global___CellStyle = CellStyle
+
 class LineContents(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor = ...
     class _Continuation(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Continuation.V], builtins.type):
@@ -3533,20 +3683,25 @@ class LineContents(google.protobuf.message.Message):
     TEXT_FIELD_NUMBER: builtins.int
     CODE_POINTS_PER_CELL_FIELD_NUMBER: builtins.int
     CONTINUATION_FIELD_NUMBER: builtins.int
+    STYLE_FIELD_NUMBER: builtins.int
     text: typing.Text = ...
     continuation: global___LineContents.Continuation.V = ...
 
     @property
     def code_points_per_cell(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CodePointsPerCell]: ...
 
+    @property
+    def style(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CellStyle]: ...
+
     def __init__(self,
         *,
         text : typing.Optional[typing.Text] = ...,
         code_points_per_cell : typing.Optional[typing.Iterable[global___CodePointsPerCell]] = ...,
         continuation : typing.Optional[global___LineContents.Continuation.V] = ...,
+        style : typing.Optional[typing.Iterable[global___CellStyle]] = ...,
         ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal[u"continuation",b"continuation",u"text",b"text"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal[u"code_points_per_cell",b"code_points_per_cell",u"continuation",b"continuation",u"text",b"text"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal[u"code_points_per_cell",b"code_points_per_cell",u"continuation",b"continuation",u"style",b"style",u"text",b"text"]) -> None: ...
 global___LineContents = LineContents
 
 class CodePointsPerCell(google.protobuf.message.Message):

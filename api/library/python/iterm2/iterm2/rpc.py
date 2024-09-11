@@ -205,7 +205,8 @@ async def async_create_tab(
 async def async_get_screen_contents(
         connection,
         session,
-        windowed_coord_range=None):
+        windowed_coord_range=None,
+        style=False):
     """
     Gets screen contents, including both the mutable area and history.
 
@@ -218,6 +219,7 @@ async def async_get_screen_contents(
     request = _alloc_request()
     if session is not None:
         request.get_buffer_request.session = session
+    request.get_buffer_request.include_styles = style
     if windowed_coord_range:
         request.get_buffer_request.line_range.windowed_coord_range.CopyFrom(
             windowed_coord_range.proto)
