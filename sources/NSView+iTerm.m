@@ -8,6 +8,7 @@
 
 #import "NSView+iTerm.h"
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermApplication.h"
 #import "iTermTextPopoverViewController.h"
 #import "NSObject+iTerm.h"
@@ -220,6 +221,14 @@ static NSInteger gTakingSnapshot;
                                     ofView:self
                              preferredEdge:NSRectEdgeMaxY];
     [self it_setAssociatedObject:popoverVC forKey:@"PopoverWarning"];
+}
+
+- (void)it_showWarningWithMarkdown:(NSString *)markdown {
+    NSAttributedString *attributedString = [NSAttributedString attributedStringWithMarkdown:markdown
+                                                                                   font:[NSFont systemFontOfSize:[NSFont systemFontSize]]
+                                                                         paragraphStyle:[NSParagraphStyle defaultParagraphStyle]];
+    [self it_showWarningWithAttributedString:attributedString
+                                        rect:self.bounds];
 }
 
 - (void)it_showWarningWithAttributedString:(NSAttributedString *)text rect:(NSRect)rect {

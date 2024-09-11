@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftyMarkdown
 
 class AttributeToControlSequenceConverter {
     private var currentCodes = [String]()
@@ -147,6 +148,30 @@ extension NSAttributedString {
         }
 
         return NSAttributedString(attributedString: mutableAttributedString)
+    }
+
+    @objc(attributedStringWithMarkdown:font:paragraphStyle:)
+    class func attributedString(markdown: String, font: NSFont, paragraphStyle: NSParagraphStyle) -> NSAttributedString? {
+        let md = SwiftyMarkdown(string: markdown)
+        if let fixedPitchFontName = NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize)?.fontName {
+            md.code.fontName = fixedPitchFontName
+        }
+        let points = NSFont.systemFontSize
+        md.setFontSizeForAllStyles(with: points)
+        // I couldn't find a definitive source to map headings to ems. I used this, which looks fine.
+        // https://stackoverflow.com/questions/5410066/what-are-the-default-font-sizes-in-pixels-for-the-html-heading-tags-h1-h2
+        md.h1.fontSize = max(4, round(points * 2))
+        md.h2.fontSize = max(4, round(points * 1.5))
+        md.h3.fontSize = max(4, round(points * 1.3))
+        md.h4.fontSize = max(4, round(points * 1.0))
+        md.h5.fontSize = max(4, round(points * 0.8))
+        md.h6.fontSize = max(4, round(points * 0.7))
+
+        md.setFontColorForAllStyles(with: .textColor)
+
+        md.code.fontName = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .bold).fontName
+
+        return md.attributedString()
     }
 
     // The HTML parser built in to NSAttributedString is unusable because it sets an sRGB color for
