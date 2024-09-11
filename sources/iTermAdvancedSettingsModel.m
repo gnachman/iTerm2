@@ -364,7 +364,6 @@ DEFINE_STRING(findUrlsRegex,
               SECTION_TERMINAL @"Regular expression for “Find URLs” command.");
 DEFINE_SETTABLE_FLOAT(echoProbeDuration, EchoProbeDuration, 0.5, SECTION_TERMINAL @"Amount of time to wait while testing if echo is on (seconds).\nThis is used by the password manager to ensure you're at a password prompt. Set to 0 to disable echo probe.");
 DEFINE_BOOL(disablePasswordManagerAnimations, NO, SECTION_TERMINAL @"Disable animations for showing/hiding password manager.");
-DEFINE_BOOL(optionIsMetaForSpecialChars, YES, SECTION_TERMINAL @"When you press an arrow key or other function key that transmits the modifiers, should ⌥ be translated to Meta?\nIf this is set to No then it will be translated to Alt.");
 DEFINE_BOOL(noSyncSilenceAnnoyingBellAutomatically, NO, SECTION_TERMINAL @"Automatically silence bell when it rings too much.");
 DEFINE_SETTABLE_STRING(noSyncVariablesToReport, NoSyncVariablesToReport, @"", SECTION_TERMINAL @"Variables to report via control sequence\nThis is a comma-delimited list of variables that can be reported with the OSC 1337 ReportVariable=name control sequence. Each variable name must be prefixed with “allow:” or “deny:”.");
 DEFINE_BOOL(restoreWindowContents, YES, SECTION_TERMINAL @"Restore window contents at startup.\nThis requires “System Settings > Desktop & Dock > Close windows when quitting an app” to be off.");

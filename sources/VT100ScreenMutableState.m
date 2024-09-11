@@ -99,8 +99,6 @@ static _Atomic int gPerformingJoinedBlock;
         [[iTermEventuallyConsistentIntervalTree alloc] initWithSideEffectPerformer:self
                                                             derivativeIntervalTree:_derivativeSavedIntervalTree];
         _terminal = [[VT100Terminal alloc] init];
-        _terminal.output.optionIsMetaForSpecialKeys =
-        [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
         _sideEffectPerformer = performer;
         _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
@@ -407,6 +405,7 @@ static _Atomic int gPerformingJoinedBlock;
         [self movePromptUnderComposerIfNeeded];
     }
     _terminal.terminfoValues = config.terminfoValues;
+    _terminal.output.optionIsMetaForSpecialKeys = config.optionIsMetaForSpecialChars;
     _alertOnNextMark = config.alertOnNextMark;
 
     _autoComposerEnabled = config.autoComposerEnabled;

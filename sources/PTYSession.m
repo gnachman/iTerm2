@@ -14072,6 +14072,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                                               inProfile:self.profile];
         _config.profileName = [self profileName];
         _config.terminalCanChangeBlink = [iTermProfilePreferences boolForKey:KEY_ALLOW_CHANGE_CURSOR_BLINK inProfile:self.profile];
+        _config.optionIsMetaForSpecialChars = ![iTermProfilePreferences boolForKey:KEY_TREAT_OPTION_AS_ALT inProfile:_profile];
 
         dirty = YES;
         _profileDidChange = NO;

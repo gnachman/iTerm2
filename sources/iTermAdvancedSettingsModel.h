@@ -279,7 +279,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)openNewWindowAtStartup;
 + (BOOL)openUntitledFile;
 + (int)optimumTabWidth;
-+ (BOOL)optionIsMetaForSpecialChars;
 + (BOOL)oscColorReport16Bits;
 + (BOOL)p3;
 + (int)pasteHistoryMaxOptions;

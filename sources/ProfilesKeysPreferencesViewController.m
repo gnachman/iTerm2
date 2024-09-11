@@ -23,6 +23,7 @@
 #import "iTermTuple.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSView+iTerm.h"
 #import "PreferencePanel.h"
 
 static NSString *const kDeleteKeyString = @"0x7f-0x0";
@@ -46,7 +47,9 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
     IBOutlet NSButton *_allowModifyOtherKeys;
     IBOutlet NSButton *_movementKeysScrollOutsideInteractiveApps;
-    IBOutlet NSTabView *_tabView;   
+    IBOutlet NSTabView *_tabView;
+    IBOutlet NSButton *_treatOptionAsAlt;
+
     iTermHotkeyPreferencesWindowController *_hotkeyPanel;
     NSInteger _posting;
 }
@@ -112,6 +115,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                     key:KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_treatOptionAsAlt
+                    key:KEY_TREAT_OPTION_AS_ALT
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
     PreferenceInfo *info = [self defineControl:_useLibTickit
                                            key:KEY_USE_LIBTICKIT_PROTOCOL
                                    relatedView:nil
@@ -165,6 +172,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                        KEY_RIGHT_OPTION_KEY_CHANGEABLE,
                        KEY_APPLICATION_KEYPAD_ALLOWED,
                        KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS,
+                       KEY_TREAT_OPTION_AS_ALT,
                        KEY_USE_LIBTICKIT_PROTOCOL ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
@@ -237,6 +245,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
 
 #pragma mark - Actions
+
+- (IBAction)optionAsMetaHelp:(id)sender {
+    [[NSView castFrom:sender] it_showWarningWithMarkdown:@"In most key reporting modes, when reporting special keys like arrows, the ⌥ key may act as either Meta or Alt. Prior to version 3.5.6, iTerm2 used Meta. The default changed to Alt because some programs like Emacs expect it."];
+}
 
 - (void)didToggleLibtickit {
     if (_useLibTickit.state != NSControlStateValueOn) {

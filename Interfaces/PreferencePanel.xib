@@ -1529,6 +1529,7 @@ DQ
                 <outlet property="_rightOptionKeyChangeable" destination="UGZ-Vx-hCx" id="E0t-Fw-yPb"/>
                 <outlet property="_rightOptionKeySends" destination="gYE-Rz-4du" id="yem-fV-GFg"/>
                 <outlet property="_tabView" destination="gvH-pp-196" id="VXs-g2-ett"/>
+                <outlet property="_treatOptionAsAlt" destination="2jJ-eT-YfX" id="hm8-Qd-f3d"/>
                 <outlet property="_useLibTickit" destination="JI4-WQ-gMX" id="Law-dB-f3B"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>
                 <outlet property="view" destination="M5G-Dw-0HO" id="7cT-58-ldP"/>
@@ -4470,7 +4471,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ttF-JA-0vc">
-                                                <rect key="frame" x="132" y="256" width="157" height="18"/>
+                                                <rect key="frame" x="132" y="234" width="157" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">When enabled, apps can cause this option key to send Esc+. Note that on some external keyboards left and right option keys are swapped.</string>
                                                 <buttonCell key="cell" type="check" title="Apps can change this" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Xvy-v8-zjR">
@@ -4482,7 +4483,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gYE-Rz-4du">
-                                                <rect key="frame" x="132" y="231" width="224" height="18"/>
+                                                <rect key="frame" x="132" y="209" width="224" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 <size key="cellSize" width="72" height="18"/>
@@ -4517,7 +4518,7 @@ DQ
                                                 </connections>
                                             </matrix>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UGZ-Vx-hCx">
-                                                <rect key="frame" x="132" y="206" width="157" height="18"/>
+                                                <rect key="frame" x="132" y="184" width="157" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">When enabled, apps can cause this option key to send Esc+. Note that on some external keyboards left and right option keys are swapped.</string>
                                                 <buttonCell key="cell" type="check" title="Apps can change this" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="cMx-85-ocB">
@@ -4529,7 +4530,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Gwm-6Y-Hrv">
-                                                <rect key="frame" x="27" y="282" width="101" height="16"/>
+                                                <rect key="frame" x="27" y="260" width="101" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Left Option key:" id="ehR-mJ-2EC">
                                                     <font key="font" metaFont="system"/>
@@ -4538,7 +4539,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="l3O-jI-Mvm">
-                                                <rect key="frame" x="19" y="232" width="109" height="16"/>
+                                                <rect key="frame" x="19" y="210" width="109" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Right Option key:" id="Cbw-j5-Mas">
                                                     <font key="font" metaFont="system"/>
@@ -4547,7 +4548,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <matrix toolTip="+Esc is the preferred setting for users who don't need the option key to enter diacritics or other special character." verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Oxl-pz-vZ5">
-                                                <rect key="frame" x="132" y="281" width="224" height="18"/>
+                                                <rect key="frame" x="132" y="259" width="224" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 <size key="cellSize" width="72" height="18"/>
@@ -4604,6 +4605,17 @@ DQ
                                                     <action selector="settingChanged:" target="kOZ-HN-eXg" id="E0s-wB-IqM"/>
                                                 </connections>
                                             </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2jJ-eT-YfX">
+                                                <rect key="frame" x="132" y="293" width="111" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Treat ⌥ as Alt" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="H0w-Px-zqZ">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="nYf-VK-P4P"/>
+                                                </connections>
+                                            </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JI4-WQ-gMX">
                                                 <rect key="frame" x="132" y="359" width="170" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4628,7 +4640,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NUB-Bf-hkZ">
-                                                <rect key="frame" x="-1" y="137" width="622" height="62"/>
+                                                <rect key="frame" x="-1" y="115" width="622" height="62"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="CqK-sy-SCU">
@@ -4661,9 +4673,20 @@ DQ
                                                 </subviews>
                                             </customView>
                                             <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="nnK-AL-7aV">
-                                                <rect key="frame" x="12" y="305" width="597" height="5"/>
+                                                <rect key="frame" x="12" y="283" width="597" height="5"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             </box>
+                                            <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8Ta-Fg-DNL">
+                                                <rect key="frame" x="250" y="292" width="18" height="19"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hhS-am-adL">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="smallSystem"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="optionAsMetaHelp:" target="kOZ-HN-eXg" id="kzy-yM-hVS"/>
+                                                </connections>
+                                            </button>
                                         </subviews>
                                     </customView>
                                 </subviews>

@@ -295,6 +295,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_TITLE_COMPONENTS, KEY_USE_CUSTOM_WINDOW_TITLE, KEY_USE_CUSTOM_TAB_TITLE,
                              KEY_USE_LIBTICKIT_PROTOCOL, KEY_WINDOW_TYPE, KEY_ALLOW_PASTE_BRACKETING,
                              KEY_PREVENT_APS, KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS,
+                             KEY_TREAT_OPTION_AS_ALT,
                              KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY, KEY_SHOW_TIMESTAMPS,
                              KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE,
                              KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY];
@@ -598,6 +599,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_RIGHT_OPTION_KEY_CHANGEABLE: @NO,
                   KEY_APPLICATION_KEYPAD_ALLOWED: @NO,
                   KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS: @NO,
+                  KEY_TREAT_OPTION_AS_ALT: @YES,
                   KEY_ALLOW_MODIFY_OTHER_KEYS: @YES,
                   KEY_USE_LIBTICKIT_PROTOCOL: @NO,
                   KEY_PLACE_PROMPT_AT_FIRST_COLUMN: @YES,
@@ -786,7 +788,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BRIGHTEN_BOLD_TEXT: PROFILE_BLOCK(brightenBoldText),
                   KEY_BRIGHTEN_BOLD_TEXT COLORS_LIGHT_MODE_SUFFIX: PROFILE_BLOCK(brightenBoldTextLight),
                   KEY_BRIGHTEN_BOLD_TEXT COLORS_DARK_MODE_SUFFIX: PROFILE_BLOCK(brightenBoldTextDark),
-
+                  KEY_TREAT_OPTION_AS_ALT: PROFILE_BLOCK(treatOptionAsAlt)
                 };
     }
     return dict;
@@ -936,6 +938,22 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     // this setting directly, fall back to the "use bold color" setting.
     return [self objectForKey:KEY_USE_BOLD_COLOR
                     inProfile:profile];
+}
+
++ (id)treatOptionAsAlt:(Profile *)profile {
+    // If the profile has a non-default value, use it.
+    if ([NSNumber castFrom:profile[KEY_TREAT_OPTION_AS_ALT]]) {
+        return profile[KEY_TREAT_OPTION_AS_ALT];
+    }
+
+    // If there was an old setting in advanced prefs, use that. Fall back to the default value.
+    NSNumber *number = [NSNumber castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:@"OptionIsMetaForSpecialChars"]];
+    if (number){
+        return @(!number.boolValue);
+    }
+
+    // Fall back to the default value.
+    return [self defaultValueMap][KEY_TREAT_OPTION_AS_ALT];
 }
 
 + (id)brightenBoldTextDark:(Profile *)profile {

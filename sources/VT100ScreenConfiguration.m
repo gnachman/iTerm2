@@ -52,6 +52,7 @@
 @property (nonatomic, strong, readwrite, nullable) NSNumber *desiredComposerRows;
 @property (nonatomic, readwrite) BOOL autoComposerEnabled;
 @property (nonatomic, readwrite) BOOL useLineStyleMarks;
+@property (nonatomic, readwrite) BOOL optionIsMetaForSpecialChars;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -96,6 +97,7 @@
 @synthesize desiredComposerRows = _desiredComposerRows;
 @synthesize autoComposerEnabled = _autoComposerEnabled;
 @synthesize useLineStyleMarks = _useLineStyleMarks;
+@synthesize optionIsMetaForSpecialChars = _optionIsMetaForSpecialChars;
 
 @synthesize isDirty = _isDirty;
 @synthesize terminfoValues = _terminfoValues;
@@ -144,6 +146,7 @@
         _desiredComposerRows = other.desiredComposerRows;
         _autoComposerEnabled = other.autoComposerEnabled;
         _useLineStyleMarks = other.useLineStyleMarks;
+        _optionIsMetaForSpecialChars = other.optionIsMetaForSpecialChars;
 
         _isDirty = other.isDirty;
     }
@@ -200,6 +203,7 @@
                             @"desiredComposerRows": _desiredComposerRows ?: [NSNull null],
                             @"autoComposerEnabled": @(_autoComposerEnabled),
                             @"useLineStyleMarks": @(_useLineStyleMarks),
+                            @"optionIsMetaForSpecialChars": @(_optionIsMetaForSpecialChars),
 
                             @"isDirty": @(_isDirty),
     };
@@ -259,6 +263,7 @@
 @dynamic desiredComposerRows;
 @dynamic autoComposerEnabled;
 @dynamic useLineStyleMarks;
+@dynamic optionIsMetaForSpecialChars;
 
 @dynamic isDirty;
 
