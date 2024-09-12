@@ -6359,7 +6359,12 @@ ITERM_WEAKLY_REFERENCEABLE
         [theTab recompact];
         [theTab notifyWindowChanged];
         DLog(@"Update client size");
-        [[theTab tmuxController] setSize:theTab.tmuxSize window:theTab.tmuxWindow];
+        if (self.tabs.count > 0) {
+            // When there are no tabs the size is the initial frame computed in
+            // finishInitializationWithSmartLayout: so we shouldn't set it. The size should come
+            // from the tmux server later based on the client size or its default size.
+            [[theTab tmuxController] setSize:theTab.tmuxSize window:theTab.tmuxWindow];
+        }
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
 }

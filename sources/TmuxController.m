@@ -665,7 +665,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (size.height < 2) {
         size.height = 2;
     }
-    // NOTE: setSizeCommand only set when variable window sizes are not in use.
+    // Set the size so that newly created windows will take the size of the profile.
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                 size.width, size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", [self listWindowsDetailedFormat]];
@@ -678,17 +678,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *getHotkeysCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hotkeys", sessionId_];
     NSString *getTabColorsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @tab_colors", sessionId_];
     NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hidden", sessionId_];
-    const BOOL autoHideGateway = [iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession];
+
     NSArray *commands = @[ [gateway_ dictionaryForCommand:getSessionGuidCommand
                                            responseTarget:self
                                          responseSelector:@selector(getSessionGuidResponse:)
                                            responseObject:nil
                                                     flags:0],
-                           autoHideGateway ? [NSNull null] : [gateway_ dictionaryForCommand:setSizeCommand
-                                                                             responseTarget:nil
-                                                                           responseSelector:nil
-                                                                             responseObject:nil
-                                                                                      flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           [gateway_ dictionaryForCommand:setSizeCommand
+                                           responseTarget:nil
+                                         responseSelector:nil
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:getHiddenWindowsCommand
                                            responseTarget:self
                                          responseSelector:@selector(getHiddenWindowsResponse:)

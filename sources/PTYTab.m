@@ -6537,7 +6537,11 @@ typedef struct {
 }
 
 - (VT100GridSize)sessionTmuxSizeWithProfile:(Profile *)profile {
-    if ([iTermPreferences useTmuxProfile]) {
+    // See discussion in issue 11810.
+    const iTermOpenTmuxWindowsMode openWindowsMode = [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn];
+    const BOOL useExistingWindowSize = (openWindowsMode == kOpenTmuxWindowsAsNativeTabsInExistingWindow);
+    DLog(@"useExistingWindowSize=%@ useTmuxProfile=%@", @(useExistingWindowSize), @([iTermPreferences useTmuxProfile]));
+    if ([iTermPreferences useTmuxProfile] && !useExistingWindowSize) {
         DLog(@"Return size from profile %@", profile);
         return VT100GridSizeMake([[profile objectForKey:KEY_COLUMNS] intValue],
                                  [[profile objectForKey:KEY_ROWS] intValue]);
