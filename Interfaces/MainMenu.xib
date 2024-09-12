@@ -1206,31 +1206,31 @@ DQ
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <menu key="submenu" title="Emulation Level" id="VOZ-Xj-fTA">
                                                 <items>
-                                                    <menuItem title="VT100" tag="100" id="Xze-0w-34U">
+                                                    <menuItem title="VT100" tag="100" identifier="Terminal State.Emulation Level.VT100" id="Xze-0w-34U">
                                                         <modifierMask key="keyEquivalentModifierMask"/>
                                                         <connections>
                                                             <action selector="terminalStateSetEmulationLevel:" target="-1" id="2KW-nW-gpn"/>
                                                         </connections>
                                                     </menuItem>
-                                                    <menuItem title="VT200" tag="200" id="Yat-BG-Cr5">
+                                                    <menuItem title="VT200" tag="200" identifier="Terminal State.Emulation Level.VT200" id="Yat-BG-Cr5">
                                                         <modifierMask key="keyEquivalentModifierMask"/>
                                                         <connections>
                                                             <action selector="terminalStateSetEmulationLevel:" target="-1" id="fKD-Gf-3K0"/>
                                                         </connections>
                                                     </menuItem>
-                                                    <menuItem title="VT300" tag="300" id="P4S-PI-zKU">
+                                                    <menuItem title="VT300" tag="300" identifier="Terminal State.Emulation Level.VT300" id="P4S-PI-zKU">
                                                         <modifierMask key="keyEquivalentModifierMask"/>
                                                         <connections>
                                                             <action selector="terminalStateSetEmulationLevel:" target="-1" id="fke-dG-S4L"/>
                                                         </connections>
                                                     </menuItem>
-                                                    <menuItem title="VT400" tag="400" id="AfM-Tg-ZYT">
+                                                    <menuItem title="VT400" tag="400" identifier="Terminal State.Emulation Level.VT400" id="AfM-Tg-ZYT">
                                                         <modifierMask key="keyEquivalentModifierMask"/>
                                                         <connections>
                                                             <action selector="terminalStateSetEmulationLevel:" target="-1" id="cxJ-Df-XhR"/>
                                                         </connections>
                                                     </menuItem>
-                                                    <menuItem title="VT500" tag="500" id="CLa-er-Pr0">
+                                                    <menuItem title="VT500" tag="500" identifier="Terminal State.Emulation Level.VT500" id="CLa-er-Pr0">
                                                         <modifierMask key="keyEquivalentModifierMask"/>
                                                         <connections>
                                                             <action selector="terminalStateSetEmulationLevel:" target="-1" id="IHH-UN-FXK"/>

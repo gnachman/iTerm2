@@ -31,12 +31,14 @@ iTerm2 > Secure Keyboard Entry                                                  
 iTerm2 > Make iTerm2 Default Term                                                       `Make iTerm2 Default Term`                                                    
 iTerm2 > Make Terminal Default Term                                                     `Make Terminal Default Term`                                                  
 iTerm2 > Install Shell Integration                                                      `Install Shell Integration`                                                   
+iTerm2 > Remove Recent Profiles from Dock Menu                                          `Remove Recent Profiles from Dock Menu`                                       
 iTerm2 > Quit iTerm2                                                                    `Quit iTerm2`                                                                 
 Shell > New Window                                                                      `New Window`                                                                  
 Shell > New Window with Current Profile                                                 `New Window with Current Profile`                                             
 Shell > New Tab                                                                         `New Tab`                                                                     
 Shell > New Tab with Current Profile                                                    `New Tab with Current Profile`                                                
 Shell > Duplicate Tab                                                                   `Duplicate Tab`                                                               
+Shell > Duplicate Window                                                                `Duplicate Window`                                                            
 Shell > Split Horizontally with Current Profile                                         `Split Horizontally with Current Profile`                                     
 Shell > Split Vertically with Current Profile                                           `Split Vertically with Current Profile`                                       
 Shell > Split Horizontally…                                                             `Split Horizontally…`                                                         
@@ -95,9 +97,11 @@ Edit > Find > Find…                                                           
 Edit > Find > Find Next                                                                 `Find.Find Next`                                                              
 Edit > Find > Find Previous                                                             `Find.Find Previous`                                                          
 Edit > Find > Use Selection for Find                                                    `Find.Use Selection for Find`                                                 
+Edit > Find > Clear Find                                                                `Find.Clear Find`                                                             
 Edit > Find > Find Globally...                                                          `Find.Find Globally...`                                                       
 Edit > Find > Select Matches                                                            `Find.ConvertMatchesToSelections`                                             
 Edit > Find > Find URLs                                                                 `Find.Find URLs`                                                              
+Edit > Find > Find All Smart Selection Matches                                          `Find.Find All Smart Selection  Matches`                                      
 Edit > Find > Pick Result to Open                                                       `Find.Pick Result To Open`                                                    
 Edit > Find > Filter                                                                    `Find.Filter`                                                                 
 Edit > Marks and Annotations > Set Mark                                                 `Marks and Annotations.Set Mark`                                              
@@ -111,6 +115,7 @@ Edit > Marks and Annotations > Alerts > Alert on Next Mark                      
 Edit > Marks and Annotations > Alerts > Alert on Marks in Offscreen Sessions            `Marks and Alerts.Alerts.Alert on Marks in Offscreen Sessions`                
 Edit > Marks and Annotations > Alerts > Show Modal Alert Box                            `Marks and Annotations.Alerts.Show Modal Alert Box`                           
 Edit > Marks and Annotations > Alerts > Post Notification                               `Marks and Annotations.Alerts.Post Notification`                              
+Edit > Set Named Mark                                                                   `Set Named Mark`                                                              
 Edit > Clear Buffer                                                                     `Clear Buffer`                                                                
 Edit > Clear Instant Replay                                                             `Clear Instant Replay`                                                        
 Edit > Clear Scrollback Buffer                                                          `Clear Scrollback Buffer`                                                     
@@ -167,6 +172,17 @@ Session > Terminal State > modifyOtherKeys Mode 1                               
 Session > Terminal State > modifyOtherKeys Mode 2                                       `Terminal State.Report Modifiers like xterm 2`                                
 Session > Terminal State > CSI u Mode                                                   `Terminal State.Report Modifiers with CSI u`                                  
 Session > Terminal State > Raw Key Reporting Mode                                       `Terminal State.Raw Key Reporting`                                            
+Session > Terminal State > Disambiguate Escape                                          `Terminal State.Disambiguate Escape`                                          
+Session > Terminal State > Report All Event Types                                       `Terminal State.Report All Event Types`                                       
+Session > Terminal State > Report Alternate Keys                                        `Terminal State.Report Alternate Keys`                                        
+Session > Terminal State > Report All Keys as Escape Codes                              `Terminal State.Report All Keys as Escape Codes`                              
+Session > Terminal State > Report Associated Text                                       `Terminal State.Report Associated Text`                                       
+Session > Terminal State > Literal Controls                                             `Terminal State.Literal Mode`                                                 
+Session > Terminal State > Emulation Level > VT100                                      `Terminal State.Emulation Level.VT100`                                        
+Session > Terminal State > Emulation Level > VT200                                      `Terminal State.Emulation Level.VT200`                                        
+Session > Terminal State > Emulation Level > VT300                                      `Terminal State.Emulation Level.VT300`                                        
+Session > Terminal State > Emulation Level > VT400                                      `Terminal State.Emulation Level.VT400`                                        
+Session > Terminal State > Emulation Level > VT500                                      `Terminal State.Emulation Level.VT500`                                        
 Session > Terminal State > Reset                                                        `Reset Terminal State`                                                        
 Session > Bury Session                                                                  `Bury Session`                                                                
 Scripts > Manage > New Python Script                                                    `New Python Script`                                                           
@@ -204,6 +220,7 @@ Window > Arrange Windows Horizontally                                           
 Window > Arrange Split Panes Evenly                                                     `Arrange Split Panes Evenly`                                                  
 Window > Move Session to Window                                                         `Move Session to Window`                                                      
 Window > Move Session to Tab                                                            `Move Session to Tab`                                                         
+Window > Move Session to Split Pane                                                     `Move Session to Split Pane`                                                  
 Window > Save Window Arrangement                                                        `Save Window Arrangement`                                                     
 Window > Save Current Window as Arrangement                                             `Save Current Window as Arrangement`                                          
 Window > Select Split Pane > Select Pane Above                                          `Select Split Pane.Select Pane Above`                                         

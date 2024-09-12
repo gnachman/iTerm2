@@ -304,7 +304,7 @@ class CellStyle:
         return CellStyle.RGBColor(self._proto.underlineColor) if self._proto.HasField("underlineColor") else None
 
     @property
-    def block_id(self) -> str | None:
+    def block_id(self) -> typing.Optional[str]:
         """
         Returns the block ID if set (as set by OSC 1337 ; Block).
 
