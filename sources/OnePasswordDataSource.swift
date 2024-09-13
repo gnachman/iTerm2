@@ -245,18 +245,24 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             }
             let item = try JSONDecoder().decode(Item.self, from: json.data(using: .utf8)!)
 
-            let password = try {
-                let passwordField = item.fields.first { field in
-                    field.id == "password"
+            let getValue = { (fieldName: String) -> String? in
+                let desiredField = item.fields.first { field in
+                    field.id == fieldName
                 }
-                guard let password = passwordField?.value else {
-                    throw OPError.runtime
+                guard let value = desiredField?.value else {
+                    return nil
                 }
-                if password.hasSuffix("\r") {
-                    return String(password.dropLast())
+                if value.hasSuffix("\r") {
+                    return String(value.dropLast())
                 }
-                return password
-            }()
+                return value
+            }
+            // Accept credential because the user may have added an API credential through the
+            // 1password UI and manually tagged it with iTerm2
+            let password = getValue("password") ?? getValue("credential")
+            guard let password else {
+                 throw OPError.runtime
+            }
             let otp = {
                 let otpField = item.fields.first { field in
                     field.type == "OTP"
