@@ -13360,7 +13360,6 @@
 				8742064A0564169600CFC3F1 /* Resources */,
 				8742064E0564169600CFC3F1 /* Sources */,
 				874206510564169600CFC3F1 /* Frameworks */,
-				874206550564169600CFC3F1 /* Rez */,
 				874206560564169600CFC3F1 /* CopyFiles */,
 				A6866B7823CAA10A00ACD94C /* Embed XPC Services */,
 				A6725AD923D64A57001CA48A /* CopyFiles */,
@@ -15282,13 +15281,6 @@
 
 /* Begin PBXRezBuildPhase section */
 		1D6EDAFF19AEA20D005A7799 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		874206550564169600CFC3F1 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
