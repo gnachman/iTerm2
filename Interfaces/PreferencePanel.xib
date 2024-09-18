@@ -1195,7 +1195,6 @@ DQ
         <customObject id="8TE-cq-5cL" userLabel="Prefs&gt;Keys View Controller" customClass="KeysPreferencesViewController">
             <connections>
                 <outlet property="_configureHotKeyWindow" destination="yqL-PV-QBa" id="ujI-sN-AKS"/>
-                <outlet property="_controlButtonLabel" destination="3673" id="RLd-dc-IoT"/>
                 <outlet property="_emulateUSKeyboard" destination="xcI-Ej-rao" id="ikw-qr-450"/>
                 <outlet property="_forceKeyboard" destination="hSH-Ji-OlD" id="R9x-Iy-4Pu"/>
                 <outlet property="_functionButton" destination="0ov-Pi-2Zd" id="Rou-hw-bgx"/>
@@ -4028,7 +4027,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
