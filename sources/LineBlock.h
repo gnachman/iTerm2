@@ -96,6 +96,9 @@
 // Get the number of lines in this block at a given screen width.
 - (int)getNumLinesWithWrapWidth:(int)width;
 
+// Only use this for development purposes. It is slow.
+- (int)totallyUncachedNumLinesWithWrapWidth:(int)width;
+
 // Returns whether getNumLinesWithWrapWidth will be fast.
 - (BOOL)hasCachedNumLinesForWidth:(int)width;
 
@@ -237,7 +240,7 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (void)setPartial:(BOOL)partial;
 
 // For tests only
-- (LineBlockMetadata)internalMetadataForLine:(int)line;
+- (LineBlockMutableMetadata)internalMetadataForLine:(int)line;
 - (BOOL)hasOwner;
 - (void)dropMirroringProgenitor:(LineBlock *)other;
 - (BOOL)isSynchronizedWithProgenitor;
@@ -251,5 +254,5 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (instancetype)copyWithAbsoluteBlockNumber:(long long)absoluteBlockNumber;
 - (NSString *)dumpString;
 - (NSString *)dumpStringWithDroppedChars:(long long)droppedChars;
-
+- (void)sanityCheckMetadataCache;
 @end

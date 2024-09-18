@@ -578,7 +578,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         return EOL_HARD;
     }
 
-    int length;
+    int length = 0;
     int eol;
     screen_char_t continuation;
     const int requestedLine = remainder;
@@ -587,6 +587,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                                      lineLength:&length
                                               includesEndOfLine:&eol
                                                    continuation:&continuation];
+    ITAssertWithMessage(length >= 0, @"Length is negative %@", @(length));
     if (p == nil) {
         ITAssertWithMessage(NO, @"Nil wrapped line %@ for block with width %@", @(requestedLine), @(width));
 #if DEBUG

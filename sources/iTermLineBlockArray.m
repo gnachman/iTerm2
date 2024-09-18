@@ -13,6 +13,8 @@
 #import "LineBlock.h"
 #import "NSArray+iTerm.h"
 
+//#define DEBUG_LINEBUFFER_MERGE 1
+
 typedef struct {
     BOOL tailIsEmpty;
 } LineBlockArrayCacheHint;
@@ -822,6 +824,10 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     }
 }
 
+- (void)sanityCheck {
+    [self sanityCheck:0];
+}
+
 - (void)sanityCheck:(long long)droppedChars {
     if (_rawLinesCache == nil) {
         return;
@@ -832,7 +838,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
         LineBlock *block = _blocks[i];
         BOOL ok = [block numRawLines] == [_rawLinesCache valueAtIndex:i];
         if (ok && w > 0) {
-            ok = [block getNumLinesWithWrapWidth:w] == [[_numLinesCaches numLinesCacheForWidth:w] valueAtIndex:i];
+            ok = [block totallyUncachedNumLinesWithWrapWidth:w] == [[_numLinesCaches numLinesCacheForWidth:w] valueAtIndex:i];
         }
         if (!ok) {
             [self oopsWithWidth:0 droppedChars:droppedChars block:^{

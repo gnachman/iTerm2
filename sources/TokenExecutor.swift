@@ -511,7 +511,7 @@ private class TokenExecutorImpl {
     // Runs block synchronously while token executor is stopped.
     func whilePaused(_ block: () -> (), onExecutorQueue: Bool) {
         dispatchPrecondition(condition: .onQueue(.main))
-
+        #warning("If tokens are coming in fast and you have enabled maximize throughput this can block forever trying to get onto queue")
         if gDebugLogging.boolValue { DLog("Incr pending pauses if \(iTermPreferences.maximizeThroughput())") }
         let unpauser = iTermPreferences.maximizeThroughput() ? nil : pause()
         let sema = DispatchSemaphore(value: 0)

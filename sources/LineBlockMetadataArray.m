@@ -192,6 +192,7 @@
   migrationIndex:(iTermExternalAttributeIndex *)migrationIndex
      startOffset:(int)startOffset
           length:(int)length {
+    [self willMutate];
     ITAssertWithMessage(i == _guts->_numEntries, @"i=%@ != numEntries=%@", @(i), @(_guts->_numEntries));
     ITAssertWithMessage(i < _guts->_capacity, @"i=%@ >= capacity=%@", @(i), @(_guts->_capacity));
     _guts->_numEntries += 1;
@@ -228,6 +229,7 @@
 }
 
 - (void)setFirstIndex:(int)i {
+    [self willMutate];
     ITAssertWithMessage(i <= _guts->_numEntries, @"i=%@ > numEntries=%@", @(i), @(_guts->_numEntries));
     ITAssertWithMessage(i <= _guts->_capacity, @"i=%@ > capacity=%@", @(i), @(_guts->_capacity));
 
@@ -263,7 +265,7 @@
     return _guts->_array[_guts->_numEntries - 1].continuation;
 }
 
-- (iTermExternalAttributeIndex *)lastExternalAttributeIndex {
+- (id<iTermExternalAttributeIndexReading>)lastExternalAttributeIndex {
     if (_guts->_numEntries == 0) {
         return nil;
     }
@@ -286,6 +288,7 @@
 #pragma mark - Mutation
 
 - (void)setEntry:(int)i value:(const LineBlockMetadata *)value {
+    [self willMutate];
     LineBlockMetadata *destination = (LineBlockMetadata *)&_guts->_array[i];
 
     iTermExternalAttributeIndex *index = iTermMetadataGetExternalAttributesIndex(value->lineMetadata);
@@ -304,6 +307,7 @@
 }
 
 - (void)append:(iTermImmutableMetadata)lineMetadata continuation:(screen_char_t)continuation {
+    [self willMutate];
     ITAssertWithMessage(_guts->_capacity > 0, @"capacity=%@ <= 0", @(_guts->_capacity));
     ITAssertWithMessage(_guts->_numEntries < _guts->_capacity, @"numEntries=%@ >= capacity=%@", @(_guts->_numEntries), @(_guts->_capacity));
 
@@ -319,6 +323,7 @@
           originalLength:(int)originalLength
         additionalLength:(int)additionalLength 
             continuation:(screen_char_t)continuation {
+    [self willMutate];
     ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
     ITAssertWithMessage(_guts->_numEntries > _guts->_first, @"numEntries=%@ <= first=%@", @(_guts->_numEntries), @(_guts->_first));
 
@@ -338,6 +343,7 @@
     if (newCapacity <= _guts->_capacity) {
         return;
     }
+    [self willMutate];
     const int formerCapacity = _guts->_capacity;
     _guts->_capacity = newCapacity;
     _guts->_array = (LineBlockMetadata *)iTermZeroingRealloc((void *)_guts->_array,
@@ -346,11 +352,15 @@
                                                          sizeof(LineBlockMetadata));
 }
 
-- (LineBlockMetadata *)mutableMetadataAtIndex:(int)i {
-    return &_guts->_array[i];
+- (iTermLineBlockMetadataProvider)metadataProviderAtIndex:(int)i {
+    return (iTermLineBlockMetadataProvider){
+        ._metadata = &_guts->_array[i],
+        ._willMutate = ^{ [self willMutate]; }
+    };
 }
 
 - (void)removeLast {
+    [self willMutate];
     ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
     _guts->_numEntries -= 1;
     _guts->_array[_guts->_numEntries].number_of_wrapped_lines = 0;
@@ -364,6 +374,7 @@
     if (_guts->_numEntries == 0) {
         return;
     }
+    [self willMutate];
     _guts->_array[_guts->_numEntries - 1].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
         _guts->_array[_guts->_numEntries - 1].double_width_characters = nil;
@@ -371,11 +382,13 @@
 }
 
 - (void)eraseFirstLineCache {
+    [self willMutate];
     _guts->_array[_guts->_first].width_for_number_of_wrapped_lines = 0;
     _guts->_array[_guts->_first].number_of_wrapped_lines = 0;
 }
 
 - (void)setLastExternalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
+    [self willMutate];
     ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
     ITAssertWithMessage(_guts->_numEntries > _guts->_first, @"numEntries=%@ <= first=%@", @(_guts->_numEntries), @(_guts->_first));
 
@@ -389,6 +402,7 @@
 }
 
 - (void)removeFirst:(int)n {
+    [self willMutate];
     for (int i = 0; i < n; i++) {
         const int first = _guts->_first;
         ITAssertWithMessage(_guts->_numEntries >= first, @"numEntries=%@ < first=%@", @(_guts->_numEntries), @(first));
@@ -404,6 +418,7 @@
 }
 
 - (void)reset {
+    [self willMutate];
     for (int i = 0; i < _guts->_numEntries; i++) {
         iTermMetadataSetExternalAttributes(&_guts->_array[i].lineMetadata, nil);
         _guts->_array[i].double_width_characters = nil;

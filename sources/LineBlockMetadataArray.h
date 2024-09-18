@@ -7,6 +7,9 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermMetadata.h"
+#import "iTermPromise.h"
+
+NS_ASSUME_NONNULL_BEGIN
 
 typedef struct {
     iTermMetadata lineMetadata;
@@ -17,11 +20,37 @@ typedef struct {
     // Remembers the offsets at which double-width characters that are wrapped
     // to the next line occur for a pane of width
     // width_for_double_width_characters_cache.
-    NSMutableIndexSet *_Nullable double_width_characters;
+    // This is actually NSMutableIndexSet but to avoid race conditions we expose it as NSIndexSet.
+    NSIndexSet *_Nullable double_width_characters;
     int width_for_double_width_characters_cache;
 } LineBlockMetadata;
 
-NS_ASSUME_NONNULL_BEGIN
+typedef struct {
+    LineBlockMetadata *metadata;
+    NSMutableIndexSet *mutableDoubleWidthCharacters;
+} LineBlockMutableMetadata;
+
+// Don't access this directly. Use the functions below.
+typedef struct {
+    LineBlockMetadata *_metadata;
+    void (^_Nullable _willMutate)(void);
+} iTermLineBlockMetadataProvider;
+
+NS_INLINE const LineBlockMetadata *iTermLineBlockMetadataProviderGetImmutable(iTermLineBlockMetadataProvider provider) {
+    return provider._metadata;
+}
+
+NS_INLINE LineBlockMutableMetadata iTermLineBlockMetadataProvideGetMutable(iTermLineBlockMetadataProvider provider) {
+    if (provider._willMutate) {
+        provider._willMutate();
+        provider._willMutate = nil;
+    }
+    return (LineBlockMutableMetadata) {
+        .metadata = provider._metadata,
+        .mutableDoubleWidthCharacters = (NSMutableIndexSet *) provider._metadata->double_width_characters
+    };
+}
+
 
 // Stores an array of `LineBlockMetadata`. Offers copy-on-write. This is maybe
 // more like a dequeue because it also tracks number of items at the head of
@@ -77,7 +106,7 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 // precondition: numEntries > 0
 - (screen_char_t)lastContinuation;
 
-- (iTermExternalAttributeIndex * _Nullable)lastExternalAttributeIndex;
+- (id<iTermExternalAttributeIndexReading> _Nullable)lastExternalAttributeIndex;
 
 // Used to save state for later restoration with setEntry:fromComponents:externalAttributeIndex:
 - (NSArray *)encodedArray;
@@ -109,9 +138,9 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
         additionalLength:(int)additionalLength
             continuation:(screen_char_t)continuation;
 
-// Returns a mutable pointer to the `i`th entry.
+// Returns a provider for the `i`th entry. From the provider, you can get a mutable object.
 // i >= first && i < numEntries
-- (LineBlockMetadata *)mutableMetadataAtIndex:(int)i;
+- (iTermLineBlockMetadataProvider)metadataProviderAtIndex:(int)i;
 
 // Replace the external attributes in the last entry.
 // numEntries > first
