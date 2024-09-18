@@ -576,6 +576,11 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return YES;
 }
 
+- (BOOL)scrolledToBottom {
+    return (([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight ==
+            [_dataSource numberOfLines]);
+}
+
 - (void)scrollLineUp:(id)sender {
     [self scrollBy:-[self.enclosingScrollView verticalLineScroll]];
 }
@@ -6201,11 +6206,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)mouseHandlerOpenTargetWithEvent:(NSEvent *)event
                            inBackground:(BOOL)inBackground {
     [_urlActionHelper openTargetWithEvent:event inBackground:inBackground];
-}
-
-- (BOOL)scrolledToBottom {
-    return (([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight ==
-            [_dataSource numberOfLines]);
 }
 
 - (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler {

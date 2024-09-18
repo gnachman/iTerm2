@@ -292,7 +292,6 @@ class HueVisualizationView: NSView {
         if let newValue = OKLab(temp.oklab.p3Color) {
             temp.oklab = newValue
             temp.color = newValue.p3Color
-            let newRect = rect(entry: temp, pointRadius: pointRadius)
 
             delegate?.hueVisualizationDidModifyColor(key: dragInfo.key, to: temp.oklab.p3Color)
             entries[i] = temp

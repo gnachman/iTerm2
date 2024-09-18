@@ -56,7 +56,9 @@ NSString *VT100ScreenTerminalStateKeyLineDrawingCharacterSets = @"LineDrawingCha
 NSString *VT100ScreenTerminalStateKeyRemoteHost = @"RemoteHost";
 NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
-@implementation VT100ScreenState
+@implementation VT100ScreenState {
+    id<iTermMarkCacheReading> _markCache;
+}
 
 @synthesize audibleBell = _audibleBell;
 @synthesize showBellIndicator = _showBellIndicator;
@@ -81,7 +83,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 @synthesize unlimitedScrollback = _unlimitedScrollback;
 @synthesize scrollbackOverflow = _scrollbackOverflow;
 @synthesize commandStartCoord = _commandStartCoord;
-@synthesize markCache = _markCache;
+@synthesize markCache;
 @synthesize maxScrollbackLines = _maxScrollbackLines;
 @synthesize tabStops = _tabStops;
 @synthesize charsetUsesLineDrawingMode = _charsetUsesLineDrawingMode;
