@@ -189,8 +189,6 @@ NSString *iTermSnippetHelpMarkdown = @"Terms in the search query are used to pre
 }
 
 - (iTermSnippet *)clone {
-    NSMutableDictionary *dict = [[self dictionaryValue] mutableCopy];
-
     return [[iTermSnippet alloc] initWithTitle:self.title
                                          value:self.value
                                           guid:[[NSUUID UUID] UUIDString]

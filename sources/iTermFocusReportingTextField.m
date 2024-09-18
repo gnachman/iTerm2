@@ -50,7 +50,6 @@
 }
 
 - (void)performFindPanelAction:(id)sender {
-    NSMenuItem *item = [NSMenuItem castFrom:sender];
     NSResponder *responder = self.nextResponder;
     while (responder) {
         if ([responder respondsToSelector:_cmd]) {

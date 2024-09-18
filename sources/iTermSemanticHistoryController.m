@@ -381,7 +381,6 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     NSURLComponents *components = [[NSURLComponents alloc] init];
     components.scheme = @"cursor";
     components.host = @"file";
-    NSString *pathWithLine = path;
     NSArray<NSString *> *parts = [@[ path, 
                                      line ?: [NSNull null],
                                      (line != nil && column != nil) ? column : [NSNull null] ] arrayByRemovingNulls];
