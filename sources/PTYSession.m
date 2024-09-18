@@ -13440,6 +13440,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     PTYSessionHostState *state = [[_hostStack[i] retain] autorelease];
     DLog(@"Found at %@: %@. Restore mode and pop", @(i), state);
     [_hostStack removeObjectsInRange:NSMakeRange(i, _hostStack.count - i)];
+    // TODO: Add key reporting flags
     if (_keyMappingMode != state.keyMappingMode) {
         [self setKeyMappingMode:state.keyMappingMode];
     }
@@ -14813,6 +14814,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenKeyReportingFlagsDidChange {
+    const BOOL allowed = [iTermProfilePreferences boolForKey:KEY_ALLOW_MODIFY_OTHER_KEYS
+                                                   inProfile:self.profile];
+    if (!allowed) {
+        return;
+    }
     if (_screen.terminalKeyReportingFlags == 0) {
         [self screenSendModifiersDidChange];
         return;
