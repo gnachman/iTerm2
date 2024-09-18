@@ -2547,8 +2547,6 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         return NO;
     }
     NSInteger i = self.length - 1;
-#warning Test this
-    // TODO: This never worked because of a bug in longCharacterAtIndex:
     return [[NSCharacterSet whitespaceAndNewlineCharacterSet] longCharacterIsMember:[self longCharacterAtIndex:i]];
 }
 
