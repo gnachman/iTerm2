@@ -96,7 +96,7 @@ NS_ASSUME_NONNULL_BEGIN
                                       width:(int)width
                                    paddedTo:(int)paddedSize
                              eligibleForDWC:(BOOL)eligibleForDWC;
-
+- (void)sanityCheck;
 - (ScreenCharArray * _Nullable)maybeScreenCharArrayForLine:(int)line
                                                      width:(int)width
                                                   paddedTo:(int)paddedSize
