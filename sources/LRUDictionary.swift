@@ -78,7 +78,7 @@ class LRUEvictionPolicy<Element: Hashable> {
     // Returns elements to evict
     func add(element: Element, cost: Int) -> Set<Element> {
         let item = Item(element: element, cost: cost)
-        if let existing = nodesByKey[item.element] {
+        if nodesByKey[item.element] != nil {
             delete(item.element)
         }
         nodesByKey[item.element] = itemsByUse.append(item)
