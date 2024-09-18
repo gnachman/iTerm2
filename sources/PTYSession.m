@@ -17479,6 +17479,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return configuration;
 }
 
+- (NSUInteger)modernKeyMapperDelegateStringEncoding {
+    return self.encoding;
+}
+
 #pragma mark - iTermStandardKeyMapperDelegate
 
 - (void)standardKeyMapperWillMapKey:(iTermStandardKeyMapper *)standardKeyMapper {

@@ -14,9 +14,6 @@ protocol ModernKeyMapperDelegate: iTermStandardKeyMapperDelegate {
 
     @objc
     func modernKeyMapperWillMapKey() -> ObjCModernKeyMapperConfiguration
-
-    @objc
-    func modernKeyMapperInApplicationKeypadMode() -> Bool
 }
 
 struct ModernKeyMapperConfiguration {

@@ -45,9 +45,6 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 - (void)offerToTurnOffBracketedPasteOnHostChange;
 @end
 
-@interface PTYSession(ARCPrivate)<iTermModernKeyMapperDelegate>
-@end
-
 @implementation PTYSession (ARC)
 
 #pragma mark - Arrangements
@@ -303,16 +300,6 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         }
     }
     DLog(@"Done sending pending publish requests. Queue size is %@", @(_pendingPublishRequests.count));
-}
-
-@end
-
-@implementation PTYSession(ARCPrivate)
-
-#pragma mark - iTermModernKeyMapperDelegate
-
-- (NSUInteger)modernKeyMapperDelegateStringEncoding {
-    return self.encoding;
 }
 
 @end
