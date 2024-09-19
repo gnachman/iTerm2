@@ -6,8 +6,11 @@
 //
 //
 
+#import <AppKit/AppKit.h>
+
 #import "NSObject+iTerm.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermWeakProxy.h"
 #import "NSJSONSerialization+iTerm.h"
 
@@ -101,7 +104,59 @@
 
 @end
 
+@protocol iTermPlaceholderProtocol
+- (void)showMenu:(id)sender;
+@end
+
+@protocol iTermNSThemeZoomWidgetCell
+- (void)stopTracking:(struct CGPoint)arg1 at:(struct CGPoint)arg2 inView:(id)arg3 mouseIsUp:(BOOL)arg4;
+- (NSView *)controlView;
+@end
+
 @implementation NSObject (iTerm)
+
+static void (*originalNSThemeZoomWidgetCellShowMenuIMP)(id, SEL, id) = NULL;
+
++ (void)load {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // Get the private class by name
+        Class class = NSClassFromString(@"_NSThemeZoomWidgetCell");
+
+        if (class) {
+            SEL originalSelector = @selector(showMenu:); // Adjust to include the argument
+            SEL swizzledSelector = @selector(swizzled__NSThemeZoomWidgetCell_showMenu:);
+
+            Method originalMethod = class_getInstanceMethod(class, originalSelector);
+            Method swizzledMethod = class_getInstanceMethod(self, swizzledSelector);
+
+            if (originalMethod) {
+                // Store the original implementation, which takes an id argument
+                originalNSThemeZoomWidgetCellShowMenuIMP = (void (*)(id, SEL, id))method_getImplementation(originalMethod);
+
+                // Perform the swizzling
+                method_exchangeImplementations(originalMethod, swizzledMethod);
+            } else {
+                // If the original method doesn't exist, add it and bind it to swizzled method
+                BOOL didAddMethod =
+                    class_addMethod(class,
+                                    originalSelector,
+                                    method_getImplementation(swizzledMethod),
+                                    method_getTypeEncoding(swizzledMethod));
+
+                if (!didAddMethod) {
+                    NSLog(@"Failed to add swizzled method");
+                }
+            }
+        }
+    });
+}
+
+- (void)swizzled__NSThemeZoomWidgetCell_showMenu:(id)arg {
+    if (originalNSThemeZoomWidgetCellShowMenuIMP && [iTermAdvancedSettingsModel enableZoomMenu]) {
+        originalNSThemeZoomWidgetCellShowMenuIMP(self, @selector(showMenu:), arg);
+    }
+}
 
 + (BOOL)object:(NSObject *)a isEqualToObject:(NSObject *)b {
     if (a == b) {

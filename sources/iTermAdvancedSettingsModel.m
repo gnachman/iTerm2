@@ -485,6 +485,8 @@ DEFINE_STRING(onePasswordAccount, @"", SECTION_GENERAL @"1Password account name.
 DEFINE_BOOL(excludeUtunFromNetworkUtilization, YES, SECTION_GENERAL @"Exclude utun interfaces from network utilization?\nThis is useful if you use a VPN and only want to see the traffic that goes over Wi-Fi or Ethernet.");
 DEFINE_FLOAT(noSyncDownloadPrefsTimeout, 5.0, SECTION_GENERAL @"Timeout for downloading settings");
 DEFINE_BOOL(showButtonsForSelectedCommand, YES, SECTION_GENERAL @"Show buttons at the top of a selected command?\nWhen you select a command by single clicking the command line or its output, buttons are shown on the top right with options like Copy and Share. Note that this setting only applies when marks are not “line style” such as when using Auto Composer.")
+DEFINE_BOOL(enableZoomMenu, NO, SECTION_GENERAL @"Allow the standard system menu on window Zoom buttons to open?\nmacOS has a bug that makes the app hang. Since this is a rarely used menu, it is disabled by default.");
+
 #pragma mark - Drawing
 
 #define SECTION_DRAWING @"Drawing: "

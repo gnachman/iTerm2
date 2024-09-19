@@ -151,6 +151,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 
 + (BOOL)enableSemanticHistoryOnNetworkMounts;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
++ (BOOL)enableZoomMenu;
 + (BOOL)escapeWithQuotes;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
 + (BOOL)excludeUtunFromNetworkUtilization;
