@@ -1329,6 +1329,8 @@ class OpenAIMetadata: NSObject {
         var url: String?
     }
 
+    // This has to be constantly updated from
+    // https://platform.openai.com/docs/models/models
     private let models = [
         Model(name: "gpt-4o",
               contextWindowTokens: 128_000,
@@ -1345,11 +1347,14 @@ class OpenAIMetadata: NSObject {
               contextWindowTokens: 128000,
               maxResponseTokens: 4096,
               url: "https://api.openai.com/v1/completions"),
-        Model(name: "gpt-3.5-turbo",
-              contextWindowTokens: 16384,
-              maxResponseTokens: 4096,
-              url: "https://api.openai.com/v1/completions"),
-
+        Model(name: "o1-preview",
+              contextWindowTokens: 128000,
+              maxResponseTokens: 32768,
+              url: "https://api.openai.com/v1/chat/completions"),
+        Model(name: "o1-mini",
+              contextWindowTokens: 128000,
+              maxResponseTokens: 65536,
+              url: "https://api.openai.com/v1/chat/completions"),
         Model(name: "llama2:latest",
              contextWindowTokens: 4_096,
              maxResponseTokens: 4_096,
