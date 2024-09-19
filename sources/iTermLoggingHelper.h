@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "ITAddressBookMgr.h"
+#import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -77,6 +78,7 @@ asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
 - (void)logData:(NSData *)data;
 - (void)logNewline:(NSData * _Nullable)data;
 - (void)logWithoutTimestamp:(NSData *)data;
+- (void)logSetSize:(VT100GridSize)size;
 
 @end
 

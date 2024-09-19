@@ -305,14 +305,27 @@ asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
     }
 }
 
-- (void)queueWriteDataToAsciicast:data {
-    const NSTimeInterval now = [NSDate it_timeSinceBoot];
-    NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] ?: [NSString stringWithLongCharacter:0xfffd];
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[ @(now - _asciicastMetadata.startTime), @"o", string ]
+- (void)queueWriteObjectToAsciicast:(NSArray *)object {
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:object
                                                        options:0
                                                          error:nil];
     [self queueWriteDataToFileHandle:jsonData];
     [self queueWriteDataToFileHandle:[NSData dataWithBytes:"\n" length:1]];
+}
+
+- (NSArray*)queueAsciicastObjectWithCommand:(NSString *)command argument:(NSString *)argument {
+    const NSTimeInterval now = [NSDate it_timeSinceBoot];
+    return @[ @(now - _asciicastMetadata.startTime), command, argument ];
+}
+
+- (void)queueWriteDataToAsciicast:(NSData *)data {
+    NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] ?: [NSString stringWithLongCharacter:0xfffd];
+    [self queueWriteObjectToAsciicast:[self queueAsciicastObjectWithCommand:@"o" argument:string]];
+}
+
+- (void)queueLogSetSizeForAsciicast:(VT100GridSize)size {
+    NSString *string = [NSString stringWithFormat:@"%@x%@", @(size.width), @(size.height)];
+    [self queueWriteObjectToAsciicast:[self queueAsciicastObjectWithCommand:@"r" argument:string]];
 }
 
 - (void)logNewline:(NSData *)data {
@@ -320,6 +333,20 @@ asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
         [self queueLogData:data ?: [NSData dataWithBytesNoCopy:"\n" length:1 freeWhenDone:NO]];
         self->_needsTimestamp = YES;
     });
+}
+
+- (void)logSetSize:(VT100GridSize)size {
+    switch(_style) {
+        case iTermLoggingStyleRaw:
+        case iTermLoggingStyleHTML:
+        case iTermLoggingStylePlainText:
+            break;
+        case iTermLoggingStyleAsciicast:
+            dispatch_async(_queue, ^{
+                [self queueLogSetSizeForAsciicast:size];
+            });
+            break;
+    }
 }
 
 // Called on _queue

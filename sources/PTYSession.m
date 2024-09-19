@@ -3647,9 +3647,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)taskDidResizeToGridSize:(VT100GridSize)gridSize pixelSize:(NSSize)pixelSize {
+    [_logging logSetSize:gridSize];
     if (!_screen.terminalSendResizeNotifications) {
         return;
     }
+    // Send inband resize notification
     NSData *data = [_screen.terminalOutput windowResizeNotificationWithGridSize:gridSize
                                                                       pixelSize:pixelSize];
     [self screenSendReportData:data];
