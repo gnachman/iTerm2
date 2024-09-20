@@ -1087,7 +1087,6 @@ DQ
                 <outlet property="_checkTestRelease" destination="5049" id="mCk-NA-PO2"/>
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_clickToSelectCommand" destination="2Pt-rH-WYj" id="kzN-to-jNw"/>
-                <outlet property="_compressHistory" destination="Sd7-qu-MNg" id="f0r-zf-UCa"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
                 <outlet property="_copyLastNewline" destination="5747" id="y4f-IT-rUT"/>
                 <outlet property="_customAIEndpoint" destination="1ex-YA-kns" id="0uj-2P-Lhd"/>
@@ -3997,7 +3996,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -5172,15 +5171,15 @@ DQ
                         </tabViewItem>
                         <tabViewItem label="Magic" identifier="" id="a3F-w8-ggT">
                             <view key="view" id="h6U-Bn-0HU">
-                                <rect key="frame" x="10" y="33" width="755" height="461"/>
+                                <rect key="frame" x="10" y="33" width="755" height="478"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hVu-mt-KS9">
-                                        <rect key="frame" x="111" y="265" width="569" height="203"/>
+                                        <rect key="frame" x="111" y="304" width="569" height="181"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5054">
-                                                <rect key="frame" x="287" y="164" width="97" height="16"/>
+                                                <rect key="frame" x="287" y="142" width="97" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="MB per session" id="5060">
                                                     <font key="font" metaFont="system"/>
@@ -5189,7 +5188,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5055">
-                                                <rect key="frame" x="236" y="161" width="46" height="21"/>
+                                                <rect key="frame" x="236" y="139" width="46" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5058">
                                                     <font key="font" metaFont="system"/>
@@ -5203,7 +5202,7 @@ DQ
                                                 </connections>
                                             </textField>
                                             <button toolTip="When enabled, terminals are rendered using the GPU. This improves performance." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YoO-mR-uX5">
-                                                <rect key="frame" x="78" y="66" width="116" height="18"/>
+                                                <rect key="frame" x="78" y="44" width="116" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="GPU rendering" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cDA-tx-zuo">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5215,7 +5214,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5056">
-                                                <rect key="frame" x="96" y="137" width="304" height="18"/>
+                                                <rect key="frame" x="96" y="115" width="304" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Save copy/paste and command history to disk" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5057">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5227,7 +5226,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hxX-te-qT5">
-                                                <rect key="frame" x="57" y="117" width="137" height="18"/>
+                                                <rect key="frame" x="57" y="95" width="137" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Enable Python API" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="Enu-TA-VzR">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5239,7 +5238,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5053">
-                                                <rect key="frame" x="108" y="164" width="126" height="16"/>
+                                                <rect key="frame" x="108" y="142" width="126" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Instant Replay uses " id="5061">
                                                     <font key="font" metaFont="system"/>
@@ -5248,7 +5247,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kIb-n8-d33">
-                                                <rect key="frame" x="194" y="114" width="224" height="22"/>
+                                                <rect key="frame" x="194" y="92" width="224" height="22"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Require “Automation” permission" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="A1J-wd-hbr" id="A9A-re-7GZ">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -5265,7 +5264,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2nT-Ny-kwd">
-                                                <rect key="frame" x="192" y="59" width="228" height="28"/>
+                                                <rect key="frame" x="192" y="37" width="228" height="28"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Advanced GPU Settings…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="tof-yo-OcS">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5276,7 +5275,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oUZ-km-gJb">
-                                                <rect key="frame" x="421" y="115" width="21" height="22"/>
+                                                <rect key="frame" x="421" y="93" width="21" height="22"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="PzG-2P-IYF">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5287,7 +5286,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="llA-8R-abf">
-                                                <rect key="frame" x="256" y="91" width="203" height="21"/>
+                                                <rect key="frame" x="256" y="69" width="203" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="o9N-bf-pX4" userLabel="iTermStatusIndicatingTextFieldCell" customClass="iTermStatusIndicatingTextFieldCell">
                                                     <font key="font" metaFont="system"/>
@@ -5299,12 +5298,12 @@ DQ
                                                 </connections>
                                             </textField>
                                             <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="I3s-Lg-hNk">
-                                                <rect key="frame" x="441" y="93" width="16" height="16"/>
+                                                <rect key="frame" x="441" y="71" width="16" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="jWh-HP-krB"/>
                                             </imageView>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dDY-rB-g7q">
-                                                <rect key="frame" x="18" y="93" width="237" height="18"/>
+                                                <rect key="frame" x="18" y="71" width="237" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Custom Python API Scripts Folder" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="BLe-VU-xVS">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5315,7 +5314,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dQq-rp-4ax">
-                                                <rect key="frame" x="460" y="84" width="96" height="32"/>
+                                                <rect key="frame" x="460" y="62" width="96" height="32"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Browse" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="maq-kg-hPh">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5325,20 +5324,8 @@ DQ
                                                     <action selector="browseScriptsFolder:" target="9Se-ld-UJa" id="KbM-oS-jDJ"/>
                                                 </connections>
                                             </button>
-                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Sd7-qu-MNg">
-                                                <rect key="frame" x="128" y="19" width="311" height="18"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Compress scrollback history in the background" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cYw-rN-XP1">
-                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="dmm-Wv-NXX"/>
-                                                    <outlet property="nextKeyView" destination="1988" id="3hc-eO-5xq"/>
-                                                </connections>
-                                            </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="d2e-qW-9tY">
-                                                <rect key="frame" x="120" y="41" width="328" height="18"/>
+                                                <rect key="frame" x="120" y="19" width="328" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Maximize throughput at the cost of higher latency" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="wTp-Qf-YIk">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>

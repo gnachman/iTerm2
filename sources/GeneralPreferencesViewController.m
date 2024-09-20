@@ -171,8 +171,6 @@ enum {
     IBOutlet NSTextField *_aiPromptLabel;
     IBOutlet NSImageView *_aiPromptWarning;  // Image shown when prompt lacks \(ai.prompt)
 
-    IBOutlet NSButton *_compressHistory;
-
     BOOL _customScriptsFolderDidChange;
 
     IBOutlet NSComboBox *_aiModel;
@@ -635,11 +633,6 @@ enum {
     [self defineControl:_syncTmuxClipboard
                     key:kPreferenceKeyTmuxSyncClipboard
             displayName:nil
-                   type:kPreferenceInfoTypeCheckbox];
-
-    [self defineControl:_compressHistory
-                    key:kPreferenceKeyCompressHistory
-            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_allowsSendingClipboardContents
