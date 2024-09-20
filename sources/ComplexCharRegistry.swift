@@ -158,10 +158,6 @@ private class ComplexCharRegistryImpl: NSObject {
                 hasWrapped = true
             }
             let candidate = _nextCode
-            if _nextCode == maxKey {
-                _nextCode = 0
-                hasWrapped = true
-            }
             _nextCode += 1
             if (!reserved(candidate)) {
                 return candidate
