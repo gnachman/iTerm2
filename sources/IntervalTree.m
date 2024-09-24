@@ -483,6 +483,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (void)removeAllObjects {
+    DLog(@"%p: removeAllObjects", self);
     for (id<IntervalTreeObject> obj in [self objectsInInterval:[Interval maxInterval]]) {
         obj.entry = nil;
     }
@@ -497,7 +498,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval {
-    DLog(@"Add %@ at %@", object, interval);
+    DLog(@"%p: Add %@ at %@", self, object, interval);
     [interval boundsCheck];
     assert(object.entry == nil);  // Object must not belong to another tree
     IntervalTreeEntry *entry = [IntervalTreeEntry entryWithInterval:interval
@@ -516,7 +517,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (BOOL)removeObject:(id<IntervalTreeObject>)object {
-    DLog(@"Remove %@\n%@", object, [NSThread callStackSymbols]);
+    DLog(@"%p: Remove %@", self, object);
     Interval *interval = object.entry.interval;
     long long theLocation = interval.location;
     IntervalTreeValue *value = [_tree objectForKey:@(interval.location)];
@@ -557,6 +558,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 
     [toVisit removeObject:node];
     long long max = [value maxLimit];
+    DLog(@"Recalculate node %p with value %p: value.maxLimit=%@", node, value, @(max));
     if (node.left) {
         if ([toVisit containsObject:node.left]) {
             [self recalculateMaxLimitInSubtreeAtNode:node.left
@@ -564,6 +566,7 @@ static NSString *const kIntervalLengthKey = @"Length";
         }
         IntervalTreeValue *leftValue = (IntervalTreeValue *)node.left.data;
         max = MAX(max, leftValue.maxLimitAtSubtree);
+        DLog(@"Recalculate node %p: leftValue.maxLimit=%@", node, @(leftValue.maxLimitAtSubtree));
     }
     if (node.right) {
         if ([toVisit containsObject:node.right]) {
@@ -572,29 +575,69 @@ static NSString *const kIntervalLengthKey = @"Length";
         }
         IntervalTreeValue *rightValue = (IntervalTreeValue *)node.right.data;
         max = MAX(max, rightValue.maxLimitAtSubtree);
+        DLog(@"Recalculate node %p: rightValue.maxLimit=%@", node, @(rightValue.maxLimitAtSubtree));
     }
+    DLog(@"Recalculate node %p with value %p: assign %@ to %p", node, value, @(max), &value->_maxLimitAtSubtree);
     value.maxLimitAtSubtree = max;
+#if DEBUG
+    const long long bruteForced = [self bruteForceMaxLimitAtSubtree:node];
+    assert(max = bruteForced);
+#endif
 }
 
 #pragma mark - AATreeDelegate
 
+#if DEBUG
+- (BOOL)treeContainsNode:(AATreeNode *)node at:(AATreeNode *)current {
+    if (!current) {
+        return NO;
+    }
+    if (current == node) {
+        return YES;
+    }
+    return [self treeContainsNode:node at:current.left] || [self treeContainsNode:node at:current.right];
+}
+#endif 
+
 - (void)aaTree:(AATree *)tree didChangeSubtreesAtNodes:(NSSet *)changedNodes {
-    NSMutableSet *toVisit = [[changedNodes mutableCopy] autorelease];
+    DLog(@"aaTree:didChangeSubtressAtNodes:");
+    NSMutableSet *toVisit = [NSMutableSet set];
     for (AATreeNode *node in changedNodes) {
-        if ([toVisit containsObject:node]) {
-            [self recalculateMaxLimitInSubtreeAtNode:node
-                               removeFromToVisitList:toVisit];
+        if (node.deleted) {
+            continue;
+        }
+        [toVisit addObject:node];
+        for (AATreeNode *parent in [tree pathFromNode:node]) {
+            [toVisit addObject:parent];
         }
     }
+    while (toVisit.count) {
+        AATreeNode *node = [toVisit anyObject];
+#if DEBUG
+        assert(!node.deleted);
+        assert([self treeContainsNode:node at:_tree.root]);
+#endif
+        DLog(@"  Recalculate node %p", node);
+        [self recalculateMaxLimitInSubtreeAtNode:node
+                           removeFromToVisitList:toVisit];
+    }
+    DLog(@"Done with didChangeSubtreesAtNodes");
+#if DEBUG
+    [self sanityCheck];
+#endif
 }
 
 - (void)aaTree:(AATree *)tree didChangeValueAtNode:(AATreeNode *)node {
+    DLog(@"aaTree:didChangeValueAtNode:");
     NSArray *parents = [tree pathFromNode:node];
     NSMutableSet *parentSet = [NSMutableSet setWithArray:parents];
     for (AATreeNode *theNode in parents) {
         [self recalculateMaxLimitInSubtreeAtNode:theNode
                            removeFromToVisitList:parentSet];
     }
+#if DEBUG
+    [self sanityCheck];
+#endif
 }
 
 - (void)addObjectsInInterval:(Interval *)interval
@@ -1147,7 +1190,7 @@ static NSString *const kIntervalLengthKey = @"Length";
     IntervalTreeValue *value = node.data;
     long long location = [(NSNumber *)node.key longLongValue];
     const long long limit = [self bruteForceMaxLimitAtSubtree:node];
-    value.maxLimitAtSubtree = limit;
+    assert(value.maxLimitAtSubtree == limit);
     IntervalTreeValue *leftValue = node.left.data;
     IntervalTreeValue *rightValue = node.right.data;
     if (leftValue) {
@@ -1168,8 +1211,21 @@ static NSString *const kIntervalLengthKey = @"Length";
         [self sanityCheckAtNode:node.right];
     }
 }
+
 - (void)sanityCheck {
-    [self sanityCheckAtNode:_tree.root];
+    NSMutableSet *values = [NSMutableSet set];
+    for (id value in _tree.allValues) {
+        NSString *addr = [NSString stringWithFormat:@"%p", value];
+        if ([values containsObject:addr]) {
+            NSLog(@"Dup found");
+            assert(NO);
+        }
+        [values addObject:addr];
+    }
+
+    if (_tree.root) {
+        [self sanityCheckAtNode:_tree.root];
+    }
 }
 
 - (NSString *)debugString {

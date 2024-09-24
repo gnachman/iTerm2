@@ -6,6 +6,24 @@
 
 #import "DebugLogging.h"
 
+// This assumes the AATree is used by IntervalTree but boy does it ever simplify debugging.
+@protocol AATreeCheatInterval <NSObject>
+@property(nonatomic, readonly) long long location;
+@property(nonatomic, assign) long long length;
+@end
+
+@protocol AATreeCheatEntry <NSObject>
+- (id<AATreeCheatInterval>)interval;
+- (id)object;
+@end
+
+@protocol AATreeCheatValue <NSObject>
+
+- (long long)maxLimit;
+- (NSArray<id<AATreeCheatEntry>> *)entries;
+- (long long)maxLimitAtSubtree;
+
+@end
 @interface AATree() // private methods.
 
 @property(retain) AATreeNode *root;
@@ -205,6 +223,66 @@
     [root printWithIndent:0];
 }
 
+- (NSString *)dump {
+    if (!self.root) {
+        return @"No root";
+    }
+    return [[self dumpNode:self.root] componentsJoinedByString:@"\n"];
+}
+
+static NSString *PrependSpaces(NSString *s, NSInteger count) {
+    return [[@"" stringByPaddingToLength:count withString:@" " startingAtIndex:0] stringByAppendingString:s];
+}
+
+- (NSArray<NSString *> *)dumpNode:(AATreeNode *)node {
+    NSString *interior = [self dumpInterior:node];
+    NSArray<NSString *> *left = node.left ? [self dumpNode:node.left] : @[];
+    NSArray<NSString *> *right = node.right ? [self dumpNode:node.right] : @[];
+
+    NSMutableArray<NSString *> *joined = [NSMutableArray array];
+    __block int maxLeft = 0;
+    [left enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (obj.length > maxLeft) {
+            maxLeft = obj.length;
+        }
+    }];
+    __block int maxRight = 0;
+    [right enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (obj.length > maxRight) {
+            maxRight = obj.length;
+        }
+    }];
+    if (maxLeft < interior.length / 2) {
+        maxLeft = interior.length / 2;
+    }
+    NSMutableArray<NSString *> *padded = [[left mutableCopy] autorelease];
+    for (NSUInteger i = 0; i < left.count; i++) {
+        padded[i] = PrependSpaces(padded[i], maxLeft - padded[i].length);
+        if (i < right.count) {
+            padded[i] = [padded[i] stringByAppendingString:@"  "];
+            padded[i] = [padded[i] stringByAppendingString:right[i]];
+        }
+    }
+    NSString *paddedInterior = PrependSpaces(interior, maxLeft - interior.length / 2);
+    [padded insertObject:paddedInterior atIndex:0];
+    return padded;
+}
+
+- (NSString *)dumpInterior:(AATreeNode *)node {
+    id<AATreeCheatValue> value = (id<AATreeCheatValue>)node.data;
+    NSArray<id<AATreeCheatEntry>> *entries = value.entries;
+    __block long long imin = LONG_LONG_MAX;
+    __block long long imax = LONG_LONG_MIN;
+    [entries enumerateObjectsUsingBlock:^(id<AATreeCheatEntry>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (obj.interval.location < imin) {
+            imin = obj.interval.location;
+        }
+        if (obj.interval.location + obj.interval.length > imax) {
+            imax = obj.interval.location + obj.interval.length;
+        }
+    }];
+    return [NSString stringWithFormat:@"obj=%@ node=%p value=%p [%@-%@] max=%@", NSStringFromClass([entries.firstObject.object class]), node, node.data, @(imin), @(imax), @(value.maxLimitAtSubtree)];
+}
 
 - (void) removeObjectForKey:(id)aKey {
 
@@ -323,12 +401,16 @@
                     [changedNodes addObject:aRoot.left];
                 }
             } else {
+                [changedNodes addObject:aRoot];
                 if (aRoot.left) {
                     aRoot.deleted = YES;
                     aRoot = aRoot.left;
                 } else {
                     aRoot.deleted = YES;
                     aRoot = aRoot.right; // which could be nil.
+                }
+                if (aRoot) {
+                    [changedNodes addObject:aRoot];
                 }
                 assert(count > 0);
                 count--;
@@ -364,6 +446,9 @@
             }
 
             AATreeNode *prevRoot = aRoot;
+            if (aRoot) {
+                [changedNodes addObject:aRoot];
+            }
             aRoot = [self __skew:aRoot];
             if (aRoot != prevRoot) {
                 [changedNodes addObject:prevRoot];
