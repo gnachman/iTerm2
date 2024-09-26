@@ -5,6 +5,7 @@
 #import "AATree.h"
 
 #import "DebugLogging.h"
+#import "NSArray+CommonAdditions.h"
 
 // This assumes the AATree is used by IntervalTree but boy does it ever simplify debugging.
 @protocol AATreeCheatInterval <NSObject>
@@ -224,22 +225,25 @@
 }
 
 - (NSString *)dump {
+    return [NSString stringWithFormat:@"%@\n\n%@", [self dumpVerbose:NO], [self dumpVerbose:YES]];
+}
+
+- (NSString *)dumpVerbose:(BOOL)verbose {
     if (!self.root) {
         return @"No root";
     }
-    return [[self dumpNode:self.root] componentsJoinedByString:@"\n"];
+    return [[self dumpNode:self.root verbose:verbose] componentsJoinedByString:@"\n"];
 }
 
 static NSString *PrependSpaces(NSString *s, NSInteger count) {
     return [[@"" stringByPaddingToLength:count withString:@" " startingAtIndex:0] stringByAppendingString:s];
 }
 
-- (NSArray<NSString *> *)dumpNode:(AATreeNode *)node {
-    NSString *interior = [self dumpInterior:node];
-    NSArray<NSString *> *left = node.left ? [self dumpNode:node.left] : @[];
-    NSArray<NSString *> *right = node.right ? [self dumpNode:node.right] : @[];
+- (NSArray<NSString *> *)dumpNode:(AATreeNode *)node verbose:(BOOL)verbose {
+    NSString *interior = [self dumpInterior:node verbose:verbose];
+    NSArray<NSString *> *left = node.left ? [self dumpNode:node.left verbose:verbose] : @[];
+    NSArray<NSString *> *right = node.right ? [self dumpNode:node.right verbose:verbose] : @[];
 
-    NSMutableArray<NSString *> *joined = [NSMutableArray array];
     __block int maxLeft = 0;
     [left enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (obj.length > maxLeft) {
@@ -256,8 +260,12 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
         maxLeft = interior.length / 2;
     }
     NSMutableArray<NSString *> *padded = [[left mutableCopy] autorelease];
-    for (NSUInteger i = 0; i < left.count; i++) {
-        padded[i] = PrependSpaces(padded[i], maxLeft - padded[i].length);
+    for (NSUInteger i = 0; i < MAX(left.count, right.count); i++) {
+        if (i < left.count) {
+            padded[i] = PrependSpaces(padded[i], maxLeft - padded[i].length);
+        } else {
+            [padded addObject:PrependSpaces(@"", maxLeft)];
+        }
         if (i < right.count) {
             padded[i] = [padded[i] stringByAppendingString:@"  "];
             padded[i] = [padded[i] stringByAppendingString:right[i]];
@@ -268,26 +276,45 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
     return padded;
 }
 
-- (NSString *)dumpInterior:(AATreeNode *)node {
+- (NSString *)dumpInterior:(AATreeNode *)node verbose:(BOOL)verbose {
+    const long long location = [node.key longLongValue];
+    if (!verbose) {
+        return [@(location) stringValue];
+    }
+    
     id<AATreeCheatValue> value = (id<AATreeCheatValue>)node.data;
     NSArray<id<AATreeCheatEntry>> *entries = value.entries;
-    __block long long imin = LONG_LONG_MAX;
-    __block long long imax = LONG_LONG_MIN;
+    __block long long imax = location;
     [entries enumerateObjectsUsingBlock:^(id<AATreeCheatEntry>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (obj.interval.location < imin) {
-            imin = obj.interval.location;
-        }
         if (obj.interval.location + obj.interval.length > imax) {
             imax = obj.interval.location + obj.interval.length;
         }
     }];
-    return [NSString stringWithFormat:@"obj=%@ node=%p value=%p [%@-%@] max=%@", NSStringFromClass([entries.firstObject.object class]), node, node.data, @(imin), @(imax), @(value.maxLimitAtSubtree)];
+    NSArray *classes = [entries mapWithBlock:^id _Nullable(id<AATreeCheatEntry>  _Nonnull anObject) {
+        return NSStringFromClass([anObject.object class]);
+    }];
+    return [NSString stringWithFormat:@"obj=%@ node=%p value=%p [%@-%@] max=%@",
+            [classes componentsJoinedByString:@","],
+            node,
+            node.data,
+            @(location),
+            @(imax),
+            @(value.maxLimitAtSubtree)];
 }
+
+#if DEBUG
+static NSMutableArray *gDebugJournal;
+#endif
 
 - (void) removeObjectForKey:(id)aKey {
 
     [self __lockForWriting];
     changedNodes = [[NSMutableSet alloc] init];
+#if DEBUG
+    NSString *before = [self dump];
+
+    gDebugJournal = [[NSMutableArray alloc] init];
+#endif
     AATreeNode *prevRoot = self.root;
     self.root = [self __deleteNodeAtKey:aKey atRoot:root];
     if (prevRoot != self.root) {
@@ -300,6 +327,9 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
     }
     if (changedNodes.count > 0) {
         [_delegate aaTree:self didChangeSubtreesAtNodes:changedNodes];
+#if DEBUG
+        DLog(@"Before:\n%@\nAfter:\n%@\nJournal:\n%@", before, [self dump], gDebugJournal);
+#endif
     }
     [changedNodes release];
     changedNodes = nil;
@@ -375,6 +405,9 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
 @synthesize keyComparator;
 
 - (AATreeNode *) __deleteNodeAtKey:(id)aKey atRoot:(AATreeNode *)aRoot {
+#if DEBUG
+    [gDebugJournal addObject:[NSString stringWithFormat:@"Delete node with key %@ at node %@", aKey, aRoot]];
+#endif
 
     if (aRoot) {
 
@@ -395,6 +428,9 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
                 aRoot.data = heir.data;
 
                 // Delete the in-order predecessor (heir).
+#if DEBUG
+                [gDebugJournal addObject:[NSString stringWithFormat:@"  Will delete in-order predecessor"]];
+#endif
                 aRoot.left = [self __deleteNodeAtKey:aRoot.key atRoot:aRoot.left];
                 [changedNodes addObject:aRoot];
                 if (aRoot.left) {
@@ -403,9 +439,15 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
             } else {
                 [changedNodes addObject:aRoot];
                 if (aRoot.left) {
+#if DEBUG
+                [gDebugJournal addObject:[NSString stringWithFormat:@"  Delete left"]];
+#endif
                     aRoot.deleted = YES;
                     aRoot = aRoot.left;
                 } else {
+#if DEBUG
+                [gDebugJournal addObject:[NSString stringWithFormat:@"  Delete self and hoist right child"]];
+#endif
                     aRoot.deleted = YES;
                     aRoot = aRoot.right; // which could be nil.
                 }
@@ -419,6 +461,9 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
             // Otherwise, travel left or right.
         } else if (compareResult == NSOrderedAscending) {
             AATreeNode *prevLeft = aRoot.left;
+#if DEBUG
+                [gDebugJournal addObject:[NSString stringWithFormat:@"  Will travel left"]];
+#endif
             aRoot.left = [self __deleteNodeAtKey:aKey atRoot:aRoot.left];
             if (prevLeft != aRoot.left) {
                 [changedNodes addObject:aRoot];
@@ -426,6 +471,9 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
             }
         } else {
             AATreeNode *prevRight = aRoot.right;
+#if DEBUG
+                [gDebugJournal addObject:[NSString stringWithFormat:@"  Will travel right"]];
+#endif
             aRoot.right = [self __deleteNodeAtKey:aKey atRoot:aRoot.right];
             if (prevRight != aRoot.right) {
                 [changedNodes addObject:aRoot];
@@ -449,12 +497,18 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
             if (aRoot) {
                 [changedNodes addObject:aRoot];
             }
+#if DEBUG
+                [gDebugJournal addObject:[NSString stringWithFormat:@"  Skew at %@", aRoot]];
+#endif
             aRoot = [self __skew:aRoot];
             if (aRoot != prevRoot) {
                 [changedNodes addObject:prevRoot];
                 [changedNodes addObject:aRoot];
             }
             prevRoot = aRoot;
+#if DEBUG
+                [gDebugJournal addObject:[NSString stringWithFormat:@"  Split at %@", aRoot]];
+#endif
             aRoot = [self __split:aRoot];
             if (aRoot != prevRoot) {
                 [changedNodes addObject:prevRoot];
@@ -585,6 +639,9 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
             aRoot = aRoot.left;
             save.left = aRoot.right;
             aRoot.right = save;
+            if (save) {
+                [changedNodes addObject:save];
+            }
         }
         // Skew the right side of the (new) root.
         aRoot.right = [self __skew:aRoot.right];
@@ -604,7 +661,9 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
         aRoot = aRoot.right;
         save.right = aRoot.left;
         aRoot.left = save;
-
+        if (save) {
+            [changedNodes addObject:save];
+        }
         // Increase the level of the new root.
         aRoot.level++;
 

@@ -10,7 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface Interval : NSObject<NSCopying>
 // Negative locations have special meaning. Don't use them.
 @property(nonatomic, readonly) long long location;
-@property(nonatomic, assign) long long length;
+@property(nonatomic, readonly) long long length;
 @property(nonatomic, readonly) long long limit;
 
 + (instancetype)intervalWithLocation:(long long)location length:(long long)length;

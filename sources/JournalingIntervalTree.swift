@@ -97,7 +97,13 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     @objc(mutateObject:block:)
     func mutate(_ object: IntervalTreeImmutableObject,
                 closure: @escaping (IntervalTreeObject) -> ()) {
+#if DEBUG
+        super.sanityCheck()
+#endif
         closure(object as! IntervalTreeObject)
+#if DEBUG
+        super.sanityCheck()
+#endif
         addSideEffect(object as! IntervalTreeObject) { doppelganger, _ in
             closure(doppelganger)
         }
@@ -109,11 +115,45 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     func bulkMutate(_ objects: [IntervalTreeImmutableObject],
                     closure: @escaping (IntervalTreeObject) -> ()) {
         for object in objects {
+#if DEBUG
+            super.sanityCheck()
+#endif
             closure(object as! IntervalTreeObject)
+#if DEBUG
+            super.sanityCheck()
+#endif
         }
         addBulkSideEffect(objects as! [IntervalTreeObject]) { _, doppelganger, _ in
             closure(doppelganger)
         }
+    }
+
+    @objc(bulkRemoveObjects:)
+    func bulkRemoveObjects(_ objects: [IntervalTreeImmutableObject]) {
+        DLog("Will bulk remove. Tree has:\n\(allObjects())")
+#if DEBUG
+        sanityCheck()
+#endif
+        for object in objects {
+            let ito = object as! IntervalTreeObject
+            DLog("->Will remove \(ito.description). Tree has:\n\(allObjects())")
+#if DEBUG
+            sanityCheck()
+#endif
+            super.remove(ito)
+#if DEBUG
+            sanityCheck()
+#endif
+            DLog("->Did remove \(ito.description). Tree has:\n\(allObjects())")
+        }
+#if DEBUG
+        sanityCheck()
+#endif
+        addBulkSideEffect(objects as! [IntervalTreeObject]) { i, ito, tree in
+            DLog("Running bulk removal side effect on \(ito.description)")
+            tree.remove(ito)
+        }
+        DLog("After bulk remove tree has:\n\(allObjects())")
     }
 
     @objc(bulkMoveObjects:block:)
@@ -122,8 +162,14 @@ class EventuallyConsistentIntervalTree: IntervalTree {
         let newIntervals = objects.map { closure($0 as! IntervalTreeObject) }
         for (object, interval) in zip(objects, newIntervals) {
             let ito = object as! IntervalTreeObject
+#if DEBUG
+super.sanityCheck()
+#endif
             super.remove(ito)
             super.add(ito, with: interval)
+#if DEBUG
+super.sanityCheck()
+#endif
         }
         addBulkSideEffect(objects as! [IntervalTreeObject]) { i, ito, tree in
             tree.remove(ito)

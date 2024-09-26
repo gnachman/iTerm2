@@ -499,6 +499,9 @@ static NSString *const kIntervalLengthKey = @"Length";
 
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval {
     DLog(@"%p: Add %@ at %@", self, object, interval);
+#if DEBUG
+    [self sanityCheck];
+#endif
     [interval boundsCheck];
     assert(object.entry == nil);  // Object must not belong to another tree
     IntervalTreeEntry *entry = [IntervalTreeEntry entryWithInterval:interval
@@ -514,10 +517,16 @@ static NSString *const kIntervalLengthKey = @"Length";
     }
     object.entry = entry;
     ++_count;
+#if DEBUG
+    [self sanityCheck];
+#endif
 }
 
 - (BOOL)removeObject:(id<IntervalTreeObject>)object {
     DLog(@"%p: Remove %@", self, object);
+#if DEBUG
+    [self sanityCheck];
+#endif
     Interval *interval = object.entry.interval;
     long long theLocation = interval.location;
     IntervalTreeValue *value = [_tree objectForKey:@(interval.location)];
@@ -577,7 +586,7 @@ static NSString *const kIntervalLengthKey = @"Length";
         max = MAX(max, rightValue.maxLimitAtSubtree);
         DLog(@"Recalculate node %p: rightValue.maxLimit=%@", node, @(rightValue.maxLimitAtSubtree));
     }
-    DLog(@"Recalculate node %p with value %p: assign %@ to %p", node, value, @(max), &value->_maxLimitAtSubtree);
+    DLog(@"Recalculate node %p with value %p: new maxLimitAtSubtree is %@", node, value, @(max));
     value.maxLimitAtSubtree = max;
 #if DEBUG
     const long long bruteForced = [self bruteForceMaxLimitAtSubtree:node];
@@ -1206,9 +1215,11 @@ static NSString *const kIntervalLengthKey = @"Length";
 
     if (node.left) {
         [self sanityCheckAtNode:node.left];
+        assert(node.left != node.right);
     }
     if (node.right) {
         [self sanityCheckAtNode:node.right];
+        assert(node.left != node.right);
     }
 }
 

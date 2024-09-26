@@ -32,7 +32,7 @@
 - (NSString *)description {
   static int indent;
   indent += 2;
-  NSString *result = [NSString stringWithFormat:@"<%@: %p key=%@ data=%@\n%@left=%@\n%@right=%@>",
+  NSString *result = [NSString stringWithFormat:@"<%@: %p key=%@ data=%@\n%@left=%p\n%@right=%p>",
                       self.class, self, self.key, self.data, [self spaces:indent], self.left, [self spaces:indent], self.right];
   indent -= 2;
   return result;
@@ -68,6 +68,40 @@
 	if (left) [left printWithIndent:(indent+1)];
 }
 
+#if DEBUG
+- (void)setLeft:(AATreeNode *)newValue {
+    @synchronized (self) {
+        if ((newValue || self.right) && newValue == self.right) {
+            NSLog(@"Setting left equal to right");
+        }
+        [left autorelease];
+        left = [newValue retain];
+    }
+}
+
+- (AATreeNode *)left {
+    @synchronized (self) {
+        return left;
+    }
+}
+
+- (void)setRight:(AATreeNode *)newValue {
+    @synchronized (self) {
+        if ((newValue || self.left) && newValue == self.left) {
+            NSLog(@"Setting right equal to left");
+        }
+
+        [right autorelease];
+        right = [newValue retain];
+    }
+}
+
+- (AATreeNode *)right {
+    @synchronized (self) {
+        return right;
+    }
+}
+#endif
 
 - (void) dealloc
 {

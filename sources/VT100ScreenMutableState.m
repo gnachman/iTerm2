@@ -34,6 +34,7 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermTextExtractor.h"
+#import "iTermTuple.h"
 #import "iTermURLStore.h"
 
 #import <stdatomic.h>
@@ -1867,14 +1868,29 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                             self.width,
                             screenOrigin + self.height);
     Interval *screenInterval = [self intervalForGridCoordRange:screenRange];
-    // Array of doppelgangers.
-    [self.mutableIntervalTree bulkMutateObjects:[self.intervalTree objectsInInterval:screenInterval]
-                                          block:^(id<IntervalTreeObject> note) {
+
+    NSArray<id<IntervalTreeObject>> *objects = [self.mutableIntervalTree mutableObjectsInInterval:screenInterval];
+    NSArray<iTermTuple<Interval *, id<IntervalTreeObject>> *> *updates =
+    [objects mapWithBlock:^id _Nullable(id<IntervalTreeObject> note) {
         if (note.entry.interval.location < screenInterval.location) {
             // Truncate note so that it ends just before screen.
             // Subtract 1 because end coord is inclusive of y even when x is 0.
-            note.entry.interval.length = screenInterval.location - note.entry.interval.location - 1;
+            Interval *newInterval = [[Interval alloc] initWithLocation:note.entry.interval.location
+                                                                length:screenInterval.location - note.entry.interval.location - 1];
+            return [iTermTuple tupleWithObject:newInterval andObject:note];
         }
+        return nil;
+    }];
+    NSArray<id<IntervalTreeObject>> *objectsToRemove = [updates mapWithBlock:^id(iTermTuple *tuple) {
+        return tuple.secondObject;
+    }];
+    [self.mutableIntervalTree bulkRemoveObjects:objectsToRemove];
+    for (iTermTuple<Interval *, id<IntervalTreeObject>> *tuple in updates) {
+        [self.mutableIntervalTree addObject:tuple.secondObject withInterval:tuple.firstObject];
+    }
+
+    [self.mutableIntervalTree bulkMutateObjects:[self.intervalTree objectsInInterval:screenInterval]
+                                          block:^(id<IntervalTreeObject> note) {
         PTYAnnotation *annotation = [PTYAnnotation castFrom:note];
         [annotation hide];
     }];

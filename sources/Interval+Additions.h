@@ -6,10 +6,17 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "IntervalTree.h"
+#import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface Interval_Additions : NSObject
+@interface Interval(Additions)
+
++ (instancetype)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)absRange
+                                       width:(int)width;
+
+- (VT100GridAbsCoordRange)absCoordRangeForWidth:(int)width;
 
 @end
 
