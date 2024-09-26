@@ -1014,14 +1014,24 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
             i--;
             lastIndex = indexOfLineThatWouldStartWithRightHalf;
         }];
-        ITAssertWithMessage(i <= length, @"1 i=%@ exceeds length=%@, cache=%@", @(i), @(length), metadata->double_width_characters);
+        ITAssertWithMessage(i <= length, @"[1] i=%@ exceeds length=%@, n=%@, width=%@, cache=%@",
+                            @(i),
+                            @(length),
+                            @(n),
+                            @(width),
+                            metadata->double_width_characters);
         if (lines < n) {
             i += (n - lines) * width;
-            ITAssertWithMessage(i <= length, @"2 i=%@ exceeds length=%@, cache=%@", @(i), @(length), metadata->double_width_characters);
+            ITAssertWithMessage(i <= length, @"[1] i=%@ exceeds length=%@, n=%@, width=%@, cache=%@",
+                                @(i),
+                                @(length),
+                                @(n),
+                                @(width),
+                                metadata->double_width_characters);
         }
         return i;
     } else {
-        ITAssertWithMessage(n * width <= length, @"3 n=%@ * width=%@ < length=%@", @(n), @(width), @(length));
+        ITAssertWithMessage(n * width <= length, @"[3] n=%@ * width=%@ < length=%@", @(n), @(width), @(length));
         return n * width;
     }
 }

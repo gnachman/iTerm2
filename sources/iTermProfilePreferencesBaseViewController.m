@@ -222,7 +222,7 @@
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update
                        searchable:(BOOL)searchable {
-    assert(self.delegate);
+    ITAssertWithMessage(self.delegate != nil, @"No delegate for control %@ with key %@", control, key);
     return [super defineControl:control key:key relatedView:relatedView displayName:forceDisplayName type:type settingChanged:settingChanged update:update searchable:searchable];
 }
 
