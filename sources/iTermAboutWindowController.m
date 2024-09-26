@@ -68,6 +68,7 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     IBOutlet NSTextField *_whiteboxText;
 
     IBOutlet NSView *_latchBio;
+    IBOutlet NSView *_codeRabbit;
 
     NSArray<iTermSponsor *> *_sponsors;
 }
@@ -97,7 +98,11 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
                    [iTermSponsor sponsorWithView:_latchBio
                                        textField:nil
                                        container:self
-                                             url:@"https://latch.bio/"]];
+                                             url:@"https://latch.bio/"],
+                   [iTermSponsor sponsorWithView:_codeRabbit
+                                       textField:nil
+                                       container:self
+                                             url:@"https://coderabbit.ai/"]];
 }
 
 
