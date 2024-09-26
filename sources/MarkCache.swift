@@ -39,6 +39,15 @@ class MarkCache: NSObject, MarkCacheReading {
         super.init()
     }
 
+    @objc
+    func dump() {
+        for mark in enumerate(from: 0) {
+            let object = mark as! NSObject
+            let ito = mark as! IntervalTreeObject
+            NSLog("\(object.description) at \(ito.entry?.interval.description ?? "(No entry)")")
+        }
+    }
+
     fileprivate init(dict: [Int: iTermMarkProtocol]) {
         self.dict = dict
         for value in dict.values {
@@ -164,6 +173,10 @@ class ReadOnlyMarkCache: NSObject, MarkCacheReading {
         let instance = MarkCache(dict: dict)
         realInstance = instance
         return instance
+    }
+
+    override var description: String {
+        realInstance?.description ?? "Unrealized"
     }
 
     @objc(enumerateFrom:)
