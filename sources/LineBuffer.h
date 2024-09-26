@@ -51,7 +51,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) int largestAbsoluteBlockNumber;
 @property(nonatomic, readonly) BOOL dirty;
 @property(nonatomic, readonly) long long numberOfDroppedChars;
-@property(nonatomic, readonly) long long generation;
+@property(atomic, readonly) long long generation;
+
 // Returns the metadata associated with a line when wrapped to the specified width.
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
 

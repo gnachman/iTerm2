@@ -108,11 +108,11 @@ static const NSInteger kUnicodeVersion = 9;
 
     BOOL _wantsSeal;
     int _deferSanityCheck;
+    atomic_llong _generation;
 }
 
 @synthesize mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
 @synthesize delegate = _delegate;
-@synthesize generation = _generation;
 
 // Append a block
 - (LineBlock *)_addBlockOfSize:(int)size {
@@ -239,9 +239,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         return;
     }
     if (dirty) {
-        _generation += 1;
+        atomic_fetch_add(&_generation, 1);
     }
     _dirty = dirty;
+}
+
+- (long long)generation {
+    return atomic_load(&_generation);
 }
 
 - (void)setMaxLines:(int)maxLines {
