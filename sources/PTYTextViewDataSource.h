@@ -12,9 +12,11 @@
 @class Interval;
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
+@protocol iTermFoldMarkReading;
 @class iTermKittyImageDraw;
 @protocol iTermMark;
 @class iTermOffscreenCommandLine;
+@class iTermSavedIntervalTreeObject;
 @class iTermTerminalButtonPlace;
 @protocol IntervalTreeImmutableObject;
 @class PTYAnnotation;
@@ -117,7 +119,10 @@
 - (id<VT100ScreenMarkReading>)markOnLine:(int)line;
 - (void)removeNamedMark:(id<VT100ScreenMarkReading>)mark;
 - (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
+                            mustHaveCommand:(BOOL)mustHaveCommand
                                       range:(out VT100GridWindowedRange *)range;
+- (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor;
+
 - (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval;
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
 
@@ -153,7 +158,20 @@
 - (void)replaceRange:(VT100GridAbsCoordRange)range
         withPorthole:(id<Porthole>)porthole
             ofHeight:(int)numLines;
-- (void)replaceMark:(id<iTermMark>)mark withLines:(NSArray<ScreenCharArray *> *)lines;
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+            withLine:(ScreenCharArray *)line
+        promptLength:(NSInteger)promptLength;
+- (BOOL)removeFoldsInRange:(NSRange)absRange;
+- (NSIndexSet *)foldsInRange:(VT100GridRange)range;
+- (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range;
+
+// includeSucessorDivider is the blank line before the next line-style mark
+- (VT100GridAbsCoordRange)rangeOfCommandAndOutputForMark:(id<VT100ScreenMarkReading>)mark
+                                  includeSucessorDivider:(BOOL)includeSucessorDivider;
+
+- (void)replaceMark:(id<iTermMark>)mark
+          withLines:(NSArray<ScreenCharArray *> *)lines
+          savedITOs:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs;
 - (void)changeHeightOfMark:(id<iTermMark>)mark to:(int)newHeight;
 
 - (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole;
@@ -162,5 +180,7 @@
 - (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range;
 - (VT100GridCoordRange)rangeOfBlockWithID:(NSString *)blockID;
 - (NSArray<iTermKittyImageDraw *> *)kittyImageDraws;
+- (void)addSavedIntervalTreeObjects:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs
+                           baseLine:(long long)baseLine;
 
 @end

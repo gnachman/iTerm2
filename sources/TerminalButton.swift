@@ -295,7 +295,7 @@ class TerminalBookmarkButton: TerminalMarkButton {
 class TerminalShareButton: TerminalMarkButton {
     @objc(initWithMark:dx:)
     init?(mark: VT100ScreenMarkReading, dx: Int32) {
-        super.init(identifier: -5, mark: mark, fgName: "square.and.arrow.up", bgName: "square.and.arrow.up.fill", dx: dx)
+        super.init(identifier: -4, mark: mark, fgName: "square.and.arrow.up", bgName: "square.and.arrow.up.fill", dx: dx)
     }
     required init?(_ original: TerminalButton) {
         super.init(original)
@@ -308,6 +308,30 @@ class TerminalCommandInfoButton: TerminalMarkButton {
     @objc(initWithMark:dx:)
     init?(mark: VT100ScreenMarkReading, dx: Int32) {
         super.init(identifier: -5, mark: mark, fgName: "info.circle", bgName: "info.circle.fill", dx: dx)
+    }
+    required init?(_ original: TerminalButton) {
+        super.init(original)
+    }
+}
+
+@available(macOS 11, *)
+@objc(iTermTerminalFoldButton)
+class TerminalFoldButton: TerminalMarkButton {
+    @objc(initWithMark:dx:)
+    init?(mark: VT100ScreenMarkReading, dx: Int32) {
+        super.init(identifier: -6, mark: mark, fgName: "rectangle.compress.vertical", bgName: "rectangle.compress.vertical", dx: dx)
+    }
+    required init?(_ original: TerminalButton) {
+        super.init(original)
+    }
+}
+
+@available(macOS 11, *)
+@objc(iTermTerminalUnfoldButton)
+class TerminalUnfoldButton: TerminalMarkButton {
+    @objc(initWithMark:dx:)
+    init?(mark: VT100ScreenMarkReading, dx: Int32) {
+        super.init(identifier: -7, mark: mark, fgName: "rectangle.expand.vertical", bgName: "rectangle.expand.vertical", dx: dx)
     }
     required init?(_ original: TerminalButton) {
         super.init(original)

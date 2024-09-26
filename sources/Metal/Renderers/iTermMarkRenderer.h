@@ -4,9 +4,14 @@
 
 typedef NS_ENUM(int, iTermMarkStyle) {
     iTermMarkStyleNone = -1,
-    iTermMarkStyleSuccess = 0,
-    iTermMarkStyleFailure = 1,
-    iTermMarkStyleOther = 2
+
+    iTermMarkStyleRegularSuccess = 0,
+    iTermMarkStyleRegularFailure = 1,
+    iTermMarkStyleRegularOther = 2,
+
+    iTermMarkStyleFoldedSuccess = 3,
+    iTermMarkStyleFoldedFailure = 4,
+    iTermMarkStyleFoldedOther = 5
 };
 
 NS_ASSUME_NONNULL_BEGIN

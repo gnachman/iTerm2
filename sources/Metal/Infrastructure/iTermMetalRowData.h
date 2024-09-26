@@ -47,6 +47,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) BOOL belongsToBlock;
 @property (nonatomic, readonly) NSMutableArray<iTermKittyImageRun *> *kittyImageRuns;
 
+@property (nonatomic, readonly) BOOL hasFold;
+
 - (void)writeDebugInfoToFolder:(NSURL *)folder;
 
 @end

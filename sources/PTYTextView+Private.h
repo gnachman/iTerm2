@@ -88,6 +88,7 @@ NSPopoverDelegate> {
 - (BOOL)showCommandInfoForMark:(id<VT100ScreenMarkReading>)mark at:(NSPoint)locationInWindow;
 - (IBAction)performFindPanelAction:(id)sender;
 - (BOOL)mouseIsOverButtonInEvent:(NSEvent *)event;
+- (void)addViewForNote:(id<PTYAnnotationReading>)annotation focus:(BOOL)focus visible:(BOOL)visible;
 
 @end
 

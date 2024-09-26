@@ -282,13 +282,28 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue;
 
+#pragma mark - Folding
+
+- (BOOL)removeFoldsInRange:(NSRange)absRange;
+
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+            withLine:(ScreenCharArray *)line
+        promptLength:(NSInteger)promptLength;
+
 #pragma mark - Portholes
 
 - (void)replaceRange:(VT100GridAbsCoordRange)range
         withPorthole:(id<Porthole>)porthole
             ofHeight:(int)numLines;
+- (void)addSavedIntervalTreeObjects:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs
+                           baseLine:(long long)baseLine;
 
-- (void)replaceMark:(iTermMark *)mark withLines:(NSArray<ScreenCharArray *> *)lines;
+#pragma mark - Folding
+
+// Unfold
+- (void)replaceMark:(iTermMark *)mark
+          withLines:(NSArray<ScreenCharArray *> *)lines
+          savedITOs:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs;
 
 // This assumes that the range the mark spans is empty lines.
 - (void)changeHeightOfMark:(iTermMark *)mark to:(int)newHeight;

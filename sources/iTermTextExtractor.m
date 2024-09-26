@@ -284,6 +284,27 @@ const NSInteger kLongMaximumWordLength = 100000;
     return result;
 }
 
+- (int)cellCountInWrappedLineWithAbsY:(long long)absY {
+    int y = absY - self.dataSource.totalScrollbackOverflow;
+    if (y < 0) {
+        return self.dataSource.width;
+    }
+    if ([self.dataSource screenCharArrayForLine:y].eol == EOL_DWC) {
+        return self.dataSource.width - 1;
+    } else {
+        return self.dataSource.width;
+    }
+}
+
+- (int)rowCountForRawLineEncompassingWithAbsY:(long long)absY {
+    const long long offset = self.dataSource.totalScrollbackOverflow;
+    const VT100GridCoordRange lineRange =
+    [self rangeForWrappedLineEncompassing:VT100GridCoordMake(0, absY - offset)
+                          respectContinuations:NO
+                                      maxChars:-1].coordRange;
+    return lineRange.end.y - absY + 1;
+}
+
 - (VT100GridAbsWindowedRange)rangeForWordAtAbsCoord:(VT100GridAbsCoord)absLocation
                                       maximumLength:(NSInteger)maximumLength {
     return VT100GridAbsWindowedRangeFromWindowedRange([self rangeForWordAt:[self coordFromAbsolute:absLocation]

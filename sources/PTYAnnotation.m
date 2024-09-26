@@ -57,6 +57,11 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
     return copy;
 }
 
+- (NSDictionary *)dictionaryValueWithTypeInformation {
+    return @{ @"class": NSStringFromClass(self.class),
+              @"value": [self dictionaryValue] };
+}
+
 - (void)hide {
     if (!self.delegate) {
         _deferHide = YES;

@@ -45,6 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Serialized value.
 - (NSDictionary *)dictionaryValue;
+- (NSDictionary *)dictionaryValueWithTypeInformation;
 
 - (instancetype)copyOfIntervalTreeObject;
 @end

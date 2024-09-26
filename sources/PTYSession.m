@@ -16182,7 +16182,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 // Does nothing if the selected command would include the mutable part of the alternate screen.
 - (void)selectCommandWithMarkIfSafe:(id<VT100ScreenMarkReading>)mark {
     if (mark && _screen.terminalSoftAlternateScreenMode) {
-        const VT100GridAbsCoordRange absRange = [self rangeOfCommandAndOutputForMark:mark];
+        const VT100GridAbsCoordRange absRange = [self rangeOfCommandAndOutputForMark:mark
+                                                              includeSucessorDivider:YES];
         const NSRange markRange = NSMakeRange(absRange.start.y, MAX(0, absRange.end.y - absRange.start.y + 1));
         const NSRange screenRange = NSMakeRange(_screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow,
                                                 _screen.height);
@@ -16206,7 +16207,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (VT100GridAbsCoordRange)textViewCoordRangeForCommandAndOutputAtMark:(id<iTermMark>)mark {
     if ([mark conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
-        return [self rangeOfCommandAndOutputForMark:(id<VT100ScreenMarkReading>)mark];
+        return [self rangeOfCommandAndOutputForMark:(id<VT100ScreenMarkReading>)mark
+                             includeSucessorDivider:YES];
     }
     return [_screen absCoordRangeForInterval:mark.entry.interval];
 }
@@ -16284,7 +16286,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         _textview.findOnPageHelper.absLineRange = NSMakeRange(0, 0);
         return;
     }
-    VT100GridAbsCoordRange range = [self rangeOfCommandAndOutputForMark:_selectedCommandMark];
+    VT100GridAbsCoordRange range = [self rangeOfCommandAndOutputForMark:_selectedCommandMark
+                                                 includeSucessorDivider:YES];
     if (_selectedCommandMark.lineStyle) {
         _textview.findOnPageHelper.absLineRange = NSMakeRange(MAX(0, range.start.y - 1),
                                                               range.end.y - range.start.y + 1);
@@ -16293,18 +16296,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
-- (VT100GridAbsCoordRange)rangeOfCommandAndOutputForMark:(id<VT100ScreenMarkReading>)mark {
-    VT100GridAbsCoordRange range;
-    range.start = [_screen absCoordRangeForInterval:mark.entry.interval].start;
-
-    id<VT100ScreenMarkReading> successor = [_screen promptMarkAfterPromptMark:mark];
-    if (successor) {
-        range.end = [_screen absCoordRangeForInterval:successor.entry.interval].start;
-        range.end.y -= 1;
-    } else {
-        range.end = VT100GridAbsCoordMake(_screen.width - 1, _screen.numberOfLines + _screen.totalScrollbackOverflow);
-    }
-    return range;
+- (VT100GridAbsCoordRange)rangeOfCommandAndOutputForMark:(id<VT100ScreenMarkReading>)mark
+                                  includeSucessorDivider:(BOOL)includeSucessorDivider {
+    return [_screen rangeOfCommandAndOutputForMark:mark includeSucessorDivider:includeSucessorDivider];
 }
 
 #pragma mark - iTermHotkeyNavigableSession

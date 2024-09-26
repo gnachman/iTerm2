@@ -77,6 +77,7 @@ NS_ASSUME_NONNULL_BEGIN
                                       enabled:drawingHelper.drawMarkIndicators
                                      textView:textView
                           allowOtherMarkStyle:allowOtherMarkStyle
+                                      hasFold:[drawingHelper.folds containsIndex:i]
                                 lineStyleMark:&_lineStyleMark
                       lineStyleMarkRightInset:&_lineStyleMarkRightInset]);
     }
@@ -87,31 +88,38 @@ NS_ASSUME_NONNULL_BEGIN
                            enabled:(BOOL)enabled
                           textView:(PTYTextView *)textView
                allowOtherMarkStyle:(BOOL)allowOtherMarkStyle
+                           hasFold:(BOOL)folded
                      lineStyleMark:(out BOOL *)lineStyleMark
            lineStyleMarkRightInset:(out int *)lineStyleMarkRightInset {
-    if (!enabled) {
-        return iTermMarkStyleNone;
-    }
-
     id<VT100ScreenMarkReading> mark = [textView.dataSource markOnLine:i];
-    if (!mark) {
-        return iTermMarkStyleNone;
+    *lineStyleMarkRightInset = 0;
+    *lineStyleMark = NO;
+    if (mark != nil && enabled) {
+        if (mark.lineStyle) {
+            // Don't draw line-style mark in selected command region or immediately after selected command region.
+            // Note: that logic is in populateLineStyleMarkRendererTransientStateWithFrameData.
+            *lineStyleMark = YES;
+            if (mark.command.length) {
+                *lineStyleMarkRightInset = iTermTextDrawingHelperLineStyleMarkRightInsetCells;
+            }
+        }
     }
-    *lineStyleMark = mark.lineStyle;
-    if (mark.command.length && mark.lineStyle) {
-        *lineStyleMarkRightInset = iTermTextDrawingHelperLineStileMarkRightInsetCells;
-    } else {
-        *lineStyleMarkRightInset = 0;
+    if (!mark) {
+        if (folded) {
+            // Folds without a mark should draw as folded success.
+            return iTermMarkStyleFoldedSuccess;
+        } else {
+            return iTermMarkStyleNone;
+        }
     }
     if (mark.code == 0) {
-        return iTermMarkStyleSuccess;
+        return folded ? iTermMarkStyleFoldedSuccess : iTermMarkStyleRegularSuccess;
     }
     if (allowOtherMarkStyle &&
         mark.code >= 128 && mark.code <= 128 + 32) {
-        return iTermMarkStyleOther;
+        return folded ? iTermMarkStyleFoldedOther : iTermMarkStyleRegularOther;
     }
-    return iTermMarkStyleFailure;
-
+    return folded ? iTermMarkStyleFoldedFailure : iTermMarkStyleRegularFailure;
 }
 
 - (iTermMetalPerFrameStateRow *)emptyCopy {

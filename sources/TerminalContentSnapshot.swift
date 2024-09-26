@@ -58,6 +58,10 @@ class TerminalContentSnapshot: NSObject, iTermTextDataSource {
         return block(line)
     }
 
+    func metadata(onLine lineNumber: Int32) -> iTermImmutableMetadata {
+        lineBuffer.metadata(forLineNumber: lineNumber, width: _width)
+    }
+
     func date(forLine line: Int32) -> Date? {
         let timestamp = lineBuffer.metadata(forLineNumber: line, width: _width).timestamp
         if timestamp == 0 {
@@ -66,7 +70,9 @@ class TerminalContentSnapshot: NSObject, iTermTextDataSource {
         return Date(timeIntervalSinceReferenceDate: timestamp)
     }
 
-    func commandMark(at coord: VT100GridCoord, range: UnsafeMutablePointer<VT100GridWindowedRange>) -> VT100ScreenMarkReading? {
+    func commandMark(at coord: VT100GridCoord, 
+                     mustHaveCommand: Bool,
+                     range: UnsafeMutablePointer<VT100GridWindowedRange>?) -> VT100ScreenMarkReading? {
         return nil
     }
 }

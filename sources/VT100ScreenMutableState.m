@@ -2556,6 +2556,19 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return marksToMove;
 }
 
+- (NSArray<id<IntervalTreeObject>> *)intervalTreeObjectsContainedEntirelyInAbsRange:(VT100GridAbsCoordRange)absCoordRange {
+    NSMutableArray<id<IntervalTreeObject>> *result = [NSMutableArray array];
+    Interval *interval = [self intervalForGridAbsCoordRange:absCoordRange];
+    for (NSArray<id<IntervalTreeObject>> *objects in [self.intervalTree forwardLocationEnumeratorAt:interval.location]) {
+        for (id<IntervalTreeObject> obj in objects) {
+            if (obj.entry.interval.limit <= interval.limit) {
+                [result addObject:obj];
+            }
+        }
+    }
+    return result;
+}
+
 // FTCS C
 - (void)commandDidEndWithRange:(VT100GridCoordRange)range {
     NSString *command = [self commandInRange:range];
@@ -3656,19 +3669,43 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 #pragma mark - Portholes
 
-- (void)replaceMark:(iTermMark *)mark withLines:(NSArray<ScreenCharArray *> *)lines {
+// Unfold
+- (void)replaceMark:(iTermMark *)mark
+          withLines:(NSArray<ScreenCharArray *> *)lines
+          savedITOs:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs {
     const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:mark.entry.interval];
     if (range.end.y < self.totalScrollbackOverflow) {
         // Nothing to do - it has already scrolled off to the great beyond.
         return;
     }
+    DLog(@"Unfold");
+    DLog(@"Before unfold:");
+    DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
     NSArray<ScreenCharArray *> *trimmed = lines;
     if (range.start.y <= self.totalScrollbackOverflow) {
         VT100GridCoordRange relativeRange = VT100GridCoordRangeFromAbsCoordRange(range, self.totalScrollbackOverflow);
         trimmed = [self linesByTruncatingLines:lines toWrappedHeight:relativeRange.end.y - relativeRange.start.y + 1];
     }
-    [self replaceRange:range withLines:trimmed];
-    [self.mutableIntervalTree removeObject:mark];
+
+    LineBuffer *lb = [[LineBuffer alloc] init];
+    [trimmed enumerateObjectsUsingBlock:^(ScreenCharArray *sca, NSUInteger idx, BOOL * _Nonnull stop) {
+        [lb appendScreenCharArray:sca width:self.width];
+    }];
+    const int numLines = [lb numLinesWithWidth:self.width];
+    NSArray<ScreenCharArray *> *reflowed = [[NSArray sequenceWithRange:NSMakeRange(0, numLines)] mapWithBlock:^id _Nullable(NSNumber *n) {
+        const int line = n.intValue;
+        return [lb screenCharArrayForLine:line width:self.width paddedTo:self.width eligibleForDWC:NO];
+    }];
+
+    [self replaceRange:range withLines:reflowed removedIntervalTreeObjects:nil removedLines:nil];
+    if (mark.entry) {
+        // Not sure how you could get here since the previous method should have removed it, but
+        // better to be safe.
+        [self.mutableIntervalTree removeObject:mark];
+    }
+    [self addSavedIntervalTreeObjects:savedITOs baseLine:range.start.y];
+    DLog(@"After unfold:");
+    DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
 }
 
 - (NSArray<ScreenCharArray *> *)linesByTruncatingLines:(NSArray<ScreenCharArray *> *)originalLines
@@ -3692,6 +3729,63 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return result;
 }
 
+- (BOOL)removeFoldsInRange:(NSRange)foldRange {
+    NSArray<iTermFoldMark *> *foldMarks = [self foldMarksInRange:foldRange max:NSUIntegerMax];
+    [foldMarks enumerateObjectsUsingBlock:^(iTermFoldMark *mark, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self unfoldMark:mark];
+    }];
+    [self setNeedsRedraw];
+    return foldMarks.count > 0;
+}
+
+- (void)unfoldMark:(iTermFoldMark *)mark {
+    [self replaceMark:mark
+            withLines:mark.savedLines ?: @[]
+            savedITOs:mark.savedITOs];
+    [self reloadMarkCache];
+    [self setNeedsRedraw];
+}
+
+// Performs a fold operation
+- (void)replaceRange:(VT100GridAbsCoordRange)absRange
+            withLine:(ScreenCharArray *)line
+        promptLength:(NSInteger)promptLength {
+    DLog(@"replaceRange:withLine: (fold)");
+    NSArray<iTermSavedIntervalTreeObject *> *savedITOs = nil;
+    NSArray<ScreenCharArray *> *savedLines = nil;
+    const VT100GridAbsCoordRange markRange = [self replaceRange:absRange
+                                                      withLines:@[ line ]
+                                     removedIntervalTreeObjects:&savedITOs
+                                                   removedLines:&savedLines];
+    if (!VT100GridAbsCoordRangeIsValid(markRange)) {
+        return;
+    }
+    Interval *interval = [self intervalForGridAbsCoordRange:markRange];
+    iTermFoldMark *mark = [[iTermFoldMark alloc] initWithLines:savedLines
+                                                     savedITOs:savedITOs
+                                                  promptLength:promptLength];
+    [self.mutableIntervalTree addObject:mark withInterval:interval];
+    [self setNeedsRedraw];
+}
+
+- (void)addSavedIntervalTreeObjects:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs
+                           baseLine:(long long)baseLine {
+    iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:self];
+    [savedITOs enumerateObjectsUsingBlock:^(iTermSavedIntervalTreeObject * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        PTYAnnotation *annotation = [PTYAnnotation castFrom:obj.object];
+        const VT100GridAbsCoordRange itoRange = [obj absCoordRangeWithBaseLine:baseLine
+                                                                     extractor:extractor];
+        DLog(@"Restore ito %@ to %@", obj, VT100GridAbsCoordRangeDescription(itoRange));
+        if (annotation) {
+            [self addAnnotation:annotation
+                        inRange:VT100GridCoordRangeFromAbsCoordRange(itoRange, self.totalScrollbackOverflow) focus:NO visible:NO];
+        } else {
+            [self.mutableIntervalTree addObject:obj.object
+                                   withInterval:[self intervalForGridAbsCoordRange:itoRange]];
+        }
+    }];
+}
+
 - (void)replaceRange:(VT100GridAbsCoordRange)absRange
         withPorthole:(id<Porthole>)porthole
             ofHeight:(int)numLines {
@@ -3699,10 +3793,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     for (int i = 0; i < numLines; i++) {
         [lines addObject:[[ScreenCharArray alloc] init]];
     }
-    const VT100GridAbsCoordRange markRange = [self replaceRange:absRange withLines:lines];
+    NSArray<iTermSavedIntervalTreeObject *> *savedITOs = nil;
+    const VT100GridAbsCoordRange markRange = [self replaceRange:absRange
+                                                      withLines:lines
+                                     removedIntervalTreeObjects:&savedITOs
+                                                   removedLines:nil];
     if (!VT100GridAbsCoordRangeIsValid(markRange)) {
         return;
     }
+    porthole.savedITOs = savedITOs;
     Interval *interval = [self intervalForGridAbsCoordRange:markRange];
     PortholeMark *mark = [[PortholeMark alloc] init:porthole.uniqueIdentifier];
     [self.mutableIntervalTree addObject:mark withInterval:interval];
@@ -3723,7 +3822,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     for (int i = 0; i < newHeight; i++) {
         [lines addObject:[[ScreenCharArray alloc] init]];
     }
-    [self replaceRange:range withLines:lines];
+    [self replaceRange:range withLines:lines removedIntervalTreeObjects:nil removedLines:nil];
 
     replacementAbsRange.end.y = replacementAbsRange.start.y + newHeight - 1;
     replacementAbsRange.start.y = MAX(self.totalScrollbackOverflow, replacementAbsRange.start.y);
@@ -3735,21 +3834,70 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (VT100GridAbsCoordRange)replaceRange:(VT100GridAbsCoordRange)absRange
-                             withLines:(NSArray<ScreenCharArray *> *)replacementLines {
+                             withLines:(NSArray<ScreenCharArray *> *)replacementLines
+            removedIntervalTreeObjects:(out NSArray<iTermSavedIntervalTreeObject *> **)removedIntervalTreeObjects
+                          removedLines:(out NSArray<ScreenCharArray *> **)removedLines {
     __block VT100GridAbsCoordRange result;
+    __block NSArray<iTermSavedIntervalTreeObject *> *removedMarks = nil;
+    __block NSArray<ScreenCharArray *> *removedSCAs = nil;
     [self performBlockWithoutTriggers:^{
-        result = [self reallyReplaceRange:absRange withLines:replacementLines];
+        result = [self reallyReplaceRange:absRange
+                                withLines:replacementLines
+               removedIntervalTreeObjects:&removedMarks
+                             removedLines:&removedSCAs];
     }];
+    if (removedIntervalTreeObjects) {
+        *removedIntervalTreeObjects = removedMarks;
+    }
+    if (removedLines) {
+        *removedLines = removedSCAs;
+    }
     return result;
 }
 
 - (VT100GridAbsCoordRange)reallyReplaceRange:(VT100GridAbsCoordRange)absRange
-                                   withLines:(NSArray<ScreenCharArray *> *)replacementLines {
+                                   withLines:(NSArray<ScreenCharArray *> *)replacementLines
+                  removedIntervalTreeObjects:(out NSArray<iTermSavedIntervalTreeObject *> **)removedIntervalTreeObjects
+                                removedLines:(out NSArray<ScreenCharArray *> **)removedLines {
+    DLog(@"reallyReplaceRange:%@ withLines:%@", VT100GridAbsCoordRangeDescription(absRange), replacementLines);
+    DLog(@"Before replacing range:");
+    DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
+
     VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, self.cumulativeScrollbackOverflow);
     if (range.start.y < 0) {
         // Already scrolled into the dustbin.
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     }
+
+    // Saved removed lines. We'll need this later to puplate removedIntervalTreeObjects.
+    NSMutableArray<ScreenCharArray *> *removedSCAs = [NSMutableArray array];
+    for (int i = range.start.y; i <= range.end.y; i++) {
+        [removedSCAs addObject:[[self screenCharArrayForLine:i] clone]];
+    }
+    if (removedLines) {
+        *removedLines = removedSCAs;
+    }
+
+    // Temporarily remove the command mark at the first line, if any, so we can re-add it later.
+    VT100ScreenMark *commandMark = [VT100ScreenMark castFrom:self.markCache[self.cumulativeScrollbackOverflow + absRange.start.y]];
+    Interval *commandMarkInterval = [commandMark.entry.interval copy];
+    if (commandMark) {
+        DLog(@"Temporarily remove command mark %@ at %@", commandMark, VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:commandMarkInterval]));
+        DLog(@"Before removing command mark:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
+        [self.mutableIntervalTree removeObject:commandMark];
+        DLog(@"After removing command mark:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
+    }
+
+    // Remove interval tree objects that were entirely within the replaced range.
+    NSArray<id<IntervalTreeObject>> *objectsToRemove = [self intervalTreeObjectsContainedEntirelyInAbsRange:absRange];
+    if (removedIntervalTreeObjects) {
+        *removedIntervalTreeObjects = [iTermSavedIntervalTreeObject fromObjects:objectsToRemove
+                                                                      startLine:absRange.start.y
+                                                               screenCharArrays:removedSCAs
+                                                                          width:self.width];
+    }
+    [self.mutableIntervalTree bulkRemoveObjects:objectsToRemove];
+
     [self clearTriggerLine];
 
     const VT100GridSize gridSize = self.currentGrid.size;
@@ -3859,22 +4007,58 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 
     // Shift interval tree objects under range.start.y down this much.
-
+    // The ends of all intervals under the start move up. For those intervals that begin after
+    // range.end, also move the start of the interval up.
     const VT100GridCoordRange rangeFromPortholeToEnd =
     VT100GridCoordRangeMake(replacementRange.start.x,
                             replacementRange.start.y,
                             gridSize.width,
                             originalNumLines);
+
+    DLog(@"Before shifting itos:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
     [self shiftIntervalTreeObjectsInRange:rangeFromPortholeToEnd
                             startingAfter:range.end.y
                               downByLines:deltaLines];
+    DLog(@"After shifting itos:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
+
+    if (commandMark && commandMarkInterval) {
+        DLog(@"Add command mark %@ back at %@", commandMark, VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:commandMarkInterval]));
+        [self.mutableIntervalTree addObject:commandMark withInterval:commandMarkInterval];
+    }
+
+    // Adjust command ranges of subsequent commands
+    const long long originalLength = absRange.end.y - absRange.start.y + 1;
+    const long long newLength = replacementLines.count;
+    const long long delta = newLength - originalLength;
+    [self shiftCommandRangesBelowAbsLine:absRange.start.y + 1 by:delta];
+    [self reloadMarkCache];
 
     [self.linebuffer setMaxLines:savedMaxLines];
     if (!self.config.unlimitedScrollback) {
         [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:gridSize.width]];
     }
 
+    DLog(@"After replacing a range with lines:");
+    DLog(@"Removed %@", objectsToRemove);
+    DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
+
     return resultingRange;
+}
+
+- (void)shiftCommandRangesBelowAbsLine:(long long)startLine by:(long long)delta {
+    Interval *i = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, startLine, 0, startLine)];
+    for (id<iTermMark> unsafeMark in [self.markCache enumerateFrom:i.location]) {
+        [self.mutableIntervalTree mutateObject:unsafeMark block:^(id<IntervalTreeObject> mark) {
+            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
+            if (!screenMark) {
+                return;
+            }
+            VT100GridAbsCoordRange range = screenMark.commandRange;
+            range.start.y += delta;
+            range.end.y += delta;
+            screenMark.commandRange = range;
+        }];
+    }
 }
 
 // If an object starts on or before the line `startingAfter` then its start stays put but its end
@@ -3883,6 +4067,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)shiftIntervalTreeObjectsInRange:(VT100GridCoordRange)inputRange
                           startingAfter:(int)startingAfter
                             downByLines:(int)deltaLines {
+    DLog(@"shiftIntervalTreeObjectsInRange:%@ startingAfter:%@ downByLines:%@",
+          VT100GridCoordRangeDescription(inputRange), @(startingAfter), @(deltaLines));
     Interval *intervalToMove =
     [self intervalForGridCoordRange:inputRange];
 
@@ -3892,10 +4078,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.mutableIntervalTree bulkMoveObjects:objects
                                         block:^Interval*(id<IntervalTreeObject> object) {
         VT100GridCoordRange itoRange = [self coordRangeForInterval:object.entry.interval];
+        DLog(@"Moving %@. Original range: %@", object, VT100GridCoordRangeDescription(itoRange));
         if (itoRange.start.y > startingAfter) {
             itoRange.start.y += deltaLines;
         }
         itoRange.end.y += deltaLines;
+        DLog(@"        Destination range: %@", VT100GridCoordRangeDescription(itoRange));
         return [self intervalForGridCoordRange:itoRange];
     }];
     NSArray<id<IntervalTreeImmutableObject>> *doppelgangers = [objects mapWithBlock:^id _Nullable(id<IntervalTreeImmutableObject>  _Nonnull anObject) {

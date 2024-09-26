@@ -289,6 +289,10 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     return content;
 }
 
+- (instancetype)clone {
+    return [self copy];
+}
+
 - (id)copyWithZone:(NSZone *)zone {
     ScreenCharArray *theCopy = [[ScreenCharArray alloc] initWithCopyOfLine:_line
                                                                     length:_length

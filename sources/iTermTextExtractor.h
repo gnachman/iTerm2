@@ -244,6 +244,9 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 - (int)startOfIndentationOnLine:(int)line;
 - (int)startOfIndentationOnAbsLine:(long long)absLine;
 
+- (int)cellCountInWrappedLineWithAbsY:(long long)absY;
+- (int)rowCountForRawLineEncompassingWithAbsY:(long long)absY;
+
 #pragma mark - For tests
 
 - (NSInteger)indexInSortedArray:(NSArray<NSNumber *> *)indexes

@@ -938,7 +938,6 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 // For Metal
 - (void)requestDelegateRedraw {
-    DLog(@"-[PTYTextView requestDelegateRedraw]");
     [_delegate textViewNeedsDisplayInRect:self.bounds];
 }
 
@@ -1596,12 +1595,14 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     // TODO: Don't leave find on page helper as the source of truth for this!
     _drawingHelper.selectedCommandRegion = [self relativeRangeFromAbsLineRange:self.findOnPageHelper.absLineRange];
     _drawingHelper.kittyImageDraws = [self.dataSource kittyImageDraws];
+    const VT100GridRange range = [self rangeOfVisibleLines];
+    _drawingHelper.folds = [self.dataSource foldsInRange:range];
+    
     [_drawingHelper updateCachedMetrics];
     if (@available(macOS 11, *)) {
         [_drawingHelper updateButtonFrames];
     }
 
-    const VT100GridRange range = [self rangeOfVisibleLines];
     const int topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     if ([_delegate textViewShouldShowOffscreenCommandLineAt:range.location] &&
         self.enclosingScrollView.contentView.bounds.origin.y > topBottomMargin) {
@@ -5350,6 +5351,41 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         };
         [updated addObject:button];
     }
+    x -= 3;
+    id<iTermFoldMarkReading> fold = [[self.dataSource foldMarksInRange:VT100GridRangeMake(markLine, 1)] firstObject];
+    if (fold) {
+        existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalUnfoldButton class]];
+        if (existing) {
+            existing.shouldFloat = shouldFloat;
+            [updated addObject:existing];
+        } else {
+            iTermTerminalUnfoldButton *button = [[iTermTerminalUnfoldButton alloc] initWithMark:mark dx:x - width];
+            button.shouldFloat = shouldFloat;
+            __weak __typeof(mark) weakMark = mark;
+            button.action = ^(NSPoint locationInWindow) {
+                if (weakMark) {
+                    [weakSelf unfoldMark:fold];
+                }
+            };
+            [updated addObject:button];
+        }
+    } else {
+        existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalFoldButton class]];
+        if (existing) {
+            existing.shouldFloat = shouldFloat;
+            [updated addObject:existing];
+        } else {
+            iTermTerminalFoldButton *button = [[iTermTerminalFoldButton alloc] initWithMark:mark dx:x - width];
+            button.shouldFloat = shouldFloat;
+            __weak __typeof(mark) weakMark = mark;
+            button.action = ^(NSPoint locationInWindow) {
+                if (weakMark) {
+                    [weakSelf foldCommandMark:weakMark];
+                }
+            };
+            [updated addObject:button];
+        }
+    }
     return updated;
 }
 
@@ -6094,7 +6130,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                 return VT100GridCoordMake(-1, -1);
             }
         }
-        if (!firstMouse) {
+        id<iTermFoldMarkReading> foldMark = [self foldMarkAtWindowCoord:event.locationInWindow];
+        id<VT100ScreenMarkReading> commandMark = [self commandMarkAtWindowCoord:event.locationInWindow];
+        if (foldMark) {
+            [self unfoldMark:foldMark];
+            return VT100GridCoordMake(-1, -1);
+        } else if (commandMark) {
+            [self foldCommandMark:commandMark];
+            return VT100GridCoordMake(-1, -1);
+        } else if (!firstMouse) {
             const NSPoint temp =
             [self clickPoint:event allowRightMarginOverflow:allowRightMarginOverflow];
             const VT100GridCoord selectAtCoord = VT100GridCoordMake(temp.x, temp.y);

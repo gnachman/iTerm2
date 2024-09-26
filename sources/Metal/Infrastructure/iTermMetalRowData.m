@@ -86,5 +86,19 @@
     return DebugStringForScreenChar(c);
 }
 
+- (BOOL)hasFold {
+    switch (self.markStyle) {
+        case iTermMarkStyleNone:
+        case iTermMarkStyleRegularSuccess:
+        case iTermMarkStyleRegularFailure:
+        case iTermMarkStyleRegularOther:
+            return NO;
+        case iTermMarkStyleFoldedSuccess:
+        case iTermMarkStyleFoldedFailure:
+        case iTermMarkStyleFoldedOther:
+            return YES;
+    }
+}
+
 @end
 

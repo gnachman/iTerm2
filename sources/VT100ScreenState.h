@@ -231,7 +231,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 // -resetScrollbackOverflow.
 @property (nonatomic, readwrite) int scrollbackOverflow;
 @property (nonatomic, readwrite) VT100GridAbsCoord commandStartCoord;
-@property (nonatomic, strong, readwrite) iTermMarkCache *markCache;
+@property (nonatomic, strong, readonly) iTermMarkCache *markCache;
 @property (nonatomic, readwrite) unsigned int maxScrollbackLines;
 @property (nonatomic, strong, readwrite) NSMutableSet<NSNumber *> *tabStops;
 @property (nonatomic, strong) NSMutableSet<NSNumber *> *charsetUsesLineDrawingMode;
@@ -329,6 +329,9 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 - (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range;
 - (VT100GridCoordRange)rangeOfBlockWithID:(NSString *)blockID;
 - (id<iTermBlockMarkReading>)blockMarkWithID:(NSString *)blockID;
+- (BOOL)haveFoldsInRange:(NSRange)absLineRange;
+- (NSIndexSet *)foldsInRange:(VT100GridRange)gridRange;
+- (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 
@@ -349,8 +352,9 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 
 - (id<VT100ScreenMarkReading> _Nullable)markOnLine:(int)line;
-- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
-                                      range:(out nonnull VT100GridWindowedRange *)rangeOut;
+- (id<VT100ScreenMarkReading> _Nullable)commandMarkAt:(VT100GridCoord)coord
+                                      mustHaveCommand:(BOOL)mustHaveCommand
+                                                range:(out VT100GridWindowedRange * _Nullable)rangeOut;
 - (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line;
 - (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor;
 

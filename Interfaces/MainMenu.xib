@@ -759,6 +759,27 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem title="Fold Selected Lines" keyEquivalent="L" identifier="Fold Selected Lines" id="7ly-zH-p8X">
+                                <connections>
+                                    <action selector="foldSelection:" target="-1" id="hgD-pz-qFa"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="Tkg-kg-CnW">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                <menu key="submenu" id="Sgf-ct-nyp">
+                                    <items>
+                                        <menuItem title="Item 1" enabled="NO" id="5EJ-KF-6Ll">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                        <menuItem title="Item 2" enabled="NO" id="Laq-Gc-l1k">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                        <menuItem title="Item 3" enabled="NO" id="pqa-Lr-NlO">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
                             <menuItem title="Clear Buffer" keyEquivalent="k" identifier="Clear Buffer" id="217">
                                 <connections>
                                     <action selector="clearBuffer:" target="-1" id="220"/>

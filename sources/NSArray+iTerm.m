@@ -496,7 +496,6 @@
     [self enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         id theClass = block(obj);
         if (theClass) {
-            assert(!dict[theClass]);
             dict[theClass] = obj;
         }
     }];

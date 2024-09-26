@@ -1163,7 +1163,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
 }
 
-static const NSInteger SessionViewNumberOfTrackingAreas = 2;
+static const NSInteger SessionViewNumberOfTrackingAreas = 3;
 
 typedef struct {
     NSRect rect;
@@ -1185,11 +1185,16 @@ typedef struct {
     const iTermTrackingAreaSpec value[SessionViewNumberOfTrackingAreas] = {
         {
             .rect = self.bounds,
-            .options=trackingOptions
+            .options = trackingOptions
         },
         {
             .rect = [self offscreenCommandLineFrame],
             .options = NSTrackingActiveInActiveApp | NSTrackingMouseEnteredAndExited
+        },
+        // This one is because command marks and fold buttons are in the left margin.
+        {
+            .rect = NSMakeRect(0, 0, [iTermPreferences floatForKey:kPreferenceKeySideMargins], self.bounds.size.height),
+            .options = NSTrackingActiveInActiveApp | NSTrackingMouseMoved
         }
     };
     memmove(specs, value, sizeof(value));

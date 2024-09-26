@@ -103,6 +103,18 @@ iTermCommandInfoViewControllerDelegate>
     if (item.action == @selector(performNaturalLanguageQuery:)) {
         return [iTermAdvancedSettingsModel generativeAIAllowed];
     }
+    if (item.action == @selector(foldSelection:)) {
+        if (!self.selection.hasSelection && !self.selection.live) {
+            item.title = @"Fold/Unfold";
+            return NO;
+        }
+        if ([self selectionContainsFold]) {
+            item.title = @"Unfold in Selection";
+        } else {
+            item.title = @"Fold Selected Lines";
+        }
+        return YES;
+    }
     return NO;
 }
 
@@ -121,6 +133,28 @@ iTermCommandInfoViewControllerDelegate>
 
 - (IBAction)performNaturalLanguageQuery:(id)sender {
     [self.delegate textViewPerformNaturalLanguageQuery];
+}
+
+- (BOOL)selectionContainsFold {
+    const long long offset = self.dataSource.totalScrollbackOverflow;
+    for (iTermSubSelection *subSelection in self.selection.allSubSelections) {
+        const long long start = subSelection.absRange.coordRange.start.y;
+        const VT100GridRange range = VT100GridRangeMake(start - offset,
+                                                        subSelection.absRange.coordRange.end.y - start + 1);
+        if ([self.dataSource foldsInRange:range].count) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (IBAction)foldSelection:(id)sender {
+    [self.selection.allSubSelections enumerateObjectsUsingBlock:^(iTermSubSelection *subSelection, NSUInteger idx, BOOL * _Nonnull stop) {
+        const long long start = subSelection.absRange.coordRange.start.y;
+        [self toggleFoldSelectionAbsoluteLines:NSMakeRange(start,
+                                                           subSelection.absRange.coordRange.end.y - start + 1)];
+    }];
+    [self.selection clearSelection];
 }
 
 #pragma mark - Coordinate Space Conversions
@@ -465,21 +499,70 @@ iTermCommandInfoViewControllerDelegate>
 
 - (iTermRenegablePromise<NSString *> *)promisedOutputForMark:(id<VT100ScreenMarkReading>)mark
                                                     progress:(iTermProgress *)outputProgress {
+    const int markLine = [self.dataSource coordRangeForInterval:mark.entry.interval].start.y;
+    id<iTermFoldMarkReading> fold = [[self.dataSource foldMarksInRange:VT100GridRangeMake(markLine, 1)] firstObject];
+    if (fold) {
+        return [self promisedOutputForFoldedMark:mark fold:fold progress:outputProgress];
+    }
+    const VT100GridCoordRange coordRange = [self coordRangeForMark:mark];
+
+    return [self selectionPromiseForRange:coordRange progress:outputProgress];
+}
+
+- (iTermRenegablePromise<NSString *> *)selectionPromiseForRange:(VT100GridCoordRange)coordRange
+                                                       progress:(iTermProgress *)outputProgress {
     long long overflow = self.dataSource.totalScrollbackOverflow;
+    const VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(coordRange, overflow);
+    return [self selectionPromiseForAbsRange:absRange progress:outputProgress];
+}
+
+- (iTermRenegablePromise<NSString *> *)selectionPromiseForAbsRange:(VT100GridAbsCoordRange)absCoordRange
+                                                       progress:(iTermProgress *)outputProgress {
+
     iTermSelection *selection = [[iTermSelection alloc] init];
     selection.delegate = self;
-    const VT100GridCoordRange coordRange = [self coordRangeForMark:mark];
-    [selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(0, coordRange.start.y + overflow)
+    [selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(0, absCoordRange.start.y)
                                    mode:kiTermSelectionModeLine
                                  resume:NO
                                  append:NO];
-    [selection moveSelectionEndpointTo:VT100GridAbsCoordMake(self.dataSource.width, coordRange.end.y + overflow - 1)];
+    [selection moveSelectionEndpointTo:VT100GridAbsCoordMake(self.dataSource.width, absCoordRange.end.y - 1)];
     [selection endLiveSelection];
     return [self promisedStringForSelectedTextCappedAtSize:INT_MAX
                                          minimumLineNumber:0
                                                 timestamps:NO
                                                  selection:selection
                                                   progress:outputProgress ?: [[iTermProgress alloc] init]];
+}
+
+- (iTermRenegablePromise<NSString *> *)promisedOutputForFoldedMark:(id<VT100ScreenMarkReading>)mark
+                                                              fold:(id<iTermFoldMarkReading>)fold
+                                                          progress:(iTermProgress *)outputProgress {
+    NSString *prefix = fold.contentString;
+
+    VT100GridAbsCoordRange commandRange = [self.dataSource rangeOfCommandAndOutputForMark:mark
+                                                                   includeSucessorDivider:NO];
+    if (commandRange.end.y == commandRange.start.y) {
+        // Normal case
+        return [iTermRenegablePromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+            outputProgress.fraction = 1.0;
+            [seal fulfill:prefix];
+        } renege:^{
+            DLog(@"Ignoring renege request");
+        }];
+    }
+
+    // The fold doesn't go all the way to the next command mark, which can happen if the user
+    // folded the first part of a command.
+    VT100GridAbsCoordRange additionalRangeToCopy = commandRange;
+    additionalRangeToCopy.start.y += 1;
+    iTermRenegablePromise<NSString *> *inner = [self selectionPromiseForAbsRange:additionalRangeToCopy progress:outputProgress];
+    return [iTermRenegablePromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        [inner then:^(NSString * _Nonnull value) {
+            [seal fulfill:[prefix stringByAppendingString:value]];
+        }];
+    } renege:^{
+        [inner renege];
+    }];
 }
 
 #pragma mark - Mouse Cursor
@@ -509,6 +592,9 @@ iTermCommandInfoViewControllerDelegate>
     } else if ([self mouseIsOverButtonInEvent:event]) {
         DLog(@"Mouse is over a button");
         changed = [self setCursor:[NSCursor arrowCursor]];
+    } else if ([self mouseIsOverFoldButtonInEvent:event]) {
+        DLog(@"Mouse is over a command mark");
+        changed = [self setCursor:[NSCursor arrowCursor]];
     } else {
         changed = [self setCursor:self.delegate.textViewDefaultPointer ?: [iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
     }
@@ -529,6 +615,18 @@ iTermCommandInfoViewControllerDelegate>
 - (BOOL)mouseIsOverImageInEvent:(NSEvent *)event {
     NSPoint point = [self clickPoint:event allowRightMarginOverflow:NO];
     return [self imageInfoAtCoord:VT100GridCoordMake(point.x, point.y)] != nil;
+}
+
+- (BOOL)mouseIsOverFoldButtonInEvent:(NSEvent *)event {
+    id<iTermFoldMarkReading> foldMark = [self foldMarkAtWindowCoord:event.locationInWindow];
+    if (foldMark) {
+        return YES;
+    }
+    id<VT100ScreenMarkReading> commandMark = [self commandMarkAtWindowCoord:event.locationInWindow];
+    if (commandMark) {
+        return YES;
+    }
+    return NO;
 }
 
 #pragma mark - Quicklook
@@ -1324,7 +1422,9 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                               markAtCoord:(VT100GridCoord)coord {
     VT100GridWindowedRange range = { 0 };
-    return [self.dataSource commandMarkAt:coord range:&range];
+    return [self.dataSource commandMarkAt:coord 
+                          mustHaveCommand:YES
+                                    range:&range];
 }
 
 - (NSString *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

@@ -33,7 +33,11 @@
 typedef NS_ENUM(NSUInteger, iTermMarkIndicatorType) {
     iTermMarkIndicatorTypeSuccess,
     iTermMarkIndicatorTypeError,
-    iTermMarkIndicatorTypeOther
+    iTermMarkIndicatorTypeOther,
+
+    iTermMarkIndicatorTypeFoldedSuccess,
+    iTermMarkIndicatorTypeFoldedError,
+    iTermMarkIndicatorTypeFoldedOther
 };
 
 typedef struct {
@@ -79,7 +83,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor);
 
 extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
-extern const int iTermTextDrawingHelperLineStileMarkRightInsetCells;
+extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 
 @interface iTermTextDrawingHelper : NSObject
 
@@ -338,6 +342,7 @@ extern const int iTermTextDrawingHelperLineStileMarkRightInsetCells;
 // Color for shade over deselected commands
 @property (nonatomic, readonly) NSColor *shadeColor;
 @property (nonatomic, copy) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
+@property (nonatomic, copy) NSIndexSet *folds;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;
@@ -370,10 +375,12 @@ extern const int iTermTextDrawingHelperLineStileMarkRightInsetCells;
                                 scale:(CGFloat)scale;
 
 + (NSImage *)newImageWithMarkOfColor:(NSColor *)color
-                                size:(CGSize)size;
+                                size:(CGSize)size
+                              folded:(BOOL)folded;
 
 + (NSImage *)newImageWithMarkOfColor:(NSColor *)color
-                           pixelSize:(CGSize)size;
+                           pixelSize:(CGSize)size
+                              folded:(BOOL)folded;
 
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect

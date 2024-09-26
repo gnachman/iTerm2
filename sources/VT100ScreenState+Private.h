@@ -22,5 +22,6 @@ extern NSString *VT100ScreenTerminalStateKeyPath;
 - (instancetype _Nonnull)initForMutationOnQueue:(dispatch_queue_t _Nonnull)queue;
 - (instancetype _Nonnull)initWithState:(VT100ScreenMutableState * _Nonnull)source
                            predecessor:(VT100ScreenState * _Nullable)predecessor;
+- (NSArray<iTermFoldMark *> *)foldMarksInRange:(NSRange)absLineRange max:(NSUInteger)maxCount;
 
 @end

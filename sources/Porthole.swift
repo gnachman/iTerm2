@@ -101,6 +101,7 @@ protocol ObjCPorthole: AnyObject {
     @objc func removeSelection()
     @objc func updateColors(useSelectedTextColor: Bool, deferUpdate: Bool)
     @objc var savedLines: [ScreenCharArray] { get set }
+    @objc var savedITOs: [SavedIntervalTreeObject] { get set }
     // Inset the view by this amount top and bottom.
     @objc var outerMargin: CGFloat { get }
 }

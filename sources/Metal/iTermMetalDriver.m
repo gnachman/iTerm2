@@ -1489,7 +1489,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         if (VT100GridRangeContains(frameData.perFrameState.linesToSuppressDrawing, rowData.y)) {
             return;
         }
-        if (!rowData.lineStyleMark) {
+        if (!rowData.lineStyleMark || rowData.hasFold) {
             [tState setMarkStyle:rowData.markStyle row:idx];
         }
     }];

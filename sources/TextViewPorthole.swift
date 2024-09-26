@@ -20,6 +20,7 @@ class TextViewPorthole: NSObject {
     private let containerView: PortholeContainerView
     weak var delegate: PortholeDelegate?
     var savedLines: [ScreenCharArray] = []
+    var savedITOs: [SavedIntervalTreeObject] = []
     let outerMargin = PortholeContainerView.margin
     let innerMargin = CGFloat(4)
     var hasSelection: Bool {
@@ -85,10 +86,14 @@ class TextViewPorthole: NSObject {
 
     init(_ config: PortholeConfig,
          renderer: TextViewPortholeRenderer,
-         uuid: String? = nil,
-         savedLines: [ScreenCharArray]? = nil) {
+         uuid: String?,
+         savedLines: [ScreenCharArray]?,
+         savedITOs: [SavedIntervalTreeObject]?) {
         if let savedLines = savedLines {
             self.savedLines = savedLines
+        }
+        if let savedITOs {
+            self.savedITOs = savedITOs
         }
         popup.controlSize = .mini
         popup.font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .mini))
@@ -331,6 +336,7 @@ extension TextViewPorthole: Porthole {
     static let typeKey = "type"
     static let filenameKey = "filename"
     static let savedLinesKey = "savedLines"
+    static let savedITOsKey = "savedITOs"
     static let languageKey = "language"
     static let languagesKey = "languages"
     static let wideKey = "wide"
@@ -343,12 +349,14 @@ extension TextViewPorthole: Porthole {
             dir = nil
         }
         let encodedSavedLines = self.savedLines.map { $0.dictionaryValue as NSDictionary }
+        let encodedSavedITOs = self.savedITOs.map { $0.dictionaryValue as NSDictionary }
         let dict: [String: Any?] = [Self.uuidDictionaryKey: uuid as NSString,
                                     Self.textDictionaryKey: config.text as NSString,
                                     Self.baseDirectoryKey: dir,
                                     Self.typeKey: config.type as NSString?,
                                     Self.filenameKey: config.filename as NSString?,
                                     Self.savedLinesKey: encodedSavedLines,
+                                    Self.savedITOsKey: encodedSavedITOs,
                                     Self.languageKey: renderer.language,
                                     Self.languagesKey: renderer.languageCandidateShortNames,
                                     Self.wideKey: containerView.wideMode]
@@ -361,6 +369,7 @@ extension TextViewPorthole: Porthole {
                        font: NSFont) -> (config: PortholeConfig,
                                          uuid: String,
                                          savedLines: [ScreenCharArray],
+                                         savedITOs: [SavedIntervalTreeObject],
                                          language: String?,
                                          languages: [String]?)?  {
         guard let uuid = dict[Self.uuidDictionaryKey],
@@ -368,6 +377,7 @@ extension TextViewPorthole: Porthole {
               let savedLines = dict[self.savedLinesKey] as? [[AnyHashable: Any]] else {
             return nil
         }
+        let savedITOs: [[AnyHashable: Any]] = (dict[self.savedITOsKey] as? [[AnyHashable: Any]]) ?? [[:]]
         let baseDirectory: URL?
         if let url = dict[Self.baseDirectoryKey], let urlString = url as? String {
             baseDirectory = URL(string: urlString)
@@ -390,6 +400,7 @@ extension TextViewPorthole: Porthole {
                                        forceWide: dict[Self.wideKey] as? Bool ?? false),
                 uuid: uuid,
                 savedLines: savedLines.compactMap { ScreenCharArray(dictionary: $0) },
+                savedITOs: savedITOs.compactMap { SavedIntervalTreeObject(dictionaryValue: $0) },
                 language: dict[Self.languageKey] as? String,
                 languages: dict[Self.languagesKey] as? [String])
 

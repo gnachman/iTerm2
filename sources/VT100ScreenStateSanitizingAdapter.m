@@ -63,8 +63,10 @@
     return [[_source markOnLine:line] doppelganger];
 }
 
-- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord range:(out nonnull VT100GridWindowedRange *)range {
-    return [[_source commandMarkAt:coord range:range] doppelganger];
+- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
+                            mustHaveCommand:(BOOL)mustHaveCommand
+                                      range:(out nonnull VT100GridWindowedRange *)range {
+    return [[_source commandMarkAt:coord mustHaveCommand:mustHaveCommand range:range] doppelganger];
 }
 
 - (id<IntervalTreeImmutableObject>)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {

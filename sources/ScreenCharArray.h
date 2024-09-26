@@ -92,6 +92,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider;
 
+// Wraps copy for Swift's benefit
+- (instancetype)clone;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -341,7 +341,9 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         return nil;
     }
     VT100GridWindowedRange range = { 0 };
-    id<VT100ScreenMarkReading> mark = [self.extractor.dataSource commandMarkAt:self.coord range:&range];
+    id<VT100ScreenMarkReading> mark = [self.extractor.dataSource commandMarkAt:self.coord
+                                                               mustHaveCommand:YES
+                                                                         range:&range];
     if (!mark ||
         mark.promptRange.start.x < 0 ||
         !mark.command ||

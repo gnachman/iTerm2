@@ -26,4 +26,10 @@
 - (NSDictionary *)dictionaryValue;
 - (id<iTermMark>)doppelganger;
 
+- (NSDictionary *)dictionaryValueWithTypeInformation;
+
+// When using this beware of `IntervalTreeObject`s that do not inherit from iTermMark, such as
+// PTYAnnotation (which needs a delegate to function).
++ (id<IntervalTreeObject>)intervalTreeObjectWithDictionaryWithTypeInformation:(NSDictionary *)dict;
+
 @end

@@ -162,12 +162,18 @@ extension PTYTextView: ExternalSearchResultsController {
 
     @objc func hydratePorthole(_ mark: PortholeMarkReading) -> ObjCPorthole? {
         DLog("hydratePorthole(\(mark))")
+        guard let interval = mark.entry?.interval,
+              let absRange = dataSource?.absCoordRange(for: interval) else {
+            return nil
+        }
         guard let porthole = PortholeRegistry.instance.get(mark.uniqueIdentifier,
                                                            colorMap: colorMap,
                                                            useSelectedTextColor: delegate?.textViewShouldUseSelectedTextColor() ?? true,
                                                            font: self.fontTable.asciiFont.font) as? Porthole else {
             return nil
         }
+        // If there were any annotations, fix their delegate pointer up.
+        dataSource?.add(porthole.savedITOs, baseLine: absRange.start.y)
         return configuredPorthole(porthole)
     }
 
@@ -218,7 +224,7 @@ extension PTYTextView: ExternalSearchResultsController {
         portholes.remove(porthole)
         porthole.view.removeFromSuperview()
         if let mark = PortholeRegistry.instance.mark(for: porthole.uniqueIdentifier) {
-            dataSource.replace(mark, withLines: porthole.savedLines)
+            dataSource.replace(mark, withLines: porthole.savedLines, savedITOs: porthole.savedITOs)
         }
         NotificationCenter.default.post(name: NSNotification.Name.iTermPortholesDidChange, object: nil)
         self.delegate?.textViewDidAddOrRemovePorthole()
@@ -452,6 +458,101 @@ extension PTYTextView: ExternalSearchResultsController {
             return nil
         }
         return typedPortholes[i]
+    }
+
+    // MARK: - Marks
+
+    @objc(foldMarkAtWindowCoord:)
+    func foldMark(at windowCoord: NSPoint) -> FoldMarkReading? {
+        let locationInTextView = convert(windowCoord, from: nil)
+        if Int(clamping: locationInTextView.x) >= iTermPreferences.int(forKey: kPreferenceKeySideMargins) {
+            return nil
+        }
+        let coord = self.coord(for: locationInTextView, allowRightMarginOverflow: true)
+        if coord.y < 0 {
+            return nil
+        }
+        let marks = dataSource.foldMarks(in: VT100GridRange(location: coord.y, length: 1))
+        return marks?.first
+    }
+
+    @objc(commandMarkAtWindowCoord:)
+    func commandMark(at windowCoord: NSPoint) -> VT100ScreenMarkReading? {
+        let locationInTextView = convert(windowCoord, from: nil)
+        if Int(clamping: locationInTextView.x) >= iTermPreferences.int(forKey: kPreferenceKeySideMargins) {
+            return nil
+        }
+        let coord = self.coord(for: locationInTextView, allowRightMarginOverflow: true)
+        if coord.y < 0 {
+            return nil
+        }
+        return dataSource.commandMark(at: VT100GridCoord(x: 0, y: coord.y),
+                                      mustHaveCommand: true,
+                                      range: nil)
+    }
+
+    // MARK: - Folding
+
+    @objc(toggleFoldSelectionAbsoluteLines:)
+    func toggleFold(nsrange: NSRange) {
+        guard let range = Range<Int64>(nsrange) else {
+            return
+        }
+        guard let dataSource else {
+            return
+        }
+        // If we can remove folds in this range, do so and don't continue.
+        if dataSource.removeFolds(in: nsrange) {
+            requestDelegateRedraw()
+            return
+        }
+        let promptLength = self.promptLength(at: range.lowerBound)
+        fold(range: range, promptLength: Int(promptLength))
+    }
+
+    private func promptLength(at absY: Int64) -> Int32 {
+        var result: Int32 = 0
+        withRelativeCoord(VT100GridAbsCoord(x: 0, y: absY)) { coord in
+            if let mark = dataSource.commandMark(at: coord, mustHaveCommand: true, range: nil),
+               mark.promptRange.start.y == absY {
+                result = mark.promptRange.height
+            }
+        }
+        return result
+
+    }
+    private func fold(range: Range<Int64>,
+                      promptLength: Int) {
+        guard let dataSource else {
+            return
+        }
+        DLog("Fold")
+        let overflow = dataSource.totalScrollbackOverflow()
+        let absRange = VT100GridAbsCoordRange(start: VT100GridAbsCoord(x: 0,
+                                                                       y: range.lowerBound),
+                                              end: VT100GridAbsCoord(x: dataSource.width(),
+                                                                     y: range.upperBound - 1))
+        let line = dataSource.screenCharArray(forLine: Int32(max(0, range.lowerBound - overflow)))
+        dataSource.replace(absRange, withLine: line.clone(), promptLength: promptLength)
+        requestDelegateRedraw()
+    }
+
+    @objc(unfoldMark:)
+    func unfold(mark: FoldMarkReading) {
+        guard let interval = mark.entry?.interval else {
+            return
+        }
+        DLog("Unfold")
+        let coord = dataSource.absCoordRange(for: interval)
+        dataSource.removeFolds(in: NSRange(location: Int(coord.start.y), length: 1))
+        requestDelegateRedraw()
+    }
+
+    @objc(foldCommandMark:)
+    func fold(commandMark: VT100ScreenMarkReading) {
+        let range = dataSource.rangeOfCommandAndOutput(forMark: commandMark, includeSucessorDivider: false)
+        fold(range: Range(range.start.y...range.end.y),
+             promptLength: Int(commandMark.promptRange.height))
     }
 }
 

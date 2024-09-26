@@ -69,7 +69,7 @@ const CGFloat iTermOffscreenCommandLineVerticalPadding = 8.0;
 
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
-const int iTermTextDrawingHelperLineStileMarkRightInsetCells = 12;
+const int iTermTextDrawingHelperLineStyleMarkRightInsetCells = 15;
 
 typedef struct {
     CGContextRef maskGraphicsContext;
@@ -1161,24 +1161,27 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 }
 
 + (NSImage *)newImageWithMarkOfColor:(NSColor *)color
-                           pixelSize:(CGSize)pixelSize {
+                           pixelSize:(CGSize)pixelSize
+                              folded:(BOOL)folded {
     NSSize pointSize = [NSImage pointSizeOfGeneratedImageWithPixelSize:pixelSize];
-    return [self newImageWithMarkOfColor:color size:pointSize];
+    return [self newImageWithMarkOfColor:color size:pointSize folded:folded];
 }
 
 + (NSImage *)newImageWithMarkOfColor:(NSColor *)color
-                                size:(CGSize)size {
+                                size:(CGSize)size
+                              folded:(BOOL)folded {
     if (size.width < 1 || size.height < 1) {
         return [self newImageWithMarkOfColor:color
                                         size:CGSizeMake(MAX(1, size.width),
-                                                        MAX(1, size.height))];
+                                                        MAX(1, size.height))
+                                      folded:folded];
     }
     NSImage *img = [NSImage imageOfSize:size drawBlock:^{
         CGRect rect = CGRectMake(0, 0, MAX(1, size.width), size.height);
 
-        NSPoint bottom = NSMakePoint(NSMinX(rect), NSMinY(rect));
-        NSPoint right = NSMakePoint(NSMaxX(rect), NSMidY(rect));
-        NSPoint top = NSMakePoint(NSMinX(rect), NSMaxY(rect));
+        const NSPoint bottomLeft = NSMakePoint(NSMinX(rect), NSMinY(rect));
+        const NSPoint midRight = NSMakePoint(NSMaxX(rect), NSMidY(rect));
+        const NSPoint topLeft = NSMakePoint(NSMinX(rect), NSMaxY(rect));
 
         if (size.width < 2) {
             NSRect rect = NSMakeRect(0, 0, size.width, size.height);
@@ -1186,49 +1189,67 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             [[color colorWithAlphaComponent:0.75] set];
             NSRectFill(rect);
         } else {
-            NSBezierPath *path = [NSBezierPath bezierPath];
-            [color set];
-            [path moveToPoint:top];
-            [path lineToPoint:right];
-            [path lineToPoint:bottom];
-            [path lineToPoint:top];
-            [path fill];
+            if (folded) {
+                NSBezierPath *path = [NSBezierPath bezierPath];
+                [path moveToPoint:topLeft];
+                [path lineToPoint:midRight];
+                [path lineToPoint:bottomLeft];
 
-            [[NSColor blackColor] set];
-            path = [NSBezierPath bezierPath];
-            [path moveToPoint:NSMakePoint(bottom.x, bottom.y)];
-            [path lineToPoint:NSMakePoint(right.x, right.y)];
-            [path setLineWidth:1.0];
-            [path stroke];
+                [[NSColor blackColor] set];
+                [path fill];
+
+                [color set];
+                [path setLineWidth:1.0];
+                [path stroke];
+            } else {
+                NSBezierPath *path = [NSBezierPath bezierPath];
+                [path moveToPoint:topLeft];
+                [path lineToPoint:midRight];
+                [path lineToPoint:bottomLeft];
+                [path lineToPoint:topLeft];
+                [color set];
+                [path fill];
+
+                path = [NSBezierPath bezierPath];
+                [path moveToPoint:NSMakePoint(bottomLeft.x, bottomLeft.y)];
+                [path lineToPoint:NSMakePoint(midRight.x, midRight.y)];
+                [path setLineWidth:1.0];
+                [[NSColor blackColor] set];
+                [path stroke];
+            }
         }
     }];
 
     return img;
 }
 
-+ (iTermMarkIndicatorType)markIndicatorTypeForMark:(id<VT100ScreenMarkReading>)mark {
++ (iTermMarkIndicatorType)markIndicatorTypeForMark:(id<VT100ScreenMarkReading>)mark
+                                            folded:(BOOL)folded {
     if (mark.code == 0) {
-        return iTermMarkIndicatorTypeSuccess;
+        return folded ? iTermMarkIndicatorTypeFoldedSuccess : iTermMarkIndicatorTypeSuccess;
     }
     if ([iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal] &&
         mark.code >= 128 && mark.code <= 128 + 32) {
         // Stopped by a signal (or an error, but we can't tell which)
-        return iTermMarkIndicatorTypeOther;
+        return folded ? iTermMarkIndicatorTypeFoldedOther : iTermMarkIndicatorTypeOther;
     }
-    return iTermMarkIndicatorTypeError;
+    return folded ? iTermMarkIndicatorTypeFoldedError : iTermMarkIndicatorTypeError;
 }
 
 + (NSColor *)colorForMark:(id<VT100ScreenMarkReading>)mark {
-    return [self colorForMarkType:[iTermTextDrawingHelper markIndicatorTypeForMark:mark]];
+    return [self colorForMarkType:[iTermTextDrawingHelper markIndicatorTypeForMark:mark folded:NO]];
 }
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type {
     switch (type) {
         case iTermMarkIndicatorTypeSuccess:
+        case iTermMarkIndicatorTypeFoldedSuccess:
             return [iTermTextDrawingHelper successMarkColor];
         case iTermMarkIndicatorTypeOther:
+        case iTermMarkIndicatorTypeFoldedOther:
             return [iTermTextDrawingHelper otherMarkColor];
         case iTermMarkIndicatorTypeError:
+        case iTermMarkIndicatorTypeFoldedError:
             return [iTermTextDrawingHelper errorMarkColor];
     }
 }
@@ -1245,6 +1266,8 @@ const CGFloat commandRegionOutlineThickness = 2.0;
         return;
     }
     id<VT100ScreenMarkReading> mark = [self.delegate drawingHelperMarkOnLine:line];
+    const BOOL folded = [_folds containsIndex:line];
+    BOOL shouldDrawRegularMark = folded;
     if (mark != nil && self.drawMarkIndicators) {
         if (mark.lineStyle) {
             if (_selectedCommandRegion.length > 0 && NSLocationInRange(line, _selectedCommandRegion)) {
@@ -1256,12 +1279,13 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                 return;
             }
             NSColor *bgColor = [self defaultBackgroundColor];
-            NSColor *merged = [iTermTextDrawingHelper colorForLineStyleMark:[iTermTextDrawingHelper markIndicatorTypeForMark:mark]
+            NSColor *merged = [iTermTextDrawingHelper colorForLineStyleMark:[iTermTextDrawingHelper markIndicatorTypeForMark:mark
+                                                                                                                      folded:folded]
                                                             backgroundColor:bgColor];
             [merged set];
             NSRect rect;
             rect.origin.x = 0;
-            int buttonCells = iTermTextDrawingHelperLineStileMarkRightInsetCells;
+            int buttonCells = iTermTextDrawingHelperLineStyleMarkRightInsetCells;
             if (!mark.command.length) {
                 buttonCells = 0;
             }
@@ -1270,24 +1294,30 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             const CGFloat y = (((CGFloat)line) - 0.5) * _cellSize.height;
             rect.origin.y = round(y);
             iTermRectFill(rect, virtualOffset);
-        } else {
-            NSRect insetLeftMargin = leftMargin;
-            insetLeftMargin.origin.x += 1;
-            insetLeftMargin.size.width -= 1;
-            NSRect rect = [iTermTextDrawingHelper frameForMarkContainedInRect:insetLeftMargin
-                                                                     cellSize:_cellSize
-                                                       cellSizeWithoutSpacing:_cellSizeWithoutSpacing
-                                                                        scale:1];
-            const iTermMarkIndicatorType type = [iTermTextDrawingHelper markIndicatorTypeForMark:mark];
-            NSImage *image = _cachedMarks[@(type)];
-            if (!image || !NSEqualSizes(image.size, rect.size)) {
-                NSColor *markColor = [iTermTextDrawingHelper colorForMark:mark];
-                image = [iTermTextDrawingHelper newImageWithMarkOfColor:markColor
-                                                                   size:rect.size];
-                _cachedMarks[@(type)] = image;
-            }
-            [image it_drawInRect:rect virtualOffset:virtualOffset];
         }
+        if (!mark.lineStyle || folded) {
+            shouldDrawRegularMark = YES;
+        }
+    }
+    if (shouldDrawRegularMark) {
+        NSRect insetLeftMargin = leftMargin;
+        insetLeftMargin.origin.x += 1;
+        insetLeftMargin.size.width -= 1;
+        NSRect rect = [iTermTextDrawingHelper frameForMarkContainedInRect:insetLeftMargin
+                                                                 cellSize:_cellSize
+                                                   cellSizeWithoutSpacing:_cellSizeWithoutSpacing
+                                                                    scale:1];
+        const iTermMarkIndicatorType type = [iTermTextDrawingHelper markIndicatorTypeForMark:mark
+                                                                                      folded:folded];
+        NSImage *image = _cachedMarks[@(type)];
+        if (!image || !NSEqualSizes(image.size, rect.size)) {
+            NSColor *markColor = [iTermTextDrawingHelper colorForMark:mark];
+            image = [iTermTextDrawingHelper newImageWithMarkOfColor:markColor
+                                                               size:rect.size
+                                                             folded:folded];
+            _cachedMarks[@(type)] = image;
+        }
+        [image it_drawInRect:rect virtualOffset:virtualOffset];
     }
 }
 

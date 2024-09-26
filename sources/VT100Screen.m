@@ -202,9 +202,43 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }];
 }
 
-- (void)replaceMark:(id<iTermMark>)mark withLines:(NSArray<ScreenCharArray *> *)lines {
+- (BOOL)removeFoldsInRange:(NSRange)absRange {
+    [self.delegate screenEnsureDefaultMode];
     [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState replaceMark:mark.progenitor withLines:lines];
+        [mutableState removeFoldsInRange:absRange];
+    }];
+    return [_state haveFoldsInRange:absRange];
+}
+
+- (NSIndexSet *)foldsInRange:(VT100GridRange)range {
+    return [_state foldsInRange:range];
+}
+
+- (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range {
+    return [_state foldMarksInRange:range];
+}
+
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+            withLine:(ScreenCharArray *)line 
+        promptLength:(NSInteger)promptLength {
+    [self.delegate screenEnsureDefaultMode];
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState replaceRange:range withLine:line promptLength:promptLength];
+    }];
+}
+
+- (void)replaceMark:(id<iTermMark>)mark
+          withLines:(NSArray<ScreenCharArray *> *)lines
+          savedITOs:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState replaceMark:mark.progenitor withLines:lines savedITOs:savedITOs];
+    }];
+}
+
+- (void)addSavedIntervalTreeObjects:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs
+                           baseLine:(long long)baseLine {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState addSavedIntervalTreeObjects:savedITOs baseLine:baseLine];
     }];
 }
 
@@ -867,8 +901,31 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state markOnLine:line];
 }
 
-- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord range:(out nonnull VT100GridWindowedRange *)range {
-    return [_state commandMarkAt:coord range:range];
+// TODO: This is mighty similar to -[VT100ScreenState rangeOfOutputForCommandMark:] and is implemented quite differently!
+- (VT100GridAbsCoordRange)rangeOfCommandAndOutputForMark:(id<VT100ScreenMarkReading>)mark
+                                  includeSucessorDivider:(BOOL)includeSucessorDivider {
+    VT100GridAbsCoordRange range;
+    range.start = [self absCoordRangeForInterval:mark.entry.interval].start;
+
+    id<VT100ScreenMarkReading> successor = [self promptMarkAfterPromptMark:mark];
+    if (successor) {
+        range.end = [self absCoordRangeForInterval:successor.entry.interval].start;
+        range.end.y -= 1;
+        if (successor.lineStyle && !includeSucessorDivider) {
+            range.end.y -= 1;
+        }
+    } else {
+        range.end = VT100GridAbsCoordMake(self.width - 1, self.numberOfLines + self.totalScrollbackOverflow);
+    }
+    return range;
+}
+
+- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord 
+                            mustHaveCommand:(BOOL)mustHaveCommand
+                                      range:(out VT100GridWindowedRange *)range {
+    return [_state commandMarkAt:coord
+                 mustHaveCommand:mustHaveCommand
+                           range:range];
 }
 
 - (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line {

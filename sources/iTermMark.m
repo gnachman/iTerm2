@@ -29,6 +29,31 @@
     return @{};
 }
 
+- (NSDictionary *)dictionaryValueWithTypeInformation {
+    return @{ @"class": NSStringFromClass(self.class),
+              @"value": [self dictionaryValue] };
+}
+
++ (id<IntervalTreeObject>)intervalTreeObjectWithDictionaryWithTypeInformation:(NSDictionary *)dict {
+    NSString *className = dict[@"class"];
+    if (!className) {
+        return nil;
+    }
+    NSDictionary *value = dict[@"value"];
+    if (!value) {
+        return nil;
+    }
+    Class c = NSClassFromString(className);
+    if (!c) {
+        return nil;
+    }
+    if (![c conformsToProtocol:@protocol(IntervalTreeObject)] ||
+        ![c instancesRespondToSelector:@selector(initWithDictionary:)]) {
+        return nil;
+    }
+    return [[c alloc] initWithDictionary:value];
+}
+
 - (instancetype)copyOfIntervalTreeObject {
     return [[self.class alloc] init];
 }

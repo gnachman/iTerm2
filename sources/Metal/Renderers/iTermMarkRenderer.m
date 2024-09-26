@@ -129,12 +129,20 @@
             NSColor *successColor = [iTermTextDrawingHelper successMarkColor];
             NSColor *otherColor = [iTermTextDrawingHelper otherMarkColor];
             NSColor *failureColor = [iTermTextDrawingHelper errorMarkColor];
-            NSImage *successImage = [self newImageWithMarkOfColor:successColor size:_markSize];
-            NSImage *failureImage = [self newImageWithMarkOfColor:failureColor size:_markSize];
-            NSImage *otherImage = [self newImageWithMarkOfColor:otherColor size:_markSize];
-            _marksArrayTexture = [[iTermTextureArray alloc] initWithImages:@[successImage,
-                                                                             failureImage,
-                                                                             otherImage]
+
+            NSImage *regularSuccessImage = [self newImageWithMarkOfColor:successColor size:_markSize folded:NO];
+            NSImage *regularFailureImage = [self newImageWithMarkOfColor:failureColor size:_markSize folded:NO];
+            NSImage *regularOtherImage = [self newImageWithMarkOfColor:otherColor size:_markSize folded:NO];
+
+            NSImage *foldedSuccessImage = [self newImageWithMarkOfColor:successColor size:_markSize folded:YES];
+            NSImage *foldedFailureImage = [self newImageWithMarkOfColor:failureColor size:_markSize folded:YES];
+            NSImage *foldedOtherImage = [self newImageWithMarkOfColor:otherColor size:_markSize folded:YES];
+            _marksArrayTexture = [[iTermTextureArray alloc] initWithImages:@[regularSuccessImage,
+                                                                             regularFailureImage,
+                                                                             regularOtherImage,
+                                                                             foldedSuccessImage,
+                                                                             foldedFailureImage,
+                                                                             foldedOtherImage]
                                                                     device:_cellRenderer.device];
         }
     }
@@ -197,8 +205,10 @@
 
 #pragma mark - Private
 
-- (NSImage *)newImageWithMarkOfColor:(NSColor *)color size:(CGSize)pixelSize {
-    return [iTermTextDrawingHelper newImageWithMarkOfColor:color pixelSize:pixelSize];
+- (NSImage *)newImageWithMarkOfColor:(NSColor *)color size:(CGSize)pixelSize folded:(BOOL)folded {
+    return [iTermTextDrawingHelper newImageWithMarkOfColor:color
+                                                 pixelSize:pixelSize
+                                                    folded:folded];
 }
 
 @end

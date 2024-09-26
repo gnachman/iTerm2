@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "IntervalTree.h"
+#import "Interval+Additions.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermEchoProbe.h"
 #import "iTermImageMark.h"
@@ -83,7 +84,6 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 @synthesize unlimitedScrollback = _unlimitedScrollback;
 @synthesize scrollbackOverflow = _scrollbackOverflow;
 @synthesize commandStartCoord = _commandStartCoord;
-@synthesize markCache;
 @synthesize maxScrollbackLines = _maxScrollbackLines;
 @synthesize tabStops = _tabStops;
 @synthesize charsetUsesLineDrawingMode = _charsetUsesLineDrawingMode;
@@ -165,6 +165,10 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         _fakePromptDetectedAbsLine = -1;
     }
     return self;
+}
+
+- (id<iTermMarkCacheReading>)markCache {
+    return _markCache;
 }
 
 - (id<VT100ScreenMarkReading>)cachedLastCommandMark {
@@ -459,22 +463,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 }
 
 - (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval {
-    VT100GridAbsCoordRange result;
-    const int w = self.width + 1;
-    result.start.y = interval.location / w;
-    result.start.x = interval.location % w;
-    result.end.y = interval.limit / w;
-    result.end.x = interval.limit % w;
-
-    if (result.start.y < 0) {
-        result.start.y = 0;
-        result.start.x = 0;
-    }
-    if (result.start.x == self.width) {
-        result.start.y += 1;
-        result.start.x = 0;
-    }
-    return result;
+    return [interval absCoordRangeForWidth:self.width];
 }
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
@@ -513,20 +502,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
 - (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)absRange
                                      width:(int)width {
-    VT100GridAbsCoord absStart = absRange.start;
-    VT100GridAbsCoord absEnd = absRange.end;
-    long long si = absStart.y;
-    si *= (width + 1);
-    si += absStart.x;
-    long long ei = absEnd.y;
-    ei *= (width + 1);
-    ei += absEnd.x;
-    if (ei < si) {
-        long long temp = ei;
-        ei = si;
-        si = temp;
-    }
-    return [Interval intervalWithLocation:si length:ei - si];
+    return [Interval intervalForGridAbsCoordRange:absRange width:width];
 }
 
 - (__kindof id<IntervalTreeImmutableObject>)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
@@ -612,6 +588,34 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         }
     }
     return nil;
+}
+
+- (BOOL)haveFoldsInRange:(NSRange)absLineRange {
+    return [self foldMarksInRange:absLineRange max:1].count > 0;
+}
+
+- (NSArray<iTermFoldMark *> *)foldMarksInRange:(NSRange)absLineRange max:(NSUInteger)maxCount {
+    NSMutableArray<iTermFoldMark *> *results = [NSMutableArray array];
+    Interval *interval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, 
+                                                                                       absLineRange.location,
+                                                                                       0,
+                                                                                       NSMaxRange(absLineRange))];
+    const long long stopLocation = interval.limit;
+    for (NSArray<id<IntervalTreeObject>> *objects in [self.intervalTree forwardLocationEnumeratorAt:interval.location]) {
+        if (objects.firstObject.entry.interval.location >= stopLocation) {
+            return results;
+        }
+        for (id<IntervalTreeObject> obj in objects) {
+            iTermFoldMark *candidate = [iTermFoldMark castFrom:obj];
+            if (candidate) {
+                [results addObject:candidate];
+                if (results.count == maxCount) {
+                    return results;
+                }
+            }
+        }
+    }
+    return results;
 }
 
 #pragma mark - Combined Grid And Scrollback
@@ -905,6 +909,26 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return range;
 }
 
+- (NSIndexSet *)foldsInRange:(VT100GridRange)gridRange {
+    const NSRange absLineRange = NSMakeRange(gridRange.location + self.cumulativeScrollbackOverflow,
+                                             gridRange.length);
+    NSArray<iTermFoldMark *> *foldMarks = [self foldMarksInRange:absLineRange max:NSUIntegerMax];
+    NSMutableIndexSet *indexSet = [NSMutableIndexSet indexSet];
+    [foldMarks enumerateObjectsUsingBlock:^(iTermFoldMark *foldMark, NSUInteger idx, BOOL * _Nonnull stop) {
+        const int line = [self coordRangeForInterval:foldMark.entry.interval].start.y;
+        if (line >= 0) {
+            [indexSet addIndex:line];
+        }
+    }];
+    return indexSet;
+}
+
+- (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range {
+    return [self foldMarksInRange:NSMakeRange(MAX(0, range.location) + self.cumulativeScrollbackOverflow, range.length)
+                              max:NSUIntegerMax];
+}
+
+
 - (id<VT100ScreenMarkReading>)markOnLine:(int)line {
     return [VT100ScreenMark castFrom:self.markCache[self.cumulativeScrollbackOverflow + line]];
 }
@@ -975,12 +999,20 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return nil;
 }
 
-- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord range:(out nonnull VT100GridWindowedRange *)rangeOut {
+// If mustHaveCommand is NO then a prompt with a not-yet-run command is sufficient.
+- (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
+                            mustHaveCommand:(BOOL)mustHaveCommand
+                                      range:(out VT100GridWindowedRange *)rangeOut {
     id<VT100ScreenMarkReading> mark = [self markOnLine:coord.y];
     const VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
-    if (mark.command != nil && mark.promptRange.start.x >= 0 && VT100GridCoordRangeContainsCoord(range, coord)) {
-        rangeOut->columnWindow = VT100GridRangeMake(-1, -1);
-        rangeOut->coordRange = VT100GridCoordRangeFromAbsCoordRange(mark.promptRange, self.cumulativeScrollbackOverflow);
+    if (mustHaveCommand && mark.command == nil) {
+        return nil;
+    }
+    if (mark.promptRange.start.x >= 0 && VT100GridCoordRangeContainsCoord(range, coord)) {
+        if (rangeOut) {
+            rangeOut->columnWindow = VT100GridRangeMake(-1, -1);
+            rangeOut->coordRange = VT100GridCoordRangeFromAbsCoordRange(mark.promptRange, self.cumulativeScrollbackOverflow);
+        }
         return mark;
     }
     return nil;

@@ -55,13 +55,16 @@
         pius[i].y = yInPoints * scale;
         pius[i].rightInset = info.rightInset * self.cellConfiguration.cellSize.width;
         switch (info.style) {
-            case iTermMarkStyleOther:
+            case iTermMarkStyleRegularOther:
+            case iTermMarkStyleFoldedOther:
                 pius[i].color = self.colors.other;
                 break;
-            case iTermMarkStyleSuccess:
+            case iTermMarkStyleRegularSuccess:
+            case iTermMarkStyleFoldedSuccess:
                 pius[i].color = self.colors.success;
                 break;
-            case iTermMarkStyleFailure:
+            case iTermMarkStyleRegularFailure:
+            case iTermMarkStyleFoldedFailure:
                 pius[i].color = self.colors.failure;
                 break;
             default:
