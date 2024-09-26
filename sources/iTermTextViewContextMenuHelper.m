@@ -152,6 +152,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
     id<VT100ScreenMarkReading> mark = [self.delegate contextMenu:self markOnLine:y];
     DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark command]);
+    [self addFoldUnfoldMenuItemForLine:y contextMenu:contextMenu];
     if (mark.name) {
         NSMenuItem *nameItem = [[NSMenuItem alloc] initWithTitle:mark.name action:nil keyEquivalent:@""];
 
@@ -172,8 +173,30 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [contextMenu insertItem:markItem atIndex:0];
         [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
     }
-
     return contextMenu;
+}
+
+- (void)addFoldUnfoldMenuItemForLine:(int)y contextMenu:(NSMenu *)contextMenu {
+    id<iTermFoldMarkReading> foldMark = [self.delegate contextMenuFoldAtLine:y];
+    id<VT100ScreenMarkReading> mark = [self.delegate contextMenuCommandWithOutputAtLine:y];
+
+    if (foldMark) {
+        NSMenuItem *markItem = [[NSMenuItem alloc] initWithTitle:@"Unfold"
+                                                          action:@selector(unfoldMark:)
+                                                   keyEquivalent:@""];
+        markItem.target = self;
+        markItem.representedObject = foldMark;
+        [contextMenu insertItem:markItem atIndex:0];
+        [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
+    } else if (mark && mark.command.length) {
+        NSMenuItem *markItem = [[NSMenuItem alloc] initWithTitle:@"Fold"
+                                                          action:@selector(foldCommandMark:)
+                                                   keyEquivalent:@""];
+        markItem.target = self;
+        markItem.representedObject = mark;
+        [contextMenu insertItem:markItem atIndex:0];
+        [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
+    }
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
@@ -246,7 +269,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                                                   _validationClickPoint.y);
         return [self.delegate contextMenu:self hasOpenAnnotationInRange:range];
     }
-
+    if (item.action == @selector(foldCommandMark:) || item.action == @selector(unfoldMark:)) {
+        return YES;
+    }
     if ([self.smartSelectionActionSelectorDictionary.allValues containsObject:NSStringFromSelector(item.action)]) {
         return YES;
     }
@@ -871,6 +896,14 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 }
 
 #pragma mark - Context Menu Actions
+
+- (void)foldCommandMark:(NSMenuItem *)sender {
+    [self.delegate contextMenuFoldMark:sender.representedObject];
+}
+
+- (void)unfoldMark:(NSMenuItem *)sender {
+    [self.delegate contextMenuUnfoldMark:sender.representedObject];
+}
 
 - (void)removeNamedMark:(id)sender {
     id<VT100ScreenMarkReading> mark = [sender representedObject];

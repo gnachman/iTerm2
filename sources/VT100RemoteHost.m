@@ -86,6 +86,11 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
     return copy;
 }
 
+- (nonnull NSDictionary *)dictionaryValueWithTypeInformation { 
+    return @{ @"class": NSStringFromClass(self.class),
+              @"value": [self dictionaryValue] };
+}
+
 - (NSString *)shortDebugDescription {
     return [NSString stringWithFormat:@"[RemoteHost %@@%@]", _username, _hostname];
 }

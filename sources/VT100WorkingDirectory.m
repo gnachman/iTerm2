@@ -47,6 +47,11 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
     }
 }
 
+- (nonnull NSDictionary *)dictionaryValueWithTypeInformation {
+    return @{ @"class": NSStringFromClass(self.class),
+              @"value": [self dictionaryValue] };
+}
+
 - (NSString *)shortDebugDescription {
     return [NSString stringWithFormat:@"[Dir %@]", self.workingDirectory];
 }

@@ -112,6 +112,9 @@ NS_ASSUME_NONNULL_BEGIN
             return iTermMarkStyleNone;
         }
     }
+    if (!enabled && !folded) {
+        return iTermMarkStyleNone;
+    }
     if (mark.code == 0) {
         return folded ? iTermMarkStyleFoldedSuccess : iTermMarkStyleRegularSuccess;
     }

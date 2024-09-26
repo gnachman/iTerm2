@@ -1073,6 +1073,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         DLog(@"Have visible blocks");
         return YES;
     }
+    if (@available(macOS 11, *)) {
+        if ([self hasTerminalButtons]) {
+            DLog(@"Have terminal buttons");
+            return YES;
+        }
+    }
     return [_mouseHandler wantsMouseMovementEvents] || [self hasTerminalButtons];
 }
 
@@ -5352,7 +5358,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         [updated addObject:button];
     }
     x -= 3;
-    id<iTermFoldMarkReading> fold = [[self.dataSource foldMarksInRange:VT100GridRangeMake(markLine, 1)] firstObject];
+    id<iTermFoldMarkReading> fold = [[self.dataSource foldMarksInRange:VT100GridRangeMake(markLine - 1, 1)] firstObject];
     if (fold) {
         existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalUnfoldButton class]];
         if (existing) {

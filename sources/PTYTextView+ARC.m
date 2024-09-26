@@ -1414,6 +1414,10 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     return [self offscreenCommandLineForClickAt:windowPoint];
 }
 
+- (id<VT100ScreenMarkReading>)contextMenuCommandWithOutputAtLine:(int)line {
+    return [self.dataSource commandMarkAtOrBeforeLine:line];
+}
+
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                                markOnLine:(int)line {
     return [self.dataSource markOnLine:line];
@@ -1831,6 +1835,18 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 
 - (BOOL)contextMenuCurrentTabHasMultipleSessions:(iTermTextViewContextMenuHelper *)contextMenu {
     return [self.delegate textViewEnclosingTabHasMultipleSessions];
+}
+
+- (void)contextMenuFoldMark:(id<VT100ScreenMarkReading>)mark {
+    [self foldCommandMark:mark];
+}
+
+- (void)contextMenuUnfoldMark:(id<iTermFoldMarkReading>)mark {
+    [self unfoldMark:mark];
+}
+
+- (id<iTermFoldMarkReading>)contextMenuFoldAtLine:(int)line {
+    return [[self.dataSource foldMarksInRange:VT100GridRangeMake(line, 1)] firstObject];
 }
 
 #pragma mark - NSResponder Additions

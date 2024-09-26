@@ -173,6 +173,7 @@
           withLines:(NSArray<ScreenCharArray *> *)lines
           savedITOs:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs;
 - (void)changeHeightOfMark:(id<iTermMark>)mark to:(int)newHeight;
+- (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line;
 
 - (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole;
 - (iTermOffscreenCommandLine *)offscreenCommandLineBefore:(int)line;

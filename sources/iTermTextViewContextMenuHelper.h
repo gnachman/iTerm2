@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermObject;
 @protocol VT100RemoteHostReading;
 @protocol VT100ScreenMarkReading;
+@protocol iTermFoldMarkReading;
 @protocol iTermImageInfoReading;
 @class iTermOffscreenCommandLine;
 @class iTermSelection;
@@ -155,6 +156,10 @@ runCommandInBackground:(NSString *)command;
     removeNamedMark:(id<VT100ScreenMarkReading>)mark;
 - (BOOL)contextMenuCurrentTabHasMultipleSessions:(iTermTextViewContextMenuHelper *)contextMenu;
 
+- (void)contextMenuFoldMark:(id<VT100ScreenMarkReading>)mark;
+- (void)contextMenuUnfoldMark:(id<iTermFoldMarkReading>)mark;
+- (id<iTermFoldMarkReading>)contextMenuFoldAtLine:(int)line;
+- (id<VT100ScreenMarkReading>)contextMenuCommandWithOutputAtLine:(int)line;
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>
