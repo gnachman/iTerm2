@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <os/availability.h>
 #include <signal.h>
 #include <spawn.h>
 #include <stdio.h>

@@ -43,7 +43,7 @@ extension Int64 {
     }
 }
 
-extension Int: CustomDebugStringConvertible {
+extension Int: @retroactive CustomDebugStringConvertible {
     public var debugDescription: String {
         return String(self)
     }
