@@ -34,6 +34,7 @@
                             identifier:(NSString *)identifier;
 
 + (NSString *)nameForNewArrangement;
++ (NSString *)selectNameAndWhetherToIncludeContents:(out BOOL *)includeContentsPtr;
 
 - (IBAction)setDefault:(id)sender;
 - (IBAction)deleteSelectedArrangement:(id)sender;

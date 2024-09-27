@@ -1557,6 +1557,12 @@ DQ
                                     <action selector="saveCurrentWindowAsArrangement:" target="201" id="FAg-xE-xg0"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Load Arrangement from File…" identifier="Load Arrangement from File…" id="wNF-TH-Fz5">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="importWindowArrangement:" target="201" id="2uC-bW-99w"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Restore Window Arrangement" id="1280">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Restore Window Arrangement" id="1281"/>

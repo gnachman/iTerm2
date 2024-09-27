@@ -148,6 +148,29 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
     return savePanel;
 }
 
++ (NSSavePanel *)showWithOptions:(NSInteger)options
+                      identifier:(NSString *)identifier
+                initialDirectory:(NSString *)initialDirectory
+                 defaultFilename:(NSString *)defaultFilename
+                allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
+                          window:(NSWindow *)window {
+    iTermSavePanel *delegate = [[iTermSavePanel alloc] initWithOptions:options];
+    delegate.identifier = identifier;
+    NSSavePanel *savePanel = [self newSavePanelWithOptions:options
+                                                identifier:identifier
+                                            initialDirectory:initialDirectory
+                                             defaultFilename:defaultFilename
+                                            allowedFileTypes:allowedFileTypes
+                                                  delegate:delegate];
+    const NSModalResponse response = [savePanel runModal];
+    switch (response) {
+        case NSModalResponseOK:
+            return savePanel;
+        default:
+            return nil;
+    }
+}
+
 + (void)asyncShowWithOptions:(NSInteger)options
                   identifier:(NSString *)identifier
             initialDirectory:(NSString *)initialDirectory

@@ -98,11 +98,14 @@ extern NSString *const iTermSnippetsTagsDidChange;
 - (int)allocateWindowNumber;
 
 - (void)saveWindowArrangement:(BOOL)allWindows;
-- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name;
-- (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal name:(NSString *)name;
+- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name includeContents:(BOOL)includeContents;
+- (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal name:(NSString *)name includeContents:(BOOL)includeContents;
 
 - (void)loadWindowArrangementWithName:(NSString *)theName;
 - (BOOL)loadWindowArrangementWithName:(NSString *)theName asTabsInTerminal:(PseudoTerminal *)term;
+
+// Load from file, including contents
+- (void)importWindowArrangementAtPath:(NSString *)path asTabsInTerminal:(PseudoTerminal *)term;
 
 - (BOOL)arrangementWithName:(NSString *)arrangementName
          hasSessionWithGUID:(NSString *)guid

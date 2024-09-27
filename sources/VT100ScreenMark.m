@@ -239,13 +239,17 @@ static NSString *const kMarkOutputStart = @"Output Start";
     dict[kMarkCodeKey] = @(_code);
     dict[kMarkPromptDetectedByTrigger] = @(_promptDetectedByTrigger);
     dict[kMarkLineStyleKey] = @(_lineStyle);
-    dict[kMarkCommandKey] = _command ?: [NSNull null];
+    if (_command) {
+        dict[kMarkCommandKey] = _command;
+    }
     dict[kMarkStartDateKey] = @([self.startDate timeIntervalSinceReferenceDate]);
     if (_name) {
         dict[kMarkNameKey] = _name;
     }
     dict[kMarkEndDateKey] = @([self.endDate timeIntervalSinceReferenceDate]);
-    dict[kMarkSessionGuidKey] = self.sessionGuid ?: [NSNull null];
+    if (self.sessionGuid) {
+        dict[kMarkSessionGuidKey] = self.sessionGuid;
+    }
     dict[kMarkPromptRange] = [NSDictionary dictionaryWithGridAbsCoordRange:_promptRange];
     dict[kMarkPromptText] = [_promptText mapWithBlock:^id _Nullable(ScreenCharArray *sca) {
         return sca.dictionaryValue;

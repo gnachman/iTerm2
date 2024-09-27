@@ -31,6 +31,18 @@
                 <dict>
                         <key>CFBundleTypeExtensions</key>
                         <array>
+                                <string>iterm2arrangement</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>iTerm2.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>iTerm2 Arrangement</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Editor</string>
+                </dict>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
                                 <string>itermtab</string>
                         </array>
                         <key>CFBundleTypeIconFile</key>

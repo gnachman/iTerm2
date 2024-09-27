@@ -12,6 +12,7 @@
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
+#import "iTermSavePanel.h"
 
 static NSString* WINDOW_ARRANGEMENTS = @"Window Arrangements";
 static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
@@ -171,10 +172,13 @@ static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrange
     }
 }
 
-+ (NSString *)showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {
++ (NSString *)showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue export:(out BOOL *)export {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = prompt;
     [alert addButtonWithTitle:@"OK"];
+    if (export) {
+        [alert addButtonWithTitle:@"Save to File with Contents…"];
+    }
     [alert addButtonWithTitle:@"Cancel"];
 
     NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
@@ -183,20 +187,35 @@ static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrange
     [alert layout];
     [[alert window] makeFirstResponder:input];
     NSInteger button = [alert runModal];
-    if (button == NSAlertFirstButtonReturn) {
+
+    const NSInteger okButton = NSAlertFirstButtonReturn;
+    const NSInteger exportButton = export ? NSAlertSecondButtonReturn : -1;
+    if (button == okButton) {
         [input validateEditing];
         return [[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-    } else if (button == NSAlertSecondButtonReturn) {
-        return nil;
-    } else {
-        NSAssert1(NO, @"Invalid input dialog button %d", (int) button);
-        return nil;
+    } else if (button == exportButton) {
+        NSSavePanel *panel = [iTermSavePanel showWithOptions:0
+                                                  identifier:@"NoSyncExportWindowArrangements"
+                                            initialDirectory:NSHomeDirectory()
+                                             defaultFilename:[[input stringValue] stringByAppendingPathExtension:@"iterm2arrangement"]
+                                            allowedFileTypes:@[ @"iterm2arrangement" ]
+                                                      window:nil];
+        if (panel) {
+            NSString *path = panel.URL.path;
+            if (path) {
+                *export = YES;
+                return path;
+            }
+            return nil;
+        }
     }
+    return nil;
 }
 
 + (NSString *)nameForNewArrangement {
     NSString *name = [self showAlertWithText:@"Name for saved window arrangement:"
-                                defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]];
+                                defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]
+                                      export:nil];
     if (!name) {
         return nil;
     }
@@ -210,6 +229,15 @@ static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrange
             return nil;
         }
     }
+    return name;
+}
+
++ (NSString *)selectNameAndWhetherToIncludeContents:(out BOOL *)includeContentsPtr {
+    BOOL export = NO;
+    NSString *name = [self showAlertWithText:@"Name for saved window arrangement:"
+                                defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]
+                                      export:&export];
+    *includeContentsPtr = export;
     return name;
 }
 

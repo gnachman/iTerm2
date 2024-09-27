@@ -3070,9 +3070,9 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             return;
         }
 
-        [[iTermController sharedInstance] saveWindowArrangementForWindow:term name:name];
+        [[iTermController sharedInstance] saveWindowArrangementForWindow:term name:name includeContents:NO];
     } else {
-        [[iTermController sharedInstance] saveWindowArrangementForAllWindows:YES name:name];
+        [[iTermController sharedInstance] saveWindowArrangementForAllWindows:YES name:name includeContents:NO];
     }
     response.status = ITMSavedArrangementResponse_Status_Ok;
     handler(response);

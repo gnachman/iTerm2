@@ -653,6 +653,10 @@ static BOOL hasBecomeActive = NO;
         [iTermRecordingCodec loadRecording:[NSURL fileURLWithPath:filename]];
         return YES;
     }
+    if ([filename.pathExtension isEqualToString:@"iterm2arrangement"]) {
+        [[iTermController sharedInstance] importWindowArrangementAtPath:filename asTabsInTerminal:nil];
+        return YES;
+    }
     NSLog(@"Quiet launch");
     quiet_ = YES;
     if ([filename isEqualToString:[[NSFileManager defaultManager] versionNumberFilename]]) {
@@ -2462,6 +2466,26 @@ void TurnOnDebugLoggingAutomatically(void) {
         return;
     }
     [_scriptsMenuController newPythonScript];
+}
+
+- (void)pickArrangement:(void (^)(NSString *path))completion {
+    NSOpenPanel *panel = [[NSOpenPanel alloc] init];
+    panel.directoryURL = [NSURL fileURLWithPath:NSHomeDirectory()];
+    panel.canChooseFiles = YES;
+    panel.canChooseDirectories = NO;
+    panel.allowsMultipleSelection = NO;
+    panel.allowedFileTypes = @[ @"iterm2arrangement" ];
+    [panel beginWithCompletionHandler:^(NSModalResponse result) {
+        if (result == NSModalResponseOK) {
+            completion(panel.URL.path);
+        }
+    }];
+}
+
+- (IBAction)importWindowArrangement:(id)sender {
+    [self pickArrangement:^(NSString *path) {
+        [[iTermController sharedInstance] importWindowArrangementAtPath:path asTabsInTerminal:nil];
+    }];
 }
 
 - (IBAction)saveWindowArrangement:(id)sender {
