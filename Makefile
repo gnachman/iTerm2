@@ -188,4 +188,12 @@ Highlightr: force
 	rm -rf ThirdParty/Highlightr.framework
 	mv submodules/Highlightr/build/Release/Highlightr.framework ThirdParty/Highlightr.framework
 
+cleandeps: force
+	cd submodules/CoreParse/ && git clean -f -d .
+	cd submodules/NMSSH && git restore .
+	cd submodules/SwiftyMarkdown && git restore .
+	cd submodules/libsixel && git clean -f -d .
+	cd submodules/libssh2 && git clean -f -d .
+	cd submodules/openssl && git clean -f -d .
+
 force:
