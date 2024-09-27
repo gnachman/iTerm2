@@ -21,6 +21,7 @@
 #import "NSPopUpButton+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSView+iTerm.h"
 #import "RegexKitLite.h"
 
 #import <SearchableComboListView/SearchableComboListView-Swift.h>
@@ -36,6 +37,7 @@ const CGFloat sideMarginWidth = 40;
 @interface iTermEditKeyActionWindowConfiguration: NSObject
 @property (nonatomic, readonly) BOOL applyHidden;
 @property (nonatomic, readonly) BOOL parameterHidden;
+@property (nonatomic, readonly) NSString *helpString;
 @property (nonatomic, readonly) BOOL parameterLabelHidden;
 @property (nonatomic, readonly) BOOL profilePopupHidden;
 @property (nonatomic, readonly) BOOL selectionMovementUnitHidden;
@@ -61,6 +63,7 @@ const CGFloat sideMarginWidth = 40;
     self = [super init];
     if (self) {
         _parameterHidden = YES;
+        _helpString = nil;
         _parameterLabelHidden = YES;
         _profilePopupHidden = YES;
         _selectionMovementUnitHidden = YES;
@@ -93,6 +96,12 @@ const CGFloat sideMarginWidth = 40;
                 break;
 
             case KEY_ACTION_VIM_TEXT:
+                _parameterHidden = NO;
+                _helpString = @"Special characters are:\n* \\<1-to-3-digit octal>\n* \\x<1 or 2 digit hex>\n* \\u<4 digit hex>\n* \\b for backspace\n* \\e for esc\n* \\f for formfeed\n* \\n for newline and \\r for return\n* \\t for tab\n* \\\\ and \\\" for literal \\ and \"\n* <C-x> for control key\n* <M-x> for meta key.";
+                _parameterPlaceholder = @"Enter value to send. Click help button for special characters.";
+                _applyHidden = NO;
+                break;
+
             case KEY_ACTION_TEXT:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"Enter value to send";
@@ -266,6 +275,8 @@ const CGFloat sideMarginWidth = 40;
     IBOutlet NSView *_pasteSpecialViewContainer;
     IBOutlet NSButton *_okButton;
     NSPopUpButton *_applyButton;
+    IBOutlet NSButton *_helpButton;
+    iTermEditKeyActionWindowConfiguration *_config;
 
     iTermPasteSpecialViewController *_pasteSpecialViewController;
     iTermFunctionCallTextFieldDelegate *_functionCallDelegate;
@@ -637,6 +648,7 @@ const CGFloat sideMarginWidth = 40;
     iTermEditKeyActionWindowConfiguration *config = [[iTermEditKeyActionWindowConfiguration alloc] initWithTag:tag
                                                                                           functionCallDelegate:_functionCallDelegate
                                                                                                        context:_suggestContext];
+    _config = config;
     if (config.parameterPlaceholder) {
         [_parameter.cell setPlaceholderString:config.parameterPlaceholder];
     }
@@ -654,6 +666,7 @@ const CGFloat sideMarginWidth = 40;
     _parameter.delegate = config.parameterDelegate ?: self;
 
     [_parameter setHidden:config.parameterHidden];
+    _helpButton.hidden = config.helpString == nil;
     [_parameterLabel setHidden:config.parameterLabelHidden];
     [_profilePopup setHidden:config.profilePopupHidden];
     [_selectionMovementUnit setHidden:config.selectionMovementUnitHidden];
@@ -849,6 +862,11 @@ const CGFloat sideMarginWidth = 40;
 }
 
 #pragma mark - Actions
+
+- (IBAction)help:(id)sender {
+    [[NSView castFrom:sender] it_showWarningWithMarkdown:_config.helpString];
+}
+
 
 - (IBAction)parameterDidChange:(id)sender {
     if (!_secondaryComboViewContainer.isHidden) {
