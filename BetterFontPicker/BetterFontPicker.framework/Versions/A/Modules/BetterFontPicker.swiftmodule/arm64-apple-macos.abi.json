@@ -1,8 +1,8 @@
 {
   "ABIRoot": {
     "kind": "Root",
-    "name": "TopLevel",
-    "printedName": "TopLevel",
+    "name": "BetterFontPicker",
+    "printedName": "BetterFontPicker",
     "children": [
       {
         "kind": "Import",
@@ -76,6 +76,22 @@
         "declAttributes": [
           "AccessControl",
           "ObjC"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          }
         ]
       },
       {
@@ -100,8 +116,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "ReferenceOwnership",
               "AccessControl",
               "ObjC"
@@ -211,6 +228,7 @@
             "mangledName": "$s16BetterFontPicker04SizeC4ViewC4sizeSdvp",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -304,6 +322,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -354,8 +373,9 @@
             "declAttributes": [
               "HasInitialValue",
               "Final",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "AccessControl",
               "ObjC"
             ],
@@ -416,6 +436,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "clampWithMin:max:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -449,6 +470,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -490,6 +512,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Required",
               "AccessControl"
@@ -522,6 +545,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -558,6 +582,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "stepper:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -588,6 +613,7 @@
             "objc_name": "controlTextDidEndEditing:",
             "declAttributes": [
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -617,6 +643,7 @@
             "objc_name": "controlTextDidChange:",
             "declAttributes": [
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -629,6 +656,7 @@
         "moduleName": "BetterFontPicker",
         "objc_name": "BFPSizePickerView",
         "declAttributes": [
+          "Preconcurrency",
           "Custom",
           "AccessControl",
           "ObjC"
@@ -641,6 +669,20 @@
           "ObjectiveC.NSObject"
         ],
         "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
           {
             "kind": "Conformance",
             "name": "Equatable",
@@ -949,6 +991,22 @@
         "declAttributes": [
           "AccessControl",
           "ObjC"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          }
         ]
       },
       {
@@ -1001,6 +1059,7 @@
             "objc_name": "keyDown:",
             "declAttributes": [
               "Dynamic",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl",
@@ -1033,6 +1092,7 @@
             "objc_name": "mouseDown:",
             "declAttributes": [
               "Dynamic",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl",
@@ -1068,6 +1128,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override"
             ],
@@ -1109,6 +1170,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Required"
             ],
@@ -1121,6 +1183,7 @@
         "moduleName": "BetterFontPicker",
         "objc_name": "BFPFontListTableView",
         "declAttributes": [
+          "Preconcurrency",
           "Custom",
           "AccessControl",
           "ObjC"
@@ -1135,6 +1198,20 @@
           "ObjectiveC.NSObject"
         ],
         "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
           {
             "kind": "Conformance",
             "name": "Equatable",
@@ -1282,6 +1359,22 @@
         "declAttributes": [
           "AccessControl",
           "ObjC"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          }
         ]
       },
       {
@@ -1306,8 +1399,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "ReferenceOwnership",
               "AccessControl",
               "ObjC"
@@ -1425,6 +1519,7 @@
             "mangledName": "$s16BetterFontPicker10AffordanceC10familyNameSSSgvp",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -1530,8 +1625,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "ReferenceOwnership",
               "AccessControl"
             ],
@@ -1638,6 +1734,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -1733,6 +1830,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "Override"
@@ -1771,6 +1869,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "Override"
@@ -1807,6 +1906,7 @@
             "objc_name": "mainViewController:didSelectFontWithName:",
             "declAttributes": [
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -1819,6 +1919,7 @@
         "moduleName": "BetterFontPicker",
         "objc_name": "BFPAffordance",
         "declAttributes": [
+          "Preconcurrency",
           "Custom",
           "AccessControl",
           "ObjC"
@@ -1841,6 +1942,20 @@
             "printedName": "MainViewControllerDelegate",
             "usr": "c:@M@BetterFontPicker@objc(pl)BFPMainViewControllerDelegate",
             "mangledName": "$s16BetterFontPicker26MainViewControllerDelegateP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
           },
           {
             "kind": "Conformance",
@@ -1961,6 +2076,7 @@
             "objc_name": "viewDidLayout",
             "declAttributes": [
               "Dynamic",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl",
@@ -1992,6 +2108,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "numberOfRowsInTableView:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC",
@@ -2037,6 +2154,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "tableView:rowViewForRow:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -2095,6 +2213,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "tableView:viewForTableColumn:row:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -2131,6 +2250,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "tableView:heightOfRow:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -2167,6 +2287,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "tableView:shouldSelectRow:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -2196,6 +2317,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "tableViewSelectionDidChange:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC",
@@ -2253,6 +2375,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override"
             ],
@@ -2265,6 +2388,7 @@
         "moduleName": "BetterFontPicker",
         "objc_name": "BFPTableViewController",
         "declAttributes": [
+          "Preconcurrency",
           "Custom",
           "AccessControl",
           "ObjC"
@@ -2277,6 +2401,20 @@
           "ObjectiveC.NSObject"
         ],
         "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
           {
             "kind": "Conformance",
             "name": "Equatable",
@@ -2381,6 +2519,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -2445,6 +2584,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -2471,6 +2611,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -2523,6 +2664,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override"
             ],
@@ -2534,6 +2676,7 @@
         "mangledName": "$s16BetterFontPicker0bC5PanelC",
         "moduleName": "BetterFontPicker",
         "declAttributes": [
+          "Preconcurrency",
           "Custom",
           "AccessControl",
           "ObjC"
@@ -2547,6 +2690,20 @@
           "ObjectiveC.NSObject"
         ],
         "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
           {
             "kind": "Conformance",
             "name": "Equatable",
@@ -2677,6 +2834,22 @@
         "declAttributes": [
           "AccessControl",
           "ObjC"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          }
         ]
       },
       {
@@ -2701,8 +2874,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "ReferenceOwnership",
               "AccessControl",
               "ObjC"
@@ -2814,8 +2988,9 @@
             "declAttributes": [
               "HasInitialValue",
               "Final",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "AccessControl",
               "ObjC"
             ],
@@ -2873,8 +3048,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "AccessControl",
               "SetterAccess",
               "ObjC"
@@ -2939,8 +3115,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "AccessControl",
               "SetterAccess",
               "ObjC"
@@ -3152,6 +3329,20 @@
             "conformances": [
               {
                 "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
                 "name": "Equatable",
                 "printedName": "Equatable",
                 "usr": "s:SQ",
@@ -3206,8 +3397,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "AccessControl",
               "ObjC"
             ],
@@ -3307,6 +3499,7 @@
             "mangledName": "$s16BetterFontPicker0bC13CompositeViewC4fontSo6NSFontCSgvp",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -3418,6 +3611,7 @@
             "mangledName": "$s16BetterFontPicker0bC13CompositeViewC4fontACSo6NSFontC_tcfc",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -3450,6 +3644,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -3491,6 +3686,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Required",
               "AccessControl"
@@ -3523,6 +3719,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -3545,6 +3742,7 @@
             "mangledName": "$s16BetterFontPicker0bC13CompositeViewC010removeSizeC0yyF",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -3567,6 +3765,7 @@
             "mangledName": "$s16BetterFontPicker0bC13CompositeViewC012removeMemberC0yyF",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -3589,6 +3788,7 @@
             "mangledName": "$s16BetterFontPicker0bC13CompositeViewC19removeOptionsButtonyyF",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -3619,6 +3819,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "addHorizontalSpacingAccessoryWithInitialValue:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -3649,6 +3850,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "addVerticalSpacingAccessoryWithInitialValue:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -3677,6 +3879,7 @@
             "mangledName": "$s16BetterFontPicker0bC13CompositeViewC3add9accessoryySo6NSViewC_tF",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -3712,6 +3915,7 @@
             "objc_name": "affordance:didSelectFontFamily:",
             "declAttributes": [
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -3747,6 +3951,7 @@
             "objc_name": "fontFamilyMemberPickerView:didSelectFontName:",
             "declAttributes": [
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -3782,6 +3987,7 @@
             "objc_name": "sizePickerView:didChangeSizeTo:",
             "declAttributes": [
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -3794,6 +4000,7 @@
         "moduleName": "BetterFontPicker",
         "objc_name": "BFPCompositeView",
         "declAttributes": [
+          "Preconcurrency",
           "Custom",
           "AccessControl",
           "ObjC"
@@ -3826,6 +4033,20 @@
             "printedName": "SizePickerViewDelegate",
             "usr": "c:@M@BetterFontPicker@objc(pl)BFPSizePickerViewDelegate",
             "mangledName": "$s16BetterFontPicker04SizeC12ViewDelegateP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
           },
           {
             "kind": "Conformance",
@@ -3954,6 +4175,22 @@
         "declAttributes": [
           "AccessControl",
           "ObjC"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          }
         ]
       },
       {
@@ -3978,8 +4215,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "ReferenceOwnership",
               "AccessControl",
               "ObjC"
@@ -4105,6 +4343,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "Override"
@@ -4140,6 +4379,7 @@
             "mangledName": "$s16BetterFontPicker0b12FamilyMemberC4ViewC9didChangeyyypSgF",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -4153,6 +4393,7 @@
         "moduleName": "BetterFontPicker",
         "objc_name": "BFPFontFamilyMemberPickerView",
         "declAttributes": [
+          "Preconcurrency",
           "Custom",
           "AccessControl",
           "ObjC"
@@ -4169,6 +4410,20 @@
           "ObjectiveC.NSObject"
         ],
         "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
           {
             "kind": "Conformance",
             "name": "Equatable",
@@ -4296,6 +4551,22 @@
         "declAttributes": [
           "AccessControl",
           "ObjC"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          }
         ]
       },
       {
@@ -4320,8 +4591,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "ReferenceOwnership",
               "AccessControl",
               "IBOutlet",
@@ -4432,8 +4704,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "ReferenceOwnership",
               "AccessControl",
               "IBOutlet",
@@ -4545,8 +4818,9 @@
             "objc_name": "delegate",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "ReferenceOwnership",
               "AccessControl",
               "IBOutlet",
@@ -4666,8 +4940,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "AccessControl",
               "ObjC"
             ],
@@ -4783,6 +5058,7 @@
             "mangledName": "$s16BetterFontPicker18MainViewControllerC14fontFamilyNameSSSgvp",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -4881,6 +5157,7 @@
             "mangledName": "$s16BetterFontPicker18MainViewControllerC6insetsSo12NSEdgeInsetsVvp",
             "moduleName": "BetterFontPicker",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -4931,8 +5208,9 @@
             "moduleName": "BetterFontPicker",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "AccessControl"
             ],
             "hasStorage": true,
@@ -5036,6 +5314,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -5065,6 +5344,7 @@
             "moduleName": "BetterFontPicker",
             "objc_name": "controlTextDidChange:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -5091,6 +5371,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -5104,6 +5385,7 @@
         "moduleName": "BetterFontPicker",
         "objc_name": "BFPMainViewController",
         "declAttributes": [
+          "Preconcurrency",
           "Custom",
           "AccessControl",
           "ObjC"
@@ -5117,6 +5399,20 @@
           "ObjectiveC.NSObject"
         ],
         "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
           {
             "kind": "Conformance",
             "name": "Equatable",
@@ -5187,11 +5483,39 @@
       "value": "\"\""
     },
     {
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorDataSource.swift",
+      "kind": "BooleanLiteral",
+      "offset": 301,
+      "length": 4,
+      "value": "true"
+    },
+    {
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorDataSource.swift",
+      "kind": "Array",
+      "offset": 353,
+      "length": 2,
+      "value": "[]"
+    },
+    {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
       "kind": "FloatLiteral",
       "offset": 552,
       "length": 4,
       "value": "12.0"
+    },
+    {
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
+      "kind": "FloatLiteral",
+      "offset": 835,
+      "length": 4,
+      "value": "54.0"
+    },
+    {
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
+      "kind": "FloatLiteral",
+      "offset": 849,
+      "length": 4,
+      "value": "27.0"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontsDataSource.swift",
@@ -5206,6 +5530,13 @@
       "offset": 1446,
       "length": 2,
       "value": "\"\""
+    },
+    {
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontsDataSource.swift",
+      "kind": "BooleanLiteral",
+      "offset": 1675,
+      "length": 5,
+      "value": "false"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
@@ -5300,24 +5631,17 @@
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
+      "kind": "BooleanLiteral",
+      "offset": 637,
+      "length": 5,
+      "value": "false"
+    },
+    {
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
       "kind": "StringLiteral",
       "offset": 742,
       "length": 2,
       "value": "\"\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
-      "kind": "StringLiteral",
-      "offset": 1694,
-      "length": 10,
-      "value": "\"BetterFontPicker.MenuButton\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
-      "kind": "StringLiteral",
-      "offset": 2100,
-      "length": 16,
-      "value": "\"BetterFontPicker.AccessoryWrapper\""
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
@@ -5325,6 +5649,13 @@
       "offset": 643,
       "length": 20,
       "value": "\"NoSyncBFPFavorites\""
+    },
+    {
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
+      "kind": "BooleanLiteral",
+      "offset": 828,
+      "length": 5,
+      "value": "false"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
@@ -5376,11 +5707,11 @@
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 562,
-      "length": 19,
-      "value": "\"BetterFontPicker.TableViewController\""
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerPanel.swift",
+      "kind": "BooleanLiteral",
+      "offset": 276,
+      "length": 4,
+      "value": "true"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
@@ -5425,25 +5756,11 @@
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
-      "kind": "StringLiteral",
-      "offset": 362,
-      "length": 17,
-      "value": "\"BetterFontPicker.StarTableViewCell\""
-    },
-    {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
       "kind": "Array",
       "offset": 702,
       "length": 2,
       "value": "[]"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
-      "kind": "IntegerLiteral",
-      "offset": 1321,
-      "length": 10,
-      "value": "1"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",

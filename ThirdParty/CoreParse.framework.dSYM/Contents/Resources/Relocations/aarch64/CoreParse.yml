@@ -2,529 +2,529 @@
 triple:          'arm64-apple-darwin'
 binary-path:     '/Users/gnachman/git/iterm2-alt3/ThirdParty/CoreParse.framework/Versions/A/CoreParse'
 relocations:
-  - { offsetInCU: 0x27, offset: 0x47A95, size: 0x8, addend: 0x0, symName: '-[CPTokeniser init]', symObjAddr: 0x0, symBinAddr: 0x2300, symSize: 0x60 }
-  - { offsetInCU: 0x67, offset: 0x47AD5, size: 0x8, addend: 0x0, symName: '-[CPTokeniser advanceLineNumber:columnNumber:withInput:range:]', symObjAddr: 0x61C, symBinAddr: 0x291C, symSize: 0xEC }
-  - { offsetInCU: 0x8D, offset: 0x47AFB, size: 0x8, addend: 0x0, symName: '_advanceLineNumber:columnNumber:withInput:range:.onceToken', symObjAddr: 0x4AC0, symBinAddr: 0x22990, symSize: 0x0 }
-  - { offsetInCU: 0x1C0, offset: 0x47C2E, size: 0x8, addend: 0x0, symName: _newlineCharset, symObjAddr: 0x4AC8, symBinAddr: 0x22998, symSize: 0x0 }
-  - { offsetInCU: 0x2AC, offset: 0x47D1A, size: 0x8, addend: 0x0, symName: '-[CPTokeniser init]', symObjAddr: 0x0, symBinAddr: 0x2300, symSize: 0x60 }
-  - { offsetInCU: 0x2E3, offset: 0x47D51, size: 0x8, addend: 0x0, symName: '-[CPTokeniser initWithCoder:]', symObjAddr: 0x60, symBinAddr: 0x2360, symSize: 0x68 }
-  - { offsetInCU: 0x32A, offset: 0x47D98, size: 0x8, addend: 0x0, symName: '-[CPTokeniser encodeWithCoder:]', symObjAddr: 0xC8, symBinAddr: 0x23C8, symSize: 0x30 }
-  - { offsetInCU: 0x36D, offset: 0x47DDB, size: 0x8, addend: 0x0, symName: '-[CPTokeniser dealloc]', symObjAddr: 0xF8, symBinAddr: 0x23F8, symSize: 0x48 }
-  - { offsetInCU: 0x3A0, offset: 0x47E0E, size: 0x8, addend: 0x0, symName: '-[CPTokeniser addTokenRecogniser:]', symObjAddr: 0x140, symBinAddr: 0x2440, symSize: 0x24 }
-  - { offsetInCU: 0x3E3, offset: 0x47E51, size: 0x8, addend: 0x0, symName: '-[CPTokeniser insertTokenRecogniser:atPriority:]', symObjAddr: 0x164, symBinAddr: 0x2464, symSize: 0x2C }
-  - { offsetInCU: 0x436, offset: 0x47EA4, size: 0x8, addend: 0x0, symName: '-[CPTokeniser insertTokenRecogniser:beforeRecogniser:]', symObjAddr: 0x190, symBinAddr: 0x2490, symSize: 0x74 }
-  - { offsetInCU: 0x499, offset: 0x47F07, size: 0x8, addend: 0x0, symName: '-[CPTokeniser removeTokenRecogniser:]', symObjAddr: 0x204, symBinAddr: 0x2504, symSize: 0x24 }
-  - { offsetInCU: 0x4DC, offset: 0x47F4A, size: 0x8, addend: 0x0, symName: '-[CPTokeniser tokenise:]', symObjAddr: 0x228, symBinAddr: 0x2528, symSize: 0x50 }
-  - { offsetInCU: 0x533, offset: 0x47FA1, size: 0x8, addend: 0x0, symName: '-[CPTokeniser tokenise:into:]', symObjAddr: 0x278, symBinAddr: 0x2578, symSize: 0x32C }
-  - { offsetInCU: 0x6BC, offset: 0x4812A, size: 0x8, addend: 0x0, symName: '-[CPTokeniser addToken:toStream:]', symObjAddr: 0x5A4, symBinAddr: 0x28A4, symSize: 0x78 }
-  - { offsetInCU: 0x78A, offset: 0x481F8, size: 0x8, addend: 0x0, symName: '___62-[CPTokeniser advanceLineNumber:columnNumber:withInput:range:]_block_invoke', symObjAddr: 0x708, symBinAddr: 0x2A08, symSize: 0x30 }
-  - { offsetInCU: 0x7B1, offset: 0x4821F, size: 0x8, addend: 0x0, symName: '-[CPTokeniser setDelegate:]', symObjAddr: 0x738, symBinAddr: 0x2A38, symSize: 0xF8 }
-  - { offsetInCU: 0x7F4, offset: 0x48262, size: 0x8, addend: 0x0, symName: '-[CPTokeniser tokenRecognisers]', symObjAddr: 0x830, symBinAddr: 0x2B30, symSize: 0xC }
-  - { offsetInCU: 0x82B, offset: 0x48299, size: 0x8, addend: 0x0, symName: '-[CPTokeniser setTokenRecognisers:]', symObjAddr: 0x83C, symBinAddr: 0x2B3C, symSize: 0x8 }
-  - { offsetInCU: 0x86A, offset: 0x482D8, size: 0x8, addend: 0x0, symName: '-[CPTokeniser delegate]', symObjAddr: 0x844, symBinAddr: 0x2B44, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4847F, size: 0x8, addend: 0x0, symName: '+[CPTokenStream tokenStreamWithTokens:]', symObjAddr: 0x0, symBinAddr: 0x2B4C, symSize: 0x28 }
-  - { offsetInCU: 0x9C, offset: 0x484F4, size: 0x8, addend: 0x0, symName: '+[CPTokenStream tokenStreamWithTokens:]', symObjAddr: 0x0, symBinAddr: 0x2B4C, symSize: 0x28 }
-  - { offsetInCU: 0xE3, offset: 0x4853B, size: 0x8, addend: 0x0, symName: '-[CPTokenStream initWithTokens:]', symObjAddr: 0x28, symBinAddr: 0x2B74, symSize: 0x44 }
-  - { offsetInCU: 0x12A, offset: 0x48582, size: 0x8, addend: 0x0, symName: '-[CPTokenStream init]', symObjAddr: 0x6C, symBinAddr: 0x2BB8, symSize: 0x7C }
-  - { offsetInCU: 0x161, offset: 0x485B9, size: 0x8, addend: 0x0, symName: '-[CPTokenStream dealloc]', symObjAddr: 0xE8, symBinAddr: 0x2C34, symSize: 0x50 }
-  - { offsetInCU: 0x194, offset: 0x485EC, size: 0x8, addend: 0x0, symName: '-[CPTokenStream peekToken]', symObjAddr: 0x138, symBinAddr: 0x2C84, symSize: 0x64 }
-  - { offsetInCU: 0x1DB, offset: 0x48633, size: 0x8, addend: 0x0, symName: '-[CPTokenStream popToken]', symObjAddr: 0x19C, symBinAddr: 0x2CE8, symSize: 0x6C }
-  - { offsetInCU: 0x222, offset: 0x4867A, size: 0x8, addend: 0x0, symName: '-[CPTokenStream tokens]', symObjAddr: 0x208, symBinAddr: 0x2D54, symSize: 0x18 }
-  - { offsetInCU: 0x259, offset: 0x486B1, size: 0x8, addend: 0x0, symName: '-[CPTokenStream setTokens:]', symObjAddr: 0x220, symBinAddr: 0x2D6C, symSize: 0x48 }
-  - { offsetInCU: 0x29C, offset: 0x486F4, size: 0x8, addend: 0x0, symName: '-[CPTokenStream pushToken:]', symObjAddr: 0x268, symBinAddr: 0x2DB4, symSize: 0x3C }
-  - { offsetInCU: 0x2DF, offset: 0x48737, size: 0x8, addend: 0x0, symName: '-[CPTokenStream pushTokens:]', symObjAddr: 0x2A4, symBinAddr: 0x2DF0, symSize: 0x38 }
-  - { offsetInCU: 0x322, offset: 0x4877A, size: 0x8, addend: 0x0, symName: '-[CPTokenStream closeTokenStream]', symObjAddr: 0x2DC, symBinAddr: 0x2E28, symSize: 0x34 }
-  - { offsetInCU: 0x355, offset: 0x487AD, size: 0x8, addend: 0x0, symName: '-[CPTokenStream description]', symObjAddr: 0x310, symBinAddr: 0x2E5C, symSize: 0x118 }
-  - { offsetInCU: 0x3B3, offset: 0x4880B, size: 0x8, addend: 0x0, symName: '-[CPTokenStream unlockTokenStream]', symObjAddr: 0x428, symBinAddr: 0x2F74, symSize: 0x40 }
-  - { offsetInCU: 0x3E6, offset: 0x4883E, size: 0x8, addend: 0x0, symName: '-[CPTokenStream hash]', symObjAddr: 0x468, symBinAddr: 0x2FB4, symSize: 0x14 }
-  - { offsetInCU: 0x41D, offset: 0x48875, size: 0x8, addend: 0x0, symName: '-[CPTokenStream isTokenStream]', symObjAddr: 0x47C, symBinAddr: 0x2FC8, symSize: 0x8 }
-  - { offsetInCU: 0x450, offset: 0x488A8, size: 0x8, addend: 0x0, symName: '-[CPTokenStream isEqual:]', symObjAddr: 0x484, symBinAddr: 0x2FD0, symSize: 0x40 }
-  - { offsetInCU: 0x497, offset: 0x488EF, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsTokenStream) isTokenStream]', symObjAddr: 0x4C4, symBinAddr: 0x3010, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x489FC, size: 0x8, addend: 0x0, symName: '-[CPToken name]', symObjAddr: 0x0, symBinAddr: 0x3018, symSize: 0x34 }
-  - { offsetInCU: 0xCC, offset: 0x48AA1, size: 0x8, addend: 0x0, symName: '-[CPToken name]', symObjAddr: 0x0, symBinAddr: 0x3018, symSize: 0x34 }
-  - { offsetInCU: 0xFF, offset: 0x48AD4, size: 0x8, addend: 0x0, symName: '-[CPToken hash]', symObjAddr: 0x34, symBinAddr: 0x304C, symSize: 0x14 }
-  - { offsetInCU: 0x136, offset: 0x48B0B, size: 0x8, addend: 0x0, symName: '-[CPToken isEqual:]', symObjAddr: 0x48, symBinAddr: 0x3060, symSize: 0x54 }
-  - { offsetInCU: 0x17D, offset: 0x48B52, size: 0x8, addend: 0x0, symName: '-[CPToken description]', symObjAddr: 0x9C, symBinAddr: 0x30B4, symSize: 0x40 }
-  - { offsetInCU: 0x1B4, offset: 0x48B89, size: 0x8, addend: 0x0, symName: '-[CPToken lineNumber]', symObjAddr: 0xDC, symBinAddr: 0x30F4, symSize: 0x8 }
-  - { offsetInCU: 0x1EB, offset: 0x48BC0, size: 0x8, addend: 0x0, symName: '-[CPToken setLineNumber:]', symObjAddr: 0xE4, symBinAddr: 0x30FC, symSize: 0x8 }
-  - { offsetInCU: 0x228, offset: 0x48BFD, size: 0x8, addend: 0x0, symName: '-[CPToken columnNumber]', symObjAddr: 0xEC, symBinAddr: 0x3104, symSize: 0x8 }
-  - { offsetInCU: 0x25F, offset: 0x48C34, size: 0x8, addend: 0x0, symName: '-[CPToken setColumnNumber:]', symObjAddr: 0xF4, symBinAddr: 0x310C, symSize: 0x8 }
-  - { offsetInCU: 0x29C, offset: 0x48C71, size: 0x8, addend: 0x0, symName: '-[CPToken characterNumber]', symObjAddr: 0xFC, symBinAddr: 0x3114, symSize: 0x8 }
-  - { offsetInCU: 0x2D3, offset: 0x48CA8, size: 0x8, addend: 0x0, symName: '-[CPToken setCharacterNumber:]', symObjAddr: 0x104, symBinAddr: 0x311C, symSize: 0x8 }
-  - { offsetInCU: 0x310, offset: 0x48CE5, size: 0x8, addend: 0x0, symName: '-[CPToken length]', symObjAddr: 0x10C, symBinAddr: 0x3124, symSize: 0x8 }
-  - { offsetInCU: 0x347, offset: 0x48D1C, size: 0x8, addend: 0x0, symName: '-[CPToken setLength:]', symObjAddr: 0x114, symBinAddr: 0x312C, symSize: 0x8 }
-  - { offsetInCU: 0x384, offset: 0x48D59, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsToken) isToken]', symObjAddr: 0x11C, symBinAddr: 0x3134, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x48DFD, size: 0x8, addend: 0x0, symName: '+[CPKeywordRecogniser recogniserForKeyword:]', symObjAddr: 0x0, symBinAddr: 0x313C, symSize: 0x28 }
-  - { offsetInCU: 0x84, offset: 0x48E5A, size: 0x8, addend: 0x0, symName: '+[CPKeywordRecogniser recogniserForKeyword:]', symObjAddr: 0x0, symBinAddr: 0x313C, symSize: 0x28 }
-  - { offsetInCU: 0xCB, offset: 0x48EA1, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser initWithKeyword:]', symObjAddr: 0x28, symBinAddr: 0x3164, symSize: 0x8 }
-  - { offsetInCU: 0x10E, offset: 0x48EE4, size: 0x8, addend: 0x0, symName: '+[CPKeywordRecogniser recogniserForKeyword:invalidFollowingCharacters:]', symObjAddr: 0x30, symBinAddr: 0x316C, symSize: 0x30 }
-  - { offsetInCU: 0x165, offset: 0x48F3B, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser initWithKeyword:invalidFollowingCharacters:]', symObjAddr: 0x60, symBinAddr: 0x319C, symSize: 0x70 }
-  - { offsetInCU: 0x1BC, offset: 0x48F92, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser init]', symObjAddr: 0xD0, symBinAddr: 0x320C, symSize: 0xC }
-  - { offsetInCU: 0x1F1, offset: 0x48FC7, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser initWithCoder:]', symObjAddr: 0xDC, symBinAddr: 0x3218, symSize: 0x84 }
-  - { offsetInCU: 0x238, offset: 0x4900E, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser encodeWithCoder:]', symObjAddr: 0x160, symBinAddr: 0x329C, symSize: 0x50 }
-  - { offsetInCU: 0x27B, offset: 0x49051, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser dealloc]', symObjAddr: 0x1B0, symBinAddr: 0x32EC, symSize: 0x50 }
-  - { offsetInCU: 0x2AE, offset: 0x49084, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x200, symBinAddr: 0x333C, symSize: 0xD4 }
-  - { offsetInCU: 0x3D0, offset: 0x491A6, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser keyword]', symObjAddr: 0x2D4, symBinAddr: 0x3410, symSize: 0x8 }
-  - { offsetInCU: 0x407, offset: 0x491DD, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser setKeyword:]', symObjAddr: 0x2DC, symBinAddr: 0x3418, symSize: 0x8 }
-  - { offsetInCU: 0x446, offset: 0x4921C, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser invalidFollowingCharacters]', symObjAddr: 0x2E4, symBinAddr: 0x3420, symSize: 0x8 }
-  - { offsetInCU: 0x47D, offset: 0x49253, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser setInvalidFollowingCharacters:]', symObjAddr: 0x2EC, symBinAddr: 0x3428, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4936C, size: 0x8, addend: 0x0, symName: '+[CPKeywordToken tokenWithKeyword:]', symObjAddr: 0x0, symBinAddr: 0x3430, symSize: 0x30 }
-  - { offsetInCU: 0xC2, offset: 0x49407, size: 0x8, addend: 0x0, symName: '+[CPKeywordToken tokenWithKeyword:]', symObjAddr: 0x0, symBinAddr: 0x3430, symSize: 0x30 }
-  - { offsetInCU: 0x105, offset: 0x4944A, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken initWithKeyword:]', symObjAddr: 0x30, symBinAddr: 0x3460, symSize: 0x58 }
-  - { offsetInCU: 0x14C, offset: 0x49491, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken init]', symObjAddr: 0x88, symBinAddr: 0x34B8, symSize: 0xC }
-  - { offsetInCU: 0x181, offset: 0x494C6, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken dealloc]', symObjAddr: 0x94, symBinAddr: 0x34C4, symSize: 0x50 }
-  - { offsetInCU: 0x1B4, offset: 0x494F9, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken description]', symObjAddr: 0xE4, symBinAddr: 0x3514, symSize: 0x40 }
-  - { offsetInCU: 0x1EB, offset: 0x49530, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken name]', symObjAddr: 0x124, symBinAddr: 0x3554, symSize: 0x4 }
-  - { offsetInCU: 0x220, offset: 0x49565, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken hash]', symObjAddr: 0x128, symBinAddr: 0x3558, symSize: 0x14 }
-  - { offsetInCU: 0x257, offset: 0x4959C, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken isKeywordToken]', symObjAddr: 0x13C, symBinAddr: 0x356C, symSize: 0x8 }
-  - { offsetInCU: 0x28A, offset: 0x495CF, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken isEqual:]', symObjAddr: 0x144, symBinAddr: 0x3574, symSize: 0x48 }
-  - { offsetInCU: 0x2D1, offset: 0x49616, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken keyword]', symObjAddr: 0x18C, symBinAddr: 0x35BC, symSize: 0x10 }
-  - { offsetInCU: 0x308, offset: 0x4964D, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken setKeyword:]', symObjAddr: 0x19C, symBinAddr: 0x35CC, symSize: 0xC }
-  - { offsetInCU: 0x347, offset: 0x4968C, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsKeywordToken) isKeywordToken]', symObjAddr: 0x1A8, symBinAddr: 0x35D8, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x49739, size: 0x8, addend: 0x0, symName: '+[CPEOFToken eof]', symObjAddr: 0x0, symBinAddr: 0x35E0, symSize: 0x1C }
-  - { offsetInCU: 0xA3, offset: 0x497B5, size: 0x8, addend: 0x0, symName: '+[CPEOFToken eof]', symObjAddr: 0x0, symBinAddr: 0x35E0, symSize: 0x1C }
-  - { offsetInCU: 0xD6, offset: 0x497E8, size: 0x8, addend: 0x0, symName: '-[CPEOFToken name]', symObjAddr: 0x1C, symBinAddr: 0x35FC, symSize: 0xC }
-  - { offsetInCU: 0x109, offset: 0x4981B, size: 0x8, addend: 0x0, symName: '-[CPEOFToken hash]', symObjAddr: 0x28, symBinAddr: 0x3608, symSize: 0x8 }
-  - { offsetInCU: 0x13C, offset: 0x4984E, size: 0x8, addend: 0x0, symName: '-[CPEOFToken isEOFToken]', symObjAddr: 0x30, symBinAddr: 0x3610, symSize: 0x8 }
-  - { offsetInCU: 0x16F, offset: 0x49881, size: 0x8, addend: 0x0, symName: '-[CPEOFToken isEqual:]', symObjAddr: 0x38, symBinAddr: 0x3618, symSize: 0x8 }
-  - { offsetInCU: 0x1B2, offset: 0x498C4, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsEOFToken) isEOFToken]', symObjAddr: 0x40, symBinAddr: 0x3620, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x49976, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser initWithCoder:]', symObjAddr: 0x0, symBinAddr: 0x3628, symSize: 0x84 }
-  - { offsetInCU: 0xB3, offset: 0x49A02, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser initWithCoder:]', symObjAddr: 0x0, symBinAddr: 0x3628, symSize: 0x84 }
-  - { offsetInCU: 0xFA, offset: 0x49A49, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser encodeWithCoder:]', symObjAddr: 0x84, symBinAddr: 0x36AC, symSize: 0x50 }
-  - { offsetInCU: 0x13D, offset: 0x49A8C, size: 0x8, addend: 0x0, symName: '+[CPNumberRecogniser integerRecogniser]', symObjAddr: 0xD4, symBinAddr: 0x36FC, symSize: 0x44 }
-  - { offsetInCU: 0x180, offset: 0x49ACF, size: 0x8, addend: 0x0, symName: '+[CPNumberRecogniser floatRecogniser]', symObjAddr: 0x118, symBinAddr: 0x3740, symSize: 0x44 }
-  - { offsetInCU: 0x1C3, offset: 0x49B12, size: 0x8, addend: 0x0, symName: '+[CPNumberRecogniser numberRecogniser]', symObjAddr: 0x15C, symBinAddr: 0x3784, symSize: 0x44 }
-  - { offsetInCU: 0x206, offset: 0x49B55, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x1A0, symBinAddr: 0x37C8, symSize: 0x154 }
-  - { offsetInCU: 0x2D6, offset: 0x49C25, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser recognisesInts]', symObjAddr: 0x2F4, symBinAddr: 0x391C, symSize: 0xC }
-  - { offsetInCU: 0x30D, offset: 0x49C5C, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser setRecognisesInts:]', symObjAddr: 0x300, symBinAddr: 0x3928, symSize: 0x8 }
-  - { offsetInCU: 0x34A, offset: 0x49C99, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser recognisesFloats]', symObjAddr: 0x308, symBinAddr: 0x3930, symSize: 0xC }
-  - { offsetInCU: 0x381, offset: 0x49CD0, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser setRecognisesFloats:]', symObjAddr: 0x314, symBinAddr: 0x393C, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x49DF8, size: 0x8, addend: 0x0, symName: '+[CPNumberToken tokenWithNumber:]', symObjAddr: 0x0, symBinAddr: 0x3944, symSize: 0x30 }
-  - { offsetInCU: 0xC7, offset: 0x49E98, size: 0x8, addend: 0x0, symName: '+[CPNumberToken tokenWithNumber:]', symObjAddr: 0x0, symBinAddr: 0x3944, symSize: 0x30 }
-  - { offsetInCU: 0x10A, offset: 0x49EDB, size: 0x8, addend: 0x0, symName: '-[CPNumberToken initWithNumber:]', symObjAddr: 0x30, symBinAddr: 0x3974, symSize: 0x58 }
-  - { offsetInCU: 0x151, offset: 0x49F22, size: 0x8, addend: 0x0, symName: '-[CPNumberToken init]', symObjAddr: 0x88, symBinAddr: 0x39CC, symSize: 0x34 }
-  - { offsetInCU: 0x188, offset: 0x49F59, size: 0x8, addend: 0x0, symName: '-[CPNumberToken dealloc]', symObjAddr: 0xBC, symBinAddr: 0x3A00, symSize: 0x50 }
-  - { offsetInCU: 0x1BB, offset: 0x49F8C, size: 0x8, addend: 0x0, symName: '-[CPNumberToken description]', symObjAddr: 0x10C, symBinAddr: 0x3A50, symSize: 0x40 }
-  - { offsetInCU: 0x1F2, offset: 0x49FC3, size: 0x8, addend: 0x0, symName: '-[CPNumberToken name]', symObjAddr: 0x14C, symBinAddr: 0x3A90, symSize: 0xC }
-  - { offsetInCU: 0x225, offset: 0x49FF6, size: 0x8, addend: 0x0, symName: '-[CPNumberToken hash]', symObjAddr: 0x158, symBinAddr: 0x3A9C, symSize: 0x14 }
-  - { offsetInCU: 0x25C, offset: 0x4A02D, size: 0x8, addend: 0x0, symName: '-[CPNumberToken isNumberToken]', symObjAddr: 0x16C, symBinAddr: 0x3AB0, symSize: 0x8 }
-  - { offsetInCU: 0x28F, offset: 0x4A060, size: 0x8, addend: 0x0, symName: '-[CPNumberToken isEqual:]', symObjAddr: 0x174, symBinAddr: 0x3AB8, symSize: 0x48 }
-  - { offsetInCU: 0x2D6, offset: 0x4A0A7, size: 0x8, addend: 0x0, symName: '-[CPNumberToken number]', symObjAddr: 0x1BC, symBinAddr: 0x3B00, symSize: 0x10 }
-  - { offsetInCU: 0x30D, offset: 0x4A0DE, size: 0x8, addend: 0x0, symName: '-[CPNumberToken setNumber:]', symObjAddr: 0x1CC, symBinAddr: 0x3B10, symSize: 0xC }
-  - { offsetInCU: 0x34C, offset: 0x4A11D, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsNumberToken) isNumberToken]', symObjAddr: 0x1D8, symBinAddr: 0x3B1C, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4A1CA, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceRecogniser initWithCoder:]', symObjAddr: 0x0, symBinAddr: 0x3B24, symSize: 0x34 }
-  - { offsetInCU: 0x46, offset: 0x4A1E9, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceRecogniser initWithCoder:]', symObjAddr: 0x0, symBinAddr: 0x3B24, symSize: 0x34 }
-  - { offsetInCU: 0x89, offset: 0x4A22C, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceRecogniser encodeWithCoder:]', symObjAddr: 0x34, symBinAddr: 0x3B58, symSize: 0x4 }
-  - { offsetInCU: 0xC4, offset: 0x4A267, size: 0x8, addend: 0x0, symName: '+[CPWhiteSpaceRecogniser whiteSpaceRecogniser]', symObjAddr: 0x38, symBinAddr: 0x3B5C, symSize: 0x1C }
-  - { offsetInCU: 0xF7, offset: 0x4A29A, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x54, symBinAddr: 0x3B78, symSize: 0x8C }
-  - { offsetInCU: 0x27, offset: 0x4A404, size: 0x8, addend: 0x0, symName: '+[CPWhiteSpaceToken whiteSpace:]', symObjAddr: 0x0, symBinAddr: 0x3C04, symSize: 0x30 }
-  - { offsetInCU: 0xBD, offset: 0x4A49A, size: 0x8, addend: 0x0, symName: '+[CPWhiteSpaceToken whiteSpace:]', symObjAddr: 0x0, symBinAddr: 0x3C04, symSize: 0x30 }
-  - { offsetInCU: 0x100, offset: 0x4A4DD, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken initWithWhiteSpace:]', symObjAddr: 0x30, symBinAddr: 0x3C34, symSize: 0x58 }
-  - { offsetInCU: 0x147, offset: 0x4A524, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken init]', symObjAddr: 0x88, symBinAddr: 0x3C8C, symSize: 0xC }
-  - { offsetInCU: 0x17C, offset: 0x4A559, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken dealloc]', symObjAddr: 0x94, symBinAddr: 0x3C98, symSize: 0x50 }
-  - { offsetInCU: 0x1AF, offset: 0x4A58C, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken name]', symObjAddr: 0xE4, symBinAddr: 0x3CE8, symSize: 0xC }
-  - { offsetInCU: 0x1E2, offset: 0x4A5BF, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken hash]', symObjAddr: 0xF0, symBinAddr: 0x3CF4, symSize: 0x8 }
-  - { offsetInCU: 0x215, offset: 0x4A5F2, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken isWhiteSpaceToken]', symObjAddr: 0xF8, symBinAddr: 0x3CFC, symSize: 0x8 }
-  - { offsetInCU: 0x248, offset: 0x4A625, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken isEqual:]', symObjAddr: 0x100, symBinAddr: 0x3D04, symSize: 0x8 }
-  - { offsetInCU: 0x28B, offset: 0x4A668, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken whiteSpace]', symObjAddr: 0x108, symBinAddr: 0x3D0C, symSize: 0x10 }
-  - { offsetInCU: 0x2C2, offset: 0x4A69F, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken setWhiteSpace:]', symObjAddr: 0x118, symBinAddr: 0x3D1C, symSize: 0xC }
-  - { offsetInCU: 0x301, offset: 0x4A6DE, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsWhiteSpaceToken) isWhiteSpaceToken]', symObjAddr: 0x124, symBinAddr: 0x3D28, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4A790, size: 0x8, addend: 0x0, symName: '+[CPIdentifierRecogniser identifierRecogniser]', symObjAddr: 0x0, symBinAddr: 0x3D30, symSize: 0x28 }
-  - { offsetInCU: 0x7F, offset: 0x4A7E8, size: 0x8, addend: 0x0, symName: '+[CPIdentifierRecogniser identifierRecogniser]', symObjAddr: 0x0, symBinAddr: 0x3D30, symSize: 0x28 }
-  - { offsetInCU: 0xB2, offset: 0x4A81B, size: 0x8, addend: 0x0, symName: '+[CPIdentifierRecogniser identifierRecogniserWithInitialCharacters:identifierCharacters:]', symObjAddr: 0x28, symBinAddr: 0x3D58, symSize: 0x38 }
-  - { offsetInCU: 0x105, offset: 0x4A86E, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser initWithInitialCharacters:identifierCharacters:]', symObjAddr: 0x60, symBinAddr: 0x3D90, symSize: 0x70 }
-  - { offsetInCU: 0x15C, offset: 0x4A8C5, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser initWithCoder:]', symObjAddr: 0xD0, symBinAddr: 0x3E00, symSize: 0x84 }
-  - { offsetInCU: 0x1A3, offset: 0x4A90C, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser encodeWithCoder:]', symObjAddr: 0x154, symBinAddr: 0x3E84, symSize: 0x50 }
-  - { offsetInCU: 0x1E6, offset: 0x4A94F, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser dealloc]', symObjAddr: 0x1A4, symBinAddr: 0x3ED4, symSize: 0x50 }
-  - { offsetInCU: 0x219, offset: 0x4A982, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x1F4, symBinAddr: 0x3F24, symSize: 0x15C }
-  - { offsetInCU: 0x2DB, offset: 0x4AA44, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser initialCharacters]', symObjAddr: 0x350, symBinAddr: 0x4080, symSize: 0xC }
-  - { offsetInCU: 0x312, offset: 0x4AA7B, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser setInitialCharacters:]', symObjAddr: 0x35C, symBinAddr: 0x408C, symSize: 0x8 }
-  - { offsetInCU: 0x351, offset: 0x4AABA, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser identifierCharacters]', symObjAddr: 0x364, symBinAddr: 0x4094, symSize: 0xC }
-  - { offsetInCU: 0x388, offset: 0x4AAF1, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser setIdentifierCharacters:]', symObjAddr: 0x370, symBinAddr: 0x40A0, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4AC22, size: 0x8, addend: 0x0, symName: '+[CPIdentifierToken tokenWithIdentifier:]', symObjAddr: 0x0, symBinAddr: 0x40A8, symSize: 0x30 }
-  - { offsetInCU: 0xC2, offset: 0x4ACBD, size: 0x8, addend: 0x0, symName: '+[CPIdentifierToken tokenWithIdentifier:]', symObjAddr: 0x0, symBinAddr: 0x40A8, symSize: 0x30 }
-  - { offsetInCU: 0x105, offset: 0x4AD00, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken initWithIdentifier:]', symObjAddr: 0x30, symBinAddr: 0x40D8, symSize: 0x58 }
-  - { offsetInCU: 0x14C, offset: 0x4AD47, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken init]', symObjAddr: 0x88, symBinAddr: 0x4130, symSize: 0xC }
-  - { offsetInCU: 0x181, offset: 0x4AD7C, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken dealloc]', symObjAddr: 0x94, symBinAddr: 0x413C, symSize: 0x50 }
-  - { offsetInCU: 0x1B4, offset: 0x4ADAF, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken description]', symObjAddr: 0xE4, symBinAddr: 0x418C, symSize: 0x40 }
-  - { offsetInCU: 0x1EB, offset: 0x4ADE6, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken name]', symObjAddr: 0x124, symBinAddr: 0x41CC, symSize: 0xC }
-  - { offsetInCU: 0x21E, offset: 0x4AE19, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken hash]', symObjAddr: 0x130, symBinAddr: 0x41D8, symSize: 0x14 }
-  - { offsetInCU: 0x255, offset: 0x4AE50, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken isIdentifierToken]', symObjAddr: 0x144, symBinAddr: 0x41EC, symSize: 0x8 }
-  - { offsetInCU: 0x288, offset: 0x4AE83, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken isEqual:]', symObjAddr: 0x14C, symBinAddr: 0x41F4, symSize: 0x48 }
-  - { offsetInCU: 0x2CF, offset: 0x4AECA, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken identifier]', symObjAddr: 0x194, symBinAddr: 0x423C, symSize: 0x10 }
-  - { offsetInCU: 0x306, offset: 0x4AF01, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken setIdentifier:]', symObjAddr: 0x1A4, symBinAddr: 0x424C, symSize: 0xC }
-  - { offsetInCU: 0x345, offset: 0x4AF40, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsIdentifierToken) isIdentifierToken]', symObjAddr: 0x1B0, symBinAddr: 0x4258, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4AFED, size: 0x8, addend: 0x0, symName: '+[CPQuotedToken content:quotedWith:name:]', symObjAddr: 0x0, symBinAddr: 0x4260, symSize: 0x48 }
-  - { offsetInCU: 0xE9, offset: 0x4B0AF, size: 0x8, addend: 0x0, symName: '+[CPQuotedToken content:quotedWith:name:]', symObjAddr: 0x0, symBinAddr: 0x4260, symSize: 0x48 }
-  - { offsetInCU: 0x14C, offset: 0x4B112, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken initWithContent:quoteType:name:]', symObjAddr: 0x48, symBinAddr: 0x42A8, symSize: 0x88 }
-  - { offsetInCU: 0x1B3, offset: 0x4B179, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken init]', symObjAddr: 0xD0, symBinAddr: 0x4330, symSize: 0x14 }
-  - { offsetInCU: 0x1E8, offset: 0x4B1AE, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken dealloc]', symObjAddr: 0xE4, symBinAddr: 0x4344, symSize: 0x70 }
-  - { offsetInCU: 0x21B, offset: 0x4B1E1, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken description]', symObjAddr: 0x154, symBinAddr: 0x43B4, symSize: 0x58 }
-  - { offsetInCU: 0x252, offset: 0x4B218, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken name]', symObjAddr: 0x1AC, symBinAddr: 0x440C, symSize: 0x10 }
-  - { offsetInCU: 0x289, offset: 0x4B24F, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken hash]', symObjAddr: 0x1BC, symBinAddr: 0x441C, symSize: 0x14 }
-  - { offsetInCU: 0x2C0, offset: 0x4B286, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken isQuotedToken]', symObjAddr: 0x1D0, symBinAddr: 0x4430, symSize: 0x8 }
-  - { offsetInCU: 0x2F3, offset: 0x4B2B9, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken isEqual:]', symObjAddr: 0x1D8, symBinAddr: 0x4438, symSize: 0x7C }
-  - { offsetInCU: 0x33A, offset: 0x4B300, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken content]', symObjAddr: 0x254, symBinAddr: 0x44B4, symSize: 0x10 }
-  - { offsetInCU: 0x371, offset: 0x4B337, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken setContent:]', symObjAddr: 0x264, symBinAddr: 0x44C4, symSize: 0xC }
-  - { offsetInCU: 0x3B0, offset: 0x4B376, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken quoteType]', symObjAddr: 0x270, symBinAddr: 0x44D0, symSize: 0x10 }
-  - { offsetInCU: 0x3E7, offset: 0x4B3AD, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken setQuoteType:]', symObjAddr: 0x280, symBinAddr: 0x44E0, symSize: 0xC }
-  - { offsetInCU: 0x426, offset: 0x4B3EC, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsQuotedToken) isQuotedToken]', symObjAddr: 0x28C, symBinAddr: 0x44EC, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4B499, size: 0x8, addend: 0x0, symName: '+[CPQuotedRecogniser quotedRecogniserWithStartQuote:endQuote:name:]', symObjAddr: 0x0, symBinAddr: 0x44F4, symSize: 0x14 }
-  - { offsetInCU: 0x1A6, offset: 0x4B618, size: 0x8, addend: 0x0, symName: '+[CPQuotedRecogniser quotedRecogniserWithStartQuote:endQuote:name:]', symObjAddr: 0x0, symBinAddr: 0x44F4, symSize: 0x14 }
-  - { offsetInCU: 0x205, offset: 0x4B677, size: 0x8, addend: 0x0, symName: '+[CPQuotedRecogniser quotedRecogniserWithStartQuote:endQuote:escapeSequence:name:]', symObjAddr: 0x14, symBinAddr: 0x4508, symSize: 0x14 }
-  - { offsetInCU: 0x272, offset: 0x4B6E4, size: 0x8, addend: 0x0, symName: '+[CPQuotedRecogniser quotedRecogniserWithStartQuote:endQuote:escapeSequence:maximumLength:name:]', symObjAddr: 0x28, symBinAddr: 0x451C, symSize: 0x60 }
-  - { offsetInCU: 0x2F5, offset: 0x4B767, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser initWithStartQuote:endQuote:escapeSequence:maximumLength:name:]', symObjAddr: 0x88, symBinAddr: 0x457C, symSize: 0xA8 }
-  - { offsetInCU: 0x37C, offset: 0x4B7EE, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser initWithCoder:]', symObjAddr: 0x130, symBinAddr: 0x4624, symSize: 0x124 }
-  - { offsetInCU: 0x3DE, offset: 0x4B850, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser encodeWithCoder:]', symObjAddr: 0x254, symBinAddr: 0x4748, symSize: 0xBC }
-  - { offsetInCU: 0x421, offset: 0x4B893, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser dealloc]', symObjAddr: 0x310, symBinAddr: 0x4804, symSize: 0x68 }
-  - { offsetInCU: 0x454, offset: 0x4B8C6, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x378, symBinAddr: 0x486C, symSize: 0x300 }
-  - { offsetInCU: 0x923, offset: 0x4BD95, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser startQuote]', symObjAddr: 0x678, symBinAddr: 0x4B6C, symSize: 0xC }
-  - { offsetInCU: 0x95A, offset: 0x4BDCC, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setStartQuote:]', symObjAddr: 0x684, symBinAddr: 0x4B78, symSize: 0x8 }
-  - { offsetInCU: 0x999, offset: 0x4BE0B, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser endQuote]', symObjAddr: 0x68C, symBinAddr: 0x4B80, symSize: 0xC }
-  - { offsetInCU: 0x9D0, offset: 0x4BE42, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setEndQuote:]', symObjAddr: 0x698, symBinAddr: 0x4B8C, symSize: 0x8 }
-  - { offsetInCU: 0xA0F, offset: 0x4BE81, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser escapeSequence]', symObjAddr: 0x6A0, symBinAddr: 0x4B94, symSize: 0xC }
-  - { offsetInCU: 0xA46, offset: 0x4BEB8, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setEscapeSequence:]', symObjAddr: 0x6AC, symBinAddr: 0x4BA0, symSize: 0x8 }
-  - { offsetInCU: 0xA85, offset: 0x4BEF7, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser escapeReplacer]', symObjAddr: 0x6B4, symBinAddr: 0x4BA8, symSize: 0xC }
-  - { offsetInCU: 0xABC, offset: 0x4BF2E, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setEscapeReplacer:]', symObjAddr: 0x6C0, symBinAddr: 0x4BB4, symSize: 0x8 }
-  - { offsetInCU: 0xAFB, offset: 0x4BF6D, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser maximumLength]', symObjAddr: 0x6C8, symBinAddr: 0x4BBC, symSize: 0x8 }
-  - { offsetInCU: 0xB32, offset: 0x4BFA4, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setMaximumLength:]', symObjAddr: 0x6D0, symBinAddr: 0x4BC4, symSize: 0x8 }
-  - { offsetInCU: 0xB6F, offset: 0x4BFE1, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser name]', symObjAddr: 0x6D8, symBinAddr: 0x4BCC, symSize: 0xC }
-  - { offsetInCU: 0xBA6, offset: 0x4C018, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setName:]', symObjAddr: 0x6E4, symBinAddr: 0x4BD8, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4C160, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate parser:didProduceSyntaxTree:]', symObjAddr: 0x0, symBinAddr: 0x4BE0, symSize: 0x690 }
-  - { offsetInCU: 0x187, offset: 0x4C2C0, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate parser:didProduceSyntaxTree:]', symObjAddr: 0x0, symBinAddr: 0x4BE0, symSize: 0x690 }
-  - { offsetInCU: 0x3D9, offset: 0x4C512, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate parser:didEncounterErrorOnInput:expecting:]', symObjAddr: 0x690, symBinAddr: 0x5270, symSize: 0xD8 }
-  - { offsetInCU: 0x44C, offset: 0x4C585, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate tokeniser:shouldConsumeToken:]', symObjAddr: 0x768, symBinAddr: 0x5348, symSize: 0x8 }
-  - { offsetInCU: 0x497, offset: 0x4C5D0, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate tokeniser:willProduceToken:]', symObjAddr: 0x770, symBinAddr: 0x5350, symSize: 0x44 }
-  - { offsetInCU: 0x4E6, offset: 0x4C61F, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate err]', symObjAddr: 0x7B4, symBinAddr: 0x5394, symSize: 0x8 }
-  - { offsetInCU: 0x51D, offset: 0x4C656, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate setErr:]', symObjAddr: 0x7BC, symBinAddr: 0x539C, symSize: 0x8 }
-  - { offsetInCU: 0x55C, offset: 0x4C695, size: 0x8, addend: 0x0, symName: '+[CPGrammar grammarWithStart:rules:]', symObjAddr: 0x7C4, symBinAddr: 0x53A4, symSize: 0x30 }
-  - { offsetInCU: 0x5B3, offset: 0x4C6EC, size: 0x8, addend: 0x0, symName: '-[CPGrammar initWithStart:rules:]', symObjAddr: 0x7F4, symBinAddr: 0x53D4, symSize: 0x88 }
-  - { offsetInCU: 0x60A, offset: 0x4C743, size: 0x8, addend: 0x0, symName: '+[CPGrammar grammarWithStart:backusNaurForm:]', symObjAddr: 0x87C, symBinAddr: 0x545C, symSize: 0x30 }
-  - { offsetInCU: 0x661, offset: 0x4C79A, size: 0x8, addend: 0x0, symName: '+[CPGrammar grammarWithStart:backusNaurForm:error:]', symObjAddr: 0x8AC, symBinAddr: 0x548C, symSize: 0x40 }
-  - { offsetInCU: 0x6C8, offset: 0x4C801, size: 0x8, addend: 0x0, symName: '-[CPGrammar initWithStart:backusNaurForm:]', symObjAddr: 0x8EC, symBinAddr: 0x54CC, symSize: 0x58 }
-  - { offsetInCU: 0x72F, offset: 0x4C868, size: 0x8, addend: 0x0, symName: '-[CPGrammar initWithStart:backusNaurForm:error:]', symObjAddr: 0x944, symBinAddr: 0x5524, symSize: 0xB38 }
-  - { offsetInCU: 0x9A3, offset: 0x4CADC, size: 0x8, addend: 0x0, symName: '-[CPGrammar init]', symObjAddr: 0x147C, symBinAddr: 0x605C, symSize: 0x34 }
-  - { offsetInCU: 0x9DB, offset: 0x4CB14, size: 0x8, addend: 0x0, symName: '-[CPGrammar initWithCoder:]', symObjAddr: 0x14B0, symBinAddr: 0x6090, symSize: 0x84 }
-  - { offsetInCU: 0xA24, offset: 0x4CB5D, size: 0x8, addend: 0x0, symName: '-[CPGrammar encodeWithCoder:]', symObjAddr: 0x1534, symBinAddr: 0x6114, symSize: 0x50 }
-  - { offsetInCU: 0xA69, offset: 0x4CBA2, size: 0x8, addend: 0x0, symName: '-[CPGrammar dealloc]', symObjAddr: 0x1584, symBinAddr: 0x6164, symSize: 0x54 }
-  - { offsetInCU: 0xA9D, offset: 0x4CBD6, size: 0x8, addend: 0x0, symName: '-[CPGrammar allRules]', symObjAddr: 0x15D8, symBinAddr: 0x61B8, symSize: 0x2C }
-  - { offsetInCU: 0xAD5, offset: 0x4CC0E, size: 0x8, addend: 0x0, symName: '-[CPGrammar checkForMissingNonTerminalsInRules:]', symObjAddr: 0x1604, symBinAddr: 0x61E4, symSize: 0x364 }
-  - { offsetInCU: 0xBBB, offset: 0x4CCF4, size: 0x8, addend: 0x0, symName: '-[CPGrammar allNonTerminalNames]', symObjAddr: 0x1968, symBinAddr: 0x6548, symSize: 0x14 }
-  - { offsetInCU: 0xBF3, offset: 0x4CD2C, size: 0x8, addend: 0x0, symName: '-[CPGrammar addRule:]', symObjAddr: 0x197C, symBinAddr: 0x655C, symSize: 0x78 }
-  - { offsetInCU: 0xC5A, offset: 0x4CD93, size: 0x8, addend: 0x0, symName: '-[CPGrammar rulesForNonTerminalWithName:]', symObjAddr: 0x19F4, symBinAddr: 0x65D4, symSize: 0x24 }
-  - { offsetInCU: 0xCA3, offset: 0x4CDDC, size: 0x8, addend: 0x0, symName: '-[CPGrammar hash]', symObjAddr: 0x1A18, symBinAddr: 0x65F8, symSize: 0x38 }
-  - { offsetInCU: 0xCDB, offset: 0x4CE14, size: 0x8, addend: 0x0, symName: '-[CPGrammar isGrammar]', symObjAddr: 0x1A50, symBinAddr: 0x6630, symSize: 0x8 }
-  - { offsetInCU: 0xD0F, offset: 0x4CE48, size: 0x8, addend: 0x0, symName: '-[CPGrammar isEqual:]', symObjAddr: 0x1A58, symBinAddr: 0x6638, symSize: 0x68 }
-  - { offsetInCU: 0xD58, offset: 0x4CE91, size: 0x8, addend: 0x0, symName: '-[CPGrammar start]', symObjAddr: 0x1AC0, symBinAddr: 0x66A0, symSize: 0xC }
-  - { offsetInCU: 0xD8F, offset: 0x4CEC8, size: 0x8, addend: 0x0, symName: '-[CPGrammar setStart:]', symObjAddr: 0x1ACC, symBinAddr: 0x66AC, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4D0EE, size: 0x8, addend: 0x0, symName: '+[CPParser parserWithGrammar:]', symObjAddr: 0x0, symBinAddr: 0x66B4, symSize: 0x28 }
-  - { offsetInCU: 0x117, offset: 0x4D1DE, size: 0x8, addend: 0x0, symName: '+[CPParser parserWithGrammar:]', symObjAddr: 0x0, symBinAddr: 0x66B4, symSize: 0x28 }
-  - { offsetInCU: 0x15E, offset: 0x4D225, size: 0x8, addend: 0x0, symName: '-[CPParser initWithGrammar:]', symObjAddr: 0x28, symBinAddr: 0x66DC, symSize: 0x58 }
-  - { offsetInCU: 0x1A5, offset: 0x4D26C, size: 0x8, addend: 0x0, symName: '-[CPParser init]', symObjAddr: 0x80, symBinAddr: 0x6734, symSize: 0x8 }
-  - { offsetInCU: 0x1DA, offset: 0x4D2A1, size: 0x8, addend: 0x0, symName: '-[CPParser dealloc]', symObjAddr: 0x88, symBinAddr: 0x673C, symSize: 0x48 }
-  - { offsetInCU: 0x20D, offset: 0x4D2D4, size: 0x8, addend: 0x0, symName: '-[CPParser parse:]', symObjAddr: 0xD0, symBinAddr: 0x6784, symSize: 0x30 }
-  - { offsetInCU: 0x24C, offset: 0x4D313, size: 0x8, addend: 0x0, symName: '-[CPParser setDelegate:]', symObjAddr: 0x100, symBinAddr: 0x67B4, symSize: 0xA0 }
-  - { offsetInCU: 0x28F, offset: 0x4D356, size: 0x8, addend: 0x0, symName: '-[CPParser grammar]', symObjAddr: 0x1A0, symBinAddr: 0x6854, symSize: 0xC }
-  - { offsetInCU: 0x2C6, offset: 0x4D38D, size: 0x8, addend: 0x0, symName: '-[CPParser setGrammar:]', symObjAddr: 0x1AC, symBinAddr: 0x6860, symSize: 0x8 }
-  - { offsetInCU: 0x305, offset: 0x4D3CC, size: 0x8, addend: 0x0, symName: '-[CPParser delegate]', symObjAddr: 0x1B4, symBinAddr: 0x6868, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4D460, size: 0x8, addend: 0x0, symName: '+[CPSyntaxTree syntaxTreeWithRule:children:]', symObjAddr: 0x0, symBinAddr: 0x6870, symSize: 0x50 }
-  - { offsetInCU: 0x10B, offset: 0x4D544, size: 0x8, addend: 0x0, symName: '+[CPSyntaxTree syntaxTreeWithRule:children:]', symObjAddr: 0x0, symBinAddr: 0x6870, symSize: 0x50 }
-  - { offsetInCU: 0x162, offset: 0x4D59B, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree initWithRule:children:]', symObjAddr: 0x50, symBinAddr: 0x68C0, symSize: 0x48 }
-  - { offsetInCU: 0x1B9, offset: 0x4D5F2, size: 0x8, addend: 0x0, symName: '+[CPSyntaxTree syntaxTreeWithRule:children:tagValues:]', symObjAddr: 0x98, symBinAddr: 0x6908, symSize: 0x40 }
-  - { offsetInCU: 0x220, offset: 0x4D659, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree initWithRule:children:tagValues:]', symObjAddr: 0xD8, symBinAddr: 0x6948, symSize: 0x80 }
-  - { offsetInCU: 0x287, offset: 0x4D6C0, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree init]', symObjAddr: 0x158, symBinAddr: 0x69C8, symSize: 0x48 }
-  - { offsetInCU: 0x2BE, offset: 0x4D6F7, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree dealloc]', symObjAddr: 0x1A0, symBinAddr: 0x6A10, symSize: 0x58 }
-  - { offsetInCU: 0x2F1, offset: 0x4D72A, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree valueForTag:]', symObjAddr: 0x1F8, symBinAddr: 0x6A68, symSize: 0x8 }
-  - { offsetInCU: 0x336, offset: 0x4D76F, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree childAtIndex:]', symObjAddr: 0x200, symBinAddr: 0x6A70, symSize: 0x8 }
-  - { offsetInCU: 0x37B, offset: 0x4D7B4, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree hash]', symObjAddr: 0x208, symBinAddr: 0x6A78, symSize: 0x14 }
-  - { offsetInCU: 0x3B2, offset: 0x4D7EB, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree isSyntaxTree]', symObjAddr: 0x21C, symBinAddr: 0x6A8C, symSize: 0x8 }
-  - { offsetInCU: 0x3E5, offset: 0x4D81E, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree isEqual:]', symObjAddr: 0x224, symBinAddr: 0x6A94, symSize: 0x54 }
-  - { offsetInCU: 0x42C, offset: 0x4D865, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree description]', symObjAddr: 0x278, symBinAddr: 0x6AE8, symSize: 0x13C }
-  - { offsetInCU: 0x48A, offset: 0x4D8C3, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree rule]', symObjAddr: 0x3B4, symBinAddr: 0x6C24, symSize: 0xC }
-  - { offsetInCU: 0x4C1, offset: 0x4D8FA, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree setRule:]', symObjAddr: 0x3C0, symBinAddr: 0x6C30, symSize: 0x8 }
-  - { offsetInCU: 0x500, offset: 0x4D939, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree children]', symObjAddr: 0x3C8, symBinAddr: 0x6C38, symSize: 0xC }
-  - { offsetInCU: 0x537, offset: 0x4D970, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree setChildren:]', symObjAddr: 0x3D4, symBinAddr: 0x6C44, symSize: 0x8 }
-  - { offsetInCU: 0x576, offset: 0x4D9AF, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree tagValues]', symObjAddr: 0x3DC, symBinAddr: 0x6C4C, symSize: 0xC }
-  - { offsetInCU: 0x5AD, offset: 0x4D9E6, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree setTagValues:]', symObjAddr: 0x3E8, symBinAddr: 0x6C58, symSize: 0x8 }
-  - { offsetInCU: 0x5EC, offset: 0x4DA25, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsSyntaxTree) isSyntaxTree]', symObjAddr: 0x3F0, symBinAddr: 0x6C60, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4DAC4, size: 0x8, addend: 0x0, symName: '-[CPRule rightHandSideElements]', symObjAddr: 0x0, symBinAddr: 0x6C68, symSize: 0x18 }
-  - { offsetInCU: 0x102, offset: 0x4DB9F, size: 0x8, addend: 0x0, symName: '-[CPRule rightHandSideElements]', symObjAddr: 0x0, symBinAddr: 0x6C68, symSize: 0x18 }
-  - { offsetInCU: 0x139, offset: 0x4DBD6, size: 0x8, addend: 0x0, symName: '-[CPRule setRightHandSideElements:]', symObjAddr: 0x18, symBinAddr: 0x6C80, symSize: 0x58 }
-  - { offsetInCU: 0x17C, offset: 0x4DC19, size: 0x8, addend: 0x0, symName: '+[CPRule ruleWithName:rightHandSideElements:representitiveClass:]', symObjAddr: 0x70, symBinAddr: 0x6CD8, symSize: 0x40 }
-  - { offsetInCU: 0x1E3, offset: 0x4DC80, size: 0x8, addend: 0x0, symName: '-[CPRule initWithName:rightHandSideElements:representitiveClass:]', symObjAddr: 0xB0, symBinAddr: 0x6D18, symSize: 0x8C }
-  - { offsetInCU: 0x24A, offset: 0x4DCE7, size: 0x8, addend: 0x0, symName: '+[CPRule ruleWithName:rightHandSideElements:tag:]', symObjAddr: 0x13C, symBinAddr: 0x6DA4, symSize: 0x40 }
-  - { offsetInCU: 0x2B1, offset: 0x4DD4E, size: 0x8, addend: 0x0, symName: '-[CPRule initWithName:rightHandSideElements:tag:]', symObjAddr: 0x17C, symBinAddr: 0x6DE4, symSize: 0x3C }
-  - { offsetInCU: 0x318, offset: 0x4DDB5, size: 0x8, addend: 0x0, symName: '+[CPRule ruleWithName:rightHandSideElements:]', symObjAddr: 0x1B8, symBinAddr: 0x6E20, symSize: 0x38 }
-  - { offsetInCU: 0x36B, offset: 0x4DE08, size: 0x8, addend: 0x0, symName: '-[CPRule initWithName:rightHandSideElements:]', symObjAddr: 0x1F0, symBinAddr: 0x6E58, symSize: 0x8 }
-  - { offsetInCU: 0x3BC, offset: 0x4DE59, size: 0x8, addend: 0x0, symName: '-[CPRule init]', symObjAddr: 0x1F8, symBinAddr: 0x6E60, symSize: 0x38 }
-  - { offsetInCU: 0x3F3, offset: 0x4DE90, size: 0x8, addend: 0x0, symName: '-[CPRule initWithCoder:]', symObjAddr: 0x230, symBinAddr: 0x6E98, symSize: 0xC0 }
-  - { offsetInCU: 0x45B, offset: 0x4DEF8, size: 0x8, addend: 0x0, symName: '-[CPRule encodeWithCoder:]', symObjAddr: 0x2F0, symBinAddr: 0x6F58, symSize: 0x8C }
-  - { offsetInCU: 0x4BF, offset: 0x4DF5C, size: 0x8, addend: 0x0, symName: '-[CPRule dealloc]', symObjAddr: 0x37C, symBinAddr: 0x6FE4, symSize: 0x50 }
-  - { offsetInCU: 0x4F2, offset: 0x4DF8F, size: 0x8, addend: 0x0, symName: '-[CPRule description]', symObjAddr: 0x3CC, symBinAddr: 0x7034, symSize: 0x6C }
-  - { offsetInCU: 0x529, offset: 0x4DFC6, size: 0x8, addend: 0x0, symName: '-[CPRule hash]', symObjAddr: 0x438, symBinAddr: 0x70A0, symSize: 0x34 }
-  - { offsetInCU: 0x560, offset: 0x4DFFD, size: 0x8, addend: 0x0, symName: '-[CPRule isRule]', symObjAddr: 0x46C, symBinAddr: 0x70D4, symSize: 0x8 }
-  - { offsetInCU: 0x593, offset: 0x4E030, size: 0x8, addend: 0x0, symName: '-[CPRule isEqual:]', symObjAddr: 0x474, symBinAddr: 0x70DC, symSize: 0x80 }
-  - { offsetInCU: 0x5DA, offset: 0x4E077, size: 0x8, addend: 0x0, symName: '-[CPRule name]', symObjAddr: 0x4F4, symBinAddr: 0x715C, symSize: 0xC }
-  - { offsetInCU: 0x611, offset: 0x4E0AE, size: 0x8, addend: 0x0, symName: '-[CPRule setName:]', symObjAddr: 0x500, symBinAddr: 0x7168, symSize: 0x8 }
-  - { offsetInCU: 0x650, offset: 0x4E0ED, size: 0x8, addend: 0x0, symName: '-[CPRule tag]', symObjAddr: 0x508, symBinAddr: 0x7170, symSize: 0x8 }
-  - { offsetInCU: 0x687, offset: 0x4E124, size: 0x8, addend: 0x0, symName: '-[CPRule setTag:]', symObjAddr: 0x510, symBinAddr: 0x7178, symSize: 0x8 }
-  - { offsetInCU: 0x6C4, offset: 0x4E161, size: 0x8, addend: 0x0, symName: '-[CPRule representitiveClass]', symObjAddr: 0x518, symBinAddr: 0x7180, symSize: 0x8 }
-  - { offsetInCU: 0x6FB, offset: 0x4E198, size: 0x8, addend: 0x0, symName: '-[CPRule setRepresentitiveClass:]', symObjAddr: 0x520, symBinAddr: 0x7188, symSize: 0x8 }
-  - { offsetInCU: 0x738, offset: 0x4E1D5, size: 0x8, addend: 0x0, symName: '-[CPRule(Internal) shouldCollapse]', symObjAddr: 0x528, symBinAddr: 0x7190, symSize: 0x8 }
-  - { offsetInCU: 0x76F, offset: 0x4E20C, size: 0x8, addend: 0x0, symName: '-[CPRule(Internal) setShouldCollapse:]', symObjAddr: 0x530, symBinAddr: 0x7198, symSize: 0x8 }
-  - { offsetInCU: 0x7AC, offset: 0x4E249, size: 0x8, addend: 0x0, symName: '-[CPRule(Internal) tagNames]', symObjAddr: 0x538, symBinAddr: 0x71A0, symSize: 0x18 }
-  - { offsetInCU: 0x7E3, offset: 0x4E280, size: 0x8, addend: 0x0, symName: '-[CPRule(Internal) setTagNames:]', symObjAddr: 0x550, symBinAddr: 0x71B8, symSize: 0x3C }
-  - { offsetInCU: 0x826, offset: 0x4E2C3, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsRule) isRule]', symObjAddr: 0x58C, symBinAddr: 0x71F4, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4E35B, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser initWithGrammar:]', symObjAddr: 0x0, symBinAddr: 0x71FC, symSize: 0x60 }
-  - { offsetInCU: 0x1C9, offset: 0x4E4FD, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser initWithGrammar:]', symObjAddr: 0x0, symBinAddr: 0x71FC, symSize: 0x60 }
-  - { offsetInCU: 0x22F, offset: 0x4E563, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser initWithCoder:]', symObjAddr: 0x60, symBinAddr: 0x725C, symSize: 0x9C }
-  - { offsetInCU: 0x276, offset: 0x4E5AA, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser encodeWithCoder:]', symObjAddr: 0xFC, symBinAddr: 0x72F8, symSize: 0x6C }
-  - { offsetInCU: 0x2B9, offset: 0x4E5ED, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser dealloc]', symObjAddr: 0x168, symBinAddr: 0x7364, symSize: 0x60 }
-  - { offsetInCU: 0x2EC, offset: 0x4E620, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser constructShiftReduceTables]', symObjAddr: 0x1C8, symBinAddr: 0x73C4, symSize: 0x20 }
-  - { offsetInCU: 0x31F, offset: 0x4E653, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser parse:]', symObjAddr: 0x1E8, symBinAddr: 0x73E4, symSize: 0x42C }
-  - { offsetInCU: 0x481, offset: 0x4E7B5, size: 0x8, addend: 0x0, symName: '___29-[CPShiftReduceParser parse:]_block_invoke', symObjAddr: 0x614, symBinAddr: 0x7810, symSize: 0x2B4 }
-  - { offsetInCU: 0x577, offset: 0x4E8AB, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32o40o, symObjAddr: 0x8C8, symBinAddr: 0x7AC4, symSize: 0x3C }
-  - { offsetInCU: 0x5A0, offset: 0x4E8D4, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32o40o, symObjAddr: 0x904, symBinAddr: 0x7B00, symSize: 0x30 }
-  - { offsetInCU: 0x5BF, offset: 0x4E8F3, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser error:expecting:]', symObjAddr: 0x934, symBinAddr: 0x7B30, symSize: 0xD8 }
-  - { offsetInCU: 0x636, offset: 0x4E96A, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser actionForState:token:]', symObjAddr: 0xA0C, symBinAddr: 0x7C08, symSize: 0x2C }
-  - { offsetInCU: 0x690, offset: 0x4E9C4, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser acceptableTokenNamesForState:]', symObjAddr: 0xA38, symBinAddr: 0x7C34, symSize: 0x24 }
-  - { offsetInCU: 0x6D9, offset: 0x4EA0D, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser gotoForState:rule:]', symObjAddr: 0xA5C, symBinAddr: 0x7C58, symSize: 0x2C }
-  - { offsetInCU: 0x733, offset: 0x4EA67, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser actionTable]', symObjAddr: 0xA88, symBinAddr: 0x7C84, symSize: 0x10 }
-  - { offsetInCU: 0x76A, offset: 0x4EA9E, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser setActionTable:]', symObjAddr: 0xA98, symBinAddr: 0x7C94, symSize: 0xC }
-  - { offsetInCU: 0x7A9, offset: 0x4EADD, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser gotoTable]', symObjAddr: 0xAA4, symBinAddr: 0x7CA0, symSize: 0x10 }
-  - { offsetInCU: 0x7E0, offset: 0x4EB14, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser setGotoTable:]', symObjAddr: 0xAB4, symBinAddr: 0x7CB0, symSize: 0xC }
-  - { offsetInCU: 0x27, offset: 0x4EE1A, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceAction shiftAction:]', symObjAddr: 0x0, symBinAddr: 0x7CBC, symSize: 0x28 }
-  - { offsetInCU: 0x12E, offset: 0x4EF21, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceAction shiftAction:]', symObjAddr: 0x0, symBinAddr: 0x7CBC, symSize: 0x28 }
-  - { offsetInCU: 0x175, offset: 0x4EF68, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceAction reduceAction:]', symObjAddr: 0x28, symBinAddr: 0x7CE4, symSize: 0x28 }
-  - { offsetInCU: 0x1BC, offset: 0x4EFAF, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceAction acceptAction]', symObjAddr: 0x50, symBinAddr: 0x7D0C, symSize: 0x14 }
-  - { offsetInCU: 0x1F3, offset: 0x4EFE6, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction initWithShift:]', symObjAddr: 0x64, symBinAddr: 0x7D20, symSize: 0x4C }
-  - { offsetInCU: 0x23A, offset: 0x4F02D, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction initWithReductionRule:]', symObjAddr: 0xB0, symBinAddr: 0x7D6C, symSize: 0x60 }
-  - { offsetInCU: 0x281, offset: 0x4F074, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction init]', symObjAddr: 0x110, symBinAddr: 0x7DCC, symSize: 0x40 }
-  - { offsetInCU: 0x2B8, offset: 0x4F0AB, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction initWithCoder:]', symObjAddr: 0x150, symBinAddr: 0x7E0C, symSize: 0x98 }
-  - { offsetInCU: 0x2FF, offset: 0x4F0F2, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction encodeWithCoder:]', symObjAddr: 0x1E8, symBinAddr: 0x7EA4, symSize: 0x7C }
-  - { offsetInCU: 0x342, offset: 0x4F135, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction dealloc]', symObjAddr: 0x264, symBinAddr: 0x7F20, symSize: 0x54 }
-  - { offsetInCU: 0x375, offset: 0x4F168, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isShiftAction]', symObjAddr: 0x2B8, symBinAddr: 0x7F74, symSize: 0x10 }
-  - { offsetInCU: 0x3AC, offset: 0x4F19F, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isReduceAction]', symObjAddr: 0x2C8, symBinAddr: 0x7F84, symSize: 0x10 }
-  - { offsetInCU: 0x3E3, offset: 0x4F1D6, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isAccept]', symObjAddr: 0x2D8, symBinAddr: 0x7F94, symSize: 0x10 }
-  - { offsetInCU: 0x41A, offset: 0x4F20D, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction newState]', symObjAddr: 0x2E8, symBinAddr: 0x7FA4, symSize: 0x8 }
-  - { offsetInCU: 0x451, offset: 0x4F244, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction reductionRule]', symObjAddr: 0x2F0, symBinAddr: 0x7FAC, symSize: 0x8 }
-  - { offsetInCU: 0x488, offset: 0x4F27B, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction hash]', symObjAddr: 0x2F8, symBinAddr: 0x7FB4, symSize: 0x8 }
-  - { offsetInCU: 0x4BF, offset: 0x4F2B2, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isShiftReduceAction]', symObjAddr: 0x300, symBinAddr: 0x7FBC, symSize: 0x8 }
-  - { offsetInCU: 0x4F2, offset: 0x4F2E5, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isEqual:]', symObjAddr: 0x308, symBinAddr: 0x7FC4, symSize: 0x80 }
-  - { offsetInCU: 0x558, offset: 0x4F34B, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isEqualToShiftReduceAction:]', symObjAddr: 0x388, symBinAddr: 0x8044, symSize: 0x74 }
-  - { offsetInCU: 0x59F, offset: 0x4F392, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction description]', symObjAddr: 0x3FC, symBinAddr: 0x80B8, symSize: 0x80 }
-  - { offsetInCU: 0x5D6, offset: 0x4F3C9, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction descriptionWithGrammar:]', symObjAddr: 0x47C, symBinAddr: 0x8138, symSize: 0x88 }
-  - { offsetInCU: 0x61D, offset: 0x4F410, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsShiftReduceAction) isShiftReduceAction]', symObjAddr: 0x504, symBinAddr: 0x81C0, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4F4D1, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceState shiftReduceStateWithObject:state:]', symObjAddr: 0x0, symBinAddr: 0x81C8, symSize: 0x30 }
-  - { offsetInCU: 0x8D, offset: 0x4F537, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceState shiftReduceStateWithObject:state:]', symObjAddr: 0x0, symBinAddr: 0x81C8, symSize: 0x30 }
-  - { offsetInCU: 0xE4, offset: 0x4F58E, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState initWithObject:state:]', symObjAddr: 0x30, symBinAddr: 0x81F8, symSize: 0x70 }
-  - { offsetInCU: 0x13B, offset: 0x4F5E5, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState dealloc]', symObjAddr: 0xA0, symBinAddr: 0x8268, symSize: 0x48 }
-  - { offsetInCU: 0x16E, offset: 0x4F618, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState description]', symObjAddr: 0xE8, symBinAddr: 0x82B0, symSize: 0x58 }
-  - { offsetInCU: 0x1A5, offset: 0x4F64F, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState object]', symObjAddr: 0x140, symBinAddr: 0x8308, symSize: 0xC }
-  - { offsetInCU: 0x1DC, offset: 0x4F686, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState setObject:]', symObjAddr: 0x14C, symBinAddr: 0x8314, symSize: 0x8 }
-  - { offsetInCU: 0x21B, offset: 0x4F6C5, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState state]', symObjAddr: 0x154, symBinAddr: 0x831C, symSize: 0x8 }
-  - { offsetInCU: 0x252, offset: 0x4F6FC, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState setState:]', symObjAddr: 0x15C, symBinAddr: 0x8324, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x4F7B1, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable initWithCapacity:]', symObjAddr: 0x0, symBinAddr: 0x832C, symSize: 0x90 }
-  - { offsetInCU: 0x78, offset: 0x4F802, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable initWithCapacity:]', symObjAddr: 0x0, symBinAddr: 0x832C, symSize: 0x90 }
-  - { offsetInCU: 0xDE, offset: 0x4F868, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable initWithCoder:]', symObjAddr: 0x90, symBinAddr: 0x83BC, symSize: 0xBC }
-  - { offsetInCU: 0x163, offset: 0x4F8ED, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable encodeWithCoder:]', symObjAddr: 0x14C, symBinAddr: 0x8478, symSize: 0x40 }
-  - { offsetInCU: 0x1A6, offset: 0x4F930, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable dealloc]', symObjAddr: 0x18C, symBinAddr: 0x84B8, symSize: 0x70 }
-  - { offsetInCU: 0x1F8, offset: 0x4F982, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable setAction:forState:name:]', symObjAddr: 0x1FC, symBinAddr: 0x8528, symSize: 0x6C }
-  - { offsetInCU: 0x26F, offset: 0x4F9F9, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable actionForState:token:]', symObjAddr: 0x268, symBinAddr: 0x8594, symSize: 0x30 }
-  - { offsetInCU: 0x2C6, offset: 0x4FA50, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable acceptableTokenNamesForState:]', symObjAddr: 0x298, symBinAddr: 0x85C4, symSize: 0x134 }
-  - { offsetInCU: 0x334, offset: 0x4FABE, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable description]', symObjAddr: 0x3CC, symBinAddr: 0x86F8, symSize: 0x39C }
-  - { offsetInCU: 0x53B, offset: 0x4FCC5, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable descriptionWithGrammar:]', symObjAddr: 0x768, symBinAddr: 0x8A94, symSize: 0x3A8 }
-  - { offsetInCU: 0x27, offset: 0x4FFFD, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable initWithCapacity:]', symObjAddr: 0x0, symBinAddr: 0x8E3C, symSize: 0x90 }
-  - { offsetInCU: 0x71, offset: 0x50047, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable initWithCapacity:]', symObjAddr: 0x0, symBinAddr: 0x8E3C, symSize: 0x90 }
-  - { offsetInCU: 0xD7, offset: 0x500AD, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable initWithCoder:]', symObjAddr: 0x90, symBinAddr: 0x8ECC, symSize: 0xBC }
-  - { offsetInCU: 0x15C, offset: 0x50132, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable encodeWithCoder:]', symObjAddr: 0x14C, symBinAddr: 0x8F88, symSize: 0x40 }
-  - { offsetInCU: 0x19F, offset: 0x50175, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable dealloc]', symObjAddr: 0x18C, symBinAddr: 0x8FC8, symSize: 0x70 }
-  - { offsetInCU: 0x1F1, offset: 0x501C7, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable setGoto:forState:nonTerminalNamed:]', symObjAddr: 0x1FC, symBinAddr: 0x9038, symSize: 0x84 }
-  - { offsetInCU: 0x268, offset: 0x5023E, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable gotoForState:rule:]', symObjAddr: 0x280, symBinAddr: 0x90BC, symSize: 0x34 }
-  - { offsetInCU: 0x27, offset: 0x50320, size: 0x8, addend: 0x0, symName: '-[CPSLRParser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0x90F0, symSize: 0x4B8 }
-  - { offsetInCU: 0x161, offset: 0x5045A, size: 0x8, addend: 0x0, symName: '-[CPSLRParser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0x90F0, symSize: 0x4B8 }
-  - { offsetInCU: 0x27, offset: 0x5075B, size: 0x8, addend: 0x0, symName: '+[CPItem itemWithRule:position:]', symObjAddr: 0x0, symBinAddr: 0x95A8, symSize: 0x30 }
-  - { offsetInCU: 0xEC, offset: 0x50820, size: 0x8, addend: 0x0, symName: '+[CPItem itemWithRule:position:]', symObjAddr: 0x0, symBinAddr: 0x95A8, symSize: 0x30 }
-  - { offsetInCU: 0x143, offset: 0x50877, size: 0x8, addend: 0x0, symName: '-[CPItem initWithRule:position:]', symObjAddr: 0x30, symBinAddr: 0x95D8, symSize: 0x64 }
-  - { offsetInCU: 0x19A, offset: 0x508CE, size: 0x8, addend: 0x0, symName: '-[CPItem copyWithZone:]', symObjAddr: 0x94, symBinAddr: 0x963C, symSize: 0x2C }
-  - { offsetInCU: 0x1E1, offset: 0x50915, size: 0x8, addend: 0x0, symName: '-[CPItem dealloc]', symObjAddr: 0xC0, symBinAddr: 0x9668, symSize: 0x48 }
-  - { offsetInCU: 0x214, offset: 0x50948, size: 0x8, addend: 0x0, symName: '-[CPItem nextSymbol]', symObjAddr: 0x108, symBinAddr: 0x96B0, symSize: 0x5C }
-  - { offsetInCU: 0x25B, offset: 0x5098F, size: 0x8, addend: 0x0, symName: '-[CPItem followingSymbols]', symObjAddr: 0x164, symBinAddr: 0x970C, symSize: 0x48 }
-  - { offsetInCU: 0x2A2, offset: 0x509D6, size: 0x8, addend: 0x0, symName: '-[CPItem itemByMovingDotRight]', symObjAddr: 0x1AC, symBinAddr: 0x9754, symSize: 0x3C }
-  - { offsetInCU: 0x2E9, offset: 0x50A1D, size: 0x8, addend: 0x0, symName: '-[CPItem isItem]', symObjAddr: 0x1E8, symBinAddr: 0x9790, symSize: 0x8 }
-  - { offsetInCU: 0x31C, offset: 0x50A50, size: 0x8, addend: 0x0, symName: '-[CPItem isEqual:]', symObjAddr: 0x1F0, symBinAddr: 0x9798, symSize: 0x54 }
-  - { offsetInCU: 0x363, offset: 0x50A97, size: 0x8, addend: 0x0, symName: '-[CPItem isEqualToItem:]', symObjAddr: 0x244, symBinAddr: 0x97EC, symSize: 0x30 }
-  - { offsetInCU: 0x3A8, offset: 0x50ADC, size: 0x8, addend: 0x0, symName: '-[CPItem hash]', symObjAddr: 0x274, symBinAddr: 0x981C, symSize: 0xC }
-  - { offsetInCU: 0x3DF, offset: 0x50B13, size: 0x8, addend: 0x0, symName: '-[CPItem description]', symObjAddr: 0x280, symBinAddr: 0x9828, symSize: 0x190 }
-  - { offsetInCU: 0x45B, offset: 0x50B8F, size: 0x8, addend: 0x0, symName: '-[CPItem rule]', symObjAddr: 0x410, symBinAddr: 0x99B8, symSize: 0xC }
-  - { offsetInCU: 0x492, offset: 0x50BC6, size: 0x8, addend: 0x0, symName: '-[CPItem setRule:]', symObjAddr: 0x41C, symBinAddr: 0x99C4, symSize: 0x8 }
-  - { offsetInCU: 0x4D1, offset: 0x50C05, size: 0x8, addend: 0x0, symName: '-[CPItem position]', symObjAddr: 0x424, symBinAddr: 0x99CC, symSize: 0x8 }
-  - { offsetInCU: 0x508, offset: 0x50C3C, size: 0x8, addend: 0x0, symName: '-[CPItem setPosition:]', symObjAddr: 0x42C, symBinAddr: 0x99D4, symSize: 0x8 }
-  - { offsetInCU: 0x545, offset: 0x50C79, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsItem) isItem]', symObjAddr: 0x434, symBinAddr: 0x99DC, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x50D50, size: 0x8, addend: 0x0, symName: '-[NSSet(Functional) cp_map:]', symObjAddr: 0x0, symBinAddr: 0x99E4, symSize: 0x140 }
-  - { offsetInCU: 0x36, offset: 0x50D5F, size: 0x8, addend: 0x0, symName: '-[NSSet(Functional) cp_map:]', symObjAddr: 0x0, symBinAddr: 0x99E4, symSize: 0x140 }
-  - { offsetInCU: 0x27, offset: 0x50F29, size: 0x8, addend: 0x0, symName: '-[CPLR1Parser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0x9B24, symSize: 0x408 }
-  - { offsetInCU: 0x162, offset: 0x51064, size: 0x8, addend: 0x0, symName: '-[CPLR1Parser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0x9B24, symSize: 0x408 }
-  - { offsetInCU: 0x32C, offset: 0x5122E, size: 0x8, addend: 0x0, symName: '-[CPLR1Parser kernelsForGrammar:]', symObjAddr: 0x408, symBinAddr: 0x9F2C, symSize: 0x200 }
-  - { offsetInCU: 0x42C, offset: 0x5132E, size: 0x8, addend: 0x0, symName: '___33-[CPLR1Parser kernelsForGrammar:]_block_invoke', symObjAddr: 0x608, symBinAddr: 0xA12C, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x51526, size: 0x8, addend: 0x0, symName: '+[CPLR1Item lr1ItemWithRule:position:terminal:]', symObjAddr: 0x0, symBinAddr: 0xA134, symSize: 0x40 }
-  - { offsetInCU: 0x136, offset: 0x51635, size: 0x8, addend: 0x0, symName: '+[CPLR1Item lr1ItemWithRule:position:terminal:]', symObjAddr: 0x0, symBinAddr: 0xA134, symSize: 0x40 }
-  - { offsetInCU: 0x19D, offset: 0x5169C, size: 0x8, addend: 0x0, symName: '-[CPLR1Item initWithRule:position:terminal:]', symObjAddr: 0x40, symBinAddr: 0xA174, symSize: 0x58 }
-  - { offsetInCU: 0x204, offset: 0x51703, size: 0x8, addend: 0x0, symName: '-[CPLR1Item initWithRule:position:]', symObjAddr: 0x98, symBinAddr: 0xA1CC, symSize: 0x8 }
-  - { offsetInCU: 0x255, offset: 0x51754, size: 0x8, addend: 0x0, symName: '-[CPLR1Item copyWithZone:]', symObjAddr: 0xA0, symBinAddr: 0xA1D4, symSize: 0x64 }
-  - { offsetInCU: 0x29C, offset: 0x5179B, size: 0x8, addend: 0x0, symName: '-[CPLR1Item dealloc]', symObjAddr: 0x104, symBinAddr: 0xA238, symSize: 0x50 }
-  - { offsetInCU: 0x2CF, offset: 0x517CE, size: 0x8, addend: 0x0, symName: '-[CPLR1Item isLR1Item]', symObjAddr: 0x154, symBinAddr: 0xA288, symSize: 0x8 }
-  - { offsetInCU: 0x302, offset: 0x51801, size: 0x8, addend: 0x0, symName: '-[CPLR1Item isEqual:]', symObjAddr: 0x15C, symBinAddr: 0xA290, symSize: 0x6C }
-  - { offsetInCU: 0x349, offset: 0x51848, size: 0x8, addend: 0x0, symName: '-[CPLR1Item hash]', symObjAddr: 0x1C8, symBinAddr: 0xA2FC, symSize: 0x48 }
-  - { offsetInCU: 0x380, offset: 0x5187F, size: 0x8, addend: 0x0, symName: '-[CPLR1Item description]', symObjAddr: 0x210, symBinAddr: 0xA344, symSize: 0x64 }
-  - { offsetInCU: 0x3B7, offset: 0x518B6, size: 0x8, addend: 0x0, symName: '-[CPLR1Item terminal]', symObjAddr: 0x274, symBinAddr: 0xA3A8, symSize: 0x10 }
-  - { offsetInCU: 0x3EE, offset: 0x518ED, size: 0x8, addend: 0x0, symName: '-[CPLR1Item setTerminal:]', symObjAddr: 0x284, symBinAddr: 0xA3B8, symSize: 0xC }
-  - { offsetInCU: 0x42D, offset: 0x5192C, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsLR1Item) isLR1Item]', symObjAddr: 0x290, symBinAddr: 0xA3C4, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x519C4, size: 0x8, addend: 0x0, symName: '+[CPGrammarSymbol nonTerminalWithName:]', symObjAddr: 0x0, symBinAddr: 0xA3CC, symSize: 0x2C }
-  - { offsetInCU: 0x8F, offset: 0x51A2C, size: 0x8, addend: 0x0, symName: '+[CPGrammarSymbol nonTerminalWithName:]', symObjAddr: 0x0, symBinAddr: 0xA3CC, symSize: 0x2C }
-  - { offsetInCU: 0xD6, offset: 0x51A73, size: 0x8, addend: 0x0, symName: '+[CPGrammarSymbol terminalWithName:]', symObjAddr: 0x2C, symBinAddr: 0xA3F8, symSize: 0x2C }
-  - { offsetInCU: 0x11D, offset: 0x51ABA, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol initWithName:isTerminal:]', symObjAddr: 0x58, symBinAddr: 0xA424, symSize: 0x70 }
-  - { offsetInCU: 0x174, offset: 0x51B11, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol init]', symObjAddr: 0xC8, symBinAddr: 0xA494, symSize: 0x10 }
-  - { offsetInCU: 0x1A9, offset: 0x51B46, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol initWithCoder:]', symObjAddr: 0xD8, symBinAddr: 0xA4A4, symSize: 0x84 }
-  - { offsetInCU: 0x1F0, offset: 0x51B8D, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol encodeWithCoder:]', symObjAddr: 0x15C, symBinAddr: 0xA528, symSize: 0x50 }
-  - { offsetInCU: 0x233, offset: 0x51BD0, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol isGrammarSymbol]', symObjAddr: 0x1AC, symBinAddr: 0xA578, symSize: 0x8 }
-  - { offsetInCU: 0x266, offset: 0x51C03, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol isEqual:]', symObjAddr: 0x1B4, symBinAddr: 0xA580, symSize: 0x54 }
-  - { offsetInCU: 0x2AD, offset: 0x51C4A, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol isEqualToGrammarSymbol:]', symObjAddr: 0x208, symBinAddr: 0xA5D4, symSize: 0x2C }
-  - { offsetInCU: 0x2F4, offset: 0x51C91, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol hash]', symObjAddr: 0x234, symBinAddr: 0xA600, symSize: 0x14 }
-  - { offsetInCU: 0x32B, offset: 0x51CC8, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol description]', symObjAddr: 0x248, symBinAddr: 0xA614, symSize: 0x68 }
-  - { offsetInCU: 0x362, offset: 0x51CFF, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol dealloc]', symObjAddr: 0x2B0, symBinAddr: 0xA67C, symSize: 0x48 }
-  - { offsetInCU: 0x395, offset: 0x51D32, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol name]', symObjAddr: 0x2F8, symBinAddr: 0xA6C4, symSize: 0xC }
-  - { offsetInCU: 0x3CC, offset: 0x51D69, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol setName:]', symObjAddr: 0x304, symBinAddr: 0xA6D0, symSize: 0x8 }
-  - { offsetInCU: 0x40B, offset: 0x51DA8, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol isTerminal]', symObjAddr: 0x30C, symBinAddr: 0xA6D8, symSize: 0xC }
-  - { offsetInCU: 0x442, offset: 0x51DDF, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol setTerminal:]', symObjAddr: 0x318, symBinAddr: 0xA6E4, symSize: 0x8 }
-  - { offsetInCU: 0x47F, offset: 0x51E1C, size: 0x8, addend: 0x0, symName: '-[NSObject(CPGrammarSymbol) isGrammarSymbol]', symObjAddr: 0x320, symBinAddr: 0xA6EC, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x51ECE, size: 0x8, addend: 0x0, symName: '-[CPJSONParser init]', symObjAddr: 0x0, symBinAddr: 0xA6F4, symSize: 0x24C }
-  - { offsetInCU: 0x1A7, offset: 0x5204E, size: 0x8, addend: 0x0, symName: '-[CPJSONParser init]', symObjAddr: 0x0, symBinAddr: 0xA6F4, symSize: 0x24C }
-  - { offsetInCU: 0x20D, offset: 0x520B4, size: 0x8, addend: 0x0, symName: '___20-[CPJSONParser init]_block_invoke', symObjAddr: 0x24C, symBinAddr: 0xA940, symSize: 0x78 }
-  - { offsetInCU: 0x258, offset: 0x520FF, size: 0x8, addend: 0x0, symName: '-[CPJSONParser dealloc]', symObjAddr: 0x2C4, symBinAddr: 0xA9B8, symSize: 0x50 }
-  - { offsetInCU: 0x28B, offset: 0x52132, size: 0x8, addend: 0x0, symName: '-[CPJSONParser parse:]', symObjAddr: 0x314, symBinAddr: 0xAA08, symSize: 0x2C }
-  - { offsetInCU: 0x2E2, offset: 0x52189, size: 0x8, addend: 0x0, symName: '-[CPJSONParser tokeniser:shouldConsumeToken:]', symObjAddr: 0x340, symBinAddr: 0xAA34, symSize: 0x8 }
-  - { offsetInCU: 0x32D, offset: 0x521D4, size: 0x8, addend: 0x0, symName: '-[CPJSONParser tokeniser:willProduceToken:]', symObjAddr: 0x348, symBinAddr: 0xAA3C, symSize: 0x44 }
-  - { offsetInCU: 0x37C, offset: 0x52223, size: 0x8, addend: 0x0, symName: '-[CPJSONParser parser:didProduceSyntaxTree:]', symObjAddr: 0x38C, symBinAddr: 0xAA80, symSize: 0x2BC }
-  - { offsetInCU: 0x27, offset: 0x5254D, size: 0x8, addend: 0x0, symName: '-[CPLALR1Parser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0xAD3C, symSize: 0x62C }
-  - { offsetInCU: 0x19B, offset: 0x526C1, size: 0x8, addend: 0x0, symName: '-[CPLALR1Parser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0xAD3C, symSize: 0x62C }
-  - { offsetInCU: 0x3CF, offset: 0x528F5, size: 0x8, addend: 0x0, symName: '___43-[CPLALR1Parser constructShiftReduceTables]_block_invoke', symObjAddr: 0x62C, symBinAddr: 0xB368, symSize: 0x10 }
-  - { offsetInCU: 0x40A, offset: 0x52930, size: 0x8, addend: 0x0, symName: '___43-[CPLALR1Parser constructShiftReduceTables]_block_invoke_2', symObjAddr: 0x63C, symBinAddr: 0xB378, symSize: 0x4C }
-  - { offsetInCU: 0x445, offset: 0x5296B, size: 0x8, addend: 0x0, symName: '___43-[CPLALR1Parser constructShiftReduceTables]_block_invoke_3', symObjAddr: 0x688, symBinAddr: 0xB3C4, symSize: 0x4C }
-  - { offsetInCU: 0x480, offset: 0x529A6, size: 0x8, addend: 0x0, symName: '___43-[CPLALR1Parser constructShiftReduceTables]_block_invoke_4', symObjAddr: 0x6D4, symBinAddr: 0xB410, symSize: 0x4C }
-  - { offsetInCU: 0x4BB, offset: 0x529E1, size: 0x8, addend: 0x0, symName: '-[CPLALR1Parser kernelsForGrammar:]', symObjAddr: 0x720, symBinAddr: 0xB45C, symSize: 0xB30 }
-  - { offsetInCU: 0x27, offset: 0x530C0, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser initWithRegexp:matchHandler:]', symObjAddr: 0x0, symBinAddr: 0xBF8C, symSize: 0x70 }
-  - { offsetInCU: 0x172, offset: 0x5320B, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser initWithRegexp:matchHandler:]', symObjAddr: 0x0, symBinAddr: 0xBF8C, symSize: 0x70 }
-  - { offsetInCU: 0x1C9, offset: 0x53262, size: 0x8, addend: 0x0, symName: '+[CPRegexpRecogniser recogniserForRegexp:matchHandler:]', symObjAddr: 0x70, symBinAddr: 0xBFFC, symSize: 0x30 }
-  - { offsetInCU: 0x220, offset: 0x532B9, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser dealloc]', symObjAddr: 0xA0, symBinAddr: 0xC02C, symSize: 0x50 }
-  - { offsetInCU: 0x253, offset: 0x532EC, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser initWithCoder:]', symObjAddr: 0xF0, symBinAddr: 0xC07C, symSize: 0x68 }
-  - { offsetInCU: 0x29A, offset: 0x53333, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser encodeWithCoder:]', symObjAddr: 0x158, symBinAddr: 0xC0E4, symSize: 0x30 }
-  - { offsetInCU: 0x2DD, offset: 0x53376, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x188, symBinAddr: 0xC114, symSize: 0xD0 }
-  - { offsetInCU: 0x39A, offset: 0x53433, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser regexp]', symObjAddr: 0x258, symBinAddr: 0xC1E4, symSize: 0x8 }
-  - { offsetInCU: 0x3D1, offset: 0x5346A, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser setRegexp:]', symObjAddr: 0x260, symBinAddr: 0xC1EC, symSize: 0x8 }
-  - { offsetInCU: 0x410, offset: 0x534A9, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser matchHandler]', symObjAddr: 0x268, symBinAddr: 0xC1F4, symSize: 0x8 }
-  - { offsetInCU: 0x447, offset: 0x534E0, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser setMatchHandler:]', symObjAddr: 0x270, symBinAddr: 0xC1FC, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x535A3, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) rulesByNonTerminal]', symObjAddr: 0x0, symBinAddr: 0xC204, symSize: 0xC }
-  - { offsetInCU: 0x41, offset: 0x535BD, size: 0x8, addend: 0x0, symName: _rulesByNonTerminalKey, symObjAddr: 0x3001, symBinAddr: 0x229A0, symSize: 0x0 }
-  - { offsetInCU: 0x5E, offset: 0x535DA, size: 0x8, addend: 0x0, symName: _followCacheKey, symObjAddr: 0x3002, symBinAddr: 0x229A1, symSize: 0x0 }
-  - { offsetInCU: 0xA3, offset: 0x5361F, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) rulesByNonTerminal]', symObjAddr: 0x0, symBinAddr: 0xC204, symSize: 0xC }
-  - { offsetInCU: 0x138, offset: 0x536B4, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) setRulesByNonTerminal:]', symObjAddr: 0xC, symBinAddr: 0xC210, symSize: 0x10 }
-  - { offsetInCU: 0x1C8, offset: 0x53744, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) followCache]', symObjAddr: 0x1C, symBinAddr: 0xC220, symSize: 0xC }
-  - { offsetInCU: 0x214, offset: 0x53790, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) setFollowCache:]', symObjAddr: 0x28, symBinAddr: 0xC22C, symSize: 0x10 }
-  - { offsetInCU: 0x27A, offset: 0x537F6, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) rules]', symObjAddr: 0x38, symBinAddr: 0xC23C, symSize: 0x114 }
-  - { offsetInCU: 0x2D8, offset: 0x53854, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) setRules:]', symObjAddr: 0x14C, symBinAddr: 0xC350, symSize: 0x13C }
-  - { offsetInCU: 0x33A, offset: 0x538B6, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) orderedRules]', symObjAddr: 0x288, symBinAddr: 0xC48C, symSize: 0x20 }
-  - { offsetInCU: 0x371, offset: 0x538ED, size: 0x8, addend: 0x0, symName: '___43-[CPGrammar(CPGrammarPrivate) orderedRules]_block_invoke', symObjAddr: 0x2A8, symBinAddr: 0xC4AC, symSize: 0xDC }
-  - { offsetInCU: 0x3E7, offset: 0x53963, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) firstSymbol:]', symObjAddr: 0x384, symBinAddr: 0xC588, symSize: 0x274 }
-  - { offsetInCU: 0x4F9, offset: 0x53A75, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) allSymbolNames]', symObjAddr: 0x5F8, symBinAddr: 0xC7FC, symSize: 0x28 }
-  - { offsetInCU: 0x530, offset: 0x53AAC, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) symbolNamesInRules:]', symObjAddr: 0x620, symBinAddr: 0xC824, symSize: 0x1B8 }
-  - { offsetInCU: 0x27, offset: 0x53CBE, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) augmentedGrammar]', symObjAddr: 0x0, symBinAddr: 0xC9DC, symSize: 0xB4 }
-  - { offsetInCU: 0x192, offset: 0x53E29, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) augmentedGrammar]', symObjAddr: 0x0, symBinAddr: 0xC9DC, symSize: 0xB4 }
-  - { offsetInCU: 0x1C9, offset: 0x53E60, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) indexOfRule:]', symObjAddr: 0xB4, symBinAddr: 0xCA90, symSize: 0x24 }
-  - { offsetInCU: 0x210, offset: 0x53EA7, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) description]', symObjAddr: 0xD8, symBinAddr: 0xCAB4, symSize: 0x120 }
-  - { offsetInCU: 0x296, offset: 0x53F2D, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) lr0Closure:]', symObjAddr: 0x1F8, symBinAddr: 0xCBD4, symSize: 0xF0 }
-  - { offsetInCU: 0x32C, offset: 0x53FC3, size: 0x8, addend: 0x0, symName: '___43-[CPGrammar(CPGrammarInternal) lr0Closure:]_block_invoke', symObjAddr: 0x2E8, symBinAddr: 0xCCC4, symSize: 0x64 }
-  - { offsetInCU: 0x3B6, offset: 0x5404D, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) lr0GotoKernelWithItems:symbol:]', symObjAddr: 0x3B8, symBinAddr: 0xCD28, symSize: 0x5C }
-  - { offsetInCU: 0x409, offset: 0x540A0, size: 0x8, addend: 0x0, symName: '___62-[CPGrammar(CPGrammarInternal) lr0GotoKernelWithItems:symbol:]_block_invoke', symObjAddr: 0x414, symBinAddr: 0xCD84, symSize: 0x2C }
-  - { offsetInCU: 0x464, offset: 0x540FB, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32o, symObjAddr: 0x440, symBinAddr: 0xCDB0, symSize: 0x10 }
-  - { offsetInCU: 0x48D, offset: 0x54124, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32o, symObjAddr: 0x450, symBinAddr: 0xCDC0, symSize: 0xC }
-  - { offsetInCU: 0x4AC, offset: 0x54143, size: 0x8, addend: 0x0, symName: '___62-[CPGrammar(CPGrammarInternal) lr0GotoKernelWithItems:symbol:]_block_invoke.10', symObjAddr: 0x45C, symBinAddr: 0xCDCC, symSize: 0x8 }
-  - { offsetInCU: 0x4E7, offset: 0x5417E, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) lr0Kernels]', symObjAddr: 0x464, symBinAddr: 0xCDD4, symSize: 0x1DC }
-  - { offsetInCU: 0x5DB, offset: 0x54272, size: 0x8, addend: 0x0, symName: '___42-[CPGrammar(CPGrammarInternal) lr0Kernels]_block_invoke', symObjAddr: 0x640, symBinAddr: 0xCFB0, symSize: 0x8 }
-  - { offsetInCU: 0x616, offset: 0x542AD, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) lr1Closure:]', symObjAddr: 0x648, symBinAddr: 0xCFB8, symSize: 0x2AC }
-  - { offsetInCU: 0x775, offset: 0x5440C, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) lr1GotoKernelWithItems:symbol:]', symObjAddr: 0x8F4, symBinAddr: 0xD264, symSize: 0x5C }
-  - { offsetInCU: 0x7C8, offset: 0x5445F, size: 0x8, addend: 0x0, symName: '___62-[CPGrammar(CPGrammarInternal) lr1GotoKernelWithItems:symbol:]_block_invoke', symObjAddr: 0x950, symBinAddr: 0xD2C0, symSize: 0x2C }
-  - { offsetInCU: 0x823, offset: 0x544BA, size: 0x8, addend: 0x0, symName: '___62-[CPGrammar(CPGrammarInternal) lr1GotoKernelWithItems:symbol:]_block_invoke_2', symObjAddr: 0x97C, symBinAddr: 0xD2EC, symSize: 0x8 }
-  - { offsetInCU: 0x85E, offset: 0x544F5, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) follow:]', symObjAddr: 0x984, symBinAddr: 0xD2F4, symSize: 0x198 }
-  - { offsetInCU: 0x91A, offset: 0x545B1, size: 0x8, addend: 0x0, symName: '___39-[CPGrammar(CPGrammarInternal) follow:]_block_invoke', symObjAddr: 0xB1C, symBinAddr: 0xD48C, symSize: 0xF0 }
-  - { offsetInCU: 0xA04, offset: 0x5469B, size: 0x8, addend: 0x0, symName: '___39-[CPGrammar(CPGrammarInternal) follow:]_block_invoke_2', symObjAddr: 0xC0C, symBinAddr: 0xD57C, symSize: 0x24 }
-  - { offsetInCU: 0xA4B, offset: 0x546E2, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32o40o48o56o64o, symObjAddr: 0xC30, symBinAddr: 0xD5A0, symSize: 0x6C }
-  - { offsetInCU: 0xA74, offset: 0x5470B, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32o40o48o56o64o, symObjAddr: 0xC9C, symBinAddr: 0xD60C, symSize: 0x54 }
-  - { offsetInCU: 0xA93, offset: 0x5472A, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) first:]', symObjAddr: 0xCF0, symBinAddr: 0xD660, symSize: 0x134 }
-  - { offsetInCU: 0xB28, offset: 0x547BF, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) uniqueSymbolNameBasedOnName:]', symObjAddr: 0xE24, symBinAddr: 0xD794, symSize: 0x30 }
-  - { offsetInCU: 0xB6F, offset: 0x54806, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) symbolNameNotInSet:basedOnName:]', symObjAddr: 0xE54, symBinAddr: 0xD7C4, symSize: 0x80 }
-  - { offsetInCU: 0xBD2, offset: 0x54869, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) tidyRightHandSides:error:]', symObjAddr: 0xED4, symBinAddr: 0xD844, symSize: 0x15C }
-  - { offsetInCU: 0xC7B, offset: 0x54912, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) checkRulesForErrors:]', symObjAddr: 0x1030, symBinAddr: 0xD9A0, symSize: 0x2F0 }
-  - { offsetInCU: 0xD82, offset: 0x54A19, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) collectRHSElementsForNewRules:]', symObjAddr: 0x1320, symBinAddr: 0xDC90, symSize: 0x1B4 }
-  - { offsetInCU: 0xE0C, offset: 0x54AA3, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) nameNewRules:withRules:]', symObjAddr: 0x14D4, symBinAddr: 0xDE44, symSize: 0x16C }
-  - { offsetInCU: 0xEB7, offset: 0x54B4E, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) addRHSRules:toRules:]', symObjAddr: 0x1640, symBinAddr: 0xDFB0, symSize: 0x580 }
-  - { offsetInCU: 0x27, offset: 0x55150, size: 0x8, addend: 0x0, symName: '-[CPRHSItem hash]', symObjAddr: 0x0, symBinAddr: 0xE530, symSize: 0x58 }
-  - { offsetInCU: 0xEF, offset: 0x55218, size: 0x8, addend: 0x0, symName: '-[CPRHSItem hash]', symObjAddr: 0x0, symBinAddr: 0xE530, symSize: 0x58 }
-  - { offsetInCU: 0x126, offset: 0x5524F, size: 0x8, addend: 0x0, symName: '-[CPRHSItem isRHSItem]', symObjAddr: 0x58, symBinAddr: 0xE588, symSize: 0x8 }
-  - { offsetInCU: 0x159, offset: 0x55282, size: 0x8, addend: 0x0, symName: '-[CPRHSItem isEqual:]', symObjAddr: 0x60, symBinAddr: 0xE590, symSize: 0xF0 }
-  - { offsetInCU: 0x1A0, offset: 0x552C9, size: 0x8, addend: 0x0, symName: '-[CPRHSItem copyWithZone:]', symObjAddr: 0x150, symBinAddr: 0xE680, symSize: 0x98 }
-  - { offsetInCU: 0x1F7, offset: 0x55320, size: 0x8, addend: 0x0, symName: '-[CPRHSItem dealloc]', symObjAddr: 0x1E8, symBinAddr: 0xE718, symSize: 0x50 }
-  - { offsetInCU: 0x22A, offset: 0x55353, size: 0x8, addend: 0x0, symName: '-[CPRHSItem description]', symObjAddr: 0x238, symBinAddr: 0xE768, symSize: 0x2FC }
-  - { offsetInCU: 0x2C4, offset: 0x553ED, size: 0x8, addend: 0x0, symName: '-[CPRHSItem tags]', symObjAddr: 0x534, symBinAddr: 0xEA64, symSize: 0x18 }
-  - { offsetInCU: 0x2FB, offset: 0x55424, size: 0x8, addend: 0x0, symName: '-[CPRHSItem setTags:]', symObjAddr: 0x54C, symBinAddr: 0xEA7C, symSize: 0x3C }
-  - { offsetInCU: 0x33E, offset: 0x55467, size: 0x8, addend: 0x0, symName: '-[CPRHSItem nonTerminalsUsed]', symObjAddr: 0x588, symBinAddr: 0xEAB8, symSize: 0x1D4 }
-  - { offsetInCU: 0x3B9, offset: 0x554E2, size: 0x8, addend: 0x0, symName: '-[CPRHSItem alternatives]', symObjAddr: 0x75C, symBinAddr: 0xEC8C, symSize: 0xC }
-  - { offsetInCU: 0x3F0, offset: 0x55519, size: 0x8, addend: 0x0, symName: '-[CPRHSItem setAlternatives:]', symObjAddr: 0x768, symBinAddr: 0xEC98, symSize: 0x8 }
-  - { offsetInCU: 0x42F, offset: 0x55558, size: 0x8, addend: 0x0, symName: '-[CPRHSItem repeats]', symObjAddr: 0x770, symBinAddr: 0xECA0, symSize: 0xC }
-  - { offsetInCU: 0x466, offset: 0x5558F, size: 0x8, addend: 0x0, symName: '-[CPRHSItem setRepeats:]', symObjAddr: 0x77C, symBinAddr: 0xECAC, symSize: 0x8 }
-  - { offsetInCU: 0x4A3, offset: 0x555CC, size: 0x8, addend: 0x0, symName: '-[CPRHSItem mayNotExist]', symObjAddr: 0x784, symBinAddr: 0xECB4, symSize: 0xC }
-  - { offsetInCU: 0x4DA, offset: 0x55603, size: 0x8, addend: 0x0, symName: '-[CPRHSItem setMayNotExist:]', symObjAddr: 0x790, symBinAddr: 0xECC0, symSize: 0x8 }
-  - { offsetInCU: 0x517, offset: 0x55640, size: 0x8, addend: 0x0, symName: '-[CPRHSItem shouldCollapse]', symObjAddr: 0x798, symBinAddr: 0xECC8, symSize: 0xC }
-  - { offsetInCU: 0x54E, offset: 0x55677, size: 0x8, addend: 0x0, symName: '-[CPRHSItem setShouldCollapse:]', symObjAddr: 0x7A4, symBinAddr: 0xECD4, symSize: 0x8 }
-  - { offsetInCU: 0x58B, offset: 0x556B4, size: 0x8, addend: 0x0, symName: '-[CPRHSItem(Private) addTag:]', symObjAddr: 0x7AC, symBinAddr: 0xECDC, symSize: 0x48 }
-  - { offsetInCU: 0x5CE, offset: 0x556F7, size: 0x8, addend: 0x0, symName: '-[CPRHSItem(Private) tagNamesWithError:]', symObjAddr: 0x7F4, symBinAddr: 0xED24, symSize: 0x364 }
-  - { offsetInCU: 0x6C0, offset: 0x557E9, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsRHSItem) isRHSItem]', symObjAddr: 0xB58, symBinAddr: 0xF088, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x558A1, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult initWithSyntaxTree:]', symObjAddr: 0x0, symBinAddr: 0xF090, symSize: 0x1E8 }
-  - { offsetInCU: 0xC4, offset: 0x5593E, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult initWithSyntaxTree:]', symObjAddr: 0x0, symBinAddr: 0xF090, symSize: 0x1E8 }
-  - { offsetInCU: 0x178, offset: 0x559F2, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult dealloc]', symObjAddr: 0x1E8, symBinAddr: 0xF278, symSize: 0x58 }
-  - { offsetInCU: 0x1AB, offset: 0x55A25, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult isRHSItemResult]', symObjAddr: 0x240, symBinAddr: 0xF2D0, symSize: 0x8 }
-  - { offsetInCU: 0x1DE, offset: 0x55A58, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult contents]', symObjAddr: 0x248, symBinAddr: 0xF2D8, symSize: 0xC }
-  - { offsetInCU: 0x215, offset: 0x55A8F, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult setContents:]', symObjAddr: 0x254, symBinAddr: 0xF2E4, symSize: 0x8 }
-  - { offsetInCU: 0x254, offset: 0x55ACE, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult tagNames]', symObjAddr: 0x25C, symBinAddr: 0xF2EC, symSize: 0xC }
-  - { offsetInCU: 0x28B, offset: 0x55B05, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult setTagNames:]', symObjAddr: 0x268, symBinAddr: 0xF2F8, symSize: 0x8 }
-  - { offsetInCU: 0x2CA, offset: 0x55B44, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult shouldCollapse]', symObjAddr: 0x270, symBinAddr: 0xF300, symSize: 0xC }
-  - { offsetInCU: 0x301, offset: 0x55B7B, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult setShouldCollapse:]', symObjAddr: 0x27C, symBinAddr: 0xF30C, symSize: 0x8 }
-  - { offsetInCU: 0x33E, offset: 0x55BB8, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult tagValues]', symObjAddr: 0x284, symBinAddr: 0xF314, symSize: 0xC }
-  - { offsetInCU: 0x375, offset: 0x55BEF, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult setTagValues:]', symObjAddr: 0x290, symBinAddr: 0xF320, symSize: 0x8 }
-  - { offsetInCU: 0x3B4, offset: 0x55C2E, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsRHSItemResult) isRHSItemResult]', symObjAddr: 0x298, symBinAddr: 0xF328, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x55D6F, size: 0x8, addend: 0x0, symName: '+[CPErrorToken errorWithMessage:]', symObjAddr: 0x0, symBinAddr: 0xF330, symSize: 0x28 }
-  - { offsetInCU: 0xBD, offset: 0x55E05, size: 0x8, addend: 0x0, symName: '+[CPErrorToken errorWithMessage:]', symObjAddr: 0x0, symBinAddr: 0xF330, symSize: 0x28 }
-  - { offsetInCU: 0x104, offset: 0x55E4C, size: 0x8, addend: 0x0, symName: '-[CPErrorToken initWithMesage:]', symObjAddr: 0x28, symBinAddr: 0xF358, symSize: 0x58 }
-  - { offsetInCU: 0x14B, offset: 0x55E93, size: 0x8, addend: 0x0, symName: '-[CPErrorToken dealloc]', symObjAddr: 0x80, symBinAddr: 0xF3B0, symSize: 0x50 }
-  - { offsetInCU: 0x17E, offset: 0x55EC6, size: 0x8, addend: 0x0, symName: '-[CPErrorToken name]', symObjAddr: 0xD0, symBinAddr: 0xF400, symSize: 0xC }
-  - { offsetInCU: 0x1B1, offset: 0x55EF9, size: 0x8, addend: 0x0, symName: '-[CPErrorToken hash]', symObjAddr: 0xDC, symBinAddr: 0xF40C, symSize: 0x8 }
-  - { offsetInCU: 0x1E4, offset: 0x55F2C, size: 0x8, addend: 0x0, symName: '-[CPErrorToken isErrorToken]', symObjAddr: 0xE4, symBinAddr: 0xF414, symSize: 0x8 }
-  - { offsetInCU: 0x217, offset: 0x55F5F, size: 0x8, addend: 0x0, symName: '-[CPErrorToken isEqual:]', symObjAddr: 0xEC, symBinAddr: 0xF41C, symSize: 0x8 }
-  - { offsetInCU: 0x25A, offset: 0x55FA2, size: 0x8, addend: 0x0, symName: '-[CPErrorToken errorMessage]', symObjAddr: 0xF4, symBinAddr: 0xF424, symSize: 0x10 }
-  - { offsetInCU: 0x291, offset: 0x55FD9, size: 0x8, addend: 0x0, symName: '-[CPErrorToken setErrorMessage:]', symObjAddr: 0x104, symBinAddr: 0xF434, symSize: 0xC }
-  - { offsetInCU: 0x2D0, offset: 0x56018, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsErrorToken) isErrorToken]', symObjAddr: 0x110, symBinAddr: 0xF440, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x560CA, size: 0x8, addend: 0x0, symName: '+[CPRecoveryAction recoveryActionWithAdditionalToken:]', symObjAddr: 0x0, symBinAddr: 0xF448, symSize: 0x28 }
-  - { offsetInCU: 0x109, offset: 0x561AC, size: 0x8, addend: 0x0, symName: '+[CPRecoveryAction recoveryActionWithAdditionalToken:]', symObjAddr: 0x0, symBinAddr: 0xF448, symSize: 0x28 }
-  - { offsetInCU: 0x150, offset: 0x561F3, size: 0x8, addend: 0x0, symName: '+[CPRecoveryAction recoveryActionDeletingCurrentToken]', symObjAddr: 0x28, symBinAddr: 0xF470, symSize: 0x18 }
-  - { offsetInCU: 0x187, offset: 0x5622A, size: 0x8, addend: 0x0, symName: '+[CPRecoveryAction recoveryActionStop]', symObjAddr: 0x40, symBinAddr: 0xF488, symSize: 0x18 }
-  - { offsetInCU: 0x1BE, offset: 0x56261, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction initWithAdditionalToken:]', symObjAddr: 0x58, symBinAddr: 0xF4A0, symSize: 0x64 }
-  - { offsetInCU: 0x205, offset: 0x562A8, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction initWithDeleteAction]', symObjAddr: 0xBC, symBinAddr: 0xF504, symSize: 0x54 }
-  - { offsetInCU: 0x23C, offset: 0x562DF, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction initWithStopAction]', symObjAddr: 0x110, symBinAddr: 0xF558, symSize: 0x54 }
-  - { offsetInCU: 0x273, offset: 0x56316, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction dealloc]', symObjAddr: 0x164, symBinAddr: 0xF5AC, symSize: 0x48 }
-  - { offsetInCU: 0x2A6, offset: 0x56349, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction recoveryType]', symObjAddr: 0x1AC, symBinAddr: 0xF5F4, symSize: 0x8 }
-  - { offsetInCU: 0x2DD, offset: 0x56380, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction setRecoveryType:]', symObjAddr: 0x1B4, symBinAddr: 0xF5FC, symSize: 0x8 }
-  - { offsetInCU: 0x31A, offset: 0x563BD, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction additionalToken]', symObjAddr: 0x1BC, symBinAddr: 0xF604, symSize: 0xC }
-  - { offsetInCU: 0x351, offset: 0x563F4, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction setAdditionalToken:]', symObjAddr: 0x1C8, symBinAddr: 0xF610, symSize: 0x8 }
-  - { offsetInCU: 0x27, offset: 0x564A6, size: 0x8, addend: 0x0, symName: '-[NSArray(Functional) cp_map:]', symObjAddr: 0x0, symBinAddr: 0xF618, symSize: 0x140 }
-  - { offsetInCU: 0x36, offset: 0x564B5, size: 0x8, addend: 0x0, symName: '-[NSArray(Functional) cp_map:]', symObjAddr: 0x0, symBinAddr: 0xF618, symSize: 0x140 }
+  - { offset: 0x47BF4, size: 0x8, addend: 0x0, symName: '-[CPTokeniser init]', symObjAddr: 0x0, symBinAddr: 0x231C, symSize: 0x60 }
+  - { offset: 0x47C34, size: 0x8, addend: 0x0, symName: '-[CPTokeniser advanceLineNumber:columnNumber:withInput:range:]', symObjAddr: 0x61C, symBinAddr: 0x2938, symSize: 0xEC }
+  - { offset: 0x47C5A, size: 0x8, addend: 0x0, symName: '_advanceLineNumber:columnNumber:withInput:range:.onceToken', symObjAddr: 0x4AD0, symBinAddr: 0x22990, symSize: 0x0 }
+  - { offset: 0x47D8D, size: 0x8, addend: 0x0, symName: _newlineCharset, symObjAddr: 0x4AD8, symBinAddr: 0x22998, symSize: 0x0 }
+  - { offset: 0x47E79, size: 0x8, addend: 0x0, symName: '-[CPTokeniser init]', symObjAddr: 0x0, symBinAddr: 0x231C, symSize: 0x60 }
+  - { offset: 0x47EB0, size: 0x8, addend: 0x0, symName: '-[CPTokeniser initWithCoder:]', symObjAddr: 0x60, symBinAddr: 0x237C, symSize: 0x68 }
+  - { offset: 0x47EF7, size: 0x8, addend: 0x0, symName: '-[CPTokeniser encodeWithCoder:]', symObjAddr: 0xC8, symBinAddr: 0x23E4, symSize: 0x30 }
+  - { offset: 0x47F3A, size: 0x8, addend: 0x0, symName: '-[CPTokeniser dealloc]', symObjAddr: 0xF8, symBinAddr: 0x2414, symSize: 0x48 }
+  - { offset: 0x47F6D, size: 0x8, addend: 0x0, symName: '-[CPTokeniser addTokenRecogniser:]', symObjAddr: 0x140, symBinAddr: 0x245C, symSize: 0x24 }
+  - { offset: 0x47FB0, size: 0x8, addend: 0x0, symName: '-[CPTokeniser insertTokenRecogniser:atPriority:]', symObjAddr: 0x164, symBinAddr: 0x2480, symSize: 0x2C }
+  - { offset: 0x48003, size: 0x8, addend: 0x0, symName: '-[CPTokeniser insertTokenRecogniser:beforeRecogniser:]', symObjAddr: 0x190, symBinAddr: 0x24AC, symSize: 0x74 }
+  - { offset: 0x48066, size: 0x8, addend: 0x0, symName: '-[CPTokeniser removeTokenRecogniser:]', symObjAddr: 0x204, symBinAddr: 0x2520, symSize: 0x24 }
+  - { offset: 0x480A9, size: 0x8, addend: 0x0, symName: '-[CPTokeniser tokenise:]', symObjAddr: 0x228, symBinAddr: 0x2544, symSize: 0x50 }
+  - { offset: 0x48100, size: 0x8, addend: 0x0, symName: '-[CPTokeniser tokenise:into:]', symObjAddr: 0x278, symBinAddr: 0x2594, symSize: 0x32C }
+  - { offset: 0x48289, size: 0x8, addend: 0x0, symName: '-[CPTokeniser addToken:toStream:]', symObjAddr: 0x5A4, symBinAddr: 0x28C0, symSize: 0x78 }
+  - { offset: 0x48356, size: 0x8, addend: 0x0, symName: '___62-[CPTokeniser advanceLineNumber:columnNumber:withInput:range:]_block_invoke', symObjAddr: 0x708, symBinAddr: 0x2A24, symSize: 0x30 }
+  - { offset: 0x4837D, size: 0x8, addend: 0x0, symName: '-[CPTokeniser setDelegate:]', symObjAddr: 0x738, symBinAddr: 0x2A54, symSize: 0xF8 }
+  - { offset: 0x483C0, size: 0x8, addend: 0x0, symName: '-[CPTokeniser tokenRecognisers]', symObjAddr: 0x830, symBinAddr: 0x2B4C, symSize: 0xC }
+  - { offset: 0x483F7, size: 0x8, addend: 0x0, symName: '-[CPTokeniser setTokenRecognisers:]', symObjAddr: 0x83C, symBinAddr: 0x2B58, symSize: 0x8 }
+  - { offset: 0x48436, size: 0x8, addend: 0x0, symName: '-[CPTokeniser delegate]', symObjAddr: 0x844, symBinAddr: 0x2B60, symSize: 0x8 }
+  - { offset: 0x485DD, size: 0x8, addend: 0x0, symName: '+[CPTokenStream tokenStreamWithTokens:]', symObjAddr: 0x0, symBinAddr: 0x2B68, symSize: 0x28 }
+  - { offset: 0x48652, size: 0x8, addend: 0x0, symName: '+[CPTokenStream tokenStreamWithTokens:]', symObjAddr: 0x0, symBinAddr: 0x2B68, symSize: 0x28 }
+  - { offset: 0x48699, size: 0x8, addend: 0x0, symName: '-[CPTokenStream initWithTokens:]', symObjAddr: 0x28, symBinAddr: 0x2B90, symSize: 0x44 }
+  - { offset: 0x486E0, size: 0x8, addend: 0x0, symName: '-[CPTokenStream init]', symObjAddr: 0x6C, symBinAddr: 0x2BD4, symSize: 0x7C }
+  - { offset: 0x48717, size: 0x8, addend: 0x0, symName: '-[CPTokenStream dealloc]', symObjAddr: 0xE8, symBinAddr: 0x2C50, symSize: 0x50 }
+  - { offset: 0x4874A, size: 0x8, addend: 0x0, symName: '-[CPTokenStream peekToken]', symObjAddr: 0x138, symBinAddr: 0x2CA0, symSize: 0x64 }
+  - { offset: 0x48791, size: 0x8, addend: 0x0, symName: '-[CPTokenStream popToken]', symObjAddr: 0x19C, symBinAddr: 0x2D04, symSize: 0x6C }
+  - { offset: 0x487D8, size: 0x8, addend: 0x0, symName: '-[CPTokenStream tokens]', symObjAddr: 0x208, symBinAddr: 0x2D70, symSize: 0x18 }
+  - { offset: 0x4880F, size: 0x8, addend: 0x0, symName: '-[CPTokenStream setTokens:]', symObjAddr: 0x220, symBinAddr: 0x2D88, symSize: 0x48 }
+  - { offset: 0x48852, size: 0x8, addend: 0x0, symName: '-[CPTokenStream pushToken:]', symObjAddr: 0x268, symBinAddr: 0x2DD0, symSize: 0x3C }
+  - { offset: 0x48895, size: 0x8, addend: 0x0, symName: '-[CPTokenStream pushTokens:]', symObjAddr: 0x2A4, symBinAddr: 0x2E0C, symSize: 0x38 }
+  - { offset: 0x488D8, size: 0x8, addend: 0x0, symName: '-[CPTokenStream closeTokenStream]', symObjAddr: 0x2DC, symBinAddr: 0x2E44, symSize: 0x34 }
+  - { offset: 0x4890B, size: 0x8, addend: 0x0, symName: '-[CPTokenStream description]', symObjAddr: 0x310, symBinAddr: 0x2E78, symSize: 0x118 }
+  - { offset: 0x48969, size: 0x8, addend: 0x0, symName: '-[CPTokenStream unlockTokenStream]', symObjAddr: 0x428, symBinAddr: 0x2F90, symSize: 0x40 }
+  - { offset: 0x4899C, size: 0x8, addend: 0x0, symName: '-[CPTokenStream hash]', symObjAddr: 0x468, symBinAddr: 0x2FD0, symSize: 0x14 }
+  - { offset: 0x489D3, size: 0x8, addend: 0x0, symName: '-[CPTokenStream isTokenStream]', symObjAddr: 0x47C, symBinAddr: 0x2FE4, symSize: 0x8 }
+  - { offset: 0x48A06, size: 0x8, addend: 0x0, symName: '-[CPTokenStream isEqual:]', symObjAddr: 0x484, symBinAddr: 0x2FEC, symSize: 0x40 }
+  - { offset: 0x48A4D, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsTokenStream) isTokenStream]', symObjAddr: 0x4C4, symBinAddr: 0x302C, symSize: 0x8 }
+  - { offset: 0x48B5A, size: 0x8, addend: 0x0, symName: '-[CPToken name]', symObjAddr: 0x0, symBinAddr: 0x3034, symSize: 0x34 }
+  - { offset: 0x48BFF, size: 0x8, addend: 0x0, symName: '-[CPToken name]', symObjAddr: 0x0, symBinAddr: 0x3034, symSize: 0x34 }
+  - { offset: 0x48C32, size: 0x8, addend: 0x0, symName: '-[CPToken hash]', symObjAddr: 0x34, symBinAddr: 0x3068, symSize: 0x14 }
+  - { offset: 0x48C69, size: 0x8, addend: 0x0, symName: '-[CPToken isEqual:]', symObjAddr: 0x48, symBinAddr: 0x307C, symSize: 0x54 }
+  - { offset: 0x48CB0, size: 0x8, addend: 0x0, symName: '-[CPToken description]', symObjAddr: 0x9C, symBinAddr: 0x30D0, symSize: 0x40 }
+  - { offset: 0x48CE7, size: 0x8, addend: 0x0, symName: '-[CPToken lineNumber]', symObjAddr: 0xDC, symBinAddr: 0x3110, symSize: 0x8 }
+  - { offset: 0x48D1E, size: 0x8, addend: 0x0, symName: '-[CPToken setLineNumber:]', symObjAddr: 0xE4, symBinAddr: 0x3118, symSize: 0x8 }
+  - { offset: 0x48D5B, size: 0x8, addend: 0x0, symName: '-[CPToken columnNumber]', symObjAddr: 0xEC, symBinAddr: 0x3120, symSize: 0x8 }
+  - { offset: 0x48D92, size: 0x8, addend: 0x0, symName: '-[CPToken setColumnNumber:]', symObjAddr: 0xF4, symBinAddr: 0x3128, symSize: 0x8 }
+  - { offset: 0x48DCF, size: 0x8, addend: 0x0, symName: '-[CPToken characterNumber]', symObjAddr: 0xFC, symBinAddr: 0x3130, symSize: 0x8 }
+  - { offset: 0x48E06, size: 0x8, addend: 0x0, symName: '-[CPToken setCharacterNumber:]', symObjAddr: 0x104, symBinAddr: 0x3138, symSize: 0x8 }
+  - { offset: 0x48E43, size: 0x8, addend: 0x0, symName: '-[CPToken length]', symObjAddr: 0x10C, symBinAddr: 0x3140, symSize: 0x8 }
+  - { offset: 0x48E7A, size: 0x8, addend: 0x0, symName: '-[CPToken setLength:]', symObjAddr: 0x114, symBinAddr: 0x3148, symSize: 0x8 }
+  - { offset: 0x48EB7, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsToken) isToken]', symObjAddr: 0x11C, symBinAddr: 0x3150, symSize: 0x8 }
+  - { offset: 0x48F5B, size: 0x8, addend: 0x0, symName: '+[CPKeywordRecogniser recogniserForKeyword:]', symObjAddr: 0x0, symBinAddr: 0x3158, symSize: 0x28 }
+  - { offset: 0x48FB8, size: 0x8, addend: 0x0, symName: '+[CPKeywordRecogniser recogniserForKeyword:]', symObjAddr: 0x0, symBinAddr: 0x3158, symSize: 0x28 }
+  - { offset: 0x48FFF, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser initWithKeyword:]', symObjAddr: 0x28, symBinAddr: 0x3180, symSize: 0x8 }
+  - { offset: 0x49042, size: 0x8, addend: 0x0, symName: '+[CPKeywordRecogniser recogniserForKeyword:invalidFollowingCharacters:]', symObjAddr: 0x30, symBinAddr: 0x3188, symSize: 0x30 }
+  - { offset: 0x49099, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser initWithKeyword:invalidFollowingCharacters:]', symObjAddr: 0x60, symBinAddr: 0x31B8, symSize: 0x70 }
+  - { offset: 0x490F0, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser init]', symObjAddr: 0xD0, symBinAddr: 0x3228, symSize: 0xC }
+  - { offset: 0x49125, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser initWithCoder:]', symObjAddr: 0xDC, symBinAddr: 0x3234, symSize: 0x84 }
+  - { offset: 0x4916C, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser encodeWithCoder:]', symObjAddr: 0x160, symBinAddr: 0x32B8, symSize: 0x50 }
+  - { offset: 0x491AF, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser dealloc]', symObjAddr: 0x1B0, symBinAddr: 0x3308, symSize: 0x50 }
+  - { offset: 0x491E2, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x200, symBinAddr: 0x3358, symSize: 0xD4 }
+  - { offset: 0x49304, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser keyword]', symObjAddr: 0x2D4, symBinAddr: 0x342C, symSize: 0x8 }
+  - { offset: 0x4933B, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser setKeyword:]', symObjAddr: 0x2DC, symBinAddr: 0x3434, symSize: 0x8 }
+  - { offset: 0x4937A, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser invalidFollowingCharacters]', symObjAddr: 0x2E4, symBinAddr: 0x343C, symSize: 0x8 }
+  - { offset: 0x493B1, size: 0x8, addend: 0x0, symName: '-[CPKeywordRecogniser setInvalidFollowingCharacters:]', symObjAddr: 0x2EC, symBinAddr: 0x3444, symSize: 0x8 }
+  - { offset: 0x494CA, size: 0x8, addend: 0x0, symName: '+[CPKeywordToken tokenWithKeyword:]', symObjAddr: 0x0, symBinAddr: 0x344C, symSize: 0x30 }
+  - { offset: 0x49565, size: 0x8, addend: 0x0, symName: '+[CPKeywordToken tokenWithKeyword:]', symObjAddr: 0x0, symBinAddr: 0x344C, symSize: 0x30 }
+  - { offset: 0x495A8, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken initWithKeyword:]', symObjAddr: 0x30, symBinAddr: 0x347C, symSize: 0x58 }
+  - { offset: 0x495EF, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken init]', symObjAddr: 0x88, symBinAddr: 0x34D4, symSize: 0xC }
+  - { offset: 0x49624, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken dealloc]', symObjAddr: 0x94, symBinAddr: 0x34E0, symSize: 0x50 }
+  - { offset: 0x49657, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken description]', symObjAddr: 0xE4, symBinAddr: 0x3530, symSize: 0x40 }
+  - { offset: 0x4968E, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken name]', symObjAddr: 0x124, symBinAddr: 0x3570, symSize: 0x4 }
+  - { offset: 0x496C3, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken hash]', symObjAddr: 0x128, symBinAddr: 0x3574, symSize: 0x14 }
+  - { offset: 0x496FA, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken isKeywordToken]', symObjAddr: 0x13C, symBinAddr: 0x3588, symSize: 0x8 }
+  - { offset: 0x4972D, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken isEqual:]', symObjAddr: 0x144, symBinAddr: 0x3590, symSize: 0x48 }
+  - { offset: 0x49774, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken keyword]', symObjAddr: 0x18C, symBinAddr: 0x35D8, symSize: 0x10 }
+  - { offset: 0x497AB, size: 0x8, addend: 0x0, symName: '-[CPKeywordToken setKeyword:]', symObjAddr: 0x19C, symBinAddr: 0x35E8, symSize: 0xC }
+  - { offset: 0x497EA, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsKeywordToken) isKeywordToken]', symObjAddr: 0x1A8, symBinAddr: 0x35F4, symSize: 0x8 }
+  - { offset: 0x49897, size: 0x8, addend: 0x0, symName: '+[CPEOFToken eof]', symObjAddr: 0x0, symBinAddr: 0x35FC, symSize: 0x1C }
+  - { offset: 0x49913, size: 0x8, addend: 0x0, symName: '+[CPEOFToken eof]', symObjAddr: 0x0, symBinAddr: 0x35FC, symSize: 0x1C }
+  - { offset: 0x49946, size: 0x8, addend: 0x0, symName: '-[CPEOFToken name]', symObjAddr: 0x1C, symBinAddr: 0x3618, symSize: 0xC }
+  - { offset: 0x49979, size: 0x8, addend: 0x0, symName: '-[CPEOFToken hash]', symObjAddr: 0x28, symBinAddr: 0x3624, symSize: 0x8 }
+  - { offset: 0x499AC, size: 0x8, addend: 0x0, symName: '-[CPEOFToken isEOFToken]', symObjAddr: 0x30, symBinAddr: 0x362C, symSize: 0x8 }
+  - { offset: 0x499DF, size: 0x8, addend: 0x0, symName: '-[CPEOFToken isEqual:]', symObjAddr: 0x38, symBinAddr: 0x3634, symSize: 0x8 }
+  - { offset: 0x49A22, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsEOFToken) isEOFToken]', symObjAddr: 0x40, symBinAddr: 0x363C, symSize: 0x8 }
+  - { offset: 0x49AD4, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser initWithCoder:]', symObjAddr: 0x0, symBinAddr: 0x3644, symSize: 0x84 }
+  - { offset: 0x49B60, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser initWithCoder:]', symObjAddr: 0x0, symBinAddr: 0x3644, symSize: 0x84 }
+  - { offset: 0x49BA7, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser encodeWithCoder:]', symObjAddr: 0x84, symBinAddr: 0x36C8, symSize: 0x50 }
+  - { offset: 0x49BEA, size: 0x8, addend: 0x0, symName: '+[CPNumberRecogniser integerRecogniser]', symObjAddr: 0xD4, symBinAddr: 0x3718, symSize: 0x44 }
+  - { offset: 0x49C2D, size: 0x8, addend: 0x0, symName: '+[CPNumberRecogniser floatRecogniser]', symObjAddr: 0x118, symBinAddr: 0x375C, symSize: 0x44 }
+  - { offset: 0x49C70, size: 0x8, addend: 0x0, symName: '+[CPNumberRecogniser numberRecogniser]', symObjAddr: 0x15C, symBinAddr: 0x37A0, symSize: 0x44 }
+  - { offset: 0x49CB3, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x1A0, symBinAddr: 0x37E4, symSize: 0x154 }
+  - { offset: 0x49D83, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser recognisesInts]', symObjAddr: 0x2F4, symBinAddr: 0x3938, symSize: 0xC }
+  - { offset: 0x49DBA, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser setRecognisesInts:]', symObjAddr: 0x300, symBinAddr: 0x3944, symSize: 0x8 }
+  - { offset: 0x49DF7, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser recognisesFloats]', symObjAddr: 0x308, symBinAddr: 0x394C, symSize: 0xC }
+  - { offset: 0x49E2E, size: 0x8, addend: 0x0, symName: '-[CPNumberRecogniser setRecognisesFloats:]', symObjAddr: 0x314, symBinAddr: 0x3958, symSize: 0x8 }
+  - { offset: 0x49F56, size: 0x8, addend: 0x0, symName: '+[CPNumberToken tokenWithNumber:]', symObjAddr: 0x0, symBinAddr: 0x3960, symSize: 0x30 }
+  - { offset: 0x49FF6, size: 0x8, addend: 0x0, symName: '+[CPNumberToken tokenWithNumber:]', symObjAddr: 0x0, symBinAddr: 0x3960, symSize: 0x30 }
+  - { offset: 0x4A039, size: 0x8, addend: 0x0, symName: '-[CPNumberToken initWithNumber:]', symObjAddr: 0x30, symBinAddr: 0x3990, symSize: 0x58 }
+  - { offset: 0x4A080, size: 0x8, addend: 0x0, symName: '-[CPNumberToken init]', symObjAddr: 0x88, symBinAddr: 0x39E8, symSize: 0x34 }
+  - { offset: 0x4A0B7, size: 0x8, addend: 0x0, symName: '-[CPNumberToken dealloc]', symObjAddr: 0xBC, symBinAddr: 0x3A1C, symSize: 0x50 }
+  - { offset: 0x4A0EA, size: 0x8, addend: 0x0, symName: '-[CPNumberToken description]', symObjAddr: 0x10C, symBinAddr: 0x3A6C, symSize: 0x40 }
+  - { offset: 0x4A121, size: 0x8, addend: 0x0, symName: '-[CPNumberToken name]', symObjAddr: 0x14C, symBinAddr: 0x3AAC, symSize: 0xC }
+  - { offset: 0x4A154, size: 0x8, addend: 0x0, symName: '-[CPNumberToken hash]', symObjAddr: 0x158, symBinAddr: 0x3AB8, symSize: 0x14 }
+  - { offset: 0x4A18B, size: 0x8, addend: 0x0, symName: '-[CPNumberToken isNumberToken]', symObjAddr: 0x16C, symBinAddr: 0x3ACC, symSize: 0x8 }
+  - { offset: 0x4A1BE, size: 0x8, addend: 0x0, symName: '-[CPNumberToken isEqual:]', symObjAddr: 0x174, symBinAddr: 0x3AD4, symSize: 0x48 }
+  - { offset: 0x4A205, size: 0x8, addend: 0x0, symName: '-[CPNumberToken number]', symObjAddr: 0x1BC, symBinAddr: 0x3B1C, symSize: 0x10 }
+  - { offset: 0x4A23C, size: 0x8, addend: 0x0, symName: '-[CPNumberToken setNumber:]', symObjAddr: 0x1CC, symBinAddr: 0x3B2C, symSize: 0xC }
+  - { offset: 0x4A27B, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsNumberToken) isNumberToken]', symObjAddr: 0x1D8, symBinAddr: 0x3B38, symSize: 0x8 }
+  - { offset: 0x4A328, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceRecogniser initWithCoder:]', symObjAddr: 0x0, symBinAddr: 0x3B40, symSize: 0x34 }
+  - { offset: 0x4A347, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceRecogniser initWithCoder:]', symObjAddr: 0x0, symBinAddr: 0x3B40, symSize: 0x34 }
+  - { offset: 0x4A38A, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceRecogniser encodeWithCoder:]', symObjAddr: 0x34, symBinAddr: 0x3B74, symSize: 0x4 }
+  - { offset: 0x4A3C5, size: 0x8, addend: 0x0, symName: '+[CPWhiteSpaceRecogniser whiteSpaceRecogniser]', symObjAddr: 0x38, symBinAddr: 0x3B78, symSize: 0x1C }
+  - { offset: 0x4A3F8, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x54, symBinAddr: 0x3B94, symSize: 0x8C }
+  - { offset: 0x4A562, size: 0x8, addend: 0x0, symName: '+[CPWhiteSpaceToken whiteSpace:]', symObjAddr: 0x0, symBinAddr: 0x3C20, symSize: 0x30 }
+  - { offset: 0x4A5F8, size: 0x8, addend: 0x0, symName: '+[CPWhiteSpaceToken whiteSpace:]', symObjAddr: 0x0, symBinAddr: 0x3C20, symSize: 0x30 }
+  - { offset: 0x4A63B, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken initWithWhiteSpace:]', symObjAddr: 0x30, symBinAddr: 0x3C50, symSize: 0x58 }
+  - { offset: 0x4A682, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken init]', symObjAddr: 0x88, symBinAddr: 0x3CA8, symSize: 0xC }
+  - { offset: 0x4A6B7, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken dealloc]', symObjAddr: 0x94, symBinAddr: 0x3CB4, symSize: 0x50 }
+  - { offset: 0x4A6EA, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken name]', symObjAddr: 0xE4, symBinAddr: 0x3D04, symSize: 0xC }
+  - { offset: 0x4A71D, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken hash]', symObjAddr: 0xF0, symBinAddr: 0x3D10, symSize: 0x8 }
+  - { offset: 0x4A750, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken isWhiteSpaceToken]', symObjAddr: 0xF8, symBinAddr: 0x3D18, symSize: 0x8 }
+  - { offset: 0x4A783, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken isEqual:]', symObjAddr: 0x100, symBinAddr: 0x3D20, symSize: 0x8 }
+  - { offset: 0x4A7C6, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken whiteSpace]', symObjAddr: 0x108, symBinAddr: 0x3D28, symSize: 0x10 }
+  - { offset: 0x4A7FD, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceToken setWhiteSpace:]', symObjAddr: 0x118, symBinAddr: 0x3D38, symSize: 0xC }
+  - { offset: 0x4A83C, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsWhiteSpaceToken) isWhiteSpaceToken]', symObjAddr: 0x124, symBinAddr: 0x3D44, symSize: 0x8 }
+  - { offset: 0x4A8EE, size: 0x8, addend: 0x0, symName: '+[CPIdentifierRecogniser identifierRecogniser]', symObjAddr: 0x0, symBinAddr: 0x3D4C, symSize: 0x28 }
+  - { offset: 0x4A946, size: 0x8, addend: 0x0, symName: '+[CPIdentifierRecogniser identifierRecogniser]', symObjAddr: 0x0, symBinAddr: 0x3D4C, symSize: 0x28 }
+  - { offset: 0x4A979, size: 0x8, addend: 0x0, symName: '+[CPIdentifierRecogniser identifierRecogniserWithInitialCharacters:identifierCharacters:]', symObjAddr: 0x28, symBinAddr: 0x3D74, symSize: 0x38 }
+  - { offset: 0x4A9CC, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser initWithInitialCharacters:identifierCharacters:]', symObjAddr: 0x60, symBinAddr: 0x3DAC, symSize: 0x70 }
+  - { offset: 0x4AA23, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser initWithCoder:]', symObjAddr: 0xD0, symBinAddr: 0x3E1C, symSize: 0x84 }
+  - { offset: 0x4AA6A, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser encodeWithCoder:]', symObjAddr: 0x154, symBinAddr: 0x3EA0, symSize: 0x50 }
+  - { offset: 0x4AAAD, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser dealloc]', symObjAddr: 0x1A4, symBinAddr: 0x3EF0, symSize: 0x50 }
+  - { offset: 0x4AAE0, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x1F4, symBinAddr: 0x3F40, symSize: 0x15C }
+  - { offset: 0x4ABA2, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser initialCharacters]', symObjAddr: 0x350, symBinAddr: 0x409C, symSize: 0xC }
+  - { offset: 0x4ABD9, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser setInitialCharacters:]', symObjAddr: 0x35C, symBinAddr: 0x40A8, symSize: 0x8 }
+  - { offset: 0x4AC18, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser identifierCharacters]', symObjAddr: 0x364, symBinAddr: 0x40B0, symSize: 0xC }
+  - { offset: 0x4AC4F, size: 0x8, addend: 0x0, symName: '-[CPIdentifierRecogniser setIdentifierCharacters:]', symObjAddr: 0x370, symBinAddr: 0x40BC, symSize: 0x8 }
+  - { offset: 0x4AD80, size: 0x8, addend: 0x0, symName: '+[CPIdentifierToken tokenWithIdentifier:]', symObjAddr: 0x0, symBinAddr: 0x40C4, symSize: 0x30 }
+  - { offset: 0x4AE1B, size: 0x8, addend: 0x0, symName: '+[CPIdentifierToken tokenWithIdentifier:]', symObjAddr: 0x0, symBinAddr: 0x40C4, symSize: 0x30 }
+  - { offset: 0x4AE5E, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken initWithIdentifier:]', symObjAddr: 0x30, symBinAddr: 0x40F4, symSize: 0x58 }
+  - { offset: 0x4AEA5, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken init]', symObjAddr: 0x88, symBinAddr: 0x414C, symSize: 0xC }
+  - { offset: 0x4AEDA, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken dealloc]', symObjAddr: 0x94, symBinAddr: 0x4158, symSize: 0x50 }
+  - { offset: 0x4AF0D, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken description]', symObjAddr: 0xE4, symBinAddr: 0x41A8, symSize: 0x40 }
+  - { offset: 0x4AF44, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken name]', symObjAddr: 0x124, symBinAddr: 0x41E8, symSize: 0xC }
+  - { offset: 0x4AF77, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken hash]', symObjAddr: 0x130, symBinAddr: 0x41F4, symSize: 0x14 }
+  - { offset: 0x4AFAE, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken isIdentifierToken]', symObjAddr: 0x144, symBinAddr: 0x4208, symSize: 0x8 }
+  - { offset: 0x4AFE1, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken isEqual:]', symObjAddr: 0x14C, symBinAddr: 0x4210, symSize: 0x48 }
+  - { offset: 0x4B028, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken identifier]', symObjAddr: 0x194, symBinAddr: 0x4258, symSize: 0x10 }
+  - { offset: 0x4B05F, size: 0x8, addend: 0x0, symName: '-[CPIdentifierToken setIdentifier:]', symObjAddr: 0x1A4, symBinAddr: 0x4268, symSize: 0xC }
+  - { offset: 0x4B09E, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsIdentifierToken) isIdentifierToken]', symObjAddr: 0x1B0, symBinAddr: 0x4274, symSize: 0x8 }
+  - { offset: 0x4B14B, size: 0x8, addend: 0x0, symName: '+[CPQuotedToken content:quotedWith:name:]', symObjAddr: 0x0, symBinAddr: 0x427C, symSize: 0x48 }
+  - { offset: 0x4B20D, size: 0x8, addend: 0x0, symName: '+[CPQuotedToken content:quotedWith:name:]', symObjAddr: 0x0, symBinAddr: 0x427C, symSize: 0x48 }
+  - { offset: 0x4B270, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken initWithContent:quoteType:name:]', symObjAddr: 0x48, symBinAddr: 0x42C4, symSize: 0x88 }
+  - { offset: 0x4B2D7, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken init]', symObjAddr: 0xD0, symBinAddr: 0x434C, symSize: 0x14 }
+  - { offset: 0x4B30C, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken dealloc]', symObjAddr: 0xE4, symBinAddr: 0x4360, symSize: 0x70 }
+  - { offset: 0x4B33F, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken description]', symObjAddr: 0x154, symBinAddr: 0x43D0, symSize: 0x58 }
+  - { offset: 0x4B376, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken name]', symObjAddr: 0x1AC, symBinAddr: 0x4428, symSize: 0x10 }
+  - { offset: 0x4B3AD, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken hash]', symObjAddr: 0x1BC, symBinAddr: 0x4438, symSize: 0x14 }
+  - { offset: 0x4B3E4, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken isQuotedToken]', symObjAddr: 0x1D0, symBinAddr: 0x444C, symSize: 0x8 }
+  - { offset: 0x4B417, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken isEqual:]', symObjAddr: 0x1D8, symBinAddr: 0x4454, symSize: 0x7C }
+  - { offset: 0x4B45E, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken content]', symObjAddr: 0x254, symBinAddr: 0x44D0, symSize: 0x10 }
+  - { offset: 0x4B495, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken setContent:]', symObjAddr: 0x264, symBinAddr: 0x44E0, symSize: 0xC }
+  - { offset: 0x4B4D4, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken quoteType]', symObjAddr: 0x270, symBinAddr: 0x44EC, symSize: 0x10 }
+  - { offset: 0x4B50B, size: 0x8, addend: 0x0, symName: '-[CPQuotedToken setQuoteType:]', symObjAddr: 0x280, symBinAddr: 0x44FC, symSize: 0xC }
+  - { offset: 0x4B54A, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsQuotedToken) isQuotedToken]', symObjAddr: 0x28C, symBinAddr: 0x4508, symSize: 0x8 }
+  - { offset: 0x4B5F7, size: 0x8, addend: 0x0, symName: '+[CPQuotedRecogniser quotedRecogniserWithStartQuote:endQuote:name:]', symObjAddr: 0x0, symBinAddr: 0x4510, symSize: 0x14 }
+  - { offset: 0x4B776, size: 0x8, addend: 0x0, symName: '+[CPQuotedRecogniser quotedRecogniserWithStartQuote:endQuote:name:]', symObjAddr: 0x0, symBinAddr: 0x4510, symSize: 0x14 }
+  - { offset: 0x4B7D5, size: 0x8, addend: 0x0, symName: '+[CPQuotedRecogniser quotedRecogniserWithStartQuote:endQuote:escapeSequence:name:]', symObjAddr: 0x14, symBinAddr: 0x4524, symSize: 0x14 }
+  - { offset: 0x4B842, size: 0x8, addend: 0x0, symName: '+[CPQuotedRecogniser quotedRecogniserWithStartQuote:endQuote:escapeSequence:maximumLength:name:]', symObjAddr: 0x28, symBinAddr: 0x4538, symSize: 0x60 }
+  - { offset: 0x4B8C5, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser initWithStartQuote:endQuote:escapeSequence:maximumLength:name:]', symObjAddr: 0x88, symBinAddr: 0x4598, symSize: 0xA8 }
+  - { offset: 0x4B94C, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser initWithCoder:]', symObjAddr: 0x130, symBinAddr: 0x4640, symSize: 0x124 }
+  - { offset: 0x4B9CD, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser encodeWithCoder:]', symObjAddr: 0x254, symBinAddr: 0x4764, symSize: 0xBC }
+  - { offset: 0x4BA1E, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser dealloc]', symObjAddr: 0x310, symBinAddr: 0x4820, symSize: 0x68 }
+  - { offset: 0x4BA51, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x378, symBinAddr: 0x4888, symSize: 0x2FC }
+  - { offset: 0x4BF16, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser startQuote]', symObjAddr: 0x674, symBinAddr: 0x4B84, symSize: 0xC }
+  - { offset: 0x4BF4D, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setStartQuote:]', symObjAddr: 0x680, symBinAddr: 0x4B90, symSize: 0x8 }
+  - { offset: 0x4BF8C, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser endQuote]', symObjAddr: 0x688, symBinAddr: 0x4B98, symSize: 0xC }
+  - { offset: 0x4BFC3, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setEndQuote:]', symObjAddr: 0x694, symBinAddr: 0x4BA4, symSize: 0x8 }
+  - { offset: 0x4C002, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser escapeSequence]', symObjAddr: 0x69C, symBinAddr: 0x4BAC, symSize: 0xC }
+  - { offset: 0x4C039, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setEscapeSequence:]', symObjAddr: 0x6A8, symBinAddr: 0x4BB8, symSize: 0x8 }
+  - { offset: 0x4C078, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser escapeReplacer]', symObjAddr: 0x6B0, symBinAddr: 0x4BC0, symSize: 0xC }
+  - { offset: 0x4C0AF, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setEscapeReplacer:]', symObjAddr: 0x6BC, symBinAddr: 0x4BCC, symSize: 0x8 }
+  - { offset: 0x4C0EE, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser maximumLength]', symObjAddr: 0x6C4, symBinAddr: 0x4BD4, symSize: 0x8 }
+  - { offset: 0x4C125, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setMaximumLength:]', symObjAddr: 0x6CC, symBinAddr: 0x4BDC, symSize: 0x8 }
+  - { offset: 0x4C162, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser name]', symObjAddr: 0x6D4, symBinAddr: 0x4BE4, symSize: 0xC }
+  - { offset: 0x4C199, size: 0x8, addend: 0x0, symName: '-[CPQuotedRecogniser setName:]', symObjAddr: 0x6E0, symBinAddr: 0x4BF0, symSize: 0x8 }
+  - { offset: 0x4C2E1, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate parser:didProduceSyntaxTree:]', symObjAddr: 0x0, symBinAddr: 0x4BF8, symSize: 0x650 }
+  - { offset: 0x4C441, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate parser:didProduceSyntaxTree:]', symObjAddr: 0x0, symBinAddr: 0x4BF8, symSize: 0x650 }
+  - { offset: 0x4C693, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate parser:didEncounterErrorOnInput:expecting:]', symObjAddr: 0x650, symBinAddr: 0x5248, symSize: 0xD8 }
+  - { offset: 0x4C706, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate tokeniser:shouldConsumeToken:]', symObjAddr: 0x728, symBinAddr: 0x5320, symSize: 0x8 }
+  - { offset: 0x4C751, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate tokeniser:willProduceToken:]', symObjAddr: 0x730, symBinAddr: 0x5328, symSize: 0x44 }
+  - { offset: 0x4C7A0, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate err]', symObjAddr: 0x774, symBinAddr: 0x536C, symSize: 0x8 }
+  - { offset: 0x4C7D7, size: 0x8, addend: 0x0, symName: '-[CPBNFParserDelegate setErr:]', symObjAddr: 0x77C, symBinAddr: 0x5374, symSize: 0x8 }
+  - { offset: 0x4C816, size: 0x8, addend: 0x0, symName: '+[CPGrammar grammarWithStart:rules:]', symObjAddr: 0x784, symBinAddr: 0x537C, symSize: 0x30 }
+  - { offset: 0x4C86D, size: 0x8, addend: 0x0, symName: '-[CPGrammar initWithStart:rules:]', symObjAddr: 0x7B4, symBinAddr: 0x53AC, symSize: 0x88 }
+  - { offset: 0x4C8C4, size: 0x8, addend: 0x0, symName: '+[CPGrammar grammarWithStart:backusNaurForm:]', symObjAddr: 0x83C, symBinAddr: 0x5434, symSize: 0x30 }
+  - { offset: 0x4C91B, size: 0x8, addend: 0x0, symName: '+[CPGrammar grammarWithStart:backusNaurForm:error:]', symObjAddr: 0x86C, symBinAddr: 0x5464, symSize: 0x40 }
+  - { offset: 0x4C982, size: 0x8, addend: 0x0, symName: '-[CPGrammar initWithStart:backusNaurForm:]', symObjAddr: 0x8AC, symBinAddr: 0x54A4, symSize: 0x58 }
+  - { offset: 0x4CA16, size: 0x8, addend: 0x0, symName: '-[CPGrammar initWithStart:backusNaurForm:error:]', symObjAddr: 0x904, symBinAddr: 0x54FC, symSize: 0xB38 }
+  - { offset: 0x4CC8A, size: 0x8, addend: 0x0, symName: '-[CPGrammar init]', symObjAddr: 0x143C, symBinAddr: 0x6034, symSize: 0x34 }
+  - { offset: 0x4CCC2, size: 0x8, addend: 0x0, symName: '-[CPGrammar initWithCoder:]', symObjAddr: 0x1470, symBinAddr: 0x6068, symSize: 0x84 }
+  - { offset: 0x4CD0B, size: 0x8, addend: 0x0, symName: '-[CPGrammar encodeWithCoder:]', symObjAddr: 0x14F4, symBinAddr: 0x60EC, symSize: 0x50 }
+  - { offset: 0x4CD50, size: 0x8, addend: 0x0, symName: '-[CPGrammar dealloc]', symObjAddr: 0x1544, symBinAddr: 0x613C, symSize: 0x54 }
+  - { offset: 0x4CD84, size: 0x8, addend: 0x0, symName: '-[CPGrammar allRules]', symObjAddr: 0x1598, symBinAddr: 0x6190, symSize: 0x2C }
+  - { offset: 0x4CDBC, size: 0x8, addend: 0x0, symName: '-[CPGrammar checkForMissingNonTerminalsInRules:]', symObjAddr: 0x15C4, symBinAddr: 0x61BC, symSize: 0x364 }
+  - { offset: 0x4CEA2, size: 0x8, addend: 0x0, symName: '-[CPGrammar allNonTerminalNames]', symObjAddr: 0x1928, symBinAddr: 0x6520, symSize: 0x14 }
+  - { offset: 0x4CEDA, size: 0x8, addend: 0x0, symName: '-[CPGrammar addRule:]', symObjAddr: 0x193C, symBinAddr: 0x6534, symSize: 0x78 }
+  - { offset: 0x4CF41, size: 0x8, addend: 0x0, symName: '-[CPGrammar rulesForNonTerminalWithName:]', symObjAddr: 0x19B4, symBinAddr: 0x65AC, symSize: 0x24 }
+  - { offset: 0x4CF8A, size: 0x8, addend: 0x0, symName: '-[CPGrammar hash]', symObjAddr: 0x19D8, symBinAddr: 0x65D0, symSize: 0x38 }
+  - { offset: 0x4CFC2, size: 0x8, addend: 0x0, symName: '-[CPGrammar isGrammar]', symObjAddr: 0x1A10, symBinAddr: 0x6608, symSize: 0x8 }
+  - { offset: 0x4CFF6, size: 0x8, addend: 0x0, symName: '-[CPGrammar isEqual:]', symObjAddr: 0x1A18, symBinAddr: 0x6610, symSize: 0x68 }
+  - { offset: 0x4D03F, size: 0x8, addend: 0x0, symName: '-[CPGrammar start]', symObjAddr: 0x1A80, symBinAddr: 0x6678, symSize: 0xC }
+  - { offset: 0x4D076, size: 0x8, addend: 0x0, symName: '-[CPGrammar setStart:]', symObjAddr: 0x1A8C, symBinAddr: 0x6684, symSize: 0x8 }
+  - { offset: 0x4D29C, size: 0x8, addend: 0x0, symName: '+[CPParser parserWithGrammar:]', symObjAddr: 0x0, symBinAddr: 0x668C, symSize: 0x28 }
+  - { offset: 0x4D38C, size: 0x8, addend: 0x0, symName: '+[CPParser parserWithGrammar:]', symObjAddr: 0x0, symBinAddr: 0x668C, symSize: 0x28 }
+  - { offset: 0x4D3D3, size: 0x8, addend: 0x0, symName: '-[CPParser initWithGrammar:]', symObjAddr: 0x28, symBinAddr: 0x66B4, symSize: 0x58 }
+  - { offset: 0x4D41A, size: 0x8, addend: 0x0, symName: '-[CPParser init]', symObjAddr: 0x80, symBinAddr: 0x670C, symSize: 0x8 }
+  - { offset: 0x4D44F, size: 0x8, addend: 0x0, symName: '-[CPParser dealloc]', symObjAddr: 0x88, symBinAddr: 0x6714, symSize: 0x48 }
+  - { offset: 0x4D482, size: 0x8, addend: 0x0, symName: '-[CPParser parse:]', symObjAddr: 0xD0, symBinAddr: 0x675C, symSize: 0x30 }
+  - { offset: 0x4D4C1, size: 0x8, addend: 0x0, symName: '-[CPParser setDelegate:]', symObjAddr: 0x100, symBinAddr: 0x678C, symSize: 0xA0 }
+  - { offset: 0x4D504, size: 0x8, addend: 0x0, symName: '-[CPParser grammar]', symObjAddr: 0x1A0, symBinAddr: 0x682C, symSize: 0xC }
+  - { offset: 0x4D53B, size: 0x8, addend: 0x0, symName: '-[CPParser setGrammar:]', symObjAddr: 0x1AC, symBinAddr: 0x6838, symSize: 0x8 }
+  - { offset: 0x4D57A, size: 0x8, addend: 0x0, symName: '-[CPParser delegate]', symObjAddr: 0x1B4, symBinAddr: 0x6840, symSize: 0x8 }
+  - { offset: 0x4D60E, size: 0x8, addend: 0x0, symName: '+[CPSyntaxTree syntaxTreeWithRule:children:]', symObjAddr: 0x0, symBinAddr: 0x6848, symSize: 0x50 }
+  - { offset: 0x4D6F2, size: 0x8, addend: 0x0, symName: '+[CPSyntaxTree syntaxTreeWithRule:children:]', symObjAddr: 0x0, symBinAddr: 0x6848, symSize: 0x50 }
+  - { offset: 0x4D749, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree initWithRule:children:]', symObjAddr: 0x50, symBinAddr: 0x6898, symSize: 0x48 }
+  - { offset: 0x4D7A0, size: 0x8, addend: 0x0, symName: '+[CPSyntaxTree syntaxTreeWithRule:children:tagValues:]', symObjAddr: 0x98, symBinAddr: 0x68E0, symSize: 0x40 }
+  - { offset: 0x4D807, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree initWithRule:children:tagValues:]', symObjAddr: 0xD8, symBinAddr: 0x6920, symSize: 0x80 }
+  - { offset: 0x4D86E, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree init]', symObjAddr: 0x158, symBinAddr: 0x69A0, symSize: 0x48 }
+  - { offset: 0x4D8A5, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree dealloc]', symObjAddr: 0x1A0, symBinAddr: 0x69E8, symSize: 0x58 }
+  - { offset: 0x4D8D8, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree valueForTag:]', symObjAddr: 0x1F8, symBinAddr: 0x6A40, symSize: 0x8 }
+  - { offset: 0x4D91D, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree childAtIndex:]', symObjAddr: 0x200, symBinAddr: 0x6A48, symSize: 0x8 }
+  - { offset: 0x4D962, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree hash]', symObjAddr: 0x208, symBinAddr: 0x6A50, symSize: 0x14 }
+  - { offset: 0x4D999, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree isSyntaxTree]', symObjAddr: 0x21C, symBinAddr: 0x6A64, symSize: 0x8 }
+  - { offset: 0x4D9CC, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree isEqual:]', symObjAddr: 0x224, symBinAddr: 0x6A6C, symSize: 0x54 }
+  - { offset: 0x4DA13, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree description]', symObjAddr: 0x278, symBinAddr: 0x6AC0, symSize: 0x13C }
+  - { offset: 0x4DA71, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree rule]', symObjAddr: 0x3B4, symBinAddr: 0x6BFC, symSize: 0xC }
+  - { offset: 0x4DAA8, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree setRule:]', symObjAddr: 0x3C0, symBinAddr: 0x6C08, symSize: 0x8 }
+  - { offset: 0x4DAE7, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree children]', symObjAddr: 0x3C8, symBinAddr: 0x6C10, symSize: 0xC }
+  - { offset: 0x4DB1E, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree setChildren:]', symObjAddr: 0x3D4, symBinAddr: 0x6C1C, symSize: 0x8 }
+  - { offset: 0x4DB5D, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree tagValues]', symObjAddr: 0x3DC, symBinAddr: 0x6C24, symSize: 0xC }
+  - { offset: 0x4DB94, size: 0x8, addend: 0x0, symName: '-[CPSyntaxTree setTagValues:]', symObjAddr: 0x3E8, symBinAddr: 0x6C30, symSize: 0x8 }
+  - { offset: 0x4DBD3, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsSyntaxTree) isSyntaxTree]', symObjAddr: 0x3F0, symBinAddr: 0x6C38, symSize: 0x8 }
+  - { offset: 0x4DC72, size: 0x8, addend: 0x0, symName: '-[CPRule rightHandSideElements]', symObjAddr: 0x0, symBinAddr: 0x6C40, symSize: 0x18 }
+  - { offset: 0x4DD4D, size: 0x8, addend: 0x0, symName: '-[CPRule rightHandSideElements]', symObjAddr: 0x0, symBinAddr: 0x6C40, symSize: 0x18 }
+  - { offset: 0x4DD84, size: 0x8, addend: 0x0, symName: '-[CPRule setRightHandSideElements:]', symObjAddr: 0x18, symBinAddr: 0x6C58, symSize: 0x58 }
+  - { offset: 0x4DDC7, size: 0x8, addend: 0x0, symName: '+[CPRule ruleWithName:rightHandSideElements:representitiveClass:]', symObjAddr: 0x70, symBinAddr: 0x6CB0, symSize: 0x40 }
+  - { offset: 0x4DE2E, size: 0x8, addend: 0x0, symName: '-[CPRule initWithName:rightHandSideElements:representitiveClass:]', symObjAddr: 0xB0, symBinAddr: 0x6CF0, symSize: 0x8C }
+  - { offset: 0x4DE95, size: 0x8, addend: 0x0, symName: '+[CPRule ruleWithName:rightHandSideElements:tag:]', symObjAddr: 0x13C, symBinAddr: 0x6D7C, symSize: 0x40 }
+  - { offset: 0x4DEFC, size: 0x8, addend: 0x0, symName: '-[CPRule initWithName:rightHandSideElements:tag:]', symObjAddr: 0x17C, symBinAddr: 0x6DBC, symSize: 0x3C }
+  - { offset: 0x4DF63, size: 0x8, addend: 0x0, symName: '+[CPRule ruleWithName:rightHandSideElements:]', symObjAddr: 0x1B8, symBinAddr: 0x6DF8, symSize: 0x38 }
+  - { offset: 0x4DFB6, size: 0x8, addend: 0x0, symName: '-[CPRule initWithName:rightHandSideElements:]', symObjAddr: 0x1F0, symBinAddr: 0x6E30, symSize: 0x8 }
+  - { offset: 0x4E007, size: 0x8, addend: 0x0, symName: '-[CPRule init]', symObjAddr: 0x1F8, symBinAddr: 0x6E38, symSize: 0x38 }
+  - { offset: 0x4E03E, size: 0x8, addend: 0x0, symName: '-[CPRule initWithCoder:]', symObjAddr: 0x230, symBinAddr: 0x6E70, symSize: 0xC0 }
+  - { offset: 0x4E0A6, size: 0x8, addend: 0x0, symName: '-[CPRule encodeWithCoder:]', symObjAddr: 0x2F0, symBinAddr: 0x6F30, symSize: 0x8C }
+  - { offset: 0x4E10A, size: 0x8, addend: 0x0, symName: '-[CPRule dealloc]', symObjAddr: 0x37C, symBinAddr: 0x6FBC, symSize: 0x50 }
+  - { offset: 0x4E13D, size: 0x8, addend: 0x0, symName: '-[CPRule description]', symObjAddr: 0x3CC, symBinAddr: 0x700C, symSize: 0x6C }
+  - { offset: 0x4E174, size: 0x8, addend: 0x0, symName: '-[CPRule hash]', symObjAddr: 0x438, symBinAddr: 0x7078, symSize: 0x34 }
+  - { offset: 0x4E1AB, size: 0x8, addend: 0x0, symName: '-[CPRule isRule]', symObjAddr: 0x46C, symBinAddr: 0x70AC, symSize: 0x8 }
+  - { offset: 0x4E1DE, size: 0x8, addend: 0x0, symName: '-[CPRule isEqual:]', symObjAddr: 0x474, symBinAddr: 0x70B4, symSize: 0x80 }
+  - { offset: 0x4E225, size: 0x8, addend: 0x0, symName: '-[CPRule name]', symObjAddr: 0x4F4, symBinAddr: 0x7134, symSize: 0xC }
+  - { offset: 0x4E25C, size: 0x8, addend: 0x0, symName: '-[CPRule setName:]', symObjAddr: 0x500, symBinAddr: 0x7140, symSize: 0x8 }
+  - { offset: 0x4E29B, size: 0x8, addend: 0x0, symName: '-[CPRule tag]', symObjAddr: 0x508, symBinAddr: 0x7148, symSize: 0x8 }
+  - { offset: 0x4E2D2, size: 0x8, addend: 0x0, symName: '-[CPRule setTag:]', symObjAddr: 0x510, symBinAddr: 0x7150, symSize: 0x8 }
+  - { offset: 0x4E30F, size: 0x8, addend: 0x0, symName: '-[CPRule representitiveClass]', symObjAddr: 0x518, symBinAddr: 0x7158, symSize: 0x8 }
+  - { offset: 0x4E346, size: 0x8, addend: 0x0, symName: '-[CPRule setRepresentitiveClass:]', symObjAddr: 0x520, symBinAddr: 0x7160, symSize: 0x8 }
+  - { offset: 0x4E383, size: 0x8, addend: 0x0, symName: '-[CPRule(Internal) shouldCollapse]', symObjAddr: 0x528, symBinAddr: 0x7168, symSize: 0x8 }
+  - { offset: 0x4E3BA, size: 0x8, addend: 0x0, symName: '-[CPRule(Internal) setShouldCollapse:]', symObjAddr: 0x530, symBinAddr: 0x7170, symSize: 0x8 }
+  - { offset: 0x4E3F7, size: 0x8, addend: 0x0, symName: '-[CPRule(Internal) tagNames]', symObjAddr: 0x538, symBinAddr: 0x7178, symSize: 0x18 }
+  - { offset: 0x4E42E, size: 0x8, addend: 0x0, symName: '-[CPRule(Internal) setTagNames:]', symObjAddr: 0x550, symBinAddr: 0x7190, symSize: 0x3C }
+  - { offset: 0x4E471, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsRule) isRule]', symObjAddr: 0x58C, symBinAddr: 0x71CC, symSize: 0x8 }
+  - { offset: 0x4E509, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser initWithGrammar:]', symObjAddr: 0x0, symBinAddr: 0x71D4, symSize: 0x60 }
+  - { offset: 0x4E6AB, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser initWithGrammar:]', symObjAddr: 0x0, symBinAddr: 0x71D4, symSize: 0x60 }
+  - { offset: 0x4E711, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser initWithCoder:]', symObjAddr: 0x60, symBinAddr: 0x7234, symSize: 0x9C }
+  - { offset: 0x4E758, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser encodeWithCoder:]', symObjAddr: 0xFC, symBinAddr: 0x72D0, symSize: 0x6C }
+  - { offset: 0x4E79B, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser dealloc]', symObjAddr: 0x168, symBinAddr: 0x733C, symSize: 0x60 }
+  - { offset: 0x4E7CE, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser constructShiftReduceTables]', symObjAddr: 0x1C8, symBinAddr: 0x739C, symSize: 0x20 }
+  - { offset: 0x4E820, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser parse:]', symObjAddr: 0x1E8, symBinAddr: 0x73BC, symSize: 0x42C }
+  - { offset: 0x4E982, size: 0x8, addend: 0x0, symName: '___29-[CPShiftReduceParser parse:]_block_invoke', symObjAddr: 0x614, symBinAddr: 0x77E8, symSize: 0x2B4 }
+  - { offset: 0x4EA78, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32o40o, symObjAddr: 0x8C8, symBinAddr: 0x7A9C, symSize: 0x3C }
+  - { offset: 0x4EAA1, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32o40o, symObjAddr: 0x904, symBinAddr: 0x7AD8, symSize: 0x30 }
+  - { offset: 0x4EAC0, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser error:expecting:]', symObjAddr: 0x934, symBinAddr: 0x7B08, symSize: 0xD8 }
+  - { offset: 0x4EB45, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser actionForState:token:]', symObjAddr: 0xA0C, symBinAddr: 0x7BE0, symSize: 0x2C }
+  - { offset: 0x4EB9F, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser acceptableTokenNamesForState:]', symObjAddr: 0xA38, symBinAddr: 0x7C0C, symSize: 0x24 }
+  - { offset: 0x4EBE8, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser gotoForState:rule:]', symObjAddr: 0xA5C, symBinAddr: 0x7C30, symSize: 0x2C }
+  - { offset: 0x4EC42, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser actionTable]', symObjAddr: 0xA88, symBinAddr: 0x7C5C, symSize: 0x10 }
+  - { offset: 0x4EC79, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser setActionTable:]', symObjAddr: 0xA98, symBinAddr: 0x7C6C, symSize: 0xC }
+  - { offset: 0x4ECB8, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser gotoTable]', symObjAddr: 0xAA4, symBinAddr: 0x7C78, symSize: 0x10 }
+  - { offset: 0x4ECEF, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceParser setGotoTable:]', symObjAddr: 0xAB4, symBinAddr: 0x7C88, symSize: 0xC }
+  - { offset: 0x4EFF5, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceAction shiftAction:]', symObjAddr: 0x0, symBinAddr: 0x7C94, symSize: 0x28 }
+  - { offset: 0x4F0FC, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceAction shiftAction:]', symObjAddr: 0x0, symBinAddr: 0x7C94, symSize: 0x28 }
+  - { offset: 0x4F143, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceAction reduceAction:]', symObjAddr: 0x28, symBinAddr: 0x7CBC, symSize: 0x28 }
+  - { offset: 0x4F18A, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceAction acceptAction]', symObjAddr: 0x50, symBinAddr: 0x7CE4, symSize: 0x14 }
+  - { offset: 0x4F1C1, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction initWithShift:]', symObjAddr: 0x64, symBinAddr: 0x7CF8, symSize: 0x4C }
+  - { offset: 0x4F208, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction initWithReductionRule:]', symObjAddr: 0xB0, symBinAddr: 0x7D44, symSize: 0x60 }
+  - { offset: 0x4F24F, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction init]', symObjAddr: 0x110, symBinAddr: 0x7DA4, symSize: 0x40 }
+  - { offset: 0x4F286, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction initWithCoder:]', symObjAddr: 0x150, symBinAddr: 0x7DE4, symSize: 0x98 }
+  - { offset: 0x4F2CD, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction encodeWithCoder:]', symObjAddr: 0x1E8, symBinAddr: 0x7E7C, symSize: 0x7C }
+  - { offset: 0x4F310, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction dealloc]', symObjAddr: 0x264, symBinAddr: 0x7EF8, symSize: 0x54 }
+  - { offset: 0x4F343, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isShiftAction]', symObjAddr: 0x2B8, symBinAddr: 0x7F4C, symSize: 0x10 }
+  - { offset: 0x4F37A, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isReduceAction]', symObjAddr: 0x2C8, symBinAddr: 0x7F5C, symSize: 0x10 }
+  - { offset: 0x4F3B1, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isAccept]', symObjAddr: 0x2D8, symBinAddr: 0x7F6C, symSize: 0x10 }
+  - { offset: 0x4F3E8, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction newState]', symObjAddr: 0x2E8, symBinAddr: 0x7F7C, symSize: 0x8 }
+  - { offset: 0x4F41F, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction reductionRule]', symObjAddr: 0x2F0, symBinAddr: 0x7F84, symSize: 0x8 }
+  - { offset: 0x4F456, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction hash]', symObjAddr: 0x2F8, symBinAddr: 0x7F8C, symSize: 0x8 }
+  - { offset: 0x4F48D, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isShiftReduceAction]', symObjAddr: 0x300, symBinAddr: 0x7F94, symSize: 0x8 }
+  - { offset: 0x4F4C0, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isEqual:]', symObjAddr: 0x308, symBinAddr: 0x7F9C, symSize: 0x80 }
+  - { offset: 0x4F526, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction isEqualToShiftReduceAction:]', symObjAddr: 0x388, symBinAddr: 0x801C, symSize: 0x74 }
+  - { offset: 0x4F56D, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction description]', symObjAddr: 0x3FC, symBinAddr: 0x8090, symSize: 0x80 }
+  - { offset: 0x4F5A4, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceAction descriptionWithGrammar:]', symObjAddr: 0x47C, symBinAddr: 0x8110, symSize: 0x88 }
+  - { offset: 0x4F5EB, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsShiftReduceAction) isShiftReduceAction]', symObjAddr: 0x504, symBinAddr: 0x8198, symSize: 0x8 }
+  - { offset: 0x4F6AC, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceState shiftReduceStateWithObject:state:]', symObjAddr: 0x0, symBinAddr: 0x81A0, symSize: 0x30 }
+  - { offset: 0x4F712, size: 0x8, addend: 0x0, symName: '+[CPShiftReduceState shiftReduceStateWithObject:state:]', symObjAddr: 0x0, symBinAddr: 0x81A0, symSize: 0x30 }
+  - { offset: 0x4F769, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState initWithObject:state:]', symObjAddr: 0x30, symBinAddr: 0x81D0, symSize: 0x70 }
+  - { offset: 0x4F7C0, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState dealloc]', symObjAddr: 0xA0, symBinAddr: 0x8240, symSize: 0x48 }
+  - { offset: 0x4F7F3, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState description]', symObjAddr: 0xE8, symBinAddr: 0x8288, symSize: 0x58 }
+  - { offset: 0x4F82A, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState object]', symObjAddr: 0x140, symBinAddr: 0x82E0, symSize: 0xC }
+  - { offset: 0x4F861, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState setObject:]', symObjAddr: 0x14C, symBinAddr: 0x82EC, symSize: 0x8 }
+  - { offset: 0x4F8A0, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState state]', symObjAddr: 0x154, symBinAddr: 0x82F4, symSize: 0x8 }
+  - { offset: 0x4F8D7, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceState setState:]', symObjAddr: 0x15C, symBinAddr: 0x82FC, symSize: 0x8 }
+  - { offset: 0x4F98C, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable initWithCapacity:]', symObjAddr: 0x0, symBinAddr: 0x8304, symSize: 0x90 }
+  - { offset: 0x4F9DE, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable initWithCapacity:]', symObjAddr: 0x0, symBinAddr: 0x8304, symSize: 0x90 }
+  - { offset: 0x4FA64, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable initWithCoder:]', symObjAddr: 0x90, symBinAddr: 0x8394, symSize: 0xBC }
+  - { offset: 0x4FAF7, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable encodeWithCoder:]', symObjAddr: 0x14C, symBinAddr: 0x8450, symSize: 0x40 }
+  - { offset: 0x4FB3A, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable dealloc]', symObjAddr: 0x18C, symBinAddr: 0x8490, symSize: 0x70 }
+  - { offset: 0x4FBA8, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable setAction:forState:name:]', symObjAddr: 0x1FC, symBinAddr: 0x8500, symSize: 0x6C }
+  - { offset: 0x4FC1F, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable actionForState:token:]', symObjAddr: 0x268, symBinAddr: 0x856C, symSize: 0x30 }
+  - { offset: 0x4FC76, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable acceptableTokenNamesForState:]', symObjAddr: 0x298, symBinAddr: 0x859C, symSize: 0x134 }
+  - { offset: 0x4FCE4, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable description]', symObjAddr: 0x3CC, symBinAddr: 0x86D0, symSize: 0x39C }
+  - { offset: 0x4FEEB, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceActionTable descriptionWithGrammar:]', symObjAddr: 0x768, symBinAddr: 0x8A6C, symSize: 0x3A8 }
+  - { offset: 0x50223, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable initWithCapacity:]', symObjAddr: 0x0, symBinAddr: 0x8E14, symSize: 0x90 }
+  - { offset: 0x5026E, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable initWithCapacity:]', symObjAddr: 0x0, symBinAddr: 0x8E14, symSize: 0x90 }
+  - { offset: 0x502F4, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable initWithCoder:]', symObjAddr: 0x90, symBinAddr: 0x8EA4, symSize: 0xBC }
+  - { offset: 0x50387, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable encodeWithCoder:]', symObjAddr: 0x14C, symBinAddr: 0x8F60, symSize: 0x40 }
+  - { offset: 0x503CA, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable dealloc]', symObjAddr: 0x18C, symBinAddr: 0x8FA0, symSize: 0x70 }
+  - { offset: 0x50438, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable setGoto:forState:nonTerminalNamed:]', symObjAddr: 0x1FC, symBinAddr: 0x9010, symSize: 0x84 }
+  - { offset: 0x504AF, size: 0x8, addend: 0x0, symName: '-[CPShiftReduceGotoTable gotoForState:rule:]', symObjAddr: 0x280, symBinAddr: 0x9094, symSize: 0x34 }
+  - { offset: 0x50591, size: 0x8, addend: 0x0, symName: '-[CPSLRParser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0x90C8, symSize: 0x4B8 }
+  - { offset: 0x506CB, size: 0x8, addend: 0x0, symName: '-[CPSLRParser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0x90C8, symSize: 0x4B8 }
+  - { offset: 0x509CC, size: 0x8, addend: 0x0, symName: '+[CPItem itemWithRule:position:]', symObjAddr: 0x0, symBinAddr: 0x9580, symSize: 0x30 }
+  - { offset: 0x50A91, size: 0x8, addend: 0x0, symName: '+[CPItem itemWithRule:position:]', symObjAddr: 0x0, symBinAddr: 0x9580, symSize: 0x30 }
+  - { offset: 0x50AE8, size: 0x8, addend: 0x0, symName: '-[CPItem initWithRule:position:]', symObjAddr: 0x30, symBinAddr: 0x95B0, symSize: 0x64 }
+  - { offset: 0x50B3F, size: 0x8, addend: 0x0, symName: '-[CPItem copyWithZone:]', symObjAddr: 0x94, symBinAddr: 0x9614, symSize: 0x2C }
+  - { offset: 0x50B86, size: 0x8, addend: 0x0, symName: '-[CPItem dealloc]', symObjAddr: 0xC0, symBinAddr: 0x9640, symSize: 0x48 }
+  - { offset: 0x50BB9, size: 0x8, addend: 0x0, symName: '-[CPItem nextSymbol]', symObjAddr: 0x108, symBinAddr: 0x9688, symSize: 0x5C }
+  - { offset: 0x50C00, size: 0x8, addend: 0x0, symName: '-[CPItem followingSymbols]', symObjAddr: 0x164, symBinAddr: 0x96E4, symSize: 0x48 }
+  - { offset: 0x50C47, size: 0x8, addend: 0x0, symName: '-[CPItem itemByMovingDotRight]', symObjAddr: 0x1AC, symBinAddr: 0x972C, symSize: 0x3C }
+  - { offset: 0x50C8E, size: 0x8, addend: 0x0, symName: '-[CPItem isItem]', symObjAddr: 0x1E8, symBinAddr: 0x9768, symSize: 0x8 }
+  - { offset: 0x50CC1, size: 0x8, addend: 0x0, symName: '-[CPItem isEqual:]', symObjAddr: 0x1F0, symBinAddr: 0x9770, symSize: 0x54 }
+  - { offset: 0x50D08, size: 0x8, addend: 0x0, symName: '-[CPItem isEqualToItem:]', symObjAddr: 0x244, symBinAddr: 0x97C4, symSize: 0x30 }
+  - { offset: 0x50D4D, size: 0x8, addend: 0x0, symName: '-[CPItem hash]', symObjAddr: 0x274, symBinAddr: 0x97F4, symSize: 0xC }
+  - { offset: 0x50D84, size: 0x8, addend: 0x0, symName: '-[CPItem description]', symObjAddr: 0x280, symBinAddr: 0x9800, symSize: 0x190 }
+  - { offset: 0x50E00, size: 0x8, addend: 0x0, symName: '-[CPItem rule]', symObjAddr: 0x410, symBinAddr: 0x9990, symSize: 0xC }
+  - { offset: 0x50E37, size: 0x8, addend: 0x0, symName: '-[CPItem setRule:]', symObjAddr: 0x41C, symBinAddr: 0x999C, symSize: 0x8 }
+  - { offset: 0x50E76, size: 0x8, addend: 0x0, symName: '-[CPItem position]', symObjAddr: 0x424, symBinAddr: 0x99A4, symSize: 0x8 }
+  - { offset: 0x50EAD, size: 0x8, addend: 0x0, symName: '-[CPItem setPosition:]', symObjAddr: 0x42C, symBinAddr: 0x99AC, symSize: 0x8 }
+  - { offset: 0x50EEA, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsItem) isItem]', symObjAddr: 0x434, symBinAddr: 0x99B4, symSize: 0x8 }
+  - { offset: 0x50FC1, size: 0x8, addend: 0x0, symName: '-[NSSet(Functional) cp_map:]', symObjAddr: 0x0, symBinAddr: 0x99BC, symSize: 0x140 }
+  - { offset: 0x50FD0, size: 0x8, addend: 0x0, symName: '-[NSSet(Functional) cp_map:]', symObjAddr: 0x0, symBinAddr: 0x99BC, symSize: 0x140 }
+  - { offset: 0x511DE, size: 0x8, addend: 0x0, symName: '-[CPLR1Parser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0x9AFC, symSize: 0x408 }
+  - { offset: 0x51319, size: 0x8, addend: 0x0, symName: '-[CPLR1Parser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0x9AFC, symSize: 0x408 }
+  - { offset: 0x514E3, size: 0x8, addend: 0x0, symName: '-[CPLR1Parser kernelsForGrammar:]', symObjAddr: 0x408, symBinAddr: 0x9F04, symSize: 0x200 }
+  - { offset: 0x515E3, size: 0x8, addend: 0x0, symName: '___33-[CPLR1Parser kernelsForGrammar:]_block_invoke', symObjAddr: 0x608, symBinAddr: 0xA104, symSize: 0x8 }
+  - { offset: 0x517DB, size: 0x8, addend: 0x0, symName: '+[CPLR1Item lr1ItemWithRule:position:terminal:]', symObjAddr: 0x0, symBinAddr: 0xA10C, symSize: 0x40 }
+  - { offset: 0x518EA, size: 0x8, addend: 0x0, symName: '+[CPLR1Item lr1ItemWithRule:position:terminal:]', symObjAddr: 0x0, symBinAddr: 0xA10C, symSize: 0x40 }
+  - { offset: 0x51951, size: 0x8, addend: 0x0, symName: '-[CPLR1Item initWithRule:position:terminal:]', symObjAddr: 0x40, symBinAddr: 0xA14C, symSize: 0x58 }
+  - { offset: 0x519B8, size: 0x8, addend: 0x0, symName: '-[CPLR1Item initWithRule:position:]', symObjAddr: 0x98, symBinAddr: 0xA1A4, symSize: 0x8 }
+  - { offset: 0x51A09, size: 0x8, addend: 0x0, symName: '-[CPLR1Item copyWithZone:]', symObjAddr: 0xA0, symBinAddr: 0xA1AC, symSize: 0x64 }
+  - { offset: 0x51A50, size: 0x8, addend: 0x0, symName: '-[CPLR1Item dealloc]', symObjAddr: 0x104, symBinAddr: 0xA210, symSize: 0x50 }
+  - { offset: 0x51A83, size: 0x8, addend: 0x0, symName: '-[CPLR1Item isLR1Item]', symObjAddr: 0x154, symBinAddr: 0xA260, symSize: 0x8 }
+  - { offset: 0x51AB6, size: 0x8, addend: 0x0, symName: '-[CPLR1Item isEqual:]', symObjAddr: 0x15C, symBinAddr: 0xA268, symSize: 0x6C }
+  - { offset: 0x51AFD, size: 0x8, addend: 0x0, symName: '-[CPLR1Item hash]', symObjAddr: 0x1C8, symBinAddr: 0xA2D4, symSize: 0x54 }
+  - { offset: 0x51B34, size: 0x8, addend: 0x0, symName: '-[CPLR1Item description]', symObjAddr: 0x21C, symBinAddr: 0xA328, symSize: 0x64 }
+  - { offset: 0x51B6B, size: 0x8, addend: 0x0, symName: '-[CPLR1Item terminal]', symObjAddr: 0x280, symBinAddr: 0xA38C, symSize: 0x10 }
+  - { offset: 0x51BA2, size: 0x8, addend: 0x0, symName: '-[CPLR1Item setTerminal:]', symObjAddr: 0x290, symBinAddr: 0xA39C, symSize: 0xC }
+  - { offset: 0x51BE1, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsLR1Item) isLR1Item]', symObjAddr: 0x29C, symBinAddr: 0xA3A8, symSize: 0x8 }
+  - { offset: 0x51C79, size: 0x8, addend: 0x0, symName: '+[CPGrammarSymbol nonTerminalWithName:]', symObjAddr: 0x0, symBinAddr: 0xA3B0, symSize: 0x2C }
+  - { offset: 0x51CE1, size: 0x8, addend: 0x0, symName: '+[CPGrammarSymbol nonTerminalWithName:]', symObjAddr: 0x0, symBinAddr: 0xA3B0, symSize: 0x2C }
+  - { offset: 0x51D28, size: 0x8, addend: 0x0, symName: '+[CPGrammarSymbol terminalWithName:]', symObjAddr: 0x2C, symBinAddr: 0xA3DC, symSize: 0x2C }
+  - { offset: 0x51D6F, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol initWithName:isTerminal:]', symObjAddr: 0x58, symBinAddr: 0xA408, symSize: 0x70 }
+  - { offset: 0x51DC6, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol init]', symObjAddr: 0xC8, symBinAddr: 0xA478, symSize: 0x10 }
+  - { offset: 0x51DFB, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol initWithCoder:]', symObjAddr: 0xD8, symBinAddr: 0xA488, symSize: 0x84 }
+  - { offset: 0x51E42, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol encodeWithCoder:]', symObjAddr: 0x15C, symBinAddr: 0xA50C, symSize: 0x50 }
+  - { offset: 0x51E85, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol isGrammarSymbol]', symObjAddr: 0x1AC, symBinAddr: 0xA55C, symSize: 0x8 }
+  - { offset: 0x51EB8, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol isEqual:]', symObjAddr: 0x1B4, symBinAddr: 0xA564, symSize: 0x54 }
+  - { offset: 0x51EFF, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol isEqualToGrammarSymbol:]', symObjAddr: 0x208, symBinAddr: 0xA5B8, symSize: 0x2C }
+  - { offset: 0x51F46, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol hash]', symObjAddr: 0x234, symBinAddr: 0xA5E4, symSize: 0x14 }
+  - { offset: 0x51F7D, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol description]', symObjAddr: 0x248, symBinAddr: 0xA5F8, symSize: 0x68 }
+  - { offset: 0x51FB4, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol dealloc]', symObjAddr: 0x2B0, symBinAddr: 0xA660, symSize: 0x48 }
+  - { offset: 0x51FE7, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol name]', symObjAddr: 0x2F8, symBinAddr: 0xA6A8, symSize: 0xC }
+  - { offset: 0x5201E, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol setName:]', symObjAddr: 0x304, symBinAddr: 0xA6B4, symSize: 0x8 }
+  - { offset: 0x5205D, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol isTerminal]', symObjAddr: 0x30C, symBinAddr: 0xA6BC, symSize: 0xC }
+  - { offset: 0x52094, size: 0x8, addend: 0x0, symName: '-[CPGrammarSymbol setTerminal:]', symObjAddr: 0x318, symBinAddr: 0xA6C8, symSize: 0x8 }
+  - { offset: 0x520D1, size: 0x8, addend: 0x0, symName: '-[NSObject(CPGrammarSymbol) isGrammarSymbol]', symObjAddr: 0x320, symBinAddr: 0xA6D0, symSize: 0x8 }
+  - { offset: 0x52183, size: 0x8, addend: 0x0, symName: '-[CPJSONParser init]', symObjAddr: 0x0, symBinAddr: 0xA6D8, symSize: 0x24C }
+  - { offset: 0x52303, size: 0x8, addend: 0x0, symName: '-[CPJSONParser init]', symObjAddr: 0x0, symBinAddr: 0xA6D8, symSize: 0x24C }
+  - { offset: 0x52369, size: 0x8, addend: 0x0, symName: '___20-[CPJSONParser init]_block_invoke', symObjAddr: 0x24C, symBinAddr: 0xA924, symSize: 0x78 }
+  - { offset: 0x523B4, size: 0x8, addend: 0x0, symName: '-[CPJSONParser dealloc]', symObjAddr: 0x2C4, symBinAddr: 0xA99C, symSize: 0x50 }
+  - { offset: 0x523E7, size: 0x8, addend: 0x0, symName: '-[CPJSONParser parse:]', symObjAddr: 0x314, symBinAddr: 0xA9EC, symSize: 0x2C }
+  - { offset: 0x5243E, size: 0x8, addend: 0x0, symName: '-[CPJSONParser tokeniser:shouldConsumeToken:]', symObjAddr: 0x340, symBinAddr: 0xAA18, symSize: 0x8 }
+  - { offset: 0x52489, size: 0x8, addend: 0x0, symName: '-[CPJSONParser tokeniser:willProduceToken:]', symObjAddr: 0x348, symBinAddr: 0xAA20, symSize: 0x44 }
+  - { offset: 0x524D8, size: 0x8, addend: 0x0, symName: '-[CPJSONParser parser:didProduceSyntaxTree:]', symObjAddr: 0x38C, symBinAddr: 0xAA64, symSize: 0x2B8 }
+  - { offset: 0x52802, size: 0x8, addend: 0x0, symName: '-[CPLALR1Parser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0xAD1C, symSize: 0x62C }
+  - { offset: 0x52976, size: 0x8, addend: 0x0, symName: '-[CPLALR1Parser constructShiftReduceTables]', symObjAddr: 0x0, symBinAddr: 0xAD1C, symSize: 0x62C }
+  - { offset: 0x52BD7, size: 0x8, addend: 0x0, symName: '___43-[CPLALR1Parser constructShiftReduceTables]_block_invoke', symObjAddr: 0x62C, symBinAddr: 0xB348, symSize: 0x10 }
+  - { offset: 0x52C12, size: 0x8, addend: 0x0, symName: '___43-[CPLALR1Parser constructShiftReduceTables]_block_invoke_2', symObjAddr: 0x63C, symBinAddr: 0xB358, symSize: 0x4C }
+  - { offset: 0x52C4D, size: 0x8, addend: 0x0, symName: '___43-[CPLALR1Parser constructShiftReduceTables]_block_invoke_3', symObjAddr: 0x688, symBinAddr: 0xB3A4, symSize: 0x4C }
+  - { offset: 0x52C88, size: 0x8, addend: 0x0, symName: '___43-[CPLALR1Parser constructShiftReduceTables]_block_invoke_4', symObjAddr: 0x6D4, symBinAddr: 0xB3F0, symSize: 0x4C }
+  - { offset: 0x52CC3, size: 0x8, addend: 0x0, symName: '-[CPLALR1Parser kernelsForGrammar:]', symObjAddr: 0x720, symBinAddr: 0xB43C, symSize: 0xB30 }
+  - { offset: 0x533A2, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser initWithRegexp:matchHandler:]', symObjAddr: 0x0, symBinAddr: 0xBF6C, symSize: 0x70 }
+  - { offset: 0x534ED, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser initWithRegexp:matchHandler:]', symObjAddr: 0x0, symBinAddr: 0xBF6C, symSize: 0x70 }
+  - { offset: 0x53544, size: 0x8, addend: 0x0, symName: '+[CPRegexpRecogniser recogniserForRegexp:matchHandler:]', symObjAddr: 0x70, symBinAddr: 0xBFDC, symSize: 0x30 }
+  - { offset: 0x5359B, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser dealloc]', symObjAddr: 0xA0, symBinAddr: 0xC00C, symSize: 0x50 }
+  - { offset: 0x535CE, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser initWithCoder:]', symObjAddr: 0xF0, symBinAddr: 0xC05C, symSize: 0x68 }
+  - { offset: 0x53615, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser encodeWithCoder:]', symObjAddr: 0x158, symBinAddr: 0xC0C4, symSize: 0x30 }
+  - { offset: 0x53658, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser recogniseTokenInString:currentTokenPosition:]', symObjAddr: 0x188, symBinAddr: 0xC0F4, symSize: 0xD0 }
+  - { offset: 0x53715, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser regexp]', symObjAddr: 0x258, symBinAddr: 0xC1C4, symSize: 0x8 }
+  - { offset: 0x5374C, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser setRegexp:]', symObjAddr: 0x260, symBinAddr: 0xC1CC, symSize: 0x8 }
+  - { offset: 0x5378B, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser matchHandler]', symObjAddr: 0x268, symBinAddr: 0xC1D4, symSize: 0x8 }
+  - { offset: 0x537C2, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser setMatchHandler:]', symObjAddr: 0x270, symBinAddr: 0xC1DC, symSize: 0x8 }
+  - { offset: 0x53885, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) rulesByNonTerminal]', symObjAddr: 0x0, symBinAddr: 0xC1E4, symSize: 0xC }
+  - { offset: 0x5389F, size: 0x8, addend: 0x0, symName: _rulesByNonTerminalKey, symObjAddr: 0x2FFE, symBinAddr: 0x229A0, symSize: 0x0 }
+  - { offset: 0x538BC, size: 0x8, addend: 0x0, symName: _followCacheKey, symObjAddr: 0x2FFF, symBinAddr: 0x229A1, symSize: 0x0 }
+  - { offset: 0x53901, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) rulesByNonTerminal]', symObjAddr: 0x0, symBinAddr: 0xC1E4, symSize: 0xC }
+  - { offset: 0x53996, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) setRulesByNonTerminal:]', symObjAddr: 0xC, symBinAddr: 0xC1F0, symSize: 0x10 }
+  - { offset: 0x53A26, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) followCache]', symObjAddr: 0x1C, symBinAddr: 0xC200, symSize: 0xC }
+  - { offset: 0x53A72, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) setFollowCache:]', symObjAddr: 0x28, symBinAddr: 0xC20C, symSize: 0x10 }
+  - { offset: 0x53AD8, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) rules]', symObjAddr: 0x38, symBinAddr: 0xC21C, symSize: 0x114 }
+  - { offset: 0x53B36, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) setRules:]', symObjAddr: 0x14C, symBinAddr: 0xC330, symSize: 0x13C }
+  - { offset: 0x53B98, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) orderedRules]', symObjAddr: 0x288, symBinAddr: 0xC46C, symSize: 0x20 }
+  - { offset: 0x53BCF, size: 0x8, addend: 0x0, symName: '___43-[CPGrammar(CPGrammarPrivate) orderedRules]_block_invoke', symObjAddr: 0x2A8, symBinAddr: 0xC48C, symSize: 0xDC }
+  - { offset: 0x53C45, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) firstSymbol:]', symObjAddr: 0x384, symBinAddr: 0xC568, symSize: 0x274 }
+  - { offset: 0x53D57, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) allSymbolNames]', symObjAddr: 0x5F8, symBinAddr: 0xC7DC, symSize: 0x28 }
+  - { offset: 0x53D8E, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) symbolNamesInRules:]', symObjAddr: 0x620, symBinAddr: 0xC804, symSize: 0x1B8 }
+  - { offset: 0x53FA0, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) augmentedGrammar]', symObjAddr: 0x0, symBinAddr: 0xC9BC, symSize: 0xB4 }
+  - { offset: 0x5410B, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) augmentedGrammar]', symObjAddr: 0x0, symBinAddr: 0xC9BC, symSize: 0xB4 }
+  - { offset: 0x54142, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) indexOfRule:]', symObjAddr: 0xB4, symBinAddr: 0xCA70, symSize: 0x24 }
+  - { offset: 0x54189, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) description]', symObjAddr: 0xD8, symBinAddr: 0xCA94, symSize: 0x120 }
+  - { offset: 0x5420F, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) lr0Closure:]', symObjAddr: 0x1F8, symBinAddr: 0xCBB4, symSize: 0xF0 }
+  - { offset: 0x542A5, size: 0x8, addend: 0x0, symName: '___43-[CPGrammar(CPGrammarInternal) lr0Closure:]_block_invoke', symObjAddr: 0x2E8, symBinAddr: 0xCCA4, symSize: 0x64 }
+  - { offset: 0x5432F, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) lr0GotoKernelWithItems:symbol:]', symObjAddr: 0x3B8, symBinAddr: 0xCD08, symSize: 0x5C }
+  - { offset: 0x54382, size: 0x8, addend: 0x0, symName: '___62-[CPGrammar(CPGrammarInternal) lr0GotoKernelWithItems:symbol:]_block_invoke', symObjAddr: 0x414, symBinAddr: 0xCD64, symSize: 0x2C }
+  - { offset: 0x543DD, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32o, symObjAddr: 0x440, symBinAddr: 0xCD90, symSize: 0x10 }
+  - { offset: 0x54406, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32o, symObjAddr: 0x450, symBinAddr: 0xCDA0, symSize: 0xC }
+  - { offset: 0x54425, size: 0x8, addend: 0x0, symName: '___62-[CPGrammar(CPGrammarInternal) lr0GotoKernelWithItems:symbol:]_block_invoke.10', symObjAddr: 0x45C, symBinAddr: 0xCDAC, symSize: 0x8 }
+  - { offset: 0x54460, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) lr0Kernels]', symObjAddr: 0x464, symBinAddr: 0xCDB4, symSize: 0x1DC }
+  - { offset: 0x54554, size: 0x8, addend: 0x0, symName: '___42-[CPGrammar(CPGrammarInternal) lr0Kernels]_block_invoke', symObjAddr: 0x640, symBinAddr: 0xCF90, symSize: 0x8 }
+  - { offset: 0x5458F, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) lr1Closure:]', symObjAddr: 0x648, symBinAddr: 0xCF98, symSize: 0x2AC }
+  - { offset: 0x546EE, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) lr1GotoKernelWithItems:symbol:]', symObjAddr: 0x8F4, symBinAddr: 0xD244, symSize: 0x5C }
+  - { offset: 0x54741, size: 0x8, addend: 0x0, symName: '___62-[CPGrammar(CPGrammarInternal) lr1GotoKernelWithItems:symbol:]_block_invoke', symObjAddr: 0x950, symBinAddr: 0xD2A0, symSize: 0x2C }
+  - { offset: 0x5479C, size: 0x8, addend: 0x0, symName: '___62-[CPGrammar(CPGrammarInternal) lr1GotoKernelWithItems:symbol:]_block_invoke_2', symObjAddr: 0x97C, symBinAddr: 0xD2CC, symSize: 0x8 }
+  - { offset: 0x547D7, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) follow:]', symObjAddr: 0x984, symBinAddr: 0xD2D4, symSize: 0x198 }
+  - { offset: 0x54893, size: 0x8, addend: 0x0, symName: '___39-[CPGrammar(CPGrammarInternal) follow:]_block_invoke', symObjAddr: 0xB1C, symBinAddr: 0xD46C, symSize: 0xF0 }
+  - { offset: 0x5497D, size: 0x8, addend: 0x0, symName: '___39-[CPGrammar(CPGrammarInternal) follow:]_block_invoke_2', symObjAddr: 0xC0C, symBinAddr: 0xD55C, symSize: 0x24 }
+  - { offset: 0x549C4, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32o40o48o56o64o, symObjAddr: 0xC30, symBinAddr: 0xD580, symSize: 0x6C }
+  - { offset: 0x549ED, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32o40o48o56o64o, symObjAddr: 0xC9C, symBinAddr: 0xD5EC, symSize: 0x54 }
+  - { offset: 0x54A0C, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) first:]', symObjAddr: 0xCF0, symBinAddr: 0xD640, symSize: 0x134 }
+  - { offset: 0x54AA1, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) uniqueSymbolNameBasedOnName:]', symObjAddr: 0xE24, symBinAddr: 0xD774, symSize: 0x30 }
+  - { offset: 0x54AE8, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) symbolNameNotInSet:basedOnName:]', symObjAddr: 0xE54, symBinAddr: 0xD7A4, symSize: 0x80 }
+  - { offset: 0x54B4B, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) tidyRightHandSides:error:]', symObjAddr: 0xED4, symBinAddr: 0xD824, symSize: 0x15C }
+  - { offset: 0x54BF4, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) checkRulesForErrors:]', symObjAddr: 0x1030, symBinAddr: 0xD980, symSize: 0x2F0 }
+  - { offset: 0x54CFB, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) collectRHSElementsForNewRules:]', symObjAddr: 0x1320, symBinAddr: 0xDC70, symSize: 0x1B4 }
+  - { offset: 0x54D85, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) nameNewRules:withRules:]', symObjAddr: 0x14D4, symBinAddr: 0xDE24, symSize: 0x16C }
+  - { offset: 0x54E30, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarInternal) addRHSRules:toRules:]', symObjAddr: 0x1640, symBinAddr: 0xDF90, symSize: 0x580 }
+  - { offset: 0x55432, size: 0x8, addend: 0x0, symName: '-[CPRHSItem hash]', symObjAddr: 0x0, symBinAddr: 0xE510, symSize: 0x58 }
+  - { offset: 0x554FA, size: 0x8, addend: 0x0, symName: '-[CPRHSItem hash]', symObjAddr: 0x0, symBinAddr: 0xE510, symSize: 0x58 }
+  - { offset: 0x55531, size: 0x8, addend: 0x0, symName: '-[CPRHSItem isRHSItem]', symObjAddr: 0x58, symBinAddr: 0xE568, symSize: 0x8 }
+  - { offset: 0x55564, size: 0x8, addend: 0x0, symName: '-[CPRHSItem isEqual:]', symObjAddr: 0x60, symBinAddr: 0xE570, symSize: 0xF0 }
+  - { offset: 0x555AB, size: 0x8, addend: 0x0, symName: '-[CPRHSItem copyWithZone:]', symObjAddr: 0x150, symBinAddr: 0xE660, symSize: 0x98 }
+  - { offset: 0x55602, size: 0x8, addend: 0x0, symName: '-[CPRHSItem dealloc]', symObjAddr: 0x1E8, symBinAddr: 0xE6F8, symSize: 0x50 }
+  - { offset: 0x55635, size: 0x8, addend: 0x0, symName: '-[CPRHSItem description]', symObjAddr: 0x238, symBinAddr: 0xE748, symSize: 0x2FC }
+  - { offset: 0x556CF, size: 0x8, addend: 0x0, symName: '-[CPRHSItem tags]', symObjAddr: 0x534, symBinAddr: 0xEA44, symSize: 0x18 }
+  - { offset: 0x55706, size: 0x8, addend: 0x0, symName: '-[CPRHSItem setTags:]', symObjAddr: 0x54C, symBinAddr: 0xEA5C, symSize: 0x3C }
+  - { offset: 0x55749, size: 0x8, addend: 0x0, symName: '-[CPRHSItem nonTerminalsUsed]', symObjAddr: 0x588, symBinAddr: 0xEA98, symSize: 0x1D4 }
+  - { offset: 0x557C4, size: 0x8, addend: 0x0, symName: '-[CPRHSItem alternatives]', symObjAddr: 0x75C, symBinAddr: 0xEC6C, symSize: 0xC }
+  - { offset: 0x557FB, size: 0x8, addend: 0x0, symName: '-[CPRHSItem setAlternatives:]', symObjAddr: 0x768, symBinAddr: 0xEC78, symSize: 0x8 }
+  - { offset: 0x5583A, size: 0x8, addend: 0x0, symName: '-[CPRHSItem repeats]', symObjAddr: 0x770, symBinAddr: 0xEC80, symSize: 0xC }
+  - { offset: 0x55871, size: 0x8, addend: 0x0, symName: '-[CPRHSItem setRepeats:]', symObjAddr: 0x77C, symBinAddr: 0xEC8C, symSize: 0x8 }
+  - { offset: 0x558AE, size: 0x8, addend: 0x0, symName: '-[CPRHSItem mayNotExist]', symObjAddr: 0x784, symBinAddr: 0xEC94, symSize: 0xC }
+  - { offset: 0x558E5, size: 0x8, addend: 0x0, symName: '-[CPRHSItem setMayNotExist:]', symObjAddr: 0x790, symBinAddr: 0xECA0, symSize: 0x8 }
+  - { offset: 0x55922, size: 0x8, addend: 0x0, symName: '-[CPRHSItem shouldCollapse]', symObjAddr: 0x798, symBinAddr: 0xECA8, symSize: 0xC }
+  - { offset: 0x55959, size: 0x8, addend: 0x0, symName: '-[CPRHSItem setShouldCollapse:]', symObjAddr: 0x7A4, symBinAddr: 0xECB4, symSize: 0x8 }
+  - { offset: 0x55996, size: 0x8, addend: 0x0, symName: '-[CPRHSItem(Private) addTag:]', symObjAddr: 0x7AC, symBinAddr: 0xECBC, symSize: 0x48 }
+  - { offset: 0x559D9, size: 0x8, addend: 0x0, symName: '-[CPRHSItem(Private) tagNamesWithError:]', symObjAddr: 0x7F4, symBinAddr: 0xED04, symSize: 0x364 }
+  - { offset: 0x55ACB, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsRHSItem) isRHSItem]', symObjAddr: 0xB58, symBinAddr: 0xF068, symSize: 0x8 }
+  - { offset: 0x55B83, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult initWithSyntaxTree:]', symObjAddr: 0x0, symBinAddr: 0xF070, symSize: 0x1E8 }
+  - { offset: 0x55C20, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult initWithSyntaxTree:]', symObjAddr: 0x0, symBinAddr: 0xF070, symSize: 0x1E8 }
+  - { offset: 0x55CD4, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult dealloc]', symObjAddr: 0x1E8, symBinAddr: 0xF258, symSize: 0x58 }
+  - { offset: 0x55D07, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult isRHSItemResult]', symObjAddr: 0x240, symBinAddr: 0xF2B0, symSize: 0x8 }
+  - { offset: 0x55D3A, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult contents]', symObjAddr: 0x248, symBinAddr: 0xF2B8, symSize: 0xC }
+  - { offset: 0x55D71, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult setContents:]', symObjAddr: 0x254, symBinAddr: 0xF2C4, symSize: 0x8 }
+  - { offset: 0x55DB0, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult tagNames]', symObjAddr: 0x25C, symBinAddr: 0xF2CC, symSize: 0xC }
+  - { offset: 0x55DE7, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult setTagNames:]', symObjAddr: 0x268, symBinAddr: 0xF2D8, symSize: 0x8 }
+  - { offset: 0x55E26, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult shouldCollapse]', symObjAddr: 0x270, symBinAddr: 0xF2E0, symSize: 0xC }
+  - { offset: 0x55E5D, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult setShouldCollapse:]', symObjAddr: 0x27C, symBinAddr: 0xF2EC, symSize: 0x8 }
+  - { offset: 0x55E9A, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult tagValues]', symObjAddr: 0x284, symBinAddr: 0xF2F4, symSize: 0xC }
+  - { offset: 0x55ED1, size: 0x8, addend: 0x0, symName: '-[CPRHSItemResult setTagValues:]', symObjAddr: 0x290, symBinAddr: 0xF300, symSize: 0x8 }
+  - { offset: 0x55F10, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsRHSItemResult) isRHSItemResult]', symObjAddr: 0x298, symBinAddr: 0xF308, symSize: 0x8 }
+  - { offset: 0x56051, size: 0x8, addend: 0x0, symName: '+[CPErrorToken errorWithMessage:]', symObjAddr: 0x0, symBinAddr: 0xF310, symSize: 0x28 }
+  - { offset: 0x560E7, size: 0x8, addend: 0x0, symName: '+[CPErrorToken errorWithMessage:]', symObjAddr: 0x0, symBinAddr: 0xF310, symSize: 0x28 }
+  - { offset: 0x5612E, size: 0x8, addend: 0x0, symName: '-[CPErrorToken initWithMesage:]', symObjAddr: 0x28, symBinAddr: 0xF338, symSize: 0x58 }
+  - { offset: 0x56175, size: 0x8, addend: 0x0, symName: '-[CPErrorToken dealloc]', symObjAddr: 0x80, symBinAddr: 0xF390, symSize: 0x50 }
+  - { offset: 0x561A8, size: 0x8, addend: 0x0, symName: '-[CPErrorToken name]', symObjAddr: 0xD0, symBinAddr: 0xF3E0, symSize: 0xC }
+  - { offset: 0x561DB, size: 0x8, addend: 0x0, symName: '-[CPErrorToken hash]', symObjAddr: 0xDC, symBinAddr: 0xF3EC, symSize: 0x8 }
+  - { offset: 0x5620E, size: 0x8, addend: 0x0, symName: '-[CPErrorToken isErrorToken]', symObjAddr: 0xE4, symBinAddr: 0xF3F4, symSize: 0x8 }
+  - { offset: 0x56241, size: 0x8, addend: 0x0, symName: '-[CPErrorToken isEqual:]', symObjAddr: 0xEC, symBinAddr: 0xF3FC, symSize: 0x8 }
+  - { offset: 0x56284, size: 0x8, addend: 0x0, symName: '-[CPErrorToken errorMessage]', symObjAddr: 0xF4, symBinAddr: 0xF404, symSize: 0x10 }
+  - { offset: 0x562BB, size: 0x8, addend: 0x0, symName: '-[CPErrorToken setErrorMessage:]', symObjAddr: 0x104, symBinAddr: 0xF414, symSize: 0xC }
+  - { offset: 0x562FA, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsErrorToken) isErrorToken]', symObjAddr: 0x110, symBinAddr: 0xF420, symSize: 0x8 }
+  - { offset: 0x563AC, size: 0x8, addend: 0x0, symName: '+[CPRecoveryAction recoveryActionWithAdditionalToken:]', symObjAddr: 0x0, symBinAddr: 0xF428, symSize: 0x28 }
+  - { offset: 0x5648E, size: 0x8, addend: 0x0, symName: '+[CPRecoveryAction recoveryActionWithAdditionalToken:]', symObjAddr: 0x0, symBinAddr: 0xF428, symSize: 0x28 }
+  - { offset: 0x564D5, size: 0x8, addend: 0x0, symName: '+[CPRecoveryAction recoveryActionDeletingCurrentToken]', symObjAddr: 0x28, symBinAddr: 0xF450, symSize: 0x18 }
+  - { offset: 0x5650C, size: 0x8, addend: 0x0, symName: '+[CPRecoveryAction recoveryActionStop]', symObjAddr: 0x40, symBinAddr: 0xF468, symSize: 0x18 }
+  - { offset: 0x56543, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction initWithAdditionalToken:]', symObjAddr: 0x58, symBinAddr: 0xF480, symSize: 0x64 }
+  - { offset: 0x5658A, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction initWithDeleteAction]', symObjAddr: 0xBC, symBinAddr: 0xF4E4, symSize: 0x54 }
+  - { offset: 0x565C1, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction initWithStopAction]', symObjAddr: 0x110, symBinAddr: 0xF538, symSize: 0x54 }
+  - { offset: 0x565F8, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction dealloc]', symObjAddr: 0x164, symBinAddr: 0xF58C, symSize: 0x48 }
+  - { offset: 0x5662B, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction recoveryType]', symObjAddr: 0x1AC, symBinAddr: 0xF5D4, symSize: 0x8 }
+  - { offset: 0x56662, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction setRecoveryType:]', symObjAddr: 0x1B4, symBinAddr: 0xF5DC, symSize: 0x8 }
+  - { offset: 0x5669F, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction additionalToken]', symObjAddr: 0x1BC, symBinAddr: 0xF5E4, symSize: 0xC }
+  - { offset: 0x566D6, size: 0x8, addend: 0x0, symName: '-[CPRecoveryAction setAdditionalToken:]', symObjAddr: 0x1C8, symBinAddr: 0xF5F0, symSize: 0x8 }
+  - { offset: 0x56788, size: 0x8, addend: 0x0, symName: '-[NSArray(Functional) cp_map:]', symObjAddr: 0x0, symBinAddr: 0xF5F8, symSize: 0x140 }
+  - { offset: 0x56797, size: 0x8, addend: 0x0, symName: '-[NSArray(Functional) cp_map:]', symObjAddr: 0x0, symBinAddr: 0xF5F8, symSize: 0x140 }
 ...

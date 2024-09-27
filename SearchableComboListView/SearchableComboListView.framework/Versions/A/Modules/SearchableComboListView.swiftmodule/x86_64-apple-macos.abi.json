@@ -1,8 +1,8 @@
 {
   "ABIRoot": {
     "kind": "Root",
-    "name": "TopLevel",
-    "printedName": "TopLevel",
+    "name": "SearchableComboListView",
+    "printedName": "SearchableComboListView",
     "children": [
       {
         "kind": "Import",
@@ -114,6 +114,22 @@
         "declAttributes": [
           "AccessControl",
           "ObjC"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          }
         ]
       },
       {
@@ -205,6 +221,20 @@
           "ObjectiveC.NSObject"
         ],
         "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
           {
             "kind": "Conformance",
             "name": "Equatable",
@@ -666,6 +696,20 @@
         "conformances": [
           {
             "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
             "name": "Equatable",
             "printedName": "Equatable",
             "usr": "s:SQ",
@@ -746,6 +790,7 @@
                 "declAttributes": [
                   "Dynamic",
                   "ObjC",
+                  "Preconcurrency",
                   "Custom",
                   "Override",
                   "AccessControl"
@@ -804,6 +849,7 @@
                 "declAttributes": [
                   "Dynamic",
                   "ObjC",
+                  "Preconcurrency",
                   "Custom",
                   "Override",
                   "AccessControl"
@@ -843,6 +889,7 @@
                 "declAttributes": [
                   "Dynamic",
                   "ObjC",
+                  "Preconcurrency",
                   "Custom",
                   "Override",
                   "AccessControl"
@@ -869,6 +916,7 @@
                 "declAttributes": [
                   "Dynamic",
                   "ObjC",
+                  "Preconcurrency",
                   "Custom",
                   "Override",
                   "AccessControl"
@@ -921,6 +969,7 @@
                 "declAttributes": [
                   "Dynamic",
                   "ObjC",
+                  "Preconcurrency",
                   "Custom",
                   "Override"
                 ],
@@ -932,6 +981,7 @@
             "mangledName": "$s23SearchableComboListView0abD0C5PanelC",
             "moduleName": "SearchableComboListView",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -945,6 +995,20 @@
               "ObjectiveC.NSObject"
             ],
             "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
               {
                 "kind": "Conformance",
                 "name": "Equatable",
@@ -1020,8 +1084,9 @@
             "moduleName": "SearchableComboListView",
             "declAttributes": [
               "HasInitialValue",
-              "HasStorage",
+              "Preconcurrency",
               "Custom",
+              "HasStorage",
               "ReferenceOwnership",
               "AccessControl",
               "ObjC"
@@ -1141,6 +1206,7 @@
             "static": true,
             "isOpen": true,
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -1166,6 +1232,7 @@
             "static": true,
             "isOpen": true,
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -1206,6 +1273,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "Required"
@@ -1250,6 +1318,7 @@
             "moduleName": "SearchableComboListView",
             "objc_name": "initWithGroups:defaultTitle:",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "ObjC"
@@ -1283,6 +1352,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "Override"
@@ -1312,6 +1382,7 @@
             "mangledName": "$s23SearchableComboListView0abD0C10selectItem14withIdentifierSbSo015NSUserInterfacefH0a_tF",
             "moduleName": "SearchableComboListView",
             "declAttributes": [
+              "Preconcurrency",
               "Custom",
               "AccessControl"
             ],
@@ -1344,6 +1415,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -1371,6 +1443,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "Override"
@@ -1409,6 +1482,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "AccessControl",
               "Override"
@@ -1445,6 +1519,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override",
               "AccessControl"
@@ -1519,6 +1594,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override"
             ],
@@ -1552,6 +1628,7 @@
             "declAttributes": [
               "Dynamic",
               "ObjC",
+              "Preconcurrency",
               "Custom",
               "Override"
             ],
@@ -1565,6 +1642,7 @@
         "isOpen": true,
         "objc_name": "iTermSearchableComboView",
         "declAttributes": [
+          "Preconcurrency",
           "Custom",
           "AccessControl",
           "ObjC"
@@ -1579,6 +1657,20 @@
           "ObjectiveC.NSObject"
         ],
         "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
           {
             "kind": "Conformance",
             "name": "Equatable",
@@ -1784,25 +1876,11 @@
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
-      "kind": "StringLiteral",
-      "offset": 2510,
-      "length": 34,
-      "value": "\"SearchableComboListView.SearchableComboTableViewController\""
-    },
-    {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
-      "kind": "StringLiteral",
-      "offset": 370,
-      "length": 24,
-      "value": "\"SearchableComboListView.SearchableComboViewGroup\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
-      "kind": "StringLiteral",
-      "offset": 840,
-      "length": 23,
-      "value": "\"SearchableComboListView.SearchableComboViewItem\""
+      "kind": "BooleanLiteral",
+      "offset": 1686,
+      "length": 4,
+      "value": "true"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
@@ -1817,20 +1895,6 @@
       "offset": 2402,
       "length": 5,
       "value": "false"
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
-      "kind": "StringLiteral",
-      "offset": 1547,
-      "length": 19,
-      "value": "\"SearchableComboListView.SearchableComboView\""
-    },
-    {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
-      "kind": "StringLiteral",
-      "offset": 1547,
-      "length": 19,
-      "value": "\"SearchableComboListView.SearchableComboView\""
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",

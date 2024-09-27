@@ -1,6 +1,7 @@
 // swift-interface-format-version: 1.0
-// swift-compiler-version: Apple Swift version 5.10 (swiftlang-5.10.0.13 clang-1500.3.9.4)
+// swift-compiler-version: Apple Swift version 6.0 effective-5.10 (swiftlang-6.0.0.9.10 clang-1600.0.26.2)
 // swift-module-flags: -target x86_64-apple-macos10.15 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -enable-bare-slash-regex -module-name BetterFontPicker
+// swift-module-flags-ignorable: -no-verify-emitted-module-interface
 @_exported import BetterFontPicker
 import Cocoa
 import Foundation
@@ -11,23 +12,23 @@ import _SwiftConcurrencyShims
 @objc(BFPSizePickerViewDelegate) public protocol SizePickerViewDelegate : ObjectiveC.NSObjectProtocol {
   @objc func sizePickerView(_ sizePickerView: BetterFontPicker.SizePickerView, didChangeSizeTo size: Swift.Double)
 }
-@_inheritsConvenienceInitializers @objc(BFPSizePickerView) @_Concurrency.MainActor(unsafe) public class SizePickerView : AppKit.NSView, AppKit.NSTextFieldDelegate {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any BetterFontPicker.SizePickerViewDelegate)?
-  @objc @_Concurrency.MainActor(unsafe) public var size: Swift.Double {
+@_inheritsConvenienceInitializers @objc(BFPSizePickerView) @_Concurrency.MainActor @preconcurrency public class SizePickerView : AppKit.NSView, AppKit.NSTextFieldDelegate {
+  @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any BetterFontPicker.SizePickerViewDelegate)?
+  @objc @_Concurrency.MainActor @preconcurrency public var size: Swift.Double {
     @objc get
     @objc set
   }
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public var fittingSize: Foundation.NSSize {
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public var fittingSize: Foundation.NSSize {
     @objc get
   }
-  @objc @_Concurrency.MainActor(unsafe) final public let textField: AppKit.NSTextField
-  @objc @_Concurrency.MainActor(unsafe) public func clamp(min: Swift.Int, max: Swift.Int)
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame frameRect: Foundation.NSRect)
-  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder decoder: Foundation.NSCoder)
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func resizeSubviews(withOldSize oldSize: Foundation.NSSize)
-  @objc(stepper:) @_Concurrency.MainActor(unsafe) public func stepper(_ sender: Any?)
-  @_Concurrency.MainActor(unsafe) @objc public func controlTextDidEndEditing(_ obj: Foundation.Notification)
-  @_Concurrency.MainActor(unsafe) @objc public func controlTextDidChange(_ obj: Foundation.Notification)
+  @objc @_Concurrency.MainActor @preconcurrency final public let textField: AppKit.NSTextField
+  @objc @_Concurrency.MainActor @preconcurrency public func clamp(min: Swift.Int, max: Swift.Int)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public init(frame frameRect: Foundation.NSRect)
+  @_Concurrency.MainActor @preconcurrency @objc required dynamic public init?(coder decoder: Foundation.NSCoder)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func resizeSubviews(withOldSize oldSize: Foundation.NSSize)
+  @objc(stepper:) @_Concurrency.MainActor @preconcurrency public func stepper(_ sender: Any?)
+  @_Concurrency.MainActor @preconcurrency @objc public func controlTextDidEndEditing(_ obj: Foundation.Notification)
+  @_Concurrency.MainActor @preconcurrency @objc public func controlTextDidChange(_ obj: Foundation.Notification)
   @objc deinit
 }
 @objc(BFPFontListDataSource) public protocol FontListDataSource : ObjectiveC.NSObjectProtocol {
@@ -36,64 +37,64 @@ import _SwiftConcurrencyShims
   @objc var filter: Swift.String { get set }
   @objc func reload()
 }
-@_inheritsConvenienceInitializers @objc(BFPFontListTableView) @_Concurrency.MainActor(unsafe) public class FontListTableView : AppKit.NSTableView {
-  @objc(keyDown:) @_Concurrency.MainActor(unsafe) override dynamic public func keyDown(with event: AppKit.NSEvent)
-  @objc(mouseDown:) @_Concurrency.MainActor(unsafe) override dynamic public func mouseDown(with event: AppKit.NSEvent)
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame frameRect: Foundation.NSRect)
-  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+@_inheritsConvenienceInitializers @objc(BFPFontListTableView) @_Concurrency.MainActor @preconcurrency public class FontListTableView : AppKit.NSTableView {
+  @objc(keyDown:) @_Concurrency.MainActor @preconcurrency override dynamic public func keyDown(with event: AppKit.NSEvent)
+  @objc(mouseDown:) @_Concurrency.MainActor @preconcurrency override dynamic public func mouseDown(with event: AppKit.NSEvent)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public init(frame frameRect: Foundation.NSRect)
+  @_Concurrency.MainActor @preconcurrency @objc required dynamic public init?(coder: Foundation.NSCoder)
   @objc deinit
 }
 @objc(BFPAffordanceDelegate) public protocol AffordanceDelegate {
   @objc func affordance(_ affordance: BetterFontPicker.Affordance, didSelectFontFamily fontFamily: Swift.String)
 }
-@_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc(BFPAffordance) @_Concurrency.MainActor(unsafe) public class Affordance : AppKit.NSPopUpButton, BetterFontPicker.MainViewControllerDelegate {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any BetterFontPicker.AffordanceDelegate)?
-  @objc @_Concurrency.MainActor(unsafe) public var familyName: Swift.String? {
+@_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc(BFPAffordance) @_Concurrency.MainActor @preconcurrency public class Affordance : AppKit.NSPopUpButton, BetterFontPicker.MainViewControllerDelegate {
+  @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any BetterFontPicker.AffordanceDelegate)?
+  @objc @_Concurrency.MainActor @preconcurrency public var familyName: Swift.String? {
     @objc get
     @objc set
   }
-  @_Concurrency.MainActor(unsafe) weak public var memberPicker: BetterFontPicker.FontFamilyMemberPickerView? {
+  @_Concurrency.MainActor @preconcurrency weak public var memberPicker: BetterFontPicker.FontFamilyMemberPickerView? {
     get
     set
   }
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public var title: Swift.String {
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public var title: Swift.String {
     @objc get
     @objc set
   }
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame buttonFrame: Foundation.NSRect, pullsDown flag: Swift.Bool)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public init(frame buttonFrame: Foundation.NSRect, pullsDown flag: Swift.Bool)
   @objc deinit
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func willOpenMenu(_ menu: AppKit.NSMenu, with event: AppKit.NSEvent)
-  @_Concurrency.MainActor(unsafe) @objc public func mainViewController(_ mainViewController: BetterFontPicker.MainViewController, didSelectFontWithName name: Swift.String)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func willOpenMenu(_ menu: AppKit.NSMenu, with event: AppKit.NSEvent)
+  @_Concurrency.MainActor @preconcurrency @objc public func mainViewController(_ mainViewController: BetterFontPicker.MainViewController, didSelectFontWithName name: Swift.String)
 }
-@_hasMissingDesignatedInitializers @objc(BFPTableViewController) @_Concurrency.MainActor(unsafe) public class TableViewController : AppKit.NSViewController, AppKit.NSTableViewDataSource, AppKit.NSTableViewDelegate {
-  @objc(viewDidLayout) @_Concurrency.MainActor(unsafe) override dynamic public func viewDidLayout()
-  @objc(numberOfRowsInTableView:) @_Concurrency.MainActor(unsafe) public func numberOfRows(in tableView: AppKit.NSTableView) -> Swift.Int
-  @objc(tableView:rowViewForRow:) @_Concurrency.MainActor(unsafe) public func tableView(_ tableView: AppKit.NSTableView, rowViewForRow row: Swift.Int) -> AppKit.NSTableRowView?
-  @objc(tableView:viewForTableColumn:row:) @_Concurrency.MainActor(unsafe) public func tableView(_ tableView: AppKit.NSTableView, viewFor tableColumn: AppKit.NSTableColumn?, row: Swift.Int) -> AppKit.NSView?
-  @objc(tableView:heightOfRow:) @_Concurrency.MainActor(unsafe) public func tableView(_ tableView: AppKit.NSTableView, heightOfRow row: Swift.Int) -> CoreFoundation.CGFloat
-  @objc(tableView:shouldSelectRow:) @_Concurrency.MainActor(unsafe) public func tableView(_ tableView: AppKit.NSTableView, shouldSelectRow row: Swift.Int) -> Swift.Bool
-  @objc(tableViewSelectionDidChange:) @_Concurrency.MainActor(unsafe) public func tableViewSelectionDidChange(_ notification: Foundation.Notification)
+@_hasMissingDesignatedInitializers @objc(BFPTableViewController) @_Concurrency.MainActor @preconcurrency public class TableViewController : AppKit.NSViewController, AppKit.NSTableViewDataSource, AppKit.NSTableViewDelegate {
+  @objc(viewDidLayout) @_Concurrency.MainActor @preconcurrency override dynamic public func viewDidLayout()
+  @objc(numberOfRowsInTableView:) @_Concurrency.MainActor @preconcurrency public func numberOfRows(in tableView: AppKit.NSTableView) -> Swift.Int
+  @objc(tableView:rowViewForRow:) @_Concurrency.MainActor @preconcurrency public func tableView(_ tableView: AppKit.NSTableView, rowViewForRow row: Swift.Int) -> AppKit.NSTableRowView?
+  @objc(tableView:viewForTableColumn:row:) @_Concurrency.MainActor @preconcurrency public func tableView(_ tableView: AppKit.NSTableView, viewFor tableColumn: AppKit.NSTableColumn?, row: Swift.Int) -> AppKit.NSView?
+  @objc(tableView:heightOfRow:) @_Concurrency.MainActor @preconcurrency public func tableView(_ tableView: AppKit.NSTableView, heightOfRow row: Swift.Int) -> CoreFoundation.CGFloat
+  @objc(tableView:shouldSelectRow:) @_Concurrency.MainActor @preconcurrency public func tableView(_ tableView: AppKit.NSTableView, shouldSelectRow row: Swift.Int) -> Swift.Bool
+  @objc(tableViewSelectionDidChange:) @_Concurrency.MainActor @preconcurrency public func tableViewSelectionDidChange(_ notification: Foundation.Notification)
   @objc deinit
 }
-@objc @_inheritsConvenienceInitializers @_Concurrency.MainActor(unsafe) public class FontPickerPanel : AppKit.NSPanel {
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public var canBecomeKey: Swift.Bool {
+@objc @_inheritsConvenienceInitializers @_Concurrency.MainActor @preconcurrency public class FontPickerPanel : AppKit.NSPanel {
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public var canBecomeKey: Swift.Bool {
     @objc get
   }
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func cancelOperation(_ sender: Any?)
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func resignKey()
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(contentRect: Foundation.NSRect, styleMask style: AppKit.NSWindow.StyleMask, backing backingStoreType: AppKit.NSWindow.BackingStoreType, defer flag: Swift.Bool)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func cancelOperation(_ sender: Any?)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func resignKey()
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public init(contentRect: Foundation.NSRect, styleMask style: AppKit.NSWindow.StyleMask, backing backingStoreType: AppKit.NSWindow.BackingStoreType, defer flag: Swift.Bool)
   @objc deinit
 }
 @objc(BFPCompositeViewDelegate) public protocol FontPickerCompositeViewDelegate : ObjectiveC.NSObjectProtocol {
   @objc func fontPickerCompositeView(_ view: BetterFontPicker.FontPickerCompositeView, didSelectFont font: AppKit.NSFont)
 }
-@_inheritsConvenienceInitializers @objc(BFPCompositeView) @_Concurrency.MainActor(unsafe) public class FontPickerCompositeView : AppKit.NSView, BetterFontPicker.AffordanceDelegate, BetterFontPicker.FontFamilyMemberPickerViewDelegate, BetterFontPicker.SizePickerViewDelegate {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any BetterFontPicker.FontPickerCompositeViewDelegate)?
-  @objc @_Concurrency.MainActor(unsafe) final public let affordance: BetterFontPicker.Affordance
-  @objc @_Concurrency.MainActor(unsafe) public var horizontalSpacing: BetterFontPicker.SizePickerView? {
+@_inheritsConvenienceInitializers @objc(BFPCompositeView) @_Concurrency.MainActor @preconcurrency public class FontPickerCompositeView : AppKit.NSView, BetterFontPicker.AffordanceDelegate, BetterFontPicker.FontFamilyMemberPickerViewDelegate, BetterFontPicker.SizePickerViewDelegate {
+  @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any BetterFontPicker.FontPickerCompositeViewDelegate)?
+  @objc @_Concurrency.MainActor @preconcurrency final public let affordance: BetterFontPicker.Affordance
+  @objc @_Concurrency.MainActor @preconcurrency public var horizontalSpacing: BetterFontPicker.SizePickerView? {
     get
   }
-  @objc @_Concurrency.MainActor(unsafe) public var verticalSpacing: BetterFontPicker.SizePickerView? {
+  @objc @_Concurrency.MainActor @preconcurrency public var verticalSpacing: BetterFontPicker.SizePickerView? {
     get
   }
   @objc(BFPCompositeViewMode) public enum Mode : Swift.Int {
@@ -105,60 +106,60 @@ import _SwiftConcurrencyShims
       get
     }
   }
-  @objc @_Concurrency.MainActor(unsafe) public var mode: BetterFontPicker.FontPickerCompositeView.Mode {
+  @objc @_Concurrency.MainActor @preconcurrency public var mode: BetterFontPicker.FontPickerCompositeView.Mode {
     @objc get
     @objc set
   }
-  @objc @_Concurrency.MainActor(unsafe) public var font: AppKit.NSFont? {
+  @objc @_Concurrency.MainActor @preconcurrency public var font: AppKit.NSFont? {
     @objc get
     @objc set
   }
-  @_Concurrency.MainActor(unsafe) public init(font: AppKit.NSFont)
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame frameRect: Foundation.NSRect)
-  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder decoder: Foundation.NSCoder)
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func resizeSubviews(withOldSize oldSize: Foundation.NSSize)
-  @objc @_Concurrency.MainActor(unsafe) public func removeSizePicker()
-  @objc @_Concurrency.MainActor(unsafe) public func removeMemberPicker()
-  @objc @_Concurrency.MainActor(unsafe) public func removeOptionsButton()
-  @objc(addHorizontalSpacingAccessoryWithInitialValue:) @_Concurrency.MainActor(unsafe) public func addHorizontalSpacingAccessory(_ initialValue: Swift.Double) -> BetterFontPicker.SizePickerView
-  @objc(addVerticalSpacingAccessoryWithInitialValue:) @_Concurrency.MainActor(unsafe) public func addVerticalSpacingAccessory(_ initialValue: Swift.Double) -> BetterFontPicker.SizePickerView
-  @_Concurrency.MainActor(unsafe) public func add(accessory view: AppKit.NSView)
-  @_Concurrency.MainActor(unsafe) @objc public func affordance(_ affordance: BetterFontPicker.Affordance, didSelectFontFamily fontFamily: Swift.String)
-  @_Concurrency.MainActor(unsafe) @objc public func fontFamilyMemberPickerView(_ fontFamilyMemberPickerView: BetterFontPicker.FontFamilyMemberPickerView, didSelectFontName name: Swift.String)
-  @_Concurrency.MainActor(unsafe) @objc public func sizePickerView(_ sizePickerView: BetterFontPicker.SizePickerView, didChangeSizeTo size: Swift.Double)
+  @_Concurrency.MainActor @preconcurrency public init(font: AppKit.NSFont)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public init(frame frameRect: Foundation.NSRect)
+  @_Concurrency.MainActor @preconcurrency @objc required dynamic public init?(coder decoder: Foundation.NSCoder)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func resizeSubviews(withOldSize oldSize: Foundation.NSSize)
+  @objc @_Concurrency.MainActor @preconcurrency public func removeSizePicker()
+  @objc @_Concurrency.MainActor @preconcurrency public func removeMemberPicker()
+  @objc @_Concurrency.MainActor @preconcurrency public func removeOptionsButton()
+  @objc(addHorizontalSpacingAccessoryWithInitialValue:) @_Concurrency.MainActor @preconcurrency public func addHorizontalSpacingAccessory(_ initialValue: Swift.Double) -> BetterFontPicker.SizePickerView
+  @objc(addVerticalSpacingAccessoryWithInitialValue:) @_Concurrency.MainActor @preconcurrency public func addVerticalSpacingAccessory(_ initialValue: Swift.Double) -> BetterFontPicker.SizePickerView
+  @_Concurrency.MainActor @preconcurrency public func add(accessory view: AppKit.NSView)
+  @_Concurrency.MainActor @preconcurrency @objc public func affordance(_ affordance: BetterFontPicker.Affordance, didSelectFontFamily fontFamily: Swift.String)
+  @_Concurrency.MainActor @preconcurrency @objc public func fontFamilyMemberPickerView(_ fontFamilyMemberPickerView: BetterFontPicker.FontFamilyMemberPickerView, didSelectFontName name: Swift.String)
+  @_Concurrency.MainActor @preconcurrency @objc public func sizePickerView(_ sizePickerView: BetterFontPicker.SizePickerView, didChangeSizeTo size: Swift.Double)
   @objc deinit
 }
 @objc(BFPFontFamilyMemberPickerViewDelegate) public protocol FontFamilyMemberPickerViewDelegate : ObjectiveC.NSObjectProtocol {
   @objc func fontFamilyMemberPickerView(_ fontFamilyMemberPickerView: BetterFontPicker.FontFamilyMemberPickerView, didSelectFontName name: Swift.String)
 }
-@_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc(BFPFontFamilyMemberPickerView) @_Concurrency.MainActor(unsafe) public class FontFamilyMemberPickerView : AppKit.NSPopUpButton {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any BetterFontPicker.FontFamilyMemberPickerViewDelegate)?
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame buttonFrame: Foundation.NSRect, pullsDown flag: Swift.Bool)
-  @objc @_Concurrency.MainActor(unsafe) public func didChange(_ sender: Any?)
+@_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc(BFPFontFamilyMemberPickerView) @_Concurrency.MainActor @preconcurrency public class FontFamilyMemberPickerView : AppKit.NSPopUpButton {
+  @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any BetterFontPicker.FontFamilyMemberPickerViewDelegate)?
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public init(frame buttonFrame: Foundation.NSRect, pullsDown flag: Swift.Bool)
+  @objc @_Concurrency.MainActor @preconcurrency public func didChange(_ sender: Any?)
   @objc deinit
 }
 @objc(BFPMainViewControllerDelegate) public protocol MainViewControllerDelegate {
   @objc func mainViewController(_ mainViewController: BetterFontPicker.MainViewController, didSelectFontWithName name: Swift.String)
 }
-@_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc(BFPMainViewController) @_Concurrency.MainActor(unsafe) public class MainViewController : AppKit.NSViewController, AppKit.NSTextFieldDelegate {
-  @objc @IBOutlet @_Concurrency.MainActor(unsafe) weak public var tableView: BetterFontPicker.FontListTableView!
-  @objc @IBOutlet @_Concurrency.MainActor(unsafe) weak public var searchField: AppKit.NSSearchField!
-  @objc(delegate) @IBOutlet @_Concurrency.MainActor(unsafe) weak public var delegate: (any BetterFontPicker.MainViewControllerDelegate)?
-  @objc @_Concurrency.MainActor(unsafe) public var systemFontDataSources: [any BetterFontPicker.FontListDataSource] {
+@_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc(BFPMainViewController) @_Concurrency.MainActor @preconcurrency public class MainViewController : AppKit.NSViewController, AppKit.NSTextFieldDelegate {
+  @objc @IBOutlet @_Concurrency.MainActor @preconcurrency weak public var tableView: BetterFontPicker.FontListTableView!
+  @objc @IBOutlet @_Concurrency.MainActor @preconcurrency weak public var searchField: AppKit.NSSearchField!
+  @objc(delegate) @IBOutlet @_Concurrency.MainActor @preconcurrency weak public var delegate: (any BetterFontPicker.MainViewControllerDelegate)?
+  @objc @_Concurrency.MainActor @preconcurrency public var systemFontDataSources: [any BetterFontPicker.FontListDataSource] {
     @objc get
     @objc set
   }
-  @_Concurrency.MainActor(unsafe) public var fontFamilyName: Swift.String? {
+  @_Concurrency.MainActor @preconcurrency public var fontFamilyName: Swift.String? {
     get
     set
   }
-  @_Concurrency.MainActor(unsafe) public var insets: Foundation.NSEdgeInsets {
+  @_Concurrency.MainActor @preconcurrency public var insets: Foundation.NSEdgeInsets {
     get
   }
-  @_Concurrency.MainActor(unsafe) public var tableViewController: BetterFontPicker.TableViewController?
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func awakeFromNib()
-  @objc(controlTextDidChange:) @_Concurrency.MainActor(unsafe) public func controlTextDidChange(_ obj: Foundation.Notification)
-  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewWillAppear()
+  @_Concurrency.MainActor @preconcurrency public var tableViewController: BetterFontPicker.TableViewController?
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func awakeFromNib()
+  @objc(controlTextDidChange:) @_Concurrency.MainActor @preconcurrency public func controlTextDidChange(_ obj: Foundation.Notification)
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func viewWillAppear()
   @objc deinit
 }
 extension BetterFontPicker.FontPickerCompositeView.Mode : Swift.Equatable {}

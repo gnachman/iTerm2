@@ -6,15 +6,15 @@
 	<dict>
 		<key>Resources/Info.plist</key>
 		<data>
-		4g6USXOSI3GYav1hxuIN8zG/bFA=
+		d0VBsoGakIDszt61nccnOTg4gZE=
 		</data>
 		<key>Resources/SearchableComboView.nib/keyedobjects-101500.nib</key>
 		<data>
-		Pfz+QjONwl72J/53IiCkcEOYoEk=
+		m+9wgT2L7qvn4RUw2A/bV4kQ9WU=
 		</data>
 		<key>Resources/SearchableComboView.nib/keyedobjects-110000.nib</key>
 		<data>
-		cqMotC+URvvqVJsTbp14tByaFVs=
+		7oQPDj7CA21NjuUMYOfMEBNMxyk=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -23,7 +23,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			C3aTbW3DNrTzA5ebQzpBPI3KGfps1Z+PR7dfjKIhXyw=
+			qtiQbAjP6Mzd54/ENxpkL3+S9GleJBgER+Un+Rw2ePM=
 			</data>
 		</dict>
 		<key>Headers/SearchableComboListView.h</key>
@@ -37,84 +37,84 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			gS+Zv2Q+SVYgY5DePFosTk0PoqaIRf4t9VgjqmygQTQ=
+			ln2LYgroYgBIKQa1Cwuwsk3ZVEppcS7ftl0MERdGRwY=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/Project/x86_64-apple-macos.swiftsourceinfo</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			jktYTRmgjEVXzWqZKe7UXWTO6vFxln6BWyVb7/T7Azg=
+			nu1TXRn3D6He4Udw15Ju95XL/32PS/AZqx9Ma3HqO7s=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/arm64-apple-macos.abi.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			CEoCXttfPOv151ZQO5qX0KOapbZjHj8AE0KeAm18HGY=
+			78zjFFR1Cwh8P53HH33sH2qKn6z2CftO1movSt78o6w=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/arm64-apple-macos.private.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			EBQZVZedJgiaEAmQzwlEpERkQ1ijZ8g5MTQlTlHaINk=
+			D5+7Nd3sWy1b3tLSA4ed+BfQHmtmltFdpDsA1J+sSeM=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/arm64-apple-macos.swiftdoc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			APJtSZCyH7Y1Ywptypr4QcN3LiH5hKsuIW5EbGDnm1c=
+			hKhSavunD2MDaSiFJRlRqUV7ISapsDQKy4xydeVwYzc=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/arm64-apple-macos.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			EBQZVZedJgiaEAmQzwlEpERkQ1ijZ8g5MTQlTlHaINk=
+			D5+7Nd3sWy1b3tLSA4ed+BfQHmtmltFdpDsA1J+sSeM=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/arm64-apple-macos.swiftmodule</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			1yh4CwBLjD8sxOO5Mroxxn91IB2FQOk/P7q7931WHSA=
+			z3eD10qfi0byTg2t/CH9Hvc7eG/5K/FTOt/xSsAe1BA=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/x86_64-apple-macos.abi.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			CEoCXttfPOv151ZQO5qX0KOapbZjHj8AE0KeAm18HGY=
+			78zjFFR1Cwh8P53HH33sH2qKn6z2CftO1movSt78o6w=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/x86_64-apple-macos.private.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			cXwJ61YRyTtboV3N6sndl5PeL6FRbVw/YzG+PiwfKW0=
+			QhMoOD7sjc/4bw2D6iAnCe+gDat/RewxsZfjQYpe8Lo=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/x86_64-apple-macos.swiftdoc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			tR4W2lfOkZjhb5ehqDZmv8JsidQJZ/cHl4iDDkSNokc=
+			91P33RTa4atoYC+oXzMjl64+hzXC0ahZrubvl/pmasc=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/x86_64-apple-macos.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			cXwJ61YRyTtboV3N6sndl5PeL6FRbVw/YzG+PiwfKW0=
+			QhMoOD7sjc/4bw2D6iAnCe+gDat/RewxsZfjQYpe8Lo=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/x86_64-apple-macos.swiftmodule</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			VHBtVD8hRo+qZLEtV2xwIWKJ+3zjylnN76k/3efTi/I=
+			6ArM7eUS9RCRXXv+5JbTtwC2DlHzJLf+31KEYWT3GXo=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
@@ -128,21 +128,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			O9FDjUJsAO6i9r8krRn5L8DRjqctKVMOamK4qvu17FY=
+			NEoOG6kvYYFhc6LMnjRwn5JgOEY77bMqZNaisa40v8A=
 			</data>
 		</dict>
 		<key>Resources/SearchableComboView.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			o1Y2+MIxlDLtyif1FWKkNijywVOGJA/5txJnCvWCMg8=
+			EFlErItwmyZfyWzPJmNAAiKzO+tcFJ7bhc9vV0UZ24w=
 			</data>
 		</dict>
 		<key>Resources/SearchableComboView.nib/keyedobjects-110000.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			yZcYCv0Txw48ebXcRoPREI5GyLfpDmAbcc/xEY7cNAs=
+			/GzIjFwqePd7J3qiUGJCsohsjvu01JtZTru9RXZ6V9I=
 			</data>
 		</dict>
 	</dict>
