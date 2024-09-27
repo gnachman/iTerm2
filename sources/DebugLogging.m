@@ -290,7 +290,7 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
         [handleToUse synchronizeFile];
     }
 
-    AppendPinnedDebugLogMessage(@"CrashLogMessage", string);
+    AppendPinnedDebugLogMessage(@"CrashLogMessage", @"%@", string);
 }
 
 static void StartDebugLogging(void) {
