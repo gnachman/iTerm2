@@ -445,7 +445,7 @@
                 if (hadRemapped != _remapped &&
                     CGEventGetFlags(event) != _flags &&
                     (CGEventGetType(event) == kCGEventKeyDown || CGEventGetType(event) == kCGEventKeyUp)) {
-                    CGEventRef fakeEvent = [self fakeFlagsChangedEvent:CGEventGetFlags(event)];
+                    CGEventRef fakeEvent = [self createFakeFlagsChangedEvent:CGEventGetFlags(event)];
                     DLog(@"remapped %@ -> %@, flags %@ -> %@, event type is %@. Post fake flags-changed event: %@",
                           @(hadRemapped), @(_remapped),
                           @(_flags), @(CGEventGetFlags(event)),
@@ -465,7 +465,7 @@
     }
 }
 
-- (CGEventRef)fakeFlagsChangedEvent:(CGEventFlags)flags {
+- (CGEventRef)createFakeFlagsChangedEvent:(CGEventFlags)flags {
     CGEventSourceRef source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
     CGEventRef event = CGEventCreate(source);
     CGEventSetType(event, kCGEventFlagsChanged);

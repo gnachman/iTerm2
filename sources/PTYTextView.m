@@ -1001,13 +1001,6 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     if ([_dataSource width] == 0) {
         return;
     }
-    int imeLines = ([_dataSource cursorX] - 1 + [self inputMethodEditorLength] + 1) / [_dataSource width] + 1;
-
-    NSRect imeRect = NSMakeRect([iTermPreferences intForKey:kPreferenceKeySideMargins],
-                                ([_dataSource cursorY] - 1 + [_dataSource numberOfLines] - [_dataSource height]) * _lineHeight,
-                                [_dataSource width] * _charWidth,
-                                imeLines * _lineHeight);
-    imeRect = [self rectWithHalo:imeRect];
     [self requestDelegateRedraw];
 }
 
@@ -5243,10 +5236,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         }];
         if (i == NSNotFound || !VT100GridAbsCoordEquals([self absCoordForButton:_buttons[i]], place.coord)) {
             if (place.mark.copyBlockID) {
-                iTermTerminalButton *button = [[iTermTerminalCopyButton alloc] initWithID:place.id 
-                                                                                  blockID:place.mark.copyBlockID
-                                                                                     mark:place.mark
-                                                                                     absY:nil];
+                iTermTerminalButton *button = [[[iTermTerminalCopyButton alloc] initWithID:place.id
+                                                                                   blockID:place.mark.copyBlockID
+                                                                                      mark:place.mark
+                                                                                      absY:nil] autorelease];
                 NSString *blockID = [[place.mark.copyBlockID copy] autorelease];
 
                 button.action = ^(NSPoint locationInWindow) {

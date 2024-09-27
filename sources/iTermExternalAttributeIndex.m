@@ -413,7 +413,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
                                    url:(iTermURL * _Nullable)url
                                blockID:(NSString *)blockID
-                           controlCode:(nonnull NSNumber *)code {
+                           controlCode:(NSNumber *)code {
     self = [self init];
     if (self) {
         self.hasUnderlineColor = YES;

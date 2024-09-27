@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *dumpForCrashlog;
 @property (nonatomic, weak) id<iTermLineBlockArrayDelegate> delegate;
 
-- (NSString *)dumpWidths:(NSSet<NSNumber *> *)widths;
+- (NSString *)dumpWidths:(NSSet<NSNumber *> * _Nullable)widths;
 
 // NOTE: Update -copyWithZone: if you add properties.
 
@@ -59,12 +59,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range;
 
 // If you don't need a yoffset pass -1 for width and NULL for blockOffset to avoid building a cache.
-- (LineBlock *)blockContainingPosition:(long long)p
-                               yOffset:(int)yOffset
-                                 width:(int)width
-                             remainder:(nullable int *)remainder
-                           blockOffset:(nullable int *)yoffset
-                                 index:(nullable int *)indexPtr;
+- (LineBlock * _Nullable)blockContainingPosition:(long long)p
+                                         yOffset:(int)yOffset
+                                           width:(int)width
+                                       remainder:(nullable int *)remainder
+                                     blockOffset:(nullable int *)yoffset
+                                           index:(nullable int *)indexPtr;
 - (void)sanityCheck:(long long)droppedChars;
 - (void)oopsWithWidth:(int)width droppedChars:(long long)droppedChars block:(void (^)(void))block;
 - (NSSet<NSNumber *> *)cachedWidths;

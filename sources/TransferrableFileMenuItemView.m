@@ -81,7 +81,6 @@ static CGFloat TransferrableFileMenuItemViewRightMargin(void) {
 
 - (void)drawRect:(NSRect)dirtyRect {
      [super drawRect:dirtyRect];
-    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     NSColor *textColor;
     NSColor *grayColor;
 

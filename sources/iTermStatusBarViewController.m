@@ -333,7 +333,7 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     // Shouldn't happen since this is not the setup UI
 }
 
-- (id<ProcessInfoProvider>)statusBarComponentProcessInfoProvider {
+- (id<ProcessInfoProvider> _Nullable)statusBarComponentProcessInfoProvider {
     return [self.delegate statusBarProcessInfoProvider];
 }
 
@@ -362,7 +362,7 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     return [[self.delegate statusBarTerminalBackgroundColor] perceivedBrightness] < 0.5;
 }
 
-- (NSColor *)statusBarComponentEffectiveBackgroundColor:(id<iTermStatusBarComponent>)component {
+- (NSColor * _Nullable)statusBarComponentEffectiveBackgroundColor:(id<iTermStatusBarComponent>)component {
     iTermStatusBarContainerView *view = [self containerViewForComponent:component];
     if (!view) {
         return nil;

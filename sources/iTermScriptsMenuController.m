@@ -1053,8 +1053,8 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 // Returns a string like "3.10".
-- (NSString *)pythonVersionForPicker:(iTermScriptTemplatePickerWindowController *)picker
-                                 url:(NSURL *)url {
+- (NSString * _Nullable)pythonVersionForPicker:(iTermScriptTemplatePickerWindowController *)picker
+                                           url:(NSURL *)url {
     NSString *raw;
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         NSString *path = [iTermAPIScriptLauncher pathToVersionsFolderForPyenvScriptNamed:url.lastPathComponent];

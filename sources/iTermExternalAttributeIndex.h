@@ -44,7 +44,7 @@ typedef struct {
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
                                    url:(iTermURL * _Nullable)url
                                blockID:(NSString * _Nullable)blocokID
-                           controlCode:(NSNumber *)code;
+                           controlCode:(NSNumber * _Nullable)code;
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
 - (NSData *)data;

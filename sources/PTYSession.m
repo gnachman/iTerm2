@@ -7943,6 +7943,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         NSError *error = nil;
         NSRegularExpression *expr = [[NSRegularExpression alloc] initWithPattern:bare options:0 error:&error];
         if (error || !expr) {
+            [expr release];
             return nil;
         }
         [expr release];
@@ -15886,7 +15887,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     const NSInteger button = [alert runSheetModalForWindow:self.view.window];
 
     if (button == NSAlertFirstButtonReturn) {
-        return [[input string] copy];
+        return [[[input string] copy] autorelease];
     } else if (button == NSAlertSecondButtonReturn) {
         return nil;
     }
@@ -18166,7 +18167,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
     // Send when next mark is received.
-    [_commandQueue addObject:[command copy]];
+    [_commandQueue addObject:[[command copy] autorelease]];
 }
 
 - (void)composerManager:(iTermComposerManager *)composerManager sendCommand:(NSString *)command {

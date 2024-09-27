@@ -2251,7 +2251,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *session = self.currentSession;
     MutableProfile *profile = [[session.profile mutableCopy] autorelease];
     NSArray<iTermSSHReconnectionInfo *> *pendingJumps = nil;
-    Profile *original = [profile copy];
+    Profile *original = [[profile copy] autorelease];
     if (session.sshIdentity) {
         NSArray<iTermSSHReconnectionInfo *> *sequence = session.sshCommandLineSequence;
         if ([profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
@@ -2293,7 +2293,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Will use profile:\n%@", profile);
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     iTermMutableDictionaryEncoderAdapter *encoder =
-        [[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict];
+        [[[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict] autorelease];
     [session encodeArrangementWithContents:YES encoder:encoder];
 
     NSDictionary *tabArrangement = [self.currentTab arrangementWithOnlySession:session

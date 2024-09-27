@@ -7,6 +7,7 @@
 
 #import "AtomicHelpers.h"
 
+#import "iTermMalloc.h"
 #include <stdatomic.h>
 #include <stdlib.h>
 
@@ -15,10 +16,8 @@ typedef struct iTermAtomicInt64 {
 } iTermAtomicInt64;
 
 iTermAtomicInt64 *iTermAtomicInt64Create(void) {
-    iTermAtomicInt64 *ai = malloc(sizeof(iTermAtomicInt64));
-    if (ai != NULL) {
-        atomic_init(&ai->value, 0);
-    }
+    iTermAtomicInt64 *ai = iTermMalloc(sizeof(iTermAtomicInt64));
+    atomic_init(&ai->value, 0);
     return ai;
 }
 

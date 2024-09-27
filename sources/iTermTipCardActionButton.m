@@ -21,7 +21,6 @@ static const CGFloat kStandardButtonHeight = 34;
 @implementation iTermTipCardActionButtonTopDividerView
 
 - (void)drawRect:(NSRect)dirtyRect {
-    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     NSRect rect = self.bounds;
     [self.color set];
     NSRectFill(NSMakeRect(rect.origin.x,
@@ -39,7 +38,6 @@ static const CGFloat kStandardButtonHeight = 34;
 @implementation iTermTipCardActionButtonLeftDividerView
 
 - (void)drawRect:(NSRect)dirtyRect {
-    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     NSRect rect = self.bounds;
     [self.color set];
     NSRectFill(NSMakeRect(rect.origin.x,

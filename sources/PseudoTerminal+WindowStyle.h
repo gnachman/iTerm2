@@ -34,7 +34,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType);
 - (void)toggleTraditionalFullScreenModeImpl;
 - (BOOL)fullScreenImpl;
 - (iTermWindowType)windowTypeImpl;
-- (IBAction)toggleFullScreenModeImpl:(id)sender;
+- (IBAction)toggleFullScreenModeImpl:(id _Nullable)sender;
 - (void)toggleFullScreenModeImpl:(id)sender
                       completion:(void (^)(BOOL))completion;
 - (BOOL)togglingLionFullScreenImpl;

@@ -122,7 +122,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
                             state:(iTermMouseState)state;
 - (BOOL)mouseHandlerAnyReportingModeEnabled:(PTYMouseHandler *)mouseHandler;
 - (void)mouseHandlerRedraw:(PTYMouseHandler *)mouseHandler;
-- (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler blockIDOnLine:(int)line;
+- (NSString * _Nullable)mouseHandler:(PTYMouseHandler *)mouseHandler blockIDOnLine:(int)line;
 - (BOOL)mouseHandlerMouseDownAt:(NSPoint)locationInWindow;
 - (BOOL)mouseHandlerMouseUp:(NSEvent *)event;
 - (void)mouseHandler:(PTYMouseHandler *)sender handleCommandShiftClickAtCoord:(VT100GridCoord)coord;

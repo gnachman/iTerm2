@@ -78,7 +78,7 @@ typedef NS_ENUM(NSInteger, VT100DCSState) {
 @property(nonatomic, readonly) NSString *hookDescription;
 
 // Uniquely identifies this object so the main thread can avoid unhooking the wrong session.
-@property(nonatomic, readonly) NSString *uniqueID;
+@property(nonatomic, readonly, nullable) NSString *uniqueID;
 
 - (void)decodeFromContext:(iTermParserContext *)context
                     token:(VT100Token *)result

@@ -35,7 +35,6 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 @implementation iTermTipCardFakeDividerView
 
 - (void)drawRect:(NSRect)dirtyRect {
-    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     NSRect rect = self.bounds;
     [self.color set];
     NSRectFill(NSMakeRect(rect.origin.x,
@@ -98,6 +97,8 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 - (void)dealloc {
     [_actionButtons release];
     [_fakeBottomDivider release];
+    [_didDrag release];
+    [_willDrag release];
     [super dealloc];
 }
 

@@ -63,11 +63,11 @@ iTermURLActionHelperDelegate>
 
 #pragma mark - Context Menu
 
-- (NSMenu *)menuForEvent:(NSEvent *)event;
+- (NSMenu * _Nullable)menuForEvent:(NSEvent *)event;
 
 #pragma mark - Offscreen Command Line
 
-- (iTermOffscreenCommandLine *)offscreenCommandLineForClickAt:(NSPoint)windowPoint;
+- (iTermOffscreenCommandLine * _Nullable)offscreenCommandLineForClickAt:(NSPoint)windowPoint;
 - (void)presentCommandInfoForOffscreenCommandLine:(iTermOffscreenCommandLine *)offscreenCommandLine
                                             event:(NSEvent *)event
                          fromOffscreenCommandLine:(BOOL)fromOffscreenCommandLine;
@@ -127,7 +127,7 @@ iTermURLActionHelperDelegate>
 - (BOOL)selectionIsBig:(iTermSelection *)selection;
 
 // Saves the selection as the "last" selection app-wide and returns a promise in case you need the value.
-- (iTermPromise<NSString *> *)recordSelection:(iTermSelection *)selection;
+- (iTermPromise<NSString *> * _Nullable)recordSelection:(iTermSelection *)selection;
 
 - (id)selectedTextWithStyle:(iTermCopyTextStyle)style
                cappedAtSize:(int)maxBytes

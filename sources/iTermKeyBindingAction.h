@@ -117,7 +117,7 @@ typedef NS_ENUM(int, KEY_ACTION) {
 @property (nonatomic, readonly) NSString *label;
 @property (nonatomic, readonly) NSString *displayName;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
-@property (nonatomic, readonly) NSString *stringValue;
+@property (nonatomic, readonly, nullable) NSString *stringValue;
 @property (nonatomic, readonly) BOOL sendsText;
 @property (nonatomic, readonly) BOOL isActionable;
 @property (nonatomic, readonly) iTermSendTextEscaping escaping;
@@ -137,7 +137,7 @@ typedef NS_ENUM(int, KEY_ACTION) {
                   escaping:(iTermSendTextEscaping)escaping
                  applyMode:(iTermActionApplyMode)applyMode;
 
-+ (instancetype)fromString:(NSString *)string;
++ (instancetype _Nullable)fromString:(NSString *)string;
 
 - (instancetype)init NS_UNAVAILABLE;
 

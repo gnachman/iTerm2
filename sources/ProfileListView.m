@@ -296,7 +296,7 @@ const CGFloat kDefaultTagsWidth = 80;
 #pragma mark -  Drag drop
 
 - (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
-    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
     [pbItem setData:[self dataForRow:row]
             forType:kProfileTableViewDataType];
     return pbItem;

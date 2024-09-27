@@ -27,7 +27,7 @@ typedef struct {
 
 typedef struct {
     LineBlockMetadata *metadata;
-    NSMutableIndexSet *mutableDoubleWidthCharacters;
+    NSMutableIndexSet * _Nullable mutableDoubleWidthCharacters;
 } LineBlockMutableMetadata;
 
 // Don't access this directly. Use the functions below.

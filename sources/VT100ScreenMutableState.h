@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, weak) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
 @property (nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
 @property (nonatomic) BOOL exited;
-@property (nonatomic, strong, readonly) VT100Terminal *terminal;
+@property (nonatomic, strong, readonly, nullable) VT100Terminal *terminal;
 @property (nonatomic, strong) iTermEchoProbe *echoProbe;
 @property (nonatomic, weak) id<iTermEchoProbeDelegate> echoProbeDelegate;
 @property (nullable, nonatomic, strong) VT100ScreenState *mainThreadCopy;
@@ -106,7 +106,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)appendStringAtCursor:(NSString *)string;
 - (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                length:(int)len
-               externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes;
+               externalAttributeIndex:(id<iTermExternalAttributeIndexReading> _Nullable)externalAttributes;
 - (void)appendTabAtCursor:(BOOL)setBackgroundColors;
 - (void)appendScreenChars:(const screen_char_t *)line
                       length:(int)length
@@ -220,9 +220,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 // This is like setPromptStartLine: but with lots of side effects that are desirable for the
 // regular shell integration flow.
-- (VT100ScreenMark *)promptDidStartAt:(VT100GridAbsCoord)coord wasInCommand:(BOOL)wasInCommand detectedByTrigger:(BOOL)detectedByTrigger;
+- (VT100ScreenMark * _Nullable)promptDidStartAt:(VT100GridAbsCoord)coord wasInCommand:(BOOL)wasInCommand detectedByTrigger:(BOOL)detectedByTrigger;
 
-- (VT100ScreenMark *)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger;
+- (VT100ScreenMark * _Nullable)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger;
 - (void)didUpdatePromptLocation;
 - (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)screenMarkDoppelganger;
 
@@ -273,7 +273,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)removeAnnotation:(id<PTYAnnotationReading>)annotation;
 
-- (id<PTYAnnotationReading>)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
+- (id<PTYAnnotationReading> _Nullable)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
 
 - (void)addAnnotation:(id<PTYAnnotationReading>)annotation
               inRange:(VT100GridCoordRange)range

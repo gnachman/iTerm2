@@ -187,7 +187,6 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
 
 // Draw the menu item (label and colors)
 - (void)drawRect:(NSRect)rect {
-    rect = NSIntersectionRect(rect, self.bounds);
     const BOOL enabled = self.enabled;
 
     // draw the "x" (reset color to default)

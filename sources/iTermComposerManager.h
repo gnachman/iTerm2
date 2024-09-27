@@ -84,7 +84,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 @property (nonatomic, readonly) NSRect dropDownFrame;
 @property (nonatomic, readonly) NSString *contents;
 @property (nonatomic) BOOL temporarilyHidden;
-@property (nonatomic, strong, readonly) id prefixUserData;
+@property (nonatomic, strong, readonly, nullable) id prefixUserData;
 @property (nonatomic, readonly) NSRect cursorFrameInScreenCoordinates;
 
 // Only used by dropdown composer

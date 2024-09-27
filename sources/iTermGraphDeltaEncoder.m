@@ -121,8 +121,8 @@
                                   NSString *path,
                                   BOOL *stop))block {
     iTermOrderedDictionary<iTermTuple<NSString *, NSString *> *, iTermEncoderGraphRecord *> *beforeDict =
-    [iTermOrderedDictionary byMapping:preRecord.graphRecords block:^id _Nonnull(NSUInteger index,
-                                                                                iTermEncoderGraphRecord * _Nonnull record) {
+    [iTermOrderedDictionary byMapping:preRecord.graphRecords ?: @[] block:^id _Nonnull(NSUInteger index,
+                                                                                       iTermEncoderGraphRecord * _Nonnull record) {
         return [iTermTuple tupleWithObject:record.key andObject:record.identifier];
     }];
     iTermOrderedDictionary<iTermTuple<NSString *, NSString *> *, iTermEncoderGraphRecord *> *afterDict =

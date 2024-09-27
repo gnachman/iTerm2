@@ -51,7 +51,6 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     NSRect frame = [self frame];
     [[NSGraphicsContext currentContext] saveGraphicsState];
     [[NSGraphicsContext currentContext] setShouldAntialias:YES];

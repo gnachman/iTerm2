@@ -38,7 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
                       metadata:(iTermImmutableMetadata)metadata
           lineBufferGeneration:(long long)lineBufferGeneration;
 - (void)maybeTurnOffPasteBracketing;
-- (id<iTermPopupWindowHosting>)popupHost;
+- (id<iTermPopupWindowHosting> _Nullable)popupHost;
 
 @end
 

@@ -321,6 +321,7 @@ typedef enum {
                                                 encoding:encoding] autorelease];
     [self parseKeyValuePairInToken:headerToken];
     [headerToken retain];
+    // The analyzer thinks this leaks but it does not.
     CVectorAppend(vector, headerToken);
 }
 
@@ -332,6 +333,7 @@ typedef enum {
     token.string = [[[NSString alloc] initWithData:data
                                           encoding:encoding] autorelease];
     [token retain];
+    // The analyzer thinks this leaks but it does not.
     CVectorAppend(vector, token);
 }
 

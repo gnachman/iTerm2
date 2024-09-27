@@ -42,7 +42,6 @@
         [super drawRect:rect];
         return;
     }
-    rect = NSIntersectionRect(rect, self.bounds);
         
     NSImage *image = (_down) ? _PSMTabBarOverflowDownPopUpImage : _PSMTabBarOverflowPopUpImage;
         NSSize imageSize = [image size];

@@ -486,7 +486,9 @@ static struct {
     CGEventSetFlags(cgEvent, modifiedFlags);
     NSEvent *nsevent = [NSEvent eventWithCGEvent:cgEvent];
     DLog(@"Resulting event is %@", nsevent);
-    return nsevent.charactersIgnoringModifiers;
+    NSString *chars = nsevent.charactersIgnoringModifiers;
+    CFRelease(cgEvent);
+    return chars;
 }
 
 // Returns all possible keys for an event, from most preferred to least.

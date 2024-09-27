@@ -1708,7 +1708,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (self.terminal.softAlternateScreenMode) {
         return;
     }
-    if (self.config.desiredComposerRows <= 0) {
+    if (self.config.desiredComposerRows.intValue <= 0) {
         return;
     }
     id<VT100ScreenMarkReading> mark = [self lastPromptMark];
@@ -5660,7 +5660,7 @@ launchCoprocessWithCommand:(NSString *)command
                          self.numberOfScrollbackLines +
                          line);
     iTermImageMark *mark = [[iTermImageMark alloc] initWithImageCode:@(code)];
-    mark = (iTermImageMark *)[self addMark:mark onLine:absLine singleLine:YES];
+    [self addMark:mark onLine:absLine singleLine:YES];
     [self setNeedsRedraw];
 }
 

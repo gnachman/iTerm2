@@ -163,7 +163,7 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     return NO;
 }
 
-- (NSColor *)statusBarComponentEffectiveBackgroundColor:(id<iTermStatusBarComponent>)component {
+- (NSColor * _Nullable)statusBarComponentEffectiveBackgroundColor:(id<iTermStatusBarComponent>)component {
     return nil;
 }
 
@@ -219,7 +219,7 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     assert(NO);
 }
 
-- (nonnull id<ProcessInfoProvider>)statusBarComponentProcessInfoProvider {
+- (id<ProcessInfoProvider> _Nullable)statusBarComponentProcessInfoProvider {
     return nil;
 }
 

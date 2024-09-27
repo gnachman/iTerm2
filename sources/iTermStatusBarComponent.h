@@ -39,7 +39,7 @@ static NSString *const iTermStatusBarSharedFontKey = @"shared font";
 - (BOOL)statusBarComponentIsVisible:(id<iTermStatusBarComponent>)component;
 - (NSFont *)statusBarComponentTerminalFont:(id<iTermStatusBarComponent>)component;
 - (BOOL)statusBarComponentTerminalBackgroundColorIsDark:(id<iTermStatusBarComponent>)component;
-- (NSColor *)statusBarComponentEffectiveBackgroundColor:(id<iTermStatusBarComponent>)component;
+- (NSColor * _Nullable)statusBarComponentEffectiveBackgroundColor:(id<iTermStatusBarComponent>)component;
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string;
 - (void)statusBarComponentOpenStatusBarPreferences:(id<iTermStatusBarComponent>)component;
 - (void)statusBarComponentPerformAction:(iTermAction *)action;
@@ -55,7 +55,7 @@ forInvocation:(NSString *)invocation
 - (id<iTermTriggersDataSource>)statusBarComponentTriggersDataSource:(id<iTermStatusBarComponent>)component;
 - (void)statusBarRemoveTemporaryComponent:(id<iTermStatusBarComponent>)component;
 - (void)statusBarSetFilter:(NSString * _Nullable)query;
-- (id<ProcessInfoProvider>)statusBarComponentProcessInfoProvider;
+- (id<ProcessInfoProvider> _Nullable)statusBarComponentProcessInfoProvider;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSSecureCoding, NSCopying, NSObject>

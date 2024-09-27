@@ -1132,9 +1132,9 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
                     if (!encodedBox) {
                         DLog(@"Decoding: recv failed for %@", strongSelf->_socketPath);
                         [callback invokeWithObject:[iTermResult withError:strongSelf.protocolError]];
+                    } else {
+                        [callback invokeWithObject:[iTermResult withObject:encodedBox]];
                     }
-
-                    [callback invokeWithObject:[iTermResult withObject:encodedBox]];
                 }
                                error:^(NSError * _Nonnull error) {
                     DLog(@"Failed to read payload from %@: %@", socketPath, error);

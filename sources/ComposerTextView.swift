@@ -969,7 +969,7 @@ extension NSRange {
 }
 
 
-extension NSEvent.ModifierFlags: Hashable {
+extension NSEvent.ModifierFlags: @retroactive Hashable {
 
 }
 

@@ -151,7 +151,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 @property (nullable, nonatomic, strong, readonly) id<VT100ScreenMarkReading> lastCommandMark;
 @property (nullable, nonatomic, strong, readonly) id<VT100ScreenMarkReading> penultimateCommandMark;
 @property (nonatomic, strong, readonly) id<iTermColorMapReading> colorMap;
-@property (nonatomic, strong, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
+@property (nonatomic, strong, readonly, nullable) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
 
 // -2: Within command output (inferred)
 // -1: Uninitialized
@@ -300,8 +300,8 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer;
 
-- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                                                   startPtr:(long long *)startAbsLineNumber;
+- (iTermStringLine * _Nullable)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                             startPtr:(long long *)startAbsLineNumber;
 
 - (void)enumerateLinesInRange:(NSRange)range
                         block:(void (^)(int,
@@ -325,10 +325,10 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 - (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)absRange
                                      width:(int)width;
 
-- (__kindof id<IntervalTreeImmutableObject>)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
+- (__kindof id<IntervalTreeImmutableObject> _Nullable)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
 - (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range;
 - (VT100GridCoordRange)rangeOfBlockWithID:(NSString *)blockID;
-- (id<iTermBlockMarkReading>)blockMarkWithID:(NSString *)blockID;
+- (id<iTermBlockMarkReading> _Nullable)blockMarkWithID:(NSString *)blockID;
 - (BOOL)haveFoldsInRange:(NSRange)absLineRange;
 - (NSIndexSet *)foldsInRange:(VT100GridRange)gridRange;
 - (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range;
@@ -355,12 +355,12 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 - (id<VT100ScreenMarkReading> _Nullable)commandMarkAt:(VT100GridCoord)coord
                                       mustHaveCommand:(BOOL)mustHaveCommand
                                                 range:(out VT100GridWindowedRange * _Nullable)rangeOut;
-- (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line;
-- (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor;
+- (id<VT100ScreenMarkReading> _Nullable)commandMarkAtOrBeforeLine:(int)line;
+- (id<VT100ScreenMarkReading> _Nullable)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor;
 
-- (NSString *)commandInRange:(VT100GridCoordRange)range;
+- (NSString * _Nullable)commandInRange:(VT100GridCoordRange)range;
 
-- (id<IntervalTreeImmutableObject>)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
+- (id<IntervalTreeImmutableObject> _Nullable)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
 
 - (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
 

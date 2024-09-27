@@ -183,7 +183,7 @@ runCommandInBackground:(NSString *)command;
 - (NSMenu * _Nullable)menuForEvent:(NSEvent *)theEvent;
 - (NSMenu *)titleBarMenu;
 - (void)openContextMenuAt:(VT100GridCoord)clickPoint event:(NSEvent *)event;
-- (id<VT100ScreenMarkReading>)markForClick:(NSEvent *)event requireMargin:(BOOL)requireMargin;
+- (id<VT100ScreenMarkReading> _Nullable)markForClick:(NSEvent *)event requireMargin:(BOOL)requireMargin;
 - (void)selectOutputOfCommandMark:(id<VT100ScreenMarkReading>)mark;
 
 @end

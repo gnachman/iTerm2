@@ -203,7 +203,9 @@ static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrange
         if (panel) {
             NSString *path = panel.URL.path;
             if (path) {
-                *export = YES;
+                if (export) {
+                    *export = YES;
+                }
                 return path;
             }
             return nil;

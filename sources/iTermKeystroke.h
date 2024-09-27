@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)withEvent:(NSEvent *)event;
 + (instancetype)withCharacter:(unichar)character
                 modifierFlags:(NSEventModifierFlags)modifierFlags;
-+ (instancetype)withTmuxKey:(NSString *)key;
++ (instancetype _Nullable)withTmuxKey:(NSString *)key;
 
 - (instancetype)initWithSerialized:(NSString *)serialized;
 - (instancetype)initWithVirtualKeyCode:(int)virtualKeyCode

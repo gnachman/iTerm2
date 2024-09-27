@@ -154,7 +154,6 @@ typedef struct {
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     [_borderColor set];
     NSRect rect = NSInsetRect(self.bounds, self.radius, self.radius);
     NSRect superviewsFrameInMyCoords = [self.superview convertRect:self.superview.bounds toView:self];

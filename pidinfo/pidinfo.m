@@ -605,8 +605,12 @@ static const char *GetPathToSelf(void) {
         NSPipe *pipe = [NSPipe pipe];
 
         NSTask *task = [[NSTask alloc] init];
-        task.launchPath = [NSString stringWithCString:GetPathToSelf()
+        const char *pathToSelf = GetPathToSelf();
+        task.launchPath = [NSString stringWithCString:pathToSelf
                                              encoding:NSUTF8StringEncoding];
+        if (pathToSelf) {
+            free((void *)pathToSelf);
+        }
         task.arguments = @[ @"--git-state", path, [@(timeout) stringValue] ];
         task.standardOutput = pipe;
         @try {

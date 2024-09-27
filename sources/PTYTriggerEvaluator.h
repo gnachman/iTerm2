@@ -20,8 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 extern NSString *const PTYSessionSlownessEventExecute;
 
 @protocol PTYTriggerEvaluatorDataSource<iTermTextDataSource>
-- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                                                   startPtr:(long long *)startAbsLineNumber;
+- (iTermStringLine * _Nullable)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                             startPtr:(long long *)startAbsLineNumber;
 - (int)numberOfScrollbackLines;
 - (int)cursorY;
 - (long long)totalScrollbackOverflow;
@@ -74,7 +74,7 @@ extern NSString *const PTYSessionSlownessEventExecute;
 - (void)checkIdempotentTriggersIfAllowed;
 - (void)invalidateIdempotentTriggers;
 - (void)appendStringToTriggerLine:(NSString *)s;
-- (NSString *)appendAsciiDataToCurrentLine:(AsciiData *)asciiData;
+- (NSString * _Nullable)appendAsciiDataToCurrentLine:(AsciiData *)asciiData;
 - (void)forceCheck;
 - (NSIndexSet *)enabledTriggerIndexes;
 - (void)clearTriggerLine;

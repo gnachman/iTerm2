@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 // is useful because observers often depend on the fact that the destination path is updated
 // before they are called, since they'll use that to produce a user-visible value. Be careful
 // with side-effects when handling errors because the second call has a nil error.
-@property (nonatomic, copy) NSString *(^observer)(NSString * _Nullable, NSError * _Nullable);
+@property (nonatomic, copy, nullable) NSString *(^observer)(NSString * _Nullable, NSError * _Nullable);
 @property (nullable, nonatomic, readonly) NSString *evaluatedString;
 @property (nonatomic, readonly) NSArray<iTermVariableReference *> *refs;
 @property (nonatomic, copy) NSString *destinationPath;

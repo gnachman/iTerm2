@@ -29,9 +29,9 @@ extern NSString *const SIGArchiveHeaderMagicString;
 @property (nonatomic, readonly) long long payloadOffset;
 @property (nullable, nonatomic, readonly) NSFileHandle *fileHandle;
 
-+ (instancetype)chunkFromFileHandle:(NSFileHandle *)fileHandle
-                           atOffset:(long long)offset
-                              error:(out NSError **)error;
++ (instancetype _Nullable)chunkFromFileHandle:(NSFileHandle *)fileHandle
+                                     atOffset:(long long)offset
+                                        error:(out NSError **)error;
 
 - (instancetype)initWithTag:(SIGArchiveTag)tag
                      length:(long long)length

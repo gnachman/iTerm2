@@ -30,7 +30,7 @@ extern NSString *const kTagRestrictionOperator;
 // This assumes the operator is not tag:
 - (BOOL)matchesAnyWordIn:(NSArray<NSString * > *)words operator:(NSString *)operator;
 
-- (BOOL)matchesAnyWordInNameWords:(NSArray<NSString * > *)nameWords;
+- (BOOL)matchesAnyWordInNameWords:(NSArray<NSString * > * _Nullable)nameWords;
 - (BOOL)matchesAnyWordInTagWords:(NSArray<NSString * > *)tagWords;
 
 @end

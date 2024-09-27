@@ -64,7 +64,6 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     [[NSColor clearColor] set];
     NSRectFillUsingOperation(self.bounds, NSCompositingOperationSourceOver);
 
