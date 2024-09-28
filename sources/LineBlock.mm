@@ -1602,6 +1602,26 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return [self getRawLineLength:index];
 }
 
+- (int)lengthOfLastLineWrappedToWidth:(int)width {
+    int temp = [self getNumLinesWithWrapWidth:width];
+    if (temp == 0) {
+        return 0;
+    }
+    temp -= 1;
+    const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&temp];
+    if (!location.found) {
+        return 0;
+    }
+    int x;
+    int y;
+    if (![self convertPosition:location.prev withWidth:width wrapOnEOL:YES toX:&x toY:&y]) {
+        return 0;
+    }
+
+    const int numLines = [self getNumLinesWithWrapWidth:width];
+    return (numLines - y);
+}
+
 - (int)getRawLineLength:(int)linenum {
     ITAssertWithMessage(linenum < cll_entries && linenum >= 0, @"Out of bounds");
     int prev;
@@ -2481,6 +2501,8 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 }
 
 // Returns YES if the position is valid for this block.
+// If wrapOnEOL is true: if `position` is exactly after a hard EOL, use the start of the subsequent
+// line. Otherwise, return the coordinate at the end of the line with the hard EOL.
 - (BOOL)convertPosition:(int)position
               withWidth:(int)width
               wrapOnEOL:(BOOL)wrapOnEOL

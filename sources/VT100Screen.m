@@ -193,6 +193,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                                   cumulativeOverflow:_state.cumulativeScrollbackOverflow] autorelease];
 }
 
+- (id<iTermTextDataSource>)snapshotWithPrimaryGrid {
+    return [[[iTermTerminalContentSnapshot alloc] initWithLineBuffer:_state.linebuffer
+                                                                grid:_state.primaryGrid
+                                                  cumulativeOverflow:_state.cumulativeScrollbackOverflow] autorelease];
+}
+
 - (void)replaceRange:(VT100GridAbsCoordRange)range
         withPorthole:(id<Porthole>)porthole
             ofHeight:(int)numLines {
@@ -390,6 +396,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (int)numberOfScrollbackLines {
     return _state.numberOfScrollbackLines;
+}
+
+- (long long)absLineNumberOfLastLineInLineBuffer {
+    const int lengthOfLastLine = [_state.linebuffer numberOfWrappedLinesAtPartialEndforWidth:self.width];
+    return self.numberOfScrollbackLines - lengthOfLastLine + self.totalScrollbackOverflow;
 }
 
 - (int)scrollbackOverflow {
@@ -1550,7 +1561,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
            withOffset:(int)offset
             inContext:(FindContext*)context
       multipleResults:(BOOL)multipleResults
-         absLineRange:(NSRange)absLineRange {
+         absLineRange:(NSRange)absLineRange
+      forceMainScreen:(BOOL)forceMainScreen {
     [self setFindStringImpl:aString
            forwardDirection:direction
                        mode:mode
@@ -1559,7 +1571,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                  withOffset:offset
                   inContext:context
             multipleResults:multipleResults
-               absLineRange:absLineRange];
+               absLineRange:absLineRange
+            forceMainScreen:forceMainScreen];
 }
 
 - (void)addNote:(PTYAnnotation *)note

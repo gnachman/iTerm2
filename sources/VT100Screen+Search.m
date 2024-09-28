@@ -32,7 +32,8 @@
                withOffset:(int)offset
                 inContext:(FindContext *)context
           multipleResults:(BOOL)multipleResults
-             absLineRange:(NSRange)absLineRange {
+             absLineRange:(NSRange)absLineRange
+          forceMainScreen:(BOOL)forceMainScreen {
     DLog(@"begin self=%@ aString=%@", self, aString);
 
     // It's too hard to reason about merging the search buffer with the real
@@ -60,20 +61,21 @@
         }
     }
     context.initialStart = VT100GridAbsCoordMake(x, self.totalScrollbackOverflow + y);
-
+    context.forceMainScreen = forceMainScreen;
     @autoreleasepool {
         LineBuffer *tempLineBuffer = [self searchBuffer];
+        VT100Grid *grid = forceMainScreen ? _state.primaryGrid : _state.currentGrid;
 
         //assert([tempLineBuffer isEqual:_state.linebuffer]);
         [tempLineBuffer performBlockWithTemporaryChanges:^{
             // Append the screen contents to the scrollback buffer so they are included in the search.
-            [_state.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                               toLineBuffer:tempLineBuffer];
+            [grid appendLines:[grid numberOfLinesUsed]
+                 toLineBuffer:tempLineBuffer];
 
             // Get the start position of (x,y)
             LineBufferPosition *startPos;
             startPos = [tempLineBuffer positionForCoordinate:VT100GridCoordMake(x, y)
-                                                       width:_state.currentGrid.size.width
+                                                       width:grid.size.width
                                                       offset:offset * (direction ? 1 : -1)];
             if (!startPos) {
                 // x,y wasn't a real position in the line buffer, probably a null after the end.
@@ -89,7 +91,7 @@
                 // Make sure startPos is not at or after the last cell in the line buffer.
                 BOOL ok;
                 VT100GridCoord startPosCoord = [tempLineBuffer coordinateForPosition:startPos
-                                                                               width:_state.currentGrid.size.width
+                                                                               width:grid.size.width
                                                                         extendsRight:YES
                                                                                   ok:&ok];
                 LineBufferPosition *lastValidPosition = [tempLineBuffer penultimatePosition];
@@ -100,27 +102,27 @@
                     VT100GridCoord lastPositionCoord;
                     if (absLineRange.length > 0) {
                         const long long lastY = MAX(0, NSMaxRange(absLineRange) - 1 - self.totalScrollbackOverflow);
-                        lastPositionCoord = VT100GridCoordMake(_state.currentGrid.size.width - 1, lastY);
+                        lastPositionCoord = VT100GridCoordMake(grid.size.width - 1, lastY);
                         ok = YES;
                     } else {
                         lastPositionCoord = [tempLineBuffer coordinateForPosition:lastValidPosition
-                                                                            width:_state.currentGrid.size.width
+                                                                            width:grid.size.width
                                                                      extendsRight:YES
                                                                                ok:&ok];
                     }
                     assert(ok);
                     long long s = startPosCoord.y;
-                    s *= _state.currentGrid.size.width;
+                    s *= grid.size.width;
                     s += startPosCoord.x;
 
                     long long l = lastPositionCoord.y;
-                    l *= _state.currentGrid.size.width;
+                    l *= grid.size.width;
                     l += lastPositionCoord.x;
 
                     if (s >= l) {
                         startPos = lastValidPosition;
                     } else {
-                        VT100GridCoord lastValidCoord = [tempLineBuffer coordinateForPosition:lastValidPosition width:_state.currentGrid.size.width extendsRight:YES ok:&ok];
+                        VT100GridCoord lastValidCoord = [tempLineBuffer coordinateForPosition:lastValidPosition width:grid.size.width extendsRight:YES ok:&ok];
                         if (ok && (startPosCoord.y > lastValidCoord.y ||
                                    (startPosCoord.y == lastValidCoord.y && startPosCoord.x > lastValidCoord.x))) {
                             startPos = lastValidPosition;
@@ -173,17 +175,19 @@
 
 - (void)saveFindContextAbsPosImpl {
     LineBuffer *temp = [_state.linebuffer copy];
-    [_state.currentGrid appendLines:[self.currentGrid numberOfLinesUsed]
-                       toLineBuffer:temp];
+    VT100Grid *grid = self.findContext.forceMainScreen ? _state.primaryGrid : _state.currentGrid;
+    [grid appendLines:[grid numberOfLinesUsed]
+         toLineBuffer:temp];
     self.savedFindContextAbsPos = [temp absPositionOfFindContext:self.findContext];
 }
 
 - (void)restoreSavedPositionToFindContextImpl:(FindContext *)context {
     @autoreleasepool {
         LineBuffer *temp = [self searchBuffer];
+        VT100Grid *grid = context.forceMainScreen ? _state.primaryGrid : _state.currentGrid;
         [temp performBlockWithTemporaryChanges:^{
-            [_state.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                               toLineBuffer:temp];
+            [grid appendLines:[grid numberOfLinesUsed]
+                 toLineBuffer:temp];
             [temp storeLocationOfAbsPos:self.savedFindContextAbsPos
                               inContext:context];
         }];
@@ -234,10 +238,11 @@
     __block BOOL keepSearching = NO;
     assert(context.substring != nil);
     @autoreleasepool {
+        VT100Grid *grid = context.forceMainScreen ? _state.primaryGrid : _state.currentGrid;
         LineBuffer *temporaryLineBuffer = [self searchBuffer];
         [temporaryLineBuffer performBlockWithTemporaryChanges:^{
-            [_state.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                               toLineBuffer:temporaryLineBuffer];
+            [grid appendLines:[grid numberOfLinesUsed]
+                 toLineBuffer:temporaryLineBuffer];
 
             // Search one block.
             BOOL ok;
@@ -248,7 +253,7 @@
             LineBufferPosition *initialStartPosition = nil;
             if (ok) {
                 initialStartPosition = [temporaryLineBuffer positionForCoordinate:initialStartRel
-                                                                            width:_state.currentGrid.size.width
+                                                                            width:grid.size.width
                                                                            offset:0];
             }
             LineBufferPosition *stopAt = nil;
@@ -268,7 +273,7 @@
                     }
                     y = MAX(0, y);
                     stopAt = [temporaryLineBuffer positionForCoordinate:VT100GridCoordMake(0, y)
-                                                                  width:_state.currentGrid.size.width
+                                                                  width:grid.size.width
                                                                  offset:0];
                     if (!stopAt) {
                         if (context.dir > 0) {
@@ -289,7 +294,7 @@
                     moveStart = YES;
                 } else if (startCoord.y >= (NSInteger)NSMaxRange(absLineRange)) {
                     startCoord.y = NSMaxRange(absLineRange) - 1;
-                    startCoord.x = _state.currentGrid.size.width - 1;
+                    startCoord.x = grid.size.width - 1;
                     moveStart = YES;
                 }
                 if (moveStart) {
@@ -304,7 +309,7 @@
                          VT100GridAbsCoordDescription(startCoord));
                     ok = [temporaryLineBuffer setStartCoord:rel
                                               ofFindContext:context
-                                                      width:_state.currentGrid.size.width];
+                                                      width:grid.size.width];
                     if (!ok) {
                         DLog(@"Failed to set search coord");
                     }
@@ -330,7 +335,7 @@
             int ms_diff = 0;
             do {
                 if (context.status == Searching) {
-                    const int width = _state.currentGrid.size.width;
+                    const int width = grid.size.width;
                     const VT100GridCoord startCoord =
                     [temporaryLineBuffer coordinateForPosition:[temporaryLineBuffer positionOfFindContext:context
                                                                                                     width:width]
@@ -362,7 +367,7 @@
                         // NSLog(@"matched");
                         // Found a match in the text.
                         NSArray *allPositions = [temporaryLineBuffer convertPositions:context.results
-                                                                            withWidth:_state.currentGrid.size.width];
+                                                                            withWidth:grid.size.width];
                         for (XYRange *xyrange in allPositions) {
                             DLog(@"  Add result at %@", xyrange);
                             SearchResult *result = [SearchResult withCoordRange:xyrange.coordRange
@@ -400,7 +405,7 @@
                             FindContext *tempFindContext = [[FindContext alloc] init];
                             LineBufferPosition *startPos;
                             if (absLineRange.length > 0) {
-                                const int width = _state.currentGrid.size.width;
+                                const int width = grid.size.width;
                                 long long absY;
                                 int x;
                                 int offset;

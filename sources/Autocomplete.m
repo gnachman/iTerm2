@@ -435,7 +435,8 @@ precededByWhitespace:(BOOL)precededByWhitespace
                withOffset:1
                 inContext:findContext_
           multipleResults:YES
-             absLineRange:NSMakeRange(0, 0)];
+             absLineRange:NSMakeRange(0, 0)
+          forceMainScreen:NO];
 
     [self _doPopulateMore];
 }

@@ -44,6 +44,7 @@
 
     // Fades out the progress indicator.
     NSTimer *_animationTimer;
+    NSMutableDictionary<NSString *, NSNumber *> *_sessionGuidsWithChangedScreens;
 }
 
 - (instancetype)init {
@@ -58,6 +59,14 @@
     [_findType selectItemWithTag:[iTermUserDefaults globalSearchMode]];
     _outlineView.target = self;
     _outlineView.action = @selector(didClick:);
+}
+
+- (void)windowWillClose:(NSNotification *)notification {
+    [self restoreAlternateScreensWithAnnouncement:YES];
+}
+
+- (void)dealloc {
+    [self restoreAlternateScreensWithAnnouncement:YES];
 }
 
 - (NSArray<PTYSession *> *)sessions {
@@ -141,21 +150,36 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return sqrt(Square(p1.x - p2.x) + Square(p1.y - p2.y));
 }
 
+- (void)switchSessionToAlternateScreenIfNeededForResult:(iTermGlobalSearchResult *)result {
+    const BOOL shouldShowAlternateScreen = !result.onMainScreen;
+    if (shouldShowAlternateScreen != result.session.screen.showingAlternateScreen) {
+        if (!_sessionGuidsWithChangedScreens) {
+            _sessionGuidsWithChangedScreens = [NSMutableDictionary dictionary];
+        }
+        _sessionGuidsWithChangedScreens[result.session.guid] = @(result.session.screen.showingAlternateScreen);
+        [result.session setShowAlternateScreen:shouldShowAlternateScreen
+                                      announce:YES];
+    }
+}
+
 - (void)revealSelection {
     [_searchField setNeedsDisplay:YES];
     id item = [_outlineView itemAtRow:_outlineView.selectedRow];
     NSString *guid = [NSString castFrom:item];
     if (guid) {
         PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+        [self restoreAlternateScreensWithAnnouncement:YES];
         [session reveal];
         return;
     }
     iTermGlobalSearchResult *result = [iTermGlobalSearchResult castFrom:item];
     if (!result) {
+        [self restoreAlternateScreensWithAnnouncement:YES];
         return;
     }
 
     [result.session reveal];
+    [self switchSessionToAlternateScreenIfNeededForResult:result];
     if (result.isExternal) {
         [result.session.externalSearchResultsController selectExternalSearchResult:result.result.externalResult
                                                                           multiple:NO
@@ -398,6 +422,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     assert(NO);
     return nil;
 
+}
+
+- (void)restoreAlternateScreensWithAnnouncement:(BOOL)announce {
+    [_sessionGuidsWithChangedScreens enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
+        PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:key];
+        if (session) {
+            [session setShowAlternateScreen:obj.boolValue announce:announce];
+        }
+    }];
+    [_sessionGuidsWithChangedScreens removeAllObjects];
 }
 
 - (void)outlineViewSelectionDidChange:(NSNotification *)notification {

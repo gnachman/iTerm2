@@ -82,6 +82,9 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 // Remembers where the search began so we can stop after wrapping.
 @property(nonatomic) VT100GridAbsCoord initialStart;
 
+// Search main, not alternate screen, even if in alternate screen mode.
+@property(nonatomic) BOOL forceMainScreen;
+
 - (void)copyFromFindContext:(FindContext *)other;
 
 - (void)reset;

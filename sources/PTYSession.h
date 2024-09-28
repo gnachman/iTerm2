@@ -722,6 +722,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (void)updateViewBackgroundImage;
 - (void)invalidateBlend;
+- (void)setShowAlternateScreen:(BOOL)showAlternateScreen announce:(BOOL)announce;
 
 // PTYTextView
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;

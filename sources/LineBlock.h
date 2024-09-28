@@ -116,6 +116,7 @@
                          width:(int)width;
 - (void)removeLastRawLine;
 - (int)lengthOfLastLine;
+- (int)lengthOfLastLineWrappedToWidth:(int)width;
 
 // Drop lines from the start of the buffer. Returns the number of lines actually dropped
 // (either n or the number of lines in the block).

@@ -4402,7 +4402,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                     withOffset:offset
                      inContext:context
                multipleResults:multipleResults
-                  absLineRange:absLineRange];
+                  absLineRange:absLineRange
+               forceMainScreen:NO];
 }
 
 - (void)findOnPageHelperSearchExternallyFor:(NSString *)query mode:(iTermFindMode)mode {

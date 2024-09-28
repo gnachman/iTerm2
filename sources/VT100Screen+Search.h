@@ -22,7 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
                withOffset:(int)offset
                 inContext:(FindContext *)context
           multipleResults:(BOOL)multipleResults
-             absLineRange:(NSRange)absLineRange;
+             absLineRange:(NSRange)absLineRange
+          forceMainScreen:(BOOL)forceMainScreen;
 
 - (BOOL)continueFindAllResultsImpl:(NSMutableArray<SearchResult *> *)results
                           rangeOut:(NSRange *)rangePtr

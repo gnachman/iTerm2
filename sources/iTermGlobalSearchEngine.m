@@ -11,6 +11,7 @@
 #import "NSTimer+iTerm.h"
 #import "PTYSession.h"
 #import "SearchResult.h"
+#import "VT100Screen.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermGlobalSearchEngineCursor.h"
 #import "iTermGlobalSearchResult.h"
@@ -21,6 +22,44 @@
     NSMutableArray<iTermGlobalSearchEngineCursor *> *_cursors;
     NSUInteger _retiredLines;
     NSUInteger _expectedLines;
+}
+
+static void iTermGlobalSearchEngineCursorInitialize(iTermGlobalSearchEngineCursor *cursor,
+                                                    NSString *query,
+                                                    iTermFindMode mode,
+                                                    PTYSession *session,
+                                                    iTermGlobalSearchEngineCursorPass pass) {
+    VT100Screen *screen = session.screen;
+    FindContext *findContext = [[FindContext alloc] init];
+    NSRange range;
+    switch (pass) {
+        case iTermGlobalSearchEngineCursorPassMainScreen: {
+            const long long lastLineStart = [session.screen absLineNumberOfLastLineInLineBuffer];
+            const long long numberOfLines = session.screen.numberOfLines + session.screen.height;
+            range = NSMakeRange(lastLineStart, numberOfLines - lastLineStart);
+            break;
+        }
+        case iTermGlobalSearchEngineCursorPassCurrentScreen:
+            range = NSMakeRange(0, 0);
+            break;
+    }
+    [screen setFindString:query
+         forwardDirection:NO
+                     mode:mode
+              startingAtX:0
+              startingAtY:screen.numberOfLines + 1 + screen.totalScrollbackOverflow
+               withOffset:0
+                inContext:findContext
+          multipleResults:YES
+             absLineRange:range
+          forceMainScreen:(pass == iTermGlobalSearchEngineCursorPassMainScreen)];
+    findContext.hasWrapped = YES;
+    cursor.session = session;
+    cursor.findContext = findContext;
+    cursor.pass = pass;
+    cursor.query = query;
+    cursor.mode = mode;
+    cursor.currentScreenIsAlternate = screen.showingAlternateScreen;
 }
 
 - (instancetype)initWithQuery:(NSString *)query
@@ -35,20 +74,17 @@
         _handler = [handler copy];
         _mode = mode;
         _cursors = [[sessions mapWithBlock:^id(PTYSession *session) {
-            FindContext *findContext = [[FindContext alloc] init];
-            [session.screen setFindString:query
-                         forwardDirection:NO
-                                     mode:mode
-                              startingAtX:0
-                              startingAtY:session.screen.numberOfLines + 1 + session.screen.totalScrollbackOverflow
-                               withOffset:0
-                                inContext:findContext
-                          multipleResults:YES
-                             absLineRange:NSMakeRange(0, 0)];
-            iTermGlobalSearchEngineCursor *cursor = [[iTermGlobalSearchEngineCursor alloc] init];
-            cursor.session = session;
-            cursor.findContext = findContext;
+            iTermGlobalSearchEngineCursorPass pass;
+            if (session.screen.showingAlternateScreen) {
+                pass = iTermGlobalSearchEngineCursorPassMainScreen;
+                const long long lastLineY = [session.screen absLineNumberOfLastLineInLineBuffer] - session.screen.totalScrollbackOverflow;
+                _expectedLines += session.screen.height + session.screen.numberOfLines - lastLineY;
+            } else {
+                pass = iTermGlobalSearchEngineCursorPassCurrentScreen;
+            }
             _expectedLines += session.screen.numberOfLines;
+            iTermGlobalSearchEngineCursor *cursor = [[iTermGlobalSearchEngineCursor alloc] init];
+            iTermGlobalSearchEngineCursorInitialize(cursor, query, mode, session, pass);
             return cursor;
         }] mutableCopy];
         _timer = [NSTimer scheduledWeakTimerWithTimeInterval:0
@@ -77,6 +113,19 @@
     if (more) {
         [_cursors addObject:cursor];
         return;
+    }
+    switch (cursor.pass) {
+        case iTermGlobalSearchEngineCursorPassMainScreen: {
+            iTermGlobalSearchEngineCursorInitialize(cursor,
+                                                        cursor.query,
+                                                        cursor.mode,
+                                                        cursor.session,
+                                                        iTermGlobalSearchEngineCursorPassCurrentScreen);
+            [_cursors addObject:cursor];
+            return;
+        }
+        case iTermGlobalSearchEngineCursorPassCurrentScreen:
+            break;
     }
     if (_cursors.count == 0) {
         [self stop];
@@ -121,7 +170,17 @@
                                                           inContext:cursor.findContext
                                                        absLineRange:NSMakeRange(0, 0)
                                                       rangeSearched:NULL];
-    iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:cursor.session.screen];
+    iTermTextExtractor *extractor;
+    switch (cursor.pass) {
+        case iTermGlobalSearchEngineCursorPassCurrentScreen:
+            extractor = [[iTermTextExtractor alloc] initWithDataSource:cursor.session.screen];
+            break;
+        case iTermGlobalSearchEngineCursorPassMainScreen: {
+            iTermTerminalContentSnapshot *snapshot = [cursor.session.screen snapshotWithPrimaryGrid];
+            extractor = [[iTermTextExtractor alloc] initWithDataSource:snapshot];
+            break;
+        }
+    }
     id<ExternalSearchResultsController> esrc = cursor.session.externalSearchResultsController;
     NSArray<iTermExternalSearchResult *> *externals =
         [esrc externalSearchResultsForQuery:query
@@ -140,7 +199,15 @@
     }
     NSDictionary *matchAttributes = [self matchAttributes];
     NSDictionary *regularAttributes = [self regularAttributes];
+    const long long gridStartAbsY = cursor.session.screen.numberOfScrollbackLines + cursor.session.screen.totalScrollbackOverflow;
     NSArray<iTermGlobalSearchResult *> *mapped = [results mapWithBlock:^id(SearchResult *anObject) {
+        if (cursor.currentScreenIsAlternate &&
+            cursor.pass == iTermGlobalSearchEngineCursorPassMainScreen &&
+            anObject.safeAbsEndY < gridStartAbsY) {
+            // Drop main screen results that are entirely in the linebuffer.
+            // Switching to the main screen is confusing.
+            return nil;
+        }
         iTermGlobalSearchResult *result = [[iTermGlobalSearchResult alloc] init];
         result.session = cursor.session;
         result.result = anObject;
@@ -150,7 +217,13 @@
                                   matchAttributes:matchAttributes
                                 regularAttributes:regularAttributes];
         } else {
-            result.snippet = [self snippetFromExtractor:extractor result:anObject];
+            result.snippet = [self snippetFromExtractor:extractor
+                                                 result:anObject];
+        }
+        if (cursor.pass == iTermGlobalSearchEngineCursorPassMainScreen) {
+            result.onMainScreen = YES;
+        } else {
+            result.onMainScreen = !cursor.currentScreenIsAlternate;
         }
         return result;
     }];

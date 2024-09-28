@@ -199,6 +199,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)isEqual:(LineBuffer *)other;
 - (NSInteger)numberOfCellsUsedInWrappedLineRange:(VT100GridRange)wrappedLineRange width:(int)width;
 
+// If the last line has a hard eol, this is 0.
+// Otherwise it is the number of wrapped lines up to the preceding hard eol.
+- (int)numberOfWrappedLinesAtPartialEndforWidth:(int)width;
+
 @end
 
 // A LineBuffer represents an ordered collection of strings of screen_char_t. Each string forms a

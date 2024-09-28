@@ -1989,6 +1989,17 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return sum;
 }
 
+- (int)numberOfWrappedLinesAtPartialEndforWidth:(int)width {
+    LineBlock *block = _lineBlocks.lastBlock;
+    if (!block) {
+        return 0;
+    }
+    if (!block.hasPartial) {
+        return 0;
+    }
+    return [block lengthOfLastLineWrappedToWidth:width];
+}
+
 #pragma mark - iTermLineBlockArrayDelegate
 
 - (void)lineBlockArrayDidChange:(iTermLineBlockArray *)lineBlockArray {

@@ -1951,7 +1951,10 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     if (convertNullsToSpace) {
         nullPolicy = kiTermTextExtractorNullPolicyTreatAsSpace;
     }
-
+    if (range.coordRange.start.x >= _dataSource.width) {
+        range.coordRange.start.x = 0;
+        range.coordRange.start.y += 1;
+    }
     iTermLocatedString *locatedString =
         [self locatedStringInRange:range
                  attributeProvider:nil

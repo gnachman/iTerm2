@@ -11256,6 +11256,24 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return NO;
 }
 
+- (void)setShowAlternateScreen:(BOOL)showAlternateScreen announce:(BOOL)announce {
+    if (_screen.showingAlternateScreen == showAlternateScreen) {
+        return;
+    }
+    if (announce) {
+        if (showAlternateScreen) {
+            [_view showUnobtrusiveMessage:@"Switching to alternate screen"];
+        } else {
+            [_view showUnobtrusiveMessage:@"Switching to main screen"];
+        }
+    }
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        [terminal toggleAlternateScreen];
+    }];
+}
+
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem {
     _modeHandler.mode = iTermSessionModeDefault;
     const NSInteger tag = menuItem.tag;
@@ -11976,7 +11994,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 withOffset:0
                  inContext:_tailFindContext
            multipleResults:YES
-              absLineRange:_textview.findOnPageHelper.absLineRange];
+              absLineRange:_textview.findOnPageHelper.absLineRange
+           forceMainScreen:NO];
 
     // Set the starting position to the block & offset that the backward search
     // began at. Do a forward search from that location.

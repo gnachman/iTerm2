@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) PTYSession *session;
 @property (nonatomic, strong) SearchResult *result;
 @property (nonatomic, copy) NSAttributedString *snippet;
+@property (nonatomic) BOOL onMainScreen;
 
 - (void)highlightLines;
 @end

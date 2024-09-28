@@ -79,7 +79,8 @@
            withOffset:(int)offsetof  // Offset in the direction of searching (offset=1 while searching backwards means start one char before x,y)
             inContext:(FindContext*)context
       multipleResults:(BOOL)multipleResults
-         absLineRange:(NSRange)absLineRange;
+         absLineRange:(NSRange)absLineRange
+      forceMainScreen:(BOOL)forceMainScreen;
 
 // Save the position of the current find context (with the screen appended).
 - (void)saveFindContextAbsPos;
@@ -154,6 +155,7 @@
 - (void)resetDirty;
 
 - (id<iTermTextDataSource>)snapshotDataSource;
+- (id<iTermTextDataSource>)snapshotWithPrimaryGrid;
 
 - (void)replaceRange:(VT100GridAbsCoordRange)range
         withPorthole:(id<Porthole>)porthole
