@@ -318,6 +318,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)rememberWindowPositions;
 
 + (BOOL)removeAddTabButton;
++ (BOOL)reportOnFirstMouse;
 + (BOOL)restrictSemanticHistoryPrefixAndSuffixToLogicalWindow;
 + (BOOL)requireCmdForDraggingText;
 + (BOOL)requireSlashInURLGuess;
