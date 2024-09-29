@@ -60,7 +60,11 @@ static char iTermSliderKVOKey;
     _stepper.action = @selector(stepperDidChange:);
     [self addSubview:_stepper];
 
-    const CGFloat textFieldWidth = 30;
+    static CGFloat textFieldWidth;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        textFieldWidth = [self widthForTextFieldWithString:@"100"];
+    });
     _textField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, textFieldWidth, 17)];
     [_textField sizeToFit];
     _textField.editable = YES;
@@ -76,6 +80,19 @@ static char iTermSliderKVOKey;
     rect.origin.y = (NSHeight(self.frame) - NSHeight(_textField.frame)) / 2.0;
     _textField.frame = rect;
     [self addSubview:_textField];
+}
+
+- (CGFloat)widthForTextFieldWithString:(NSString *)string {
+    NSTextField *textField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
+    textField.stringValue = string;
+    textField.editable = YES;
+    textField.selectable = YES;
+    textField.autoresizingMask = NSViewMinXMargin;
+    textField.usesSingleLineMode = YES;
+    textField.delegate = self;
+    textField.focusRingType = NSFocusRingTypeNone;
+    [textField sizeToFit];
+    return textField.frame.size.width;
 }
 
 - (BOOL)wantsDefaultClipping {
