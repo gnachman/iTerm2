@@ -3335,7 +3335,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     NSString *user = components.user;
     NSString *path = components.path;
 
-    if (host || user) {
+    if (host.length > 0 || user.length > 0) {
         __weak __typeof(self) weakSelf = self;
         [self setHost:host user:user ssh:NO completion:^{
             [weakSelf setPathFromURL:path];
