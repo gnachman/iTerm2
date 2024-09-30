@@ -11229,7 +11229,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             return _keyMappingMode == iTermKeyMappingModeModifyOtherKeys2;
 
         case 10:
-            return _keyMappingMode == iTermKeyMappingModeCSIu;
+            return (_keyMappingMode == iTermKeyMappingModeCSIu && _screen.terminalKeyReportingFlags == 0);
 
         case 11:
             return _keyMappingMode == iTermKeyMappingModeRaw;
