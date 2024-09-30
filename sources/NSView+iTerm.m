@@ -257,6 +257,11 @@ static NSInteger gTakingSnapshot;
 }
 
 - (NSPoint)viewPointFromAccessibilityScreenPoint:(NSPoint)stupidScreenPoint {
+    if (@available(macOS 15, *)) {
+        const NSPoint windowPoint = [self.window convertPointFromScreen:stupidScreenPoint];
+        const NSPoint viewPoint =  [self convertPoint:windowPoint fromView:nil];
+        return viewPoint;
+    }
     const CGFloat flippedY = NSMaxY([NSScreen mainScreen].frame) - stupidScreenPoint.y;
     const NSPoint regularScreenPoint = NSMakePoint(stupidScreenPoint.x, flippedY);
     const NSPoint windowPoint = [self.window convertPointFromScreen:regularScreenPoint];

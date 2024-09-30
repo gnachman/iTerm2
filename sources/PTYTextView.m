@@ -5544,8 +5544,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         CGFloat screenHeight = NSHeight([(NSScreen *)[screens objectAtIndex:0] frame]);
         NSRect rect = bounds;
         rect.origin.y = (screenHeight - (bounds.origin.y + bounds.size.height));
+        DLog(@"convertScreenRect:%@ -> %@", NSStringFromRect(bounds), NSStringFromRect(rect));
         return rect;
     }
+    DLog(@"convertScreenRect:%@ -> %@ [fail]", NSStringFromRect(bounds), NSStringFromRect(CGRectZero));
     return CGRectZero;
 }
 
