@@ -5063,6 +5063,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)userInitiatedReset {
     _modeHandler.mode = iTermSessionModeDefault;
+    [_hostStack removeAllObjects];
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [terminal resetForReason:VT100TerminalResetReasonUserRequest];
     }];
