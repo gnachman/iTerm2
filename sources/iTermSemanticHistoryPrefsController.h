@@ -32,6 +32,7 @@ extern NSString *kRiderIdentifier;
 extern NSString *kNovaAppIdentifier;
 extern NSString *kXcodeAppIdentifier;
 extern NSString *kCursorAppIdentifier;
+extern NSString *kZedAppIdentifier;
 
 extern NSString *kSemanticHistoryBestEditorAction;
 extern NSString *kSemanticHistoryUrlAction;

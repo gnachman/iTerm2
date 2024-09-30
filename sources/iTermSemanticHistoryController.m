@@ -146,6 +146,16 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     return url.path;
 }
 
+- (NSString *)zedCommandInBundle:(NSBundle *)bundle {
+    DLog(@"Trying to find zed in %@", bundle.bundlePath);
+    NSURL *url = bundle.bundleURL;
+    NSArray<NSString *> *parts = @[ @"Contents", @"MacOS", @"cli" ];
+    for (NSString *part in parts) {
+        url = [url URLByAppendingPathComponent:part];
+    }
+    return url.path;
+}
+
 - (NSString *)emacsClientInApplicationBundle:(NSBundle *)bundle {
     DLog(@"Trying to find emacsclient in %@", bundle.bundlePath);
     struct utsname uts;
@@ -331,6 +341,24 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     [self launchTaskWithPath:novaUtil arguments:args completion:nil];
 }
 
+- (void)openDocumentInZed:(NSString *)path line:(NSString *)line column:(NSString *)column {
+    NSBundle *bundle = [self applicationBundleWithIdentifier:kZedAppIdentifier];
+    if (!bundle) {
+        DLog(@"Failed to find zed bundle");
+        return;
+    }
+    NSString *zed = [self zedCommandInBundle:bundle];
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    [parts addObject:path];
+    if (line.length) {
+        [parts addObject:line];
+        if (column.length) {
+            [parts addObject:column];
+        }
+    }
+    [self launchTaskWithPath:zed arguments:@[ [parts componentsJoinedByString:@":"] ] completion:nil];
+}
+
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId {
     return [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
 }
@@ -410,6 +438,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kNovaAppIdentifier,
               kXcodeAppIdentifier,
               kCursorAppIdentifier,
+              kZedAppIdentifier
     ];
 }
 
@@ -491,6 +520,10 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
     if ([identifier isEqualToString:kCursorAppIdentifier]) {
         [self openDocumentInCursor:path line:lineNumber column:columnNumber];
+        return;
+    }
+    if ([identifier isEqualToString:kZedAppIdentifier]) {
+        [self openDocumentInZed:path line:lineNumber column:columnNumber];
         return;
     }
     // WebStorm doesn't actually support --line, but it's harmless to try.

@@ -41,7 +41,7 @@ NSString *kRiderIdentifier = @"com.jetbrains.rider";
 NSString *kNovaAppIdentifier = @"com.panic.Nova";
 NSString *kXcodeAppIdentifier = @"com.apple.dt.Xcode";
 NSString *kCursorAppIdentifier = @"com.todesktop.230313mzl4w4u92";
-
+NSString *kZedAppIdentifier = @"dev.zed.zed";
 NSString *kSemanticHistoryBestEditorAction = @"best editor";
 NSString *kSemanticHistoryUrlAction = @"url";
 NSString *kSemanticHistoryEditorAction = @"editor";
@@ -97,7 +97,8 @@ enum {
     kIntelliJUETag,
     kXcodeTag,
     kCursorTag,
-    
+    kZedTag
+
     // Only append to the end of the list; never delete or change.
 };
 
@@ -153,6 +154,7 @@ enum {
                                kNovaAppIdentifier: @"",
                                kXcodeAppIdentifier: @"",
                                kCursorAppIdentifier: @"cursor",
+                               kZedAppIdentifier: @""
     };
     return schemes[editor];
 }
@@ -178,7 +180,8 @@ enum {
               kXcodeAppIdentifier,
               kWebStormIdentifier,
               kRiderIdentifier,
-              kCursorAppIdentifier ];
+              kCursorAppIdentifier,
+              kZedAppIdentifier ];
 }
 
 + (NSString *)bestEditor {
@@ -210,7 +213,8 @@ enum {
                                   kRiderIdentifier,
                                   kNovaAppIdentifier,
                                   kXcodeAppIdentifier,
-                                  kCursorAppIdentifier, ];
+                                  kCursorAppIdentifier,
+                                  kZedAppIdentifier];
     return [editorBundleIds containsObject:bundleId];
 }
 
@@ -235,6 +239,7 @@ enum {
                                  kNovaAppIdentifier: @(kNovaTag),
                                 kXcodeAppIdentifier: @(kXcodeTag),
                                kCursorAppIdentifier: @(kCursorTag),
+                                  kZedAppIdentifier: @(kZedTag)
     };
     return tags;
 }
@@ -282,7 +287,8 @@ enum {
                                     kRiderIdentifier: @"Rider",
                                   kNovaAppIdentifier: @"Nova",
                                  kXcodeAppIdentifier: @"Xcode",
-                                kCursorAppIdentifier: @"Cursor"
+                                kCursorAppIdentifier: @"Cursor",
+                                   kZedAppIdentifier: @"Zed"
     };
 
     NSDictionary *tags = [[self class] identifierToTagMap];
@@ -358,7 +364,8 @@ enum {
                                   @(kRiderTag): kRiderIdentifier,
                                    @(kNovaTag): kNovaAppIdentifier,
                                   @(kXcodeTag): kXcodeAppIdentifier,
-                                 @(kCursorTag): kCursorAppIdentifier
+                                 @(kCursorTag): kCursorAppIdentifier,
+                                    @(kZedTag): kZedAppIdentifier,
     };
     return map[@([[editors_ selectedItem] tag])];
 }
