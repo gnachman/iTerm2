@@ -1008,13 +1008,11 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 }
 
 - (void)drawOutlineAroundSelectedCommand:(CGFloat)virtualOffset {
-
-    const CGFloat hMargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
     const CGFloat y = _selectedCommandRegion.location * _cellSize.height;
 
     NSRect rect = NSMakeRect(0,
                              y - commandRegionOutlineThickness,
-                             _cellSize.width * _gridSize.width + 2 * hMargin,
+                             _scrollViewDocumentVisibleRect.size.width,
                              _selectedCommandRegion.length * _cellSize.height + commandRegionOutlineThickness * 2);
 
     NSArray<NSColor *> *colors = self.selectedCommandOutlineColors;

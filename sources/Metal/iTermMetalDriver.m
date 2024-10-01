@@ -1615,7 +1615,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         VT100GridRect rect = frameData.perFrameState.selectedCommandRect;
         const CGFloat scale = tState.cellConfiguration.scale;
         const CGFloat leftMarginPt = tState.margins.left / scale;
-        const CGFloat rightMarginPt = tState.margins.right / scale;
+        const CGFloat rightMarginPt = (frameData.viewportSize.x - tState.margins.left - tState.cellConfiguration.gridSize.width * tState.cellConfiguration.cellSize.width) / scale;
         [tState addFrameRectangleWithRect:rect
                                 thickness:1.0
                                    insets:NSEdgeInsetsMake(-1, 1 - leftMarginPt, 0, 2 - leftMarginPt)
@@ -1625,7 +1625,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                                    insets:NSEdgeInsetsMake(-2, 0 - leftMarginPt, -1, 1 - leftMarginPt)
                                     color:frameData.perFrameState.selectedCommandOutlineColors[0]];
         const vector_float4 shadeColor = frameData.perFrameState.shadeColor;
-        if (rect.origin.y > 0){
+        if (rect.origin.y > 0) {
             [tState addRectangleWithRect:VT100GridRectMake(0,
                                                            0,
                                                            tState.cellConfiguration.gridSize.width,
@@ -1640,6 +1640,16 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                                                            tState.cellConfiguration.gridSize.width,
                                                            tState.cellConfiguration.gridSize.height - firstRowBeneath)
                                   insets:NSEdgeInsetsMake(2, -leftMarginPt, 0, -rightMarginPt)
+                                   color:shadeColor];
+        }
+        if (!frameData.perFrameState.forceRegularBottomMargin) {
+            // Draw shade over bottom margin + excess area
+            const CGFloat bottomMarginPt = (frameData.viewportSize.y - tState.margins.top) / scale;
+            [tState addRectangleWithRect:VT100GridRectMake(0,
+                                                           tState.cellConfiguration.gridSize.height,
+                                                           tState.cellConfiguration.gridSize.width,
+                                                           1)
+                                  insets:NSEdgeInsetsMake(0, -leftMarginPt, -bottomMarginPt, -rightMarginPt)
                                    color:shadeColor];
         }
 
