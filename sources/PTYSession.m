@@ -1336,8 +1336,12 @@ ITERM_WEAKLY_REFERENCEABLE
             modifiedArrangement[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = set.allObjects;
         }
         MutableProfile *modifiedProfile = [[theBookmark mutableCopy] autorelease];
-        modifiedProfile[KEY_CUSTOM_LOCALE] = lang;
-        modifiedProfile[KEY_SET_LOCALE_VARS] = @(iTermSetLocalVarsModeCustom);
+        if (lang) {
+            modifiedProfile[KEY_CUSTOM_LOCALE] = lang;
+            modifiedProfile[KEY_SET_LOCALE_VARS] = @(iTermSetLocalVarsModeCustom);
+        } else {
+            modifiedProfile[KEY_SET_LOCALE_VARS] = @(iTermSetLocalVarsModeMinimal);
+        }
         modifiedArrangement[SESSION_ARRANGEMENT_BOOKMARK] = modifiedProfile;
         return modifiedArrangement;
     }
@@ -2725,10 +2729,16 @@ ITERM_WEAKLY_REFERENCEABLE
 
 + (void)setCustomLocale:(NSString *)lang inProfile:(Profile *)originalProfile model:(ProfileModel *)model {
     NSString *guid = [[originalProfile[KEY_GUID] copy] autorelease];
-    [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_CUSTOM_LOCALE: lang,
-                                                         KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeCustom) } 
-                                            inProfile:originalProfile
-                                                model:model];
+    if (lang) {
+        [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_CUSTOM_LOCALE: lang,
+                                                             KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeCustom) }
+                                                inProfile:originalProfile
+                                                    model:model];
+    } else {
+        [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeMinimal) }
+                                                inProfile:originalProfile
+                                                    model:model];
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
                                                         object:guid];
 }
@@ -2774,10 +2784,22 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     } else if (prompt.remember && localeVars == nil && lang == nil) {
         DLog(@"Minimal");
-        [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeMinimal) } inProfile:self.originalProfile
-                                                    model:self.profileModel];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
-                                                            object:self.originalProfile[KEY_GUID]];
+        if (fromArrangement) {
+            NSMutableArray *repairedArrangements = [NSMutableArray array];
+            NSArray *terminalArrangements = [WindowArrangements arrangementWithName:arrangementName];
+            for (NSDictionary *terminalArrangement in terminalArrangements) {
+                [repairedArrangements addObject:[PseudoTerminal repairedArrangement:terminalArrangement
+                                                                settingCustomLocale:lang]];
+            }
+            [WindowArrangements setArrangement:repairedArrangements withName:arrangementName];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                                object:self.originalProfile[KEY_GUID]];
+        } else {
+            [iTermProfilePreferences setObjectsFromDictionary:@{ KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeMinimal) } inProfile:self.originalProfile
+                                                        model:self.profileModel];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                                object:self.originalProfile[KEY_GUID]];
+        }
     }
     return localeVars;
 }
