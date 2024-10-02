@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23094" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22689"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23094"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -19,12 +19,12 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" fullSizeContentView="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="386" y="524" width="588" height="413"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1728" height="1079"/>
             <view key="contentView" id="Y6E-dl-YZS" customClass="iTermAboutWindowContentView">
                 <rect key="frame" x="0.0" y="0.0" width="588" height="413"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GaD-UM-uz4">
+                    <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GaD-UM-uz4">
                         <rect key="frame" x="181" y="361" width="389" height="27"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="iTerm2" id="U4n-GV-8aZ">
@@ -92,7 +92,7 @@
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                     </scrollView>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fQo-xv-ggV">
+                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fQo-xv-ggV">
                         <rect key="frame" x="169" y="342" width="401" height="17"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="By George Nachman and Contributors" id="XAW-F5-RXa">
@@ -156,7 +156,7 @@
                         </scroller>
                     </scrollView>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yIc-gQ-ll0" userLabel="LatchBio">
-                        <rect key="frame" x="218" y="174" width="126" height="48"/>
+                        <rect key="frame" x="185" y="174" width="126" height="48"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <subviews>
                             <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="BLi-vD-bXQ">
@@ -167,12 +167,12 @@
                         </subviews>
                     </customView>
                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gnK-jE-EbY">
-                        <rect key="frame" x="352" y="179" width="151" height="38"/>
+                        <rect key="frame" x="319" y="174" width="200" height="48"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="coderabbitai" id="K26-aE-Qae"/>
                     </imageView>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QLQ-ce-ZLX" userLabel="Whitebox">
-                        <rect key="frame" x="87" y="174" width="123" height="48"/>
+                        <rect key="frame" x="54" y="174" width="123" height="48"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <subviews>
                             <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="r4H-cK-fWg">
@@ -180,7 +180,7 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="whitebox_logo" id="Gkx-JC-hcS"/>
                             </imageView>
-                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yn8-g8-sO4">
+                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yn8-g8-sO4">
                                 <rect key="frame" x="56" y="12" width="62" height="16"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Whitebox" id="5go-AO-e2e">
@@ -207,7 +207,7 @@
     <resources>
         <image name="LatchBio" width="479" height="171"/>
         <image name="NSApplicationIcon" width="32" height="32"/>
-        <image name="coderabbitai" width="196.5" height="48"/>
+        <image name="coderabbitai" width="214" height="48"/>
         <image name="whitebox_logo" width="22.079999923706055" height="22.079999923706055"/>
     </resources>
 </document>
