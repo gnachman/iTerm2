@@ -115,10 +115,19 @@ iTermCommandInfoViewControllerDelegate>
         }
         return YES;
     }
+    if (item.action == @selector(toggleLockSplitPaneWidth:)) {
+        BOOL allow = NO;
+        item.state = [self.delegate textViewSplitPaneWidthIsLocked:&allow] ? NSControlStateValueOn : NSControlStateValueOff;
+        return allow;
+    }
     return NO;
 }
 
 #pragma mark - Actions
+
+- (IBAction)toggleLockSplitPaneWidth:(id)sender {
+    [self.delegate textViewToggleLockSplitPaneWidth];
+}
 
 - (IBAction)renderSelection:(id)sender {
     VT100GridAbsCoordRange absRange = self.selection.spanningAbsRange;

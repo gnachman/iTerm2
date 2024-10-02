@@ -1713,6 +1713,15 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1405">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Lock Split Pane Width" identifier="Lock Split Pane Width" id="OsT-y6-DSn">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleLockSplitPaneWidth:" target="-1" id="QuG-FK-nTo"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="iau-F7-eSE">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
                             <menuItem title="Password Manager" keyEquivalent="f" identifier="Password Manager" id="5">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>

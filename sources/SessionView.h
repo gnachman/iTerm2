@@ -191,6 +191,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) iTermLegacyView *legacyView;
 
 @property(nonatomic) CGFloat composerHeight;
+@property(nonatomic, strong) NSNumber *preferredWidth;
 
 // For macOS 10.14+ when subpixel AA is OFF, this draws the default background color. When there's
 // a background image it will be translucent to effect blending. When subpixel AA is ON or the OS

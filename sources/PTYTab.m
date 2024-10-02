@@ -1940,10 +1940,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             NSSize minSize;
             if ([aView isKindOfClass:[NSSplitView class]]) {
                 NSSplitView *splitView = (NSSplitView *)aView;
-                minSize = [self _recursiveMinSize:splitView];
+                minSize = [self _recursiveMinSize:splitView respectPinning:YES];
             } else {
                 SessionView *sessionView = (SessionView *)aView;
-                minSize = [self _minSessionSize:sessionView];
+                minSize = [self _minSessionSize:sessionView respectPinning:YES];
             }
             if (isVertical && actualSize.width < minSize.width) {
                 DLog(@"Not enough width for vertical split");
@@ -1960,7 +1960,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         // Another bogus heuristic: if the active session's constraints have been violated then you
         // can't split.
         NSSize actualSize = [[activeSession_ view] frame].size;
-        NSSize minSize = [self _minSessionSize:[activeSession_ view]];
+        NSSize minSize = [self _minSessionSize:[activeSession_ view]
+                                respectPinning:isVertical];
         if (isVertical && actualSize.width < minSize.width) {
             DLog(@"Not enough width for vertical split");
             return NO;
@@ -2109,6 +2110,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [[targetSessionView superview] replaceSubview:targetSessionView with:newSplit];
         [newSplit addSubview:before ? newView : targetSessionView];
         [newSplit addSubview:before ? targetSessionView : newView];
+        [self adjustSplitSubviewSizesForPinnedSizes:newSplit];
 
         // Resize all subviews the same size to accommodate the new view.
         [self adjustSubviewsOf:parentSplit];
@@ -2179,7 +2181,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  inTerminal:parentWindow_];
 }
 
-- (NSSize)_minSessionSize:(SessionView*)sessionView {
+- (NSSize)_minSessionSize:(SessionView*)sessionView respectPinning:(BOOL)respectPinning {
     NSSize size;
     PTYSession *session = [self sessionForSessionView:sessionView];
     size.width = kVT100ScreenMinColumns * [[session textview] charWidth] + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
@@ -2193,6 +2195,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                     borderType:NSNoBorder
                                    controlSize:NSControlSizeRegular
                                  scrollerStyle:[parentWindow_ scrollerStyle]];
+    if (respectPinning && sessionView.preferredWidth != nil) {
+        scrollViewSize.width = sessionView.preferredWidth.doubleValue;
+    }
     return scrollViewSize;
 }
 
@@ -2292,7 +2297,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 // Return the minimum size of a tree of splits so that no session is smaller than
 // MIN_SESSION_COLUMNS columns by MIN_SESSION_ROWS rows.
-- (NSSize)_recursiveMinSize:(NSSplitView *)node {
+- (NSSize)_recursiveMinSize:(NSSplitView *)node
+             respectPinning:(BOOL)respectPinning {
     NSSize size;
     size.width = 0;
     size.height = 0;
@@ -2317,11 +2323,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
         if ([subview isKindOfClass:[NSSplitView class]]) {
             // Get size of child tree at this subview.
-            subviewSize = [self _recursiveMinSize:(NSSplitView*)subview];
+            subviewSize = [self _recursiveMinSize:(NSSplitView*)subview
+                                   respectPinning:respectPinning];
         } else {
             // Get size of session at this subview.
             SessionView* sessionView = (SessionView*)subview;
-            subviewSize = [self _minSessionSize:sessionView];
+            subviewSize = [self _minSessionSize:sessionView
+                                 respectPinning:respectPinning];
+            if (node.vertical && respectPinning && sessionView.preferredWidth != nil) {
+                subviewSize.width = sessionView.preferredWidth.doubleValue;
+            }
         }
         if ([node isVertical]) {
             // Vertical splitters have their subviews arranged horizontally so widths add and
@@ -2373,7 +2384,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (NSSize)minSize {
-    return [self _recursiveMinSize:root_];
+    return [self _recursiveMinSize:root_ respectPinning:YES];
 }
 
 - (void)setSize:(NSSize)newSize {
@@ -2624,12 +2635,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return p;
 }
 
-- (NSSize)_minSizeOfView:(NSView*)view {
+- (NSSize)_minSizeOfView:(NSView*)view respectPinning:(BOOL)respectPinning {
     if ([view isKindOfClass:[SessionView class]]) {
         SessionView *sessionView = (SessionView*)view;
-        return [self _minSessionSize:sessionView];
+        return [self _minSessionSize:sessionView
+                      respectPinning:respectPinning];
     } else {
-        return [self _recursiveMinSize:(NSSplitView*)view];
+        return [self _recursiveMinSize:(NSSplitView*)view
+                        respectPinning:respectPinning];
     }
 }
 
@@ -5549,7 +5562,8 @@ typedef struct {
     }
     PtyLog(@"PTYTab constrainMin:%f divider:%d", (float)proposedMin, (int)dividerIndex);
     CGFloat dim;
-    NSSize minSize = [self _minSizeOfView:[[splitView subviews] objectAtIndex:dividerIndex]];
+    NSSize minSize = [self _minSizeOfView:[[splitView subviews] objectAtIndex:dividerIndex]
+                           respectPinning:YES];
     if ([splitView isVertical]) {
         dim = minSize.width;
     } else {
@@ -5570,7 +5584,8 @@ typedef struct {
     }
     PtyLog(@"PTYTab constrainMax:%f divider:%d", (float)proposedMax, (int)dividerIndex);
     CGFloat dim;
-    NSSize minSize = [self _minSizeOfView:[[splitView subviews] objectAtIndex:dividerIndex+1]];
+    NSSize minSize = [self _minSizeOfView:[[splitView subviews] objectAtIndex:dividerIndex+1]
+                           respectPinning:YES];
     if ([splitView isVertical]) {
         dim = minSize.width;
     } else {
@@ -5619,7 +5634,8 @@ typedef struct {
 - (void)_recursiveLockedSize:(NSView *)theSubview
                    ancestors:(NSSet<NSView *> *)ancestors
                      minSize:(NSSize *)minSize
-                     maxSize:(NSSize *)maxSizeOut {
+                     maxSize:(NSSize *)maxSizeOut
+              respectPinning:(BOOL)respectPinning {
     if ([theSubview isKindOfClass:[SessionView class]]) {
         // This must be the locked session. Its min and max size are exactly its ideal size.
         assert(theSubview == [lockedSession_ view]);
@@ -5637,9 +5653,13 @@ typedef struct {
             NSSize viewMin;
             NSSize viewMax;
             if (aView == [lockedSession_ view] || [ancestors containsObject:aView]) {
-                [self _recursiveLockedSize:aView ancestors:ancestors minSize:&viewMin maxSize:&viewMax];
+                [self _recursiveLockedSize:aView
+                                 ancestors:ancestors
+                                   minSize:&viewMin
+                                   maxSize:&viewMax
+                            respectPinning:respectPinning];
             } else {
-                viewMin = [self _minSizeOfView:aView];
+                viewMin = [self _minSizeOfView:aView respectPinning:respectPinning];
                 viewMax.width = INFINITY;
                 viewMax.height = INFINITY;
             }
@@ -5738,17 +5758,25 @@ typedef struct {
 // Called after a splitter has been resized. This adjusts session sizes appropriately,
 // with special attention paid to the "locked" session, which never resizes.
 - (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize {
+    if (![self resizeSubviewsOfSplitView:splitView oldSize:oldSize respectPinning:YES]) {
+        [self resizeSubviewsOfSplitView:splitView oldSize:oldSize respectPinning:NO];
+    }
+}
+
+- (BOOL)resizeSubviewsOfSplitView:(NSSplitView *)splitView
+                          oldSize:(NSSize)oldSize
+                   respectPinning:(BOOL)respectPinning {
     // While we'd prefer not to do this if tmuxOriginatedResizeInProgress_>0,
     // it's necessary to avoid a warning. It should be harmless because after
     // setting a splitter's size we go back and set each child's size in
     // -[_recursiveSetSizesInTmuxParseTree:showTitles:bookmark:inTerminal:].
     if ([[splitView subviews] count] == 0) {
         // nothing to do!
-        return;
+        return YES;
     }
     if ([splitView frame].size.width == 0) {
         XLog(@"Warning: splitView:resizeSubviewsWithOldSize: resized to 0 width");
-        return;
+        return YES;
     }
     PtyLog(@"splitView:resizeSubviewsWithOldSize for %p", splitView);
     BOOL isVertical = [splitView isVertical];
@@ -5793,17 +5821,24 @@ typedef struct {
                 [self _recursiveLockedSize:aSubview
                                  ancestors:ancestors
                                    minSize:&minLockedSize
-                                   maxSize:&maxLockedSize];
+                                   maxSize:&maxLockedSize
+                            respectPinning:respectPinning];
                 theMinSize = WithGrainDim(isVertical, minLockedSize);
                 theMaxSize = WithGrainDim(isVertical, maxLockedSize);
                 PtyLog(@"splitView:resizeSubviewsWithOldSize - this subview is LOCKED");
             } else {
-                if ([aSubview isKindOfClass:[NSSplitView class]]) {
-                    theMinSize = WithGrainDim(isVertical, [self _recursiveMinSize:(NSSplitView*)aSubview]);
-                } else {
-                    theMinSize = WithGrainDim(isVertical, [self _minSessionSize:(SessionView*)aSubview]);
-                }
                 theMaxSize = targetSize;
+                if ([aSubview isKindOfClass:[NSSplitView class]]) {
+                    theMinSize = WithGrainDim(isVertical, [self _recursiveMinSize:(NSSplitView*)aSubview
+                                                                   respectPinning:respectPinning]);
+                } else {
+                    SessionView *sessionView = (SessionView *)aSubview;
+                    theMinSize = WithGrainDim(isVertical, [self _minSessionSize:sessionView
+                                                                 respectPinning:respectPinning]);
+                    if (respectPinning && splitView.vertical && sessionView.preferredWidth != nil) {
+                        theMaxSize = sessionView.preferredWidth.doubleValue;
+                    }
+                }
                 PtyLog(@"splitView:resizeSubviewsWithOldSize - this subview is unlocked");
             }
             PtyLog(@"splitView:resizeSubviewsWithOldSize - range of %p is [%lf,%lf]", aSubview, theMinSize, theMaxSize);
@@ -5837,6 +5872,9 @@ typedef struct {
             }
             if (currentSumOfUnclamped < kEpsilon) {
                 // Not enough unclamped space to make any change.
+                if (respectPinning) {
+                    return NO;
+                }
                 ignoreConstraints = YES;
                 break;
             }
@@ -5874,9 +5912,12 @@ typedef struct {
             if (!anyChanges) {
                 PtyLog(@"splitView:resizeSubviewsWithOldSize - nothing changed in this round");
                 if (fabs(currentSumOfSizes - targetSize) > [[splitView subviews] count]) {
+                    XLog(@"No changes! Ignoring constraints!");
+                    if (respectPinning) {
+                        return NO;
+                    }
                     // I'm not sure this will ever happen, but just in case quantization prevents us
                     // from converging give up and ignore constraints.
-                    XLog(@"No changes! Ignoring constraints!");
                     ignoreConstraints = YES;
                 } else {
                     PtyLog(@"splitView:resizeSubviewsWithOldSize - redistribute quantization error");
@@ -5984,6 +6025,7 @@ typedef struct {
 
     NSRect frame = NSZeroRect;
     SetAgainstGrainDim(isVertical, &frame.size, AgainstGrainDim(isVertical, [splitView frame].size));
+    DLog(@"Target: %@\nBefore:\n%@\nSizes:\n%@", NSStringFromSize(splitView.frame.size), splitView.subviews, sizes);
     for (int i = 0; i < [sizes count]; ++i) {
         SetWithGrainDim(isVertical, &frame.size, [[sizes objectAtIndex:i] doubleValue]);
         [[[splitView subviews] objectAtIndex:i] setFrame:frame];
@@ -5993,6 +6035,8 @@ typedef struct {
             frame.origin.y += frame.size.height + [splitView dividerThickness];
         }
     }
+    DLog(@"After:\n%@", splitView.subviews);
+    return YES;
 }
 
 - (void)splitViewWillResizeSubviews:(NSNotification *)notification {
@@ -6037,6 +6081,21 @@ typedef struct {
             [self _splitViewDidResizeSubviews:(NSSplitView*)subview];
         }
     }
+}
+
+- (void)adjustSplitSubviewSizesForPinnedSizes:(NSSplitView *)splitView {
+    if (!splitView.vertical) {
+        return;
+    }
+    NSArray<SessionView *> *sessionViews = [splitView.subviews mapWithBlock:^id _Nullable(__kindof NSView * _Nonnull anObject) {
+        return [SessionView castFrom:anObject];
+    }];
+    if ([sessionViews allWithBlock:^BOOL(SessionView *sessionView) {
+        return sessionView.preferredWidth != nil;
+    }]) {
+        return;
+    }
+    [self resizeSubviewsOfSplitView:splitView oldSize:splitView.frame.size respectPinning:YES];
 }
 
 - (CGFloat)_recursiveStepSize:(__kindof NSView *)theView wantWidth:(BOOL)wantWidth {

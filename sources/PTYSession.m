@@ -12282,6 +12282,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if ([[_delegate parentWindow] anyFullScreen]) {
         return;
     }
+    if (_view.preferredWidth != nil) {
+        DLog(@"Width locked");
+        return;
+    }
     int rows = proposedSize.width;
     const VT100GridSize windowSize = [self windowSizeInCells];
     if (rows == -1) {
@@ -16290,6 +16294,36 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSCursor *)textViewDefaultPointer {
     return self.defaultPointer;
+}
+
+- (BOOL)textViewSplitPaneWidthIsLocked:(out BOOL *)allowedPtr {
+    if (self.tmuxMode == TMUX_CLIENT) {
+        DLog(@"Tmux client");
+        *allowedPtr = NO;
+        return NO;
+    }
+    if ([[_delegate sessions] count] == 1) {
+        DLog(@"Solo");
+        *allowedPtr = NO;
+    } else {
+        // Must have a vertical splitter as ancestor
+        PTYSplitView *splitView = [PTYSplitView castFrom:_view.superview];
+        while (splitView && !splitView.isVertical) {
+            splitView = [PTYSplitView castFrom:splitView.superview];
+        }
+        *allowedPtr = splitView.isVertical;
+    }
+    return _view.preferredWidth != nil;
+}
+
+- (void)textViewToggleLockSplitPaneWidth {
+    if (_view.preferredWidth) {
+        DLog(@"Unlock %@", self);
+        _view.preferredWidth = nil;
+    } else {
+        DLog(@"Lock %@", self);
+        _view.preferredWidth = @(_view.frame.size.width);
+    }
 }
 
 - (void)removeSelectedCommandRange {

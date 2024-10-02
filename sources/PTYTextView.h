@@ -303,6 +303,8 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewOrComposerIsFirstResponder;
 - (VT100GridAbsCoordRange)textViewCoordRangeForCommandAndOutputAtMark:(id<iTermMark>)mark;
 - (BOOL)textViewCanUploadOverSSHIntegrationTo:(SCPPath *)path;
+- (BOOL)textViewSplitPaneWidthIsLocked:(out BOOL *)allowedPtr;
+- (void)textViewToggleLockSplitPaneWidth;
 
 @end
 
