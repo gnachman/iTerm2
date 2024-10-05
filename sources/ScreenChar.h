@@ -436,6 +436,7 @@ BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code);
 NSString* ScreenCharToStr(const screen_char_t *const sct);
 NSString* CharToStr(unichar code, BOOL isComplex);
 NSString* ScreenCharToKittyPlaceholder(const screen_char_t *const sct);
+UTF32Char BaseCharacterForComplexChar(unichar code);
 
 // This is a faster version of ScreenCharToStr if what you want is an array of
 // unichars. Returns the number of code points appended to dest.

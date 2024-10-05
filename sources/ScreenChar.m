@@ -167,6 +167,10 @@ NSString *CharToStr(unichar code, BOOL isComplex) {
     return [GetComplexCharRegistry() stringForCode:code isComplex:isComplex];
 }
 
+UTF32Char BaseCharacterForComplexChar(unichar code) {
+    return [GetComplexCharRegistry() baseCharacterForComplexCode:code];
+}
+
 int ExpandScreenChar(const screen_char_t *sct, unichar* dest) {
     if (!sct[0].complexChar) {
         // Fast path

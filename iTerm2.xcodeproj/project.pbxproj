@@ -4013,6 +4013,7 @@
 		A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D24D3D26BC5FA600CCE211 /* SwiftDebugLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */; };
+		A6D298ED2EE4AAAC00DDC44F /* iTermShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D298EC2EE4AAAC00DDC44F /* iTermShape.swift */; };
 		A6D3205529C29EE30088BBE1 /* NerdFontInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D3205429C29EE30088BBE1 /* NerdFontInstaller.swift */; };
 		A6D3205729C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
 		A6D3205829C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
@@ -8564,6 +8565,7 @@
 		A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellHistoryTest.m; sourceTree = "<group>"; };
 		A6D24D3A26BB12F700CCE211 /* CPUGovernor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPUGovernor.swift; sourceTree = "<group>"; };
 		A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDebugLogging.swift; sourceTree = "<group>"; };
+		A6D298EC2EE4AAAC00DDC44F /* iTermShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermShape.swift; sourceTree = "<group>"; };
 		A6D3205429C29EE30088BBE1 /* NerdFontInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NerdFontInstaller.swift; sourceTree = "<group>"; };
 		A6D3205629C492410088BBE1 /* nerd.itse */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = nerd.itse; path = OtherResources/nerd.itse; sourceTree = "<group>"; };
 		A6D3985D2BDACC1300C4C1AD /* SFSymbolsHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSymbolsHelpers.swift; sourceTree = "<group>"; };
@@ -12941,6 +12943,7 @@
 				A63EB05A284DCAF300B2AB89 /* WeakBox.swift */,
 				A6D1A3F62C7E9B2000FECDF2 /* KittyImageCommand.swift */,
 				A6AE58952E820FFF00762C1D /* AppSignatureValidator.swift */,
+				A6D298EC2EE4AAAC00DDC44F /* iTermShape.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -19814,6 +19817,7 @@
 				A6D10E3A27F7C2BC0026DB56 /* NSPoint+MultiCursor.swift in Sources */,
 				A69FF3C72E143ABD00AFF7A8 /* HoverButton.swift in Sources */,
 				A67DAF14299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.m in Sources */,
+				A6D298ED2EE4AAAC00DDC44F /* iTermShape.swift in Sources */,
 				A68ADA0B29D397400008E092 /* Progress.swift in Sources */,
 				A6644BE325CDCCD600419355 /* iTermLegacyView.m in Sources */,
 				535B3BBA2228DC5500D6D410 /* iTermAlertBuiltInFunction.m in Sources */,

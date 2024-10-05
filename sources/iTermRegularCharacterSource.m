@@ -174,7 +174,7 @@
     }
     DLog(@"Draw box %@ at scale %@ with systemScale=%@ mainScreen=%@. descriptor=%@",
          _string, @(_descriptor.scale), @(systemScale), [[NSScreen mainScreen] it_uniqueName], _descriptor);
-    [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:[_string characterAtIndex:0]
+    [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:[_string longCharacterAtIndex:0]
                                                        cellSize:NSMakeSize(_descriptor.cellSize.width * _descriptor.scale,
                                                                            _descriptor.cellSize.height * _descriptor.scale)
                                                            scale:_descriptor.scale

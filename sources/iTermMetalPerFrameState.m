@@ -1495,17 +1495,20 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 
         iTermExternalAttribute *ea = eaIndex[logicalIndex];
         iTermURL *url = ea.url;
+        NSString *complexString = line[logicalIndex].complexChar ? ScreenCharToStr(&line[logicalIndex]) : nil;
         const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[logicalIndex],
                                                                                    logicalIndex > 0 ? &line[logicalIndex - 1] : NULL,
-                                                                                   line[logicalIndex].complexChar && (ScreenCharToStr(&line[logicalIndex]) != nil),
+                                                                                   line[logicalIndex].complexChar && (complexString != nil),
                                                                                    _configuration->_blinkingItemsVisible,
                                                                                    _configuration->_blinkAllowed,
                                                                                    NO /* preferSpeedToFullLigatureSupport */,
                                                                                    url != nil);
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
-                                            !line[logicalIndex].complexChar &&
-                                            line[logicalIndex].code > 127 &&
-                                            [boxCharacterSet characterIsMember:line[logicalIndex].code]);
+                                            ((!line[logicalIndex].complexChar &&
+                                              line[logicalIndex].code > 127 &&
+                                              [boxCharacterSet characterIsMember:line[logicalIndex].code]) ||
+                                             (line[logicalIndex].complexChar &&
+                                              [boxCharacterSet longCharacterIsMember:[complexString firstCharacter]])));
         const BOOL isBlockCharacter = (characterIsDrawable &&
                                        !line[logicalIndex].complexChar &&
                                        line[logicalIndex].code > 127 &&

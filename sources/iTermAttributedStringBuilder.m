@@ -614,7 +614,9 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     const BOOL isComplex = c->complexChar;
     const unichar code = c->code;
 
-    attributes->boxDrawing = !isComplex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] characterIsMember:code];
+    const UTF32Char longCode = isComplex ? BaseCharacterForComplexChar(code) : code;
+    attributes->boxDrawing = [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] longCharacterIsMember:longCode];
+
     attributes->contrastIneligible = !isComplex && [[iTermBoxDrawingBezierCurveFactory blockDrawingCharacters] characterIsMember:code];
 
     if (forceTextColor) {
