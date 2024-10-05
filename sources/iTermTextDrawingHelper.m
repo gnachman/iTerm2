@@ -1828,7 +1828,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
 }
 
-- (void)drawBoxDrawingCharacter:(unichar)theCharacter
+- (void)drawBoxDrawingCharacter:(UTF32Char)theCharacter
                  withAttributes:(NSDictionary *)attributes
                              at:(NSPoint)pos
                   virtualOffset:(CGFloat)virtualOffset {
@@ -2179,7 +2179,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
         // Special box-drawing cells don't use the font so they look prettier.
         [attributedString.string enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
             NSPoint p = NSMakePoint(point.x + positions[range.location], point.y);
-            [self drawBoxDrawingCharacter:simple
+            [self drawBoxDrawingCharacter:simple ?: [complexString firstCharacter]
                            withAttributes:[attributedString attributesAtIndex:range.location
                                                                effectiveRange:nil]
                                        at:p
@@ -2805,7 +2805,8 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
     const BOOL isComplex = c->complexChar;
     const unichar code = c->code;
 
-    attributes->boxDrawing = !isComplex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] characterIsMember:code];
+    const UTF32Char longCode = isComplex ? BaseCharacterForComplexChar(code) : code;
+    attributes->boxDrawing = [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] longCharacterIsMember:longCode];
     attributes->contrastIneligible = !isComplex && [[iTermBoxDrawingBezierCurveFactory blockDrawingCharacters] characterIsMember:code];
 
     if (forceTextColor) {

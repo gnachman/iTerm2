@@ -917,17 +917,20 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
         iTermExternalAttribute *ea = eaIndex[x];
         iTermURL *url = ea.url;
+        NSString *complexString = line[x].complexChar ? ScreenCharToStr(&line[x]) : nil;
         const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[x],
                                                                                    x > 0 ? &line[x - 1] : NULL,
-                                                                                   line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
+                                                                                   line[x].complexChar && (complexString != nil),
                                                                                    _configuration->_blinkingItemsVisible,
                                                                                    _configuration->_blinkAllowed,
                                                                                    NO /* preferSpeedToFullLigatureSupport */,
                                                                                    url != nil);
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
-                                            !line[x].complexChar &&
-                                            line[x].code > 127 &&
-                                            [boxCharacterSet characterIsMember:line[x].code]);
+                                            ((!line[x].complexChar &&
+                                              line[x].code > 127 &&
+                                              [boxCharacterSet characterIsMember:line[x].code]) ||
+                                             (line[x].complexChar &&
+                                              [boxCharacterSet longCharacterIsMember:[complexString firstCharacter]])));
         const BOOL isBlockCharacter = (characterIsDrawable &&
                                        !line[x].complexChar &&
                                        line[x].code > 127 &&

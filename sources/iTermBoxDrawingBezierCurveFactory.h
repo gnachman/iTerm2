@@ -16,7 +16,7 @@
 // by minimum contrast.
 + (NSCharacterSet *)blockDrawingCharacters;
 
-+ (void)drawCodeInCurrentContext:(unichar)code
++ (void)drawCodeInCurrentContext:(UTF32Char)code
                         cellSize:(NSSize)cellSize
                            scale:(CGFloat)scale
                         isPoints:(BOOL)isPoints
@@ -24,7 +24,7 @@
                            color:(CGColorRef)color
         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs;
 
-+ (BOOL)isPowerlineGlyph:(unichar)code;
-+ (BOOL)isDoubleWidthPowerlineGlyph:(unichar)code;
++ (BOOL)isPowerlineGlyph:(UTF32Char)code;
++ (BOOL)isDoubleWidthPowerlineGlyph:(UTF32Char)code;
 
 @end
