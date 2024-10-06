@@ -986,7 +986,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
 // startingOffset is relative to bufferStart.
 // return value must be at least equal to length.
 - (int)offsetOfWrappedLineInBufferAtOffset:(int)startingOffset
-                         wrappedLineNumber:(int)n
+                         wrappedLineNumber:(int)n  // lineNum
                               bufferLength:(int)length
                                      width:(int)width
                                   metadata:(iTermLineBlockMetadataProvider)metadataProvider {
@@ -1022,18 +1022,27 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                             metadata->double_width_characters);
         if (lines < n) {
             i += (n - lines) * width;
-            ITAssertWithMessage(i <= length, @"[1] i=%@ exceeds length=%@, n=%@, width=%@, cache=%@",
+            ITAssertWithMessage(i <= length, @"[2] i=%@ exceeds length=%@, n=%@, width=%@, lines=%@, cache=%@, debugInfo=%@ clls=%@",
                                 @(i),
                                 @(length),
                                 @(n),
                                 @(width),
-                                metadata->double_width_characters);
+                                @(lines),
+                                metadata->double_width_characters,
+                                _debugInfo ? _debugInfo() : @"n/a",
+                                [self dumpCumulativeLineLengths]);
         }
         return i;
     } else {
         ITAssertWithMessage(n * width <= length, @"[3] n=%@ * width=%@ < length=%@", @(n), @(width), @(length));
         return n * width;
     }
+}
+
+- (NSString *)dumpCumulativeLineLengths {
+    return [[[NSArray sequenceWithRange:NSMakeRange(_firstEntry, cll_entries - _firstEntry)] mapWithBlock:^id _Nullable(NSNumber * _Nonnull i) {
+        return [NSString stringWithFormat:@"%@: %@", i, @(cumulative_line_lengths[i.integerValue])];
+    }] componentsJoinedByString:@"\n"];
 }
 
 // TODO: Reduce use of this function in favor of the optimized method once I am confident it is correct.

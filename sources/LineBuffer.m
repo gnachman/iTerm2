@@ -586,6 +586,18 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int eol;
     screen_char_t continuation;
     const int requestedLine = remainder;
+    __weak __typeof(self) weakSelf = self;
+    __weak __typeof(block) weakBlock = block;
+    block.debugInfo = ^NSString *{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return nil;
+        }
+        const NSInteger i = [strongSelf->_lineBlocks.blocks indexOfObject:weakBlock];
+        NSString *lineBlockDump = [strongSelf->_lineBlocks dumpForCrashlog];
+        return [NSString stringWithFormat:@"Block index %@, width=%@, lineNum=%@, remainder=%@\n%@",
+                @(i), @(width), @(lineNum), @(remainder), lineBlockDump];
+    };
     const screen_char_t *p = [block getWrappedLineWithWrapWidth:width
                                                         lineNum:&remainder
                                                      lineLength:&length

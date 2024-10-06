@@ -48,6 +48,9 @@
 // Unique 0-based counter. Does not survive app restoration.
 @property(nonatomic, readonly) unsigned int index;
 
+// Called when an assertion fails to add more contextual information to the message.
+@property(nonatomic, copy) NSString *(^debugInfo)(void);
+
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary
                 absoluteBlockNumber:(long long)absoluteBlockNumber;
 
