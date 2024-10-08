@@ -1405,6 +1405,15 @@ iTermCommandInfoViewControllerDelegate>
     return NO;
 }
 
+- (void)showContextMenuForSelection:(id)sender {
+    if (@available(macOS 15, *)) {
+        if ([self.delegate textViewWouldReportControlReturn]) {
+            return;
+        }
+        [super showContextMenuForSelection:sender];
+    }
+}
+
 #pragma mark - iTermContextMenuHelperDelegate
 
 - (NSPoint)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

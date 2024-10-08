@@ -645,6 +645,10 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
     return iTermTermkeyKeyMapperConfigurationDictionary(&_configuration);
 }
 
+- (BOOL)wouldReportControlReturn {
+    return YES;
+}
+
 @end
 
 NSDictionary *iTermTermkeyKeyMapperConfigurationDictionary(iTermTermkeyKeyMapperConfiguration *config) {

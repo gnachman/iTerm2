@@ -305,6 +305,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewCanUploadOverSSHIntegrationTo:(SCPPath *)path;
 - (BOOL)textViewSplitPaneWidthIsLocked:(out BOOL *)allowedPtr;
 - (void)textViewToggleLockSplitPaneWidth;
+- (BOOL)textViewWouldReportControlReturn;
 
 @end
 

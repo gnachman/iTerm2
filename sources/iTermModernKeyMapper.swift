@@ -275,6 +275,10 @@ class ModernKeyMapper: NSObject, iTermKeyMapper {
         return result
     }
 
+    func wouldReportControlReturn() -> Bool {
+        return !flags.intersection([.reportAllEventTypes, .reportAllKeysAsEscapeCodes]).isEmpty
+    }
+
     func keyMapperData(forKeyUp nsevent: NSEvent) -> Data? {
         DLog("keyMapperData(forKeyUp \(nsevent)")
         let event = updateConfiguration(event: nsevent)

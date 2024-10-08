@@ -475,6 +475,10 @@
     return iTermStandardKeyMapperConfigurationDictionaryValue(_configuration);
 }
 
+- (BOOL)wouldReportControlReturn {
+    return NO;
+}
+
 @end
 
 NSDictionary *iTermStandardKeyMapperConfigurationDictionaryValue(iTermStandardKeyMapperConfiguration *config) {

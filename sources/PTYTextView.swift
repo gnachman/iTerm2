@@ -648,3 +648,74 @@ extension PTYTextView {
         copySelection(withControlSequences: selection)
     }
 }
+
+extension PTYTextView: NSViewContentSelectionInfo {
+    func clampedRelativeCoord(_ absCoord: VT100GridAbsCoord) -> VT100GridCoord {
+        var result = VT100GridCoordMake(0, 0)
+        withRelativeCoord(absCoord) { relative in
+            result = relative
+        }
+        return result
+    }
+
+    func rect(for range: VT100GridAbsCoordRange) -> NSRect {
+        let width = dataSource?.width() ?? 1
+        let relativeStart = clampedRelativeCoord(range.start)
+        let relativeEnd = clampedRelativeCoord(range.end)
+        var coords = [relativeStart, relativeEnd]
+        if relativeStart.y != relativeEnd.y {
+            coords.append(VT100GridCoord(x: width - 1, y: relativeStart.y))
+            coords.append(VT100GridCoord(x: 0, y: relativeEnd.y))
+        }
+        let rects = coords.map { rect(for: $0) }
+        return rects.reduce(into: rects.first!) { partialResult, rect in
+            partialResult = partialResult.union(rect)
+        }
+    }
+
+    public var selectionAnchorRect: NSRect {
+        guard let dataSource else {
+            return .null
+        }
+        let temp = rangeOfVisibleLines
+        let offset = dataSource.totalScrollbackOverflow()
+        let visibleAbsRange = VT100GridAbsCoordRangeMake(0,
+                                                         Int64(temp.location) + offset,
+                                                         0,
+                                                         Int64(temp.location) + Int64(temp.length) + offset)
+        let visibleAbsLines = (visibleAbsRange.start.y)..<(visibleAbsRange.end.y)
+        for subselection in selection.allSubSelections {
+            let absRange = subselection.absRange
+            let selRange = absRange.coordRange.start.y..<(absRange.coordRange.end.y + 1)
+            if visibleAbsLines.overlaps(selRange) {
+                var visibleSelectedAbsRange = VT100GridAbsCoordRangeIntersection(absRange.coordRange,
+                                                                                 visibleAbsRange,
+                                                                                 dataSource.width())
+                if visibleSelectedAbsRange.start.x >= 0 {
+                    let hull = rect(for: visibleSelectedAbsRange)
+                    if absRange.columnWindow.location >= 0 && absRange.columnWindow.length > 0 {
+                        var columnRect = rect(
+                            for: VT100GridAbsCoordRange(
+                                start: VT100GridAbsCoord(
+                                    x: absRange.columnWindow.location,
+                                    y: offset),
+                                end: VT100GridAbsCoord(
+                                    x: absRange.columnWindow.location + absRange.columnWindow.length,
+                                    y: offset)))
+                        columnRect.origin.y = hull.origin.y
+                        columnRect.size.height = hull.size.height
+                        return columnRect.intersection(hull)
+                    }
+                    return hull
+                }
+            }
+        }
+        let cursorCoord = VT100GridCoord(x: dataSource.cursorX() - 1,
+                                         y: dataSource.numberOfScrollbackLines() + dataSource.cursorY() - 1)
+        let cursorAbsCoord = VT100GridAbsCoordFromCoord(cursorCoord, offset)
+        if visibleAbsLines.contains(cursorAbsCoord.y) {
+            return rect(for: cursorCoord)
+        }
+        return .null
+     }
+}

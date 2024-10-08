@@ -352,6 +352,10 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     return iTermModifyOtherKeysMapperDictionary(self, self.delegate);
 }
 
+- (BOOL)wouldReportControlReturn {
+    return YES;
+}
+
 @end
 
 @implementation iTermModifyOtherKeysMapper2

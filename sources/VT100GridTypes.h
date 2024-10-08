@@ -341,6 +341,33 @@ NS_INLINE NSComparisonResult VT100GridAbsCoordOrder(VT100GridAbsCoord a, VT100Gr
     return NSOrderedSame;
 }
 
+NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeIntersection(VT100GridAbsCoordRange r1,
+                                                                    VT100GridAbsCoordRange r2,
+                                                                    int width) {
+    VT100GridAbsCoordRange result;
+
+    if (VT100GridAbsCoordOrder(r1.start, r2.start) == NSOrderedDescending) {
+        result.start = r1.start;
+    } else {
+        result.start = r2.start;
+    }
+
+    if (VT100GridAbsCoordOrder(r1.end, r2.end) == NSOrderedAscending) {
+        result.end = r1.end;
+    } else {
+        result.end = r2.end;
+    }
+
+    if (VT100GridAbsCoordOrder(result.start, result.end) != NSOrderedAscending) {
+        result.start.x = result.end.x = INT_MIN;
+        result.start.y = result.end.y = INT64_MIN;
+        return result;
+    }
+
+    return result;
+}
+
+
 NS_INLINE VT100GridRun VT100GridRunMake(int x, int y, int length) {
     VT100GridRun run;
     run.origin.x = x;

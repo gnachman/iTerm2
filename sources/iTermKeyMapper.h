@@ -56,6 +56,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event;
 
 - (NSDictionary *)keyMapperDictionaryValue;
+
+- (BOOL)wouldReportControlReturn;
+
 //@optional
 //- (void)setDelegate:(id)delegate;
 

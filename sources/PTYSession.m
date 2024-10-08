@@ -16348,6 +16348,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
+- (BOOL)textViewWouldReportControlReturn {
+    return [_keyMapper wouldReportControlReturn];
+}
+
 - (void)removeSelectedCommandRange {
     if (!_selectedCommandMark) {
         return;
