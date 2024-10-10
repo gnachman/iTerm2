@@ -16,7 +16,12 @@
 #import "legacy_server.h"
 #import "shell_launcher.h"
 
-int main(int argc, const char *argv[]){
+int main(int argc, const char *argv[]) {
+    if (argc >= 2 && !strcmp(argv[1], "--help")) {
+        fprintf(stderr, "Usage: iTerm2 [--command=command]\n");
+        fprintf(stderr, "  --command=command: If given, open a window running `command` using `/usr/bin/login -fpq $USER $SHELL -c command`. Various launch actions are disabled, such as running auto-launch scripts, opening the default window arrangement (if so configured), and opening the profiles window (if so configured).\n");
+        return 0;
+    }
     if (argc > 1 && !strcmp(argv[1], "--launch_shell")) {
         // In theory this is not used any more because the ShellLauncher executable should be used instead.
         return launch_shell(argc > 2 ? argv[2] : NULL, 0, NULL);
