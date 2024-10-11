@@ -168,6 +168,8 @@
         <string>An application in iTerm2 wants to use your reminders.</string>
         <key>NSPhotoLibraryUsageDescription</key>
         <string>An application in iTerm2 wants to use the photo library.</string>
+        <key>NSLocalNetworkUsageDescription</key>
+        <string>An application in iTerm2 wants to access the local network.</string>
         <key>NSServices</key>
         <array>
                 <dict>
