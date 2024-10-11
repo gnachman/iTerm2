@@ -350,6 +350,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showSecureKeyboardEntryIndicator;
 + (BOOL)showSessionRestoredBanner;
 + (BOOL)showTimestampsByDefault;
++ (BOOL)showURLPreviewForSemanticHistory;
 + (BOOL)showWindowTitleWhenTabBarInvisible;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
 + (BOOL)silentUserNotifications;

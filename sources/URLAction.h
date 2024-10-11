@@ -64,6 +64,7 @@ typedef NS_ENUM(NSInteger, URLActionType) {
 @property(nonatomic) BOOL hover;
 @property(nonatomic, strong) id<VT100ScreenMarkReading> mark;
 @property(nonatomic) VT100GridCoord coord;
+@property(nonatomic) BOOL osc8;
 
 + (instancetype)urlActionToSecureCopyFile:(SCPPath *)scpPath;
 + (instancetype)urlActionToOpenURL:(NSString *)filename;

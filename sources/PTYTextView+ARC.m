@@ -587,7 +587,7 @@ iTermCommandInfoViewControllerDelegate>
     } else if (action &&
                ([[iTermApplication sharedApplication] it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand) {
         changed = [self setCursor:[NSCursor pointingHandCursor]];
-        if (action.hover && action.string.length) {
+        if (action.hover && action.string.length && ([iTermAdvancedSettingsModel showURLPreviewForSemanticHistory] || action.osc8)) {
             hover = action.string;
             anchorRange = action.range;
         }
