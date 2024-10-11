@@ -379,6 +379,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)statusBarIcon;
 + (BOOL)stealKeyFocus;
 + (BOOL)storeStateInSqlite;
++ (NSString *)successSound;
++ (NSString *)errorSound;
 + (BOOL)supportDecsetMetaSendsEscape;
 + (BOOL)supportREPCode;
 + (BOOL)suppressMultilinePasteWarningWhenNotAtShellPrompt;

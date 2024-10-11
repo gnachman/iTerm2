@@ -3151,6 +3151,12 @@
 		A6C838AD2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
 		A6C838AE2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
 		A6C838AF2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
+		A6C838B22CB9ACF90062BE68 /* success-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */; };
+		A6C838B32CB9ACF90062BE68 /* error-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */; };
+		A6C838B42CB9ACF90062BE68 /* success-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */; };
+		A6C838B52CB9ACF90062BE68 /* error-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */; };
+		A6C838B62CB9ACF90062BE68 /* success-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */; };
+		A6C838B72CB9ACF90062BE68 /* error-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */; };
 		A6C93DD4238A447900F21E0D /* iTermLogicalMovementHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */; };
 		A6C93DD5238A447900F21E0D /* iTermLogicalMovementHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */; };
 		A6C978F124A0194500971AA7 /* WindowCornerFull.psd in Resources */ = {isa = PBXBuildFile; fileRef = A6C978EF24A0194400971AA7 /* WindowCornerFull.psd */; };
@@ -7025,6 +7031,8 @@
 		A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+Scripting.m"; sourceTree = "<group>"; };
 		A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = DeprecatedProfileKeyMappings.plist; sourceTree = "<group>"; };
+		A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "success-sound.mp3"; sourceTree = "<group>"; };
+		A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "error-sound.mp3"; sourceTree = "<group>"; };
 		A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLogicalMovementHelper.h; sourceTree = "<group>"; };
 		A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLogicalMovementHelper.m; sourceTree = "<group>"; };
 		A6C978EF24A0194400971AA7 /* WindowCornerFull.psd */ = {isa = PBXFileReference; lastKnownFileType = file; name = WindowCornerFull.psd; path = images/WindowCornerFull.psd; sourceTree = "<group>"; };
@@ -9494,6 +9502,8 @@
 		A629F57123AF2DD900C2F16B /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */,
+				A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */,
 				A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */,
 				A67A502726CCD3E200281693 /* terminfo */,
 				A629F57223AF2DD900C2F16B /* shell_integration */,
@@ -13973,6 +13983,8 @@
 				A6F31A29295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
 				A635F1E525076203008C3038 /* iTermActionsEditingViewController.xib in Resources */,
 				A6109B662B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
+				A6C838B22CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
+				A6C838B32CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
 				A6A64E632508BE650040490B /* StatusBarIconSnippet.png in Resources */,
 				A67F614C214395870093940A /* graphic_http.png in Resources */,
 				1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */,
@@ -14441,6 +14453,8 @@
 				A6038321294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */,
 				A67F6191214395A70093940A /* graphic_npm.png in Resources */,
 				A67F619C214395B70093940A /* graphic_php@2x.png in Resources */,
+				A6C838B42CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
+				A6C838B52CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
 				A68ADA0829CCBE4C0008E092 /* CommandInfoViewController.xib in Resources */,
 				A6F18B452AE2F39C006C08EE /* uniE0A3_column-number.pdf in Resources */,
 				A6F2F219250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
@@ -14898,6 +14912,8 @@
 				A6E7AEA3214394F600DE9F3B /* graphic_git.png in Resources */,
 				A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				A6F31A27295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
+				A6C838B62CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
+				A6C838B72CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
 				A67F61DB214395D50093940A /* graphic_yo.png in Resources */,
 				A65429B220C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,
 				A60A80E12C4F66B3002C3AA2 /* LatchBio.png in Resources */,

@@ -182,6 +182,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (NSArray *)marksBefore:(Interval *)location;
 - (NSArray *)marksAfter:(Interval *)location;
 
+- (id<VT100ScreenMarkReading>)screenMarkBefore:(Interval *)location;
+
 - (NSArray *)annotationsBefore:(Interval *)location;
 - (NSArray *)annotationsAfter:(Interval *)location;
 

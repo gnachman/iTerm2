@@ -727,6 +727,12 @@ DQ
                                                             <action selector="enableMarkAlertPostsNotification:" target="201" id="LvA-zT-HJj"/>
                                                         </connections>
                                                     </menuItem>
+                                                    <menuItem title="Play a Sound" identifier="Marks and Notes.Alerts.Play a Sound" id="Mhn-ha-kyp">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="enableMarkAlertRingsBell:" target="201" id="MGh-mi-BNu"/>
+                                                        </connections>
+                                                    </menuItem>
                                                 </items>
                                             </menu>
                                         </menuItem>

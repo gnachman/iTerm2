@@ -1023,6 +1023,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return -1;
 }
 
+- (id<VT100ScreenMarkReading>)screenMarkBefore:(Interval *)location {
+    return [[self marksOfAnyClassIn:@[ [VT100ScreenMark class] ] before:location] firstObject];
+}
+
 - (NSArray *)marksOfAnyClassIn:(NSArray<Class> *)allowedClasses
                         before:(Interval *)location {
     NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumeratorAt:location.limit];

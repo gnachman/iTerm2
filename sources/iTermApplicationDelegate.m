@@ -143,6 +143,7 @@ NSString *const kNonTerminalWindowBecameKeyNotification = @"kNonTerminalWindowBe
 static NSString *const kMarkAlertAction = @"Mark Alert Action";
 NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
+NSString *const kMarkAlertActionRingBell = @"Ring Bell";
 NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSettingDidChange";
 NSString *const iTermDidToggleAlertOnMarksInOffscreenSessionsNotification = @"iTermDidToggleAlertOnMarksInOffscreenSessionsNotification";
 
@@ -371,6 +372,9 @@ static BOOL hasBecomeActive = NO;
         return YES;
     } else if ([menuItem action] == @selector(enableMarkAlertPostsNotification:)) {
         [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionPostNotification] ? NSControlStateValueOn : NSControlStateValueOff];
+        return YES;
+    } else if ([menuItem action] == @selector(enableMarkAlertRingsBell:)) {
+        [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionRingBell] ? NSControlStateValueOn : NSControlStateValueOff];
         return YES;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
         return ![[iTermLaunchServices sharedInstance] iTermIsDefaultTerminal];
@@ -2519,6 +2523,11 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (IBAction)enableMarkAlertPostsNotification:(id)sender {
     [[NSUserDefaults standardUserDefaults] setObject:kMarkAlertActionPostNotification forKey:kMarkAlertAction];
+}
+
+- (IBAction)enableMarkAlertRingsBell:(id)sender {
+    [[NSUserDefaults standardUserDefaults] setObject:kMarkAlertActionRingBell
+                                              forKey:kMarkAlertAction];
 }
 
 - (IBAction)showTipOfTheDay:(id)sender {

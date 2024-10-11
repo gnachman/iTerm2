@@ -582,6 +582,8 @@ DEFINE_FLOAT(timeoutForDaemonAttachment, 10, SECTION_SESSION @"How long to wait 
 DEFINE_BOOL(logTimestampsWithPlainText, YES, SECTION_SESSION @"When logging plain text, include timestamps for each line?");
 DEFINE_STRING(composerClearSequence, @"0x15 0x0b", SECTION_SESSION @"Hex codes to send to clear the command line when entering the composer.\n0x15 is ^U, 0x0b is ^K.");
 DEFINE_BOOL(alwaysUseStatusBarComposer, NO, SECTION_SESSION @"Temporarily add a composer to the status bar instead of opening the large composer view when a status bar is present.");
+DEFINE_STRING(successSound, @"", SECTION_SESSION @"When Alert on Next Mark is configured to play a sound, use a file with this name for successful completion of the previous command.\nYou can name a system sound or a file in ~/Library/Sounds.");
+DEFINE_STRING(errorSound, @"", SECTION_SESSION @"When Alert on Next Mark is configured to play a sound, use a file with this name for erroneous completion of the previous command.\nYou can name a system sound or a file in ~/Library/Sounds.");
 
 #pragma mark - Windows
 

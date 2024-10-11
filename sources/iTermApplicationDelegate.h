@@ -41,6 +41,7 @@ extern NSString *const kNonTerminalWindowBecameKeyNotification;
 
 extern NSString *const kMarkAlertActionModalAlert;
 extern NSString *const kMarkAlertActionPostNotification;
+extern NSString *const kMarkAlertActionRingBell;
 extern NSString *const kShowFullscreenTabsSettingDidChange;
 extern NSString *const iTermApplicationWillTerminate;
 extern NSString *const iTermDidToggleAlertOnMarksInOffscreenSessionsNotification;

@@ -12833,6 +12833,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         completion();
         return;
     }
+    if ([action isEqualToString:kMarkAlertActionRingBell]) {
+        id<VT100ScreenMarkReading> previousScreenMark = [_screen screenMarkBefore:newMark.entry.interval];
+        NSSound *sound;
+        if (previousScreenMark.code) {
+            sound = [NSSound soundNamed:[iTermAdvancedSettingsModel errorSound]] ?: [NSSound soundNamed:@"error-sound.mp3"];
+        } else {
+            sound = [NSSound soundNamed:[iTermAdvancedSettingsModel successSound]] ?: [NSSound soundNamed:@"success-sound.mp3"];
+        }
+        [sound play];
+        completion();
+        return;
+    }
     // Dispatch so that we don't get a runloop in a side-effect, which can do weird re-entrant things.
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
