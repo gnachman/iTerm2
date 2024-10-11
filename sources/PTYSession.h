@@ -597,6 +597,8 @@ backgroundColor:(NSColor *)backgroundColor;
                            withOldCWD:(NSString *)replacementOldCWD;
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
                   settingCustomLocale:(NSString *)lang;
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                       profileMutator:(Profile *(^)(Profile *))profileMutator;
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 + (void)selectMenuItem:(NSString*)theName;

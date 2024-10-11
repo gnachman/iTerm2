@@ -131,6 +131,8 @@ extern NSString *const PTYTabVariableTitleOverride;
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
                   settingCustomLocale:(NSString *)lang;
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                       profileMutator:(Profile *(^)(Profile *))profileMutator;
 
 + (NSDictionary *)arrangementForSessionWithGUID:(NSString *)sessionGUID
                                   inArrangement:(NSDictionary *)arrangement;

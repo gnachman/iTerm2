@@ -216,6 +216,9 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         }
 
         [[iTermHotKeyMigrationHelper sharedInstance] migrateSingleHotkeyToMulti];
+        if (@available(macOS 15, *)) {
+            [iTermMigrationHelper askToRemoveDeprecatedKeyMappingsIfNeeded];
+        }
         [[iTermHotKeyProfileBindingController sharedInstance] refresh];
     }
 

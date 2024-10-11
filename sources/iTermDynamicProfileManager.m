@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermMigrationHelper.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermWarning.h"
@@ -389,7 +390,40 @@
         }
         [profiles addObject:profile];
     }
-    return profiles;
+
+    if (@available(macOS 15, *)) {
+        switch ([iTermMigrationHelper shouldRemoveDeprecatedKeyMappings]) {
+            case iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsNoneFound: {
+                // Didn't find bad keymappings in any profiles, but a DP could come later.
+                const BOOL needed = [profiles anyWithBlock:^BOOL(Profile *profile) {
+                    return [iTermMigrationHelper keyMappingsByRemovingDeprecatedKeyMappingsFrom:profile[KEY_KEYBOARD_MAP]] != nil;
+                }];
+                if (!needed || ![iTermMigrationHelper askToRemoveDeprecatedKeyMappings:@"A dynamic profile was found with a now-deprecated key mapping that interferes with window tiling shortcuts added in macOS Sequoia. Remove the key mappings? It shouldn’t break anything."]) {
+                    return profiles;
+                }
+                // Fall through
+            }
+
+            case iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsYes: {
+                return [profiles mapWithBlock:^id _Nullable(Profile *profile) {
+                    NSDictionary *temp = profile[KEY_KEYBOARD_MAP];
+                    if (!temp) {
+                        return profile;
+                    }
+                    temp = [iTermMigrationHelper keyMappingsByRemovingDeprecatedKeyMappingsFrom:temp];
+                    if (!temp) {
+                        return profile;
+                    }
+                    return [profile dictionaryBySettingObject:temp forKey:KEY_KEYBOARD_MAP];
+                }];
+                break;
+            }
+            default:
+                return profiles;
+        }
+    } else {
+        return profiles;
+    }
 }
 
 - (NSDictionary *)dictionaryForProfiles:(NSArray<Profile *> *)profiles {

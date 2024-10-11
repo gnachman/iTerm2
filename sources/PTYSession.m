@@ -63,6 +63,7 @@
 #import "iTermLoggingHelper.h"
 #import "iTermMalloc.h"
 #import "iTermMetalClipView.h"
+#import "iTermMigrationHelper.h"
 #import "iTermMultiServerJobManager.h"
 #import "iTermObject.h"
 #import "iTermOpenDirectory.h"
@@ -1305,6 +1306,22 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                       profileMutator:(Profile *(^)(Profile *))profileMutator {
+    DLog(@"Repair arrangement for %@", self);
+
+    Profile *savedProfile = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
+    if (savedProfile) {
+        DLog(@"Modify arrangement's profile in place");
+        NSMutableDictionary *modifiedArrangement = [[arrangement mutableCopy] autorelease];
+        Profile *modifiedProfile = profileMutator(savedProfile);
+        modifiedArrangement[SESSION_ARRANGEMENT_BOOKMARK] = modifiedProfile;
+        return modifiedArrangement;
+    }
+
+    return arrangement;
+}
+
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
                   settingCustomLocale:(NSString *)lang {
     DLog(@"Repair arrangement for %@", self);
     Profile *theBookmark =
@@ -1600,6 +1617,26 @@ ITERM_WEAKLY_REFERENCEABLE
             theBookmark = modifiedProfile;
         }
     }
+
+    switch ([iTermMigrationHelper shouldRemoveDeprecatedKeyMappings]) {
+        case iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsDefault:
+            // shouldn't happen
+            break;
+        case iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsNo:
+            // User declined previously.
+            break;
+        case iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsNoneFound:
+        case iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsYes: {
+            NSDictionary *temp = [iTermMigrationHelper keyMappingsByRemovingDeprecatedKeyMappingsFrom:theBookmark[KEY_KEYBOARD_MAP]];
+            if (temp) {
+                NSMutableDictionary *modifiedProfile = [[theBookmark mutableCopy] autorelease];
+                modifiedProfile[KEY_KEYBOARD_MAP] = temp;
+                theBookmark = modifiedProfile;
+            }
+            break;
+        }
+    }
+
     if ([arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE]) {
         // This is a tmux arrangement.
         NSString *colorString = arrangement[SESSION_ARRANGEMENT_TMUX_TAB_COLOR];

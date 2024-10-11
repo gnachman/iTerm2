@@ -14,6 +14,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermWarning.h"
+#import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 
 @implementation iTermMigrationHelper
@@ -240,6 +241,167 @@
         }
         [self recursiveMigrateBookmarks:[entries objectAtIndex:i] path:childPath];
     }
+}
+
+static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaultKey = @"NoSyncRemoveDeprecatedKeyMappings";
+
++ (iTermMigrationHelperShouldRemoveDeprecatedKeyMappings)shouldRemoveDeprecatedKeyMappings {
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSNumber *n = [NSNumber castFrom:[ud objectForKey:iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaultKey]];
+    if (!n) {
+        // User hasn't been prompted.
+        return iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsDefault;
+    }
+    return (iTermMigrationHelperShouldRemoveDeprecatedKeyMappings)n.unsignedIntegerValue;
+}
+
++ (void)setShouldRemoveDeprecatedKeyMappings:(iTermMigrationHelperShouldRemoveDeprecatedKeyMappings)value {
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    [ud setObject:@(value)
+           forKey:iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaultKey];
+}
+
++ (void)askToRemoveDeprecatedKeyMappingsIfNeeded NS_AVAILABLE_MAC(15) {
+    switch ([self shouldRemoveDeprecatedKeyMappings]) {
+        case iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsNoneFound:
+            // Didn't find any last time. To avoid slowing launch, assume it hasn't changed.
+            return;
+        case iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsNo:
+            // User declined previously.
+            return;
+        case iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsYes:
+            // Already removed them. To avoid slowing launch, assume they are still gone.
+            return;
+        case iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsDefault:
+            // First launch since this user defaultw as added.
+            if (![self anyProfileOrArrangementHasDeprecatedKeyMappings]) {
+                [self setShouldRemoveDeprecatedKeyMappings:iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsNoneFound];
+                return;
+            }
+            // Go on to prompt the user.
+            break;
+
+    }
+
+    if ([self askToRemoveDeprecatedKeyMappings:nil]) {
+        [self removeDeprecatedKeyMappingsTestOnly:NO];
+    }
+}
+
++ (BOOL)askToRemoveDeprecatedKeyMappings:(NSString *)specialReason NS_AVAILABLE_MAC(15) {
+    NSString *message = specialReason ?: @"Some profiles have unnecessary key mappings which may interfere with window tiling shortcuts added in macOS Sequoia. These were in the default profile for many years but are no longer needed. Remove the key mappings? It shouldn’t break anything, and it won’t modify the on-disk copy of the dynamic profile.";
+
+
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ @"OK", @"Learn More", @"Cancel" ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Remove Deprecated Key Mappings?"
+                                window:nil];
+    switch (selection) {
+        case kiTermWarningSelection0:  // ok
+            [self setShouldRemoveDeprecatedKeyMappings:iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsYes];
+            return YES;
+            break;
+        case kiTermWarningSelection1:  // lean more
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://gitlab.com/gnachman/iterm2/-/wikis/Deprecated-Key-Mappings"]];
+            return [self askToRemoveDeprecatedKeyMappings:specialReason];
+            break;
+        default:  // cancel
+            [self setShouldRemoveDeprecatedKeyMappings:iTermMigrationHelperShouldRemoveDeprecatedKeyMappingsNo];
+            return NO;
+            break;
+    }
+}
+
+// Returns true if any change would be made.
++ (BOOL)anyProfileOrArrangementHasDeprecatedKeyMappings {
+    return [self removeDeprecatedKeyMappingsTestOnly:YES];
+}
+
+// Returns true if any change was/would be made.
++ (BOOL)removeDeprecatedKeyMappingsTestOnly:(BOOL)testOnly {
+    const BOOL global = [self removeDeprecatedKeyMappingsInModel:[ProfileModel sharedInstance]
+                                                        testOnly:testOnly];
+    const BOOL divorced = [self removeDeprecatedKeyMappingsInModel:[ProfileModel sessionsInstance]
+                                                          testOnly:testOnly];
+    const BOOL arrangement = [self removeDeprecatedKeyMappingsFromArrangementsTestOnly:testOnly];
+    return global || divorced || arrangement;
+}
+
++ (BOOL)removeDeprecatedKeyMappingsFromArrangementsTestOnly:(BOOL)testOnly {
+    __block BOOL changed = NO;
+    for (NSString *name in [WindowArrangements allNames]) {
+        NSArray *windowArrangements = [WindowArrangements arrangementWithName:name];
+        NSArray *modifiedArrangements = [windowArrangements mapWithBlock:^id _Nullable(NSDictionary *arrangement) {
+            return [PseudoTerminal repairedArrangement:arrangement profileMutator:^NSDictionary *(NSDictionary *profile) {
+                NSDictionary *keyMappings = profile[KEY_KEYBOARD_MAP];
+                if (!keyMappings) {
+                    return profile;
+                }
+                NSDictionary *dict = [self keyMappingsByRemovingDeprecatedKeyMappingsFrom:keyMappings];
+                if (dict) {
+                    changed = YES;
+                }
+                return dict ?: profile;
+            }];
+        }];
+        if (!testOnly) {
+            [WindowArrangements setArrangement:modifiedArrangements withName:name];
+        }
+    }
+    return changed;
+}
+
++ (BOOL)removeDeprecatedKeyMappingsInModel:(ProfileModel *)model
+                                  testOnly:(BOOL)testOnly {
+    NSArray<Profile *> *profiles = [[model bookmarks] copy];
+    __block BOOL changed = NO;
+    [profiles enumerateObjectsUsingBlock:^(NSDictionary *profile, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([self removeDeprecatedKeyMappingsInProfile:profile model:model testOnly:testOnly]) {
+            changed = YES;
+        }
+    }];
+    return changed;
+}
+
+// Returns nil if nothing was changed.
++ (NSDictionary *)keyMappingsByRemovingDeprecatedKeyMappingsFrom:(NSDictionary *)input {
+    if (!input) {
+        return nil;
+    }
+    NSString *path = [[NSBundle bundleForClass:[self class]]
+                      pathForResource:@"DeprecatedProfileKeyMappings"
+                      ofType:@"plist"];
+    NSDictionary *deprecations = [NSDictionary dictionaryWithContentsOfFile:path];
+    NSMutableDictionary *mappings = nil;
+
+    for (NSString *key in deprecations) {
+        id deprecatedValue = deprecations[key];
+        id actualValue = input[key];
+        if ([deprecatedValue isEqual:actualValue]) {
+            if (!mappings) {
+                mappings = [input mutableCopy];
+            }
+            [mappings removeObjectForKey:key];
+        }
+    }
+    return mappings;
+}
+
++ (BOOL)removeDeprecatedKeyMappingsInProfile:(Profile *)profile
+                                       model:(ProfileModel *)model
+                                    testOnly:(BOOL)testOnly {
+    NSDictionary *mappings = [self keyMappingsByRemovingDeprecatedKeyMappingsFrom:profile[KEY_KEYBOARD_MAP]];
+    if (mappings && !testOnly) {
+        [iTermProfilePreferences setObject:mappings
+                                    forKey:KEY_KEYBOARD_MAP
+                                 inProfile:profile
+                                     model:model];
+    }
+    return mappings != nil;
 }
 
 @end

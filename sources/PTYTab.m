@@ -2955,6 +2955,21 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [sessionGUID isEqualToString:guid] ? arrangement[TAB_ARRANGEMENT_SESSION] : nil;
 }
 
++ (NSDictionary *)recursiveRepairedArrangementNode:(NSDictionary *)arrangement
+                                    profileMutator:(Profile *(^)(Profile *))profileMutator {
+    if ([arrangement[TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        NSArray *subviews = arrangement[SUBVIEWS];
+        NSArray *repairedSubviews = [subviews mapWithBlock:^id(NSDictionary<NSString *, id> *subArrangement) {
+            return [PTYTab recursiveRepairedArrangementNode:subArrangement
+                                             profileMutator:profileMutator];
+        }];
+        return [arrangement dictionaryBySettingObject:repairedSubviews forKey:SUBVIEWS];
+    }
+
+    return [arrangement dictionaryBySettingObject:[PTYSession repairedArrangement:arrangement[TAB_ARRANGEMENT_SESSION]
+                                                                   profileMutator:profileMutator]
+                                           forKey:TAB_ARRANGEMENT_SESSION];
+}
 
 + (NSDictionary *)recursiveRepairedArrangementNode:(NSDictionary *)arrangement
                                settingCustomLocale:(NSString *)lang {
@@ -3231,6 +3246,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSDictionary *newRoot = [PTYTab recursiveRepairedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
                                     replacingOldCWDOfSessionWithGUID:guid
                                                           withOldCWD:replacementOldCWD];
+    NSMutableDictionary *result = [arrangement mutableCopy];
+    result[TAB_ARRANGEMENT_ROOT] = newRoot;
+    return result;
+}
+
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                       profileMutator:(Profile *(^)(Profile *))profileMutator {
+    NSDictionary *newRoot = [PTYTab recursiveRepairedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
+                                                      profileMutator:profileMutator];
     NSMutableDictionary *result = [arrangement mutableCopy];
     result[TAB_ARRANGEMENT_ROOT] = newRoot;
     return result;

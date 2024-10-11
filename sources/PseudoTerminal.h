@@ -272,6 +272,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                            withOldCWD:(NSString *)replacementOldCWD;
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
                   settingCustomLocale:(NSString *)lang;
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                       profileMutator:(Profile *(^)(Profile *))profileMutator;
 
 + (NSDictionary *)arrangementForSessionWithGUID:(NSString *)sessionGUID
                             inWindowArrangement:(NSDictionary *)arrangement;

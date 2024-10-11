@@ -3323,6 +3323,17 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+                       profileMutator:(Profile *(^)(Profile *))profileMutator {
+    NSMutableDictionary *result = [[arrangement mutableCopy] autorelease];
+    NSArray *tabs = result[TERMINAL_ARRANGEMENT_TABS];
+    result[TERMINAL_ARRANGEMENT_TABS] = [tabs mapWithBlock:^id(NSDictionary *tabArrangement) {
+        return [PTYTab repairedArrangement:tabArrangement
+                            profileMutator:profileMutator];
+    }];
+    return result;
+}
+
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
                   settingCustomLocale:(NSString *)lang {
     NSMutableDictionary *result = [[arrangement mutableCopy] autorelease];
     NSArray *tabs = result[TERMINAL_ARRANGEMENT_TABS];
