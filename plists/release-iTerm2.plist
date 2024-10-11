@@ -166,6 +166,12 @@
         <string>An application in iTerm2 wants to use the photo library.</string>
         <key>NSLocalNetworkUsageDescription</key>
         <string>An application in iTerm2 wants to access the local network.</string>
+        <key>NSBonjourServices</key>
+        <array>
+          <string>_ssh._tcp.</string>
+          <string>_ftp._tcp.</string>
+          <string>_telnet._tcp.</string>
+        </array>
         <key>NSServices</key>
         <array>
                 <dict>
