@@ -12,6 +12,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMigrationHelper.h"
+#import "iTermProfilePreferences.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermWarning.h"
@@ -492,9 +493,22 @@
     Profile *prototype = [self prototypeForDynamicProfile:newProfile];
     NSMutableDictionary *merged = [self profileByMergingProfile:newProfile
                                                     intoProfile:prototype];
+    if ([self shouldDisableSeparateColorsForDynamicProfile:newProfile prototype:prototype]) {
+        merged[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] = @NO;
+    }
     [merged profileAddDynamicTagIfNeeded];
     [[ProfileModel sharedInstance] setBookmark:merged
                                       withGuid:merged[KEY_GUID]];
+}
+
+- (BOOL)shouldDisableSeparateColorsForDynamicProfile:(Profile *)dynamicProfile
+                                           prototype:(Profile *)prototype {
+    // If it's off by default in the dynamic profile but on in the parent/prototype then treat it
+    // as off. Fixes a bug where colors are not respected because the DP doesn't have values for
+    // the light mode/dark mode keys.
+    return (dynamicProfile[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] == nil &&
+            ![iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:dynamicProfile] &&
+            [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:prototype]);
 }
 
 // Copies fields from |profile| over those in |prototype| and returns a new
