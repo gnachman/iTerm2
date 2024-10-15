@@ -138,7 +138,11 @@
 @end
 
 
-@implementation AATree
+@implementation AATree {
+#if DEBUG
+    NSMutableArray *_debugJournal;
+#endif
+}
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 // -- public methods --
@@ -302,10 +306,6 @@ static NSString *PrependSpaces(NSString *s, NSInteger count) {
             @(value.maxLimitAtSubtree)];
 }
 
-#if DEBUG
-static NSMutableArray *gDebugJournal;
-#endif
-
 - (void) removeObjectForKey:(id)aKey {
 
     [self __lockForWriting];
@@ -314,7 +314,7 @@ static NSMutableArray *gDebugJournal;
     NSString *before = [self dump];
 
     @synchronized([AATree class]) {
-        gDebugJournal = [[NSMutableArray alloc] init];
+        _debugJournal = [[NSMutableArray alloc] init];
     }
 #endif
     AATreeNode *prevRoot = self.root;
@@ -331,7 +331,7 @@ static NSMutableArray *gDebugJournal;
         [_delegate aaTree:self didChangeSubtreesAtNodes:changedNodes];
 #if DEBUG
         @synchronized([AATree class]) {
-            DLog(@"Before:\n%@\nAfter:\n%@\nJournal:\n%@", before, [self dump], gDebugJournal);
+            DLog(@"Before:\n%@\nAfter:\n%@\nJournal:\n%@", before, [self dump], _debugJournal);
         }
 #endif
     }
@@ -340,7 +340,8 @@ static NSMutableArray *gDebugJournal;
     [self __unlock];
 #if DEBUG
     @synchronized([AATree class]) {
-        [gDebugJournal release];
+        [_debugJournal release];
+        _debugJournal = nil;
     }
 #endif
 }
@@ -416,7 +417,7 @@ static NSMutableArray *gDebugJournal;
 - (AATreeNode *) __deleteNodeAtKey:(id)aKey atRoot:(AATreeNode *)aRoot {
 #if DEBUG
     @synchronized([AATree class]) {
-        [gDebugJournal addObject:[NSString stringWithFormat:@"Delete node with key %@ at node %@", aKey, aRoot]];
+        [_debugJournal addObject:[NSString stringWithFormat:@"Delete node with key %@ at node %@", aKey, aRoot]];
     }
 #endif
 
@@ -441,7 +442,7 @@ static NSMutableArray *gDebugJournal;
                 // Delete the in-order predecessor (heir).
 #if DEBUG
                 @synchronized([AATree class]) {
-                    [gDebugJournal addObject:[NSString stringWithFormat:@"  Will delete in-order predecessor"]];
+                    [_debugJournal addObject:[NSString stringWithFormat:@"  Will delete in-order predecessor"]];
                 }
 #endif
                 aRoot.left = [self __deleteNodeAtKey:aRoot.key atRoot:aRoot.left];
@@ -454,7 +455,7 @@ static NSMutableArray *gDebugJournal;
                 if (aRoot.left) {
 #if DEBUG
                     @synchronized([AATree class]) {
-                        [gDebugJournal addObject:[NSString stringWithFormat:@"  Delete left"]];
+                        [_debugJournal addObject:[NSString stringWithFormat:@"  Delete left"]];
                     }
 #endif
                     aRoot.deleted = YES;
@@ -462,7 +463,7 @@ static NSMutableArray *gDebugJournal;
                 } else {
 #if DEBUG
                     @synchronized([AATree class]) {
-                        [gDebugJournal addObject:[NSString stringWithFormat:@"  Delete self and hoist right child"]];
+                        [_debugJournal addObject:[NSString stringWithFormat:@"  Delete self and hoist right child"]];
                     }
 #endif
                     aRoot.deleted = YES;
@@ -480,7 +481,7 @@ static NSMutableArray *gDebugJournal;
             AATreeNode *prevLeft = aRoot.left;
 #if DEBUG
             @synchronized([AATree class]) {
-                [gDebugJournal addObject:[NSString stringWithFormat:@"  Will travel left"]];
+                [_debugJournal addObject:[NSString stringWithFormat:@"  Will travel left"]];
             }
 #endif
             aRoot.left = [self __deleteNodeAtKey:aKey atRoot:aRoot.left];
@@ -492,7 +493,7 @@ static NSMutableArray *gDebugJournal;
             AATreeNode *prevRight = aRoot.right;
 #if DEBUG
             @synchronized([AATree class]) {
-                [gDebugJournal addObject:[NSString stringWithFormat:@"  Will travel right"]];
+                [_debugJournal addObject:[NSString stringWithFormat:@"  Will travel right"]];
             }
 #endif
             aRoot.right = [self __deleteNodeAtKey:aKey atRoot:aRoot.right];
@@ -520,7 +521,7 @@ static NSMutableArray *gDebugJournal;
             }
 #if DEBUG
             @synchronized([AATree class]) {
-                [gDebugJournal addObject:[NSString stringWithFormat:@"  Skew at %@", aRoot]];
+                [_debugJournal addObject:[NSString stringWithFormat:@"  Skew at %@", aRoot]];
             }
 #endif
             aRoot = [self __skew:aRoot];
@@ -531,7 +532,7 @@ static NSMutableArray *gDebugJournal;
             prevRoot = aRoot;
 #if DEBUG
             @synchronized([AATree class]) {
-                [gDebugJournal addObject:[NSString stringWithFormat:@"  Split at %@", aRoot]];
+                [_debugJournal addObject:[NSString stringWithFormat:@"  Split at %@", aRoot]];
             }
 #endif
             aRoot = [self __split:aRoot];
