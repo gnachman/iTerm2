@@ -161,11 +161,16 @@ libgit2: force
 	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
 	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} --build . --target install --parallel "$$(sysctl -n hw.ncpu)"
 
+sparkle: force
+	rm -rf ThirdParty/Sparkle.framework
+	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release
+	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
+
 paranoiddeps: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) deps
 
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
-deps: force fatlibsixel fatopenssl fatlibssh2 CoreParse NMSSH bindeps libgit2 
+deps: force fatlibsixel fatopenssl fatlibssh2 CoreParse NMSSH bindeps libgit2 sparkle
 
 DepsIfNeeded: force
 	tools/rebuild-deps-if-needed

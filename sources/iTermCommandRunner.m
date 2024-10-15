@@ -67,6 +67,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
                                        code:1
                                    userInfo:@{ NSLocalizedDescriptionKey: errorText }]);
     };
+    runner.callbackQueue = callbackQueue;
     [runner run];
 }
 
