@@ -383,8 +383,10 @@
 
 - (void)eraseFirstLineCache {
     [self willMutate];
-    _guts->_array[_guts->_first].width_for_number_of_wrapped_lines = 0;
-    _guts->_array[_guts->_first].number_of_wrapped_lines = 0;
+    if (_guts->_numEntries > _guts->_first) {
+        _guts->_array[_guts->_first].width_for_number_of_wrapped_lines = 0;
+        _guts->_array[_guts->_first].number_of_wrapped_lines = 0;
+    }
 }
 
 - (void)setLastExternalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
@@ -406,6 +408,8 @@
     for (int i = 0; i < n; i++) {
         const int first = _guts->_first;
         ITAssertWithMessage(_guts->_numEntries >= first, @"numEntries=%@ < first=%@", @(_guts->_numEntries), @(first));
+        // This is just paranoia. The entry is no longer used after this point.
+        _guts->_array[first].width_for_number_of_wrapped_lines = 0;
         _guts->_array[first].number_of_wrapped_lines = 0;
         if (_guts->_useDWCCache) {
             _guts->_array[first].double_width_characters = nil;

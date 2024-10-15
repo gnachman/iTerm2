@@ -393,6 +393,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
 
 - (void)setBufferStartOffset:(ptrdiff_t)offset {
     _startOffset = offset;
+    // The cached numlines and cached width are no longer valid.
+    [_metadataArray eraseFirstLineCache];
 }
 
 - (int)bufferStartOffset {
@@ -1022,21 +1024,43 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                             metadata->double_width_characters);
         if (lines < n) {
             i += (n - lines) * width;
-            ITAssertWithMessage(i <= length, @"[2] i=%@ exceeds length=%@, n=%@, width=%@, lines=%@, cache=%@, debugInfo=%@ clls=%@",
-                                @(i),
-                                @(length),
-                                @(n),
-                                @(width),
-                                @(lines),
-                                metadata->double_width_characters,
-                                _debugInfo ? _debugInfo() : @"n/a",
-                                [self dumpCumulativeLineLengths]);
+            if (i > length) {
+                const LineBlockMetadata *metadata = iTermLineBlockMetadataProviderGetImmutable(metadataProvider);
+                ITAssertWithMessage(i <= length, @"[2] i=%@ exceeds length=%@, n=%@, width=%@, lines=%@, bufferStartOffset=%@, startingOffset=%@, metadata_.width_for_number_of_wrapped_lines=%@, metadata->number_of_wrapped_lines=%@, numberOfFullLinesCache=%@, double_width_characters=%@, debugInfo=%@ clls=%@",
+                                    @(i),
+                                    @(length),
+                                    @(n),
+                                    @(width),
+                                    @(lines),
+                                    @(self.bufferStartOffset),
+                                    @(startingOffset),
+                                    @(metadata ? metadata->width_for_number_of_wrapped_lines : 0xdeadbeef),
+                                    @(metadata ? metadata->number_of_wrapped_lines : 0xdeadbeef),
+                                    [self dumpNumberOfFullLinesCache],
+                                    metadata->double_width_characters,
+                                    _debugInfo ? _debugInfo() : @"n/a",
+                                    [self dumpCumulativeLineLengths]);
+            }
         }
         return i;
     } else {
         ITAssertWithMessage(n * width <= length, @"[3] n=%@ * width=%@ < length=%@", @(n), @(width), @(length));
         return n * width;
     }
+}
+
+- (NSString *)dumpNumberOfFullLinesCache {
+    NSMutableString *result = [NSMutableString string];
+
+    for (const auto &entry : _numberOfFullLinesCache) {
+        const iTermNumFullLinesCacheKey &key = entry.first;
+        int value = entry.second;
+
+        // Append the key and value to the result
+        [result appendFormat:@"(%d, %d, %d) -> %d\n",
+            key.offset, key.length, key.width, value];
+    }
+    return result;
 }
 
 - (NSString *)dumpCumulativeLineLengths {
@@ -1762,6 +1786,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             _firstEntry = i;
             [_metadataArray removeFirst:_firstEntry - _metadataArray.first];
             assert(_metadataArray.first == _firstEntry);
+            [_metadataArray eraseFirstLineCache];
 
             *charsDropped = self.bufferStartOffset - initialOffset;
 
