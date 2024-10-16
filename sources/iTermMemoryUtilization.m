@@ -110,7 +110,7 @@
         return 0;
     }
 
-    return self.pageSize * (vm_stat.internal_page_count - vm_stat.purgeable_count + vm_stat.wire_count);
+    return self.pageSize * (vm_stat.internal_page_count + vm_stat.wire_count + vm_stat.compressor_page_count);
 }
 
 - (long long)availableMemory {
