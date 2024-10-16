@@ -82,6 +82,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)chaseAnchoredScreen;
 + (BOOL)clearBellIconAggressively;
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
++ (int)codeciergeCommandWarningCount;
 + (NSString *)codeciergeGhostRidingPrompt;
 + (NSString *)codeciergeRegularPrompt;
 + (double)coloredSelectedTabOutlineStrength;

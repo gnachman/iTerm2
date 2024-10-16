@@ -13982,9 +13982,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                 @"lineCount": @(outputRange.end.y - outputRange.start.y + 1),
                                 @"command": (id)command ?: (id)[NSNull null]};
     userInfo = [userInfo dictionaryByRemovingNullValues];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"PTYCommandDidExitNotification"
-                                                        object:_guid
-                                                      userInfo:userInfo];
+    // This runs in a side-effect and notification observers might want a modal runloop.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"PTYCommandDidExitNotification"
+                                                            object:_guid
+                                                          userInfo:userInfo];
+    });
 }
 
 - (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading>)maybeMark {
@@ -14015,9 +14018,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                     @"startLine": @(outputRange.start.y),
                                     @"lineCount": @(outputRange.end.y - outputRange.start.y + 1) };
         userInfo = [userInfo dictionaryByRemovingNullValues];
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"PTYCommandDidExitNotification"
-                                                            object:_guid
-                                                          userInfo:userInfo];
+        // This runs in a side-effect and notification observers might want a modal runloop.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"PTYCommandDidExitNotification"
+                                                                object:_guid
+                                                              userInfo:userInfo];
+        });
     }
 }
 

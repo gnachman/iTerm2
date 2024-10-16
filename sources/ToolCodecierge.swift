@@ -14,6 +14,8 @@ fileprivate protocol ToolCodeciergeSessionDelegate: AnyObject {
     func session(session: ToolCodecierge.Session, didProduceAdditionalText text: String)
     func sessionDidReceiveCommand(session: ToolCodecierge.Session, command: String)
     func sessionEnabled(_ session: ToolCodecierge.Session) -> Bool
+    func sessionAbort(_ session: ToolCodecierge.Session)
+    var sessionWindow: NSWindow? { get }
 }
 
 @objc(iTermToolCodecierge)
@@ -178,6 +180,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
         private var conversation: AIConversation?
         var busy: Bool { conversation?.busy ?? false }
         private var observer: (any NSObjectProtocol)?
+        private var commandCount = 0
 
         init(_ guid: String) {
             self.guid = guid
@@ -239,6 +242,27 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                   output: output,
                                   exitCode: exitCode)
             updateHistory(command: command)
+            if running {
+                commandCount += 1
+                if commandCount >= iTermAdvancedSettingsModel.codeciergeCommandWarningCount() {
+                    let selection =
+                    iTermWarning.show(withTitle: "Your codecierge session has been going on for a long time. Are you still using it? If not, stop it to save money and privacy.",
+                                      actions: ["Keep Going", "Stop Codecierge"],
+                                      accessory: nil,
+                                      identifier: "CodeciergeCommandWarning",
+                                      silenceable: .kiTermWarningTypePermanentlySilenceable,
+                                      heading: "Codecierge Usage Warning",
+                                      window: delegate?.sessionWindow)
+                    switch selection {
+                    case .kiTermWarningSelection0:
+                        commandCount = 0
+                    case .kiTermWarningSelection1:
+                        delegate?.sessionAbort(self)
+                    default:
+                        break
+                    }
+                }
+            }
         }
 
         func updateHistory(command newCommand: Command?) {
@@ -605,6 +629,14 @@ extension ToolCodecierge: ToolCodeciergeSessionDelegate {
 
     fileprivate func sessionEnabled(_ session: ToolCodecierge.Session) -> Bool {
         return !isHiddenOrHasHiddenAncestor
+    }
+
+    fileprivate var sessionWindow: NSWindow? {
+        return window
+    }
+
+    fileprivate func sessionAbort(_ session: Session) {
+        state = .goalSetting
     }
 }
 

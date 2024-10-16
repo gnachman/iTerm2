@@ -95,6 +95,7 @@
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSResponder+iTerm.h"
+#import "NSScreen+iTerm.h"
 #import "NSScroller+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
@@ -4677,7 +4678,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize {
     DLog(@"windowWillResize: self=%@, proposedFrameSize=%@ screen=%@",
-           self, NSStringFromSize(proposedFrameSize), self.window.screen);
+           self, NSStringFromSize(proposedFrameSize), self.window.screen.it_description);
     DLog(@"%@", [NSThread callStackSymbols]);
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
