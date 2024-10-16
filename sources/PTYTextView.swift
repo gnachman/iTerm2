@@ -688,7 +688,7 @@ extension PTYTextView: NSViewContentSelectionInfo {
             let absRange = subselection.absRange
             let selRange = absRange.coordRange.start.y..<(absRange.coordRange.end.y + 1)
             if visibleAbsLines.overlaps(selRange) {
-                var visibleSelectedAbsRange = VT100GridAbsCoordRangeIntersection(absRange.coordRange,
+                let visibleSelectedAbsRange = VT100GridAbsCoordRangeIntersection(absRange.coordRange,
                                                                                  visibleAbsRange,
                                                                                  dataSource.width())
                 if visibleSelectedAbsRange.start.x >= 0 {
