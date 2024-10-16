@@ -243,6 +243,9 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block;
+- (void)performBlockWithJoinedThreadsReentrantSafe:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
+                                                                         VT100ScreenMutableState *mutableState,
+                                                                         id<VT100ScreenDelegate> delegate))block;
 - (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block;
 - (void)mutateAsynchronously:(void (^)(VT100Terminal *terminal,
                                        VT100ScreenMutableState *mutableState,

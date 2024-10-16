@@ -1311,6 +1311,21 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_mutableState performLightweightBlockWithJoinedThreads:block];
 }
 
+// Skips running side effects if it's already in a side effect. This is harder to reason about
+// since you don't know whether side effects will run first. Only call this if you know what you're
+// doing.
+- (void)performBlockWithJoinedThreadsReentrantSafe:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
+                                                                         VT100ScreenMutableState *mutableState,
+                                                                         id<VT100ScreenDelegate> delegate))block {
+    DLog(@"%@", [NSThread callStackSymbols]);
+    if (!_mutableState.performingSideEffect ||
+        _mutableState.performingPausedSideEffect) {
+        block(_mutableState.terminal, _mutableState, _mutableState.sideEffectPerformer.sideEffectPerformingScreenDelegate);
+    } else {
+        [_mutableState performBlockWithJoinedThreads:block];
+    }
+}
+
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block {
@@ -1510,9 +1525,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)setEchoProbeDelegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate {
-    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal,
-                                             VT100ScreenMutableState *mutableState,
-                                             id<VT100ScreenDelegate> delegate) {
+    [self performBlockWithJoinedThreadsReentrantSafe:^(VT100Terminal *terminal,
+                                                       VT100ScreenMutableState *mutableState,
+                                                       id<VT100ScreenDelegate> delegate) {
         mutableState.echoProbeDelegate = echoProbeDelegate;
     }];
 }
