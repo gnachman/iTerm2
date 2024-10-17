@@ -70,6 +70,7 @@
 #import "iTermTuple.h"
 #import "iTermURLStore.h"
 #import "iTermUserDefaults.h"
+#import "iTermUserDefaultsObserver.h"
 #import "iTermVariableScope.h"
 #import "iTermVariables.h"
 #import "iTermVirtualOffset.h"

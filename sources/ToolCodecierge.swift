@@ -768,6 +768,7 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
         }
     }
     override var isFlipped: Bool { true }
+    private let userDefaultsObserver: iTermUserDefaultsObserver
 
     init(startCallback: @escaping (String, Bool) -> ()) {
         self.startCallback = startCallback
@@ -794,7 +795,8 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
         autoButton.setButtonType(.switch)
         autoButton.title = "Run commands automatically"
         autoButton.state = .off
-
+        autoButton.isEnabled = AITermController.provider.functionsSupported
+        userDefaultsObserver = iTermUserDefaultsObserver()
         startButton = NSButton(title: "Start", target: nil, action: nil)
         startButton.isEnabled = false
 
@@ -817,6 +819,16 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
             self?.startButtonPressed()
         }
         layoutSubviews()
+
+        userDefaultsObserver.observeKey(kPreferenceKeyAITermURL) { [weak self] in
+            self?.autoButton.isEnabled = AITermController.provider.functionsSupported
+        }
+        userDefaultsObserver.observeKey(kPreferenceKeyAIModel) { [weak self] in
+            self?.autoButton.isEnabled = AITermController.provider.functionsSupported
+        }
+        userDefaultsObserver.observeKey(kPreferenceKeyAITermUseLegacyAPI) { [weak self] in
+            self?.autoButton.isEnabled = AITermController.provider.functionsSupported
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -1394,7 +1406,11 @@ class OpenAIMetadata: NSObject {
         Model(name: "llama3:latest",
              contextWindowTokens: 8_192,
              maxResponseTokens: 8_192,
-              url: "http://localhost:11434/v1/chat/completions")
+              url: "http://localhost:11434/v1/chat/completions"),
+        Model(name: "Gemini 1.5 flash",
+              contextWindowTokens: 1_048_576,
+              maxResponseTokens: 8_192,
+              url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent")
         ]
 
     @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int, String?) -> ()) {

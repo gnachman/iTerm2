@@ -117,6 +117,35 @@ fileprivate struct LegacyBodyRequestBuilder {
     }
 }
 
+fileprivate struct GeminiRequestBuilder: Codable {
+    let contents: [Content]
+
+    struct Content: Codable {
+        var role: String
+        var parts: [Part]
+
+        struct Part: Codable {
+            let text: String
+        }
+    }
+
+    init(messages: [LLM.Message]) {
+        self.contents = messages.map { message in
+            let role = if message.role == "user" {
+                message.role
+            } else {
+                "model"
+            }
+            return Content(role: role,
+                           parts: [Content.Part(text: message.content ?? "")])
+        }
+    }
+
+    var body: Data {
+        return try! JSONEncoder().encode(self)
+    }
+}
+
 fileprivate struct ModernBodyRequestBuilder {
     var messages: [LLM.Message]
     var provider: LLMProvider
@@ -163,6 +192,8 @@ struct LLMRequestBuilder {
         case .azure:
             [ "Content-Type": "application/json",
               "api-key": apiKey ]
+        case .gemini:
+            ["Content-Type": "application/json"]
         }
     }
 
@@ -177,6 +208,8 @@ struct LLMRequestBuilder {
             return ModernBodyRequestBuilder(messages: messages,
                                             provider: provider,
                                             functions: functions).body
+        case .gemini:
+            return GeminiRequestBuilder(messages: messages).body
         }
     }
 
@@ -184,7 +217,7 @@ struct LLMRequestBuilder {
         WebRequest(headers: headers,
                    method: method,
                    body: body.lossyString,
-                   url: provider.url.absoluteString)
+                   url: provider.url(apiKey: apiKey).absoluteString)
     }
 }
 
@@ -193,17 +226,22 @@ struct LLMProvider {
     enum Platform: String {
         case openAI = "OpenAI"
         case azure = "Azure"
+        case gemini = "Gemini"
     }
 
     enum Version {
         case legacy
         case completions
+        case gemini
     }
 
     var platform = Platform.openAI
     var model: String
 
     var version: Version {
+        if hostIsGoogle(url: completionsURL) {
+            return .gemini
+        }
         if hostIsOpenAIAPI(url: completionsURL) {
             return openAIModelIsLegacy(model: model) ? .legacy : .completions
         }
@@ -215,7 +253,7 @@ struct LLMProvider {
     }
 
     var usingOpenAI: Bool {
-        return hostIsOpenAIAPI(url: url)
+        return hostIsOpenAIAPI(url: url(apiKey: "placeholder"))
     }
 
     // URL assuming the completions API is in use. This may be overridden for the legacy API.
@@ -227,13 +265,26 @@ struct LLMProvider {
         return URL(string: value) ?? URL(string: "about:empty")!
     }
 
-    var url: URL {
-        let completionsURL = self.completionsURL
-        if hostIsOpenAIAPI(url: completionsURL) && version == .completions {
-            // The default value for the setting is the legacy URL, so modernize it if needed.
-            return URL(string: "https://api.openai.com/v1/chat/completions")!
+    func url(apiKey: String) -> URL {
+        switch platform {
+        case .gemini:
+            let url = URL(string: iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "") ?? URL(string: "about:empty")!
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            components?.queryItems = [URLQueryItem(name: "key", value: apiKey)]
+            return components?.url ?? URL(string: "about:empty")!
+
+        case .openAI, .azure:
+            let completionsURL = self.completionsURL
+            if hostIsOpenAIAPI(url: completionsURL) && version == .completions {
+                // The default value for the setting is the legacy URL, so modernize it if needed.
+                return URL(string: "https://api.openai.com/v1/chat/completions")!
+            }
+            return completionsURL
         }
-        return completionsURL
+    }
+
+    private func hostIsGoogle(url: URL?) -> Bool {
+        return url?.host == "generativelanguage.googleapis.com"
     }
 
     private func hostIsOpenAIAPI(url: URL?) -> Bool {
@@ -241,21 +292,28 @@ struct LLMProvider {
     }
 
     var urlIsValid: Bool {
-        return url.scheme != "about"
+        return url(apiKey: "placeholder").scheme != "about"
     }
 
     var displayName: String {
         if usingOpenAI {
             return "OpenAI"
         }
-        return url.host ?? "the API provider"
+        switch platform {
+        case .openAI:
+            return "OpenAI"
+        case .azure:
+            return "Microsoft"
+        case .gemini:
+            return "Google"
+        }
     }
 
     var dynamicModelsSupported: Bool {
         switch platform {
         case .openAI:
             true
-        case .azure:
+        case .azure, .gemini:
             false
         }
     }
@@ -264,7 +322,7 @@ struct LLMProvider {
         switch platform {
         case .openAI:
             true
-        case .azure:
+        case .azure, .gemini:
             false
         }
     }
@@ -275,6 +333,8 @@ struct LLMProvider {
             false
         case .completions:
             true
+        case .gemini:
+            false
         }
     }
 
@@ -303,6 +363,8 @@ struct LLMProvider {
             return LLMModernResponseParser()
         case .legacy:
             return LLMLegacyResponseParser()
+        case .gemini:
+            return LLMGeminiResponseParser()
         }
     }
 }
@@ -381,6 +443,55 @@ struct LLMLegacyResponseParser: LLMResponseParser {
     mutating func parse(data: Data) throws -> LLM.AnyResponse {
         let decoder = JSONDecoder()
         let response = try decoder.decode(LegacyResponse.self, from: data)
+        parsedResponse = response
+        return response
+    }
+}
+
+struct LLMGeminiResponseParser: LLMResponseParser {
+    struct GeminiResponse: Codable, LLM.AnyResponse {
+        var choiceMessages: [LLM.Message] {
+            candidates.map {
+                let role = if let content = $0.content {
+                    content.role == "model" ? "assistant" : "user"
+                } else {
+                    "assistant"  // failed, probably because of safety
+                }
+                return if let text = $0.content?.parts.first?.text {
+                    LLM.Message(role: role, content: text)
+                } else {
+                    if $0.finishReason == "SAFETY" {
+                        LLM.Message(role: role, content: "The request violated Gemini's safety rules.")
+                    } else if let reason = $0.finishReason {
+                        LLM.Message(role: role, content: "Failed to generate a response with reason: \(reason).")
+                    } else {
+                        LLM.Message(role: role, content: "Failed to generate a response for an unknown reason.")
+                    }
+                }
+            }
+        }
+
+        let candidates: [Candidate]
+
+        struct Candidate: Codable {
+            var content: Content?
+
+            struct Content: Codable {
+                var parts: [Part]
+                var role: String
+
+                struct Part: Codable {
+                    var text: String
+                }
+            }
+            var finishReason: String?
+        }
+    }
+    private(set) var parsedResponse: GeminiResponse?
+
+    mutating func parse(data: Data) throws -> LLM.AnyResponse {
+        let decoder = JSONDecoder()
+        let response = try decoder.decode(GeminiResponse.self, from: data)
         parsedResponse = response
         return response
     }
