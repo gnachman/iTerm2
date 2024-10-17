@@ -1325,7 +1325,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"In underlined range so don't report");
         return NO;
     }
-    if (_mouseDownWasFirstMouse && ![iTermAdvancedSettingsModel reportOnFirstMouse]) {
+    if (_mouseDownWasFirstMouse && ![iTermAdvancedSettingsModel reportOnFirstMouse] && event.type != NSEventTypeScrollWheel) {
         DLog(@"Mouse-down was first mouse so do not report");
         return NO;
     }
