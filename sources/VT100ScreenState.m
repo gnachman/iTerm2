@@ -262,6 +262,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
 - (void)copySlowStuffFrom:(VT100ScreenMutableState *)source {
     if (!_markCache || source.markCache.dirty) {
+        DLog(@"Mark cache is dirty. Update copy in read-only state.");
         _markCache = source.markCache.readOnlyCopy;
     }
     if (!_colorMap) {

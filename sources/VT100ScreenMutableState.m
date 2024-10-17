@@ -3306,6 +3306,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)reloadMarkCache {
+    DLog(@"Reload mark cache");
     long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
     [self.markCache removeAll];
     for (id<IntervalTreeObject> obj in [self.intervalTree allObjects]) {

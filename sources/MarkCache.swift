@@ -26,6 +26,13 @@ class MarkCache: NSObject, MarkCacheReading {
     private var dict = [Int: iTermMarkProtocol]()
     private let sorted = SortedArray<iTermMarkProtocol> { $0 === $1 }
 
+    // A mark might not have a location at the time the cache is created but it could pick one up
+    // later. This dictionary maps line to mark for marks that didn't have locations last time
+    // they were seen. Marks without locations aren't in `sorted` so range queries will fail to
+    // find them. Before performing any operation on `sorted` move marks with entries out
+    // of `dropped`.
+    private var dropped: [Int: iTermMarkProtocol] = [:]
+
     @objc private(set) var dirty = false
 
     override var description: String {
@@ -50,39 +57,48 @@ class MarkCache: NSObject, MarkCacheReading {
 
     fileprivate init(dict: [Int: iTermMarkProtocol]) {
         self.dict = dict
-        for value in dict.values {
+        for (key, value) in dict {
             if let location = value.entry?.interval.location {
                 value.cachedLocation = location
                 sorted.insert(object: value, location: location)
+            } else {
+                dropped[key] = value
             }
         }
     }
 
     @objc(removeMark:onLine:)
     func remove(mark: iTermMarkProtocol, line: Int) {
+        DLog("\(it_addressString): remove(mark:line:): dirty=true")
         dirty = true
         dict.removeValue(forKey: line)
+        dropped.removeValue(forKey: line)
         sorted.remove(entry: .init(value: mark, location: mark.cachedLocation))
     }
 
     @objc(removeMarks:onLines:)
     func remove(marks: [iTermMarkProtocol], lines: [Int]) {
+        DLog("\(it_addressString): remove(marks:lines:): dirty=true")
         dirty = true
         for line in lines {
             dict.removeValue(forKey: line)
+            dropped.removeValue(forKey: line)
         }
         sorted.remove(entries: marks.map { .init(value: $0, location: $0.cachedLocation )})
     }
 
     @objc
     func removeAll() {
+        DLog("\(it_addressString): removeAll(): dirty=true")
         dirty = true
         dict = [:]
+        dropped = [:]
         sorted.removeAll()
     }
 
     @objc
     func copy(with zone: NSZone? = nil) -> Any {
+        DLog("\(it_addressString): copy(): dirty=false")
         dirty = false
         return MarkCache(dict: dict)
     }
@@ -98,6 +114,7 @@ class MarkCache: NSObject, MarkCacheReading {
             return dict[line]
         }
         set {
+            DLog("\(it_addressString): markCache[\(line)]=\(newValue?.description ?? "nil")")
             dirty = true
             if let newValue = newValue {
                 dict[line] = newValue
@@ -114,14 +131,31 @@ class MarkCache: NSObject, MarkCacheReading {
         }
     }
 
+    private func rescueDroppedMarks() {
+        var lines = IndexSet()
+        for (line, droppedMark) in dropped {
+            if let location = droppedMark.entry?.interval.location {
+                DLog("Rescue dropped mark \(droppedMark.description) on line \(line)")
+                droppedMark.cachedLocation = location
+                sorted.insert(object: droppedMark, location: location)
+                lines.insert(line)
+            }
+        }
+        for line in lines {
+            dropped.removeValue(forKey: line)
+        }
+    }
+
     @objc
     func findAtOrBefore(location desiredLocation: Int64) -> [iTermMarkProtocol] {
+        rescueDroppedMarks()
         return sorted.findAtOrBefore(location: desiredLocation)
     }
 
     @objc(eraseUpToLocation:)
     func eraseUpTo(location: Int64) {
         DLog("Erase up to \(location)")
+        rescueDroppedMarks()
         sorted.removeUpTo(location: location)
     }
 
