@@ -169,6 +169,12 @@ sparkle: force
 paranoiddeps: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) deps
 
+paranoidlibssh2: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibssh2
+
+paranoidnmssh: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) NMSSH
+
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
 deps: force fatlibsixel fatopenssl fatlibssh2 CoreParse NMSSH bindeps libgit2 sparkle
 
