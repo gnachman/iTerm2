@@ -4602,11 +4602,100 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (NSColor *)defaultANSIColor:(int)i darkMode:(BOOL)darkMode {
+    switch (i) {
+        case 0:  // Black
+            return [NSColor colorWithSRGBRed:0.078431375
+                                       green:0.098039217
+                                        blue:0.117647059
+                                       alpha:1.0];
+        case 1:  // Red
+            return [NSColor colorWithSRGBRed:0.707443237
+                                        green:0.236600697
+                                         blue:0.163000375
+                                        alpha:1.0];
+        case 2:  // Green
+            return [NSColor colorWithSRGBRed:0.0
+                                       green:0.760784328
+                                        blue:0.0
+                                       alpha:1.0];
+        case 3:  // Yellow
+            return [NSColor colorWithSRGBRed:0.780586481
+                                        green:0.769594848
+                                         blue:0.0
+                                       alpha:1.0];
+        case 4:  // Blue
+            return [NSColor colorWithSRGBRed:0.154043003
+                                        green:0.264743567
+                                         blue:0.782161772
+                                        alpha:1.0];
+        case 5:  // Magenta
+            return [NSColor colorWithSRGBRed:0.752197266
+                                        green:0.249316841
+                                         blue:0.744943619
+                                        alpha:1.0];
+        case 6:  // Cyan
+            return [NSColor colorWithSRGBRed:0.0
+                                       green:0.774259031
+                                        blue:0.781662047
+                                       alpha:1.0];
+        case 7:  // White
+            return [NSColor colorWithSRGBRed:0.781039774
+                                        green:0.781058252
+                                         blue:0.781048298
+                                        alpha:1.0];
+        case 8:  // Bright Black
+            return [NSColor colorWithSRGBRed:0.407817602
+                                       green:0.407827884
+                                        blue:0.407822371
+                                       alpha:1.0];
+        case 9:  // Bright Red
+            return [NSColor colorWithSRGBRed:0.865951538
+                                        green:0.475240767
+                                         blue:0.458332241
+                                        alpha:1.0];
+        case 10:  // Bright Green
+            return [NSColor colorWithSRGBRed:0.345007032
+                                       green:0.904281616
+                                        blue:0.565419376
+                                       alpha:1.0];
+        case 11:  // Bright Yellow
+            return [NSColor colorWithSRGBRed:0.92590332
+                                        green:0.883377552
+                                         blue:0.0
+                                       alpha:1.0];
+        case 12:  // Bright Blue
+            return [NSColor colorWithSRGBRed:0.653490782
+                                        green:0.670447171
+                                         blue:0.948532105
+                                        alpha:1.0];
+        case 13:  // Bright Magenta
+            return [NSColor colorWithSRGBRed:0.882156372
+                                        green:0.492726654
+                                         blue:0.882156372
+                                        alpha:1.0];
+        case 14:  // Bright Cyan
+            return [NSColor colorWithSRGBRed:0.375975311
+                                        green:0.992632926
+                                         blue:1.0
+                                        alpha:1.0];
+        case 15:  // Bright White
+            return [NSColor colorWithSRGBRed:0.999996006
+                                       green:1.0
+                                        blue:1.0
+                                       alpha:1.0];
+        default:
+            return [NSColor colorWithSRGBRed:1.0
+                                        green:0.0
+                                        blue:0.0
+                                        alpha:1.0];
+    }
+}
 - (void)loadANSIColor:(int)i fromProfile:(Profile *)aDict darkMode:(BOOL)dark to:(NSMutableDictionary<NSNumber *, id> *)dict {
     NSString *baseKey = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
     NSString *profileKey = iTermAmendedColorKey(baseKey, aDict, dark);
     NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
-    dict[@(kColorMap8bitBase + i)] = theColor ?: [NSNull null];
+    dict[@(kColorMap8bitBase + i)] = theColor ?: [self defaultANSIColor:i darkMode:dark];
 }
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
