@@ -2659,13 +2659,13 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
         // "Normal" case for uncached text color. Recompute the unprocessed color from the character.
         context->previousCharacterAttributes = *c;
         context->havePreviousCharacterAttributes = YES;
-        rawColor = [context->delegate drawingHelperColorForCode:c->foregroundColor
-                                                          green:c->fgGreen
-                                                           blue:c->fgBlue
-                                                      colorMode:c->foregroundColorMode
-                                                           bold:c->bold
-                                                          faint:c->faint
-                                                   isBackground:NO];
+        rawColor = [context->delegate drawingHelperRequiredColorForCode:c->foregroundColor
+                                                                  green:c->fgGreen
+                                                                   blue:c->fgBlue
+                                                              colorMode:c->foregroundColorMode
+                                                                   bold:c->bold
+                                                                  faint:c->faint
+                                                           isBackground:NO];
         assert(rawColor);
     } else {
         // Foreground attributes are just like the last character. There is a cached foreground color.

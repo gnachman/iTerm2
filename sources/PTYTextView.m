@@ -5041,6 +5041,35 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return color;
 }
 
+- (NSColor*)requiredColorForCode:(int)theIndex
+                           green:(int)green
+                            blue:(int)blue
+                       colorMode:(ColorMode)theMode
+                            bold:(BOOL)isBold
+                           faint:(BOOL)isFaint
+                    isBackground:(BOOL)isBackground {
+    iTermColorMapKey key = [self colorMapKeyForCode:theIndex
+                                              green:green
+                                               blue:blue
+                                          colorMode:theMode
+                                               bold:isBold
+                                       isBackground:isBackground];
+    NSColor *color;
+    iTermColorMap *colorMap = self.colorMap;
+    if (isBackground) {
+        color = [colorMap colorForKey:key];
+    } else {
+        color = [self.colorMap colorForKey:key];
+        if (isFaint) {
+            color = [color colorWithAlphaComponent:self.colorMap.faintTextAlpha];
+        }
+    }
+    ITCriticalError(color != nil, @"Nil color. theIndex=%@ green=%@ blue=%@ mode=%@ bold=%@ faint=%@ background=%@ key=%@ colormap=%@",
+                    @(theIndex), @(green), @(blue), @(theMode), @(isBold), @(isFaint), @(isBackground), @(key), colorMap);
+    return color;
+}
+
+
 - (iTermColorMapKey)colorMapKeyForCode:(int)code
                                  green:(int)green
                                   blue:(int)blue
@@ -5116,6 +5145,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                          bold:isBold
                         faint:isFaint
                  isBackground:isBackground];
+}
+
+- (NSColor *)drawingHelperRequiredColorForCode:(int)theIndex
+                                 green:(int)green
+                                  blue:(int)blue
+                             colorMode:(ColorMode)theMode
+                                  bold:(BOOL)isBold
+                                 faint:(BOOL)isFaint
+                          isBackground:(BOOL)isBackground {
+    return [self requiredColorForCode:theIndex
+                                green:green
+                                 blue:blue
+                            colorMode:theMode
+                                 bold:isBold
+                                faint:isFaint
+                         isBackground:isBackground];
 }
 
 - (PTYFontInfo *)drawingHelperFontForChar:(UniChar)ch

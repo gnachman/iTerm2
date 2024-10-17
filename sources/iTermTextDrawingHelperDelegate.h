@@ -39,13 +39,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDate * _Nullable)drawingHelperTimestampForLine:(int)line;
 
-- (NSColor *)drawingHelperColorForCode:(int)theIndex
-                                 green:(int)green
-                                  blue:(int)blue
-                             colorMode:(ColorMode)theMode
-                                  bold:(BOOL)isBold
-                                 faint:(BOOL)isFaint
-                          isBackground:(BOOL)isBackground;
+- (NSColor * _Nullable)drawingHelperColorForCode:(int)theIndex
+                                           green:(int)green
+                                            blue:(int)blue
+                                       colorMode:(ColorMode)theMode
+                                            bold:(BOOL)isBold
+                                           faint:(BOOL)isFaint
+                                    isBackground:(BOOL)isBackground;
+
+- (NSColor *)drawingHelperRequiredColorForCode:(int)theIndex
+                                         green:(int)green
+                                          blue:(int)blue
+                                     colorMode:(ColorMode)theMode
+                                          bold:(BOOL)isBold
+                                         faint:(BOOL)isFaint
+                                  isBackground:(BOOL)isBackground;
 
 - (PTYFontInfo *)drawingHelperFontForChar:(UniChar)ch
                                 isComplex:(BOOL)isComplex

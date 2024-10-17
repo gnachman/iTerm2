@@ -95,6 +95,23 @@ const int kColorMapAnsiBrightModifier = 8;
     return self;
 }
 
+- (NSString *)description {
+    NSMutableArray *ranges = [NSMutableArray array];
+    [[self allKeys] enumerateRangesUsingBlock:^(NSRange range, BOOL * _Nonnull stop) {
+        [ranges addObject:[NSString stringWithFormat:@"[%@,%@)", @(range.location), @(NSMaxRange(range))]];
+    }];
+    NSString *keys = [ranges componentsJoinedByString:@"+"];
+    return [NSString stringWithFormat:@"<%@: %p keys=%@>", NSStringFromClass([self class]), self, keys];
+}
+
+- (NSIndexSet *)allKeys {
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    [_map enumerateKeysAndObjectsUsingBlock:^(NSNumber *key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        [indexes addIndex:key.longLongValue];
+    }];
+    return indexes;
+}
+
 - (void)setDimmingAmount:(double)dimmingAmount {
     _generation += 1;
     _dimmingAmount = dimmingAmount;
