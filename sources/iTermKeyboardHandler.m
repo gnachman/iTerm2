@@ -245,7 +245,7 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     }
 }
 
-- (BOOL)shouldPassPostCocoaEventToDelegate:(NSEvent *)event {
+- (BOOL)shouldPassPostCocoaEventToDelegate:(NSEvent *)event inputContext:(NSTextInputContext *)inputContext {
     if (_hadMarkedTextBeforeHandlingKeypressEvent) {
         return NO;
     }
@@ -259,6 +259,16 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         if (!event.isARepeat) {
             return NO;
         }
+    }
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagCommand |
+                                       NSEventModifierFlagControl);
+    if ([inputContext.selectedKeyboardInputSource isEqual:@"com.apple.keylayout.UnicodeHexInput"] &&
+        (event.modifierFlags & mask) == NSEventModifierFlagOption &&
+        event.charactersIgnoringModifiers.length == 1 &&
+        [@"1234567890abcdefABCDEF" containsString:event.charactersIgnoringModifiers]) {
+        DLog(@"Hex input");
+        return NO;
     }
     return YES;
 }
@@ -338,10 +348,11 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         DLog(@"Squelch repeated keypress event %@", event);
         return;
     }
-    if ([self shouldPassPostCocoaEventToDelegate:event]) {
+    if ([self shouldPassPostCocoaEventToDelegate:event inputContext:inputContext]) {
         DLog(@"PTYTextView keyDown unhandled (likely repeated) keypress with no IME, send to delegate");
         [self.delegate keyboardHandler:self sendEventToController:event];
     }
 }
 
 @end
+
