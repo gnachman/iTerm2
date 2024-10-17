@@ -483,6 +483,9 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 }
 
 - (void)updateHueChromaVisualizationForKey:(NSString *)key {
+    if (![self.chromaHueVisualizationKeys containsObject:key]) {
+        return;
+    }
     NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:key]];
     NSColor *color = [dict colorValue];
     if (color) {
