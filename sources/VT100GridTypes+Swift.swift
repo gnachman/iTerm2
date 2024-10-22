@@ -15,3 +15,46 @@ extension VT100GridAbsCoordRange {
         Int32(clamping: max(0, end.y - start.y + 1))
     }
 }
+
+extension VT100GridCoord: Comparable {
+    public static func == (lhs: VT100GridCoord, rhs: VT100GridCoord) -> Bool {
+        return VT100GridCoordEquals(lhs, rhs)
+    }
+
+    public static func < (lhs: VT100GridCoord, rhs: VT100GridCoord) -> Bool {
+        return VT100GridCoordCompare(lhs, rhs) == .orderedAscending
+    }
+}
+
+extension VT100GridCoord {
+    func absolute(overflow: Int64) -> VT100GridAbsCoord {
+        return VT100GridAbsCoordFromCoord(self, overflow)
+    }
+}
+
+extension VT100GridAbsCoord {
+    func relative(overflow: Int64) -> VT100GridCoord? {
+        var ok = ObjCBool(false)
+        let result = VT100GridCoordFromAbsCoord(self, overflow, &ok)
+        if !ok.boolValue {
+            return nil
+        }
+        return result
+    }
+
+    func relativeClamped(overflow: Int64) -> VT100GridCoord {
+        if let coord = relative(overflow: overflow) {
+            return coord
+        }
+        if y < overflow {
+            return VT100GridCoord(x: 0, y: 0)
+        }
+        return VT100GridCoord(x: 0, y: Int32.max - 1)
+    }
+}
+
+extension VT100GridAbsCoordRange {
+    var description: String {
+        VT100GridAbsCoordRangeDescription(self)
+    }
+}

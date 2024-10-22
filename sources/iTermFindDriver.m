@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "FindContext.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermFindPasteboard.h"
 #import "iTermSearchHistory.h"
@@ -42,11 +43,8 @@ static NSString *gSearchString;
 @implementation iTermFindDriver {
     FindState *_savedState;
     FindState *_state;
-    
-    // Find runs out of a timer so that if you have a huge buffer then it
-    // doesn't lock up. This timer runs the show.
-    NSTimer *_timer;
-    
+    iTermSearchEngine *_searchEngine;
+
     // Last time the text field was edited.
     NSTimeInterval _lastEditTime;
     enum {
@@ -108,7 +106,8 @@ static NSString *gSearchString;
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_timer invalidate];
+    [_searchEngine.timer invalidate];
+    _searchEngine.timer = nil;
 }
 
 #pragma mark - APIs
@@ -166,14 +165,15 @@ static NSString *gSearchString;
 
 - (void)setDelegate:(id<iTermFindDriverDelegate>)delegate {
     _delegate = delegate;
+    _searchEngine = [_delegate findDriverSearchEngine];
 }
 
 - (void)close {
     BOOL wasHidden = _viewController.view.isHidden;
     if (!wasHidden) {
         DLog(@"Remove timer");
-        [_timer invalidate];
-        _timer = nil;
+        [_searchEngine.timer invalidate];
+        _searchEngine.timer = nil;
     }
     [self updateDelayState];
 
@@ -474,7 +474,7 @@ static NSString *gSearchString;
 }
 
 - (void)didLoseFocus {
-    if (_timer == nil) {
+    if (_searchEngine.timer == nil) {
         [_viewController setProgress:0];
         _state.progress = nil;
     }
@@ -497,8 +497,8 @@ static NSString *gSearchString;
         [_viewController setProgress:progress];
     }
     if (!more) {
-        [_timer invalidate];
-        _timer = nil;
+        [_searchEngine.timer invalidate];
+        _searchEngine.timer = nil;
         DLog(@"Remove timer");
         [_viewController setProgress:1];
     }
@@ -550,7 +550,7 @@ static NSString *gSearchString;
         } else {
             [_delegate findString:subString
                  forwardDirection:direction
-                             mode:mode | ([subString containsString:@"\n"] ? FindOptMultiLine : 0)
+                             mode:mode
                        withOffset:offset
               scrollToFirstResult:scrollToFirstResult
                             force:force];
@@ -558,22 +558,23 @@ static NSString *gSearchString;
         }
     }
 
-    DLog(@"ok=%@ timer=%@", @(ok), _timer);
-    if (ok && !_timer) {
+    DLog(@"ok=%@ timer=%@", @(ok), _searchEngine.timer);
+    if (ok && !_searchEngine.timer) {
         [_viewController setProgress:0];
         if ([self continueSearch]) {
-            _timer = [NSTimer scheduledTimerWithTimeInterval:0.01
-                                                      target:self
-                                                    selector:@selector(continueSearch)
-                                                    userInfo:nil
-                                                     repeats:YES];
+            _searchEngine.timer = [NSTimer scheduledTimerWithTimeInterval:0.01
+                                                                   target:self
+                                                                 selector:@selector(continueSearch)
+                                                                 userInfo:nil
+                                                                  repeats:YES];
             DLog(@"Set timer");
-            [[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
+            [[NSRunLoop currentRunLoop] addTimer:_searchEngine.timer
+                                         forMode:NSRunLoopCommonModes];
         }
-    } else if (!ok && _timer) {
+    } else if (!ok && _searchEngine.timer) {
         DLog(@"Remove timer");
-        [_timer invalidate];
-        _timer = nil;
+        [_searchEngine.timer invalidate];
+        _searchEngine.timer = nil;
         [_viewController setProgress:1];
         if (_state.progress) {
             _state.progress(NSMakeRange(0, NSUIntegerMax));

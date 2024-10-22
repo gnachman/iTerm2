@@ -1541,9 +1541,9 @@ void TurnOnDebugLoggingAutomatically(void) {
     NSString *directory = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
         return [element.name isEqualToString:@"d"];
     }].value;
-    const BOOL silent = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
+    const BOOL silent = ([components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
         return [element.name isEqualToString:@"silent"];
-    }];
+    }] != nil);
     if (@available(macOS 11, *)) {
         iTermCommandURLHandler *handler = [[[iTermCommandURLHandler alloc] initWithCommand:command
                                                                                   hostname:hostname

@@ -49,6 +49,8 @@ VT100ScreenSideEffectPerforming> {
     // If you used it last time, we can merge it, which is faster than making a copy of
     // the whole buffer.
     BOOL _wantsSearchBuffer;
+
+    iTermSearchEngine *_searchEngine;
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers;

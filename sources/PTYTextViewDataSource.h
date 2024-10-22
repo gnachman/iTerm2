@@ -17,6 +17,7 @@
 @protocol iTermMark;
 @class iTermOffscreenCommandLine;
 @class iTermSavedIntervalTreeObject;
+@class iTermSearchEngine;
 @class iTermTerminalButtonPlace;
 @protocol IntervalTreeImmutableObject;
 @class PTYAnnotation;
@@ -63,27 +64,6 @@
 - (int)numberOfScrollbackLines;
 - (int)scrollbackOverflow;
 - (long long)absoluteLineNumberOfCursor;
-- (BOOL)continueFindAllResults:(NSMutableArray*)results
-                      rangeOut:(NSRange *)rangePtr
-                     inContext:(FindContext*)context
-                  absLineRange:(NSRange)absLineRange
-                 rangeSearched:(VT100GridAbsCoordRange *)VT100GridAbsCoordRange;
-- (FindContext*)findContext;
-
-// Initialize the find context.
-- (void)setFindString:(NSString*)aString
-     forwardDirection:(BOOL)direction
-                 mode:(iTermFindMode)mode
-          startingAtX:(int)x
-          startingAtY:(int)y
-           withOffset:(int)offsetof  // Offset in the direction of searching (offset=1 while searching backwards means start one char before x,y)
-            inContext:(FindContext*)context
-      multipleResults:(BOOL)multipleResults
-         absLineRange:(NSRange)absLineRange
-      forceMainScreen:(BOOL)forceMainScreen;
-
-// Save the position of the current find context (with the screen appended).
-- (void)saveFindContextAbsPos;
 
 // Return a human-readable dump of the screen contents.
 - (NSString*)debugString;
@@ -185,5 +165,5 @@
 - (NSArray<iTermKittyImageDraw *> *)kittyImageDraws;
 - (void)addSavedIntervalTreeObjects:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs
                            baseLine:(long long)baseLine;
-
+- (iTermSearchEngine *)searchEngine;
 @end

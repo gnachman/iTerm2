@@ -14,31 +14,11 @@
 
 @class FindContext;
 @class iTermExternalSearchResult;
+@class iTermSearchEngine;
 @class iTermSubSelection;
 @class SearchResult;
 
 @protocol iTermFindOnPageHelperDelegate <NSObject>
-
-// Actually perform a search.
-- (void)findOnPageSetFindString:(NSString*)aString
-               forwardDirection:(BOOL)direction
-                           mode:(iTermFindMode)mode
-                    startingAtX:(int)x
-                    startingAtY:(int)y
-                     withOffset:(int)offset
-                      inContext:(FindContext*)context
-                multipleResults:(BOOL)multipleResults
-                   absLineRange:(NSRange)absLineRange;
-
-// Save the absolute position in the find context.
-- (void)findOnPageSaveFindContextAbsPos;
-
-// Find more, fill in results.
-- (BOOL)continueFindAllResults:(NSMutableArray *)results
-                      rangeOut:(NSRange *)rangePtr
-                     inContext:(FindContext *)context
-                  absLineRange:(NSRange)absLineRange
-                 rangeSearched:(VT100GridAbsCoordRange *)rangeSearched;
 
 // Select a range.
 - (void)findOnPageSelectRange:(VT100GridCoordRange)range wrapped:(BOOL)wrapped;
@@ -110,7 +90,7 @@ typedef NS_ENUM(NSUInteger, FindCursorType) {
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
         withOffset:(int)offset
-           context:(FindContext *)findContext
+      searchEngine:(iTermSearchEngine *)searchEngine
      numberOfLines:(int)numberOfLines
 totalScrollbackOverflow:(long long)totalScrollbackOverflow
 scrollToFirstResult:(BOOL)scrollToFirstResult
@@ -120,7 +100,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)clearHighlights;
 
 // Reset the copied find context. This will prevent tail search from running in the future.
-- (void)resetCopiedFindContext;
+- (void)resetSearchEngine;
 
 // Erase the find cursor.
 - (void)resetFindCursor;
@@ -132,7 +112,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 // search results.
 - (BOOL)continueFind:(double *)progress
             rangeOut:(NSRange *)rangePtr
-             context:(FindContext *)context
                width:(int)width
        numberOfLines:(int)numberOfLines
   overflowAdjustment:(long long)overflowAdjustment;

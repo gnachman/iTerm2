@@ -2250,6 +2250,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return [self.delegate findDriverBottomUpValidateMenuItem:menuItem];
 }
 
+- (iTermSearchEngine *)findDriverSearchEngine {
+    return [self.delegate findDriverSearchEngine];
+}
+
 - (void)findDriverBottomUpPerformFindPanelAction:(id)sender {
     [self.delegate findDriverBottomUpPerformFindPanelAction:sender];
 }

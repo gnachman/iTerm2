@@ -109,6 +109,11 @@ typedef enum {
               @"modifyOther": iTermModifyOtherKeysMapperDictionary(_modifyOther, self.delegate) };
 }
 
+- (BOOL)wouldReportControlReturn { 
+    return YES;
+}
+
+
 - (iTermModifyOtherKeysMapper1KeyType)keyTypeForEvent:(NSEvent *)event {
     if (event.modifierFlags & NSEventModifierFlagFunction) {
         return iTermModifyOtherKeysMapper1KeyTypeFunction;

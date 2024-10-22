@@ -6,9 +6,8 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "LineBufferHelpers.h"
 #import "VT100GridTypes.h"
-
-@class ResultRange;
 
 #if __cplusplus
 extern "C"

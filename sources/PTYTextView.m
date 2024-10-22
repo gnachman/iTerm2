@@ -646,7 +646,6 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         DLog(@"Calling super.performKeyEquivalent");
         return [super performKeyEquivalent:theEvent];
     }
-    unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
 
     if ([_keyboardHandler performKeyEquivalent:theEvent inputContext:self.inputContext]) {
         return YES;
@@ -4335,51 +4334,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [_findOnPageHelper addSearchResult:searchResult width:[_dataSource width]];
 }
 
-- (FindContext *)findContext {
-    return _findOnPageHelper.copiedContext;
-}
-
 - (BOOL)continueFind:(double *)progress range:(NSRange *)rangePtr {
     return [_findOnPageHelper continueFind:progress
                                   rangeOut:rangePtr
-                                   context:[_dataSource findContext]
                                      width:[_dataSource width]
                              numberOfLines:[_dataSource numberOfLines]
                         overflowAdjustment:[_dataSource totalScrollbackOverflow] - [_dataSource scrollbackOverflow]];
-}
-
-- (BOOL)continueFindAllResults:(NSMutableArray *)results
-                      rangeOut:(NSRange *)rangePtr
-                     inContext:(FindContext *)context
-                  absLineRange:(NSRange)absLineRange
-                 rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
-    return [_dataSource continueFindAllResults:results
-                                      rangeOut:rangePtr
-                                     inContext:context
-                                  absLineRange:absLineRange
-                                 rangeSearched:rangeSearched];
-}
-
-- (void)findOnPageSetFindString:(NSString*)aString
-               forwardDirection:(BOOL)direction
-                           mode:(iTermFindMode)mode
-                    startingAtX:(int)x
-                    startingAtY:(int)y
-                     withOffset:(int)offset
-                      inContext:(FindContext*)context
-                multipleResults:(BOOL)multipleResults
-                   absLineRange:(NSRange)absLineRange {
-    DLog(@"begin self=%@ aString=%@ dataSource=%@", self, aString, _dataSource);
-    [_dataSource setFindString:aString
-              forwardDirection:direction
-                          mode:mode
-                   startingAtX:x
-                   startingAtY:y
-                    withOffset:offset
-                     inContext:context
-               multipleResults:multipleResults
-                  absLineRange:absLineRange
-               forceMainScreen:NO];
 }
 
 - (void)findOnPageHelperSearchExternallyFor:(NSString *)query mode:(iTermFindMode)mode {
@@ -4448,10 +4408,6 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return [self selectExternalSearchResult:result multiple:NO scroll:YES];
 }
 
-- (void)findOnPageSaveFindContextAbsPos {
-    [_dataSource saveFindContextAbsPos];
-}
-
 - (void)findOnPageDidWrapForwards:(BOOL)directionIsForwards {
     if (directionIsForwards) {
         [self beginFlash:kiTermIndicatorWrapToTop];
@@ -4505,10 +4461,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                  forwardDirection:direction
                              mode:mode
                        withOffset:offset
-                          context:[_dataSource findContext]
-                    numberOfLines:[_dataSource numberOfLines]
-          totalScrollbackOverflow:[_dataSource totalScrollbackOverflow]
-               scrollToFirstResult:scrollToFirstResult
+                     searchEngine:_dataSource.searchEngine
+                    numberOfLines:_dataSource.numberOfLines
+          totalScrollbackOverflow:_dataSource.totalScrollbackOverflow
+              scrollToFirstResult:scrollToFirstResult
                             force:force];
 }
 
@@ -4516,7 +4472,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     DLog(@"begin");
     [_findOnPageHelper clearHighlights];
     if (resetContext) {
-        [_findOnPageHelper resetCopiedFindContext];
+        [_findOnPageHelper resetSearchEngine];
     } else {
         [_findOnPageHelper removeAllSearchResults];
     }

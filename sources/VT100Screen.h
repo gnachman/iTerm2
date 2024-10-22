@@ -20,6 +20,7 @@
 @class iTermStringLine;
 @protocol iTermTemporaryDoubleBufferedGridControllerReading;
 @class LineBuffer;
+@class LineBufferPosition;
 @class IntervalTree;
 @class PTYTask;
 @protocol PortholeMarkReading;
@@ -37,6 +38,7 @@
 @protocol iTermFilterDestination;
 @protocol iTermMark;
 @class iTermSlownessDetector;
+@class iTermTerminalContentSnapshot;
 @class iTermTokenExecutor;
 
 // Key into dictionaryValue to get screen state.
@@ -117,7 +119,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 // Where the next tail-find needs to begin.
 @property (nonatomic) long long savedFindContextAbsPos;
-@property (nonatomic, strong) FindContext *findContext;
 @property (nonatomic, readonly) BOOL sendingIsBlocked;
 
 @property (nonatomic, readonly) BOOL isAtCommandPrompt;
@@ -128,13 +129,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 // Preserves the prompt, but erases screen and scrollback buffer.
 - (void)clearBuffer;
-
-// Save the position of the end of the scrollback buffer without the screen appended.
-- (void)storeLastPositionInLineBufferAsFindContextSavedPosition;
-
-// Restore the saved position into a passed-in find context (see saveFindContextAbsPos and
-// storeLastPositionInLineBufferAsFindContextSavedPosition).
-- (void)restoreSavedPositionToFindContext:(FindContext *)context;
 
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
                                               query:(NSString *)query
@@ -269,6 +263,8 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (long long)startAbsLineForBlock:(NSString *)blockID;
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
 - (long long)absLineNumberOfLastLineInLineBuffer;
+- (iTermTerminalContentSnapshot *)snapshotForcingPrimaryGrid:(BOOL)forcePrimary;
+- (LineBufferPosition *)positionForTailSearchOfScreen;
 
 @end
 

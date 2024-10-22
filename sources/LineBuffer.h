@@ -39,7 +39,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class LineBlock;
 @class LineBuffer;
-@class ResultRange;
 
 @protocol iTermLineBufferDelegate<NSObject>
 - (void)lineBufferDidDropLines:(LineBuffer * _Nonnull)lineBuffer;
@@ -290,6 +289,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // If the last block is non-empty, make a new block to avoid having to copy it on write.
 - (void)seal;
+- (void)forceSeal;
 
 // Ensure it's fast to append to the buffer.
 - (void)ensureLastBlockUncopied;

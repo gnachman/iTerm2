@@ -8,7 +8,10 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermFindDriver.h"
+#import "LineBufferHelpers.h"
 #import "VT100GridTypes.h"
+
+NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_OPTIONS(NSUInteger, FindOptions) {
     FindOptBackwards         = (1 << 0),
@@ -24,10 +27,8 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
     NotFound
 };
 
-@class ResultRange;
-
 @protocol iTermFindContextReading<NSObject>
-@property(nonatomic, strong, readonly) NSMutableArray<ResultRange *> *results;
+@property(nonatomic, strong, readonly, nullable) NSMutableArray<ResultRange *> *results;
 @property(nonatomic, readonly) BOOL hasWrapped;
 @property(nonatomic, readonly) double progress;
 @property(nonatomic, readonly) BOOL includesPartialLastLine;
@@ -35,11 +36,13 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 
 @interface FindContext : NSObject<iTermFindContextReading, NSCopying>
 
+@property (nonatomic, readonly) NSString *briefDescription;
+
 // Current absolute block number being searched.
 @property(nonatomic) int absBlockNum;
 
 // The substring to search for.
-@property(nonatomic, copy) NSString *substring;
+@property(nonatomic, copy, nullable) NSString *substring;
 
 // A bitwise OR of the options defined above.
 @property(nonatomic) FindOptions options;
@@ -66,7 +69,7 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 @property(nonatomic) int matchLength;
 
 // used for multiple results
-@property(nonatomic, strong, readwrite) NSMutableArray<ResultRange *> *results;
+@property(nonatomic, strong, readwrite, nullable) NSMutableArray<ResultRange *> *results;
 
 // for client use. Not read or written by LineBuffer.
 @property(nonatomic, readwrite) BOOL hasWrapped;
@@ -84,6 +87,7 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 
 // Search main, not alternate screen, even if in alternate screen mode.
 @property(nonatomic) BOOL forceMainScreen;
+@property(nonatomic) NSRange lastAbsPositionsSearched;
 
 - (void)copyFromFindContext:(FindContext *)other;
 
@@ -93,3 +97,5 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 - (FindContext *)copy;
 
 @end
+
+NS_ASSUME_NONNULL_END

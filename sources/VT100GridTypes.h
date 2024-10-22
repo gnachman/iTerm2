@@ -63,6 +63,7 @@ typedef struct {
 } VT100GridAbsWindowedRange;
 
 extern const VT100GridCoord VT100GridCoordInvalid;
+extern const VT100GridAbsCoord VT100GridAbsCoordInvalid;
 extern const VT100GridCoordRange VT100GridCoordRangeInvalid;
 
 @interface NSValue (VT100Grid)
@@ -182,6 +183,13 @@ NS_INLINE BOOL VT100GridRectEquals(VT100GridRect a, VT100GridRect b) {
             a.origin.y == b.origin.y &&
             a.size.width == b.size.width &&
             a.size.height == b.size.height);
+}
+
+NS_INLINE NSComparisonResult VT100GridCoordCompare(VT100GridCoord a, VT100GridCoord b) {
+    if (a.y != b.y) {
+        return [@(a.y) compare:@(b.y)];
+    }
+    return [@(a.x) compare:@(b.x)];
 }
 
 NS_INLINE BOOL VT100GridCoordEquals(VT100GridCoord a, VT100GridCoord b) {

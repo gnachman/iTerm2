@@ -199,7 +199,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (BOOL)blur;
 - (double)blurRadius;
 
-- (NSSize)_minSessionSize:(SessionView*)sessionView;
+- (NSSize)_minSessionSize:(SessionView*)sessionView respectPinning:(BOOL)respectPinning;
 - (NSSize)_sessionSize:(SessionView*)sessionView;
 
 // If the active session's parent splitview has:

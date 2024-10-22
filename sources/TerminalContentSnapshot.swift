@@ -18,7 +18,7 @@ class TerminalContentSnapshot: NSObject, iTermTextDataSource {
     func numberOfLines() -> Int32 {
         return _numberOfLines
     }
-    private let lineBuffer: LineBuffer
+    let lineBuffer: LineBuffer
     let cumulativeOverflow: Int64
 
     @objc

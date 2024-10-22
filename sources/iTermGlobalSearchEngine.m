@@ -8,14 +8,19 @@
 #import "iTermGlobalSearchEngine.h"
 
 #import "NSArray+iTerm.h"
+
 #import "NSTimer+iTerm.h"
 #import "PTYSession.h"
 #import "SearchResult.h"
 #import "VT100Screen.h"
+#import "VT100Screen+Search.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermGlobalSearchEngineCursor.h"
 #import "iTermGlobalSearchResult.h"
 #import "iTermTextExtractor.h"
+
+@interface iTermGlobalSearchEngine()<iTermSearchEngineDelegate>
+@end
 
 @implementation iTermGlobalSearchEngine {
     NSTimer *_timer;
@@ -30,7 +35,13 @@ static void iTermGlobalSearchEngineCursorInitialize(iTermGlobalSearchEngineCurso
                                                     PTYSession *session,
                                                     iTermGlobalSearchEngineCursorPass pass) {
     VT100Screen *screen = session.screen;
-    FindContext *findContext = [[FindContext alloc] init];
+    iTermSearchEngine *searchEngine = [[iTermSearchEngine alloc] initWithDataSource:nil syncDistributor:nil];
+    // Don't synchronize. Global search just searches a snapshot of state at the time it began.
+    searchEngine.automaticallySynchronize = NO;
+    searchEngine.dataSource = screen;
+    // Avoid blocking the main queue for too long
+    searchEngine.maxConsumeCount = 128;
+
     NSRange range;
     switch (pass) {
         case iTermGlobalSearchEngineCursorPassMainScreen: {
@@ -43,19 +54,19 @@ static void iTermGlobalSearchEngineCursorInitialize(iTermGlobalSearchEngineCurso
             range = NSMakeRange(0, 0);
             break;
     }
-    [screen setFindString:query
-         forwardDirection:NO
-                     mode:mode
-              startingAtX:0
-              startingAtY:screen.numberOfLines + 1 + screen.totalScrollbackOverflow
-               withOffset:0
-                inContext:findContext
-          multipleResults:YES
-             absLineRange:range
-          forceMainScreen:(pass == iTermGlobalSearchEngineCursorPassMainScreen)];
-    findContext.hasWrapped = YES;
+
+    iTermSearchRequest *request = [[iTermSearchRequest alloc] initWithQuery:query
+                                                                       mode:mode
+                                                                 startCoord:VT100GridCoordMake(0, screen.numberOfLines + 1)
+                                                                     offset:0
+                                                                    options:FindOptBackwards | FindMultipleResults
+                                                            forceMainScreen:(pass == iTermGlobalSearchEngineCursorPassMainScreen)
+                                                              startPosition:nil];
+    [request setAbsLineRange:range];
+    [searchEngine search:request];
+
     cursor.session = session;
-    cursor.findContext = findContext;
+    cursor.searchEngine = searchEngine;
     cursor.pass = pass;
     cursor.query = query;
     cursor.mode = mode;
@@ -85,6 +96,7 @@ static void iTermGlobalSearchEngineCursorInitialize(iTermGlobalSearchEngineCurso
             _expectedLines += session.screen.numberOfLines;
             iTermGlobalSearchEngineCursor *cursor = [[iTermGlobalSearchEngineCursor alloc] init];
             iTermGlobalSearchEngineCursorInitialize(cursor, query, mode, session, pass);
+            cursor.searchEngine.delegate = self;
             return cursor;
         }] mutableCopy];
         _timer = [NSTimer scheduledWeakTimerWithTimeInterval:0
@@ -94,6 +106,22 @@ static void iTermGlobalSearchEngineCursorInitialize(iTermGlobalSearchEngineCurso
                                                      repeats:YES];
     }
     return self;
+}
+
+// If this is a performance problem it can be removed.
+- (void)searchEngineWillPause:(iTermSearchEngine *)searchEngine {
+    for (iTermGlobalSearchEngineCursor *cursor in _cursors) {
+        if (cursor.searchEngine == searchEngine) {
+            [self drain:cursor];
+            return;
+        }
+    }
+}
+
+- (void)drain:(iTermGlobalSearchEngineCursor *)cursor {
+    while (cursor.searchEngine.havePendingResults) {
+        [self searchWithCursor:cursor];
+    }
 }
 
 - (void)stop {
@@ -162,14 +190,13 @@ static void iTermGlobalSearchEngineCursorInitialize(iTermGlobalSearchEngineCurso
 
 - (BOOL)searchWithCursor:(iTermGlobalSearchEngineCursor *)cursor {
     NSMutableArray<SearchResult *> *results = [NSMutableArray array];
-    NSString *query = [cursor.findContext.substring copy];
-    const iTermFindMode mode = cursor.findContext.mode;
+    NSString *query = [cursor.searchEngine.query copy];
+    const iTermFindMode mode = cursor.searchEngine.mode;
     NSRange range;
-    const BOOL more = [cursor.session.screen continueFindAllResults:results
-                                                           rangeOut:&range
-                                                          inContext:cursor.findContext
-                                                       absLineRange:NSMakeRange(0, 0)
-                                                      rangeSearched:NULL];
+    const BOOL more = [cursor.searchEngine continueFindAllResults:results
+                                                         rangeOut:&range
+                                                     absLineRange:NSMakeRange(0, 0)
+                                                    rangeSearched:NULL];
     iTermTextExtractor *extractor;
     switch (cursor.pass) {
         case iTermGlobalSearchEngineCursorPassCurrentScreen:
@@ -238,7 +265,7 @@ static void iTermGlobalSearchEngineCursorInitialize(iTermGlobalSearchEngineCurso
     double done = _retiredLines;
 
     for (iTermGlobalSearchEngineCursor *cursor in [_cursors arrayByAddingObject:additionalCursor]) {
-        done += cursor.findContext.progress * cursor.session.screen.numberOfLines;
+        done += cursor.searchEngine.progress * cursor.session.screen.numberOfLines;
     }
     return MIN(1, MAX(0, done / _expectedLines));
 }
