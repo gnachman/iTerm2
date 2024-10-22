@@ -62,6 +62,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     // If YES, we reset dirty on a shared grid and the grid must be merged regardless of its dirty bits.
     BOOL _forceMergeGrids;
+
+    iTermSyncDistributor *_syncDistributor;
 }
 
 @synthesize dvr = dvr_;
@@ -74,7 +76,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         _animatedLines = [[NSMutableIndexSet alloc] init];
         _state = [_mutableState copy];
         _mutableState.mainThreadCopy = _state;
-        _findContext = [[FindContext alloc] init];
+        _syncDistributor = [[iTermSyncDistributor alloc] init];
+        _searchEngine = [[iTermSearchEngine alloc] initWithDataSource:self syncDistributor:_syncDistributor];
 
         [iTermNotificationController sharedInstance];
 
@@ -88,9 +91,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [dvr_ release];
     [_state release];
     [_mutableState release];
-    [_findContext release];
     [_animatedLines release];
     [_searchBuffer release];
+    [_searchEngine release];
+    [_syncDistributor release];
 
     [super dealloc];
 }
@@ -156,10 +160,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return YES;
 }
 
-- (void)storeLastPositionInLineBufferAsFindContextSavedPosition {
-    [self storeLastPositionInLineBufferAsFindContextSavedPositionImpl];
-}
-
 - (VT100GridAbsCoord)commandStartCoord {
     return _state.commandStartCoord;
 }
@@ -180,9 +180,30 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                              height:(int)height
                        mutableState:(VT100ScreenMutableState *)mutableState {
     [self.delegate screenEnsureDefaultMode];
-    self.findContext.substring = nil;
+#warning This used to simply set the query to nil. Not sure if cancel is quite the same.
+    [_searchEngine cancel];
     [mutableState destructivelySetScreenWidth:MAX(width, kVT100ScreenMinColumns)
                                        height:MAX(height, kVT100ScreenMinRows)];
+}
+
+- (iTermSyncDistributor *)syncDistributor {
+    return _syncDistributor;
+}
+
+- (iTermTerminalContentSnapshot *)snapshotForcingPrimaryGrid:(BOOL)forcePrimary {
+    if (forcePrimary) {
+        return [[[iTermTerminalContentSnapshot alloc] initWithLineBuffer:_state.linebuffer
+                                                                    grid:_state.primaryGrid
+                                                      cumulativeOverflow:_state.cumulativeScrollbackOverflow] autorelease];
+    }
+    return [[[iTermTerminalContentSnapshot alloc] initWithLineBuffer:_state.linebuffer
+                                                                grid:_state.currentGrid
+                                                  cumulativeOverflow:_state.cumulativeScrollbackOverflow] autorelease];
+
+}
+
+- (LineBufferPosition *)positionForTailSearchOfScreen {
+    return _state.linebuffer.lastPosition;
 }
 
 #pragma mark - PTYTextViewDataSource
@@ -418,18 +439,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (int)lineNumberOfCursor {
     return _state.lineNumberOfCursor;
-}
-
-- (BOOL)continueFindAllResults:(NSMutableArray *)results
-                      rangeOut:(NSRange *)rangePtr
-                     inContext:(FindContext *)context
-                  absLineRange:(NSRange)absLineRange
-                 rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
-    return [self continueFindAllResultsImpl:results
-                                   rangeOut:rangePtr
-                                  inContext:context
-                               absLineRange:absLineRange
-                              rangeSearched:rangeSearched];
 }
 
 - (NSString *)debugString {
@@ -1146,10 +1155,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state penultimateCommandMark];
 }
 
-- (void)saveFindContextAbsPos {
-    [self saveFindContextAbsPosImpl];
-}
-
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
                                               query:(NSString *)query
                                            refining:(iTermAsyncFilter *)refining
@@ -1399,6 +1404,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     DLog(@"Begin %@", self);
     [self.delegate screenWillSynchronize];
     [mutableState willSynchronize];
+
+    id<iTermUnpauser> unpauser = [_syncDistributor pause];
+
     switch (checkTriggers) {
         case VT100ScreenTriggerCheckTypeNone:
             break;
@@ -1452,6 +1460,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         }
     }
     _wantsSearchBuffer = NO;
+    [unpauser unpause];
     [self.delegate screenDidSynchronize];
     [mutableState didSynchronize:resetOverflow];
     DLog(@"%@: End overflow=%@ haveScrolled=%@", self, @(overflow), @(_state.currentGrid.haveScrolled));
@@ -1567,31 +1576,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }];
 }
 
-
-- (void)restoreSavedPositionToFindContext:(FindContext *)context {
-    [self restoreSavedPositionToFindContextImpl:context];
-}
-
-- (void)setFindString:(NSString*)aString
-     forwardDirection:(BOOL)direction
-                 mode:(iTermFindMode)mode
-          startingAtX:(int)x
-          startingAtY:(int)y
-           withOffset:(int)offset
-            inContext:(FindContext*)context
-      multipleResults:(BOOL)multipleResults
-         absLineRange:(NSRange)absLineRange
-      forceMainScreen:(BOOL)forceMainScreen {
-    [self setFindStringImpl:aString
-           forwardDirection:direction
-                       mode:mode
-                startingAtX:x
-                startingAtY:y
-                 withOffset:offset
-                  inContext:context
-            multipleResults:multipleResults
-               absLineRange:absLineRange
-            forceMainScreen:forceMainScreen];
+- (iTermSearchEngine *)searchEngine {
+    return _searchEngine;
 }
 
 - (void)addNote:(PTYAnnotation *)note

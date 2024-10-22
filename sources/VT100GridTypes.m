@@ -2,6 +2,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+const VT100GridAbsCoord VT100GridAbsCoordInvalid = {
+    .x = INT_MIN,
+    .y = LONG_LONG_MIN
+};
+
 const VT100GridCoord VT100GridCoordInvalid = {
     .x = INT_MIN,
     .y = INT_MIN

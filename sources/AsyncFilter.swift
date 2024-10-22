@@ -224,7 +224,7 @@ class FilteringUpdater: HexAddressFormatting {
                 }
                 lastY = range.yEnd
             }
-            context.results.removeAllObjects()
+            context.results?.removeAllObjects()
         case .Searching, .NotFound:
             DLog("\(hexAddress): FilteringUpdater: update: status != Matched")
             break

@@ -415,9 +415,6 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 // An absolute scroll position which won't change as lines in history are dropped.
 @property(nonatomic, readonly) long long absoluteScrollPosition;
 
-// Returns the current find context, or one initialized to empty.
-@property(nonatomic, readonly) FindContext *findContext;
-
 // Indicates if the "find cursor" mode is active.
 @property(nonatomic, readonly) BOOL isFindingCursor;
 

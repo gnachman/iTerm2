@@ -9,7 +9,6 @@
 #import "iTermFindOnPageHelper.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "DebugLogging.h"
-#import "FindContext.h"
 #import "iTermSelection.h"
 #import "iTermMutableOrderedSet.h"
 #import "SearchResult.h"
@@ -44,8 +43,7 @@ typedef struct {
 } iTermFindOnPageCachedCounts;
 
 @implementation iTermFindOnPageHelper {
-    // Find context just after initialization.
-    FindContext *_copiedContext;
+    iTermSearchEngine *_searchEngine;
 
     // Is a find currently executing?
     BOOL _findInProgress;
@@ -92,7 +90,6 @@ typedef struct {
     self = [super init];
     if (self) {
         _highlightMap = [[NSMutableDictionary alloc] init];
-        _copiedContext = [[FindContext alloc] init];
         _locations = [[NSMutableIndexSet alloc] init];
         _findCursor = [[FindCursor alloc] init];
     }
@@ -154,7 +151,7 @@ typedef struct {
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
         withOffset:(int)offset
-           context:(FindContext *)findContext
+      searchEngine:(iTermSearchEngine *)searchEngine
      numberOfLines:(int)numberOfLines
     totalScrollbackOverflow:(long long)totalScrollbackOverflow
 scrollToFirstResult:(BOOL)scrollToFirstResult 
@@ -178,7 +175,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         // Begin a brand new search.
         self.selectedResult = nil;
         if (_findInProgress) {
-            [findContext reset];
+            [searchEngine cancel];
         }
 
         // Search backwards from the end. This is slower than searching
@@ -207,19 +204,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             }
         }
         DLog(@"Start search at %@", VT100GridCoordDescription(startCoord));
-        [_delegate findOnPageSetFindString:aString
-                          forwardDirection:NO
-                                      mode:mode
-                               startingAtX:startCoord.x
-                               startingAtY:startCoord.y
-                                withOffset:0
-                                 inContext:findContext
-                           multipleResults:YES
-                              absLineRange:self.absLineRange];
 
-        [_copiedContext copyFromFindContext:findContext];
-        _copiedContext.results = nil;
-        [_delegate findOnPageSaveFindContextAbsPos];
+        [searchEngine setFindString:aString
+                   forwardDirection:NO
+                               mode:mode
+                        startingAtX:startCoord.x
+                        startingAtY:startCoord.y
+                         withOffset:0
+                    multipleResults:YES
+                       absLineRange:self.absLineRange
+                    forceMainScreen:NO
+                      startPosition:nil];
+        _searchEngine = searchEngine;
         _findInProgress = YES;
 
         // Reset every bit of state.
@@ -261,8 +257,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [_delegate findOnPageHelperRequestRedraw];
 }
 
-- (void)resetCopiedFindContext {
-    _copiedContext.substring = nil;
+- (void)resetSearchEngine {
+    [_searchEngine cancel];
 }
 
 - (void)resetFindCursor {
@@ -277,7 +273,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 //   the current selection and flip _searchingForNextResult to false.
 - (BOOL)continueFind:(double *)progress
             rangeOut:(NSRange *)rangePtr
-             context:(FindContext *)context
                width:(int)width
        numberOfLines:(int)numberOfLines
   overflowAdjustment:(long long)overflowAdjustment {
@@ -288,12 +283,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     NSMutableArray<SearchResult *> *newSearchResults = [NSMutableArray array];
     if (_findInProgress) {
         // Collect more results.
-        more = [_delegate continueFindAllResults:newSearchResults
+        more = [_searchEngine continueFindAllResults:newSearchResults
                                         rangeOut:rangePtr
-                                       inContext:context
                                     absLineRange:self.absLineRange
                                    rangeSearched:NULL];
-        *progress = [context progress];
+        *progress = [_searchEngine progress];
     } else {
         *progress = 1;
     }

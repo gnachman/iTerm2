@@ -117,6 +117,7 @@
 #import "SCPPath.h"
 #import "ScreenChar.h"
 #import "ScreenCharArray.h"
+#import "SearchResult.h"
 #import "ToastWindowController.h"
 #import "TokenExecutorHelpers.h"
 #import "Trigger.h"

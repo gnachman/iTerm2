@@ -1,49 +1,11 @@
 //
 //  VT100Screen+Search.h
-//  iTerm2SharedARC
+//  iTerm2
 //
-//  Created by George Nachman on 1/16/22.
+//  Created by George Nachman on 10/20/24.
 //
 
-#import "VT100Screen.h"
+#import "iTerm2SharedARC-Swift.h"
 
-@class FindContext;
-@class SearchResult;
-
-NS_ASSUME_NONNULL_BEGIN
-
-@interface VT100Screen (Search)
-
-- (void)setFindStringImpl:(NSString*)aString
-         forwardDirection:(BOOL)direction
-                     mode:(iTermFindMode)mode
-              startingAtX:(int)x
-              startingAtY:(int)y
-               withOffset:(int)offset
-                inContext:(FindContext *)context
-          multipleResults:(BOOL)multipleResults
-             absLineRange:(NSRange)absLineRange
-          forceMainScreen:(BOOL)forceMainScreen;
-
-- (BOOL)continueFindAllResultsImpl:(NSMutableArray<SearchResult *> *)results
-                          rangeOut:(NSRange *)rangePtr
-                         inContext:(FindContext *)context
-                      absLineRange:(NSRange)absLineRange
-                     rangeSearched:(VT100GridAbsCoordRange *)rangeSearched;
-
-#pragma mark - Tail Find
-
-// Save the position of the current search so that tail find can later begin from here.
-- (void)saveFindContextAbsPosImpl;
-
-
-// For tail find. Updates the find context with the saved start location.
-- (void)restoreSavedPositionToFindContextImpl:(FindContext *)context;
-
-// Record the location of the last position in the buffer so that later on tail find can begin from
-// that point.
-- (void)storeLastPositionInLineBufferAsFindContextSavedPositionImpl;
-
+@interface VT100Screen(Search)<iTermSearchEngineDataSource>
 @end
-
-NS_ASSUME_NONNULL_END

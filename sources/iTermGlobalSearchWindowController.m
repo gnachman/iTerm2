@@ -127,19 +127,24 @@
     }
     NSIndexSet *indexes = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(sessionResults.count, results.count)];
     [sessionResults addObjectsFromArray:results];
+    BOOL expand = NO;
     if (isNew) {
         const NSUInteger i = [self.sortedNonEmptyResultSessionGUIDs indexOfObject:session.guid];
         if (i != NSNotFound) {
             [_outlineView insertItemsAtIndexes:[NSIndexSet indexSetWithIndex:i]
                                       inParent:nil
                                  withAnimation:NO];
+            expand = YES;
         }
     }
     [_outlineView insertItemsAtIndexes:indexes
                               inParent:session.guid
                          withAnimation:NO];
-    [_outlineView expandItem:session.guid expandChildren:YES];
+    if (expand) {
+        [_outlineView expandItem:session.guid expandChildren:YES];
+    }
     [_outlineView endUpdates];
+    [_searchField setNeedsDisplay:YES];
 }
 
 static double Square(double n) {

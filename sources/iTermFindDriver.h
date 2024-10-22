@@ -7,8 +7,10 @@
 
 #import <Cocoa/Cocoa.h>
 #import "iTermFindViewController.h"
+#import "FindContext.h"
 
 @class FindViewController;
+@class iTermSearchEngine;
 
 @protocol iTermFindDriverDelegate <NSObject>
 
@@ -68,6 +70,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)findDriverFilterVisibilityDidChange:(BOOL)visible;
 - (void)findDriverBottomUpPerformFindPanelAction:(id)sender;
 - (BOOL)findDriverBottomUpValidateMenuItem:(NSMenuItem *)menuItem;
+- (iTermSearchEngine *)findDriverSearchEngine;
 
 @end
 

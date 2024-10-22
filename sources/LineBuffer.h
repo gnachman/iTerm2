@@ -39,7 +39,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class LineBlock;
 @class LineBuffer;
-@class ResultRange;
 
 @protocol iTermLineBufferDelegate<NSObject>
 - (void)lineBufferDidDropLines:(LineBuffer * _Nonnull)lineBuffer;
@@ -144,6 +143,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (LineBufferPosition * _Nullable)positionForCoordinate:(VT100GridCoord)coord
                                                   width:(int)width
                                                  offset:(int)offset;
+- (void)clampFindContext:(FindContext *)findContext;
 
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition * _Nonnull)position
                                   width:(int)width
@@ -159,7 +159,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (LineBufferPosition * _Nonnull)positionForStartOfLastLineBeforePosition:(LineBufferPosition *)limit;
 - (LineBufferPosition * _Nonnull)positionForStartOfResultRange:(ResultRange *)resultRange;
-
+- (LineBufferPosition * _Nullable)positionForStartOfBlock:(int)absBlockNum;
+- (LineBufferPosition * _Nullable)positionForEndOfBlock:(int)absBlockNum;
+- (int)numberOfBlocks;
 // Convert the block,offset in a findcontext into an absolute position.
 - (long long)absPositionOfFindContext:(FindContext * _Nonnull)findContext;
 // Convert an absolute position into a position.
@@ -202,6 +204,12 @@ NS_ASSUME_NONNULL_BEGIN
 // If the last line has a hard eol, this is 0.
 // Otherwise it is the number of wrapped lines up to the preceding hard eol.
 - (int)numberOfWrappedLinesAtPartialEndforWidth:(int)width;
+- (long long)generationForAbsBlockNumber:(int)absBlockNum;
+
+- (int)enumerateBlocksForward:(BOOL)forward
+                      closure:(void (^NS_NOESCAPE)(int absBlockNum, long long generation, BOOL *stop))closure
+__attribute__((swift_name("enumerateBlocks(forward:closure:)")));
+- (LineBlock * _Nonnull)copyOfLastBlock;
 
 @end
 
@@ -290,6 +298,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // If the last block is non-empty, make a new block to avoid having to copy it on write.
 - (void)seal;
+- (void)forceSeal;
 
 // Ensure it's fast to append to the buffer.
 - (void)ensureLastBlockUncopied;

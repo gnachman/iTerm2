@@ -335,9 +335,16 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (NSString *)dumpString {
     NSMutableArray<NSString *> *strings = [NSMutableArray array];
     int i;
+    long long pos = droppedChars;
     for (i = 0; i < _lineBlocks.count; ++i) {
         [strings addObject:@""];
-        [strings addObject:[NSString stringWithFormat:@"-- BEGIN BLOCK %d (abs %d) --", i, i + num_dropped_blocks]];
+        const int rawSpaceUsed = [_lineBlocks[i] rawSpaceUsed];
+        [strings addObject:[NSString stringWithFormat:@"-- BEGIN BLOCK %d (abs block number %d, abs-position %@, raw size %@) --",
+                            i,
+                            i + num_dropped_blocks,
+                            @(pos),
+                            @(rawSpaceUsed)]];
+        pos += rawSpaceUsed;
         [strings addObject:[_lineBlocks[i] dumpStringWithDroppedChars:droppedChars]];
     }
     return [strings componentsJoinedByString:@"\n"];
@@ -1080,6 +1087,8 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
     // NSLog(@"search block %d starting at offset %d", context.absBlockNum - num_dropped_blocks, context.offset);
 
+    const NSRange blockAbsolutePositions = NSMakeRange([self absPositionOfAbsBlock:blockIndex + num_dropped_blocks],
+                                                       block.rawSpaceUsed);
     BOOL includesPartialLastLine = NO;
     [block findSubstring:context.substring
                  options:context.options
@@ -1088,6 +1097,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                  results:context.results
          multipleResults:((context.options & FindMultipleResults) != 0)
  includesPartialLastLine:&includesPartialLastLine];
+    context.lastAbsPositionsSearched = blockAbsolutePositions;
     context.includesPartialLastLine = includesPartialLastLine && (blockIndex + 1 == numBlocks);
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
@@ -1095,8 +1105,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     const int blockSize = _lineBlocks.blocks[blockIndex].rawSpaceUsed;  // TODO: Is this right when lines are dropped?
     const int stopAt = stopPosition.absolutePosition - droppedChars;
     if (context.dir > 0 && blockPosition >= stopAt) {
+        DLog(@"status<-NotFound because dir>0, blockPosition(%@)>=stopAt(%@)", @(blockPosition), @(stopAt));
         context.status = NotFound;
     } else if (context.dir < 0 && blockPosition + blockSize < stopAt) {
+        DLog(@"status<-NotFound because dir<0, blockPosition(%@)+blockSize(%@)<stopAt(%@)", @(blockPosition), @(blockSize), @(stopAt));
         context.status = NotFound;
     } else {
         for (ResultRange* range in context.results) {
@@ -1127,7 +1139,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 // Returns an array of XRange values
-- (NSArray *)convertPositions:(NSArray<ResultRange *> *)resultRanges withWidth:(int)width {
+- (NSArray<XYRange *> *)convertPositions:(NSArray<ResultRange *> *)resultRanges withWidth:(int)width {
     return [self convertPositions:resultRanges expandedResultRanges:nil withWidth:width];
 }
 
@@ -1420,6 +1432,15 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return coord;
 }
 
+- (void)clampFindContext:(FindContext *)findContext {
+    if (findContext.absBlockNum >= self.numberOfDroppedBlocks + _lineBlocks.count) {
+        findContext.absBlockNum = self.numberOfDroppedBlocks + _lineBlocks.count - 1;
+    }
+    if (findContext.absBlockNum < self.numberOfDroppedBlocks) {
+        findContext.absBlockNum = self.numberOfDroppedBlocks;
+    }
+}
+
 - (LineBufferPosition *)firstPosition {
     LineBufferPosition *position = [LineBufferPosition position];
     position.absolutePosition = droppedChars;
@@ -1439,6 +1460,74 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         return [self lastPosition];
     }
     return [[self lastPosition] predecessor];
+}
+
+- (int)numberOfBlocks {
+    return _lineBlocks.count;
+}
+
+- (LineBlock * _Nonnull)copyOfLastBlock {
+    return [_lineBlocks.lastBlock cowCopy];
+}
+
+- (int)enumerateBlocksForward:(BOOL)forward
+                      closure:(void (^NS_NOESCAPE)(int absBlockNum, long long generation, BOOL *stop))closure {
+    int start;
+    int end;
+    int stride;
+    if (forward) {
+        start = 0;
+        end = _lineBlocks.count;
+        stride = 1;
+    } else {
+        start = _lineBlocks.count - 1;
+        end = -1;
+        stride = -1;
+    }
+
+    int last = end + num_dropped_blocks - stride;
+
+    for (int i = start; i != end; i+= stride) {
+        BOOL stop = NO;
+        closure(i + num_dropped_blocks, _lineBlocks[i].generation, &stop);
+        if (stop) {
+            last = i + num_dropped_blocks;
+            break;
+        }
+    }
+
+    return last;
+}
+
+- (LineBufferPosition *)positionForStartOfBlock:(int)absBlockNum {
+    if (absBlockNum < num_dropped_blocks) {
+        return nil;
+    }
+    if (absBlockNum >= num_dropped_blocks + _lineBlocks.count) {
+        return nil;
+    }
+    const int index = absBlockNum - num_dropped_blocks;
+    const long long absolutePosition = droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, index)];
+
+    LineBufferPosition *result = [LineBufferPosition position];
+    result.absolutePosition = absolutePosition;
+    result.yOffset = 0;
+    result.extendsToEndOfLine = NO;
+    return result;
+}
+
+- (LineBufferPosition *)positionForEndOfBlock:(int)absBlockNum {
+    if (absBlockNum < num_dropped_blocks) {
+        return nil;
+    }
+    if (absBlockNum >= num_dropped_blocks + _lineBlocks.count) {
+        return nil;
+    }
+    LineBufferPosition *position = [self positionForStartOfBlock:absBlockNum + 1];
+    if (position) {
+        return position;
+    }
+    return [self lastPosition];
 }
 
 - (LineBufferPosition * _Nonnull)positionForStartOfResultRange:(ResultRange *)resultRange {
@@ -1822,6 +1911,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     [self _addBlockOfSize:block_size];
 }
 
+- (void)forceSeal {
+    assert(!_lineBlocks.lastBlock.hasPartial);
+    assert(_lineBlocks.lastBlock != nil);
+    assert(!_lineBlocks.lastBlock.isEmpty);
+    self.dirty = YES;
+    [self _addBlockOfSize:block_size];
+}
+
 - (void)forceMergeFrom:(LineBuffer *)source {
     source.dirty = YES;
     [self mergeFrom:source];
@@ -1963,6 +2060,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         return limit - 1;
     }
     return unsafe;
+}
+
+- (long long)generationForAbsBlockNumber:(int)absBlockNum {
+    if (absBlockNum < num_dropped_blocks || absBlockNum >= _lineBlocks.count + num_dropped_blocks) {
+        return -1;
+    }
+    LineBlock *block = _lineBlocks[absBlockNum - num_dropped_blocks];
+    return block.generation;
 }
 
 - (NSInteger)numberOfCellsUsedInWrappedLineRange:(VT100GridRange)wrappedLineRange

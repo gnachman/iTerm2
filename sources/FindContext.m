@@ -41,6 +41,7 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
     self = [super init];
     if (self) {
         maxTime_ = kDefaultMaxTime;
+        _lastAbsPositionsSearched = NSMakeRange(0, 0);
     }
     return self;
 }
@@ -51,9 +52,14 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
     [super dealloc];
 }
 
+- (NSString *)briefDescription {
+    return [NSString stringWithFormat:@"<%@: %p absBlockNum=%@ substring=%@ options=%@ dir=%@ offset=%@ stopAt=%@ status=%@ matchLength=%@ results.count=%@ hasWrapped=%@ maxTime=%@ searched=%@>",
+            self.class, self, @(absBlockNum_), substring_, @(options_), @(dir_), @(offset_), @(stopAt_), @(status_), @(matchLength_), @(results_.count), @(hasWrapped_), @(maxTime_), NSStringFromRange(_lastAbsPositionsSearched)];
+}
+
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p absBlockNum=%@ substring=%@ options=%@ dir=%@ offset=%@ stopAt=%@ status=%@ matchLength=%@ results=%@ hasWrapped=%@ maxTime=%@>",
-            self.class, self, @(absBlockNum_), substring_, @(options_), @(dir_), @(offset_), @(stopAt_), @(status_), @(matchLength_), results_, @(hasWrapped_), @(maxTime_)];
+    return [NSString stringWithFormat:@"<%@: %p absBlockNum=%@ substring=%@ options=%@ dir=%@ offset=%@ stopAt=%@ status=%@ matchLength=%@ results=%@ hasWrapped=%@ maxTime=%@ searched=%@>",
+            self.class, self, @(absBlockNum_), substring_, @(options_), @(dir_), @(offset_), @(stopAt_), @(status_), @(matchLength_), results_, @(hasWrapped_), @(maxTime_), NSStringFromRange(_lastAbsPositionsSearched)];
 }
 
 - (void)copyFromFindContext:(FindContext *)other {
@@ -69,6 +75,7 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
     self.results = other.results;
     self.hasWrapped = other.hasWrapped;
     self.maxTime = other.maxTime;
+    self.lastAbsPositionsSearched = other.lastAbsPositionsSearched;
 }
 
 - (void)reset {

@@ -1800,12 +1800,12 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
 
     // Consumed the whole buffer.
+    *charsDropped = [self rawSpaceUsed];
     [_metadataArray reset];
     cached_numlines_width = -1;
     cll_entries = 0;
     [self setBufferStartOffset:0];
     _firstEntry = 0;
-    *charsDropped = [self rawSpaceUsed];
     iTermLineBlockDidChange(self, "drop lines");
     assert(_metadataArray.first == _firstEntry);
     assert(_metadataArray.numEntries == cll_entries);
@@ -2063,7 +2063,7 @@ static int CoreSearch(NSString *needle,
             apiOptions = static_cast<RKLRegexOptions>(apiOptions | NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch);
         }
         if ((options & FindOptEmptyQueryMatches) == FindOptEmptyQueryMatches && needle.length == 0) {
-            range = NSMakeRange(0, 0);
+            range = haystackRange;
         } else {
             SearchLog(@"Search subrange %@ of haystack %@", NSStringFromRange(haystackRange), [entireHaystack asciified]);
             const NSRange foundRange = [entireHaystack rangeOfString:needle options:apiOptions range:haystackRange];
@@ -2085,9 +2085,11 @@ static int CoreSearch(NSString *needle,
         SearchLog(@"adjustedLocation(%@) = range.location(%@) + haystackRange.location(%@) + deltas[range.location](%@)",
               @(adjustedLocation), @(range.location), @(haystackRange.location), @(deltas[range.location]));
 
-        const int adjustedLength = range.length + deltas[MAX(range.location, NSMaxRange(range) - 1)] - deltas[range.location];
+        const NSInteger di = MAX(range.location,
+                                 ((NSInteger)NSMaxRange(range)) - 1);
+        const int adjustedLength = range.length + deltas[di] - deltas[range.location];
         SearchLog(@"adjustedLength(%@) = range.length(%@) + deltas[range.upperBound](%@) - deltas[range.location](%@)",
-              @(adjustedLength), @(range.length), @(deltas[NSMaxRange(range)]), @(deltas[range.location]));
+                  @(adjustedLength), @(range.length), @(deltas[NSMaxRange(range)]), @(deltas[range.location]));
         *resultLength = adjustedLength;
         result = adjustedLocation;
     }
@@ -2392,7 +2394,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
         offset = [self rawSpaceUsed] - 1;
     }
     NSArray<NSString *> *splitLines = nil;
-    if (mode & FindOptMultiLine) {
+    if (options & FindOptMultiLine) {
         // The purpose of the find option is to avoid having to do this in the normal case.
         splitLines = [substring componentsSeparatedByString:@"\n"];
     }
@@ -2429,6 +2431,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
             assert(splitLines.count > 1);
             numberOfQueryLines = splitLines.count;
             if (entry + splitLines.count <= cll_entries) {
+#warning TODO: Support searching over multiple blocks
                 DLog(@"There are enough lines in the buffer to match the lines of substring.");
                 MutableResultRange *multiLineRange = nil;
 

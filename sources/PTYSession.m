@@ -185,6 +185,7 @@
 #import "VT100DCSParser.h"
 #import "VT100RemoteHost.h"
 #import "VT100Screen.h"
+#import "VT100Screen+Search.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
 #import "VT100ScreenMutableState.h"
@@ -417,7 +418,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     // Does the terminal think this session is focused?
     BOOL _focused;
 
-    FindContext *_tailFindContext;
+    iTermSearchEngine *_tailFindSearchEngine;
     NSTimer *_tailFindTimer;
     // A one-shot tail find runs even though the find view is invisible. Once it's done searching,
     // it doesn't restart itself until the user does cmd-g again. See issue 9964.
@@ -754,7 +755,10 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         };
 
         _tmuxSecureLogging = NO;
-        _tailFindContext = [[FindContext alloc] init];
+        assert(_screen.syncDistributor != nil);
+        _tailFindSearchEngine = [[iTermSearchEngine alloc] initWithDataSource:_screen
+                                                              syncDistributor:_screen.syncDistributor];
+        _tailFindSearchEngine.dataSource = _screen;
         _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
@@ -963,7 +967,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_upload release];
     [_shell release];
     [_screen release];
-    [_tailFindContext release];
+    [_tailFindSearchEngine release];
     [_patternedImage release];
     [_announcements release];
     [_variables release];
@@ -2312,13 +2316,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateMetalDriver];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
                                                     iTermVariableKeySessionRows: @(_screen.height) }];
-}
-
-- (void)startTailFindIfVisible {
-    if (!_tailFindTimer &&
-        [_delegate sessionBelongsToVisibleTab]) {
-        [self beginContinuousTailFind];
-    }
 }
 
 - (Profile *)profileForSplit {
@@ -6880,6 +6877,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return [_textview validateMenuItem:menuItem];
 }
 
+- (iTermSearchEngine *)findDriverSearchEngine {
+    return _screen.searchEngine;
+}
+
 - (void)findDriverFilterVisibilityDidChange:(BOOL)visible {
     if (!visible) {
         [_asyncFilter cancel];
@@ -7632,7 +7633,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     // and a search was performed in the find window (vs select+cmd-e+cmd-f).
     return (!_tailFindTimer &&
             !_view.findViewIsHidden &&
-            [_textview findContext].substring != nil);
+            _screen.searchEngine.hasRequest);
 }
 
 - (void)hideSession {
@@ -10382,10 +10383,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }];
     }
 
-    // Remove the tail-find timer so that a new tail find can begin. This is necessary so that
-    // shouldSEndContentsChangedNotification will return YES.
-    [_tailFindTimer invalidate];
-    _tailFindTimer = nil;
+    // I used to remove the tail-find timer here (commit 86477b98076802412a9a02c4b88ca1ee4b5b4d66) but I'm not quite sure why.
+    // I do see that I wanted to start a new search since things had changed, but I'm not
+    // convinced that it's the best solution. It certainly doesn't work well with the
+    // async search engine, which can fail to make progress when it is constantly restarted.
+#warning TODO: Make sure the updated grid gets searched for tail find
 }
 
 - (void)textViewBeginDrag
@@ -12075,17 +12077,26 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }];
 }
 
+#pragma mark - Tail find
+
+- (void)startTailFindIfVisible {
+    if (!_tailFindTimer &&
+        [_delegate sessionBelongsToVisibleTab]) {
+        [self beginContinuousTailFind];
+    }
+}
+
 - (void)continueTailFind {
     NSMutableArray<SearchResult *> *results = [NSMutableArray array];
     BOOL more;
     VT100GridAbsCoordRange rangeSearched = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     NSRange ignore;
-    more = [_screen continueFindAllResults:results
-                                  rangeOut:&ignore
-                                 inContext:_tailFindContext
-                              absLineRange:_textview.findOnPageHelper.absLineRange
-                             rangeSearched:&rangeSearched];
-    DLog(@"Continue tail find found %@ results, more=%@", @(results.count), @(more));
+    DLog(@"Continue tail find");
+    more = [_tailFindSearchEngine continueFindAllResults:results
+                                                rangeOut:&ignore
+                                            absLineRange:_textview.findOnPageHelper.absLineRange
+                                           rangeSearched:&rangeSearched];
+    DLog(@"Continue tail find found %@ results, last is %@, more=%@", @(results.count), results.lastObject, @(more));
     if (VT100GridAbsCoordRangeIsValid(rangeSearched)) {
         [_textview removeSearchResultsInRange:rangeSearched];
     }
@@ -12105,7 +12116,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     } else {
         DLog(@"tailfind is all done");
         // Update the saved position to just before the screen.
-        [_screen storeLastPositionInLineBufferAsFindContextSavedPosition];
+        _screen.searchEngine.lastStartPosition = _tailFindSearchEngine.lastLocationSearched ?: _screen.searchEngine.lastEndOfBufferPosition;
+        [_tailFindTimer invalidate];
         _tailFindTimer = nil;
         _performingOneShotTailFind = NO;
     }
@@ -12130,25 +12142,27 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)beginTailFindImpl {
     DLog(@"beginTailFindImpl");
-    FindContext *findContext = [_textview findContext];
-    if (!findContext.substring) {
+    if (!_screen.searchEngine.hasRequest) {
         return NO;
     }
     DLog(@"Begin tail find");
-    [_screen setFindString:findContext.substring
-          forwardDirection:YES
-                      mode:findContext.mode
-               startingAtX:0
-               startingAtY:0
-                withOffset:0
-                 inContext:_tailFindContext
-           multipleResults:YES
-              absLineRange:_textview.findOnPageHelper.absLineRange
-           forceMainScreen:NO];
-
     // Set the starting position to the block & offset that the backward search
     // began at. Do a forward search from that location.
-    [_screen restoreSavedPositionToFindContext:_tailFindContext];
+    LineBufferPosition *start = _screen.searchEngine.lastStartPosition;
+    LineBufferPosition *candidate = [_screen positionForTailSearchOfScreen];
+    if (!start || [start compare:candidate] == NSOrderedDescending) {
+        start = candidate;
+    }
+    [_tailFindSearchEngine setFindString:_screen.searchEngine.query
+                        forwardDirection:YES
+                                    mode:_screen.searchEngine.mode
+                             startingAtX:0
+                             startingAtY:0
+                              withOffset:0
+                         multipleResults:YES
+                            absLineRange:_textview.findOnPageHelper.absLineRange
+                         forceMainScreen:NO
+                           startPosition:start];
     [self continueTailFind];
     return YES;
 }
@@ -12167,12 +12181,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)stopTailFind
 {
-    if (_tailFindTimer) {
-        _tailFindContext.substring = nil;
-        _tailFindContext.results = nil;
-        [_tailFindTimer invalidate];
-        _tailFindTimer = nil;
-    }
+    DLog(@"stop tail find");
+    [_tailFindSearchEngine cancel];
+    [_tailFindTimer invalidate];
+    _tailFindTimer = nil;
 }
 
 - (void)printTmuxMessage:(NSString *)message {
@@ -13933,7 +13945,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     } else {
         self.defaultPointer = f();
     }
-    NSLog(@"invalidateCursorRectsForView");
+    DLog(@"invalidateCursorRectsForView");
     [_textview.window invalidateCursorRectsForView:_textview];
     [_textview updateCursor:[NSApp currentEvent]];
 }
