@@ -46,6 +46,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)alertTriggerRateLimit;
 + (BOOL)alertsIndicateShortcuts;
 + (BOOL)allowDragOfTabIntoNewWindow;
++ (BOOL)allowDragOnAddTabButton;
 + (BOOL)allowIdempotentTriggers;
 + (BOOL)allowInteractiveSwipeBetweenTabs;
 + (BOOL)allowTabbarInTitlebarAccessoryBigSur;

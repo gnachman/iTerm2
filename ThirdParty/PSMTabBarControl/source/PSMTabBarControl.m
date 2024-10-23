@@ -406,6 +406,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     }
     [self unregisterDraggedTypes];
     [self registerForDraggedTypes:types];
+    _addTabButton.allowDrags = [object tabViewShouldAllowDragOnAddTabButton:_tabView];
 }
 
 - (NSString *)styleName {
@@ -1510,6 +1511,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 - (void)mouseDragged:(NSEvent *)theEvent
 {
     if ([self lastMouseDownEvent] == nil) {
+        if (!_addTabButton.allowDrags) {
+            [super mouseDragged:theEvent];
+        }
         return;
     }
     if (!_haveInitialDragLocation) {

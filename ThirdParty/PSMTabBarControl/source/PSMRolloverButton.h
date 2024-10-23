@@ -10,6 +10,8 @@
 
 @interface PSMRolloverButton : NSButton
 
+@property (nonatomic) BOOL allowDrags;
+
 // the regular image
 - (void)setUsualImage:(NSImage *)newImage;
 - (NSImage *)usualImage;

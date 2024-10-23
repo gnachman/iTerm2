@@ -273,6 +273,7 @@ DEFINE_BOOL(navigatePanesInReadingOrder, YES, SECTION_TABS @"Next Pane and Previ
 DEFINE_FLOAT(tabAutoShowHoldTime, 1.0, SECTION_TABS @"How long in seconds to show tabs in fullscreen.\nThe tab bar appears briefly in fullscreen when the number of tabs changes or you switch tabs. This setting gives the time in seconds for it to remain visible.");
 DEFINE_FLOAT(tabFlashAnimationDuration, 0.25, SECTION_TABS @"Animation duration for fade in/out animation of tabs in full screen, in seconds.")
 DEFINE_BOOL(allowDragOfTabIntoNewWindow, YES, SECTION_TABS @"Allow a tab to be dragged and dropped outside any existing tab bar to create a new window.");
+DEFINE_BOOL(allowDragOnAddTabButton, YES, SECTION_TABS @"Allow dragging window by the Add Tab button in the tab bar?");
 DEFINE_INT(minimumTabDragDistance, 10, SECTION_TABS @"How far must the mouse move before a tab drag is initiated?\nYou must restart iTerm2 after changing this setting for it to take effect.");
 DEFINE_BOOL(tabTitlesUseSmartTruncation, YES, SECTION_TABS @"Use “smart truncation” for tab titles.\nIf a tab‘s title is too long to fit, ellipsize the start of the title if more tabs have unique suffixes than prefixes in a given window.");
 DEFINE_BOOL(middleClickClosesTab, YES, SECTION_TABS @"Should middle-click on a tab in the tab bar close the tab?");
