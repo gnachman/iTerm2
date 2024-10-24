@@ -36,5 +36,6 @@ typedef NS_ENUM(NSUInteger, iTermDynamicProfileFileType) {
 - (void)reloadDynamicProfiles;
 - (void)revealProfileWithGUID:(NSString *)guid;
 - (NSArray *)profilesByRemovingDynamicProfiles:(NSArray *)source;
+- (void)markProfileRewritableWithGuid:(NSString *)guid;
 
 @end

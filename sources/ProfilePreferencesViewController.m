@@ -1040,21 +1040,31 @@ andEditComponentWithIdentifier:(NSString *)identifier
     if (![tagsArray containsObject:kProfileDynamicTag]) {
         return;
     }
+    if ([iTermProfilePreferences boolForKey:KEY_DYNAMIC_PROFILE_REWRITABLE inProfile:profile]) {
+        return;
+    }
     NSString *profileName = [profile objectForKey:KEY_NAME] ?: @"(unknown name)";
-    NSString *message = [NSString stringWithFormat:@"The selected profile, “%@”, is a dynamic profile. Changes made through Settings will be lost when you restart iTerm2. To modify this profile you must edit its source file.", profileName];
+    NSString *message = [NSString stringWithFormat:@"The selected profile, “%@”, is a dynamic profile. These are generally only edited by hand.\n\niTerm2 is now able to write changes back to dynamic profiles when they are marked as “rewritable“. Rewriting can cause the order of values to change.", profileName];
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"OK", @"Reveal in Finder" ]
+                               actions:@[ @"Mark as Rewritable", @"Reveal in Finder", @"Cancel" ]
                              accessory:nil
                             identifier:@"NoSyncDynamicProfileChangeWillBeLost"
                            silenceable:kiTermWarningTypeTemporarilySilenceable
                                heading:@"Changes Will Be Lost"
                                 window:self.view.window];
-    if (selection == kiTermWarningSelection0) {
-        return;
+    switch (selection) {
+        case kiTermWarningSelection0:
+            [[iTermDynamicProfileManager sharedInstance] markProfileRewritableWithGuid:guid];
+            break;
+        case kiTermWarningSelection1:
+            [[iTermDynamicProfileManager sharedInstance] revealProfileWithGUID:guid];
+            break;
+        case kiTermWarningSelection2:
+            break;
+        default:
+            break;
     }
-
-    [[iTermDynamicProfileManager sharedInstance] revealProfileWithGUID:guid];
 }
 
 #pragma mark - ProfilesGeneralPreferencesViewControllerDelegate

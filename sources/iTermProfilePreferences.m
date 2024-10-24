@@ -159,7 +159,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
               KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
               KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_FONT_CONFIG, KEY_BACKGROUND_IMAGE_LOCATION, KEY_KEYBOARD_MAP,
               KEY_TOUCHBAR_MAP, KEY_DYNAMIC_PROFILE_PARENT_NAME, KEY_DYNAMIC_PROFILE_PARENT_GUID,
-              KEY_DYNAMIC_PROFILE_FILENAME ];
+              KEY_DYNAMIC_PROFILE_FILENAME, KEY_DYNAMIC_PROFILE_REWRITABLE ];
 }
 + (NSArray<NSString *> *)allKeys {
     return [self.defaultValueMap.allKeys arrayByAddingObjectsFromArray:self.keysWithoutDefaultValues];
@@ -298,7 +298,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_TREAT_OPTION_AS_ALT,
                              KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY, KEY_SHOW_TIMESTAMPS,
                              KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE,
-                             KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY];
+                             KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY,
+                             KEY_DYNAMIC_PROFILE_REWRITABLE];
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];

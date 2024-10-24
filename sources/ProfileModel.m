@@ -38,6 +38,7 @@ NSString *const kReloadAddressBookNotification = @"iTermReloadAddressBook";
 NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 NSString *const iTermProfileModelNewWindowMenuItemIdentifierPrefix = @"NewWindow:";
 NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix = @"NewTab:";
+NSString *const iTermProfileDidChange = @"iTermProfileDidChange";
 
 // Set to true if a bookmark was changed automatically due to migration to a new
 // standard.
@@ -652,6 +653,7 @@ static NSMutableArray<NSString *> *_combinedLog;
     if (needJournal) {
         [self postChangeNotification];
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfileDidChange object:bookmark[KEY_GUID]];
 }
 
 - (void)setBookmark:(Profile*)bookmark withGuid:(NSString*)guid

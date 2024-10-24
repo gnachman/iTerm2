@@ -37,6 +37,7 @@ extern NSString *const kReloadAllProfiles;
 // Menu item identifier prefixes for NSMenuItems that open a window/tab
 extern NSString *const iTermProfileModelNewWindowMenuItemIdentifierPrefix;
 extern NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix;
+extern NSString *const iTermProfileDidChange;
 
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 

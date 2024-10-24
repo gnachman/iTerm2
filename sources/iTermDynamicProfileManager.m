@@ -12,6 +12,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMigrationHelper.h"
+#import "iTermProfileModelJournal.h"
 #import "iTermProfilePreferences.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
@@ -66,6 +67,7 @@
     NSInteger _pendingErrors;
     iTermFilesAndFolders *_paths;
     NSArray *_tokens;
+    BOOL _loading;
 }
 
 + (instancetype)sharedInstance {
@@ -92,6 +94,8 @@
       _paths = self.pathsToWatch;
       DLog(@"Watching files: %@, folders: %@", _paths.files, _paths.folders);
       [self startWatching];
+
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(profileDidChange:) name:iTermProfileDidChange object:nil];
   }
   return self;
 }
@@ -254,11 +258,14 @@
 }
 
 - (void)reloadDynamicProfiles {
+    assert(!_loading);
+    _loading = YES;
     [[ProfileModel sharedInstance] performBlockWithCoalescedNotifications:^{
         [ITAddressBookMgr performBlockWithCoalescedNotifications:^{
             [self reallyReloadDynamicProfiles];
         }];
     }];
+    _loading = NO;
 }
 
 - (void)reallyReloadDynamicProfiles {
@@ -490,6 +497,12 @@
 // Reload a dynamic profile, re-merging it with its parent.
 - (void)updateDynamicProfile:(Profile *)newProfile {
     DLog(@"Updating dynamic profile name=%@ guid=%@", newProfile[KEY_NAME], newProfile[KEY_GUID]);
+    Profile *merged = [self profileByMergingParentAndApplyingHacks:newProfile];
+    [[ProfileModel sharedInstance] setBookmark:merged
+                                      withGuid:merged[KEY_GUID]];
+}
+
+- (Profile *)profileByMergingParentAndApplyingHacks:(Profile *)newProfile {
     Profile *prototype = [self prototypeForDynamicProfile:newProfile];
     NSMutableDictionary *merged = [self profileByMergingProfile:newProfile
                                                     intoProfile:prototype];
@@ -497,8 +510,7 @@
         merged[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] = @NO;
     }
     [merged profileAddDynamicTagIfNeeded];
-    [[ProfileModel sharedInstance] setBookmark:merged
-                                      withGuid:merged[KEY_GUID]];
+    return merged;
 }
 
 - (BOOL)shouldDisableSeparateColorsForDynamicProfile:(Profile *)dynamicProfile
@@ -588,6 +600,148 @@
     return [source filteredArrayUsingBlock:^BOOL(Profile *profile) {
         return !profile.profileIsDynamic;
     }];
+}
+
+#pragma mark - Notifications
+
+- (void)profileDidChange:(NSNotification *)notification {
+    if (_loading) {
+        return;
+    }
+    NSString *guid = notification.object;
+
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    if (!profile) {
+        return;
+    }
+    if (![profile profileIsDynamic]) {
+        return;
+    }
+    if (!profile[KEY_DYNAMIC_PROFILE_FILENAME]) {
+        return;
+    }
+    if (![[NSNumber castFrom:profile[KEY_DYNAMIC_PROFILE_REWRITABLE]] boolValue]) {
+        return;
+    }
+
+    [self writeModifiedProfile:[self strippedProfile:profile]
+                        toFile:profile[KEY_DYNAMIC_PROFILE_FILENAME]];
+}
+
+- (Profile *)onDiskEntryForProfile:(Profile *)profile {
+    NSString *filename = profile[KEY_DYNAMIC_PROFILE_FILENAME];
+    if (!filename) {
+        return nil;
+    }
+    NSArray<Profile *> *allProfiles = [self profilesInFile:filename fileType:nil];
+    return [allProfiles objectPassingTest:^BOOL(NSDictionary *element, NSUInteger index, BOOL *stop) {
+        return [element[KEY_GUID] isEqual:profile[KEY_GUID]];
+    }];
+}
+
+// Here, hydrated means it has been merged with parent profiles.
+- (Profile *)strippedProfile:(Profile *)updatedProfile {
+    Profile *profileOnDisk = [self onDiskEntryForProfile:updatedProfile];
+    Profile *prototype = [self prototypeForDynamicProfile:updatedProfile];
+    NSMutableDictionary *stripped = [profileOnDisk mutableCopy];
+    for (NSString *key in [NSSet setWithArray:[prototype.allKeys arrayByAddingObjectsFromArray:updatedProfile.allKeys]]) {
+        if ([key isEqualToString:KEY_DYNAMIC_PROFILE_FILENAME]) {
+            // This is never written to disk
+            [stripped removeObjectForKey:key];
+            continue;
+        }
+        if (!updatedProfile[key]) {
+            // Key has been removed. Don't write it to disk.
+            [stripped removeObjectForKey:key];
+            continue;
+        }
+        if ([NSObject object:[iTermProfilePreferences objectForKey:key inProfile:prototype]
+             isEqualToObject:updatedProfile[key]]) {
+            // Is a default value or value set by parent. Don't write it to disk.
+            [stripped removeObjectForKey:key];
+            continue;
+        }
+        if ([NSObject object:profileOnDisk[key] isEqualToObject:updatedProfile[key]]) {
+            // No change. The value matches what is already on disk.
+            stripped[key] = profileOnDisk[key];
+            continue;
+        }
+        // Value is different than the hydrated value so it must be written.
+        stripped[key] = updatedProfile[key];
+    }
+    NSArray<NSString *> *tags = stripped[KEY_TAGS];
+    if (tags) {
+        tags = [tags arrayByRemovingObject:kProfileDynamicTag];
+        if (tags.count) {
+            stripped[KEY_TAGS] = tags;
+        } else {
+            [stripped removeObjectForKey:KEY_TAGS];
+        }
+    }
+    return stripped;
+}
+
+- (void)writeModifiedProfile:(Profile *)profile
+                      toFile:(NSString *)filename {
+    assert([[NSNumber castFrom:profile[KEY_DYNAMIC_PROFILE_REWRITABLE]] boolValue]);
+    if (!filename) {
+        return;
+    }
+    NSData *data = [self dataForModifiedDynamicProfileFileWithProfile:profile inFile:filename];
+    if (!data) {
+        return;
+    }
+    [data writeToFile:filename atomically:NO];
+}
+
+- (NSData *)dataForModifiedDynamicProfileFileWithProfile:(Profile *)profile
+                                                  inFile:(NSString *)filename {
+    if (!profile) {
+        return nil;
+    }
+    iTermDynamicProfileFileType fileType;
+    NSArray<Profile *> *profiles = [self profilesInFile:filename
+                                               fileType:&fileType];
+    const NSUInteger index = [profiles indexOfObjectPassingTest:^BOOL(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [obj[KEY_GUID] isEqualToString:profile[KEY_GUID]];
+    }];
+    if (index == NSNotFound) {
+        return nil;
+    }
+
+    NSMutableArray<Profile *> *modifiedProfilesArray = [profiles mutableCopy];
+    modifiedProfilesArray[index] = profile;
+
+    NSDictionary *dict = [[iTermDynamicProfileManager sharedInstance] dictionaryForProfiles:modifiedProfilesArray];
+    dict = [dict it_jsonSafeValue];
+    switch (fileType) {
+        case kDynamicProfileFileTypeJSON: {
+            NSError *error = nil;
+            NSData *data = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
+            if (error) {
+                XLog(@"Failed to create JSON data from dictionary %@ with error %@", dict, error);
+            }
+            return data;
+        }
+
+        case kDynamicProfileFileTypePropertyList:
+            return [dict propertyListData];
+    }
+}
+
+- (void)markProfileRewritableWithGuid:(NSString *)guid {
+    Profile *fullProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    if (!fullProfile) {
+        return;
+    }
+    NSString *filename = fullProfile[KEY_DYNAMIC_PROFILE_FILENAME];
+    if (!filename) {
+        return;
+    }
+    Profile *profile = [self onDiskEntryForProfile:fullProfile];
+    MutableProfile *modifiedProfile = [profile mutableCopy];
+    modifiedProfile[KEY_DYNAMIC_PROFILE_REWRITABLE] = @YES;
+    [self writeModifiedProfile:modifiedProfile toFile:filename];
 }
 
 #pragma mark - SCEventListenerProtocol

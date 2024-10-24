@@ -278,6 +278,7 @@
 #define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"
 #define KEY_DYNAMIC_PROFILE_PARENT_GUID      @"Dynamic Profile Parent GUID"
 #define KEY_DYNAMIC_PROFILE_FILENAME         @"Dynamic Profile Filename"
+#define KEY_DYNAMIC_PROFILE_REWRITABLE       @"Rewritable"
 
 // Session-only key
 #define KEY_SESSION_HOTKEY                   @"Session Hotkey"
