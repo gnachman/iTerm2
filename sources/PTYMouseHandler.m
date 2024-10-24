@@ -850,7 +850,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    if (!([iTermPreferences boolForKey:kPreferenceKeyRightClickClickBypassesContextMenu] && reportable))mo {
+    if (!([iTermPreferences boolForKey:kPreferenceKeyRightClickClickBypassesContextMenu] && reportable)) {
         if ([pointer_ mouseUp:event withTouches:_numTouches reportable:reportable]) {
             [self setMouseInfoForEvent:event
                            sideEffects:iTermClickSideEffectsPerformBoundAction];

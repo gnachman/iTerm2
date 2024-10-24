@@ -199,7 +199,7 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
     if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
         return NO;
     }
-    if ([self actionForEvent:event clicks:1 withTouches:3 reportable:NO]) {
+    if ([self actionForEvent:event reportable:NO clicks:1 withTouches:3]) {
         return NO;
     }
 
