@@ -151,6 +151,7 @@ NSString *const kPreferenceKeyHotkeyAutoHides_Deprecated = @"HotkeyAutoHides";  
 
 NSString *const kPreferenceKeyCmdClickOpensURLs = @"CommandSelection";
 NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu = @"PassOnControlClick";
+NSString *const kPreferenceKeyRightClickClickBypassesContextMenu = @"ReportRightClick";
 NSString *const kPreferenceKeyOptionClickMovesCursor = @"OptionClickMovesCursor";
 NSString *const kPreferenceKeyThreeFingerEmulatesMiddle = @"ThreeFingerEmulates";
 NSString *const kPreferenceKeyFocusFollowsMouse = @"FocusFollowsMouse";
@@ -466,6 +467,7 @@ static NSString *sPreviousVersion;
 
                   kPreferenceKeyCmdClickOpensURLs: @YES,
                   kPreferenceKeyControlLeftClickBypassesContextMenu: @NO,
+                  kPreferenceKeyRightClickClickBypassesContextMenu: @NO,
                   kPreferenceKeyOptionClickMovesCursor: @YES,
                   kPreferenceKeyThreeFingerEmulatesMiddle: @NO,
                   kPreferenceKeyFocusFollowsMouse: @NO,

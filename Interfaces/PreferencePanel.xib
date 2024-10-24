@@ -749,7 +749,7 @@ Gw
                             </subviews>
                         </clipView>
                         <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5846">
-                            <rect key="frame" x="1" y="248" width="763" height="16"/>
+                            <rect key="frame" x="1" y="249" width="763" height="15"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5847">
@@ -1240,6 +1240,7 @@ DQ
                 <outlet property="_focusOnRightOrMiddleClick" destination="j6a-ag-jgf" id="m8S-Wq-a1R"/>
                 <outlet property="_optionClickMovesCursor" destination="6407" id="hKN-R0-UCE"/>
                 <outlet property="_reportHorizontalScrollEvents" destination="cgK-BO-rKa" id="13W-yw-YvC"/>
+                <outlet property="_rightClickActsLikeRightClick" destination="ZG1-dm-1gD" id="N8K-Uy-gd3"/>
                 <outlet property="_tabView" destination="kxy-pe-gzv" id="iKb-9p-k0h"/>
                 <outlet property="_threeFingerEmulatesMiddle" destination="6227" id="eEX-cI-LAf"/>
                 <outlet property="view" destination="qwf-ly-A8K" id="myg-rZ-Ivy"/>
@@ -4027,7 +4028,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -7557,7 +7558,7 @@ instead of the system keyboard.</string>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="T59-Vc-DXx" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="253" y="168" width="352" height="200"/>
+                                        <rect key="frame" x="253" y="144" width="352" height="224"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6407">
@@ -7584,7 +7585,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6107">
-                                                <rect key="frame" x="18" y="178" width="314" height="18"/>
+                                                <rect key="frame" x="18" y="202" width="314" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="⌘-Click opens filename/URL (semantic history)" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6108">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -7595,7 +7596,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6111">
-                                                <rect key="frame" x="18" y="158" width="314" height="18"/>
+                                                <rect key="frame" x="18" y="182" width="314" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">For terminal applications that use mouse reporting, turning this on allows control-click to be reported instead of opening the context menu.</string>
                                                 <buttonCell key="cell" type="check" title="^-Click reported to apps, does not open menu" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6112">
@@ -7604,6 +7605,18 @@ instead of the system keyboard.</string>
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="settingChanged:" target="pwh-OY-l3e" id="Bgs-Qw-L7Z"/>
+                                                </connections>
+                                            </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZG1-dm-1gD">
+                                                <rect key="frame" x="18" y="160" width="326" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">For terminal applications that use mouse reporting, turning this on allows right click (or two finger tap on a trackpad) to be reported instead of opening the context menu.</string>
+                                                <buttonCell key="cell" type="check" title="Right click reported to apps, does not open menu" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="iBA-fC-cDp">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="pwh-OY-l3e" id="pWG-HU-yMF"/>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6062">

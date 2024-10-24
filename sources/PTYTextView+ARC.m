@@ -1436,6 +1436,10 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     return [self.dataSource commandMarkAtOrBeforeLine:line];
 }
 
+- (BOOL)contextMenuIsMouseEventReportable:(iTermTextViewContextMenuHelper *)contextMenu
+                                 forEvent:(NSEvent *)event {
+    return [_mouseHandler mouseEventIsReportable:event];
+}
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                                markOnLine:(int)line {
     return [self.dataSource markOnLine:line];

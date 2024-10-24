@@ -52,11 +52,11 @@
 
 @property(nonatomic, assign) id<PointerControllerDelegate> delegate;
 
-- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption;
-- (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches;
+- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption reportable:(BOOL)reportable;
+- (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches reportable:(BOOL)reportable;
 - (BOOL)pressureChangeWithEvent:(NSEvent *)event;
 - (void)swipeWithEvent:(NSEvent *)event;
-- (BOOL)eventEmulatesRightClick:(NSEvent *)event;
+- (BOOL)eventEmulatesRightClick:(NSEvent *)event reportable:(BOOL)reportable;
 - (void)notifyLeftMouseDown;
 - (BOOL)threeFingerTap:(NSEvent *)event;
 

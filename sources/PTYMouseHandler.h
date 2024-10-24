@@ -160,12 +160,12 @@ NS_DESIGNATED_INITIALIZER;
 #pragma mark - Right mouse
 
 - (void)rightMouseDown:(NSEvent *)event superCaller:(void (^)(void))superCaller;
-- (void)rightMouseUp:(NSEvent *)event superCaller:(void (^)(void))superCaller;
+- (void)rightMouseUp:(NSEvent *)event superCaller:(void (^)(void))superCaller reportable:(BOOL)reportable;
 - (void)rightMouseDragged:(NSEvent *)event superCaller:(void (^)(void))superCaller;
 
 #pragma mark - Other mouse
 
-- (void)otherMouseUp:(NSEvent *)event superCaller:(void (^)(void))superCaller;
+- (void)otherMouseUp:(NSEvent *)event superCaller:(void (^)(void))superCaller reportable:(BOOL)reportable;
 - (void)otherMouseDown:(NSEvent *)event;
 - (void)otherMouseDragged:(NSEvent *)event superCaller:(void (^)(void))superCaller;
 
@@ -193,6 +193,7 @@ NS_DESIGNATED_INITIALIZER;
 - (BOOL)mouseReportingAllowedForEvent:(NSEvent *)event;
 - (void)didCopyToPasteboardWithControlSequence;
 - (BOOL)wantsScrollWheelMomentumEvents;
+- (BOOL)mouseEventIsReportable:(NSEvent *)event;
 
 @end
 

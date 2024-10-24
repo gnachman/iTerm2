@@ -223,7 +223,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Perform user-defined gesture action, if any
             shouldReturnEarly = [pointer_ mouseDown:event
                                         withTouches:_numTouches
-                                       ignoreOption:[self terminalWantsMouseReports]];
+                                       ignoreOption:[self terminalWantsMouseReports]
+                                         reportable:[self mouseEventIsReportable:event]];
             if (shouldReturnEarly) {
                 *sideEffects |= iTermClickSideEffectsPerformBoundAction;
             }
@@ -235,10 +236,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return NO;
         }
     }
-    if ([pointer_ eventEmulatesRightClick:event]) {
+    const BOOL isReportable = [self mouseEventIsReportable:event];
+    if ([pointer_ eventEmulatesRightClick:event reportable:isReportable]) {
         const BOOL performed = [pointer_ mouseDown:event
                                        withTouches:_numTouches
-                                      ignoreOption:[self terminalWantsMouseReports]];
+                                      ignoreOption:[self terminalWantsMouseReports]
+                                        reportable:isReportable];
         if (performed) {
             *sideEffects |= iTermClickSideEffectsPerformBoundAction;
         }
@@ -420,7 +423,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return iTermClickSideEffectsNone;
     } else if (numTouches == 3 && _mouseDown) {
         // Three finger tap is valid but not emulating middle button
-        const BOOL performedAction = [pointer_ mouseUp:event withTouches:numTouches];
+        const BOOL performedAction = [pointer_ mouseUp:event withTouches:numTouches reportable:[self mouseEventIsReportable:event]];
         DLog(@"set mouseDown=NO");
         _mouseDown = NO;
         DLog(@"Returning from mouseUp because there were 3 touches. Set mouseDown=NO");
@@ -433,8 +436,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     dragOk_ = NO;
     _semanticHistoryDragged = NO;
-    if ([pointer_ eventEmulatesRightClick:event]) {
-        const BOOL performedAction = [pointer_ mouseUp:event withTouches:numTouches];
+    if ([pointer_ eventEmulatesRightClick:event reportable:[self mouseEventIsReportable:event]]) {
+        const BOOL performedAction = [pointer_ mouseUp:event withTouches:numTouches reportable:[self mouseEventIsReportable:event]];
         DLog(@"Returning from mouseUp because we'e emulating a right click.");
         if (self.selection.live) {
             [self copyAfterSelectionEndsIfDesired];
@@ -823,7 +826,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if ([pointer_ mouseDown:event
                 withTouches:_numTouches
-               ignoreOption:[self terminalWantsMouseReports]]) {
+               ignoreOption:[self terminalWantsMouseReports]
+                 reportable:[self mouseEventIsReportable:event]]) {
         [self setMouseInfoForEvent:event
                        sideEffects:iTermClickSideEffectsPerformBoundAction];
         return;
@@ -839,17 +843,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                    sideEffects:iTermClickSideEffectsNone];
 }
 
-- (void)rightMouseUp:(NSEvent *)event superCaller:(void (^)(void))superCaller {
+- (void)rightMouseUp:(NSEvent *)event superCaller:(void (^)(void))superCaller reportable:(BOOL)reportable {
     [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([_threeFingerTapGestureRecognizer rightMouseUp:event]) {
         return;
     }
 
-    if ([pointer_ mouseUp:event withTouches:_numTouches]) {
-        [self setMouseInfoForEvent:event
-                       sideEffects:iTermClickSideEffectsPerformBoundAction];
-        return;
+    if (!([iTermPreferences boolForKey:kPreferenceKeyRightClickClickBypassesContextMenu] && reportable))mo {
+        if ([pointer_ mouseUp:event withTouches:_numTouches reportable:reportable]) {
+            [self setMouseInfoForEvent:event
+                           sideEffects:iTermClickSideEffectsPerformBoundAction];
+            return;
+        }
     }
     if ([self reportMouseEvent:event]) {
         [self setMouseInfoForEvent:event
@@ -876,7 +882,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark - Other mouse
 
-- (void)otherMouseUp:(NSEvent *)event superCaller:(void (^)(void))superCaller {
+- (void)otherMouseUp:(NSEvent *)event superCaller:(void (^)(void))superCaller reportable:(BOOL)reportable {
     [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([self reportMouseEvent:event]) {
@@ -891,7 +897,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         superCaller();
     }
     DLog(@"Sending third button press up to pointer controller");
-    if ([pointer_ mouseUp:event withTouches:_numTouches]) {
+    if ([pointer_ mouseUp:event withTouches:_numTouches reportable:reportable]) {
         sideEffects |= iTermClickSideEffectsPerformBoundAction;
     }
     [self setMouseInfoForEvent:event
@@ -912,7 +918,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     const BOOL performed = [pointer_ mouseDown:event
                                    withTouches:_numTouches
-                                  ignoreOption:[self terminalWantsMouseReports]];
+                                  ignoreOption:[self terminalWantsMouseReports]
+                                    reportable:[self mouseEventIsReportable:event]];
     if (performed) {
         sideEffects |= iTermClickSideEffectsPerformBoundAction;
     }

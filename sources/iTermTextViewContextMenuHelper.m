@@ -67,7 +67,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent {
     if (theEvent) {
         // Control-click
-        if ([iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu] &&
+            [self.delegate contextMenuIsMouseEventReportable:self forEvent:theEvent]) {
             return nil;
         }
         NSPoint clickPoint = [self.delegate contextMenu:self clickPoint:theEvent allowRightMarginOverflow:NO];

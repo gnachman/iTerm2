@@ -20,6 +20,7 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
 
     // Control-click doesn't open the context menu, is mouse-reported as right click.
     IBOutlet NSButton *_controlLeftClickActsLikeRightClick;
+    IBOutlet NSButton *_rightClickActsLikeRightClick;
 
     // Opt-click moves cursor.
     IBOutlet NSButton *_optionClickMovesCursor;
@@ -51,6 +52,11 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
 
     [self defineControl:_controlLeftClickActsLikeRightClick
                     key:kPreferenceKeyControlLeftClickBypassesContextMenu
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_rightClickActsLikeRightClick
+                    key:kPreferenceKeyRightClickClickBypassesContextMenu
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

@@ -109,14 +109,15 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
 }
 
 // Caller is responsible to check that it's a single click
-- (BOOL)eventEmulatesRightClick:(NSEvent *)event
+- (BOOL)eventEmulatesRightClick:(NSEvent *)event reportable:(BOOL)reportable
 {
-    return ![iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu] &&
+    return !([iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu] && reportable) &&
            [event buttonNumber] == 0 &&
            ([event it_modifierFlags] & (NSEventModifierFlagControl | NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift)) == NSEventModifierFlagControl;
 }
 
 - (NSString *)actionForEvent:(NSEvent *)event
+                  reportable:(BOOL)reportable
                       clicks:(int)clicks
                  withTouches:(int)numTouches
 {
@@ -126,13 +127,19 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
     }
 
     DLog(@"actionForEvent:%@ cicks:%d withTouches:%d", event, clicks, numTouches);
-    if (clicks == 1 && [self eventEmulatesRightClick:event]) {
+    if (clicks == 1 && [self eventEmulatesRightClick:event reportable:reportable]) {
         // Ctrl-click emulates right button
         DLog(@"Look up action for an emulated right-click");
         return [PointerPrefsController actionWithButton:1 numClicks:1 modifiers:0];
     }
     if (numTouches <= 2) {
         DLog(@"Look up action for a two or one-finger touch click");
+        if (reportable &&
+            event.buttonNumber == 1 &&
+            clicks == 1 &&
+            [iTermPreferences boolForKey:kPreferenceKeyRightClickClickBypassesContextMenu]) {
+            return nil;
+        }
         return [PointerPrefsController actionWithButton:[event buttonNumber]
                                               numClicks:clicks
                                               modifiers:modifierFlags];
@@ -145,8 +152,9 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
 
 - (BOOL)compatibilityEscapingForEvent:(NSEvent *)event
                                clicks:(int)clicks
-                          withTouches:(int)numTouches {
-    if (clicks == 1 && [self eventEmulatesRightClick:event]) {
+                          withTouches:(int)numTouches
+                           reportable:(BOOL)reportable {
+    if (clicks == 1 && [self eventEmulatesRightClick:event reportable:reportable]) {
         // Ctrl-click emulates right button
         return [PointerPrefsController useCompatibilityEscapingWithButton:1
                                                                 numClicks:1
@@ -164,8 +172,9 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
 
 - (NSString *)argumentForEvent:(NSEvent *)event
                         clicks:(int)clicks
-                   withTouches:(int)numTouches {
-    if (clicks == 1 && [self eventEmulatesRightClick:event]) {
+                   withTouches:(int)numTouches
+                    reportable:(BOOL)reportable {
+    if (clicks == 1 && [self eventEmulatesRightClick:event reportable:reportable]) {
         // Ctrl-click emulates right button
         return [PointerPrefsController argumentWithButton:1
                                                 numClicks:1
@@ -190,7 +199,7 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
     if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
         return NO;
     }
-    if ([self actionForEvent:event clicks:1 withTouches:3]) {
+    if ([self actionForEvent:event clicks:1 withTouches:3 reportable:NO]) {
         return NO;
     }
 
@@ -202,7 +211,7 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
     return NO;
 }
 
-- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption {
+- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption reportable:(BOOL)reportable {
     // A double left click plus an immediate right click reports a triple right
     // click! So we keep our own click count and use the lower of the OS's
     // value and ours. Theirs is lower when the time between clicks is long.
@@ -215,21 +224,25 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
     ignoreOption_ = ignoreOption;
     mouseDownButton_ = [event buttonNumber];
     return [self actionForEvent:event
+                     reportable:reportable
                          clicks:clicks_
                     withTouches:numTouches] != nil;
 }
 
-- (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches {
+- (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches reportable:(BOOL)reportable {
     _previousStage = 0;
     NSString *argument = [self argumentForEvent:event
                                          clicks:clicks_
-                                    withTouches:numTouches];
+                                    withTouches:numTouches
+                                     reportable:reportable];
     NSString *action = [self actionForEvent:event
+                                 reportable:reportable
                                      clicks:clicks_
                                 withTouches:numTouches];
     BOOL compatibilityEscaping = [self compatibilityEscapingForEvent:event
                                                               clicks:clicks_
-                                                         withTouches:numTouches];
+                                                         withTouches:numTouches
+                                                          reportable:reportable];
     DLog(@"mouseUp action=%@", action);
     if (action) {
         [self performAction:action forEvent:event withArgument:argument compatibilityEscaping:compatibilityEscaping];

@@ -160,6 +160,8 @@ runCommandInBackground:(NSString *)command;
 - (void)contextMenuUnfoldMark:(id<iTermFoldMarkReading>)mark;
 - (id<iTermFoldMarkReading>)contextMenuFoldAtLine:(int)line;
 - (id<VT100ScreenMarkReading>)contextMenuCommandWithOutputAtLine:(int)line;
+- (BOOL)contextMenuIsMouseEventReportable:(iTermTextViewContextMenuHelper *)contextMenu
+                                 forEvent:(NSEvent *)event;
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>

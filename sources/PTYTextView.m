@@ -1095,7 +1095,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (void)rightMouseUp:(NSEvent *)event {
-    [_mouseHandler rightMouseUp:event superCaller:^{ [super rightMouseUp:event]; }];
+    [_mouseHandler rightMouseUp:event superCaller:^{ [super rightMouseUp:event]; } reportable:[_mouseHandler mouseEventIsReportable:event]];
 }
 
 - (void)rightMouseDragged:(NSEvent *)event {
@@ -1109,7 +1109,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 - (void)otherMouseUp:(NSEvent *)event {
     [_mouseHandler otherMouseUp:event
-                    superCaller:^{ [super otherMouseUp:event]; }];
+                    superCaller:^{ [super otherMouseUp:event]; }
+                     reportable:[_mouseHandler mouseEventIsReportable:event]];
 }
 
 - (void)otherMouseDragged:(NSEvent *)event {
