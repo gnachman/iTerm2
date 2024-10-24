@@ -546,6 +546,32 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     return screen;
 }
 
+- (void)screenParametersDidChangeNontrivally:(NSNotification *)notification {
+    DLog(@"screenParametersDidChangeNontrivally: %@", self);
+    if (!self.lionFullScreen) {
+        DLog(@"Not lion fullscreen");
+        return;
+    }
+    NSScreen *screen = self.window.screen;
+    if (!screen) {
+        DLog(@"Nil screen");
+        return;
+    }
+    const NSRect screenFrame = screen.frame;
+    const NSRect myFrame = self.window.frame;
+    DLog(@"screenFrame=%@ myFrame=%@", NSStringFromRect(screenFrame), NSStringFromRect(myFrame));
+    if (NSMinY(myFrame) == NSMinY(screenFrame)) {
+        return;
+    }
+    NSRect correctedFrame = NSMakeRect(NSMinX(myFrame),
+                                       NSMinY(screenFrame),
+                                       NSMaxX(screenFrame) - NSMinX(myFrame),
+                                       myFrame.size.height);
+    DLog(@"Correct frame=%@", NSStringFromRect(correctedFrame));
+    [self.window setFrame:correctedFrame display:YES];
+}
+
+
 - (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
                                  windowType:(iTermWindowType)unsafeWindowType
                             savedWindowType:(iTermWindowType)unsafeSavedWindowType
@@ -824,6 +850,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                            selector:@selector(activeSpaceDidChange:)
                                                                name:NSWorkspaceActiveSpaceDidChangeNotification
                                                              object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(screenParametersDidChangeNontrivally:)
+                                                 name:iTermScreenParametersDidChangeNontrivally
+                                               object:nil];
     [iTermNamedMarksDidChangeNotification subscribeWithOwner:self block:^(iTermNamedMarksDidChangeNotification * _Nonnull notif) {
         if ([notif.sessionGuid isEqualToString:weakSelf.currentSession.guid]) {
             [weakSelf refreshNamedMarks];
