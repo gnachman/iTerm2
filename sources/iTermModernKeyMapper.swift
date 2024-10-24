@@ -820,23 +820,38 @@ fileprivate struct KeyReport {
         // commands in the shell such as reset after a program that sets this mode crashes
         // without clearing it.
         //
-        // However, Kitty's implementation also allows backspace through.
+        // However, Kitty's implementation also allows backspace (but not delete-forwards) through.
         // I am interpreting this as referring to the unicode-key-code.
         // I am not confident this will work well with non-US keyboards.
         let sets = [CharacterSet(charactersIn: Unicode.Scalar("a")...Unicode.Scalar("z")),
                     CharacterSet(charactersIn: Unicode.Scalar("0")...Unicode.Scalar("9")),
                     CharacterSet(charactersIn: "`-=[]\\;',./"),
-                    CharacterSet(charactersIn: "\n\r\t\u{7F}")]
+                    CharacterSet(charactersIn: "\n\r\t")]
         let legacyKeys = sets.reduce(CharacterSet()) {
             $0.union($1)
         }
-        if !legacyKeys.contains(codePoint: event.unicodeKeyCode) {
+        if !legacyKeys.contains(codePoint: event.unicodeKeyCode) && !isBackspace(event) {
             DLog("keycode nonlegacy")
             return .nonReportable
         }
 
         DLog("Return \(event.characters ?? "")")
         return .string(event.characters ?? "")
+    }
+
+    private func isBackspace(_ event: KeyEventInfo) -> Bool {
+        if event.unicodeKeyCode != 0x7f {
+            return false
+        }
+        guard let chars = event.charactersIgnoringModifiers else {
+            return false
+        }
+        guard let firstChar = chars.it_firstUnicodeScalarValue else {
+            return false
+        }
+        let result = Int(firstChar) != NSDeleteFunctionKey
+        DLog("isBackspace=\(result)")
+        return result
     }
 
     private var legacyControl: String? {
@@ -1143,7 +1158,7 @@ enum FunctionalKeyDefinition: String {
     case TAB="9u"
     case BACKSPACE="127u"
     case INSERT="2~"
-    case DELETE="3~"
+    case FORWARD_DELETE="3~"
     case LEFT="D"
     case RIGHT="C"
     case UP="A"
@@ -1281,8 +1296,8 @@ fileprivate extension FunctionalKeyDefinition {
             self = .BACKSPACE
         case kVK_Help:
             self = .INSERT
-        case kVK_Delete:
-            self = .DELETE
+        case kVK_ForwardDelete:
+            self = .FORWARD_DELETE
         case kVK_LeftArrow:
             self = .LEFT
         case kVK_RightArrow:
