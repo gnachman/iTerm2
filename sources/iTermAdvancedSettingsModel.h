@@ -420,6 +420,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)triggerRadius;
 + (BOOL)trimWhitespaceOnCopy;
 + (BOOL)typingClearsSelection;
++ (NSString *)unameCommand;
 + (double)underlineCursorHeight;
 + (double)underlineCursorOffset;
 + (BOOL)underlineHyperlinks;

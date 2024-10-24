@@ -14863,12 +14863,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         if (uname(&utsname)) {
             return @"Darwin";
         }
-        unameString = [NSString stringWithFormat:@"%s %s %s %s %s",
-                       utsname.sysname,
-                       utsname.nodename,
-                       utsname.release,
-                       utsname.version,
-                       utsname.machine];
+        unameString = [NSString stringWithUTF8String:utsname.sysname];
     }
     return unameString;
 }

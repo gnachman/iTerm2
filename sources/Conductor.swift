@@ -1166,7 +1166,7 @@ class Conductor: NSObject, Codable {
                     "sshargs": sshargs,
                     "boolArgs": boolArgs,
                     "clientUniqueID": clientUniqueID])
-        runRemoteCommand("uname -a") { [weak self] data, status in
+        runRemoteCommand(iTermAdvancedSettingsModel.unameCommand()) { [weak self] data, status in
             if status == 0 {
                 self?.uname = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
                 self?.delegate?.conductorStateDidChange()
