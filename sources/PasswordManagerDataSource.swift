@@ -12,6 +12,8 @@ protocol PasswordManagerAccount: AnyObject {
     @objc var accountName: String { get }
     @objc var userName: String { get }
     @objc var displayString: String { get }
+    @objc var hasOTP: Bool { get }
+    @objc var sendOTP: Bool { get }
 
     @objc(fetchPassword:) func fetchPassword(_ completion: @escaping (String?, String?, Error?) -> ())
     @objc(setPassword:completion:) func set(password: String,
@@ -34,6 +36,9 @@ protocol PasswordManagerDataSource: AnyObject {
     func resetErrors()
     func reload(_ completion: () -> ())
     func consolidateAvailabilityChecks(_ block: () -> ())
+
+    @objc(toggleShouldSendOTPForAccount:completion:)
+    func toggleShouldSendOTP(account: PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ())
 }
 
 extension PasswordManagerAccount {

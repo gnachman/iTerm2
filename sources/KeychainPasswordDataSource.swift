@@ -12,6 +12,8 @@ fileprivate let serviceName = "iTerm2"
 // Used to store account name in label and username in account. That was a mistake.
 // Now it stores username and account name in accountName and account name in label (just for looks in keychain access)
 fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
+    var hasOTP: Bool { false }
+    var sendOTP: Bool { false }
     private let accountNameUserNameSeparator = "\u{2002}—\u{2002}"
     let accountName: String
     let userName: String
@@ -125,6 +127,8 @@ fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
 // Stores account name and user name together in account name and makes label "iTerm2"
 fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
     private let accountNameUserNameSeparator = "\u{2002}—\u{2002}"
+    var hasOTP: Bool { false }
+    var sendOTP: Bool { false }
 
     let accountName: String
     let userName: String
@@ -150,6 +154,10 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
 
     var displayString: String {
         return keychainAccountName
+    }
+
+    func toggleShouldSendOTP(account: any PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        fatalError()
     }
 
     func fetchPassword(_ completion: (String?, String?, Error?) -> ()) {
@@ -207,6 +215,10 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
 
     func fetchAccounts(_ completion: @escaping ([PasswordManagerAccount]) -> ()) {
         completion(self.accounts)
+    }
+
+    func toggleShouldSendOTP(account: any PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        fatalError()
     }
 
     func add(userName: String, accountName: String, password: String, completion: (PasswordManagerAccount?, Error?) -> ()) {

@@ -18,6 +18,9 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
     let identifier: String
     let accountName: String
     let userName: String
+    let hasOTP: Bool
+    let sendOTP: Bool
+
     var displayString: String {
         return "\(accountName)\u{2002}—\u{2002}\(userName)"
     }
@@ -52,10 +55,15 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
 
     init(identifier: String,
          accountName: String,
-         userName: String, configuration: CommandLinePasswordDataSource.Configuration) {
+         userName: String,
+         hasOTP: Bool,
+         sendOTP: Bool,
+         configuration: CommandLinePasswordDataSource.Configuration) {
         self.identifier = identifier
         self.accountName = accountName
         self.userName = userName
+        self.hasOTP = hasOTP
+        self.sendOTP = sendOTP;
         self.configuration = configuration
     }
 }
@@ -832,6 +840,8 @@ class CommandLinePasswordDataSource: NSObject {
         let identifier: AccountIdentifier
         let userName: String
         let accountName: String
+        let hasOTP: Bool
+        let sendOTP: Bool
     }
 
     struct SetPasswordRequest {
@@ -869,6 +879,8 @@ class CommandLinePasswordDataSource: NSObject {
                 CommandLineProvidedAccount(identifier: account.identifier.value,
                                            accountName: account.accountName,
                                            userName: account.userName,
+                                           hasOTP: account.hasOTP,
+                                           sendOTP: account.sendOTP,
                                            configuration: configuration)
             }
             completion(accounts, nil)
@@ -892,6 +904,8 @@ class CommandLinePasswordDataSource: NSObject {
             let account = CommandLineProvidedAccount(identifier: accountIdentifier!.value,
                                                      accountName: accountName,
                                                      userName: userName,
+                                                     hasOTP: false,
+                                                     sendOTP: true,
                                                      configuration: configuration)
             completion(account, nil)
         }

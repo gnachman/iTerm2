@@ -147,7 +147,9 @@ class LastPassDataSource: CommandLinePasswordDataSource {
                 }
                 return Account(identifier: AccountIdentifier(value: parts[1]),
                                userName: parts[3],
-                               accountName: parts[2])
+                               accountName: parts[2],
+                               hasOTP: false,
+                               sendOTP: false)
             }
         }
         return wrap("The account list could not be fetched.", AnyRecipe(recipe))
@@ -301,6 +303,13 @@ class LastPassDataSource: CommandLinePasswordDataSource {
 }
 
 extension LastPassDataSource: PasswordManagerDataSource {
+    var hasOTP: Bool { false }
+    var sendOTP: Bool { false }
+
+    func toggleShouldSendOTP(account: any PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        fatalError()
+    }
+
     func fetchAccounts(_ completion: @escaping ([PasswordManagerAccount]) -> ()) {
         standardAccounts(configuration) { result, _ in
             completion(result ?? [])

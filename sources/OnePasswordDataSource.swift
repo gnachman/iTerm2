@@ -186,12 +186,15 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
                 }
                 struct Field: Codable {
                     var id: String
+                    var type: String?
                     var value: String?
+                    var totp: String?
                 }
                 struct Item: Codable {
                     var id: String
                     var title: String
                     var fields: [Field]
+                    var tags: [String]?
                 }
                 guard let phonyJson = String(data: output.stdout, encoding: .utf8) else {
                     throw OPError.runtime
@@ -207,9 +210,13 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
                     } else {
                         username = nil
                     }
+                    let hasOTP = $0.fields.anySatisfies { field in field.type == "OTP" }
+                    let otpDisabled = $0.tags?.contains("iTerm2-no-otp") ?? false
                     return Account(identifier: CommandLinePasswordDataSource.AccountIdentifier(value: $0.id),
                                    userName: username ?? "",
-                                   accountName: $0.title)
+                                   accountName: $0.title,
+                                   hasOTP: hasOTP,
+                                   sendOTP: hasOTP ? !otpDisabled : false)
                 }
             }
 
@@ -377,6 +384,83 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         }
         available = .wantCache
         block()
+    }
+
+    func toggleShouldSendOTP(account pmAccount: PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        guard let account = pmAccount as? CommandLineProvidedAccount else {
+            fatalError()
+        }
+        let recipe = if account.sendOTP {
+            mutateTagRecipe(accountID: account.identifier) { tags in
+                Array(Set(tags).union(Set(["iTerm2-no-otp"])))
+            }
+        } else {
+            mutateTagRecipe(accountID: account.identifier) { tags in
+                Array(Set(tags).subtracting(Set(["iTerm2-no-otp"])))
+            }
+        }
+        let configuration = self.configuration
+        recipe.transformAsync(inputs: ()) { _, error in
+            if let error {
+                completion(nil, error)
+                return
+            }
+            let updated = CommandLineProvidedAccount(identifier: account.identifier,
+                                                     accountName: account.accountName,
+                                                     userName: account.userName,
+                                                     hasOTP: account.hasOTP,
+                                                     sendOTP: !account.sendOTP,
+                                                     configuration: configuration)
+            completion(updated, nil)
+        }
+    }
+
+    @nonobjc
+    private func getTagsRecipe(accountID: String) -> AnyRecipe<Void, [String]> {
+        return AnyRecipe(OnePasswordDynamicCommandRecipe(dataSource: self, inputTransformer: { _, token in
+            return CommandRequestWithInput(
+                command: OnePasswordUtils.pathToCLI,
+                args: ["item", "get", "--format=json", "--no-color", accountID],
+                env: OnePasswordUtils.standardEnvironment(token: token),
+                input: Data())
+        }, outputTransformer: { output throws -> [String] in
+            if output.returnCode != 0 {
+                throw OPError.runtime
+            }
+            struct Field: Codable {
+                var id: String
+                var type: String?
+                var value: String?
+                var totp: String?
+            }
+            struct Item: Codable {
+                var id: String
+                var title: String
+                var fields: [Field]
+                var tags: [String]?
+            }
+            guard let phonyJson = String(data: output.stdout, encoding: .utf8) else {
+                throw OPError.runtime
+            }
+            let json = "[" + phonyJson.replacingOccurrences(of: "}\n{", with: "},\n{") + "]"
+            let items = try JSONDecoder().decode([Item].self, from: json.data(using: .utf8)!)
+            return items.first?.tags ?? []
+        }))
+    }
+
+    @nonobjc
+    private func mutateTagRecipe(accountID: String, mutator: @escaping ([String]) -> ([String])) -> AnyRecipe<Void, Void> {
+        let mutateTagsRecipe = AnyRecipe(OnePasswordDynamicCommandRecipe<[String], Void>(dataSource: self, inputTransformer: { tags, token in
+            let updatedTags = mutator(tags)
+
+            return CommandRequestWithInput(
+                command: OnePasswordUtils.pathToCLI,
+                args: ["item", "edit", accountID, "--tags", updatedTags.joined(separator: ",")],
+                env: OnePasswordUtils.standardEnvironment(token: token),
+                input: Data())
+        }, outputTransformer: { _ in }))
+        return AnyRecipe(PipelineRecipe(getTagsRecipe(accountID: accountID),
+                                        mutateTagsRecipe))
     }
 }
 
