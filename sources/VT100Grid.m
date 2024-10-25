@@ -597,6 +597,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         return [self scrollWholeScreenUpIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:unlimitedScrollback];
     } else {
+        // Scroll a region
+
         int numLinesDropped = 0;
         // Not scrolling the whole screen.
         if (scrollTop == 0 && useScrollbackWithRegion && ![self haveColumnScrollRegion]) {
@@ -619,6 +621,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                                            scrollBottom - scrollTop + 1)
                     downBy:-1
                softBreak:softBreak];
+        // Absolute line numbers referring to positions in the grid are no longer meaningful.
+        // Although the grid didn't change everywhere, this is the simplest way to ensure that
+        // things like search results get updated.
+        [self setAllDirty:YES];
 
         return numLinesDropped;
     }
