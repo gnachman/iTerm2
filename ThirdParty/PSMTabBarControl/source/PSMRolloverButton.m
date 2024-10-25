@@ -19,7 +19,8 @@ static const CGFloat PSMRolloverButtonMaxAlpha = 0.25;
     CGFloat _alpha;
     NSTimer *_timer;
     NSTrackingArea *_trackingArea;
-    BOOL _dragged;
+    CGFloat _dragDistance;
+    NSPoint _lastDragLocation;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -133,13 +134,15 @@ static const CGFloat PSMRolloverButtonMaxAlpha = 0.25;
                                        argument:nil
                                           order:1
                                           modes:@[ NSEventTrackingRunLoopMode, NSDefaultRunLoopMode ]];
+    _dragDistance = 0;
+    _lastDragLocation = theEvent.locationInWindow;
 }
 
 - (void)mouseUp:(NSEvent *)event {
-    if (event.clickCount == 1 && !_dragged) {
+    if (event.clickCount == 1 && _dragDistance < 4) {
         [self performClick:self];
     }
-    _dragged = NO;
+    _dragDistance = 0;
 }
 
 - (void)mouseDragged:(NSEvent *)event {
@@ -147,7 +150,9 @@ static const CGFloat PSMRolloverButtonMaxAlpha = 0.25;
         [super mouseDragged:event];
         return;
     }
-    _dragged = YES;
+    _dragDistance += sqrt(pow(event.locationInWindow.y - _lastDragLocation.y, 2) +
+                          pow(event.locationInWindow.x - _lastDragLocation.x, 2));
+    _lastDragLocation = event.locationInWindow;
     [self.window makeKeyAndOrderFront:nil];
     [self.window performWindowDragWithEvent:event];
 }
