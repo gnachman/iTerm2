@@ -643,10 +643,14 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)softAlternateScreenModeDidChange {
     const BOOL enabled = self.terminal.softAlternateScreenMode;
-    const BOOL showing = self.currentGrid == self.altGrid;;
+    const BOOL showing = self.currentGrid == self.altGrid;
     _triggerEvaluator.triggersSlownessDetector.enabled = enabled;
     [_triggerEvaluator.triggersSlownessDetector reset];
     [_promptStateMachine setAllowed:!enabled];
+    if (enabled && !showing && !self.saveToScrollbackInAlternateScreen) {
+        DLog(@"Content isn't saved to alt screen so save primary grid now");
+        [self scrollScreenIntoHistoryWithLineBuffer:self.linebuffer];
+    }
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSoftAlternateScreenModeDidChangeTo:enabled showingAltScreen:showing];
     }];
@@ -1104,11 +1108,15 @@ static _Atomic int gPerformingJoinedBlock;
     // Scroll the top lines of the screen into history, up to and including the last non-
     // empty line.
     LineBuffer *lineBuffer;
-    if (self.currentGrid == self.altGrid && !self.saveToScrollbackInAlternateScreen) {
+    if (self.terminal.softAlternateScreenMode && !self.saveToScrollbackInAlternateScreen) {
         lineBuffer = nil;
     } else {
         lineBuffer = self.linebuffer;
     }
+    [self scrollScreenIntoHistoryWithLineBuffer:lineBuffer];
+}
+
+- (void)scrollScreenIntoHistoryWithLineBuffer:(LineBuffer *)lineBuffer {
     const int n = MAX(self.lastGridLineWithKittyImage,
                       MAX(self.lastGridLineWithVisibleMarkOrAnnotation + 1,
                       [self.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES]));
