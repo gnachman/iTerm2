@@ -349,6 +349,10 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
+    info.shouldBeEnabled = ^BOOL{
+        return ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen];
+    };
+    [info addShouldBeEnabledDependencyOnUserDefault:kPreferenceKeyLionStyleFullscreen controller:self];
 
     info = [self defineControl:_enableDivisionView
                            key:kPreferenceKeyEnableDivisionView
@@ -361,6 +365,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
+
     [self updateProxyIconEnabled];
 }
 

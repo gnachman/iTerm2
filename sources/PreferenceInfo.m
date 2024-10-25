@@ -8,8 +8,11 @@
 
 #import "PreferenceInfo.h"
 #import "PreferencePanel.h"
+#import "iTermUserDefaultsObserver.h"
 
-@implementation PreferenceInfo
+@implementation PreferenceInfo {
+    iTermUserDefaultsObserver *_userDefaultsObserver;
+}
 
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
@@ -42,6 +45,21 @@
 
 - (void)setObserver:(void (^)(void))observer {
     _observer = [observer copy];
+}
+
+- (void)addShouldBeEnabledDependencyOnUserDefault:(NSString *)key controller:(id<PreferenceController>)controller {
+    if (!_userDefaultsObserver) {
+        _userDefaultsObserver = [[iTermUserDefaultsObserver alloc] init];
+    }
+    __weak __typeof(controller) weakController = controller;
+    __weak __typeof(self) weakSelf = self;
+    [_userDefaultsObserver observeKey:key block:^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [weakController updateEnabledStateForInfo:strongSelf];
+    }];
 }
 
 #pragma mark - Notifications

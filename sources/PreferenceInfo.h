@@ -28,6 +28,11 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 };
 
 @class iTermPreferencesSearchDocument;
+@class PreferenceInfo;
+
+@protocol PreferenceController<NSObject>
+- (void)updateEnabledStateForInfo:(PreferenceInfo *)info;
+@end
 
 @interface PreferenceInfo : NSObject
 
@@ -91,5 +96,8 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
                                  control:(NSControl *)control;
+
+- (void)addShouldBeEnabledDependencyOnUserDefault:(NSString *)key
+                                       controller:(id<PreferenceController>)controller;
 
 @end
