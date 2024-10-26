@@ -87,6 +87,7 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 @property(nonatomic, readonly) BOOL titleChangedRecently;
 @property(nonatomic, readonly) BOOL isCompact;
 @property(nonatomic) NSInteger it_openingSheet;
+@property(nonatomic, readonly) BOOL it_resizingForTiling;
 @property (nonatomic) BOOL it_becomingKey;
 @property (nonatomic) NSInteger it_accessibilityResizing;
 @property(nonatomic) BOOL it_restorableStateInvalid;

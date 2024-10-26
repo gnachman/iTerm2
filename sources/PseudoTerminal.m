@@ -4692,6 +4692,10 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Accepting proposal (2)");
         return proposedFrameSize;
     }
+    if (self.ptyWindow.it_resizingForTiling) {
+        DLog(@"Accepting proposal (resizing for tiling)");
+        return proposedFrameSize;
+    }
     if (self.windowType == WINDOW_TYPE_MAXIMIZED || self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED) {
         DLog( @"Blocking resize" );
         self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];

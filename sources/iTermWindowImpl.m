@@ -39,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 #endif
     BOOL _updatingDividerLayer;
     BOOL _isMovingScreen;
+    NSInteger _resizingForTilingCount;
 }
 
 @synthesize it_openingSheet;
@@ -571,6 +572,22 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)it_isMovingScreen {
     return _isMovingScreen;
+}
+
+- (void)_resizeFromWindowManagerWithTargetGeometry:(id)geometry
+                                      springSettings:(id)springSettings
+                                          completion:(id)completion NS_AVAILABLE_MAC(15_0) {
+    _resizingForTilingCount += 1;
+    DLog(@"incr _resizingForTilingCount to %@", @(_resizingForTilingCount));
+    [super _resizeFromWindowManagerWithTargetGeometry:geometry
+                                       springSettings:springSettings
+                                           completion:completion];
+    _resizingForTilingCount -= 1;
+    DLog(@"decr _resizingForTilingCount to %@", @(_resizingForTilingCount));
+}
+
+- (BOOL)it_resizingForTiling {
+    return _resizingForTilingCount > 0;
 }
 
 - (void)setFrame:(NSRect)frameRect display:(BOOL)flag {
