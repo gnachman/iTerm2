@@ -17,6 +17,8 @@
 
 @interface NSDictionary<__covariant KeyType, __covariant ObjectType> (iTerm)
 
++ (instancetype)it_dictionaryWithContentsOfData:(NSData *)data;
+
 + (CGFloat)defaultAlphaForColorPresetKey:(NSString *)key;
 
 + (NSDictionary *)dictionaryWithGridCoord:(VT100GridCoord)coord;

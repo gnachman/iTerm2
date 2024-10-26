@@ -215,6 +215,9 @@ enum {
         [gRemotePrefsObserver observeKey:kPreferenceKeyCustomFolder block:^{
             DLog(@"Remote prefs changed from\n%@", [NSThread callStackSymbols]);
         }];
+        [gRemotePrefsObserver observeKey:kPreferenceKeyLoadPrefsFromCustomFolder block:^{
+            [weakSelf loadPrefsFromCustomFolderDidChangeByUI:NO];
+        }];
     }
     return self;
 }
@@ -478,7 +481,7 @@ enum {
                            key:kPreferenceKeyLoadPrefsFromCustomFolder
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^() { [self loadPrefsFromCustomFolderDidChange]; };
+    info.onChange = ^() { [self loadPrefsFromCustomFolderDidChangeByUI:YES]; };
     info.observer = ^() { [self updateRemotePrefsViews]; };
 
     info = [self defineControl:_saveChanges
@@ -1069,12 +1072,17 @@ enum {
     [self updateCustomScriptsFolderViews];
 }
 
-- (void)loadPrefsFromCustomFolderDidChange {
+- (void)loadPrefsFromCustomFolderDidChangeByUI:(BOOL)byUI {
     BOOL shouldLoadRemotePrefs = [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
     [self updateRemotePrefsViews];
-    if (shouldLoadRemotePrefs) {
+    if (shouldLoadRemotePrefs && byUI) {
         // Just turned it on.
-        if ([[_prefsCustomFolder stringValue] length] == 0 && ![self pasteboardHasGitlabURL]) {
+#if DEBUG
+        const BOOL gitlab = [iTermPreferences pasteboardHasGitlabURL];
+#else
+        const BOOL gitlab = NO;
+#endif
+        if ([[_prefsCustomFolder stringValue] length] == 0 && !gitlab) {
             // Field was initially empty so browse for a dir.
             if ([self choosePrefsCustomFolder]) {
                 // User didn't hit cancel; if he chose a writable directory, ask if he wants to write to it.
@@ -1090,12 +1098,10 @@ enum {
             }
         }
     }
+    if (!byUI && (_loadPrefsFromCustomFolder.state == NSControlStateValueOn) != shouldLoadRemotePrefs) {
+        _loadPrefsFromCustomFolder.state = shouldLoadRemotePrefs ? NSControlStateValueOn : NSControlStateValueOff;
+    }
     [self updateRemotePrefsViews];
-}
-
-- (BOOL)pasteboardHasGitlabURL {
-    NSString *pasteboardString = [NSString stringFromPasteboard];
-    return [pasteboardString isMatchedByRegex:@"^https://gitlab.com/gnachman/iterm2/uploads/[a-f0-9]*/com.googlecode.iterm2.plist$"];
 }
 
 - (BOOL)chooseCustomScriptsFolder {

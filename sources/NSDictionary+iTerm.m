@@ -9,6 +9,7 @@
 #import "NSDictionary+iTerm.h"
 
 #import "iTermTuple.h"
+#import "DebugLogging.h"
 #import "NSColor+iTerm.h"
 #import "NSWorkspace+iTerm.h"
 
@@ -69,6 +70,20 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
 @end
 
 @implementation NSDictionary (iTerm)
+
++ (instancetype)it_dictionaryWithContentsOfData:(NSData *)data {
+    NSError *error = nil;
+    NSDictionary *dictionary = [NSPropertyListSerialization propertyListWithData:data
+                                                                         options:NSPropertyListImmutable
+                                                                          format:nil
+                                                                           error:&error];
+
+    if (error) {
+        DLog(@"Error parsing plist: %@", error.localizedDescription);
+        return nil;
+    }
+    return dictionary;
+}
 
 + (NSDictionary *)dictionaryWithGridCoord:(VT100GridCoord)coord {
     return @{ kGridCoordXKey: @(coord.x),

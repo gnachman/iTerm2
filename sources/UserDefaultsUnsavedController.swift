@@ -124,16 +124,26 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
             return
         }
         let menu = SimpleContextMenu()
-        menu.addItem(title: "Save Settings") { [weak self] in
-            self?.save()
-        }
-        menu.addItem(title: "Save Settings Automatically") { [weak self] in
-            self?.enableAutosave()
-        }
-        menu.addItem(title: "Hide Unsaved Changes Notification") { [weak self] in
-            self?.hideNotification()
+        if iTermRemotePreferences.sharedInstance().remoteLocationIsURL {
+            menu.addItem(title: "Disable Loading Settings from URL") { [weak self] in
+                self?.disableRemotePrefs()
+            }
+        } else {
+            menu.addItem(title: "Save Settings") { [weak self] in
+                self?.save()
+            }
+            menu.addItem(title: "Save Settings Automatically") { [weak self] in
+                self?.enableAutosave()
+            }
+            menu.addItem(title: "Hide Unsaved Changes Notification") { [weak self] in
+                self?.hideNotification()
+            }
         }
         menu.show(in: view, for: event)
+    }
+
+    private func disableRemotePrefs() {
+        UserDefaults.standard.set(false, forKey: kPreferenceKeyLoadPrefsFromCustomFolder)
     }
 
     private func save() {
@@ -163,6 +173,7 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
 
     private func userDefaultsDidChange(_ key: String?) {
         if iTermRemotePreferences.sharedInstance().remoteLocationIsURL {
+            checkAsynchronously()
             return
         }
         if iTermRemotePreferences.sharedInstance().shouldSaveAutomatically() {
@@ -171,6 +182,10 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
         if checking {
             return
         }
+        checkAsynchronously()
+    }
+
+    private func checkAsynchronously() {
         checking = true
         DispatchQueue.main.async { [weak self] in
             self?.check()

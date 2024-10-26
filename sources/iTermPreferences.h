@@ -303,6 +303,9 @@ extern NSString *const iTermDefaultAIPrompt;
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag;
 
 + (NSString *)warningIdentifierForNeverWarnAboutShortLivedSessions:(NSString *)guid;
+#if DEBUG
++ (BOOL)pasteboardHasGitlabURL;
+#endif
 
 @end
 

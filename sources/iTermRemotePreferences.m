@@ -111,6 +111,63 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
     return iTermRemotePreferencesKeyIsSyncable(key, self.preservedKeys);
 }
 
+- (NSData *)loadFromURL:(NSURL *)url
+respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
+                  error:(out NSError **)errorPtr {
+    const NSTimeInterval timeout = respectingTimeoutSetting ? [iTermAdvancedSettingsModel noSyncDownloadPrefsTimeout] : INFINITY;
+    NSURLRequest *req = [NSURLRequest requestWithURL:url
+                                         cachePolicy:NSURLRequestUseProtocolCachePolicy
+                                     timeoutInterval:timeout];
+    __block NSError *error = nil;
+    __block NSData *data = nil;
+
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    DLog(@"Create task for %@", url);
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:req completionHandler:^(NSData * _Nullable taskData,
+                                                                             NSURLResponse * _Nullable taskResponse,
+                                                                             NSError * _Nullable taskError) {
+        DLog(@"Task progressing with %@ bytes", @(taskData.length));
+        data = taskData;
+        error = taskError;
+        dispatch_semaphore_signal(sema);
+    }];
+    DLog(@"Resume task");
+    [task resume];
+    DLog(@"Wait for completion");
+    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+    DLog(@"Download completed");
+
+    if (errorPtr) {
+        *errorPtr = error;
+    }
+    return data;
+}
+
+- (NSData *)didFailToLoadFromURL:(NSURL *)url withError:(NSError *)error {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Failed to load settings from URL. Falling back to local copy.";
+    alert.informativeText = [NSString stringWithFormat:@"HTTP request failed: %@",
+                             [error localizedDescription] ?: @"unknown error"];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Reveal in Settings"];
+    if ([error.domain isEqual:NSURLErrorDomain] && error.code == NSURLErrorTimedOut) {
+        [alert addButtonWithTitle:@"Try Again Without Timeout"];
+    }
+
+    const NSModalResponse response = [alert runModal];
+    if (response == NSAlertSecondButtonReturn) {
+        [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+    } else if (response == NSAlertThirdButtonReturn) {
+        NSError *innerError = nil;
+        NSData *data = [self loadFromURL:url respectingTimeoutSetting:NO error:&innerError];
+        if (!data || innerError) {
+            return [self didFailToLoadFromURL:url withError:innerError];
+        }
+        return data;
+    }
+    return nil;
+}
+
 - (NSDictionary *)freshCopyOfRemotePreferences {
     if (!self.shouldLoadRemotePrefs) {
         return nil;
@@ -154,61 +211,16 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
         }
         // Download the URL's contents.
         NSURL *url = [NSURL URLWithUserSuppliedString:filename];
-        const NSTimeInterval kFetchTimeout = [iTermAdvancedSettingsModel noSyncDownloadPrefsTimeout];
-        NSURLRequest *req = [NSURLRequest requestWithURL:url
-                                             cachePolicy:NSURLRequestUseProtocolCachePolicy
-                                         timeoutInterval:kFetchTimeout];
-        __block NSError *error = nil;
-        __block NSData *data = nil;
-
-        dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-        DLog(@"Create task for %@", url);
-        NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:req completionHandler:^(NSData * _Nullable taskData,
-                                                                                 NSURLResponse * _Nullable taskResponse,
-                                                                                 NSError * _Nullable taskError) {
-            DLog(@"Task progressing with %@ bytes", @(taskData.length));
-            data = taskData;
-            error = taskError;
-            dispatch_semaphore_signal(sema);
-        }];
-        DLog(@"Resume task");
-        [task resume];
-        DLog(@"Wait for completion");
-        dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
-        DLog(@"Download completed");
-
+        NSError *error = nil;
+        NSData *data = [self loadFromURL:url respectingTimeoutSetting:YES error:&error];
         if (!data || error) {
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Failed to load settings from URL. Falling back to local copy.";
-            alert.informativeText = [NSString stringWithFormat:@"HTTP request failed: %@",
-                                     [error localizedDescription] ?: @"unknown error"];
-            [alert addButtonWithTitle:@"OK"];
-            [alert addButtonWithTitle:@"Reveal in Settings"];
-            const NSModalResponse response = [alert runModal];
-            if (response == NSAlertSecondButtonReturn) {
-                [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+            data = [self didFailToLoadFromURL:url withError:error];
+            if (!data) {
+                return nil;
             }
-            return nil;
         }
 
-        // Write it to disk
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-        NSString *tempDir = [fileManager it_temporaryDirectory];
-        NSString *tempFile = [tempDir stringByAppendingPathComponent:@"temp.plist"];
-        error = nil;
-        if (![data writeToFile:tempFile options:0 error:&error]) {
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Failed to write to temp file while getting remote settings. Falling back to local copy.";
-            alert.informativeText = [NSString stringWithFormat:@"Error on file %@: %@", tempFile,
-                                     [error localizedDescription]];
-            [alert runModal];
-            return nil;
-        }
-
-        remotePrefs = [NSDictionary dictionaryWithContentsOfFile:tempFile];
-
-        [fileManager removeItemAtPath:tempFile error:nil];
-        [fileManager removeItemAtPath:tempDir error:nil];
+        remotePrefs = [NSDictionary it_dictionaryWithContentsOfData:data];
     } else {
         DLog(@"Will load dictionary from %@", filename);
         remotePrefs = [NSDictionary dictionaryWithContentsOfFile:filename];

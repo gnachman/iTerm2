@@ -20,8 +20,10 @@
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermUserDefaultsObserver.h"
-#import "WindowArrangements.h"
+#import "NSArray+iTerm.h"
 #import "PSMTabBarControl.h"
+#import "RegexKitLite.h"
+#import "WindowArrangements.h"
 
 #define BLOCK(x) [^id() { return [self x]; } copy]
 
@@ -321,7 +323,47 @@ static NSString *sPreviousVersion;
     };
 }
 
++ (BOOL)pasteboardHasGitlabURL {
+    NSString *pasteboardString = [NSString stringFromPasteboard];
+    NSArray<NSString *> *regexen = @[
+        @"^https://gitlab\\.com/gnachman/iterm2/uploads/[a-f0-9]*/com\\.googlecode\\.iterm2\\.plist$",
+        @"^https://gitlab\\.com/-/project/[a-f0-9]*/uploads/[a-f0-9]*/com\\.googlecode\\.iterm2\\.plist$"
+    ];
+    return [regexen anyWithBlock:^BOOL(NSString *regex) {
+        return [pasteboardString isMatchedByRegex:regex];
+    }];
+}
+
+#if DEBUG
++ (void)handleGitlabURLOnPasteboard {
+    if (![self pasteboardHasGitlabURL]) {
+        return;
+    }
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSString *urlString = [NSString stringFromPasteboard];
+    if ([ud boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder] &&
+        [[ud stringForKey:kPreferenceKeyCustomFolder] isEqual:urlString]) {
+        return;
+    }
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:@"Load settings from Gitlab settings-like URL on pasteboard?"
+                               actions:@[ @"OK", @"Cancel" ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Load Gitlab Settings"
+                                window:nil];
+    if (selection == kiTermWarningSelection0) {
+        [ud setBool:YES forKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+        [ud setObject:urlString forKey:kPreferenceKeyCustomFolder];
+    }
+}
+#endif
+
 + (void)initializeUserDefaults {
+#if DEBUG
+    [self handleGitlabURLOnPasteboard];
+#endif
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     [[self systemPreferenceOverrides] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         [userDefaults setObject:obj forKey:key];
