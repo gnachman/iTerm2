@@ -33,8 +33,9 @@ static_assert(iTermASCIITextureAttributesBold == iTermMetalGlyphKeyTypefaceBold,
 static_assert(iTermASCIITextureAttributesItalic == iTermMetalGlyphKeyTypefaceItalic, "Italic flags differ");
 #endif
 
-NS_INLINE iTermASCIITextureAttributes iTermASCIITextureAttributesFromGlyphKeyTypeface(iTermMetalGlyphKeyTypeface typeface,
-                                                                                      BOOL thinStrokes) {
+NS_INLINE iTermASCIITextureAttributes
+iTermASCIITextureAttributesFromGlyphKeyTypeface(iTermMetalGlyphKeyTypeface typeface,
+                                                BOOL thinStrokes) {
     static const int mask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
     iTermASCIITextureAttributes result = (typeface & mask);
     if (thinStrokes) {

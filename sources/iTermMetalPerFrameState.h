@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class PTYTextView;
 @class VT100Screen;
+@class iTermAttributedStringBuilder;
 @class iTermImageWrapper;
 
 @protocol iTermMetalPerFrameStateDelegate <NSObject>
@@ -37,7 +38,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithTextView:(PTYTextView *)textView
                           screen:(VT100Screen *)screen
                             glue:(id<iTermMetalPerFrameStateDelegate>)glue
-                         context:(CGContextRef)context NS_DESIGNATED_INITIALIZER;
+                         context:(CGContextRef)context
+         attributedStringBuilder:(iTermAttributedStringBuilder *)attributedStringBuilder NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end

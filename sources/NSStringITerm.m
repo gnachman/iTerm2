@@ -50,6 +50,7 @@
 #import "ScreenChar.h"
 #import <apr-1/apr_base64.h>
 #import <Carbon/Carbon.h>
+#import <CoreText/CoreText.h>
 #import <Foundation/Foundation.h>
 #import <wctype.h>
 
@@ -2808,6 +2809,43 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
         }
     }
     return valid;
+}
+
+- (NSIndexSet *)rtlIndexes {
+    // Create an attributed string from the input string
+    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:self];
+
+    // Create a CTLine from the attributed string
+    CTLineRef line = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
+    if (!line) {
+        return [NSIndexSet indexSet];
+    }
+
+    NSMutableIndexSet *rtlIndexes = [NSMutableIndexSet indexSet];
+
+    // Get the runs from the line
+    CFArrayRef runs = CTLineGetGlyphRuns(line);
+    CFIndex numRuns = CFArrayGetCount(runs);
+
+    // Iterate through each run
+    for (CFIndex runIndex = 0; runIndex < numRuns; runIndex++) {
+        CTRunRef run = CFArrayGetValueAtIndex(runs, runIndex);
+
+        // Check if the run is RTL
+        if (CTRunGetStatus(run) & kCTRunStatusRightToLeft) {
+            CFRange runRange = CTRunGetStringRange(run);
+
+            // Add the range to the index set
+            for (CFIndex i = runRange.location; i < runRange.location + runRange.length; i++) {
+                [rtlIndexes addIndex:i];
+            }
+        }
+    }
+
+    // Clean up
+    CFRelease(line);
+
+    return rtlIndexes;
 }
 
 @end

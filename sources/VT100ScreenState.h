@@ -292,6 +292,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 @property (nonatomic, readonly) int numberOfLines;
 
 - (iTermImmutableMetadata)metadataOnLine:(int)lineNumber;
+- (iTermBidiDisplayInfo *)bidiInfoForLine:(int)line;
 
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
 // This function is dangerous! It writes to an internal buffer and returns a

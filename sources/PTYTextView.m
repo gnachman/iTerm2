@@ -704,7 +704,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                         NULL,
                         [_delegate textViewUnicodeNormalizationForm],
                         [_delegate textViewUnicodeVersion],
-                        self.dataSource.terminalSoftAlternateScreenMode);
+                        self.dataSource.terminalSoftAlternateScreenMode,
+                        NULL);
 
     // Count how many additional cells are needed due to double-width chars
     // that span line breaks being wrapped to the next line.
@@ -1592,6 +1593,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         rightMargin = _drawingHelper.timestampDrawHelper.maximumWidth + 8;
     }
     _drawingHelper.indicatorFrame = [self configureIndicatorsHelperWithRightMargin:rightMargin];
+    [_drawingHelper didFinishSetup];
 
     return _drawingHelper;
 }
@@ -2847,6 +2849,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                     range:(VT100GridWindowedRange *)rangePtr
           respectDividers:(BOOL)respectDividers {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    extractor.supportBidi = YES;
     VT100GridCoord coord = VT100GridCoordMake(x, y);
     if (respectDividers) {
         [extractor restrictToLogicalWindowIncludingCoord:coord];
@@ -4388,7 +4391,14 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                       _lineHeight);
 }
 
-- (void)findOnPageSelectRange:(VT100GridCoordRange)range wrapped:(BOOL)wrapped {
+- (iTermTextExtractor *)bidiExtractor {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    extractor.supportBidi = YES;
+    return extractor;
+}
+
+- (void)findOnPageSelectRange:(VT100GridCoordRange)logicalRange wrapped:(BOOL)wrapped {
+    VT100GridCoordRange range = [self.bidiExtractor visualRangeForLogical:logicalRange];
     [self selectCoordRange:range];
     VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range, _dataSource.totalScrollbackOverflow);
     // Let the scrollview scroll if needs to before showing the find indicator.
@@ -4756,6 +4766,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     if (lineNumber < 0 || lineNumber > INT_MAX) {
         return VT100GridRangeMake(0, 0);
     }
+    if ([_dataSource bidiInfoForLine:lineNumber] != nil) {
+#warning TODO: This is a hack. A proper fix would give iTermSelection the ability to extend selection leftwards for lines that are right-justified.
+        return VT100GridRangeMake(_dataSource.width, 0);
+    }
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     int length = [extractor lengthOfLine:lineNumber];
@@ -5037,6 +5051,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return [_dataSource externalAttributeIndexForLine:lineNumber];
 }
 
+- (iTermImmutableMetadata)drawingHelperMetadataOnLine:(int)lineNumber {
+    return [_dataSource metadataOnLine:lineNumber];
+}
+
 - (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
     return [_dataSource screenCharArrayAtScreenIndex:line].line;
 }
@@ -5110,6 +5128,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (NSArray<iTermTerminalButton *> *)drawingHelperTerminalButtons  API_AVAILABLE(macos(11)){
     return [self terminalButtons];
+}
+
+- (iTermBidiDisplayInfo * _Nullable)drawingHelperBidiInfoForLine:(int)line {
+    return [self.dataSource bidiInfoForLine:line];
 }
 
 - (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11)) {

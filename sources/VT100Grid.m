@@ -47,6 +47,8 @@ static NSString *const kGridSizeKey = @"Size";
     NSMutableData *resultLine_;
     screen_char_t savedDefaultChar_;
     NSTimeInterval _allDirtyTimestamp;
+    NSMutableArray *_bidiInfo;  // iTermBidiDisplayInfo or NSNull
+    BOOL _bidiDirty;  // Did _bidiInfo change?
 }
 
 @synthesize size = size_;
@@ -426,6 +428,30 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     return YES;
 }
 
+- (BOOL)anyLineDirtyInRange:(NSRange)range {
+    for (NSInteger i = 0; i < range.length; i++) {
+        if ([self dirtyRangeForLine:range.location + i].length > 0) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)mayContainRTL {
+    const int height = size_.height;
+    for (int i = 0; i < height; i++) {
+        if (lineInfos_[i].metadata.rtlFound) {
+            return YES;
+        }
+    }
+    if ([_bidiInfo anyWithBlock:^BOOL(id anObject) {
+        return ![anObject isKindOfClass:[NSNull class]];
+    }]) {
+        return YES;
+    }
+    return NO;
+}
+
 - (int)numberOfLinesUsed {
     return MAX(MIN(size_.height, cursor_.y + 1), [self numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:NO]);
 }
@@ -493,6 +519,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
               [lineBuffer numLinesWithWidth:size_.width], size_.width);
 #endif
     }
+    [lineBuffer commitLastBlock];
 
     return numLines;
 }
@@ -979,6 +1006,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     }
     _hasChanged = YES;
     [otherGrid copyMiscellaneousStateTo:self];
+    [otherGrid resetBidiDirty];
 }
 
 - (int)scrollLeft {
@@ -997,7 +1025,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                 wraparound:(BOOL)wraparound
                       ansi:(BOOL)ansi
                     insert:(BOOL)insert
-    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes {
+    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes
+                  rtlFound:(BOOL)rtlFound {
     int numDropped = 0;
     assert(buffer);
     int idx;  // Index into buffer
@@ -1008,6 +1037,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     const int scrollLeft = self.scrollLeft;
     const int scrollRight = self.scrollRight;
     const screen_char_t defaultChar = [self defaultChar];
+    int lastY = -1;
     // Iterate over each character in the buffer and copy/insert into screen.
     // Grab a block of consecutive characters up to the remaining length in the
     // line and append them at once.
@@ -1089,6 +1119,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                     newCursorX--;
                 }
 
+                if (rtlFound && cursor_.y != lastY) {
+                    lastY = cursor_.y;
+                    [[self lineInfoAtLineNumber:cursor_.y] setRTLFound:rtlFound];
+                }
                 screen_char_t *line = VT100GridScreenCharsAtLine(self, cursor_.y);
                 if (rightMargin == size_.width) {
                     // Clear the continuation marker
@@ -1173,6 +1207,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         }
 
         const int lineNumber = cursor_.y;
+        if (rtlFound && cursor_.y != lastY) {
+            lastY = cursor_.y;
+            [[self lineInfoAtLineNumber:cursor_.y] setRTLFound:rtlFound];
+        }
         aLine = VT100GridScreenCharsAtLine(self, lineNumber);
         iTermExternalAttributeIndex *eaIndex = VT100GridGetExternalAttributes(self, lineNumber, attributes != nil);
 
@@ -1636,6 +1674,18 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     self.cursorY = MIN(size_.height - 1, MAX(0, info.cursorY - yOffset));
 }
 
+- (void)setCharactersInLine:(int)line
+                         to:(const screen_char_t *)chars
+                     length:(int)length {
+    assert(length <= self.size.width);
+    screen_char_t *destination = [self screenCharsAtLineNumber:line];
+    assert(destination != nil);
+    memmove(destination, chars, length * sizeof(screen_char_t));
+    [self markCharsDirty:YES
+              inRectFrom:VT100GridCoordMake(0, line)
+                      to:VT100GridCoordMake(length - 1, line)];
+}
+
 - (NSString *)debugString {
     NSMutableString* result = [NSMutableString stringWithString:@""];
     int x, y;
@@ -1765,6 +1815,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     while (destLineNumber >= 0) {
         screen_char_t *dest = [self screenCharsAtLineNumber:destLineNumber];
         memcpy(dest, defaultLine, sizeof(screen_char_t) * size_.width);
+        [self markCharsDirty:YES
+                  inRectFrom:VT100GridCoordMake(0, destLineNumber)
+                          to:VT100GridCoordMake(size_.width - 1, destLineNumber)];
         if (!foundCursor) {
             int tempCursor = cursor_.x;
             foundCursor = [lineBuffer getCursorInLastLineWithWidth:size_.width atX:&tempCursor];
@@ -2204,6 +2257,102 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
 }
 
+- (int)lengthOfParagraphFromLineNumber:(int)line {
+    int length = 1;
+    for (int i = line; i < self.size.height; i++) {
+        if ([self continuationMarkForLineNumber:i] == EOL_HARD) {
+            break;
+        }
+        length += 1;
+    }
+    return length;
+}
+
+- (void)enumerateParagraphs:(void (^)(int, NSArray<MutableScreenCharArray *> *))closure {
+    for (int i = 0; i < self.size.height; ) {
+        int length = [self lengthOfParagraphFromLineNumber:i];
+        closure(i, [self mutableLinesInRange:NSMakeRange(i, length)]);
+        i += length;
+    }
+}
+
+- (NSArray<MutableScreenCharArray *> *)mutableLinesInRange:(NSRange)range {
+    return [[NSArray sequenceWithRange:range] mapWithBlock:^id _Nullable(NSNumber *number) {
+        return [self mutableScreenCharArrayForLine:number.intValue];
+    }];
+}
+
+- (MutableScreenCharArray *)mutableScreenCharArrayForLine:(int)line {
+    screen_char_t *chars = [self screenCharsAtLineNumber:line];
+    return [[MutableScreenCharArray alloc] initWithLine:chars
+                                                 length:self.size.width
+                                               metadata:[self immutableMetadataAtLineNumber:line]
+                                           continuation:chars[self.size.width]];
+}
+
+- (BOOL)mayContainRTLInRange:(NSRange)range {
+    for (NSInteger i = 0; i < range.length; i++) {
+        if ([self metadataAtLineNumber:range.location + i].rtlFound) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)resetBidiDirty {
+    _bidiDirty = NO;
+}
+
+- (BOOL)eraseBidiInfoInDirtyLines {
+    const int height = self.size.height;
+    if (height == _bidiInfo.count) {
+        if (![self isAnyCharDirty]) {
+            return NO;
+        }
+        for (int i = 0; i < height; i++) {
+            if ([self dirtyRangeForLine:i].length <= 0) {
+                continue;
+            }
+            if (![_bidiInfo[i] isKindOfClass:[NSNull class]]) {
+                _bidiDirty = YES;
+            }
+            _bidiInfo[i] = [NSNull null];
+        }
+        return YES;
+    }
+
+    // Height has changed.
+    [self initializeBidi];
+    return YES;
+}
+
+- (void)initializeBidi {
+    const int height = self.size.height;
+    _bidiDirty = YES;
+    _bidiInfo = [[NSMutableArray alloc] initWithCapacity:height];
+    for (int i = 0; i < height; i++) {
+        [_bidiInfo addObject:[NSNull null]];
+    }
+}
+
+- (void)setBidiInfo:(iTermBidiDisplayInfo *)bidiInfo forLine:(int)line {
+    if (bidiInfo) {
+        if ([_bidiInfo[line] isKindOfClass:[NSNull class]]) {
+            _bidiDirty = YES;
+        }
+        _bidiInfo[line] = bidiInfo;
+    } else {
+        if (![_bidiInfo[line] isKindOfClass:[NSNull class]]) {
+            _bidiDirty = YES;
+        }
+        _bidiInfo[line] = [NSNull null];
+    }
+}
+
+- (iTermBidiDisplayInfo *)bidiInfoForLine:(int)line {
+    return [_bidiInfo[line] nilIfNull];
+}
+
 #pragma mark - Private
 
 - (NSMutableArray *)linesWithSize:(VT100GridSize)size {
@@ -2376,6 +2525,7 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
 
         cursor_.x = MIN(cursor_.x, size_.width - 1);
         self.cursorY = MIN(cursor_.y, size_.height - 1);
+        [self initializeBidi];
         if (withSideEffects) {
             [self.delegate gridDidResize];
         }
@@ -2634,6 +2784,9 @@ static void DumpBuf(screen_char_t* p, int n) {
     theCopy.scrollRegionCols = scrollRegionCols_;
     theCopy.useScrollRegionCols = useScrollRegionCols_;
     theCopy.savedDefaultChar = savedDefaultChar_;
+    if (_bidiDirty || theCopy->_bidiInfo == nil) {
+        theCopy->_bidiInfo = [_bidiInfo mutableCopy];
+    }
 }
 
 - (id)copyWithZone:(NSZone *)zone {

@@ -9,6 +9,8 @@
 #import "ScreenChar.h"
 #import "iTermMetadata.h"
 
+@class iTermBidiDisplayInfo;
+
 NS_ASSUME_NONNULL_BEGIN
 
 // Typically used to store a single screen line.
@@ -23,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *stringValue;
 @property (nonatomic, readonly) NSString *stringValueIncludingNewline;
 @property (nonatomic, readonly) NSString *debugStringValue;
+@property (nonatomic, readonly, nullable) iTermBidiDisplayInfo *bidiInfo;
 
 @property (nonatomic, readonly) NSInteger lengthExcludingTrailingWhitespaceAndNulls;
 
@@ -36,10 +39,21 @@ NS_ASSUME_NONNULL_BEGIN
                             length:(int)length
                       continuation:(screen_char_t)continuation;
 
+- (instancetype)initWithCopyOfLine:(const screen_char_t *)line
+                            length:(int)length
+                      continuation:(screen_char_t)continuation
+                          bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
+
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
                     metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation;
+
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation
+                    bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
 
 - (instancetype)initWithData:(NSData *)data
                     metadata:(iTermImmutableMetadata)metadata
@@ -78,7 +92,9 @@ NS_ASSUME_NONNULL_BEGIN
 // 2. The top-left cell of the grid is a double-width character
 - (ScreenCharArray *)paddedToLength:(int)length eligibleForDWC:(BOOL)eligibleForDWC;
 
+// Zeros a logical range
 - (ScreenCharArray *)copyByZeroingRange:(NSRange)range;
+- (ScreenCharArray *)copyByZeroingVisibleRange:(NSRange)range;
 - (ScreenCharArray *)paddedOrTruncatedToLength:(NSUInteger)newLength;
 - (ScreenCharArray *)paddedToAtLeastLength:(NSUInteger)newLength;
 - (ScreenCharArray *)screenCharArrayByRemovingFirst:(int)n;
@@ -95,6 +111,23 @@ NS_ASSUME_NONNULL_BEGIN
 // Wraps copy for Swift's benefit
 - (instancetype)clone;
 
+@end
+
+@interface MutableScreenCharArray: ScreenCharArray
+
+@property (nonatomic, readonly) screen_char_t *mutableLine;
+
+- (void)appendScreenCharArray:(ScreenCharArray *)sca;
+
+@end
+
+@interface ScreenCharRope: NSObject
+@property (nonatomic, strong) NSArray<ScreenCharArray *> *scas;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithScreenCharArrays:(NSArray<ScreenCharArray *> *)scas NS_DESIGNATED_INITIALIZER;
+
+- (MutableScreenCharArray *)joined;
 @end
 
 NS_ASSUME_NONNULL_END

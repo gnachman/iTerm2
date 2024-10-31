@@ -559,10 +559,10 @@ static void SwapInt(int *a, int *b) {
                                               ^(VT100GridCoordRange range) {
             VT100GridCoordRange newSelection;
             const BOOL ok = [self convertRange:range
-                                               toWidth:newWidth
-                                                    to:&newSelection
-                                          inLineBuffer:self.linebuffer
-                                         tolerateEmpty:NO];
+                                       toWidth:newWidth
+                                            to:&newSelection
+                                  inLineBuffer:self.linebuffer
+                                 tolerateEmpty:NO];
             if (ok) {
                 assert(range.start.y >= 0);
                 assert(range.end.y >= 0);

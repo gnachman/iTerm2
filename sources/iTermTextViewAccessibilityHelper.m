@@ -197,10 +197,11 @@
 }
 
 - (NSRect)boundsForRange:(NSRange)range {
+    const int lastLine = (range.location + range.length > 0) ? range.location + range.length - 1 : 0;
     int yStart = [self lineNumberOfChar:range.location];
-    int y2 = [self lineNumberOfChar:range.location + range.length - 1];
+    int y2 = [self lineNumberOfChar:lastLine];
     int xStart = [self columnOfChar:range.location inLine:yStart];
-    int x2 = [self columnOfChar:range.location + range.length - 1 inLine:y2];
+    int x2 = [self columnOfChar:lastLine inLine:y2];
     ++x2;
     if (x2 == [_delegate accessibilityHelperWidth]) {
         x2 = 0;

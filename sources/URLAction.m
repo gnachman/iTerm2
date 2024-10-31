@@ -106,8 +106,8 @@
             actionType = @"ShowCommandInfo";
             break;
     }
-    return [NSString stringWithFormat:@"<%@: %p actionType=%@ string=%@ rule=%@ range=%@ coord=%@>",
-            [self class], self, actionType, self.string, self.rule, VT100GridWindowedRangeDescription(_range), VT100GridCoordDescription(self.coord)];
+    return [NSString stringWithFormat:@"<%@: %p actionType=%@ string=%@ rule=%@ logicalRange=%@ visualRange=%@ coord=%@>",
+            [self class], self, actionType, self.string, self.rule, VT100GridWindowedRangeDescription(_logicalRange), VT100GridWindowedRangeDescription(_visualRange), VT100GridCoordDescription(self.coord)];
 }
 
 @end

@@ -35,6 +35,7 @@
 - (VT100GridRange)dirtyRange;
 - (NSIndexSet *)dirtyIndexes;
 - (void)setTimestamp:(NSTimeInterval)timestamp;
+- (void)setRTLFound:(BOOL)rtlFound;
 - (void)decodeMetadataArray:(NSArray *)array;
 - (void)resetMetadata;
 - (NSArray *)encodedMetadata;

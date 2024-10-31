@@ -11,7 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // A collection of data about a font.
-@interface PTYFontInfo : NSObject
+@interface PTYFontInfo : NSObject<NSCopying>
 
 @property(nonatomic, retain) NSFont *font;
 @property(nonatomic, readonly) CGFloat baselineOffset;

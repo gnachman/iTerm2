@@ -792,6 +792,7 @@ DEFINE_INT(codeciergeCommandWarningCount, 10, SECTION_EXPERIMENTAL @"After this 
 DEFINE_STRING(codeciergeRegularPrompt, @"You help a me in a terminal emulator. My goal is $GOAL. $CONTEXT. Start by suggesting a command. Don't overwhelm me with too much information: just go one step at a time. When I've reached my goal, remind me to click the End Task button.", SECTION_EXPERIMENTAL @"Prompt to send to LLM for Codecierge when it is NOT able to execute commands automatically.\n$GOAL and $CONTEXT are replaced with the user-specified goal and info about the running environment, respectively." );
 DEFINE_BOOL(generativeAIAllowed, YES, SECTION_GENERAL @"Allow the use of large language model APIs?\nThe purpose of this setting is to make it easy for managed environments to disable the use of LLMs. The user defaults key is `GenerativeAIAllowed`.");
 DEFINE_STRING(llmPlatform, @"OpenAI", SECTION_GENERAL @"LLM Platform.\nLegal values are: OpenAI, Azure, Gemini. This determines the format of requests and responses.");
+DEFINE_BOOL(bidi, NO, SECTION_EXPERIMENTAL @"Support right-to-left text and ligatures in the GPU renderer?");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

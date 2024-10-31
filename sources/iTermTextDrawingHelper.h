@@ -15,6 +15,7 @@
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
 
+@class iTermAttributedStringBuilder;
 @class iTermColorMap;
 @class iTermExternalAttribute;
 @class iTermExternalAttributeIndex;
@@ -218,6 +219,7 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 @property(nonatomic, assign) BOOL blinkAllowed;
 
 // Underlined selection range (inclusive of all values), indicating clickable url.
+// This is a logical range.
 @property(nonatomic, assign) VT100GridAbsWindowedRange underlinedRange;
 
 // If set, the last-modified time of each line on the screen is shown on the right side of the display.
@@ -343,6 +345,7 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 @property (nonatomic, readonly) NSColor *shadeColor;
 @property (nonatomic, copy) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
 @property (nonatomic, copy) NSIndexSet *folds;
+@property (nonatomic, readonly) iTermAttributedStringBuilder *attributedStringBuilder;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;
@@ -407,6 +410,8 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 - (void)updateCachedMetrics;
 - (void)updateButtonFrames NS_AVAILABLE_MAC(11);
 - (NSRange)rangeOfVisibleRows;
+- (VT100GridCoord)coordinateByTransformingScreenCoordinateForRTL:(VT100GridCoord)nominal;
+- (void)didFinishSetup;
 
 @end
 

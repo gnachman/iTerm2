@@ -17,6 +17,7 @@
 #import "AtomicHelpers.h"
 #import "iTermCPUUtilization.h"
 #import "iTermController.h"
+#import "iTermCoreTextLineRenderingHelper.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermFindPasteboard.h"
 #import "iTermGCD.h"

@@ -7,9 +7,12 @@
 //
 
 #import "NSFont+iTerm.h"
+
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermBijection.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
-#import "iTermAdvancedSettingsModel.h"
 
 @implementation NSFont (iTerm)
 
@@ -63,6 +66,36 @@
 - (BOOL)it_hasStylisticAlternatives {
     NSArray *settings = self.fontDescriptor.fontAttributes[NSFontFeatureSettingsAttribute];
     return settings.count > 0;
+}
+
+static iTermBijection<NSNumber *, NSFont *> *iTermMetalFontBijection(void) {
+    static iTermBijection<NSNumber *, NSFont *> *bijection;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        bijection = [[iTermBijection alloc] init];
+    });
+    return bijection;
+}
+
+- (int)it_metalFontID {
+    iTermBijection<NSNumber *, NSFont *> *bijection = iTermMetalFontBijection();
+    @synchronized(bijection) {
+        NSNumber *number = [bijection objectForRight:self];
+        if (number) {
+            return number.intValue;
+        }
+        static int nextNumber;
+        const int newNumber = nextNumber++;
+        [bijection link:@(newNumber) to:self];
+        return newNumber;
+    }
+}
+
++ (instancetype)it_fontWithMetalID:(int)metalID {
+    iTermBijection<NSNumber *, NSFont *> *bijection = iTermMetalFontBijection();
+    @synchronized(bijection) {
+        return [bijection objectForLeft:@(metalID)];
+    }
 }
 
 @end

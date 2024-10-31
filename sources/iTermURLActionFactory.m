@@ -352,7 +352,8 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     }
     URLAction *action = [URLAction actionToShowCommandInfoForMark:mark
                                                             coord:self.coord];
-    action.range = range;
+    action.logicalRange = range;
+    action.visualRange = [self.extractor visualWindowedRangeForLogical:action.logicalRange];
     return action;
 }
 - (URLAction *)urlActionForHypertextLink {
@@ -367,11 +368,11 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         // file: URLs with a fragment go through semantic history and therefore need a workingDirectory.
         action.workingDirectory = self.workingDirectory;
         action.osc8 = YES;
-        action.range = [extractor rangeOfCoordinatesAround:self.coord
-                                           maximumDistance:1000
-                                               passingTest:^BOOL(screen_char_t *c,
-                                                                 iTermExternalAttribute *ea,
-                                                                 VT100GridCoord coord) {
+        action.logicalRange = [extractor rangeOfCoordinatesAround:self.coord
+                                                  maximumDistance:1000
+                                                      passingTest:^BOOL(screen_char_t *c,
+                                                                        iTermExternalAttribute *ea,
+                                                                        VT100GridCoord coord) {
             if ([NSObject object:ea.url isEqualToObject:oea.url]) {
                 return YES;
             }
@@ -380,6 +381,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
             // Hover together only if URL and ID are equal.
             return ([thisURL isEqual:url] && (thisId == urlId || [thisId isEqualToString:urlId]));
         }];
+        action.visualRange = [extractor visualWindowedRangeForLogical:action.logicalRange];
         return action;
     } else {
         return nil;
@@ -467,7 +469,8 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     }
     range.coordRange.end = [self.extractor successorOfCoord:lastCoord];
     range.columnWindow = self.extractor.logicalWindow;
-    action.range = range;
+    action.logicalRange = range;
+    action.visualRange = [self.extractor visualWindowedRangeForLogical:action.logicalRange];
 
     NSString *lineNumber = nil;
     NSString *columnNumber = nil;
@@ -501,7 +504,8 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         DLog(@"  Actions match this content: %@", content);
         URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:smartMatch.rule
                                                                    onString:content];
-        action.range = smartRange;
+        action.logicalRange = smartRange;
+        action.visualRange = [self.extractor visualWindowedRangeForLogical:action.logicalRange];
         NSInteger index = 0;
         if (self.alternate && actions.count > 1) {
             DLog(@"Selecting alternate action from %@", actions);
@@ -536,7 +540,8 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
             DLog(@"Good enough for me. name=%@", name);
             URLAction *action = [URLAction urlActionToOpenExistingFile:name];
             action.rawFilename = name;
-            action.range = smartRange;
+            action.logicalRange = smartRange;
+            action.visualRange = [self.extractor visualWindowedRangeForLogical:action.logicalRange];
             action.fullPath = name;
             action.workingDirectory = self.workingDirectory;
             return action;
@@ -711,7 +716,8 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         }
         range.columnWindow = self.extractor.logicalWindow;
         URLAction *action = [URLAction urlActionToOpenURL:string];
-        action.range = range;
+        action.logicalRange = range;
+        action.visualRange = [self.extractor visualWindowedRangeForLogical:action.logicalRange];
         return action;
     } else {
         DLog(@"%@ is not openable (couldn't convert it to a URL [%@] or no scheme handler",
@@ -734,7 +740,8 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         if (scpPath) {
             DLog(@"was able to cobble together a SCPPath of %@", scpPath);
             URLAction *action = [URLAction urlActionToSecureCopyFile:scpPath];
-            action.range = smartRange;
+            action.logicalRange = smartRange;
+            action.visualRange = [self.extractor visualWindowedRangeForLogical:action.logicalRange];
             return action;
         }
     }

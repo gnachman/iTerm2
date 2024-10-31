@@ -376,7 +376,8 @@ static NSInteger gNextFrameDataNumber;
 
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats
                            histograms:(NSArray<iTermHistogram *> *)aggregateHistograms
-                                owner:(NSString *)owner {
+                                owner:(NSString *)owner
+                           additional:(NSString *)additional {
     self.status = @"complete";
     if (self.intermediateRenderPassDescriptor) {
         [self.fullSizeTexturePool returnTexture:self.intermediateRenderPassDescriptor.colorAttachments[0].texture];
@@ -425,7 +426,13 @@ static NSInteger gNextFrameDataNumber;
         temp[i] = aggregateStats[i];
         [aggregateHistograms[i] mergeFrom:_statHistograms[i]];
     }
-    iTermPreciseTimerPeriodicLog([NSString stringWithFormat:@"%@: Metal Frame Data", owner], temp, iTermMetalFrameDataStatCount, 1, [iTermAdvancedSettingsModel logDrawingPerformance], aggregateHistograms);
+    iTermPreciseTimerPeriodicLog([NSString stringWithFormat:@"%@: Metal Frame Data\n", owner],
+                                 temp,
+                                 iTermMetalFrameDataStatCount,
+                                 1,
+                                 [iTermAdvancedSettingsModel logDrawingPerformance],
+                                 aggregateHistograms,
+                                 additional);
 #endif  // ENABLE_STATS
 }
 

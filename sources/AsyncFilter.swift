@@ -256,11 +256,12 @@ class FilteringUpdater: HexAddressFormatting {
 
 @objc(iTermFilterDestination)
 protocol FilterDestination {
-    @objc(filterDestinationAppendCharacters:count:externalAttributeIndex:continuation:)
+    @objc(filterDestinationAppendCharacters:count:externalAttributeIndex:continuation:rtlFound:)
     func append(_ characters: UnsafePointer<screen_char_t>,
                 count: Int32,
                 externalAttributeIndex: iTermExternalAttributeIndexReading?,
-                continuation: screen_char_t)
+                continuation: screen_char_t,
+                rtlFound: Bool)
 
     @objc(filterDestinationRemoveLastLine)
     func removeLastLine()
@@ -342,7 +343,8 @@ class AsyncFilter: NSObject {
         destination.append(chars.line,
                            count: chars.length,
                            externalAttributeIndex: iTermImmutableMetadataGetExternalAttributesIndex(metadata),
-                           continuation: chars.continuation)
+                           continuation: chars.continuation,
+                           rtlFound: metadata.rtlFound.boolValue)
     }
 
     @objc func start() {

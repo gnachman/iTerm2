@@ -141,7 +141,7 @@
 - (int)startOffset;
 
 // Return the length of a raw (unwrapped) line
-- (int)getRawLineLength:(int)linenum;
+- (int)lengthOfRawLine:(int)linenum;
 
 // Remove extra space from the end of the buffer. Future appends will fail.
 - (void)shrinkToFit;
@@ -155,6 +155,8 @@
 // Returns the metadata associated with a line when wrapped to the specified width.
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
 - (iTermImmutableMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
+
+- (iTermBidiDisplayInfo *)bidiInfoForLineNumber:(int)lineNum width:(int)width;
 
 // Appends the contents of the block to |s|.
 - (void)appendToDebugString:(NSMutableString *)s;
@@ -242,6 +244,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 void EnableDoubleWidthCharacterLineCache(void);
 
 - (void)setPartial:(BOOL)partial;
+- (ScreenCharArray *)lastRawLine;
 
 // For tests only
 - (LineBlockMutableMetadata)internalMetadataForLine:(int)line;
@@ -259,4 +262,10 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (NSString *)dumpString;
 - (NSString *)dumpStringWithDroppedChars:(long long)droppedChars;
 - (void)sanityCheckMetadataCache;
+- (void)reloadBidiInfo;
+
+// This doesn't support CoW so only call this before making the first copy.
+- (void)eraseRTLStatusInAllCharacters;
+- (void)setBidiForLastRawLine:(iTermBidiDisplayInfo *)bidi;
+
 @end

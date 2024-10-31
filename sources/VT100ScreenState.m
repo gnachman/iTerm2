@@ -158,6 +158,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _initialSize = VT100GridSizeMake(-1, -1);
         _linebuffer = [[LineBuffer alloc] init];
+        _linebuffer.maintainBidiInfo = YES;
         _colorMap = [[iTermColorMap alloc] init];
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] initWithQueue:queue];
         _namedMarks = [[iTermMutableArrayOfWeakObjects alloc] init];
@@ -364,6 +365,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 - (void)mergeFrom:(VT100ScreenMutableState *)source {
     [self copyFastStuffFrom:source];
     [self releaseOverwrittenImagesIn:source];
+    [source populateRTLStateIfNeeded];
 
     const BOOL lineBufferDirty = (!_linebuffer || source.linebuffer.dirty);
     if (lineBufferDirty) {
@@ -636,8 +638,23 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     }
 }
 
+- (iTermBidiDisplayInfo *)bidiInfoForLine:(int)lineNumber {
+    ITBetaAssert(lineNumber >= 0, @"Negative index to bidiInfoForLine");
+    const int width = self.currentGrid.size.width;
+    int numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:width];
+    if (lineNumber >= numLinesInLineBuffer) {
+        if (self.currentGrid == self.primaryGrid) {
+            return [self.primaryGrid bidiInfoForLine:lineNumber - numLinesInLineBuffer];
+        } else {
+            return nil;
+        }
+    } else {
+        return [self.linebuffer bidiInfoForLine:lineNumber width:width];
+    }
+}
+
 - (const screen_char_t *)getLineAtIndex:(int)theIndex {
-    return [self getLineAtIndex:theIndex 
+    return [self getLineAtIndex:theIndex
                     destination:[self.currentGrid resultLineData]
                           width:self.currentGrid.size.width];
 }
@@ -798,7 +815,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         }
         [self.currentGrid appendLines:numLines toLineBuffer:temp];
     }
-
+    [temp commitLastBlock];
     [temp encode:encoder maxLines:maxLines80];
     *intervalOffsetPtr = intervalOffset;
     return linesDroppedForBrevity;
@@ -1250,7 +1267,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:line
                                                             length:width
                                                           metadata:[self.currentGrid immutableMetadataAtLineNumber:index]
-                                                      continuation:line[width]];
+                                                      continuation:line[width]
+                                                          bidiInfo:[self.currentGrid bidiInfoForLine:index]];
     return array;
 }
 

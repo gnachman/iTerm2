@@ -112,13 +112,15 @@ class TextClipDrawing: NSObject {
         let width = drawingHelper.gridSize.width
         var lines = (range.start.y...range.end.y).map { i -> ScreenCharArray in
             let line = delegate.drawingHelperLine(at: i)
+            let bidi = delegate.drawingHelperBidiInfo(forLine: i)
             let sca = ScreenCharArray(copyOfLine: line,
                                       length: width,
-                                      continuation: line[Int(width)])
+                                      continuation: line[Int(width)],
+                                      bidiInfo: bidi)
             return sca
         }
-        lines[0] = lines[0].copy(byZeroingRange: NSRange(0..<range.start.x))
-        lines[lines.count - 1] = lines[lines.count - 1].copy(byZeroingRange: NSRange(range.end.x..<width))
+        lines[0] = lines[0].copy(byZeroingVisibleRange: NSRange(0..<range.start.x))
+        lines[lines.count - 1] = lines[lines.count - 1].copy(byZeroingVisibleRange: NSRange(range.end.x..<width))
         SavedState.perform(drawingHelper) {
             let instance = TextClipDrawing(drawingHelper: drawingHelper,
                                            firstLine: range.start.y,
@@ -182,6 +184,7 @@ class TextClipDrawing: NSObject {
         drawingHelper.delegate = self
     }
 
+    // Draw visual range `range`.
     private func draw(range: VT100GridCoordRange) {
         NSGraphicsContext.saveGraphicsState()
         defer {
@@ -205,12 +208,22 @@ class TextClipDrawing: NSObject {
 
         matches = (0..<rows).map { i -> Data in
             var result = Data()
-            result.setBits(0..<width)
-            if i == 0 {
-                result.clearBits(0..<range.start.x)
-            }
-            if i + 1 == rows {
-                result.clearBits(range.end.x..<width)
+            if let bidi = originalDelegate.drawingHelperBidiInfo(forLine: i + range.start.y) {
+                // Matches are in logical order. Set matches to true everywhere in the visible range given by `range`.
+                result.setBits(0..<width)
+                for visualIndex in 0..<width {
+                    let logicalIndex = bidi.logicalForVisual(visualIndex)
+                    let value = (visualIndex >= range.start.x && visualIndex < range.end.x)
+                    result.set(bit: logicalIndex, value: value)
+                }
+            } else {
+                result.setBits(0..<width)
+                if i == 0 {
+                    result.clearBits(0..<range.start.x)
+                }
+                if i + 1 == rows {
+                    result.clearBits(range.end.x..<width)
+                }
             }
             return result
         }
@@ -267,6 +280,10 @@ extension Data {
 }
 
 extension TextClipDrawing: iTermTextDrawingHelperDelegate {
+    func drawingHelperBidiInfo(forLine line: Int32) -> BidiDisplayInfoObjc? {
+        return originalDelegate.drawingHelperBidiInfo(forLine: line)
+    }
+
     @available(macOS 11, *)
     func absCoord(for button: TerminalButton) -> VT100GridAbsCoord {
         return VT100GridAbsCoord(x: -1, y: -1)
@@ -354,6 +371,10 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
 
     func drawingHelperExternalAttributes(onLine lineNumber: Int32) -> iTermExternalAttributeIndexReading? {
         return originalDelegate.drawingHelperExternalAttributes(onLine: lineNumber)
+    }
+
+    func drawingHelperMetadata(onLine lineNumber: Int32) -> iTermImmutableMetadata {
+        return originalDelegate.drawingHelperMetadata(onLine: lineNumber)
     }
 
     func frame() -> NSRect {

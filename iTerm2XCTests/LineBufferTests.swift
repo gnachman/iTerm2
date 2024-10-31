@@ -41,7 +41,8 @@ extension ScreenCharArray {
                                         foundDWCPtr,
                                         normalization,
                                         unicodeVersion,
-                                        false)
+                                        false,
+                                        nil)
                 }
             }
         }
@@ -114,6 +115,8 @@ public extension screen_char_t {
                                     invisible: 0,
                                     inverse: 0,
                                     guarded: 0,
+                                    virtualPlaceholder: 0,
+                                    rtlStatus: .unknown,
                                     unused: 0)
 
     static let defaultForeground = screen_char_t(code: 0,
@@ -160,6 +163,8 @@ public extension screen_char_t {
                                                  invisible: 0,
                                                  inverse: 0,
                                                  guarded: 0,
+                                                 virtualPlaceholder: 0,
+                                                 rtlStatus: .unknown,
                                                  unused: 0)
 
     func with(code: unichar) -> screen_char_t {
@@ -184,6 +189,8 @@ public extension screen_char_t {
                              invisible: invisible,
                              inverse: inverse,
                              guarded: guarded,
+                             virtualPlaceholder: 0,
+                             rtlStatus: .unknown,
                              unused: unused)
     }
 }
