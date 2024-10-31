@@ -267,6 +267,10 @@ extension Data {
 }
 
 extension TextClipDrawing: iTermTextDrawingHelperDelegate {
+    func drawingHelperBidiInfo(forLine line: Int32) -> BidiDisplayInfoObjc? {
+        return originalDelegate.drawingHelperBidiInfo(forLine: line)
+    }
+
     @available(macOS 11, *)
     func absCoord(for button: TerminalButton) -> VT100GridAbsCoord {
         return VT100GridAbsCoord(x: -1, y: -1)
@@ -354,6 +358,10 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
 
     func drawingHelperExternalAttributes(onLine lineNumber: Int32) -> iTermExternalAttributeIndexReading? {
         return originalDelegate.drawingHelperExternalAttributes(onLine: lineNumber)
+    }
+
+    func drawingHelperMetadata(onLine lineNumber: Int32) -> iTermImmutableMetadata {
+        return originalDelegate.drawingHelperMetadata(onLine: lineNumber)
     }
 
     func frame() -> NSRect {

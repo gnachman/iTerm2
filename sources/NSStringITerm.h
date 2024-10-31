@@ -371,6 +371,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)chunkedWithLineLength:(NSInteger)length separator:(NSString *)separator;
 - (BOOL)parseKittyUnicodePlaceholder:(out VT100GridCoord *)coord
                             imageMSB:(out int *)imageMSB;
+- (NSIndexSet *)rtlIndexes;
 
 @end
 

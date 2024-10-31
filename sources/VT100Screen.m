@@ -1309,6 +1309,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
 }
 
+- (iTermBidiDisplayInfo *)bidiInfoForLine:(int)line {
+    return [_state bidiInfoForLine:line];
+}
+
 #pragma mark - Mutation Wrappers
 
 - (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block {

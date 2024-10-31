@@ -759,6 +759,7 @@ static const int kMaxScreenRows = 4096;
     result.virtualPlaceholder = NO;
     result.inverse = graphicRendition_.reversed;
     result.guarded = _protectedMode != VT100TerminalProtectedModeNone;
+    result.rtlStatus = RTLStatusUnknown;
     result.unused = 0;
     return result;
 }
@@ -800,6 +801,7 @@ static const int kMaxScreenRows = 4096;
     result.invisible = graphicRendition_.invisible;
     result.inverse = graphicRendition_.reversed;
     result.guarded = _protectedMode != VT100TerminalProtectedModeNone;
+    result.rtlStatus = RTLStatusUnknown;
     result.unused = 0;
     return result;
 }

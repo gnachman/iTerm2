@@ -21,6 +21,7 @@
 #import "PTYTriggerEvaluator.h"
 #import "TmuxStateParser.h"
 #import "TmuxWindowOpener.h"
+#import "VT100LineInfo.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenDelegate.h"
@@ -666,11 +667,13 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)appendScreenChars:(const screen_char_t *)line
                    length:(int)length
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
-             continuation:(screen_char_t)continuation {
+             continuation:(screen_char_t)continuation
+                 rtlFound:(BOOL)rtlFound {
     [self performBlockWithoutTriggers:^{
         [self appendScreenCharArrayAtCursor:line
                                      length:length
-                     externalAttributeIndex:externalAttributeIndex];
+                     externalAttributeIndex:externalAttributeIndex
+                                   rtlFound:rtlFound];
         if (continuation.code == EOL_HARD) {
             [self carriageReturn];
             [self appendLineFeed];
@@ -730,6 +733,7 @@ static _Atomic int gPerformingJoinedBlock;
     // and combining marks, replace private codes with replacement characters, swallow zero-
     // width spaces, and set fg/bg colors and attributes.
     BOOL dwc = NO;
+    BOOL rtlFound = NO;
     StringToScreenChars(augmentedString,
                         buffer,
                         [self.terminal foregroundColorCode],
@@ -740,9 +744,13 @@ static _Atomic int gPerformingJoinedBlock;
                         &dwc,
                         self.config.normalization,
                         self.config.unicodeVersion,
-                        self.terminal.softAlternateScreenMode);
+                        self.terminal.softAlternateScreenMode,
+                        &rtlFound);
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
+        if (rtlFound) {
+            [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
+        }
         [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
                                             block:^(screen_char_t *sct,
                                                     iTermExternalAttribute *__autoreleasing *eaOut,
@@ -776,7 +784,8 @@ static _Atomic int gPerformingJoinedBlock;
     }
     [self appendScreenCharArrayAtCursor:buffer + bufferOffset
                                  length:len - bufferOffset
-                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]];
+                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]
+                               rtlFound:rtlFound];
     if (buffer == dynamicBuffer) {
         free(buffer);
     }
@@ -784,7 +793,8 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                length:(int)len
-               externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes {
+               externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes
+                             rtlFound:(BOOL)rtlFound {
     if (len >= 1) {
         screen_char_t lastCharacter = buffer[len - 1];
         if (ScreenCharIsDWC_RIGHT(lastCharacter) && !lastCharacter.complexChar) {
@@ -813,11 +823,12 @@ static _Atomic int gPerformingJoinedBlock;
                                                              wraparound:self.wraparoundMode
                                                                    ansi:self.ansi
                                                                  insert:self.insert
-                                                 externalAttributeIndex:externalAttributes]];
+                                                 externalAttributeIndex:externalAttributes
+                                                               rtlFound:rtlFound]];
 
         if (self.config.publishing) {
             iTermImmutableMetadata temp;
-            iTermImmutableMetadataInit(&temp, 0, externalAttributes);
+            iTermImmutableMetadataInit(&temp, 0, rtlFound, externalAttributes);
 
             screen_char_t continuation = buffer[0];
             continuation.code = EOL_SOFT;
@@ -882,7 +893,8 @@ static _Atomic int gPerformingJoinedBlock;
 
     [self appendScreenCharArrayAtCursor:buffer
                                  length:len
-                 externalAttributeIndex:ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil];
+                 externalAttributeIndex:ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil
+                               rtlFound:NO];
     STOPWATCH_LAP(appendAsciiDataAtCursor);
 }
 
@@ -1609,7 +1621,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self appendScreenChars:savedLine.line
                          length:savedLine.length
          externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(savedLine.metadata)
-                   continuation:savedLine.continuation];
+                   continuation:savedLine.continuation
+                       rtlFound:savedLine.metadata.rtlFound];
 
         // Restore marks on that line.
         const long long numberOfLinesRemoved = absCursorCoord.y - absLine;
@@ -3568,7 +3581,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                         &dwc,
                         self.config.normalization,
                         self.config.unicodeVersion,
-                        self.terminal.softAlternateScreenMode);
+                        self.terminal.softAlternateScreenMode,
+                        NULL);
     free(buf);
     return len;
 }
@@ -4376,6 +4390,87 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+- (void)populateRTLStateIfNeeded {
+    if ([self shouldPopulateRTLState]) {
+        [self populateRTLState];
+    }
+}
+
+- (BOOL)shouldPopulateRTLState {
+    if (self.currentGrid != self.primaryGrid) {
+        return NO;
+    }
+    return self.linebuffer.lastRawLine.metadata.rtlFound || self.primaryGrid.mayContainRTL;
+}
+
+// Set the RTL status for all cells in the primary grid. This may require modifying the last line
+// of the line buffer as well since a proper bidi analysis can only be done on full paragraphs, not
+// on line segments.
+- (void)populateRTLState {
+    const int width = self.width;
+    ScreenCharArray *prefix = nil;
+    if ([self.linebuffer numberOfWrappedLinesAtPartialEndforWidth:width] > 0) {
+        prefix = [self.linebuffer lastRawLine];
+    }
+    const BOOL updateDirtyLinesOnly = ![self.primaryGrid eraseBidiInfoInDirtyLines];
+    [self.primaryGrid enumerateParagraphs:^(int line, NSArray<MutableScreenCharArray *> *scas) {
+        if (updateDirtyLinesOnly && ![self.primaryGrid anyLineDirtyInRange:NSMakeRange(line, scas.count)]) {
+            return;
+        }
+        if (![self.primaryGrid mayContainRTLInRange:NSMakeRange(line, scas.count)]) {
+            for (int i = 0; i < scas.count; i++) {
+                [self.primaryGrid setBidiInfo:nil forLine:line + i];
+            }
+            return;
+        }
+        DLog(@"Updating bidi in line %d, wrapped length %@", line, @(scas.count));
+        if ((line > 0 || prefix == nil) && scas.count == 1) {
+            // Fast path - we can modify the line in place.
+            iTermBidiDisplayInfo *bidiInfo = [[iTermBidiDisplayInfo alloc] initWithScreenCharArray:scas[0]];
+            DLog(@"Simple case for line %d. Set bidi info to %@", line, bidiInfo);
+            [self.primaryGrid setBidiInfo:bidiInfo forLine:line];
+            [iTermBidiDisplayInfo annotateWithBidiInfo:bidiInfo msca:scas[0]];
+            return;
+        }
+        MutableScreenCharArray *joined = [self mutableScreenCharArrayWithPrefix:prefix lines:scas];
+        iTermBidiDisplayInfo *bidiInfo = [[iTermBidiDisplayInfo alloc] initWithScreenCharArray:joined];
+        const BOOL changed = [iTermBidiDisplayInfo annotateWithBidiInfo:bidiInfo msca:joined];
+
+        if (!changed) {
+            // No changes made. As an optimization, leave the status as Unknown, which will be treated as LTR.
+            DLog(@"No bidi found");
+            return;
+        }
+        for (int i = 0; i < scas.count; i++) {
+            if (prefix && i == 0) {
+                [self.linebuffer removeLastRawLine];
+                [self.linebuffer appendLine:joined.line
+                                     length:prefix.length
+                                    partial:YES
+                                      width:width
+                                   metadata:prefix.metadata
+                               continuation:prefix.continuation];
+            }
+#warning TODO: Deal with dwc splitting here
+            const int offset = i == 0 ? prefix.length : i * width;
+            iTermBidiDisplayInfo *sub = [bidiInfo subInfoInRange:NSMakeRange(offset, width)];
+            DLog(@"Set bidi for line %d to %@", i, sub);
+            [self.primaryGrid setBidiInfo:sub forLine:i];
+            [self.primaryGrid setCharactersInLine:i + line
+                                               to:joined.line + offset
+                                           length:MIN(width, joined.length - offset)];
+        }
+        [self.linebuffer commitLastBlock];
+    }];
+}
+
+- (MutableScreenCharArray *)mutableScreenCharArrayWithPrefix:(ScreenCharArray *)prefix lines:(NSArray<ScreenCharArray *> *)scas {
+    NSArray<ScreenCharArray *> *combined = prefix ? [@[prefix] arrayByAddingObjectsFromArray:scas] : scas;
+    ScreenCharRope *rope = [[ScreenCharRope alloc] initWithScreenCharArrays:combined];
+    MutableScreenCharArray *joined = [rope joined];
+    return joined;
+}
+
 - (void)didSynchronize:(BOOL)resetOverflow {
     DLog(@"Did synchronize. Set drewSavedGrid=YES");
     if (resetOverflow) {
@@ -4590,7 +4685,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [self restoreFromDictionary:dictionary
            includeRestorationBanner:includeRestorationBanner];
 
-        LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary[@"LineBuffer"]];
+        LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary[@"LineBuffer"]
+                                                       maintainBidiInfo:YES];
+        lineBuffer.maintainBidiInfo = YES;
         [lineBuffer setMaxLines:self.maxScrollbackLines + self.height];
         if (!self.unlimitedScrollback) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
@@ -4913,7 +5010,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [helper writeToGrid:self.currentGrid];
 }
 
-- (void)setHistory:(NSArray<NSData *> *)history {
+- (void)setHistory:(TmuxHistory *)history {
     // This is way more complicated than it should be to work around something dumb in tmux.
     // It pads lines in its history with trailing spaces, which we'd like to trim. More importantly,
     // we need to trim empty lines at the end of the history because that breaks how we move the
@@ -4927,8 +5024,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     // TODO(externalAttributes): Add support for external attributes here. This is only used by tmux at the moment.
     iTermMetadata metadata;
-    iTermMetadataInit(&metadata, now, nil);
-    for (NSData *chars in history) {
+    iTermMetadataInit(&metadata, now, NO, nil);
+    for (NSData *chars in history.data) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
         const int len = [chars length] / sizeof(screen_char_t);
         screen_char_t continuation;
@@ -4937,6 +5034,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             continuation.code = EOL_HARD;
         } else {
             memset(&continuation, 0, sizeof(continuation));
+        }
+        if (history.rtlFound) {
+            metadata.rtlFound = AnnotateRightToLeftInScreenChars(line, len);
         }
         [temp appendLine:line
                   length:len

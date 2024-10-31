@@ -30,7 +30,8 @@
                   withTerminal:(VT100Terminal *)terminal
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                 unicodeVersion:(NSInteger)unicodeVersion
-               alternateScreen:(BOOL)alternateScreen {
+               alternateScreen:(BOOL)alternateScreen
+                      rtlFound:(BOOL *)rtlFound {
     screen_char_t *screenChars;
     NSMutableData *result = [NSMutableData data];
     NSData *histData = [hist dataUsingEncoding:NSUTF8StringEncoding];
@@ -63,7 +64,8 @@
                                 NULL,
                                 NO,
                                 unicodeVersion,
-                                alternateScreen);
+                                alternateScreen,
+                                rtlFound);
             if ([token isAscii] && [terminal charset]) {
                 ConvertCharsToGraphicsCharset(screenChars, len);
             }
@@ -80,10 +82,11 @@
 
 // Return an NSArray of NSData's. Each NSData is an array of screen_char_t's,
 // with the last element in each being the newline. Returns nil on error.
-- (NSArray *)parseDumpHistoryResponse:(NSString *)response
-               ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
-                       unicodeVersion:(NSInteger)unicodeVersion
-                      alternateScreen:(BOOL)alternateScreen {
+- (NSArray<NSData *> *)parseDumpHistoryResponse:(NSString *)response
+                         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
+                                 unicodeVersion:(NSInteger)unicodeVersion
+                                alternateScreen:(BOOL)alternateScreen
+                                       rtlFound:(BOOL *)rtlFound {
     if (![response length]) {
         return [NSArray array];
     }
@@ -97,7 +100,8 @@
                                    withTerminal:terminal
                          ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
                                  unicodeVersion:unicodeVersion
-                                alternateScreen:alternateScreen];
+                                alternateScreen:alternateScreen
+                                       rtlFound:rtlFound];
         if (!data) {
             return nil;
         }

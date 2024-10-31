@@ -3769,6 +3769,7 @@
 		A6E2DF872AC4A1FF005C6677 /* TerminalButtonRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E2DF862AC4A1FF005C6677 /* TerminalButtonRenderer.swift */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
+		A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */; };
 		A6E5110D24C1729E00D6552D /* iTermAttributedStringProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E5110B24C1729E00D6552D /* iTermAttributedStringProxy.h */; };
 		A6E5110E24C1729E00D6552D /* iTermAttributedStringProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E5110C24C1729E00D6552D /* iTermAttributedStringProxy.m */; };
 		A6E5110F24C576B300D6552D /* iTermAnimatedImageInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */; };
@@ -7297,6 +7298,7 @@
 		A6E2DF862AC4A1FF005C6677 /* TerminalButtonRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalButtonRenderer.swift; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
+		A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidiDisplayInfo.swift; sourceTree = "<group>"; };
 		A6E5110B24C1729E00D6552D /* iTermAttributedStringProxy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAttributedStringProxy.h; sourceTree = "<group>"; };
 		A6E5110C24C1729E00D6552D /* iTermAttributedStringProxy.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAttributedStringProxy.m; sourceTree = "<group>"; };
 		A6E525CE1A9C5725007B898E /* VT100StateTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100StateTransition.m; sourceTree = "<group>"; };
@@ -10663,6 +10665,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */,
 				A6BBBFCE2CC87278000A697C /* AddressString.swift */,
 				A6BBBFCC2CC87215000A697C /* ProducerConsumerQueue.swift */,
 				A6BBBFCA2CC871FF000A697C /* ConditionVariable.swift */,
@@ -15936,6 +15939,7 @@
 				A6BBBFCD2CC8721A000A697C /* ProducerConsumerQueue.swift in Sources */,
 				A6396B042C4722210064BCFD /* iTermTerminfo.m in Sources */,
 				A667C26F277B8F1F006B4DEF /* VT100ScreenMutableState.m in Sources */,
+				A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */,
 				A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */,
 				A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */,
 				A6BCAADA21F6F53E0000CD29 /* iTermTextPopoverViewController.m in Sources */,

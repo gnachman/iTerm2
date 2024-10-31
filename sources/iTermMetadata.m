@@ -11,20 +11,26 @@
 
 void iTermMetadataInit(iTermMetadata *obj,
                        NSTimeInterval timestamp,
+                       BOOL rtlFound,
                        iTermExternalAttributeIndex *externalAttributes) {
     obj->timestamp = timestamp;
+    obj->rtlFound = rtlFound;
     obj->externalAttributes = [(id)externalAttributes retain];
 }
 
 void iTermImmutableMetadataInit(iTermImmutableMetadata *obj,
                                 NSTimeInterval timestamp,
+                                BOOL rtlFound,
                                 id<iTermExternalAttributeIndexReading> _Nullable externalAttributes) {
-    iTermMetadataInit((iTermMetadata *)obj, timestamp, (iTermExternalAttributeIndex *)externalAttributes);
+    iTermMetadataInit((iTermMetadata *)obj,
+                      timestamp,
+                      rtlFound,
+                      (iTermExternalAttributeIndex *)externalAttributes);
 }
 
 iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp) {
     iTermMetadata result;
-    iTermMetadataInit(&result, timestamp, nil);
+    iTermMetadataInit(&result, timestamp, NO, nil);
     iTermMetadataAutorelease(result);
     return result;
 }
@@ -38,6 +44,7 @@ iTermMetadata iTermImmutableMetadataMutableCopy(iTermImmutableMetadata obj) {
     iTermExternalAttributeIndex *index = obj.externalAttributes ? [iTermImmutableMetadataGetExternalAttributesIndex(obj) mutableCopyWithZone:nil] : nil;
     return (iTermMetadata) {
         .timestamp = obj.timestamp,
+        .rtlFound = obj.rtlFound,
         .externalAttributes = index
     };
 }
@@ -92,7 +99,9 @@ void iTermMetadataReplaceWithCopy(iTermMetadata *obj) {
 
 NSArray *iTermImmutableMetadataEncodeToArray(iTermImmutableMetadata obj) {
     iTermExternalAttributeIndex *eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(obj);
-    return @[ @(obj.timestamp), [eaIndex dictionaryValue] ?: @{} ];
+    return @[ @(obj.timestamp),
+              [eaIndex dictionaryValue] ?: @{},
+              @(obj.rtlFound) ];
 }
 
 NSArray *iTermMetadataEncodeToArray(iTermMetadata obj) {
@@ -124,11 +133,19 @@ iTermExternalAttributeIndex *iTermMetadataGetExternalAttributesIndexCreatingIfNe
 
 void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
     if (array.count < 2) {
-        iTermMetadataInit(obj, 0, nil);
+        iTermMetadataInit(obj, 0, NO, nil);
+        return;
+    }
+    if (array.count < 3) {
+        iTermMetadataInit(obj,
+                          [array[0] doubleValue],
+                          NO,
+                          [[[iTermExternalAttributeIndex alloc] initWithDictionary:array[1]] autorelease]);
         return;
     }
     iTermMetadataInit(obj,
                       [array[0] doubleValue],
+                      [array[2] boolValue],
                       [[[iTermExternalAttributeIndex alloc] initWithDictionary:array[1]] autorelease]);
 }
 
@@ -137,6 +154,7 @@ void iTermMetadataAppend(iTermMetadata *lhs,
                          iTermImmutableMetadata *rhs,
                          int rhsLength) {
     lhs->timestamp = rhs->timestamp;
+    lhs->rtlFound |= rhs->rtlFound;
     if (!rhs->externalAttributes) {
         return;
     }
@@ -159,7 +177,7 @@ void iTermMetadataInitByConcatenation(iTermMetadata *obj,
                                               length:lhsLength
                                                 with:iTermMetadataGetExternalAttributesIndex(*rhs)
                                           length:rhsLength];
-    iTermMetadataInit(obj, rhs->timestamp, eaIndex);
+    iTermMetadataInit(obj, rhs->timestamp, lhs->rtlFound || rhs->rtlFound, eaIndex);
 }
 
 void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
@@ -170,11 +188,14 @@ void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
     iTermExternalAttributeIndex *eaIndex = [sourceIndex subAttributesFromIndex:start maximumLength:length];
     iTermMetadataInit(obj,
                       source->timestamp,
+                      source->rtlFound,
                       eaIndex);
 }
 
 iTermMetadata iTermMetadataDefault(void) {
-    return (iTermMetadata){ .timestamp = 0, .externalAttributes = NULL };
+    return (iTermMetadata){ .timestamp = 0,
+        .externalAttributes = NULL,
+        .rtlFound = NO };
 }
 
 iTermImmutableMetadata iTermImmutableMetadataDefault(void) {
@@ -183,11 +204,15 @@ iTermImmutableMetadata iTermImmutableMetadataDefault(void) {
 
 void iTermMetadataReset(iTermMetadata *obj) {
     obj->timestamp = 0;
+    obj->rtlFound = NO;
     iTermMetadataSetExternalAttributes(obj, NULL);
 }
 
 NSString *iTermMetadataShortDescription(iTermMetadata metadata, int length) {
-    return [NSString stringWithFormat:@"<timestamp=%@ ea=%@>", @(metadata.timestamp), iTermMetadataGetExternalAttributesIndex(metadata)];
+    return [NSString stringWithFormat:@"<timestamp=%@ ea=%@ rtl=%@>",
+            @(metadata.timestamp),
+            iTermMetadataGetExternalAttributesIndex(metadata),
+            @(metadata.rtlFound)];
 }
 
 NSArray *iTermMetadataArrayFromData(NSData *data) {
@@ -201,6 +226,7 @@ NSArray *iTermMetadataArrayFromData(NSData *data) {
     if (!attrData) {
         return nil;
     }
+    [decoder decodeBool:&temp.rtlFound];
     iTermExternalAttributeIndex *attr = [iTermExternalAttributeIndex fromData:attrData];
     iTermMetadataSetExternalAttributes(&temp, attr);
     NSArray *result = iTermMetadataEncodeToArray(temp);
@@ -213,5 +239,6 @@ NSData *iTermMetadataEncodeToData(iTermMetadata metadata) {
     [encoder encodeDouble:metadata.timestamp];
     iTermExternalAttributeIndex *attr = iTermMetadataGetExternalAttributesIndex(metadata);
     [encoder encodeData:[attr data] ?: [NSData data]];
+    [encoder encodeBool:metadata.rtlFound];
     return encoder.data;
 }

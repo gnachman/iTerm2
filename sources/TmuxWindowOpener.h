@@ -19,6 +19,12 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @class TmuxController;
 @class PTYTab;
 
+@interface TmuxHistory: NSObject
+@property (nonatomic) BOOL rtlFound;
+@property (nonatomic, strong) NSArray<NSData *> *data;
+@end
+
+
 @interface TmuxWindowOpener : NSObject <NSControlTextEditingDelegate>
 
 @property (nonatomic, assign) int windowIndex;
@@ -73,7 +79,7 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 - (void)unpauseWindowPanes:(NSArray<NSNumber *> *)windowPanes;
 
 // These access the results of unpauseWindowPanes:
-- (NSArray<NSData *> *)historyLinesForWindowPane:(int)wp alternateScreen:(BOOL)altScreen;
+- (TmuxHistory *)historyLinesForWindowPane:(int)wp alternateScreen:(BOOL)altScreen;
 - (NSDictionary *)stateForWindowPane:(int)wp;
 
 @end

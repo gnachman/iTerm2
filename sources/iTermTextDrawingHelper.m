@@ -112,6 +112,7 @@ typedef struct {
     NSInteger ligatureLevel;
     BOOL drawable;
     BOOL hasUnderlineColor;
+    RTLStatus rtlStatus;
     VT100TerminalColorValue underlineColor;
 } iTermCharacterAttributes;
 
@@ -1698,7 +1699,9 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                       context:(CGContextRef)ctx
                 virtualOffset:(CGFloat)virtualOffset {
     const screen_char_t *theLine = [self lineAtIndex:sourceLine isFirst:nil];
-    id<iTermExternalAttributeIndexReading> eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:sourceLine];
+    iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:sourceLine];
+    id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
+    const BOOL rtlFound = metadata.rtlFound;
     NSData *matches = [_delegate drawingHelperMatchesOnLine:sourceLine];
     if (sourceLine != displayLine) {
         matches = nil;
@@ -1708,6 +1711,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
         NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->range.location * _cellSize.width,
                                          y);
         [self constructAndDrawRunsForLine:theLine
+                                 bidiInfo:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:sourceLine] : nil
                        externalAttributes:eaIndex
                           sourceLineNumer:sourceLine
                         displayLineNumber:displayLine
@@ -1725,6 +1729,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 }
 
 - (void)constructAndDrawRunsForLine:(const screen_char_t *)theLine
+                           bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
                  externalAttributes:(id<iTermExternalAttributeIndexReading>)eaIndex
                     sourceLineNumer:(int)sourceLineNumber
                   displayLineNumber:(int)displayLineNumber
@@ -1755,6 +1760,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
     NSArray<id<iTermAttributedString>> *attributedStrings = [self attributedStringsForLine:theLine
+                                                                                  bidiInfo:bidiInfo
                                                                         externalAttributes:eaIndex
                                                                                      range:indexRange
                                                                            hasSelectedText:bgselected
@@ -2262,8 +2268,6 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 
     // The x origin of the column for the current cell. Initialize to -1 to ensure it gets set on
     // the first pass through the position-adjusting loop.
-    CGFloat xOriginForCurrentColumn = -1;
-    CFIndex previousCharacterIndex = -1;
     CGFloat advanceAccumulator = 0;
     const BOOL verbose = NO;  // turn this on to debug character position problems.
     if (verbose) {
@@ -2302,37 +2306,17 @@ const CGFloat commandRegionOutlineThickness = 2.0;
         // positions[glyphIndex].x needs to be transformed to subtract whatever horizontal advance
         // was present earlier in the string.
 
-        // xOffset gives the accumulated advances to subtract from the current character's x position
-        CGFloat xOffset = 0;
         if (verbose) {
             NSLog(@"Begin run %@", @(j));
         }
-        for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
-            // `characterIndex` indexes into the attributed string.
-            const CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
-            const CGFloat xOriginForThisCharacter = xOriginsForCharacters[characterIndex] - xOriginsForCharacters[0];
-
-            if (verbose) {
-                NSLog(@"  begin glyph %@", @(glyphIndex));
-            }
-            if (characterIndex != previousCharacterIndex &&
-                xOriginForThisCharacter != xOriginForCurrentColumn) {
-                // Have advanced to the next character or column.
-                xOffset = advanceAccumulator;
-                xOriginForCurrentColumn = xOriginForThisCharacter;
-                if (verbose) {
-                    NSLog(@"  This glyph begins a new character or column. xOffset<-%@, xOriginForCurrentColumn<-%@", @(xOffset), @(xOriginForCurrentColumn));
-                }
-            }
-            advanceAccumulator = advances[glyphIndex].width + positions[glyphIndex].x;
-            if (verbose) {
-                NSLog(@"  advance=%@, position=%@. advanceAccumulator<-%@", @(advances[glyphIndex].width), @(positions[glyphIndex].x), @(advanceAccumulator));
-            }
-            positions[glyphIndex].x += xOriginForCurrentColumn - xOffset;
-            if (verbose) {
-                NSLog(@"  position<-%@", @(positions[glyphIndex].x));
-            }
-        }
+        [self alignGlyphsToGridWithGlyphIndex:glyphIndexToCharacterIndex
+                                       length:length
+                        xOriginsForCharacters:xOriginsForCharacters
+                                    positions:positions
+                           advanceAccumulator:&advanceAccumulator
+                                     advances:advances
+                                          rtl:!!(CTRunGetStatus(run) & kCTRunStatusRightToLeft)
+                                      verbose:verbose];
 
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
         if (!smear) {
@@ -2373,6 +2357,64 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
 
     [ctx restoreGraphicsState];
+}
+
+// glyphIndexToCharacterIndex: An array with `length` items giving indexes into the original NSAttributedString.
+// length: Number of characters in the NSAttributedString.
+// xOriginsForCharacters: An array giving proposed x origins for characters. This has to take into account writing direction.
+// positions: Proposed positions from CoreText. These will be modified to be grid-aligned.
+// advanceAccumulatorPtr: In-out. The X origin of the column for the current cell.
+// advances: Array of glyph advances.
+// rtl: Should this be rendered right-to-left?
+// verbose: Log extra info?
+
+- (void)alignGlyphsToGridWithGlyphIndex:(const CFIndex *)glyphIndexToCharacterIndex
+                                 length:(size_t)length
+                  xOriginsForCharacters:(CGFloat *)xOriginsForCharacters
+                              positions:(CGPoint *)positions
+                     advanceAccumulator:(CGFloat *)advanceAccumulatorPtr
+                               advances:(const CGSize *)advances
+                                    rtl:(BOOL)rtl
+                                verbose:(BOOL)verbose {
+    CFIndex previousCharacterIndex = -1;
+    CGFloat xOriginForCurrentColumn = -1;
+
+    // endOfLastCharacter gives the x coordinate where the previous character ended (its last glyph's origin plus its last glyph's advance).
+    CGFloat startOfThisCharacter = 0;
+
+    for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
+        // `characterIndex` indexes into the attributed string.
+        const CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
+
+        // Where this character's column begins
+        const CGFloat xOriginForThisCharacter = xOriginsForCharacters[characterIndex] - xOriginsForCharacters[0];
+
+        if (verbose) {
+            NSLog(@"  begin glyph %@", @(glyphIndex));
+        }
+
+        if (characterIndex != previousCharacterIndex &&
+            xOriginForThisCharacter != xOriginForCurrentColumn) {
+            // Have advanced to the next character or column.
+            startOfThisCharacter = *advanceAccumulatorPtr;
+            xOriginForCurrentColumn = xOriginForThisCharacter;
+            if (verbose) {
+                NSLog(@"  This glyph begins a new character or column. xOffset<-%@, xOriginForCurrentColumn<-%@", @(startOfThisCharacter), @(xOriginForCurrentColumn));
+            }
+        }
+        *advanceAccumulatorPtr = advances[glyphIndex].width + positions[glyphIndex].x;
+        if (verbose) {
+            NSLog(@"  advance=%@, position=%@. advanceAccumulator<-%@", @(advances[glyphIndex].width), @(positions[glyphIndex].x), @(*advanceAccumulatorPtr));
+        }
+        // The existing value in `positions` is where Core Text would place this glyph. That is based
+        // on the properties of the font itself, which is typically variable width.
+        // We subtract `startOfThisCharacter`, which is where the character would nominally begin
+        // based on the "advance" of the preceding character. Then add in the x origin that we want.
+        positions[glyphIndex].x += xOriginForCurrentColumn - startOfThisCharacter;
+        if (verbose) {
+            NSLog(@"  position<-%@", @(positions[glyphIndex].x));
+        }
+    }
 }
 
 - (void)drawTextOnlyAttributedString:(NSAttributedString *)attributedString
@@ -2756,6 +2798,7 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
                                           newAttributes->strikethrough != previousAttributes->strikethrough ||
                                           newAttributes->isURL != previousAttributes->isURL ||
                                           newAttributes->drawable != previousAttributes->drawable ||
+                                          newAttributes->rtlStatus != previousAttributes->rtlStatus ||
                                           !iTermCharacterAttributesUnderlineColorEqual(newAttributes, previousAttributes));
         }
         return *combinedAttributesChanged;
@@ -2863,6 +2906,7 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
     }
     attributes->strikethrough = c->strikethrough;
     attributes->drawable = drawable;
+    attributes->rtlStatus = c->rtlStatus;
     if (ea) {
         attributes->hasUnderlineColor = ea.hasUnderlineColor;
         attributes->underlineColor = ea.underlineColor;
@@ -2916,6 +2960,16 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
         paragraphStyle.tabStops = @[];
         paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
     });
+    NSWritingDirection writingDirection;
+    switch (attributes->rtlStatus) {
+        case RTLStatusUnknown:
+        case RTLStatusLTR:
+            writingDirection = NSWritingDirectionLeftToRight | NSWritingDirectionOverride;
+            break;
+        case RTLStatusRTL:
+            writingDirection = NSWritingDirectionRightToLeft | NSWritingDirectionOverride;
+            break;
+    }
     return @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
               (NSString *)kCTForegroundColorAttributeName: (id)[attributes->foregroundColor CGColor],
               NSFontAttributeName: attributes->font,
@@ -2932,7 +2986,9 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
                                                @(attributes->underlineColor.mode) ],
               NSUnderlineStyleAttributeName: @(underlineStyle),
               NSStrikethroughStyleAttributeName: @(strikethroughStyle),
-              NSParagraphStyleAttributeName: paragraphStyle };
+              NSParagraphStyleAttributeName: paragraphStyle,
+              NSWritingDirectionAttributeName: @[@(writingDirection)],
+    };
 }
 
 static unsigned int VT100TerminalColorValueToKittyImageNumber(VT100TerminalColorValue colorValue,
@@ -3093,7 +3149,17 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             [iTermAdvancedSettingsModel zippyTextDrawing]);
 }
 
+- (int)lengthOfRTLRunInLine:(const screen_char_t *)line length:(int)length {
+    for (int i = 0; i < length; i++) {
+        if (line[i].rtlStatus != RTLStatusRTL) {
+            return i;
+        }
+    }
+    return length;
+}
+
 - (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(const screen_char_t *)line
+                                                        bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
                                               externalAttributes:(id<iTermExternalAttributeIndexReading>)eaIndex
                                                            range:(NSRange)indexRange
                                                  hasSelectedText:(BOOL)hasSelectedText
@@ -3123,6 +3189,9 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     iTermMutableAttributedStringBuilder *builder = [[iTermMutableAttributedStringBuilder alloc] init];
     builder.zippy = self.zippy;
     builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
+    if (bidiInfo) {
+        [builder enableExplicitDirectionControls];
+    }
     iTermCharacterAttributes characterAttributes = { 0 };
     iTermCharacterAttributes previousCharacterAttributes = { 0 };
     int segmentLength = 0;
@@ -3137,6 +3206,9 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     BOOL lastWasNull = NO;
     NSCharacterSet *emojiWithDefaultTextPresentation = [NSCharacterSet emojiWithDefaultTextPresentation];
     NSCharacterSet *emojiWithDefaultEmojiPresentationCharacterSet = [NSCharacterSet emojiWithDefaultEmojiPresentation];
+    const int *bidiLUT = [bidiInfo lut];
+    const int bidiLUTLength = bidiInfo.numberOfCells;
+
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
         screen_char_t c = line[i];
@@ -3155,6 +3227,13 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
         NSString *charAsString;
 
+        CGFloat xPosition;
+        if (bidiLUT && i < bidiLUTLength) {
+            xPosition = (bidiLUT[i] - indexRange.location) * _cellSize.width;
+        } else {
+            xPosition = (i - indexRange.location) * _cellSize.width;
+        }
+
         if (isComplex && !c.image) {
             charAsString = ComplexCharToStr(code);
 
@@ -3167,7 +3246,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                 // This does not apply to ASCII characters, since they can never combine with a
                 // spacing combining mark. That's done for performance in the GPU renderer to avoid
                 // complicating its ASCII fastpath.
-                [builder appendString:charAsString];
+                [builder appendString:charAsString rtl:c.rtlStatus == RTLStatusRTL];
                 const CGFloat lastValue = CTVectorGet(positions, CTVectorCount(positions) - 1);
                 for (int i = 0; i < charAsString.length; i++) {
                     CTVectorAppend(positions, lastValue);
@@ -3228,8 +3307,9 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                 [self updateBuilder:builder
                          withString:drawable ? charAsString : @" "
                         orCharacter:code
+                                rtl:c.rtlStatus == RTLStatusRTL
                           positions:positions
-                             offset:(i - indexRange.location) * _cellSize.width];
+                             offset:xPosition];
             }
             continue;
         }
@@ -3321,8 +3401,9 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             [self updateBuilder:builder
                      withString:drawable ? charAsString : @" "
                     orCharacter:code
+                            rtl:c.rtlStatus == RTLStatusRTL
                       positions:positions
-                         offset:(i - indexRange.location) * _cellSize.width];
+                         offset:xPosition];
         }
     }
     if (builder.length) {
@@ -3347,15 +3428,16 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 - (void)updateBuilder:(iTermMutableAttributedStringBuilder *)builder
            withString:(NSString *)string
           orCharacter:(unichar)code
+                  rtl:(BOOL)rtl
             positions:(CTVector(CGFloat) *)positions
                offset:(CGFloat)offset {
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_UPDATE_BUILDER]);
     NSUInteger length;
     if (string) {
-        [builder appendString:string];
+        [builder appendString:string rtl:rtl];
         length = string.length;
     } else {
-        [builder appendCharacter:code];
+        [builder appendCharacter:code rtl:rtl];
         length = 1;
     }
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_UPDATE_BUILDER]);
@@ -3930,6 +4012,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
         screen_char_t fg = {0}, bg = {0};
         int len;
         int cursorIndex = (int)_inputMethodSelectedRange.location;
+#warning TODO: Deal with RTL here
         StringToScreenChars(str,
                             buf,
                             fg,
@@ -3940,7 +4023,8 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                             NULL,
                             _normalization,
                             self.unicodeVersion,
-                            self.softAlternateScreenMode);
+                            self.softAlternateScreenMode,
+                            NULL);
         int cursorX = 0;
         int baseX = floor(xStart * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
         int i;
@@ -3974,7 +4058,9 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
             [self drawAccessoriesInRect:r virtualOffset:virtualOffset];
 
             // Draw the characters.
+#warning TODO: Deal with RTL here
             [self constructAndDrawRunsForLine:buf
+                                     bidiInfo:nil
                            externalAttributes:nil
                               sourceLineNumer:y
                             displayLineNumber:y
@@ -4169,11 +4255,23 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     }
 }
 
+- (VT100GridCoord)coordinateByTransformingForRTL:(VT100GridCoord)nominal {
+    iTermBidiDisplayInfo *bidiInfo = [self.delegate drawingHelperBidiInfoForLine:nominal.y];
+    if (!bidiInfo) {
+        return nominal;
+    }
+    if (nominal.x < 0 || nominal.x >= bidiInfo.numberOfCells) {
+        return nominal;
+    }
+    return VT100GridCoordMake(bidiInfo.lut[nominal.x], nominal.y);
+}
+
 - (NSRect)reallyDrawCursor:(iTermCursor *)cursor
            backgroundColor:(NSColor *)backgroundColor
-                        at:(VT100GridCoord)cursorCoord
+                        at:(VT100GridCoord)nominalCursorCoord
                    outline:(BOOL)outline
              virtualOffset:(CGFloat)virtualOffset {
+    const VT100GridCoord cursorCoord = [self coordinateByTransformingForRTL:nominalCursorCoord];
     // Get the character that's under the cursor.
     const screen_char_t *theLine;
     if (cursorCoord.y >= 0) {
@@ -4562,9 +4660,12 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     iTermRectClip(innerRect, virtualOffset);
 
     const screen_char_t *line = [self lineAtIndex:row isFirst:nil];
-    id<iTermExternalAttributeIndexReading> eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:row];
+    iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:row];
+    const BOOL rtlFound = metadata.rtlFound;
+    id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
 
     [self constructAndDrawRunsForLine:line
+                             bidiInfo:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:row] : nil
                    externalAttributes:eaIndex
                       sourceLineNumer:row
                     displayLineNumber:row

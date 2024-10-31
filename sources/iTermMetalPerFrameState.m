@@ -539,6 +539,7 @@ typedef struct {
     c.underline = YES;
     c.underlineStyle = VT100UnderlineStyleSingle;
     c.strikethrough = NO;
+    c.rtlStatus = RTLStatusUnknown;
 
     return c;
 }
@@ -557,6 +558,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     screen_char_t fg = {0}, bg = {0};
     int len;
     int cursorIndex = cursorLocation;
+#warning TODO: Deal with rtl here
     StringToScreenChars(str,
                         buf,
                         fg,
@@ -567,7 +569,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                         NULL,
                         normalization,
                         unicodeVersion,
-                        softAlternateScreen);
+                        softAlternateScreen,
+                        NULL);
     VT100GridCoord coord = startCoord;
     coord.y -= numberOfIMELines;
     BOOL foundCursor = NO;

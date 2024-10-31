@@ -7,6 +7,7 @@
 
 #import "LineBlockMetadataArray.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermMalloc.h"
 #import "DebugLogging.h"
 
@@ -100,6 +101,7 @@
         iTermExternalAttributeIndex *indexCopy = [index copy];
         iTermMetadataInit(&destination->lineMetadata,
                           value->lineMetadata.timestamp,
+                          value->lineMetadata.rtlFound,
                           indexCopy);
 
         destination->continuation = value->continuation;
@@ -109,6 +111,7 @@
             destination->double_width_characters = nil;
         }
         destination->width_for_double_width_characters_cache = 0;
+        destination->bidi_display_info = value->bidi_display_info;
     }
 
     return copy;
@@ -121,6 +124,7 @@
     if (_useDWCCache) {
         for (int i = 0; i < _numEntries; i++) {
             _array[i].double_width_characters = nil;
+            _array[i].bidi_display_info = nil;
         }
     }
     for (int i = 0; i < _numEntries; i++) {
@@ -218,13 +222,18 @@
             eaIndex = [[iTermExternalAttributeIndex alloc] initWithDictionary:encodedExternalAttributes];
         }
     }
+    NSNumber *rtlFound = components.count > j ? components[j++] : @NO;
 
     iTermMetadataInit(&_guts->_array[i].lineMetadata,
                       timestamp.doubleValue,
+                      rtlFound.boolValue,
                       eaIndex);
     _guts->_array[i].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
         _guts->_array[i].double_width_characters = nil;
+    }
+    if (components.count > j) {
+        _guts->_array[i].bidi_display_info = [[iTermBidiDisplayInfo alloc] initWithDictionary:components[j++]];
     }
 }
 
@@ -295,6 +304,7 @@
     iTermExternalAttributeIndex *indexCopy = [index copy];
     iTermMetadataInit(&destination->lineMetadata,
                       value->lineMetadata.timestamp,
+                      value->lineMetadata.rtlFound,
                       indexCopy);
 
     destination->continuation = value->continuation;
@@ -304,6 +314,7 @@
         destination->double_width_characters = nil;
     }
     destination->width_for_double_width_characters_cache = 0;
+    destination->bidi_display_info = value->bidi_display_info;
 }
 
 - (void)append:(iTermImmutableMetadata)lineMetadata continuation:(screen_char_t)continuation {
@@ -319,10 +330,10 @@
     _guts->_numEntries += 1;
 }
 
-- (void)appendToLastLine:(iTermImmutableMetadata *)metadataToAppend
-          originalLength:(int)originalLength
-        additionalLength:(int)additionalLength 
-            continuation:(screen_char_t)continuation {
+- (const iTermMetadata *)appendToLastLine:(iTermImmutableMetadata *)metadataToAppend
+                           originalLength:(int)originalLength
+                         additionalLength:(int)additionalLength 
+                             continuation:(screen_char_t)continuation {
     [self willMutate];
     ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
     ITAssertWithMessage(_guts->_numEntries > _guts->_first, @"numEntries=%@ <= first=%@", @(_guts->_numEntries), @(_guts->_first));
@@ -337,6 +348,8 @@
         // TODO: Would be nice to add on to the index set instead of deleting it.
         _guts->_array[_guts->_numEntries - 1].double_width_characters = nil;
     }
+    _guts->_array[_guts->_numEntries - 1].bidi_display_info = nil;
+    return &_guts->_array[_guts->_numEntries - 1].lineMetadata;
 }
 
 - (void)increaseCapacityTo:(int)newCapacity {
@@ -368,6 +381,7 @@
         _guts->_array[_guts->_numEntries].double_width_characters = nil;
         iTermMetadataSetExternalAttributes(&_guts->_array[_guts->_numEntries].lineMetadata, nil);
     }
+    _guts->_array[_guts->_numEntries].bidi_display_info = nil;
 }
 
 - (void)eraseLastLineCache {
@@ -379,6 +393,7 @@
     if (_guts->_useDWCCache) {
         _guts->_array[_guts->_numEntries - 1].double_width_characters = nil;
     }
+    _guts->_array[_guts->_numEntries - 1].bidi_display_info = nil;
 }
 
 - (void)eraseFirstLineCache {
@@ -386,6 +401,8 @@
     if (_guts->_numEntries > _guts->_first) {
         _guts->_array[_guts->_first].width_for_number_of_wrapped_lines = 0;
         _guts->_array[_guts->_first].number_of_wrapped_lines = 0;
+        // TODO: Figure out why I don't reset double_width_characters here. seems sktch
+        _guts->_array[_guts->_numEntries - 1].bidi_display_info = nil;
     }
 }
 
@@ -397,6 +414,19 @@
     iTermMetadataSetExternalAttributes(&_guts->_array[_guts->_numEntries - 1].lineMetadata,
                                        eaIndex);
 
+}
+
+- (void)setRTLFound:(BOOL)rtlFound atIndex:(NSInteger)index {
+    [self willMutate];
+    _guts->_array[index].lineMetadata.rtlFound = rtlFound;
+}
+
+- (void)setBidiInfo:(iTermBidiDisplayInfo *)bidiInfo
+             atLine:(int)index
+           rtlFound:(BOOL)rtlFound {
+    [self willMutate];
+    _guts->_array[index].lineMetadata.rtlFound = rtlFound;
+    _guts->_array[index].bidi_display_info = bidiInfo;
 }
 
 - (void)removeFirst {
@@ -414,6 +444,7 @@
         if (_guts->_useDWCCache) {
             _guts->_array[first].double_width_characters = nil;
         }
+        _guts->_array[first].bidi_display_info = nil;
         iTermMetadataSetExternalAttributes(&_guts->_array[first].lineMetadata, nil);
         _guts->_first += 1;
         ITAssertWithMessage(_guts->_first <= _guts->_numEntries,
@@ -426,6 +457,7 @@
     for (int i = 0; i < _guts->_numEntries; i++) {
         iTermMetadataSetExternalAttributes(&_guts->_array[i].lineMetadata, nil);
         _guts->_array[i].double_width_characters = nil;
+        _guts->_array[i].bidi_display_info = nil;
     }
     _guts->_numEntries = 0;
     _guts->_first = 0;

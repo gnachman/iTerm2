@@ -1241,12 +1241,14 @@ ITERM_WEAKLY_REFERENCEABLE
                 [mutableState appendScreenChars:sca.line
                                          length:sca.length
                          externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
-                                   continuation:continuation];
+                                   continuation:continuation
+                                       rtlFound:metadata.rtlFound];
             } else {
                 [mutableState appendScreenChars:sca.line
                                          length:sca.length
                          externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
-                                   continuation:sca.continuation];
+                                   continuation:sca.continuation
+                                       rtlFound:metadata.rtlFound];
             }
         }];
     }];
@@ -1424,13 +1426,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        NSArray *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
+        TmuxHistory *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
         if (history) {
             [mutableState setHistory:history];
         }
         history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
         if (history) {
-            [mutableState setAltScreen:history];
+            [mutableState setAltScreen:history.data];
         }
     }];
     [aSession.nameController restoreNameFromStateDictionary:arrangement[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE]];
@@ -8677,8 +8679,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self queueAnnouncement:announcement identifier:PTYSessionAnnouncementIdentifierTmuxPaused];
 }
 
-- (void)setTmuxHistory:(NSArray<NSData *> *)history
-            altHistory:(NSArray<NSData *> *)altHistory
+- (void)setTmuxHistory:(TmuxHistory *)history
+            altHistory:(TmuxHistory *)altHistory
                  state:(NSDictionary *)state {
     __weak __typeof(self) weakSelf = self;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -8690,15 +8692,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }];
 }
 
-- (void)reallySetTmuxHistory:(NSArray<NSData *> *)history
-                  altHistory:(NSArray<NSData *> *)altHistory
+- (void)reallySetTmuxHistory:(TmuxHistory *)history
+                  altHistory:(TmuxHistory *)altHistory
                        state:(NSDictionary *)state
                     terminal:(VT100Terminal *)terminal
                 mutableState:(VT100ScreenMutableState *)mutableState {
     [terminal resetForTmuxUnpause];
     [self clearScrollbackBuffer];
     [mutableState setHistory:history];
-    [mutableState setAltScreen:altHistory];
+    [mutableState setAltScreen:altHistory.data];
     [self setTmuxState:state];
     _view.scrollview.ptyVerticalScroller.userScroll = NO;
 }
@@ -18938,12 +18940,14 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)filterDestinationAppendCharacters:(const screen_char_t *)line
                                     count:(int)count
                    externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributeIndex
-                             continuation:(screen_char_t)continuation {
+                             continuation:(screen_char_t)continuation
+                                 rtlFound:(BOOL)rtlFound {
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState appendScreenChars:line
                                  length:count
                  externalAttributeIndex:externalAttributeIndex
-                           continuation:continuation];
+                           continuation:continuation
+                               rtlFound:rtlFound];
     }];
 }
 

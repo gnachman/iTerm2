@@ -8,11 +8,16 @@
 #import <Foundation/Foundation.h>
 #import "LineBlock.h"
 
+@class iTermBidiDisplayInfo;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface LineBlock(SwiftInterop)
 
 - (NSData * _Nullable)decompressedDataFromV4Data:(NSData *)v4data;
+- (void)sanityCheckBidiDisplayInfoForRawLine:(int)i;
+- (void)reallyReloadBidiInfo;
+- (iTermBidiDisplayInfo * _Nullable)_bidiInfoForLineNumber:(int)lineNum width:(int)width;
 
 @end
 

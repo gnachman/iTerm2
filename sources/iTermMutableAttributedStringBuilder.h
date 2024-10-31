@@ -39,9 +39,10 @@ static inline BOOL iTermCharacterSupportsFastPath(unichar code, BOOL asciiLigatu
 @property(nonatomic, assign) BOOL asciiLigaturesAvailable;
 @property(nonatomic, assign) BOOL zippy;
 
-- (void)appendString:(NSString *)string;
-- (void)appendCharacter:(unichar)code;
+- (void)appendString:(NSString *)string rtl:(BOOL)rtl;
+- (void)appendCharacter:(unichar)code rtl:(BOOL)rtl;
 - (void)disableFastPath;
+- (void)enableExplicitDirectionControls;
 
 @end
 

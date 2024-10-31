@@ -97,4 +97,20 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+@interface MutableScreenCharArray: ScreenCharArray
+
+@property (nonatomic, readonly) screen_char_t *mutableLine;
+
+- (void)appendScreenCharArray:(ScreenCharArray *)sca;
+
+@end
+
+@interface ScreenCharRope: NSObject
+@property (nonatomic, strong) NSArray<ScreenCharArray *> *scas;
+
+- (instancetype)initWithScreenCharArrays:(NSArray<ScreenCharArray *> *)scas NS_DESIGNATED_INITIALIZER;
+
+- (MutableScreenCharArray *)joined;
+@end
+
 NS_ASSUME_NONNULL_END

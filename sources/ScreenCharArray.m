@@ -14,12 +14,20 @@ static NSString *const ScreenCharArrayKeyMetadata = @"metadata";
 static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
 
 @implementation ScreenCharArray {
-    // If initialized with data, hold a reference to it to preserve ownership.
-    NSData *_data;
     BOOL _shouldFreeOnRelease;
     screen_char_t _placeholder;
     size_t _offset;
+
+@protected
+    // If initialized with data, hold a reference to it to preserve ownership.
+    NSData *_data;
+    const screen_char_t *_line;
+    int _length;
+    iTermImmutableMetadata _metadata;
+    int _eol;
+    screen_char_t _continuation;
 }
+
 @synthesize line = _line;
 @synthesize length = _length;
 @synthesize eol = _eol;
@@ -341,7 +349,10 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
                                             with:appendage
                                           length:other->_length];
     iTermMetadata combined;
-    iTermMetadataInit(&combined, _metadata.timestamp, eaIndex);
+    iTermMetadataInit(&combined,
+                      _metadata.timestamp,
+                      other->_metadata.rtlFound,
+                      eaIndex);
     ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:copy
                                                              length:combinedLength
                                                            metadata:iTermMetadataMakeImmutable(combined)
@@ -462,7 +473,7 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
                                                            to:(screen_char_t)c {
     assert(i >= 0);
     assert(i < self.length);
-    
+
     NSMutableData *temp = [self mutableLineData];
     screen_char_t *line = (screen_char_t *)temp.mutableBytes;
     line[i] = c;
@@ -507,6 +518,48 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
     }
     return length;
 }
+@end
+
+@implementation MutableScreenCharArray
+
+- (screen_char_t *)mutableLine {
+    return (screen_char_t *)_line;
+}
+
+- (void)appendScreenCharArray:(ScreenCharArray *)sca {
+#warning TODO: Make sure this doesn't over release or under retain any of the metaedatas'
+    iTermMetadata metadata = iTermImmutableMetadataMutableCopy(_metadata);
+    iTermMetadataAppend(&metadata, self.length, &sca->_metadata, sca.length);
+    _metadata = iTermMetadataMakeImmutable(metadata);
+
+    NSMutableData *data = [NSMutableData dataWithLength:(self.length + sca.length) * sizeof(screen_char_t)];
+    memmove(data.mutableBytes, _line, self.length * sizeof(screen_char_t));
+    memmove(((screen_char_t *)data.mutableBytes) + self.length, sca.line, sca.length * sizeof(screen_char_t));
+    _data = data;
+    _line = data.bytes;
+    _length += sca.length;
+    _continuation = sca.continuation;
+    _eol = sca.continuation.code;
+}
 
 @end
 
+@implementation ScreenCharRope
+
+- (instancetype)initWithScreenCharArrays:(NSArray<ScreenCharArray *> *)scas {
+    self = [super init];
+    if (self) {
+        _scas = [scas copy];
+    }
+    return self;
+}
+
+- (MutableScreenCharArray *)joined {
+    MutableScreenCharArray *result = [[MutableScreenCharArray alloc] init];
+    for (ScreenCharArray *sca in self.scas) {
+        [result appendScreenCharArray:sca];
+    }
+    return result;
+}
+
+@end

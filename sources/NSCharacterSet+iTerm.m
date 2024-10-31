@@ -8,6 +8,8 @@
 
 #import "NSCharacterSet+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
 
 unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
 
@@ -2653,6 +2655,162 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
         [characterSet addCharactersInRange:NSMakeRange(0x1F1E6, 0x1F200 - 0x1F1E6)];
         // Emoji tag sequences:
         [characterSet addCharactersInRange:NSMakeRange(0x1F3F4, 1)];
+    });
+    return characterSet;
+}
+
++ (NSCharacterSet *)rtlSmellingCodePoints {
+    static dispatch_once_t onceToken;
+    static NSCharacterSet *characterSet;
+    dispatch_once(&onceToken, ^{
+        // Run tools/bidi.py to generate this
+        NSMutableCharacterSet *mutableCharacterSet = [[NSMutableCharacterSet alloc] init];
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x5be, 1)];  // HEBREW PUNCTUATION MAQAF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x5c0, 1)];  // HEBREW PUNCTUATION PASEQ
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x5c3, 1)];  // HEBREW PUNCTUATION SOF PASUQ
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x5c6, 1)];  // HEBREW PUNCTUATION NUN HAFUKHA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x5d0, 27)];  // HEBREW LETTER ALEF...HEBREW LETTER TAV
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x5ef, 6)];  // HEBREW YOD TRIANGLE...HEBREW PUNCTUATION GERSHAYIM
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x600, 6)];  // ARABIC NUMBER SIGN...ARABIC NUMBER MARK ABOVE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x608, 1)];  // ARABIC RAY
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x60b, 1)];  // AFGHANI SIGN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x60d, 1)];  // ARABIC DATE SEPARATOR
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x61b, 48)];  // ARABIC SEMICOLON...ARABIC LETTER YEH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x660, 10)];  // ARABIC-INDIC DIGIT ZERO...ARABIC-INDIC DIGIT NINE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x66b, 5)];  // ARABIC DECIMAL SEPARATOR...ARABIC LETTER DOTLESS QAF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x671, 101)];  // ARABIC LETTER ALEF WASLA...ARABIC LETTER AE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x6dd, 1)];  // ARABIC END OF AYAH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x6e5, 2)];  // ARABIC SMALL WAW...ARABIC SMALL YEH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x6ee, 2)];  // ARABIC LETTER DAL WITH INVERTED V...ARABIC LETTER REH WITH INVERTED V
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x6fa, 20)];  // ARABIC LETTER SHEEN WITH DOT BELOW...SYRIAC HARKLEAN ASTERISCUS
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x70f, 2)];  // SYRIAC ABBREVIATION MARK...SYRIAC LETTER ALAPH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x712, 30)];  // SYRIAC LETTER BETH...SYRIAC LETTER PERSIAN DHALATH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x74d, 89)];  // SYRIAC LETTER SOGDIAN ZHAIN...THAANA LETTER WAAVU
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x7b1, 1)];  // THAANA LETTER NAA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x7c0, 43)];  // NKO DIGIT ZERO...NKO LETTER JONA RA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x7f4, 2)];  // NKO HIGH TONE APOSTROPHE...NKO LOW TONE APOSTROPHE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x7fa, 1)];  // NKO LAJANYALAN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x7fe, 24)];  // NKO DOROME SIGN...SAMARITAN LETTER TAAF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x81a, 1)];  // SAMARITAN MODIFIER LETTER EPENTHETIC YUT
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x824, 1)];  // SAMARITAN MODIFIER LETTER SHORT A
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x828, 1)];  // SAMARITAN MODIFIER LETTER I
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x830, 15)];  // SAMARITAN PUNCTUATION NEQUDAA...SAMARITAN PUNCTUATION ANNAAU
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x840, 25)];  // MANDAIC LETTER HALQA...MANDAIC LETTER AIN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x85e, 1)];  // MANDAIC PUNCTUATION
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x860, 11)];  // SYRIAC LETTER MALAYALAM NGA...SYRIAC LETTER MALAYALAM SSA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x870, 31)];  // ARABIC LETTER ALEF WITH ATTACHED FATHA...ARABIC VERTICAL TAIL
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x890, 2)];  // ARABIC POUND MARK ABOVE...ARABIC PIASTRE MARK ABOVE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x8a0, 42)];  // ARABIC LETTER BEH WITH SMALL V BELOW...ARABIC SMALL FARSI YEH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x8e2, 1)];  // ARABIC DISPUTED END OF AYAH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x200f, 1)];  // RIGHT-TO-LEFT MARK
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x202a, 5)];  // LEFT-TO-RIGHT EMBEDDING...RIGHT-TO-LEFT OVERRIDE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x2066, 4)];  // LEFT-TO-RIGHT ISOLATE...POP DIRECTIONAL ISOLATE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfb1d, 1)];  // HEBREW LETTER YOD WITH HIRIQ
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfb1f, 10)];  // HEBREW LIGATURE YIDDISH YOD YOD PATAH...HEBREW LETTER WIDE TAV
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfb2a, 13)];  // HEBREW LETTER SHIN WITH SHIN DOT...HEBREW LETTER ZAYIN WITH DAGESH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfb38, 5)];  // HEBREW LETTER TET WITH DAGESH...HEBREW LETTER LAMED WITH DAGESH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfb3e, 1)];  // HEBREW LETTER MEM WITH DAGESH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfb40, 2)];  // HEBREW LETTER NUN WITH DAGESH...HEBREW LETTER SAMEKH WITH DAGESH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfb43, 2)];  // HEBREW LETTER FINAL PE WITH DAGESH...HEBREW LETTER PE WITH DAGESH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfb46, 125)];  // HEBREW LETTER TSADI WITH DAGESH...ARABIC SYMBOL WASLA ABOVE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfbd3, 363)];  // ARABIC LETTER NG ISOLATED FORM...ARABIC LIGATURE ALEF WITH FATHATAN ISOLATED FORM
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfd50, 64)];  // ARABIC LIGATURE TEH WITH JEEM WITH MEEM INITIAL FORM...ARABIC LIGATURE MEEM WITH KHAH WITH MEEM INITIAL FORM
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfd92, 54)];  // ARABIC LIGATURE MEEM WITH JEEM WITH KHAH INITIAL FORM...ARABIC LIGATURE NOON WITH JEEM WITH YEH FINAL FORM
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfdf0, 13)];  // ARABIC LIGATURE SALLA USED AS KORANIC STOP SIGN ISOLATED FORM...RIAL SIGN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfe70, 5)];  // ARABIC FATHATAN ISOLATED FORM...ARABIC KASRATAN ISOLATED FORM
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0xfe76, 135)];  // ARABIC FATHA ISOLATED FORM...ARABIC LIGATURE LAM WITH ALEF FINAL FORM
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10800, 6)];  // CYPRIOT SYLLABLE A...CYPRIOT SYLLABLE JA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10808, 1)];  // CYPRIOT SYLLABLE JO
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1080a, 44)];  // CYPRIOT SYLLABLE KA...CYPRIOT SYLLABLE WO
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10837, 2)];  // CYPRIOT SYLLABLE XA...CYPRIOT SYLLABLE XE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1083c, 1)];  // CYPRIOT SYLLABLE ZA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1083f, 23)];  // CYPRIOT SYLLABLE ZO...IMPERIAL ARAMAIC LETTER TAW
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10857, 72)];  // IMPERIAL ARAMAIC SECTION SIGN...NABATAEAN LETTER TAW
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x108a7, 9)];  // NABATAEAN NUMBER ONE...NABATAEAN NUMBER ONE HUNDRED
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x108e0, 19)];  // HATRAN LETTER ALEPH...HATRAN LETTER QOPH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x108f4, 2)];  // HATRAN LETTER SHIN...HATRAN LETTER TAW
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x108fb, 33)];  // HATRAN NUMBER ONE...PHOENICIAN NUMBER THREE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10920, 26)];  // LYDIAN LETTER A...LYDIAN LETTER C
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1093f, 1)];  // LYDIAN TRIANGULAR MARK
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10980, 56)];  // MEROITIC HIEROGLYPHIC LETTER A...MEROITIC CURSIVE LETTER DA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x109bc, 20)];  // MEROITIC CURSIVE FRACTION ELEVEN TWELFTHS...MEROITIC CURSIVE NUMBER SEVENTY
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x109d2, 47)];  // MEROITIC CURSIVE NUMBER ONE HUNDRED...KHAROSHTHI LETTER A
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10a10, 4)];  // KHAROSHTHI LETTER KA...KHAROSHTHI LETTER GHA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10a15, 3)];  // KHAROSHTHI LETTER CA...KHAROSHTHI LETTER JA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10a19, 29)];  // KHAROSHTHI LETTER NYA...KHAROSHTHI LETTER VHA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10a40, 9)];  // KHAROSHTHI DIGIT ONE...KHAROSHTHI FRACTION ONE HALF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10a50, 9)];  // KHAROSHTHI PUNCTUATION DOT...KHAROSHTHI PUNCTUATION LINES
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10a60, 64)];  // OLD SOUTH ARABIAN LETTER HE...OLD NORTH ARABIAN NUMBER TWENTY
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10ac0, 37)];  // MANICHAEAN LETTER ALEPH...MANICHAEAN LETTER TAW
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10aeb, 12)];  // MANICHAEAN NUMBER ONE...MANICHAEAN PUNCTUATION LINE FILLER
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10b00, 54)];  // AVESTAN LETTER A...AVESTAN LETTER HE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10b40, 22)];  // INSCRIPTIONAL PARTHIAN LETTER ALEPH...INSCRIPTIONAL PARTHIAN LETTER TAW
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10b58, 27)];  // INSCRIPTIONAL PARTHIAN NUMBER ONE...INSCRIPTIONAL PAHLAVI LETTER TAW
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10b78, 26)];  // INSCRIPTIONAL PAHLAVI NUMBER ONE...PSALTER PAHLAVI LETTER TAW
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10b99, 4)];  // PSALTER PAHLAVI SECTION MARK...PSALTER PAHLAVI FOUR DOTS WITH DOT
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10ba9, 7)];  // PSALTER PAHLAVI NUMBER ONE...PSALTER PAHLAVI NUMBER ONE HUNDRED
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10c00, 73)];  // OLD TURKIC LETTER ORKHON A...OLD TURKIC LETTER ORKHON BASH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10c80, 51)];  // OLD HUNGARIAN CAPITAL LETTER A...OLD HUNGARIAN CAPITAL LETTER US
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10cc0, 51)];  // OLD HUNGARIAN SMALL LETTER A...OLD HUNGARIAN SMALL LETTER US
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10cfa, 42)];  // OLD HUNGARIAN NUMBER ONE...HANIFI ROHINGYA MARK NA KHONNA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10d30, 10)];  // HANIFI ROHINGYA DIGIT ZERO...HANIFI ROHINGYA DIGIT NINE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10d40, 38)];  // GARAY DIGIT ZERO...GARAY CAPITAL LETTER OLD NA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10d6f, 23)];  // GARAY REDUPLICATION MARK...GARAY SMALL LETTER OLD NA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10d8e, 2)];  // GARAY PLUS SIGN...GARAY MINUS SIGN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10e60, 31)];  // RUMI DIGIT ONE...RUMI FRACTION TWO THIRDS
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10e80, 42)];  // YEZIDI LETTER ELIF...YEZIDI LETTER ET
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10ead, 1)];  // YEZIDI HYPHENATION MARK
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10eb0, 2)];  // YEZIDI LETTER LAM WITH DOT ABOVE...YEZIDI LETTER YOT WITH CIRCUMFLEX ABOVE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10ec2, 3)];  // ARABIC LETTER DAL WITH TWO DOTS VERTICALLY BELOW...ARABIC LETTER KAF WITH TWO DOTS VERTICALLY BELOW
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10f00, 40)];  // OLD SOGDIAN LETTER ALEPH...OLD SOGDIAN LIGATURE AYIN-DALETH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10f30, 22)];  // SOGDIAN LETTER ALEPH...SOGDIAN INDEPENDENT SHIN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10f51, 9)];  // SOGDIAN NUMBER ONE...SOGDIAN PUNCTUATION HALF CIRCLE WITH DOT
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10f70, 18)];  // OLD UYGHUR LETTER ALEPH...OLD UYGHUR LETTER LESH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10f86, 4)];  // OLD UYGHUR PUNCTUATION BAR...OLD UYGHUR PUNCTUATION FOUR DOTS
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10fb0, 28)];  // CHORASMIAN LETTER ALEPH...CHORASMIAN NUMBER ONE HUNDRED
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x10fe0, 23)];  // ELYMAIC LETTER ALEPH...ELYMAIC LIGATURE ZAYIN-YODH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1e800, 197)];  // MENDE KIKAKUI SYLLABLE M001 KI...MENDE KIKAKUI SYLLABLE M060 NYON
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1e8c7, 9)];  // MENDE KIKAKUI DIGIT ONE...MENDE KIKAKUI DIGIT NINE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1e900, 68)];  // ADLAM CAPITAL LETTER ALIF...ADLAM SMALL LETTER SHA
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1e94b, 1)];  // ADLAM NASALIZATION MARK
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1e950, 10)];  // ADLAM DIGIT ZERO...ADLAM DIGIT NINE
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1e95e, 2)];  // ADLAM INITIAL EXCLAMATION MARK...ADLAM INITIAL QUESTION MARK
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ec71, 68)];  // INDIC SIYAQ NUMBER ONE...INDIC SIYAQ ALTERNATE LAKH MARK
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ed01, 61)];  // OTTOMAN SIYAQ NUMBER ONE...OTTOMAN SIYAQ FRACTION ONE SIXTH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee00, 4)];  // ARABIC MATHEMATICAL ALEF...ARABIC MATHEMATICAL DAL
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee05, 27)];  // ARABIC MATHEMATICAL WAW...ARABIC MATHEMATICAL DOTLESS QAF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee21, 2)];  // ARABIC MATHEMATICAL INITIAL BEH...ARABIC MATHEMATICAL INITIAL JEEM
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee24, 1)];  // ARABIC MATHEMATICAL INITIAL HEH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee27, 1)];  // ARABIC MATHEMATICAL INITIAL HAH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee29, 10)];  // ARABIC MATHEMATICAL INITIAL YEH...ARABIC MATHEMATICAL INITIAL QAF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee34, 4)];  // ARABIC MATHEMATICAL INITIAL SHEEN...ARABIC MATHEMATICAL INITIAL KHAH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee39, 1)];  // ARABIC MATHEMATICAL INITIAL DAD
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee3b, 1)];  // ARABIC MATHEMATICAL INITIAL GHAIN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee42, 1)];  // ARABIC MATHEMATICAL TAILED JEEM
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee47, 1)];  // ARABIC MATHEMATICAL TAILED HAH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee49, 1)];  // ARABIC MATHEMATICAL TAILED YEH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee4b, 1)];  // ARABIC MATHEMATICAL TAILED LAM
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee4d, 3)];  // ARABIC MATHEMATICAL TAILED NOON...ARABIC MATHEMATICAL TAILED AIN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee51, 2)];  // ARABIC MATHEMATICAL TAILED SAD...ARABIC MATHEMATICAL TAILED QAF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee54, 1)];  // ARABIC MATHEMATICAL TAILED SHEEN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee57, 1)];  // ARABIC MATHEMATICAL TAILED KHAH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee59, 1)];  // ARABIC MATHEMATICAL TAILED DAD
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee5b, 1)];  // ARABIC MATHEMATICAL TAILED GHAIN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee5d, 1)];  // ARABIC MATHEMATICAL TAILED DOTLESS NOON
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee5f, 1)];  // ARABIC MATHEMATICAL TAILED DOTLESS QAF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee61, 2)];  // ARABIC MATHEMATICAL STRETCHED BEH...ARABIC MATHEMATICAL STRETCHED JEEM
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee64, 1)];  // ARABIC MATHEMATICAL STRETCHED HEH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee67, 4)];  // ARABIC MATHEMATICAL STRETCHED HAH...ARABIC MATHEMATICAL STRETCHED KAF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee6c, 7)];  // ARABIC MATHEMATICAL STRETCHED MEEM...ARABIC MATHEMATICAL STRETCHED QAF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee74, 4)];  // ARABIC MATHEMATICAL STRETCHED SHEEN...ARABIC MATHEMATICAL STRETCHED KHAH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee79, 4)];  // ARABIC MATHEMATICAL STRETCHED DAD...ARABIC MATHEMATICAL STRETCHED DOTLESS BEH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee7e, 1)];  // ARABIC MATHEMATICAL STRETCHED DOTLESS FEH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee80, 10)];  // ARABIC MATHEMATICAL LOOPED ALEF...ARABIC MATHEMATICAL LOOPED YEH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1ee8b, 17)];  // ARABIC MATHEMATICAL LOOPED LAM...ARABIC MATHEMATICAL LOOPED GHAIN
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1eea1, 3)];  // ARABIC MATHEMATICAL DOUBLE-STRUCK BEH...ARABIC MATHEMATICAL DOUBLE-STRUCK DAL
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1eea5, 5)];  // ARABIC MATHEMATICAL DOUBLE-STRUCK WAW...ARABIC MATHEMATICAL DOUBLE-STRUCK YEH
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x1eeab, 17)];  // ARABIC MATHEMATICAL DOUBLE-STRUCK LAM...ARABIC MATHEMATICAL DOUBLE-STRUCK GHAIN
+        characterSet = mutableCharacterSet;
     });
     return characterSet;
 }

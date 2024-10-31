@@ -704,7 +704,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                         NULL,
                         [_delegate textViewUnicodeNormalizationForm],
                         [_delegate textViewUnicodeVersion],
-                        self.dataSource.terminalSoftAlternateScreenMode);
+                        self.dataSource.terminalSoftAlternateScreenMode,
+                        NULL);
 
     // Count how many additional cells are needed due to double-width chars
     // that span line breaks being wrapped to the next line.
@@ -5037,6 +5038,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return [_dataSource externalAttributeIndexForLine:lineNumber];
 }
 
+- (iTermImmutableMetadata)drawingHelperMetadataOnLine:(int)lineNumber {
+    return [_dataSource metadataOnLine:lineNumber];
+}
+
 - (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
     return [_dataSource screenCharArrayAtScreenIndex:line].line;
 }
@@ -5110,6 +5115,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (NSArray<iTermTerminalButton *> *)drawingHelperTerminalButtons  API_AVAILABLE(macos(11)){
     return [self terminalButtons];
+}
+
+- (iTermBidiDisplayInfo * _Nullable)drawingHelperBidiInfoForLine:(int)line {
+    return [self.dataSource bidiInfoForLine:line];
 }
 
 - (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11)) {

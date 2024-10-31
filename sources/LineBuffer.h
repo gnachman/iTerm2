@@ -39,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class LineBlock;
 @class LineBuffer;
+@class iTermBidiDisplayInfo;
 
 @protocol iTermLineBufferDelegate<NSObject>
 - (void)lineBufferDidDropLines:(LineBuffer * _Nonnull)lineBuffer;
@@ -201,6 +202,9 @@ NS_ASSUME_NONNULL_BEGIN
 // If the last line has a hard eol, this is 0.
 // Otherwise it is the number of wrapped lines up to the preceding hard eol.
 - (int)numberOfWrappedLinesAtPartialEndforWidth:(int)width;
+- (ScreenCharArray * _Nullable)lastRawLine;
+
+- (iTermBidiDisplayInfo * _Nullable)bidiInfoForLine:(int)line width:(int)width;
 
 @end
 
@@ -220,9 +224,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Has anything changed? Feel free to reset this to NO as you please.
 @property(nonatomic) BOOL dirty;
+@property(nonatomic) BOOL maintainBidiInfo;
 
 - (LineBuffer * _Nonnull)initWithBlockSize:(int)bs;
-- (LineBuffer * _Nullable)initWithDictionary:(NSDictionary * _Nonnull)dictionary;
+- (LineBuffer * _Nullable)initWithDictionary:(NSDictionary * _Nonnull)dictionary
+                            maintainBidiInfo:(BOOL)maintainBidiInfo;
 
 // Call this immediately after init. Otherwise the buffer will hold unlimited lines (until you
 // run out of memory).
@@ -302,6 +308,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)clear;
 
 - (NSString *)dumpString;
+
+// Ensure bidi info is up to date for the last block.
+- (void)commitLastBlock;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -6,6 +6,13 @@
 //
 
 extension IndexSet {
+    init(ranges: [Range<Int>]) {
+        self.init()
+        for range in ranges {
+            insert(integersIn: range)
+        }
+    }
+
     mutating func removeFirst() -> Element? {
         if let value = first {
             remove(value)

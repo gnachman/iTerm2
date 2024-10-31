@@ -69,6 +69,8 @@
     NSMutableString *_string;
     NSMutableData *_characterData;
     BOOL _canUseFastPath;
+    BOOL _explicitDirectionControls;
+    NSMutableIndexSet *_rtlIndexes;
 }
 
 - (instancetype)init {
@@ -122,6 +124,19 @@
         [self appendRealAttributedStringWithText:_string attributes:_attributes];
         [_string setString:@""];
     }
+    if (_explicitDirectionControls && _attributedString != nil) {
+        NSMutableAttributedString *attributedString = [NSMutableAttributedString castFrom:_attributedString];
+        assert(attributedString != nil);
+        NSMutableIndexSet *ltrIndexes = [NSMutableIndexSet indexSet];
+        [ltrIndexes addIndexesInRange:NSMakeRange(0, attributedString.length)];
+        [_rtlIndexes enumerateRangesUsingBlock:^(NSRange range, BOOL * _Nonnull stop) {
+            [attributedString addAttribute:NSWritingDirectionAttributeName value:@[@(NSWritingDirectionRightToLeft | NSWritingDirectionOverride)] range:range];
+            [ltrIndexes removeIndexesInRange:range];
+        }];
+        [ltrIndexes enumerateRangesUsingBlock:^(NSRange range, BOOL * _Nonnull stop) {
+            [attributedString addAttribute:NSWritingDirectionAttributeName value:@[@(NSWritingDirectionLeftToRight | NSWritingDirectionOverride)] range:range];
+        }];
+    }
 }
 
 - (void)appendRealAttributedStringWithText:(NSString *)string attributes:(NSDictionary *)attributes {
@@ -142,7 +157,7 @@
     return _attributedString;
 }
 
-- (void)appendString:(NSString *)string {
+- (void)appendString:(NSString *)string rtl:(BOOL)rtl {
     // Require a string length of 1 to avoid using zippy for combining marks, which core graphics
     // renders poorly. Zippy still has value for using core graphics for nonascii uncombined characters.
     BOOL tryZippy = _zippy;
@@ -157,7 +172,7 @@
                 string = [string substringFromIndex:i];
                 break;
             }
-            [self appendCharacter:c];
+            [self appendCharacter:c rtl:rtl];
         }
         if (i == string.length) {
             return;
@@ -169,6 +184,9 @@
     }
     if (!_string) {
         _string = [[NSMutableString alloc] init];
+    }
+    if (rtl) {
+        [_rtlIndexes addIndexesInRange:NSMakeRange(_string.length, string.length)];
     }
     [_string appendString:string];
 }
@@ -184,7 +202,7 @@
     _characterData = nil;
 }
 
-- (void)appendCharacter:(unichar)code {
+- (void)appendCharacter:(unichar)code rtl:(BOOL)rtl {
     if (!_zippy) {
         _canUseFastPath &= iTermCharacterSupportsFastPath(code, _asciiLigaturesAvailable);
     }
@@ -193,6 +211,9 @@
     }
     if (!_characterData) {
         _characterData = [[NSMutableData alloc] initWithCapacity:20];
+    }
+    if (rtl) {
+        [_rtlIndexes addIndex:_string.length + _characterData.length / sizeof(unichar)];
     }
     [_characterData appendBytes:&code length:sizeof(unichar)];
 }
@@ -203,6 +224,15 @@
 
 - (void)disableFastPath {
     _canUseFastPath = NO;
+}
+
+- (void)enableExplicitDirectionControls {
+    if (_explicitDirectionControls) {
+        return;
+    }
+    [self disableFastPath];
+    _explicitDirectionControls = YES;
+    _rtlIndexes = [NSMutableIndexSet indexSet];
 }
 
 @end

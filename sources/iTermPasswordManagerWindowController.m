@@ -271,7 +271,6 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (id<PasswordManagerAccount>)selectedAccount {
-    id<PasswordManagerAccount> account = nil;
     if (_tableView.selectedRow == -1) {
         return nil;
     }
