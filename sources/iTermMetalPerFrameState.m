@@ -281,8 +281,8 @@ typedef struct {
     _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
                                                          drawingHelper.copyModeCursorCoord.y - _visibleRange.start.y);
     _cursorInfo.copyModeCursorSelecting = drawingHelper.copyModeSelecting;
-    _cursorInfo.coord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
-                                           textView.dataSource.cursorY - 1 - offset);
+    _cursorInfo.coord = [drawingHelper coordinateByTransformingForRTL:VT100GridCoordMake(textView.dataSource.cursorX - 1,
+                                                                                         textView.dataSource.cursorY - 1 - offset)];
     _cursorInfo.cursorShadow = drawingHelper.cursorShadow;
     NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
     if ([self shouldDrawCursor] &&
@@ -810,6 +810,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
   lineStyleMarkRightInset:(out nonnull int *)lineStyleMarkRightInsetPtr
                       row:(int)row
                     width:(int)width
+                 bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
            drawableGlyphs:(int *)drawableGlyphsPtr
                      date:(out NSDate **)datePtr
            belongsToBlock:(out BOOL *)belongsToBlockPtr {
@@ -846,6 +847,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     iTermKittyUnicodePlaceholderState kittyPlaceholderState;
     const BOOL underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
     iTermMetalPerFrameStateCaches caches;
+    const int *bidiLUT = [bidiInfo lut];
+    const int bidiLUTLength = bidiInfo.numberOfCells;
 
     iTermKittyUnicodePlaceholderStateInit(&kittyPlaceholderState);
     memset(&caches, 0, sizeof(caches));
@@ -1085,6 +1088,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         } else {
             glyphKeys[x].drawable = NO;
             glyphKeys[x].combiningSuccessor = 0;
+        }
+        if (bidiLUT && x < bidiLUTLength) {
+            glyphKeys[x].visualColumn = bidiLUT[x];
+        } else {
+            glyphKeys[x].visualColumn = x;
         }
     }
 

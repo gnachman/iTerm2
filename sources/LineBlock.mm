@@ -1360,6 +1360,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     screen_char_t continuation = { 0 };
     int eol = 0;
     const screen_char_t *chunk = _characterBuffer.pointer + _startOffset;
+    iTermBidiDisplayInfo *bidiInfo = nil;
     const int offset = [self _wrappedLineWithWrapWidth:width
                                               location:location
                                                lineNum:&mutableLineNum
@@ -1369,14 +1370,15 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                           continuation:&continuation
                                   isStartOfWrappedLine:NULL
                                               metadata:&metadata
-                                              bidiInfo:NULL
+                                              bidiInfo:&bidiInfo
                                             lineOffset:NULL];
 
     ;
     ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:chunk + offset
                                                           length:length
                                                         metadata:metadata
-                                                    continuation:continuation];
+                                                    continuation:continuation
+                                                        bidiInfo:bidiInfo];
     return [sca paddedToLength:paddedSize eligibleForDWC:eligibleForDWC];
 }
 

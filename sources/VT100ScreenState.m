@@ -1267,7 +1267,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:line
                                                             length:width
                                                           metadata:[self.currentGrid immutableMetadataAtLineNumber:index]
-                                                      continuation:line[width]];
+                                                      continuation:line[width]
+                                                          bidiInfo:[self.currentGrid bidiInfoForLine:index]];
     return array;
 }
 

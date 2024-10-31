@@ -173,6 +173,7 @@ class BidiDisplayInfoObjc: NSObject {
         case rtlIndexes = "rtlIndexes"
     }
 
+    @objc
     var dictionaryValue: [String: Any] {
         return [Keys.lut.rawValue: guts.lut.map { NSNumber(value: $0) },
                 Keys.rtlIndexes.rawValue: rtlIndexes.rangeView.map { NSValue(range: NSRange($0)) }]
@@ -344,6 +345,9 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
 
     func subInfo(range nsrange: NSRange) -> BidiDisplayInfo? {
         let range = Range(nsrange)!.clamped(to: 0..<lut.count)
+        if range == 0..<lut.count {
+            return self
+        }
 
         var subIndexes = IndexSet()
         for rtlRange in rtlIndexes.rangeView(of: range) {

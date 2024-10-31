@@ -12,6 +12,7 @@
 #import "iTermTextRendererTransientState.h"
 
 @import MetalKit;
+@class iTermBidiDisplayInfo;
 @class iTermKittyImageDraw;
 @class iTermKittyImageRun;
 @class iTermTerminalButton;
@@ -112,6 +113,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
   lineStyleMarkRightInset:(out int *)lineStyleMarkRightInset
                       row:(int)row
                     width:(int)width
+                 bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
            drawableGlyphs:(int *)drawableGlyphsPtr
                      date:(out NSDate * _Nonnull * _Nonnull)date
            belongsToBlock:(out BOOL * _Nonnull)belongsToBlock;

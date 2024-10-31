@@ -11,6 +11,7 @@
 #import "iTermMarkRenderer.h"
 
 @class ScreenCharArray;
+@class iTermBidiDisplayInfo;
 @class iTermKittyImageRun;
 @class iTermMetalImageRun;
 

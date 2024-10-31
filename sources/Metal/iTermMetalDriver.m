@@ -720,6 +720,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                            lineStyleMarkRightInset:&lineStyleMarkRightInset
                                                row:y
                                              width:columns
+                                          bidiInfo:rowData.screenCharArray.bidiInfo
                                     drawableGlyphs:&drawableGlyphs
                                               date:&date
                                     belongsToBlock:&belongsToBlock];

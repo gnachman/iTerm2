@@ -6,12 +6,15 @@
 //
 
 #import "ScreenCharArray.h"
+#import "NSDictionary+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 
 static NSString *const ScreenCharArrayKeyData = @"data";
 static NSString *const ScreenCharArrayKeyEOL = @"eol";
 static NSString *const ScreenCharArrayKeyMetadata = @"metadata";
 static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
+static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 
 @implementation ScreenCharArray {
     BOOL _shouldFreeOnRelease;
@@ -58,6 +61,7 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
                      continuation:_continuation];
         iTermMetadataRelease(metadata);
         _eol = [dictionary[ScreenCharArrayKeyEOL] intValue];
+        _bidiInfo = [[iTermBidiDisplayInfo alloc] initWithDictionary:[NSDictionary castFrom:dictionary[ScreenCharArrayKeyBidiInfo]]];
     }
     return self;
 }
@@ -67,6 +71,18 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     if (self) {
         _line = &_placeholder;
         _eol = EOL_HARD;
+    }
+    return self;
+}
+
+- (instancetype)initWithData:(NSData *)data
+       includingContinuation:(BOOL)includingContinuation
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation
+                    bidiInfo:(iTermBidiDisplayInfo *)bidiInfo {
+    self = [self initWithData:data includingContinuation:includingContinuation metadata:metadata continuation:continuation];
+    if (self) {
+        _bidiInfo = bidiInfo;
     }
     return self;
 }
@@ -103,14 +119,22 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
 
 - (instancetype)initWithCopyOfLine:(const screen_char_t *)line
                             length:(int)length
-                      continuation:(screen_char_t)continuation {
+                      continuation:(screen_char_t)continuation
+                          bidiInfo:(iTermBidiDisplayInfo *)bidiInfo {
     screen_char_t *copy = malloc(sizeof(*line) * length);
     memmove(copy, line, sizeof(*line) * length);
     self = [self initWithLine:copy length:length continuation:continuation];
     if (self) {
         _shouldFreeOnRelease = YES;
+        _bidiInfo = bidiInfo;
     }
     return self;
+}
+
+- (instancetype)initWithCopyOfLine:(const screen_char_t *)line
+                            length:(int)length
+                      continuation:(screen_char_t)continuation {
+    return [self initWithCopyOfLine:line length:length continuation:continuation bidiInfo:nil];
 }
 
 - (instancetype)initWithLine:(const screen_char_t *)line
@@ -135,6 +159,18 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
         _metadata = metadata;
         iTermImmutableMetadataRetain(_metadata);
         _eol = continuation.code;
+    }
+    return self;
+}
+
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation
+                    bidiInfo:(iTermBidiDisplayInfo *)bidiInfo {
+    self = [self initWithLine:line length:length metadata:metadata continuation:continuation];
+    if (self) {
+        _bidiInfo = bidiInfo;
     }
     return self;
 }
@@ -281,6 +317,9 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     if ((_line != other->_line && memcmp(_line, other->_line, _length * sizeof(screen_char_t)))) {
         return NO;
     }
+    if (![NSObject object:_bidiInfo isEqualToObject:other->_bidiInfo]) {
+        return NO;
+    }
     return YES;
 }
 
@@ -304,18 +343,20 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
 - (id)copyWithZone:(NSZone *)zone {
     ScreenCharArray *theCopy = [[ScreenCharArray alloc] initWithCopyOfLine:_line
                                                                     length:_length
-                                                              continuation:_continuation];
+                                                              continuation:_continuation
+                                                                  bidiInfo:_bidiInfo];
     theCopy->_metadata = iTermImmutableMetadataCopy(_metadata);
     return theCopy;
 }
 
 - (NSDictionary *)dictionaryValue {
-    return @{
+    return [@{
         ScreenCharArrayKeyData: [NSData dataWithBytes:self.line length:self.length * sizeof(screen_char_t)],
         ScreenCharArrayKeyEOL: @(_eol),
         ScreenCharArrayKeyMetadata: iTermImmutableMetadataEncodeToArray(_metadata),
-        ScreenCharArrayKeyContinuation: [NSData dataWithBytes:&_continuation length:sizeof(_continuation)]
-    };
+        ScreenCharArrayKeyContinuation: [NSData dataWithBytes:&_continuation length:sizeof(_continuation)],
+        ScreenCharArrayKeyBidiInfo: [_bidiInfo dictionaryValue] ?: [NSNull null]
+    } dictionaryByRemovingNullValues];
 }
 
 - (ScreenCharArray *)screenCharArrayByRemovingFirst:(int)n {
@@ -324,7 +365,8 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     }
     return [[ScreenCharArray alloc] initWithCopyOfLine:self.line + n
                                                 length:self.length - n
-                                          continuation:self.continuation];
+                                          continuation:self.continuation
+                                              bidiInfo:[_bidiInfo subInfoInRange:NSMakeRange(n, self.length - n)]];
 }
 
 - (ScreenCharArray *)screenCharArrayByRemovingLast:(int)n {
@@ -333,7 +375,8 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     }
     return [[ScreenCharArray alloc] initWithCopyOfLine:self.line
                                                 length:self.length - n
-                                          continuation:self.continuation];
+                                          continuation:self.continuation
+                                              bidiInfo:[_bidiInfo subInfoInRange:NSMakeRange(0, self.length - n)]];
 }
 
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other {
@@ -356,7 +399,8 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:copy
                                                              length:combinedLength
                                                            metadata:iTermMetadataMakeImmutable(combined)
-                                                       continuation:other.continuation];
+                                                       continuation:other.continuation
+                                                           bidiInfo:nil];
     iTermMetadataRelease(combined);
     if (result) {
         result->_shouldFreeOnRelease = YES;
@@ -382,6 +426,7 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     memset(&_continuation, 0, sizeof(_continuation));
     _continuation.code = EOL_SOFT;
     _eol = EOL_SOFT;
+    _bidiInfo = nil;
 }
 
 - (ScreenCharArray *)inWindow:(VT100GridRange)window {
@@ -395,10 +440,12 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     if (offset == 0 && maxLength >= self.length) {
         return self;
     }
+    const int newLength = MIN(maxLength, self.length);
     return [[ScreenCharArray alloc] initWithLine:theLine + offset
-                                          length:MIN(maxLength, self.length)
+                                          length:newLength
                                         metadata:self.metadata
-                                    continuation:self.continuation];
+                                    continuation:self.continuation
+                                        bidiInfo:[_bidiInfo subInfoInRange:NSMakeRange(offset, newLength)]];
 }
 
 - (ScreenCharArray *)paddedToLength:(int)length eligibleForDWC:(BOOL)eligibleForDWC {
@@ -436,7 +483,8 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     return [[ScreenCharArray alloc] initWithData:data
                            includingContinuation:YES
                                         metadata:self.metadata
-                                    continuation:continuation];
+                                    continuation:continuation
+                                        bidiInfo:_bidiInfo];
 }
 
 - (ScreenCharArray *)copyByZeroingRange:(NSRange)range {
@@ -445,6 +493,7 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     for (NSInteger i = 0; i < range.length; i++) {
         line[range.location + i] = (screen_char_t){ 0 };
     }
+    theCopy->_bidiInfo = nil;
     return theCopy;
 }
 
@@ -453,7 +502,10 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
         return self;
     }
     if (newLength < self.length) {
-        return [[ScreenCharArray alloc] initWithCopyOfLine:self.line length:newLength continuation:self.continuation];
+        return [[ScreenCharArray alloc] initWithCopyOfLine:self.line
+                                                    length:newLength
+                                              continuation:self.continuation
+                                                  bidiInfo:[_bidiInfo subInfoInRange:NSMakeRange(0, newLength)]];
     }
     return [self paddedToLength:newLength eligibleForDWC:NO];
 }

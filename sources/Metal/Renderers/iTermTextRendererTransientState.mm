@@ -340,13 +340,13 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
                                                                     float h,
                                                                     iTermASCIITexture *texture,
                                                                     float cellWidth,
-                                                                    int x,
+                                                                    int visualColumn,
                                                                     CGSize asciiOffset,
                                                                     iTermASCIITextureOffset offset,
                                                                     vector_float4 textColor,
                                                                     iTermMetalGlyphAttributesUnderline underlineStyle,
                                                                     vector_float4 underlineColor) {
-    piu->offset = simd_make_float2(x * cellWidth + asciiOffset.width,
+    piu->offset = simd_make_float2(visualColumn * cellWidth + asciiOffset.width,
                                    asciiOffset.height);
     const int index = iTermASCIITextureIndexOfCode(code, offset);
     MTLOrigin origin = iTermTextureArrayOffsetForIndex(texture.textureArray, index);
@@ -365,6 +365,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
 
 - (void)addASCIICellToPIUsForCode:(char)code
                                 x:(int)x
+                     visualColumn:(int)visualColumn
                            offset:(CGSize)asciiOffset
                                 w:(float)w
                                 h:(float)h
@@ -411,7 +412,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                     h,
                                                     texture,
                                                     cellWidth,
-                                                    x,
+                                                    visualColumn,
                                                     asciiOffset,
                                                     iTermASCIITextureOffsetCenter,
                                                     textColor,
@@ -423,35 +424,18 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     
     // Add PIU for left overflow
     if (parts & iTermASCIITexturePartsLeft) {
-        if (x > 0) {
-            // Normal case
-            iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
-                                                        code,
-                                                        w,
-                                                        h,
-                                                        texture,
-                                                        cellWidth,
-                                                        x - 1,
-                                                        asciiOffset,
-                                                        iTermASCIITextureOffsetLeft,
-                                                        textColor,
-                                                        iTermMetalGlyphAttributesUnderlineNone,
-                                                        underlineColor);
-        } else {
-            // Intrusion into left margin
-            iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
-                                                        code,
-                                                        w,
-                                                        h,
-                                                        texture,
-                                                        cellWidth,
-                                                        x - 1,
-                                                        asciiOffset,
-                                                        iTermASCIITextureOffsetLeft,
-                                                        textColor,
-                                                        iTermMetalGlyphAttributesUnderlineNone,
-                                                        underlineColor);
-        }
+        iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                    code,
+                                                    w,
+                                                    h,
+                                                    texture,
+                                                    cellWidth,
+                                                    visualColumn - 1,
+                                                    asciiOffset,
+                                                    iTermASCIITextureOffsetLeft,
+                                                    textColor,
+                                                    iTermMetalGlyphAttributesUnderlineNone,
+                                                    underlineColor);
     }
 
     // Add PIU for center part, which is always present
@@ -461,7 +445,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                 h,
                                                 texture,
                                                 cellWidth,
-                                                x,
+                                                visualColumn,
                                                 asciiOffset,
                                                 iTermASCIITextureOffsetCenter,
                                                 textColor,
@@ -469,36 +453,19 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                 underlineColor);
     // Add PIU for right overflow
     if (parts & iTermASCIITexturePartsRight) {
-        const int lastColumn = self.cellConfiguration.gridSize.width - 1;
-        if (x < lastColumn) {
-            // Normal case
-            iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
-                                                        code,
-                                                        w,
-                                                        h,
-                                                        texture,
-                                                        cellWidth,
-                                                        x + 1,
-                                                        asciiOffset,
-                                                        iTermASCIITextureOffsetRight,
-                                                        attributes[x].foregroundColor,
-                                                        iTermMetalGlyphAttributesUnderlineNone,
-                                                        underlineColor);
-        } else {
-            // Intrusion into right margin
-            iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
-                                                        code,
-                                                        w,
-                                                        h,
-                                                        texture,
-                                                        cellWidth,
-                                                        x + 1,
-                                                        asciiOffset,
-                                                        iTermASCIITextureOffsetRight,
-                                                        attributes[x].foregroundColor,
-                                                        iTermMetalGlyphAttributesUnderlineNone,
-                                                        underlineColor);
-        }
+
+        iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                    code,
+                                                    w,
+                                                    h,
+                                                    texture,
+                                                    cellWidth,
+                                                    visualColumn + 1,
+                                                    asciiOffset,
+                                                    iTermASCIITextureOffsetRight,
+                                                    attributes[x].foregroundColor,
+                                                    iTermMetalGlyphAttributesUnderlineNone,
+                                                    underlineColor);
     }
 }
 
@@ -549,6 +516,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                                                                                      glyphKeys[x].thinStrokes);
             [self addASCIICellToPIUsForCode:glyphKeys[x].code
                                           x:x
+                               visualColumn:glyphKeys[x].visualColumn
                                      offset:CGSizeMake(asciiXOffset, yOffset + asciiYOffset)
                                           w:reciprocalAsciiAtlasSize.x
                                           h:reciprocalAsciiAtlasSize.y
@@ -587,7 +555,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                 const int &part = entry->_part;
                 const int dx = iTermImagePartDX(part);
                 const int dy = iTermImagePartDY(part);
-                piu->offset = simd_make_float2(x * cellWidth + dx * glyphSize.width,
+                piu->offset = simd_make_float2(glyphKeys[x].visualColumn * cellWidth + dx * glyphSize.width,
                                                -dy * glyphSize.height + yOffset);
                 MTLOrigin origin = entry->get_origin();
                 vector_float2 reciprocal_atlas_size = entry->_page->get_reciprocal_atlas_size();

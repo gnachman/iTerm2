@@ -28,6 +28,7 @@ typedef struct {
     BOOL drawable;  // If this is NO it will be ignored
     BOOL antialiased;  // Only relevant for non-ascii glyphs
     iTermMetalGlyphKeyTypeface typeface : iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded;
+    int visualColumn;
 } iTermMetalGlyphKey;
 
 // Features of a cell that do not affect which texture is selected as source material.

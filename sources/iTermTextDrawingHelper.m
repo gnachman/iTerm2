@@ -2347,6 +2347,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             }
             CGContextTranslateCTM(cgContext, -radius - 0.5, 0);
         }
+        CFRelease(runFont);
     }
     if (verbose) {
         NSLog(@"");
