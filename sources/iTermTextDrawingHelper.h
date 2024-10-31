@@ -408,6 +408,7 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 - (void)updateButtonFrames NS_AVAILABLE_MAC(11);
 - (NSRange)rangeOfVisibleRows;
 - (VT100GridCoord)coordinateByTransformingForRTL:(VT100GridCoord)nominal;
+- (void)didFinishSetup;
 
 @end
 
