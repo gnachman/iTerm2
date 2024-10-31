@@ -7,6 +7,36 @@
 
 import Foundation
 
+@objc(iTermUntypedLRUDictionary)
+class UntypedLRUDictionary: NSObject {
+    private var impl: LRUDictionary<AnyHashable, Any>
+
+    @objc(initWithMaximumSize:)
+    init(maximumSize: Int) {
+        impl = LRUDictionary(maximumSize: maximumSize)
+    }
+
+    @objc(addObjectWithKey:value:cost:)
+    func insert(key: AnyHashable, value: Any, cost: Int) {
+        _ = impl.insert(key: key, value: value, cost: cost)
+    }
+
+    @objc(removeObjectForKey:)
+    func delete(forKey key: AnyHashable) {
+        impl.delete(forKey: key)
+    }
+
+    @objc(objectForKey:)
+    func object(forKey key: AnyHashable) -> Any? {
+        impl[key]
+    }
+
+    @objc(removeAllObjects)
+    func removeAllObjects() {
+        impl.removeAll()
+    }
+}
+
 // A dictionary that automatically evicts least-recently used value to keep the
 // size under a cap.
 struct LRUDictionary<Key: Hashable, Value> {

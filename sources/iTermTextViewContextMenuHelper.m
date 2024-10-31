@@ -977,7 +977,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
         DLog(@"Sender not an action or nil: %@", sender);
         return;
     }
-    const VT100GridWindowedRange range = action.range;
+    const VT100GridWindowedRange range = action.visualRange;
     [self.delegate contextMenu:self copyRangeAccordingToUserPreferences:range];
 }
 

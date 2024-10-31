@@ -389,8 +389,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 // Those are always at the end of the list because it's sorted in reverse order.
 // Return the range of search results that are still accessible.
 - (NSRange)validRangeForOverflow:(long long)overflow {
+    // See where a search result at the last possible location before overflow would be inserted.
+    // I picked INT_MAX-1 for the x coordinate just in case someone wants to add 1 to it later.
+    // That is definitely more than any possible x coordinate could be.
     SearchResult *r = [[SearchResult alloc] init];
-    r.internalAbsStartY = overflow;
+    r.internalAbsStartY = overflow - 1;
+    r.internalStartX = INT_MAX - 1;
     const NSInteger lastValidIndex =
     [_searchResults indexOfObject:r
                     inSortedRange:NSMakeRange(0, _searchResults.count)

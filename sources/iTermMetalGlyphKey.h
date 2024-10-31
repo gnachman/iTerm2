@@ -19,28 +19,72 @@ typedef NS_OPTIONS(int, iTermMetalGlyphKeyTypeface) {
     iTermMetalGlyphKeyTypefaceBoldItalic = (iTermMetalGlyphKeyTypefaceBold | iTermMetalGlyphKeyTypefaceItalic)
 };
 
+typedef NS_ENUM(unsigned char, iTermMetalGlyphType) {
+    iTermMetalGlyphTypeRegular,
+    iTermMetalGlyphTypeDecomposed
+};
+
 typedef struct {
     unichar code;
     unichar combiningSuccessor;  // 0 if none, which is the normal case.
     BOOL isComplex;
     BOOL boxDrawing;
-    BOOL thinStrokes;
     BOOL drawable;  // If this is NO it will be ignored
-    BOOL antialiased;  // Only relevant for non-ascii glyphs
+} iTermRegularGlyphPayload;
+
+typedef struct {
+    unsigned int fontID;
+    unsigned short glyphNumber;
+    NSPoint position;
+    unsigned int fakeBold : 1;
+    unsigned int fakeItalic : 1;
+} iTermDecomposedGlyphPayload;
+
+typedef struct iTermMetalGlyphKey {
+    iTermMetalGlyphType type;
+    union {
+        iTermRegularGlyphPayload regular;
+        iTermDecomposedGlyphPayload decomposed;
+    } payload;
+
     iTermMetalGlyphKeyTypeface typeface : iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded;
+    BOOL thinStrokes;
+    int visualColumn;
+    int logicalIndex;
 } iTermMetalGlyphKey;
 
 // Features of a cell that do not affect which texture is selected as source material.
 typedef struct {
     vector_float4 foregroundColor;
     vector_float4 backgroundColor;
+    vector_float4 unprocessedBackgroundColor;
     BOOL hasUnderlineColor;
     vector_float4 underlineColor;
     iTermMetalGlyphAttributesUnderline underlineStyle : 4;
     BOOL annotation;  // affects underline color
 } iTermMetalGlyphAttributes;
 
-NS_INLINE NSString *iTermMetalGlyphKeyDescription(const iTermMetalGlyphKey *key) {
+NS_INLINE NSString *iTermMetalGlyphTypeDecomposedDescription(const iTermDecomposedGlyphPayload *payload) {
+    return [NSString stringWithFormat:@"Decomposed: font=%@ fakeBold=%@ fakeItalic=%@ glyph=%@ position=%@",
+            @(payload->fontID),
+            @(payload->fakeBold),
+            @(payload->fakeItalic),
+            @(payload->glyphNumber),
+            NSStringFromPoint(payload->position)];
+}
+
+NS_INLINE NSString *iTermGlyphTypefaceString(const iTermMetalGlyphKey *key) {
+    NSString *typefaceString = @"";
+    if (key->typeface & iTermMetalGlyphKeyTypefaceBold) {
+        typefaceString = [typefaceString stringByAppendingString:@"B"];
+    }
+    if (key->typeface & iTermMetalGlyphKeyTypefaceItalic) {
+        typefaceString = [typefaceString stringByAppendingString:@"I"];
+    }
+    return typefaceString;
+}
+
+NS_INLINE NSString *iTermRegularGlyphPayloadDescription(const iTermRegularGlyphPayload *key) {
     if (!key->drawable) {
         return @"not drawable";
     }
@@ -58,22 +102,26 @@ NS_INLINE NSString *iTermMetalGlyphKeyDescription(const iTermMetalGlyphKey *key)
         formattedCombiningSuccessor = @"none";
     }
 
-    NSString *typefaceString = @"";
-    if (key->typeface & iTermMetalGlyphKeyTypefaceBold) {
-        typefaceString = [typefaceString stringByAppendingString:@"B"];
-    }
-    if (key->typeface & iTermMetalGlyphKeyTypefaceItalic) {
-        typefaceString = [typefaceString stringByAppendingString:@"I"];
-    }
 
-    return [NSString stringWithFormat:@"code=%@ combiningSuccessor=%@ complex=%@ boxDrawing=%@ thinStrokes=%@ typeface=%@ antialiased=%@",
+    return [NSString stringWithFormat:@"Regular: code=%@ combiningSuccessor=%@ complex=%@ boxDrawing=%@",
             formattedCode,
             formattedCombiningSuccessor,
             key->isComplex ? @"YES" : @"NO",
-            key->boxDrawing ? @"YES" : @"NO",
-            key->thinStrokes ? @"YES" : @"NO",
-            typefaceString,
-            key->antialiased ? @"YES" : @"NO"];
+            key->boxDrawing ? @"YES" : @"NO"];
+}
+
+NS_INLINE NSString *iTermMetalGlyphKeyDescription(const iTermMetalGlyphKey *key) {
+    NSString *payload = @"Invalid payload";
+    switch (key->type) {
+        case iTermMetalGlyphTypeRegular:
+            payload = iTermRegularGlyphPayloadDescription(&key->payload.regular);
+            break;
+        case iTermMetalGlyphTypeDecomposed:
+            payload = iTermMetalGlyphTypeDecomposedDescription(&key->payload.decomposed);
+            break;
+    }
+    return [NSString stringWithFormat:@"%@ thinStrokes=%@ visualColumn=%@ typeface=%@",
+            payload, key->thinStrokes ? @"YES" : @"NO", @(key->visualColumn), iTermGlyphTypefaceString(key)];
 }
 
 NS_INLINE NSString *iTermStringFromColorVectorFloat4(vector_float4 v) {

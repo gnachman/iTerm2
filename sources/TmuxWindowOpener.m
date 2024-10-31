@@ -22,6 +22,17 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
 NSString *const kTmuxWindowOpenerWindowOptionStyle = @"WindowStyle";
 NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen";
 
+@implementation TmuxHistory
+- (instancetype)initWithData:(NSArray<NSData *> *)data rtlFound:(BOOL)rtlFound {
+    self = [super init];
+    if (self) {
+        _rtlFound = rtlFound;
+        _data = data;
+    }
+    return self;
+}
+@end
+
 @implementation TmuxWindowOpener {
     int windowIndex_;
     NSString *name_;
@@ -32,8 +43,8 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     NSMutableDictionary *parseTree_;
     int pendingRequests_;
     __weak TmuxController *controller_;
-    NSMutableDictionary *histories_;
-    NSMutableDictionary *altHistories_;
+    NSMutableDictionary<NSNumber *, TmuxHistory *> *histories_;
+    NSMutableDictionary<NSNumber *, TmuxHistory *> *altHistories_;
     NSMutableDictionary *states_;
     PTYTab *tabToUpdate_;
     id target_;
@@ -295,15 +306,17 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     NSNumber *wp = [info objectAtIndex:0];
     NSNumber *alt = [info objectAtIndex:1];
     // Lie and say it's the alternate screen because tmux doesn't support variation selector 16 yet.
-    NSArray *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response
-                                                             ambiguousIsDoubleWidth:ambiguousIsDoubleWidth_
-                                                                     unicodeVersion:self.unicodeVersion
-                                                                    alternateScreen:YES];
+    BOOL rtlFound = NO;
+    NSArray<NSData *> *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response
+                                                                       ambiguousIsDoubleWidth:ambiguousIsDoubleWidth_
+                                                                               unicodeVersion:self.unicodeVersion
+                                                                              alternateScreen:YES
+                                                                                     rtlFound:&rtlFound];
     if (history) {
         if ([alt boolValue]) {
-            [altHistories_ setObject:history forKey:wp];
+            altHistories_[wp] = [[TmuxHistory alloc] initWithData:history rtlFound:rtlFound];
         } else {
-            [histories_ setObject:history forKey:wp];
+            histories_[wp] = [[TmuxHistory alloc] initWithData:history rtlFound:rtlFound];
         }
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -316,7 +329,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [self requestDidComplete];
 }
 
-- (NSArray<NSData *> *)historyLinesForWindowPane:(int)wp alternateScreen:(BOOL)altScreen {
+- (TmuxHistory *)historyLinesForWindowPane:(int)wp alternateScreen:(BOOL)altScreen {
     NSDictionary *dict = altScreen ? altHistories_ : histories_;
     return dict[@(wp)];
 }
@@ -584,12 +597,12 @@ static int OctalValue(const char *bytes) {
     if (!n) {
         return nil;
     }
-    NSArray *history = [histories_ objectForKey:n];
+    TmuxHistory *history = histories_[n];
     if (history) {
         [parseTree setObject:history forKey:kLayoutDictHistoryKey];
     }
 
-    history = [altHistories_ objectForKey:n];
+    history = altHistories_[n];
     if (history) {
         [parseTree setObject:history forKey:kLayoutDictAltHistoryKey];
     }

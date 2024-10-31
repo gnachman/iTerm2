@@ -7,13 +7,18 @@
 
 #import <Foundation/Foundation.h>
 
+struct iTermMetalGlyphKey;
+
 // Like NSMutableData but quickly allocates uninitialized data without zeroing it. You can also
 // set the length to a smaller value safe in the knowledge that it won't get realloced.
 @interface iTermData : NSObject
 @property (nonatomic, readonly) void *mutableBytes;
 @property (nonatomic, readonly) const unsigned char *bytes;
 @property (nonatomic) NSUInteger length;
+@property (nonatomic) NSUInteger count;
+
 - (void)checkForOverrun;
+- (void)setLength:(NSUInteger)newLength;
 @end
 
 @interface iTermScreenCharData : iTermData
@@ -22,6 +27,7 @@
 @end
 
 @interface iTermGlyphKeyData : iTermData
+@property (nonatomic, readonly) struct iTermMetalGlyphKey *basePointer;
 + (instancetype)dataOfLength:(NSUInteger)length;
 - (void)checkForOverrun;
 - (void)checkForOverrun1;

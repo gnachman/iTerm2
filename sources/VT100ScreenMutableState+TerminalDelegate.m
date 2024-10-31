@@ -2198,7 +2198,8 @@
         for (int i = 0; i < times; i++) {
             [self appendScreenCharArrayAtCursor:chars
                                          length:length
-                         externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.lastExternalAttribute]];
+                         externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.lastExternalAttribute]
+                                       rtlFound:NO];
             [self appendStringToTriggerLine:string];
             if (self.config.loggingEnabled) {
                 const BOOL atPrompt = _promptStateMachine.isAtPrompt;

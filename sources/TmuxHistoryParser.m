@@ -30,7 +30,11 @@
                   withTerminal:(VT100Terminal *)terminal
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                 unicodeVersion:(NSInteger)unicodeVersion
-               alternateScreen:(BOOL)alternateScreen {
+               alternateScreen:(BOOL)alternateScreen
+                      rtlFound:(BOOL *)rtlFoundPtr {
+    if (rtlFoundPtr) {
+        *rtlFoundPtr = NO;
+    }
     screen_char_t *screenChars;
     NSMutableData *result = [NSMutableData data];
     NSData *histData = [hist dataUsingEncoding:NSUTF8StringEncoding];
@@ -53,6 +57,7 @@
             // Allocate double space in case they're all double-width characters.
             screenChars = iTermMalloc(sizeof(screen_char_t) * 2 * string.length);
             int len = 0;
+            BOOL rtlFound = NO;
             StringToScreenChars(string,
                                 screenChars,
                                 [terminal foregroundColorCode],
@@ -63,7 +68,11 @@
                                 NULL,
                                 NO,
                                 unicodeVersion,
-                                alternateScreen);
+                                alternateScreen,
+                                &rtlFound);
+            if (rtlFound && rtlFoundPtr != nil) {
+                *rtlFoundPtr = YES;
+            }
             if ([token isAscii] && [terminal charset]) {
                 ConvertCharsToGraphicsCharset(screenChars, len);
             }
@@ -80,10 +89,14 @@
 
 // Return an NSArray of NSData's. Each NSData is an array of screen_char_t's,
 // with the last element in each being the newline. Returns nil on error.
-- (NSArray *)parseDumpHistoryResponse:(NSString *)response
-               ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
-                       unicodeVersion:(NSInteger)unicodeVersion
-                      alternateScreen:(BOOL)alternateScreen {
+- (NSArray<NSData *> *)parseDumpHistoryResponse:(NSString *)response
+                         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
+                                 unicodeVersion:(NSInteger)unicodeVersion
+                                alternateScreen:(BOOL)alternateScreen
+                                       rtlFound:(BOOL *)rtlFoundPtr {
+    if (rtlFoundPtr) {
+        *rtlFoundPtr = NO;
+    }
     if (![response length]) {
         return [NSArray array];
     }
@@ -93,11 +106,16 @@
     terminal.tmuxMode = YES;
     [terminal setEncoding:NSUTF8StringEncoding];
     for (NSString *line in lines) {
+        BOOL rtlFound = NO;
         NSData *data = [self dataForHistoryLine:line
                                    withTerminal:terminal
                          ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
                                  unicodeVersion:unicodeVersion
-                                alternateScreen:alternateScreen];
+                                alternateScreen:alternateScreen
+                                       rtlFound:&rtlFound];
+        if (rtlFoundPtr != nil && rtlFound) {
+            *rtlFoundPtr = YES;
+        }
         if (!data) {
             return nil;
         }

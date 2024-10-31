@@ -213,6 +213,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 // Describes the current user, host, and path.
 - (NSURL *)textViewCurrentLocation;
 - (void)textViewBurySession;
+// anchor is a visual range
 - (BOOL)textViewShowHoverURL:(NSString *)url anchor:(VT100GridWindowedRange)anchor;
 
 - (BOOL)textViewCopyMode;

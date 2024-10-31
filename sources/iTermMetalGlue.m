@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermAttributedStringBuilder.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
@@ -41,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermMetalGlue {
     NSMutableSet<NSString *> *_missingImages;
     NSMutableSet<NSString *> *_loadedImages;
+    iTermAttributedStringBuilderStats _stats;
 }
 
 @synthesize oldCursorScreenCoord = _oldCursorScreenCoord;
@@ -55,6 +57,13 @@ NS_ASSUME_NONNULL_BEGIN
                                                    object:nil];
         _missingImages = [NSMutableSet set];
         _loadedImages = [NSMutableSet set];
+        iTermPreciseTimerSetEnabled(YES);
+        iTermPreciseTimerStatsInit(&_stats.attrsForChar, "Compute Attrs");
+        iTermPreciseTimerStatsInit(&_stats.shouldSegment, "Segment");
+        iTermPreciseTimerStatsInit(&_stats.buildMutableAttributedString, "Build attr strings");
+        iTermPreciseTimerStatsInit(&_stats.combineAttributes, "Combine Attrs");
+        iTermPreciseTimerStatsInit(&_stats.updateBuilder, "Update Builder");
+        iTermPreciseTimerStatsInit(&_stats.advances, "Advances");
     }
     return self;
 }
@@ -94,10 +103,20 @@ NS_ASSUME_NONNULL_BEGIN
     }
     ITBetaAssert(self.delegate != nil, @"Nil delegate");
     ITBetaAssert(self.delegate.metalGlueContext != nil, @"Nil metal glue context");
+    iTermAttributedStringBuilderStatsPointers statsPointers = {
+        .attrsForChar = &_stats.attrsForChar,
+        .shouldSegment = &_stats.shouldSegment,
+        .buildMutableAttributedString = &_stats.buildMutableAttributedString,
+        .combineAttributes = &_stats.combineAttributes,
+        .updateBuilder = &_stats.updateBuilder,
+        .advances = &_stats.advances,
+    };
+    iTermAttributedStringBuilder *attributedStringBuilder = [[iTermAttributedStringBuilder alloc] initWithStats:statsPointers];
     return [[iTermMetalPerFrameState alloc] initWithTextView:self.textView
                                                       screen:self.screen
                                                         glue:self
-                                                     context:self.delegate.metalGlueContext];
+                                                     context:self.delegate.metalGlueContext
+                                     attributedStringBuilder:attributedStringBuilder];
 }
 
 - (void)metalDidFindImages:(NSSet<NSString *> *)foundImages

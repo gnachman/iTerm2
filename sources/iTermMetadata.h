@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 typedef struct {
     NSTimeInterval timestamp;
     void * _Nullable externalAttributes;
+    BOOL rtlFound;
 } iTermMetadata;
 
 // I'd like to make these const to keep users well-behaved but C++ makes structs with const fields
@@ -26,11 +27,13 @@ typedef struct {
 typedef struct {
     NSTimeInterval timestamp;
     void * _Nullable externalAttributes;
+    BOOL rtlFound;
 } iTermImmutableMetadata;
 
 NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
     iTermImmutableMetadata result = {
         .timestamp = obj.timestamp,
+        .rtlFound = obj.rtlFound,
         .externalAttributes = obj.externalAttributes
     };
     return result;
@@ -39,10 +42,12 @@ NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
 
 void iTermMetadataInit(iTermMetadata *obj,
                        NSTimeInterval timestamp,
+                       BOOL rtlFound,
                        iTermExternalAttributeIndex * _Nullable externalAttributes);
 
 void iTermImmutableMetadataInit(iTermImmutableMetadata *obj,
                                 NSTimeInterval timestamp,
+                                BOOL rtlFound,
                                 id<iTermExternalAttributeIndexReading> _Nullable externalAttributes);
 
 iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp);

@@ -38,5 +38,8 @@ extern unichar iTermMinimumDefaultEmojiPresentationCodePoint;
 + (NSCharacterSet *)emojiWithDefaultTextPresentation;
 + (NSCharacterSet *)flagCharactersForUnicodeVersion:(NSInteger)version;
 + (NSCharacterSet *)modifierCharactersForcingFullWidthRendition;
++ (NSCharacterSet *)rtlSmellingCodePoints;
++ (NSCharacterSet *)strongRTLCodePoints;
++ (NSCharacterSet *)strongLTRCodePoints;
 
 @end

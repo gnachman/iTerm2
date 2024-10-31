@@ -43,7 +43,7 @@
 	<key>DTXcodeBuild</key>
 	<string>16B40</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.15</string>
+	<string>10.14</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2012 Nine Muses AB. All rights reserved.</string>
 </dict>

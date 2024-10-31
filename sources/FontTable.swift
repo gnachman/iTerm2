@@ -16,6 +16,8 @@ protocol FontProviderProtocol {
                           renderBold: UnsafeMutablePointer<ObjCBool>,
                           renderItalic: UnsafeMutablePointer<ObjCBool>,
                           remapped: UnsafeMutablePointer<UTF32Char>) -> PTYFontInfo
+
+    func cloneFontProvider() -> FontProviderProtocol
 }
 
 extension RandomAccessCollection {
@@ -82,13 +84,15 @@ struct RangeMap<Value>: Sequence {
     }
 }
 
+// It is very important that this class always remain immutable.
+// It is accessed from the Metal thread and the main thread.
 @objc(iTermFontTable)
 class FontTable: NSObject, FontProviderProtocol {
     @objc static let unicodeLimit = 0x110000
-    private var rangeMap = RangeMap<FontBox>()
+    private let rangeMap: RangeMap<FontBox>
 
     private class FontBox: NSObject {
-        var delta: Int?
+        let delta: Int?
         var font: PTYFontInfo {
             didSet {
                 font.boldVersion = font.computedBoldVersion()
@@ -105,6 +109,7 @@ class FontTable: NSObject, FontProviderProtocol {
             guard let name = dict["name"] as? String,
                   let size = dict["size"] as? CGFloat else {
                 font = Self.defaultFont
+                delta = nil
                 return
             }
             if let nsfont = NSFont(name: name, size: size) {
@@ -327,6 +332,7 @@ class FontTable: NSObject, FontProviderProtocol {
         // Max number of code points
         let asciiLimit = 128
         var unassignedCodePoints = IndexSet(integersIn: 0..<FontTable.unicodeLimit)
+        var rangeMap = RangeMap<FontBox>()
         if let config {
             for entry in config.entries {
                 let font = entry.font(defaultPointSize: defaultFont.font.pointSize)
@@ -353,6 +359,7 @@ class FontTable: NSObject, FontProviderProtocol {
         anyASCIIDefaultLigatures = Self.rangeMapHasLigatures(rangeMap: rangeMap, ascii: true)
         anyNonASCIIDefaultLigatures = Self.rangeMapHasLigatures(rangeMap: rangeMap, ascii: false)
 
+        self.rangeMap = rangeMap
         super.init()
     }
 
@@ -520,6 +527,10 @@ class FontTable: NSObject, FontProviderProtocol {
         }
         return false
     }
+
+    func cloneFontProvider() -> any FontProviderProtocol {
+        return self
+    }
 }
 
 extension PTYFontInfo: FontProviderProtocol {
@@ -538,6 +549,9 @@ extension PTYFontInfo: FontProviderProtocol {
                                 usesNonAsciiFont: false,
                                 renderBold: renderBold,
                                 renderItalic: renderItalic)
+    }
+    func cloneFontProvider() -> any FontProviderProtocol {
+        return self
     }
 }
 
@@ -567,5 +581,10 @@ class DualFontProvider: NSObject, FontProviderProtocol {
                                 usesNonAsciiFont: true,
                                 renderBold: renderBold,
                                 renderItalic: renderItalic)
+    }
+
+    func cloneFontProvider() -> any FontProviderProtocol {
+        return DualFontProvider(asciiFontInfo: asciiFontInfo.copy() as! PTYFontInfo,
+                                nonASCIIFontInfo: nonASCIIFontInfo.copy() as! PTYFontInfo)
     }
 }

@@ -8,31 +8,15 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermLocatedString.h"
+#import "iTermWordExtractor.h"
 #import "ScreenChar.h"
 #import "SmartMatch.h"
 #import "PTYTextViewDataSource.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermBidiDisplayInfo;
 @class iTermProgress;
-
-typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
-    // Any kind of white space.
-    kTextExtractorClassWhitespace,
-
-    // Characters that belong to a word.
-    kTextExtractorClassWord,
-
-    // Unset character
-    kTextExtractorClassNull,
-
-    // DWC_RIGHT or DWC_SKIP
-    kTextExtractorClassDoubleWidthPlaceholder,
-
-    // Non-alphanumeric, non-whitespace, non-word, not double-width filler.
-    // Miscellaneous symbols, etc.
-    kTextExtractorClassOther
-};
 
 typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
     kiTermTextExtractorNullPolicyFromStartToFirst,  // Ignore content prior to last null
@@ -53,6 +37,7 @@ extern const NSInteger kLongMaximumWordLength;
 @property(atomic) BOOL stopAsSoonAsPossible;
 @property(nonatomic, strong) iTermProgress *progress;
 @property(nonatomic) BOOL addTimestamps;
+@property(nonatomic) BOOL supportBidi;
 
 // Characters that divide words.
 + (NSCharacterSet *)wordSeparatorCharacterSet;
@@ -94,9 +79,6 @@ extern const NSInteger kLongMaximumWordLength;
 - (VT100GridWindowedRange)rangeForWrappedLineEncompassing:(VT100GridCoord)coord
                                      respectContinuations:(BOOL)respectContinuations
                                                  maxChars:(int)maxChars;
-
-// Returns the class for a character.
-- (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter;
 
 // If the character at |location| is a paren, brace, or bracket, and there is a matching
 // open/close paren/brace/bracket, the range from the opening to closing paren/brace/bracket is
@@ -175,9 +157,17 @@ extern const NSInteger kLongMaximumWordLength;
 - (int)lengthOfLine:(int)line;
 - (int)lengthOfAbsLine:(long long)absLine;
 
+// When supportBidi is NO, then logicalCoord always equals visualCoord. That is the legacy, pre-bidi
+// behavior. When supportBidi is YES, visualCoord may to jump around and logicalCoord may also jump
+// around since `range` is a visual range that may contain non-adjacent logical ranges.
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^ _Nullable NS_NOESCAPE)(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute * _Nullable, VT100GridCoord coord))charBlock
-                     eolBlock:(BOOL (^ _Nullable NS_NOESCAPE)(unichar code, int numPreceedingNulls, int line))eolBlock;
+                  supportBidi:(BOOL)supportBidi
+                    charBlock:(BOOL (^NS_NOESCAPE _Nullable)(const screen_char_t *currentLine,
+                                                             screen_char_t theChar,
+                                                             iTermExternalAttribute *,
+                                                             VT100GridCoord logicalCoord,
+                                                             VT100GridCoord visualCoord))charBlock
+                     eolBlock:(BOOL (^NS_NOESCAPE _Nullable)(unichar code, int numPrecedingNulls, int line))eolBlock;
 
 - (void)enumerateWrappedLinesIntersectingRange:(VT100GridRange)range
                                          block:(void (^)(iTermStringLine *, VT100GridWindowedRange, BOOL *))block;
@@ -200,12 +190,15 @@ extern const NSInteger kLongMaximumWordLength;
 
 - (ScreenCharArray *)combinedLinesInRange:(NSRange)range;
 
+- (screen_char_t)characterAtVisualCoord:(VT100GridCoord)coord;
+
+// Logical coord
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
 - (screen_char_t)characterAtAbsCoord:(VT100GridAbsCoord)coord;
 
 - (iTermExternalAttribute * _Nullable)externalAttributesAt:(VT100GridCoord)coord;
 
-// Returns a subset of `range` by removing leading and trailing whitespace.
+// Returns a subset of `range` by removing leading and trailing whitespace. Returns a visual range.
 - (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range;
 
 typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
@@ -246,6 +239,11 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 
 - (int)cellCountInWrappedLineWithAbsY:(long long)absY;
 - (int)rowCountForRawLineEncompassingWithAbsY:(long long)absY;
+- (VT100GridCoord)visualCoordForLogical:(VT100GridCoord)logical;
+- (VT100GridCoordRange)visualRangeForLogical:(VT100GridCoordRange)logical;
+- (VT100GridWindowedRange)visualWindowedRangeForLogical:(VT100GridWindowedRange)logical;
+
+- (VT100GridCoord)logicalCoordForVisualCoord:(VT100GridCoord)visualCoord;
 
 #pragma mark - For tests
 

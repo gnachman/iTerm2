@@ -40,9 +40,13 @@ NS_INLINE NSString *iTermMetalUnderlineDescriptorDescription(iTermMetalUnderline
             @(d->color.w)];
 }
 
+// RLEs are in logical order. logicalOrigin gives the first logical index, while `origin` gives the
+// leftmost visual index. Runs will be consecutive in both logical and visual order (although
+// visual order may be reversed, it is irrelevant since all the cells have the same background color).
 struct iTermMetalBackgroundColorRLE {
     vector_float4 color;
-    unsigned short origin;  // Not strictly needed but this is needed to binary search the RLEs
+    unsigned short origin;  // visual origin
+    unsigned short logicalOrigin;
     unsigned short count;
     unsigned char isDefault;  // Is this the default background color?
 #if __cplusplus

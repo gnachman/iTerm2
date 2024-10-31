@@ -170,6 +170,41 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setBufferStartOffset:(ptrdiff_t)offset;
 - (LineBlock *)copyDeep:(BOOL)deep absoluteBlockNumber:(long long)absoluteBlockNumber;
 - (id<iTermLineBlockMutationCertificate>)validMutationCertificate;
+- (int) _lineLength:(int)anIndex;
+- (int)_lineRawOffset:(int) anIndex;
+
+
+typedef struct {
+    // Is this structure valid?
+    BOOL found;
+
+    // Offset of the start of the wrapped line from bufferStart.
+    int prev;
+
+    // How many empty lines to skip at prev.
+    int numEmptyLines;
+
+    // Raw line number.
+    int index;
+
+    // Length of the raw line.
+    int length;
+} LineBlockLocation;
+
+
+- (LineBlockLocation)locationOfRawLineForWidth:(int)width
+                                       lineNum:(int *)lineNum;
+- (int)_wrappedLineWithWrapWidth:(int)width
+                        location:(LineBlockLocation)location
+                         lineNum:(int *)lineNum
+                      lineLength:(int *)lineLength
+               includesEndOfLine:(int *)includesEndOfLine
+                         yOffset:(int * _Nullable)yOffsetPtr
+                    continuation:(screen_char_t * _Nullable)continuationPtr
+            isStartOfWrappedLine:(BOOL * _Nullable)isStartOfWrappedLine
+                        metadata:(out iTermImmutableMetadata * _Nullable)metadataPtr
+                        bidiInfo:(out iTermBidiDisplayInfo * _Nullable * _Nullable)bidiInfoPtr
+                      lineOffset:(out int * _Nullable)lineOffset;
 
 @end
 

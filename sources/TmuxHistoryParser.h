@@ -13,6 +13,7 @@
 - (NSArray<NSData *> *)parseDumpHistoryResponse:(NSString *)response
                          ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                  unicodeVersion:(NSInteger)unicodeVersion
-                                alternateScreen:(BOOL)alternateScreen;
+                                alternateScreen:(BOOL)alternateScreen
+                                       rtlFound:(BOOL *)rtlFound;
 
 @end

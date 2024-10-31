@@ -531,7 +531,7 @@
             directories = [[self.delegate largeComposerViewController:self
                                            valueOfEnvironmentVariable:@"PATH"] componentsSeparatedByString:@":"];
         }
-        if ([command containsString:@"/"]) {
+        if ([command containsString:@"/"] && directories.count > 0) {
             directories = [@[self.workingDirectory] arrayByAddingObjectsFromArray:directories];
         }
     } else {

@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTermHistogram.h"
+#import "iTermMalloc.h"
 #import "NSStringITerm.h"
 #include <assert.h>
 #include <CoreServices/CoreServices.h>
@@ -20,9 +21,6 @@
 #if ENABLE_PRECISE_TIMERS
 static BOOL gPreciseTimersEnabled;
 static NSMutableDictionary *sLogs;
-
-@interface iTermPreciseTimersLock : NSObject
-@end
 
 @implementation iTermPreciseTimersLock
 @end
@@ -224,12 +222,21 @@ NSTimeInterval iTermPreciseTimerStatsGetStddev(iTermPreciseTimerStats *stats) {
     }
 }
 
+iTermPreciseTimerStats *iTermPreciseTimerStatsCopy(const iTermPreciseTimerStats *source) {
+    iTermPreciseTimerStats *copy = iTermMalloc(sizeof(*source));
+    @synchronized([iTermPreciseTimersLock class]) {
+        memmove(copy, source, sizeof(*source));
+    }
+    return copy;
+}
+
 void iTermPreciseTimerPeriodicLog(NSString *identifier,
                                   iTermPreciseTimerStats stats[],
                                   size_t count,
                                   NSTimeInterval interval,
                                   BOOL logToConsole,
-                                  NSArray *histograms) {
+                                  NSArray *histograms,
+                                  NSString *additional) {
     @synchronized([iTermPreciseTimersLock class]) {
         if (!gPreciseTimersEnabled) {
             return;
@@ -240,7 +247,7 @@ void iTermPreciseTimerPeriodicLog(NSString *identifier,
         }
 
         if (iTermPreciseTimerMeasure(&gLastLog) >= interval) {
-            iTermPreciseTimerLog(identifier, stats, count, logToConsole, histograms);
+            iTermPreciseTimerLog(identifier, stats, count, logToConsole, histograms, additional);
             iTermPreciseTimerStart(&gLastLog);
         }
     }
@@ -262,11 +269,11 @@ static NSString *iTermEmojiForDuration(double ms) {
     }
 }
 
-void iTermPreciseTimerLog(NSString *identifier,
-                          iTermPreciseTimerStats stats[],
-                          size_t count,
-                          BOOL logToConsole,
-                          NSArray *histograms) {
+NSString *iTermPreciseTimerLogString(NSString *identifier,
+                                     iTermPreciseTimerStats stats[],
+                                     size_t count,
+                                     NSArray *histograms,
+                                     BOOL reset) {
     const int millisWidth = 7;
     NSString *(^formatMillis)(double) = ^NSString *(double ms) {
         NSString *numeric = [NSString stringWithFormat:@"%0.1fms", ms];
@@ -278,20 +285,22 @@ void iTermPreciseTimerLog(NSString *identifier,
         for (size_t i = 0; i < count; i++) {
             maxlevel = MAX(maxlevel, stats[i].level);
         }
-        [log appendFormat:@"%-20s%@    %@µ      N  %@p50  %@p75  %@p95 [min  distribution  max]\n",
-         "Statistic",
-         [@"    " stringRepeatedTimes:maxlevel],  // corresponds to dead space for indentation
-         [@" " stringRepeatedTimes:millisWidth - 1],  // average
-         [@" " stringRepeatedTimes:millisWidth - 3],  // p50
-         [@" " stringRepeatedTimes:millisWidth - 3],  // p75
-         [@" " stringRepeatedTimes:millisWidth - 3]]; // p95
-        [log appendFormat:@"%@%@    %@-  -----  %@---  %@---  %@--- ------------------------\n",
-         [@"-" stringRepeatedTimes:20],
-         [@"----" stringRepeatedTimes:maxlevel],  // corresponds to dead space for indentation
-         [@"-" stringRepeatedTimes:millisWidth - 1],  // average
-         [@"-" stringRepeatedTimes:millisWidth - 3],  // p50
-         [@"-" stringRepeatedTimes:millisWidth - 3],  // p75
-         [@"-" stringRepeatedTimes:millisWidth - 3]]; // p95
+        if (histograms) {
+            [log appendFormat:@"%-20s%@    %@µ      N  %@p50  %@p75  %@p95 [min  distribution  max]\n",
+             "Statistic",
+             [@"    " stringRepeatedTimes:maxlevel],  // corresponds to dead space for indentation
+             [@" " stringRepeatedTimes:millisWidth - 1],  // average
+             [@" " stringRepeatedTimes:millisWidth - 3],  // p50
+             [@" " stringRepeatedTimes:millisWidth - 3],  // p75
+             [@" " stringRepeatedTimes:millisWidth - 3]]; // p95
+            [log appendFormat:@"%@%@    %@-  -----  %@---  %@---  %@--- ------------------------\n",
+             [@"-" stringRepeatedTimes:20],
+             [@"----" stringRepeatedTimes:maxlevel],  // corresponds to dead space for indentation
+             [@"-" stringRepeatedTimes:millisWidth - 1],  // average
+             [@"-" stringRepeatedTimes:millisWidth - 3],  // p50
+             [@"-" stringRepeatedTimes:millisWidth - 3],  // p75
+             [@"-" stringRepeatedTimes:millisWidth - 3]]; // p95
+        }
         for (size_t i = 0; i < count; i++) {
             if (histograms && [histograms[i] count] == 0) {
                 continue;
@@ -324,14 +333,29 @@ void iTermPreciseTimerLog(NSString *identifier,
                  (double)stats[i].totalEventCount / (double)stats[i].n];
             }
 
-            iTermPreciseTimerStatsInit(&stats[i], NULL);
+            if (reset) {
+                iTermPreciseTimerStatsInit(&stats[i], NULL);
+            }
         }
-        if (logToConsole) {
-            NSLog(@"%@", log);
-        }
-        iTermPreciseTimerSaveLog(identifier, log);
-        DLog(@"%@", log);
+        return log;
     }
+}
+
+void iTermPreciseTimerLog(NSString *identifier,
+                          iTermPreciseTimerStats stats[],
+                          size_t count,
+                          BOOL logToConsole,
+                          NSArray *histograms,
+                          NSString *additional) {
+    NSString *log = iTermPreciseTimerLogString(identifier, stats, count, histograms, YES);
+    if (additional) {
+        log = [log stringByAppendingFormat:@"\n%@", additional];
+    }
+    if (logToConsole) {
+        NSLog(@"%@", log);
+    }
+    iTermPreciseTimerSaveLog(identifier, log);
+    DLog(@"%@", log);
 }
 
 void iTermPreciseTimerLogOneEvent(NSString *identifier,

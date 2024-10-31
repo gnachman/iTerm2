@@ -7,17 +7,19 @@
 //
 
 #import "iTermBackgroundColorRun.h"
+#import "iTerm2SharedARC-Swift.h"
 
 static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                                         const screen_char_t *theLine,
                                         VT100GridCoord coord,
+                                        int visualColumn,
                                         NSIndexSet *selectedIndexes,
                                         NSData *matches,
                                         int width) {
     if (ScreenCharIsDWC_SKIP(theLine[coord.x])) {
         run->selected = NO;
     } else {
-        run->selected = [selectedIndexes containsIndex:coord.x];
+        run->selected = [selectedIndexes containsIndex:visualColumn];
     }
     if (matches) {
         // Test if this char is a highlighted match from a Find.
@@ -42,20 +44,35 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
 
 @implementation iTermBackgroundColorRunsInLine
 
+static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger inclusiveEnd) {
+    if (start > inclusiveEnd) {
+        return NSMakeRangeFromEndpointsInclusive(inclusiveEnd, start);
+    }
+    return NSMakeRange(start, inclusiveEnd - start + 1);
+}
+
 + (void)addBackgroundRun:(iTermBackgroundColorRun *)run
                  toArray:(NSMutableArray *)runs
-                endingAt:(int)end {  // end is the location after the last location in the run
-    // Update the range's length.
-    NSRange range = run->range;
-    range.length = end - range.location;
-    run->range = range;
+           endingAtModel:(int)modelEnd // modelEnd is the location after the last location in the run
+                  visual:(int)visualEnd {  // visualEnd could be before or after the existing visualEnd. This one *is* included.
+    // Update the range's length. We assume that model locations increase monotonically.
+    NSRange modelRange = run->modelRange;
+    modelRange.length = modelEnd - modelRange.location;
+    run->modelRange = modelRange;
+
+    if (!NSLocationInRange(visualEnd, run->visualRange)) {
+        if (visualEnd < run->visualRange.location) {
+            run->visualRange = NSMakeRangeFromEndpointsInclusive(visualEnd, NSMaxRange(run->visualRange) - 1);
+        } else {
+            run->visualRange = NSMakeRangeFromEndpointsInclusive(run->visualRange.location, visualEnd);
+        }
+    }
 
     // Add it to the array.
     iTermBoxedBackgroundColorRun *box = [[[iTermBoxedBackgroundColorRun alloc] init] autorelease];
     memcpy(box.valuePointer, run, sizeof(*run));
     [runs addObject:box];
 }
-
 
 + (instancetype)backgroundRunsInLine:(const screen_char_t *)theLine
                           lineLength:(int)width
@@ -65,13 +82,25 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                          withinRange:(NSRange)charRange
                              matches:(NSData *)matches
                             anyBlink:(BOOL *)anyBlinkPtr
-                                   y:(CGFloat)y {
+                                   y:(CGFloat)y
+                                bidi:(iTermBidiDisplayInfo *)bidi {
     NSMutableArray *runs = [NSMutableArray array];
     iTermBackgroundColorRun previous;
     iTermBackgroundColorRun current;
     BOOL first = YES;
     int j;
+    const int32_t *bidiLUT = bidi.lut;
+    const int32_t bidiLUTLength = bidi.numberOfCells;
+
+    int lastVisualColumn = -1;
+    int visualColumn = -1;
     for (j = charRange.location; j < charRange.location + charRange.length; j++) {
+        lastVisualColumn = visualColumn;
+        if (j < bidiLUTLength) {
+            visualColumn = bidiLUT[j];
+        } else {
+            visualColumn = j;
+        }
         int x = j;
         if (ScreenCharIsDWC_RIGHT(theLine[j])) {
             x = j - 1;
@@ -83,6 +112,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
         iTermMakeBackgroundColorRun(&current,
                                     theLine,
                                     VT100GridCoordMake(x, displayLineNumber),
+                                    visualColumn,
                                     selectedIndexes,
                                     matches,
                                     width);
@@ -90,18 +120,30 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
             *anyBlinkPtr = YES;
         }
         if (first) {
-            current.range = NSMakeRange(j, 0);
+            current.modelRange = NSMakeRange(j, 0);
+            current.visualRange = NSMakeRange(visualColumn, 1);
             first = NO;
         } else if (!iTermBackgroundColorRunsEqual(&current, &previous)) {
-            [self addBackgroundRun:&previous toArray:runs endingAt:j];
+            // Color changed so start a new run.
+            [self addBackgroundRun:&previous toArray:runs endingAtModel:j visual:lastVisualColumn];
 
-            current.range = NSMakeRange(j, 0);
+            current.modelRange = NSMakeRange(j, 0);
+            current.visualRange = NSMakeRange(visualColumn, 1);
+        } else if (visualColumn != lastVisualColumn + 1) {
+            // Might need to extend an existing range.
+            if (![self extendRunInRuns:runs logicalIndex:j visualColumn:visualColumn value:&current]) {
+                // Have to start a new range.
+                [self addBackgroundRun:&previous toArray:runs endingAtModel:j visual:lastVisualColumn];
+
+                current.modelRange = NSMakeRange(j, 0);
+                current.visualRange = NSMakeRange(visualColumn, 1);
+            }
         }
 
         previous = current;
     }
     if (!first) {
-        [self addBackgroundRun:&current toArray:runs endingAt:j];
+        [self addBackgroundRun:&current toArray:runs endingAtModel:j visual:lastVisualColumn];
     }
 
     iTermBackgroundColorRunsInLine *backgroundColorRuns =
@@ -113,6 +155,20 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     return backgroundColorRuns;
 }
 
++ (BOOL)extendRunInRuns:(NSMutableArray<iTermBoxedBackgroundColorRun *> *)runs
+           logicalIndex:(int)logicalIndex
+           visualColumn:(int)visualColumn
+                  value:(const iTermBackgroundColorRun *)run {
+    const NSInteger i = [runs indexOfObjectPassingTest:^BOOL(iTermBoxedBackgroundColorRun *obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [obj isAdjacentToVisualColumn:visualColumn] && iTermBackgroundColorRunsEqual(run, obj.valuePointer);
+    }];
+    if (i == NSNotFound) {
+        return NO;
+    }
+    [runs[i] extendWithVisualColumn:visualColumn];
+    return YES;
+}
+
 + (instancetype)defaultRunOfLength:(int)width
                                row:(int)row
                                  y:(CGFloat)y {
@@ -122,12 +178,14 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     iTermMakeBackgroundColorRun(&run,
                                 &defaultCharacter,
                                 VT100GridCoordMake(0, 0),
+                                0,
                                 nil,
                                 nil,
                                 width);
-    run.range = NSMakeRange(0, width);
+    run.modelRange = NSMakeRange(0, width);
+    run.visualRange = NSMakeRange(0, width);
     NSMutableArray *runs = [NSMutableArray array];
-    [self addBackgroundRun:&run toArray:runs endingAt:width];
+    [self addBackgroundRun:&run toArray:runs endingAtModel:width visual:width];
 
     iTermBackgroundColorRunsInLine *backgroundColorRuns =
     [[[iTermBackgroundColorRunsInLine alloc] init] autorelease];
@@ -148,9 +206,9 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
             self.class, self, @(self.line), @(self.numberOfEquivalentRows), self.array];
 }
 
-- (iTermBackgroundColorRun *)runAtIndex:(int)x {
+- (iTermBackgroundColorRun *)runAtVisualIndex:(int)x {
     for (iTermBoxedBackgroundColorRun *box in self.array) {
-        if (x >= box.valuePointer->range.location && x < NSMaxRange(box.valuePointer->range)) {
+        if (x >= box.valuePointer->visualRange.location && x < NSMaxRange(box.valuePointer->visualRange)) {
             return box.valuePointer;
         }
     }
@@ -182,11 +240,13 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p selected=%@ range=%@ backgroundColor=%@>",
+    return [NSString stringWithFormat:@"<%@: %p findMatch=%@ selected=%@ modelRange=%@ visualRange=%@ backgroundColor=%@>",
             self.class,
             self,
+            @(_value.isMatch),
             @(_value.selected),
-            NSStringFromRange(_value.range),
+            NSStringFromRange(_value.modelRange),
+            NSStringFromRange(_value.visualRange),
             self.backgroundColor];
 }
 
@@ -206,7 +266,18 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
 
 - (BOOL)isEqualToBoxedBackgroundColorRun:(iTermBoxedBackgroundColorRun *)other {
     return (iTermBackgroundColorRunsEqual(&other->_value, &_value) &&
-            NSEqualRanges(other->_value.range, _value.range));
+            NSEqualRanges(other->_value.modelRange, _value.modelRange) &&
+            NSEqualRanges(other->_value.visualRange, _value.visualRange));
+}
+
+- (BOOL)isAdjacentToVisualColumn:(int)c {
+    return _value.visualRange.location == c + 1 || NSMaxRange(_value.visualRange) == c;
+}
+
+- (void)extendWithVisualColumn:(int)c {
+    NSRange range = NSMakeRange(c, 1);
+    range = NSUnionRange(range, _value.visualRange);
+    _value.visualRange = range;
 }
 
 @end

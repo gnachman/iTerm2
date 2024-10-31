@@ -77,6 +77,7 @@ extern NSString *const PTYCommandDidExitNotification;
 @class iTermQuickLookController;
 @protocol iTermSessionScope;
 @class SessionView;
+@class TmuxHistory;
 
 typedef NS_ENUM(NSInteger, SplitSelectionMode) {
     kSplitSelectionModeOn,
@@ -840,8 +841,8 @@ backgroundColor:(NSColor *)backgroundColor;
 // impose this restriction because they must belong to the same controller.
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession;
 - (void)setTmuxPane:(int)windowPane;
-- (void)setTmuxHistory:(NSArray<NSData *> *)history
-            altHistory:(NSArray<NSData *> *)altHistory
+- (void)setTmuxHistory:(TmuxHistory *)history
+            altHistory:(TmuxHistory *)altHistory
                  state:(NSDictionary *)state;
 - (void)toggleTmuxPausePane;
 

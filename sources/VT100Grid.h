@@ -9,12 +9,14 @@
 #import <Foundation/Foundation.h>
 #import "DVRIndexEntry.h"
 #import "ScreenChar.h"
+#import "ScreenCharArray.h"
 #import "VT100GridTypes.h"
 #import "iTermMetadata.h"
 
 @class LineBuffer;
 @class VT100LineInfo;
 @class VT100Terminal;
+@class iTermBidiDisplayInfo;
 @protocol iTermEncoderAdapter;
 
 @protocol VT100GridDelegate <NSObject>
@@ -135,7 +137,11 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range;
 
 - (BOOL)lineIsEmpty:(int)n;
+- (BOOL)anyLineDirtyInRange:(NSRange)range;
 
+@property (nonatomic, readonly) BOOL mayContainRTL;
+- (BOOL)mayContainRTLInRange:(NSRange)range;
+- (iTermBidiDisplayInfo *)bidiInfoForLine:(int)line;
 @end
 
 @interface VT100Grid : NSObject<VT100GridReading> {
@@ -286,7 +292,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                 wraparound:(BOOL)wraparound
                       ansi:(BOOL)ansi
                     insert:(BOOL)insert
-    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes;
+    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes
+                  rtlFound:(BOOL)rtlFound;
 
 // Delete some number of chars starting at a given location, moving chars to the right of them back.
 - (void)deleteChars:(int)num
@@ -302,6 +309,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (void)setContentsFromDVRFrame:(const screen_char_t*)s
                   metadataArray:(iTermMetadata *)sourceMetadataArray
                            info:(DVRFrameInfo)info;
+
+- (void)setCharactersInLine:(int)line
+                         to:(const screen_char_t *)chars
+                     length:(int)length;
 
 // Scroll backwards, pulling content from history back in to the grid. The lowest lines of the grid
 // will be lost.
@@ -371,6 +382,13 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                                           iTermExternalAttribute **eaOut,
                                           VT100GridCoord coord,
                                           BOOL *stop))block;
+
+- (void)enumerateParagraphs:(void (^)(int startLine, NSArray<MutableScreenCharArray *> *scas))closure;
+
+// Returns YES if it must be recomputed for all lines. Returns NO if you can look only at dirty lines.
+- (BOOL)eraseBidiInfoInDirtyLines;
+- (void)setBidiInfo:(iTermBidiDisplayInfo *)bidiInfo forLine:(int)line;
+- (void)resetBidiDirty;
 
 #pragma mark - Testing use only
 

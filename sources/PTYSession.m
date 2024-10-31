@@ -1242,12 +1242,14 @@ ITERM_WEAKLY_REFERENCEABLE
                 [mutableState appendScreenChars:sca.line
                                          length:sca.length
                          externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
-                                   continuation:continuation];
+                                   continuation:continuation
+                                       rtlFound:metadata.rtlFound];
             } else {
                 [mutableState appendScreenChars:sca.line
                                          length:sca.length
                          externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
-                                   continuation:sca.continuation];
+                                   continuation:sca.continuation
+                                       rtlFound:metadata.rtlFound];
             }
         }];
     }];
@@ -1430,13 +1432,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        NSArray *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
+        TmuxHistory *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
         if (history) {
             [mutableState setHistory:history];
         }
         history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
         if (history) {
-            [mutableState setAltScreen:history];
+            [mutableState setAltScreen:history.data];
         }
     }];
     [aSession.nameController restoreNameFromStateDictionary:arrangement[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE]];
@@ -7131,7 +7133,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         }
         return NO;
     }
-    if ([self ligaturesEnabledInEitherFont]) {
+    if (![iTermAdvancedSettingsModel bidi] && [self ligaturesEnabledInEitherFont]) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonLigatures;
         }
@@ -8685,8 +8687,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self queueAnnouncement:announcement identifier:PTYSessionAnnouncementIdentifierTmuxPaused];
 }
 
-- (void)setTmuxHistory:(NSArray<NSData *> *)history
-            altHistory:(NSArray<NSData *> *)altHistory
+- (void)setTmuxHistory:(TmuxHistory *)history
+            altHistory:(TmuxHistory *)altHistory
                  state:(NSDictionary *)state {
     __weak __typeof(self) weakSelf = self;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -8698,15 +8700,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }];
 }
 
-- (void)reallySetTmuxHistory:(NSArray<NSData *> *)history
-                  altHistory:(NSArray<NSData *> *)altHistory
+- (void)reallySetTmuxHistory:(TmuxHistory *)history
+                  altHistory:(TmuxHistory *)altHistory
                        state:(NSDictionary *)state
                     terminal:(VT100Terminal *)terminal
                 mutableState:(VT100ScreenMutableState *)mutableState {
     [terminal resetForTmuxUnpause];
     [self clearScrollbackBuffer];
     [mutableState setHistory:history];
-    [mutableState setAltScreen:altHistory];
+    [mutableState setAltScreen:altHistory.data];
     [self setTmuxState:state];
     _view.scrollview.ptyVerticalScroller.userScroll = NO;
 }
@@ -11116,6 +11118,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     iTermTextExtractor *textExtractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
+    // It would be nice to support bidi here, but on the other hand that would mean thinking about the touch bar. Revisit this when death is cured.
     NSString *word = [textExtractor fastWordAt:VT100GridCoordMake(_screen.cursorX - 1, _screen.cursorY + _screen.numberOfScrollbackLines - 1)];
     [[_delegate realParentWindow] currentSessionWordAtCursorDidBecome:word];
 }
@@ -17166,8 +17169,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         line = nil;
         return NO;
     };
+    // TODO: Some day add bidi support to the python API.
     [extractor enumerateCharsInRange:range
-                           charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
+                         supportBidi:NO
+                           charBlock:^BOOL(const screen_char_t *currentLine,
+                                           screen_char_t theChar,
+                                           iTermExternalAttribute *ea,
+                                           VT100GridCoord logicalCoord,
+                                           VT100GridCoord coord) {
                                line = currentLine;
                                if (firstIndex < 0) {
                                    firstIndex = coord.x;
@@ -19098,12 +19107,14 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)filterDestinationAppendCharacters:(const screen_char_t *)line
                                     count:(int)count
                    externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributeIndex
-                             continuation:(screen_char_t)continuation {
+                             continuation:(screen_char_t)continuation
+                                 rtlFound:(BOOL)rtlFound {
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState appendScreenChars:line
                                  length:count
                  externalAttributeIndex:externalAttributeIndex
-                           continuation:continuation];
+                           continuation:continuation
+                               rtlFound:rtlFound];
     }];
 }
 

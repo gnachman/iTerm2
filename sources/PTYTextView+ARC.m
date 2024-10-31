@@ -286,8 +286,8 @@ iTermCommandInfoViewControllerDelegate>
     if (!_mouseHandler.semanticHistoryDragged) {
         return;
     }
-    const VT100GridCoord coord = [self coordForMouseLocation:[NSEvent mouseLocation]];
-    if (!VT100GridWindowedRangeContainsCoord(action.range, coord)) {
+    const VT100GridCoord visualCoord = [self coordForMouseLocation:[NSEvent mouseLocation]];
+    if (!VT100GridWindowedRangeContainsCoord(action.visualRange, visualCoord)) {
         return;
     }
     NSString *path = action.fullPath;
@@ -396,15 +396,15 @@ iTermCommandInfoViewControllerDelegate>
         return;
     }
     DLog(@"There is an action");
-    const VT100GridCoord coord = [self coordForMouseLocation:[NSEvent mouseLocation]];
-    if (!VT100GridWindowedRangeContainsCoord(action.range, coord)) {
+    const VT100GridCoord visualCoord = [self coordForMouseLocation:[NSEvent mouseLocation]];
+    if (!VT100GridWindowedRangeContainsCoord(action.visualRange, visualCoord)) {
         DLog(@"Mouse not in action's range");
         return;
     }
 
     if ([iTermAdvancedSettingsModel enableUnderlineSemanticHistoryOnCmdHover]) {
-        DLog(@"Setting underlined range to %@", VT100GridWindowedRangeDescription(action.range));
-        self.drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.range,
+        DLog(@"Setting underlined range to %@", VT100GridWindowedRangeDescription(action.logicalRange));
+        self.drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.logicalRange,
                                                                                    [self.dataSource totalScrollbackOverflow]);
     }
 
@@ -589,7 +589,7 @@ iTermCommandInfoViewControllerDelegate>
         changed = [self setCursor:[NSCursor pointingHandCursor]];
         if (action.hover && action.string.length && ([iTermAdvancedSettingsModel showURLPreviewForSemanticHistory] || action.osc8)) {
             hover = action.string;
-            anchorRange = action.range;
+            anchorRange = action.visualRange;
         }
     } else if ([self mouseIsOverImageInEvent:event]) {
         changed = [self setCursor:[NSCursor arrowCursor]];
@@ -657,8 +657,8 @@ iTermCommandInfoViewControllerDelegate>
         [self showDefinitionForWordAt:clickPoint];
         return;
     }
-    const VT100GridCoord coord = [self coordForMouseLocation:[NSEvent mouseLocation]];
-    if (!VT100GridWindowedRangeContainsCoord(urlAction.range, coord)) {
+    const VT100GridCoord visualCoord = [self coordForMouseLocation:[NSEvent mouseLocation]];
+    if (!VT100GridWindowedRangeContainsCoord(urlAction.visualRange, visualCoord)) {
         return;
     }
     NSURL *url = nil;

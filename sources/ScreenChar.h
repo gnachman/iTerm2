@@ -221,6 +221,12 @@ typedef struct legacy_screen_char_t {
     unsigned short urlCode;
 } legacy_screen_char_t;
 
+typedef NS_ENUM(unsigned int, RTLStatus) {
+    RTLStatusUnknown = 0,
+    RTLStatusLTR = 1,
+    RTLStatusRTL = 2
+};
+
 typedef struct screen_char_t {
     // Normally, 'code' gives a utf-16 code point. If 'complexChar' is set then
     // it is a key into a string table of multiple utf-16 code points (for
@@ -301,7 +307,10 @@ typedef struct screen_char_t {
     // Only valid when this is an image. If set, this is a Kitty-style virtual placeholder.
     unsigned int virtualPlaceholder : 1;
 
-    unsigned int unused : 14;
+    // BiDi disposition, if any.
+    RTLStatus rtlStatus : 2;
+
+    unsigned int unused : 12;
 } screen_char_t;
 
 
@@ -329,7 +338,8 @@ static inline BOOL ScreenCharacterAttributesEqual(const screen_char_t c1, const 
             c1.underlineStyle == c2.underlineStyle &&
             c1.strikethrough == c2.strikethrough &&
             c1.image == c2.image &&
-            c1.virtualPlaceholder == c2.virtualPlaceholder);
+            c1.virtualPlaceholder == c2.virtualPlaceholder &&
+            c1.rtlStatus == c2.rtlStatus);
 }
 
 // Copy foreground color from one char to another.
@@ -498,7 +508,8 @@ void StringToScreenChars(NSString *s,
                          BOOL *foundDwc,
                          iTermUnicodeNormalization normalization,
                          NSInteger unicodeVersion,
-                         BOOL softAlternateScreenMode);
+                         BOOL softAlternateScreenMode,
+                         BOOL *rtlFound);
 
 // Copy attributes from fg and bg, and zero out other fields. Text attributes like bold, italic, etc.
 // come from fg.
@@ -550,6 +561,19 @@ void ScreenCharClearProvisionalFlagForImageWithCode(int code);
 
 NSString *ScreenCharDescription(screen_char_t c);
 void ScreenCharInvert(screen_char_t *c);
+
+// Returns true if any RTL was found. Sets the rtlState on all characters in c.
+BOOL AnnotateRightToLeftInScreenChars(screen_char_t *c, int len);
+
+// This may return a value for the next cell if `cellOffset` points at something without a corresponding
+// code point, such as a DWC_RIGHT.
+int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offset with this cell offset
+                              const int *deltas,  // indexed by code point
+                              int numCodePoints);
+
+// Converts an offset into an NSString to a cell index in the SCA that created it with ScreenCharArrayToString.
+int CellOffsetFromUTF16Offset(int utf16Offset,
+                              const int *deltas);
 
 NS_INLINE BOOL ScreenCharIsDWC_SKIP(screen_char_t c) {
     if (c.complexChar) {

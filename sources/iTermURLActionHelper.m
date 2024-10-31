@@ -56,43 +56,45 @@
                                completion:completion];
 }
 
-- (id<iTermCancelable>)urlActionForClickAtCoord:(VT100GridCoord)coord
+- (id<iTermCancelable>)urlActionForClickAtCoord:(VT100GridCoord)visualCoord
                          respectingHardNewlines:(BOOL)respectHardNewlines
                                       alternate:(BOOL)alternate
                                      completion:(void (^)(URLAction *))completion {
     DLog(@"urlActionForClickAt:%@ respectingHardNewlines:%@",
-         VT100GridCoordDescription(coord), @(respectHardNewlines));
-    if (coord.y < 0) {
+         VT100GridCoordDescription(visualCoord), @(respectHardNewlines));
+    if (visualCoord.y < 0) {
         completion(nil);
         return nil;
     }
-    id<iTermImageInfoReading> imageInfo = [self.delegate urlActionHelper:self imageInfoAt:coord];
+    id<iTermImageInfoReading> imageInfo = [self.delegate urlActionHelper:self imageInfoAt:visualCoord];
     if (imageInfo) {
         completion([URLAction urlActionToOpenImage:imageInfo]);
         return nil;
     }
     iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
-    if ([extractor characterAt:coord].code == 0) {
+    extractor.supportBidi = [iTermAdvancedSettingsModel bidi];
+    VT100GridCoord logicalCoord = [extractor logicalCoordForVisualCoord:visualCoord];
+    if ([extractor characterAt:logicalCoord].code == 0) {
         completion(nil);
         return nil;
     }
-    [extractor restrictToLogicalWindowIncludingCoord:coord];
+    [extractor restrictToLogicalWindowIncludingCoord:visualCoord];
 
     __block id<iTermCancelable> urlActionFactoryCanceler = nil;
     iTermBlockCanceller *canceller = [[iTermBlockCanceller alloc] initWithBlock:^{
         [urlActionFactoryCanceler cancelOperation];
     }];
     [self.delegate urlActionHelper:self
-            workingDirectoryOnLine:coord.y
+            workingDirectoryOnLine:visualCoord.y
                         completion:^(NSString *workingDirectory) {
         urlActionFactoryCanceler =
-        [iTermURLActionFactory urlActionAtCoord:coord
+        [iTermURLActionFactory urlActionAtCoord:logicalCoord
                             respectHardNewlines:respectHardNewlines
                                       alternate:alternate
                                workingDirectory:workingDirectory ?: @""
                                           scope:[self.delegate urlActionHelperScope:self]
                                           owner:[self.delegate urlActionHelperOwner:self]
-                                     remoteHost:[self.delegate urlActionHelper:self remoteHostOnLine:coord.y]
+                                     remoteHost:[self.delegate urlActionHelper:self remoteHostOnLine:visualCoord.y]
                                       selectors:[self.delegate urlActionHelperSmartSelectionActionSelectorDictionary:self]
                                           rules:[self.delegate urlActionHelperSmartSelectionRules:self]
                                       extractor:extractor
@@ -348,7 +350,7 @@
                     }
                     [self downloadFileAtSecureCopyPath:path
                                            displayName:url.path.lastPathComponent
-                                        locationInView:action.range.coordRange];
+                                        locationInView:action.visualRange.coordRange];
                 } else {
                     [self openURL:url inBackground:openInBackground workingDirectory:action.workingDirectory];
                 }
@@ -371,7 +373,7 @@
                 DLog(@"Secure copy file.");
                 [self downloadFileAtSecureCopyPath:action.identifier
                                        displayName:action.string
-                                    locationInView:action.range.coordRange];
+                                    locationInView:action.visualRange.coordRange];
                 break;
 
             case kURLActionShowCommandInfo:

@@ -7,9 +7,11 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermColorMap.h"
+#import "iTermMetadata.h"
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
 
+@class iTermBidiDisplayInfo;
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
 @protocol iTermExternalAttributeIndexReading;
@@ -61,6 +63,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSRect)textDrawingHelperVisibleRectExcludingTopMargin;
 - (NSRect)textDrawingHelperVisibleRectIncludingTopMargin;
 - (id<iTermExternalAttributeIndexReading> _Nullable)drawingHelperExternalAttributesOnLine:(int)lineNumber;
+- (iTermImmutableMetadata)drawingHelperMetadataOnLine:(int)lineNumber;
 
 // Sometimes these are implemented by NSView
 - (NSRect)frame;
@@ -69,6 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)drawingHelperShouldPadBackgrounds:(out NSSize *)padding;
 - (NSArray<iTermTerminalButton *> *)drawingHelperTerminalButtons;
 - (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11));
+- (iTermBidiDisplayInfo * _Nullable)drawingHelperBidiInfoForLine:(int)line;
 
 @end
 

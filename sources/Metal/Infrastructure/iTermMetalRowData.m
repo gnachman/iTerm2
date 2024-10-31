@@ -7,6 +7,7 @@
 
 #import "iTermMetalRowData.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermMetalGlyphKey.h"
 #import "iTermTextRendererCommon.h"
 #import "ScreenChar.h"
@@ -30,13 +31,15 @@
                       @"numberOfDrawableGlyphs=%@\n"
                       @"markStyle=%@\n"
                       @"belongsToBlock=%@\n"
-                      @"date=%@\n",
+                      @"date=%@\n"
+                      @"bidi=%@\n",
                       @(self.y),
                       @(self.numberOfBackgroundRLEs),
                       @(self.numberOfDrawableGlyphs),
                       @(self.markStyle),
                       @(self.belongsToBlock),
-                      self.date];
+                      self.date,
+                      [self.screenCharArray.bidiInfo description] ];
     [info writeToURL:[folder URLByAppendingPathComponent:@"info.txt"] atomically:NO encoding:NSUTF8StringEncoding error:NULL];
 
     @autoreleasepool {

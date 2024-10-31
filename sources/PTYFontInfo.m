@@ -19,15 +19,15 @@
     static NSSet<NSString *> *blacklist;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        blacklist = [[NSSet setWithArray:@[ @"AndaleMono",
-                                            @"Courier",
-                                            @"LetterGothicStd",
-                                            @"Monaco",
-                                            @"OCRAStd",
-                                            @"OratorStd",
-                                            @"Osaka",
-                                            @"PTMono",
-                                            @"SFMono" ]] retain];
+        blacklist = [NSSet setWithArray:@[ @"AndaleMono",
+                                           @"Courier",
+                                           @"LetterGothicStd",
+                                           @"Monaco",
+                                           @"OCRAStd",
+                                           @"OratorStd",
+                                           @"Osaka",
+                                           @"PTMono",
+                                           @"SFMono" ]];
     });
     NSString *myName = self.fontName;
     if ([myName hasPrefix:@"MenloNF"]) {
@@ -63,7 +63,7 @@
     static NSSet *fontsWithDefaultLigatures;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        fontsWithDefaultLigatures = [[NSSet setWithArray:@[ ]] retain];
+        fontsWithDefaultLigatures = [NSSet setWithArray:@[ ]];
     });
     BOOL result = [fontsWithDefaultLigatures containsObject:self.fontName];
     DLog(@"Default ligatures for '%@' is %@", self.fontName, @(result));
@@ -81,6 +81,19 @@
 @synthesize font = font_;
 @synthesize boldVersion = boldVersion_;
 @synthesize italicVersion = italicVersion_;
+
+- (id)copyWithZone:(NSZone *)zone {
+    PTYFontInfo *copy = [[PTYFontInfo alloc] init];
+    copy->font_ = font_;
+    copy->boldVersion_ = [boldVersion_ copy];
+    copy->italicVersion_ = [italicVersion_ copy];
+    copy->_baselineOffset = _baselineOffset;
+    copy->_underlineOffset = _underlineOffset;
+    copy->_boldItalicVersion = [_boldItalicVersion copy];
+    copy->_ligatureLevel = _ligatureLevel;
+    copy->_hasDefaultLigatures = _hasDefaultLigatures;
+    return copy;
+}
 
 + (PTYFontInfo *)fontForAsciiCharacter:(BOOL)isAscii
                              asciiFont:(PTYFontInfo *)asciiFont
@@ -131,23 +144,14 @@
 }
 
 + (PTYFontInfo *)fontInfoWithFont:(NSFont *)font {
-    PTYFontInfo *fontInfo = [[[PTYFontInfo alloc] init] autorelease];
+    PTYFontInfo *fontInfo = [[PTYFontInfo alloc] init];
     fontInfo.font = font;
     return fontInfo;
 }
 
-- (void)dealloc {
-    [font_ release];
-    [boldVersion_ release];
-    [italicVersion_ release];
-    [_boldItalicVersion release];
-    [super dealloc];
-}
-
 - (void)setFont:(NSFont *)font {
     assert(font != nil);
-    [font_ autorelease];
-    font_ = [font retain];
+    font_ = font;
 
     _ligatureLevel = font.it_ligatureLevel;
     _hasDefaultLigatures = font.it_defaultLigatures;
@@ -180,13 +184,13 @@
 
 // From https://github.com/DrawKit/DrawKit/blob/master/framework/Code/NSBezierPath%2BText.m#L648
 - (CGFloat)computedUnderlineOffset {
-    NSLayoutManager *layoutManager = [[[NSLayoutManager alloc] init] autorelease];
-    NSTextContainer *textContainer = [[[NSTextContainer alloc] init] autorelease];
+    NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
+    NSTextContainer *textContainer = [[NSTextContainer alloc] init];
     [layoutManager addTextContainer:textContainer];
     NSDictionary *attributes = @{ NSFontAttributeName: font_,
                                   NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) };
-    NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:@"M" attributes:attributes] autorelease];
-    NSTextStorage *textStorage = [[[NSTextStorage alloc] initWithAttributedString:attributedString] autorelease];
+    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:@"M" attributes:attributes];
+    NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:attributedString];
     [textStorage addLayoutManager:layoutManager];
 
     NSUInteger glyphIndex = [layoutManager glyphIndexForCharacterAtIndex:0];

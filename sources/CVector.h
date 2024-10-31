@@ -129,4 +129,16 @@ CTVectorDefine(char);
 CTVectorDefine(NSInteger);
 CTVectorDefine(NSUInteger);
 
+#define CTVectorGetData(__v) \
+[NSData dataWithBytes:(void *)(__v)->elements length:(__v)->count * sizeof(*(__v)->elements)]
+
+#define CTVectorCreateFromData(__vector, __data) \
+do { \
+  __typeof(__vector) __v = __vector; \
+  \
+  __v->count = __data.length / sizeof(*__v->elements); \
+  __v->capacity = __v->count; \
+  __v->elements = (__typeof(__v->elements))iTermMalloc(__data.length); \
+  memmove((void *)__v->elements, (void *)__data.bytes, __data.length); \
+} while(0)
 

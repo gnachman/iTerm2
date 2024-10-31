@@ -108,32 +108,30 @@ armsixel: force
 fatlibsixel: force armsixel x86libsixel
 	lipo -create -output ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel-x86/lib/libsixel.a
 
-# Unfortuately configuring these two can't be done in parallel, so force arm to
-# go first and have x86 depend on it. (The build is parallel.)
-configure-armopenssl: force
+armopenssl: force
+	echo Begin building configure-armopenssl
 	cd submodules/openssl && make clean && make distclean || echo make failed
 	cd submodules/openssl && ./Configure darwin64-arm64-cc no-shared -fPIC -mmacosx-version-min=10.15 -Wl,-ld_classic
-
-armopenssl: force configure-armopenssl
 	echo Begin building armopenssl
 	cd submodules/openssl && $(MAKE) -j16
 	rm -rf submodules/openssl/build-arm
 	mkdir submodules/openssl/build-arm
 	cp submodules/openssl/*.a submodules/openssl/build-arm
 
-configure-x86openssl: force
+x86openssl: force
+	echo Begin building configure-x86openssl
 	cd submodules/openssl && make clean && make distclean || echo make failed
 	cd submodules/openssl && ./Configure darwin64-x86_64-cc no-shared -fPIC -mmacosx-version-min=10.15 -Wl,-ld_classic
-
-x86openssl: force configure-x86openssl
 	echo Begin building x86openssl
 	cd submodules/openssl && $(MAKE) -j16
 	rm -rf submodules/openssl/build-x86
 	mkdir submodules/openssl/build-x86
 	cp submodules/openssl/*.a submodules/openssl/build-x86
 
-fatopenssl: force x86openssl armopenssl
+fatopenssl: force
 	echo Begin building fatopenssl
+	$(MAKE) armopenssl
+	$(MAKE) x86openssl
 	cd submodules/openssl/ && lipo -create -output libcrypto.a build-x86/libcrypto.a build-arm/libcrypto.a
 	cd submodules/openssl/ && lipo -create -output libssl.a build-x86/libssl.a build-arm/libssl.a
 	cd submodules/openssl; rm -rf build-fat; mkdir build-fat; mkdir build-fat/lib; cp -R include/ build-fat/include/
@@ -172,12 +170,6 @@ NMSSH: force fatlibssh2
 	echo Begin building NMSSH
 	rm -rf ThirdParty/NMSSH.framework
 	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty OTHER_LDFLAGS="-ld_classic"
-
-paranoidarmopenssl: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) armopenssl
-
-paranoidx86openssl: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) x86openssl
 
 paranoidNMSSH: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) NMSSH

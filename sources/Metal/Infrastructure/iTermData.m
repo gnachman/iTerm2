@@ -9,6 +9,9 @@
 
 #import "DebugLogging.h"
 #import "iTermMalloc.h"
+#import "iTermMetalGlyphKey.h"
+#import "iTermTextRendererCommon.h"
+#import "ScreenChar.h"
 
 static const unsigned char iTermDataGuardRegionValue[64] = {
     0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
@@ -19,7 +22,6 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
 
 @implementation iTermData {
 @protected
-    NSUInteger _originalLength;
     void *_mutableBytes;
     NSUInteger _length;
 }
@@ -32,7 +34,6 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
 
         _mutableBytes = buffer;
         _length = length;
-        _originalLength = length;
     }
     return self;
 }
@@ -50,15 +51,31 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
 }
 
 - (void)setLength:(NSUInteger)length {
-    assert(length <= _originalLength);
     _length = length;
+    _mutableBytes = iTermRealloc(_mutableBytes, length + sizeof(iTermDataGuardRegionValue), 1);
+    memmove((char *)_mutableBytes + length,
+            iTermDataGuardRegionValue,
+            sizeof(iTermDataGuardRegionValue));
 }
+
 - (void)checkForOverrun {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        const int comparisonResult = memcmp(buffer + _length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
         assert(comparisonResult == 0);
     }
+}
+
+- (NSUInteger)count {
+    return _length / self.stride;
+}
+
+- (void)setCount:(NSUInteger)count {
+    [self setLength:count * self.stride];
+}
+
+- (NSUInteger)stride {
+    return 1;
 }
 
 @end
@@ -73,10 +90,15 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
 - (void)checkForOverrun {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        const int comparisonResult = memcmp(buffer + _length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
         assert(comparisonResult == 0);
     }
 }
+
+- (NSUInteger)stride {
+    return sizeof(screen_char_t);
+}
+
 @end
 
 @implementation iTermGlyphKeyData : iTermData
@@ -85,26 +107,33 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
     return [[self alloc] initWithLength:length];
 }
 
+- (struct iTermMetalGlyphKey *)basePointer {
+    return (struct iTermMetalGlyphKey *)self.mutableBytes;
+}
+
 - (void)checkForOverrun {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        const int comparisonResult = memcmp(buffer + _length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
         assert(comparisonResult == 0);
     }
 }
 - (void)checkForOverrun1 {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        const int comparisonResult = memcmp(buffer + _length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
         assert(comparisonResult == 0);
     }
 }
 - (void)checkForOverrun2 {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        const int comparisonResult = memcmp(buffer + _length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
         assert(comparisonResult == 0);
     }
+}
+- (NSUInteger)stride {
+    return sizeof(iTermMetalGlyphKey);
 }
 @end
 
@@ -117,24 +146,29 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
 - (void)checkForOverrun {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        const int comparisonResult = memcmp(buffer + _length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
         assert(comparisonResult == 0);
     }
 }
 - (void)checkForOverrun1 {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        const int comparisonResult = memcmp(buffer + _length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
         assert(comparisonResult == 0);
     }
 }
 - (void)checkForOverrun2 {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        const int comparisonResult = memcmp(buffer + _length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
         assert(comparisonResult == 0);
     }
 }
+
+- (NSUInteger)stride {
+    return sizeof(iTermMetalGlyphAttributes);
+}
+
 @end
 
 @implementation iTermBackgroundColorRLEsData : iTermData
@@ -146,10 +180,15 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
 - (void)checkForOverrun {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        const int comparisonResult = memcmp(buffer + _length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
         assert(comparisonResult == 0);
     }
 }
+
+- (NSUInteger)stride {
+    return sizeof(iTermMetalBackgroundColorRLE);
+}
+
 @end
 
 @implementation iTermBitmapData : iTermData
@@ -165,13 +204,13 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
 - (void)checkForOverrunWithInfo:(NSString *)info {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        const int comparisonResult = memcmp(buffer + _length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
         if (comparisonResult == 0) {
             return;
         }
         NSMutableString *hex = [NSMutableString string];
         for (NSInteger i = 0; i < sizeof(iTermDataGuardRegionValue); i++) {
-            unsigned int value = buffer[_originalLength + i];
+            unsigned int value = buffer[_length + i];
             [hex appendFormat:@"%02x ", value];
         }
         [hex appendString:@"vs expected: "];
@@ -182,5 +221,9 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
         ITAssertWithMessage(NO, @"%@. Guard corrupted: actual is %@", info, hex);
     }
 }
+- (NSUInteger)stride {
+    return 4;
+}
+
 @end
 

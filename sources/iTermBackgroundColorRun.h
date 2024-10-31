@@ -9,11 +9,13 @@
 #import <Cocoa/Cocoa.h>
 #import "ScreenChar.h"
 
+@class iTermBidiDisplayInfo;
 @class iTermBoxedBackgroundColorRun;
 @class iTermTextExtractor;
 
 typedef struct {
-    NSRange range;
+    NSRange modelRange;
+    NSRange visualRange;
     int bgColor;
     int bgGreen;
     int bgBlue;
@@ -29,8 +31,8 @@ typedef struct {
 } iTermBackgroundColorRun;
 
 // NOTE: This does not compare the ranges.
-NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
-                                             iTermBackgroundColorRun *b) {
+NS_INLINE BOOL iTermBackgroundColorRunsEqual(const iTermBackgroundColorRun *a,
+                                             const iTermBackgroundColorRun *b) {
     return (a->bgColor == b->bgColor &&
             a->bgGreen == b->bgGreen &&
             a->bgBlue == b->bgBlue &&
@@ -65,13 +67,14 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
                          withinRange:(NSRange)charRange
                              matches:(NSData *)matches
                             anyBlink:(BOOL *)anyBlinkPtr
-                                   y:(CGFloat)y;  // Value for self.y
+                                   y:(CGFloat)y  // Value for self.y
+                                bidi:(iTermBidiDisplayInfo *)bidi;
 
 + (instancetype)defaultRunOfLength:(int)width
                                row:(int)row
                                  y:(CGFloat)y;
 
-- (iTermBackgroundColorRun *)runAtIndex:(int)i;
+- (iTermBackgroundColorRun *)runAtVisualIndex:(int)i;
 - (iTermBackgroundColorRun *)lastRun;
 
 @end
@@ -83,6 +86,8 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 @property(nonatomic, retain) NSColor *unprocessedBackgroundColor;
 
 + (instancetype)boxedBackgroundColorRunWithValue:(iTermBackgroundColorRun)value;
+- (BOOL)isAdjacentToVisualColumn:(int)c;
+- (void)extendWithVisualColumn:(int)c;
 
 @end
 

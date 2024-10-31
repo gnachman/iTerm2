@@ -39,6 +39,7 @@
 #import "NSArray+iTerm.h"
 #import "NSCharacterSet+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSStringITerm.h"
 #import "ScreenChar.h"
 
 static NSString *const kScreenCharComplexCharMapKey = @"Complex Char Map";
@@ -419,7 +420,7 @@ int EffectiveLineLength(screen_char_t* theLine, int totalLength) {
 
 NSString *DebugStringForScreenChar(screen_char_t c) {
     NSArray *modes = @[ @"default", @"selected", @"altsem", @"altsem-reversed" ];
-    return [NSString stringWithFormat:@"code=%x (%@) foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ foregroundColorMode=%@ backgroundColorMode=%@ complexChar=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ underlineStyle=%@ strikethrough=%@ image=%@ virtualPlaceholder=%@ invisible=%@ inverse=%@ guarded=%@ unused=%@",
+    return [NSString stringWithFormat:@"code=%x (%@) foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ foregroundColorMode=%@ backgroundColorMode=%@ complexChar=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ underlineStyle=%@ strikethrough=%@ image=%@ virtualPlaceholder=%@ invisible=%@ inverse=%@ guarded=%@ rtl=%@ unused=%@",
             (int)c.code,
             ScreenCharToStr(&c),
             @(c.foregroundColor),
@@ -443,6 +444,7 @@ NSString *DebugStringForScreenChar(screen_char_t c) {
             @(c.invisible),
             @(c.inverse),
             @(c.guarded),
+            @(c.rtlStatus),
             @(c.unused)];
 }
 
@@ -458,7 +460,8 @@ void StringToScreenChars(NSString *s,
                          BOOL *foundDwc,
                          iTermUnicodeNormalization normalization,
                          NSInteger unicodeVersion,
-                         BOOL softAlternateScreenMode) {
+                         BOOL softAlternateScreenMode,
+                         BOOL *rtlFound) {
     __block NSInteger j = 0;
     __block BOOL foundCursor = NO;
     NSCharacterSet *ignorableCharacters = [NSCharacterSet ignorableCharactersForUnicodeVersion:unicodeVersion];
@@ -466,7 +469,11 @@ void StringToScreenChars(NSString *s,
     NSCharacterSet *modifierCharactersForcingFullWidthRendition = [NSCharacterSet modifierCharactersForcingFullWidthRendition];
     const BOOL shouldSupportVS16 = [iTermAdvancedSettingsModel vs16Supported] || (!softAlternateScreenMode && [iTermAdvancedSettingsModel vs16SupportedInPrimaryScreen]);
     NSCharacterSet *emojiAcceptingVS16 = [NSCharacterSet emojiAcceptingVS16];
+    NSCharacterSet *rtlSmellingCodePoints = [iTermAdvancedSettingsModel bidi] ? [NSCharacterSet rtlSmellingCodePoints] : [NSCharacterSet characterSetWithCharactersInString:@""];
     const BOOL fullWidthFlags = [iTermAdvancedSettingsModel fullWidthFlags];
+    if (rtlFound) {
+        *rtlFound = ([s rangeOfCharacterFromSet:rtlSmellingCodePoints].location != NSNotFound);
+    }
 
     [s enumerateComposedCharacters:^(NSRange range,
                                      unichar baseBmpChar,
@@ -620,6 +627,7 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->virtualPlaceholder = NO;
     s->inverse = fg.inverse;
     s->guarded = fg.guarded;
+    s->rtlStatus = RTLStatusUnknown;
     s->unused = 0;
 }
 
@@ -751,6 +759,17 @@ NSString *ScreenCharDescription(screen_char_t c) {
     if (c.inverse) {
         [attrs addObject:@"Inverse"];
     }
+    switch (c.rtlStatus) {
+        case RTLStatusUnknown:
+            [attrs addObject:@"Dir-Unk"];
+            break;
+        case RTLStatusLTR:
+            [attrs addObject:@"LTR"];
+            break;
+        case RTLStatusRTL:
+            [attrs addObject:@"RTL"];
+            break;
+    }
     NSString *style = [attrs componentsJoinedByString:@" "];
     if (style.length) {
         style = [@"; " stringByAppendingString:style];
@@ -800,3 +819,45 @@ void ScreenCharInvert(screen_char_t *c) {
     
     c->inverse = !c->inverse;
 }
+
+BOOL AnnotateRightToLeftInScreenChars(screen_char_t *c, int len) {
+    MutableScreenCharArray *msca = [[MutableScreenCharArray alloc] initWithLine:c length:len continuation:(screen_char_t){.code=EOL_HARD}];
+    iTermBidiDisplayInfo *bidi = [[iTermBidiDisplayInfo alloc] initUnpaddedWithScreenCharArray:msca];
+    [iTermBidiDisplayInfo annotateWithBidiInfo:bidi msca:msca];
+    return bidi != nil;
+}
+
+int CellOffsetFromUTF16Offset(int utf16Offset,
+                              const int *deltas) {
+    return deltas[utf16Offset] + utf16Offset;
+}
+
+// This may return a value for the next cell if `cellOffset` points at something without a corresponding
+// code point, such as a DWC_RIGHT.
+int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offset with this cell offset
+                              const int *deltas,  // indexed by code point
+                              int numCodePoints) {
+    // `deltas[i] + i` gives the cell offset for UTF-16 offset `i`.
+    // Example:
+    //
+    //         0  1  2  3  4  5  6  7  8  9  A
+    // cells   a  b  -  c  -  d  e  -  f  g
+    // utf-16  a  b  c  d  +  +  e  f  +  +  g         // + means combining mark
+    // deltas  0  0  1  2  1  0  0  1  0 -1 -1
+    //
+    // An index `i` into utf-16 can be converted to an index into cells by adding `deltas[i]`.
+    // To go in reverse is more difficult. Starting with an index in cells doesn't give you a
+    // clue where to look in deltas. There can easily be more cells than deltas (e.g., lots of
+    // DWCs and no combining marks).
+    //
+    // You could do a binary search but I haven't implemented it yet because it
+    // adds risk and this is fast enough.
+    for (int utf16Index = 0; utf16Index < numCodePoints; utf16Index++) {
+        const int cellIndex = utf16Index + deltas[utf16Index];
+        if (cellIndex >= cellOffset) {
+            return utf16Index;
+        }
+    }
+    return numCodePoints;
+}
+

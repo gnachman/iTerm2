@@ -20,7 +20,7 @@
         width_ = width;
         _dirty = NO;
         [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestampTo:0];
-        iTermMetadataInit(&_metadata, 0, nil);
+        iTermMetadataInit(&_metadata, 0, NO, nil);
     }
     return self;
 }
@@ -90,6 +90,11 @@
 
 - (void)setTimestamp:(NSTimeInterval)timestamp {
     _metadata.timestamp = timestamp;
+    _cachedEncodedMetadata = nil;
+}
+
+- (void)setRTLFound:(BOOL)rtlFound {
+    _metadata.rtlFound = rtlFound;
     _cachedEncodedMetadata = nil;
 }
 

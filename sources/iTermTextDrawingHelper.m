@@ -13,11 +13,13 @@
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermAttributedStringBuilder.h"
 #import "iTermAttributedStringProxy.h"
 #import "iTermBackgroundColorRun.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
+#import "iTermCoreTextLineRenderingHelper.h"
 #import "iTermFindCursorView.h"
 #import "iTermGraphicsUtilities.h"
 #import "iTermImageInfo.h"
@@ -46,8 +48,6 @@
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"  // TODO: Remove this dependency
 
-#define likely(x) __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
 #define MEDIAN(min_, mid_, max_) MAX(MIN(mid_, max_), min_)
 
 typedef struct {
@@ -83,37 +83,8 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index) {
     return !!(theIndex < [findMatches length] && (matchBytes[theIndex] & mask));
 }
 
-@interface iTermTextDrawingHelper() <iTermCursorDelegate>
+@interface iTermTextDrawingHelper() <iTermCursorDelegate, iTermAttributedStringBuilderDelegate>
 @end
-
-typedef NS_ENUM(unsigned char, iTermCharacterAttributesUnderline) {
-    iTermCharacterAttributesUnderlineNone,
-    iTermCharacterAttributesUnderlineRegular,  // Single unless isURL, then double.
-    iTermCharacterAttributesUnderlineCurly,
-    iTermCharacterAttributesUnderlineDouble
-};
-
-// IMPORTANT: If you add a field here also update the comparison function
-// shouldSegmentWithAttributes:imageAttributes:previousAttributes:previousImageAttributes:combinedAttributesChanged:
-typedef struct {
-    BOOL initialized;
-    BOOL shouldAntiAlias;
-    NSColor *foregroundColor;
-    BOOL boxDrawing;
-    BOOL contrastIneligible;
-    NSFont *font;
-    BOOL bold;
-    BOOL faint;
-    BOOL fakeBold;
-    BOOL fakeItalic;
-    iTermCharacterAttributesUnderline underlineType;
-    BOOL strikethrough;
-    BOOL isURL;
-    NSInteger ligatureLevel;
-    BOOL drawable;
-    BOOL hasUnderlineColor;
-    VT100TerminalColorValue underlineColor;
-} iTermCharacterAttributes;
 
 enum {
     TIMER_TOTAL_DRAW_RECT,
@@ -133,42 +104,6 @@ enum {
 
     TIMER_STAT_MAX
 };
-
-static NSString *const iTermAntiAliasAttribute = @"iTermAntiAliasAttribute";
-static NSString *const iTermBoldAttribute = @"iTermBoldAttribute";
-static NSString *const iTermFaintAttribute = @"iTermFaintAttribute";
-static NSString *const iTermFakeBoldAttribute = @"iTermFakeBoldAttribute";
-static NSString *const iTermFakeItalicAttribute = @"iTermFakeItalicAttribute";
-static NSString *const iTermImageCodeAttribute = @"iTermImageCodeAttribute";
-static NSString *const iTermImageColumnAttribute = @"iTermImageColumnAttribute";
-static NSString *const iTermImageLineAttribute = @"iTermImageLineAttribute";
-static NSString *const iTermImageDisplayColumnAttribute = @"iTermImageDisplayColumnAttribute";
-static NSString *const iTermIsBoxDrawingAttribute = @"iTermIsBoxDrawingAttribute";
-static NSString *const iTermUnderlineLengthAttribute = @"iTermUnderlineLengthAttribute";
-static NSString *const iTermHasUnderlineColorAttribute = @"iTermHasUnderlineColorAttribute";
-static NSString *const iTermUnderlineColorAttribute = @"iTermUnderlineColorAttribute";  // @[r,g,b,mode]
-
-static NSString *const iTermKittyImageRowAttribute = @"iTermKittyImageRowAttribute";
-static NSString *const iTermKittyImageColumnAttribute = @"iTermKittyImageColumnAttribute";
-static NSString *const iTermKittyImageIDAttribute = @"iTermKittyImageIDAttribute";
-static NSString *const iTermKittyImagePlacementIDAttribute = @"iTermKittyImagePlacementIDAttribute";
-
-typedef struct iTermTextColorContext {
-    NSColor *lastUnprocessedColor;
-    CGFloat dimmingAmount;
-    CGFloat mutingAmount;
-    BOOL hasSelectedText;
-    iTermColorMap *colorMap;
-    id<iTermTextDrawingHelperDelegate> delegate;
-    NSData *findMatches;
-    BOOL reverseVideo;
-    screen_char_t previousCharacterAttributes;
-    BOOL havePreviousCharacterAttributes;
-    NSColor *backgroundColor;
-    NSColor *previousBackgroundColor;
-    CGFloat minimumContrast;
-    NSColor *previousForegroundColor;
-} iTermTextColorContext;
 
 typedef NS_ENUM(NSUInteger, iTermBackgroundDrawingMode) {
     iTermBackgroundDrawingModeDefault,
@@ -245,6 +180,16 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         _lineRefCache = [[NSMutableDictionary alloc] init];
         _replacementLineRefCache = [[NSMutableDictionary alloc] init];
         _cachedMarks = [[NSMutableDictionary alloc] init];
+
+        iTermAttributedStringBuilderStatsPointers pointers = {
+            .attrsForChar = &_stats[TIMER_ATTRS_FOR_CHAR],
+            .shouldSegment = &_stats[TIMER_SHOULD_SEGMENT],
+            .buildMutableAttributedString = &_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING],
+            .combineAttributes = &_stats[TIMER_COMBINE_ATTRIBUTES],
+            .updateBuilder = &_stats[TIMER_UPDATE_BUILDER],
+            .advances = &_stats[TIMER_ADVANCES],
+        };
+        _attributedStringBuilder = [[iTermAttributedStringBuilder alloc] initWithStats:pointers];
     }
     return self;
 }
@@ -266,6 +211,31 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 #pragma mark - Drawing: General
+
+- (void)didFinishSetup {
+    [_attributedStringBuilder setColorMap:_colorMap
+                             reverseVideo:_reverseVideo
+                          minimumContrast:_minimumContrast
+                                    zippy:self.zippy
+                  asciiLigaturesAvailable:_asciiLigaturesAvailable
+                           asciiLigatures:_asciiLigatures
+         preferSpeedToFullLigatureSupport:_preferSpeedToFullLigatureSupport
+                                 cellSize:_cellSize
+                     blinkingItemsVisible:_blinkingItemsVisible
+                             blinkAllowed:_blinkAllowed
+                          useNonAsciiFont:_useNonAsciiFont
+                           asciiAntiAlias:_asciiAntiAlias
+                        nonAsciiAntiAlias:_nonAsciiAntiAlias
+                                 isRetina:_isRetina
+                forceAntialiasingOnRetina:_forceAntialiasingOnRetina
+                              boldAllowed:_boldAllowed
+                            italicAllowed:_italicAllowed
+                        nonAsciiLigatures:_nonAsciiLigatures
+                 useNativePowerlineGlyphs:_useNativePowerlineGlyphs
+                             fontProvider:_fontProvider
+                                fontTable:_fontTable
+                                 delegate:self];
+}
 
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray
@@ -292,7 +262,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     const int haloWidth = 4;
     NSInteger yLimit = _numberOfLines;
 
-    VT100GridCoordRange boundingCoordRange = [self coordRangeForRect:rect];
+    VT100GridCoordRange boundingCoordRange = [self visualCoordRangeForRect:rect];
     DLog(@"BEFORE: boundingCoordRange=%@", VT100GridCoordRangeDescription(boundingCoordRange));
     NSRange visibleLines = [self rangeOfVisibleRows];
 
@@ -310,10 +280,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         DLog(@"No rows in rect given bounding coord range %@", VT100GridCoordRangeDescription(boundingCoordRange));
         return;
     }
+    // X ranges to draw for each line.
     NSMutableData *store = [NSMutableData dataWithLength:numRowsInRect * sizeof(NSRange)];
     NSRange *ranges = (NSRange *)store.mutableBytes;
     for (int i = 0; i < rectCount; i++) {
-        VT100GridCoordRange coordRange = [self coordRangeForRect:rectArray[i]];
+        VT100GridCoordRange coordRange = [self visualCoordRangeForRect:rectArray[i]];
         DLog(@"Have to draw rect %@ (%@)", NSStringFromRect(rectArray[i]), VT100GridCoordRangeDescription(coordRange));
         int coordRangeMinX = 0;
         int coordRangeMaxX = MIN(_gridSize.width, coordRange.end.x + haloWidth);
@@ -353,7 +324,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     [self stopTiming];
 
-    iTermPreciseTimerPeriodicLog(@"drawRect", _stats, sizeof(_stats) / sizeof(*_stats), 5, [iTermAdvancedSettingsModel logDrawingPerformance], nil);
+    iTermPreciseTimerPeriodicLog(@"drawRect", _stats, sizeof(_stats) / sizeof(*_stats), 5, [iTermAdvancedSettingsModel logDrawingPerformance], nil, nil);
 
     if (_debug) {
         NSColor *c = [NSColor colorWithCalibratedRed:(rand() % 255) / 255.0
@@ -431,6 +402,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             [_selection selectedIndexesIncludingTabFillersInAbsoluteLine:line + _totalScrollbackOverflow];
 
         if ([self canDrawLine:line]) {
+            iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:line];
+            const BOOL rtlFound = metadata.rtlFound;
             iTermBackgroundColorRunsInLine *runsInLine =
             [iTermBackgroundColorRunsInLine backgroundRunsInLine:theLine
                                                       lineLength:_gridSize.width
@@ -440,7 +413,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                      withinRange:charRange
                                                          matches:matches
                                                         anyBlink:&_blinkingFound
-                                                               y:y];
+                                                               y:y
+                                                            bidi:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:line] : nil];
             [backgroundRunArrays addObject:runsInLine];
         } else {
             [backgroundRunArrays addObject:[iTermBackgroundColorRunsInLine defaultRunOfLength:_gridSize.width
@@ -620,7 +594,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         }
         if (cursorY >= runArray.line &&
             cursorY < runArray.line + runArray.numberOfEquivalentRows) {
-            NSColor *color = [self unprocessedColorForBackgroundRun:[runArray runAtIndex:self.cursorCoord.x] ?: runArray.lastRun
+            NSColor *color = [self unprocessedColorForBackgroundRun:[runArray runAtVisualIndex:self.cursorCoord.x] ?: runArray.lastRun
                                                      enableBlending:NO];
             cursorBackgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
         }
@@ -680,9 +654,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 //        NSLog(@"Paint background row %d range %@", line, NSStringFromRange(run->range));
 
-        NSRect rect = NSMakeRect(floor([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->range.location * _cellSize.width),
+        NSRect rect = NSMakeRect(floor([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->visualRange.location * _cellSize.width),
                                  yOrigin,
-                                 ceil(run->range.length * _cellSize.width),
+                                 ceil(run->visualRange.length * _cellSize.width),
                                  _cellSize.height * rows);
         // If subpixel AA is enabled, then we want to draw the default background color directly.
         // Otherwise, we'll disable blending and make it clear. Then the background color view can
@@ -756,7 +730,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return _selectedCommandRegion.length > 0 && (line < 0 || !NSLocationInRange(line, _selectedCommandRegion));
 }
 
-- (NSColor *)unprocessedColorForBackgroundRun:(iTermBackgroundColorRun *)run
+- (NSColor *)unprocessedColorForBackgroundRun:(const iTermBackgroundColorRun *)run
                                enableBlending:(BOOL)enableBlending {
     NSColor *color;
     CGFloat alpha = _transparencyAlpha;
@@ -1579,6 +1553,14 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 
 #pragma mark - Drawing: Foreground
 
+static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
+    if (lhs.location == NSNotFound || rhs.location == NSNotFound) {
+        return NO;
+    }
+
+    return NSMaxRange(lhs) == rhs.location || NSMaxRange(rhs) == lhs.location;
+}
+
 // Draw assuming no foreground color processing. Keeps glyphs together in a single background color run across different background colors.
 - (void)drawUnprocessedForegroundForBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
                                drawOffscreenCommandLine:(BOOL)drawOffscreenCommandLine
@@ -1599,9 +1581,11 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             } else if (run.valuePointer->selected == previousRun.selected &&
                        run.valuePointer->isMatch == previousRun.isMatch &&
                        !run.valuePointer->beneathFaintText &&
-                       !previousRun.beneathFaintText) {
+                       !previousRun.beneathFaintText &&
+                       NSRangesAdjacent(previousRun.modelRange, run.valuePointer->modelRange)) {
                 // Combine with preceding run.
-                previousRun.range = NSUnionRange(previousRun.range, run.valuePointer->range);
+                previousRun.visualRange = NSUnionRange(previousRun.visualRange, run.valuePointer->visualRange);
+                previousRun.modelRange = NSUnionRange(previousRun.modelRange, run.valuePointer->modelRange);
             } else {
                 // Allow this run to remain.
                 [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
@@ -1698,20 +1682,23 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                       context:(CGContextRef)ctx
                 virtualOffset:(CGFloat)virtualOffset {
     const screen_char_t *theLine = [self lineAtIndex:sourceLine isFirst:nil];
-    id<iTermExternalAttributeIndexReading> eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:sourceLine];
+    iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:sourceLine];
+    id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
+    const BOOL rtlFound = metadata.rtlFound;
     NSData *matches = [_delegate drawingHelperMatchesOnLine:sourceLine];
     if (sourceLine != displayLine) {
         matches = nil;
     }
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
-        NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->range.location * _cellSize.width,
+        NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins],
                                          y);
         [self constructAndDrawRunsForLine:theLine
+                                 bidiInfo:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:sourceLine] : nil
                        externalAttributes:eaIndex
                           sourceLineNumer:sourceLine
                         displayLineNumber:displayLine
-                                  inRange:run->range
+                                  inRange:run->modelRange
                           startingAtPoint:textOrigin
                                bgselected:run->selected
                                   bgColor:box.unprocessedBackgroundColor
@@ -1725,6 +1712,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 }
 
 - (void)constructAndDrawRunsForLine:(const screen_char_t *)theLine
+                           bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
                  externalAttributes:(id<iTermExternalAttributeIndexReading>)eaIndex
                     sourceLineNumer:(int)sourceLineNumber
                   displayLineNumber:(int)displayLineNumber
@@ -1754,16 +1742,18 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     DLog(@"row %f: %@", (initialPoint.y - virtualOffset) / self.cellSize.height, ScreenCharArrayToStringDebug(theLine, _gridSize.width));
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
-    NSArray<id<iTermAttributedString>> *attributedStrings = [self attributedStringsForLine:theLine
-                                                                        externalAttributes:eaIndex
-                                                                                     range:indexRange
-                                                                           hasSelectedText:bgselected
-                                                                           backgroundColor:bgColor
-                                                                            forceTextColor:forceTextColor
-                                                                                  colorRun:colorRun
-                                                                               findMatches:matches
-                                                                           underlinedRange:[self underlinedRangeOnLine:sourceLineNumber + _totalScrollbackOverflow]
-                                                                                 positions:&positions];
+    NSArray<id<iTermAttributedString>> *attributedStrings =
+    [_attributedStringBuilder attributedStringsForLine:theLine
+                                              bidiInfo:bidiInfo
+                                    externalAttributes:eaIndex
+                                                 range:indexRange
+                                       hasSelectedText:bgselected
+                                       backgroundColor:bgColor
+                                        forceTextColor:forceTextColor
+                                              colorRun:colorRun
+                                           findMatches:matches
+                                       underlinedRange:[self underlinedRangeOnLine:sourceLineNumber + _totalScrollbackOverflow]
+                                             positions:&positions];
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_CONSTRUCTION]);
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_DRAW]);
@@ -2213,7 +2203,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     CGColorRef cgColor = (__bridge CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
 
     BOOL bold = [attributes[iTermBoldAttribute] boolValue];
-    BOOL fakeBold = [attributes[iTermFakeBoldAttribute] boolValue];
+    __block BOOL fakeBold = [attributes[iTermFakeBoldAttribute] boolValue];
     BOOL fakeItalic = [attributes[iTermFakeItalicAttribute] boolValue];
     BOOL antiAlias = !smear && [attributes[iTermAntiAliasAttribute] boolValue];
 
@@ -2235,7 +2225,6 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
     _replacementLineRefCache[proxy] = (__bridge id)lineRef;
 
-    CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
     CGContextRef cgContext = (CGContextRef) [ctx CGContext];
     CGContextSetShouldAntialias(cgContext, antiAlias);
     CGContextSetFillColorWithColor(cgContext, cgColor);
@@ -2257,84 +2246,26 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     const CGFloat ty = origin.y + _baselineOffset + _cellSize.height - virtualOffset;
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
                                                          c, -1.0,
-                                                         origin.x + xOriginsForCharacters[0], ty);
+                                                         origin.x, ty);
     CGContextSetTextMatrix(cgContext, textMatrix);
-
-    // The x origin of the column for the current cell. Initialize to -1 to ensure it gets set on
-    // the first pass through the position-adjusting loop.
-    CGFloat xOriginForCurrentColumn = -1;
-    CFIndex previousCharacterIndex = -1;
-    CGFloat advanceAccumulator = 0;
     const BOOL verbose = NO;  // turn this on to debug character position problems.
     if (verbose) {
         NSLog(@"Begin drawing string: %@", attributedString.string);
     }
-    for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
-        CTRunRef run = CFArrayGetValueAtIndex(runs, j);
-        size_t length = CTRunGetGlyphCount(run);
-        const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
-        if (!buffer) {
-            NSMutableData *tempBuffer =
-            [[NSMutableData alloc] initWithLength:sizeof(CGGlyph) * length];
-            CTRunGetGlyphs(run, CFRangeMake(0, length), (CGGlyph *)tempBuffer.mutableBytes);
-            buffer = tempBuffer.mutableBytes;
-        }
 
-        NSMutableData *positionsBuffer =
-        [[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length];
-        CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)positionsBuffer.mutableBytes);
-        CGPoint *positions = positionsBuffer.mutableBytes;
-
-        NSMutableData *advancesBuffer =
-        [[NSMutableData alloc] initWithLength:sizeof(CGSize) * length];
-        CTRunGetAdvances(run, CFRangeMake(0, length), advancesBuffer.mutableBytes);
-        CGSize *advances = advancesBuffer.mutableBytes;
-
-        const CFIndex *glyphIndexToCharacterIndex = CTRunGetStringIndicesPtr(run);
-        if (!glyphIndexToCharacterIndex) {
-            NSMutableData *tempBuffer =
-            [[NSMutableData alloc] initWithLength:sizeof(CFIndex) * length];
-            CTRunGetStringIndices(run, CFRangeMake(0, length), (CFIndex *)tempBuffer.mutableBytes);
-            glyphIndexToCharacterIndex = (CFIndex *)tempBuffer.mutableBytes;
-        }
-
-        // Transform positions to put each grapheme cluster in its proper column.
-        // positions[glyphIndex].x needs to be transformed to subtract whatever horizontal advance
-        // was present earlier in the string.
-
-        // xOffset gives the accumulated advances to subtract from the current character's x position
-        CGFloat xOffset = 0;
-        if (verbose) {
-            NSLog(@"Begin run %@", @(j));
-        }
-        for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
-            // `characterIndex` indexes into the attributed string.
-            const CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
-            const CGFloat xOriginForThisCharacter = xOriginsForCharacters[characterIndex] - xOriginsForCharacters[0];
-
-            if (verbose) {
-                NSLog(@"  begin glyph %@", @(glyphIndex));
-            }
-            if (characterIndex != previousCharacterIndex &&
-                xOriginForThisCharacter != xOriginForCurrentColumn) {
-                // Have advanced to the next character or column.
-                xOffset = advanceAccumulator;
-                xOriginForCurrentColumn = xOriginForThisCharacter;
-                if (verbose) {
-                    NSLog(@"  This glyph begins a new character or column. xOffset<-%@, xOriginForCurrentColumn<-%@", @(xOffset), @(xOriginForCurrentColumn));
-                }
-            }
-            advanceAccumulator = advances[glyphIndex].width + positions[glyphIndex].x;
-            if (verbose) {
-                NSLog(@"  advance=%@, position=%@. advanceAccumulator<-%@", @(advances[glyphIndex].width), @(positions[glyphIndex].x), @(advanceAccumulator));
-            }
-            positions[glyphIndex].x += xOriginForCurrentColumn - xOffset;
-            if (verbose) {
-                NSLog(@"  position<-%@", @(positions[glyphIndex].x));
-            }
-        }
-
-        CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
+    NSData *drawInCellIndex = attributes[iTermDrawInCellIndexAttribute];
+    iTermCoreTextLineRenderingHelper *renderingHelper = [[iTermCoreTextLineRenderingHelper alloc] initWithLine:lineRef
+                                                                                                        string:attributedString.string
+                                                                                               drawInCellIndex:drawInCellIndex];
+    [renderingHelper enumerateGridAlignedRunsWithColumnPositions:xOriginsForCharacters
+                                                     alignToZero:NO
+                                                         closure:^(CTRunRef run,
+                                                                   CTFontRef runFont,
+                                                                   const CGGlyph *buffer,
+                                                                   const NSPoint *positions,
+                                                                   const CFIndex *glyphIndexToCharacterIndex,
+                                                                   size_t length,
+                                                                   BOOL *stop) {
         if (!smear) {
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
 
@@ -2363,7 +2294,8 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             }
             CGContextTranslateCTM(cgContext, -radius - 0.5, 0);
         }
-    }
+    }];
+
     if (verbose) {
         NSLog(@"");
     }
@@ -2417,42 +2349,47 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                                  options:0
                               usingBlock:
      ^(NSNumber * _Nullable value, NSRange range, BOOL * _Nonnull stop) {
-         NSUnderlineStyle underlineStyle = value.integerValue;
-         if (underlineStyle == NSUnderlineStyleNone) {
-             return;
-         }
-         NSDictionary *const attributes = [attributedString attributesAtIndex:range.location
-                                                               effectiveRange:nil];
-         const NSSize size = NSMakeSize([attributes[iTermUnderlineLengthAttribute] intValue] * _cellSize.width,
-                                        _cellSize.height * 2);
-         const CGFloat xOrigin = origin.x + stringPositions[range.location];
-         const NSRect rect = NSMakeRect(xOrigin,
-                                        origin.y,
-                                        size.width,
-                                        size.height);
-         NSColor *underlineColor = [self underlineColorForAttributes:attributes];
-         [self drawUnderlinedOrStruckthroughTextWithContext:underlineContext
-                                              wantUnderline:wantUnderline
-                                                     inRect:rect
-                                             underlineColor:underlineColor
-                                                      style:underlineStyle
-                                                       font:attributes[NSFontAttributeName]
-                                              virtualOffset:virtualOffset
-                                                      block:
-          ^(CGContextRef ctx) {
-              if (!wantUnderline) {
-                  // This is a shortcut to prefer simplicity over speed.
-                  // Underline and strikethrough are very similar except for
-                  // masking. For strikethrough, we draw an empty mask. If this
-                  // becomes a performance issue, we can skip drawing the empty
-                  // mask.
-                  return;
-              }
-              [self drawAttributedStringForMask:attributedString
-                                         origin:NSMakePoint(-stringPositions[range.location], 0)
-                                stringPositions:stringPositions];
-          }];
-     }];
+        NSUnderlineStyle underlineStyle = value.integerValue;
+        if (underlineStyle == NSUnderlineStyleNone) {
+            return;
+        }
+        NSDictionary *const attributes = [attributedString attributesAtIndex:range.location
+                                                              effectiveRange:nil];
+        CGFloat minX = INFINITY;
+        CGFloat maxX = -INFINITY;
+        for (NSInteger i = 0; i < range.length; i++) {
+            minX = MIN(minX, stringPositions[range.location + i]);
+            maxX = MAX(maxX, stringPositions[range.location + i] + _cellSize.width);
+        }
+        const NSSize size = NSMakeSize(maxX - minX, _cellSize.height * 2);
+        const CGFloat xOrigin = origin.x + minX;
+        const NSRect rect = NSMakeRect(xOrigin,
+                                       origin.y,
+                                       size.width,
+                                       size.height);
+        NSColor *underlineColor = [self underlineColorForAttributes:attributes];
+        [self drawUnderlinedOrStruckthroughTextWithContext:underlineContext
+                                             wantUnderline:wantUnderline
+                                                    inRect:rect
+                                            underlineColor:underlineColor
+                                                     style:underlineStyle
+                                                      font:attributes[NSFontAttributeName]
+                                             virtualOffset:virtualOffset
+                                                     block:
+         ^(CGContextRef ctx) {
+            if (!wantUnderline) {
+                // This is a shortcut to prefer simplicity over speed.
+                // Underline and strikethrough are very similar except for
+                // masking. For strikethrough, we draw an empty mask. If this
+                // becomes a performance issue, we can skip drawing the empty
+                // mask.
+                return;
+            }
+            [self drawAttributedStringForMask:attributedString
+                                       origin:NSMakePoint(-stringPositions[range.location], 0)
+                              stringPositions:stringPositions];
+        }];
+    }];
 
     if (underlineContext->maskGraphicsContext) {
         CGContextRelease(underlineContext->maskGraphicsContext);
@@ -2596,345 +2533,6 @@ NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor) {
     return bgColor.isDark ? [NSColor colorWithCalibratedRed:1 green:1 blue:1 alpha:1] : [NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1];
 }
 
-NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
-                                            screen_char_t *c,
-                                            BOOL inUnderlinedRange,
-                                            int index,
-                                            iTermTextColorContext *context,
-                                            iTermBackgroundColorRun *colorRun,
-                                            BOOL disableMinimumContrast) {
-    NSColor *rawColor = nil;
-    BOOL isMatch = NO;
-    if (c->faint && colorRun && !context->backgroundColor) {
-        context->backgroundColor = [self unprocessedColorForBackgroundRun:colorRun
-                                                           enableBlending:YES];
-    }
-    const BOOL needsProcessing = context->backgroundColor && (context->minimumContrast > 0.001 ||
-                                                              context->dimmingAmount > 0.001 ||
-                                                              context->mutingAmount > 0.001 ||
-                                                              c->faint);  // faint implies alpha<1 and is faster than getting the alpha component
-
-    if (context->findMatches && !context->hasSelectedText) {
-        // Test if this is a highlighted match from a find.
-        int theIndex = index / 8;
-        int mask = 1 << (index & 7);
-        const char *matchBytes = context->findMatches.bytes;
-        if (theIndex < [context->findMatches length] && (matchBytes[theIndex] & mask)) {
-            isMatch = YES;
-        }
-    }
-
-    if (isMatch) {
-        // Black-on-yellow search result.
-        NSColor *bgColor = [context->colorMap colorForKey:kColorMapMatch];
-        rawColor = iTermTextDrawingHelperTextColorForMatch(bgColor);
-        assert(rawColor);
-        context->havePreviousCharacterAttributes = NO;
-    } else if (inUnderlinedRange) {
-        // Blue link text.
-        rawColor = [context->colorMap colorForKey:kColorMapLink];
-        assert(rawColor);
-        context->havePreviousCharacterAttributes = NO;
-    } else if (context->hasSelectedText && self.useSelectedTextColor) {
-        // Selected text.
-        rawColor = [context->colorMap colorForKey:kColorMapSelectedText];
-        assert(rawColor);
-        context->havePreviousCharacterAttributes = NO;
-    } else if (context->reverseVideo &&
-               ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
-                (c->foregroundColor == ALTSEM_CURSOR && c->foregroundColorMode == ColorModeAlternate))) {
-        // Reverse video is on. Either is cursor or has default foreground color. Use
-        // background color.
-        rawColor = [context->colorMap colorForKey:kColorMapBackground];
-        assert(rawColor);
-        context->havePreviousCharacterAttributes = NO;
-    } else if (!context->havePreviousCharacterAttributes ||
-               c->foregroundColor != context->previousCharacterAttributes.foregroundColor ||
-               c->fgGreen != context->previousCharacterAttributes.fgGreen ||
-               c->fgBlue != context->previousCharacterAttributes.fgBlue ||
-               c->foregroundColorMode != context->previousCharacterAttributes.foregroundColorMode ||
-               c->bold != context->previousCharacterAttributes.bold ||
-               c->faint != context->previousCharacterAttributes.faint ||
-               !context->previousForegroundColor) {
-        // "Normal" case for uncached text color. Recompute the unprocessed color from the character.
-        context->previousCharacterAttributes = *c;
-        context->havePreviousCharacterAttributes = YES;
-        rawColor = [context->delegate drawingHelperColorForCode:c->foregroundColor
-                                                          green:c->fgGreen
-                                                           blue:c->fgBlue
-                                                      colorMode:c->foregroundColorMode
-                                                           bold:c->bold
-                                                          faint:c->faint
-                                                   isBackground:NO];
-        assert(rawColor);
-    } else {
-        // Foreground attributes are just like the last character. There is a cached foreground color.
-        if (needsProcessing && context->backgroundColor != context->previousBackgroundColor) {
-            // Process the text color for the current background color, which has changed since
-            // the last cell.
-            rawColor = context->lastUnprocessedColor;
-            assert(rawColor);
-        } else {
-            // Text color is unchanged. Either it's independent of the background color or the
-            // background color has not changed.
-            return context->previousForegroundColor;
-        }
-    }
-
-    context->lastUnprocessedColor = rawColor;
-
-    NSColor *result = nil;
-    if (needsProcessing) {
-        result = [context->colorMap processedTextColorForTextColor:rawColor
-                                               overBackgroundColor:context->backgroundColor
-                                            disableMinimumContrast:disableMinimumContrast];
-    } else {
-        result = rawColor;
-    }
-    context->previousForegroundColor = result;
-    assert(result);
-    return result;
-}
-
-static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
-                                                  BOOL useNonAsciiFont,
-                                                  BOOL asciiAntiAlias,
-                                                  BOOL nonAsciiAntiAlias,
-                                                  BOOL isRetina,
-                                                  BOOL forceAntialiasingOnRetina) {
-    if (isRetina && forceAntialiasingOnRetina) {
-        return YES;
-    }
-    if (!useNonAsciiFont || (c->code < 128 && !c->complexChar)) {
-        return asciiAntiAlias;
-    } else {
-        return nonAsciiAntiAlias;
-    }
-}
-
-static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAttributes *newAttributes,
-                                                               iTermCharacterAttributes *previousAttributes) {
-    if (newAttributes->hasUnderlineColor != previousAttributes->hasUnderlineColor) {
-        return NO;
-    }
-    if (!newAttributes->hasUnderlineColor) {
-        return YES;
-    }
-    return memcmp(&newAttributes->underlineColor,
-                  &previousAttributes->underlineColor,
-                  sizeof(newAttributes->underlineColor)) == 0;
-}
-
-- (BOOL)shouldSegmentWithAttributes:(iTermCharacterAttributes *)newAttributes
-                    imageAttributes:(NSDictionary *)imageAttributes
-                 previousAttributes:(iTermCharacterAttributes *)previousAttributes
-            previousImageAttributes:(NSDictionary *)previousImageAttributes
-           combinedAttributesChanged:(BOOL *)combinedAttributesChanged {
-    if (unlikely(!previousAttributes->initialized)) {
-        // First char of first segment
-        *combinedAttributesChanged = YES;
-        return NO;
-    }
-
-    if (likely(!imageAttributes && !previousImageAttributes)) {
-        // Not an image cell. Try to quickly check if the attributes are the same, which is the normal case.
-        if (likely(!memcmp(previousAttributes, newAttributes, sizeof(*previousAttributes)))) {
-            // Identical, byte-for-byte
-            *combinedAttributesChanged = NO;
-        } else {
-            // Properly compare object fields
-            *combinedAttributesChanged = (newAttributes->shouldAntiAlias != previousAttributes->shouldAntiAlias ||
-                                          ![newAttributes->foregroundColor isEqual:previousAttributes->foregroundColor] ||
-                                          newAttributes->boxDrawing != previousAttributes->boxDrawing ||
-                                          newAttributes->contrastIneligible != previousAttributes ->contrastIneligible ||
-                                          ![newAttributes->font isEqual:previousAttributes->font] ||
-                                          newAttributes->ligatureLevel != previousAttributes->ligatureLevel ||
-                                          newAttributes->bold != previousAttributes->bold ||
-                                          newAttributes->faint != previousAttributes->faint ||
-                                          newAttributes->fakeItalic != previousAttributes->fakeItalic ||
-                                          newAttributes->underlineType != previousAttributes->underlineType ||
-                                          newAttributes->strikethrough != previousAttributes->strikethrough ||
-                                          newAttributes->isURL != previousAttributes->isURL ||
-                                          newAttributes->drawable != previousAttributes->drawable ||
-                                          !iTermCharacterAttributesUnderlineColorEqual(newAttributes, previousAttributes));
-        }
-        return *combinedAttributesChanged;
-    } else if ((imageAttributes == nil) != (previousImageAttributes == nil)) {
-        // Entering or exiting image
-        *combinedAttributesChanged = YES;
-        return YES;
-    } else {
-        // Going from image cell to image cell. Segment unless it's an adjacent image cell.
-        *combinedAttributesChanged = YES;  // In theory an image cell should never repeat, so shortcut comparison.
-        return ![self imageAttributes:imageAttributes followImageAttributes:previousImageAttributes];
-    }
-}
-
-- (BOOL)imageAttributes:(NSDictionary *)imageAttributes
-  followImageAttributes:(NSDictionary *)previousImageAttributes {
-    if (![previousImageAttributes[iTermImageCodeAttribute] isEqual:imageAttributes[iTermImageCodeAttribute]]) {
-        return NO;
-    }
-    if (![previousImageAttributes[iTermImageLineAttribute] isEqual:imageAttributes[iTermImageLineAttribute]]) {
-        return NO;
-    }
-    if ((([previousImageAttributes[iTermImageColumnAttribute] integerValue] + 1) & 0xff) != ([imageAttributes[iTermImageColumnAttribute] integerValue] & 0xff)) {
-        return NO;
-    }
-
-    return YES;
-}
-
-- (void)getAttributesForCharacter:(screen_char_t *)c
-               externalAttributes:(iTermExternalAttribute *)ea
-                          atIndex:(NSInteger)i
-                   forceTextColor:(NSColor *)forceTextColor
-                   forceUnderline:(BOOL)inUnderlinedRange
-                         colorRun:(iTermBackgroundColorRun *)colorRun
-                         drawable:(BOOL)drawable
-                 textColorContext:(iTermTextColorContext *)textColorContext
-                       attributes:(iTermCharacterAttributes *)attributes
-                         remapped:(UTF32Char *)remapped {
-    attributes->initialized = YES;
-    attributes->shouldAntiAlias = iTermTextDrawingHelperShouldAntiAlias(c,
-                                                                        _useNonAsciiFont,
-                                                                        _asciiAntiAlias,
-                                                                        _nonAsciiAntiAlias,
-                                                                        _isRetina,
-                                                                        _forceAntialiasingOnRetina);
-    const BOOL isComplex = c->complexChar;
-    const unichar code = c->code;
-
-    attributes->boxDrawing = !isComplex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] characterIsMember:code];
-    attributes->contrastIneligible = !isComplex && [[iTermBoxDrawingBezierCurveFactory blockDrawingCharacters] characterIsMember:code];
-
-    if (forceTextColor) {
-        attributes->foregroundColor = forceTextColor;
-    } else {
-        attributes->foregroundColor = iTermTextDrawingHelperGetTextColor(self,
-                                                                         c,
-                                                                         inUnderlinedRange,
-                                                                         i,
-                                                                         textColorContext,
-                                                                         colorRun,
-                                                                         attributes->contrastIneligible);
-    }
-
-    attributes->bold = c->bold;
-    attributes->faint = c->faint;
-    attributes->fakeBold = c->bold;  // default value
-    attributes->fakeItalic = c->italic;  // default value
-    PTYFontInfo *fontInfo = [_fontProvider fontForCharacter:isComplex ? [CharToStr(code, isComplex) longCharacterAtIndex:0] : code
-                                                useBoldFont:_boldAllowed
-                                              useItalicFont:_italicAllowed
-                                                 renderBold:&attributes->fakeBold
-                                               renderItalic:&attributes->fakeItalic
-                                                   remapped:remapped];
-
-    attributes->font = fontInfo.font;
-    attributes->ligatureLevel = fontInfo.ligatureLevel;
-    if (_preferSpeedToFullLigatureSupport) {
-        if (!c->complexChar &&
-            iTermCharacterSupportsFastPath(c->code, _asciiLigaturesAvailable)) {
-            attributes->ligatureLevel = 0;
-        }
-        if (c->complexChar || c->code > 128) {
-            if (!_nonAsciiLigatures) {
-                attributes->ligatureLevel = 0;
-            }
-        }
-    }
-    if (c->underline) {
-        switch (c->underlineStyle) {
-            case VT100UnderlineStyleSingle:
-                attributes->underlineType = iTermCharacterAttributesUnderlineRegular;
-                break;
-            case VT100UnderlineStyleCurly:
-                attributes->underlineType = iTermCharacterAttributesUnderlineCurly;
-                break;
-            case VT100UnderlineStyleDouble:
-                attributes->underlineType = iTermCharacterAttributesUnderlineDouble;
-                break;
-        }
-    } else if (inUnderlinedRange) {
-        attributes->underlineType = iTermCharacterAttributesUnderlineRegular;
-    } else {
-        attributes->underlineType = iTermCharacterAttributesUnderlineNone;
-    }
-    attributes->strikethrough = c->strikethrough;
-    attributes->drawable = drawable;
-    if (ea) {
-        attributes->hasUnderlineColor = ea.hasUnderlineColor;
-        attributes->underlineColor = ea.underlineColor;
-        attributes->isURL = (ea.url != nil);
-    } else {
-        attributes->hasUnderlineColor = NO;
-        attributes->isURL = NO;
-        memset(&attributes->underlineColor, 0, sizeof(attributes->underlineColor));
-    }
-}
-
-- (NSDictionary *)dictionaryForCharacterAttributes:(iTermCharacterAttributes *)attributes {
-    NSUnderlineStyle underlineStyle = NSUnderlineStyleNone;
-    switch (attributes->underlineType) {
-        case iTermCharacterAttributesUnderlineNone:
-            if (attributes->isURL) {
-                underlineStyle = NSUnderlinePatternDash;
-            }
-            break;
-        case iTermCharacterAttributesUnderlineDouble:
-            if (attributes->isURL) {
-                underlineStyle = NSUnderlineStylePatternDot;  // Mixed solid/underline isn't an option, so repurpose this.
-            } else {
-                underlineStyle = NSUnderlineStyleDouble;
-            }
-            break;
-        case iTermCharacterAttributesUnderlineRegular:
-            if (attributes->isURL) {
-                underlineStyle = NSUnderlineStylePatternDot;  // Mixed solid/underline isn't an option, so repurpose this.
-            } else {
-                underlineStyle = NSUnderlineStyleSingle;
-            }
-            break;
-        case iTermCharacterAttributesUnderlineCurly:
-            if (attributes->isURL) {
-                underlineStyle = NSUnderlineStylePatternDot;  // Mixed solid/underline isn't an option, so repurpose this.
-            } else {
-                underlineStyle = NSUnderlineStyleThick;  // Curly isn't an option, so repurpose this.
-            }
-            break;
-    }
-    NSUnderlineStyle strikethroughStyle = NSUnderlineStyleNone;
-    if (attributes->strikethrough) {
-        strikethroughStyle = NSUnderlineStyleSingle;
-    }
-    static NSMutableParagraphStyle *paragraphStyle;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-        paragraphStyle.lineBreakMode = NSLineBreakByClipping;
-        paragraphStyle.tabStops = @[];
-        paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
-    });
-    return @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
-              (NSString *)kCTForegroundColorAttributeName: (id)[attributes->foregroundColor CGColor],
-              NSFontAttributeName: attributes->font,
-              iTermAntiAliasAttribute: @(attributes->shouldAntiAlias),
-              iTermIsBoxDrawingAttribute: @(attributes->boxDrawing),
-              iTermFakeBoldAttribute: @(attributes->fakeBold),
-              iTermBoldAttribute: @(attributes->bold),
-              iTermFaintAttribute: @(attributes->faint),
-              iTermFakeItalicAttribute: @(attributes->fakeItalic),
-              iTermHasUnderlineColorAttribute: @(attributes->hasUnderlineColor),
-              iTermUnderlineColorAttribute: @[ @(attributes->underlineColor.red),
-                                               @(attributes->underlineColor.green),
-                                               @(attributes->underlineColor.blue),
-                                               @(attributes->underlineColor.mode) ],
-              NSUnderlineStyleAttributeName: @(underlineStyle),
-              NSStrikethroughStyleAttributeName: @(strikethroughStyle),
-              NSParagraphStyleAttributeName: paragraphStyle };
-}
-
 static unsigned int VT100TerminalColorValueToKittyImageNumber(VT100TerminalColorValue colorValue,
                                                               int msb) {
     unsigned int shiftedMSB = ((unsigned int)msb) << 24;
@@ -3006,366 +2604,19 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
     return YES;
 }
 
-- (NSDictionary *)imageAttributesForCharacter:(screen_char_t *)c
-                           externalAttributes:(iTermExternalAttribute *)ea
-                                        state:(iTermKittyUnicodePlaceholderState *)state
-                                displayColumn:(int)displayColumn {
-    if (c->image) {
-        if (c->virtualPlaceholder) {
-            iTermKittyUnicodePlaceholderInfo info;
-            if (!iTermDecodeKittyUnicodePlaceholder(c, ea, state, &info)) {
-                return nil;
-            }
-            return @{ iTermKittyImageRowAttribute: @(info.row),
-                      iTermKittyImageColumnAttribute: @(info.column),
-                      iTermKittyImageIDAttribute: @(info.imageID),
-                      iTermKittyImagePlacementIDAttribute: @(info.placementID),
-                      iTermImageDisplayColumnAttribute: @(displayColumn)
-            };
-        } else {
-            return @{ iTermImageCodeAttribute: @(c->code),
-                      iTermImageColumnAttribute: @(c->foregroundColor),
-                      iTermImageLineAttribute: @(c->backgroundColor),
-                      iTermImageDisplayColumnAttribute: @(displayColumn) };
-        }
-    } else {
-        iTermKittyUnicodePlaceholderStateInit(state);
-        return nil;
-    }
-}
-
-- (BOOL)character:(const screen_char_t *)c
-withExtendedAttributes:(iTermExternalAttribute *)ea1
-isEquivalentToCharacter:(const screen_char_t *)pc
-withExtendedAttributes:(iTermExternalAttribute *)ea2 {
-    if (c->complexChar != pc->complexChar) {
-        return NO;
-    }
-    if (!c->complexChar) {
-        if (_useNonAsciiFont) {
-            BOOL ascii = c->code < 128;
-            BOOL pcAscii = pc->code < 128;
-            if (ascii != pcAscii) {
-                return NO;
-            }
-        }
-        if (iTermCharacterSupportsFastPath(c->code, _asciiLigaturesAvailable) != iTermCharacterSupportsFastPath(pc->code, _asciiLigaturesAvailable)) {
-            return NO;
-        }
-
-        static NSCharacterSet *boxSet;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            boxSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs];
-        });
-        BOOL box = [boxSet characterIsMember:c->code];
-        BOOL pcBox = [boxSet characterIsMember:pc->code];
-        if (box != pcBox) {
-            return NO;
-        }
-    }
-    if (!ScreenCharacterAttributesEqual(*c, *pc)) {
-        return NO;
-    }
-    if ([_fontTable haveSpecialExceptionFor:*c orCharacter:*pc]) {
-        return NO;
-    }
-    if (c->virtualPlaceholder) {
-        // Anti-optimization: each unicode placeholder gets its own attributed string for now.
-        // I can improve this later.
-        return NO;
-    }
-    if (ea1 == nil && ea2 == nil) {
-        // fast path
-        return YES;
-    }
-
-    if (ea1 != nil) {
-        return NO;
-    }
-
-    return [ea1 isEqualToExternalAttribute:ea2];
-}
-
 - (BOOL)zippy {
     return (!(_asciiLigaturesAvailable && _asciiLigatures) &&
             !(_nonAsciiLigatures) &&
             [iTermAdvancedSettingsModel zippyTextDrawing]);
 }
 
-- (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(const screen_char_t *)line
-                                              externalAttributes:(id<iTermExternalAttributeIndexReading>)eaIndex
-                                                           range:(NSRange)indexRange
-                                                 hasSelectedText:(BOOL)hasSelectedText
-                                                 backgroundColor:(NSColor *)backgroundColor
-                                                  forceTextColor:(NSColor *)forceTextColor
-                                                        colorRun:(iTermBackgroundColorRun *)colorRun
-                                                     findMatches:(NSData *)findMatches
-                                                 underlinedRange:(NSRange)underlinedRange
-                                                       positions:(CTVector(CGFloat) *)positions {
-    NSMutableArray<id<iTermAttributedString>> *attributedStrings = [NSMutableArray array];
-    iTermColorMap *colorMap = self.colorMap;
-    iTermTextColorContext textColorContext = {
-        .lastUnprocessedColor = nil,
-        .dimmingAmount = colorMap.dimmingAmount,
-        .mutingAmount = colorMap.mutingAmount,
-        .hasSelectedText = hasSelectedText,
-        .colorMap = self.colorMap,
-        .delegate = _delegate,
-        .findMatches = findMatches,
-        .reverseVideo = _reverseVideo,
-        .havePreviousCharacterAttributes = NO,
-        .backgroundColor = backgroundColor,
-        .minimumContrast = _minimumContrast,
-        .previousForegroundColor = nil,
-    };
-    NSDictionary *previousImageAttributes = nil;
-    iTermMutableAttributedStringBuilder *builder = [[iTermMutableAttributedStringBuilder alloc] init];
-    builder.zippy = self.zippy;
-    builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
-    iTermCharacterAttributes characterAttributes = { 0 };
-    iTermCharacterAttributes previousCharacterAttributes = { 0 };
-    int segmentLength = 0;
-    BOOL previousDrawable = YES;
-    screen_char_t predecessor = { 0 };
-    BOOL lastCharacterImpartsEmojiPresentation = NO;
-    iTermExternalAttribute *prevEa = nil;
-    iTermKittyUnicodePlaceholderState kittyPlaceholderState;
-    iTermKittyUnicodePlaceholderStateInit(&kittyPlaceholderState);
-
-    // Only defined if not preferring speed to full ligature support.
-    BOOL lastWasNull = NO;
-    NSCharacterSet *emojiWithDefaultTextPresentation = [NSCharacterSet emojiWithDefaultTextPresentation];
-    NSCharacterSet *emojiWithDefaultEmojiPresentationCharacterSet = [NSCharacterSet emojiWithDefaultEmojiPresentation];
-    for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
-        iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
-        screen_char_t c = line[i];
-        if (!_preferSpeedToFullLigatureSupport) {
-            if (c.code == 0) {
-                if (!lastWasNull) {
-                    c.code = ' ';
-                }
-                lastWasNull = YES;
-            } else {
-                lastWasNull = NO;
-            }
-        }
-        unichar code = c.code;
-        BOOL isComplex = c.complexChar;
-
-        NSString *charAsString;
-
-        if (isComplex && !c.image) {
-            charAsString = ComplexCharToStr(code);
-
-            if (i > indexRange.location &&
-                builder.length > 0 &&
-                !(!predecessor.complexChar && predecessor.code < 128) &&
-                ComplexCharCodeIsSpacingCombiningMark(code)) {
-                // Spacing combining marks get their own cell but get drawn together with their base
-                // character which is assumed to be in the preceding cell so they combine properly.
-                // This does not apply to ASCII characters, since they can never combine with a
-                // spacing combining mark. That's done for performance in the GPU renderer to avoid
-                // complicating its ASCII fastpath.
-                [builder appendString:charAsString];
-                const CGFloat lastValue = CTVectorGet(positions, CTVectorCount(positions) - 1);
-                for (int i = 0; i < charAsString.length; i++) {
-                    CTVectorAppend(positions, lastValue);
-                }
-                continue;
-            }
-            const UTF32Char base = [charAsString firstCharacter];
-            if (lastCharacterImpartsEmojiPresentation && [emojiWithDefaultTextPresentation longCharacterIsMember:base] && ![charAsString containsString:@"\ufe0f"]) {
-                // Prevent previous character's emoji presentation from making this one have an emoji presentation as well.
-                // Leave lastCharacterImpartsEmojiPresentation set to YES intentionally.
-                charAsString = [charAsString stringByAppendingString:@"\ufe0e"];
-            } else {
-                lastCharacterImpartsEmojiPresentation = [emojiWithDefaultEmojiPresentationCharacterSet longCharacterIsMember:base];
-            }
-        } else if (!c.image) {
-            charAsString = nil;
-            if (lastCharacterImpartsEmojiPresentation && [emojiWithDefaultTextPresentation characterIsMember:code]) {
-                unichar chars[2] = { code, 0xfe0e };
-                // Prevent previous character's emoji presentation from making this one have an emoji presentation as well.
-                // See issue 9185
-                charAsString = [NSString stringWithCharacters:chars length:2];
-            } else if (code != DWC_RIGHT && code >= iTermMinimumDefaultEmojiPresentationCodePoint) {  // filter out small values for speed
-                lastCharacterImpartsEmojiPresentation = [emojiWithDefaultEmojiPresentationCharacterSet characterIsMember:code];
-            }
-        } else {
-            charAsString = nil;
-        }
-
-        iTermExternalAttribute *ea = eaIndex[i];
-        const BOOL drawable = iTermTextDrawingHelperIsCharacterDrawable(&c,
-                                                                        i > indexRange.location ? &predecessor : NULL,
-                                                                        charAsString != nil,
-                                                                        _blinkingItemsVisible,
-                                                                        _blinkAllowed,
-                                                                        _preferSpeedToFullLigatureSupport,
-                                                                        ea.url != nil);
-        predecessor = c;
-        if (!drawable) {
-            if ((characterAttributes.drawable && ScreenCharIsDWC_RIGHT(c)) ||
-                (i > indexRange.location && !memcmp(&c, &line[i - 1], sizeof(c)))) {
-                // This optimization short-circuits long runs of terminal nulls.
-                ++segmentLength;
-                characterAttributes.drawable = NO;
-                continue;
-            }
-        }
-
-        if (likely(underlinedRange.length == 0) &&
-            likely(drawable == previousDrawable) &&
-            likely(i > indexRange.location) &&
-            [self character:&c withExtendedAttributes:ea isEquivalentToCharacter:&line[i-1] withExtendedAttributes:prevEa]) {
-            ++segmentLength;
-            iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
-            if (drawable ||
-                ((characterAttributes.underlineType ||
-                  characterAttributes.strikethrough ||
-                  characterAttributes.isURL) && segmentLength == 1)) {
-                [self updateBuilder:builder
-                         withString:drawable ? charAsString : @" "
-                        orCharacter:code
-                          positions:positions
-                             offset:(i - indexRange.location) * _cellSize.width];
-            }
-            continue;
-        }
-        previousDrawable = drawable;
-
-        UTF32Char remapped = 0;
-        [self getAttributesForCharacter:&c
-                     externalAttributes:ea
-                                atIndex:i
-                         forceTextColor:forceTextColor
-                         forceUnderline:NSLocationInRange(i, underlinedRange)
-                               colorRun:colorRun
-                               drawable:drawable
-                       textColorContext:&textColorContext
-                             attributes:&characterAttributes
-                               remapped:&remapped];
-        prevEa = ea;
-        if (!c.image && remapped) {
-            if (c.complexChar) {
-                charAsString = [charAsString stringByReplacingBaseCharacterWith:remapped];
-            } else if (remapped <= 0xffff) {
-                code = remapped;
-            } else {
-                charAsString = [NSString stringWithLongCharacter:remapped];
-            }
-        }
-        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
-
-        iTermPreciseTimerStatsStartTimer(&_stats[TIMER_SHOULD_SEGMENT]);
-
-        NSDictionary *imageAttributes = [self imageAttributesForCharacter:&c
-                                                       externalAttributes:ea
-                                                                    state:&kittyPlaceholderState
-                                                            displayColumn:i];
-        BOOL combinedAttributesChanged = NO;
-
-        // I tried segmenting when fastpath eligibility changes so we can use the fast path as much
-        // as possible. In the vimdiff benchmark it was neutral, and in the spam.cc benchmark it was
-        // hugely negative (66->210 ms). The failed change was to segment when this is true:
-        // builder.canUseFastPath != (!c.complexChar && iTermCharacterSupportsFastPath(code, _asciiLigaturesAvailable))
-        if ([self shouldSegmentWithAttributes:&characterAttributes
-                              imageAttributes:imageAttributes
-                           previousAttributes:&previousCharacterAttributes
-                      previousImageAttributes:previousImageAttributes
-                     combinedAttributesChanged:&combinedAttributesChanged]) {
-            iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
-            id<iTermAttributedString> builtString = builder.attributedString;
-            if (previousCharacterAttributes.underlineType ||
-                previousCharacterAttributes.strikethrough ||
-                previousCharacterAttributes.isURL) {
-                [builtString addAttribute:iTermUnderlineLengthAttribute
-                                    value:@(segmentLength)];
-            }
-            segmentLength = 0;
-            iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
-
-            if (builtString.length > 0) {
-                [attributedStrings addObject:builtString];
-            }
-            builder = [[iTermMutableAttributedStringBuilder alloc] init];
-            builder.zippy = self.zippy;
-            builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
-        }
-        ++segmentLength;
-        previousCharacterAttributes = characterAttributes;
-        previousImageAttributes = [imageAttributes copy];
-        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_SHOULD_SEGMENT]);
-
-        iTermPreciseTimerStatsStartTimer(&_stats[TIMER_COMBINE_ATTRIBUTES]);
-        if (combinedAttributesChanged) {
-            NSDictionary *combinedAttributes = [self dictionaryForCharacterAttributes:&characterAttributes];
-            if (imageAttributes) {
-                combinedAttributes = [combinedAttributes dictionaryByMergingDictionary:imageAttributes];
-            }
-            [builder setAttributes:combinedAttributes];
-            if ([[NSFont castFrom:combinedAttributes[NSFontAttributeName]] it_hasStylisticAlternatives]) {
-                // CG APIs don't support these so we must use slow core text.
-                [builder disableFastPath];
-            }
-        }
-        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_COMBINE_ATTRIBUTES]);
-
-        if (drawable || ((characterAttributes.underlineType ||
-                          characterAttributes.strikethrough ||
-                          characterAttributes.isURL) && segmentLength == 1)) {
-            // Use " " when not drawable to prevent 0-length attributed strings when an underline/strikethrough is
-            // present. If we get here's because there's an underline/strikethrough (which isn't quite obvious
-            // from the if statement's condition).
-            [self updateBuilder:builder
-                     withString:drawable ? charAsString : @" "
-                    orCharacter:code
-                      positions:positions
-                         offset:(i - indexRange.location) * _cellSize.width];
+- (int)lengthOfRTLRunInLine:(const screen_char_t *)line length:(int)length {
+    for (int i = 0; i < length; i++) {
+        if (line[i].rtlStatus != RTLStatusRTL) {
+            return i;
         }
     }
-    if (builder.length) {
-        iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
-        id<iTermAttributedString> builtString = builder.attributedString;
-        if (previousCharacterAttributes.underlineType ||
-            previousCharacterAttributes.strikethrough ||
-            previousCharacterAttributes.isURL) {
-            [builtString addAttribute:iTermUnderlineLengthAttribute
-                                            value:@(segmentLength)];
-        }
-        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
-
-        if (builtString.length > 0) {
-            [attributedStrings addObject:builtString];
-        }
-    }
-
-    return attributedStrings;
-}
-
-- (void)updateBuilder:(iTermMutableAttributedStringBuilder *)builder
-           withString:(NSString *)string
-          orCharacter:(unichar)code
-            positions:(CTVector(CGFloat) *)positions
-               offset:(CGFloat)offset {
-    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_UPDATE_BUILDER]);
-    NSUInteger length;
-    if (string) {
-        [builder appendString:string];
-        length = string.length;
-    } else {
-        [builder appendCharacter:code];
-        length = 1;
-    }
-    iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_UPDATE_BUILDER]);
-
-    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ADVANCES]);
-    // Append to positions.
-    for (NSUInteger j = 0; j < length; j++) {
-        CTVectorAppend(positions, offset);
-    }
-    iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ADVANCES]);
+    return length;
 }
 
 - (BOOL)useThinStrokesAgainstBackgroundColor:(NSColor *)backgroundColor
@@ -3847,16 +3098,23 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
 
     BOOL blink = NO;
     const int row = [self rangeOfVisibleRows].location;
+
+    const int line = _offscreenCommandLine.absoluteLineNumber - _totalScrollbackOverflow;
+    iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:line];
+    const BOOL rtlFound = metadata.rtlFound;
+
     iTermBackgroundColorRunsInLine *backgroundRuns =
     [iTermBackgroundColorRunsInLine backgroundRunsInLine:_offscreenCommandLine.characters.line
                                               lineLength:_gridSize.width
-                                        sourceLineNumber:_offscreenCommandLine.absoluteLineNumber - _totalScrollbackOverflow
+                                        sourceLineNumber:line
                                        displayLineNumber:row
                                          selectedIndexes:[NSIndexSet indexSet]
                                              withinRange:NSMakeRange(0, _gridSize.width)
                                                  matches:nil
                                                 anyBlink:&blink
-                                                       y:row * _cellSize.height];
+                                                       y:row * _cellSize.height
+                                                    bidi:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:line] : nil];
+
 
     [self drawOffscreenCommandLineDecorationsInContext:ctx
                                          virtualOffset:virtualOffset];
@@ -3930,6 +3188,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
         screen_char_t fg = {0}, bg = {0};
         int len;
         int cursorIndex = (int)_inputMethodSelectedRange.location;
+        // If I can ever find a case that reproduces IME + RTL then this code should be updated to support bidi.
         StringToScreenChars(str,
                             buf,
                             fg,
@@ -3940,7 +3199,8 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                             NULL,
                             _normalization,
                             self.unicodeVersion,
-                            self.softAlternateScreenMode);
+                            self.softAlternateScreenMode,
+                            NULL);
         int cursorX = 0;
         int baseX = floor(xStart * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
         int i;
@@ -3975,6 +3235,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
 
             // Draw the characters.
             [self constructAndDrawRunsForLine:buf
+                                     bidiInfo:nil
                            externalAttributes:nil
                               sourceLineNumer:y
                             displayLineNumber:y
@@ -4096,6 +3357,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     [self reallyDrawCursor:cursor
            backgroundColor:cursorBackgroundColor
                         at:VT100GridCoordMake(_copyModeCursorCoord.x, _copyModeCursorCoord.y - _numberOfScrollbackLines)
+            coordIsLogical:NO
                    outline:NO
              virtualOffset:virtualOffset];
 }
@@ -4118,6 +3380,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
         NSRect rect = [self reallyDrawCursor:cursor
                              backgroundColor:cursorBackgroundColor
                                           at:_cursorCoord
+                              coordIsLogical:YES
                                      outline:outline
                                virtualOffset:virtualOffset];
 
@@ -4169,11 +3432,39 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     }
 }
 
+// This is intended to transform the cursor coordinate for bidi lines.
+- (VT100GridCoord)coordinateByTransformingScreenCoordinateForRTL:(VT100GridCoord)screenCoord {
+    iTermBidiDisplayInfo *bidiInfo = [self.delegate drawingHelperBidiInfoForLine:screenCoord.y + _numberOfScrollbackLines];
+    if (!bidiInfo) {
+        return screenCoord;
+    }
+    if (screenCoord.x < 0 || bidiInfo.numberOfCells == 0) {
+        return screenCoord;
+    }
+    const int numberOfCells = bidiInfo.numberOfCells;
+    if (screenCoord.x >= numberOfCells) {
+        const int offset = 0;
+        // Cursor is logically after the last non-space character.
+        if ([bidiInfo.rtlIndexes containsIndex:numberOfCells - 1]) {
+            // Cursor follows an RTL run. Place it left of the last character.
+            return VT100GridCoordMake(MAX(0, bidiInfo.lut[numberOfCells - 1] - offset), screenCoord.y);
+        } else {
+            // The line ends with LTR so place it right of last character.
+            const int width = _gridSize.width;
+            return VT100GridCoordMake(MIN(width, bidiInfo.lut[numberOfCells - 1] + offset + 1), screenCoord.y);
+        }
+    }
+    // Cursor is somewhere in the bidi lookup table.
+    return VT100GridCoordMake(bidiInfo.lut[screenCoord.x], screenCoord.y);
+}
+
 - (NSRect)reallyDrawCursor:(iTermCursor *)cursor
            backgroundColor:(NSColor *)backgroundColor
-                        at:(VT100GridCoord)cursorCoord
+                        at:(VT100GridCoord)nominalCursorCoord
+            coordIsLogical:(BOOL)coordIsLogical
                    outline:(BOOL)outline
              virtualOffset:(CGFloat)virtualOffset {
+    const VT100GridCoord cursorCoord = coordIsLogical ? [self coordinateByTransformingScreenCoordinateForRTL:nominalCursorCoord] : nominalCursorCoord;
     // Get the character that's under the cursor.
     const screen_char_t *theLine;
     if (cursorCoord.y >= 0) {
@@ -4385,6 +3676,42 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     }
 }
 
+// Takes bidi into account
+- (VT100GridCoordRange)visualCoordRangeForRect:(NSRect)rect {
+    const VT100GridCoordRange naive = [self coordRangeForRect:rect];
+    if (naive.start.x == 0 && naive.end.x >= self.gridSize.width - 1) {
+        // The rect is the full width so no need to mess around with bidi stuff.
+        return naive;
+    }
+    const int minY = floor(rect.origin.y / _cellSize.height);
+    const int maxY = ceil(NSMaxY(rect) / _cellSize.height);
+
+    VT100GridCoordRange convexHull = VT100GridCoordRangeInvalid;
+    const CGFloat sideMargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    for (int i = minY; i <= maxY; i++) {
+        const VT100GridCoordRange logicalRect = VT100GridCoordRangeMake(MAX(0, floor((rect.origin.x - sideMargin) / _cellSize.width)),
+                                                                        i,
+                                                                        MAX(0, ceil((NSMaxX(rect) - sideMargin) / _cellSize.width)),
+                                                                        i);
+        VT100GridCoordRange visualRect;
+        iTermBidiDisplayInfo *bidi = [self.delegate drawingHelperBidiInfoForLine:i];
+        if (bidi) {
+            NSRange visualRange = [bidi visualRangeForLogicalRange:NSMakeRange(logicalRect.start.x, logicalRect.end.x - logicalRect.start.x)];
+            visualRect.start.x = visualRange.location;
+            visualRect.end.x = NSMaxRange(visualRange);
+            visualRect.start.y = logicalRect.start.y;
+            visualRect.end.y = logicalRect.end.y;
+        } else {
+            visualRect = logicalRect;
+        }
+        convexHull = VT100GridCoordRangeUnionBoxes(convexHull, visualRect);
+    }
+    if (VT100GridCoordRangeEqualsCoordRange(convexHull, VT100GridCoordRangeInvalid)) {
+        return naive;
+    }
+   return convexHull;
+}
+
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect {
     return VT100GridCoordRangeMake(MAX(0, floor((rect.origin.x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width)),
                                    floor(rect.origin.y / _cellSize.height),
@@ -4562,9 +3889,12 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     iTermRectClip(innerRect, virtualOffset);
 
     const screen_char_t *line = [self lineAtIndex:row isFirst:nil];
-    id<iTermExternalAttributeIndexReading> eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:row];
+    iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:row];
+    const BOOL rtlFound = metadata.rtlFound;
+    id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
 
     [self constructAndDrawRunsForLine:line
+                             bidiInfo:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:row] : nil
                    externalAttributes:eaIndex
                       sourceLineNumer:row
                     displayLineNumber:row
@@ -4648,6 +3978,24 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
 
 - (NSColor *)cursorColorByDimmingSmartColor:(NSColor *)color {
     return [_colorMap colorByDimmingTextColor:color];
+}
+
+#pragma mark - iTermAttributedStringBuilderDelegate
+
+- (NSColor *)colorForCode:(int)theIndex
+                    green:(int)green
+                     blue:(int)blue
+                colorMode:(ColorMode)theMode
+                     bold:(BOOL)isBold
+                    faint:(BOOL)isFaint
+             isBackground:(BOOL)isBackground {
+    return [self.delegate drawingHelperColorForCode:theIndex
+                                              green:green
+                                               blue:blue
+                                          colorMode:theMode
+                                               bold:isBold
+                                              faint:isFaint
+                                       isBackground:isBackground];
 }
 
 @end

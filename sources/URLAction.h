@@ -38,8 +38,9 @@ typedef NS_ENUM(NSInteger, URLActionType) {
 // holds an SCPPath.
 @property(nonatomic, readonly) id identifier;
 
-// Always set. The range of |string| on screen.
-@property(nonatomic, assign) VT100GridWindowedRange range;
+// These two are always set. The range of |string|.
+@property(nonatomic, assign) VT100GridWindowedRange logicalRange;
+@property(nonatomic, assign) VT100GridWindowedRange visualRange;
 
 // For kURLActionOpenExistingFile, the full path the the file.
 @property(nonatomic, copy) NSString *fullPath;

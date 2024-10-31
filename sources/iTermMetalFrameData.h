@@ -192,7 +192,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats
                            histograms:(NSArray<iTermHistogram *> *)aggregateHistograms
-                                owner:(NSString *)owner;
+                                owner:(NSString *)owner
+                           additional:(NSString *)additional;
 
 - (__kindof iTermMetalRendererTransientState * _Nullable)transientStateForRenderer:(NSObject *)renderer;
 - (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer;

@@ -9,6 +9,8 @@
 #import "iTermMetadata.h"
 #import "iTermPromise.h"
 
+@class iTermBidiDisplayInfo;
+
 NS_ASSUME_NONNULL_BEGIN
 
 typedef struct {
@@ -22,12 +24,14 @@ typedef struct {
     // width_for_double_width_characters_cache.
     // This is actually NSMutableIndexSet but to avoid race conditions we expose it as NSIndexSet.
     NSIndexSet *_Nullable double_width_characters;
+    iTermBidiDisplayInfo *_Nullable bidi_display_info;
     int width_for_double_width_characters_cache;
 } LineBlockMetadata;
 
 typedef struct {
     LineBlockMetadata *metadata;
     NSMutableIndexSet * _Nullable mutableDoubleWidthCharacters;
+    iTermBidiDisplayInfo *_Nullable mutableBidiDisplayInfo;
 } LineBlockMutableMetadata;
 
 // Don't access this directly. Use the functions below.
@@ -47,7 +51,8 @@ NS_INLINE LineBlockMutableMetadata iTermLineBlockMetadataProvideGetMutable(iTerm
     }
     return (LineBlockMutableMetadata) {
         .metadata = provider._metadata,
-        .mutableDoubleWidthCharacters = (NSMutableIndexSet *) provider._metadata->double_width_characters
+        .mutableDoubleWidthCharacters = (NSMutableIndexSet *) provider._metadata->double_width_characters,
+        .mutableBidiDisplayInfo = provider._metadata->bidi_display_info,
     };
 }
 
@@ -133,10 +138,14 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 
 // Appends to the last entry already in the array.
 // numEntries > first
-- (void)appendToLastLine:(iTermImmutableMetadata *)metadataToAppend
-          originalLength:(int)originalLength
-        additionalLength:(int)additionalLength
-            continuation:(screen_char_t)continuation;
+- (const iTermMetadata *)appendToLastLine:(iTermImmutableMetadata *)metadataToAppend
+                           originalLength:(int)originalLength
+                         additionalLength:(int)additionalLength
+                             continuation:(screen_char_t)continuation;
+
+- (void)setBidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo
+             atLine:(int)line
+           rtlFound:(BOOL)rtlFound;
 
 // Returns a provider for the `i`th entry. From the provider, you can get a mutable object.
 // i >= first && i < numEntries
@@ -145,6 +154,8 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 // Replace the external attributes in the last entry.
 // numEntries > first
 - (void)setLastExternalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex;
+
+- (void)setRTLFound:(BOOL)rtlFound atIndex:(NSInteger)index;
 
 // Remove the first entry (by incrementing the `first` pointer and freeing
 // associated memory).

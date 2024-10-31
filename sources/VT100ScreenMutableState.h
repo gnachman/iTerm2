@@ -14,6 +14,7 @@
 @protocol iTermEchoProbeDelegate;
 @protocol iTermOrderedToken;
 @class iTermTokenExecutor;
+@class TmuxHistory;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -104,15 +105,25 @@ NS_ASSUME_NONNULL_BEGIN
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
 // buffer may change.
 - (void)appendStringAtCursor:(NSString *)string;
+
 - (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                length:(int)len
-               externalAttributeIndex:(id<iTermExternalAttributeIndexReading> _Nullable)externalAttributes;
+               externalAttributeIndex:(id<iTermExternalAttributeIndexReading> _Nullable)externalAttributes
+                             rtlFound:(BOOL)rtlFound;
+
 - (void)appendTabAtCursor:(BOOL)setBackgroundColors;
+
 - (void)appendScreenChars:(const screen_char_t *)line
                       length:(int)length
       externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
-             continuation:(screen_char_t)continuation;
+             continuation:(screen_char_t)continuation
+                 rtlFound:(BOOL)rtlFound;
+
 - (void)appendBannerMessage:(NSString *)message;
+
+#pragma mark Bidi
+
+- (void)populateRTLStateIfNeeded;
 
 #pragma mark Erase
 
@@ -395,7 +406,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 // Sets the primary grid's contents and scrollback history. `history` is an array of NSData
 // containing screen_char_t's. It contains a bizarre workaround for tmux bugs.
-- (void)setHistory:(NSArray<NSData *> *)history;
+- (void)setHistory:(TmuxHistory *)history;
 
 // Sets the alt grid's contents. `lines` is NSData with screen_char_t's.
 - (void)setAltScreen:(NSArray<NSData *> *)lines;

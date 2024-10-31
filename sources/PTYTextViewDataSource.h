@@ -166,4 +166,6 @@
 - (void)addSavedIntervalTreeObjects:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs
                            baseLine:(long long)baseLine;
 - (iTermSearchEngine *)searchEngine;
+- (iTermBidiDisplayInfo *)bidiInfoForLine:(int)line;
+
 @end

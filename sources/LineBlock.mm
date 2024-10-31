@@ -87,23 +87,6 @@ static dispatch_queue_t gDeallocQueue;
 - (instancetype)init NS_UNAVAILABLE;
 @end
 
-typedef struct {
-    // Is this structure valid?
-    BOOL found;
-
-    // Offset of the start of the wrapped line from bufferStart.
-    int prev;
-
-    // How many empty lines to skip at prev.
-    int numEmptyLines;
-
-    // Raw line number.
-    int index;
-
-    // Length of the raw line.
-    int length;
-} LineBlockLocation;
-
 static NSString *LineBlockLocationDescription(LineBlockLocation location) {
     return [NSString stringWithFormat:@"<LineBlockLocation found=%@ prev=%@ numEmptyLines=%@ index=%@ length=%@>",
             @(location.found),
@@ -373,14 +356,19 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     if (width < 2) {
         return;
     }
-    NSIndexSet *actual = [metadata->double_width_characters copy];
-    if (!actual) {
-        return;
+
+    [self sanityCheckBidiDisplayInfoForRawLine:i];
+    
+    {
+        NSIndexSet *actual = [metadata->double_width_characters copy];
+        if (!actual) {
+            return;
+        }
+        NSIndexSet *expected = [self doubleWidthCharacterCacheWithStartingOffset:i > 0 ? cumulative_line_lengths[i - 1] : 0
+                                                                          length:[self lengthOfRawLine:i]
+                                                                           width:width];
+        ITAssertWithMessage([actual isEqualToIndexSet:expected], @"actual=%@ expected=%@", actual, expected);
     }
-    NSIndexSet *expected = [self doubleWidthCharacterCacheWithStartingOffset:i > 0 ? cumulative_line_lengths[i - 1] : 0
-                                                                      length:[self lengthOfLine:i]
-                                                                       width:width];
-    ITAssertWithMessage([actual isEqualToIndexSet:expected], @"actual=%@ expected=%@", actual, expected);
 }
 
 - (NSString *)description {
@@ -711,6 +699,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                                           continuation:&continuation
                                   isStartOfWrappedLine:NULL
                                               metadata:&metadata
+                                              bidiInfo:NULL
                                             lineOffset:NULL];
 
     return [self rawSpaceUsed] - offset;
@@ -780,6 +769,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     //
     // This can happen in practice if the now-empty line being appended formerly had some stuff
     // but that stuff was erased and the EOL_SOFT was left behind.
+    BOOL didFindRTL = NO;
     if (is_partial && !(!partial && length == 0)) {
         // append to an existing line
         ITAssertWithMessage(cll_entries > 0, @"is_partial but has no entries");
@@ -805,15 +795,17 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
             originalLength -= start;
         }
         cert.mutableCumulativeLineLengths[cll_entries - 1] += length;
-        [_metadataArray appendToLastLine:&lineMetadata
-                          originalLength:originalLength
-                        additionalLength:length
-                            continuation:continuation];
+        const iTermMetadata *amendedMetadata = [_metadataArray appendToLastLine:&lineMetadata
+                                                                 originalLength:originalLength
+                                                               additionalLength:length
+                                                                   continuation:continuation];
+        didFindRTL = amendedMetadata->rtlFound;
 #ifdef TEST_LINEBUFFER_SANITY
         [self checkAndResetCachedNumlines:@"appendLine partial case" width:width];
 #endif
     } else {
         // add a new line
+        didFindRTL = lineMetadata.rtlFound;
         [self _appendCumulativeLineLength:(space_used + length)
                                  metadata:lineMetadata
                              continuation:continuation
@@ -831,9 +823,18 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
 #endif
     }
     is_partial = partial;
-
+    if (didFindRTL) {
+        [self didFindRTLInLine:cll_entries - 1 cert:cert];
+    }
     iTermLineBlockDidChange(self, "append line");
     return YES;
+}
+
+- (void)didFindRTLInLine:(int)line cert:(id<iTermLineBlockMutationCertificate>)cert {
+    const LineBlockMetadata *existing = [_metadataArray metadataAtIndex:line];
+    if (!existing->lineMetadata.rtlFound) {
+        [_metadataArray setRTLFound:YES atIndex:line];
+    }
 }
 
 // Only used by tests
@@ -1108,11 +1109,16 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                        continuation:NULL
                isStartOfWrappedLine:NULL
                            metadata:(iTermImmutableMetadata *)&metadata
+                           bidiInfo:NULL
                          lineOffset:&lineOffset];
     iTermMetadata result;
     iTermMetadataInitCopyingSubrange(&result, (iTermImmutableMetadata *)&metadata, lineOffset, width);
     iTermMetadataAutorelease(result);
     return iTermMetadataMakeImmutable(result);
+}
+
+- (iTermBidiDisplayInfo *)bidiInfoForLineNumber:(int)lineNum width:(int)width {
+    return [self _bidiInfoForLineNumber:lineNum width:width];
 }
 
 - (const screen_char_t *)getWrappedLineWithWrapWidth:(int)width
@@ -1156,6 +1162,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                     continuation:(screen_char_t *)continuationPtr
             isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
                         metadata:(out iTermImmutableMetadata *)metadataPtr
+                        bidiInfo:(out iTermBidiDisplayInfo **)bidiInfoPtr
                       lineOffset:(out int *)lineOffset {
     const screen_char_t *bufferStart = _characterBuffer.pointer + _startOffset;
     int offset = [self cacheAwareOffsetOfWrappedLineInBuffer:location
@@ -1218,6 +1225,10 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     if (metadataPtr) {
         iTermMetadataRetainAutorelease(md->lineMetadata);
         *metadataPtr = iTermMetadataMakeImmutable(md->lineMetadata);
+    }
+    if (bidiInfoPtr) {
+        *bidiInfoPtr = [self subBidiInfo:md->bidi_display_info
+                                   range:NSMakeRange(offset, width) width:width];
     }
     if (lineOffset) {
         *lineOffset = offset;
@@ -1327,6 +1338,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                           continuation:continuationPtr
                                   isStartOfWrappedLine:isStartOfWrappedLine
                                               metadata:metadataPtr
+                                              bidiInfo:NULL
                                             lineOffset:NULL];
     ITAssertWithMessage(*lineLength >= 0, @"Length is negative %@", @(*lineLength));
 
@@ -1349,6 +1361,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     screen_char_t continuation = { 0 };
     int eol = 0;
     const screen_char_t *chunk = _characterBuffer.pointer + _startOffset;
+    iTermBidiDisplayInfo *bidiInfo = nil;
     const int offset = [self _wrappedLineWithWrapWidth:width
                                               location:location
                                                lineNum:&mutableLineNum
@@ -1358,13 +1371,15 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                           continuation:&continuation
                                   isStartOfWrappedLine:NULL
                                               metadata:&metadata
+                                              bidiInfo:&bidiInfo
                                             lineOffset:NULL];
 
     ;
     ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:chunk + offset
                                                           length:length
                                                         metadata:metadata
-                                                    continuation:continuation];
+                                                    continuation:continuation
+                                                        bidiInfo:bidiInfo];
     return [sca paddedToLength:paddedSize eligibleForDWC:eligibleForDWC];
 }
 
@@ -1632,7 +1647,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         return 0;
     }
     const int index = cll_entries - 1;
-    return [self getRawLineLength:index];
+    return [self lengthOfRawLine:index];
 }
 
 - (int)lengthOfLastLineWrappedToWidth:(int)width {
@@ -1655,15 +1670,31 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return (numLines - y);
 }
 
-- (int)getRawLineLength:(int)linenum {
-    ITAssertWithMessage(linenum < cll_entries && linenum >= 0, @"Out of bounds");
-    int prev;
-    if (linenum == 0) {
-        prev = 0;
-    } else {
-        prev = cumulative_line_lengths[linenum-1] - self.bufferStartOffset;
+- (ScreenCharArray *)lastRawLine {
+    if (cll_entries <= _firstEntry) {
+        return nil;
     }
-    return cumulative_line_lengths[linenum] - self.bufferStartOffset - prev;
+    const LineBlockMetadata *md = [_metadataArray metadataAtIndex:cll_entries - 1];
+
+    return [[ScreenCharArray alloc] initWithLine:[self rawLine:cll_entries - 1]
+                                          length:[self lengthOfLastLine]
+                                        metadata:iTermMetadataMakeImmutable(md->lineMetadata)
+                                    continuation:md->continuation];
+}
+
+- (int)lengthOfRawLine:(int)linenum {
+    if (cll_entries == 0) {
+        return 0;
+    }
+    ITAssertWithMessage(linenum < cll_entries && linenum >= _firstEntry, @"Out of bounds");
+
+    int offset = 0;
+    if (linenum == _firstEntry) {
+        offset = _startOffset;
+    } else {
+        offset = cumulative_line_lengths[linenum - 1];
+    }
+    return cumulative_line_lengths[linenum] - offset;
 }
 
 - (const screen_char_t*)rawLine:(int)linenum {
@@ -1810,6 +1841,26 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     assert(_metadataArray.first == _firstEntry);
     assert(_metadataArray.numEntries == cll_entries);
     return orig_n - n;
+}
+
+- (void)reloadBidiInfo {
+    [_metadataArray willMutate];
+    [self reallyReloadBidiInfo];
+}
+
+- (void)setBidiForLastRawLine:(iTermBidiDisplayInfo *)bidi {
+    assert(cll_entries > 0);
+    [_metadataArray setBidiInfo:bidi atLine:cll_entries - 1 rtlFound:bidi != nil];
+}
+
+- (void)eraseRTLStatusInAllCharacters {
+    if (cll_entries == 0) {
+        return;
+    }
+    screen_char_t *c = _characterBuffer.mutablePointer;
+    for (int i = self.bufferStartOffset; i < cumulative_line_lengths[cll_entries - 1]; i++) {
+        c[i].rtlStatus = RTLStatusUnknown;
+    }
 }
 
 // self and other will have a common ancestor by following `owner`. It may be like:
@@ -2097,35 +2148,6 @@ static int CoreSearch(NSString *needle,
         *rangeOut = range;
     }
     return result;
-}
-
-// This may return a value for the next cell if `cellOffset` points at something without a corresponding
-// code point, such as a DWC_RIGHT.
-static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offset with this cell offset
-                                     const int *deltas,  // indexed by code point
-                                     int numCodePoints) {
-    // `deltas[i] + i` gives the cell offset for UTF-16 offset `i`.
-    // Example:
-    //
-    //         0  1  2  3  4  5  6  7  8  9  A
-    // cells   a  b  -  c  -  d  e  -  f  g
-    // utf-16  a  b  c  d  +  +  e  f  +  +  g         // + means combining mark
-    // deltas  0  0  1  2  1  0  0  1  0 -1 -1
-    //
-    // An index `i` into utf-16 can be converted to an index into cells by adding `deltas[i]`.
-    // To go in reverse is more difficult. Starting with an index in cells doesn't give you a
-    // clue where to look in deltas. There can easily be more cells than deltas (e.g., lots of
-    // DWCs and no combining marks).
-    //
-    // You could do a binary search but I haven't implemented it yet because it
-    // adds risk and this is fast enough.
-    for (int utf16Index = 0; utf16Index < numCodePoints; utf16Index++) {
-        const int cellIndex = utf16Index + deltas[utf16Index];
-        if (cellIndex >= cellOffset) {
-            return utf16Index;
-        }
-    }
-    return numCodePoints;
 }
 
 #if DEBUG_SEARCH
@@ -2458,7 +2480,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
                         break;
                     }
                     ResultRange *range = nil;
-                    const int lineLength = [self lengthOfLine:entry + i];
+                    const int lineLength = [self lengthOfRawLine:entry + i];
                     if (i == 0) {
                         // For the first line of the query:
                         // If there were multiple results use the first one that extends to the end.
@@ -2638,18 +2660,10 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
     return self.rawSpaceUsed - self.bufferStartOffset;
 }
 
-- (int)lengthOfLine:(int)lineNumber {
-    if (lineNumber == 0) {
-        return cumulative_line_lengths[0];
-    } else {
-        return cumulative_line_lengths[lineNumber] - cumulative_line_lengths[lineNumber - 1];
-    }
-}
-
 - (int)numberOfTrailingEmptyLines {
     int count = 0;
     for (int i = cll_entries - 1; i >= _firstEntry; i--) {
-        if ([self lengthOfLine:i] == 0) {
+        if ([self lengthOfRawLine:i] == 0) {
             count++;
         } else {
             break;
@@ -2661,7 +2675,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 - (int)numberOfLeadingEmptyLines {
     int count = 0;
     for (int i = _firstEntry; i < cll_entries; i++) {
-        if ([self lengthOfLine:i] == 0) {
+        if ([self lengthOfRawLine:i] == 0) {
             count++;
         } else {
             break;

@@ -26,6 +26,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) CGFloat verticalOffset;
 
 - (void)setGlyphKeysData:(iTermGlyphKeyData*)glyphKeysData
+           glyphKeyCount:(NSUInteger)glyphKeyCount
                    count:(int)count
           attributesData:(iTermAttributesData *)attributesData
                      row:(int)row

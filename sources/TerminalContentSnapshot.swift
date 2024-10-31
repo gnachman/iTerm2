@@ -31,6 +31,7 @@ class TerminalContentSnapshot: NSObject, iTermTextDataSource {
         self.cumulativeOverflow = cumulativeOverflow
         self.lineBuffer = lineBuffer.copy()
         grid.appendLines(grid.size.height, to: self.lineBuffer)
+        self.lineBuffer.commitLastBlock()
     }
 
     func screenCharArray(forLine line: Int32) -> ScreenCharArray {

@@ -11,6 +11,7 @@
 #import "iTermMarkRenderer.h"
 
 @class ScreenCharArray;
+@class iTermBidiDisplayInfo;
 @class iTermKittyImageRun;
 @class iTermMetalImageRun;
 
@@ -21,6 +22,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 // iTermMetalGlyphKey
 @property (nonatomic, strong) iTermGlyphKeyData *keysData;
+@property (nonatomic) NSUInteger glyphKeyCount;
 
 // iTermMetalGlyphAttributes
 @property (nonatomic, strong) iTermAttributesData *attributesData;
