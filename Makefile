@@ -112,14 +112,14 @@ fatlibsixel: force armsixel x86libsixel
 # go first and have x86 depend on it. (The build is parallel.)
 configure-armopenssl: force
 	mkdir -p submodules/openssl/build-arm
-	cd submodules/openssl/build-arm && ../Configure darwin64-arm64-cc -Wl,-ld_classic && $(MAKE) build_generated
+	cd submodules/openssl/build-arm && ../Configure darwin64-arm64-cc no-asm -Wl,-ld_classic && $(MAKE) clean && $(MAKE) build_generated
 
 armopenssl: force configure-armopenssl
 	cd submodules/openssl/build-arm && $(MAKE) libcrypto.a libssl.a
 
 configure-x86openssl: force configure-armopenssl
 	mkdir -p submodules/openssl/build-x86
-	cd submodules/openssl/build-x86 && ../Configure darwin64-x86_64-cc -Wl,-ld_classic && $(MAKE) build_generated
+	cd submodules/openssl/build-x86 && ../Configure darwin64-x86_64-cc -Wl,-ld_classic &&  $(MAKE) clean && $(MAKE) build_generated
 
 x86openssl: force configure-x86openssl
 	cd submodules/openssl/build-x86 && $(MAKE) libcrypto.a libssl.a

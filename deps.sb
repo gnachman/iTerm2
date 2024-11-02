@@ -1,3 +1,4 @@
 (version 1)
 (allow default)
 (deny file* (subpath "/opt/homebrew/Cellar"))
+(allow file* (subpath "/opt/homebrew/Cellar/perl/"))
