@@ -30,7 +30,11 @@
 		</data>
 		<key>Resources/Info.plist</key>
 		<data>
-		ztzUsAzGrGsoXoq95vAL+mkUcJU=
+		FfD7H8+XS9FXy5cS0hcWgwVGsZg=
+		</data>
+		<key>Resources/LAB.tiff</key>
+		<data>
+		V2Xwe/AEXUpdwkc9gMv31LNQe9w=
 		</data>
 		<key>Resources/NoColor.tiff</key>
 		<data>
@@ -151,7 +155,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			+03Fe1NsVhQOSRebH5hryQlaqzcLYhdUNxr9rp2x1qE=
+			yclxgKVUmrJsVszCns7B7LVPEnqimbojGpVODI2URkw=
+			</data>
+		</dict>
+		<key>Resources/LAB.tiff</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			u4mFJMgO2FR0+ieVLXrPqJ80vp2rdh9hqtWAQgGTUWo=
 			</data>
 		</dict>
 		<key>Resources/NoColor.tiff</key>
