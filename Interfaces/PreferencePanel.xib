@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23094" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23504" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23094"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23504"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -4473,7 +4473,7 @@ DQ
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ttF-JA-0vc">
                                                 <rect key="frame" x="132" y="234" width="157" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <string key="toolTip">When enabled, apps can cause this option key to send Esc+. Note that on some external keyboards left and right option keys are swapped.</string>
+                                                <string key="toolTip">When enabled, apps can cause this option key to send Esc+ using DECSET 1036. Note that on some external keyboards left and right option keys are swapped.</string>
                                                 <buttonCell key="cell" type="check" title="Apps can change this" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Xvy-v8-zjR">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
@@ -4520,7 +4520,7 @@ DQ
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UGZ-Vx-hCx">
                                                 <rect key="frame" x="132" y="184" width="157" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <string key="toolTip">When enabled, apps can cause this option key to send Esc+. Note that on some external keyboards left and right option keys are swapped.</string>
+                                                <string key="toolTip">When enabled, apps can cause this option key to send Esc+ using DECSET 1036. Note that on some external keyboards left and right option keys are swapped.</string>
                                                 <buttonCell key="cell" type="check" title="Apps can change this" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="cMx-85-ocB">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
