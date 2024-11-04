@@ -18127,7 +18127,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             static dispatch_once_t onceToken;
             dispatch_once(&onceToken, ^{
                 dateFormatter = [[NSDateFormatter alloc] init];
-                dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"yyyy-MM-dd hh.mm.ss.SSS"
+                dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:[iTermAdvancedSettingsModel logTimestampFormat]
                                                                            options:0
                                                                             locale:[NSLocale currentLocale]];
             });
