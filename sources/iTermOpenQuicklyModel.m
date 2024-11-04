@@ -164,7 +164,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     return term.window.title ?: @"";
 }
 
-// Returns a function PTYSession -> (Feature name, Feature value) that gives the value which most distinguishes sesssions from one another.
+// Returns a function PTYSession -> (Feature name, Feature value) that gives the value which most distinguishes sessions from one another.
 - (iTermTuple<NSString *, NSString *> *(^)(PTYSession *))detailFunctionForSessions:(NSArray<PTYSession *> *)sessions {
     iTermTuple<NSString *, NSString *> *(^pwd)(PTYSession *) = ^iTermTuple<NSString *, NSString *> *(PTYSession *session) {
         return [iTermTuple tupleWithObject:@"Directory" andObject:session.variablesScope.path];
