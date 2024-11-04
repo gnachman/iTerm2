@@ -6,7 +6,7 @@ Get Selected Color Preset
 =========================
 
 This script prints to stdout the name of the color preset the current
-sesssion is using, or `None` if none of them matches.
+session is using, or `None` if none of them matches.
 
 To see the output you can either run `pip3 install iterm2` and then execute
 this script from the command line or run it from the **Scripts** menu and view

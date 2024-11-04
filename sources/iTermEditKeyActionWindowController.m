@@ -479,7 +479,7 @@ const CGFloat sideMarginWidth = 40;
     (void)[_comboView selectItemWithTag:self.action];
 
     _applyButton = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
-    [_applyButton addItemWithTitle:@"Apply to current sesssion"];
+    [_applyButton addItemWithTitle:@"Apply to current session"];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeCurrentSession;
     [_applyButton addItemWithTitle:@"Apply to all sessions"];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeAllSessions;
@@ -487,7 +487,7 @@ const CGFloat sideMarginWidth = 40;
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeUnfocusedSessions;
     [_applyButton addItemWithTitle:@"Apply to all sessions in window"];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeAllInWindow;
-    [_applyButton addItemWithTitle:@"Apply to all sesssions in tab"];
+    [_applyButton addItemWithTitle:@"Apply to all sessions in tab"];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeAllInTab;
     [_applyButton addItemWithTitle:@"Apply to broadcasted-to sessions"];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeBroadcasting;
