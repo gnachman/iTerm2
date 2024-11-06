@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermMetalGlyphKey.h"
+#import "NSFont+iTerm.h"
 
 namespace iTerm2 {
     template <class T>
@@ -33,13 +34,27 @@ namespace iTerm2 {
         }
 
         inline bool operator==(const GlyphKey &other) const {
-            return (_repr.code == other._repr.code &&
-                    _repr.combiningSuccessor == other._repr.combiningSuccessor &&
-                    _repr.isComplex == other._repr.isComplex &&
-                    _repr.boxDrawing == other._repr.boxDrawing &&
-                    _repr.thinStrokes == other._repr.thinStrokes &&
-                    _repr.typeface == other._repr.typeface &&
-                    _repr.antialiased == other._repr.antialiased);
+            if (_repr.type != other._repr.type ||
+                _repr.typeface != other._repr.typeface ||
+                _repr.visualColumn != other._repr.visualColumn ||
+                _repr.thinStrokes != other._repr.thinStrokes) {
+                return false;
+            }
+#warning TODO: I removed antialiased but it does seem important.
+            switch (_repr.type) {
+                case iTermMetalGlyphTypeRegular:
+                    return (_repr.payload.regular.code == other._repr.payload.regular.code &&
+                            _repr.payload.regular.combiningSuccessor == other._repr.payload.regular.combiningSuccessor &&
+                            _repr.payload.regular.isComplex == other._repr.payload.regular.isComplex &&
+                            _repr.payload.regular.boxDrawing == other._repr.payload.regular.boxDrawing);
+                case iTermMetalGlyphTypeDecomposed:
+                    return (_repr.payload.decomposed.fontID == other._repr.payload.decomposed.fontID &&
+                            _repr.payload.decomposed.fakeBold == other._repr.payload.decomposed.fakeBold &&
+                            _repr.payload.decomposed.fakeItalic == other._repr.payload.decomposed.fakeItalic &&
+                            _repr.payload.decomposed.glyphNumber == other._repr.payload.decomposed.glyphNumber &&
+                            NSEqualPoints(_repr.payload.decomposed.position,
+                                          other._repr.payload.decomposed.position));
+            }
         }
 
         inline std::size_t get_hash() const {
@@ -47,29 +62,52 @@ namespace iTerm2 {
         }
 
         NSString *description() const {
-            return [NSString stringWithFormat:@"[GlyphKey: code=%@ combiningSuccessor=%@ complex=%@ boxdrawing=%@ thinStrokes=%@ drawable=%@ typeface=%@ antialiased=%@]",
-                    @(_repr.code),
-                    @(_repr.combiningSuccessor),
-                    @(_repr.isComplex),
-                    @(_repr.boxDrawing),
-                    @(_repr.thinStrokes),
-                    @(_repr.drawable),
-                    @(_repr.typeface),
-                    @(_repr.antialiased)];
+            switch (_repr.type) {
+                case iTermMetalGlyphTypeRegular:
+                    return [NSString stringWithFormat:@"[GlyphKey regular: code=%@ combiningSuccessor=%@ complex=%@ boxdrawing=%@ thinStrokes=%@ drawable=%@ typeface=%@]",
+                            @(_repr.payload.regular.code),
+                            @(_repr.payload.regular.combiningSuccessor),
+                            @(_repr.payload.regular.isComplex),
+                            @(_repr.payload.regular.boxDrawing),
+                            @(_repr.thinStrokes),
+                            @(_repr.payload.regular.drawable),
+                            iTermGlyphTypefaceString(&_repr)];
+                case iTermMetalGlyphTypeDecomposed:
+                    return [NSString stringWithFormat:@"[GlyphKey decomposed: font=%@ fakeBold=%@ fakeItalic=%@ glyph=%@ thinStrokes=%@ typeface=%@]",
+                            [NSFont it_fontWithMetalID:_repr.payload.decomposed.fontID],
+                            @(_repr.payload.decomposed.fakeBold),
+                            @(_repr.payload.decomposed.fakeItalic),
+                            @(_repr.payload.decomposed.glyphNumber),
+                            @(_repr.thinStrokes),
+                            iTermGlyphTypefaceString(&_repr)];
+            }
         }
 
     private:
         inline std::size_t compute_hash() const {
             std::size_t seed = 0;
 
-            hash_combine(seed, _repr.code);
-            hash_combine(seed, _repr.combiningSuccessor);
-            hash_combine(seed, _repr.isComplex);
-            hash_combine(seed, _repr.boxDrawing);
+            hash_combine(seed, _repr.type);
             hash_combine(seed, _repr.thinStrokes);
-            // No need to include _repr.drawable because we just skip those glyphs.
             hash_combine(seed, _repr.typeface);
-            hash_combine(seed, _repr.antialiased);
+            switch (_repr.type) {
+                case iTermMetalGlyphTypeRegular:
+                    // No need to include _repr.drawable because we just skip those glyphs.
+                    hash_combine(seed, _repr.payload.regular.code);
+                    hash_combine(seed, _repr.payload.regular.combiningSuccessor);
+                    hash_combine(seed, _repr.payload.regular.isComplex);
+                    hash_combine(seed, _repr.payload.regular.boxDrawing);
+                    break;
+
+                case iTermMetalGlyphTypeDecomposed:
+                    hash_combine(seed, _repr.payload.decomposed.fontID);
+                    hash_combine(seed, _repr.payload.decomposed.glyphNumber);
+                    hash_combine(seed, _repr.payload.decomposed.fakeBold);
+                    hash_combine(seed, _repr.payload.decomposed.fakeItalic);
+                    hash_combine(seed, _repr.payload.decomposed.position.x);
+                    hash_combine(seed, _repr.payload.decomposed.position.y);
+                    break;
+            }
 
             return seed;
         }

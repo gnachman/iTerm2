@@ -19,6 +19,7 @@
 #import "iTermBoxDrawingBezierCurveFactory.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
+#import "iTermCoreTextLineRenderingHelper.h"
 #import "iTermFindCursorView.h"
 #import "iTermGraphicsUtilities.h"
 #import "iTermImageInfo.h"
@@ -154,8 +155,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     BOOL _preferSpeedToFullLigatureSupport;
     NSMutableDictionary<NSNumber *, NSImage *> *_cachedMarks;
-
-    iTermAttributedStringBuilder *_attributedStringBuilder;
 }
 
 - (instancetype)init {
@@ -729,7 +728,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return _selectedCommandRegion.length > 0 && (line < 0 || !NSLocationInRange(line, _selectedCommandRegion));
 }
 
-- (NSColor *)unprocessedColorForBackgroundRun:(iTermBackgroundColorRun *)run
+- (NSColor *)unprocessedColorForBackgroundRun:(const iTermBackgroundColorRun *)run
                                enableBlending:(BOOL)enableBlending {
     NSColor *color;
     CGFloat alpha = _transparencyAlpha;
@@ -1731,17 +1730,18 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     DLog(@"row %f: %@", (initialPoint.y - virtualOffset) / self.cellSize.height, ScreenCharArrayToStringDebug(theLine, _gridSize.width));
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
-    NSArray<id<iTermAttributedString>> *attributedStrings = [_attributedStringBuilder attributedStringsForLine:theLine
-                                                                                                      bidiInfo:bidiInfo
-                                                                                            externalAttributes:eaIndex
-                                                                                                         range:indexRange
-                                                                                               hasSelectedText:bgselected
-                                                                                               backgroundColor:bgColor
-                                                                                                forceTextColor:forceTextColor
-                                                                                                      colorRun:colorRun
-                                                                                                   findMatches:matches
-                                                                                               underlinedRange:[self underlinedRangeOnLine:sourceLineNumber + _totalScrollbackOverflow]
-                                                                                                     positions:&positions];
+    NSArray<id<iTermAttributedString>> *attributedStrings =
+    [_attributedStringBuilder attributedStringsForLine:theLine
+                                              bidiInfo:bidiInfo
+                                    externalAttributes:eaIndex
+                                                 range:indexRange
+                                       hasSelectedText:bgselected
+                                       backgroundColor:bgColor
+                                        forceTextColor:forceTextColor
+                                              colorRun:colorRun
+                                           findMatches:matches
+                                       underlinedRange:[self underlinedRangeOnLine:sourceLineNumber + _totalScrollbackOverflow]
+                                             positions:&positions];
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_CONSTRUCTION]);
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_DRAW]);
@@ -2191,7 +2191,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     CGColorRef cgColor = (__bridge CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
 
     BOOL bold = [attributes[iTermBoldAttribute] boolValue];
-    BOOL fakeBold = [attributes[iTermFakeBoldAttribute] boolValue];
+    __block BOOL fakeBold = [attributes[iTermFakeBoldAttribute] boolValue];
     BOOL fakeItalic = [attributes[iTermFakeItalicAttribute] boolValue];
     BOOL antiAlias = !smear && [attributes[iTermAntiAliasAttribute] boolValue];
 
@@ -2213,7 +2213,6 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
     _replacementLineRefCache[proxy] = (__bridge id)lineRef;
 
-    CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
     CGContextRef cgContext = (CGContextRef) [ctx CGContext];
     CGContextSetShouldAntialias(cgContext, antiAlias);
     CGContextSetFillColorWithColor(cgContext, cgColor);
@@ -2235,62 +2234,24 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     const CGFloat ty = origin.y + _baselineOffset + _cellSize.height - virtualOffset;
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
                                                          c, -1.0,
-                                                         origin.x + xOriginsForCharacters[0], ty);
+                                                         origin.x, ty);
     CGContextSetTextMatrix(cgContext, textMatrix);
-
-    // The x origin of the column for the current cell. Initialize to -1 to ensure it gets set on
-    // the first pass through the position-adjusting loop.
-    CGFloat advanceAccumulator = 0;
     const BOOL verbose = NO;  // turn this on to debug character position problems.
     if (verbose) {
         NSLog(@"Begin drawing string: %@", attributedString.string);
     }
-    for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
-        CTRunRef run = CFArrayGetValueAtIndex(runs, j);
-        size_t length = CTRunGetGlyphCount(run);
-        const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
-        if (!buffer) {
-            NSMutableData *tempBuffer =
-            [[NSMutableData alloc] initWithLength:sizeof(CGGlyph) * length];
-            CTRunGetGlyphs(run, CFRangeMake(0, length), (CGGlyph *)tempBuffer.mutableBytes);
-            buffer = tempBuffer.mutableBytes;
-        }
 
-        NSMutableData *positionsBuffer =
-        [[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length];
-        CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)positionsBuffer.mutableBytes);
-        CGPoint *positions = positionsBuffer.mutableBytes;
-
-        NSMutableData *advancesBuffer =
-        [[NSMutableData alloc] initWithLength:sizeof(CGSize) * length];
-        CTRunGetAdvances(run, CFRangeMake(0, length), advancesBuffer.mutableBytes);
-        CGSize *advances = advancesBuffer.mutableBytes;
-
-        const CFIndex *glyphIndexToCharacterIndex = CTRunGetStringIndicesPtr(run);
-        if (!glyphIndexToCharacterIndex) {
-            NSMutableData *tempBuffer =
-            [[NSMutableData alloc] initWithLength:sizeof(CFIndex) * length];
-            CTRunGetStringIndices(run, CFRangeMake(0, length), (CFIndex *)tempBuffer.mutableBytes);
-            glyphIndexToCharacterIndex = (CFIndex *)tempBuffer.mutableBytes;
-        }
-
-        // Transform positions to put each grapheme cluster in its proper column.
-        // positions[glyphIndex].x needs to be transformed to subtract whatever horizontal advance
-        // was present earlier in the string.
-
-        if (verbose) {
-            NSLog(@"Begin run %@", @(j));
-        }
-        [self alignGlyphsToGridWithGlyphIndex:glyphIndexToCharacterIndex
-                                       length:length
-                        xOriginsForCharacters:xOriginsForCharacters
-                                    positions:positions
-                           advanceAccumulator:&advanceAccumulator
-                                     advances:advances
-                                          rtl:!!(CTRunGetStatus(run) & kCTRunStatusRightToLeft)
-                                      verbose:verbose];
-
-        CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
+    iTermCoreTextLineRenderingHelper *renderingHelper = [[iTermCoreTextLineRenderingHelper alloc] initWithLine:lineRef
+                                                                                                        string:attributedString.string];
+    [renderingHelper enumerateGridAlignedRunsWithColumnPositions:xOriginsForCharacters
+                                                     alignToZero:NO
+                                                         closure:^(CTRunRef run,
+                                                                   CTFontRef runFont,
+                                                                   const CGGlyph *buffer,
+                                                                   const NSPoint *positions,
+                                                                   const CFIndex *glyphIndexToCharacterIndex,
+                                                                   size_t length,
+                                                                   BOOL *stop) {
         if (!smear) {
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
 
@@ -2319,7 +2280,8 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             }
             CGContextTranslateCTM(cgContext, -radius - 0.5, 0);
         }
-    }
+    }];
+
     if (verbose) {
         NSLog(@"");
     }

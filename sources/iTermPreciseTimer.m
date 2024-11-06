@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTermHistogram.h"
+#import "iTermMalloc.h"
 #import "NSStringITerm.h"
 #include <assert.h>
 #include <CoreServices/CoreServices.h>
@@ -222,6 +223,12 @@ NSTimeInterval iTermPreciseTimerStatsGetStddev(iTermPreciseTimerStats *stats) {
             return sqrt(stats->m2 / (stats->n - 1));
         }
     }
+}
+
+iTermPreciseTimerStats *iTermPreciseTimerStatsCopy(const iTermPreciseTimerStats *source) {
+    iTermPreciseTimerStats *copy = iTermMalloc(sizeof(*source));
+    memmove(copy, source, sizeof(*source));
+    return copy;
 }
 
 void iTermPreciseTimerPeriodicLog(NSString *identifier,

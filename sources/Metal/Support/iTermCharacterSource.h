@@ -74,6 +74,16 @@
          useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
                           context:(CGContextRef)context;
 
+- (instancetype)initWithFontID:(unsigned int)fontID
+                      fakeBold:(BOOL)fakeBold
+                    fakeItalic:(BOOL)fakeItalic
+                   glyphNumber:(unsigned short)glyphNumber
+                      position:(NSPoint)position
+                    descriptor:(iTermCharacterSourceDescriptor *)descriptor
+                    attributes:(iTermCharacterSourceAttributes *)attributes
+                        radius:(int)radius
+                       context:(CGContextRef)context;
+
 - (iTermCharacterBitmap *)bitmapForPart:(int)part;
 
 @end

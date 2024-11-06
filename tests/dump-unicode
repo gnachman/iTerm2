@@ -86,7 +86,7 @@ def code_point_to_utf8_hex(code_point):
     code_point_int = int(code_point, 16)
     character = chr(code_point_int)
     utf8_bytes = character.encode('utf-8')
-    utf8_hex = f"({character}) " + ' '.join(['{:02x}'.format(b) for b in utf8_bytes])
+    utf8_hex = f"({sanitize(character)}) " + ' '.join(['{:02x}'.format(b) for b in utf8_bytes])
     return utf8_hex, character
 
 def code_point_to_utf16_hex(code_point):
@@ -111,9 +111,14 @@ def dump_ucs4(ucs4_list):
     print("UTF-16:", ' '.join(utf16_hexes))
     print("Characters:", ''.join(characters))
 
+def sanitize(char):
+    if ord(char) < 32:
+        return f'^{chr(ord(char) + ord("A"))}'
+    return f"\u200E{char}\u200E"
+
 def dump_string(s):
     # UCS-4 / UTF-32 code points
-    ucs4_code_points = [f"({char}) {hex(ord(char))[2:].zfill(4)}" for char in s]
+    ucs4_code_points = [f"({sanitize(char)}) {hex(ord(char))[2:].zfill(4)}" for char in s]
 
     # UTF-16 code points
     utf16_encoded = s.encode('utf-16le')
@@ -122,10 +127,10 @@ def dump_string(s):
     j = 0
     while i < len(utf16_encoded):
         if 0xD800 <= (utf16_encoded[i+1] << 8 | utf16_encoded[i]) <= 0xDBFF:  # surrogate pair
-            utf16_segments.append(f"({s[j]}) {hex(utf16_encoded[i+1] << 8 | utf16_encoded[i])[2:].zfill(4)} {hex(utf16_encoded[i+3] << 8 | utf16_encoded[i+2])[2:].zfill(4)}")
+            utf16_segments.append(f"({sanitize(s[j])}) {hex(utf16_encoded[i+1] << 8 | utf16_encoded[i])[2:].zfill(4)} {hex(utf16_encoded[i+3] << 8 | utf16_encoded[i+2])[2:].zfill(4)}")
             i += 4
         else:
-            utf16_segments.append(f"({s[j]}) {hex(utf16_encoded[i+1] << 8 | utf16_encoded[i])[2:].zfill(4)}")
+            utf16_segments.append(f"({sanitize(s[j])}) {hex(utf16_encoded[i+1] << 8 | utf16_encoded[i])[2:].zfill(4)}")
             i += 2
         j += 1
 
@@ -142,7 +147,7 @@ def dump_string(s):
             char_len = 3
         elif (utf8_encoded[i] & 0xC0) == 0xC0:
             char_len = 2
-        utf8_segments.append(f"({s[j]}) {' '.join(hex(utf8_encoded[i+k])[2:] for k in range(char_len))}")
+        utf8_segments.append(f"({sanitize(s[j])}) {' '.join(hex(utf8_encoded[i+k])[2:] for k in range(char_len))}")
         i += char_len
         j += 1
 

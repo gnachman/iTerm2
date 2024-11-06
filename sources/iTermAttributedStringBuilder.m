@@ -100,7 +100,7 @@ static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
                                                    BOOL inUnderlinedRange,
                                                    int index,
                                                    iTermTextColorContext *context,
-                                                   iTermBackgroundColorRun *colorRun,
+                                                   const iTermBackgroundColorRun *colorRun,
                                                    BOOL disableMinimumContrast) {
     NSColor *rawColor = nil;
     BOOL isMatch = NO;
@@ -211,7 +211,20 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 }
 
-@implementation iTermAttributedStringBuilder
+@implementation iTermAttributedStringBuilder {
+    BOOL _freeStatsOnDealloc;
+}
+
+- (void)dealloc {
+    if (_freeStatsOnDealloc) {
+        free(_stats.attrsForChar);
+        free(_stats.shouldSegment);
+        free(_stats.buildMutableAttributedString);
+        free(_stats.combineAttributes);
+        free(_stats.updateBuilder);
+        free(_stats.advances);
+    }
+}
 
 - (void)setColorMap:(iTermColorMap *)colorMap
                     reverseVideo:(BOOL)reverseVideo
@@ -268,7 +281,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                                  hasSelectedText:(BOOL)hasSelectedText
                                                  backgroundColor:(NSColor *)backgroundColor
                                                   forceTextColor:(NSColor *)forceTextColor
-                                                        colorRun:(iTermBackgroundColorRun *)colorRun
+                                                        colorRun:(const iTermBackgroundColorRun *)colorRun
                                                      findMatches:(NSData *)findMatches
                                                  underlinedRange:(NSRange)underlinedRange
                                                        positions:(CTVector(CGFloat) *)positions {
@@ -290,6 +303,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     };
     NSDictionary *previousImageAttributes = nil;
     iTermMutableAttributedStringBuilder *builder = [[iTermMutableAttributedStringBuilder alloc] init];
+    builder.startColumn = indexRange.location;
     builder.zippy = self.zippy;
     builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
     if (bidiInfo) {
@@ -459,6 +473,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                       previousImageAttributes:previousImageAttributes
                      combinedAttributesChanged:&combinedAttributesChanged]) {
             iTermPreciseTimerStatsStartTimer(_stats.buildMutableAttributedString);
+            builder.endColumn = i;
             id<iTermAttributedString> builtString = builder.attributedString;
             if (previousCharacterAttributes.underlineType ||
                 previousCharacterAttributes.strikethrough ||
@@ -473,6 +488,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 [attributedStrings addObject:builtString];
             }
             builder = [[iTermMutableAttributedStringBuilder alloc] init];
+            builder.startColumn = i;
             builder.zippy = self.zippy;
             builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
         }
@@ -482,7 +498,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         iTermPreciseTimerStatsMeasureAndAccumulate(_stats.shouldSegment);
 
         iTermPreciseTimerStatsStartTimer(_stats.combineAttributes);
-        if (combinedAttributesChanged) {
+        if (combinedAttributesChanged) {  // This implies that we segmented
             NSDictionary *combinedAttributes = [self dictionaryForCharacterAttributes:&characterAttributes];
             if (imageAttributes) {
                 combinedAttributes = [combinedAttributes dictionaryByMergingDictionary:imageAttributes];
@@ -511,6 +527,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     }
     if (builder.length) {
         iTermPreciseTimerStatsStartTimer(_stats.buildMutableAttributedString);
+        builder.endColumn = NSMaxRange(indexRange);
         id<iTermAttributedString> builtString = builder.attributedString;
         if (previousCharacterAttributes.underlineType ||
             previousCharacterAttributes.strikethrough ||
@@ -558,7 +575,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                           atIndex:(NSInteger)i
                    forceTextColor:(NSColor *)forceTextColor
                    forceUnderline:(BOOL)inUnderlinedRange
-                         colorRun:(iTermBackgroundColorRun *)colorRun
+                         colorRun:(const iTermBackgroundColorRun *)colorRun
                          drawable:(BOOL)drawable
                  textColorContext:(iTermTextColorContext *)textColorContext
                        attributes:(iTermCharacterAttributes *)attributes
@@ -856,6 +873,40 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
     return YES;
 }
+#warning The shit I do with stats is utter nonsense because I make a new copy for each frame
+- (void)copySettingsFrom:(iTermAttributedStringBuilder *)other
+                delegate:(id<iTermAttributedStringBuilderDelegate>)delegate {
+    if (!_stats.attrsForChar) {
+        _stats.attrsForChar = iTermPreciseTimerStatsCopy(other->_stats.attrsForChar);
+        _stats.shouldSegment = iTermPreciseTimerStatsCopy(other->_stats.shouldSegment);
+        _stats.buildMutableAttributedString = iTermPreciseTimerStatsCopy(other->_stats.buildMutableAttributedString);
+        _stats.combineAttributes = iTermPreciseTimerStatsCopy(other->_stats.combineAttributes);
+        _stats.updateBuilder = iTermPreciseTimerStatsCopy(other->_stats.updateBuilder);
+        _stats.advances = iTermPreciseTimerStatsCopy(other->_stats.advances);
+    }
 
-
+    _colorMap = other.colorMap;
+    _reverseVideo = other.reverseVideo;
+    _minimumContrast = other.minimumContrast;
+    _zippy = other.zippy;
+    _asciiLigaturesAvailable = other.asciiLigaturesAvailable;
+    _asciiLigatures = other.asciiLigatures;
+    _stats = other.stats;
+    _preferSpeedToFullLigatureSupport = other.preferSpeedToFullLigatureSupport;
+    _cellSize = other.cellSize;
+    _blinkingItemsVisible = other.blinkingItemsVisible;
+    _blinkAllowed = other.blinkAllowed;
+    _useNonAsciiFont = other.useNonAsciiFont;
+    _asciiAntiAlias = other.asciiAntiAlias;
+    _nonAsciiAntiAlias = other.nonAsciiAntiAlias;
+    _isRetina = other.isRetina;
+    _forceAntialiasingOnRetina = other.forceAntialiasingOnRetina;
+    _boldAllowed = other.boldAllowed;
+    _italicAllowed = other.italicAllowed;
+    _nonAsciiLigatures = other.nonAsciiLigatures;
+    _useNativePowerlineGlyphs = other.useNativePowerlineGlyphs;
+    _fontProvider = [other.fontProvider cloneFontProvider];
+    _fontTable = other.fontTable;
+    _delegate = delegate;
+}
 @end

@@ -128,8 +128,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 @end
 
+@interface iTermRegularCharacterSource: iTermCharacterSource
+@end
+
+@interface iTermGlyphCharacterSource: iTermCharacterSource
+@end
+
 @implementation iTermCharacterSource {
-    NSString *_string;
+@protected
     iTermCharacterSourceDescriptor *_descriptor;
     iTermCharacterSourceAttributes *_attributes;
     BOOL _antialiased;
@@ -139,21 +145,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
     // Large enough to hold glyphSize * maxParts in both horizontal and vertical direction.
     CGSize _size;
-    BOOL _boxDrawing;
-    BOOL _useNativePowerlineGlyphs;
     BOOL _postprocessed NS_AVAILABLE_MAC(10_14);
-    
-    CTLineRef _lineRefs[4];
+
     CGContextRef _context;
     // These have size _bytesPerRow * _numberOfRows.
     NSMutableArray<NSMutableData *> *_datas;
 
-    NSAttributedString *_attributedStrings[4];
     NSImage *_image;
-    NSMutableData *_glyphsData;
-    NSMutableData *_positionsBuffer;
     BOOL _haveDrawn;
-    CGImageRef _imageRef;
     NSArray<NSNumber *> *_parts;
     int _radius;
 
@@ -162,10 +161,12 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     NSInteger _nextIterationToDrawBackgroundFor;
     NSInteger _numberOfIterationsNeeded;
     iTermBitmapData *_postprocessedData;
-    BOOL _isAscii;
     // These metrics are for _context.
     NSInteger _bytesPerRow;
     NSInteger _numberOfRows;
+
+    BOOL _isEmoji;
+    BOOL _debug;
 }
 
 + (NSRect)boundingRectForCharactersInRange:(NSRange)range
@@ -203,21 +204,21 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (cache[key]) {
         return [cache[key] rectValue];
     }
-    
+
     const CGSize bigSize = CGSizeMake(round(pointSize * 10),
                                       round(pointSize * 10));
     iTermCharacterSourceDescriptor *descriptor = [iTermCharacterSourceDescriptor characterSourceDescriptorWithFontTable:fontTable
                                                                                                             asciiOffset:CGSizeZero
-                                                                                                         glyphSize:bigSize
-                                                                                                          cellSize:bigSize
-                                                                                            cellSizeWithoutSpacing:bigSize
-                                                                                                             scale:scale
+                                                                                                              glyphSize:bigSize
+                                                                                                               cellSize:bigSize
+                                                                                                 cellSizeWithoutSpacing:bigSize
+                                                                                                                  scale:scale
                                                                                                             useBoldFont:useBoldFont
                                                                                                           useItalicFont:useItalicFont
                                                                                                        usesNonAsciiFont:useNonAsciiFont
                                                                                                        asciiAntiAliased:YES
                                                                                                     nonAsciiAntiAliased:YES];
-    
+
     iTermCharacterSourceAttributes *attributes = [iTermCharacterSourceAttributes characterSourceAttributesWithThinStrokes:NO
                                                                                                                      bold:YES
                                                                                                                    italic:YES];
@@ -244,6 +245,27 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     return unionRect;
 }
 
+
+- (instancetype)initWithFontID:(unsigned int)fontID
+                      fakeBold:(BOOL)fakeBold
+                    fakeItalic:(BOOL)fakeItalic
+                   glyphNumber:(unsigned short)glyphNumber
+                      position:(NSPoint)position
+                    descriptor:(iTermCharacterSourceDescriptor *)descriptor
+                    attributes:(iTermCharacterSourceAttributes *)attributes
+                        radius:(int)radius
+                       context:(CGContextRef)context {
+    return [[iTermGlyphCharacterSource alloc] initWithFontID:fontID
+                                                    fakeBold:fakeBold
+                                                  fakeItalic:fakeItalic
+                                                 glyphNumber:glyphNumber
+                                                    position:position
+                                                  descriptor:descriptor
+                                                  attributes:attributes
+                                                      radius:radius
+                                                     context:context];
+}
+
 - (instancetype)initWithCharacter:(NSString *)string
                        descriptor:(iTermCharacterSourceDescriptor *)descriptor
                        attributes:(iTermCharacterSourceAttributes *)attributes
@@ -251,69 +273,44 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                            radius:(int)radius
          useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
                           context:(CGContextRef)context {
-    assert(descriptor.glyphSize.width > 0);
-    assert(descriptor.glyphSize.height > 0);
-    assert(descriptor.scale > 0);
+    return [[iTermRegularCharacterSource alloc] initWithCharacter:string
+                                                       descriptor:descriptor
+                                                       attributes:attributes
+                                                       boxDrawing:boxDrawing
+                                                           radius:radius
+                                         useNativePowerlineGlyphs:useNativePowerlineGlyphs
+                                                          context:context];
+}
 
-    if (string.length == 0) {
-        return nil;
-    }
-
+- (instancetype)initWithFont:(NSFont *)font
+                    fakeBold:(BOOL)fakeBold
+                  fakeItalic:(BOOL)fakeItalic
+                 antialiased:(BOOL)antialiased
+                  descriptor:(iTermCharacterSourceDescriptor *)descriptor
+                  attributes:(iTermCharacterSourceAttributes *)attributes
+                      radius:(int)radius
+                     context:(CGContextRef)context {
     self = [super init];
-    // This is an appropriate place to set _debug to YES.
     if (self) {
-        _fakeBold = attributes.bold;
-        _fakeItalic = attributes.italic;
-        UTF32Char remapped = 0;
-        _font = [descriptor.fontTable fontForCharacter:[string longCharacterAtIndex:0]
-                                           useBoldFont:descriptor.useBoldFont
-                                         useItalicFont:descriptor.useItalicFont
-                                            renderBold:&_fakeBold
-                                          renderItalic:&_fakeItalic
-                                              remapped: &remapped].font;
-        if (remapped) {
-            string = [string stringByReplacingBaseCharacterWith:remapped];
-        }
-
-        _string = [string copy];
+        _font = font;
         _descriptor = descriptor;
-        _isAscii = (string.length == 1 && [string characterAtIndex:0] < 128);
-        _antialiased = _isAscii ? descriptor.asciiAntiAliased : descriptor.nonAsciiAntiAliased;
-        DLog(@"%p initialize with descriptor %@, isAscii=%@", self, descriptor, @(_isAscii));
-
-        ITAssertWithMessage(descriptor.fontTable, @"Nil font table for string=%@ attributes=%@", string, attributes);
+        _fakeBold = fakeBold;
+        _fakeItalic = fakeItalic;
+        _antialiased = antialiased;
         _attributes = attributes;
         _radius = radius;
         _size = CGSizeMake(ceil(descriptor.glyphSize.width) * self.maxParts,
                            ceil(descriptor.glyphSize.height) * self.maxParts);
-        _boxDrawing = boxDrawing;
-        _useNativePowerlineGlyphs = useNativePowerlineGlyphs;
         _context = context;
-
         _bytesPerRow = CGBitmapContextGetBytesPerRow(_context);
         _numberOfRows = CGBitmapContextGetHeight(_context);
-
         CGContextRetain(context);
-
-        for (int i = 0; i < 4; i++) {
-            _attributedStrings[i] = [[NSAttributedString alloc] initWithString:string attributes:[self attributesForIteration:i]];
-            DLog(@"Create lineref %@ with attributed string %@", @(i), _attributedStrings[i]);
-            _lineRefs[i] = CTLineCreateWithAttributedString((CFAttributedStringRef)_attributedStrings[i]);
-        }
     }
     return self;
 }
 
 - (void)dealloc {
     CGContextRelease(_context);
-    for (NSInteger i = 0; i < 4; i++) {
-        if (_lineRefs[i]) {
-            CFRelease(_lineRefs[i]);
-        }
-    }
-    if (_imageRef) {
-        CGImageRelease(_imageRef);
-    }
 }
 
 - (NSString *)description {
@@ -323,170 +320,37 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
             _font];
 }
 
+#pragma mark - Methods that subclasses must override
+
+- (void)drawIteration:(NSInteger)iteration atOffset:(CGPoint)offset skew:(CGFloat)skew {
+    [self doesNotRecognizeSelector:_cmd];
+}
+
+- (CGSize)desiredOffset {
+    [self doesNotRecognizeSelector:_cmd];
+    return CGSizeZero;
+}
+
+- (CGRect)frameFlipped:(BOOL)flipped {
+    [self doesNotRecognizeSelector:_cmd];
+    return CGRectZero;
+}
+
+- (NSString *)debugName {
+    [self doesNotRecognizeSelector:_cmd];
+    return @"bug";
+}
+
+#pragma mark - Helpers
+
 - (int)maxParts {
     return _radius * 2 + 1;
 }
 
-// Dumps the alpha channel of data, which has dimensions of _size.
-- (void)logStringRepresentationOfAlphaChannelOfBitmapDataBytes:(unsigned char *)data {
-    for (int y = 0; y < _size.height; y++) {
-        NSMutableString *line = [NSMutableString string];
-        int width = _size.width;
-        for (int x = 0; x < width; x++) {
-            int offset = y * width * 4 + x*4 + 3;
-            if (data[offset]) {
-                [line appendString:@"X"];
-            } else {
-                [line appendString:@" "];
-            }
-        }
-        NSLog(@"%@", line);
-    }
-}
-
-#pragma mark - APIs
-
-// NOTE: This is only called for monochrome (non-subpixel-antialiased) text.
-- (void)performPostProcessing {
-    // Be conservative and allocate more space than needed if there's any imprecision.
-    const NSInteger destinationLength = ceil(_size.width) * 4 * ceil(_size.height);
-    _postprocessedData = [iTermBitmapData dataOfLength:destinationLength];
-    unsigned char *destination = _postprocessedData.mutableBytes;
-
-    unsigned char *data[4];
-    for (int i = 0; i < 4; i++) {
-        data[i] = _datas[i].mutableBytes;
-    }
-
-    // Byte arrays in _datas[j] have this size.
-    const NSInteger readBound = _numberOfRows * _bytesPerRow;
-
-    // The destination has this size.
-    const NSInteger writeBound = destinationLength;
-
-    // Don't attempt to access past this limit. In theory these would be the
-    // same. In practice there were crashes I can't explain.
-    const NSInteger bound = MIN(readBound, writeBound);
-
-    // i indexes into the array of pixels, always to the red value.
-    for (int i = 0 ; i + 3 < bound; i += 4) {
-        // j indexes a destination color component and a source bitmap.
-        for (int j = 0; j < 4; j++) {
-            destination[i + j] = data[j][i + 3];
-        }
-    }
-    _postprocessed = YES;
-    [_postprocessedData checkForOverrunWithInfo:[NSString stringWithFormat:@"Size is %@", NSStringFromSize(_size)]];
-}
-
-- (iTermCharacterBitmap *)bitmapForPart:(int)part {
-    [self drawIfNeeded];
-    const int radius = _radius;
-    const int dx = iTermImagePartDX(part) + radius;
-    const int dy = iTermImagePartDY(part) + radius;
-    const NSInteger glyphWidth = ceil(_descriptor.glyphSize.width);
-    const size_t destRowSize = glyphWidth * 4;
-    const NSInteger glyphHeight = ceil(_descriptor.glyphSize.height);
-    const NSUInteger length = destRowSize * glyphHeight;
-
-    if (iTermTextIsMonochrome()) {
-        if (!_postprocessed && !_isEmoji) {
-            [self performPostProcessing];
-        }
-    }
-    const unsigned char *bitmapBytes = _postprocessedData.bytes;
-    NSInteger sourceLength = ceil(_size.width) * 4 * ceil(_size.height);
-    size_t sourceRowSize = ceil(_size.width) * 4;
-    if (!bitmapBytes) {
-        bitmapBytes = _datas[0].bytes;
-        sourceLength = _numberOfRows * _bytesPerRow;
-        sourceRowSize = _bytesPerRow;
-    }
-
-    iTermCharacterBitmap *bitmap = [[iTermCharacterBitmap alloc] init];
-    bitmap.data = [NSMutableData uninitializedDataWithLength:length];
-    bitmap.size = NSMakeSize(glyphWidth, glyphHeight);
-
-    char *dest = (char *)bitmap.data.mutableBytes;
-
-    // Flip vertically and copy. The vertical flip is for historical reasons
-    // (i.e., if I had more time I'd undo it but it's annoying because there
-    // are assumptions about vertical flipping all over the fragment shader).
-    ssize_t destOffset = (glyphHeight - 1) * destRowSize;
-    ssize_t sourceOffset = (dx * 4 * glyphWidth) + (dy * glyphHeight * sourceRowSize);
-    for (int i = 0;
-         (destOffset >= 0 &&
-          i < glyphHeight &&
-          sourceOffset + destRowSize <= sourceLength);
-         i++) {
-        memcpy(dest + destOffset, bitmapBytes + sourceOffset, destRowSize);
-        sourceOffset += sourceRowSize;
-        destOffset -= destRowSize;
-    }
-
-    if (_debug) {
-        NSImage *image = [NSImage imageWithRawData:bitmap.data
-                                              size:bitmap.size
-                                     bitsPerSample:8
-                                   samplesPerPixel:4
-                                          hasAlpha:YES
-                                    colorSpaceName:NSDeviceRGBColorSpace];
-        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.%@.%@.%@.png", _font.familyName,
-                            [@[_attributes.bold ? @"Bold" : @"",
-                              _attributes.italic ? @"Italic" : @"",
-                              _attributes.useThinStrokes ? @"Thin" : @""] componentsJoinedByString:@""],
-                            _string, @(part)]];
-
-        NSData *bigData = [NSData dataWithBytes:bitmapBytes length:sourceLength];
-        image = [NSImage imageWithRawData:bigData
-                                     size:_size
-                            bitsPerSample:8
-                          samplesPerPixel:4
-                                 hasAlpha:YES
-                           colorSpaceName:NSDeviceRGBColorSpace];
-        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/big-%@.png", _string]];
-    }
-
-    return bitmap;
-}
-
-- (NSArray<NSNumber *> *)parts {
-    if (!_parts) {
-        _parts = [self newParts];
-    }
-    return _parts;
-}
-
-#pragma mark - Private
-
-#pragma mark Lazy Computations
-
-- (NSArray<NSNumber *> *)newParts {
-    CGRect boundingBox = self.frame;
-    const int radius = _radius;
-    NSMutableArray<NSNumber *> *result = [NSMutableArray array];
-    for (int y = 0; y < self.maxParts; y++) {
-        for (int x = 0; x < self.maxParts; x++) {
-            CGRect partRect = CGRectMake(x * _descriptor.glyphSize.width,
-                                         y * _descriptor.glyphSize.height,
-                                         _descriptor.glyphSize.width,
-                                         _descriptor.glyphSize.height);
-            if (CGRectIntersectsRect(partRect, boundingBox)) {
-                [result addObject:@(iTermImagePartFromDeltas(x - radius, y - radius))];
-            }
-        }
-    }
-    return [result copy];
-}
-
+// Subclasses must implement this.
 - (void)drawIfNeeded {
     if (!_haveDrawn) {
-        CGSize offset;
-        if (_isAscii) {
-            offset = _descriptor.asciiOffset;
-        } else {
-            offset = CGSizeZero;
-        }
+        CGSize offset = [self desiredOffset];
         NSInteger iteration = 0;
         do {
             const int radius = _radius;
@@ -499,103 +363,15 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 }
 
-- (CGFloat)fakeBoldShift {
-    if (_antialiased) {
-        if (_descriptor.scale > 1) {
-            return iTermCharacterSourceAntialiasedRetinaFakeBoldShiftPoints;
-        } else {
-            return iTermCharacterSourceAntialiasedNonretinaFakeBoldShiftPoints;
-        }
-    } else {
-        return iTermCharacterSourceAliasedFakeBoldShiftPoints;
-    }
-}
-
-- (CGRect)frame {
-    return [self frameFlipped:YES];
-}
-
-- (CGRect)frameFlipped:(BOOL)flipped {
-    if (_string.length == 0) {
-        return CGRectZero;
-    }
-    if (_boxDrawing) {
-        // yOffset should equal offset.y in drawWithOffset:iteration:
-        const CGFloat yOffset = _descriptor.glyphSize.height * _radius;
-
-        // ty should equal ty in drawWithOffset:iteration:
-        const CGFloat ty = yOffset - _descriptor.baselineOffset * _descriptor.scale;
-
-        // y should equal rect.origin.y in drawBoxAtOffset:iteration:
-        const CGFloat y = ty + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift;
-
-        NSRect rect = NSMakeRect(_descriptor.glyphSize.width * _radius,
-                                 y,
-                                 _descriptor.cellSize.width * _descriptor.scale,
-                                 _descriptor.cellSize.height * _descriptor.scale);
-        if (_string.length > 0 &&
-            _useNativePowerlineGlyphs &&
-            [iTermBoxDrawingBezierCurveFactory isDoubleWidthPowerlineGlyph:[_string characterAtIndex:0]]) {
-            rect.size.width *= 2;
-        }
-        if (flipped) {
-            rect.origin.y = _size.height - rect.origin.y - rect.size.height;
-        }
-        return rect;
-    }
-
-    CGContextRef cgContext = _context;
-    CGRect frame = CTLineGetImageBounds(_lineRefs[0], cgContext);
-    const int radius = _radius;
-    frame.origin.y -= _descriptor.baselineOffset;
-    frame.origin.x *= _descriptor.scale;
-    frame.origin.y *= _descriptor.scale;
-    frame.size.width *= _descriptor.scale;
-    frame.size.height *= _descriptor.scale;
-
-    if (_fakeItalic) {
-        // Unfortunately it looks like CTLineGetImageBounds ignores the context's text matrix so we
-        // have to guess what the frame's width would be when skewing it.
-        const CGFloat heightAboveBaseline = NSMaxY(frame) + _descriptor.baselineOffset * _descriptor.scale;
-        const CGFloat scaledSkew = iTermFakeItalicSkew * _descriptor.scale;
-        const CGFloat rightExtension = heightAboveBaseline * scaledSkew;
-        if (rightExtension > 0) {
-            frame.size.width += rightExtension;
-        }
-    }
-    if (_fakeBold) {
-        frame.size.width += self.fakeBoldShift;
-    }
-
-    frame.origin.x += radius * _descriptor.glyphSize.width;
-    frame.origin.y += radius * _descriptor.glyphSize.height;
-    if (flipped) {
-        frame.origin.y = _size.height - frame.origin.y - frame.size.height;
-    }
-    
-    CGPoint min = CGPointMake(floor(CGRectGetMinX(frame)),
-                              floor(CGRectGetMinY(frame)));
-    CGPoint max = CGPointMake(ceil(CGRectGetMaxX(frame)),
-                              ceil(CGRectGetMaxY(frame)));
-    frame = CGRectMake(min.x, min.y, max.x - min.x, max.y - min.y);
-    DLog(@"%@ Bounding box for character '%@' in font %@ is %@ at scale %@", self, _string, _font, NSStringFromRect(frame), @(_descriptor.scale));
-
-    return frame;
-}
-
-#pragma mark Drawing
-
 - (void)drawWithOffset:(CGPoint)offset iteration:(NSInteger)iteration {
     CGAffineTransform textMatrix = CGContextGetTextMatrix(_context);
     CGContextSaveGState(_context);
-    CFArrayRef runs = CTLineGetGlyphRuns(_lineRefs[iteration]);
     const CGFloat skew = _fakeItalic ? iTermFakeItalicSkew : 0;
     const CGFloat ty = offset.y - _descriptor.baselineOffset * _descriptor.scale;
 
-    [self drawRuns:runs
-          atOffset:CGPointMake(offset.x, ty)
-              skew:skew
-         iteration:iteration];
+    [self drawIteration:iteration
+               atOffset:CGPointMake(offset.x, ty)
+                   skew:skew];
     _haveDrawn = YES;
     const NSUInteger length = CGBitmapContextGetBytesPerRow(_context) * CGBitmapContextGetHeight(_context);
     NSMutableData *data = [NSMutableData dataWithBytes:CGBitmapContextGetData(_context)
@@ -607,7 +383,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         CGImageRef imageRef = CGBitmapContextCreateImage(_context);
 
         // Step 2: Create a URL for the output file
-        NSURL *url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"/tmp/full.%@.%@,%@.%@.png", _string, @(offset.x), @(offset.y), @(iteration)]];
+        NSURL *url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"/tmp/full.%@.%@,%@.%@.png", self.debugName, @(offset.x), @(offset.y), @(iteration)]];
 
         // Step 3: Write the CGImage to disk as PNG
         CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)url, kUTTypePNG, 1, NULL);
@@ -735,11 +511,11 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                  offset:offset];
 }
 
-- (void)prepareToDrawRunAtIteration:(NSInteger)iteration
-                             offset:(CGPoint)offset
-                            runFont:(CTFontRef)runFont
-                               skew:(CGFloat)skew
-                        initialized:(BOOL)haveInitializedThisIteration {
+- (void)prepareToDrawIteration:(NSInteger)iteration
+                        offset:(CGPoint)offset
+                       runFont:(CTFontRef)runFont
+                          skew:(CGFloat)skew
+                   initialized:(BOOL)haveInitializedThisIteration {
     [self initializeStateIfNeededWithFont:runFont];
 
     CGContextRef context = _context;
@@ -753,6 +529,470 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                              skew:skew
                           context:context];
     }
+}
+
+- (NSColor *)textColorForIteration:(NSInteger)iteration {
+    if (iTermTextIsMonochrome()) {
+        switch (iteration) {
+            case 0:
+                return [NSColor it_colorInDefaultColorSpaceWithRed:0 green:0 blue:0 alpha:1];
+            case 1:
+                return [NSColor it_colorInDefaultColorSpaceWithRed:1 green:0 blue:0 alpha:1];
+            case 2:
+                return [NSColor it_colorInDefaultColorSpaceWithRed:0 green:1 blue:0 alpha:1];
+            case 3:
+                return [NSColor it_colorInDefaultColorSpaceWithRed:1 green:1 blue:1 alpha:1];
+        }
+        ITAssertWithMessage(NO, @"bogus iteration %@", @(iteration));
+    }
+    return [NSColor blackColor];
+}
+
+- (void)initializeTextMatrixInContext:(CGContextRef)cgContext
+                             withSkew:(CGFloat)skew
+                               offset:(CGPoint)offset {
+    if (!_isEmoji) {
+        // Can't use this with emoji.
+        CGAffineTransform textMatrix = CGAffineTransformMake(_descriptor.scale,        0.0,
+                                                             skew * _descriptor.scale, _descriptor.scale,
+                                                             offset.x,                 offset.y);
+        CGContextSetTextMatrix(cgContext, textMatrix);
+    } else {
+        CGContextSetTextMatrix(cgContext, CGAffineTransformIdentity);
+    }
+}
+
+- (void)initializeCTMWithFont:(CTFontRef)runFont
+                       offset:(CGPoint)offset
+                    iteration:(NSInteger)iteration
+                      context:(CGContextRef)context {
+    CGContextConcatCTM(context, CTFontGetMatrix(runFont));
+    CGContextTranslateCTM(context, offset.x, offset.y);
+    CGContextScaleCTM(context, _descriptor.scale, _descriptor.scale);
+}
+
+- (iTermCharacterBitmap *)bitmapForPart:(int)part {
+    [self drawIfNeeded];
+    const int radius = _radius;
+    const int dx = iTermImagePartDX(part) + radius;
+    const int dy = iTermImagePartDY(part) + radius;
+    const NSInteger glyphWidth = ceil(_descriptor.glyphSize.width);
+    const size_t destRowSize = glyphWidth * 4;
+    const NSInteger glyphHeight = ceil(_descriptor.glyphSize.height);
+    const NSUInteger length = destRowSize * glyphHeight;
+
+    if (iTermTextIsMonochrome()) {
+        if (!_postprocessed && !_isEmoji) {
+            [self performPostProcessing];
+        }
+    }
+    const unsigned char *bitmapBytes = _postprocessedData.bytes;
+    NSInteger sourceLength = ceil(_size.width) * 4 * ceil(_size.height);
+    size_t sourceRowSize = ceil(_size.width) * 4;
+    if (!bitmapBytes) {
+        bitmapBytes = _datas[0].bytes;
+        sourceLength = _numberOfRows * _bytesPerRow;
+        sourceRowSize = _bytesPerRow;
+    }
+
+    iTermCharacterBitmap *bitmap = [[iTermCharacterBitmap alloc] init];
+    bitmap.data = [NSMutableData uninitializedDataWithLength:length];
+    bitmap.size = NSMakeSize(glyphWidth, glyphHeight);
+
+    char *dest = (char *)bitmap.data.mutableBytes;
+
+    // Flip vertically and copy. The vertical flip is for historical reasons
+    // (i.e., if I had more time I'd undo it but it's annoying because there
+    // are assumptions about vertical flipping all over the fragment shader).
+    ssize_t destOffset = (glyphHeight - 1) * destRowSize;
+    ssize_t sourceOffset = (dx * 4 * glyphWidth) + (dy * glyphHeight * sourceRowSize);
+    for (int i = 0;
+         (destOffset >= 0 &&
+          i < glyphHeight &&
+          sourceOffset + destRowSize <= sourceLength);
+         i++) {
+        memcpy(dest + destOffset, bitmapBytes + sourceOffset, destRowSize);
+        sourceOffset += sourceRowSize;
+        destOffset -= destRowSize;
+    }
+
+    if (_debug) {
+        NSImage *image = [NSImage imageWithRawData:bitmap.data
+                                              size:bitmap.size
+                                     bitsPerSample:8
+                                   samplesPerPixel:4
+                                          hasAlpha:YES
+                                    colorSpaceName:NSDeviceRGBColorSpace];
+        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.%@.%@.%@.png", _font.familyName,
+                            [@[_attributes.bold ? @"Bold" : @"",
+                              _attributes.italic ? @"Italic" : @"",
+                              _attributes.useThinStrokes ? @"Thin" : @""] componentsJoinedByString:@""],
+                            self.debugName, @(part)]];
+
+        NSData *bigData = [NSData dataWithBytes:bitmapBytes length:sourceLength];
+        image = [NSImage imageWithRawData:bigData
+                                     size:_size
+                            bitsPerSample:8
+                          samplesPerPixel:4
+                                 hasAlpha:YES
+                           colorSpaceName:NSDeviceRGBColorSpace];
+        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/big-%@.png", self.debugName]];
+    }
+
+    return bitmap;
+}
+
+- (NSArray<NSNumber *> *)parts {
+    if (!_parts) {
+        _parts = [self newParts];
+    }
+    return _parts;
+}
+
+- (NSArray<NSNumber *> *)newParts {
+    CGRect boundingBox = self.frame;
+    const int radius = _radius;
+    NSMutableArray<NSNumber *> *result = [NSMutableArray array];
+    for (int y = 0; y < self.maxParts; y++) {
+        for (int x = 0; x < self.maxParts; x++) {
+            CGRect partRect = CGRectMake(x * _descriptor.glyphSize.width,
+                                         y * _descriptor.glyphSize.height,
+                                         _descriptor.glyphSize.width,
+                                         _descriptor.glyphSize.height);
+            if (CGRectIntersectsRect(partRect, boundingBox)) {
+                [result addObject:@(iTermImagePartFromDeltas(x - radius, y - radius))];
+            }
+        }
+    }
+    return [result copy];
+}
+
+- (CGFloat)fakeBoldShift {
+    if (_antialiased) {
+        if (_descriptor.scale > 1) {
+            return iTermCharacterSourceAntialiasedRetinaFakeBoldShiftPoints;
+        } else {
+            return iTermCharacterSourceAntialiasedNonretinaFakeBoldShiftPoints;
+        }
+    } else {
+        return iTermCharacterSourceAliasedFakeBoldShiftPoints;
+    }
+}
+
+- (CGRect)frame {
+    return [self frameFlipped:YES];
+}
+
+
+
+// Dumps the alpha channel of data, which has dimensions of _size.
+- (void)logStringRepresentationOfAlphaChannelOfBitmapDataBytes:(unsigned char *)data {
+    for (int y = 0; y < _size.height; y++) {
+        NSMutableString *line = [NSMutableString string];
+        int width = _size.width;
+        for (int x = 0; x < width; x++) {
+            int offset = y * width * 4 + x*4 + 3;
+            if (data[offset]) {
+                [line appendString:@"X"];
+            } else {
+                [line appendString:@" "];
+            }
+        }
+        NSLog(@"%@", line);
+    }
+}
+
+// NOTE: This is only called for monochrome (non-subpixel-antialiased) text.
+- (void)performPostProcessing {
+    // Be conservative and allocate more space than needed if there's any imprecision.
+    const NSInteger destinationLength = ceil(_size.width) * 4 * ceil(_size.height);
+    _postprocessedData = [iTermBitmapData dataOfLength:destinationLength];
+    unsigned char *destination = _postprocessedData.mutableBytes;
+
+    unsigned char *data[4];
+    for (int i = 0; i < 4; i++) {
+        data[i] = _datas[i].mutableBytes;
+    }
+
+    // Byte arrays in _datas[j] have this size.
+    const NSInteger readBound = _numberOfRows * _bytesPerRow;
+
+    // The destination has this size.
+    const NSInteger writeBound = destinationLength;
+
+    // Don't attempt to access past this limit. In theory these would be the
+    // same. In practice there were crashes I can't explain.
+    const NSInteger bound = MIN(readBound, writeBound);
+
+    // i indexes into the array of pixels, always to the red value.
+    for (int i = 0 ; i + 3 < bound; i += 4) {
+        // j indexes a destination color component and a source bitmap.
+        for (int j = 0; j < 4; j++) {
+            destination[i + j] = data[j][i + 3];
+        }
+    }
+    _postprocessed = YES;
+    [_postprocessedData checkForOverrunWithInfo:[NSString stringWithFormat:@"Size is %@", NSStringFromSize(_size)]];
+}
+
+- (NSRect)frameForBoundingRect:(NSRect)frame flipped:(BOOL)flipped {
+    const int radius = _radius;
+    frame.origin.y -= _descriptor.baselineOffset;
+    frame.origin.x *= _descriptor.scale;
+    frame.origin.y *= _descriptor.scale;
+    frame.size.width *= _descriptor.scale;
+    frame.size.height *= _descriptor.scale;
+
+    if (_fakeItalic) {
+        // Unfortunately it looks like CTLineGetImageBounds ignores the context's text matrix so we
+        // have to guess what the frame's width would be when skewing it.
+        const CGFloat heightAboveBaseline = NSMaxY(frame) + _descriptor.baselineOffset * _descriptor.scale;
+        const CGFloat scaledSkew = iTermFakeItalicSkew * _descriptor.scale;
+        const CGFloat rightExtension = heightAboveBaseline * scaledSkew;
+        if (rightExtension > 0) {
+            frame.size.width += rightExtension;
+        }
+    }
+    if (_fakeBold) {
+        frame.size.width += self.fakeBoldShift;
+    }
+
+    frame.origin.x += radius * _descriptor.glyphSize.width;
+    frame.origin.y += radius * _descriptor.glyphSize.height;
+    if (flipped) {
+        frame.origin.y = _size.height - frame.origin.y - frame.size.height;
+    }
+
+    CGPoint min = CGPointMake(floor(CGRectGetMinX(frame)),
+                              floor(CGRectGetMinY(frame)));
+    CGPoint max = CGPointMake(ceil(CGRectGetMaxX(frame)),
+                              ceil(CGRectGetMaxY(frame)));
+    frame = CGRectMake(min.x, min.y, max.x - min.x, max.y - min.y);
+    DLog(@"%@ Bounding box for character '%@' in font %@ is %@ at scale %@",
+         self, self.debugName, _font, NSStringFromRect(frame), @(_descriptor.scale));
+
+    return frame;
+}
+
+@end
+
+@implementation iTermGlyphCharacterSource {
+    unsigned short _glyphNumber;
+    NSPoint _position;
+}
+
+- (instancetype)initWithFontID:(unsigned int)fontID
+                      fakeBold:(BOOL)fakeBold
+                    fakeItalic:(BOOL)fakeItalic
+                   glyphNumber:(unsigned short)glyphNumber
+                      position:(NSPoint)position
+                    descriptor:(iTermCharacterSourceDescriptor *)descriptor
+                    attributes:(iTermCharacterSourceAttributes *)attributes
+                        radius:(int)radius
+                       context:(CGContextRef)context {
+    NSFont *font = [NSFont it_fontWithMetalID:fontID];
+    if (!font) {
+        return nil;
+    }
+    self = [super initWithFont:font
+                      fakeBold:fakeBold
+                    fakeItalic:fakeItalic
+                   antialiased:descriptor.nonAsciiAntiAliased
+                    descriptor:descriptor
+                    attributes:attributes
+                        radius:radius
+                       context:context];
+    if (self) {
+        _glyphNumber = glyphNumber;
+        _position = position;
+    }
+    return self;
+}
+
+- (void)drawIteration:(NSInteger)iteration atOffset:(CGPoint)offset skew:(CGFloat)skew {
+    [self prepareToDrawIteration:iteration
+                          offset:offset
+                         runFont:(__bridge CTFontRef)_font
+                            skew:skew
+                     initialized:NO];
+    CGGlyph glyph = _glyphNumber;
+    CGPoint position = _position;
+    CTFontDrawGlyphs((__bridge CTFontRef)_font,
+                     &glyph,
+                     &position,
+                     1,
+                     _context);
+    if (_fakeBold) {
+        [self initializeTextMatrixInContext:_context
+                                   withSkew:skew
+                                     offset:CGPointMake(offset.x + self.fakeBoldShift * _descriptor.scale,
+                                                        offset.y)];
+        CTFontDrawGlyphs((__bridge CTFontRef)_font,
+                         &glyph,
+                         &position,
+                         1,
+                         _context);
+    }
+}
+
+- (NSString *)debugName {
+    return [NSString stringWithFormat:@"glyph-%@", @(_glyphNumber)];
+}
+
+- (CGSize)desiredOffset {
+    return CGSizeZero;
+}
+
+- (CGRect)frameFlipped:(BOOL)flipped {
+    CGGlyph glyph = _glyphNumber;
+    const CGRect bounds = CTFontGetBoundingRectsForGlyphs((__bridge CTFontRef)_font,
+                                                          kCTFontOrientationDefault,
+                                                          &glyph,
+                                                          NULL,
+                                                          1);
+    return [self frameForBoundingRect:bounds flipped:flipped];
+}
+
+@end
+
+@implementation iTermRegularCharacterSource {
+    NSString *_string;
+    BOOL _boxDrawing;
+    BOOL _useNativePowerlineGlyphs;
+
+    CTLineRef _lineRefs[4];
+
+    NSAttributedString *_attributedStrings[4];
+    NSMutableData *_glyphsData;
+    NSMutableData *_positionsBuffer;
+
+    BOOL _isAscii;
+}
+
+- (instancetype)initWithCharacter:(NSString *)string
+                       descriptor:(iTermCharacterSourceDescriptor *)descriptor
+                       attributes:(iTermCharacterSourceAttributes *)attributes
+                       boxDrawing:(BOOL)boxDrawing
+                           radius:(int)radius
+         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
+                          context:(CGContextRef)context {
+    assert(descriptor.glyphSize.width > 0);
+    assert(descriptor.glyphSize.height > 0);
+    assert(descriptor.scale > 0);
+
+    if (string.length == 0) {
+        return nil;
+    }
+
+    UTF32Char remapped = 0;
+    BOOL fakeBold = attributes.bold;
+    BOOL fakeItalic = attributes.italic;
+    NSFont *font = [descriptor.fontTable fontForCharacter:[string longCharacterAtIndex:0]
+                                              useBoldFont:descriptor.useBoldFont
+                                            useItalicFont:descriptor.useItalicFont
+                                               renderBold:&fakeBold
+                                             renderItalic:&fakeItalic
+                                                 remapped: &remapped].font;
+    const BOOL isAscii = (string.length == 1 && [string characterAtIndex:0] < 128);
+
+    self = [super initWithFont:font
+                      fakeBold:fakeBold
+                    fakeItalic:fakeItalic
+                   antialiased:isAscii ? descriptor.asciiAntiAliased : descriptor.nonAsciiAntiAliased
+                    descriptor:descriptor
+                    attributes:attributes
+                        radius:radius
+                       context:context];
+    // This is an appropriate place to set _debug to YES.
+    if (self) {
+        if (remapped) {
+            string = [string stringByReplacingBaseCharacterWith:remapped];
+        }
+
+        _string = [string copy];
+        _isAscii = isAscii;
+        DLog(@"%p initialize with descriptor %@, isAscii=%@", self, descriptor, @(_isAscii));
+
+        ITAssertWithMessage(descriptor.fontTable, @"Nil font table for string=%@ attributes=%@", string, attributes);
+        _boxDrawing = boxDrawing;
+        _useNativePowerlineGlyphs = useNativePowerlineGlyphs;
+
+        for (int i = 0; i < 4; i++) {
+            _attributedStrings[i] = [[NSAttributedString alloc] initWithString:string attributes:[self attributesForIteration:i]];
+            DLog(@"Create lineref %@ with attributed string %@", @(i), _attributedStrings[i]);
+            _lineRefs[i] = CTLineCreateWithAttributedString((CFAttributedStringRef)_attributedStrings[i]);
+        }
+    }
+    return self;
+}
+
+- (void)dealloc {
+    for (NSInteger i = 0; i < 4; i++) {
+        if (_lineRefs[i]) {
+            CFRelease(_lineRefs[i]);
+        }
+    }
+}
+
+#pragma mark - APIs
+
+- (NSString *)debugName {
+    return _string;
+}
+
+#pragma mark Lazy Computations
+
+- (CGSize)desiredOffset {
+    if (_isAscii) {
+        return _descriptor.asciiOffset;
+    } else {
+        return CGSizeZero;
+    }
+}
+
+- (CGRect)frameFlipped:(BOOL)flipped {
+    if (_string.length == 0) {
+        return CGRectZero;
+    }
+    if (_boxDrawing) {
+        // yOffset should equal offset.y in drawWithOffset:iteration:
+        const CGFloat yOffset = _descriptor.glyphSize.height * _radius;
+
+        // ty should equal ty in drawWithOffset:iteration:
+        const CGFloat ty = yOffset - _descriptor.baselineOffset * _descriptor.scale;
+
+        // y should equal rect.origin.y in drawBoxAtOffset:iteration:
+        const CGFloat y = ty + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift;
+
+        NSRect rect = NSMakeRect(_descriptor.glyphSize.width * _radius,
+                                 y,
+                                 _descriptor.cellSize.width * _descriptor.scale,
+                                 _descriptor.cellSize.height * _descriptor.scale);
+        if (_string.length > 0 &&
+            _useNativePowerlineGlyphs &&
+            [iTermBoxDrawingBezierCurveFactory isDoubleWidthPowerlineGlyph:[_string characterAtIndex:0]]) {
+            rect.size.width *= 2;
+        }
+        if (flipped) {
+            rect.origin.y = _size.height - rect.origin.y - rect.size.height;
+        }
+        return rect;
+    }
+
+    CGContextRef cgContext = _context;
+    CGRect frame = CTLineGetImageBounds(_lineRefs[0], cgContext);
+    return [self frameForBoundingRect:frame flipped:flipped];
+}
+
+#pragma mark Drawing
+
+- (void)drawIteration:(NSInteger)iteration atOffset:(CGPoint)offset skew:(CGFloat)skew {
+    CFArrayRef runs = CTLineGetGlyphRuns(_lineRefs[iteration]);
+
+    [self drawRuns:runs
+          atOffset:offset
+              skew:skew
+         iteration:iteration];
 }
 
 - (void)drawBoxInContext:(CGContextRef)context iteration:(int)iteration {
@@ -823,7 +1063,11 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         CGPoint *positions = [self positionsInRun:run length:length];
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
         DLog(@"%@ For run %@, run is %@ and runFont is %@", self, @(j), run, runFont);
-        [self prepareToDrawRunAtIteration:iteration offset:offset runFont:runFont skew:skew initialized:haveInitializedThisIteration];
+        [self prepareToDrawIteration:iteration
+                              offset:offset
+                             runFont:runFont
+                                skew:skew
+                         initialized:haveInitializedThisIteration];
         haveInitializedThisIteration = YES;
         CGContextRef context = _context;
 
@@ -866,23 +1110,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 }
 
-- (NSColor *)textColorForIteration:(NSInteger)iteration {
-    if (iTermTextIsMonochrome()) {
-        switch (iteration) {
-            case 0:
-                return [NSColor it_colorInDefaultColorSpaceWithRed:0 green:0 blue:0 alpha:1];
-            case 1:
-                return [NSColor it_colorInDefaultColorSpaceWithRed:1 green:0 blue:0 alpha:1];
-            case 2:
-                return [NSColor it_colorInDefaultColorSpaceWithRed:0 green:1 blue:0 alpha:1];
-            case 3:
-                return [NSColor it_colorInDefaultColorSpaceWithRed:1 green:1 blue:1 alpha:1];
-        }
-        ITAssertWithMessage(NO, @"bogus iteration %@", @(iteration));
-    }
-    return [NSColor blackColor];
-}
-
 - (void)drawEmojiWithFont:(CTFontRef)runFont
                    offset:(CGPoint)offset
                    buffer:(const CGGlyph *)buffer
@@ -919,29 +1146,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)_positionsBuffer.mutableBytes);
     return (CGPoint *)_positionsBuffer.mutableBytes;
 
-}
-
-- (void)initializeTextMatrixInContext:(CGContextRef)cgContext
-                             withSkew:(CGFloat)skew
-                               offset:(CGPoint)offset {
-    if (!_isEmoji) {
-        // Can't use this with emoji.
-        CGAffineTransform textMatrix = CGAffineTransformMake(_descriptor.scale,        0.0,
-                                                             skew * _descriptor.scale, _descriptor.scale,
-                                                             offset.x,                 offset.y);
-        CGContextSetTextMatrix(cgContext, textMatrix);
-    } else {
-        CGContextSetTextMatrix(cgContext, CGAffineTransformIdentity);
-    }
-}
-
-- (void)initializeCTMWithFont:(CTFontRef)runFont
-                       offset:(CGPoint)offset
-                    iteration:(NSInteger)iteration
-                      context:(CGContextRef)context {
-    CGContextConcatCTM(context, CTFontGetMatrix(runFont));
-    CGContextTranslateCTM(context, offset.x, offset.y);
-    CGContextScaleCTM(context, _descriptor.scale, _descriptor.scale);
 }
 
 - (NSDictionary *)attributesForIteration:(NSInteger)iteration {

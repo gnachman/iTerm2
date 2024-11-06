@@ -15,6 +15,7 @@
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
 
+@class iTermAttributedStringBuilder;
 @class iTermColorMap;
 @class iTermExternalAttribute;
 @class iTermExternalAttributeIndex;
@@ -343,6 +344,7 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 @property (nonatomic, readonly) NSColor *shadeColor;
 @property (nonatomic, copy) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
 @property (nonatomic, copy) NSIndexSet *folds;
+@property (nonatomic, readonly) iTermAttributedStringBuilder *attributedStringBuilder;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;

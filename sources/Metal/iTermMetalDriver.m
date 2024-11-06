@@ -701,7 +701,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
             ITDebugAssert(NO);
             rowData.screenCharArray = [ScreenCharArray emptyLineOfLength:columns];
         }
-        iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
         int rles = 0;
         iTermMarkStyle markStyle;
@@ -709,21 +708,24 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         int lineStyleMarkRightInset = 0;
         NSDate *date;
         BOOL belongsToBlock;
-        [frameData.perFrameState metalGetGlyphKeys:glyphKeys
-                                        attributes:rowData.attributesData.mutableBytes
-                                         imageRuns:rowData.imageRuns
-                                    kittyImageRuns:rowData.kittyImageRuns
-                                        background:rowData.backgroundColorRLEData.mutableBytes
-                                          rleCount:&rles
-                                         markStyle:&markStyle
-                                     lineStyleMark:&lineStyleMark
-                           lineStyleMarkRightInset:&lineStyleMarkRightInset
-                                               row:y
-                                             width:columns
-                                          bidiInfo:rowData.screenCharArray.bidiInfo
-                                    drawableGlyphs:&drawableGlyphs
-                                              date:&date
-                                    belongsToBlock:&belongsToBlock];
+        NSUInteger glyphKeyCount;
+        [frameData.perFrameState metalGetGlyphKeysData:rowData.keysData
+                                         glyphKeyCount:&glyphKeyCount
+                                            attributes:rowData.attributesData.mutableBytes
+                                             imageRuns:rowData.imageRuns
+                                        kittyImageRuns:rowData.kittyImageRuns
+                                            background:rowData.backgroundColorRLEData.mutableBytes
+                                              rleCount:&rles
+                                             markStyle:&markStyle
+                                         lineStyleMark:&lineStyleMark
+                               lineStyleMarkRightInset:&lineStyleMarkRightInset
+                                                   row:y
+                                                 width:columns
+                                              bidiInfo:rowData.screenCharArray.bidiInfo
+                                        drawableGlyphs:&drawableGlyphs
+                                                  date:&date
+                                        belongsToBlock:&belongsToBlock];
+        rowData.glyphKeyCount = glyphKeyCount;
         rowData.backgroundColorRLEData.length = rles * sizeof(iTermMetalBackgroundColorRLE);
         rowData.date = date;
         rowData.numberOfBackgroundRLEs = rles;
@@ -1064,14 +1066,16 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                                                                             scale:(CGFloat)scale {
     static const int typefaceMask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
     iTermMetalGlyphKey glyphKey = {
-        .code = c,
-        .combiningSuccessor = 0,
-        .isComplex = NO,
-        .boxDrawing = NO,
-        .thinStrokes = !!(attributes & iTermASCIITextureAttributesThinStrokes),
-        .drawable = YES,
+        .type = iTermMetalGlyphTypeRegular,
         .typeface = (attributes & typefaceMask),
-        .antialiased = NO  // always no because it's ascii
+        .thinStrokes = !!(attributes & iTermASCIITextureAttributesThinStrokes),
+        .payload.regular = {
+            .code = c,
+            .combiningSuccessor = 0,
+            .isComplex = NO,
+            .boxDrawing = NO,
+            .drawable = YES,
+        }
     };
     BOOL emoji = NO;
     // Don't need to pass predecessor or successor because ASCII never has combining spacing marks.
@@ -1349,14 +1353,15 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                                      @(rowData.numberOfDrawableGlyphs * sizeof(iTermMetalGlyphKey)),
                                      @(rowData.keysData.length));
             [textState setGlyphKeysData:rowData.keysData
+                          glyphKeyCount:rowData.glyphKeyCount
                                   count:rowData.numberOfDrawableGlyphs
                          attributesData:rowData.attributesData
                                     row:rowData.y
                  backgroundColorRLEData:rowData.backgroundColorRLEData
                       markedRangeOnLine:markedRangeOnLine
                                 context:textState.poolContext
-                               creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
-                                   return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
+                               creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int gkIndex, BOOL *emoji) {
+                                   return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[gkIndex]
                                                                               asciiOffset:frameData.asciiOffset
                                                                                      size:glyphSize
                                                                                     scale:scale

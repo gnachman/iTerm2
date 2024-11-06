@@ -22,7 +22,7 @@
 @protocol iTermAttributedStringBuilderDelegate<NSObject>
 @property (nonatomic, readonly) BOOL useSelectedTextColor;
 
-- (NSColor *)unprocessedColorForBackgroundRun:(iTermBackgroundColorRun *)run
+- (NSColor *)unprocessedColorForBackgroundRun:(const iTermBackgroundColorRun *)run
                                enableBlending:(BOOL)enableBlending;
 - (NSColor *)colorForCode:(int)theIndex
                     green:(int)green
@@ -118,9 +118,12 @@ useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
                                                  hasSelectedText:(BOOL)hasSelectedText
                                                  backgroundColor:(NSColor *)backgroundColor
                                                   forceTextColor:(NSColor *)forceTextColor
-                                                        colorRun:(iTermBackgroundColorRun *)colorRun
+                                                        colorRun:(const iTermBackgroundColorRun *)colorRun
                                                      findMatches:(NSData *)findMatches
                                                  underlinedRange:(NSRange)underlinedRange
                                                        positions:(CTVector(CGFloat) *)positions;
+
+- (void)copySettingsFrom:(iTermAttributedStringBuilder *)other
+                delegate:(id<iTermAttributedStringBuilderDelegate>)delegate;
 
 @end

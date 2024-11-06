@@ -8,12 +8,17 @@
 
 #import "iTermMutableAttributedStringBuilder.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "CVector.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
+
+NSString *const iTermSourceColumnsAttribute = @"iTermSourceColumnsAttribute";
+NSString *const iTermSourceCellIndexAttribute = @"iTermSourceCellIndexAttribute";
 
 @interface iTermCheapAttributedString()
-@property (nonatomic, retain) NSMutableData *characterData;
-@property (nonatomic, retain) NSDictionary *attributes;
+@property (nonatomic, strong) NSMutableData *characterData;
+@property (nonatomic, strong) NSDictionary *attributes;
 @end
 
 @implementation iTermCheapAttributedString
@@ -22,13 +27,7 @@
     return [NSString stringWithFormat:@"<%@: %p %@>",
 	   NSStringFromClass([self class]),
 	   self,
-	   [[[NSString alloc] initWithCharacters:[self characters] length:[self length]] autorelease]];
-}
-
-- (void)dealloc {
-    [_attributes release];
-    [_characterData release];
-    [super dealloc];
+	   [[NSString alloc] initWithCharacters:[self characters] length:[self length]]];
 }
 
 - (unichar *)characters {
@@ -57,9 +56,13 @@
 
 - (iTermCheapAttributedString *)copyWithAttributes:(NSDictionary *)attributes {
     iTermCheapAttributedString *other = [[iTermCheapAttributedString alloc] init];
-    other.characterData = [[_characterData mutableCopy] autorelease];
+    other.characterData = [_characterData mutableCopy];
     other.attributes = attributes;
     return other;
+}
+
+- (NSRange)sourceColumnRange {
+    return [[NSValue castFrom:_attributes[iTermSourceColumnsAttribute]] rangeValue];
 }
 
 @end
@@ -71,24 +74,24 @@
     BOOL _canUseFastPath;
     BOOL _explicitDirectionControls;
     NSMutableIndexSet *_rtlIndexes;
+    CTVector(int) _characterIndexToSourceCell;
+    int _count;  // number of cells
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
 #if ENABLE_TEXT_DRAWING_FAST_PATH
-    _canUseFastPath = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
+        _canUseFastPath = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
 #endif
+        _startColumn = _endColumn = NSNotFound;
+        CTVectorCreate(&_characterIndexToSourceCell, 100);
     }
     return self;
 }
 
 - (void)dealloc {
-    [_attributedString release];
-    [_attributes release];
-    [_characterData release];
-    [_string release];
-    [super dealloc];
+    CTVectorDestroy(&_characterIndexToSourceCell);
 }
 
 - (void)setAttributes:(NSDictionary *)attributes {
@@ -96,21 +99,35 @@
         return;
     }
     [self build];
-    [_attributes release];
     _attributes = [attributes copy];
 }
 
+- (void)setEndColumn:(NSInteger)endColumn {
+    _endColumn = endColumn;
+    NSValue *value = [NSValue valueWithRange:NSMakeRange(_startColumn, _endColumn - _startColumn)];
+    _attributes = [_attributes dictionaryBySettingObject:value
+                                                  forKey:iTermSourceColumnsAttribute];
+}
+
+- (BOOL)willCreateCheap {
+    return (_canUseFastPath && !_attributedString && _characterData.length / sizeof(unichar) && !_string.length);
+}
+
+- (BOOL)didCreateCheap {
+    return ([_attributedString isKindOfClass:[iTermCheapAttributedString class]]);
+}
+
 - (void)build {
-    if (_canUseFastPath && !_attributedString && _characterData.length / sizeof(unichar) && !_string.length) {
+    if (self.willCreateCheap) {
         // Create a cheap attributed string from character array
         iTermCheapAttributedString *cheap = [[iTermCheapAttributedString alloc] init];
         cheap.characterData = _characterData;
         cheap.attributes = _attributes;
         _attributedString = cheap;
         return;
-    } else if ([_attributedString isKindOfClass:[iTermCheapAttributedString class]]) {
+    } else if (self.didCreateCheap) {
         // Convert a cheap attributed string to a real attributed string
-        iTermCheapAttributedString *cheap = [(id)_attributedString autorelease];
+        iTermCheapAttributedString *cheap = (id)_attributedString;
         _attributedString = nil;
         [self appendRealAttributedStringWithText:[NSString stringWithCharacters:cheap.characters length:cheap.length]
                                       attributes:cheap.attributes];
@@ -150,6 +167,11 @@
 }
 
 - (id<iTermAttributedString>)attributedString {
+    if (!self.didCreateCheap && !self.willCreateCheap) {
+        NSData *data = CTVectorGetData(&_characterIndexToSourceCell);
+        _attributes = [_attributes dictionaryBySettingObject:data
+                                                      forKey:iTermSourceCellIndexAttribute];
+    }
     [self build];
     if ([_attributedString isKindOfClass:[NSAttributedString class]]) {
         [_attributedString endEditing];
@@ -189,6 +211,10 @@
         [_rtlIndexes addIndexesInRange:NSMakeRange(_string.length, string.length)];
     }
     [_string appendString:string];
+    for (NSUInteger i = 0; i < string.length; i++) {
+        CTVectorAppend(&_characterIndexToSourceCell, _count);
+    }
+    _count += 1;
 }
 
 // Moves characters from characterData to string.
@@ -198,7 +224,6 @@
     }
     [_string appendString:[NSString stringWithCharacters:_characterData.mutableBytes length:_characterData.length / sizeof(unichar)]];
     _canUseFastPath = NO;
-    [_characterData release];
     _characterData = nil;
 }
 
@@ -216,6 +241,8 @@
         [_rtlIndexes addIndex:_string.length + _characterData.length / sizeof(unichar)];
     }
     [_characterData appendBytes:&code length:sizeof(unichar)];
+    CTVectorAppend(&_characterIndexToSourceCell, _count);
+    _count += 1;
 }
 
 - (NSInteger)length {
@@ -241,6 +268,11 @@
 
 - (void)addAttribute:(NSString *)name value:(id)value {
     [self addAttribute:name value:value range:NSMakeRange(0, self.length)];
+}
+
+- (NSRange)sourceColumnRange {
+    id value = [self attribute:iTermSourceColumnsAttribute atIndex:0 effectiveRange:nil];
+    return [[NSValue castFrom:value] rangeValue];
 }
 
 @end

@@ -102,21 +102,22 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) vector_float4 shadeColor;
 
 // Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
-- (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
-               attributes:(iTermMetalGlyphAttributes *)attributes
-                imageRuns:(NSMutableArray<iTermMetalImageRun *> *)imageRuns
-           kittyImageRuns:(NSMutableArray<iTermKittyImageRun *> *)kittyImageRuns
-               background:(iTermMetalBackgroundColorRLE *)backgrounds
-                 rleCount:(int *)rleCount
-                markStyle:(out iTermMarkStyle *)markStylePtr
-            lineStyleMark:(out BOOL *)lineStyleMarkPtr
-  lineStyleMarkRightInset:(out int *)lineStyleMarkRightInset
-                      row:(int)row
-                    width:(int)width
-                 bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
-           drawableGlyphs:(int *)drawableGlyphsPtr
-                     date:(out NSDate * _Nonnull * _Nonnull)date
-           belongsToBlock:(out BOOL * _Nonnull)belongsToBlock;
+- (void)metalGetGlyphKeysData:(iTermGlyphKeyData *)glyphKeysData
+                glyphKeyCount:(out NSUInteger *)glyphKeyCountPtr
+                   attributes:(iTermMetalGlyphAttributes *)attributes
+                    imageRuns:(NSMutableArray<iTermMetalImageRun *> *)imageRuns
+               kittyImageRuns:(NSMutableArray<iTermKittyImageRun *> *)kittyImageRuns
+                   background:(iTermMetalBackgroundColorRLE *)backgrounds
+                     rleCount:(int *)rleCount
+                    markStyle:(out iTermMarkStyle *)markStylePtr
+                lineStyleMark:(out BOOL *)lineStyleMarkPtr
+      lineStyleMarkRightInset:(out int *)lineStyleMarkRightInset
+                          row:(int)row
+                        width:(int)width
+                     bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
+               drawableGlyphs:(int *)drawableGlyphsPtr
+                         date:(out NSDate * _Nonnull * _Nonnull)date
+               belongsToBlock:(out BOOL * _Nonnull)belongsToBlock;
 
 - (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize
                                                                        asciiOffset:(CGSize)asciiOffset;

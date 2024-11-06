@@ -10,12 +10,19 @@
 
 #define ENABLE_TEXT_DRAWING_FAST_PATH 1
 
+// NSvalue with range of columns
+extern NSString *const iTermSourceColumnsAttribute;
+
+// NSData mapping character index to source cell. Only for NSAttributedString, not for cheap strings.
+extern NSString *const iTermSourceCellIndexAttribute;
+
 @protocol iTermAttributedString<NSObject>
 @property (readonly) NSUInteger length;
 - (void)addAttribute:(NSString *)name value:(id)value;
 - (void)beginEditing;
 - (void)endEditing;
 - (void)appendAttributedString:(NSAttributedString *)attrString;
+- (NSRange)sourceColumnRange;
 @end
 
 // We don't render these characters with CoreText, so they will never get ligatures. This allows
@@ -38,6 +45,8 @@ static inline BOOL iTermCharacterSupportsFastPath(unichar code, BOOL asciiLigatu
 @property(nonatomic, readonly) NSInteger length;
 @property(nonatomic, assign) BOOL asciiLigaturesAvailable;
 @property(nonatomic, assign) BOOL zippy;
+@property(nonatomic) NSInteger endColumn;
+@property(nonatomic) NSInteger startColumn;
 
 - (void)appendString:(NSString *)string rtl:(BOOL)rtl;
 - (void)appendCharacter:(unichar)code rtl:(BOOL)rtl;

@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithCopyOfLine:(const screen_char_t *)line
                             length:(int)length
                       continuation:(screen_char_t)continuation
-                          bidiInfo:(iTermBidiDisplayInfo *)bidiInfo;
+                          bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
 
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length

@@ -61,71 +61,50 @@ extension ClosedRange {
     }
 }
 
-// Make a lookup table that maps source column number to display column number.
+// Make a lookup table that maps source cell to display cell.
 fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
-                                 deltas: UnsafePointer<Int32>,
-                                 count: Int) -> ([Int32], IndexSet) {
+                                     deltas: UnsafePointer<Int32>,
+                                     count: Int) -> ([Int32], IndexSet) {
     var rtlIndexes = IndexSet()
-    struct CharInfo {
-        var stringIndex: Int32
-        var positions: ClosedRange<CGFloat>
-    }
 
     // Create a CTLine from the attributed string
     let line = CTLineCreateWithAttributedString(attributedString)
     let runs = CTLineGetGlyphRuns(line) as! [CTRun]
 
-    // Maps indexes in attributedString to display order.
-    var lut = Array<Int32>(0..<Int32(count))
-
-    var charInfos = [CharInfo]()
+    // Source cell to range of positions
+    var sourceCellToPositionRange = Array<ClosedRange<CGFloat>?>(repeating: nil, count: count)
     for run in runs {
-        let isRTL = (run.status == .rightToLeft)
-
+        let isRTL = (run.status.contains(.rightToLeft))
         let stringIndices = run.stringIndices
         let positions = run.positions
-
-        var currentRange: ClosedRange<CGFloat>?
-        var lastStringIndex: Int32?
-
-        // Process sorted indices using permutation
-        let permutation = (0..<stringIndices.count).sorted {
-            stringIndices[$0] < stringIndices[$1]
-        }
-
-        for index in permutation {
-            let stringIndex = Int32(stringIndices[index])
-            let position = positions[index].x
-
-            if stringIndex == lastStringIndex {
-                // Extend the current range if the string index matches
-                currentRange?.formUnion(position...position)
+        for i in 0..<run.glyphCount {
+            let stringIndex = stringIndices[i]
+            if isRTL {
+                rtlIndexes.insert(Int(stringIndex))
+            }
+            let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
+            if var existing = sourceCellToPositionRange[sourceCell] {
+                existing.formUnion(positions[i].x...positions[i].x)
+                sourceCellToPositionRange[sourceCell] = existing
             } else {
-                // Push previous CharInfo and start a new one
-                if let lastRange = currentRange, let lastIndex = lastStringIndex {
-                    charInfos.append(CharInfo(stringIndex: lastIndex, positions: lastRange))
-                }
-                currentRange = position...position
-                lastStringIndex = stringIndex
-                if isRTL {
-                    rtlIndexes.insert(Int(stringIndex))
-                }
+                sourceCellToPositionRange[sourceCell] = positions[i].x...positions[i].x
             }
         }
-        // Push the last CharInfo
-        if let lastRange = currentRange, let lastIndex = lastStringIndex {
-            charInfos.append(CharInfo(stringIndex: lastIndex, positions: lastRange))
+    }
+
+    let sortedElementsByPosition = sourceCellToPositionRange.enumerated().compactMap { (sourceCell: Int, positionRange: ClosedRange<CGFloat>?) -> (sourceCell: Int, positionRange: ClosedRange<CGFloat>)? in
+        if let positionRange {
+            (sourceCell, positionRange)
+        } else {
+            nil
         }
+    }.sorted { lhs, rhs in
+        lhs.positionRange.lowerBound < rhs.positionRange.lowerBound
     }
-
-    // Sort CharInfos by the lower bound of their position ranges
-    charInfos.sort { $0.positions.lowerBound < $1.positions.lowerBound }
-
-    // Update the lookup table
-    for (i, char) in charInfos.enumerated() {
-        lut[Int(CellOffsetFromUTF16Offset(char.stringIndex, deltas))] = Int32(i)
+    var lut = Array(Int32(0)..<Int32(count))
+    for (visualIndex, element) in sortedElementsByPosition.enumerated() {
+        lut[element.sourceCell] = Int32(visualIndex)
     }
-
     return (lut, rtlIndexes)
 }
 

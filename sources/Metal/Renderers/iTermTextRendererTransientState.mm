@@ -470,13 +470,30 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
 }
 
 static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphKey) {
-    return (glyphKey.code <= iTermASCIITextureMaximumCharacter &&
-            glyphKey.code >= iTermASCIITextureMinimumCharacter &&
-            !glyphKey.isComplex &&
-            !glyphKey.boxDrawing);
+    return (glyphKey.type == iTermMetalGlyphTypeRegular &&
+            glyphKey.payload.regular.code <= iTermASCIITextureMaximumCharacter &&
+            glyphKey.payload.regular.code >= iTermASCIITextureMinimumCharacter &&
+            !glyphKey.payload.regular.isComplex &&
+            !glyphKey.payload.regular.boxDrawing);
 }
 
+typedef struct {
+    const iTermMetalGlyphKey *glyphKeys;
+    int i;
+    float asciiXOffset;
+    float asciiYOffset;
+    float yOffset;
+    vector_float2 reciprocalAsciiAtlasSize;
+    CGSize cellSize;
+    CGSize glyphSize;
+    const iTermMetalGlyphAttributes *attributes;
+    BOOL inMarkedRange;
+    iTermMetalBufferPoolContext *context;
+    NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^creation)(int x, BOOL *emoji);
+} iTermTextRendererGlyphState;
+
 - (void)setGlyphKeysData:(iTermGlyphKeyData *)glyphKeysData
+           glyphKeyCount:(NSUInteger)glyphKeyCount
                    count:(int)count
           attributesData:(iTermAttributesData *)attributesData
                      row:(int)row
@@ -489,8 +506,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.bytes;
     vector_float2 reciprocalAsciiAtlasSize = 1.0 / _asciiTextureGroup.atlasSize;
     CGSize glyphSize = self.cellConfiguration.glyphSize;
+    const CGSize cellSize = self.cellConfiguration.cellSize;
     const float cellHeight = self.cellConfiguration.cellSize.height;
-    const float cellWidth = self.cellConfiguration.cellSize.width;
     // NOTE: This must match logic in -[iTermCharacterSource drawBoxAtOffset:iteration:]
     const float verticalShift = round((cellHeight - self.cellConfiguration.cellSizeWithoutSpacing.height) / (2 * self.configuration.scale)) * self.configuration.scale;
     const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight + verticalShift;
@@ -500,95 +517,134 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     std::map<int, int> lastRelations;
     BOOL inMarkedRange = NO;
 
-    for (int x = 0; x < count; x++) {
+    iTermTextRendererGlyphState state = {
+        .glyphKeys = glyphKeys,
+        .asciiXOffset = asciiXOffset,
+        .asciiYOffset = asciiYOffset,
+        .yOffset = yOffset,
+        .reciprocalAsciiAtlasSize = reciprocalAsciiAtlasSize,
+        .cellSize = cellSize,
+        .glyphSize = glyphSize,
+        .attributes = attributes,
+        .context = context,
+        .creation = creation
+    };
+    int prevX = -1;
+    for (state.i = 0; state.i < glyphKeyCount; state.i++) {
+        const int x = glyphKeys[state.i].index;
         if (x == markedRangeOnLine.location) {
-            inMarkedRange = YES;
+            state.inMarkedRange = YES;
         } else if (inMarkedRange && x == NSMaxRange(markedRangeOnLine)) {
-            inMarkedRange = NO;
+            state.inMarkedRange = NO;
         }
 
-        if (!glyphKeys[x].drawable) {
-            continue;
-        }
-        if (GlyphKeyCanTakeASCIIFastPath(glyphKeys[x])) {
-            // ASCII fast path
-            iTermASCIITextureAttributes asciiAttrs = iTermASCIITextureAttributesFromGlyphKeyTypeface(glyphKeys[x].typeface,
-                                                                                                     glyphKeys[x].thinStrokes);
-            [self addASCIICellToPIUsForCode:glyphKeys[x].code
-                                          x:x
-                               visualColumn:glyphKeys[x].visualColumn
-                                     offset:CGSizeMake(asciiXOffset, yOffset + asciiYOffset)
-                                          w:reciprocalAsciiAtlasSize.x
-                                          h:reciprocalAsciiAtlasSize.y
-                                  cellWidth:cellWidth
-                                 asciiAttrs:asciiAttrs
-                                 attributes:attributes
-                              inMarkedRange:inMarkedRange];
-            [glyphKeysData checkForOverrun1];
-            [attributesData checkForOverrun1];
-        } else {
-            // Non-ASCII slower path
-            const iTerm2::GlyphKey glyphKey(&glyphKeys[x]);
-            std::vector<const iTerm2::GlyphEntry *> *entries = _texturePageCollectionSharedPointer.object->find(glyphKey);
-            if (!entries) {
-                entries = _texturePageCollectionSharedPointer.object->add(x, glyphKey, context, creation);
-                if (!entries) {
-                    continue;
+        switch (glyphKeys[state.i].type) {
+            case iTermMetalGlyphTypeRegular:
+                if (!glyphKeys[state.i].payload.regular.drawable) {
+                    break;
                 }
-            } else if (entries->empty()) {
-                continue;
-            }
-            const bool &hasAnnotation = attributes[x].annotation;
-            const bool hasUnderline = attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
-            const iTerm2::GlyphEntry *firstGlyphEntry = (*entries)[0];
-            const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, firstGlyphEntry->_is_emoji);
-            for (auto entry : *entries) {
-                auto it = _pius[outerPIUIndex].find(entry->_page);
-                iTerm2::PIUArray<iTermTextPIU> *array;
-                if (it == _pius[outerPIUIndex].end()) {
-                    array = _pius[outerPIUIndex][entry->_page] = new iTerm2::PIUArray<iTermTextPIU>(_numberOfCells);
+                if (GlyphKeyCanTakeASCIIFastPath(glyphKeys[state.i])) {
+                    [self addASCII:&state];
                 } else {
-                    array = it->second;
+                    [self addNonASCII:&state allowUnderline:YES];
                 }
-                iTermTextPIU *piu = array->get_next();
-                // Build the PIU
-                const int &part = entry->_part;
-                const int dx = iTermImagePartDX(part);
-                const int dy = iTermImagePartDY(part);
-                piu->offset = simd_make_float2(glyphKeys[x].visualColumn * cellWidth + dx * glyphSize.width,
-                                               -dy * glyphSize.height + yOffset);
-                MTLOrigin origin = entry->get_origin();
-                vector_float2 reciprocal_atlas_size = entry->_page->get_reciprocal_atlas_size();
-                piu->textureOffset = simd_make_float2(origin.x * reciprocal_atlas_size.x,
-                                                      origin.y * reciprocal_atlas_size.y);
-                piu->textColor = attributes[x].foregroundColor;
-                if (attributes[x].annotation) {
-                    piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-                    piu->underlineColor = iTermAnnotationUnderlineColor;
-                } else if (inMarkedRange) {
-                    piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-                    piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
-                } else {
-                    piu->underlineStyle = attributes[x].underlineStyle;
-                    if (attributes[x].hasUnderlineColor) {
-                        piu->underlineColor = attributes[x].underlineColor;
-                    } else {
-                        piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
-                    }
-                }
-                if (part != iTermTextureMapMiddleCharacterPart &&
-                    part != iTermTextureMapMiddleCharacterPart + 1) {
-                    // Only underline center part and its right neighbor of the character. There are weird artifacts otherwise,
-                    // such as floating underlines (for parts above and below) or doubly drawn
-                    // underlines.
-                    piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
-                }
-            }
+                break;
+            case iTermMetalGlyphTypeDecomposed:
+                [self addNonASCII:&state allowUnderline:x != prevX];
+                break;
         }
-        [glyphKeysData checkForOverrun2];
-        [attributesData checkForOverrun2];
+        prevX = x;
     }
-    //DLog(@"END setGlyphKeysData for %@", self);
+}
+
+// ASCII fast path
+- (void)addASCII:(const iTermTextRendererGlyphState *)state {
+    const iTermMetalGlyphKey theGlyphKey = state->glyphKeys[state->i];
+    const int x = theGlyphKey.index;
+
+    iTermASCIITextureAttributes asciiAttrs =
+        iTermASCIITextureAttributesFromGlyphKeyTypeface(theGlyphKey.typeface,
+                                                        theGlyphKey.thinStrokes);
+    [self addASCIICellToPIUsForCode:theGlyphKey.payload.regular.code
+                                  x:x
+                       visualColumn:theGlyphKey.visualColumn
+                             offset:CGSizeMake(state->asciiXOffset,
+                                               state->yOffset + state->asciiYOffset)
+                                  w:state->reciprocalAsciiAtlasSize.x
+                                  h:state->reciprocalAsciiAtlasSize.y
+                          cellWidth:state->cellSize.width
+                         asciiAttrs:asciiAttrs
+                         attributes:state->attributes
+                      inMarkedRange:state->inMarkedRange];
+}
+
+// Non-ASCII slower path
+- (void)addNonASCII:(const iTermTextRendererGlyphState *)state
+     allowUnderline:(BOOL)allowUnderline {
+    const iTermMetalGlyphKey theGlyphKey = state->glyphKeys[state->i];
+    const int x = theGlyphKey.index;
+
+    const iTerm2::GlyphKey glyphKey(&theGlyphKey);
+    std::vector<const iTerm2::GlyphEntry *> *entries = _texturePageCollectionSharedPointer.object->find(glyphKey);
+    if (!entries) {
+        entries = _texturePageCollectionSharedPointer.object->add(state->i,
+                                                                  glyphKey,
+                                                                  state->context,
+                                                                  state->creation);
+        if (!entries) {
+            return;;
+        }
+    } else if (entries->empty()) {
+        return;;
+    }
+
+    const iTermMetalGlyphAttributes *attributes = state->attributes;
+    const bool &hasAnnotation = attributes[x].annotation;
+    const bool hasUnderline = attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
+    const iTerm2::GlyphEntry *firstGlyphEntry = (*entries)[0];
+    const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, firstGlyphEntry->_is_emoji);
+    for (auto entry : *entries) {
+        auto it = _pius[outerPIUIndex].find(entry->_page);
+        iTerm2::PIUArray<iTermTextPIU> *array;
+        if (it == _pius[outerPIUIndex].end()) {
+            array = _pius[outerPIUIndex][entry->_page] = new iTerm2::PIUArray<iTermTextPIU>(_numberOfCells);
+        } else {
+            array = it->second;
+        }
+        iTermTextPIU *piu = array->get_next();
+        // Build the PIU
+        const int &part = entry->_part;
+        const int dx = iTermImagePartDX(part);
+        const int dy = iTermImagePartDY(part);
+        piu->offset = simd_make_float2(theGlyphKey.visualColumn * state->cellSize.width + dx * state->glyphSize.width,
+                                       -dy * state->glyphSize.height + state->yOffset);
+        MTLOrigin origin = entry->get_origin();
+        vector_float2 reciprocal_atlas_size = entry->_page->get_reciprocal_atlas_size();
+        piu->textureOffset = simd_make_float2(origin.x * reciprocal_atlas_size.x,
+                                              origin.y * reciprocal_atlas_size.y);
+        piu->textColor = attributes[x].foregroundColor;
+        if (attributes[x].annotation) {
+            piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+            piu->underlineColor = iTermAnnotationUnderlineColor;
+        } else if (state->inMarkedRange) {
+            piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+            piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+        } else {
+            piu->underlineStyle = attributes[x].underlineStyle;
+            if (attributes[x].hasUnderlineColor) {
+                piu->underlineColor = attributes[x].underlineColor;
+            } else {
+                piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+            }
+        }
+        if (part != iTermTextureMapMiddleCharacterPart &&
+            part != iTermTextureMapMiddleCharacterPart + 1) {
+            // Only underline center part and its right neighbor of the character. There are weird artifacts otherwise,
+            // such as floating underlines (for parts above and below) or doubly drawn
+            // underlines.
+            piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+        }
+    }
 }
 
 - (void)didComplete {
