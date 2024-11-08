@@ -1284,7 +1284,8 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
                                                          blue:bgrle->color.z
                                                         alpha:bgrle->color.w];
             iTermBackgroundColorRun run = {
-                .range = NSMakeRange(0, width),
+                .modelRange = NSMakeRange(0, width),
+                .visualRange = NSMakeRange(0, width),
                 .bgColor = line[bgrle->origin].backgroundColor,
                 .bgGreen = line[bgrle->origin].bgGreen,
                 .bgBlue = line[bgrle->origin].bgBlue,
@@ -1295,11 +1296,12 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
                             CheckFindMatchAtIndex(findMatches, bgrle->origin)),
                 .beneathFaintText = line[bgrle->origin].faint
             };
+#warning This is pretty sketchy. Don't i need to break it up into real background runs so stuff like hasSelectedTExt is correct?
             attributedStrings =
             [_attributedStringBuilder attributedStringsForLine:line
                                                       bidiInfo:bidiInfo
                                             externalAttributes:eaIndex
-                                                         range:run.range
+                                                         range:run.modelRange
                                                hasSelectedText:selectedIndexes.count > 0
                                                backgroundColor:bgColor
                                                 forceTextColor:nil

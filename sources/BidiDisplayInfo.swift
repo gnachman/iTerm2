@@ -76,12 +76,19 @@ fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
     for run in runs {
         let isRTL = (run.status.contains(.rightToLeft))
         let stringIndices = run.stringIndices
+
+        // Update rtlIndexes
+        if isRTL {
+            for stringIndex in stringIndices {
+                let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
+                rtlIndexes.insert(sourceCell)
+            }
+        }
+
+        // Update sourceCellToPositionRange
         let positions = run.positions
         for i in 0..<run.glyphCount {
             let stringIndex = stringIndices[i]
-            if isRTL {
-                rtlIndexes.insert(Int(stringIndex))
-            }
             let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
             if var existing = sourceCellToPositionRange[sourceCell] {
                 existing.formUnion(positions[i].x...positions[i].x)
@@ -144,7 +151,7 @@ class BidiDisplayInfoObjc: NSObject {
         }
     }
     @objc var rtlIndexes: IndexSet { guts.rtlIndexes }
-    // Length of the `lut`. Also equals the number of non-empty sequential cells counting from the first.
+    // Length of the `lut`. Also equals the number of non-empty sequential cells counting from the first. Does not include trailing spaces.
     @objc var numberOfCells: Int32 { Int32(guts.lut.count) }
 
     private enum Keys: String {
@@ -155,7 +162,7 @@ class BidiDisplayInfoObjc: NSObject {
     @objc
     var dictionaryValue: [String: Any] {
         return [Keys.lut.rawValue: guts.lut.map { NSNumber(value: $0) },
-                Keys.rtlIndexes.rawValue: rtlIndexes.rangeView.map { NSValue(range: NSRange($0)) }]
+                Keys.rtlIndexes.rawValue: rtlIndexes.rangeView.map { NSValue(range: NSRange($0)) } ]
     }
 
     @objc(initWithDictionary:)
@@ -304,7 +311,7 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     // Fails if no RTL was found
     init?(_ sca: ScreenCharArray) {
         let length = Int32(sca.length)
-        let emptyCount = Int32(sca.numberOfTrailingEmptyCells)
+        let emptyCount = Int32(sca.numberOfTrailingEmptyCells(spaceIsEmpty: false))
         let nonEmptyCount = length - emptyCount
 
         var buffer: UnsafeMutablePointer<unichar>?
@@ -352,11 +359,12 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
 }
 
 extension ScreenCharArray {
-    var numberOfTrailingEmptyCells: Int {
+    func numberOfTrailingEmptyCells(spaceIsEmpty: Bool) -> Int {
         var count = 0
         let length = Int(self.length)
         let line = self.line
-        while count < length && line[Int(length - count - 1)].code == 0 {
+        let emptyCodes = spaceIsEmpty ? Set([unichar(0), unichar(32)]) : Set([unichar(0)])
+        while count < length && emptyCodes.contains(line[Int(length - count - 1)].code) {
             count += 1
         }
         return count

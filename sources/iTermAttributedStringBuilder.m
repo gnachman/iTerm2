@@ -345,10 +345,11 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         NSString *charAsString;
 
         CGFloat xPosition;
+#warning TODO: I changed positions to be relative to the left margin. They used to be relative to indexRange.location but that is a model range now, not a visual range, so it doesn't make sense to do.
         if (bidiLUT && i < bidiLUTLength) {
-            xPosition = (bidiLUT[i] - indexRange.location) * _cellSize.width;
+            xPosition = bidiLUT[i] * _cellSize.width;
         } else {
-            xPosition = (i - indexRange.location) * _cellSize.width;
+            xPosition = i * _cellSize.width;
         }
 
         if (isComplex && !c.image) {

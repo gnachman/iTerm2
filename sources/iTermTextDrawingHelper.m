@@ -403,6 +403,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             [_selection selectedIndexesIncludingTabFillersInAbsoluteLine:line + _totalScrollbackOverflow];
 
         if ([self canDrawLine:line]) {
+            iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:line];
+            const BOOL rtlFound = metadata.rtlFound;
             iTermBackgroundColorRunsInLine *runsInLine =
             [iTermBackgroundColorRunsInLine backgroundRunsInLine:theLine
                                                       lineLength:_gridSize.width
@@ -412,7 +414,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                      withinRange:charRange
                                                          matches:matches
                                                         anyBlink:&_blinkingFound
-                                                               y:y];
+                                                               y:y
+                                                            bidi:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:line] : nil];
             [backgroundRunArrays addObject:runsInLine];
         } else {
             [backgroundRunArrays addObject:[iTermBackgroundColorRunsInLine defaultRunOfLength:_gridSize.width
@@ -592,7 +595,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         }
         if (cursorY >= runArray.line &&
             cursorY < runArray.line + runArray.numberOfEquivalentRows) {
-            NSColor *color = [self unprocessedColorForBackgroundRun:[runArray runAtIndex:self.cursorCoord.x] ?: runArray.lastRun
+            NSColor *color = [self unprocessedColorForBackgroundRun:[runArray runAtVisualIndex:self.cursorCoord.x] ?: runArray.lastRun
                                                      enableBlending:NO];
             cursorBackgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
         }
@@ -652,9 +655,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 //        NSLog(@"Paint background row %d range %@", line, NSStringFromRange(run->range));
 
-        NSRect rect = NSMakeRect(floor([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->range.location * _cellSize.width),
+        NSRect rect = NSMakeRect(floor([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->visualRange.location * _cellSize.width),
                                  yOrigin,
-                                 ceil(run->range.length * _cellSize.width),
+                                 ceil(run->visualRange.length * _cellSize.width),
                                  _cellSize.height * rows);
         // If subpixel AA is enabled, then we want to draw the default background color directly.
         // Otherwise, we'll disable blending and make it clear. Then the background color view can
@@ -1551,6 +1554,14 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 
 #pragma mark - Drawing: Foreground
 
+static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
+    if (lhs.location == NSNotFound || rhs.location == NSNotFound) {
+        return NO;
+    }
+
+    return NSMaxRange(lhs) == rhs.location || NSMaxRange(rhs) == lhs.location;
+}
+
 // Draw assuming no foreground color processing. Keeps glyphs together in a single background color run across different background colors.
 - (void)drawUnprocessedForegroundForBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
                                drawOffscreenCommandLine:(BOOL)drawOffscreenCommandLine
@@ -1571,9 +1582,11 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             } else if (run.valuePointer->selected == previousRun.selected &&
                        run.valuePointer->isMatch == previousRun.isMatch &&
                        !run.valuePointer->beneathFaintText &&
-                       !previousRun.beneathFaintText) {
+                       !previousRun.beneathFaintText &&
+                       NSRangesAdjacent(previousRun.modelRange, run.valuePointer->modelRange)) {
                 // Combine with preceding run.
-                previousRun.range = NSUnionRange(previousRun.range, run.valuePointer->range);
+                previousRun.visualRange = NSUnionRange(previousRun.visualRange, run.valuePointer->visualRange);
+                previousRun.modelRange = NSUnionRange(previousRun.modelRange, run.valuePointer->modelRange);
             } else {
                 // Allow this run to remain.
                 [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
@@ -1679,14 +1692,14 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
-        NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->range.location * _cellSize.width,
+        NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins]/* + run->visualRange.location * _cellSize.width*/,
                                          y);
         [self constructAndDrawRunsForLine:theLine
                                  bidiInfo:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:sourceLine] : nil
                        externalAttributes:eaIndex
                           sourceLineNumer:sourceLine
                         displayLineNumber:displayLine
-                                  inRange:run->range
+                                  inRange:run->modelRange
                           startingAtPoint:textOrigin
                                bgselected:run->selected
                                   bgColor:box.unprocessedBackgroundColor
@@ -3137,16 +3150,23 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
 
     BOOL blink = NO;
     const int row = [self rangeOfVisibleRows].location;
+
+    const int line = _offscreenCommandLine.absoluteLineNumber - _totalScrollbackOverflow;
+    iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:line];
+    const BOOL rtlFound = metadata.rtlFound;
+
     iTermBackgroundColorRunsInLine *backgroundRuns =
     [iTermBackgroundColorRunsInLine backgroundRunsInLine:_offscreenCommandLine.characters.line
                                               lineLength:_gridSize.width
-                                        sourceLineNumber:_offscreenCommandLine.absoluteLineNumber - _totalScrollbackOverflow
+                                        sourceLineNumber:line
                                        displayLineNumber:row
                                          selectedIndexes:[NSIndexSet indexSet]
                                              withinRange:NSMakeRange(0, _gridSize.width)
                                                  matches:nil
                                                 anyBlink:&blink
-                                                       y:row * _cellSize.height];
+                                                       y:row * _cellSize.height
+                                                    bidi:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:line] : nil];
+
 
     [self drawOffscreenCommandLineDecorationsInContext:ctx
                                          virtualOffset:virtualOffset];
@@ -3468,9 +3488,23 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     if (!bidiInfo) {
         return nominal;
     }
-    if (nominal.x < 0 || nominal.x >= bidiInfo.numberOfCells) {
+    if (nominal.x < 0 || bidiInfo.numberOfCells == 0) {
         return nominal;
     }
+    const int numberOfCells = bidiInfo.numberOfCells;
+    if (nominal.x >= numberOfCells) {
+        const int offset = 0;
+        // Cursor is logically after the last non-space character.
+        if ([bidiInfo.rtlIndexes containsIndex:numberOfCells - 1]) {
+            // Cursor follows an RTL run. Place it left of the last character.
+            return VT100GridCoordMake(MAX(0, bidiInfo.lut[numberOfCells - 1] - offset), nominal.y);
+        } else {
+            // The line ends with LTR so place it right of last character.
+            const int width = _gridSize.width;
+            return VT100GridCoordMake(MIN(width, bidiInfo.lut[numberOfCells - 1] + offset + 1), nominal.y);
+        }
+    }
+    // Cursor is somewhere in the bidi lookup table.
     return VT100GridCoordMake(bidiInfo.lut[nominal.x], nominal.y);
 }
 

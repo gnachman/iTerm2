@@ -98,6 +98,7 @@
         }
         [self alignGlyphsToGridWithGlyphIndex:glyphIndexToCharacterIndex
                                        length:length
+                               characterRange:CTRunGetStringRange(run)
                         xOriginsForCharacters:xOriginsForCharacters
                                   alignToZero:alignToZero
                                     positions:positions
@@ -170,16 +171,15 @@
 
 - (void)alignGlyphsToGridWithGlyphIndex:(const CFIndex *)glyphIndexToCharacterIndex
                                  length:(size_t)length
+                         characterRange:(CFRange)characterRange
                   xOriginsForCharacters:(const CGFloat *)xOriginsForCharacters
                             alignToZero:(BOOL)alignToZero
                               positions:(CGPoint *)positions
                    baseCharacterIndexes:(NSIndexSet *)baseCharacterIndexes {
     CFIndex glyphIndexToBaseCharacterIndex[length];
-    CFIndex baseCharacterIndexToGlyphIndex[length];
-    CGFloat baseCharacterPositions[length];
+    CGFloat baseCharacterPositions[characterRange.length];
 
     memset(glyphIndexToBaseCharacterIndex, 0, sizeof(glyphIndexToBaseCharacterIndex));
-    memset(baseCharacterIndexToGlyphIndex, 0, sizeof(baseCharacterIndexToGlyphIndex));
     memset(baseCharacterPositions, 0, sizeof(baseCharacterPositions));
 
     for (CFIndex i = 0; i < length; i++) {
@@ -188,14 +188,14 @@
         const CFIndex baseCharacterIndex = isBase ? characterIndex : [baseCharacterIndexes indexLessThanIndex:characterIndex];
         glyphIndexToBaseCharacterIndex[i] = baseCharacterIndex;
         if (isBase) {
-            baseCharacterIndexToGlyphIndex[characterIndex] = i;
-            baseCharacterPositions[characterIndex] = positions[i].x;
+            assert(characterIndex >= characterRange.location);
+            baseCharacterPositions[characterIndex - characterRange.location] = positions[i].x;
         }
     }
 
     for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
         const CFIndex baseCharacterIndex = glyphIndexToBaseCharacterIndex[glyphIndex];
-        const CGFloat startOfThisCharacter = baseCharacterPositions[baseCharacterIndex];
+        const CGFloat startOfThisCharacter = baseCharacterPositions[baseCharacterIndex - characterRange.location];
         const CGFloat xOriginForCurrentColumn = xOriginsForCharacters[baseCharacterIndex];
         positions[glyphIndex].x += (alignToZero ? 0 : xOriginForCurrentColumn) - startOfThisCharacter;
     }

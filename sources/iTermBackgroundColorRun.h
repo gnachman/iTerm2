@@ -9,11 +9,13 @@
 #import <Cocoa/Cocoa.h>
 #import "ScreenChar.h"
 
+@class iTermBidiDisplayInfo;
 @class iTermBoxedBackgroundColorRun;
 @class iTermTextExtractor;
 
 typedef struct {
-    NSRange range;
+    NSRange modelRange;
+    NSRange visualRange;
     int bgColor;
     int bgGreen;
     int bgBlue;
@@ -65,13 +67,14 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
                          withinRange:(NSRange)charRange
                              matches:(NSData *)matches
                             anyBlink:(BOOL *)anyBlinkPtr
-                                   y:(CGFloat)y;  // Value for self.y
+                                   y:(CGFloat)y  // Value for self.y
+                                bidi:(iTermBidiDisplayInfo *)bidi;
 
 + (instancetype)defaultRunOfLength:(int)width
                                row:(int)row
                                  y:(CGFloat)y;
 
-- (iTermBackgroundColorRun *)runAtIndex:(int)i;
+- (iTermBackgroundColorRun *)runAtVisualIndex:(int)i;
 - (iTermBackgroundColorRun *)lastRun;
 
 @end
