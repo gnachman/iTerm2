@@ -212,7 +212,7 @@ NSString *const iTermSourceCellIndexAttribute = @"iTermSourceCellIndexAttribute"
     }
     [_string appendString:string];
     for (NSUInteger i = 0; i < string.length; i++) {
-        CTVectorAppend(&_characterIndexToSourceCell, _count);
+        CTVectorAppend(&_characterIndexToSourceCell, _count + _startColumn);
     }
     _count += 1;
 }
@@ -241,7 +241,7 @@ NSString *const iTermSourceCellIndexAttribute = @"iTermSourceCellIndexAttribute"
         [_rtlIndexes addIndex:_string.length + _characterData.length / sizeof(unichar)];
     }
     [_characterData appendBytes:&code length:sizeof(unichar)];
-    CTVectorAppend(&_characterIndexToSourceCell, _count);
+    CTVectorAppend(&_characterIndexToSourceCell, _count + _startColumn);
     _count += 1;
 }
 

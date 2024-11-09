@@ -1236,6 +1236,90 @@ static int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
     return rles;
 }
 
+static void iTermInitializeColorKey(BOOL findMatch,
+                                    BOOL inUnderlinedRange,
+                                    BOOL selected,
+                                    BOOL isBlockCharacter,
+                                    vector_float4 bgColor,
+                                    const screen_char_t *characterPointer,
+                                    iTermTextColorKey *currentColorKey) {
+    currentColorKey->isMatch = findMatch;
+    currentColorKey->inUnderlinedRange = inUnderlinedRange;
+    currentColorKey->selected = selected;
+    currentColorKey->mode = characterPointer->foregroundColorMode;
+    currentColorKey->foregroundColor = characterPointer->foregroundColor;
+    currentColorKey->fgGreen = characterPointer->fgGreen;
+    currentColorKey->fgBlue = characterPointer->fgBlue;
+    currentColorKey->bold = characterPointer->bold;
+    currentColorKey->faint = characterPointer->faint;
+    currentColorKey->background = bgColor;
+    currentColorKey->isBlock = isBlockCharacter;
+}
+
+static BOOL iTermColorKeysEqual(const iTermTextColorKey *lhs,
+                                const iTermTextColorKey *rhs) {
+    return (lhs->isMatch == rhs->isMatch &&
+            lhs->inUnderlinedRange == rhs->inUnderlinedRange &&
+            lhs->selected == rhs->selected &&
+            lhs->foregroundColor == rhs->foregroundColor &&
+            lhs->mode == rhs->mode &&
+            lhs->fgGreen == rhs->fgGreen &&
+            lhs->fgBlue == rhs->fgBlue &&
+            lhs->bold == rhs->bold &&
+            lhs->faint == rhs->faint &&
+            simd_equal(lhs->background, rhs->background) &&
+            lhs->isBlock == rhs->isBlock);
+}
+
+static void iTermMetalSetUnderline(iTermMetalPerFrameState *self,
+                                   BOOL annotated,
+                                   BOOL inUnderlinedRange,
+                                   BOOL underlineHyperlinks,
+                                   const screen_char_t *const line,
+                                   const iTermTextColorKey *currentColorKey,
+                                   int logicalIndex,
+                                   int visualX,
+                                   iTermURL *url,
+                                   iTermExternalAttribute *ea,
+                                   iTermMetalGlyphAttributes *attributes) {
+    if (annotated) {
+        attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+    } else if (line[logicalIndex].underline || inUnderlinedRange) {
+        const BOOL curly = line[logicalIndex].underline && line[logicalIndex].underlineStyle == VT100UnderlineStyleCurly;
+        if (url != nil) {
+            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineHyperlink;
+        } else if (line[logicalIndex].underline && line[logicalIndex].underlineStyle == VT100UnderlineStyleDouble && !inUnderlinedRange) {
+            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
+        } else if (curly && !inUnderlinedRange) {
+            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineCurly;
+        } else {
+            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+        }
+    } else if (url != nil && underlineHyperlinks) {
+        attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
+    } else {
+        attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+    }
+    if (line[logicalIndex].strikethrough) {
+        // This right here is why strikethrough and underline is mutually exclusive
+        attributes[visualX].underlineStyle |= iTermMetalGlyphAttributesUnderlineStrikethroughFlag;
+    }
+    if (ea) {
+        attributes[visualX].hasUnderlineColor = ea.hasUnderlineColor;
+        if (attributes[visualX].hasUnderlineColor) {
+            attributes[visualX].underlineColor = [self vectorColorForCode:ea.underlineColor.red
+                                                              green:ea.underlineColor.green
+                                                               blue:ea.underlineColor.blue
+                                                          colorMode:ea.underlineColor.mode
+                                                               bold:NO
+                                                              faint:currentColorKey->faint
+                                                       isBackground:NO];
+        }
+    } else {
+        attributes[visualX].hasUnderlineColor = NO;
+    }
+}
+
 static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                            const screen_char_t *const line,
                                            int row,
@@ -1342,29 +1426,14 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                        [blockCharacterSet characterIsMember:line[logicalIndex].code]);
         // Foreground colors
         // Build up a compact key describing all the inputs to a text color
-        currentColorKey->isMatch = findMatch;
-        currentColorKey->inUnderlinedRange = inUnderlinedRange;
-        currentColorKey->selected = selected;
-        currentColorKey->mode = line[logicalIndex].foregroundColorMode;
-        currentColorKey->foregroundColor = line[logicalIndex].foregroundColor;
-        currentColorKey->fgGreen = line[logicalIndex].fgGreen;
-        currentColorKey->fgBlue = line[logicalIndex].fgBlue;
-        currentColorKey->bold = line[logicalIndex].bold;
-        currentColorKey->faint = line[logicalIndex].faint;
-        currentColorKey->background = bgColor;
-        currentColorKey->isBlock = isBlockCharacter;
-        if (logicalIndex > 0 &&
-            currentColorKey->isMatch == previousColorKey->isMatch &&
-            currentColorKey->inUnderlinedRange == previousColorKey->inUnderlinedRange &&
-            currentColorKey->selected == previousColorKey->selected &&
-            currentColorKey->foregroundColor == previousColorKey->foregroundColor &&
-            currentColorKey->mode == previousColorKey->mode &&
-            currentColorKey->fgGreen == previousColorKey->fgGreen &&
-            currentColorKey->fgBlue == previousColorKey->fgBlue &&
-            currentColorKey->bold == previousColorKey->bold &&
-            currentColorKey->faint == previousColorKey->faint &&
-            simd_equal(currentColorKey->background, previousColorKey->background) &&
-            currentColorKey->isBlock == previousColorKey->isBlock) {
+        iTermInitializeColorKey(findMatch,
+                                inUnderlinedRange,
+                                selected,
+                                isBlockCharacter,
+                                bgColor,
+                                &line[logicalIndex],
+                                currentColorKey);
+        if (logicalIndex > 0 && iTermColorKeysEqual(currentColorKey, previousColorKey)) {
             attributes[visualX].foregroundColor = attributes[previousVisualX].foregroundColor;
         } else {
             vector_float4 textColor = [self textColorForCharacter:&line[logicalIndex]
@@ -1378,42 +1447,18 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             attributes[visualX].foregroundColor = textColor;
             attributes[visualX].foregroundColor.w = 1;
         }
-        if (annotated) {
-            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-        } else if (line[logicalIndex].underline || inUnderlinedRange) {
-            const BOOL curly = line[logicalIndex].underline && line[logicalIndex].underlineStyle == VT100UnderlineStyleCurly;
-            if (url != nil) {
-                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineHyperlink;
-            } else if (line[logicalIndex].underline && line[logicalIndex].underlineStyle == VT100UnderlineStyleDouble && !inUnderlinedRange) {
-                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
-            } else if (curly && !inUnderlinedRange) {
-                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineCurly;
-            } else {
-                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-            }
-        } else if (url != nil && underlineHyperlinks) {
-            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
-        } else {
-            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
-        }
-        if (line[logicalIndex].strikethrough) {
-            // This right here is why strikethrough and underline is mutually exclusive
-            attributes[visualX].underlineStyle |= iTermMetalGlyphAttributesUnderlineStrikethroughFlag;
-        }
-        if (ea) {
-            attributes[visualX].hasUnderlineColor = ea.hasUnderlineColor;
-            if (attributes[visualX].hasUnderlineColor) {
-                attributes[visualX].underlineColor = [self vectorColorForCode:ea.underlineColor.red
-                                                                  green:ea.underlineColor.green
-                                                                   blue:ea.underlineColor.blue
-                                                              colorMode:ea.underlineColor.mode
-                                                                   bold:NO
-                                                                  faint:currentColorKey->faint
-                                                           isBackground:NO];
-            }
-        } else {
-            attributes[visualX].hasUnderlineColor = NO;
-        }
+        iTermMetalSetUnderline(self,
+                               annotated,
+                               inUnderlinedRange,
+                               underlineHyperlinks,
+                               line,
+                               currentColorKey,
+                               logicalIndex,
+                               visualX,
+                               url,
+                               ea,
+                               attributes);
+
         // Swap current and previous
         iTermTextColorKey *temp = currentColorKey;
         currentColorKey = previousColorKey;
