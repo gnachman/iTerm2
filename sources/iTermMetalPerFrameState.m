@@ -810,31 +810,31 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 NS_INLINE void iTermGlyphKeySetVisualPosition(iTermMetalGlyphKey *glyphKeys,
                                               int gk,
-                                              int x,
+                                              int logicalIndex,
                                               const int *bidiLUT,
                                               int bidiLUTLength) {
-    if (bidiLUT && x < bidiLUTLength) {
-        glyphKeys[gk].visualColumn = bidiLUT[x];
+    if (bidiLUT && logicalIndex < bidiLUTLength) {
+        glyphKeys[gk].visualColumn = bidiLUT[logicalIndex];
     } else {
-        glyphKeys[gk].visualColumn = x;
+        glyphKeys[gk].visualColumn = logicalIndex;
     }
 }
 
 NS_INLINE int iTermGlyphKeyEmitPlaceholder(iTermMetalGlyphKey *glyphKeys,
                                            int i,
-                                           int x,
+                                           int logicalIndex,
                                            const int *bidiLUT,
                                            int bidiLUTLength) {
     glyphKeys[i].type = iTermMetalGlyphTypeRegular;
     glyphKeys[i].payload.regular.drawable = NO;
     glyphKeys[i].payload.regular.combiningSuccessor = 0;
-    iTermGlyphKeySetVisualPosition(glyphKeys, i, x, bidiLUT, bidiLUTLength);
+    iTermGlyphKeySetVisualPosition(glyphKeys, i, logicalIndex, bidiLUT, bidiLUTLength);
     return i + 1;
 }
 
 NS_INLINE int iTermGlyphKeyEmitRegular(iTermMetalGlyphKey *glyphKeys,
                                        int i,
-                                       int x,
+                                       int logicalIndex,
                                        int width,
                                        BOOL characterIsDrawable,
                                        const screen_char_t *line,
@@ -844,29 +844,29 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermMetalGlyphKey *glyphKeys,
                                        int bidiLUTLength) {
     glyphKeys[i].type = iTermMetalGlyphTypeRegular;
     if (characterIsDrawable) {
-        glyphKeys[i].payload.regular.code = line[x].code;
-        glyphKeys[i].payload.regular.isComplex = line[x].complexChar;
+        glyphKeys[i].payload.regular.code = line[logicalIndex].code;
+        glyphKeys[i].payload.regular.isComplex = line[logicalIndex].complexChar;
     } else {
         glyphKeys[i].payload.regular.code = ' ';
         glyphKeys[i].payload.regular.isComplex = NO;
     }
     glyphKeys[i].payload.regular.boxDrawing = isBoxDrawingCharacter;
-    const int boldBit = line[x].bold ? (1 << 0) : 0;
-    const int italicBit = line[x].italic ? (1 << 1) : 0;
+    const int boldBit = line[logicalIndex].bold ? (1 << 0) : 0;
+    const int italicBit = line[logicalIndex].italic ? (1 << 1) : 0;
     glyphKeys[i].typeface = (boldBit | italicBit);
     glyphKeys[i].payload.regular.drawable = YES;
-    if (x + 1 < width &&
-        line[x + 1].complexChar &&
-        !(!line[x].complexChar && line[x].code < 128) &&
-        ComplexCharCodeIsSpacingCombiningMark(line[x + 1].code)) {
+    if (logicalIndex + 1 < width &&
+        line[logicalIndex + 1].complexChar &&
+        !(!line[logicalIndex].complexChar && line[logicalIndex].code < 128) &&
+        ComplexCharCodeIsSpacingCombiningMark(line[logicalIndex + 1].code)) {
         // Next character is a combining spacing mark that will join with this non-ascii character.
-        glyphKeys[i].payload.regular.combiningSuccessor = line[x + 1].code;
+        glyphKeys[i].payload.regular.combiningSuccessor = line[logicalIndex + 1].code;
     } else {
         glyphKeys[i].payload.regular.combiningSuccessor = 0;
     }
     glyphKeys[i].thinStrokes = thinStrokes;
-    glyphKeys[i].index = x;
-    iTermGlyphKeySetVisualPosition(glyphKeys, i, x, bidiLUT, bidiLUTLength);
+    glyphKeys[i].logicalIndex = logicalIndex;
+    iTermGlyphKeySetVisualPosition(glyphKeys, i, logicalIndex, bidiLUT, bidiLUTLength);
     return i + 1;
 }
 
@@ -874,10 +874,9 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromCheap(iTermGlyphKeyData *glyphKeyDa
                                                    BOOL bold,
                                                    BOOL italic,
                                                    int gk,
-                                                   int x,
+                                                   int logicalIndex,
                                                    iTermCheapAttributedString *cheapString,
                                                    BOOL thinStrokes,
-                                                   const CTVector(CGFloat) *positions,
                                                    const int *bidiLUT,
                                                    int bidiLUTLength) {
     CGGlyph glyphs[cheapString.length];
@@ -889,6 +888,9 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromCheap(iTermGlyphKeyData *glyphKeyDa
     if (!ok) {
         return -1;
     }
+    CGPoint positions[cheapString.length];
+    memset(positions, 0, sizeof(positions));
+
     const BOOL fakeBold = [cheapString.attributes[iTermFakeBoldAttribute] boolValue];
     const BOOL fakeItalic = [cheapString.attributes[iTermFakeItalicAttribute] boolValue];
     return iTermGlyphKeyEmitDecomposedFromGlyphs(glyphKeyData,
@@ -897,12 +899,11 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromCheap(iTermGlyphKeyData *glyphKeyDa
                                                  fakeBold,
                                                  fakeItalic,
                                                  gk,
-                                                 x,
+                                                 logicalIndex,
                                                  font,
                                                  glyphs,
                                                  cheapString.length,
                                                  thinStrokes,
-                                                 positions,
                                                  bidiLUT,
                                                  bidiLUTLength);
 }
@@ -913,12 +914,11 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromGlyphs(iTermGlyphKeyData *glyphKeyD
                                                     BOOL fakeBold,
                                                     BOOL fakeItalic,
                                                     int gk,
-                                                    int x,
+                                                    int logicalIndex,
                                                     NSFont *font,
                                                     CGGlyph *glyphs,
                                                     NSUInteger length,
                                                     BOOL thinStrokes,
-                                                    const CTVector(CGFloat) *positions,
                                                     const int *bidiLUT,
                                                     int bidiLUTLength) {
     if (glyphKeyData.count < gk + length) {
@@ -934,9 +934,9 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromGlyphs(iTermGlyphKeyData *glyphKeyD
                                                   fakeItalic,
                                                   font.it_metalFontID,
                                                   glyphs[i],
-                                                  CTVectorGet(positions, i),
+                                                  CGPointZero,
                                                   gk + i,
-                                                  x,
+                                                  logicalIndex + i,
                                                   thinStrokes,
                                                   bidiLUT,
                                                   bidiLUTLength);
@@ -951,9 +951,9 @@ NS_INLINE void iTermGlyphKeyEmitDecomposedForSingleGlyph(iTermMetalGlyphKey *gly
                                                          BOOL fakeItalic,
                                                          int fontID,
                                                          CGGlyph glyph,
-                                                         CGFloat xPosition,
+                                                         NSPoint glyphPositionRelativeToCellOrigin,
                                                          int gk,
-                                                         CFIndex x,
+                                                         CFIndex logicalIndex,
                                                          BOOL thinStrokes,
                                                          const int *bidiLUT,
                                                          int bidiLUTLength) {
@@ -962,14 +962,14 @@ NS_INLINE void iTermGlyphKeyEmitDecomposedForSingleGlyph(iTermMetalGlyphKey *gly
     glyphKeys[gk].payload.decomposed.glyphNumber = glyph;
     glyphKeys[gk].payload.decomposed.fakeBold = fakeBold;
     glyphKeys[gk].payload.decomposed.fakeItalic = fakeItalic;
-    glyphKeys[gk].payload.decomposed.position = NSMakePoint(xPosition, 0);
-    glyphKeys[gk].index = x;
+    glyphKeys[gk].payload.decomposed.position = glyphPositionRelativeToCellOrigin;
+    glyphKeys[gk].logicalIndex = logicalIndex;
     glyphKeys[gk].thinStrokes = thinStrokes;
     const int boldBit = bold ? (1 << 0) : 0;
     const int italicBit = italic ? (1 << 1) : 0;
     glyphKeys[gk].typeface = (boldBit | italicBit);
 
-    iTermGlyphKeySetVisualPosition(glyphKeys, gk, x, bidiLUT, bidiLUTLength);
+    iTermGlyphKeySetVisualPosition(glyphKeys, gk, logicalIndex, bidiLUT, bidiLUTLength);
 }
 
 NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermGlyphKeyData *glyphKeyData,
@@ -978,7 +978,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermGlyphKeyDat
                                                                 BOOL fakeBold,
                                                                 BOOL fakeItalic,
                                                                 int gk,
-                                                                int x,
+                                                                int logicalIndex,
                                                                 NSAttributedString *attributedString,
                                                                 BOOL thinStrokes,
                                                                 const CTVector(CGFloat) *positions,
@@ -1006,11 +1006,12 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermGlyphKeyDat
                            cost:1];
         CFRelease(lineRef);
     }
+
 #warning TODO: Test that combining marks get proper positions.
     iTermCoreTextLineRenderingHelper *helper = [[iTermCoreTextLineRenderingHelper alloc] initWithLine:lineRef
                                                                                                string:attributedString.string];
     __block int o = gk;
-    [helper enumerateGridAlignedRunsWithColumnPositions:CTVectorElementsFromIndex(positions, x)
+    [helper enumerateGridAlignedRunsWithColumnPositions:CTVectorElementsFromIndex(positions, logicalIndex)
                                             alignToZero:YES
                                                 closure:^(CTRunRef run,
                                                           CTFontRef font,
@@ -1033,7 +1034,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermGlyphKeyDat
                                                       fakeItalic,
                                                       fontID,
                                                       glyphs[i],
-                                                      positions[i].x,
+                                                      positions[i],
                                                       o + i,
                                                       sourceCell,
                                                       thinStrokes,
@@ -1049,7 +1050,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposed(iTermGlyphKeyData *glyphKeyData,
                                           BOOL bold,
                                           BOOL italic,
                                           int gk,
-                                          int x,
+                                          int logicalIndex,
                                           id<iTermAttributedString> attributedString,
                                           BOOL thinStrokes,
                                           const CTVector(CGFloat) *positions,
@@ -1062,10 +1063,9 @@ NS_INLINE int iTermGlyphKeyEmitDecomposed(iTermGlyphKeyData *glyphKeyData,
                                                           bold,
                                                           italic,
                                                           gk,
-                                                          x,
+                                                          logicalIndex,
                                                           cheapString,
                                                           thinStrokes,
-                                                          positions,
                                                           bidiLUT,
                                                           bidiLUTLength);
         if (result >= 0) {
@@ -1094,7 +1094,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposed(iTermGlyphKeyData *glyphKeyData,
                                                              fakeBold,
                                                              fakeItalic,
                                                              gk,
-                                                             x,
+                                                             logicalIndex,
                                                              nsAttributedString,
                                                              thinStrokes,
                                                              positions,
@@ -1104,7 +1104,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposed(iTermGlyphKeyData *glyphKeyData,
 }
 
 NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
-                                      int x,
+                                      int logicalIndex,
                                       int row,
                                       iTermExternalAttribute *ea,
                                       iTermKittyUnicodePlaceholderState *kittyPlaceholderStatePtr,
@@ -1113,9 +1113,9 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
                                       int *previousImageCodePtr,
                                       VT100GridCoord *previousImageCoordPtr,
                                       NSMutableArray<iTermMetalImageRun *> *imageRuns) {
-    if (line[x].virtualPlaceholder) {
+    if (line[logicalIndex].virtualPlaceholder) {
         iTermKittyUnicodePlaceholderInfo info;
-        if (iTermDecodeKittyUnicodePlaceholder(&line[x], ea, kittyPlaceholderStatePtr, &info)) {
+        if (iTermDecodeKittyUnicodePlaceholder(&line[logicalIndex], ea, kittyPlaceholderStatePtr, &info)) {
             if (info.runLength > 1) {
                 kittyImageRuns.lastObject.length += 1;
             } else {
@@ -1127,30 +1127,344 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
                     [[iTermKittyImageRun alloc] initWithDraw:draw
                                                  sourceCoord:VT100GridCoordMake(info.column,
                                                                                 info.row)
-                                                   destCoord:VT100GridCoordMake(x, row)
+                                                   destCoord:VT100GridCoordMake(logicalIndex, row)
                                                       length:1];
                     [kittyImageRuns addObject:run];
                 }
             }
         }
     } else {
-        if (line[x].code == *previousImageCodePtr &&
-            line[x].foregroundColor == ((previousImageCoordPtr->x + 1) & 0xff) &&
-            line[x].backgroundColor == previousImageCoordPtr->y) {
+        if (line[logicalIndex].code == *previousImageCodePtr &&
+            line[logicalIndex].foregroundColor == ((previousImageCoordPtr->x + 1) & 0xff) &&
+            line[logicalIndex].backgroundColor == previousImageCoordPtr->y) {
             imageRuns.lastObject.length = imageRuns.lastObject.length + 1;
             previousImageCoordPtr->x++;
         } else {
-            *previousImageCodePtr = line[x].code;
+            *previousImageCodePtr = line[logicalIndex].code;
             iTermMetalImageRun *run = [[iTermMetalImageRun alloc] init];
-            *previousImageCoordPtr = GetPositionOfImageInChar(line[x]);
-            run.code = line[x].code;
+            *previousImageCoordPtr = GetPositionOfImageInChar(line[logicalIndex]);
+            run.code = line[logicalIndex].code;
             run.startingCoordInImage = *previousImageCoordPtr;
-            run.startingCoordOnScreen = VT100GridCoordMake(x, row);
+            run.startingCoordOnScreen = VT100GridCoordMake(logicalIndex, row);
             run.length = 1;
-            run.imageInfo = GetImageInfo(line[x].code);
+            run.imageInfo = GetImageInfo(line[logicalIndex].code);
             [imageRuns addObject:run];
         }
     }
+}
+
+static int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
+                                         const screen_char_t *const line,
+                                         iTermMetalBackgroundColorRLE *backgroundRLE,
+                                         iTermMetalGlyphAttributes *attributes,
+                                         vector_float4 *unprocessedBackgroundColors,
+                                         int width,
+                                         NSIndexSet *selectedIndexes,
+                                         NSData *findMatches,
+                                         id<iTermColorMapReading> colorMap,
+                                         iTermBidiDisplayInfo *bidiInfo) {
+    iTermBackgroundColorKey lastBackgroundKey;
+    vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
+    int rles = 0;
+    const int *bidiLUT = [bidiInfo lut];
+    const int bidiLUTLength = bidiInfo.numberOfCells;
+    int prevVisualX = -1;
+
+    // Set background colors
+    for (int logicalX = 0; logicalX < width; logicalX++) {
+        int visualX = logicalX;
+        if (logicalX < bidiLUTLength) {
+            visualX = bidiLUT[logicalX];
+        }
+        const BOOL selected = [selectedIndexes containsIndex:visualX];
+        BOOL findMatch = NO;
+        if (findMatches && !selected) {
+            findMatch = CheckFindMatchAtIndex(findMatches, visualX);
+        }
+
+        // Background colors
+        iTermBackgroundColorKey backgroundKey = {
+            .bgColor = line[visualX].backgroundColor,
+            .bgGreen = line[visualX].bgGreen,
+            .bgBlue = line[visualX].bgBlue,
+            .bgColorMode = line[visualX].backgroundColorMode,
+            .selected = selected,
+            .isMatch = findMatch,
+            .image = line[visualX].image && !line[visualX].virtualPlaceholder,
+        };
+
+        vector_float4 backgroundColor;
+        vector_float4 unprocessedBackgroundColor;
+        if (logicalX > 0 &&
+            abs(visualX - prevVisualX) == 1 &&
+            backgroundKey.bgColor == lastBackgroundKey.bgColor &&
+            backgroundKey.bgGreen == lastBackgroundKey.bgGreen &&
+            backgroundKey.bgBlue == lastBackgroundKey.bgBlue &&
+            backgroundKey.bgColorMode == lastBackgroundKey.bgColorMode &&
+            backgroundKey.selected == lastBackgroundKey.selected &&
+            backgroundKey.isMatch == lastBackgroundKey.isMatch &&
+            backgroundKey.image == lastBackgroundKey.image) {
+            // Extend RLE
+            const int previousRLE = rles - 1;
+            backgroundColor = backgroundRLE[previousRLE].color;
+            backgroundRLE[previousRLE].count++;
+            if (visualX < prevVisualX) {
+                backgroundRLE[previousRLE].origin -= 1;
+            }
+            unprocessedBackgroundColor = lastUnprocessedBackgroundColor;
+        } else {
+            // Start new RLE
+            BOOL isDefaultBackgroundColor = NO;
+            unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey
+                                                                           isDefault:&isDefaultBackgroundColor];
+            lastUnprocessedBackgroundColor = unprocessedBackgroundColor;
+            // The unprocessed color is needed for minimum contrast computation for text color.
+            backgroundColor = [colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
+            backgroundRLE[rles].color = backgroundColor;
+            backgroundRLE[rles].origin = visualX;
+            backgroundRLE[rles].count = 1;
+            backgroundRLE[rles].isDefault = isDefaultBackgroundColor;
+            unprocessedBackgroundColors[rles] = unprocessedBackgroundColor;
+            rles++;
+        }
+        prevVisualX = visualX;
+        lastBackgroundKey = backgroundKey;
+        attributes[visualX].backgroundColor = backgroundColor;
+        attributes[visualX].unprocessedBackgroundColor = unprocessedBackgroundColor;
+    }
+
+    return rles;
+}
+
+static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
+                                           const screen_char_t *const line,
+                                           int row,
+                                           int width,
+                                           NSArray<id<iTermAttributedString>> *attributedStrings,
+                                           CTVector(CGFloat) positions,
+                                           iTermBidiDisplayInfo *bidiInfo,
+                                           NSIndexSet *selectedIndexes,
+                                           NSIndexSet *annotatedIndexes,
+                                           NSData *findMatches,
+                                           NSRange underlinedRange,
+                                           iTermExternalAttributeIndex *eaIndex,
+                                           iTermMetalPerFrameStateConfiguration *_configuration,
+                                           NSMutableArray<iTermKittyImageRun *> *kittyImageRuns,
+                                           NSArray<iTermKittyImageDraw *> *kittyImageDraws,
+                                           NSMutableArray<iTermMetalImageRun *> *imageRuns,
+                                           // out parameters:
+                                           iTermGlyphKeyData *glyphKeysData,
+                                           iTermMetalGlyphKey *glyphKeys,
+                                           iTermMetalGlyphAttributes *attributes,
+                                           int *drawableGlyphsPtr) {
+    const int *bidiLUT = [bidiInfo lut];
+    const int bidiLUTLength = bidiInfo.numberOfCells;
+    int asIndex = 0;
+    int previousVisualX = -1;
+    BOOL lastSelected = NO;
+    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_configuration->_useNativePowerlineGlyphs];
+    iTermTextColorKey keys[2];
+    iTermTextColorKey *currentColorKey = &keys[0];
+    iTermTextColorKey *previousColorKey = &keys[1];
+    const BOOL underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
+    int asEnd = attributedStrings.count > 0 ? NSMaxRange([attributedStrings.firstObject sourceColumnRange]) : -1;
+    id<iTermAttributedString> attributedString = attributedStrings.firstObject;
+    NSInteger gk = 0;
+    BOOL haveEmittedAttributedString = NO;
+    NSCharacterSet *blockCharacterSet = [iTermBoxDrawingBezierCurveFactory blockDrawingCharacters];
+    int previousImageCode = -1;
+    VT100GridCoord previousImageCoord;
+    int lastDrawableGlyph = -1;
+
+    iTermKittyUnicodePlaceholderState kittyPlaceholderState;
+    iTermKittyUnicodePlaceholderStateInit(&kittyPlaceholderState);
+
+    iTermMetalPerFrameStateCaches caches;
+    memset(&caches, 0, sizeof(caches));
+
+    for (int logicalIndex = 0; logicalIndex < width; logicalIndex++) {
+        if (attributedStrings && logicalIndex == asEnd) {
+            asIndex += 1;
+            if (asIndex < attributedStrings.count) {
+                asEnd = NSMaxRange([attributedStrings[asIndex] sourceColumnRange]);
+                attributedString = attributedStrings[asIndex];
+                haveEmittedAttributedString = NO;
+            } else {
+                asEnd = -1;
+                attributedString = nil;
+            }
+        }
+        int visualX = logicalIndex;
+        if (logicalIndex < bidiLUTLength) {
+            visualX = bidiLUT[logicalIndex];
+        }
+
+        const vector_float4 bgColor = attributes[visualX].backgroundColor;
+        BOOL selected = [selectedIndexes containsIndex:visualX];
+        BOOL findMatch = NO;
+        if (findMatches && !selected) {
+            findMatch = CheckFindMatchAtIndex(findMatches, visualX);
+        }
+        if (lastSelected && ScreenCharIsDWC_RIGHT(line[logicalIndex])) {
+            // If the left half of a DWC was selected, extend the selection to the right half.
+            lastSelected = selected;
+            selected = YES;
+        } else if (!lastSelected && selected && ScreenCharIsDWC_RIGHT(line[logicalIndex])) {
+            // If the right half of a DWC is selected but the left half is not, un-select the right half.
+            lastSelected = YES;
+            selected = NO;
+        } else {
+            // Normal code path
+            lastSelected = selected;
+        }
+        const BOOL annotated = [annotatedIndexes containsIndex:visualX];
+        const BOOL inUnderlinedRange = NSLocationInRange(visualX, underlinedRange) || annotated;
+
+
+        attributes[visualX].annotation = annotated;
+
+        iTermExternalAttribute *ea = eaIndex[logicalIndex];
+        iTermURL *url = ea.url;
+        const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[logicalIndex],
+                                                                                   logicalIndex > 0 ? &line[logicalIndex - 1] : NULL,
+                                                                                   line[logicalIndex].complexChar && (ScreenCharToStr(&line[logicalIndex]) != nil),
+                                                                                   _configuration->_blinkingItemsVisible,
+                                                                                   _configuration->_blinkAllowed,
+                                                                                   NO /* preferSpeedToFullLigatureSupport */,
+                                                                                   url != nil);
+        const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
+                                            !line[logicalIndex].complexChar &&
+                                            line[logicalIndex].code > 127 &&
+                                            [boxCharacterSet characterIsMember:line[logicalIndex].code]);
+        const BOOL isBlockCharacter = (characterIsDrawable &&
+                                       !line[logicalIndex].complexChar &&
+                                       line[logicalIndex].code > 127 &&
+                                       [blockCharacterSet characterIsMember:line[logicalIndex].code]);
+        // Foreground colors
+        // Build up a compact key describing all the inputs to a text color
+        currentColorKey->isMatch = findMatch;
+        currentColorKey->inUnderlinedRange = inUnderlinedRange;
+        currentColorKey->selected = selected;
+        currentColorKey->mode = line[logicalIndex].foregroundColorMode;
+        currentColorKey->foregroundColor = line[logicalIndex].foregroundColor;
+        currentColorKey->fgGreen = line[logicalIndex].fgGreen;
+        currentColorKey->fgBlue = line[logicalIndex].fgBlue;
+        currentColorKey->bold = line[logicalIndex].bold;
+        currentColorKey->faint = line[logicalIndex].faint;
+        currentColorKey->background = bgColor;
+        currentColorKey->isBlock = isBlockCharacter;
+        if (logicalIndex > 0 &&
+            currentColorKey->isMatch == previousColorKey->isMatch &&
+            currentColorKey->inUnderlinedRange == previousColorKey->inUnderlinedRange &&
+            currentColorKey->selected == previousColorKey->selected &&
+            currentColorKey->foregroundColor == previousColorKey->foregroundColor &&
+            currentColorKey->mode == previousColorKey->mode &&
+            currentColorKey->fgGreen == previousColorKey->fgGreen &&
+            currentColorKey->fgBlue == previousColorKey->fgBlue &&
+            currentColorKey->bold == previousColorKey->bold &&
+            currentColorKey->faint == previousColorKey->faint &&
+            simd_equal(currentColorKey->background, previousColorKey->background) &&
+            currentColorKey->isBlock == previousColorKey->isBlock) {
+            attributes[visualX].foregroundColor = attributes[previousVisualX].foregroundColor;
+        } else {
+            vector_float4 textColor = [self textColorForCharacter:&line[logicalIndex]
+                                                             line:row
+                                                  backgroundColor:attributes[visualX].unprocessedBackgroundColor
+                                                         selected:selected
+                                                        findMatch:findMatch
+                                                inUnderlinedRange:inUnderlinedRange && !annotated
+                                           disableMinimumContrast:isBlockCharacter
+                                                           caches:&caches];
+            attributes[visualX].foregroundColor = textColor;
+            attributes[visualX].foregroundColor.w = 1;
+        }
+        if (annotated) {
+            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+        } else if (line[logicalIndex].underline || inUnderlinedRange) {
+            const BOOL curly = line[logicalIndex].underline && line[logicalIndex].underlineStyle == VT100UnderlineStyleCurly;
+            if (url != nil) {
+                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineHyperlink;
+            } else if (line[logicalIndex].underline && line[logicalIndex].underlineStyle == VT100UnderlineStyleDouble && !inUnderlinedRange) {
+                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
+            } else if (curly && !inUnderlinedRange) {
+                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineCurly;
+            } else {
+                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+            }
+        } else if (url != nil && underlineHyperlinks) {
+            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
+        } else {
+            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+        }
+        if (line[logicalIndex].strikethrough) {
+            // This right here is why strikethrough and underline is mutually exclusive
+            attributes[visualX].underlineStyle |= iTermMetalGlyphAttributesUnderlineStrikethroughFlag;
+        }
+        if (ea) {
+            attributes[visualX].hasUnderlineColor = ea.hasUnderlineColor;
+            if (attributes[visualX].hasUnderlineColor) {
+                attributes[visualX].underlineColor = [self vectorColorForCode:ea.underlineColor.red
+                                                                  green:ea.underlineColor.green
+                                                                   blue:ea.underlineColor.blue
+                                                              colorMode:ea.underlineColor.mode
+                                                                   bold:NO
+                                                                  faint:currentColorKey->faint
+                                                           isBackground:NO];
+            }
+        } else {
+            attributes[visualX].hasUnderlineColor = NO;
+        }
+        // Swap current and previous
+        iTermTextColorKey *temp = currentColorKey;
+        currentColorKey = previousColorKey;
+        previousColorKey = temp;
+
+        if (line[logicalIndex].image) {
+            iTermGlyphKeyEmitImage(line,
+                                   logicalIndex,
+                                   row,
+                                   ea,
+                                   &kittyPlaceholderState,
+                                   kittyImageRuns,
+                                   kittyImageDraws,
+                                   &previousImageCode,
+                                   &previousImageCoord,
+                                   imageRuns);
+            gk = iTermGlyphKeyEmitPlaceholder(glyphKeys, gk, logicalIndex, bidiLUT, bidiLUTLength);
+        } else if (attributedString && !isBoxDrawingCharacter) {
+            if (!haveEmittedAttributedString) {
+                gk = iTermGlyphKeyEmitDecomposed(glyphKeysData,
+                                                 !!line[logicalIndex].bold,
+                                                 !!line[logicalIndex].italic,
+                                                 gk,
+                                                 logicalIndex,
+                                                 attributedString,
+                                                 [self useThinStrokesWithAttributes:&attributes[visualX]],
+                                                 &positions,
+                                                 bidiLUT,
+                                                 bidiLUTLength);
+                haveEmittedAttributedString = YES;
+            }
+        } else if (attributes[visualX].underlineStyle != iTermMetalGlyphAttributesUnderlineNone || characterIsDrawable) {
+            lastDrawableGlyph = logicalIndex;
+            gk = iTermGlyphKeyEmitRegular(glyphKeys,
+                                          gk,
+                                          logicalIndex,
+                                          width,
+                                          characterIsDrawable,
+                                          line,
+                                          isBoxDrawingCharacter,
+                                          [self useThinStrokesWithAttributes:&attributes[visualX]],
+                                          bidiLUT,
+                                          bidiLUTLength);
+        } else {
+            iTermGlyphKeyEmitPlaceholder(glyphKeys, gk, logicalIndex, bidiLUT, bidiLUTLength);
+        }
+        previousVisualX = visualX;
+    }
+
+    *drawableGlyphsPtr = lastDrawableGlyph + 1;
+    return gk;
 }
 
 // Private queue
@@ -1171,8 +1485,6 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
                          date:(out NSDate **)datePtr
                belongsToBlock:(out BOOL *)belongsToBlockPtr {
     iTermMetalGlyphKey *glyphKeys = glyphKeysData.basePointer;
-    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_configuration->_useNativePowerlineGlyphs];
-    NSCharacterSet *blockCharacterSet = [iTermBoxDrawingBezierCurveFactory blockDrawingCharacters];
     if (_configuration->_timestampsEnabled) {
         *datePtr = _rows[row]->_date;
     }
@@ -1192,92 +1504,37 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
     }
     const screen_char_t *const line = (const screen_char_t *const)lineData.line;
     iTermExternalAttributeIndex *eaIndex = _rows[row]->_eaIndex;
-    iTermTextColorKey keys[2];
-    iTermTextColorKey *currentColorKey = &keys[0];
-    iTermTextColorKey *previousColorKey = &keys[1];
-    iTermBackgroundColorKey lastBackgroundKey;
-    int rles = 0;
-    int previousImageCode = -1;
-    VT100GridCoord previousImageCoord;
-    vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
-    BOOL lastSelected = NO;
-    iTermKittyUnicodePlaceholderState kittyPlaceholderState;
-    const BOOL underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
-    iTermMetalPerFrameStateCaches caches;
     const int *bidiLUT = [bidiInfo lut];
     const int bidiLUTLength = bidiInfo.numberOfCells;
     NSArray<id<iTermAttributedString>> *attributedStrings = nil;
 
-    iTermKittyUnicodePlaceholderStateInit(&kittyPlaceholderState);
-    memset(&caches, 0, sizeof(caches));
 
     *markStylePtr = [_rows[row]->_markStyle intValue];
     *lineStyleMarkPtr = _rows[row]->_lineStyleMark;
     *lineStyleMarkRightInsetPtr = _rows[row]->_lineStyleMarkRightInset;
-    int lastDrawableGlyph = -1;
     vector_float4 unprocessedBackgroundColors[width];
 
-    // Set background colors
-    for (int x = 0; x < width; x++) {
-        const BOOL selected = [selectedIndexes containsIndex:x];
-        BOOL findMatch = NO;
-        if (findMatches && !selected) {
-            findMatch = CheckFindMatchAtIndex(findMatches, x);
-        }
+    int rles = iTermGetMetalBackgroundColors(self,
+                                             line,
+                                             backgroundRLE,
+                                             attributes,
+                                             unprocessedBackgroundColors,
+                                             width,
+                                             selectedIndexes,
+                                             findMatches,
+                                             _configuration->_colorMap,
+                                             bidiInfo);
+    *rleCount = rles;
 
-        // Background colors
-        iTermBackgroundColorKey backgroundKey = {
-            .bgColor = line[x].backgroundColor,
-            .bgGreen = line[x].bgGreen,
-            .bgBlue = line[x].bgBlue,
-            .bgColorMode = line[x].backgroundColorMode,
-            .selected = selected,
-            .isMatch = findMatch,
-            .image = line[x].image && !line[x].virtualPlaceholder,
-        };
-
-        vector_float4 backgroundColor;
-        vector_float4 unprocessedBackgroundColor;
-        if (x > 0 &&
-            backgroundKey.bgColor == lastBackgroundKey.bgColor &&
-            backgroundKey.bgGreen == lastBackgroundKey.bgGreen &&
-            backgroundKey.bgBlue == lastBackgroundKey.bgBlue &&
-            backgroundKey.bgColorMode == lastBackgroundKey.bgColorMode &&
-            backgroundKey.selected == lastBackgroundKey.selected &&
-            backgroundKey.isMatch == lastBackgroundKey.isMatch &&
-            backgroundKey.image == lastBackgroundKey.image) {
-
-            const int previousRLE = rles - 1;
-            backgroundColor = backgroundRLE[previousRLE].color;
-            backgroundRLE[previousRLE].count++;
-            unprocessedBackgroundColor = lastUnprocessedBackgroundColor;
-        } else {
-            BOOL isDefaultBackgroundColor = NO;
-            unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey
-                                                                           isDefault:&isDefaultBackgroundColor];
-            lastUnprocessedBackgroundColor = unprocessedBackgroundColor;
-            // The unprocessed color is needed for minimum contrast computation for text color.
-            backgroundColor = [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
-            backgroundRLE[rles].color = backgroundColor;
-            backgroundRLE[rles].origin = x;
-            backgroundRLE[rles].count = 1;
-            backgroundRLE[rles].isDefault = isDefaultBackgroundColor;
-            unprocessedBackgroundColors[rles] = unprocessedBackgroundColor;
-            rles++;
-        }
-        lastBackgroundKey = backgroundKey;
-        attributes[x].backgroundColor = backgroundColor;
-    }
-
-    CTVector(CGFloat) positionsList[rles];
+    CTVector(CGFloat) positions;
+    CTVectorCreate(&positions, width);
 
     NSMutableArray<id<iTermAttributedString>> *allAttributedStrings = nil;
 #warning TODO: Also do this if ligatures are enabled
     if (bidiInfo) {
         allAttributedStrings = [NSMutableArray array];
+        int logicalX = 0;
         for (int i = 0; i < rles; i++) {
-            CTVectorCreate(&positionsList[i], width);
-
             const iTermMetalBackgroundColorRLE *bgrle = &backgroundRLE[i];
             NSColor *bgColor = [NSColor colorWithDisplayP3Red:bgrle->color.x
                                                         green:bgrle->color.y
@@ -1308,193 +1565,54 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
                                                       colorRun:&run
                                                    findMatches:findMatches
                                                underlinedRange:underlinedRange
-                                                     positions:&positionsList[i]];
+                                                     positions:&positions];
+
+#if DEBUG
+            for (id obj in attributedStrings) {
+                NSAttributedString *ns = [NSAttributedString castFrom:obj];
+                if (ns != nil && [ns attribute:iTermSourceCellIndexAttribute atIndex:0 effectiveRange:nil] == nil) {
+                    NSLog(@"Bug");
+                    attributedStrings =
+                    [_attributedStringBuilder attributedStringsForLine:line
+                                                              bidiInfo:bidiInfo
+                                                    externalAttributes:eaIndex
+                                                                 range:run.modelRange
+                                                       hasSelectedText:selectedIndexes.count > 0
+                                                       backgroundColor:bgColor
+                                                        forceTextColor:nil
+                                                              colorRun:&run
+                                                           findMatches:findMatches
+                                                       underlinedRange:underlinedRange
+                                                             positions:&positions];
+                }
+            }
+#endif
             [allAttributedStrings addObjectsFromArray:attributedStrings];
+
+            logicalX += bgrle->count;
         }
     }
 
-    int rleIndex = 0;
-    int bgsRemaining = width > 0 ? backgroundRLE[0].count : 0;
-    int asIndex = 0;
-
-    int asEnd = attributedStrings.count > 0 ? NSMaxRange([attributedStrings.firstObject sourceColumnRange]) : -1;
-    id<iTermAttributedString> attributedString = attributedStrings.firstObject;
-    NSInteger gk = 0;
-    BOOL haveEmittedAttributedString = NO;
-    for (int x = 0; x < width; x++) {
-        if (attributedStrings && x == asEnd) {
-            asIndex += 1;
-            if (asIndex < attributedStrings.count) {
-                asEnd = NSMaxRange([attributedStrings[asIndex] sourceColumnRange]);
-                attributedString = attributedStrings[asIndex];
-                haveEmittedAttributedString = NO;
-            } else {
-                asEnd = -1;
-                attributedString = nil;
-            }
-        }
-        if (bgsRemaining == 0) {
-            rleIndex += 1;
-            bgsRemaining = backgroundRLE[rleIndex].count;
-        }
-        bgsRemaining -= 1;
-        const iTermMetalBackgroundColorRLE *bgrle = &backgroundRLE[rleIndex];
-        BOOL selected = [selectedIndexes containsIndex:x];
-        BOOL findMatch = NO;
-        if (findMatches && !selected) {
-            findMatch = CheckFindMatchAtIndex(findMatches, x);
-        }
-        if (lastSelected && ScreenCharIsDWC_RIGHT(line[x])) {
-            // If the left half of a DWC was selected, extend the selection to the right half.
-            lastSelected = selected;
-            selected = YES;
-        } else if (!lastSelected && selected && ScreenCharIsDWC_RIGHT(line[x])) {
-            // If the right half of a DWC is selected but the left half is not, un-select the right half.
-            lastSelected = YES;
-            selected = NO;
-        } else {
-            // Normal code path
-            lastSelected = selected;
-        }
-        const BOOL annotated = [annotatedIndexes containsIndex:x];
-        const BOOL inUnderlinedRange = NSLocationInRange(x, underlinedRange) || annotated;
-
-
-        attributes[x].annotation = annotated;
-
-        iTermExternalAttribute *ea = eaIndex[x];
-        iTermURL *url = ea.url;
-        const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[x],
-                                                                                   x > 0 ? &line[x - 1] : NULL,
-                                                                                   line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
-                                                                                   _configuration->_blinkingItemsVisible,
-                                                                                   _configuration->_blinkAllowed,
-                                                                                   NO /* preferSpeedToFullLigatureSupport */,
-                                                                                   url != nil);
-        const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
-                                            !line[x].complexChar &&
-                                            line[x].code > 127 &&
-                                            [boxCharacterSet characterIsMember:line[x].code]);
-        const BOOL isBlockCharacter = (characterIsDrawable &&
-                                       !line[x].complexChar &&
-                                       line[x].code > 127 &&
-                                       [blockCharacterSet characterIsMember:line[x].code]);
-        // Foreground colors
-        // Build up a compact key describing all the inputs to a text color
-        currentColorKey->isMatch = findMatch;
-        currentColorKey->inUnderlinedRange = inUnderlinedRange;
-        currentColorKey->selected = selected;
-        currentColorKey->mode = line[x].foregroundColorMode;
-        currentColorKey->foregroundColor = line[x].foregroundColor;
-        currentColorKey->fgGreen = line[x].fgGreen;
-        currentColorKey->fgBlue = line[x].fgBlue;
-        currentColorKey->bold = line[x].bold;
-        currentColorKey->faint = line[x].faint;
-        currentColorKey->background = bgrle->color;
-        currentColorKey->isBlock = isBlockCharacter;
-        if (x > 0 &&
-            currentColorKey->isMatch == previousColorKey->isMatch &&
-            currentColorKey->inUnderlinedRange == previousColorKey->inUnderlinedRange &&
-            currentColorKey->selected == previousColorKey->selected &&
-            currentColorKey->foregroundColor == previousColorKey->foregroundColor &&
-            currentColorKey->mode == previousColorKey->mode &&
-            currentColorKey->fgGreen == previousColorKey->fgGreen &&
-            currentColorKey->fgBlue == previousColorKey->fgBlue &&
-            currentColorKey->bold == previousColorKey->bold &&
-            currentColorKey->faint == previousColorKey->faint &&
-            simd_equal(currentColorKey->background, previousColorKey->background) &&
-            currentColorKey->isBlock == previousColorKey->isBlock) {
-            attributes[x].foregroundColor = attributes[x - 1].foregroundColor;
-        } else {
-            vector_float4 textColor = [self textColorForCharacter:&line[x]
-                                                             line:row
-                                                  backgroundColor:unprocessedBackgroundColors[rleIndex]
-                                                         selected:selected
-                                                        findMatch:findMatch
-                                                inUnderlinedRange:inUnderlinedRange && !annotated
-                                                            index:x
-                                           disableMinimumContrast:isBlockCharacter
-                                                           caches:&caches];
-            attributes[x].foregroundColor = textColor;
-            attributes[x].foregroundColor.w = 1;
-        }
-        if (annotated) {
-            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-        } else if (line[x].underline || inUnderlinedRange) {
-            const BOOL curly = line[x].underline && line[x].underlineStyle == VT100UnderlineStyleCurly;
-            if (url != nil) {
-                attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineHyperlink;
-            } else if (line[x].underline && line[x].underlineStyle == VT100UnderlineStyleDouble && !inUnderlinedRange) {
-                attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
-            } else if (curly && !inUnderlinedRange) {
-                attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineCurly;
-            } else {
-                attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-            }
-        } else if (url != nil && underlineHyperlinks) {
-            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
-        } else {
-            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
-        }
-        if (line[x].strikethrough) {
-            // This right here is why strikethrough and underline is mutually exclusive
-            attributes[x].underlineStyle |= iTermMetalGlyphAttributesUnderlineStrikethroughFlag;
-        }
-        if (ea) {
-            attributes[x].hasUnderlineColor = ea.hasUnderlineColor;
-            if (attributes[x].hasUnderlineColor) {
-                attributes[x].underlineColor = [self vectorColorForCode:ea.underlineColor.red
-                                                                  green:ea.underlineColor.green
-                                                                   blue:ea.underlineColor.blue
-                                                              colorMode:ea.underlineColor.mode
-                                                                   bold:NO
-                                                                  faint:currentColorKey->faint
-                                                           isBackground:NO];
-            }
-        } else {
-            attributes[x].hasUnderlineColor = NO;
-        }
-        // Swap current and previous
-        iTermTextColorKey *temp = currentColorKey;
-        currentColorKey = previousColorKey;
-        previousColorKey = temp;
-
-        if (line[x].image) {
-            iTermGlyphKeyEmitImage(line,
-                                   x,
-                                   row,
-                                   ea,
-                                   &kittyPlaceholderState,
-                                   kittyImageRuns,
-                                   _kittyImageDraws,
-                                   &previousImageCode,
-                                   &previousImageCoord,
-                                   imageRuns);
-            gk = iTermGlyphKeyEmitPlaceholder(glyphKeys, gk, x, bidiLUT, bidiLUTLength);
-        } else if (attributedString && !isBoxDrawingCharacter) {
-            if (!haveEmittedAttributedString) {
-                gk = iTermGlyphKeyEmitDecomposed(glyphKeysData,
-                                                 !!line[x].bold,
-                                                 !!line[x].italic,
-                                                 gk,
-                                                 x,
-                                                 attributedString,
-                                                 [self useThinStrokesWithAttributes:&attributes[x]],
-                                                 &positionsList[rleIndex],
-                                                 bidiLUT,
-                                                 bidiLUTLength);
-                haveEmittedAttributedString = YES;
-            }
-        } else if (attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone || characterIsDrawable) {
-            lastDrawableGlyph = x;
-            gk = iTermGlyphKeyEmitRegular(glyphKeys, gk, x, width, characterIsDrawable, line, isBoxDrawingCharacter, [self useThinStrokesWithAttributes:&attributes[x]], bidiLUT, bidiLUTLength);
-        } else {
-            iTermGlyphKeyEmitPlaceholder(glyphKeys, gk, x, bidiLUT, bidiLUTLength);
-        }
-    }
-
-    *rleCount = rles;
-    *drawableGlyphsPtr = lastDrawableGlyph + 1;
+    *glyphKeyCountPtr = iTermEmitGlyphsAndSetAttributes(self,
+                                                        line,
+                                                        row,
+                                                        width,
+                                                        attributedStrings,
+                                                        positions,
+                                                        bidiInfo,
+                                                        selectedIndexes,
+                                                        annotatedIndexes,
+                                                        findMatches,
+                                                        underlinedRange,
+                                                        eaIndex,
+                                                        _configuration,
+                                                        kittyImageRuns,
+                                                        _kittyImageDraws,
+                                                        imageRuns,
+                                                        glyphKeysData,
+                                                        glyphKeys,
+                                                        attributes,
+                                                        drawableGlyphsPtr);
 
     // Tweak the text color for the cell that has a box cursor.
     if (row == _cursorInfo.coord.y &&
@@ -1522,11 +1640,8 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
         }
     }
     if (bidiInfo) {
-        for (int i = 0; i < rles; i++) {
-            CTVectorDestroy(&positionsList[i]);
-        }
+        CTVectorDestroy(&positions);
     }
-    *glyphKeyCountPtr = gk;
 }
 
 - (BOOL)useThinStrokesWithAttributes:(iTermMetalGlyphAttributes *)attributes {
@@ -1964,7 +2079,6 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
                               selected:(BOOL)selected
                              findMatch:(BOOL)findMatch
                      inUnderlinedRange:(BOOL)inUnderlinedRange
-                                 index:(int)index
                 disableMinimumContrast:(BOOL)disableMinimumContrast
                                 caches:(iTermMetalPerFrameStateCaches *)caches {
     vector_float4 rawColor = { 0, 0, 0, 0 };

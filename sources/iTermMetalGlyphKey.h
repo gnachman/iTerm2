@@ -50,13 +50,14 @@ typedef struct iTermMetalGlyphKey {
     iTermMetalGlyphKeyTypeface typeface : iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded;
     BOOL thinStrokes;
     int visualColumn;
-    int index;  // Use this to find the corresponding iTermMetalGlyphAttributes.
+    int logicalIndex;
 } iTermMetalGlyphKey;
 
 // Features of a cell that do not affect which texture is selected as source material.
 typedef struct {
     vector_float4 foregroundColor;
     vector_float4 backgroundColor;
+    vector_float4 unprocessedBackgroundColor;
     BOOL hasUnderlineColor;
     vector_float4 underlineColor;
     iTermMetalGlyphAttributesUnderline underlineStyle : 4;

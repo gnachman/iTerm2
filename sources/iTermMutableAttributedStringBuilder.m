@@ -167,7 +167,7 @@ NSString *const iTermSourceCellIndexAttribute = @"iTermSourceCellIndexAttribute"
 }
 
 - (id<iTermAttributedString>)attributedString {
-    if (!self.didCreateCheap && !self.willCreateCheap) {
+    if (self.hasBidi) {
         NSData *data = CTVectorGetData(&_characterIndexToSourceCell);
         _attributes = [_attributes dictionaryBySettingObject:data
                                                       forKey:iTermSourceCellIndexAttribute];

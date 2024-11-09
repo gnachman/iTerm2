@@ -364,7 +364,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
 }
 
 - (void)addASCIICellToPIUsForCode:(char)code
-                                x:(int)x
+                     logicalIndex:(int)logicalIndex
                      visualColumn:(int)visualColumn
                            offset:(CGSize)asciiOffset
                                 w:(float)w
@@ -384,21 +384,21 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     iTermASCIITextureParts parts = texture.parts[(size_t)code];
     vector_float4 underlineColor = { 0, 0, 0, 0 };
 
-    const bool &hasAnnotation = attributes[x].annotation;
-    const bool hasUnderline = attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
+    const bool &hasAnnotation = attributes[visualColumn].annotation;
+    const bool hasUnderline = attributes[visualColumn].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
     const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, false);
     if (hasAnnotation) {
         underlineColor = iTermAnnotationUnderlineColor;
     } else if (hasUnderline) {
-        if (attributes[x].hasUnderlineColor) {
-            underlineColor = attributes[x].underlineColor;
+        if (attributes[visualColumn].hasUnderlineColor) {
+            underlineColor = attributes[visualColumn].underlineColor;
         } else {
-            underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : attributes[x].foregroundColor;
+            underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : attributes[visualColumn].foregroundColor;
         }
     }
 
-    iTermMetalGlyphAttributesUnderline underlineStyle = attributes[x].underlineStyle;
-    vector_float4 textColor = attributes[x].foregroundColor;
+    iTermMetalGlyphAttributesUnderline underlineStyle = attributes[visualColumn].underlineStyle;
+    vector_float4 textColor = attributes[visualColumn].foregroundColor;
     if (inMarkedRange) {
         // Marked range gets a yellow underline.
         underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
@@ -463,7 +463,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                     visualColumn + 1,
                                                     asciiOffset,
                                                     iTermASCIITextureOffsetRight,
-                                                    attributes[x].foregroundColor,
+                                                    attributes[visualColumn].foregroundColor,
                                                     iTermMetalGlyphAttributesUnderlineNone,
                                                     underlineColor);
     }
@@ -529,14 +529,11 @@ typedef struct {
         .context = context,
         .creation = creation
     };
-    int prevX = -1;
+    int previousLogicalIndex = -1;
     for (state.i = 0; state.i < glyphKeyCount; state.i++) {
-        const int x = glyphKeys[state.i].index;
-        if (x == markedRangeOnLine.location) {
-            state.inMarkedRange = YES;
-        } else if (inMarkedRange && x == NSMaxRange(markedRangeOnLine)) {
-            state.inMarkedRange = NO;
-        }
+        const int logicalIndex = glyphKeys[state.i].logicalIndex;
+        const int visualIndex = glyphKeys[state.i].visualColumn;
+        state.inMarkedRange = NSLocationInRange(visualIndex, markedRangeOnLine);
 
         switch (glyphKeys[state.i].type) {
             case iTermMetalGlyphTypeRegular:
@@ -550,23 +547,23 @@ typedef struct {
                 }
                 break;
             case iTermMetalGlyphTypeDecomposed:
-                [self addNonASCII:&state allowUnderline:x != prevX];
+                [self addNonASCII:&state allowUnderline:logicalIndex != previousLogicalIndex];
                 break;
         }
-        prevX = x;
+        previousLogicalIndex = logicalIndex;
     }
 }
 
 // ASCII fast path
 - (void)addASCII:(const iTermTextRendererGlyphState *)state {
     const iTermMetalGlyphKey theGlyphKey = state->glyphKeys[state->i];
-    const int x = theGlyphKey.index;
+    const int logicalIndex = theGlyphKey.logicalIndex;
 
     iTermASCIITextureAttributes asciiAttrs =
         iTermASCIITextureAttributesFromGlyphKeyTypeface(theGlyphKey.typeface,
                                                         theGlyphKey.thinStrokes);
     [self addASCIICellToPIUsForCode:theGlyphKey.payload.regular.code
-                                  x:x
+                       logicalIndex:logicalIndex
                        visualColumn:theGlyphKey.visualColumn
                              offset:CGSizeMake(state->asciiXOffset,
                                                state->yOffset + state->asciiYOffset)
@@ -582,7 +579,7 @@ typedef struct {
 - (void)addNonASCII:(const iTermTextRendererGlyphState *)state
      allowUnderline:(BOOL)allowUnderline {
     const iTermMetalGlyphKey theGlyphKey = state->glyphKeys[state->i];
-    const int x = theGlyphKey.index;
+    const int visualIndex = theGlyphKey.visualColumn;
 
     const iTerm2::GlyphKey glyphKey(&theGlyphKey);
     std::vector<const iTerm2::GlyphEntry *> *entries = _texturePageCollectionSharedPointer.object->find(glyphKey);
@@ -599,8 +596,8 @@ typedef struct {
     }
 
     const iTermMetalGlyphAttributes *attributes = state->attributes;
-    const bool &hasAnnotation = attributes[x].annotation;
-    const bool hasUnderline = attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
+    const bool &hasAnnotation = attributes[visualIndex].annotation;
+    const bool hasUnderline = attributes[visualIndex].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
     const iTerm2::GlyphEntry *firstGlyphEntry = (*entries)[0];
     const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, firstGlyphEntry->_is_emoji);
     for (auto entry : *entries) {
@@ -622,17 +619,17 @@ typedef struct {
         vector_float2 reciprocal_atlas_size = entry->_page->get_reciprocal_atlas_size();
         piu->textureOffset = simd_make_float2(origin.x * reciprocal_atlas_size.x,
                                               origin.y * reciprocal_atlas_size.y);
-        piu->textColor = attributes[x].foregroundColor;
-        if (attributes[x].annotation) {
+        piu->textColor = attributes[visualIndex].foregroundColor;
+        if (attributes[visualIndex].annotation) {
             piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
             piu->underlineColor = iTermAnnotationUnderlineColor;
         } else if (state->inMarkedRange) {
             piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
             piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
         } else {
-            piu->underlineStyle = attributes[x].underlineStyle;
-            if (attributes[x].hasUnderlineColor) {
-                piu->underlineColor = attributes[x].underlineColor;
+            piu->underlineStyle = attributes[visualIndex].underlineStyle;
+            if (attributes[visualIndex].hasUnderlineColor) {
+                piu->underlineColor = attributes[visualIndex].underlineColor;
             } else {
                 piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
             }

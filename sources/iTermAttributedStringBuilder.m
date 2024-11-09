@@ -303,6 +303,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     };
     NSDictionary *previousImageAttributes = nil;
     iTermMutableAttributedStringBuilder *builder = [[iTermMutableAttributedStringBuilder alloc] init];
+    builder.hasBidi = bidiInfo != nil;
     builder.startColumn = indexRange.location;
     builder.zippy = self.zippy;
     builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
@@ -489,6 +490,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 [attributedStrings addObject:builtString];
             }
             builder = [[iTermMutableAttributedStringBuilder alloc] init];
+            builder.hasBidi = bidiInfo != nil;
             builder.startColumn = i;
             builder.zippy = self.zippy;
             builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;

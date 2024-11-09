@@ -47,6 +47,7 @@ static inline BOOL iTermCharacterSupportsFastPath(unichar code, BOOL asciiLigatu
 @property(nonatomic, assign) BOOL zippy;
 @property(nonatomic) NSInteger endColumn;
 @property(nonatomic) NSInteger startColumn;
+@property(nonatomic) BOOL hasBidi;
 
 - (void)appendString:(NSString *)string rtl:(BOOL)rtl;
 - (void)appendCharacter:(unichar)code rtl:(BOOL)rtl;
