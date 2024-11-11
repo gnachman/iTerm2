@@ -22,7 +22,7 @@ There may be multiple "broadcast domains". Each broadcast domain has a collectio
         domain = iterm2.broadcast.BroadcastDomain()
         for tab in app.terminal_windows[0].tabs:
             domain.add_session(tab.sessions[0])
-        await iterm2.async_set_broadcast_domains([domain])
+        await iterm2.async_set_broadcast_domains(connection, [domain])
 
 
     iterm2.run_until_complete(main)
