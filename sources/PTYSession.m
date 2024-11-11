@@ -17044,7 +17044,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     };
 #warning TODO: Add support for bidi?
     [extractor enumerateCharsInRange:range
-                           charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
+                        logicalOrder:NO
+                           charBlock:^BOOL(const screen_char_t *currentLine,
+                                           screen_char_t theChar,
+                                           iTermExternalAttribute *ea,
+                                           VT100GridCoord logicalCoord,
+                                           VT100GridCoord coord) {
                                line = currentLine;
                                if (firstIndex < 0) {
                                    firstIndex = coord.x;

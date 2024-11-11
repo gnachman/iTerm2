@@ -10,6 +10,8 @@
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class iTermExternalAttribute;
 
 typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
@@ -40,24 +42,39 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
 - (int)xLimit;
 - (int)wordExtractorWidth;
 - (int)wordExtractroNumberOfLines;
+
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^NS_NOESCAPE)(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
-                     eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPrecedingNulls, int line))eolBlock;
+                 logicalOrder:(BOOL)logicalOrder
+                    charBlock:(BOOL (^NS_NOESCAPE _Nullable)(const screen_char_t *currentLine,
+                                                             screen_char_t theChar,
+                                                             iTermExternalAttribute *,
+                                                             VT100GridCoord logicalCoord,
+                                                             VT100GridCoord visualCoord))charBlock
+                     eolBlock:(BOOL (^NS_NOESCAPE _Nullable)(unichar code, int numPrecedingNulls, int line))eolBlock;
+
 - (void)enumerateInReverseCharsInRange:(VT100GridWindowedRange)range
-                             charBlock:(BOOL (^NS_NOESCAPE)(screen_char_t theChar, VT100GridCoord coord))charBlock
-                              eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPrecedingNulls, int line))eolBlock;
+                 logicalOrder:(BOOL)logicalOrder
+                             charBlock:(BOOL (^NS_NOESCAPE _Nullable)(screen_char_t theChar,
+                                                                      VT100GridCoord logicalCoord,
+                                                                      VT100GridCoord visualCoord))charBlock
+                              eolBlock:(BOOL (^NS_NOESCAPE _Nullable)(unichar code, int numPrecedingNulls, int line))eolBlock;
+
 - (BOOL)shouldStopEnumeratingWithCode:(unichar)code
                              numNulls:(int)numNulls
               windowTouchesLeftMargin:(BOOL)windowTouchesLeftMargin
              windowTouchesRightMargin:(BOOL)windowTouchesRightMargin
                      ignoringNewlines:(BOOL)ignoringNewlines;
+
 - (void)performBlockWithLineCache:(void (^NS_NOESCAPE)(void))block;
+
 - (NSInteger)indexInSortedArray:(NSArray<NSNumber *> *)indexes
      withValueLessThanOrEqualTo:(NSInteger)maximumValue
           searchingBackwardFrom:(NSInteger)start;
+
 - (NSInteger)indexInSortedArray:(NSArray<NSNumber *> *)indexes
       withValueGreaterOrEqualTo:(NSInteger)minimumValue
            searchingForwardFrom:(NSInteger)startIndex;
+
 - (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord;
 @end
 
@@ -74,7 +91,9 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
 - (instancetype)init NS_UNAVAILABLE;
 
 - (VT100GridWindowedRange)windowedRange;
-- (NSString *)fastString;
+- (NSString * _Nullable)fastString;
 - (VT100GridWindowedRange)windowedRangeForBigWord;
 
 @end
+
+NS_ASSUME_NONNULL_END

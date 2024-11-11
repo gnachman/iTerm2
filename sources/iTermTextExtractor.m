@@ -171,9 +171,11 @@ const NSInteger kLongMaximumWordLength = 100000;
                                                                                    line,
                                                                                    [_dataSource width], line),
                                                            _logicalWindow.location, _logicalWindow.length)
+                   logicalOrder:NO
                       charBlock:^BOOL(const screen_char_t *currentLine,
                                       screen_char_t theChar,
                                       iTermExternalAttribute *ea,
+                                      VT100GridCoord logicalCoord,
                                       VT100GridCoord coord) {
         if (!theChar.complexChar &&
             !theChar.image &&
@@ -239,14 +241,59 @@ const NSInteger kLongMaximumWordLength = 100000;
 }
 
 // The maximum length is a rough guideline. You might get a word up to twice as long.
-- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
                            maximumLength:(NSInteger)maximumLength
                                      big:(BOOL)big {
+    VT100GridCoord location = visualLocation;
+    iTermBidiDisplayInfo *bidi = nil;
+    if (_supportBidi) {
+        ScreenCharArray *sca = [_dataSource screenCharArrayForLine:visualLocation.y];
+        bidi = sca.bidiInfo;
+        if (bidi) {
+            location.x = [bidi logicalForVisual:visualLocation.x];
+        }
+    }
     iTermWordExtractor *wordExtractor = [[iTermWordExtractor alloc] initWithLocation:location
                                                                        maximumLength:maximumLength
                                                                                  big:big];
     wordExtractor.dataSource = self;
-    return [wordExtractor windowedRange];
+    VT100GridWindowedRange range = [wordExtractor windowedRange];
+    if (bidi) {
+        return [self visualWindowedRangeForLogical:range];
+    }
+    return range;
+}
+
+- (VT100GridWindowedRange)visualWindowedRangeForLogical:(VT100GridWindowedRange)logical {
+    VT100GridWindowedRange visual = logical;
+
+    // Get inclusive visual range
+    VT100GridCoord a = [self visualCoordForLogical:logical.coordRange.start];
+    VT100GridCoord b = [self visualCoordForLogical:[self predecessorOfCoord:logical.coordRange.end]];
+
+    // Convert back to half-open range with start <= end.
+    if (VT100GridCoordCompare(a, b) == NSOrderedDescending) {
+        visual.coordRange.start = b;
+        a.x += 1;
+        visual.coordRange.end = a;
+    } else {
+        visual.coordRange.start = a;
+        b.x += 1;
+        visual.coordRange.end = b;
+    }
+    return visual;
+}
+
+- (VT100GridCoord)visualCoordForLogical:(VT100GridCoord)logical {
+    if (!_supportBidi) {
+        return logical;
+    }
+    ScreenCharArray *sca = [_dataSource screenCharArrayForLine:logical.y];
+    iTermBidiDisplayInfo *bidi = sca.bidiInfo;
+    if (!bidi) {
+        return logical;
+    }
+    return VT100GridCoordMake([bidi visualForLogical:logical.x], logical.y);
 }
 
 // Make characterAt: much faster when called with the same line number over and over again. Assumes
@@ -748,7 +795,10 @@ const NSInteger kLongMaximumWordLength = 100000;
                                                                       _logicalWindow.location,
                                                                       _logicalWindow.length);
     [self enumerateInReverseCharsInRange:windowedRange
-                               charBlock:^BOOL(screen_char_t theChar, VT100GridCoord charCoord) {
+                            logicalOrder:NO
+                               charBlock:^BOOL(screen_char_t theChar,
+                                               VT100GridCoord logicalCoord,
+                                               VT100GridCoord charCoord) {
                                    if (!theChar.code) {
                                        return YES;
                                    }
@@ -790,7 +840,12 @@ const NSInteger kLongMaximumWordLength = 100000;
                                                _logicalWindow.length);
 
     [self enumerateCharsInRange:windowedRange
-                      charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord charCoord) {
+                   logicalOrder:NO
+                      charBlock:^BOOL(const screen_char_t *currentLine,
+                                      screen_char_t theChar,
+                                      iTermExternalAttribute *ea,
+                                      VT100GridCoord logicalCoord,
+                                      VT100GridCoord charCoord) {
                           if (!theChar.code) {
                               return YES;
                           }
@@ -880,7 +935,12 @@ const NSInteger kLongMaximumWordLength = 100000;
     [whitespaceCharacterSet addCharactersInRange:NSMakeRange(TAB_FILLER, 1)];
 
     [self enumerateCharsInRange:windowedRange
-                      charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
+                   logicalOrder:NO
+                      charBlock:^BOOL(const screen_char_t *currentLine,
+                                      screen_char_t theChar,
+                                      iTermExternalAttribute *ea,
+                                      VT100GridCoord logicalCoord,
+                                      VT100GridCoord coord) {
                           if (theChar.image) {
                               return NO;
                           }
@@ -1022,9 +1082,15 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     __block BOOL copiedImage = NO;
     __block BOOL needsTimestamps = self.addTimestamps;
     [self enumerateCharsInRange:windowedRange
-                      charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
+                   logicalOrder:YES
+                      charBlock:^BOOL(const screen_char_t *currentLine,
+                                      screen_char_t theChar,
+                                      iTermExternalAttribute *ea,
+                                      VT100GridCoord logicalCoord,
+                                      VT100GridCoord visualCoord) {
         if (needsTimestamps) {
-            appendString([self formattedTimestampForLine:coord.y], (screen_char_t) { .code = 0, .complexChar = 0, .image = 0}, nil, coord);
+            appendString([self formattedTimestampForLine:logicalCoord.y],
+                         (screen_char_t) { .code = 0, .complexChar = 0, .image = 0}, nil, logicalCoord);
             needsTimestamps = NO;
         }
         if (theChar.image) {
@@ -1043,18 +1109,18 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                     textAttachment.image = imageInfo.image.images.firstObject;
                     NSAttributedString *attributedStringWithAttachment = [NSAttributedString attributedStringWithAttachment:textAttachment];
                     [locatedAttributedString appendAttributedString:attributedStringWithAttachment
-                                                                 at:coord];
+                                                                 at:logicalCoord];
                 }
             }
         } else if (ea.controlCode.valid) {
             if (theChar.code != '^') {
-                appendString([NSString stringWithLongCharacter:ea.controlCode.code], theChar, ea, coord);
+                appendString([NSString stringWithLongCharacter:ea.controlCode.code], theChar, ea, logicalCoord);
             }
         } else if (theChar.code == TAB_FILLER && !theChar.complexChar) {
             // Convert orphan tab fillers (those without a subsequent
             // tab character) into spaces.
-            if ([self tabFillerAtIndex:coord.x isOrphanInLine:currentLine]) {
-                appendString(@" ", theChar, ea, coord);
+            if ([self tabFillerAtIndex:logicalCoord.x isOrphanInLine:currentLine]) {
+                appendString(@" ", theChar, ea, logicalCoord);
             }
         } else if (theChar.code == 0 && !theChar.complexChar) {
             // This is only reached for midline nulls; nulls at the end of the
@@ -1067,7 +1133,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                     return YES;
                 case kiTermTextExtractorNullPolicyTreatAsSpace:
                 case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
-                    appendString(@" ", theChar, ea, coord);
+                    appendString(@" ", theChar, ea, logicalCoord);
                     break;
             }
         } else if (theChar.complexChar || (theChar.code != DWC_RIGHT &&
@@ -1076,14 +1142,14 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             // of a window.
             if (continuationChars &&
                 windowedRange.columnWindow.length > 0 &&
-                coord.x == windowedRange.columnWindow.location + windowedRange.columnWindow.length - 1 &&
+                visualCoord.x == windowedRange.columnWindow.location + windowedRange.columnWindow.length - 1 &&
                 theChar.code == '\\' &&
                 !theChar.complexChar) {
                 // Is a backslash at the right edge of a window.
-                [continuationChars addIndex:[self indexForCoord:coord width:width]];
+                [continuationChars addIndex:[self indexForCoord:logicalCoord width:width]];
             } else {
                 // Normal character.
-                appendString(ScreenCharToStr(&theChar) ?: @"", theChar, ea, coord);
+                appendString(ScreenCharToStr(&theChar) ?: @"", theChar, ea, logicalCoord);
             }
         }
         if (truncateTail) {
@@ -1210,7 +1276,12 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             VT100GridWindowedRangeMake(localRange, _logicalWindow.location, _logicalWindow.length);
     if (leading) {
         [self enumerateCharsInRange:windowedRange
-                          charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
+                       logicalOrder:NO
+                          charBlock:^BOOL(const screen_char_t *currentLine,
+                                          screen_char_t theChar,
+                                          iTermExternalAttribute *ea,
+                                          VT100GridCoord logicalCoord,
+                                          VT100GridCoord coord) {
                               NSString *string = ScreenCharToStr(&theChar);
                               if ([string rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
                                   trimmedRange.start.x = coord.x;
@@ -1233,7 +1304,10 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         __block BOOL haveSeenCharacter = NO;
         __block BOOL haveSeenNewline = NO;
         [self enumerateInReverseCharsInRange:windowedRange
-                                   charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
+                                logicalOrder:NO
+                                   charBlock:^BOOL(screen_char_t theChar,
+                                                   VT100GridCoord logicalCoord,
+                                                   VT100GridCoord coord) {
                                        NSString *string = ScreenCharToStr(&theChar);
                                        BOOL result = NO;
                                        if ([string rangeOfCharacterFromSet:whitespace].location != NSNotFound) {
@@ -1495,7 +1569,12 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 }
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^NS_NOESCAPE)(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
+                 logicalOrder:(BOOL)logicalOrder
+                    charBlock:(BOOL (^NS_NOESCAPE)(const screen_char_t *currentLine,
+                                                   screen_char_t theChar,
+                                                   iTermExternalAttribute *,
+                                                   VT100GridCoord logicalCoord,
+                                                   VT100GridCoord visualCoord))charBlock
                      eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPrecedingNulls, int line))eolBlock {
     int width = [_dataSource width];
 
@@ -1546,12 +1625,27 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             }
         }
 
-        // Iterate over characters up to terminal nulls.
-        for (int x = MIN(width - 1, MAX(range.columnWindow.location, startx)); x < endx - numNulls; x++) {
-            ITAssertWithMessage(x >= 0 && x < width, @"Iterating terminal nulls. x=%@ range=%@ width=%@ numNulls=%@", @(x), VT100GridWindowedRangeDescription(range), @(width), @(numNulls));
-            if (charBlock) {
-                if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y))) {
-                    return;
+        iTermBidiDisplayInfo *bidi = _supportBidi ? sca.bidiInfo : nil;
+        if (charBlock) {
+            if (logicalOrder && bidi) {
+                const NSRange visualRange = NSMakeRangeFromHalfOpenInterval(MIN(width - 1, MAX(range.columnWindow.location, startx)),
+                                                                            endx - numNulls);
+                [bidi enumerateLogicalRangesIn:visualRange closure:^(NSRange logicalRange, int visualStart, BOOL *stop) {
+                    for (int i = 0; i < logicalRange.length; i++) {
+                        int x = logicalRange.location + i;
+                        if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y), VT100GridCoordMake(visualStart + i, y))) {
+                            *stop = YES;
+                            return;
+                        }
+                    }
+                }];
+            } else {
+                // Iterate over characters up to terminal nulls.
+                for (int x = MIN(width - 1, MAX(range.columnWindow.location, startx)); x < endx - numNulls; x++) {
+                    ITAssertWithMessage(x >= 0 && x < width, @"Iterating terminal nulls. x=%@ range=%@ width=%@ numNulls=%@", @(x), VT100GridWindowedRangeDescription(range), @(width), @(numNulls));
+                    if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y), VT100GridCoordMake(x, y))) {
+                        return;
+                    }
                 }
             }
         }
@@ -1575,8 +1669,14 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     }
 }
 
+static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger openUpperBound) {
+    assert(lowerBound <= openUpperBound);
+    return NSMakeRange(lowerBound, openUpperBound - lowerBound);
+}
+
 - (void)enumerateInReverseCharsInRange:(VT100GridWindowedRange)range
-                             charBlock:(BOOL (^NS_NOESCAPE)(screen_char_t theChar, VT100GridCoord coord))charBlock
+                          logicalOrder:(BOOL)logicalOrder
+                             charBlock:(BOOL (^NS_NOESCAPE)(screen_char_t theChar, VT100GridCoord logicalCoord, VT100GridCoord visualCoord))charBlock
                               eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPrecedingNulls, int line))eolBlock {
     int xLimit = range.columnWindow.length == 0 ? [_dataSource width] :
         (range.columnWindow.location + range.columnWindow.length);
@@ -1623,10 +1723,30 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                 }
             }
         }
+        iTermBidiDisplayInfo *bidi = _supportBidi ? sca.bidiInfo : nil;
         if (charBlock) {
-            for (; x >= xmin; x--) {
-                if (charBlock(theLine[x], VT100GridCoordMake(x, y))) {
-                    return;
+            if (logicalOrder && bidi) {
+#warning TODO: Test this
+                [bidi enumerateLogicalRangesReverseIn:NSMakeRangeFromHalfOpenInterval(xmin, x + 1)
+                                              closure:^(NSRange logicalRange,
+                                                        int32_t visualStart,
+                                                        BOOL *stop) {
+                    for (int i = 0; i < logicalRange.length; i++) {
+                        const int x = NSMaxRange(logicalRange) - i - 1;
+                        const VT100GridCoord logicalCoord = VT100GridCoordMake(x, y);
+                        const VT100GridCoord visualCoord = VT100GridCoordMake(visualStart + logicalRange.length - 1 - i, y);
+                        if (charBlock(theLine[x], logicalCoord, visualCoord)) {
+                            *stop = YES;
+                            return;
+                        }
+                    }
+                }];
+            } else {
+                for (; x >= xmin; x--) {
+                    VT100GridCoord coord = VT100GridCoordMake(x, y);
+                    if (charBlock(theLine[x], coord, coord)) {
+                        return;
+                    }
                 }
             }
         }
@@ -1662,14 +1782,19 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         VT100GridCoordRangeMake(0, coord.y, [_dataSource width], coord.y);
     NSCharacterSet *columnDividers = [self columnDividers];
     [self enumerateCharsInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
-                      charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord theCoord) {
+                   logicalOrder:NO
+                      charBlock:^BOOL(const screen_char_t *currentLine,
+                                      screen_char_t theChar,
+                                      iTermExternalAttribute *ea,
+                                      VT100GridCoord logicalCoord,
+                                      VT100GridCoord theCoord) {
                           if (!theChar.complexChar &&
                               [columnDividers characterIsMember:theChar.code]) {
                               [indexes addIndex:theCoord.x];
                           }
                           return NO;
                       }
-                       eolBlock:NULL];
+                       eolBlock:nil];
     return indexes;
 }
 

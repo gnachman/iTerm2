@@ -157,9 +157,17 @@ extern const NSInteger kLongMaximumWordLength;
 - (int)lengthOfLine:(int)line;
 - (int)lengthOfAbsLine:(long long)absLine;
 
+// When logicalOrder is NO, then logicalCoord always equals visualCoord and coordinates are
+// enumerated in visual order. That is the legacy, pre-bidi behavior. When logicalOrder is YES,
+// coordinates are enumerated in logical order, which may cause visualCoord to jump around.
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^NS_NOESCAPE)(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
-                     eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPrecedingNulls, int line))eolBlock;
+                 logicalOrder:(BOOL)logicalOrder
+                    charBlock:(BOOL (^NS_NOESCAPE _Nullable)(const screen_char_t *currentLine,
+                                                             screen_char_t theChar,
+                                                             iTermExternalAttribute *,
+                                                             VT100GridCoord logicalCoord,
+                                                             VT100GridCoord visualCoord))charBlock
+                     eolBlock:(BOOL (^NS_NOESCAPE _Nullable)(unichar code, int numPrecedingNulls, int line))eolBlock;
 
 - (void)enumerateWrappedLinesIntersectingRange:(VT100GridRange)range
                                          block:(void (^)(iTermStringLine *, VT100GridWindowedRange, BOOL *))block;

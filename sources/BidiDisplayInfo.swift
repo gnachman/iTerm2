@@ -229,7 +229,7 @@ class BidiDisplayInfoObjc: NSObject {
         guard let max = lut.max() else {
             return []
         }
-        var result = Array(0..<Int32(max))
+        var result = Array(0..<Int32(max + 1))
         for i in 0..<Int(numberOfCells) {
             result[Int(lut[i])] = Int32(i)
         }
@@ -380,6 +380,25 @@ class BidiDisplayInfoObjc: NSObject {
                 return
             }
         }
+    }
+
+    @objc(logicalForVisual:)
+    func logicalForVisual(_ visual: Int32) -> Int32 {
+        if visual < 0 {
+            return 0
+        }
+        if visual >= _inverseLUT.count {
+            return visual
+        }
+        return _inverseLUT[Int(visual)]
+    }
+
+    @objc(visualForLogical:)
+    func visualForLogical(_ logical: Int32) -> Int32 {
+        if logical < 0 || logical >= numberOfCells {
+            return logical
+        }
+        return guts.lut[Int(logical)]
     }
 }
 
