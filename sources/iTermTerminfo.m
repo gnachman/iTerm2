@@ -63,7 +63,8 @@
 - (NSDictionary<NSString *, id> *)computeDatabase {
     return [self sync:^id {
         char *term = strdup(_term.UTF8String);
-        if (setupterm(term, 1, NULL) != OK || cur_term == NULL) {
+        int ignored = 0;
+        if (setupterm(term, 1, &ignored) != OK || cur_term == NULL) {
             DLog(@"Failed to compute terminfo database for \(term)");
             free(term);
             return nil;
