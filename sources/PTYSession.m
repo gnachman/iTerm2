@@ -11110,6 +11110,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     iTermTextExtractor *textExtractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
+#warning TODO: Support bidi
     NSString *word = [textExtractor fastWordAt:VT100GridCoordMake(_screen.cursorX - 1, _screen.cursorY + _screen.numberOfScrollbackLines - 1)];
     [[_delegate realParentWindow] currentSessionWordAtCursorDidBecome:word];
 }
@@ -17041,6 +17042,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         line = nil;
         return NO;
     };
+#warning TODO: Add support for bidi?
     [extractor enumerateCharsInRange:range
                            charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
                                line = currentLine;

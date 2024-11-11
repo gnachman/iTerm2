@@ -519,6 +519,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
               [lineBuffer numLinesWithWidth:size_.width], size_.width);
 #endif
     }
+    [lineBuffer commitLastBlock];
 
     return numLines;
 }

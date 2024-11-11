@@ -183,6 +183,7 @@ class SelectionExtractor: NSObject {
                     }
                 }
                 let extractor = iTermTextExtractor(dataSource: snapshot)
+                extractor.supportBidi = true
                 if let progress {
                     progress.transform = { localFraction in
                         fractionSoFar + localFraction * subselectionWeight

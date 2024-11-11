@@ -1279,6 +1279,9 @@
 		A6275C122C7D5A050031089D /* KittyImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6275C102C7D5A040031089D /* KittyImage.metal */; };
 		A6275C132C7D5A050031089D /* KittyImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6275C102C7D5A040031089D /* KittyImage.metal */; };
 		A6275C142C7D5A050031089D /* KittyImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6275C102C7D5A040031089D /* KittyImage.metal */; };
+		A62841532CE2856A00D0796B /* VT100GridCoordTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62841522CE2856400D0796B /* VT100GridCoordTypes.swift */; };
+		A62841552CE28B9B00D0796B /* iTermWordExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = A62841542CE28B8B00D0796B /* iTermWordExtractor.h */; };
+		A62841572CE28BA200D0796B /* iTermWordExtractor.m in Sources */ = {isa = PBXBuildFile; fileRef = A62841562CE28BA000D0796B /* iTermWordExtractor.m */; };
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A629C6FE220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.h in Headers */ = {isa = PBXBuildFile; fileRef = A629C6FC220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.h */; };
 		A629C6FF220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.h in Headers */ = {isa = PBXBuildFile; fileRef = A629C6FC220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.h */; };
@@ -5715,6 +5718,9 @@
 		A626DF0A217D3034005600F9 /* iTermTabBarAccessoryViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarAccessoryViewController.m; sourceTree = "<group>"; };
 		A6275BFE2C7D45140031089D /* KittyImageRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KittyImageRenderer.swift; sourceTree = "<group>"; };
 		A6275C102C7D5A040031089D /* KittyImage.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = KittyImage.metal; path = Metal/Shaders/KittyImage.metal; sourceTree = "<group>"; };
+		A62841522CE2856400D0796B /* VT100GridCoordTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VT100GridCoordTypes.swift; sourceTree = "<group>"; };
+		A62841542CE28B8B00D0796B /* iTermWordExtractor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWordExtractor.h; sourceTree = "<group>"; };
+		A62841562CE28BA000D0796B /* iTermWordExtractor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWordExtractor.m; sourceTree = "<group>"; };
 		A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A629C6FC220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProfilePreferencesTabViewWrapperView.h; sourceTree = "<group>"; };
@@ -9791,6 +9797,8 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A62841562CE28BA000D0796B /* iTermWordExtractor.m */,
+				A62841542CE28B8B00D0796B /* iTermWordExtractor.h */,
 				A60D93612CC61B590019E164 /* VT100Screen+Search.h */,
 				A65AEDEC2CC1B620007F4A11 /* SearchEngine.swift */,
 				A60E046426E037BD00DD162B /* ContentSubscriber.swift */,
@@ -11048,6 +11056,7 @@
 		A68A30CA186D118E007F550F /* Data Structures */ = {
 			isa = PBXGroup;
 			children = (
+				A62841522CE2856400D0796B /* VT100GridCoordTypes.swift */,
 				A619DC492CD59F6A004B8996 /* iTermLRUDictionary.m */,
 				A619DC472CD59F61004B8996 /* iTermLRUDictionary.h */,
 				A619DC432CD595FB004B8996 /* iTermBijection.m */,
@@ -12969,6 +12978,7 @@
 				A6EE7F33234082BE00D0F724 /* iTermMalloc.h in Headers */,
 				A65660D82372A69A00DC6744 /* iTermDoublyLinkedList.h in Headers */,
 				A619DC4C2CD5A196004B8996 /* iTermCoreTextLineRenderingHelper.h in Headers */,
+				A62841552CE28B9B00D0796B /* iTermWordExtractor.h in Headers */,
 				5370679E21C9D2780088D0F3 /* SIGArchiveReader.h in Headers */,
 				A66F3CF01FEA3D9E00AA2021 /* iTermHistogram.h in Headers */,
 				A6644BEE25CDD20800419355 /* iTermVirtualOffset.h in Headers */,
@@ -16081,6 +16091,7 @@
 				A6A9839927E69B50003319D1 /* OnePasswordDataSource.swift in Sources */,
 				A667C23A276BD90B006B4DEF /* VT100State.m in Sources */,
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
+				A62841572CE28BA200D0796B /* iTermWordExtractor.m in Sources */,
 				A6E2B49329F99550002737AD /* CommandParser.swift in Sources */,
 				A60E045A26DD537B00DD162B /* AsyncFilter.swift in Sources */,
 				A6153D5521F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m in Sources */,
@@ -16314,6 +16325,7 @@
 				A6D7E0782C236D54007D0A37 /* LineBlockMetadataArray.m in Sources */,
 				A6891DCB2818605500751F40 /* JSONPortholeRenderer.swift in Sources */,
 				A630117720E6971D008114B7 /* iTermStatusBarTextComponent.m in Sources */,
+				A62841532CE2856A00D0796B /* VT100GridCoordTypes.swift in Sources */,
 				A6D1C420286192F600B68526 /* TextClipDrawing.swift in Sources */,
 				A66319892312312600C502BD /* iTermRule.m in Sources */,
 				A6F718B12263CC3C0053488E /* ITAddressBookMgr.m in Sources */,

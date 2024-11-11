@@ -47,6 +47,10 @@ extension CTRun {
     var status: CTRunStatus {
         CTRunGetStatus(self)
     }
+    var stringRange: Range<Int> {
+        let cfrange = CTRunGetStringRange(self)
+        return cfrange.location..<(cfrange.location + cfrange.length)
+    }
 }
 
 extension ClosedRange where Bound == Int {
@@ -60,6 +64,64 @@ extension ClosedRange {
         self = Swift.min(self.lowerBound, other.lowerBound)...Swift.max(self.upperBound, other.upperBound)
     }
 }
+
+struct CellPosition {
+    var sourceCell: Int
+    enum Position {
+        case absolute(CGFloat)
+        case leftOfPredecessor
+        case rightOfPredecessor
+    }
+    var position: Position
+}
+
+struct ResolvedCellPosition: Comparable {
+    var sourceCell: Int
+    var base: CGFloat
+    var infinitessimals: Int
+    init(previous: ResolvedCellPosition?,
+         current: CellPosition) {
+        self.sourceCell = current.sourceCell
+        if let previous {
+            switch current.position {
+            case .absolute(let value):
+                self.base = value
+                self.infinitessimals = 0
+            case .leftOfPredecessor:
+                self.base = previous.base
+                self.infinitessimals = previous.infinitessimals - 1
+            case .rightOfPredecessor:
+                self.base = previous.base
+                self.infinitessimals = previous.infinitessimals + 1
+            }
+        } else {
+            switch current.position {
+            case .absolute(let value):
+                self.base = value
+                self.infinitessimals = 0
+            case .leftOfPredecessor:
+                // The first character, which happens to be in a right-to-left run, was part of a
+                // ligature it was not credited for. This must be the rightmost position.
+                self.base = CGFloat.infinity
+                self.infinitessimals = 0
+            case .rightOfPredecessor:
+                // The first character, which happens to be in a left-to-right run, was part of a
+                // ligature it was not credited for. This must be the leftmost position.
+                self.base = -CGFloat.infinity
+                self.infinitessimals = 0
+            }
+        }
+    }
+
+    static func < (lhs: ResolvedCellPosition, rhs: ResolvedCellPosition) -> Bool {
+        if lhs.base != rhs.base {
+            return lhs.base < rhs.base
+        } else {
+            return lhs.infinitessimals < rhs.infinitessimals
+        }
+    }
+}
+
 
 // Make a lookup table that maps source cell to display cell.
 fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
@@ -79,7 +141,7 @@ fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
 
         // Update rtlIndexes
         if isRTL {
-            for stringIndex in stringIndices {
+            for stringIndex in run.stringRange {
                 let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
                 rtlIndexes.insert(sourceCell)
             }
@@ -99,18 +161,30 @@ fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
         }
     }
 
-    let sortedElementsByPosition = sourceCellToPositionRange.enumerated().compactMap { (sourceCell: Int, positionRange: ClosedRange<CGFloat>?) -> (sourceCell: Int, positionRange: ClosedRange<CGFloat>)? in
+    let cellPositionsBySourceCell = sourceCellToPositionRange.enumerated().map { (sourceCell: Int, positionRange: ClosedRange<CGFloat>?) -> CellPosition in
         if let positionRange {
-            (sourceCell, positionRange)
+            return CellPosition(sourceCell: sourceCell, position: .absolute(positionRange.lowerBound))
         } else {
-            nil
+            if rtlIndexes.contains(sourceCell) {
+                // This is a right-to-left character that contributed to a ligature. It should be placed left of the preceding character.
+                return CellPosition(sourceCell: sourceCell, position: .leftOfPredecessor)
+            } else {
+                // This is a left-to-right character that contributed to a ligature. It should be placed right of the preceding character.
+                return CellPosition(sourceCell: sourceCell, position: .rightOfPredecessor)
+            }
         }
-    }.sorted { lhs, rhs in
-        lhs.positionRange.lowerBound < rhs.positionRange.lowerBound
     }
+
+    var resolvedCellPositions = [ResolvedCellPosition]()
+    for cellPosition in cellPositionsBySourceCell {
+        resolvedCellPositions.append(ResolvedCellPosition(previous: resolvedCellPositions.last,
+                                                          current: cellPosition))
+    }
+    let sortedResolvedCellPositions = resolvedCellPositions.sorted()
+
     var lut = Array(Int32(0)..<Int32(count))
-    for (visualIndex, element) in sortedElementsByPosition.enumerated() {
-        lut[element.sourceCell] = Int32(visualIndex)
+    for (visualIndex, resolvedCellPosition) in sortedResolvedCellPositions.enumerated() {
+        lut[Int(resolvedCellPosition.sourceCell)] = Int32(visualIndex)
     }
     return (lut, rtlIndexes)
 }
@@ -150,6 +224,28 @@ class BidiDisplayInfoObjc: NSObject {
             buffer.baseAddress!
         }
     }
+    private lazy var _inverseLUT: [Int32] = {
+        let lut = guts.lut
+        guard let max = lut.max() else {
+            return []
+        }
+        var result = Array(0..<Int32(max))
+        for i in 0..<Int(numberOfCells) {
+            result[Int(lut[i])] = Int32(i)
+        }
+        return result
+    }()
+
+    @objc var inverseLUT: UnsafePointer<Int32> {
+        _inverseLUT.withUnsafeBufferPointer { buffer in
+            buffer.baseAddress!
+        }
+    }
+
+    @objc var inverseLUTCount: Int32 {
+        Int32(_inverseLUT.count)
+    }
+
     @objc var rtlIndexes: IndexSet { guts.rtlIndexes }
     // Length of the `lut`. Also equals the number of non-empty sequential cells counting from the first. Does not include trailing spaces.
     @objc var numberOfCells: Int32 { Int32(guts.lut.count) }
@@ -224,6 +320,97 @@ class BidiDisplayInfoObjc: NSObject {
             return false
         }
         return guts == obj.guts
+    }
+
+    @objc
+    func enumerateLogicalRanges(in visualNSRange: NSRange,
+                                closure: (NSRange, Int32, UnsafeMutablePointer<ObjCBool>) -> ()) {
+        enumerateLogicalRanges(in: visualNSRange, reversed: false, closure:closure)
+    }
+
+    // Like enumerateLogicalRanges(in:, closure:) but with the order of calls to `closure` reversed.
+    @objc
+    func enumerateLogicalRangesReverse(in visualNSRange: NSRange,
+                                       closure: (NSRange, Int32, UnsafeMutablePointer<ObjCBool>) -> ()) {
+        enumerateLogicalRanges(in: visualNSRange, reversed: true, closure:closure)
+    }
+
+    // Invokes `closure` with logical ranges within a visual range, but still in logical order.
+    //
+    // For example:
+    //               012345678
+    // Logical       abcDEFghi
+    // Visual        ghiFEDabc
+    // visualNSRange  ^^^^     1...4
+    //
+    // Then closure will be invoked with:
+    //
+    // Logical Range    Visual Start Index
+    // 4...5 (EF)       3
+    // 7...8 (hi)       1
+    //
+    // Or, if the reversed flag is true, the same calls are made in the reverse order (i.e., from
+    // largest logical range to smallest). The visual order is not necessarily monotonic,
+    // regardless of the `reversed` flag.
+    private func enumerateLogicalRanges(in visualNSRange: NSRange,
+                                        reversed: Bool,
+                                        closure: (NSRange, Int32, UnsafeMutablePointer<ObjCBool>) -> ()) {
+        guard let visualRange = Range<Int>(visualNSRange) else {
+            return
+        }
+
+        let visualToLogical = guts.invertedLUT
+        let sortedLogicalIndexes = visualRange.map { visualIndex in
+            if visualIndex < visualToLogical.count {
+                return Int(visualToLogical[visualIndex])
+            }
+            return visualIndex
+        }.sorted()
+        let logicalIndexes = reversed ? sortedLogicalIndexes.reversed() : sortedLogicalIndexes
+        let logicalToVisual = guts.lut
+        var stop = ObjCBool(false)
+        for logicalRange in logicalIndexes.rangeIterator() {
+            let visualStart = if logicalRange.lowerBound < logicalToVisual.count {
+                logicalToVisual[logicalRange.lowerBound]
+            } else {
+                Int32(logicalRange.lowerBound)
+            }
+            closure(NSRange(logicalRange), visualStart, &stop)
+            if stop.boolValue {
+                return
+            }
+        }
+    }
+}
+
+struct CollectionRangeIterator<C: Collection>: IteratorProtocol, Sequence where C.Element: BinaryInteger {
+    private let collection: C
+    private var currentIndex: C.Index
+
+    init(collection: C) {
+        self.collection = collection
+        self.currentIndex = collection.startIndex
+    }
+
+    mutating func next() -> ClosedRange<C.Element>? {
+        guard currentIndex < collection.endIndex else { return nil }
+
+        let start = collection[currentIndex]
+        var end = start
+        collection.formIndex(after: &currentIndex)
+
+        while currentIndex < collection.endIndex, collection[currentIndex] == end + 1 {
+            end = collection[currentIndex]
+            collection.formIndex(after: &currentIndex)
+        }
+
+        return start...end
+    }
+}
+
+extension Collection where Element: BinaryInteger {
+    func rangeIterator() -> CollectionRangeIterator<Self> {
+        return CollectionRangeIterator(collection: self)
     }
 }
 
@@ -355,6 +542,14 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
             compression[$0]!
         }
         return BidiDisplayInfo(lut: fixed, rtlIndexes: subIndexes)
+    }
+
+    var invertedLUT: [Int32] {
+        var result = Array<Int32>(repeating: 0, count: lut.count)
+        for (index, value) in lut.enumerated() {
+            result[Int(value)] = Int32(index)
+        }
+        return result
     }
 }
 

@@ -30,6 +30,7 @@ class TerminalContentSnapshot: NSObject, iTermTextDataSource {
         _numberOfLines = gridStartIndex + grid.size.height
         self.cumulativeOverflow = cumulativeOverflow
         self.lineBuffer = lineBuffer.copy()
+        
         grid.appendLines(grid.size.height, to: self.lineBuffer)
     }
 

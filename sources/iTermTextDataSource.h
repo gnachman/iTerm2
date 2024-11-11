@@ -10,6 +10,7 @@
 
 @protocol VT100ScreenMarkReading;
 @protocol iTermExternalAttributeIndexReading;
+@class iTermBidiDisplayInfo;
 
 NS_ASSUME_NONNULL_BEGIN
 
