@@ -345,7 +345,9 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
                 if (dict) {
                     changed = YES;
                 }
-                return dict ?: profile;
+                NSMutableDictionary *fixed = [profile mutableCopy];
+                fixed[KEY_KEYBOARD_MAP] = dict;
+                return fixed;
             }];
         }];
         if (!testOnly) {
