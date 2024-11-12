@@ -770,6 +770,9 @@ enum {
     DLog(@"problem=%@", problem);
     if (problem) {
         _pluginStatus.stringValue = problem;
+        _installPluginButton.title = @"Install…";
+        _installPluginButton.action = @selector(installPlugin:);
+        [_installPluginButton sizeToFit];
         _installPluginButton.enabled = [iTermAdvancedSettingsModel generativeAIAllowed];
         _pluginOK = NO;
         __weak __typeof(self) weakSelf = self;
@@ -778,7 +781,10 @@ enum {
         });
     } else {
         _pluginStatus.stringValue = @"Plugin installed and working ✅";
-        _installPluginButton.enabled = NO;
+        _installPluginButton.title = @"Reveal in Finder";
+        [_installPluginButton sizeToFit];
+        _installPluginButton.action = @selector(revealPlugin:);
+        _installPluginButton.enabled = YES;
         _pluginOK = YES;
     }
     [self updateAIEnabled];
@@ -913,6 +919,15 @@ enum {
 
 - (IBAction)installPlugin:(id)sender {
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]];
+}
+
+- (void)revealPlugin:(id)sender {
+    NSURL *url = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.googlecode.iterm2.iTermAI"];
+    if (!url) {
+        NSBeep();
+        return;
+    }
+    [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[url]];
 }
 
 - (IBAction)exportAllSettingsAndData:(id)sender {
