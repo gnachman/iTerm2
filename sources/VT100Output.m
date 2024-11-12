@@ -1217,7 +1217,7 @@ static int VT100OutputSafeAddInt(int l, int r) {
 
 - (NSData *)windowResizeNotificationWithGridSize:(VT100GridSize)gridSize
                                        pixelSize:(NSSize)pixelSize {
-    NSString *string = [NSString stringWithFormat:@"%c[48;%d;%d;%d;%d",
+    NSString *string = [NSString stringWithFormat:@"%c[48;%d;%d;%d;%dt",
                         ESC,
                         gridSize.height, gridSize.width,
                         (int)pixelSize.height, (int)pixelSize.width];
