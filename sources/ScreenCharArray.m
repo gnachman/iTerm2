@@ -497,6 +497,21 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     return theCopy;
 }
 
+- (ScreenCharArray *)copyByZeroingVisibleRange:(NSRange)range {
+    if (!_bidiInfo) {
+        return [self copyByZeroingRange:range];
+    }
+
+    ScreenCharArray *theCopy = [self copy];
+    screen_char_t *line = (screen_char_t *)theCopy->_line;
+    for (NSInteger visualIndex = 0; visualIndex < range.length; visualIndex++) {
+        int logicalIndex = [_bidiInfo logicalForVisual:range.location + visualIndex];
+        line[logicalIndex] = (screen_char_t){ 0 };
+    }
+    theCopy->_bidiInfo = _bidiInfo;
+    return theCopy;
+}
+
 - (ScreenCharArray *)paddedOrTruncatedToLength:(NSUInteger)newLength {
     if (newLength == self.length) {
         return self;

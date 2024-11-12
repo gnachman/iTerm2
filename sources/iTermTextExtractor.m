@@ -264,23 +264,28 @@ const NSInteger kLongMaximumWordLength = 100000;
     return range;
 }
 
-- (VT100GridWindowedRange)visualWindowedRangeForLogical:(VT100GridWindowedRange)logical {
-    VT100GridWindowedRange visual = logical;
+- (VT100GridCoordRange)visualRangeForLogical:(VT100GridCoordRange)logical {
+    VT100GridCoordRange visual;
 
-    // Get inclusive visual range
-    VT100GridCoord a = [self visualCoordForLogical:logical.coordRange.start];
-    VT100GridCoord b = [self visualCoordForLogical:[self predecessorOfCoord:logical.coordRange.end]];
+    VT100GridCoord a = [self visualCoordForLogical:logical.start];
+    VT100GridCoord b = [self visualCoordForLogical:[self predecessorOfCoord:logical.end]];
 
     // Convert back to half-open range with start <= end.
     if (VT100GridCoordCompare(a, b) == NSOrderedDescending) {
-        visual.coordRange.start = b;
+        visual.start = b;
         a.x += 1;
-        visual.coordRange.end = a;
+        visual.end = a;
     } else {
-        visual.coordRange.start = a;
+        visual.start = a;
         b.x += 1;
-        visual.coordRange.end = b;
+        visual.end = b;
     }
+    return visual;
+}
+
+- (VT100GridWindowedRange)visualWindowedRangeForLogical:(VT100GridWindowedRange)logical {
+    VT100GridWindowedRange visual = logical;
+    visual.coordRange = [self visualRangeForLogical:logical.coordRange];
     return visual;
 }
 

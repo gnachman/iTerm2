@@ -400,6 +400,19 @@ class BidiDisplayInfoObjc: NSObject {
         }
         return guts.lut[Int(logical)]
     }
+
+    @objc(visualRangeForLogicalRange:)
+    func visualRange(for nsrange: NSRange) -> NSRange {
+        guard let logicalRange = Range(nsrange) else {
+            return nsrange
+        }
+
+        let visual = logicalRange.map { Int(visualForLogical(Int32($0))) }
+        guard let min = visual.min(), let max = visual.max() else {
+            return nsrange
+        }
+        return NSRange(min...max)
+    }
 }
 
 struct CollectionRangeIterator<C: Collection>: IteratorProtocol, Sequence where C.Element: BinaryInteger {

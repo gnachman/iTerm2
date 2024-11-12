@@ -349,6 +349,41 @@ NS_INLINE NSComparisonResult VT100GridAbsCoordOrder(VT100GridAbsCoord a, VT100Gr
     return NSOrderedSame;
 }
 
+NS_INLINE VT100GridCoord VT100GridCoordMax(VT100GridCoord lhs, VT100GridCoord rhs) {
+    switch (VT100GridCoordCompare(lhs, rhs)) {
+        case NSOrderedAscending:
+            return rhs;
+        case NSOrderedSame:
+        case NSOrderedDescending:
+            return lhs;
+    }
+}
+
+NS_INLINE VT100GridCoord VT100GridCoordMin(VT100GridCoord lhs, VT100GridCoord rhs) {
+    switch (VT100GridCoordCompare(lhs, rhs)) {
+        case NSOrderedAscending:
+            return lhs;
+        case NSOrderedSame:
+        case NSOrderedDescending:
+            return rhs;
+    }
+}
+
+// Note that this treats the ranges as rectangular boxes, not as runs.
+NS_INLINE VT100GridCoordRange VT100GridCoordRangeUnionBoxes(VT100GridCoordRange lhs, VT100GridCoordRange rhs) {
+    if (VT100GridCoordRangeEqualsCoordRange(lhs, VT100GridCoordRangeInvalid)) {
+        return rhs;
+    }
+    if (VT100GridCoordRangeEqualsCoordRange(rhs, VT100GridCoordRangeInvalid)) {
+        return lhs;
+    }
+    const VT100GridCoordRange result = {
+        .start = VT100GridCoordMake(MIN(lhs.start.x, rhs.start.x), MIN(lhs.start.y, rhs.start.y)),
+        .end = VT100GridCoordMake(MAX(lhs.end.x, rhs.end.x), MAX(lhs.end.y, rhs.end.y)),
+    };
+    return result;
+}
+
 NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeIntersection(VT100GridAbsCoordRange r1,
                                                                     VT100GridAbsCoordRange r2,
                                                                     int width) {

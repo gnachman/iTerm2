@@ -1179,7 +1179,7 @@ static int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
         const BOOL selected = [selectedIndexes containsIndex:visualX];
         BOOL findMatch = NO;
         if (findMatches && !selected) {
-            findMatch = CheckFindMatchAtIndex(findMatches, visualX);
+            findMatch = CheckFindMatchAtIndex(findMatches, logicalX);
         }
 
         // Background colors
@@ -1351,7 +1351,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     iTermTextColorKey *currentColorKey = &keys[0];
     iTermTextColorKey *previousColorKey = &keys[1];
     const BOOL underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
-    int asEnd = attributedStrings.count > 0 ? NSMaxRange([attributedStrings.firstObject sourceColumnRange]) : -1;
+    int nextAttributedStringLogicalStartIndex = attributedStrings.count > 0 ? NSMaxRange([attributedStrings.firstObject sourceColumnRange]) : -1;
+    int nextASStart = -1;
     id<iTermAttributedString> attributedString = attributedStrings.firstObject;
     NSInteger gk = 0;
     BOOL haveEmittedAttributedString = NO;
@@ -1367,14 +1368,24 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     memset(&caches, 0, sizeof(caches));
 
     for (int logicalIndex = 0; logicalIndex < width; logicalIndex++) {
-        if (attributedStrings && logicalIndex == asEnd) {
-            asIndex += 1;
-            if (asIndex < attributedStrings.count) {
-                asEnd = NSMaxRange([attributedStrings[asIndex] sourceColumnRange]);
-                attributedString = attributedStrings[asIndex];
-                haveEmittedAttributedString = NO;
+        if (attributedStrings && logicalIndex == nextAttributedStringLogicalStartIndex) {
+            // Check for an attributed string.
+            if (asIndex + 1 < attributedStrings.count) {
+                const NSRange columnRange = [attributedStrings[asIndex + 1] sourceColumnRange];
+                if (NSLocationInRange(logicalIndex, columnRange)) {
+                    // We can use this attributed string.
+                    asIndex += 1;
+                    nextAttributedStringLogicalStartIndex = NSMaxRange(columnRange);
+                    attributedString = attributedStrings[asIndex];
+                    haveEmittedAttributedString = NO;
+                } else {
+                    // There is a gap before the next attributed string.
+                    nextAttributedStringLogicalStartIndex = columnRange.location;
+                    attributedString = nil;
+                }
             } else {
-                asEnd = -1;
+                // We are out of attributed strings.
+                nextAttributedStringLogicalStartIndex = -1;
                 attributedString = nil;
             }
         }
@@ -1387,7 +1398,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         BOOL selected = [selectedIndexes containsIndex:visualX];
         BOOL findMatch = NO;
         if (findMatches && !selected) {
-            findMatch = CheckFindMatchAtIndex(findMatches, visualX);
+            findMatch = CheckFindMatchAtIndex(findMatches, logicalIndex);
         }
         if (lastSelected && ScreenCharIsDWC_RIGHT(line[logicalIndex])) {
             // If the left half of a DWC was selected, extend the selection to the right half.

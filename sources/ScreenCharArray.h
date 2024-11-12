@@ -92,7 +92,9 @@ NS_ASSUME_NONNULL_BEGIN
 // 2. The top-left cell of the grid is a double-width character
 - (ScreenCharArray *)paddedToLength:(int)length eligibleForDWC:(BOOL)eligibleForDWC;
 
+// Zeros a logical range
 - (ScreenCharArray *)copyByZeroingRange:(NSRange)range;
+- (ScreenCharArray *)copyByZeroingVisibleRange:(NSRange)range;
 - (ScreenCharArray *)paddedOrTruncatedToLength:(NSUInteger)newLength;
 - (ScreenCharArray *)paddedToAtLeastLength:(NSUInteger)newLength;
 - (ScreenCharArray *)screenCharArrayByRemovingFirst:(int)n;

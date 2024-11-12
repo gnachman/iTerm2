@@ -236,6 +236,9 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 
 - (int)cellCountInWrappedLineWithAbsY:(long long)absY;
 - (int)rowCountForRawLineEncompassingWithAbsY:(long long)absY;
+- (VT100GridCoord)visualCoordForLogical:(VT100GridCoord)logical;
+- (VT100GridCoordRange)visualRangeForLogical:(VT100GridCoordRange)logical;
+- (VT100GridWindowedRange)visualWindowedRangeForLogical:(VT100GridWindowedRange)logical;
 
 #pragma mark - For tests
 

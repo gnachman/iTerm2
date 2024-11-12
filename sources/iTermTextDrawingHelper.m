@@ -264,7 +264,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     const int haloWidth = 4;
     NSInteger yLimit = _numberOfLines;
 
-    VT100GridCoordRange boundingCoordRange = [self coordRangeForRect:rect];
+    VT100GridCoordRange boundingCoordRange = [self visualCoordRangeForRect:rect];
     DLog(@"BEFORE: boundingCoordRange=%@", VT100GridCoordRangeDescription(boundingCoordRange));
     NSRange visibleLines = [self rangeOfVisibleRows];
 
@@ -282,10 +282,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         DLog(@"No rows in rect given bounding coord range %@", VT100GridCoordRangeDescription(boundingCoordRange));
         return;
     }
+    // X ranges to draw for each line.
     NSMutableData *store = [NSMutableData dataWithLength:numRowsInRect * sizeof(NSRange)];
     NSRange *ranges = (NSRange *)store.mutableBytes;
     for (int i = 0; i < rectCount; i++) {
-        VT100GridCoordRange coordRange = [self coordRangeForRect:rectArray[i]];
+        VT100GridCoordRange coordRange = [self visualCoordRangeForRect:rectArray[i]];
         DLog(@"Have to draw rect %@ (%@)", NSStringFromRect(rectArray[i]), VT100GridCoordRangeDescription(coordRange));
         int coordRangeMinX = 0;
         int coordRangeMaxX = MIN(_gridSize.width, coordRange.end.x + haloWidth);
@@ -3723,6 +3724,42 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     } else {
         return NSMakeRange(0, 0);
     }
+}
+
+// Takes bidi into account
+- (VT100GridCoordRange)visualCoordRangeForRect:(NSRect)rect {
+    const VT100GridCoordRange naive = [self coordRangeForRect:rect];
+    if (naive.start.x == 0 && naive.end.x >= self.gridSize.width - 1) {
+        // The rect is the full width so no need to mess around with bidi stuff.
+        return naive;
+    }
+    const int minY = floor(rect.origin.y / _cellSize.height);
+    const int maxY = ceil(NSMaxY(rect) / _cellSize.height);
+
+    VT100GridCoordRange convexHull = VT100GridCoordRangeInvalid;
+    const CGFloat sideMargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    for (int i = minY; i <= maxY; i++) {
+        const VT100GridCoordRange logicalRect = VT100GridCoordRangeMake(MAX(0, floor((rect.origin.x - sideMargin) / _cellSize.width)),
+                                                                        i,
+                                                                        MAX(0, ceil((NSMaxX(rect) - sideMargin) / _cellSize.width)),
+                                                                        i);
+        VT100GridCoordRange visualRect;
+        iTermBidiDisplayInfo *bidi = [self.delegate drawingHelperBidiInfoForLine:i];
+        if (bidi) {
+            NSRange visualRange = [bidi visualRangeForLogicalRange:NSMakeRange(logicalRect.start.x, logicalRect.end.x - logicalRect.start.x)];
+            visualRect.start.x = visualRange.location;
+            visualRect.end.x = NSMaxRange(visualRange);
+            visualRect.start.y = logicalRect.start.y;
+            visualRect.end.y = logicalRect.end.y;
+        } else {
+            visualRect = logicalRect;
+        }
+        convexHull = VT100GridCoordRangeUnionBoxes(convexHull, visualRect);
+    }
+    if (VT100GridCoordRangeEqualsCoordRange(convexHull, VT100GridCoordRangeInvalid)) {
+        return naive;
+    }
+   return convexHull;
 }
 
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect {

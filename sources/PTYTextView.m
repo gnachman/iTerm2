@@ -4391,7 +4391,14 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                       _lineHeight);
 }
 
-- (void)findOnPageSelectRange:(VT100GridCoordRange)range wrapped:(BOOL)wrapped {
+- (iTermTextExtractor *)bidiExtractor {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    extractor.supportBidi = YES;
+    return extractor;
+}
+
+- (void)findOnPageSelectRange:(VT100GridCoordRange)logicalRange wrapped:(BOOL)wrapped {
+    VT100GridCoordRange range = [self.bidiExtractor visualRangeForLogical:logicalRange];
     [self selectCoordRange:range];
     VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range, _dataSource.totalScrollbackOverflow);
     // Let the scrollview scroll if needs to before showing the find indicator.

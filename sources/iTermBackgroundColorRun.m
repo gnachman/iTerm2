@@ -217,9 +217,10 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p selected=%@ modelRange=%@ visualRange=%@ backgroundColor=%@>",
+    return [NSString stringWithFormat:@"<%@: %p findMatch=%@ selected=%@ modelRange=%@ visualRange=%@ backgroundColor=%@>",
             self.class,
             self,
+            @(_value.isMatch),
             @(_value.selected),
             NSStringFromRange(_value.modelRange),
             NSStringFromRange(_value.visualRange),
