@@ -37,11 +37,6 @@
     return self;
 }
 
-- (void)dealloc {
-    [_name release];
-    [super dealloc];
-}
-
 - (NSData *)data {
     return [NSData dataWithContentsOfFile:_name];
 }
@@ -92,6 +87,7 @@
     IBOutlet NSView *_pasteSpecialViewContainer;
 
     iTermPasteSpecialViewController *_pasteSpecialViewController;
+    NSString *_shell;
 
     // Object to paste not representable as a string and is pre-base64 encoded.
     BOOL _base64only;
@@ -103,9 +99,11 @@
                  canWaitForPrompt:(BOOL)canWaitForPrompt
                   isAtShellPrompt:(BOOL)isAtShellPrompt
                forceEscapeSymbols:(BOOL)forceEscapeSymbols
+                            shell:(NSString *)shell
                    encoding:(NSStringEncoding)encoding {
     self = [super initWithWindowNibName:@"iTermPasteSpecialWindow"];
     if (self) {
+        _shell = [shell lastPathComponent];
         _index = -1;
         _bracketingEnabled = bracketingEnabled;
         _canWaitForPrompt = canWaitForPrompt;
@@ -143,8 +141,8 @@
         }
 
         [self getLabels:labels andValues:values];
-        _labels = [labels retain];
-        _originalValues = [values retain];
+        _labels = labels;
+        _originalValues = values;
         _encoding = encoding;
         self.chunkSize = chunkSize;
         self.delayBetweenChunks = delayBetweenChunks;
@@ -152,14 +150,6 @@
         _pasteSpecialViewController.delegate = self;
     }
     return self;
-}
-
-- (void)dealloc {
-    [_originalValues release];
-    [_labels release];
-    [_rawString release];
-    [_pasteSpecialViewController release];
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -181,9 +171,9 @@
                 indexToSelect = idx + 1;
                 [_itemList.menu addItem:[NSMenuItem separatorItem]];
             } else {
-                NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:label
-                                                               action:nil
-                                                        keyEquivalent:@""] autorelease];
+                NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:label
+                                                              action:nil
+                                                       keyEquivalent:@""];
                 [_itemList.menu addItem:item];
             }
         }];
@@ -214,13 +204,13 @@
             [values addObject:string];
             CFStringRef description = NULL;
             for (NSString *theType in item.types) {
-                description = UTTypeCopyDescription((CFStringRef)theType);
+                description = UTTypeCopyDescription((__bridge CFStringRef)theType);
                 if (description) {
                     break;
                 }
             }
             NSString *label = [NSString stringWithFormat:@"%@: “%@”",
-                               [((NSString *)description ?: @"Unknown Type") stringByCapitalizingFirstLetter],
+                               [((__bridge NSString *)description ?: @"Unknown Type") stringByCapitalizingFirstLetter],
                                [string ellipsizedDescriptionNoLongerThan:100]];
             if (description) {
                 CFRelease(description);
@@ -236,14 +226,14 @@
                     if ([typeName hasPrefix:@"public."] &&
                         ![typeName isEqualTo:(NSString *)kUTTypeFileURL]) {
                         data = [item dataForType:typeName];
-                        description = UTTypeCopyDescription((CFStringRef)typeName);
+                        description = UTTypeCopyDescription((__bridge CFStringRef)typeName);
                         break;
                     }
                 }
             }
             if (data && description) {
                 [values addObject:data];
-                [labels addObject:(NSString *)description];
+                [labels addObject:(__bridge NSString *)description];
             }
             if (description) {
                 CFRelease(description);
@@ -279,7 +269,7 @@
         BOOL isDirectory;
         if ([fileManager fileExistsAtPath:filename isDirectory:&isDirectory] &&
             !isDirectory) {
-            [values addObject:[[[iTermFileReference alloc] initWithName:filename] autorelease]];
+            [values addObject:[[iTermFileReference alloc] initWithName:filename]];
             [labels addObject:[NSString stringWithFormat:@"Contents of %@", filename]];
         }
     }
@@ -302,7 +292,7 @@
         }
 
         // If the data happens to be valid UTF-8 data then don't insist on base64 encoding it.
-        string = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+        string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         if (!string) {
             _base64only = YES;
             string = [data stringWithBase64EncodingWithLineBreak:@"\r"];
@@ -311,7 +301,6 @@
         string = (NSString *)value;
     }
     _index = index;
-    [_rawString autorelease];
     _rawString = [string copy];
     _preview.string = _rawString;
     BOOL containsTabs = [string containsString:@"\t"];
@@ -358,16 +347,25 @@
     _pasteSpecialViewController.regexString = [iTermPreferences stringForKey:kPreferencesKeyPasteSpecialRegex];
     _pasteSpecialViewController.substitutionString = [iTermPreferences stringForKey:kPreferencesKeyPasteSpecialSubstitution];
     _pasteSpecialViewController.enableWaitForPrompt = _canWaitForPrompt;
-    _pasteSpecialViewController.shouldWaitForPrompt = _isAtShellPrompt && _canWaitForPrompt && [iTermAdvancedSettingsModel advancedPasteWaitsForPromptByDefault];
+    _pasteSpecialViewController.shouldWaitForPrompt = _isAtShellPrompt && _canWaitForPrompt && [iTermAdvancedSettingsModel advancedPasteWaitsForPromptByDefault] && [self waitForPromptShouldWork];
 
     [self updatePreview];
+}
+
+// When paste bracketing is on, some shells swallow newlines    .
+- (BOOL)waitForPromptShouldWork {
+    if (!_pasteSpecialViewController.shouldUseBracketedPasteMode) {
+        return YES;
+    }
+    NSSet<NSString *> *shellsThatSwallowNewlines = [NSSet setWithArray:@[ @"zsh", @"fish", @"bash" ]];
+    return ![shellsThatSwallowNewlines containsObject:_shell ?: @""];
 }
 
 - (void)updatePreview {
     PasteEvent *pasteEvent = [self pasteEventWithString:_rawString forPreview:YES];
     [iTermPasteHelper sanitizePasteEvent:pasteEvent encoding:_encoding];
     _preview.string = pasteEvent.string;
-    NSNumberFormatter *bytesFormatter = [[[NSNumberFormatter alloc] init] autorelease];
+    NSNumberFormatter *bytesFormatter = [[NSNumberFormatter alloc] init];
     int numBytes = _preview.string.length;
     if (numBytes < 10) {
         bytesFormatter.numberStyle = NSNumberFormatterSpellOutStyle;
@@ -375,7 +373,7 @@
         bytesFormatter.numberStyle = NSNumberFormatterDecimalStyle;
     }
 
-    NSNumberFormatter *linesFormatter = [[[NSNumberFormatter alloc] init] autorelease];
+    NSNumberFormatter *linesFormatter = [[NSNumberFormatter alloc] init];
     NSUInteger numberOfLines = _preview.string.numberOfLines;
     if (numberOfLines < 10) {
         linesFormatter.numberStyle = NSNumberFormatterSpellOutStyle;
@@ -416,15 +414,17 @@
            canWaitForPrompt:(BOOL)canWaitForPrompt
             isAtShellPrompt:(BOOL)isAtShellPrompt
          forceEscapeSymbols:(BOOL)forceEscapeSymbols
+                      shell:(NSString *)shell
                  completion:(iTermPasteSpecialCompletionBlock)completion {
     iTermPasteSpecialWindowController *controller =
-        [[[iTermPasteSpecialWindowController alloc] initWithChunkSize:chunkSize
-                                                   delayBetweenChunks:delayBetweenChunks
-                                                    bracketingEnabled:bracketingEnabled
-                                                     canWaitForPrompt:canWaitForPrompt
-                                                      isAtShellPrompt:isAtShellPrompt
-                                                   forceEscapeSymbols:forceEscapeSymbols
-                                                             encoding:encoding] autorelease];
+        [[iTermPasteSpecialWindowController alloc] initWithChunkSize:chunkSize
+                                                  delayBetweenChunks:delayBetweenChunks
+                                                   bracketingEnabled:bracketingEnabled
+                                                    canWaitForPrompt:canWaitForPrompt
+                                                     isAtShellPrompt:isAtShellPrompt
+                                                  forceEscapeSymbols:forceEscapeSymbols
+                                                               shell:shell
+                                                            encoding:encoding];
     NSWindow *window = [controller window];
     [presentingWindow beginSheet:window completionHandler:^(NSModalResponse returnCode) {
         [NSApp stopModal];

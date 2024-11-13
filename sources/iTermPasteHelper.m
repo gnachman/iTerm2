@@ -15,6 +15,7 @@
 #import "iTermPasteSpecialWindowController.h"
 #import "iTermPasteViewManager.h"
 #import "iTermPreferences.h"
+#import "iTermVariableScope+Session.h"
 #import "iTermWarning.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
@@ -86,6 +87,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                           canWaitForPrompt:[_delegate pasteHelperCanWaitForPrompt]
                                            isAtShellPrompt:![_delegate pasteHelperShouldWaitForPrompt]
                                         forceEscapeSymbols:NO
+                                                     shell:[[_delegate pasteHelperScope] shell]
                                                 completion:^(PasteEvent *event) {
                                                     event.suppressMultilinePasteWarning = YES;
                                                     [self tryToPasteEvent:event];
@@ -675,6 +677,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                           canWaitForPrompt:[_delegate pasteHelperCanWaitForPrompt]
                                            isAtShellPrompt:![_delegate pasteHelperShouldWaitForPrompt]
                                         forceEscapeSymbols:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
+                                                     shell:[[_delegate pasteHelperScope] shell]
                                                 completion:^(PasteEvent *event) {
                                                     event.suppressMultilinePasteWarning = YES;
                                                     [self tryToPasteEvent:event];

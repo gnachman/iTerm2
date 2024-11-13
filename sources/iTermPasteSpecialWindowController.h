@@ -21,6 +21,7 @@ typedef void (^iTermPasteSpecialCompletionBlock)(PasteEvent *pasteEvent);
            canWaitForPrompt:(BOOL)canWaitForPrompt
             isAtShellPrompt:(BOOL)isAtShellPrompt
          forceEscapeSymbols:(BOOL)forceEscapeSymbols
+                      shell:(NSString *)shell
                  completion:(iTermPasteSpecialCompletionBlock)completion;
 
 @end
