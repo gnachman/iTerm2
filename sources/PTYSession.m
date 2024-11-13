@@ -147,6 +147,7 @@
 #import "NSPasteboard+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSTextField+iTerm.h"
 #import "NSThread+iTerm.h"
 #import "NSURL+iTerm.h"
 #import "NSUserDefaults+iTerm.h"
@@ -16041,17 +16042,20 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         query = self.currentCommand;
     }
     if (query.length == 0) {
-        return [self requestNaturalLanguageQuery:@"" bypassable:NO];
+        return [self requestNaturalLanguageQuery:@"" reason:nil bypassable:NO];
     }
     NSInteger maxLength = [iTermAdvancedSettingsModel aiResponseMaxTokens] / 8;
     if (query.length >= maxLength) {
         return [self requestNaturalLanguageQuery:[query substringFromIndex:query.length - maxLength]
+                                          reason:@"⚠️ The selected text was rather long."
                                       bypassable:NO];
     }
-    return [self requestNaturalLanguageQuery:query bypassable:YES];
+    return [self requestNaturalLanguageQuery:query reason:nil bypassable:YES];
 }
 
-- (NSString *)requestNaturalLanguageQuery:(NSString *)defaultString bypassable:(BOOL)bypassable {
+- (NSString *)requestNaturalLanguageQuery:(NSString *)defaultString
+                                   reason:(NSString *)reason
+                               bypassable:(BOOL)bypassable {
     if (![iTermAITermGatekeeper check]) {
         return nil;
     }
@@ -16083,20 +16087,42 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     scrollview.borderType = NSLineBorder;
 
     NSButton *disableButton = nil;
-    if (bypassable) {
+    NSView *container = nil;
+    if (bypassable || reason) {
+        CGFloat extraHeight = 0;
+        NSMutableArray<NSView *> *views = [NSMutableArray array];
+
+        if (bypassable) {
+            disableButton = [[[NSButton alloc] init] autorelease];
+            disableButton.buttonType = NSButtonTypeSwitch;
+            disableButton.title = @"Skip this dialog in the future and send the prompt immediately.";
+            [disableButton sizeToFit];
+
+            [views addObject:disableButton];
+
+            extraHeight += NSHeight(disableButton.frame);
+        }
+
+        if (reason) {
+            NSTextField *label = [NSTextField newLabelStyledTextField];
+            label.controlSize = NSControlSizeSmall;
+            label.stringValue = reason;
+            [label sizeToFit];
+            NSRect frame = label.frame;
+            frame.origin.y = extraHeight;
+            label.frame = frame;
+
+            [views addObject:label];
+            extraHeight += NSHeight(frame);
+        }
+
         NSRect scrollViewFrame = scrollview.frame;
-        scrollViewFrame.origin.y += 30;
+        scrollViewFrame.origin.y += extraHeight;
         scrollview.frame = scrollViewFrame;
 
-        NSView *container = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 400, 230)] autorelease];
+        NSView *container = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 400, scrollViewFrame.size.height + extraHeight)] autorelease];
+        container.subviews = views;
         [container addSubview:scrollview];
-
-        disableButton = [[[NSButton alloc] init] autorelease];
-        disableButton.buttonType = NSButtonTypeSwitch;
-        disableButton.title = @"Skip this dialog in the future and send the prompt immediately.";
-        [disableButton sizeToFit];
-
-        [container addSubview:disableButton];
 
         [alert setAccessoryView:container];
     } else {
