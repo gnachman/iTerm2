@@ -938,5 +938,26 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     [super reportException:exception];
 }
 
+// If you try to open a modal while a hotkey window is animating out, the app locks up
+// because the runloop is waiting for you to interact with a modal that cannot be interacted with.
+// Prevent this by canceling the roll-out.
+- (NSModalResponse)runModalForWindow:(NSWindow *)window {
+    PseudoTerminal *pseudoterminal = [PseudoTerminal castFrom:[window.sheetParent delegate]];
+    DLog(@"pseudoterminal is %@", pseudoterminal);
+    if (pseudoterminal) {
+        iTermProfileHotKey *hotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:pseudoterminal];
+        DLog(@"hotkey is %@", hotkey);
+        if ([hotkey rollOutCancelable]) {
+            DLog(@"cancel roll out");
+            [hotkey cancelRollOut];
+        } else if (window.alphaValue < 1) {
+            DLog(@"show hotkey window");
+            [hotkey showHotKeyWindow];
+        }
+    }
+
+    return [super runModalForWindow:window];
+}
+
 @end
 

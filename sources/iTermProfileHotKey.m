@@ -28,6 +28,12 @@ typedef NS_ENUM(NSUInteger, iTermAnimationDirection) {
     kAnimationDirectionUp
 };
 
+typedef NS_ENUM(NSUInteger, iTermHotkeyRollOutStage) {
+    iTermHotkeyRollOutStageNone,
+    iTermHotkeyRollOutStageAnimating,
+    iTermHotkeyRollOutStageWaiting
+};
+
 static iTermAnimationDirection iTermAnimationDirectionOpposite(iTermAnimationDirection direction) {
     switch (direction) {
         case kAnimationDirectionRight:
@@ -54,6 +60,8 @@ static NSString *const kArrangement = @"Arrangement";
 
 @implementation iTermProfileHotKey {
     BOOL _activationPending;
+    iTermHotkeyRollOutStage _rollOutStage;
+    void (^_cancelAnimation)(void);
 }
 
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
@@ -503,6 +511,7 @@ static NSString *const kArrangement = @"Arrangement";
     if ([self rect:destination intersectsAnyScreenExcept:self.windowController.window.screen]) {
         destination = source;
     }
+    __block BOOL canceled = NO;
 
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
         [context setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
@@ -511,9 +520,21 @@ static NSString *const kArrangement = @"Arrangement";
         [self.windowController.window.animator setAlphaValue:0];
     }
                         completionHandler:^{
-        [self didFinishRollingOut:causedByKeypress];
+        if (canceled) {
+            [self.windowController.window setFrame:source display:YES];
+            [self.windowController.window setAlphaValue:1];
+        } else {
+            [self didFinishRollingOut:causedByKeypress];
+        }
     }];
 
+    // I tried everything I could think of but I don't believe you can stop an animation once it
+    // has begun. Directly setting the window's frame does nothing. There is no CALayer to mess
+    // with. NSAnimationContext doesn't have private methods that look promising.
+    __weak __typeof(self) weakSelf = self;
+    _cancelAnimation = [^{
+        canceled = YES;
+    } copy];
 }
 
 - (void)moveToPreferredScreen {
@@ -539,10 +560,15 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)fadeOut:(BOOL)causedByKeypress {
+    __block BOOL canceled = NO;
     [NSAnimationContext beginGrouping];
     [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
     [[NSAnimationContext currentContext] setCompletionHandler:^{
-        [self didFinishRollingOut:causedByKeypress];
+        if (canceled) {
+            self.windowController.window.alphaValue = 1;
+        } else {
+            [self didFinishRollingOut:causedByKeypress];
+        }
     }];
     self.windowController.window.animator.alphaValue = 0;
 #if BETA
@@ -550,6 +576,12 @@ static NSString *const kArrangement = @"Arrangement";
                              [[NSThread callStackSymbols] componentsJoinedByString:@"\n"]);
 #endif
     [NSAnimationContext endGrouping];
+
+    __weak __typeof(self) weakSelf = self;
+    _cancelAnimation = [^{
+        weakSelf.windowController.window.alphaValue = 1;
+        canceled = YES;
+    } copy];
 }
 
 - (iTermAnimationDirection)animateInDirectionForWindowType:(iTermWindowType)windowType {
@@ -596,7 +628,7 @@ static NSString *const kArrangement = @"Arrangement";
         DLog(@"Already rolling in");
         return;
     }
-    if (_rollingOut) {
+    if (self.rollingOut) {
         DLog(@"Rolling out. Cancel roll in");
         return;
     }
@@ -656,10 +688,14 @@ static NSString *const kArrangement = @"Arrangement";
     }
 }
 
+- (BOOL)rollingOut {
+    return _rollOutStage != iTermHotkeyRollOutStageNone;
+}
+
 - (void)rollOut:(BOOL)causedByKeypress {
     DLog(@"Roll out [hide] hotkey window");
     DLog(@"\n%@", [NSThread callStackSymbols]);
-    if (_rollingOut) {
+    if (self.rollingOut) {
         DLog(@"Already rolling out");
         return;
     }
@@ -670,7 +706,8 @@ static NSString *const kArrangement = @"Arrangement";
         return;
     }
 
-    _rollingOut = YES;
+    _rollOutStage = iTermHotkeyRollOutStageAnimating;
+    _rollOutCancelable = YES;
 
     if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]) {
         switch (self.windowController.windowType) {
@@ -784,9 +821,18 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (void)cancelRollOut {
     DLog(@"cancelRollOut requested");
-    if (_rollOutCancelable && _rollingOut) {
+    if (_rollOutCancelable && self.rollingOut) {
         DLog(@"Cancelling roll out");
-        _rollingOut = NO;
+        if (_rollOutStage == iTermHotkeyRollOutStageAnimating) {
+            if (_cancelAnimation) {
+                _cancelAnimation();
+                _cancelAnimation = nil;
+            }
+            _rollOutStage = iTermHotkeyRollOutStageNone;
+            _rollOutCancelable = NO;
+            return;
+        }
+        _rollOutStage = iTermHotkeyRollOutStageNone;
         _rollOutCancelable = NO;
         [self orderOut];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -795,7 +841,7 @@ static NSString *const kArrangement = @"Arrangement";
             }
         });
     } else {
-        DLog(@"Cannot cancel. cancelable=%@ rollingOut=%@", @(_rollOutCancelable), @(_rollingOut));
+        DLog(@"Cannot cancel. cancelable=%@ rollingOut=%@", @(_rollOutCancelable), @(self.rollingOut));
     }
 }
 
@@ -989,21 +1035,21 @@ static NSString *const kArrangement = @"Arrangement";
     BOOL activatingOtherApp = [self.delegate willFinishRollingOutProfileHotKey:self
                                                               causedByKeypress:causedByKeypress];
     if (activatingOtherApp) {
-        _rollOutCancelable = YES;
-        DLog(@"Schedule order-out");
         if (@available(macOS 14, *)) {
             // I'm no longer able to reproduce the bad behavior mentioned in the else clause.
             // In issue 11372 it's noted that the delay prevents you from typing in the previously
             // active app.
-            if (_rollingOut) {
+            if (self.rollingOut) {
                 DLog(@"Order out with secure keyboard entry=%@", @(IsSecureEventInputEnabled()));
                 _rollOutCancelable = NO;
                 [self orderOut];
             }
         } else {
             // Defer rolling out until the previous app is active. See issue 5313
+            DLog(@"Schedule order-out");
+            _rollOutStage = iTermHotkeyRollOutStageWaiting;
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                if (_rollingOut) {
+                if (self.rollingOut) {
                     DLog(@"Order out with secure keyboard entry=%@", @(IsSecureEventInputEnabled()));
                     _rollOutCancelable = NO;
                     [self orderOut];
@@ -1019,11 +1065,11 @@ static NSString *const kArrangement = @"Arrangement";
 - (void)orderOut {
     DLog(@"Call orderOut: on terminal %@", self.windowController);
     [self.windowController.window orderOut:self];
-    DLog(@"Returned from orderOut:. Set _rollingOut=NO");
+    DLog(@"Returned from orderOut:. Set rollOutStage=.none");
 
     // This must be done after orderOut: so autoHideHotKeyWindowsExcept: will know to throw out the
     // previous state.
-    _rollingOut = NO;
+    _rollOutStage = iTermHotkeyRollOutStageNone;
 }
 
 - (BOOL)autoHides {
