@@ -662,6 +662,7 @@ DEFINE_BOOL(noSyncSuppressCaptureOutputToolNotVisibleWarning, NO,
 DEFINE_BOOL(closingTmuxWindowKillsTmuxWindows, NO, SECTION_WARNINGS @"Suppress kill/hide dialog when closing a tmux window.");
 DEFINE_BOOL(closingTmuxTabKillsTmuxWindows, NO, SECTION_WARNINGS @"Suppress kill/hide dialog when closing a tmux tab.");
 DEFINE_BOOL(aboutToPasteTabsWithCancel, NO, SECTION_WARNINGS @"Suppress warning when pasting tabs with offer to convert them to spaces or perform advanced paste.");
+
 DEFINE_FLOAT(shortLivedSessionDuration, 3, SECTION_WARNINGS @"Warn about short-lived sessions that live less than this many seconds.");
 
 DEFINE_SETTABLE_BOOL(noSyncDoNotWarnBeforeMultilinePaste, NoSyncDoNotWarnBeforeMultilinePaste, NO, SECTION_WARNINGS @"Suppress warning about multi-line pastes (or a single line ending in a newline).\nThis applies whether you are at the shell prompt or not, provided two or more lines are being pasted.");
@@ -700,6 +701,7 @@ DEFINE_BOOL(pastingClearsSelection, YES, SECTION_PASTEBOARD @"Pasting text will 
 DEFINE_SETTABLE_BOOL(promptForPasteWhenNotAtPrompt, PromptForPasteWhenNotAtPrompt, NO, SECTION_PASTEBOARD @"Warn before pasting when not at shell prompt?");
 DEFINE_BOOL(excludeBackgroundColorsFromCopiedStyle, NO, SECTION_PASTEBOARD @"Exclude all background colors when text is copied with color and font style?\nThis includes both the default background color and non-default background colors.");
 DEFINE_BOOL(includePasteHistoryInAdvancedPaste, YES, SECTION_PASTEBOARD @"Include paste history in the advanced paste menu.");
+DEFINE_BOOL(advancedPasteWaitsForPromptByDefault, YES, SECTION_PASTEBOARD @"Should Advanced Paste automatically enable “Wait for shell prompt before pasting each line” by default when shell integration is detected?")
 DEFINE_INT(alwaysWarnBeforePastingOverSize, -1, SECTION_PASTEBOARD @"When pasting more than this many characters, require confirmation.\nSet to -1 to disable warning.\nCharacters are counted in UTF-16.");
 DEFINE_BOOL(saveToPasteHistoryWhenSecureInputEnabled, NO, SECTION_PASTEBOARD @"Save to paste history when secure keyboard input is enabled?");
 

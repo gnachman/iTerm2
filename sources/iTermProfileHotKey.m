@@ -531,7 +531,6 @@ static NSString *const kArrangement = @"Arrangement";
     // I tried everything I could think of but I don't believe you can stop an animation once it
     // has begun. Directly setting the window's frame does nothing. There is no CALayer to mess
     // with. NSAnimationContext doesn't have private methods that look promising.
-    __weak __typeof(self) weakSelf = self;
     _cancelAnimation = [^{
         canceled = YES;
     } copy];

@@ -40,6 +40,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)adaptiveFrameRateThroughputThreshold;
 + (BOOL)addNewTabAtEndOfTabs;
 + (BOOL)addUtilitiesToPATH;
++ (BOOL)advancedPasteWaitsForPromptByDefault;
 + (BOOL)aggressiveBaseCharacterDetection;
 + (BOOL)aggressiveFocusFollowsMouse;
 + (int)aiResponseMaxTokens;
