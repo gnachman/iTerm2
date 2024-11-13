@@ -592,6 +592,8 @@ static void SwapInt(int *a, int *b) {
 
     [self.blockStartAbsLine removeAllObjects];
     self.blocksGeneration += 1;
+    const long long overflow = self.cumulativeScrollbackOverflow;
+    const BOOL tolerateEmptyScreenMarks = NO;
 
     // Convert ranges of notes to their new coordinates and replace the interval tree.
     [objects enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull note, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -612,7 +614,7 @@ static void SwapInt(int *a, int *b) {
         VLog(@"Done converting newRange=%@ for %@", VT100GridCoordRangeDescription(newRange), note);
         assert(noteRange.start.y >= 0);
         assert(noteRange.end.y >= 0);
-        Interval *newInterval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, self.cumulativeScrollbackOverflow)
+        Interval *newInterval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, overflow)
                                                              width:newWidth];
         [self.mutableIntervalTree addObject:note withInterval:newInterval];
 
@@ -620,6 +622,37 @@ static void SwapInt(int *a, int *b) {
         if (blockMark) {
             DLog(@"Record block %@ as starting at line %@", blockMark.blockID, @(newRange.start.y));
             self.blockStartAbsLine[blockMark.blockID] = @(newRange.start.y);
+        }
+
+        VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:note];
+        if (screenMark) {
+            const VT100GridCoordRange commandRange = VT100GridCoordRangeFromAbsCoordRange(screenMark.commandRange, overflow);
+            if (commandRange.start.x >= 0) {
+                VT100GridCoordRange converted;
+                if ([self convertRange:commandRange
+                           toWidth:newWidth
+                                to:&converted
+                      inLineBuffer:self.linebuffer
+                         tolerateEmpty:tolerateEmptyScreenMarks]) {
+                    [self.mutableIntervalTree mutateObject:note block:^(id<IntervalTreeObject> mutableMark) {
+                        [VT100ScreenMark castFrom:mutableMark].commandRange = VT100GridAbsCoordRangeFromCoordRange(converted, overflow);
+                    }];
+                }
+            }
+
+            const VT100GridCoordRange promptRange = VT100GridCoordRangeFromAbsCoordRange(screenMark.promptRange, overflow);
+            if (promptRange.start.x >= 0) {
+                VT100GridCoordRange converted;
+                if ([self convertRange:promptRange
+                               toWidth:newWidth
+                                    to:&converted
+                          inLineBuffer:self.linebuffer
+                         tolerateEmpty:tolerateEmptyScreenMarks]) {
+                    [self.mutableIntervalTree mutateObject:note block:^(id<IntervalTreeObject> mutableMark) {
+                        [VT100ScreenMark castFrom:mutableMark].promptRange = VT100GridAbsCoordRangeFromCoordRange(converted, overflow);
+                    }];
+                }
+            }
         }
     }];
 }
