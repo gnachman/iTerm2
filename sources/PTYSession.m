@@ -16041,17 +16041,23 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         query = self.currentCommand;
     }
     if (query.length == 0) {
-        return [self requestNaturalLanguageQuery];
+        return [self requestNaturalLanguageQuery:@"" bypassable:NO];
     }
-    if (query.length >= [iTermAdvancedSettingsModel aiResponseMaxTokens] / 8) {
-        return nil;
+    NSInteger maxLength = [iTermAdvancedSettingsModel aiResponseMaxTokens] / 8;
+    if (query.length >= maxLength) {
+        return [self requestNaturalLanguageQuery:[query substringFromIndex:query.length - maxLength]
+                                      bypassable:NO];
     }
-    return query;
+    return [self requestNaturalLanguageQuery:query bypassable:YES];
 }
 
-- (NSString *)requestNaturalLanguageQuery {
+- (NSString *)requestNaturalLanguageQuery:(NSString *)defaultString bypassable:(BOOL)bypassable {
     if (![iTermAITermGatekeeper check]) {
         return nil;
+    }
+    NSString *const bypassKey = @"NoSyncBypassConfirmAIPrompt";
+    if (defaultString.length > 0 && bypassable && [[NSUserDefaults standardUserDefaults] boolForKey:bypassKey]) {
+        return defaultString;
     }
     NSAlert *alert = [[NSAlert alloc] init];
     [alert setMessageText:@"Describe the command you want to run in plain English. Press ⇧⏎ to send."];
@@ -16066,6 +16072,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [[input textContainer] setContainerSize:NSMakeSize(200, FLT_MAX)];
     [[input textContainer] setWidthTracksTextView:YES];
     [input setTextContainerInset:NSMakeSize(4, 4)];
+    [input.textStorage iterm_appendString:defaultString withAttributes:input.typingAttributes];
     __weak __typeof(alert) weakAlert = alert;
     input.shiftEnterPressed = ^{
         [weakAlert.buttons.firstObject performClick:nil];
@@ -16075,7 +16082,27 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [scrollview setDocumentView:input];
     scrollview.borderType = NSLineBorder;
 
-    [alert setAccessoryView:scrollview];
+    NSButton *disableButton = nil;
+    if (bypassable) {
+        NSRect scrollViewFrame = scrollview.frame;
+        scrollViewFrame.origin.y += 30;
+        scrollview.frame = scrollViewFrame;
+
+        NSView *container = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 400, 230)] autorelease];
+        [container addSubview:scrollview];
+
+        disableButton = [[[NSButton alloc] init] autorelease];
+        disableButton.buttonType = NSButtonTypeSwitch;
+        disableButton.title = @"Skip this dialog in the future and send the prompt immediately.";
+        [disableButton sizeToFit];
+
+        [container addSubview:disableButton];
+
+        [alert setAccessoryView:container];
+    } else {
+        [alert setAccessoryView:scrollview];
+    }
+
     alert.window.initialFirstResponder = input;
     dispatch_async(dispatch_get_main_queue(), ^{
         [input.window makeFirstResponder:input];
@@ -16083,6 +16110,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     const NSInteger button = [alert runSheetModalForWindow:self.view.window];
 
     if (button == NSAlertFirstButtonReturn) {
+        if (disableButton.state == NSControlStateValueOn) {
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:bypassKey];
+        }
         return [[[input string] copy] autorelease];
     } else if (button == NSAlertSecondButtonReturn) {
         return nil;
