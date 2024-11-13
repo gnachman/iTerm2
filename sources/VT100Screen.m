@@ -364,10 +364,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state externalAttributeIndexForLine:y];
 }
 
-- (const screen_char_t *)getLineAtIndex:(int)theIndex {
-    return [_state getLineAtIndex:theIndex];
-}
-
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
 // grid.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
