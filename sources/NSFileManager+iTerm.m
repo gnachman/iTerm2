@@ -108,6 +108,21 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return resolvedPath;
 }
 
+- (NSString *)it_cachesDirectory {
+    NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
+    NSError *error = nil;
+    NSString *path =
+        [self findOrCreateDirectory:NSCachesDirectory
+                           inDomain:NSUserDomainMask
+                appendPathComponent:bundleID
+                              error:&error];
+    if (!path) {
+        DLog(@"%@", error);
+        return [self applicationSupportDirectory];
+    }
+    return path;
+}
+
 //
 // applicationSupportDirectory
 //

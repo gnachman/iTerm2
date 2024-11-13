@@ -33,6 +33,7 @@ extern NSNotificationName iTermScriptsFolderDidChange;
 - (NSString *)legacyApplicationSupportDirectory;
 - (NSString *)applicationSupportDirectory;
 - (NSString *)applicationSupportDirectoryWithoutCreating;
+- (NSString *)it_cachesDirectory;
 
 // Gives a symlink called ApplicationSupport because pip3 can't handle spaces and this breaks pyenv.
 // Creates the symlink if it doesn't already exist

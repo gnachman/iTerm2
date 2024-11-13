@@ -70,10 +70,13 @@ static const char CPShiftReduceParserAssociatedObjectCacheKey;
 }
 
 + (NSString *)it_pathToCacheForKey:(NSString *)key {
-    NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
-    NSString *parsers = [appSupport stringByAppendingPathComponent:@"parsers"];
+    NSString *caches = [[NSFileManager defaultManager] it_cachesDirectory];
+    NSString *parsers = [caches stringByAppendingPathComponent:@"parsers"];
     NSString *file = [parsers stringByAppendingPathComponent:key];
-    [[NSFileManager defaultManager] createDirectoryAtPath:parsers withIntermediateDirectories:YES attributes:nil error:nil];
+        [[NSFileManager defaultManager] createDirectoryAtPath:parsers
+                                  withIntermediateDirectories:YES
+                                                   attributes:nil
+                                                        error:nil];
     return file;
 }
 
