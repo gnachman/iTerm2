@@ -1952,8 +1952,17 @@
     VT100InlineImageHelper *helper = [[VT100InlineImageHelper alloc] initWithSixelData:data
                                                                            scaleFactor:self.config.backingScaleFactor];
     helper.delegate = self;
+    const VT100GridCoord savedCursor = self.currentGrid.cursor;
+    if (self.terminal.sixelDisplayMode) {
+        [self.currentGrid setCursor:VT100GridCoordMake(0, 0)];
+        helper.sixelDisplayMode = YES;
+    }
     [helper writeToGrid:self.currentGrid];
-    [self appendCarriageReturnLineFeed];
+    if (self.terminal.sixelDisplayMode) {
+        [self.currentGrid setCursor:savedCursor];
+    } else {
+        [self.currentGrid setCursorX:savedCursor.x];
+    }
 }
 
 - (NSSize)terminalCellSizeInPoints:(double *)scaleOut {

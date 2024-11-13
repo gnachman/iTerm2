@@ -5663,6 +5663,10 @@ launchCoprocessWithCommand:(NSString *)command
     [self appendLineFeed];
 }
 
+- (BOOL)inlineImageLinefeedWouldScroll {
+    return self.currentGrid.cursor.y == VT100GridRangeMax(self.currentGrid.scrollRegionRows);
+}
+
 - (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
                                   code:(unichar)code {
     long long absLine = (self.cumulativeScrollbackOverflow +

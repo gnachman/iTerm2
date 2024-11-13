@@ -35,6 +35,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)inlineImageDidFinishWithImageData:(NSData *)imageData;
 - (VT100GridAbsCoord)inlineImageCursorAbsoluteCoord;
 - (void)inlineImageAppendStringAtCursor:(NSString *)string;
+- (BOOL)inlineImageLinefeedWouldScroll;
 
 @end
 
@@ -43,6 +44,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 @interface VT100InlineImageHelper : NSObject
 
 @property (nonatomic, weak) id<VT100InlineImageHelperDelegate> delegate;
+@property (nonatomic) BOOL sixelDisplayMode;
 
 // Type hints for non-image files.
 @property (nullable, nonatomic, readonly, copy) NSString *type;

@@ -96,6 +96,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 - (void)forceSetKeypadMode:(BOOL)mode;  // ignores allowKeypadMode
 @property(nonatomic, assign) BOOL allowKeypadMode;
 @property(nonatomic, assign) BOOL allowPasteBracketing;
+@property(nonatomic, assign) BOOL sixelDisplayMode;
 
 // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
 @property(nonatomic, assign) BOOL bracketedPasteMode;

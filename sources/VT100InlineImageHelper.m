@@ -540,6 +540,9 @@
     screen_char_t c = screenChar;
     for (int y = 0; y < height; y++) {
         if (y > 0) {
+            if (_sixelData && self.sixelDisplayMode && [self.delegate inlineImageLinefeedWouldScroll]) {
+                break;
+            }
             [self.delegate inlineImageAppendLinefeed];
         }
         for (int x = xOffset; x < xOffset + width && x < screenWidth; x++) {

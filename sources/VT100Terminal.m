@@ -77,6 +77,7 @@ NSString *const kTerminalStatePreviousMouseModeKey = @"Previous Mouse Mode";
 NSString *const kTerminalStateMouseFormatKey = @"Mouse Format";
 NSString *const kTerminalStateCursorModeKey = @"Cursor Mode";
 NSString *const kTerminalStateKeypadModeKey = @"Keypad Mode";
+NSString *const kTerminalStatesixelDisplayModeModeKey = @"Sixel Display Mode";
 NSString *const kTerminalStateAllowKeypadModeKey = @"Allow Keypad Mode";
 NSString *const kTerminalStateAllowPasteBracketing = @"Allow Paste Bracketing";
 NSString *const kTerminalStateBracketedPasteModeKey = @"Bracketed Paste Mode";
@@ -430,6 +431,7 @@ static const int kMaxScreenRows = 4096;
     self.reverseWraparoundMode = NO;
     self.autorepeatMode = YES;
     self.keypadMode = NO;
+    self.sixelDisplayMode = NO;
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
     self.alternateScrollMode = NO;
@@ -918,6 +920,10 @@ static const int kMaxScreenRows = 4096;
                 break;
 
                 // TODO: 80 - DECSDM
+            case 80:
+                self.sixelDisplayMode = mode;
+                break;
+
             case 95:  // DECNCSM
                 if (_vtLevel >= iTermEmulationLevel500) {
                     self.preserveScreenOnDECCOLM = mode;
@@ -1978,6 +1984,7 @@ static const int kMaxScreenRows = 4096;
 
     // Reset DECKPAM
     self.keypadMode = NO;
+    self.sixelDisplayMode = NO;
 
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
@@ -5392,6 +5399,13 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
                 DLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
+
+        case 80:
+            if (_vtLevel >= iTermEmulationLevel300) {
+                return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.sixelDisplayMode);
+            } else {
+                DLog(@"vtlevel %@ denied", @(_vtLevel));
+            }
         case 95:  // DECNCSM
             if (_vtLevel >= iTermEmulationLevel500) {
                 return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.preserveScreenOnDECCOLM);
@@ -5598,6 +5612,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStateMouseFormatKey: @(self.mouseFormat),
            kTerminalStateCursorModeKey: @(self.cursorMode),
            kTerminalStateKeypadModeKey: @(self.keypadMode),
+           kTerminalStatesixelDisplayModeModeKey: @(self.sixelDisplayMode),
            kTerminalStateReportKeyUp: @(self.reportKeyUp),
            kTerminalStateMetaSendsEscape: @(self.metaSendsEscape),
            kTerminalStateAlternateScrollMode: @(self.alternateScrollMode),
@@ -5663,6 +5678,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     self.mouseFormat = [dict[kTerminalStateMouseFormatKey] intValue];
     self.cursorMode = [dict[kTerminalStateCursorModeKey] boolValue];
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
+    self.sixelDisplayMode = [dict[kTerminalStatesixelDisplayModeModeKey] boolValue];
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
     self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
     self.alternateScrollMode = [dict[kTerminalStateAlternateScrollMode] boolValue];
