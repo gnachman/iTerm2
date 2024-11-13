@@ -666,10 +666,10 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         ITAssertWithMessage(width == self.currentGrid.size.width,
                             @"width is %@, data length is %@, current grid %@ has width %@",
                             @(width), @(dataBuffer.length), self.currentGrid, @(self.currentGrid.size.width));
-        int cont = [self.linebuffer copyLineToBuffer:dataBuffer.mutableBytes
-                                               width:width
-                                             lineNum:theIndex
-                                        continuation:&continuation];
+        int cont = [self.linebuffer copyLineToData:dataBuffer
+                                             width:width
+                                           lineNum:theIndex
+                                      continuation:&continuation];
         if (cont == EOL_SOFT &&
             theIndex == numLinesInLineBuffer - 1 &&
             ScreenCharIsDWC_RIGHT([self.currentGrid screenCharsAtLineNumber:0][1]) &&

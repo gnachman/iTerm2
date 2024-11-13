@@ -562,20 +562,29 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                   width:(int)width
                 lineNum:(int)lineNum
            continuation:(screen_char_t *)continuationPtr {
-    NSMutableData *data = [NSMutableData dataWithBytesNoCopy:buffer
-                                                      length:(width + 1) * sizeof(screen_char_t)
-                                                freeWhenDone:NO];
-    return [self copyLineToData:data
-                          width:width
-                        lineNum:lineNum
-                   continuation:continuationPtr];
+    return [self copyLineToBuffer:buffer
+                       byteLength:(width + 1) * sizeof(screen_char_t)
+                            width:width
+                          lineNum:lineNum
+                     continuation:continuationPtr];
 }
 
 - (int)copyLineToData:(NSMutableData *)destinationData
                 width:(int)width
               lineNum:(int)lineNum
          continuation:(screen_char_t * _Nullable)continuationPtr {
-    screen_char_t *buffer = destinationData.mutableBytes;
+    return [self copyLineToBuffer:destinationData.mutableBytes
+                       byteLength:destinationData.length
+                            width:width
+                          lineNum:lineNum
+                     continuation:continuationPtr];
+}
+
+- (int)copyLineToBuffer:(screen_char_t *)buffer
+             byteLength:(int)bufferLengthInBytes
+                  width:(int)width
+                lineNum:(int)lineNum
+           continuation:(screen_char_t * _Nullable)continuationPtr {
     ITBetaAssert(lineNum >= 0, @"Negative lineNum to copyLineToBuffer");
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
@@ -585,7 +594,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 #if DEBUG
         [self sanityCheck];
 #endif
-        memset(destinationData.mutableBytes, 0, width * sizeof(screen_char_t));
+        memset(buffer, 0, width * sizeof(screen_char_t));
         return EOL_HARD;
     }
 
@@ -616,7 +625,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 #if DEBUG
         [self sanityCheck];
 #endif
-        memset(destinationData.mutableBytes, 0, width * sizeof(screen_char_t));
+        memset(buffer, 0, width * sizeof(screen_char_t));
         return EOL_HARD;
     }
 
@@ -630,9 +639,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // If it crashes in memcpy/memmove below it's on the write side.
         DLog(@"*p");
     }
-    ITAssertWithMessage(destinationData.length >= length * sizeof(screen_char_t),
+    ITAssertWithMessage(bufferLengthInBytes >= length * sizeof(screen_char_t),
                         @"Destination data has length %@ but I have %@ chars totaling %@ bytes to copy. width=%@",
-                        @(destinationData.length), @(length), @(length * sizeof(screen_char_t)), @(width));
+                        @(bufferLengthInBytes), @(length), @(length * sizeof(screen_char_t)), @(width));
     memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
     [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
 
