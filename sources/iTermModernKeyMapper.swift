@@ -100,8 +100,13 @@ fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
     var isARepeat: Bool
 
     // associated with key, so 97 for shift-A; for function keys, use private
-    // use values.
+    // use values. Can be 0 for some function keys that don't have private use values.
     var unicodeKeyCode: UInt32
+
+    // The number to use for CSI u reports. This is separate from
+    // unicodeKeyCode to disambiguate things like function keys, whose numbers
+    // are not unicode keycodes. Otherwise it's about the same.
+    var csiUNumber: UInt32
 
     // uppercase/shifted version of unicodeKeyCode (65 for shift-A)
     var shiftedKeyCode: UInt32?
@@ -152,6 +157,7 @@ fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
             }()
             unicodeKeyCode = event.it_unicodeKeyCode(
                 useNativeOptionBehavior: useNativeOptionBehavior)
+            csiUNumber = event.it_csiUNumber(useNativeOptionBehavior: useNativeOptionBehavior)
             shiftedKeyCode = event.it_shiftedKeyCode(
                 useNativeOptionBehavior: useNativeOptionBehavior)
             baseLayoutKeyCode = event.it_baseLayoutKeyCode
@@ -193,6 +199,7 @@ fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
             default:
                 unicodeKeyCode = 0
             }
+            csiUNumber = unicodeKeyCode
             shiftedKeyCode = nil
             baseLayoutKeyCode = unicodeKeyCode
             textAsCodepoints = []
@@ -416,6 +423,10 @@ fileprivate class ModernKeyMapperImpl {
 
     private func shouldIgnore(event: KeyEventInfo) -> Bool {
         DLog("shouldIgnore \(event)")
+        if event.modifierFlags.subtracting(.function) == event.previousFlags.subtracting(.function) {
+            DLog("only function changed")
+            return true
+        }
         let cmdKeycodes = [kVK_Command, kVK_RightCommand]
         return (event.modifierFlags.contains(.command) ||
                 cmdKeycodes.contains(Int(event.virtualKeyCode)))
@@ -1051,30 +1062,34 @@ fileprivate struct KeyReport {
         }
 
         // Number (unicode-key-code:alternate-key-codes)
-        let numberComponents = 
-            if enhancementFlags.contains(.reportAlternateKeys) {
+        let numberComponents = { () -> [UInt32?]? in
+            if event.csiUNumber == 0 {
+                // Arrow keys: they have no number, they just use a letter.
+                return nil
+            } else if enhancementFlags.contains(.reportAlternateKeys) {
                 // Note that the shifted key must be present only if shift is also
                 // present in the modifiers.
                 // We don't bother reporting shifted and base if they're the
                 // same as the unicode code.
                 if modifiers.contains(.shift) {
-                    if (event.unicodeKeyCode == event.baseLayoutKeyCode &&
+                    if (event.csiUNumber == event.baseLayoutKeyCode &&
                         (event.shiftedKeyCode == nil ||
-                         event.unicodeKeyCode == event.shiftedKeyCode)) {
-                        [event.unicodeKeyCode]
+                         event.csiUNumber == event.shiftedKeyCode)) {
+                        return [event.csiUNumber]
                     } else {
-                        [event.unicodeKeyCode, event.shiftedKeyCode, event.baseLayoutKeyCode]
+                        return [event.csiUNumber, event.shiftedKeyCode, event.baseLayoutKeyCode]
                     }
                 } else {
-                    if (event.unicodeKeyCode == event.baseLayoutKeyCode) {
-                        [event.unicodeKeyCode]
+                    if (event.csiUNumber == event.baseLayoutKeyCode || event.baseLayoutKeyCode == 0) {
+                        return [event.csiUNumber]
                     } else {
-                        [event.unicodeKeyCode, nil, event.baseLayoutKeyCode]
+                        return [event.csiUNumber, nil, event.baseLayoutKeyCode]
                     }
                 }
             } else {
-                [event.unicodeKeyCode]
+                return [event.csiUNumber]
             }
+        }()
 
         // Prepare modifier subparams early because we need it to decide
         // whether to encode a leading 1 in the second functional form.
@@ -1100,7 +1115,9 @@ fileprivate struct KeyReport {
                 // modifiers active for the key event. The encoding is described in the
                 // Modifiers section.
                 DLog("u/~")
-                controlSequence.parameters.append(.init(values: numberComponents))
+                if let numberComponents {
+                    controlSequence.parameters.append(.init(values: numberComponents))
+                }
             } else {
                 // CSI 1; modifiers [ABCDEFHPQS]
                 // The second form is used for a few functional keys, such as the Home, End,
@@ -1114,7 +1131,7 @@ fileprivate struct KeyReport {
                     controlSequence.parameters.append(.init(values: [1]))
                 }
             }
-        } else {
+        } else if let numberComponents {
             // See note above about `CSI number ; modifiers [u~]` form.
             DLog("non functional or missing suffix")
             controlSequence.parameters.append(.init(values: numberComponents))
@@ -1249,6 +1266,16 @@ enum FunctionalKeyDefinition: String {
     case ISO_LEVEL5_SHIFT="57454u"  // no virtual keycode for this
 
     var number: UInt32 {
+        switch self {
+        case .INSERT, .FORWARD_DELETE, .F1, .F2, .F3, .F4, .F5, .F6, .F7, .F8, .F9, .F10, .F11, .F12:
+            return 0
+        default:
+            break
+        }
+        return csiUNumber
+    }
+
+    var csiUNumber: UInt32 {
         let scanner = Scanner(string: rawValue)
         var number = UInt64(0)
         _ = scanner.scanUnsignedLongLong(&number)
@@ -1446,6 +1473,13 @@ extension NSEvent {
         // The associated text must not contain control codes (control codes are
         // code points below U+0020 and codepoints in the C0 and C1 blocks).
         return (string ?? "").it_ucs4CodePoints.filter { $0 >= 32 }
+    }
+
+    func it_csiUNumber(useNativeOptionBehavior: Bool) -> UInt32 {
+        if let functional = FunctionalKeyDefinition(virtualKeyCode: keyCode) {
+            return functional.csiUNumber
+        }
+        return it_unicodeKeyCode(useNativeOptionBehavior: useNativeOptionBehavior)
     }
 
     // The unicode-key-code above is the Unicode codepoint representing the key,
