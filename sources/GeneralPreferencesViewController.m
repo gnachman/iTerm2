@@ -917,6 +917,13 @@ enum {
 
 #pragma mark - Actions
 
+- (IBAction)reloadPlugin:(id)sender {
+    __weak __typeof(self) weakSelf = self;
+    [iTermAITermGatekeeper reloadPlugin:^(void) {
+        [weakSelf validatePlugin];
+    }];
+}
+
 - (IBAction)installPlugin:(id)sender {
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]];
 }

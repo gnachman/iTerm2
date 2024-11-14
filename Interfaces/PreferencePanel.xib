@@ -5601,17 +5601,6 @@ DQ
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
-                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rqF-qe-e3L">
-                                                <rect key="frame" x="294" y="408" width="81" height="32"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="push" title="Install…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="r1I-I1-Z6i">
-                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                                <connections>
-                                                    <action selector="installPlugin:" target="9Se-ld-UJa" id="cYG-Bx-vgc"/>
-                                                </connections>
-                                            </button>
                                             <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="eTk-0S-Tsy">
                                                 <rect key="frame" x="12" y="407" width="545" height="5"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -5629,6 +5618,28 @@ DQ
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="settingChanged:" target="9Se-ld-UJa" id="TTf-hl-iJb"/>
+                                                </connections>
+                                            </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dWT-P6-fr4">
+                                                <rect key="frame" x="294" y="414" width="20" height="23"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="bevel" title="↻" bezelStyle="rounded" alignment="center" imageScaling="proportionallyDown" inset="2" id="qJO-qz-VoT">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="reloadPlugin:" target="9Se-ld-UJa" id="WaB-jR-2kr"/>
+                                                </connections>
+                                            </button>
+                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rqF-qe-e3L">
+                                                <rect key="frame" x="311" y="408" width="81" height="32"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="push" title="Install…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="r1I-I1-Z6i">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="installPlugin:" target="9Se-ld-UJa" id="cYG-Bx-vgc"/>
                                                 </connections>
                                             </button>
                                         </subviews>

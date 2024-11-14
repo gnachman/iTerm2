@@ -48,21 +48,28 @@ struct Plugin {
             case .failure, .none:
                 break
             }
-            do {
-                let temp = Result<Plugin, PluginError>.success(try Plugin())
-                result = temp
-                return temp
-            } catch let error as PluginError {
-                let temp = Result<Plugin, PluginError>.failure(error)
-                DLog("\(error.reason)")
-                result = temp
-                return temp
-            } catch {
-                DLog("\(error.localizedDescription)")
-                let temp = Result<Plugin, PluginError>.failure(PluginError(reason: error.localizedDescription))
-                result = temp
-                return temp
-            }
+            let temp = load()
+            result = temp
+            return temp
+        }
+    }
+
+    private static func load() -> Result<Plugin, PluginError> {
+        do {
+            return  Result<Plugin, PluginError>.success(try Plugin())
+        } catch let error as PluginError {
+            let temp = Result<Plugin, PluginError>.failure(error)
+            DLog("\(error.reason)")
+            return temp
+        } catch {
+            DLog("\(error.localizedDescription)")
+            let temp = Result<Plugin, PluginError>.failure(PluginError(reason: error.localizedDescription))
+            return temp
+        }
+    }
+    static func reload() {
+        _instance.mutableAccess { result in
+            result = load()
         }
     }
 
@@ -240,6 +247,17 @@ class iTermAIClient {
         }
     }
 
+    func reload(_ completion: @escaping () -> ()) {
+        executionQueue.async {
+            do {
+                Plugin.reload()
+                DispatchQueue.main.async {
+                    completion()
+                }
+            }
+        }
+    }
+
     func request(webRequest: WebRequest,
                  completion: @escaping (Result<WebResponse, PluginError>) -> ()) -> Cancellation {
         let cancellation = Cancellation()
@@ -276,6 +294,12 @@ class iTermAITermGatekeeper: NSObject {
     static func validatePlugin(_ completion: @escaping (String?) -> ()) {
         DLog("validatePlugin")
         iTermAIClient.instance.validate(completion)
+    }
+
+    @objc
+    static func reloadPlugin(_ completion: @escaping () -> ()) {
+        DLog("reloadPlugin")
+        iTermAIClient.instance.reload(completion)
     }
 
     @objc
