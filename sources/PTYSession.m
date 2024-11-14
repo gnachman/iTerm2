@@ -12286,12 +12286,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)restoreColorsFromProfile {
     NSMutableDictionary<NSString *, id> *change = [NSMutableDictionary dictionary];
-    for (NSString *key in [[_screen.colorMap colormapKeyToProfileKeyDictionary] allValues]) {
-        if (![_overriddenFields containsObject:key]) {
-            continue;
+    for (NSString *baseKey in [[_screen.colorMap colormapKeyToProfileKeyDictionary] allValues]) {
+        for (NSString *suffix in @[ @"", COLORS_DARK_MODE_SUFFIX, COLORS_LIGHT_MODE_SUFFIX ]) {
+            NSString *key = [baseKey stringByAppendingString:suffix];
+            if (![_overriddenFields containsObject:key]) {
+                continue;
+            }
+            id profileValue = self.originalProfile[key] ?: [NSNull null];
+            change[key] = profileValue;
         }
-        id profileValue = self.originalProfile[key] ?: [NSNull null];
-        change[key] = profileValue;
     }
     if (change.count == 0) {
         return;
