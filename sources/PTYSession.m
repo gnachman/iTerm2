@@ -1287,6 +1287,11 @@ ITERM_WEAKLY_REFERENCEABLE
                                     [[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue])];
 }
 
++ (NSDictionary *)modifiedArrangement:(NSDictionary *)arrangement
+                              mutator:(NSDictionary *(^)(NSDictionary *))mutator {
+    return mutator(arrangement);
+}
+
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
              replacingProfileWithGUID:(NSString *)badGuid
                           withProfile:(Profile *)goodProfile {
@@ -1544,9 +1549,11 @@ ITERM_WEAKLY_REFERENCEABLE
     if (missingProfile) {
         NSDictionary *arrangementProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
         if (arrangementProfile) {
-            [aSession.naggingController arrangementWithName:arrangementName
-                                        missingProfileNamed:arrangementProfile[KEY_NAME]
-                                                       guid:arrangementProfile[KEY_GUID]];
+            if (arrangementProfile[KEY_NAME] == nil ||
+                arrangementProfile[KEY_GUID] == nil) {
+                [aSession.naggingController offerToFixSessionWithBrokenArrangementProfileIn:arrangementName
+                                                                                       guid:arrangement[SESSION_ARRANGEMENT_GUID]];
+            }
         }
     }
     if (!attachedToServer) {
@@ -18276,6 +18283,39 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [iTermProfilePreferences setObjectsFromDictionary:update inProfile:self.profile model:[ProfileModel sharedInstance]];
     [[iTermNotificationController sharedInstance] notify:@"Profile Updated"
                                          withDescription:@"Triggers disabled in interactive apps. You can change this in Settings > Profiles > Advanced."];
+}
+
+- (void)naggingControllerAssignProfileToSession:(NSString *)arrangementName guid:(NSString *)guid {
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:@"Select a profile to use for this session. Your selection will be saved back to the arrangement."];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    ProfileListView *profiles = [[[ProfileListView alloc] initWithFrame:NSMakeRect(0, 0, 300, 300)] autorelease];
+    [profiles disableArrowHandler];
+
+    alert.accessoryView = profiles;
+
+    const NSInteger button = [alert runSheetModalForWindow:self.view.window];
+
+    if (button == NSAlertFirstButtonReturn) {
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:profiles.selectedGuid];
+        if (profile) {
+            NSArray *windowArrangements = [WindowArrangements arrangementWithName:arrangementName];
+            NSArray *modifiedArrangements = [windowArrangements mapWithBlock:^id _Nullable(NSDictionary *arrangement) {
+                return [PseudoTerminal modifiedArrangement:arrangement mutator:^NSDictionary *(NSDictionary *sessionArrangement) {
+                    if ([sessionArrangement[SESSION_ARRANGEMENT_GUID] isEqual:guid]) {
+                        NSMutableDictionary *fixed = [[sessionArrangement mutableCopy] autorelease];
+                        fixed[SESSION_ARRANGEMENT_BOOKMARK] = [[profile copy] autorelease];
+                        return fixed;
+                    } else {
+                        return sessionArrangement;
+                    }
+                }];
+            }];
+            [WindowArrangements setArrangement:modifiedArrangements withName:arrangementName];
+        }
+    }
 }
 
 #pragma mark - iTermComposerManagerDelegate

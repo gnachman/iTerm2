@@ -2897,6 +2897,25 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
++ (NSDictionary *)recursiveModifiedArrangementNode:(NSDictionary *)arrangement
+                                           mutator:(NSDictionary *(^)(NSDictionary *))mutator {
+    if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        NSMutableArray *repairedSubviews = [NSMutableArray array];
+        for (NSDictionary<NSString *, id> *subArrangement in arrangement[SUBVIEWS]) {
+            [repairedSubviews addObject:[PTYTab recursiveModifiedArrangementNode:subArrangement
+                                                                         mutator:mutator]];
+        }
+        NSMutableDictionary *result = [arrangement mutableCopy];
+        result[SUBVIEWS] = repairedSubviews;
+        return result;
+    } else {
+        NSDictionary *repairedSession = [PTYSession modifiedArrangement:arrangement[TAB_ARRANGEMENT_SESSION] mutator:mutator];
+        NSMutableDictionary *result = [arrangement mutableCopy];
+        result[TAB_ARRANGEMENT_SESSION] = repairedSession;
+        return result;
+    }
+}
+
 + (NSDictionary *)recursiveRepairedArrangementNode:(NSDictionary *)arrangement
                           replacingProfileWithGUID:(NSString *)badGuid
                                        withProfile:(Profile *)goodProfile {
@@ -3227,6 +3246,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     [theTab updateTmuxTitleMonitor];
     return theTab;
+}
+
++ (NSDictionary *)modifiedArrangement:(NSDictionary *)arrangement
+                              mutator:(NSDictionary *(^)(NSDictionary *))mutator {
+    NSDictionary *newRoot = [PTYTab recursiveModifiedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
+                                                             mutator:mutator];
+    NSMutableDictionary *result = [arrangement mutableCopy];
+    result[TAB_ARRANGEMENT_ROOT] = newRoot;
+    return result;
 }
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement

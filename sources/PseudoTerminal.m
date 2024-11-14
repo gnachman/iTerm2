@@ -3299,6 +3299,19 @@ ITERM_WEAKLY_REFERENCEABLE
                                             afterDelay:0];
 }
 
++ (NSDictionary *)modifiedArrangement:(NSDictionary *)arrangement
+                              mutator:(NSDictionary *(^)(NSDictionary *))mutator {
+    NSMutableDictionary *mutableArrangement = [[arrangement mutableCopy] autorelease];
+    NSMutableArray *mutableTabs = [NSMutableArray array];
+
+    for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
+        [mutableTabs addObject:[PTYTab modifiedArrangement:tabArrangement
+                                                   mutator:mutator]];
+    }
+    mutableArrangement[TERMINAL_ARRANGEMENT_TABS] = mutableTabs;
+    return mutableArrangement;
+}
+
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement replacingProfileWithGUID:(NSString *)badGuid withProfile:(Profile *)goodProfile {
     NSMutableDictionary *mutableArrangement = [[arrangement mutableCopy] autorelease];
     NSMutableArray *mutableTabs = [NSMutableArray array];
