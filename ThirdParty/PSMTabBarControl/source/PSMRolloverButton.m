@@ -12,6 +12,15 @@ static const CGFloat PSMRolloverButtonDifferenceThreshold = 0.0001;
 static const CGFloat PSMRolloverButtonFramesPerSecond = 60.0;
 static const CGFloat PSMRolloverButtonMaxAlpha = 0.25;
 
+extern BOOL gDebugLogging;
+int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
+#define DLog(args...) \
+    do { \
+        if (gDebugLogging) { \
+            DebugLogImpl(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args]); \
+        } \
+    } while (0)
+
 @implementation PSMRolloverButton {
     NSImage *_rolloverImage;
     NSImage *_usualImage;
@@ -136,23 +145,28 @@ static const CGFloat PSMRolloverButtonMaxAlpha = 0.25;
                                           modes:@[ NSEventTrackingRunLoopMode, NSDefaultRunLoopMode ]];
     _dragDistance = 0;
     _lastDragLocation = theEvent.locationInWindow;
+    DLog(@"mouseDown. Set dragDistance=0, lastDragLocation=%@", NSStringFromPoint(_lastDragLocation));
 }
 
 - (void)mouseUp:(NSEvent *)event {
     if (event.clickCount == 1 && _dragDistance < 4) {
+        DLog(@"mouseUp. dragDistance=%@ so act like click", @(_dragDistance));
         [self performClick:self];
     }
+    DLog(@"mouseUp. dragDistance=%@ so reset drag distance to 0", @(_dragDistance));
     _dragDistance = 0;
 }
 
 - (void)mouseDragged:(NSEvent *)event {
     if (!self.allowDrags) {
+        DLog(@"mouseDragged. drags not allowed");
         [super mouseDragged:event];
         return;
     }
     _dragDistance += sqrt(pow(event.locationInWindow.y - _lastDragLocation.y, 2) +
                           pow(event.locationInWindow.x - _lastDragLocation.x, 2));
     _lastDragLocation = event.locationInWindow;
+    DLog(@"mouseDragged. dragDistance<-%@ lastDragLocation<-%@", @(_dragDistance), @(_lastDragLocation));
     [self.window makeKeyAndOrderFront:nil];
     [self.window performWindowDragWithEvent:event];
 }
