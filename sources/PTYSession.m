@@ -12446,9 +12446,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenSetSize:(VT100GridSize)proposedSize {
-    if (![self screenShouldInitiateWindowResize]) {
-        return;
-    }
     if ([[_delegate parentWindow] anyFullScreen]) {
         return;
     }
@@ -12456,6 +12453,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         DLog(@"Width locked");
         return;
     }
+    if (![self screenShouldInitiateWindowResize]) {
+        __weak __typeof(self) weakSelf = self;
+        [self askToEnableTerminalInitiatedResizing:^{
+            [weakSelf reallySetCellSize:proposedSize];
+        }];
+        return;
+    }
+    [self reallySetCellSize:proposedSize];
+}
+
+- (void)reallySetCellSize:(VT100GridSize)proposedSize {
     int rows = proposedSize.width;
     const VT100GridSize windowSize = [self windowSizeInCells];
     if (rows == -1) {
@@ -12489,14 +12497,68 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return result;
 }
 
-- (void)screenSetPointSize:(NSSize)proposedSize {
-    if (![self screenShouldInitiateWindowResize]) {
+- (void)revealProfileSettingWithKey:(NSString *)key {
+    PreferencePanel *panel;
+    NSString *guid;
+    if (self.isDivorced && ([_overriddenFields containsObject:KEY_STATUS_BAR_LAYOUT] ||
+                            [_overriddenFields containsObject:KEY_SHOW_STATUS_BAR])) {
+        panel = [PreferencePanel sessionsInstance];
+        guid = _profile[KEY_GUID];
+    } else {
+        panel = [PreferencePanel sharedInstance];
+        guid = _originalProfile[KEY_GUID];
+    }
+    [panel openToProfileWithGuid:guid key:key];
+    [panel.window makeKeyAndOrderFront:nil];
+}
+
+- (void)askToEnableTerminalInitiatedResizing:(void (^)(void))allowOnce {
+    NSString *key = @"NoSyncSuppressPromptToEnableResizing";
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:key]) {
         return;
     }
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:@"A program has tried to resize the window. Allow it?"
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"_Allow Once", @"_Open Settings", @"Don’t Show This Again" ]
+                                                completion:^(int selection) {
+        switch (selection) {
+            case 0:
+                allowOnce();
+                break;
+
+            case 1:
+                [self revealProfileSettingWithKey:KEY_DISABLE_WINDOW_RESIZING];
+                break;
+
+            case 2:
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:key];
+                break;
+
+            default:
+                // Cancel
+                break;
+        }
+    }];
+    [self queueAnnouncement:announcement identifier:[[NSUUID UUID] UUIDString]];
+}
+
+// TODO: Only allow this if there is a single session in the tab.
+- (void)screenSetPointSize:(NSSize)proposedSize {
     if ([self screenWindowIsFullscreen]) {
         return;
     }
-    // TODO: Only allow this if there is a single session in the tab.
+    if (![self screenShouldInitiateWindowResize]) {
+        __weak __typeof(self) weakSelf = self;
+        [self askToEnableTerminalInitiatedResizing:^{
+            [weakSelf reallySetPointSize:proposedSize];
+        }];
+        return;
+    }
+    [self reallySetPointSize:proposedSize];
+}
+
+- (void)reallySetPointSize:(NSSize)proposedSize {
     const NSRect frame = [self screenWindowFrame];
     const NSRect screenFrame = [self screenWindowScreenFrame];
     CGFloat width = proposedSize.width;
