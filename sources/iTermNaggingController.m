@@ -79,6 +79,22 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
     }];
 }
 
+- (void)offerToFixSessionWithBrokenArrangementProfileIn:(NSString *)arrangementName
+                                                   guid:(NSString *)guid {
+    NSString *notice = @"This arrangement’s profile is missing. This could be due to a bug in iTerm2 version 3.5.7, which caused profiles to be corrupted in saved arrangements.";
+    [self.delegate naggingControllerShowMessage:notice
+                                     isQuestion:NO
+                                      important:YES
+                                     identifier:@"ArrangementMissingProfile"
+                                        options:@[ @"Assign Profile" ]
+                                     completion:^(int selection) {
+        if (selection == 0) {
+            [self.delegate naggingControllerAssignProfileToSession:arrangementName
+                                                              guid:guid];
+        }
+    }];
+}
+
 - (void)arrangementWithName:(NSString *)savedArrangementName
         missingProfileNamed:(NSString *)missingProfileName
                        guid:(NSString *)guid {

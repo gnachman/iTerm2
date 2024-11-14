@@ -37,6 +37,8 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)naggingControllerRepairInitialWorkingDirectoryOfSessionWithGUID:(NSString *)guid
                                                   inArrangementWithName:(NSString *)arrangementName;
 - (void)naggingControllerDisableTriggersInInteractiveApps;
+- (void)naggingControllerAssignProfileToSession:(NSString *)arrangementName
+                                           guid:(NSString *)guid;
 
 @end
 
@@ -83,6 +85,8 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)tmuxDidUpdatePasteBuffer;
 - (void)openURL:(NSURL *)url;
 - (void)openCommandDidFailWithSecureInputEnabled;
+- (void)offerToFixSessionWithBrokenArrangementProfileIn:(NSString *)arrangementName
+                                                   guid:(NSString *)guid;
 
 @end
 
