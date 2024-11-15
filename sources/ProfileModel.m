@@ -199,8 +199,8 @@ static NSMutableArray<NSString *> *_combinedLog;
               commandIndexSet:indexes
                  tagIndexSets:nil];
     NSMutableAttributedString *result =
-        [[[NSMutableAttributedString alloc] initWithString:command
-                                                attributes:defaultAttributes] autorelease];
+        [[[NSMutableAttributedString alloc] initWithString:command ?: @""
+                                                attributes:defaultAttributes ?: @{}] autorelease];
     [indexes enumerateRangesUsingBlock:^(NSRange range, BOOL *stop) {
         [result setAttributes:highlightedAttributes range:range];
     }];
