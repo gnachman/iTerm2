@@ -139,7 +139,10 @@
         DLog(@"Pasteboard has filenames: %@.", urls);
         for (NSURL *url in urls) {
             NSString *filename = url.path;
-            [escapedFilenames addObject:[filename stringWithEscapedShellCharactersIncludingNewlines:YES]];
+            NSString *escaped = [filename stringWithEscapedShellCharactersIncludingNewlines:YES];
+            if (escaped) {
+                [escapedFilenames addObject:escaped];
+            }
         }
         if (escapedFilenames.count > 0) {
             info = [escapedFilenames componentsJoinedByString:@" "];
