@@ -1,4 +1,7 @@
 Key,Type,Modifiers,Option as alt?,Keyboard,Mode,Expected output,Notes
+Forward Delete,"Press, Release",None,NA,US English,1,\e[3~
+i,"Press, Release",Option,TRUE,US English,1,\e[105;3u
+F3,"Press, Release",None,NA,US English,1,\e[13~
 Enter,"Press, Release",None,NA,US English,1,\n,
 x,"Press, Release",Capslock,NA,US English,1,X,
 Left arrow,"Press, Release",None,NA,US English,1,\e[D,
