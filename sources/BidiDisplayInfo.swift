@@ -263,6 +263,9 @@ class BidiDisplayInfoObjc: NSObject {
 
     @objc(initWithDictionary:)
     init?(_ dictionary: NSDictionary) {
+        guard iTermAdvancedSettingsModel.bidi() else {
+            return nil
+        }
         guard let lutObj = dictionary[Keys.lut.rawValue], let lutArray = lutObj as? Array<NSNumber> else {
             return nil
         }

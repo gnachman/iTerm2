@@ -124,6 +124,7 @@ useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
                                                        positions:(CTVector(CGFloat) *)positions;
 
 - (void)copySettingsFrom:(iTermAttributedStringBuilder *)other
+                colorMap:(iTermColorMap *)colorMap
                 delegate:(id<iTermAttributedStringBuilderDelegate>)delegate;
 
 @end

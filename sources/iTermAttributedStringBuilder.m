@@ -878,6 +878,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 }
 #warning The shit I do with stats is utter nonsense because I make a new copy for each frame
 - (void)copySettingsFrom:(iTermAttributedStringBuilder *)other
+                colorMap:(iTermColorMap *)colorMap
                 delegate:(id<iTermAttributedStringBuilderDelegate>)delegate {
     if (!_stats.attrsForChar) {
         _stats.attrsForChar = iTermPreciseTimerStatsCopy(other->_stats.attrsForChar);
@@ -888,7 +889,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         _stats.advances = iTermPreciseTimerStatsCopy(other->_stats.advances);
     }
 
-    _colorMap = other.colorMap;
+    _colorMap = colorMap;
     _reverseVideo = other.reverseVideo;
     _minimumContrast = other.minimumContrast;
     _zippy = other.zippy;

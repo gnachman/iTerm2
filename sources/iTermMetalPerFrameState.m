@@ -166,10 +166,12 @@ typedef struct {
                        glue:(id<iTermMetalPerFrameStateDelegate>)glue {
     iTermTextDrawingHelper *drawingHelper = textView.drawingHelper;
 
+    [_configuration loadSettingsWithDrawingHelper:drawingHelper textView:textView glue:glue];
+
     [_attributedStringBuilder copySettingsFrom:drawingHelper.attributedStringBuilder
+                                      colorMap:_configuration->_colorMap
                                       delegate:self];
 
-    [_configuration loadSettingsWithDrawingHelper:drawingHelper textView:textView glue:glue];
     [self loadSettingsWithDrawingHelper:drawingHelper textView:textView];
     [self loadMetricsWithDrawingHelper:drawingHelper textView:textView screen:screen];
     [self loadLinesWithDrawingHelper:drawingHelper textView:textView screen:screen];
@@ -1026,7 +1028,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermGlyphKeyDat
         const int fontID = [(__bridge NSFont *)font it_metalFontID];
         for (int i = 0; i < length; i++) {
             const CFIndex characterIndex = glyphIndexToCharacterIndex[i];
-            const int sourceCell = characterIndexToSourceCell[characterIndex];
+            const int sourceCell = characterIndexToSourceCell ? characterIndexToSourceCell[characterIndex] : (logicalIndex + characterIndex);
             iTermGlyphKeyEmitDecomposedForSingleGlyph(glyphKeyData.basePointer,
                                                       bold,
                                                       italic,
@@ -1086,7 +1088,6 @@ NS_INLINE int iTermGlyphKeyEmitDecomposed(iTermGlyphKeyData *glyphKeyData,
     const BOOL fakeBold = [[nsAttributedString attribute:iTermFakeBoldAttribute atIndex:0 effectiveRange:nil] boolValue];
     const BOOL fakeItalic = [[nsAttributedString attribute:iTermFakeItalicAttribute atIndex:0 effectiveRange:nil] boolValue];
     NSData *data = [NSData castFrom:[nsAttributedString attribute:iTermSourceCellIndexAttribute atIndex:0 effectiveRange:nil]];
-    assert(data);
     const int *characterIndexToSourceCell = (const int *)data.bytes;
     return iTermGlyphKeyEmitDecomposedFromNSAttributedString(glyphKeyData,
                                                              bold,
@@ -1343,7 +1344,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                            int *drawableGlyphsPtr) {
     const int *bidiLUT = [bidiInfo lut];
     const int bidiLUTLength = bidiInfo.numberOfCells;
-    int asIndex = 0;
+    int asIndex = -1;
     int previousVisualX = -1;
     BOOL lastSelected = NO;
     NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_configuration->_useNativePowerlineGlyphs];
@@ -1351,9 +1352,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     iTermTextColorKey *currentColorKey = &keys[0];
     iTermTextColorKey *previousColorKey = &keys[1];
     const BOOL underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
-    int nextAttributedStringLogicalStartIndex = attributedStrings.count > 0 ? NSMaxRange([attributedStrings.firstObject sourceColumnRange]) : -1;
-    int nextASStart = -1;
-    id<iTermAttributedString> attributedString = attributedStrings.firstObject;
+    int nextAttributedStringLogicalStartIndex = attributedStrings.count > 0 ? [attributedStrings.firstObject sourceColumnRange].location : -1;
+    id<iTermAttributedString> attributedString = nil;
     NSInteger gk = 0;
     BOOL haveEmittedAttributedString = NO;
     NSCharacterSet *blockCharacterSet = [iTermBoxDrawingBezierCurveFactory blockDrawingCharacters];
@@ -1560,10 +1560,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     }
     const screen_char_t *const line = (const screen_char_t *const)lineData.line;
     iTermExternalAttributeIndex *eaIndex = _rows[row]->_eaIndex;
-    const int *bidiLUT = [bidiInfo lut];
-    const int bidiLUTLength = bidiInfo.numberOfCells;
     NSArray<id<iTermAttributedString>> *attributedStrings = nil;
-
 
     *markStylePtr = [_rows[row]->_markStyle intValue];
     *lineStyleMarkPtr = _rows[row]->_lineStyleMark;
@@ -1586,8 +1583,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     CTVectorCreate(&positions, width);
 
     NSMutableArray<id<iTermAttributedString>> *allAttributedStrings = nil;
-#warning TODO: Also do this if ligatures are enabled
-    if (bidiInfo) {
+
+    if (bidiInfo || _configuration->_ligaturesEnabled) {
         allAttributedStrings = [NSMutableArray array];
         int logicalX = 0;
         for (int i = 0; i < rles; i++) {
@@ -1623,26 +1620,6 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                underlinedRange:underlinedRange
                                                      positions:&positions];
 
-#if DEBUG
-            for (id obj in attributedStrings) {
-                NSAttributedString *ns = [NSAttributedString castFrom:obj];
-                if (ns != nil && [ns attribute:iTermSourceCellIndexAttribute atIndex:0 effectiveRange:nil] == nil) {
-                    NSLog(@"Bug");
-                    attributedStrings =
-                    [_attributedStringBuilder attributedStringsForLine:line
-                                                              bidiInfo:bidiInfo
-                                                    externalAttributes:eaIndex
-                                                                 range:run.modelRange
-                                                       hasSelectedText:selectedIndexes.count > 0
-                                                       backgroundColor:bgColor
-                                                        forceTextColor:nil
-                                                              colorRun:&run
-                                                           findMatches:findMatches
-                                                       underlinedRange:underlinedRange
-                                                             positions:&positions];
-                }
-            }
-#endif
             [allAttributedStrings addObjectsFromArray:attributedStrings];
 
             logicalX += bgrle->count;

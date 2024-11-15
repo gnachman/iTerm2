@@ -61,6 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _brightenBold;
     BOOL _useNativePowerlineGlyphs;
     BOOL _useSelectedTextColor;
+    BOOL _ligaturesEnabled;
 
     // Focus
     BOOL _isFrontTextView;
