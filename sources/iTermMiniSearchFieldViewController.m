@@ -155,7 +155,7 @@
     if ([self.driver bottomUpValidateMenuItem:menuItem]) {
         return YES;
     }
-    return [super validateMenuItem:menuItem];
+    return NO;
 }
 
 #pragma mark - iTermFindViewController
