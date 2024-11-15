@@ -9,9 +9,9 @@ import Foundation
 
 extension Int {
     init(clamping value: CGFloat) {
-        if value > CGFloat(Int.max) {
+        if value.isNaN || value >= CGFloat(Int.max) {
             self = Int.max
-        } else if value < CGFloat(Int.min) {
+        } else if value <= CGFloat(Int.min) {
             self = Int.min
         } else {
             self = Int(value)
@@ -21,9 +21,9 @@ extension Int {
 
 extension Int32 {
     init(clamping value: CGFloat) {
-        if value > CGFloat(Int.max) {
+        if value.isNaN || value >= CGFloat(Int.max) {
             self = Int32.max
-        } else if value < CGFloat(Int.min) {
+        } else if value <= CGFloat(Int.min) {
             self = Int32.min
         } else {
             self = Int32(value)
@@ -33,9 +33,9 @@ extension Int32 {
 
 extension Int64 {
     init(clamping value: CGFloat) {
-        if value > CGFloat(Int.max) {
+        if value.isNaN || value >= CGFloat(Int.max) {
             self = Int64.max
-        } else if value < CGFloat(Int.min) {
+        } else if value <= CGFloat(Int.min) {
             self = Int64.min
         } else {
             self = Int64(value)
@@ -48,4 +48,3 @@ extension Int: @retroactive CustomDebugStringConvertible {
         return String(self)
     }
 }
-
