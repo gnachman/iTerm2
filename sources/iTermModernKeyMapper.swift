@@ -116,6 +116,8 @@ fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
     var baseLayoutKeyCode: UInt32
     var textAsCodepoints: [UInt32]
 
+    var useNativeOptionBehavior: Bool
+
     var nsevent: NSEvent? {
         return NSEvent.keyEvent(with: eventType,
                                 location: .zero,
@@ -135,26 +137,17 @@ fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
         eventType = event.type
         previousFlags = event.it_previousFlags
         modifierFlags = event.it_modifierFlags
+        let leftOptionNormal = configuration.leftOptionKey == .OPT_NORMAL
+        let rightOptionNormal = configuration.rightOptionKey == .OPT_NORMAL
+        let optionAsAlt = ((event.it_modifierFlags.contains(.leftOption) && !leftOptionNormal) ||
+                           (event.it_modifierFlags.contains(.rightOption) && !rightOptionNormal))
 
         virtualKeyCode = event.keyCode
         if event.type == .keyDown || event.type == .keyUp {
             characters = event.characters
             charactersIgnoringModifiers = event.charactersIgnoringModifiers
             isARepeat = event.isARepeat
-            let leftOptionNormal = configuration.leftOptionKey == .OPT_NORMAL
-            let rightOptionNormal = configuration.rightOptionKey == .OPT_NORMAL
-            let useNativeOptionBehavior = {
-                if flags.contains(.reportAllKeysAsEscapeCodes) {
-                    return false
-                }
-                if event.it_modifierFlags.contains(.leftOption) && leftOptionNormal {
-                    return true
-                }
-                if event.it_modifierFlags.contains(.rightOption) && rightOptionNormal {
-                    return true
-                }
-                return false
-            }()
+            useNativeOptionBehavior = !flags.contains(.reportAllKeysAsEscapeCodes) && !optionAsAlt
             unicodeKeyCode = event.it_unicodeKeyCode(
                 useNativeOptionBehavior: useNativeOptionBehavior)
             csiUNumber = event.it_csiUNumber(useNativeOptionBehavior: useNativeOptionBehavior)
@@ -178,6 +171,7 @@ fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
             characters = ""
             charactersIgnoringModifiers = ""
             isARepeat = false
+            useNativeOptionBehavior = true
 
             switch Int(virtualKeyCode) {
             case kVK_Shift:
@@ -552,7 +546,11 @@ private extension ModernKeyMapperImpl {
     private func keyReport(for event: KeyEventInfo) -> KeyReport? {
         switch event.eventType {
         case .keyDown:
-            return regularReport(type: .press, event: event)
+            if event.isARepeat {
+                return regularReport(type: .repeat, event: event)
+            } else {
+                return regularReport(type: .press, event: event)
+            }
         case .keyUp:
             if !flags.contains(.reportAllEventTypes) {
                 DLog("Ignoring key-up when not reporting all event types")
@@ -1009,6 +1007,10 @@ fileprivate struct KeyReport {
     }
 
     var isDeadKey: Bool {
+        let optionPressed = !event.modifierFlags.intersection([.leftOption, .rightOption, .option]).isEmpty
+        if optionPressed && !event.useNativeOptionBehavior {
+            return false
+        }
         return (!isFunctional &&
                 event.eventType != .flagsChanged &&
                 event.characters == "")
