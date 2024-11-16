@@ -978,6 +978,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (BOOL)getCursorInLastLineWithWidth:(int)width atX:(int *)x {
+    [self removeTrailingEmptyBlocks];
     int total_raw_lines = TotalNumberOfRawLines(self);
     if (cursor_rawline == total_raw_lines-1) {
         // The cursor is on the last line in the buffer.
