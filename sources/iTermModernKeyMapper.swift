@@ -1096,9 +1096,11 @@ fileprivate struct KeyReport {
         // Prepare modifier subparams early because we need it to decide
         // whether to encode a leading 1 in the second functional form.
         var modifierSubparams = [UInt32?]()
-        if let encodedType = type.encoded {
-            DLog("Add type")
-            modifierSubparams.append(encodedType)
+        if enhancementFlags.contains(.reportAllEventTypes) {
+            if let encodedType = type.encoded {
+                DLog("Add type")
+                modifierSubparams.append(encodedType)
+            }
         }
         if modifiers.encoded != 1 || !modifierSubparams.isEmpty {
             DLog("Insert modifiers")
@@ -1167,8 +1169,8 @@ enum FunctionalKeyDefinition: String {
     case DOWN="B"
     case PAGE_UP="5~"
     case PAGE_DOWN="6~"
-    case HOME="7~"
-    case END="8~"
+    case HOME="H"
+    case END="F"
     case CAPS_LOCK="57358u"
     case SCROLL_LOCK="57359u"  // no virtual keycode for this
     case NUM_LOCK="57360u"  // no virtual keycode for this
