@@ -2322,12 +2322,17 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
 
     // Height has changed.
+    [self initializeBidi];
+    return YES;
+}
+
+- (void)initializeBidi {
+    const int height = self.size.height;
     _bidiDirty = YES;
     _bidiInfo = [[NSMutableArray alloc] initWithCapacity:height];
     for (int i = 0; i < height; i++) {
-        _bidiInfo[i] = [NSNull null];
+        [_bidiInfo addObject:[NSNull null]];
     }
-    return YES;
 }
 
 - (void)setBidiInfo:(iTermBidiDisplayInfo *)bidiInfo forLine:(int)line {
@@ -2520,6 +2525,7 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
 
         cursor_.x = MIN(cursor_.x, size_.width - 1);
         self.cursorY = MIN(cursor_.y, size_.height - 1);
+        [self initializeBidi];
         if (withSideEffects) {
             [self.delegate gridDidResize];
         }

@@ -3411,6 +3411,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     [self reallyDrawCursor:cursor
            backgroundColor:cursorBackgroundColor
                         at:VT100GridCoordMake(_copyModeCursorCoord.x, _copyModeCursorCoord.y - _numberOfScrollbackLines)
+            coordIsLogical:NO
                    outline:NO
              virtualOffset:virtualOffset];
 }
@@ -3433,6 +3434,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
         NSRect rect = [self reallyDrawCursor:cursor
                              backgroundColor:cursorBackgroundColor
                                           at:_cursorCoord
+                              coordIsLogical:YES
                                      outline:outline
                                virtualOffset:virtualOffset];
 
@@ -3484,37 +3486,38 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     }
 }
 
-- (VT100GridCoord)coordinateByTransformingForRTL:(VT100GridCoord)nominal {
-    iTermBidiDisplayInfo *bidiInfo = [self.delegate drawingHelperBidiInfoForLine:nominal.y];
+- (VT100GridCoord)coordinateByTransformingScreenCoordinateForRTL:(VT100GridCoord)screenCoord {
+    iTermBidiDisplayInfo *bidiInfo = [self.delegate drawingHelperBidiInfoForLine:screenCoord.y + _numberOfScrollbackLines];
     if (!bidiInfo) {
-        return nominal;
+        return screenCoord;
     }
-    if (nominal.x < 0 || bidiInfo.numberOfCells == 0) {
-        return nominal;
+    if (screenCoord.x < 0 || bidiInfo.numberOfCells == 0) {
+        return screenCoord;
     }
     const int numberOfCells = bidiInfo.numberOfCells;
-    if (nominal.x >= numberOfCells) {
+    if (screenCoord.x >= numberOfCells) {
         const int offset = 0;
         // Cursor is logically after the last non-space character.
         if ([bidiInfo.rtlIndexes containsIndex:numberOfCells - 1]) {
             // Cursor follows an RTL run. Place it left of the last character.
-            return VT100GridCoordMake(MAX(0, bidiInfo.lut[numberOfCells - 1] - offset), nominal.y);
+            return VT100GridCoordMake(MAX(0, bidiInfo.lut[numberOfCells - 1] - offset), screenCoord.y);
         } else {
             // The line ends with LTR so place it right of last character.
             const int width = _gridSize.width;
-            return VT100GridCoordMake(MIN(width, bidiInfo.lut[numberOfCells - 1] + offset + 1), nominal.y);
+            return VT100GridCoordMake(MIN(width, bidiInfo.lut[numberOfCells - 1] + offset + 1), screenCoord.y);
         }
     }
     // Cursor is somewhere in the bidi lookup table.
-    return VT100GridCoordMake(bidiInfo.lut[nominal.x], nominal.y);
+    return VT100GridCoordMake(bidiInfo.lut[screenCoord.x], screenCoord.y);
 }
 
 - (NSRect)reallyDrawCursor:(iTermCursor *)cursor
            backgroundColor:(NSColor *)backgroundColor
                         at:(VT100GridCoord)nominalCursorCoord
+            coordIsLogical:(BOOL)coordIsLogical
                    outline:(BOOL)outline
              virtualOffset:(CGFloat)virtualOffset {
-    const VT100GridCoord cursorCoord = [self coordinateByTransformingForRTL:nominalCursorCoord];
+    const VT100GridCoord cursorCoord = coordIsLogical ? [self coordinateByTransformingScreenCoordinateForRTL:nominalCursorCoord] : nominalCursorCoord;
     // Get the character that's under the cursor.
     const screen_char_t *theLine;
     if (cursorCoord.y >= 0) {

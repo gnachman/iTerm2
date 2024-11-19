@@ -293,8 +293,11 @@ typedef struct {
     _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
                                                          drawingHelper.copyModeCursorCoord.y - _visibleRange.start.y);
     _cursorInfo.copyModeCursorSelecting = drawingHelper.copyModeSelecting;
-    _cursorInfo.coord = [drawingHelper coordinateByTransformingForRTL:VT100GridCoordMake(textView.dataSource.cursorX - 1,
-                                                                                         textView.dataSource.cursorY - 1 - offset)];
+    VT100GridCoord cursorCoord = [drawingHelper coordinateByTransformingScreenCoordinateForRTL:VT100GridCoordMake(textView.dataSource.cursorX - 1,
+                                                                                                                  textView.dataSource.cursorY - 1)];
+    cursorCoord.y -= offset;
+    _cursorInfo.coord = cursorCoord;
+
     _cursorInfo.cursorShadow = drawingHelper.cursorShadow;
     NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
     if ([self shouldDrawCursor] &&
@@ -1586,7 +1589,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 
     if (bidiInfo || _configuration->_ligaturesEnabled) {
         allAttributedStrings = [NSMutableArray array];
-        int logicalX = 0;
+
         for (int i = 0; i < rles; i++) {
             const iTermMetalBackgroundColorRLE *bgrle = &backgroundRLE[i];
             NSColor *bgColor = [NSColor colorWithDisplayP3Red:bgrle->color.x
@@ -1621,8 +1624,6 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                      positions:&positions];
 
             [allAttributedStrings addObjectsFromArray:attributedStrings];
-
-            logicalX += bgrle->count;
         }
     }
 

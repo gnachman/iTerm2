@@ -4411,6 +4411,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     ScreenCharArray *prefix = nil;
     if ([self.linebuffer numberOfWrappedLinesAtPartialEndforWidth:width] > 0) {
         prefix = [self.linebuffer lastRawLine];
+        [prefix makeSafe];
     }
     const BOOL updateDirtyLinesOnly = ![self.primaryGrid eraseBidiInfoInDirtyLines];
     [self.primaryGrid enumerateParagraphs:^(int line, NSArray<MutableScreenCharArray *> *scas) {
