@@ -111,38 +111,54 @@ fatlibsixel: force armsixel x86libsixel
 # Unfortuately configuring these two can't be done in parallel, so force arm to
 # go first and have x86 depend on it. (The build is parallel.)
 configure-armopenssl: force
-	mkdir -p submodules/openssl/build-arm
-	cd submodules/openssl/build-arm && ../Configure darwin64-arm64-cc no-asm -Wl,-ld_classic && $(MAKE) clean && $(MAKE) build_generated
+	cd submodules/openssl && make clean && make distclean || echo make failed
+	cd submodules/openssl && ./Configure darwin64-arm64-cc no-shared -fPIC -mmacosx-version-min=10.15 -Wl,-ld_classic
 
 armopenssl: force configure-armopenssl
-	cd submodules/openssl/build-arm && $(MAKE) libcrypto.a libssl.a
+	echo Begin building armopenssl
+	cd submodules/openssl && $(MAKE)
+	rm -rf submodules/openssl/build-arm
+	mkdir submodules/openssl/build-arm
+	cp submodules/openssl/*.a submodules/openssl/build-arm
 
-configure-x86openssl: force configure-armopenssl
-	mkdir -p submodules/openssl/build-x86
-	cd submodules/openssl/build-x86 && ../Configure darwin64-x86_64-cc -Wl,-ld_classic &&  $(MAKE) clean && $(MAKE) build_generated
+configure-x86openssl: force
+	cd submodules/openssl && make clean && make distclean || echo make failed
+	cd submodules/openssl && ./Configure darwin64-x86_64-cc no-shared -fPIC -mmacosx-version-min=10.15 -Wl,-ld_classic
 
 x86openssl: force configure-x86openssl
-	cd submodules/openssl/build-x86 && $(MAKE) libcrypto.a libssl.a
+	echo Begin building x86openssl
+	cd submodules/openssl && $(MAKE)
+	rm -rf submodules/openssl/build-x86
+	mkdir submodules/openssl/build-x86
+	cp submodules/openssl/*.a submodules/openssl/build-x86
 
 fatopenssl: force x86openssl armopenssl
+	echo Begin building fatopenssl
 	cd submodules/openssl/ && lipo -create -output libcrypto.a build-x86/libcrypto.a build-arm/libcrypto.a
 	cd submodules/openssl/ && lipo -create -output libssl.a build-x86/libssl.a build-arm/libssl.a
-	# This is a bit of a hack but the files are identical across arches
-	ln -sf ../../build-arm/include/openssl/opensslconf.h submodules/openssl/include/openssl/opensslconf.h
+	cd submodules/openssl; rm -rf build-fat; mkdir build-fat; mkdir build-fat/lib; cp -R include/ build-fat/include/
+	cp submodules/openssl/libcrypto.a submodules/openssl/libssl.a submodules/NMSSH/NMSSH-OSX/Libraries/lib
+	cp submodules/openssl/*a submodules/openssl/build-fat/lib
 
-x86libssh2: force fatopenssl
+x86libssh2: force
+	echo Begin building x86libssh2
 	mkdir -p submodules/libssh2/build_x86_64
-        # Add this flag to enable tracing:
+	# Add this flag to enable tracing:
 	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
-	cd submodules/libssh2/build_x86_64 && $(CMAKE) -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" .. && $(MAKE) libssh2_static
+	cd submodules/libssh2/build_x86_64 && $(CMAKE) -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/build-fat/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl/build-fat -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" .. && $(MAKE) libssh2_static
 
-armlibssh2: force fatopenssl
+armlibssh2: force
+	echo Begin building armlibssh2
 	mkdir -p submodules/libssh2/build_arm64
-        # Add this flag to enable tracing:
+	# Add this flag to enable tracing:
 	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
-	cd submodules/libssh2/build_arm64 && $(CMAKE) -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 .. && $(MAKE) libssh2_static
+	cd submodules/libssh2/build_arm64 && $(CMAKE) -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 .. && $(MAKE) libssh2_static
 
-fatlibssh2: force x86libssh2 armlibssh2
+fatlibssh2: force
+	echo Begin building fatlibssh2
+	$(MAKE) fatopenssl
+	$(MAKE) x86libssh2
+	$(MAKE) armlibssh2
 	cd submodules/libssh2 && lipo -create -output libssh2.a build_arm64/src/libssh2.a build_x86_64/src/libssh2.a
 	cp submodules/libssh2/libssh2.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/libssh2.a
 	cp submodules/openssl/libcrypto.a submodules/openssl/libssl.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/
@@ -153,8 +169,18 @@ CoreParse: force
 	cp "submodules/CoreParse//CoreParse/Tokenisation/Token Recognisers/CPRegexpRecogniser.h" ThirdParty/CoreParse.framework/Versions/A/Headers/CPRegexpRecogniser.h
 
 NMSSH: force fatlibssh2
+	echo Begin building NMSSH
 	rm -rf ThirdParty/NMSSH.framework
 	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty OTHER_LDFLAGS="-ld_classic"
+
+paranoidarmopenssl: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) armopenssl
+
+paranoidx86openssl: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) x86openssl
+
+paranoidNMSSH: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) NMSSH
 
 libgit2: force
 	mkdir -p submodules/libgit2/build
@@ -171,9 +197,6 @@ paranoiddeps: force
 
 paranoidlibssh2: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibssh2
-
-paranoidnmssh: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) NMSSH
 
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
 deps: force fatlibsixel fatopenssl fatlibssh2 CoreParse NMSSH bindeps libgit2 sparkle
