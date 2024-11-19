@@ -272,7 +272,6 @@ typedef struct {
     [_dataSource enumerateInReverseCharsInRange:VT100GridWindowedRangeMake(theRange,
                                                                            _logicalWindow.location,
                                                                            _logicalWindow.length)
-                                   logicalOrder:NO
                                       charBlock:^BOOL(screen_char_t theChar,
                                                       VT100GridCoord logicalCoord,
                                                       VT100GridCoord coord) {
@@ -510,7 +509,6 @@ typedef struct {
     [_dataSource enumerateInReverseCharsInRange:VT100GridWindowedRangeMake(theRange,
                                                                            _logicalWindow.location,
                                                                            _logicalWindow.length)
-                                   logicalOrder:NO
                                       charBlock:^BOOL(screen_char_t theChar,
                                                       VT100GridCoord logicalCoord,
                                                       VT100GridCoord coord) {

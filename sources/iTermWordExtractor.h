@@ -53,7 +53,6 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
                      eolBlock:(BOOL (^NS_NOESCAPE _Nullable)(unichar code, int numPrecedingNulls, int line))eolBlock;
 
 - (void)enumerateInReverseCharsInRange:(VT100GridWindowedRange)range
-                 logicalOrder:(BOOL)logicalOrder
                              charBlock:(BOOL (^NS_NOESCAPE _Nullable)(screen_char_t theChar,
                                                                       VT100GridCoord logicalCoord,
                                                                       VT100GridCoord visualCoord))charBlock

@@ -800,7 +800,6 @@ const NSInteger kLongMaximumWordLength = 100000;
                                                                       _logicalWindow.location,
                                                                       _logicalWindow.length);
     [self enumerateInReverseCharsInRange:windowedRange
-                            logicalOrder:NO
                                charBlock:^BOOL(screen_char_t theChar,
                                                VT100GridCoord logicalCoord,
                                                VT100GridCoord charCoord) {
@@ -1309,7 +1308,6 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         __block BOOL haveSeenCharacter = NO;
         __block BOOL haveSeenNewline = NO;
         [self enumerateInReverseCharsInRange:windowedRange
-                                logicalOrder:NO
                                    charBlock:^BOOL(screen_char_t theChar,
                                                    VT100GridCoord logicalCoord,
                                                    VT100GridCoord coord) {
@@ -1679,8 +1677,8 @@ static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger
     return NSMakeRange(lowerBound, openUpperBound - lowerBound);
 }
 
+// NOTE: This enumerates in logical order. RTL characters will not actually be reversed.
 - (void)enumerateInReverseCharsInRange:(VT100GridWindowedRange)range
-                          logicalOrder:(BOOL)logicalOrder
                              charBlock:(BOOL (^NS_NOESCAPE)(screen_char_t theChar, VT100GridCoord logicalCoord, VT100GridCoord visualCoord))charBlock
                               eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPrecedingNulls, int line))eolBlock {
     int xLimit = range.columnWindow.length == 0 ? [_dataSource width] :
@@ -1728,30 +1726,11 @@ static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger
                 }
             }
         }
-        iTermBidiDisplayInfo *bidi = _supportBidi ? sca.bidiInfo : nil;
         if (charBlock) {
-            if (logicalOrder && bidi) {
-#warning TODO: Test this
-                [bidi enumerateLogicalRangesReverseIn:NSMakeRangeFromHalfOpenInterval(xmin, x + 1)
-                                              closure:^(NSRange logicalRange,
-                                                        int32_t visualStart,
-                                                        BOOL *stop) {
-                    for (int i = 0; i < logicalRange.length; i++) {
-                        const int x = NSMaxRange(logicalRange) - i - 1;
-                        const VT100GridCoord logicalCoord = VT100GridCoordMake(x, y);
-                        const VT100GridCoord visualCoord = VT100GridCoordMake(visualStart + logicalRange.length - 1 - i, y);
-                        if (charBlock(theLine[x], logicalCoord, visualCoord)) {
-                            *stop = YES;
-                            return;
-                        }
-                    }
-                }];
-            } else {
-                for (; x >= xmin; x--) {
-                    VT100GridCoord coord = VT100GridCoordMake(x, y);
-                    if (charBlock(theLine[x], coord, coord)) {
-                        return;
-                    }
+            for (; x >= xmin; x--) {
+                VT100GridCoord coord = VT100GridCoordMake(x, y);
+                if (charBlock(theLine[x], coord, coord)) {
+                    return;
                 }
             }
         }
