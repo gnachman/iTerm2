@@ -116,7 +116,7 @@ configure-armopenssl: force
 
 armopenssl: force configure-armopenssl
 	echo Begin building armopenssl
-	cd submodules/openssl && $(MAKE)
+	cd submodules/openssl && $(MAKE) -j16
 	rm -rf submodules/openssl/build-arm
 	mkdir submodules/openssl/build-arm
 	cp submodules/openssl/*.a submodules/openssl/build-arm
@@ -127,7 +127,7 @@ configure-x86openssl: force
 
 x86openssl: force configure-x86openssl
 	echo Begin building x86openssl
-	cd submodules/openssl && $(MAKE)
+	cd submodules/openssl && $(MAKE) -j16
 	rm -rf submodules/openssl/build-x86
 	mkdir submodules/openssl/build-x86
 	cp submodules/openssl/*.a submodules/openssl/build-x86
