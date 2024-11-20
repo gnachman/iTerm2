@@ -1228,8 +1228,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
     if (bidiInfoPtr) {
         *bidiInfoPtr = [self subBidiInfo:md->bidi_display_info
-                                   range:NSMakeRange(location.prev + offset, width)
-                                   width:width];
+                                   range:NSMakeRange(offset, width) width:width];
     }
     if (lineOffset) {
         *lineOffset = offset;
