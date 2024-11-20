@@ -18,6 +18,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)sanityCheckBidiDisplayInfoForRawLine:(int)i;
 - (void)reallyReloadBidiInfo;
 - (iTermBidiDisplayInfo * _Nullable)_bidiInfoForLineNumber:(int)lineNum width:(int)width;
+- (iTermBidiDisplayInfo * _Nullable)subBidiInfo:(iTermBidiDisplayInfo *)bidi
+                                          range:(NSRange)range
+                                          width:(int)width;
 
 @end
 

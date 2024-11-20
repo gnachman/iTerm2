@@ -123,12 +123,21 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
             current.modelRange = NSMakeRange(j, 0);
             current.visualRange = NSMakeRange(visualColumn, 1);
             first = NO;
-        } else if ((lastVisualColumn != -1 && abs(visualColumn - lastVisualColumn) != 1) ||  // teleported because of bidi?
-                   !iTermBackgroundColorRunsEqual(&current, &previous)) {
+        } else if (!iTermBackgroundColorRunsEqual(&current, &previous)) {
+            // Color changed so start a new run.
             [self addBackgroundRun:&previous toArray:runs endingAtModel:j visual:lastVisualColumn];
 
             current.modelRange = NSMakeRange(j, 0);
             current.visualRange = NSMakeRange(visualColumn, 1);
+        } else if (visualColumn != lastVisualColumn + 1) {
+            // Might need to extend an existing range.
+            if (![self extendRunInRuns:runs logicalIndex:j visualColumn:visualColumn value:&current]) {
+                // Have to start a new range.
+                [self addBackgroundRun:&previous toArray:runs endingAtModel:j visual:lastVisualColumn];
+
+                current.modelRange = NSMakeRange(j, 0);
+                current.visualRange = NSMakeRange(visualColumn, 1);
+            }
         }
 
         previous = current;
@@ -144,6 +153,20 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
     backgroundColorRuns.line = displayLineNumber;
     backgroundColorRuns.sourceLine = sourceLineNumber;
     return backgroundColorRuns;
+}
+
++ (BOOL)extendRunInRuns:(NSMutableArray<iTermBoxedBackgroundColorRun *> *)runs
+           logicalIndex:(int)logicalIndex
+           visualColumn:(int)visualColumn
+                  value:(const iTermBackgroundColorRun *)run {
+    const NSInteger i = [runs indexOfObjectPassingTest:^BOOL(iTermBoxedBackgroundColorRun *obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [obj isAdjacentToVisualColumn:visualColumn] && iTermBackgroundColorRunsEqual(run, obj.valuePointer);
+    }];
+    if (i == NSNotFound) {
+        return NO;
+    }
+    [runs[i] extendWithVisualColumn:visualColumn];
+    return YES;
 }
 
 + (instancetype)defaultRunOfLength:(int)width
@@ -245,6 +268,16 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
     return (iTermBackgroundColorRunsEqual(&other->_value, &_value) &&
             NSEqualRanges(other->_value.modelRange, _value.modelRange) &&
             NSEqualRanges(other->_value.visualRange, _value.visualRange));
+}
+
+- (BOOL)isAdjacentToVisualColumn:(int)c {
+    return _value.visualRange.location == c + 1 || NSMaxRange(_value.visualRange) == c;
+}
+
+- (void)extendWithVisualColumn:(int)c {
+    NSRange range = NSMakeRange(c, 1);
+    range = NSUnionRange(range, _value.visualRange);
+    _value.visualRange = range;
 }
 
 @end

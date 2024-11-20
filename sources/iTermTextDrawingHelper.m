@@ -1693,7 +1693,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     }
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
-        NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins]/* + run->visualRange.location * _cellSize.width*/,
+        NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins],
                                          y);
         [self constructAndDrawRunsForLine:theLine
                                  bidiInfo:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:sourceLine] : nil

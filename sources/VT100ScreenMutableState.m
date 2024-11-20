@@ -4442,8 +4442,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             DLog(@"No bidi found");
             return;
         }
-        for (int i = 0; i < scas.count; i++) {
-            if (prefix && i == 0) {
+        for (int lineOffset = 0; lineOffset < scas.count; lineOffset++) {
+            if (prefix && lineOffset == 0) {
                 [self.linebuffer removeLastRawLine];
                 [self.linebuffer appendLine:joined.line
                                      length:prefix.length
@@ -4453,11 +4453,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                continuation:prefix.continuation];
             }
 #warning TODO: Deal with dwc splitting here
-            const int offset = i == 0 ? prefix.length : i * width;
-            iTermBidiDisplayInfo *sub = [bidiInfo subInfoInRange:NSMakeRange(offset, width)];
-            DLog(@"Set bidi for line %d to %@", i, sub);
-            [self.primaryGrid setBidiInfo:sub forLine:i];
-            [self.primaryGrid setCharactersInLine:i + line
+            const int offset = lineOffset == 0 ? prefix.length : lineOffset * width;
+            iTermBidiDisplayInfo *sub = [bidiInfo subInfoInRange:NSMakeRange(offset, width)
+                                                   paddedToWidth:width];
+            DLog(@"Set bidi for line %d to %@", lineOffset + line, sub);
+            [self.primaryGrid setBidiInfo:sub forLine:lineOffset + line];
+            [self.primaryGrid setCharactersInLine:lineOffset + line
                                                to:joined.line + offset
                                            length:MIN(width, joined.length - offset)];
         }

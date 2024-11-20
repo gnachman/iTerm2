@@ -94,8 +94,15 @@
                            bidiInfo:&bidiInfo
                          lineOffset:&lineOffset];
 #warning TODO: Test when length<width
-    return [bidiInfo subInfoInRange:NSMakeRange(lineOffset, MIN(width, length))];
+    return [bidiInfo subInfoInRange:NSMakeRange(lineOffset, MIN(width, length))
+                      paddedToWidth:width];
 }
 
+
+- (iTermBidiDisplayInfo * _Nullable)subBidiInfo:(iTermBidiDisplayInfo *)bidi
+                                          range:(NSRange)range
+                                          width:(int)width {
+    return [bidi subInfoInRange:range paddedToWidth:width];
+}
 
 @end

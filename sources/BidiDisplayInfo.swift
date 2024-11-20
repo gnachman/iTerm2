@@ -308,6 +308,15 @@ class BidiDisplayInfoObjc: NSObject {
         return changed
     }
 
+    @objc(subInfoInRange:paddedToWidth:)
+    func subInfo(range nsrange: NSRange, paddedTo width: Int32) -> BidiDisplayInfoObjc? {
+        if let guts = guts.subInfo(range: nsrange, width: width) {
+            return BidiDisplayInfoObjc(guts)
+        } else {
+            return nil
+        }
+    }
+
     @objc(subInfoInRange:)
     func subInfo(range nsrange: NSRange) -> BidiDisplayInfoObjc? {
         if let guts = guts.subInfo(range: nsrange) {
@@ -551,6 +560,15 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         }
     }
 
+    // This assumes the base writing direction is RTL, since otherwise this would not be needed.
+    init(basedOn base: BidiDisplayInfo, paddedTo width: Int32) {
+        let baseLength = Int32(base.lut.count)
+        precondition(width > baseLength)
+        let growth = width - baseLength
+        lut = base.lut.map { $0 + growth } + Array(0..<growth)
+        rtlIndexes = base.rtlIndexes
+    }
+
     func subInfo(range nsrange: NSRange) -> BidiDisplayInfo? {
         let range = Range(nsrange)!.clamped(to: 0..<lut.count)
         if range == 0..<lut.count {
@@ -577,6 +595,22 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
             compression[$0]!
         }
         return BidiDisplayInfo(lut: fixed, rtlIndexes: subIndexes)
+    }
+
+    func subInfo(range nsrange: NSRange, width: Int32) -> BidiDisplayInfo? {
+        return subInfo(range: nsrange)?.padded(to: width)
+    }
+
+    func padded(to width: Int32) -> BidiDisplayInfo {
+        guard width > lut.count else {
+            return self
+        }
+        guard rtlIndexes.contains(0) else {
+            return self
+        }
+        // It would be better to keep an index of strong ltr/rtl charactesr so that subinfos could
+        // use the first strong character to define the justification for the wrapped line.
+        return BidiDisplayInfo(basedOn: self, paddedTo: width)
     }
 
     var invertedLUT: [Int32] {

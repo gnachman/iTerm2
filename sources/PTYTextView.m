@@ -4766,6 +4766,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     if (lineNumber < 0 || lineNumber > INT_MAX) {
         return VT100GridRangeMake(0, 0);
     }
+    if ([_dataSource bidiInfoForLine:lineNumber] != nil) {
+#warning TODO: This is a hack. A proper fix would give iTermSelection the ability to extend selection leftwards for lines that are right-justified.
+        return VT100GridRangeMake(_dataSource.width, 0);
+    }
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     int length = [extractor lengthOfLine:lineNumber];

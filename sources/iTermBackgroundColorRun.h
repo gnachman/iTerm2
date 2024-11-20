@@ -31,8 +31,8 @@ typedef struct {
 } iTermBackgroundColorRun;
 
 // NOTE: This does not compare the ranges.
-NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
-                                             iTermBackgroundColorRun *b) {
+NS_INLINE BOOL iTermBackgroundColorRunsEqual(const iTermBackgroundColorRun *a,
+                                             const iTermBackgroundColorRun *b) {
     return (a->bgColor == b->bgColor &&
             a->bgGreen == b->bgGreen &&
             a->bgBlue == b->bgBlue &&
@@ -86,6 +86,8 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 @property(nonatomic, retain) NSColor *unprocessedBackgroundColor;
 
 + (instancetype)boxedBackgroundColorRunWithValue:(iTermBackgroundColorRun)value;
+- (BOOL)isAdjacentToVisualColumn:(int)c;
+- (void)extendWithVisualColumn:(int)c;
 
 @end
 

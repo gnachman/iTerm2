@@ -445,7 +445,8 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
                                           length:newLength
                                         metadata:self.metadata
                                     continuation:self.continuation
-                                        bidiInfo:[_bidiInfo subInfoInRange:NSMakeRange(offset, newLength)]];
+                                        bidiInfo:[_bidiInfo subInfoInRange:NSMakeRange(offset, newLength)
+                                                             paddedToWidth:maxLength]];
 }
 
 - (ScreenCharArray *)paddedToLength:(int)length eligibleForDWC:(BOOL)eligibleForDWC {
@@ -520,7 +521,8 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
         return [[ScreenCharArray alloc] initWithCopyOfLine:self.line
                                                     length:newLength
                                               continuation:self.continuation
-                                                  bidiInfo:[_bidiInfo subInfoInRange:NSMakeRange(0, newLength)]];
+                                                  bidiInfo:[_bidiInfo subInfoInRange:NSMakeRange(0, newLength)
+                                                                       paddedToWidth:newLength]];
     }
     return [self paddedToLength:newLength eligibleForDWC:NO];
 }

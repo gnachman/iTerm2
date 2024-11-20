@@ -259,6 +259,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     wordExtractor.dataSource = self;
     VT100GridWindowedRange range = [wordExtractor windowedRange];
     if (bidi) {
+#warning TODO: This is wrong. When a word wraps, we need to select characters from the left side of the start line and the right side of the end line. Selections don't know how to do this currently.
         return [self visualWindowedRangeForLogical:range];
     }
     return range;
@@ -1632,7 +1633,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         if (charBlock) {
             if (logicalOrder && bidi) {
                 const NSRange visualRange = NSMakeRangeFromHalfOpenInterval(MIN(width - 1, MAX(range.columnWindow.location, startx)),
-                                                                            endx - numNulls);
+                                                                            endx);
                 [bidi enumerateLogicalRangesIn:visualRange closure:^(NSRange logicalRange, int visualStart, BOOL *stop) {
                     for (int i = 0; i < logicalRange.length; i++) {
                         int x = logicalRange.location + i;
