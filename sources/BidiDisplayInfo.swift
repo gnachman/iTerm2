@@ -278,9 +278,18 @@ class BidiDisplayInfoObjc: NSObject {
                                rtlIndexes: indexes)
     }
 
-    @objc(initWithScreenCharArray:)
+    @objc(initUnpaddedWithScreenCharArray:)
     init?(_ sca: ScreenCharArray) {
         if let guts = BidiDisplayInfo(sca) {
+            self.guts = guts
+        } else {
+            return nil
+        }
+    }
+
+    @objc(initWithScreenCharArray:paddedTo:)
+    init?(_ sca: ScreenCharArray, paddedTo width: Int32) {
+        if let guts = BidiDisplayInfo(sca, paddedTo: width) {
             self.guts = guts
         } else {
             return nil
@@ -557,6 +566,21 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         free(buffer)
         if rtlIndexes.isEmpty {
             return nil
+        }
+    }
+
+    // Fails if no RTL was found
+    init?(_ sca: ScreenCharArray, paddedTo width: Int32) {
+        guard let temp = BidiDisplayInfo(sca) else {
+            return nil
+        }
+        let growth = width - Int32(temp.lut.count)
+        if growth == 0 {
+            self.lut = temp.lut
+            self.rtlIndexes = temp.rtlIndexes
+        } else {
+            self.lut = temp.lut.map { $0 + growth } + Array(0..<growth)
+            self.rtlIndexes = temp.rtlIndexes
         }
     }
 

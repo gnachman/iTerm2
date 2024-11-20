@@ -30,7 +30,7 @@
         MutableScreenCharArray *msca = [[MutableScreenCharArray alloc] initWithLine:_characterBuffer.pointer + [self _lineRawOffset:i]
                                                                              length:[self _lineLength:i]
                                                                        continuation:metadata->continuation];
-        iTermBidiDisplayInfo *expected = [[iTermBidiDisplayInfo alloc] initWithScreenCharArray:msca];
+        iTermBidiDisplayInfo *expected = [[iTermBidiDisplayInfo alloc] initUnpaddedWithScreenCharArray:msca];
         ITAssertWithMessage([actual isEqual:expected], @"actual=%@ expected=%@", actual, expected);
     }
 }
@@ -55,7 +55,7 @@
     MutableScreenCharArray *msca = nil;
     if (md->lineMetadata.rtlFound) {
         msca = [self mutableScreenCharArrayForRawLine:i];
-        bidiInfo = [[iTermBidiDisplayInfo alloc] initWithScreenCharArray:msca];
+        bidiInfo = [[iTermBidiDisplayInfo alloc] initUnpaddedWithScreenCharArray:msca];
         if (bidiInfo) {
             [iTermBidiDisplayInfo annotateWithBidiInfo:bidiInfo msca:msca];
         } else {

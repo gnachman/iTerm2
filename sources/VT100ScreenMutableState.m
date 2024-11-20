@@ -4430,14 +4430,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
         if (prefix == nil && scas.count == 1) {
             // Fast path - we can modify the line in place.
-            iTermBidiDisplayInfo *bidiInfo = [[iTermBidiDisplayInfo alloc] initWithScreenCharArray:scas[0]];
+            iTermBidiDisplayInfo *bidiInfo = [[iTermBidiDisplayInfo alloc] initWithScreenCharArray:scas[0]
+                                                                                          paddedTo:width];
             DLog(@"Simple case for line %d. Set bidi info to %@", line, bidiInfo);
             [self.primaryGrid setBidiInfo:bidiInfo forLine:line];
             [iTermBidiDisplayInfo annotateWithBidiInfo:bidiInfo msca:scas[0]];
             return;
         }
         MutableScreenCharArray *joined = [self mutableScreenCharArrayWithPrefix:prefix lines:scas];
-        iTermBidiDisplayInfo *bidiInfo = [[iTermBidiDisplayInfo alloc] initWithScreenCharArray:joined];
+        iTermBidiDisplayInfo *bidiInfo = [[iTermBidiDisplayInfo alloc] initUnpaddedWithScreenCharArray:joined];
         [iTermBidiDisplayInfo annotateWithBidiInfo:bidiInfo msca:joined];
         const int prefixLength = prefix.length;
         for (int lineOffset = 0; lineOffset < scas.count; lineOffset++) {
