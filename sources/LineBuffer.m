@@ -1490,21 +1490,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return position;
 }
 
-- (LineBufferPosition * _Nonnull)positionForStartOfLastLineBeforePosition:(LineBufferPosition *)limit {
-    [self removeTrailingEmptyBlocks];
-    int blockNum = 0;
-    int offset = 0;
-    if (![self _findPosition:limit inBlock:&blockNum inOffset:&offset]) {
-        return [self positionForStartOfLastLine];
-    }
-    const long long precedingBlocksLength = [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, blockNum)];
-    LineBlock *block = _lineBlocks[blockNum];
-    LineBufferPosition *position = [LineBufferPosition position];
-    const int offsetInBlock = [block offsetOfStartOfLineIncludingOffset:offset];
-    position.absolutePosition = droppedChars + precedingBlocksLength + offsetInBlock;
-    return position;
-}
-
 - (LineBufferPosition *)positionForStartOfLastLine {
     LineBufferPosition *position = [self lastPosition];
     const long long length = [_lineBlocks.lastBlock lengthOfLastLine];

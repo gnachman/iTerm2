@@ -157,7 +157,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (LineBufferPosition * _Nonnull)penultimatePosition;
 - (LineBufferPosition * _Nonnull)positionForStartOfLastLine;
 
-- (LineBufferPosition * _Nonnull)positionForStartOfLastLineBeforePosition:(LineBufferPosition *)limit;
 - (LineBufferPosition * _Nonnull)positionForStartOfResultRange:(ResultRange *)resultRange;
 
 // Convert the block,offset in a findcontext into an absolute position.

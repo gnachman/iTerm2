@@ -4408,7 +4408,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // on line segments.
 - (void)populateRTLState {
     const int width = self.width;
-    ScreenCharArray *prefix = nil;
+    __block ScreenCharArray *prefix = nil;
     if ([self.linebuffer numberOfWrappedLinesAtPartialEndforWidth:width] > 0) {
         prefix = [self.linebuffer lastRawLine];
         [prefix makeSafe];
@@ -4425,7 +4425,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             return;
         }
         DLog(@"Updating bidi in line %d, wrapped length %@", line, @(scas.count));
-        if ((line > 0 || prefix == nil) && scas.count == 1) {
+        if (line > 0) {
+            prefix = nil;
+        }
+        if (prefix == nil && scas.count == 1) {
             // Fast path - we can modify the line in place.
             iTermBidiDisplayInfo *bidiInfo = [[iTermBidiDisplayInfo alloc] initWithScreenCharArray:scas[0]];
             DLog(@"Simple case for line %d. Set bidi info to %@", line, bidiInfo);
@@ -4435,25 +4438,24 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
         MutableScreenCharArray *joined = [self mutableScreenCharArrayWithPrefix:prefix lines:scas];
         iTermBidiDisplayInfo *bidiInfo = [[iTermBidiDisplayInfo alloc] initWithScreenCharArray:joined];
-        const BOOL changed = [iTermBidiDisplayInfo annotateWithBidiInfo:bidiInfo msca:joined];
-
-        if (!changed) {
-            // No changes made. As an optimization, leave the status as Unknown, which will be treated as LTR.
-            DLog(@"No bidi found");
-            return;
-        }
+        [iTermBidiDisplayInfo annotateWithBidiInfo:bidiInfo msca:joined];
+        const int prefixLength = prefix.length;
         for (int lineOffset = 0; lineOffset < scas.count; lineOffset++) {
-            if (prefix && lineOffset == 0) {
-                [self.linebuffer removeLastRawLine];
-                [self.linebuffer appendLine:joined.line
-                                     length:prefix.length
-                                    partial:YES
-                                      width:width
-                                   metadata:prefix.metadata
-                               continuation:prefix.continuation];
+            const int offset = prefixLength + lineOffset * width;
+            if (prefix) {
+                if (lineOffset == 0) {
+                    [self.linebuffer removeLastRawLine];
+                    [self.linebuffer appendLine:joined.line
+                                         length:prefix.length
+                                        partial:YES
+                                          width:width
+                                       metadata:prefix.metadata
+                                   continuation:prefix.continuation];
+                } else {
+                    prefix = nil;
+                }
             }
 #warning TODO: Deal with dwc splitting here
-            const int offset = lineOffset == 0 ? prefix.length : lineOffset * width;
             iTermBidiDisplayInfo *sub = [bidiInfo subInfoInRange:NSMakeRange(offset, width)
                                                    paddedToWidth:width];
             DLog(@"Set bidi for line %d to %@", lineOffset + line, sub);
