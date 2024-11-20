@@ -1682,14 +1682,18 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (int)getRawLineLength:(int)linenum {
-    ITAssertWithMessage(linenum < cll_entries && linenum >= 0, @"Out of bounds");
-    int prev;
-    if (linenum == 0) {
-        prev = 0;
-    } else {
-        prev = cumulative_line_lengths[linenum-1] - self.bufferStartOffset;
+    if (cll_entries == 0) {
+        return 0;
     }
-    return cumulative_line_lengths[linenum] - self.bufferStartOffset - prev;
+    ITAssertWithMessage(linenum < cll_entries && linenum >= _firstEntry, @"Out of bounds");
+
+    int offset = 0;
+    if (linenum == _firstEntry) {
+        offset = _startOffset;
+    } else {
+        offset = cumulative_line_lengths[linenum - 1];
+    }
+    return cumulative_line_lengths[linenum] - offset;
 }
 
 - (const screen_char_t*)rawLine:(int)linenum {
