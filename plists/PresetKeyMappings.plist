@@ -316,7 +316,7 @@
 	<key>Action</key>
 	<integer>11</integer>
 	<key>Text</key>
-	<string>"0x1b 0x7f"</string>
+	<string>0x1b 0x7f</string>
       </dict>
       <key>f702-0x280000</key>
       <dict>
