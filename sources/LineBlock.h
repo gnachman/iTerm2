@@ -141,7 +141,7 @@
 - (int)startOffset;
 
 // Return the length of a raw (unwrapped) line
-- (int)getRawLineLength:(int)linenum;
+- (int)lengthOfRawLine:(int)linenum;
 
 // Remove extra space from the end of the buffer. Future appends will fail.
 - (void)shrinkToFit;

@@ -966,7 +966,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     self.dirty = YES;
     LineBlock *block = _lineBlocks.lastBlock;
     if ([block hasPartial]) {
-        int last_line_length = [block getRawLineLength: [block numEntries]-1];
+        int last_line_length = [block lengthOfRawLine:[block numEntries]-1];
         cursor_x = x + last_line_length;
         cursor_rawline = -1;
     } else {
@@ -983,8 +983,8 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     if (cursor_rawline == total_raw_lines-1) {
         // The cursor is on the last line in the buffer.
         LineBlock* block = _lineBlocks.lastBlock;
-        int last_line_length = [block getRawLineLength: ([block numEntries]-1)];
-        const screen_char_t *lastRawLine = [block rawLine: ([block numEntries]-1)];
+        int last_line_length = [block lengthOfRawLine:([block numEntries]-1)];
+        const screen_char_t *lastRawLine = [block rawLine:([block numEntries]-1)];
         int num_overflow_lines = [block numberOfFullLinesFromBuffer:lastRawLine length:last_line_length width:width];
 
         int min_x = OffsetOfWrappedLine(lastRawLine,
@@ -1240,7 +1240,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                 const NSNumber *rawLineNumber = [block rawLineNumberAtWrappedLineOffset:y - yoffset
                                                                                   width:width];
                 if (rawLineNumber) {
-                    const int length = [block getRawLineLength:rawLineNumber.intValue];
+                    const int length = [block lengthOfRawLine:rawLineNumber.intValue];
                     [expandedResultRanges addObject:[[ResultRange alloc] initWithPosition:positionToConvert + passed
                                                                                    length:length]];
 

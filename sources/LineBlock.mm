@@ -365,7 +365,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
             return;
         }
         NSIndexSet *expected = [self doubleWidthCharacterCacheWithStartingOffset:i > 0 ? cumulative_line_lengths[i - 1] : 0
-                                                                          length:[self lengthOfLine:i]
+                                                                          length:[self lengthOfRawLine:i]
                                                                            width:width];
         ITAssertWithMessage([actual isEqualToIndexSet:expected], @"actual=%@ expected=%@", actual, expected);
     }
@@ -1647,7 +1647,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         return 0;
     }
     const int index = cll_entries - 1;
-    return [self getRawLineLength:index];
+    return [self lengthOfRawLine:index];
 }
 
 - (int)lengthOfLastLineWrappedToWidth:(int)width {
@@ -1682,7 +1682,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                     continuation:md->continuation];
 }
 
-- (int)getRawLineLength:(int)linenum {
+- (int)lengthOfRawLine:(int)linenum {
     if (cll_entries == 0) {
         return 0;
     }
@@ -1817,7 +1817,6 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             _firstEntry = i;
             [_metadataArray removeFirst:_firstEntry - _metadataArray.first];
             assert(_metadataArray.first == _firstEntry);
-#warning TODO: Truncate bidi info rather than resetting it in eraseFirstLineCache
             [_metadataArray eraseFirstLineCache];
 
             *charsDropped = self.bufferStartOffset - initialOffset;
@@ -2475,7 +2474,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
                         break;
                     }
                     ResultRange *range = nil;
-                    const int lineLength = [self lengthOfLine:entry + i];
+                    const int lineLength = [self lengthOfRawLine:entry + i];
                     if (i == 0) {
                         // For the first line of the query:
                         // If there were multiple results use the first one that extends to the end.
@@ -2655,19 +2654,10 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
     return self.rawSpaceUsed - self.bufferStartOffset;
 }
 
-- (int)lengthOfLine:(int)lineNumber {
-    if (lineNumber == 0) {
-#warning TODO: This doesn't take buffer start offset into consideration
-        return cumulative_line_lengths[0];
-    } else {
-        return cumulative_line_lengths[lineNumber] - cumulative_line_lengths[lineNumber - 1];
-    }
-}
-
 - (int)numberOfTrailingEmptyLines {
     int count = 0;
     for (int i = cll_entries - 1; i >= _firstEntry; i--) {
-        if ([self lengthOfLine:i] == 0) {
+        if ([self lengthOfRawLine:i] == 0) {
             count++;
         } else {
             break;
@@ -2679,7 +2669,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 - (int)numberOfLeadingEmptyLines {
     int count = 0;
     for (int i = _firstEntry; i < cll_entries; i++) {
-        if ([self lengthOfLine:i] == 0) {
+        if ([self lengthOfRawLine:i] == 0) {
             count++;
         } else {
             break;
