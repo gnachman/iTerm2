@@ -279,13 +279,14 @@ const CGFloat iTermTimestampGradientWidth = 20;
                         NSForegroundColorAttributeName: fgColor,
                         NSShadowAttributeName: shadow };
     } else {
-        NSFont *font = self.font ?: [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]];
+        NSFont *defaultFont = [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]];
+        NSFont *font = self.font ?: defaultFont;
         font = [[NSFontManager sharedFontManager] fontWithFamily:font.familyName
                                                           traits:NSBoldFontMask
                                                           weight:0
                                                             size:font.pointSize];
-        attributes = @{ NSFontAttributeName: font,
-                        NSForegroundColorAttributeName: fgColor };
+        attributes = @{ NSFontAttributeName: font ?: defaultFont,
+                        NSForegroundColorAttributeName: fgColor ?: [NSColor colorWithDisplayP3Red:1 green:1 blue:1 alpha:1] };
     }
 
     return attributes;
