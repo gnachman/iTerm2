@@ -113,7 +113,7 @@ armopenssl: force
 	cd submodules/openssl && make clean && make distclean || echo make failed
 	cd submodules/openssl && ./Configure darwin64-arm64-cc no-shared -fPIC -mmacosx-version-min=10.15 -Wl,-ld_classic
 	echo Begin building armopenssl
-	cd submodules/openssl && $(MAKE) -j16
+	cd submodules/openssl && $(MAKE)
 	rm -rf submodules/openssl/build-arm
 	mkdir submodules/openssl/build-arm
 	cp submodules/openssl/*.a submodules/openssl/build-arm
@@ -123,7 +123,7 @@ x86openssl: force
 	cd submodules/openssl && make clean && make distclean || echo make failed
 	cd submodules/openssl && ./Configure darwin64-x86_64-cc no-shared -fPIC -mmacosx-version-min=10.15 -Wl,-ld_classic
 	echo Begin building x86openssl
-	cd submodules/openssl && $(MAKE) -j16
+	cd submodules/openssl && $(MAKE)
 	rm -rf submodules/openssl/build-x86
 	mkdir submodules/openssl/build-x86
 	cp submodules/openssl/*.a submodules/openssl/build-x86
@@ -152,14 +152,12 @@ armlibssh2: force
 	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
 	cd submodules/libssh2/build_arm64 && $(CMAKE) -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 .. && $(MAKE) libssh2_static
 
-fatlibssh2: force
+fatlibssh2: force fatopenssl
 	echo Begin building fatlibssh2
-	$(MAKE) fatopenssl
 	$(MAKE) x86libssh2
 	$(MAKE) armlibssh2
 	cd submodules/libssh2 && lipo -create -output libssh2.a build_arm64/src/libssh2.a build_x86_64/src/libssh2.a
 	cp submodules/libssh2/libssh2.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/libssh2.a
-	cp submodules/openssl/libcrypto.a submodules/openssl/libssl.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/
 
 CoreParse: force
 	rm -rf ThirdParty/CoreParse.framework
@@ -191,7 +189,7 @@ paranoidlibssh2: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibssh2
 
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
-deps: force fatlibsixel fatopenssl fatlibssh2 CoreParse NMSSH bindeps libgit2 sparkle
+deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle
 
 DepsIfNeeded: force
 	tools/rebuild-deps-if-needed
