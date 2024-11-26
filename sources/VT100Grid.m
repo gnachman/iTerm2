@@ -2350,6 +2350,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 - (iTermBidiDisplayInfo *)bidiInfoForLine:(int)line {
+    if (line  < 0 || line >= _bidiInfo.count) {
+        return nil;
+    }
     return [_bidiInfo[line] nilIfNull];
 }
 
