@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermDoubleWidthCharacterCache.h"
 #import "iTermMetadata.h"
 #import "iTermPromise.h"
 
@@ -19,18 +20,12 @@ typedef struct {
     int number_of_wrapped_lines;
     int width_for_number_of_wrapped_lines;
 
-    // Remembers the offsets at which double-width characters that are wrapped
-    // to the next line occur for a pane of width
-    // width_for_double_width_characters_cache.
-    // This is actually NSMutableIndexSet but to avoid race conditions we expose it as NSIndexSet.
-    NSIndexSet *_Nullable double_width_characters;
+    iTermDoubleWidthCharacterCache *_Nullable doubleWidthCharacters;
     iTermBidiDisplayInfo *_Nullable bidi_display_info;
-    int width_for_double_width_characters_cache;
 } LineBlockMetadata;
 
 typedef struct {
     LineBlockMetadata *metadata;
-    NSMutableIndexSet * _Nullable mutableDoubleWidthCharacters;
     iTermBidiDisplayInfo *_Nullable mutableBidiDisplayInfo;
 } LineBlockMutableMetadata;
 
@@ -51,7 +46,6 @@ NS_INLINE LineBlockMutableMetadata iTermLineBlockMetadataProvideGetMutable(iTerm
     }
     return (LineBlockMutableMetadata) {
         .metadata = provider._metadata,
-        .mutableDoubleWidthCharacters = (NSMutableIndexSet *) provider._metadata->double_width_characters,
         .mutableBidiDisplayInfo = provider._metadata->bidi_display_info,
     };
 }

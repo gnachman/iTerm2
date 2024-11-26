@@ -352,23 +352,9 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
 
 - (void)sanityCheckmetadataCacheForRawLine:(int)i {
     const LineBlockMetadata *metadata = [_metadataArray metadataAtIndex:i];
-    const int width = metadata->width_for_double_width_characters_cache;
-    if (width < 2) {
-        return;
-    }
-
     [self sanityCheckBidiDisplayInfoForRawLine:i];
-    
-    {
-        NSIndexSet *actual = [metadata->double_width_characters copy];
-        if (!actual) {
-            return;
-        }
-        NSIndexSet *expected = [self doubleWidthCharacterCacheWithStartingOffset:i > 0 ? cumulative_line_lengths[i - 1] : 0
-                                                                          length:[self lengthOfRawLine:i]
-                                                                           width:width];
-        ITAssertWithMessage([actual isEqualToIndexSet:expected], @"actual=%@ expected=%@", actual, expected);
-    }
+    [metadata->doubleWidthCharacters sanityCheckWithCharacters:_characterBuffer.pointer + _startOffset + (i > 0 ? cumulative_line_lengths[i - 1] : 0)
+                                                        length:[self lengthOfRawLine:i]];
 }
 
 - (NSString *)description {
@@ -931,59 +917,10 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                                              length:(int)length
                                               width:(int)width {
     assert(gEnableDoubleWidthCharacterLineCache);
-    NSMutableIndexSet *indexSet = [[NSMutableIndexSet alloc] init];
-    mutableMetadata.metadata->double_width_characters = indexSet;
-    mutableMetadata.metadata->width_for_double_width_characters_cache = width;
-
-    if (width < 2) {
-        return;
-    }
-    int lines = 0;
-    int i = 0;
-    const screen_char_t *p = _characterBuffer.pointer + _startOffset + startingOffset;
-
-    while (i + width < length) {
-        // Advance i to the start of the next line
-        i += width;
-        ++lines;
-        screen_char_t c;
-        c = p[i];
-        if (ScreenCharIsDWC_RIGHT(c)) {
-            // Oops, the line starts with the second half of a double-width
-            // character. Wrap the last character of the previous line on to
-            // this line.
-            i--;
-            [indexSet addIndex:lines];
-        }
-    }
-}
-
-- (NSIndexSet *)doubleWidthCharacterCacheWithStartingOffset:(int)startingOffset
-                                                     length:(int)length
-                                                      width:(int)width {
-    if (width < 2) {
-        return nil;
-    }
-    NSMutableIndexSet *result = [[NSMutableIndexSet alloc] init];
-    int lines = 0;
-    int i = 0;
-    const screen_char_t *p = _characterBuffer.pointer + _startOffset + startingOffset;
-
-    while (i + width < length) {
-        // Advance i to the start of the next line
-        i += width;
-        ++lines;
-        screen_char_t c;
-        c = p[i];
-        if (ScreenCharIsDWC_RIGHT(c)) {
-            // Oops, the line starts with the second half of a double-width
-            // character. Wrap the last character of the previous line on to
-            // this line.
-            i--;
-            [result addIndex:lines];
-        }
-    }
-    return result;
+    mutableMetadata.metadata->doubleWidthCharacters =
+        [[iTermDoubleWidthCharacterCache alloc] initWithCharacters:_characterBuffer.pointer + _startOffset + startingOffset
+                                                            length:length
+                                                             width:width];
 }
 
 // startingOffset is relative to bufferStart.
@@ -997,52 +934,28 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     ITBetaAssert(n >= 0, @"Negative lines to offsetOfWrappedLineInBuffer");
     const LineBlockMetadata *metadata = iTermLineBlockMetadataProviderGetImmutable(metadataProvider);
     if (_mayHaveDoubleWidthCharacter) {
-        if (!metadata->double_width_characters ||
-            metadata->width_for_double_width_characters_cache != width) {
+        if (![metadata->doubleWidthCharacters validForWidth:width length:length]) {
             [self populateDoubleWidthCharacterCacheInMetadata:iTermLineBlockMetadataProvideGetMutable(metadataProvider)
                                                startingOffset:startingOffset
                                                        length:length
                                                         width:width];
         }
-
-        __block int lines = 0;
-        __block int i = 0;
-        __block NSUInteger lastIndex = 0;
-        [metadata->double_width_characters enumerateIndexesInRange:NSMakeRange(0, MAX(0, n + 1))
-                                                           options:0
-                                                        usingBlock:^(NSUInteger indexOfLineThatWouldStartWithRightHalf, BOOL * _Nonnull stop) {
-            int numberOfLines = indexOfLineThatWouldStartWithRightHalf - lastIndex;
-            lines += numberOfLines;
-            i += width * numberOfLines;
-            i--;
-            lastIndex = indexOfLineThatWouldStartWithRightHalf;
-        }];
-        ITAssertWithMessage(i <= length, @"[1] i=%@ exceeds length=%@, n=%@, width=%@, cache=%@",
+        int lines = 0;
+        const int i = [metadata->doubleWidthCharacters offsetForWrappedLine:n totalLines:&lines];
+        ITAssertWithMessage(i <= length, @"[2] i=%@ exceeds length=%@, n=%@, width=%@, lines=%@, bufferStartOffset=%@, startingOffset=%@, metadata_.width_for_number_of_wrapped_lines=%@, metadata->number_of_wrapped_lines=%@, numberOfFullLinesCache=%@, indexSet=%@, debugInfo=%@ clls=%@",
                             @(i),
                             @(length),
                             @(n),
                             @(width),
-                            metadata->double_width_characters);
-        if (lines < n) {
-            i += (n - lines) * width;
-            if (i > length) {
-                const LineBlockMetadata *metadata = iTermLineBlockMetadataProviderGetImmutable(metadataProvider);
-                ITAssertWithMessage(i <= length, @"[2] i=%@ exceeds length=%@, n=%@, width=%@, lines=%@, bufferStartOffset=%@, startingOffset=%@, metadata_.width_for_number_of_wrapped_lines=%@, metadata->number_of_wrapped_lines=%@, numberOfFullLinesCache=%@, double_width_characters=%@, debugInfo=%@ clls=%@",
-                                    @(i),
-                                    @(length),
-                                    @(n),
-                                    @(width),
-                                    @(lines),
-                                    @(self.bufferStartOffset),
-                                    @(startingOffset),
-                                    @(metadata ? metadata->width_for_number_of_wrapped_lines : 0xdeadbeef),
-                                    @(metadata ? metadata->number_of_wrapped_lines : 0xdeadbeef),
-                                    [self dumpNumberOfFullLinesCache],
-                                    metadata->double_width_characters,
-                                    _debugInfo ? _debugInfo() : @"n/a",
-                                    [self dumpCumulativeLineLengths]);
-            }
-        }
+                            @(lines),
+                            @(self.bufferStartOffset),
+                            @(startingOffset),
+                            @(metadata ? metadata->width_for_number_of_wrapped_lines : 0xdeadbeef),
+                            @(metadata ? metadata->number_of_wrapped_lines : 0xdeadbeef),
+                            [self dumpNumberOfFullLinesCache],
+                            metadata->doubleWidthCharacters.indexSet,
+                            _debugInfo ? _debugInfo() : @"n/a",
+                            [self dumpCumulativeLineLengths]);
         return i;
     } else {
         ITAssertWithMessage(n * width <= length, @"[3] n=%@ * width=%@ < length=%@", @(n), @(width), @(length));

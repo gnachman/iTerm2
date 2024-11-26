@@ -108,9 +108,8 @@
         destination->number_of_wrapped_lines = 0;
         destination->width_for_number_of_wrapped_lines = 0;
         if (_useDWCCache) {
-            destination->double_width_characters = nil;
+            destination->doubleWidthCharacters = nil;
         }
-        destination->width_for_double_width_characters_cache = 0;
         destination->bidi_display_info = value->bidi_display_info;
     }
 
@@ -123,7 +122,7 @@
     }
     if (_useDWCCache) {
         for (int i = 0; i < _numEntries; i++) {
-            _array[i].double_width_characters = nil;
+            _array[i].doubleWidthCharacters = nil;
             _array[i].bidi_display_info = nil;
         }
     }
@@ -230,7 +229,7 @@
                       eaIndex);
     _guts->_array[i].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
-        _guts->_array[i].double_width_characters = nil;
+        _guts->_array[i].doubleWidthCharacters = nil;
     }
     // Search forwards for the end-of-metadata delimiter. Additional LineBlockMetadata fields will be found there, if any.
     while (j < components.count && ![@[] isEqual:components[j]]) {
@@ -330,9 +329,8 @@
     destination->number_of_wrapped_lines = 0;
     destination->width_for_number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
-        destination->double_width_characters = nil;
+        destination->doubleWidthCharacters = nil;
     }
-    destination->width_for_double_width_characters_cache = 0;
     destination->bidi_display_info = value->bidi_display_info;
 }
 
@@ -365,7 +363,7 @@
     _guts->_array[_guts->_numEntries - 1].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
         // TODO: Would be nice to add on to the index set instead of deleting it.
-        _guts->_array[_guts->_numEntries - 1].double_width_characters = nil;
+        _guts->_array[_guts->_numEntries - 1].doubleWidthCharacters = nil;
     }
     _guts->_array[_guts->_numEntries - 1].bidi_display_info = nil;
     return &_guts->_array[_guts->_numEntries - 1].lineMetadata;
@@ -397,7 +395,7 @@
     _guts->_numEntries -= 1;
     _guts->_array[_guts->_numEntries].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
-        _guts->_array[_guts->_numEntries].double_width_characters = nil;
+        _guts->_array[_guts->_numEntries].doubleWidthCharacters = nil;
         iTermMetadataSetExternalAttributes(&_guts->_array[_guts->_numEntries].lineMetadata, nil);
     }
     _guts->_array[_guts->_numEntries].bidi_display_info = nil;
@@ -410,7 +408,7 @@
     [self willMutate];
     _guts->_array[_guts->_numEntries - 1].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
-        _guts->_array[_guts->_numEntries - 1].double_width_characters = nil;
+        _guts->_array[_guts->_numEntries - 1].doubleWidthCharacters = nil;
     }
     _guts->_array[_guts->_numEntries - 1].bidi_display_info = nil;
 }
@@ -461,7 +459,7 @@
         _guts->_array[first].width_for_number_of_wrapped_lines = 0;
         _guts->_array[first].number_of_wrapped_lines = 0;
         if (_guts->_useDWCCache) {
-            _guts->_array[first].double_width_characters = nil;
+            _guts->_array[first].doubleWidthCharacters = nil;
         }
         _guts->_array[first].bidi_display_info = nil;
         iTermMetadataSetExternalAttributes(&_guts->_array[first].lineMetadata, nil);
@@ -475,7 +473,7 @@
     [self willMutate];
     for (int i = 0; i < _guts->_numEntries; i++) {
         iTermMetadataSetExternalAttributes(&_guts->_array[i].lineMetadata, nil);
-        _guts->_array[i].double_width_characters = nil;
+        _guts->_array[i].doubleWidthCharacters = nil;
         _guts->_array[i].bidi_display_info = nil;
     }
     _guts->_numEntries = 0;
@@ -483,3 +481,4 @@
 }
 
 @end
+
