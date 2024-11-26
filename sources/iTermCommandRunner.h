@@ -7,8 +7,10 @@
 
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @protocol iTermCommandRunner<NSObject>
-@property (nonatomic, copy) void (^completion)(int);
+@property (nonatomic, copy,  nullable) void (^completion)(int);
 - (void)run;
 @end
 
@@ -17,18 +19,18 @@
 @property (nonatomic, copy) NSString *command;
 @property (nonatomic, copy) NSArray<NSString *> *arguments;
 @property (nonatomic, copy) NSString *currentDirectoryPath;
-@property (nonatomic, copy) void (^completion)(int);
+@property (nonatomic, copy, nullable) void (^completion)(int);
 // Call the completion block after you're completely done processing the input.
 // This gives backpressure to the background process.
-@property (nonatomic, copy) void (^outputHandler)(NSData *, void (^)(void));
-@property (nonatomic, copy) NSDictionary<NSString *, NSString *> *environment;
-@property (nonatomic, strong) dispatch_queue_t callbackQueue;
+@property (nonatomic, copy, nullable) void (^outputHandler)(NSData * _Nullable, void (^)(void));
+@property (nonatomic, copy, nullable) NSDictionary<NSString *, NSString *> *environment;
+@property (nonatomic, strong, nullable) dispatch_queue_t callbackQueue;
 
 + (void)unzipURL:(NSURL *)zipURL
    withArguments:(NSArray<NSString *> *)arguments
      destination:(NSString *)destination
    callbackQueue:(dispatch_queue_t)callbackQueue
-      completion:(void (^)(NSError *))completion;
+      completion:(void (^)(NSError * _Nullable))completion;
 
 + (void)zipURLs:(NSArray<NSURL *> *)URLs
       arguments:(NSArray<NSString *> *)arguments
@@ -44,7 +46,8 @@ callbackQueue:(dispatch_queue_t)callbackQueue
 
 - (void)run;
 - (void)runWithTimeout:(NSTimeInterval)timeout;
-- (void)write:(NSData *)data completion:(void (^)(size_t, int))completion;
+- (int)blockingRun;
+- (void)write:(NSData *)data completion:(void (^ _Nullable)(size_t, int))completion;
 - (void)terminate;
 
 @end
@@ -53,8 +56,8 @@ callbackQueue:(dispatch_queue_t)callbackQueue
 
 // Saves all data read into output.
 @interface iTermBufferedCommandRunner : iTermCommandRunner
-@property (nonatomic, readonly) NSData *output;
-@property (nonatomic, strong) NSNumber *maximumOutputSize;
+@property (nonatomic, readonly, nullable) NSData *output;
+@property (nonatomic, strong, nullable) NSNumber *maximumOutputSize;
 @property (nonatomic, readonly) BOOL truncated;
 
 + (void)runCommandWithPath:(NSString *)path
@@ -63,3 +66,4 @@ callbackQueue:(dispatch_queue_t)callbackQueue
 
 @end
 
+NS_ASSUME_NONNULL_END

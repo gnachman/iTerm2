@@ -136,6 +136,20 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
     });
 }
 
+- (int)blockingRun {
+    _callbackQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    __block int rc = -1;
+    self.completion = ^(int code){
+        rc = code;
+        dispatch_group_leave(group);
+    };
+    [self run];
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    return rc;
+}
+
 - (void)runWithTimeout:(NSTimeInterval)timeout {
     if (![self launchTask]) {
         return;

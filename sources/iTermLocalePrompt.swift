@@ -49,31 +49,16 @@ class iTermLocalePrompt: NSObject {
 @objc
 extension NSPopUpButton {
     private static let validLocales: [String] = {
-        let task = Process()
-        task.launchPath = "/usr/bin/locale"
-        task.arguments = ["-a"]
-        let output = Pipe()
-        task.standardOutput = output
-        task.standardError = output
-        do {
-            try ObjC.catching {
-                task.launch()
-            }
-        } catch {
-            DLog("locale -a failed with \(error)")
+        let runner = iTermBufferedCommandRunner(command: "/usr/bin/locale",
+                                                withArguments: [ "-a" ],
+                                                path: "/")
+        runner.maximumOutputSize = NSNumber(value: 1024 * 1024)
+        let rc = runner.blockingRun()
+        if rc != 0 {
+            DLog("locale -a failed with return code \(rc)")
             return []
         }
-        var data = Data()
-        let handle = output.fileHandleForReading
-        while true {
-            let chunk = handle.availableData
-            if chunk.count > 0 {
-                data.append(chunk)
-            } else {
-                break
-            }
-        }
-        task.waitUntilExit()
+        var data = runner.output ?? Data()
         return (String(data: data, encoding: .utf8) ?? "").components(separatedBy: "\n").filter { !$0.isEmpty }
     }()
 
