@@ -16,6 +16,7 @@ gDisconnectCallbacks = []
 try:
   import websockets.legacy.client
   websockets_client = websockets.legacy.client
+  from websockets.legacy.client import connect
 except:
   websockets_client = websockets.client
 
@@ -361,7 +362,7 @@ class Connection:
 
     def _get_tcp_connect_coro(self):
         """Legacy: connect with tcp socket."""
-        return websockets.connect(_uri(),
+        return connect(_uri(),
                                         ping_interval=None,
                                         extra_headers=_headers(),
                                         subprotocols=_subprotocols())
