@@ -266,9 +266,11 @@
     [_boundHostsTableView reloadData];
 
     NSMutableArray *temp = [[self boundHosts] mutableCopy];
-    [temp removeObjectAtIndex:rowIndex];
-    [self setObject:temp forKey:KEY_BOUND_HOSTS];
-    [_boundHostsTableView reloadData];
+    if (rowIndex >= 0 && rowIndex < temp.count) {
+        [temp removeObjectAtIndex:rowIndex];
+        [self setObject:temp forKey:KEY_BOUND_HOSTS];
+        [_boundHostsTableView reloadData];
+    }
 }
 
 - (void)removeNamelessHosts {
