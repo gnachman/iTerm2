@@ -16,8 +16,10 @@ gDisconnectCallbacks = []
 try:
   import websockets.legacy.client
   websockets_client = websockets.legacy.client
+  from websockets.legacy.client import connect as websockets_connect
 except:
   websockets_client = websockets.client
+  from websockets import connect as websockets_connect
 
 import iterm2.api_pb2
 from iterm2._version import __version__
@@ -361,7 +363,7 @@ class Connection:
 
     def _get_tcp_connect_coro(self):
         """Legacy: connect with tcp socket."""
-        return websockets.connect(_uri(),
+        return websockets_connect(_uri(),
                                         ping_interval=None,
                                         extra_headers=_headers(),
                                         subprotocols=_subprotocols())
