@@ -703,9 +703,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (void)setIsUIElement:(BOOL)uiElement {
-    if (uiElement == _isUIElement) {
-        return;
-    }
+    DLog(@"setIsUIElement:%@, _isUIElement=%@\n%@", @(uiElement), @(_isUIElement), [NSThread callStackSymbols]);
     _isUIElement = uiElement;
 
     ProcessSerialNumber psn = { 0, kCurrentProcess };

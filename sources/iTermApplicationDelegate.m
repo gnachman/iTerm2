@@ -1430,6 +1430,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)processTypeDidChange:(NSNotification *)notification {
+    DLog(@"%@", notification);
     [self updateProcessType];
 }
 
@@ -2577,11 +2578,13 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (void)updateProcessType {
     BOOL enableLSUI = [iTermPreferences boolForKey:kPreferenceKeyUIElement];
+    DLog(@"settings has %@", @(enableLSUI));
 
     if ([iTermPreferences boolForKey:kPreferenceKeyUIElementRequiresHotkeys]) {
         const BOOL onlyHotKeyWindowsOpen = [self.terminals allWithBlock:^BOOL(PseudoTerminal *term) { return term.isHotKeyWindow; }];
 
         enableLSUI = enableLSUI && onlyHotKeyWindowsOpen;
+        DLog(@"onlyHotKeyWindowsOpen=%@ enableLSUI=%@", @(onlyHotKeyWindowsOpen), @(enableLSUI));
     }
     
     [[iTermApplication sharedApplication] setIsUIElement:enableLSUI];
