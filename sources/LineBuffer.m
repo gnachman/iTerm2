@@ -1206,7 +1206,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                                      wrapOnEOL:YES
                                            toX:&x
                                            toY:&y];
-            assert(x < 2000);
             if (isOk) {
                 y += yoffset;
                 [intermediate addCoordinate:VT100GridCoordMake(x, y)
