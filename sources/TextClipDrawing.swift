@@ -119,6 +119,9 @@ class TextClipDrawing: NSObject {
                                       bidiInfo: bidi)
             return sca
         }
+        guard !lines.isEmpty else {
+            return
+        }
         lines[0] = lines[0].copy(byZeroingVisibleRange: NSRange(0..<range.start.x))
         lines[lines.count - 1] = lines[lines.count - 1].copy(byZeroingVisibleRange: NSRange(range.end.x..<width))
         SavedState.perform(drawingHelper) {
