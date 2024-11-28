@@ -110,7 +110,14 @@ class TextClipDrawing: NSObject {
             return
         }
         let width = drawingHelper.gridSize.width
-        var lines = (range.start.y...range.end.y).map { i -> ScreenCharArray in
+        guard width > 0 else {
+            return
+        }
+        guard range.start.x >= 0 && range.end.x >= 0 else {
+            return
+        }
+
+        var lines = range.closedRangeForY.map { i -> ScreenCharArray in
             let line = delegate.drawingHelperLine(at: i)
             let bidi = delegate.drawingHelperBidiInfo(forLine: i)
             let sca = ScreenCharArray(copyOfLine: line,
@@ -119,11 +126,12 @@ class TextClipDrawing: NSObject {
                                       bidiInfo: bidi)
             return sca
         }
-        guard !lines.isEmpty else {
-            return
+        if let leadingRange = Range<Int32>(safeLowerBound: 0, upperBound: range.start.x) {
+            lines[0] = lines[0].copy(byZeroingVisibleRange: NSRange(leadingRange))
         }
-        lines[0] = lines[0].copy(byZeroingVisibleRange: NSRange(0..<range.start.x))
-        lines[lines.count - 1] = lines[lines.count - 1].copy(byZeroingVisibleRange: NSRange(range.end.x..<width))
+        if let trailingRange = Range<Int32>(safeLowerBound: range.end.x, upperBound: width) {
+            lines[lines.count - 1] = lines[lines.count - 1].copy(byZeroingVisibleRange: NSRange(trailingRange))
+        }
         SavedState.perform(drawingHelper) {
             let instance = TextClipDrawing(drawingHelper: drawingHelper,
                                            firstLine: range.start.y,

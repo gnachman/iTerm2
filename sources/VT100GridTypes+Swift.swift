@@ -58,3 +58,29 @@ extension VT100GridAbsCoordRange {
         VT100GridAbsCoordRangeDescription(self)
     }
 }
+
+extension VT100GridCoordRange {
+    var closedRangeForY: ClosedRange<Int32> {
+        min(start.y, end.y)...max(start.y, end.y)
+    }
+}
+
+extension ClosedRange {
+    init?(safeLowerBound lower: Bound, upperBound upper: Bound) {
+        if lower <= upper {
+            self = lower...upper
+        } else {
+            return nil
+        }
+    }
+}
+
+extension Range {
+    init?(safeLowerBound lower: Bound, upperBound upper: Bound) {
+        if lower <= upper {
+            self = lower..<upper
+        } else {
+            return nil
+        }
+    }
+}

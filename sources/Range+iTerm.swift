@@ -17,4 +17,3 @@ extension ClosedRange where Bound: Strideable, Bound.Stride: SignedInteger {
         return Swift.min(Swift.max(value, lowerBound), upperBound)
     }
 }
-
