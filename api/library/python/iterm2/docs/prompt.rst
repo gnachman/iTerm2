@@ -13,6 +13,7 @@ Prompt
    :members:
 
 .. autofunction:: iterm2.async_get_last_prompt
+.. autofunction:: iterm2.async_get_prompt_by_id
 
 
 ----
