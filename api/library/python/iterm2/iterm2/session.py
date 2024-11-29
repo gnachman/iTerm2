@@ -388,11 +388,10 @@ class Session:
                 iterm2.util.Point(0, first_line + number_of_lines)))
 
         response = await iterm2.rpc.async_get_screen_contents(
-            self.connection,
-            self.session_id,
-            coord_range,
-            None,
-            True)
+            connection=self.connection,
+            session=self.session_id,
+            windowed_coord_range=coord_range,
+            style=True)
         # pylint: disable=no-member
         if (response.get_buffer_response.status ==
                 iterm2.api_pb2.GetBufferResponse.Status.Value("OK")):
