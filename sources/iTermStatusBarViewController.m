@@ -305,7 +305,7 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [self.delegate statusBarDidUpdate];
 }
 
-- (nullable id<iTermStatusBarComponent>)componentWithIdentifier:(NSString *)identifier {
+- (nullable __kindof id<iTermStatusBarComponent>)componentWithIdentifier:(NSString *)identifier {
     return [_containerViews objectPassingTest:^BOOL(iTermStatusBarContainerView *element, NSUInteger index, BOOL *stop) {
         return [element.component.statusBarComponentIdentifier isEqual:identifier];
     }].component;
@@ -395,6 +395,10 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
 
 - (void)statusBarComponentComposerRevealComposer:(id<iTermStatusBarComponent>)component {
     [self.delegate statusBarRevealComposer];
+}
+
+- (void)statusBarComponent:(id<iTermStatusBarComponent>)component performNaturalLanguageQuery:(NSString *)query {
+    [self.delegate statusBarPerformNaturalLanguageQuery:query];
 }
 
 - (id<iTermTriggersDataSource>)statusBarComponentTriggersDataSource:(id<iTermStatusBarComponent>)component {

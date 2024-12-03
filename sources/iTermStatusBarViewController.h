@@ -48,6 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermActivityInfo)statusBarActivityInfo;
 - (void)statusBarSetFilter:(NSString * _Nullable)query;
 - (id<ProcessInfoProvider>)statusBarProcessInfoProvider;
+- (void)statusBarPerformNaturalLanguageQuery:(NSString *)query;
 
 @end
 
@@ -75,7 +76,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
 
 - (void)updateColors;
-- (nullable id<iTermStatusBarComponent>)componentWithIdentifier:(NSString *)identifier;
+- (nullable __kindof id<iTermStatusBarComponent>)componentWithIdentifier:(NSString *)identifier;
 - (nullable __kindof id<iTermStatusBarComponent>)visibleComponentWithIdentifier:(NSString *)identifier;
 
 @end

@@ -203,6 +203,10 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     assert(NO);
 }
 
+- (void)statusBarComponent:(id<iTermStatusBarComponent>)component performNaturalLanguageQuery:(NSString *)query {
+    assert(NO);
+}
+
 - (iTermActivityInfo)statusBarComponentActivityInfo:(id<iTermStatusBarComponent>)component {
     assert(NO);
 }

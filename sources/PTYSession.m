@@ -6712,14 +6712,18 @@ DLog(args); \
 - (void)compose {
     self.composerManager.isAutoComposer = self.shouldShowAutoComposer;
     if (self.currentCommand.length > 0) {
-        [self setComposerString:self.currentCommand];
+        [self setComposerString:self.currentCommand forceLarge:NO];
     }
     [self.composerManager toggle];
 }
 
-- (void)setComposerString:(NSString *)string {
+- (void)setComposerString:(NSString *)string forceLarge:(BOOL)forceLarge {
     [self sendHexCode:[iTermAdvancedSettingsModel composerClearSequence]];
-    [self.composerManager setCommand:string];
+    if (forceLarge) {
+        [self.composerManager showCommandInLargeComposer:string];
+    } else {
+        [self.composerManager placeCommandInComposer:string];
+    }
 }
 
 - (BOOL)closeComposer {
@@ -16225,10 +16229,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)textViewPerformNaturalLanguageQuery {
-    NSString *query = [self naturalLanguageQuery];
+    [self reallyPerformNaturalLanguageQuery:[self naturalLanguageQuery] completion:nil];
+}
+
+- (void)reallyPerformNaturalLanguageQuery:(NSString *)query
+                               completion:(void (^)(BOOL))completion {
     if (!query) {
         return;
     }
+    [_aiterm invalidate];
     [_aiterm release];
     __weak __typeof(self) weakSelf = self;
     _aiterm = [[AITermControllerObjC alloc] initWithQuery:query
@@ -16236,6 +16245,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                  inWindow:self.view.window
                                                completion:^(NSArray<NSString *> * _Nullable choices, NSString * _Nullable error) {
         [weakSelf handleAIChoices:choices error:error];
+        if (completion) {
+            completion(choices.count > 0 && !error);
+        }
     }];
 }
 
@@ -16296,8 +16308,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (choices.count == 0) {
         return;
     }
-    [self setComposerString:choices[0]];
-    [self.composerManager toggle];
+    [self setComposerString:choices[0] forceLarge:YES];
     DLog(@"handleAIChoices -> makeComposerFirstResponder");
     [self makeComposerFirstResponderIfAllowed];
 }
@@ -16395,8 +16406,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)textViewOpenComposer:(NSString *)string {
-    [self setComposerString:string];
-    [self.composerManager toggle];
+    [self setComposerString:string forceLarge:YES];
 }
 
 - (BOOL)textViewIsAutoComposerOpen {
@@ -17478,6 +17488,23 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     // This is called early in the appearance change process and subviews of the contentview aren't
     // up to date yet.
     return self.view.window.contentView.effectiveAppearance.it_isDark;
+}
+
+- (void)statusBarPerformNaturalLanguageQuery:(NSString *)query {
+    __weak __typeof(self) weakSelf = self;
+    [self reallyPerformNaturalLanguageQuery:query
+                                 completion:^(BOOL ok) {
+        if (ok) {
+            [weakSelf eraseStatusBarComposerTextIfEqualTo:query];
+        }
+    }];
+}
+
+- (void)eraseStatusBarComposerTextIfEqualTo:(NSString *)query {
+    NSString *current = self.composerManager.statusBarComposerContents;
+    if ([current isEqualToString:query]) {
+        [self.composerManager clearStatusBar];
+    }
 }
 
 - (BOOL)statusBarRevealComposer {

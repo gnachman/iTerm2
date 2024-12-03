@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)statusBarComposerShouldForceDarkAppearance:(iTermsStatusBarComposerViewController *)composer;
 - (void)statusBarComposerDidEndEditing:(iTermsStatusBarComposerViewController *)composer;
 - (void)statusBarComposerRevealComposer:(iTermsStatusBarComposerViewController *)composer;
+- (void)statusBarComposerPerformNaturalLanguageQuery:(iTermsStatusBarComposerViewController *)composer;
+
 @end
 
 @interface iTermsStatusBarComposerViewController : NSViewController

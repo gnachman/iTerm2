@@ -424,7 +424,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         var value: String?
     }
     private let controller: AITermController
-    private let handler: ([String]?, String?) -> ()
+    private var handler: (([String]?, String?) -> ())?
     private let ownerWindow: NSWindow
     private let query: String
     private let pleaseWait: PleaseWaitWindow
@@ -527,6 +527,12 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         }
     }
 
+    // Ensures handler will never be called.
+    @objc func invalidate() {
+        dispatchPrecondition(condition: .onQueue(.main))
+        handler = nil
+    }
+
     func aitermControllerWillSendRequest(_ sender: AITermController) {
         pleaseWait.run()
     }
@@ -534,14 +540,14 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     func aitermController(_ sender: AITermController, offerChoices choices: [String]) {
         pleaseWait.stop()
         DispatchQueue.main.async {
-            self.handler(choices, nil)
+            self.handler?(choices, nil)
         }
     }
 
     func aitermController(_ sender: AITermController, didFailWithErrorMessage errorMessage: String) {
         pleaseWait.stop()
         DispatchQueue.main.async {
-            self.handler(nil, errorMessage)
+            self.handler?(nil, errorMessage)
         }
     }
 
@@ -554,7 +560,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
             if let registration {
                 completion(registration)
             } else {
-                handler(nil, nil)
+                handler?(nil, nil)
             }
         }
     }

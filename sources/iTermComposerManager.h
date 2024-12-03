@@ -115,6 +115,10 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (void)reset;
 - (void)paste:(id)sender;
 - (void)deleteLastCharacter;
+- (void)showCommandInLargeComposer:(NSString *)command;
+- (void)placeCommandInComposer:(NSString *)command;
+- (NSString * _Nullable)statusBarComposerContents;
+- (void)clearStatusBar;
 
 @end
 

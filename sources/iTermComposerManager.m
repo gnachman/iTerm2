@@ -32,6 +32,53 @@
     _saved = [command copy];
 }
 
+// Puts the command in the existing composer. Doesn't open the dropdown if a status bar composer is present.
+- (void)placeCommandInComposer:(NSString *)command {
+    [self setCommand:command];
+    if ([self minimalComposerRevealed]) {
+        [_minimalViewController setStringValue:command];
+    } else if ([self usingStatusBar]) {
+        if (_dropDownComposerViewIsVisible) {
+            [_minimalViewController setStringValue:command];
+        } else {
+            iTermStatusBarComposerComponent *component = [self statusBarComponentIfVisible];
+            [component setStringValue:command];
+        }
+    }
+}
+
+- (iTermStatusBarComposerComponent *)statusBarComponentIfVisible {
+    iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
+    NSString *identifier = [iTermStatusBarComposerComponent statusBarComponentIdentifier];
+    return [statusBarViewController visibleComponentWithIdentifier:identifier];
+}
+
+- (iTermStatusBarComposerComponent *)statusBarComponent {
+    iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
+    NSString *identifier = [iTermStatusBarComposerComponent statusBarComponentIdentifier];
+    return [statusBarViewController componentWithIdentifier:identifier];
+}
+
+- (void)showCommandInLargeComposer:(NSString *)command {
+    [self setCommand:command];
+    if ([self minimalComposerRevealed]) {
+        // Replace command in minimal composer
+        [_minimalViewController setStringValue:command];
+    } else if ([self usingStatusBar]) {
+        if (_dropDownComposerViewIsVisible) {
+            // Replace command in minimal composer
+            [_minimalViewController setStringValue:command];
+        } else {
+            // Reveal dropdown composer view
+            [self revealMinimal];
+            [_minimalViewController setStringValue:command];
+        }
+    } else {
+        // Reveal minimal composer
+        [self toggle];
+    }
+}
+
 - (void)showOrAppendToDropdownWithString:(NSString *)string {
     if (!_dropDownComposerViewIsVisible) {
         _saved = [string copy];
@@ -88,13 +135,18 @@
     [self toggle];
 }
 
-- (void)toggle {
+- (BOOL)usingStatusBar {
     iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
-    if (statusBarViewController && [self shouldRevealStatusBarComposerInViewController:statusBarViewController]) {
+    return (statusBarViewController && [self shouldRevealStatusBarComposerInViewController:statusBarViewController]) ;
+}
+
+- (void)toggle {
+    if ([self usingStatusBar]) {
         if (_dropDownComposerViewIsVisible) {
             _saved = _minimalViewController.stringValue;
             [self dismissMinimalViewAnimated:YES];
         } else {
+            iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
             [self showComposerInStatusBar:statusBarViewController];
         }
     } else {
@@ -247,6 +299,10 @@
         return _minimalViewController.stringValue;
     }
     return _component.stringValue;
+}
+
+- (NSString *)statusBarComposerContents {
+    return [[self statusBarComponent] stringValue];
 }
 
 #pragma mark - iTermStatusBarComposerComponentDelegate
@@ -496,6 +552,10 @@
     [_minimalViewController setStringValue:@""];
     _saved = nil;
     _prefixUserData = nil;
+}
+
+- (void)clearStatusBar {
+    [[self statusBarComponent] setStringValue:@""];
 }
 
 - (void)insertText:(NSString *)string {

@@ -56,6 +56,7 @@ forInvocation:(NSString *)invocation
 - (void)statusBarRemoveTemporaryComponent:(id<iTermStatusBarComponent>)component;
 - (void)statusBarSetFilter:(NSString * _Nullable)query;
 - (id<ProcessInfoProvider> _Nullable)statusBarComponentProcessInfoProvider;
+- (void)statusBarComponent:(id<iTermStatusBarComponent>)component performNaturalLanguageQuery:(NSString *)query;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSSecureCoding, NSCopying, NSObject>
