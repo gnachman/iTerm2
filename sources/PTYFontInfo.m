@@ -15,6 +15,8 @@
 
 @implementation NSFont(PTYFontInfo)
 
+// System fonts never have ligatures and are commonly used. Don't offer ligatures for them to avoid
+// hitting the much slower ligature code paths.
 - (BOOL)it_fontIsOnLigatureBlacklist {
     static NSSet<NSString *> *blacklist;
     static dispatch_once_t onceToken;
@@ -31,6 +33,10 @@
     });
     NSString *myName = self.fontName;
     if ([myName hasPrefix:@"MenloNF"]) {
+        return NO;
+    }
+    if ([myName containsString:@"Ligaturized"]) {
+        // Exception for MonacoLigaturizedNFM. Issue 11986.
         return NO;
     }
     for (NSString *blacklistedNamePrefix in blacklist) {
