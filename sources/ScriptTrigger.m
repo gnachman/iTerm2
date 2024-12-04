@@ -31,6 +31,10 @@
     return @"Run Command…";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Run Command “%@”", self.param];
+}
+
 - (BOOL)takesParameter
 {
     return YES;

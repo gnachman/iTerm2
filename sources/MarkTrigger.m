@@ -22,6 +22,10 @@ typedef enum {
     return @"Set Mark";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Set Mark and %@ scrolling", [self shouldStopScrolling] ? @"stop" : @"continue"];
+}
+
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"";
 }

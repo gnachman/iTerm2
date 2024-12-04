@@ -18,6 +18,10 @@
     return @"Highlight Line…";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Highlight Line with %@ over %@", self.textColor.humanReadableDescription ?: @"(no color)", self.backgroundColor.humanReadableDescription ?: @"(no color)"];
+}
+
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"";
 }

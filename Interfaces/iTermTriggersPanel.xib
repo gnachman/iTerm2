@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="17701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23504" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17701"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23504"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -15,6 +15,7 @@
                 <outlet property="_partialLineColumn" destination="H06-Ge-gDS" id="2UX-gh-uge"/>
                 <outlet property="_regexColumn" destination="hKE-xP-l4d" id="XwD-KC-qFc"/>
                 <outlet property="_removeTriggerButton" destination="lql-om-mCN" id="HLz-ZZ-qqO"/>
+                <outlet property="_shareButton" destination="431-hE-c9k" id="Wqy-hY-rYJ"/>
                 <outlet property="_tableView" destination="cvg-yD-Wl1" id="luO-nT-YzO"/>
                 <outlet property="_updateProfileButton" destination="Xf9-TL-4Lo" id="18O-vP-SZq"/>
                 <outlet property="window" destination="oHh-pq-MkT" id="EaJ-db-7qT"/>
@@ -39,7 +40,7 @@
                             <rect key="frame" x="1" y="1" width="898" height="281"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="sequential" tableStyle="fullWidth" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="60R-1N-1Ti" id="cvg-yD-Wl1">
+                                <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="sequential" tableStyle="fullWidth" alternatingRowBackgroundColors="YES" columnReordering="NO" autosaveColumns="NO" headerView="60R-1N-1Ti" id="cvg-yD-Wl1">
                                     <rect key="frame" x="0.0" y="0.0" width="898" height="253"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
@@ -58,7 +59,7 @@
                                             </textFieldCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="160.6953125" minWidth="40" maxWidth="1000" id="Eb9-V8-X3M">
+                                        <tableColumn width="160.5" minWidth="40" maxWidth="1000" id="Eb9-V8-X3M">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" white="0.33333298560000002" alpha="1" colorSpace="calibratedWhite"/>
@@ -70,7 +71,7 @@
                                             </textFieldCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="265.59765625" minWidth="40" maxWidth="10000" id="czr-oB-dot">
+                                        <tableColumn width="265.5" minWidth="40" maxWidth="10000" id="czr-oB-dot">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Parameters">
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" white="0.33333298560000002" alpha="1" colorSpace="calibratedWhite"/>
@@ -144,6 +145,9 @@
                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" enabled="NO" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OrL-Oh-ED9">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+CA
+</string>
                         </buttonCell>
                         <connections>
                             <action selector="removeTrigger:" target="-2" id="Jpx-f9-aW4"/>
@@ -151,7 +155,7 @@
                         </connections>
                     </button>
                     <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lYI-3b-GBR">
-                        <rect key="frame" x="346" y="18" width="25" height="25"/>
+                        <rect key="frame" x="371" y="18" width="25" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="xZQ-vU-cgx">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -175,7 +179,7 @@ DQ
                             <action selector="closeTriggersSheet:" target="-2" id="py7-a3-2bY"/>
                         </connections>
                     </button>
-                    <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vFf-oC-juc">
+                    <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vFf-oC-juc">
                         <rect key="frame" x="17" y="343" width="62" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Triggers" id="gWO-i1-Pad">
@@ -185,7 +189,7 @@ DQ
                         </textFieldCell>
                     </textField>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rYA-8a-Y7G">
-                        <rect key="frame" x="73" y="23" width="265" height="18"/>
+                        <rect key="frame" x="98" y="23" width="265" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="check" title="Use interpolated strings for parameters" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="88E-ST-PKZ">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -206,6 +210,17 @@ DQ
                             <action selector="copyToProfile:" target="-2" id="Qdp-LS-oD3"/>
                         </connections>
                     </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="431-hE-c9k">
+                        <rect key="frame" x="68" y="17" width="24.5" height="33"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="NSShareTemplate" imagePosition="overlaps" alignment="center" imageScaling="proportionallyDown" inset="2" id="1J0-gn-Irk">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="share:" target="-2" id="YHf-mK-MRN"/>
+                        </connections>
+                    </button>
                 </subviews>
             </view>
             <accessibility identifier="triggersPanel"/>
@@ -217,7 +232,8 @@ DQ
         <userDefaultsController representsSharedInstance="YES" id="HNI-tG-eUI"/>
     </objects>
     <resources>
-        <image name="NSAddTemplate" width="14" height="13"/>
-        <image name="NSRemoveTemplate" width="14" height="4"/>
+        <image name="NSAddTemplate" width="18" height="17"/>
+        <image name="NSRemoveTemplate" width="18" height="5"/>
+        <image name="NSShareTemplate" width="19" height="23"/>
     </resources>
 </document>

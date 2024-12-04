@@ -18,6 +18,10 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
     return @"Run Coprocess…";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Run Coprocess “%@”", self.param];
+}
+
 - (BOOL)takesParameter {
     return YES;
 }

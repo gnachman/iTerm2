@@ -9,6 +9,10 @@ import Foundation
 
 @objc(iTermInjectTrigger)
 class InjectTrigger: Trigger {
+    override var description: String {
+        return "Inject Data “\(self.param ?? "")”"
+    }
+
     override static var title: String {
         return "Inject Data…"
     }

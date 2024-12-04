@@ -372,6 +372,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (BOOL)parseKittyUnicodePlaceholder:(out VT100GridCoord *)coord
                             imageMSB:(out int *)imageMSB;
 
+@property (nonatomic, readonly) NSString *it_sanitized;
+
 @end
 
 @interface NSMutableString (iTerm)

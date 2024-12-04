@@ -34,6 +34,10 @@
     return @"Post Notification…";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Post Notification “%@”", self.param];
+}
+
 - (BOOL)takesParameter {
     return YES;
 }

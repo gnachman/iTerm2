@@ -17,6 +17,10 @@
     return @"Set Title…";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Set Title to “%@”", self.param];
+}
+
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter new title";
 }

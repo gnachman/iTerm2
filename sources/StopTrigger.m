@@ -14,6 +14,10 @@
   return @"Stop Processing Triggers";
 }
 
+- (NSString *)description {
+    return [StopTrigger title];
+}
+
 - (BOOL)takesParameter {
   return NO;
 }

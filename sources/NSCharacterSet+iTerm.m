@@ -3770,4 +3770,27 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
     return characterSet;
 }
 
++ (NSCharacterSet *)it_unsafeForDisplayCharacters {
+    static dispatch_once_t onceToken;
+    static NSCharacterSet *unwantedCharacters;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *mutableCharacterSet = [NSMutableCharacterSet new];
+
+        // Add control characters (C0 and C1 controls)
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x0000, 0x0020)]; // C0
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x007F, 0x0080)]; // Delete
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x0080, 0x0020)]; // C1
+
+        // Add bidi control characters
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x202A, 0x0005)]; // LRE to PDF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x2066, 0x0004)]; // LRI to PDI
+
+        // Add zero-width and formatting characters
+        [mutableCharacterSet addCharactersInString:@"\u200B\u200C\u200D\uFEFF\u00AD\u2060\u2064"];
+
+        unwantedCharacters = mutableCharacterSet;
+    });
+    return unwantedCharacters;
+}
+
 @end

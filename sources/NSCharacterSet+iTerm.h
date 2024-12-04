@@ -41,5 +41,6 @@ extern unichar iTermMinimumDefaultEmojiPresentationCodePoint;
 + (NSCharacterSet *)rtlSmellingCodePoints;
 + (NSCharacterSet *)strongRTLCodePoints;
 + (NSCharacterSet *)strongLTRCodePoints;
++ (NSCharacterSet *)it_unsafeForDisplayCharacters;
 
 @end

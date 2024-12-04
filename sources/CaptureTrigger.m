@@ -23,6 +23,14 @@
     return @"Capture Output";
 }
 
+- (NSString *)description {
+    if ([NSString castFrom:self.param].length > 0) {
+        return [NSString stringWithFormat:@"Capture output, running “%@” on double-click", self.param];
+    } else {
+        return @"Capture Output";
+    }
+}
+
 - (BOOL)takesParameter {
     return YES;
 }

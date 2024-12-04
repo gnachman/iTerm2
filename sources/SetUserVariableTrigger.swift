@@ -57,6 +57,14 @@ class SetUserVariableTrigger: Trigger {
         return (key.removingPrefix("user."), value)
     }
 
+    override var description: String {
+        if let string = param as? String, let (name, value) = variableNameAndValue(string) {
+            return "Set User Variable “\(name)” to “\(value)”"
+        } else {
+            return "Set User Variable “\(param ?? "")”"
+        }
+    }
+
     override static var title: String {
         return "Set User Variable…"
     }

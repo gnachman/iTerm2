@@ -720,6 +720,19 @@ iTermP3Color iTermSRGBColorToP3Color(iTermSRGBColor srgb) {
     return [NSColor hexStringForDictionary:dict];
 }
 
+- (NSString *)humanReadableDescription {
+    NSDictionary *dict = [self dictionaryValue];
+    NSString *space = dict[kEncodedColorDictionaryColorSpace];
+    int red = [dict[kEncodedColorDictionaryRedComponent] doubleValue] * 255;
+    int green = [dict[kEncodedColorDictionaryGreenComponent] doubleValue] * 255;
+    int blue = [dict[kEncodedColorDictionaryBlueComponent] doubleValue] * 255;
+    if (space) {
+        return [NSString stringWithFormat:@"#%02x%02x%02x in color space “%@”", red, green, blue, space];
+    } else {
+        return [NSString stringWithFormat:@"#%02x%02x%02x", red, green, blue];
+    }
+}
+
 + (NSString *)hexStringForDictionary:(NSDictionary *)dict {
     if ([dict[kEncodedColorDictionaryColorSpace] isEqual:kEncodedColorDictionaryP3ColorSpace]) {
         int red = round([dict[kEncodedColorDictionaryRedComponent] doubleValue] * 65535);

@@ -12,6 +12,10 @@
 
 @implementation BellTrigger
 
+- (NSString *)description {
+    return @"Ring Bell";
+}
+
 + (NSString *)title
 {
     return @"Ring Bell";

@@ -20,6 +20,10 @@ enum {
     return @"Bounce Dock Icon";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Bounce dock icon %@", self.bounceType == NSCriticalRequest ? @"until focused" : @"once"];
+}
+
 - (NSString *)paramPlaceholder
 {
     return @"";

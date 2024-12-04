@@ -2810,6 +2810,43 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     return valid;
 }
 
+- (NSString *)it_sanitized {
+    NSCharacterSet *unsafe = [NSCharacterSet it_unsafeForDisplayCharacters];
+    NSMutableString *sanitized = [NSMutableString stringWithCapacity:self.length];
+
+    NSInteger startIndex = 0;
+    while (startIndex < self.length) {
+        const NSRange unsafeRange = [self rangeOfCharacterFromSet:unsafe fromIndex:startIndex];
+
+        if (unsafeRange.location == NSNotFound) {
+            // No more unsafe characters, append the rest of the string
+            [sanitized appendString:[self substringFromIndex:startIndex]];
+            break;
+        }
+
+        // Append safe portion of the string
+        if (unsafeRange.location > startIndex) {
+            [sanitized appendString:[self substringWithRange:NSMakeRange(startIndex, unsafeRange.location - startIndex)]];
+        }
+
+        // Replace unsafe character with <U+xxxx>
+        NSString *unsafeCharacter = [self substringWithRange:unsafeRange];
+        for (NSUInteger i = 0; i < unsafeCharacter.length; i++) {
+            UTF32Char character = [self longCharacterAtIndex:i];
+            if (character > 0xffff) {
+                [sanitized appendFormat:@"<U+%06X>", character];
+                i++; // Skip low surrogate
+                continue;
+            } else {
+                [sanitized appendFormat:@"<U+%04X>", character];
+            }
+        }
+
+        startIndex = NSMaxRange(unsafeRange);
+    }
+    return sanitized;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

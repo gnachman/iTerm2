@@ -1524,6 +1524,10 @@ void TurnOnDebugLoggingAutomatically(void) {
             return YES;
         }
     }
+    if ([components.path isEqualToString:@"triggers"]) {
+        [TriggerController importTriggersFromURL:url];
+        return YES;
+    }
     return NO;
 }
 

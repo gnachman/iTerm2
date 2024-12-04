@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="17132" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23504" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17132"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23504"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -32,17 +32,17 @@
                     <rect key="frame" x="0.0" y="33" width="525" height="246"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <clipView key="contentView" id="0Ig-8x-G8g">
-                        <rect key="frame" x="1" y="1" width="523" height="244"/>
+                        <rect key="frame" x="1" y="1" width="508" height="244"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" tableStyle="inset" columnReordering="NO" autosaveColumns="NO" autosaveName="KeyBingingTable" rowSizeStyle="automatic" viewBased="YES" id="ba5-LU-f2s">
-                                <rect key="frame" x="0.0" y="0.0" width="543" height="244"/>
+                                <rect key="frame" x="0.0" y="0.0" width="508" height="244"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn identifier="1" editable="NO" width="373.601" minWidth="42.10107" maxWidth="1000" id="8iu-ei-TS7">
+                                    <tableColumn identifier="1" editable="NO" width="339" minWidth="42.10107" maxWidth="1000" id="8iu-ei-TS7">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" white="0.33333299" alpha="1" colorSpace="calibratedWhite"/>
@@ -55,11 +55,11 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="lzp-l3-cWm">
-                                                <rect key="frame" x="11" y="1" width="378" height="17"/>
+                                                <rect key="frame" x="11" y="1" width="344" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
-                                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JqM-3U-nHz">
-                                                        <rect key="frame" x="0.0" y="1" width="378" height="16"/>
+                                                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JqM-3U-nHz">
+                                                        <rect key="frame" x="0.0" y="1" width="344" height="16"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="RRF-Iu-wyY">
                                                             <font key="font" usesAppearanceFont="YES"/>
@@ -87,11 +87,11 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="Zb8-8v-kJn">
-                                                <rect key="frame" x="392" y="1" width="139" height="17"/>
+                                                <rect key="frame" x="358" y="1" width="138" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
-                                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zUm-JU-Bvg">
-                                                        <rect key="frame" x="0.0" y="1" width="139" height="16"/>
+                                                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zUm-JU-Bvg">
+                                                        <rect key="frame" x="0.0" y="1" width="138" height="16"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="QdI-wp-Xjq">
                                                             <font key="font" usesAppearanceFont="YES"/>
@@ -119,7 +119,7 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                     <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="B0m-r4-UO4">
-                        <rect key="frame" x="508" y="1" width="16" height="244"/>
+                        <rect key="frame" x="509" y="1" width="15" height="244"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                     <connections>
@@ -158,7 +158,7 @@ CA
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <popUpButtonCell key="cell" type="square" title="Presets…" bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="0rv-a0-ans" id="Tmb-OS-Cqe">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="menu"/>
+                        <font key="font" metaFont="message"/>
                         <menu key="menu" title="OtherViews" id="6LM-vc-lR6">
                             <items>
                                 <menuItem title="Presets…" state="on" image="NSActionTemplate" hidden="YES" id="0rv-a0-ans">
@@ -260,8 +260,8 @@ DQ
         </window>
     </objects>
     <resources>
-        <image name="NSActionTemplate" width="17" height="15"/>
-        <image name="NSAddTemplate" width="15" height="11"/>
-        <image name="NSRemoveTemplate" width="15" height="2"/>
+        <image name="NSActionTemplate" width="20" height="20"/>
+        <image name="NSAddTemplate" width="18" height="17"/>
+        <image name="NSRemoveTemplate" width="18" height="5"/>
     </resources>
 </document>

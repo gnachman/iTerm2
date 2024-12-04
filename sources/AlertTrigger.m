@@ -26,6 +26,10 @@
     return @"Enter text to show in alert";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Show alert “%@”", self.param];
+}
+
 - (BOOL)takesParameter
 {
     return YES;

@@ -15,6 +15,10 @@
     return @"Send Text…";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Send text “%@”", self.param];
+}
+
 - (BOOL)takesParameter
 {
     return YES;

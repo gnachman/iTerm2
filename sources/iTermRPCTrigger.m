@@ -24,6 +24,10 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
     return @"Invoke Script Function";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Invoke Script Function “%@”", self.param];
+}
+
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Function call";
 }

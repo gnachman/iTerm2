@@ -28,7 +28,10 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermShellPromptTrigger.h"
 #import "MarkTrigger.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSIndexSet+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PasswordTrigger.h"
 #import "ProfileModel.h"
@@ -147,6 +150,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     IBOutlet NSButton *_removeTriggerButton;
     IBOutlet NSButton *_interpolatedStringParameters;
     IBOutlet NSButton *_updateProfileButton;
+    IBOutlet NSButton *_shareButton;
     NSArray *_cached;
 }
 
@@ -206,6 +210,11 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     _tableView.target = self;
     [self updateCopyToProfileButtonVisibility];
     [self updateUseInterpolatedStringParametersState];
+    [self updateShareButtonEnabled];
+}
+
+- (void)updateShareButtonEnabled {
+    _shareButton.enabled = _tableView.selectedRowIndexes.count > 0;
 }
 
 - (void)setDelegate:(id<TriggerDelegate>)delegate {
@@ -386,6 +395,88 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
         [_tableView reloadData];
     }
     [self updateUseInterpolatedStringParametersState];
+}
+
+- (NSString *)jsonForTriggerAtIndex:(NSInteger)i {
+    NSDictionary *dict = self.triggerDictionariesForCurrentProfile[i];
+    return [NSJSONSerialization it_jsonStringForObject:dict];
+}
+
+- (NSURL *)urlForSelectedTriggers {
+    NSArray<NSString *> *parts = [_tableView.selectedRowIndexes.it_array mapWithBlock:^id _Nullable(NSNumber *indexNumber) {
+        return [self jsonForTriggerAtIndex:indexNumber.integerValue];
+    }];
+    NSURLComponents *components = [[NSURLComponents alloc] init];
+    components.scheme = @"iterm2";
+    components.path = @"triggers";
+    components.queryItems = [parts mapWithBlock:^id _Nullable(NSString *part) {
+        return [[NSURLQueryItem alloc] initWithName:part value:nil];
+    }];
+    return components.URL;
+}
+
++ (void)importTriggersFromURL:(NSURL *)url {
+    NSURLComponents *components = [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
+    NSArray<Trigger *> *triggers = [components.queryItems mapWithBlock:^id _Nullable(NSURLQueryItem *item) {
+        if (item.value) {
+            return nil;
+        }
+        NSString *json = item.name;
+        NSDictionary *dict = [NSDictionary castFrom:[NSJSONSerialization it_objectForJsonString:json]];
+        if (!dict) {
+            return nil;
+        }
+        return [Trigger triggerFromUntrustedDict:dict];
+    }];
+    NSArray<NSString *> *guids = [self guidsForProfilesToImportTriggersInto:triggers];
+    [guids enumerateObjectsUsingBlock:^(NSString *guid, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self addTriggers:triggers toProfileWithGUID:guid];
+    }];
+}
+
++ (NSString *)importDescriptionForTrigger:(Trigger *)trigger {
+    return [NSString stringWithFormat:@"On “%@”, %@%@",
+            [trigger.regex it_sanitized],
+            [trigger.description it_sanitized],
+            trigger.partialLine ? @"  instantly" : @""];
+}
+
++ (NSArray<NSString *> *)guidsForProfilesToImportTriggersInto:(NSArray<Trigger *> *)triggers {
+    NSAlert *alert = [[NSAlert alloc] init];
+    NSArray<NSString *> *descriptions = [triggers mapWithBlock:^id _Nullable(Trigger *trigger) {
+        return [@"• " stringByAppendingString:[self importDescriptionForTrigger:trigger]];
+    }];
+    NSString *joined = [descriptions componentsJoinedByString:@"\n"];
+    NSString *message = [NSString stringWithFormat:@"Select the profiles into which these triggers should be imported:\n\n%@", joined];
+    [alert setMessageText:message];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    ProfileListView *profiles = [[ProfileListView alloc] initWithFrame:NSMakeRect(0, 0, 300, 300)];
+    [profiles disableArrowHandler];
+    [profiles allowMultipleSelections];
+
+    alert.accessoryView = profiles;
+
+    const NSInteger button = [alert runModal];
+    if (button == NSAlertFirstButtonReturn) {
+        return profiles.selectedGuids.allObjects;
+    }
+    return nil;
+}
+
++ (void)addTriggers:(NSArray<Trigger *> *)triggers toProfileWithGUID:(NSString *)guid {
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    if (!profile) {
+        return;
+    }
+    MutableProfile *mutableProfile = [profile mutableCopy];
+    NSArray *existing = profile[KEY_TRIGGERS] ?: @[];
+    NSArray *updated = [existing arrayByAddingObjectsFromArray:[triggers mapWithBlock:^id _Nullable(Trigger *trigger) {
+        return trigger.dictionaryValue;
+    }]];
+    mutableProfile[KEY_TRIGGERS] = updated;
+    [[ProfileModel sharedInstance] setObject:updated forKey:KEY_TRIGGERS inBookmark:profile];
 }
 
 #pragma mark - NSTableViewDataSource
@@ -706,6 +797,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
     self.hasSelection = [_tableView numberOfSelectedRows] > 0;
     _removeTriggerButton.enabled = self.hasSelection;
+    [self updateShareButtonEnabled];
 }
 
 #pragma mark NSWindowDelegate
@@ -720,6 +812,25 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 #pragma mark - Actions
 
+- (IBAction)share:(id)sender {
+    const NSPoint windowPoint = [[NSApp currentEvent] locationInWindow];
+    const NSPoint screenPoint = [[[NSApp currentEvent] window] convertPointToScreen:windowPoint];
+
+    iTermSimpleContextMenu *menu = [[iTermSimpleContextMenu alloc] init];
+    NSURL *url = [self urlForSelectedTriggers];
+    [menu addItemWithTitle:@"Copy Trigger as URL to Clipboard" action:^{
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        [pasteboard clearContents];
+        NSArray *objects = @[ url, url.absoluteString ];
+        [pasteboard writeObjects:objects];
+        [ToastWindowController showToastWithMessage:@"Copied"
+                                           duration:1
+                            topLeftScreenCoordinate:screenPoint
+                                          pointSize:12];
+    }];
+    [menu showInView:_tableView forEvent:[NSApp currentEvent]];
+}
+
 - (IBAction)addTrigger:(id)sender {
     [self setTriggerDictionary:[self defaultTriggerDictionary] forRow:-1 reloadData:YES];
     [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:_tableView.numberOfRows - 1]
@@ -727,13 +838,21 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 }
 
 - (IBAction)removeTrigger:(id)sender {
-    if (_tableView.selectedRow < 0) {
+    if (_tableView.selectedRowIndexes.count == 0) {
         XLog(@"This shouldn't happen: you pressed the button to remove a trigger but no row is selected");
         return;
     }
-    [self setTriggerDictionary:nil forRow:[_tableView selectedRow] reloadData:YES];
+    NSIndexSet *indexes = [_tableView.selectedRowIndexes copy];
+    // Stop editing
+    [_tableView reloadData];
+
+    NSMutableArray *triggerDictionaries = [[self triggerDictionariesForCurrentProfile] mutableCopy];
+    [triggerDictionaries removeObjectsAtIndexes:indexes];
+    [_delegate triggerChanged:self newValue:triggerDictionaries];
+    [_tableView reloadData];
     self.hasSelection = [_tableView numberOfSelectedRows] > 0;
     _removeTriggerButton.enabled = self.hasSelection;
+    [self updateShareButtonEnabled];
 }
 
 - (IBAction)toggleUseInterpolatedStrings:(id)sender {

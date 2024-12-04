@@ -117,6 +117,7 @@ extern NSString * const kTriggerDisabledKey;
 @property (nonatomic, readonly) BOOL detectsPrompt;
 + (nullable NSSet<NSString *> *)synonyms;
 + (nullable Trigger *)triggerFromDict:(NSDictionary *)dict;
++ (nullable Trigger *)triggerFromUntrustedDict:(NSDictionary *)dict;
 
 // Subclasses should implement:
 - (NSString *)title;

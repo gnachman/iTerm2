@@ -15,6 +15,10 @@
     return @"Prompt Detected";
 }
 
+- (NSString *)description {
+    return [iTermShellPromptTrigger title];
+}
+
 - (BOOL)takesParameter {
     return NO;
 }

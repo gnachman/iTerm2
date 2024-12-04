@@ -22,6 +22,14 @@ static NSString *PasswordTriggerPlaceholderString = @"Open Password Manager to U
     return @"Open Password Manager…";
 }
 
+- (NSString *)description {
+    if ([NSString castFrom:self.param].length > 0) {
+        return [NSString stringWithFormat:@"Open Password Manager to “%@”", self.param];
+    } else {
+        return @"Open Password Manager";
+    }
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {

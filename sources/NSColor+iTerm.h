@@ -151,6 +151,8 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 
 - (NSString *)hexStringPreservingColorSpace;
 
+- (NSString *)humanReadableDescription;
+
 // #rrggbb
 - (NSString *)srgbHexString;
 

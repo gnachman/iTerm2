@@ -18,6 +18,10 @@
     return @"Make Hyperlink…";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Make Hyperlink with URL “%@”", self.param];
+}
+
 - (BOOL)takesParameter {
     return YES;
 }

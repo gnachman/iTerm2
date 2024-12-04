@@ -49,6 +49,15 @@ NSString * const kTriggerDisabledKey = @"disabled";
     return trigger.dictionaryValue;
 }
 
++ (nullable Trigger *)triggerFromUntrustedDict:(NSDictionary *)dict {
+    NSString *className = [dict objectForKey:kTriggerActionKey];
+    Class class = NSClassFromString(className);
+    if (![class isSubclassOfClass:[Trigger class]] || class == [Trigger class]) {
+        return nil;
+    }
+    return [self triggerFromDict:dict];
+}
+
 + (Trigger *)triggerFromDict:(NSDictionary *)dict
 {
     NSString *className = [dict objectForKey:kTriggerActionKey];

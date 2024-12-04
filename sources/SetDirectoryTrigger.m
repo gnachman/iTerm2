@@ -16,6 +16,10 @@
   return @"Report Directory";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Report Directory as “%@”", self.param];
+}
+
 - (BOOL)takesParameter{
   return YES;
 }

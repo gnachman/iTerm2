@@ -16,6 +16,10 @@
     return @"Annotate…";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Annotate as as “%@”", self.param];
+}
+
 - (BOOL)takesParameter
 {
     return YES;

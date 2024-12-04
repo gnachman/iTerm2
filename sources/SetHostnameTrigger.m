@@ -14,6 +14,10 @@
     return @"Report User & Host";
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"Report User & Host as “%@”", self.param];
+}
+
 - (BOOL)takesParameter{
     return YES;
 }
