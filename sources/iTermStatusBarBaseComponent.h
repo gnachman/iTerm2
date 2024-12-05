@@ -25,7 +25,7 @@ extern const double iTermStatusBarBaseComponentDefaultPriority;
 @property (nonatomic, readonly, nullable) iTermVariableScope *scope;
 @property (nonatomic, readonly) NSDictionary<iTermStatusBarComponentConfigurationKey, id> *configuration;
 @property (nonatomic, readonly) NSColor *statusBarBackgroundColor;
-@property (nonatomic, readonly) NSColor *defaultTextColor;
+@property (nonatomic, readonly, nullable) NSColor *defaultTextColor;
 @property (nonatomic, readonly) iTermStatusBarAdvancedConfiguration *advancedConfiguration;
 
 + (NSString *)statusBarComponentIdentifier;

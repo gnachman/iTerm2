@@ -315,10 +315,7 @@ fileprivate extension SearchRequest {
         if let position {
             return position
         }
-        // You shouldn't be able to get here
-#if DEBUG
-        fatalError("This shouldn't happen")
-#else
+        // You can definitely get here when searching backwards because absLineRange.upperBound isn't a valid line number.
         switch direction {
         case .forwards:
             SELog("New start position is first position")
@@ -327,7 +324,6 @@ fileprivate extension SearchRequest {
             SELog("New start position is penultimate position")
             return lineBuffer.lastPosition().predecessor()
         }
-#endif
     }
 
     func startPosition(lineBuffer: LineBuffer, width: Int32, overflow: Int64) -> LineBufferPosition? {

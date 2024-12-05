@@ -22,12 +22,63 @@ class StatusBarFilterComponent: iTermStatusBarBaseComponent, iTermFilterViewCont
         if let font = advancedConfiguration.font {
             viewController.setFont(font)
         }
+        if let initialValue {
+            viewController.searchField.stringValue = initialValue
+        }
         return viewController
     }()
+
+    override static var supportsSecureCoding: Bool { true }
+    private var initialValue: String?
+
+    private enum Keys: String {
+        case searchFieldText
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        guard let obj = coder.decodeObject(forKey: Keys.searchFieldText.rawValue) else {
+            return
+        }
+        guard let string = obj as? String else {
+            return
+        }
+        initialValue = string
+    }
+    
+    required init(configuration: [iTermStatusBarComponentConfigurationKey : Any], scope: iTermVariableScope?) {
+        super.init(configuration: configuration, scope: scope)
+    }
+    
+    override func encode(with coder: NSCoder) {
+        super.encode(with: coder)
+        coder.encode(viewController.searchField.stringValue,
+                     forKey: Keys.searchFieldText.rawValue)
+    }
 
     @IBAction @objc(closeButton:) func closeButton(_ sender: Any) {
         delegate?.statusBarRemoveTemporaryComponent(self)
     }
+
+    override func statusBarComponentUpdateColors() {
+        if let color = statusBarTextColor() ?? delegate?.statusBarComponentDefaultTextColor() {
+            viewController.updateColors(textColor: color)
+        }
+    }
+
+    override func statusBarTextColor() -> NSColor? {
+        if let obj = configuration[iTermStatusBarComponentConfigurationKey.knobValues],
+           let knobValues = obj as? NSDictionary,
+           let colorObj = knobValues[iTermStatusBarSharedTextColorKey],
+           let colorDict = colorObj as? NSDictionary {
+            return colorDict.colorValue()
+        }
+        if let defaultColor = defaultTextColor {
+            return defaultColor
+        }
+        return delegate?.statusBarComponentDefaultTextColor()
+    }
+
     override func statusBarComponentMinimumWidth() -> CGFloat {
         return 125
     }
@@ -53,7 +104,11 @@ class StatusBarFilterComponent: iTermStatusBarBaseComponent, iTermFilterViewCont
     }
 
     override func statusBarComponentKnobs() -> [iTermStatusBarComponentKnob] {
-        return []
+        return [iTermStatusBarComponentKnob(labelText: "Color",
+                                            type: .color,
+                                            placeholder: nil,
+                                            defaultValue: nil,
+                                            key: iTermStatusBarSharedTextColorKey)]
     }
 
     override func statusBarComponentExemplar(withBackgroundColor backgroundColor: NSColor, textColor: NSColor) -> Any {

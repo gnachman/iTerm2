@@ -98,6 +98,7 @@ const CGFloat iTermGetStatusBarHeight(void) {
 
 - (void)updateIconIfNeeded {
     NSImage *icon = _component.statusBarComponentIcon;
+    [_component statusBarComponentUpdateColors];
     if (icon == _iconImageView.image) {
         return;
     }

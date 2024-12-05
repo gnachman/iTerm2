@@ -594,7 +594,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
     NSDictionary *knobs = @{ iTermStatusBarPriorityKey: @(INFINITY),
                              iTermStatusBarFilterComponent.isTemporaryKey: @YES };
-    NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs};
+    NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs,
+                                     iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue: self.delegate.sessionViewStatusBarAdvancedConfigurationDictionary};
     iTermStatusBarFilterComponent *component =
     [[iTermStatusBarFilterComponent alloc] initWithConfiguration:configuration
                                                            scope:self.delegate.sessionViewScope];
@@ -1818,6 +1819,11 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     } else {
         _findDriverType = iTermSessionViewFindDriverDropDown;
     }
+}
+
+- (void)takeStatusBarViewFrom:(SessionView *)donor {
+    _genericStatusBarContainer.statusBarViewController = donor->_genericStatusBarContainer.statusBarViewController;
+    donor->_genericStatusBarContainer.statusBarViewController = nil;
 }
 
 - (void)setOrdinal:(int)ordinal {

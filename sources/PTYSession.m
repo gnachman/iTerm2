@@ -1136,6 +1136,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _statusBarViewController = donorSession->_statusBarViewController;
     _statusBarViewController.delegate = self;
 
+    [_view takeStatusBarViewFrom:donorSession.view];
     donorSession->_statusBarViewController = nil;
 }
 
@@ -4902,6 +4903,11 @@ ITERM_WEAKLY_REFERENCEABLE
                                      image:[self tabGraphicForProfile:aDict]];
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
+}
+
+- (void)setStatusBarViewController:(iTermStatusBarViewController *)statusBarViewController {
+    [_statusBarViewController autorelease];
+    _statusBarViewController = [statusBarViewController retain];
 }
 
 - (void)setCursorTypeOverride:(NSNumber *)cursorTypeOverride {
@@ -16868,6 +16874,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)sessionViewUpdateComposerFrame {
     [[self composerManager] layout];
 }
+
+- (NSDictionary *)sessionViewStatusBarAdvancedConfigurationDictionary {
+    NSDictionary *layout = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT inProfile:self.profile];
+    return layout[iTermStatusBarLayoutKeyAdvancedConfiguration] ?: @{};
+}
+
 #pragma mark - iTermCoprocessDelegate
 
 - (void)coprocess:(Coprocess *)coprocess didTerminateWithErrorOutput:(NSString *)errors {

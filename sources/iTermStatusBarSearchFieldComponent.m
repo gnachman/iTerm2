@@ -82,7 +82,7 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
         }
     } else if (backgroundColor != nil &&
                view.effectiveAppearance != nil &&
-               backgroundIsDark != view.effectiveAppearance.it_isDark) {
+               backgroundIsDark != view.superview.effectiveAppearance.it_isDark) {
         view.appearance = backgroundIsDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
     } else {
         view.appearance = nil;

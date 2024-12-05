@@ -15,6 +15,7 @@ protocol MiniFilterViewControllerDelegate: AnyObject {
 @objc(iTermMiniFilterField)
 class MiniFilterField: iTermMiniSearchField {
     private var iconSet = false
+    private var iconColor: NSColor?
 
     @objc override func viewDidMoveToWindow() {
         if let searchFieldCell = self.cell as? NSSearchFieldCell,
@@ -30,8 +31,20 @@ class MiniFilterField: iTermMiniSearchField {
         cell.setButtonType(.toggle)
         let filterImage = NSImage(systemSymbolName: "line.horizontal.3.decrease.circle",
                                   accessibilityDescription: "Filter")
-        cell.image = filterImage
-        cell.alternateImage = filterImage
+        let tinted = iconColor.map { filterImage?.it_image(withTintColor: $0) } ?? filterImage
+        cell.image = tinted
+        cell.alternateImage = tinted
+    }
+
+    func setIconColor(_ color: NSColor) {
+        self.iconColor = color
+        if let image = cell?.image {
+            cell?.image = image.it_image(withTintColor: color)
+        }
+        textColor = color
+        if let placeholderString {
+            placeholderAttributedString = NSAttributedString(string: placeholderString, attributes: [.foregroundColor: color.withAlphaComponent(0.5)])
+        }
     }
 }
 
@@ -40,7 +53,7 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
     @objc var canClose = false {
         didSet { _ = self.view }
     }
-    @IBOutlet var searchField: NSSearchField!
+    @IBOutlet var searchField: MiniFilterField!
     @IBOutlet var closeButton: NSButton!
     private var timer: Timer? = nil
     weak var delegate: MiniFilterViewControllerDelegate? = nil
@@ -51,6 +64,10 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    func updateColors(textColor: NSColor) {
+        searchField.setIconColor(textColor)
     }
 
     func sizeToFit(size: NSSize) {
@@ -84,6 +101,7 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
         }
         updateSubviews()
     }
+
     private func updateSubviews() {
         let size = view.frame.size
         var searchFieldSize = searchField.frame.size

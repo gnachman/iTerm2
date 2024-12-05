@@ -150,6 +150,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
 - (NSRect)sessionViewOffscreenCommandLineFrameForView:(NSView *)view;
 - (void)sessionViewUpdateComposerFrame;
+- (NSDictionary *)sessionViewStatusBarAdvancedConfigurationDictionary;
 
 @end
 
@@ -273,6 +274,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)reallyUpdateMetalViewFrame;
 - (void)invalidateStatusBar;
 - (void)updateFindDriver;
+- (void)takeStatusBarViewFrom:(SessionView *)donor;
 
 - (void)addSubviewBelowFindView:(NSView *)aView;
 

@@ -119,6 +119,9 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
             NSStringFromClass([self class]), self, @(self.statusBarComponentPriority)];
 }
 
+- (void)statusBarComponentUpdateColors {
+}
+
 - (BOOL)statusBarComponentIsInternal {
     return NO;
 }

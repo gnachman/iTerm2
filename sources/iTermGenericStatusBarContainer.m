@@ -44,7 +44,9 @@
 }
 
 - (void)setStatusBarViewController:(iTermStatusBarViewController *)statusBarViewController {
-    [_statusBarViewController.view removeFromSuperview];
+    if ([self containsDescendant:_statusBarViewController.view]) {
+        [_statusBarViewController.view removeFromSuperview];
+    }
     _statusBarViewController = statusBarViewController;
     if (statusBarViewController) {
         [self addSubview:statusBarViewController.view];

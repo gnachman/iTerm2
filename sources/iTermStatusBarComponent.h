@@ -166,6 +166,7 @@ forInvocation:(NSString *)invocation
 - (void)statusBarComponentDidClickWithView:(NSView *)view;
 - (void)statusBarComponentMouseDownWithView:(NSView *)view;
 - (BOOL)statusBarComponentIsEmpty;
+- (void)statusBarComponentUpdateColors;
 
 @optional
 - (NSFont *)font;
