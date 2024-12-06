@@ -157,9 +157,15 @@
       <key>0xf700-0x280000</key>
       <dict>
         <key>Action</key>
-        <integer>10</integer>
+        <integer>38</integer>
+        <key>Apply Mode</key>
+        <integer>0</integer>
+        <key>Escaping</key>
+        <integer>1</integer>
         <key>Text</key>
-        <string>[A</string>
+        <string>\e\e[A</string>
+        <key>Version</key>
+        <integer>2</integer>
       </dict>
       <key>0xf701-0x220000</key>
       <dict>
@@ -185,30 +191,41 @@
       <key>0xf701-0x280000</key>
       <dict>
         <key>Action</key>
-        <integer>10</integer>
+        <integer>38</integer>
+        <key>Apply Mode</key>
+        <integer>0</integer>
+        <key>Escaping</key>
+        <integer>1</integer>
         <key>Text</key>
-        <string>[B</string>
-      </dict>
-      <key>0xf702-0x220000</key>
-      <dict>
-        <key>Action</key>
-        <integer>10</integer>
-        <key>Text</key>
-        <string>[D</string>
+        <string>\e\e[B</string>
+        <key>Version</key>
+        <integer>2</integer>
       </dict>
       <key>0xf702-0x240000</key>
       <dict>
         <key>Action</key>
         <integer>10</integer>
+        <key>Apply Mode</key>
+        <integer>0</integer>
+        <key>Escaping</key>
+        <integer>1</integer>
         <key>Text</key>
-        <string>[5D</string>
+        <string>[1;5D</string>
+        <key>Version</key>
+        <integer>2</integer>
       </dict>
       <key>0xf702-0x260000</key>
       <dict>
         <key>Action</key>
-        <integer>11</integer>
+        <integer>10</integer>
+        <key>Apply Mode</key>
+        <integer>0</integer>
+        <key>Escaping</key>
+        <integer>1</integer>
         <key>Text</key>
-        <string>0x1b 0x1b 0x5b 0x44</string>
+        <string>[D</string>
+        <key>Version</key>
+        <integer>2</integer>
       </dict>
       <key>0xf702-0x280000</key>
       <dict>
@@ -217,19 +234,18 @@
         <key>Text</key>
         <string>b</string>
       </dict>
-      <key>0xf703-0x220000</key>
-      <dict>
-        <key>Action</key>
-        <integer>10</integer>
-        <key>Text</key>
-        <string>[C</string>
-      </dict>
       <key>0xf703-0x240000</key>
       <dict>
         <key>Action</key>
         <integer>10</integer>
+        <key>Apply Mode</key>
+        <integer>0</integer>
+        <key>Escaping</key>
+        <integer>1</integer>
         <key>Text</key>
-        <string>[5C</string>
+        <string>[1;5C</string>
+        <key>Version</key>
+        <integer>2</integer>
       </dict>
       <key>0xf703-0x260000</key>
       <dict>
