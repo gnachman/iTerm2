@@ -136,6 +136,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                    relatedView:_tabStyleLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
+        [[iTermApplication sharedApplication] updateAppearance];
         [weakSelf postRefreshNotification];
         [weakSelf updateProxyIconEnabled];
     };

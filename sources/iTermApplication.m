@@ -959,5 +959,23 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     return [super runModalForWindow:window];
 }
 
+- (void)updateAppearance {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_COMPACT:
+            self.appearance = nil;
+            return;
+
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            self.appearance = [NSAppearance it_appearanceForCurrentTheme];
+            return;
+    }
+}
+
 @end
 

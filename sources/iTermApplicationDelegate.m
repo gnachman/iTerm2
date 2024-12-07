@@ -1086,6 +1086,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     DLog(@"Begin");
+    [[iTermApplication sharedApplication] updateAppearance];
     if ([iTermUserDefaults importPath]) {
         [iTerm2ImportExport finishImporting];
         assert(NO);
