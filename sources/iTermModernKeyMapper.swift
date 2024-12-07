@@ -417,7 +417,8 @@ fileprivate class ModernKeyMapperImpl {
 
     private func shouldIgnore(event: KeyEventInfo) -> Bool {
         DLog("shouldIgnore \(event)")
-        if event.modifierFlags.subtracting(.function) == event.previousFlags.subtracting(.function) {
+        if event.eventType == .flagsChanged &&
+            event.modifierFlags.subtracting(.function) == event.previousFlags.subtracting(.function) {
             DLog("only function changed")
             return true
         }
