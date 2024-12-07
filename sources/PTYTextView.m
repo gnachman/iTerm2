@@ -638,13 +638,17 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 - (BOOL)performKeyEquivalent:(NSEvent *)theEvent {
     DLog(@"performKeyEquivalent self=%@ theEvent=%@", self, theEvent);
-    if (self.window.firstResponder != self) {
-        return [super performKeyEquivalent:theEvent];
+    // I disassembled performKeyEquivalent and it just calls
+    // performKeyEquivalent on subviews. The only subviews of this view are
+    // highlight views or annotation views. This will usually return NO.
+    if ([super performKeyEquivalent:theEvent]) {
+        NSLog(@"super performed it");
+        return YES;
     }
-    NSString* unmodkeystr = [theEvent charactersIgnoringModifiers];
-    if ([unmodkeystr length] == 0) {
-        DLog(@"Calling super.performKeyEquivalent");
-        return [super performKeyEquivalent:theEvent];
+    if (self.window.firstResponder != self) {
+        // Don't let it go to the key mapper if I'm not first responder. This
+        // is probably a bug in macOS if you get here.
+        return NO;
     }
 
     if ([_keyboardHandler performKeyEquivalent:theEvent inputContext:self.inputContext]) {
@@ -664,7 +668,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         [self.window toggleFullScreen:nil];
         return YES;
     }
-    return [super performKeyEquivalent:theEvent];
+    return NO;
 }
 
 - (void)keyDown:(NSEvent *)event {

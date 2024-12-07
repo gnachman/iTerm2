@@ -33,18 +33,17 @@
     return nil;
 }
 
+// At the very least, control-shift-arrow and control-arrow need this method to
+// return YES.
+// Philosophically, PTYTextView doesn't have any key equivalents and the
+// standard key mapper can handle many kinds of keypresses. If you get here
+// it should just handle them. I don't know if it's possible to reach this code
+// when Cmd is pressed, but those keypresses are definitely none of our
+// business.
 - (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event {
-    const NSEventModifierFlags mask = (NSEventModifierFlagCommand |
-                                       NSEventModifierFlagControl |
-                                       NSEventModifierFlagShift |
-                                       NSEventModifierFlagFunction);
-    if ((event.modifierFlags & mask) == (NSEventModifierFlagControl | NSEventModifierFlagShift | NSEventModifierFlagFunction)) {
-        // control+shift+arrow takes this path. See issue 8382. Possibly other things should, too.
-        DLog(@"control|shift|function");
-        return YES;
-    }
-    DLog(@"return no");
-    return NO;
+    const BOOL cmdPressed = !!(event.modifierFlags & NSEventModifierFlagCommand);
+    DLog(@"!cmdPressed=%@", @(!cmdPressed));
+    return !cmdPressed;
 }
 
 #pragma mark - Pre-Cocoa
