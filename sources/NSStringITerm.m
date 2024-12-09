@@ -2832,11 +2832,15 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
         // Replace unsafe character with <U+xxxx>
         NSString *unsafeCharacter = [self substringWithRange:unsafeRange];
         for (NSUInteger i = 0; i < unsafeCharacter.length; i++) {
-            UTF32Char character = [self longCharacterAtIndex:i];
+            UTF32Char character = [unsafeCharacter longCharacterAtIndex:i];
             if (character > 0xffff) {
                 [sanitized appendFormat:@"<U+%06X>", character];
                 i++; // Skip low surrogate
                 continue;
+            } else if (character == 0xa) {
+                [sanitized appendString:@"\\n"];
+            } else if (character == 0x1b) {
+                [sanitized appendString:@"\\e"];
             } else {
                 [sanitized appendFormat:@"<U+%04X>", character];
             }
