@@ -15411,6 +15411,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     const BOOL dark = _screen.colorMap.darkMode;
     NSMutableDictionary *dict = [[@{ iTermAmendedColorKey(KEY_FOREGROUND_COLOR, _profile, dark): slot.text.dictionaryValue,
                                      iTermAmendedColorKey(KEY_BACKGROUND_COLOR, _profile, dark): slot.background.dictionaryValue,
+                                     iTermAmendedColorKey(KEY_MATCH_COLOR, _profile, dark): slot.background.dictionaryValue,
                                      iTermAmendedColorKey(KEY_SELECTED_TEXT_COLOR, _profile, dark): slot.selectionText.dictionaryValue,
                                      iTermAmendedColorKey(KEY_SELECTION_COLOR, _profile, dark): slot.selectionBackground.dictionaryValue } mutableCopy] autorelease];
     for (int i = 0; i < MIN(kColorMapNumberOf8BitColors, slot.indexedColors.count); i++) {
