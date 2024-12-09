@@ -26,13 +26,18 @@
     if (lineNumber == 0) {
         range.location = 0;
     } else {
-        range.location = [[_lineBreakIndexOffsets objectAtIndex:lineNumber-1] unsignedLongValue];
+        if (lineNumber - 1 < _lineBreakIndexOffsets.count) {
+            range.location = [[_lineBreakIndexOffsets objectAtIndex:lineNumber-1] unsignedLongValue];
+        } else {
+            range.location = _allText.length;
+        }
     }
     if (lineNumber >= [_lineBreakIndexOffsets count]) {
         range.length = [_allText length] - range.location;
     } else {
         range.length = [[_lineBreakIndexOffsets objectAtIndex:lineNumber] unsignedLongValue] - range.location;
     }
+    assert(NSMaxRange(range) <= self.numberOfCharacters);
     return range;
 }
 
@@ -159,7 +164,7 @@
     NSUInteger start = MIN(location1, location2);
     NSUInteger end = MIN(_allText.length, MAX(location1, location2));
 
-    return NSMakeRange(start, end - start);
+    return NSMakeRange(start, end < start ? 0 : end - start);
 }
 
 - (NSInteger)lineForIndex:(NSUInteger)theIndex {
@@ -167,7 +172,8 @@
 }
 
 - (NSRange)rangeForLine:(NSUInteger)lineNumber {
-    if (lineNumber >= [_lineBreakIndexOffsets count]) {
+    if (lineNumber > [_lineBreakIndexOffsets count]) {
+        DLog(@"rangeForLine:%@ returning NSNotFound. allText=“%@” lineBreakIndexOffsets=%@", @(lineNumber), _allText.it_sanitized, _lineBreakIndexOffsets);
         return NSMakeRange(NSNotFound, 0);
     } else {
         return [self rangeOfLine:lineNumber];
@@ -244,7 +250,12 @@
     int width = [_delegate accessibilityHelperWidth];
     unichar chars[width * kMaxParts];
     int offset = 0;
+    const int cursorY = _delegate.accessibilityHelperCursorCoord.y;
+    NSInteger offsetsCountBeforeCursor = 0;
     for (int i = 0; i < [_delegate accessibilityHelperNumberOfLines]; i++) {
+        if (i == cursorY) {
+            offsetsCountBeforeCursor = _lineBreakIndexOffsets.count;
+        }
         screen_char_t continuation;
         const screen_char_t* line = [_delegate accessibilityHelperLineAtIndex:i continuation:&continuation];
         if (!line) {
@@ -291,15 +302,19 @@
         [_lineBreakIndexOffsets addObject:[NSNumber numberWithUnsignedLong:offset]];
     }
 
-    int newlines = 0;
+    int emptyLineCount = 0;
     int i = _allText.length;
     i -= 1;
     while (i >= 0 && [_allText characterAtIndex:i] == '\n') {
-        newlines++;
+        if (_lineBreakIndexOffsets.count - emptyLineCount == offsetsCountBeforeCursor) {
+            break;
+        }
+        emptyLineCount++;
         i--;
     }
-    [_allText replaceCharactersInRange:NSMakeRange(i + 1, newlines) withString:@""];
-
+    [_allText replaceCharactersInRange:NSMakeRange(i + 1, emptyLineCount) withString:@""];
+    assert(_lineBreakIndexOffsets.count >= emptyLineCount);
+    [_lineBreakIndexOffsets removeObjectsInRange:NSMakeRange(_lineBreakIndexOffsets.count - emptyLineCount, emptyLineCount)];
     return _allText;
 }
 

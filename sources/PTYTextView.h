@@ -25,6 +25,8 @@
 #import "VT100SyncResult.h"
 #include <sys/time.h>
 
+#define AccLog DLog
+
 @class CRunStorage;
 @class iTermAction;
 @class iTermExpect;

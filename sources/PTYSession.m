@@ -11115,6 +11115,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         frame.size.height = desiredHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];  // The wrapper is always larger by VMARGIN.
         _wrapper.frame = [self safeFrameForWrapperViewFrame:frame];
 
+        AccLog(@"Post notification: row count changed (PTYSession)");
         NSAccessibilityPostNotification(_textview,
                                         NSAccessibilityRowCountChangedNotification);
         return YES;
@@ -14857,7 +14858,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 
     // Update shell integration DB.
-    DLog(@"remoteHost is %@, is local is %@", remoteHost, @(!remoteHost.isLocalhost));
+    DLog(@"remoteHost is %@, is local is %@", remoteHost, @(remoteHost.isLocalhost));
     if (pushed) {
         BOOL isSame = ([directory isEqualToString:_lastDirectory] &&
                        [remoteHost isEqualToRemoteHost:_lastRemoteHost]);
