@@ -1676,9 +1676,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             attributes[_cursorInfo.coord.x].foregroundColor.w = 1;
         }
     }
-    if (bidiInfo) {
-        CTVectorDestroy(&positions);
-    }
+    CTVectorDestroy(&positions);
 }
 
 - (BOOL)useThinStrokesWithAttributes:(iTermMetalGlyphAttributes *)attributes {
