@@ -68,6 +68,8 @@
     iTermFilesAndFolders *_paths;
     NSArray *_tokens;
     BOOL _loading;
+    NSMutableSet<NSString *> *_pendingChanges;
+    NSInteger _atomicCount;
 }
 
 + (instancetype)sharedInstance {
@@ -88,6 +90,7 @@
           ELog(@"Dynamic profiles path is nil");
           return nil;
       }
+      _pendingChanges = [NSMutableSet set];
       _events = [[SCEvents alloc] init];
       _events.notificationLatency = [iTermAdvancedSettingsModel dynamicProfilesNotificationLatency];
       _events.delegate = self;
@@ -602,6 +605,20 @@
     }];
 }
 
+- (void)performAtomically:(void (^)(void))closure {
+    _atomicCount += 1;
+    closure();
+    _atomicCount -= 1;
+    if (_atomicCount == 0) {
+        NSSet<NSString *> *guids = [_pendingChanges copy];
+        [_pendingChanges removeAllObjects];
+        for (NSString *guid in guids) {
+            DLog(@"Execute deferred change to %@", guid);
+            [self profileDidChangeWithGuid:guid];
+        }
+    }
+}
+
 #pragma mark - Notifications
 
 - (void)profileDidChange:(NSNotification *)notification {
@@ -609,7 +626,15 @@
         return;
     }
     NSString *guid = notification.object;
+    if (_atomicCount > 0) {
+        DLog(@"Defer change to %@", guid);
+        [_pendingChanges addObject:guid];
+        return;
+    }
+    [self profileDidChangeWithGuid:guid];
+}
 
+- (void)profileDidChangeWithGuid:(NSString *)guid {
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (!profile) {
         return;
@@ -623,8 +648,11 @@
     if (![[NSNumber castFrom:profile[KEY_DYNAMIC_PROFILE_REWRITABLE]] boolValue]) {
         return;
     }
-
-    [self writeModifiedProfile:[self strippedProfile:profile]
+    Profile *stripped = [self strippedProfile:profile];
+    if (!stripped) {
+        return;
+    }
+    [self writeModifiedProfile:stripped
                         toFile:profile[KEY_DYNAMIC_PROFILE_FILENAME]];
 }
 
@@ -653,6 +681,11 @@
         if (!updatedProfile[key]) {
             // Key has been removed. Don't write it to disk.
             [stripped removeObjectForKey:key];
+            continue;
+        }
+        if ([@[KEY_GUID, KEY_NAME, KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] containsObject:key]) {
+            // Always write these keys.
+            stripped[key] = updatedProfile[key];
             continue;
         }
         if ([NSObject object:[iTermProfilePreferences objectForKey:key inProfile:prototype]

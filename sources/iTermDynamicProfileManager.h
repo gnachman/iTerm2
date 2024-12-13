@@ -38,4 +38,7 @@ typedef NS_ENUM(NSUInteger, iTermDynamicProfileFileType) {
 - (NSArray *)profilesByRemovingDynamicProfiles:(NSArray *)source;
 - (void)markProfileRewritableWithGuid:(NSString *)guid;
 
+// Don't try to rewrite changes inside closure.
+- (void)performAtomically:(void (^)(void))closure;
+
 @end

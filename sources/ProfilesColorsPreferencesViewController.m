@@ -11,6 +11,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "iTermColorPresets.h"
+#import "iTermDynamicProfileManager.h"
 #import "iTermPreferenceDidChangeNotification.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSizeRememberingView.h"
@@ -227,9 +228,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         const BOOL useModes = [sender state] == NSControlStateValueOn;
-        [weakSelf useSeparateColorsDidChange:useModes];
-        // This has to be done after copying colors or else default colors might be used.
-        [weakSelf setBool:useModes forKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
+        [[iTermDynamicProfileManager sharedInstance] performAtomically:^{
+            [weakSelf useSeparateColorsDidChange:useModes];
+            // This has to be done after copying colors or else default colors might be used.
+            [weakSelf setBool:useModes forKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
+        }];
     };
 
 
