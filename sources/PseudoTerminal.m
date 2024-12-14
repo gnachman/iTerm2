@@ -5771,7 +5771,7 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"tab bar should be accessory");
         NSRect frame = _titleBarAccessoryTabBarViewController.view.superview.bounds;
         NSTitlebarAccessoryViewController *viewController = [self titleBarAccessoryTabBarViewController];
-        const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 0;
+        const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 1;
         viewController.fullScreenMinHeight = tabBarHeight;
         DLog(@"Set tabbar's fullScreenMinHeight to %@", @(tabBarHeight));
 
