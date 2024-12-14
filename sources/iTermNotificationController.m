@@ -31,14 +31,14 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermImage.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
+#import <UserNotifications/UserNotifications.h>
 
-@interface iTermNotificationController ()
-- (void)notificationWasClicked:(id)clickContext;
+@interface iTermNotificationController ()<UNUserNotificationCenterDelegate>
+- (void)notificationWasClicked:(NSDictionary *)clickContext;
 @end
 
 @implementation iTermNotificationController
@@ -55,8 +55,16 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        // Register as delegate for notification center
-        [[NSUserNotificationCenter defaultUserNotificationCenter] setDelegate:self];
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        center.delegate = self;
+
+        // Request notification authorization
+        [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge)
+                              completionHandler:^(BOOL granted, NSError * _Nullable error) {
+            if (error) {
+                DLog(@"Notification authorization error: %@", error);
+            }
+        }];
     }
     return self;
 }
@@ -66,11 +74,11 @@
 }
 
 - (void)notify:(NSString *)title withDescription:(NSString *)description {
-      [self notify:title
-        withDescription:description
-            windowIndex:-1
-               tabIndex:-1
-              viewIndex:-1];
+    [self notify:title
+  withDescription:description
+      windowIndex:-1
+         tabIndex:-1
+        viewIndex:-1];
 }
 
 - (BOOL)notify:(NSString *)title
@@ -79,31 +87,27 @@
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex {
     return [self notify:title
-             withDescription:description
-                 windowIndex:windowIndex
-                    tabIndex:tabIndex
-                   viewIndex:viewIndex
-                      sticky:NO];
+         withDescription:description
+             windowIndex:windowIndex
+                tabIndex:tabIndex
+               viewIndex:viewIndex
+                  sticky:NO];
 }
 
 - (BOOL)notifyRich:(NSString *)title
       withSubtitle:(NSString *)subtitle
    withDescription:(NSString *)description
-         withImage:(NSString *)image
+         withImage:(NSString *)imagePath
        windowIndex:(int)windowIndex
           tabIndex:(int)tabIndex
          viewIndex:(int)viewIndex {
-    DLog(@"Notify title=%@ description=%@ window=%@ tab=%@ view=%@",
-            title, description, @(windowIndex), @(tabIndex), @(viewIndex));
+    DLog(@"NotifyRich title=%@ description=%@ window=%@ tab=%@ view=%@",
+         title, description, @(windowIndex), @(tabIndex), @(viewIndex));
 
     if (description == nil) {
         DLog(@"notifyRich passed nil description.");
         return NO;
     }
-
-    // Send to NSUserDefaults directly
-    NSUserNotification *notification = [[NSUserNotification alloc] init];
-    notification.informativeText = description;
 
     NSDictionary *context = nil;
     if (windowIndex >= 0) {
@@ -111,24 +115,42 @@
                      @"tab": @(tabIndex),
                      @"view": @(viewIndex) };
     }
-    notification.userInfo = context;
 
-    if (title != nil) {
-        notification.title = title;
-    }
-    if (subtitle != nil) {
-        notification.subtitle = subtitle;
-    }
-    if (image != nil) {
-        NSData *data = [NSData dataWithContentsOfFile:image];
-        if (data != nil) {
-            notification.contentImage = [[[iTermImage imageWithCompressedData:data] images] firstObject];
+    UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+    content.title = title ?: @"";
+    content.subtitle = subtitle ?: @"";
+    content.body = description;
+    content.userInfo = context ?: @{};
+    content.sound = [iTermAdvancedSettingsModel silentUserNotifications] ? nil : [UNNotificationSound defaultSound];
+
+    // Add an image to the notification if available
+    if (imagePath) {
+        NSURL *imageURL = [NSURL fileURLWithPath:imagePath];
+        NSError *error = nil;
+        UNNotificationAttachment *attachment = [UNNotificationAttachment attachmentWithIdentifier:@"image"
+                                                                                              URL:imageURL
+                                                                                          options:nil
+                                                                                            error:&error];
+        if (!error) {
+            content.attachments = @[attachment];
+        } else {
+            DLog(@"Failed to add image to notification: %@", error);
         }
     }
-    DLog(@"Post notification %@", notification);
-    [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
 
-    return [notification isPresented];
+    UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:1 repeats:NO];
+    NSString *identifier = [NSUUID UUID].UUIDString;
+    UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:identifier
+                                                                          content:content
+                                                                          trigger:trigger];
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request
+                                                           withCompletionHandler:^(NSError * _Nullable error) {
+        if (error) {
+            DLog(@"Error posting notification: %@", error);
+        }
+    }];
+
+    return YES;
 }
 
 - (BOOL)notify:(NSString *)title
@@ -146,28 +168,50 @@
                      @"view": @(viewIndex) };
     }
 
-    // Send to NSUserDefaults directly
-    // The (BOOL)sticky parameter is ignored
-    NSUserNotification *notification = [[NSUserNotification alloc] init];
-    notification.title = title;
-    notification.informativeText = description;
-    notification.userInfo = context;
-    notification.soundName = [iTermAdvancedSettingsModel silentUserNotifications] ? nil : NSUserNotificationDefaultSoundName;
-    DLog(@"Post notification %@", notification);
-    [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
+    UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+    content.title = title ?: @"";
+    content.body = description ?: @"";
+    content.sound = [iTermAdvancedSettingsModel silentUserNotifications] ? nil : [UNNotificationSound defaultSound];
+    content.userInfo = context ?: @{};
+    DLog(@"Post notification %@", content);
+
+    UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:1 repeats:NO];
+    NSString *identifier = [NSUUID UUID].UUIDString;
+    UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:identifier
+                                                                          content:content
+                                                                          trigger:trigger];
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request
+                                                           withCompletionHandler:^(NSError * _Nullable error) {
+        if (error) {
+            DLog(@"Error posting notification: %@", error);
+        }
+    }];
 
     return YES;
 }
 
 - (void)postNotificationWithTitle:(NSString *)title detail:(NSString *)detail URL:(NSURL *)url {
-    NSUserNotification *notification = [[NSUserNotification alloc] init];
-    notification.title = title;
-    notification.informativeText = detail;
-    NSDictionary *context = @{ @"URL": url.absoluteString };
-    notification.userInfo = context;
-    notification.soundName = [iTermAdvancedSettingsModel silentUserNotifications] ? nil : NSUserNotificationDefaultSoundName;
-    DLog(@"Post notification %@", notification);
-    [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
+    UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+    content.title = title;
+    content.body = detail;
+    content.sound = [iTermAdvancedSettingsModel silentUserNotifications] ? nil : [UNNotificationSound defaultSound];
+    if (url) {
+        content.userInfo = @{ @"URL": url.absoluteString };
+    }
+
+    UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:1 repeats:NO];
+    NSString *identifier = [NSUUID UUID].UUIDString;
+
+    UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:identifier
+                                                                          content:content
+                                                                          trigger:trigger];
+
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request
+                                                           withCompletionHandler:^(NSError * _Nullable error) {
+        if (error) {
+            DLog(@"Error posting notification: %@", error);
+        }
+    }];
 }
 
 - (void)postNotificationWithTitle:(NSString *)title
@@ -182,22 +226,41 @@
          callbackNotificationName:(NSString *)name
      callbackNotificationUserInfo:(NSDictionary *)userInfo
                 actionButtonTitle:(NSString *)actionButtonTitle {
-    NSUserNotification *notification = [[NSUserNotification alloc] init];
-    notification.title = title;
-    notification.informativeText = detail;
-    NSDictionary *context = @{ @"CallbackNotificationName": name,
-                               @"CallbackUserInfo": userInfo ?: @{} };
-    notification.userInfo = context;
-    notification.soundName = [iTermAdvancedSettingsModel silentUserNotifications] ? nil : NSUserNotificationDefaultSoundName;
+    UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+    content.title = title;
+    content.body = detail;
+    content.sound = [iTermAdvancedSettingsModel silentUserNotifications] ? nil : [UNNotificationSound defaultSound];
+    content.userInfo = @{ @"CallbackNotificationName": name,
+                          @"CallbackUserInfo": userInfo ?: @{} };
+
     if (actionButtonTitle) {
-        notification.actionButtonTitle = actionButtonTitle;
+        content.categoryIdentifier = @"actionCategory";
+        UNNotificationAction *action = [UNNotificationAction actionWithIdentifier:@"actionButton"
+                                                                             title:actionButtonTitle
+                                                                           options:UNNotificationActionOptionForeground];
+        UNNotificationCategory *category = [UNNotificationCategory categoryWithIdentifier:@"actionCategory"
+                                                                                  actions:@[action]
+                                                                        intentIdentifiers:@[]
+                                                                                  options:UNNotificationCategoryOptionNone];
+        [[UNUserNotificationCenter currentNotificationCenter] setNotificationCategories:[NSSet setWithObject:category]];
     }
-    DLog(@"Post notification %@", notification);
-    [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
+
+    UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:1 repeats:NO];
+    NSString *identifier = [NSUUID UUID].UUIDString;
+
+    UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:identifier
+                                                                          content:content
+                                                                          trigger:trigger];
+
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request
+                                                           withCompletionHandler:^(NSError * _Nullable error) {
+        if (error) {
+            DLog(@"Error posting notification: %@", error);
+        }
+    }];
 }
 
-
-- (void)notificationWasClicked:(id)clickContext {
+- (void)notificationWasClicked:(NSDictionary *)clickContext {
     DLog(@"notificationWasClicked:%@", clickContext);
 
     NSString *callbackName = clickContext[@"CallbackNotificationName"];
@@ -238,17 +301,16 @@
     [theSession reveal];
 }
 
-#pragma mark Notifications Delegate Methods
+#pragma mark - UNUserNotificationCenterDelegate
 
-- (BOOL)userNotificationCenter:(NSUserNotificationCenter *)center shouldPresentNotification:(NSUserNotification *)notification
-{
-    return YES;
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler {
+    [self notificationWasClicked:response.notification.request.content.userInfo];
+    completionHandler();
 }
 
-- (void)userNotificationCenter:(NSUserNotificationCenter *)center didActivateNotification:(NSUserNotification *)notification
-{
-    [self notificationWasClicked:notification.userInfo];
-    [center removeDeliveredNotification:notification];
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler {
+    completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionSound);
 }
 
 @end
+
