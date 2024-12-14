@@ -24,6 +24,7 @@
 #import "iTermRateLimitedUpdate.h"
 #import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermShortcutInputView.h"
+#import "iTermStatusIndicatingTextFieldCell.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
@@ -75,7 +76,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSPopUpButton *_profileShortcut;
     IBOutlet NSTokenField *_tagsTokenField;
     IBOutlet NSPopUpButton *_commandType;  // Login shell vs custom command
-    IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
+    IBOutlet iTermExpandingTextField *_customCommand;  // Command to use instead of login shell
+    IBOutlet iTermStatusIndicatingTextFieldCell *_commandCell;
     IBOutlet NSImageView *_commandWarningImageView;
     IBOutlet NSTextField *_sendTextAtStart;
     IBOutlet NSMatrix *_initialDirectoryType;  // Home/Reuse/Custom/Advanced
@@ -987,6 +989,14 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         return;
     }
     _commandWarningImageView.hidden = isExecutableRegularFile;
+    [self updateCustomCommandRightInset];
+}
+
+- (void)updateCustomCommandRightInset {
+    const CGFloat inset = _commandWarningImageView.isHidden ? 0 : _commandWarningImageView.bounds.size.width;
+    _commandCell.rightInset = inset + 23;
+    _customCommand.rightInset = inset;
+    [_customCommand setNeedsDisplay:YES];
 }
 
 - (void)updateCommandWarningImageView {
@@ -997,12 +1007,14 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             break;
         case iTermGeneralProfilePreferenceCustomCommandTagLoginShell:
             _commandWarningImageView.hidden = YES;
+            [self updateCustomCommandRightInset];
             break;
         case iTermGeneralProfilePreferenceCustomCommandTagCustomShell:
             [self checkIfCommandLineIsValid];
             break;
         case iTermGeneralProfilePreferenceCustomCommandTagSSH:
             _commandWarningImageView.hidden = YES;
+            [self updateCustomCommandRightInset];
             break;
     }
 }

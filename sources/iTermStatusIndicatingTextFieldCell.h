@@ -10,6 +10,9 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermStatusIndicatingTextFieldCell : NSTextFieldCell
+
+@property (nonatomic) CGFloat rightInset;
+
 @end
 
 NS_ASSUME_NONNULL_END

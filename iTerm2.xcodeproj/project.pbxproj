@@ -1234,6 +1234,7 @@
 		A61F457622FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h in Headers */ = {isa = PBXBuildFile; fileRef = A61F457422FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h */; };
 		A61F457722FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F457522FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m */; };
 		A61F8E301E62591800D315D0 /* iTermFakeUserDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */; };
+		A61F9DD32D0E04AA0003FC13 /* ExpandingTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61F9DD22D0E04A40003FC13 /* ExpandingTextField.swift */; };
 		A620041E248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = A620041C248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h */; };
 		A620041F248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = A620041D248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m */; };
 		A620F2082AC64E93002C60FC /* ButtonMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = A620F2072AC64E93002C60FC /* ButtonMark.swift */; };
@@ -5689,6 +5690,7 @@
 		A61F457522FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarUnreadCountController.m; sourceTree = "<group>"; };
 		A61F8E2E1E62591800D315D0 /* iTermFakeUserDefaults.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFakeUserDefaults.h; sourceTree = "<group>"; };
 		A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFakeUserDefaults.m; sourceTree = "<group>"; };
+		A61F9DD22D0E04A40003FC13 /* ExpandingTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandingTextField.swift; sourceTree = "<group>"; };
 		A620041C248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxBufferSizeMonitor.h; sourceTree = "<group>"; };
 		A620041D248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxBufferSizeMonitor.m; sourceTree = "<group>"; };
 		A620F2072AC64E93002C60FC /* ButtonMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonMark.swift; sourceTree = "<group>"; };
@@ -8769,6 +8771,7 @@
 		1D373E4618F360C600773D3E /* Misc. Views */ = {
 			isa = PBXGroup;
 			children = (
+				A61F9DD22D0E04A40003FC13 /* ExpandingTextField.swift */,
 				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
 				A663010F19CFE41A004AF81C /* iTermAboutWindow.m */,
 				A6AE1EDC192723F700780C19 /* iTermAnnouncementView.m */,
@@ -16056,6 +16059,7 @@
 				A691693F281345D000083F99 /* PortholeContainerView.swift in Sources */,
 				A6BF035521E179380097DA86 /* iTermVariableHistory.m in Sources */,
 				A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */,
+				A61F9DD32D0E04AA0003FC13 /* ExpandingTextField.swift in Sources */,
 				A6FFAE712CF123D10031FB21 /* CoreTextLineRenderingHelper.swift in Sources */,
 				A6B4140A211A5AEA00D28207 /* iTermStandardWindowButtonsView.m in Sources */,
 				A6CC498C2C08E03A003484B2 /* AttributedStringSaver.swift in Sources */,

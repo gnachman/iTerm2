@@ -1293,6 +1293,7 @@ DQ
                 <outlet property="_badgeText" destination="sa9-oD-SMc" id="MvW-wP-hbS"/>
                 <outlet property="_badgeTextForEditCurrentSession" destination="YD4-m8-MP1" id="ePA-nZ-uue"/>
                 <outlet property="_basicsLabel" destination="3247" id="Uel-UZ-Vvt"/>
+                <outlet property="_commandCell" destination="2138" id="ulT-8x-7rx"/>
                 <outlet property="_commandLabel" destination="2132" id="mbo-85-faJ"/>
                 <outlet property="_commandType" destination="nxn-F2-gY6" id="cdo-IE-ePs"/>
                 <outlet property="_commandWarningImageView" destination="G1r-AP-exF" id="WIN-6p-iCO"/>
@@ -1655,7 +1656,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2131" userLabel="Command text field">
+                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2131" userLabel="Command text field" customClass="iTermExpandingTextField">
                     <rect key="frame" x="146" y="248" width="393" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Command for new sessions (interpolated string)" drawsBackground="YES" id="2138" customClass="iTermStatusIndicatingTextFieldCell">

@@ -9,9 +9,24 @@
 
 @implementation iTermStatusIndicatingTextFieldCell
 
+- (instancetype)initTextCell:(NSString *)string {
+    self = [super initTextCell:string];
+    if (self) {
+        _rightInset = 23;
+    }
+    return self;
+}
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        _rightInset = 23;
+    }
+    return self;
+}
+
 - (NSRect)drawingRectForBounds:(NSRect)theRect {
     NSRect rect = [super drawingRectForBounds:theRect];
-    rect.size.width -= 23;  // Width of warning icon
+    rect.size.width -= _rightInset;  // Width of warning icon
     return rect;
 }
 
