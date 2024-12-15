@@ -178,6 +178,52 @@ fileprivate struct ModernBodyRequestBuilder {
     }
 }
 
+// There were minor changes to the API for O1.
+fileprivate struct O1BodyRequestBuilder {
+    var messages: [LLM.Message]
+    var provider: LLMProvider
+    var functions = [LLM.AnyFunction]()
+
+    private struct Body: Codable {
+        var model: String?
+        var messages = [LLM.Message]()
+        var max_completion_tokens: Int
+        var functions: [ChatGPTFunctionDeclaration]? = nil
+        var function_call: String? = nil  // "none" and "auto" also allowed
+    }
+
+    var body: Data {
+        // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
+        // answer the same length as the query.
+        let maybeDecls = functions.isEmpty ? nil : functions.map { $0.decl }
+
+        // O1 doesn't support "system", so replace it with user.
+        let modifiedMessages = switch provider.version {
+        case .o1:
+            messages.map { message in
+                if message.role != "system" {
+                    return message
+                }
+                var temp = message
+                temp.role = "user"
+                return temp
+            }
+        case .completions, .gemini, .legacy:
+            messages
+        }
+        let body = Body(model: provider.dynamicModelsSupported ? provider.model : nil,
+                        messages: modifiedMessages,
+                        max_completion_tokens: provider.maxTokens(functions: functions, messages: messages),
+                        functions: maybeDecls,
+                        function_call: functions.isEmpty ? nil : "auto")
+        DLog("REQUEST:\n\(body)")
+        let bodyEncoder = JSONEncoder()
+        let bodyData = try! bodyEncoder.encode(body)
+        return bodyData
+
+    }
+}
+
 struct LLMRequestBuilder {
     var provider: LLMProvider
     var apiKey: String
@@ -208,6 +254,11 @@ struct LLMRequestBuilder {
             return ModernBodyRequestBuilder(messages: messages,
                                             provider: provider,
                                             functions: functions).body
+        case .o1:
+            return O1BodyRequestBuilder(messages: messages,
+                                        provider: provider,
+                                        functions: functions).body
+
         case .gemini:
             return GeminiRequestBuilder(messages: messages).body
         }
@@ -233,6 +284,7 @@ struct LLMProvider {
         case legacy
         case completions
         case gemini
+        case o1
     }
 
     var platform = Platform.openAI
@@ -243,13 +295,21 @@ struct LLMProvider {
             return .gemini
         }
         if hostIsOpenAIAPI(url: completionsURL) {
+            if model.hasPrefix("o1") {
+                return .o1
+            }
             return openAIModelIsLegacy(model: model) ? .legacy : .completions
         }
         return iTermPreferences.bool(forKey: kPreferenceKeyAITermUseLegacyAPI) ? .legacy : .completions
     }
 
     private func openAIModelIsLegacy(model: String) -> Bool {
-        return !model.hasPrefix("gpt-")
+        for prefix in iTermAdvancedSettingsModel.aiModernModelPrefixes().components(separatedBy: " ") {
+            if model.hasPrefix(prefix) {
+                return false
+            }
+        }
+        return true
     }
 
     var usingOpenAI: Bool {
@@ -321,7 +381,14 @@ struct LLMProvider {
     var temperatureSupported: Bool {
         switch platform {
         case .openAI:
-            true
+            switch version {
+            case .o1:
+                false
+            case .completions, .legacy:
+                true
+            case .gemini:
+                fatalError()
+            }
         case .azure, .gemini:
             false
         }
@@ -331,7 +398,7 @@ struct LLMProvider {
         switch version {
         case .legacy:
             false
-        case .completions:
+        case .completions, .o1:
             true
         case .gemini:
             false
@@ -359,7 +426,7 @@ struct LLMProvider {
 
     func responseParser() -> LLMResponseParser {
         switch version {
-        case .completions:
+        case .completions, .o1:
             return LLMModernResponseParser()
         case .legacy:
             return LLMLegacyResponseParser()

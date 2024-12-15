@@ -43,6 +43,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)advancedPasteWaitsForPromptByDefault;
 + (BOOL)aggressiveBaseCharacterDetection;
 + (BOOL)aggressiveFocusFollowsMouse;
++ (NSString *)aiModernModelPrefixes;
 + (int)aiResponseMaxTokens;
 + (double)alertTriggerRateLimit;
 + (BOOL)alertsIndicateShortcuts;
