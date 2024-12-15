@@ -178,25 +178,18 @@ fileprivate struct ModernBodyRequestBuilder {
     }
 }
 
-// There were minor changes to the API for O1.
+// There were minor changes to the API for O1 and it doesn't support functions.
 fileprivate struct O1BodyRequestBuilder {
     var messages: [LLM.Message]
     var provider: LLMProvider
-    var functions = [LLM.AnyFunction]()
 
     private struct Body: Codable {
         var model: String?
         var messages = [LLM.Message]()
         var max_completion_tokens: Int
-        var functions: [ChatGPTFunctionDeclaration]? = nil
-        var function_call: String? = nil  // "none" and "auto" also allowed
     }
 
     var body: Data {
-        // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
-        // answer the same length as the query.
-        let maybeDecls = functions.isEmpty ? nil : functions.map { $0.decl }
-
         // O1 doesn't support "system", so replace it with user.
         let modifiedMessages = switch provider.version {
         case .o1:
@@ -213,9 +206,7 @@ fileprivate struct O1BodyRequestBuilder {
         }
         let body = Body(model: provider.dynamicModelsSupported ? provider.model : nil,
                         messages: modifiedMessages,
-                        max_completion_tokens: provider.maxTokens(functions: functions, messages: messages),
-                        functions: maybeDecls,
-                        function_call: functions.isEmpty ? nil : "auto")
+                        max_completion_tokens: provider.maxTokens(functions: [], messages: messages))
         DLog("REQUEST:\n\(body)")
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
@@ -256,8 +247,7 @@ struct LLMRequestBuilder {
                                             functions: functions).body
         case .o1:
             return O1BodyRequestBuilder(messages: messages,
-                                        provider: provider,
-                                        functions: functions).body
+                                        provider: provider).body
 
         case .gemini:
             return GeminiRequestBuilder(messages: messages).body
@@ -398,8 +388,10 @@ struct LLMProvider {
         switch version {
         case .legacy:
             false
-        case .completions, .o1:
+        case .completions:
             true
+        case .o1:
+            false
         case .gemini:
             false
         }
