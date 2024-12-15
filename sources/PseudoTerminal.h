@@ -264,6 +264,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Return the smallest allowable width for this terminal.
 - (float)minWidth;
 
++ (BOOL)arrangement:(NSDictionary *)arrangement
+         passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure;
 + (NSDictionary *)modifiedArrangement:(NSDictionary *)arrangement
                               mutator:(NSDictionary *(^)(NSDictionary *))mutator;
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement

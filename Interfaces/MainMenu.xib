@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23094" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23504" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23094"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23504"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -977,6 +977,12 @@ DQ
                             <menuItem title="Edit Session…" keyEquivalent="i" identifier="Edit Session…" id="954">
                                 <connections>
                                     <action selector="editCurrentSession:" target="201" id="955"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Change Profile in Arrangement…" identifier="Change Profile in Arrangement…" id="58Y-0j-mff">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="changeProfileInArrangement:" target="-1" id="CKN-FY-1kR"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="w7i-MX-J2b">

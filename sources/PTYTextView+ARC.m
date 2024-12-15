@@ -120,6 +120,9 @@ iTermCommandInfoViewControllerDelegate>
         item.state = [self.delegate textViewSplitPaneWidthIsLocked:&allow] ? NSControlStateValueOn : NSControlStateValueOff;
         return allow;
     }
+    if (item.action == @selector(changeProfileInArrangement:)) {
+        return [self.delegate textViewCanChangeProfileInArrangement];
+    }
     return NO;
 }
 
@@ -2165,6 +2168,12 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 
 - (void)commandInfoDisable {
     [self.delegate textViewDisableOffscreenCommandLine];
+}
+
+#pragma mark - Arrangements
+
+- (IBAction)changeProfileInArrangement:(id)sender {
+    [self.delegate textViewChangeProfileInArrangement];
 }
 
 @end

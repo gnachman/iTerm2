@@ -637,6 +637,10 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     __weak id<VT100ScreenMarkReading> _selectedCommandMark;
     NSMutableArray<PTYSessionHostState *> *_hostStack;
+    NSDictionary *_originatingArrangement;
+    NSString *_originatingArrangementName;
+    NSInteger _canChangeProfileInArrangementGeneration;
+    BOOL _canChangeProfileInArrangement;
 }
 
 @synthesize isDivorced = _divorced;
@@ -806,6 +810,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         _sshState = iTermSSHStateNone;
         _hostStack = [[NSMutableArray alloc] init];
         [iTermCPUUtilization instanceForSessionID:_guid];
+        _canChangeProfileInArrangementGeneration = -1;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -1080,6 +1085,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_queuedConnectingSSH release];
     [_hostStack release];
     [_defaultPointer release];
+    [_originatingArrangement release];
+    [_originatingArrangementName release];
 
     [super dealloc];
 }
@@ -1289,6 +1296,11 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setSizeFromArrangement:(NSDictionary*)arrangement {
     [self setSize:VT100GridSizeMake([[arrangement objectForKey:SESSION_ARRANGEMENT_COLUMNS] intValue],
                                     [[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue])];
+}
+
++ (BOOL)arrangement:(NSDictionary *)arrangement
+         passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure {
+    return closure(arrangement);
 }
 
 + (NSDictionary *)modifiedArrangement:(NSDictionary *)arrangement
@@ -1572,6 +1584,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [aSession.nameController setNeedsUpdate];
     [aSession.nameController updateIfNeeded];
+    aSession->_originatingArrangement = [arrangement copy];
+    aSession->_originatingArrangementName = [arrangementName copy];
 }
 
 - (void)didFinishRestoration {
@@ -16653,6 +16667,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [_keyMapper wouldReportControlReturn];
 }
 
+- (BOOL)textViewCanChangeProfileInArrangement {
+    return [self canChangeProfileInArrangement];
+}
+
+- (void)textViewChangeProfileInArrangement {
+    [self changeProfileInArrangement];
+}
+
 - (void)removeSelectedCommandRange {
     if (!_selectedCommandMark) {
         return;
@@ -18454,6 +18476,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)naggingControllerAssignProfileToSession:(NSString *)arrangementName guid:(NSString *)guid {
+    [self changeProfileInArrangementNamed:arrangementName guid:guid];
+}
+
+- (Profile *)changeProfileInArrangementNamed:(NSString *)arrangementName guid:(NSString *)guid {
     NSAlert *alert = [[NSAlert alloc] init];
     [alert setMessageText:@"Select a profile to use for this session. Your selection will be saved back to the arrangement."];
     [alert addButtonWithTitle:@"OK"];
@@ -18469,21 +18495,69 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (button == NSAlertFirstButtonReturn) {
         Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:profiles.selectedGuid];
         if (profile) {
-            NSArray *windowArrangements = [WindowArrangements arrangementWithName:arrangementName];
-            NSArray *modifiedArrangements = [windowArrangements mapWithBlock:^id _Nullable(NSDictionary *arrangement) {
-                return [PseudoTerminal modifiedArrangement:arrangement mutator:^NSDictionary *(NSDictionary *sessionArrangement) {
-                    if ([sessionArrangement[SESSION_ARRANGEMENT_GUID] isEqual:guid]) {
-                        NSMutableDictionary *fixed = [[sessionArrangement mutableCopy] autorelease];
-                        fixed[SESSION_ARRANGEMENT_BOOKMARK] = [[profile copy] autorelease];
-                        return fixed;
-                    } else {
-                        return sessionArrangement;
-                    }
-                }];
-            }];
-            [WindowArrangements setArrangement:modifiedArrangements withName:arrangementName];
+            [self setProfileInArrangement:arrangementName
+                                 withGUID:guid
+                                toProfile:profile];
+        }
+        return profile;
+    }
+    return nil;
+}
+
+- (BOOL)canChangeProfileInArrangement {
+    if (_originatingArrangementName == nil) {
+        return NO;
+    }
+    NSString *guid = _originatingArrangement[SESSION_ARRANGEMENT_GUID];
+    if (guid == nil) {
+        return NO;
+    }
+    NSArray *windowArrangements = [WindowArrangements arrangementWithName:_originatingArrangementName];
+    if (windowArrangements.count == 0) {
+        return NO;
+    }
+    if (_canChangeProfileInArrangementGeneration == [WindowArrangements generation]) {
+        return _canChangeProfileInArrangement;
+    }
+    BOOL found = NO;
+    for (NSDictionary *windowArrangement in windowArrangements) {
+        found = [PseudoTerminal arrangement:windowArrangement passesTest:^BOOL(NSDictionary *candidate) {
+            return [candidate[SESSION_ARRANGEMENT_GUID] isEqual:guid];
+        }];
+        if (found) {
+            break;
         }
     }
+    _canChangeProfileInArrangementGeneration = [WindowArrangements generation];
+    _canChangeProfileInArrangement = found;
+    return found;
+}
+
+- (void)changeProfileInArrangement {
+    if (![self canChangeProfileInArrangement]) {
+        return;
+    }
+    Profile *profile = [self changeProfileInArrangementNamed:_originatingArrangementName
+                                                        guid:_originatingArrangement[SESSION_ARRANGEMENT_GUID]];
+    if (profile) {
+        [self setProfile:profile preservingName:YES];
+    }
+}
+
+- (void)setProfileInArrangement:(NSString *)arrangementName withGUID:(NSString *)guid toProfile:(Profile *)profile {
+    NSArray *windowArrangements = [WindowArrangements arrangementWithName:arrangementName];
+    NSArray *modifiedArrangements = [windowArrangements mapWithBlock:^id _Nullable(NSDictionary *arrangement) {
+        return [PseudoTerminal modifiedArrangement:arrangement mutator:^NSDictionary *(NSDictionary *sessionArrangement) {
+            if ([sessionArrangement[SESSION_ARRANGEMENT_GUID] isEqual:guid]) {
+                NSMutableDictionary *fixed = [[sessionArrangement mutableCopy] autorelease];
+                fixed[SESSION_ARRANGEMENT_BOOKMARK] = [[profile copy] autorelease];
+                return fixed;
+            } else {
+                return sessionArrangement;
+            }
+        }];
+    }];
+    [WindowArrangements setArrangement:modifiedArrangements withName:arrangementName];
 }
 
 #pragma mark - iTermComposerManagerDelegate

@@ -10,6 +10,7 @@
 #import "ArrangementPreviewView.h"
 
 @interface WindowArrangements : NSViewController <NSTableViewDataSource, NSTableViewDelegate>
+@property (nonatomic, readonly, class) NSInteger generation;
 
 + (WindowArrangements *)sharedInstance;
 

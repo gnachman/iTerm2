@@ -2897,6 +2897,20 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
++ (BOOL)recursiveArrangementNode:(NSDictionary *)arrangement
+                      passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure {
+    if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        for (NSDictionary<NSString *, id> *subArrangement in arrangement[SUBVIEWS]) {
+            if ([PTYTab recursiveArrangementNode:subArrangement passesTest:closure]) {
+                return YES;
+            }
+        }
+        return NO;
+    } else {
+        return [PTYSession arrangement:arrangement[TAB_ARRANGEMENT_SESSION] passesTest:closure];
+    }
+}
+
 + (NSDictionary *)recursiveModifiedArrangementNode:(NSDictionary *)arrangement
                                            mutator:(NSDictionary *(^)(NSDictionary *))mutator {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
@@ -3246,6 +3260,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     [theTab updateTmuxTitleMonitor];
     return theTab;
+}
+
++ (BOOL)arrangement:(NSDictionary *)arrangement
+         passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure {
+    return [PTYTab recursiveArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT] passesTest:closure];
 }
 
 + (NSDictionary *)modifiedArrangement:(NSDictionary *)arrangement

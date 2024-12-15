@@ -590,6 +590,8 @@ backgroundColor:(NSColor *)backgroundColor;
 
 #pragma mark - methods
 
++ (BOOL)arrangement:(NSDictionary *)arrangement
+         passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure;
 + (NSDictionary *)modifiedArrangement:(NSDictionary *)arrangement
                               mutator:(NSDictionary *(^)(NSDictionary *))mutator;
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
@@ -881,6 +883,8 @@ backgroundColor:(NSColor *)backgroundColor;
                    replacementProfile:(Profile *)replacementProfile
                           saveProgram:(BOOL)saveProgram
                          pendingJumps:(NSArray<iTermSSHReconnectionInfo *> *)pendingJumps;
+- (BOOL)canChangeProfileInArrangement;
+- (void)changeProfileInArrangement;
 
 - (void)toggleTmuxZoom;
 - (void)forceTmuxDetach;

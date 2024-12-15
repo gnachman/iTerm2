@@ -309,6 +309,8 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewSplitPaneWidthIsLocked:(out BOOL *)allowedPtr;
 - (void)textViewToggleLockSplitPaneWidth;
 - (BOOL)textViewWouldReportControlReturn;
+- (BOOL)textViewCanChangeProfileInArrangement;
+- (void)textViewChangeProfileInArrangement;
 
 @end
 

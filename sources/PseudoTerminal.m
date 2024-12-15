@@ -3299,6 +3299,16 @@ ITERM_WEAKLY_REFERENCEABLE
                                             afterDelay:0];
 }
 
++ (BOOL)arrangement:(NSDictionary *)arrangement
+         passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure {
+    for (NSDictionary *tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
+        if ([PTYTab arrangement:tabArrangement passesTest:closure]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 + (NSDictionary *)modifiedArrangement:(NSDictionary *)arrangement
                               mutator:(NSDictionary *(^)(NSDictionary *))mutator {
     NSMutableDictionary *mutableArrangement = [[arrangement mutableCopy] autorelease];

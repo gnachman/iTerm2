@@ -70,7 +70,13 @@ static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrange
     return [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS];
 }
 
+static NSInteger sWindowArrangementGeneration;
++ (NSInteger)generation {
+    return sWindowArrangementGeneration;
+}
+
 + (void)postChangeNotification {
+    sWindowArrangementGeneration += 1;
     [[NSNotificationCenter defaultCenter] postNotificationName:kSavedArrangementDidChangeNotification
                                                         object:nil
                                                       userInfo:nil];
