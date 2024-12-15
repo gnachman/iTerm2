@@ -13,6 +13,7 @@
 #import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "ProfileModel.h"
 
 static NSString *const iTermNaggingControllerOrphanIdentifier = @"DidRestoreOrphan";
@@ -170,7 +171,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
         if (selection == 0) {
             // Why?
             NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
-            [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+            [[NSWorkspace sharedWorkspace] it_openURL:whyUrl];
         }
     }];
 }
@@ -247,7 +248,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 
 - (void)showTmuxSupplementaryPlaneBugHelpPage {
     NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com//tmux22bug.html"];
-    [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+    [[NSWorkspace sharedWorkspace] it_openURL:whyUrl];
 }
 
 - (void)tryingToSendArrowKeysWithScrollWheel:(BOOL)isTrying {
@@ -415,7 +416,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
                 break;
 
             case 3: // Help
-                [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/paste_bracketing"]];
+                [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/paste_bracketing"]];
                 break;
         }
     }];
@@ -455,7 +456,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
                 break;
 
             case 2: // Help
-                [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/slow_triggers"]];
+                [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/slow_triggers"]];
                 break;
         }
     }];
@@ -609,7 +610,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
     }
     if ([[NSUserDefaults standardUserDefaults] boolForKey:allowHostKey]) {
         DLog(@"Always allow %@", url.host);
-        [[NSWorkspace sharedWorkspace] openURL:url];
+        [[NSWorkspace sharedWorkspace] it_openURL:url];
         return;
     }
 
@@ -627,12 +628,12 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
                 break;
 
             case 0: // Allow
-                [[NSWorkspace sharedWorkspace] openURL:url];
+                [[NSWorkspace sharedWorkspace] it_openURL:url];
                 break;
 
             case 1:  // Allow for this host
                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:allowHostKey];
-                [[NSWorkspace sharedWorkspace] openURL:url];
+                [[NSWorkspace sharedWorkspace] it_openURL:url];
                 break;
 
             case 2:  // Never allow

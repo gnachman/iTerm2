@@ -19,6 +19,7 @@
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "iTermCommandHistoryEntryMO.h"
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
@@ -377,7 +378,7 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
     [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
         switch (returnCode) {
             case NSAlertFirstButtonReturn:
-                [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
+                [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
                 break;
                 
             case NSAlertThirdButtonReturn:  // Install now, optional button

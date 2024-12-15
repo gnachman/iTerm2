@@ -22,6 +22,7 @@
 #import "iTermWarning.h"
 #import "NSBundle+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "PasteboardHistory.h"
 #import "RegexKitLite.h"
 #import "WindowArrangements.h"
@@ -925,7 +926,7 @@ enum {
 }
 
 - (IBAction)installPlugin:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]];
 }
 
 - (void)revealPlugin:(id)sender {
@@ -980,7 +981,7 @@ enum {
                                heading:@"Window Restoration Disabled"
                                 window:self.view.window];
     if (selection == kiTermWarningSelection0) {
-        [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:path]];
+        [[NSWorkspace sharedWorkspace] it_openURL:[NSURL fileURLWithPath:path]];
     }
 }
 
@@ -1003,7 +1004,7 @@ enum {
 }
 
 - (IBAction)pythonAPIAuthHelp:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]];
 }
 
 - (IBAction)resetAIPrompt:(id)sender {
@@ -1012,7 +1013,7 @@ enum {
 }
 
 - (IBAction)aiPromptHelp:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/ai-prompt-help"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/ai-prompt-help"]];
 }
 
 #pragma mark - Notifications

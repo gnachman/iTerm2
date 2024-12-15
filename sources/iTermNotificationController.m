@@ -32,6 +32,7 @@
 #import "iTermController.h"
 #import "iTermImage.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -209,7 +210,7 @@
 
     NSURL *url = [NSURL URLWithString:clickContext[@"URL"]];
     if (url) {
-        [[NSWorkspace sharedWorkspace] openURL:url];
+        [[NSWorkspace sharedWorkspace] it_openURL:url];
         return;
     }
 

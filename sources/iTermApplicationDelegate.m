@@ -111,6 +111,7 @@
 #import "NSStringITerm.h"
 #import "NSUserDefaults+iTerm.h"
 #import "NSWindow+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PreferencePanel.h"
@@ -2325,7 +2326,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (IBAction)showHelp:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.iterm2.com/documentation.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://www.iterm2.com/documentation.html"]];
 }
 
 - (iTermScriptsMenuController *)scriptsMenuController {
@@ -2564,7 +2565,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (IBAction)openSourceLicenses:(id)sender {
     NSURL *url = [[NSBundle bundleForClass:self.class] URLForResource:@"Licenses" withExtension:@"txt"];
-    [[NSWorkspace sharedWorkspace] openURL:url];
+    [[NSWorkspace sharedWorkspace] it_openURL:url];
 }
 
 - (IBAction)loadRecording:(id)sender {

@@ -11,6 +11,7 @@
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "VT100RemoteHost.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermVariableScope+Session.h"
@@ -135,7 +136,7 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
 }
 
 - (IBAction)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-smart-selection.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-smart-selection.html"]];
 }
 
 - (IBAction)didToggleUseInterpolatedStrings:(id)sender {

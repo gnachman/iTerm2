@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "NSWorkspace+iTerm.h"
 
 static NSString *const kUrlHandlersUserDefaultsKey = @"URLHandlersByGuid";
 static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
@@ -197,7 +198,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
         NSURLComponents *components = [NSURLComponents componentsWithURL:[NSURL fileURLWithPath:fullPath]
                                                  resolvingAgainstBaseURL:NO];
         components.fragment = fragment;
-        [[NSWorkspace sharedWorkspace] openURL:components.URL];
+        [[NSWorkspace sharedWorkspace] it_openURL:components.URL];
         return YES;
     }
     BOOL ok = [[NSWorkspace sharedWorkspace] openFile:fullPath];

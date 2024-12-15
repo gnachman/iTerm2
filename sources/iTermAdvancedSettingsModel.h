@@ -83,6 +83,9 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)bordersOnlyInLightMode;
 + (BOOL)bounceOnInactiveBell;
 + (BOOL)bootstrapDaemon;
+#if ITERM2_SHARED_ARC
++ (NSString *)browserBundleID;
+#endif  // ITERM2_SHARED_ARC
 + (BOOL)chaseAnchoredScreen;
 + (BOOL)clearBellIconAggressively;
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;

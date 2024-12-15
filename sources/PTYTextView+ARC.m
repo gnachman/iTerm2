@@ -43,6 +43,7 @@
 #import "NSSavePanel+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "PasteboardHistory.h"
 #import "PTYMouseHandler.h"
 #import "PTYNoteViewController.h"
@@ -1707,7 +1708,7 @@ withRelativeCoordRange:(VT100GridAbsCoordRange)range
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
             openURL:(NSURL *)url {
-    [[NSWorkspace sharedWorkspace] openURL:url];
+    [[NSWorkspace sharedWorkspace] it_openURL:url];
 }
 
 - (NSView *)contextMenuViewForMenu:(iTermTextViewContextMenuHelper *)contextMenu {

@@ -8,6 +8,7 @@
 #import "iTermStatusBarKnobTextViewController.h"
 
 #import "NSObject+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermVariableHistory.h"
 
@@ -63,7 +64,7 @@
 }
 
 - (void)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:_helpURL];
+    [[NSWorkspace sharedWorkspace] it_openURL:_helpURL];
 }
 
 - (void)setValue:(NSString *)value {

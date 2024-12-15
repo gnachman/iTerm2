@@ -6,6 +6,7 @@
 //
 
 #import "iTermClickableTextField.h"
+#import "NSWorkspace+iTerm.h"
 
 @implementation iTermClickableTextField
 
@@ -31,7 +32,7 @@
 }
 
 - (void)openURL:(NSURL *)url {
-    [[NSWorkspace sharedWorkspace] openURL:url];
+    [[NSWorkspace sharedWorkspace] it_openURL:url];
 }
 
 @end

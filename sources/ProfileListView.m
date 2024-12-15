@@ -41,6 +41,7 @@
 #import "iTermSearchField.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 
 #define kProfileTableViewDataType @"com.googlecode.iterm2.iTerm2ProfileGuid"
 
@@ -466,7 +467,7 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (void)openHowToSearchHelp:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/search_syntax.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/search_syntax.html"]];
 }
 
 - (void)setUnderlyingDatasource:(ProfileModel*)dataSource

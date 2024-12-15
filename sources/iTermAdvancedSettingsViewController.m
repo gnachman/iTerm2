@@ -22,9 +22,31 @@ static char iTermAdvancedSettingsTableKey;
 @interface iTermTableViewTextField : NSTextField
 @property (nonatomic, strong) NSAttributedString *regularAttributedString;
 @property (nonatomic, strong) NSAttributedString *selectedAttributedString;
+
+// Called when self is dealloc'ed or when you assign NO to editing.
+@property (nonatomic, copy) void (^onEndEditing)(NSString *);
+
+// You're responsible for setting this in controlTextDidBeginEditing and controlTextDidEndEditing
+@property (nonatomic) BOOL editing;
 @end
 
-@implementation iTermTableViewTextField
+@implementation iTermTableViewTextField {
+    BOOL _editing;
+}
+
+- (void)dealloc {
+    [self setEditing:NO];
+}
+
+- (void)setEditing:(BOOL)editing {
+    if (editing == _editing) {
+        return;
+    }
+    _editing = editing;
+    if (!_editing && _onEndEditing) {
+        _onEndEditing(self.stringValue);
+    }
+}
 
 - (BOOL)becomeFirstResponder {
     self.textColor = [NSColor labelColor];
@@ -58,16 +80,28 @@ static char iTermAdvancedSettingsTableKey;
 @end
 
 @interface iTermTableViewTextFieldWrapper : NSTableCellView
+@property (nonatomic, copy) void (^onEndEditing)(NSString *);
 @property (nonatomic) BOOL ignoreBackgroundStyle;
 @end
 
 @implementation iTermTableViewTextFieldWrapper
 
+- (iTermTableViewTextField *)it_textField {
+    return self.subviews.firstObject;
+}
+- (void)setOnEndEditing:(void (^)(NSString *))onEndEditing {
+    self.it_textField.onEndEditing = onEndEditing;
+}
+
+- (void (^)(NSString *))onEndEditing {
+    return self.it_textField.onEndEditing;
+}
+
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
     if (self.ignoreBackgroundStyle) {
         return;
     }
-    iTermTableViewTextField *textField = self.subviews.firstObject;
+    iTermTableViewTextField *textField = self.it_textField;
     [textField setBackgroundStyle:backgroundStyle];
 }
 
@@ -479,6 +513,14 @@ static NSDictionary *gIntrospection;
     }
 }
 
+static void iTermAdvancedSettingsSaveSecureString(NSDictionary *dict, NSString *value) {
+    NSString *selectorName = dict[kAdvancedSettingSetter];
+    assert(selectorName);
+    SEL selector = NSSelectorFromString(selectorName);
+    id newValue = [iTermAdvancedSettingsModel performSelector:selector
+                                                   withObject:value];
+}
+
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
     NSArray *settings = [self filteredAdvancedSettings];
     id obj = settings[row];
@@ -540,6 +582,12 @@ static NSDictionary *gIntrospection;
                 if (rowView) {
                     wrapper.backgroundStyle = [rowView interiorBackgroundStyle];
                 }
+                if (dict[kAdvancedSettingSetter]) {
+                    wrapper.onEndEditing = ^(NSString *value) {
+                        iTermAdvancedSettingsSaveSecureString(dict, value);
+                    };
+                }
+
                 return wrapper;
             }
         }
@@ -607,12 +655,25 @@ static NSDictionary *gIntrospection;
                                                            forKey:identifier];
                 break;
 
-            case kiTermAdvancedSettingTypeString:
-                [[NSUserDefaults standardUserDefaults] setObject:string
-                                                          forKey:identifier];
+            case kiTermAdvancedSettingTypeString: {
+                NSString *selectorName = dict[kAdvancedSettingSetter];
+                if (!selectorName) {
+                    [[NSUserDefaults standardUserDefaults] setObject:string
+                                                              forKey:identifier];
+                }
                 break;
+            }
         }
     }
+}
+
+- (void)controlTextDidBeginEditing:(NSNotification *)obj {
+    iTermTableViewTextField *textField = [iTermTableViewTextField castFrom:obj.object];
+    NSNumber *associatedObject = [textField it_associatedObjectForKey:&iTermAdvancedSettingsTableKey];
+    if (!associatedObject) {
+        return;
+    }
+    [textField setEditing:YES];
 }
 
 - (void)controlTextDidEndEditing:(NSNotification *)obj {
@@ -646,6 +707,7 @@ static NSDictionary *gIntrospection;
             break;
 
         case kiTermAdvancedSettingTypeString:
+            [textField setEditing:NO];
             break;
     }
 

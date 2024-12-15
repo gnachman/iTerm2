@@ -24,6 +24,7 @@
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSView+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
 
 static NSString *const kDeleteKeyString = @"0x7f-0x0";
@@ -303,7 +304,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
 - (IBAction)csiuHelp:(id)sender {
     NSURL *url = [NSURL URLWithString:@"https://iterm2.com/documentation-csiu.html"];
-    [[NSWorkspace sharedWorkspace] openURL:url];
+    [[NSWorkspace sharedWorkspace] it_openURL:url];
 }
 
 - (IBAction)openHotKeyPanel:(id)sender {

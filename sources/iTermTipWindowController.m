@@ -14,8 +14,9 @@
 #import "iTermTipCardActionButton.h"
 #import "iTermTipCardViewController.h"
 #import "iTermFlippedView.h"
-#import "NSView+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSView+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "SolidColorView.h"
 
 #import <QuartzCore/QuartzCore.h>
@@ -432,7 +433,7 @@ static const CGFloat kWindowTopMargin = 8;
 }
 
 - (void)openURL {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:self.tip.url]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:self.tip.url]];
     [self dismiss];
 }
 

@@ -4320,7 +4320,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSURL *url =
     [NSURL URLWithUserSuppliedString:[selection stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
     if (url) {
-        [[NSWorkspace sharedWorkspace] openURL:url];
+        [[NSWorkspace sharedWorkspace] it_openURL:url];
         return;
     }
 

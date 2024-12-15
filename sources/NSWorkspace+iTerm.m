@@ -9,6 +9,7 @@
 #import "NSWorkspace+iTerm.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermMalloc.h"
 
 @implementation NSWorkspace (iTerm)
@@ -39,6 +40,32 @@
     NSRunningApplication *activeApplication = [[NSWorkspace sharedWorkspace] frontmostApplication];
     NSString *bundleIdentifier = activeApplication.bundleIdentifier;
     return [bundleIdentifier isEqualToString:@"com.apple.SecurityAgent"];
+}
+
+- (BOOL)it_openURL:(NSURL *)url {
+    DLog(@"%@", url);
+    if (!url) {
+        return NO;
+    }
+    if (![@[ @"http", @"https", @"ftp"] containsObject:url.scheme]) {
+        DLog(@"Non-web scheme");
+        return [self openURL:url];
+    }
+    NSString *bundleID = [iTermAdvancedSettingsModel browserBundleID];
+    NSURL *appURL = [self URLForApplicationWithBundleIdentifier:bundleID];
+    if (!appURL) {
+        DLog(@"No url for bundle ID %@", bundleID);
+        return [self openURL:url];
+    }
+
+    DLog(@"Open %@ with %@", url, appURL);
+    NSError *error = nil;
+    [self openURLs:@[ url ] withApplicationAtURL:appURL options:0 configuration:@{} error:&error];
+    DLog(@"%@", error);
+    if (error) {
+        return [self openURL:url];
+    }
+    return YES;
 }
 
 @end

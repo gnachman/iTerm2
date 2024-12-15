@@ -260,7 +260,7 @@ static BOOL sInstallingScript;
                 withCompletion:(void (^)(NSString *errorMessage, BOOL, NSURL *location))completion {
     if (reveal) {
         DLog(@"Reveal in finder");
-        [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:tempDir]];
+        [[NSWorkspace sharedWorkspace] it_openURL:[NSURL fileURLWithPath:tempDir]];
         completion(nil, NO, nil);
         return;
     }

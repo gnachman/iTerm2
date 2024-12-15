@@ -1868,6 +1868,7 @@
 		A6644BEE25CDD20800419355 /* iTermVirtualOffset.h in Headers */ = {isa = PBXBuildFile; fileRef = A6644BEC25CDD20800419355 /* iTermVirtualOffset.h */; };
 		A6644BEF25CDD20800419355 /* iTermVirtualOffset.m in Sources */ = {isa = PBXBuildFile; fileRef = A6644BED25CDD20800419355 /* iTermVirtualOffset.m */; };
 		A664AE782C55A6B800A6807A /* iTermModernKeyMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A664AE772C55A6B800A6807A /* iTermModernKeyMapper.swift */; };
+		A66538852D0F90BF004B723B /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
 		A665396C26B71B880049F375 /* iTermIndicatorsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F721A23D195009B1CB6 /* iTermIndicatorsHelper.m */; };
 		A665C1CB243A4DE300F623F0 /* SIGArchiveCommon.m in Sources */ = {isa = PBXBuildFile; fileRef = A665C1CA243A4DE300F623F0 /* SIGArchiveCommon.m */; };
 		A665C1D0243A606C00F623F0 /* iTermRequestCookieCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A665C1CE243A606C00F623F0 /* iTermRequestCookieCommand.h */; };
@@ -3020,7 +3021,6 @@
 		A6C762BB1B45C52B00E3C992 /* NSMutableDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */; };
 		A6C762BD1B45C52B00E3C992 /* NSPasteboard+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */; };
 		A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */; };
-		A6C762C41B45C52B00E3C992 /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
 		A6C762C71B45C52B00E3C992 /* iTermHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB9D8F1183FE9EF0029F0B5 /* iTermHotKeyController.m */; };
 		A6C762CA1B45C52B00E3C992 /* iTermApplicationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */; };
 		A6C762CB1B45C52B00E3C992 /* iTermController.m in Sources */ = {isa = PBXBuildFile; fileRef = E8A66F030272453F03A80106 /* iTermController.m */; };
@@ -16263,6 +16263,7 @@
 				A6D009602AF6AD1700AA8F49 /* GetProfilePropertyBuiltInFunction.swift in Sources */,
 				A6CB24CB2C6EC13000005824 /* KittyImageController.swift in Sources */,
 				A6587A4821D82B4200794775 /* iTermStandardKeyMapper.m in Sources */,
+				A66538852D0F90BF004B723B /* NSWorkspace+iTerm.m in Sources */,
 				A6E1524727602FFE00D0F41C /* iTermWeakBox.m in Sources */,
 				A6A5162C2BCDE6C7006F3F09 /* PTYSessionHostState.swift in Sources */,
 				A6614A2420958ED400A10D97 /* iTermBuildingScriptWindowController.m in Sources */,
@@ -16527,7 +16528,6 @@
 				A6C762C71B45C52B00E3C992 /* iTermHotKeyController.m in Sources */,
 				A6C300582471162A002BC672 /* iTermFileDescriptorServerShared.c in Sources */,
 				A6C762E71B45C52B00E3C992 /* VT100GridTypes.m in Sources */,
-				A6C762C41B45C52B00E3C992 /* NSWorkspace+iTerm.m in Sources */,
 				A6FEA2791CF2CBCC00376F28 /* iTermAppHotKeyProvider.m in Sources */,
 				1D0EA5A21CA5DAA2005FCF8B /* PSMLightHighContrastTabStyle.m in Sources */,
 				A6374A291DEE941F000A136F /* iTermPromptOnCloseReason.m in Sources */,

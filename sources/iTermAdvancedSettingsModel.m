@@ -170,6 +170,9 @@ static podtype sAdvancedSetting_##name; \
 
 #define DEFINE_SECURE_BOOL(name, capitalizedName, theDescription) \
 DEFINE_SECURE_BOILERPLATE(name, capitalizedName, BOOL, kiTermAdvancedSettingTypeBoolean, theDescription, iTermAdvancedSettingsModelTransformBool, iTermAdvancedSettingsModelInverseTransformBool)
+
+#define DEFINE_SECURE_STRING(name, capitalizedName, theDescription) \
+DEFINE_SECURE_BOILERPLATE(name, capitalizedName, NSString *, kiTermAdvancedSettingTypeString, theDescription, iTermAdvancedSettingsModelTransformString, iTermAdvancedSettingsModelInverseTransformString)
 // NOTE: To add more secure types, you'll need to modify iTermAdvancedSettingsViewController.m to
 // call the appropriate getter & setter and, afterwards, update the UI with the return value of the setter
 // since setting can fail.
@@ -488,6 +491,9 @@ DEFINE_BOOL(excludeUtunFromNetworkUtilization, YES, SECTION_GENERAL @"Exclude ut
 DEFINE_FLOAT(noSyncDownloadPrefsTimeout, 5.0, SECTION_GENERAL @"Timeout for downloading settings");
 DEFINE_BOOL(showButtonsForSelectedCommand, YES, SECTION_GENERAL @"Show buttons at the top of a selected command?\nWhen you select a command by single clicking the command line or its output, buttons are shown on the top right with options like Copy and Share. Note that this setting only applies when marks are not “line style” such as when using Auto Composer.")
 DEFINE_BOOL(enableZoomMenu, NO, SECTION_GENERAL @"Allow the standard system menu on window Zoom buttons to open?\nmacOS has a bug that makes the app hang. Since this is a rarely used menu, it is disabled by default.");
+#if ITERM2_SHARED_ARC
+DEFINE_SECURE_STRING(browserBundleID, BrowserBundleID, SECTION_GENERAL @"Bundle ID of browser to open URLs with.\nLeave empty to use system default.");
+#endif  // ITERM2_SHARED_ARC
 
 #pragma mark - Drawing
 

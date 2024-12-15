@@ -23,6 +23,7 @@
 #import "NSHost+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSURL+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "SCPPath.h"
 #import "SmartMatch.h"
 #import "URLAction.h"
@@ -279,7 +280,7 @@
                  additionalEventParamDescriptor:nil
                               launchIdentifiers:nil];
     } else {
-        [[NSWorkspace sharedWorkspace] openURL:url];
+        [[NSWorkspace sharedWorkspace] it_openURL:url];
     }
 }
 

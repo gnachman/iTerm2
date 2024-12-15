@@ -14,5 +14,6 @@
 - (NSString *)temporaryFileNameWithPrefix:(NSString *)prefix suffix:(NSString *)suffix;
 
 - (BOOL)it_securityAgentIsActive;
+- (BOOL)it_openURL:(NSURL *)url;
 
 @end

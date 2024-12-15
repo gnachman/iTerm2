@@ -33,6 +33,7 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "ProfileListView.h"
 #import "ProfileModel.h"
 #import "PreferencePanel.h"
@@ -1279,7 +1280,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (IBAction)titleHelp:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-session-title.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-session-title.html"]];
 }
 
 #pragma mark - NSTokenField delegate

@@ -33,6 +33,7 @@
 #import "NSIndexSet+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "PasswordTrigger.h"
 #import "ProfileModel.h"
 #import "ScriptTrigger.h"
@@ -880,7 +881,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 }
 
 - (IBAction)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.iterm2.com/triggers.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://www.iterm2.com/triggers.html"]];
 }
 
 - (void)colorWellDidChange:(CPKColorWell *)colorWell {

@@ -50,6 +50,15 @@ extension Bool: SecureUserDefaultStringTranscodable {
     }
 }
 
+extension String: SecureUserDefaultStringTranscodable {
+    var sudString: String {
+        self
+    }
+    init?(sudString string: String) throws {
+        self = string
+    }
+}
+
 protocol SerializableUserDefault {
     var key: String { get }
     func encode(to: inout [String: String])
@@ -79,12 +88,14 @@ struct SecureUserDefaults {
     lazy var requireAuthToOpenPasswordmanager = { SecureUserDefault<Bool>("RequireAuthenticationToOpenPasswordManager", defaultValue: true) }()
     lazy var enableSecureKeyboardEntryAutomatically = { SecureUserDefault<Bool>("EnableSecureKeyboardEntryAutomatically", defaultValue: true) }()
     lazy var enableAI = { SecureUserDefault<Bool>("EnableAI", defaultValue: false) }()
+    lazy var browserBundleID = { SecureUserDefault<String>("BrowserBundleID", defaultValue: "") }()
 
     private mutating func serializables() -> [any SerializableUserDefault] {
         [allowPaste,
          requireAuthToOpenPasswordmanager,
          enableSecureKeyboardEntryAutomatically,
-         enableAI]
+         enableAI,
+         browserBundleID]
     }
 }
 
@@ -120,6 +131,17 @@ class iTermSecureUserDefaults: NSObject {
         }
         set {
             try? SecureUserDefaults.instance.enableAI.set(newValue)
+        }
+    }
+    @objc var defaultValue_browserBundleID: String {
+        return SecureUserDefaults.instance.browserBundleID.defaultValue
+    }
+    @objc var browserBundleID: String {
+        get {
+            return SecureUserDefaults.instance.browserBundleID.value
+        }
+        set {
+            try? SecureUserDefaults.instance.browserBundleID.set(newValue)
         }
     }
 }

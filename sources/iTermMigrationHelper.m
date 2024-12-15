@@ -16,6 +16,7 @@
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 
 @implementation iTermMigrationHelper
 
@@ -306,7 +307,7 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
             return YES;
             break;
         case kiTermWarningSelection1:  // lean more
-            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://gitlab.com/gnachman/iterm2/-/wikis/Deprecated-Key-Mappings"]];
+            [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://gitlab.com/gnachman/iterm2/-/wikis/Deprecated-Key-Mappings"]];
             return [self askToRemoveDeprecatedKeyMappings:specialReason];
             break;
         default:  // cancel

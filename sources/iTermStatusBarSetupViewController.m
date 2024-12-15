@@ -38,6 +38,7 @@
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import <ColorPicker/ColorPicker.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -320,7 +321,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (IBAction)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/status-bar-layout"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/status-bar-layout"]];
 }
 
 - (void)advancedPanelDidClose {

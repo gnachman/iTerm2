@@ -25,6 +25,7 @@
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 
@@ -365,7 +366,7 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (void)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
 }
 
 - (void)updateAppearance {

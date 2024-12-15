@@ -15,6 +15,7 @@
 #import "FutureMethods.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 
 NSString *const kRegexKey = @"regex";
 NSString *const kNotesKey = @"notes";
@@ -154,7 +155,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 }
 
 - (IBAction)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.iterm2.com/smartselection.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://www.iterm2.com/smartselection.html"]];
 }
 
 - (IBAction)addRule:(id)sender {

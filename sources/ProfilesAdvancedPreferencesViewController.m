@@ -16,6 +16,7 @@
 #import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "PointerPreferencesViewController.h"
 #import "PreferencePanel.h"
 #import "SmartSelectionController.h"
@@ -256,7 +257,7 @@
 }
 
 - (IBAction)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/automatic-profile-switching.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/automatic-profile-switching.html"]];
 }
 
 - (void)removeBoundHostOnRow:(NSInteger)rowIndex {

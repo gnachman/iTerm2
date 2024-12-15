@@ -21,6 +21,7 @@
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "ProfileModel.h"
 
 @interface NMSSHSession(iTerm)
@@ -363,7 +364,7 @@ static NSError *SCPFileError(NSString *description) {
                                        cancelLabel:@"Help"
                                             window:nil];
             if (selection == kiTermWarningSelection1) {
-                [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/troubleshoot-hostname"]];
+                [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/troubleshoot-hostname"]];
             }
         }];
         return;

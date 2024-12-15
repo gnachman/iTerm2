@@ -24,6 +24,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
 
 #import <ColorPicker/ColorPicker.h>
@@ -787,7 +788,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 }
 
 - (void)visitGallery:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:kColorGalleryURL]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:kColorGalleryURL]];
 }
 
 - (BOOL)currentColorsEqualPreset:(NSDictionary *)preset 

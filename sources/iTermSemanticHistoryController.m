@@ -45,6 +45,7 @@
 #import "NSMutableData+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "RegexKitLite.h"
 #include <sys/utsname.h>
 
@@ -675,7 +676,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
                         additionalEventParamDescriptor:nil
                                      launchIdentifiers:NULL];
     } else {
-        return [[NSWorkspace sharedWorkspace] openURL:url];
+        return [[NSWorkspace sharedWorkspace] it_openURL:url];
     }
 }
 

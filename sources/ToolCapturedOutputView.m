@@ -22,6 +22,7 @@
 #import "NSTableColumn+iTerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "ToolCommandHistoryView.h"
@@ -420,7 +421,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 #pragma mark - Actions
 
 - (void)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://iterm2.com/captured_output.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://iterm2.com/captured_output.html"]];
 }
 
 @end

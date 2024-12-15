@@ -17,6 +17,7 @@
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSWorkspace+iTerm.h"
 #import <WebKit/WebKit.h>
 
 static char iTermWebViewFactoryUserControllerDelegateKey;
@@ -74,7 +75,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
     if ([URL isEqual:[NSURL URLWithString:@"about:blank"]]) {
         URL = self.backupURL;
     }
-    [[NSWorkspace sharedWorkspace] openURL:URL];
+    [[NSWorkspace sharedWorkspace] it_openURL:URL];
 }
 
 - (NSString *)browserName {
