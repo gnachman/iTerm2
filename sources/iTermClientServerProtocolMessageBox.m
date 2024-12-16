@@ -31,9 +31,32 @@
     return box;
 }
 
+static void HexDump(NSData *data) {
+    NSMutableString *dest = [NSMutableString string];
+    const unsigned char *bytes = (const unsigned char *)data.bytes;
+    int addr = 0;
+    DLog(@"- Begin hex dump of inbound message -");
+    for (int i = 0; i < data.length; i++) {
+        if (i % 16 == 0 && i > 0) {
+            DLog(@"%4d  %@", addr, dest);
+            addr = i;
+            dest = [NSMutableString string];
+        }
+        [dest appendFormat:@"%02x ", bytes[i]];
+    }
+    if (dest.length) {
+        DLog(@"%04d  %@", addr, dest);
+    }
+    DLog(@"- End hex dump of inbound message -");
+}
+
 - (iTermMultiServerServerOriginatedMessage *)decoded {
     if (_haveDecodedMessage) {
         return &_decodedMessage;
+    }
+    if (gDebugLogging) {
+        HexDump([NSData dataWithBytes:_protocolMessage.ioVectors[0].iov_base
+                               length:_protocolMessage.ioVectors[0].iov_len]);
     }
     const int status = iTermMultiServerProtocolParseMessageFromServer(&_protocolMessage, &_decodedMessage);
     if (status) {
