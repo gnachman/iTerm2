@@ -24,7 +24,7 @@ typedef NS_ENUM(NSInteger, ITermCursorType) {
 
 @interface iTermCursor : NSObject
 
-@property(nonatomic, assign) id<iTermCursorDelegate> delegate;
+@property (nonatomic, assign) id<iTermCursorDelegate> delegate;
 
 + (iTermCursor *)cursorOfType:(ITermCursorType)theType;
 + (instancetype)itermCopyModeCursorInSelectionState:(BOOL)selecting;
@@ -41,5 +41,7 @@ typedef NS_ENUM(NSInteger, ITermCursorType) {
              outline:(BOOL)outline
        virtualOffset:(CGFloat)virtualOffset;
 - (void)drawShadow;
+- (BOOL)isSolidRectangleWithFocused:(BOOL)focused;
+- (NSRect)frameForSolidRectangle:(NSRect)rect;
 
 @end

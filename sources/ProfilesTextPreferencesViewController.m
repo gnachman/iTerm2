@@ -37,6 +37,7 @@
     IBOutlet NSButton *_useBoldFont;
     IBOutlet NSButton *_blinkAllowed;
     IBOutlet NSButton *_shadow;
+    IBOutlet NSButton *_animateMovement;
     IBOutlet NSButton *_useItalicFont;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
     IBOutlet NSPopUpButton *_normalization;
@@ -126,6 +127,11 @@
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
     [self updateShadowEnabled];
+
+    [self defineControl:_animateMovement
+                    key:KEY_ANIMATE_MOVEMENT
+            displayName:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_useItalicFont
                     key:KEY_USE_ITALIC_FONT

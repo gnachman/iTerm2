@@ -3328,7 +3328,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
 
 #pragma mark - Drawing: Cursor
 
-- (NSRect)frameForCursorAt:(VT100GridCoord)cursorCoord {
+- (NSRect)dumbFrameForCursorAt:(VT100GridCoord)cursorCoord {
     const int rowNumber = cursorCoord.y + _numberOfLines - _gridSize.height;
     if ([iTermAdvancedSettingsModel fullHeightCursor]) {
         const CGFloat height = MAX(_cellSize.height, _cellSizeWithoutSpacing.height);
@@ -3345,8 +3345,73 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     }
 }
 
-- (NSRect)cursorFrame {
-    return [self frameForCursorAt:_cursorCoord];
+- (NSRect)cursorFrameForSolidRectangle {
+    const VT100GridCoord coord = [self coordinateByTransformingScreenCoordinateForRTL:_cursorCoord];
+    const iTermCursorInfo cursorInfo = [self cursorInfoForCoord:coord];
+    return [[iTermCursor cursorOfType:_cursorType] frameForSolidRectangle:cursorInfo.rect];
+}
+
+- (NSColor *)cursorColor {
+    return [self cursorColorWithOutline:NO];
+}
+
+- (BOOL)cursorIsSolidRectangle {
+    if (_passwordInput) {
+        return NO;
+    }
+    BOOL saved = _blinkingItemsVisible;
+    _blinkingItemsVisible = YES;
+    const BOOL wouldDraw = [self shouldDrawCursor];
+    _blinkingItemsVisible = saved;
+    if (!wouldDraw) {
+        return NO;
+    }
+    if (_showSearchingCursor) {
+        return NO;
+    }
+    return [[iTermCursor cursorOfType:_cursorType] isSolidRectangleWithFocused:self.isFocused];
+}
+
+typedef struct {
+    NSRect rect;
+    BOOL isDoubleWidth;
+    screen_char_t screenChar;
+} iTermCursorInfo;
+
+- (iTermCursorInfo)cursorInfoForCoord:(VT100GridCoord)cursorCoord {
+    // Get the character that's under the cursor.
+    const screen_char_t *theLine;
+    if (cursorCoord.y >= 0) {
+        theLine = [self lineAtScreenIndex:cursorCoord.y];
+    } else {
+        theLine = [self lineAtIndex:cursorCoord.y + _numberOfScrollbackLines isFirst:nil];
+    }
+    BOOL isDoubleWidth;
+    screen_char_t screenChar = [self charForCursorAtColumn:cursorCoord.x
+                                                    inLine:theLine
+                                               doubleWidth:&isDoubleWidth];
+
+    // Update the "find cursor" view.
+    [self.delegate drawingHelperUpdateFindCursorView];
+
+    // Get the color of the cursor.
+    NSRect rect = [self dumbFrameForCursorAt:cursorCoord];
+    if (isDoubleWidth) {
+        rect.size.width *= 2;
+    }
+    return (iTermCursorInfo){
+        .rect = rect,
+        .isDoubleWidth = isDoubleWidth,
+        .screenChar = screenChar
+    };
+}
+
+- (NSColor *)cursorColorWithOutline:(BOOL)outline {
+    if (outline) {
+        return [_colorMap colorForKey:kColorMapBackground];
+    } else {
+        return [self backgroundColorForCursor];
+    }
 }
 
 - (void)drawCopyModeCursorWithBackgroundColor:(NSColor *)cursorBackgroundColor
@@ -3465,32 +3530,8 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                    outline:(BOOL)outline
              virtualOffset:(CGFloat)virtualOffset {
     const VT100GridCoord cursorCoord = coordIsLogical ? [self coordinateByTransformingScreenCoordinateForRTL:nominalCursorCoord] : nominalCursorCoord;
-    // Get the character that's under the cursor.
-    const screen_char_t *theLine;
-    if (cursorCoord.y >= 0) {
-        theLine = [self lineAtScreenIndex:cursorCoord.y];
-    } else {
-        theLine = [self lineAtIndex:cursorCoord.y + _numberOfScrollbackLines isFirst:nil];
-    }
-    BOOL isDoubleWidth;
-    screen_char_t screenChar = [self charForCursorAtColumn:cursorCoord.x
-                                                    inLine:theLine
-                                               doubleWidth:&isDoubleWidth];
-
-    // Update the "find cursor" view.
-    [self.delegate drawingHelperUpdateFindCursorView];
-
-    // Get the color of the cursor.
-    NSColor *cursorColor;
-    if (outline) {
-        cursorColor = [_colorMap colorForKey:kColorMapBackground];
-    } else {
-        cursorColor = [self backgroundColorForCursor];
-    }
-    NSRect rect = [self frameForCursorAt:cursorCoord];
-    if (isDoubleWidth) {
-        rect.size.width *= 2;
-    }
+    const iTermCursorInfo cursorInfo = [self cursorInfoForCoord:cursorCoord];
+    NSColor *cursorColor = [self cursorColorWithOutline:outline];
 
     if (_passwordInput) {
         NSImage *keyImage;
@@ -3499,7 +3540,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
         } else {
             keyImage = [NSImage it_imageNamed:@"key-dark" forClass:self.class];
         }
-        CGPoint point = rect.origin;
+        CGPoint point = cursorInfo.rect.origin;
         [keyImage it_drawInRect:NSMakeRect(point.x, point.y, _cellSize.width, _cellSize.height)
                        fromRect:NSZeroRect
                       operation:NSCompositingOperationSourceOver
@@ -3507,7 +3548,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                  respectFlipped:YES
                           hints:nil
                   virtualOffset:virtualOffset];
-        return rect;
+        return cursorInfo.rect;
     }
 
 
@@ -3523,19 +3564,22 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                                          faint:NO
                                                   isBackground:NO];
     }
-    [cursor drawWithRect:rect
-             doubleWidth:isDoubleWidth
-              screenChar:screenChar
+    [cursor drawWithRect:cursorInfo.rect
+             doubleWidth:cursorInfo.isDoubleWidth
+              screenChar:cursorInfo.screenChar
          backgroundColor:cursorColor
          foregroundColor:cursorTextColor
                    smart:_useSmartCursorColor
-                 focused:((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor)
+                 focused:[self isFocused]
                    coord:cursorCoord
                  outline:outline
            virtualOffset:virtualOffset];
-    return rect;
+    return cursorInfo.rect;
 }
 
+- (BOOL)isFocused {
+    return ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
+}
 #pragma mark - Text Run Construction
 
 - (NSRange)underlinedRangeOnLine:(long long)row {

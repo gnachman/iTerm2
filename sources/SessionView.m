@@ -220,6 +220,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermScrollerBackgroundColorView *_legacyScrollerBackgroundView;
     iTermUnobtrusiveMessage *_unobtrusiveMessage;
     iTermStatusBarFilterComponent *_temporaryFilterComponent;
+    iTermCursorSmearView *_smearView;
+    NSInteger _contentViewIndex;  // for metal or legacy view - whatever draws terminal content goes at this index.
 }
 
 + (double)titleHeight {
@@ -256,6 +258,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _backgroundColorView.layer.actions = @{@"backgroundColor": [NSNull null]};
         [self addSubview:_backgroundColorView];
 
+        // --- Subsequent views appear overtop terminal contents ---
+        _contentViewIndex = self.subviews.count;
+
         _legacyScrollerBackgroundView = [[iTermScrollerBackgroundColorView alloc] init];
         _legacyScrollerBackgroundView.layer = [[CALayer alloc] init];
         _legacyScrollerBackgroundView.wantsLayer = YES;
@@ -263,6 +268,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _legacyScrollerBackgroundView.layer.actions = @{@"backgroundColor": [NSNull null]};
         _legacyScrollerBackgroundView.hidden = YES;
         [self addSubview:_legacyScrollerBackgroundView];
+
+        _smearView = [[iTermCursorSmearView alloc] init];
+        [self addSubview:_smearView];
 
         // Set up find view
         _dropDownFindViewController = [self newDropDownFindView];
@@ -759,7 +767,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _legacyView = [[iTermLegacyView alloc] init];
     _legacyView.delegate = self;
     // Image view and background color view go under it.
-    [self insertSubview:_legacyView atIndex:2];
+    [self insertSubview:_legacyView atIndex:_contentViewIndex];
     _metalClipView.legacyView = _legacyView;
 }
 
@@ -817,7 +825,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _metalClipView.metalView = _metalView;
 
     // Image view and background color view go under it.
-    [self insertSubview:_metalView atIndex:2];
+    [self insertSubview:_metalView atIndex:_contentViewIndex];
 
     // Configure and hide the metal view. It will be shown by PTYSession after it has rendered its
     // first frame. Until then it's just a solid gray rectangle.
@@ -1003,6 +1011,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [CATransaction setDisableActions:YES];
         _imageView.frame = frame;
         _backgroundColorView.frame = frame;
+        _smearView.frame = frame;
         _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
         [CATransaction commit];
     }
@@ -1010,6 +1019,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [CATransaction setDisableActions:YES];
     _imageView.frame = self.bounds;
     _backgroundColorView.frame = self.bounds;
+    _smearView.frame = self.bounds;
     _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
     [CATransaction commit];
 
@@ -1630,6 +1640,10 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (void)setSuppressLegacyDrawing:(BOOL)suppressLegacyDrawing {
     _legacyView.hidden = suppressLegacyDrawing;
+}
+
+- (void)smearCursorFrom:(NSRect)from to:(NSRect)to color:(NSColor *)color {
+    [_smearView beginAnimationWithStart:from end:to color:color];
 }
 
 #pragma mark NSDraggingSource protocol

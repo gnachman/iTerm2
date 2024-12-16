@@ -254,8 +254,10 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 // Origin in view coordinates of the cursor. Valid only if there is marked text.
 @property(nonatomic, readonly) NSPoint imeCursorLastPos;
 
-// Where the cursor is drawn based on current cellSize and cursorCoord.
-@property(nonatomic, readonly) NSRect cursorFrame;
+// Where the cursor is drawn based on current cellSize and cursorCoord, assuming it is a solid rectangle.
+@property(nonatomic, readonly) NSRect cursorFrameForSolidRectangle;
+@property(nonatomic, readonly) NSColor *cursorColor;
+@property(nonatomic, readonly) BOOL cursorIsSolidRectangle;
 
 // Draw debug info?
 @property(nonatomic, assign) BOOL debug;

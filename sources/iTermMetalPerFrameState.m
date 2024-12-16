@@ -190,6 +190,10 @@ typedef struct {
     [self loadAnnotationRangesFromTextView:textView];
     [self loadOffscreenCommandLine:textView screen:screen drawingHelper:drawingHelper];
     [self loadImagesFromTextView:textView];
+
+    // This isn't really appropriate here but there isn't a great place for it and we do have
+    // everything we need, and the effect works well.
+    [textView smearCursorIfNeededWithDrawingHelper:drawingHelper];
 }
 
 - (void)loadImagesFromTextView:(PTYTextView *)textView {

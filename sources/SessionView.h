@@ -293,5 +293,6 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // vended by PTYTextView when it is focused.
 - (void)setMainResponder:(NSResponder *)responder;
 - (void)updateForAppearanceChange;
+- (void)smearCursorFrom:(NSRect)from to:(NSRect)to color:(NSColor *)color;
 
 @end

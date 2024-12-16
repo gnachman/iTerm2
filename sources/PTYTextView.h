@@ -311,7 +311,9 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewWouldReportControlReturn;
 - (BOOL)textViewCanChangeProfileInArrangement;
 - (void)textViewChangeProfileInArrangement;
-
+- (void)textViewSmearCursorFrom:(NSRect)from
+                             to:(NSRect)to
+                          color:(NSColor *)color;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -495,6 +497,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic, readonly) BOOL shouldBeAlphaedOut;
 @property (nonatomic, readonly) BOOL drawingHelperIsValid;
 @property (nonatomic, readonly) BOOL canCopy;
+@property (nonatomic) BOOL animateMovement;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
@@ -743,6 +746,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)requestDelegateRedraw;  // Use this instead of setNeedsDisplay:
 
 - (iTermSelection *)selectionForCommandAndOutputOfMark:(id<VT100ScreenMarkReading>)mark;
+- (void)smearCursorIfNeededWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper;
 
 #pragma mark - Testing only
 

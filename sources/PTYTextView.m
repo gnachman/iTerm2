@@ -185,6 +185,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
     iTermTerminalCopyButton *_hoverBlockCopyButton NS_AVAILABLE_MAC(11);
     NSMutableArray<iTermTerminalButton *> *_buttons NS_AVAILABLE_MAC(11);
+
+    NSRect _previousCursorFrame;
 }
 
 
@@ -1331,6 +1333,37 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return virtualOffset;
 }
 
+- (void)smearCursorIfNeededWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper {
+    if (!self.animateMovement) {
+        DLog(@"Movement animation is off");
+        return;
+    }
+    if (!drawingHelper.cursorIsSolidRectangle) {
+        DLog(@"Cursor not a solid rectangle");
+        _previousCursorFrame = NSZeroRect;
+        return;
+    }
+    const NSRect cursorFrame = [drawingHelper cursorFrameForSolidRectangle];
+    const NSRect documentVisibleRect = [self adjustedDocumentVisibleRectIncludingTopMargin:YES];
+    if (_previousCursorFrame.size.width > 0 &&
+        cursorFrame.size.width > 0 &&
+        !NSEqualRects(cursorFrame, _previousCursorFrame) &&
+        NSEqualRects(_previousCursorFrame, NSIntersectionRect(_previousCursorFrame, documentVisibleRect)) &&
+        NSEqualRects(cursorFrame, NSIntersectionRect(cursorFrame, documentVisibleRect))) {
+
+        // Convert to visible coordinate space.
+        NSRect from = _previousCursorFrame;
+        NSRect to = cursorFrame;
+        from.origin.y -= documentVisibleRect.origin.y;
+        to.origin.y -= documentVisibleRect.origin.y;
+
+        [self.delegate textViewSmearCursorFrom:from
+                                            to:to
+                                         color:drawingHelper.cursorColor];
+    }
+    _previousCursorFrame = cursorFrame;
+}
+
 // Draw in to another view which exactly coincides with the clip view, except it's inset on the top
 // and bottom by the margin heights.
 - (void)drawRect:(NSRect)rect inView:(NSView *)view {
@@ -1413,6 +1446,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     }];
     [self maybeInvalidateWindowShadow];
     [self shiftTrackingChildWindows];
+    [self smearCursorIfNeededWithDrawingHelper:_drawingHelper];
 }
 
 // This view is visible only when annotations are revealed. They are subviews, and while macOS does

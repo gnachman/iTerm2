@@ -1420,6 +1420,7 @@ DQ
         <customObject id="lhd-u6-xr5" userLabel="Prefs&gt;Profiles&gt;Text View Controller" customClass="ProfilesTextPreferencesViewController">
             <connections>
                 <outlet property="_ambiguousIsDoubleWidth" destination="5126" id="Eee-f8-fvr"/>
+                <outlet property="_animateMovement" destination="JXG-G1-APa" id="RAy-kz-OJc"/>
                 <outlet property="_asciiAntiAliased" destination="4782" id="P5t-r0-fdU"/>
                 <outlet property="_asciiFontPicker" destination="yZc-ct-5Wq" id="NZc-f0-T8A"/>
                 <outlet property="_asciiLigatures" destination="mlk-a6-xcL" id="FMp-la-RCY"/>
@@ -2732,9 +2733,9 @@ DQ
                     </connections>
                 </button>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5148">
-                    <rect key="frame" x="262" y="369" width="101" height="18"/>
+                    <rect key="frame" x="262" y="369" width="136" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Blinking text" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5149">
+                    <buttonCell key="cell" type="check" title="Allow blinking text" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5149">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -2791,10 +2792,10 @@ DQ
                     </connections>
                 </button>
                 <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5017">
-                    <rect key="frame" x="20" y="426" width="302" height="18"/>
+                    <rect key="frame" x="20" y="426" width="131" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    <size key="cellSize" width="98" height="18"/>
+                    <size key="cellSize" width="41" height="18"/>
                     <size key="intercellSpacing" width="4" height="2"/>
                     <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="5023">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2802,19 +2803,19 @@ DQ
                     </buttonCell>
                     <cells>
                         <column>
-                            <buttonCell type="radio" title="Underline" imagePosition="left" alignment="left" inset="2" id="5022">
+                            <buttonCell type="radio" title="_" imagePosition="left" alignment="left" inset="2" id="5022">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
                         </column>
                         <column>
-                            <buttonCell type="radio" title="Vertical bar" imagePosition="left" alignment="left" tag="1" inset="2" id="4EF-ZY-624">
+                            <buttonCell type="radio" title="⏐" imagePosition="left" alignment="left" tag="1" inset="2" id="4EF-ZY-624">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
                         </column>
                         <column>
-                            <buttonCell type="radio" title="Box" imagePosition="left" alignment="left" tag="2" inset="2" id="2Uw-hJ-dM5">
+                            <buttonCell type="radio" title="▋" imagePosition="left" alignment="left" tag="2" inset="2" id="2Uw-hJ-dM5">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
@@ -2978,9 +2979,9 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6400">
-                    <rect key="frame" x="419" y="369" width="82" height="18"/>
+                    <rect key="frame" x="419" y="369" width="118" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Italic text" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6401">
+                    <buttonCell key="cell" type="check" title="Allow italic text" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6401">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -3003,7 +3004,7 @@ DQ
                     </connections>
                 </button>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4773">
-                    <rect key="frame" x="419" y="426" width="117" height="18"/>
+                    <rect key="frame" x="447" y="426" width="117" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Blinking cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3051,7 +3052,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button toolTip="Underline and vertical bar cursors may have a shadow to improve visibliity." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eid-kp-DfH">
-                    <rect key="frame" x="338" y="426" width="75" height="18"/>
+                    <rect key="frame" x="366" y="426" width="75" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Shadow" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3s8-2Y-ENx">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3060,6 +3061,19 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="lhd-u6-xr5" id="Zmh-ah-9Xo"/>
                         <outlet property="nextKeyView" destination="4782" id="bQz-Xw-pk9"/>
+                    </connections>
+                </button>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JXG-G1-APa">
+                    <rect key="frame" x="217" y="426" width="143" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">When enabled, large cursor movements get an animation to help your eye follow the cursor. They are enabled only in interactive application (i.e., in alternate screen mode).</string>
+                    <buttonCell key="cell" type="check" title="Animate movement" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="a5M-2m-nch">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="npT-hf-bK8"/>
+                        <outlet property="nextKeyView" destination="4782" id="Ddq-1S-9QC"/>
                     </connections>
                 </button>
             </subviews>

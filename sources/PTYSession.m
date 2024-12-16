@@ -4792,6 +4792,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setBlinkAllowed:[iTermProfilePreferences boolForKey:KEY_BLINK_ALLOWED inProfile:aDict]];
     [_screen setCursorBlinks:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorShadow:[iTermProfilePreferences boolForKey:KEY_CURSOR_SHADOW inProfile:aDict]];
+    _textview.animateMovement = [iTermProfilePreferences boolForKey:KEY_ANIMATE_MOVEMENT inProfile:aDict];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorType:_cursorTypeOverride ? _cursorTypeOverride.integerValue : [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
 
@@ -16673,6 +16674,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)textViewChangeProfileInArrangement {
     [self changeProfileInArrangement];
+}
+
+- (void)textViewSmearCursorFrom:(NSRect)from to:(NSRect)to color:(NSColor *)color {
+    if (_screen.terminalSoftAlternateScreenMode) {
+        [_view smearCursorFrom:from to:to color:color];
+    }
 }
 
 - (void)removeSelectedCommandRange {

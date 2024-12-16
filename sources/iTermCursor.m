@@ -67,6 +67,14 @@
        virtualOffset:(CGFloat)virtualOffset {
 }
 
+- (BOOL)isSolidRectangleWithFocused:(BOOL)focused {
+    return YES;
+}
+
+- (NSRect)frameForSolidRectangle:(NSRect)rect {
+    return rect;
+}
+
 - (void)drawOutlineOfRect:(NSRect)cursorRect withColor:(NSColor *)color virtualOffset:(CGFloat)virtualOffset {
     [[color colorWithAlphaComponent:0.75] set];
     NSRect rect = cursorRect;
@@ -103,6 +111,15 @@
 
 @implementation iTermUnderlineCursor
 
+- (NSRect)frameForSolidRectangle:(NSRect)rect {
+    const CGFloat height = [iTermAdvancedSettingsModel underlineCursorHeight];
+    NSRect cursorRect = NSMakeRect(rect.origin.x,
+                                   rect.origin.y + rect.size.height - height - [iTermAdvancedSettingsModel underlineCursorOffset],
+                                   ceil(rect.size.width),
+                                   height);
+    return cursorRect;
+}
+
 - (void)drawWithRect:(NSRect)rect
          doubleWidth:(BOOL)doubleWidth
           screenChar:(screen_char_t)screenChar
@@ -113,11 +130,7 @@
                coord:(VT100GridCoord)coord
              outline:(BOOL)outline
        virtualOffset:(CGFloat)virtualOffset {
-    const CGFloat height = [iTermAdvancedSettingsModel underlineCursorHeight];
-    NSRect cursorRect = NSMakeRect(rect.origin.x,
-                                   rect.origin.y + rect.size.height - height - [iTermAdvancedSettingsModel underlineCursorOffset],
-                                   ceil(rect.size.width),
-                                   height);
+    NSRect cursorRect = [self frameForSolidRectangle:rect];
     if (outline) {
         [self drawOutlineOfRect:cursorRect
                       withColor:backgroundColor
@@ -138,6 +151,11 @@
 
 @implementation iTermVerticalCursor
 
+- (NSRect)frameForSolidRectangle:(NSRect)rect {
+    return NSMakeRect(rect.origin.x, rect.origin.y, [iTermAdvancedSettingsModel verticalBarCursorWidth], rect.size.height);
+
+}
+
 - (void)drawWithRect:(NSRect)rect
          doubleWidth:(BOOL)doubleWidth
           screenChar:(screen_char_t)screenChar
@@ -148,7 +166,7 @@
                coord:(VT100GridCoord)coord
              outline:(BOOL)outline
        virtualOffset:(CGFloat)virtualOffset {
-    NSRect cursorRect = NSMakeRect(rect.origin.x, rect.origin.y, [iTermAdvancedSettingsModel verticalBarCursorWidth], rect.size.height);
+    NSRect cursorRect = [self frameForSolidRectangle:rect];
     if (outline) {
         [self drawOutlineOfRect:cursorRect withColor:backgroundColor virtualOffset:virtualOffset];
     } else {
@@ -164,6 +182,14 @@
 @end
 
 @implementation iTermCopyModeCursor
+
+- (BOOL)isSolidRectangle {
+    return NO;
+}
+
+- (NSRect)frameForSolidRectangle:(NSRect)rect {
+    return NSZeroRect;
+}
 
 - (void)drawWithRect:(NSRect)rect
          doubleWidth:(BOOL)doubleWidth
@@ -211,6 +237,10 @@
 - (void)dealloc {
     [_smartCursorColor release];
     [super dealloc];
+}
+
+- (BOOL)isSolidRectangleWithFocused:(BOOL)focused {
+    return focused;
 }
 
 - (void)drawWithRect:(NSRect)rect
