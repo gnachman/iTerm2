@@ -1869,6 +1869,7 @@
 		A6644BEF25CDD20800419355 /* iTermVirtualOffset.m in Sources */ = {isa = PBXBuildFile; fileRef = A6644BED25CDD20800419355 /* iTermVirtualOffset.m */; };
 		A664AE782C55A6B800A6807A /* iTermModernKeyMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A664AE772C55A6B800A6807A /* iTermModernKeyMapper.swift */; };
 		A66538852D0F90BF004B723B /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
+		A66538892D0FBB11004B723B /* WindowOrderRestorer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66538882D0FBB0C004B723B /* WindowOrderRestorer.swift */; };
 		A665396C26B71B880049F375 /* iTermIndicatorsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F721A23D195009B1CB6 /* iTermIndicatorsHelper.m */; };
 		A665C1CB243A4DE300F623F0 /* SIGArchiveCommon.m in Sources */ = {isa = PBXBuildFile; fileRef = A665C1CA243A4DE300F623F0 /* SIGArchiveCommon.m */; };
 		A665C1D0243A606C00F623F0 /* iTermRequestCookieCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A665C1CE243A606C00F623F0 /* iTermRequestCookieCommand.h */; };
@@ -6209,6 +6210,7 @@
 		A6644BEC25CDD20800419355 /* iTermVirtualOffset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVirtualOffset.h; sourceTree = "<group>"; };
 		A6644BED25CDD20800419355 /* iTermVirtualOffset.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVirtualOffset.m; sourceTree = "<group>"; };
 		A664AE772C55A6B800A6807A /* iTermModernKeyMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermModernKeyMapper.swift; sourceTree = "<group>"; };
+		A66538882D0FBB0C004B723B /* WindowOrderRestorer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowOrderRestorer.swift; sourceTree = "<group>"; };
 		A665C1CA243A4DE300F623F0 /* SIGArchiveCommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGArchiveCommon.m; path = SignedArchive/SIGArchiveCommon.m; sourceTree = "<group>"; };
 		A665C1CE243A606C00F623F0 /* iTermRequestCookieCommand.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRequestCookieCommand.h; sourceTree = "<group>"; };
 		A665C1CF243A606C00F623F0 /* iTermRequestCookieCommand.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRequestCookieCommand.m; sourceTree = "<group>"; };
@@ -10700,6 +10702,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A66538882D0FBB0C004B723B /* WindowOrderRestorer.swift */,
 				A6FFAE702CF123CC0031FB21 /* CoreTextLineRenderingHelper.swift */,
 				A619DC4D2CD5A1CF004B8996 /* iTermCoreTextLineRenderingHelper.m */,
 				A619DC4B2CD5A18B004B8996 /* iTermCoreTextLineRenderingHelper.h */,
@@ -16203,6 +16206,7 @@
 				535EA51220D82A9C00FC81E0 /* PTYSplitView.m in Sources */,
 				A6BC9B1F214A2AE900F50C09 /* iTermVariableReference.m in Sources */,
 				A64B68DB2337314E009DA064 /* ToolCapturedOutputView.m in Sources */,
+				A66538892D0FBB11004B723B /* WindowOrderRestorer.swift in Sources */,
 				530098512259A44D00A69348 /* iTermSoundPlayer.m in Sources */,
 				A621F10726F53071001DD3A6 /* iTermExternalAttributeIndex.m in Sources */,
 				A6D1784721BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m in Sources */,

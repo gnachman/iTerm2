@@ -136,3 +136,12 @@ extension Array where Element: Collection, Element.Element: Comparable {
         return Array<Element.Element>(subsequence)
     }
 }
+
+extension Array {
+    subscript(safe i: Int) -> Element? {
+        if i < 0 || i >= count {
+            return nil
+        }
+        return self[i]
+    }
+}
