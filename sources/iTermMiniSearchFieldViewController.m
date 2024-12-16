@@ -152,9 +152,17 @@
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.action == @selector(searchNextPrev:) ||
+        menuItem.action == @selector(changeMode:) ||
+        menuItem.action == @selector(closeButton:) ||
+        menuItem.action == @selector(eraseSearchHistory:)) {
+        menuItem.state = (menuItem.tag == self.driver.mode) ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
+    }
     if ([self.driver bottomUpValidateMenuItem:menuItem]) {
         return YES;
     }
+
     return NO;
 }
 
