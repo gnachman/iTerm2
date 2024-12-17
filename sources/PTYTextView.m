@@ -187,6 +187,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     NSMutableArray<iTermTerminalButton *> *_buttons NS_AVAILABLE_MAC(11);
 
     NSRect _previousCursorFrame;
+    BOOL _ignoreMomentumScroll;
 }
 
 
@@ -764,7 +765,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     aFrame.size.width = [self frame].size.width;
     aFrame.size.height = _lineHeight * height;
     [self scrollRectToVisible: aFrame];
-    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+    [self cancelMomentumScroll];
+    [self lockScroll];
 }
 
 - (BOOL)withRelativeCoord:(VT100GridAbsCoord)coord
@@ -816,9 +818,15 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         aFrame.origin.y = range.start.y * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];  // allow for top margin
         aFrame.size.width = [self frame].size.width;
         aFrame.size.height = (range.end.y - range.start.y + 1) * _lineHeight;
+        NSScrollView *scrollView = self.enclosingScrollView;
         [self scrollRectToVisible: aFrame];
-        [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+        [self cancelMomentumScroll];
+        [self lockScroll];
     }];
+}
+
+- (void)cancelMomentumScroll {
+    _ignoreMomentumScroll = YES;
 }
 
 - (void)lockScroll {
@@ -907,7 +915,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         const int dy = desiredBottomLine - currentBottomLine;
         [self scrollBy:[self.enclosingScrollView verticalLineScroll] * dy];
     }
-    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+    [self cancelMomentumScroll];
+    [self lockScroll];
 }
 
 #pragma mark - NSView
@@ -1003,7 +1012,40 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return (axis == NSEventGestureAxisHorizontal) ? YES : NO;
 }
 
+static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
+    NSMutableArray<NSString *> *phase = [NSMutableArray array];
+    if (eventPhase & NSEventPhaseBegan) {
+        [phase addObject:@"Began"];
+    }
+    if (eventPhase & NSEventPhaseEnded) {
+        [phase addObject:@"Ended"];
+    }
+    if (eventPhase & NSEventPhaseChanged) {
+        [phase addObject:@"Changed"];
+    }
+    if (eventPhase & NSEventPhaseCancelled) {
+        [phase addObject:@"Cancelled"];
+    }
+    if (eventPhase & NSEventPhaseStationary) {
+        [phase addObject:@"Stationary"];
+    }
+    if (eventPhase & NSEventPhaseMayBegin) {
+        [phase addObject:@"MayBegin"];
+    }
+    if (!phase.count) {
+        [phase addObject:@"None"];
+    }
+    return [phase componentsJoinedByString:@"|"];
+}
+
 - (void)scrollWheel:(NSEvent *)event {
+    DLog(@"scrollWheel: momentumPhase=%@, eventPhase=%@, _ignoreMomentumScroll=%@",
+          iTermStringForEventPhase(event.momentumPhase), iTermStringForEventPhase(event.phase), @(_ignoreMomentumScroll));
+    if (_ignoreMomentumScroll && event.momentumPhase == NSEventPhaseChanged && event.phase == NSEventPhaseNone) {
+        DLog(@"  ignore");
+        return;
+    }
+    _ignoreMomentumScroll = NO;
     DLog(@"scrollWheel:%@", event);
     const NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
     if ([_mouseHandler scrollWheel:event pointInView:point]) {
@@ -4485,7 +4527,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         return;
     }
     // Lock scrolling after finding text
-    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+    [self cancelMomentumScroll];
+    [self lockScroll];
 
     [self scrollToCenterLine:range.end.y];
     [self requestDelegateRedraw];
@@ -6246,7 +6289,7 @@ static NSString *iTermStringFromRange(NSRange range) {
 - (void)mouseHandlerLockScrolling:(PTYMouseHandler *)handler {
     // Lock auto scrolling while the user is selecting text, but not for a first-mouse event
     // because drags are ignored for those.
-    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+    [self lockScroll];
 }
 
 - (void)mouseHandlerDidMutateState:(PTYMouseHandler *)handler {

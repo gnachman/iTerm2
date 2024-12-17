@@ -11627,6 +11627,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 {
     PTYTextView *textView = [[self currentSession] textview];
     if (textView) {
+        DLog(@"jump to selection");
         [textView scrollToSelection];
     } else {
         DLog(@"Beep: no text view to jump in");
