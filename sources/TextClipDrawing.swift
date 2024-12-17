@@ -106,14 +106,18 @@ class TextClipDrawing: NSObject {
     static func drawClip(drawingHelper: iTermTextDrawingHelper,
                          numHistoryLines: Int32,
                          range: VT100GridCoordRange) {
+        DLog("Want to draw a clip for range \(VT100GridCoordRangeDescription(range)) with \(numHistoryLines) history lines)")
         guard let delegate = drawingHelper.delegate else {
+            DLog("No delegate")
             return
         }
         let width = drawingHelper.gridSize.width
+        DLog("width=\(width)")
         guard width > 0 else {
             return
         }
         guard range.start.x >= 0 && range.end.x >= 0 else {
+            DLog("bogus range")
             return
         }
 
@@ -122,16 +126,23 @@ class TextClipDrawing: NSObject {
             let bidi = delegate.drawingHelperBidiInfo(forLine: i)
             let sca = ScreenCharArray(copyOfLine: line,
                                       length: width,
-                                      continuation: line[Int(width)],
+                                      continuation: line[Int(clamping: width)],
                                       bidiInfo: bidi)
             return sca
         }
+        if lines.isEmpty {
+            DLog("No lines")
+            return
+        }
         if let leadingRange = Range<Int32>(safeLowerBound: 0, upperBound: range.start.x) {
+            DLog("Zero out \(leadingRange) of the first line")
             lines[0] = lines[0].copy(byZeroingVisibleRange: NSRange(leadingRange))
         }
         if let trailingRange = Range<Int32>(safeLowerBound: range.end.x, upperBound: width) {
+            DLog("Zero out \(trailingRange) of the last line")
             lines[lines.count - 1] = lines[lines.count - 1].copy(byZeroingVisibleRange: NSRange(trailingRange))
         }
+        DLog("Final lines:\n\(lines)")
         SavedState.perform(drawingHelper) {
             let instance = TextClipDrawing(drawingHelper: drawingHelper,
                                            firstLine: range.start.y,
