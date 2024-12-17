@@ -32,13 +32,17 @@ class TerminalContentSnapshot: NSObject, iTermTextDataSource {
         self.lineBuffer = lineBuffer.copy()
         grid.appendLines(grid.size.height, to: self.lineBuffer)
         self.lineBuffer.commitLastBlock()
+
+        DLog("Terminal content snapshot created with width \(_width):\n\(self.lineBuffer.dumpString())")
     }
 
     func screenCharArray(forLine line: Int32) -> ScreenCharArray {
-        return lineBuffer.maybeScreenCharArray(forLine: line,
+        let sca = lineBuffer.maybeScreenCharArray(forLine: line,
                                                width: _width,
                                                paddedTo: _width,
                                                eligibleForDWC: false) ?? ScreenCharArray.emptyLine(ofLength: _width)
+        DLog("sca at line \(line) with width \(_width) is \(sca.stringValue)")
+        return sca
     }
 
     func screenCharArray(atScreenIndex index: Int32) -> ScreenCharArray {

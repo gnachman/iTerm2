@@ -1065,8 +1065,10 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             [locatedAttributedString appendString:string
                                    withAttributes:attributeProvider(theChar, ea)
                                                at:coord];
+            DLog(@"las=%@", locatedAttributedString.string);
         } else {
             [locatedString appendString:string at:coord];
+            DLog(@"ls=%@", locatedString.string);
         }
     };
 
@@ -1093,6 +1095,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                                       iTermExternalAttribute *ea,
                                       VT100GridCoord logicalCoord,
                                       VT100GridCoord visualCoord) {
+        DLog(@"Found %@ at logical=%@ visual=%@", ScreenCharToStr(&theChar), VT100GridCoordDescription(logicalCoord), VT100GridCoordDescription(visualCoord));
         if (needsTimestamps) {
             appendString([self formattedTimestampForLine:logicalCoord.y],
                          (screen_char_t) { .code = 0, .complexChar = 0, .image = 0}, nil, logicalCoord);
@@ -1170,6 +1173,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         return NO;
     }
                        eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
+        DLog(@"Found eol on line %d", line);
         if (needsTimestamps) {
             VT100GridCoord coord = VT100GridCoordMake(0, line);
             appendString([self formattedTimestampForLine:coord.y],
@@ -1606,6 +1610,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             endx = MAX(0, MIN(endx, reducedEndX));
         }
         ScreenCharArray *sca = [_dataSource screenCharArrayForLine:y];
+        DLog(@"Will enumerate characters in line %d: %@", y, sca);
         const screen_char_t *theLine = sca.line;
         id<iTermExternalAttributeIndexReading> eaIndex = [_dataSource externalAttributeIndexForLine:y];
 
