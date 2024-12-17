@@ -787,6 +787,16 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
     __block BOOL result = NO;
     const NMSSHKnownHostStatus status = [self.session knownHostStatusInFiles:nil];
     NSString *host = session.host;
+    const NMSSHSessionHash hash = session.fingerprintHash;
+    NSString *hashName = @"";
+    switch (session.fingerprintHash) {
+        case NMSSHSessionHashMD5:
+            hashName = @"MD5";
+            break;
+        case NMSSHSessionHashSHA1:
+            hashName = @"SHA1";
+            break;
+    }
     [self performOnMainThread:^{
         _okToAdd = NO;
         NSString *message = nil;
@@ -796,8 +806,8 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
                 title = [NSString stringWithFormat:@"Problem connecting to %@", host];
                 message = [NSString stringWithFormat:@"Could not read the known_hosts file.\n"
                                                      @"As a result, the authenticity of host '%@' can't be established."
-                                                     @"DSA key fingerprint is %@. Connect anyway?",
-                           host, fingerprint];
+                                                     @"%@ key fingerprint is %@. Connect anyway?",
+                           host, hashName, fingerprint];
                 break;
 
             case NMSSHKnownHostStatusMatch:
@@ -809,18 +819,18 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
                 title = @"Warning!";
                 message =
                     [NSString stringWithFormat:@"REMOTE HOST IDENTIFICATION HAS CHANGED!\n\n"
-                                               @"The DSA key fingerprint of host '%@' has changed. It is %@.\n\n"
+                                               @"The %@ key fingerprint of host '%@' has changed. It is %@.\n\n"
                                                @"Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n"
                                                @"It is also possible that a host key has just been changed.\nConnect anyway?",
-                     host, fingerprint];
+                     host, hashName, fingerprint];
                 break;
 
             case NMSSHKnownHostStatusNotFound:
                 title = [NSString stringWithFormat:@"First time connecting to %@", host];
                 message =
                     [NSString stringWithFormat:@"The authenticity of host '%@' can't be established.\n\n"
-                                               @"DSA key fingerprint is %@.\n\nConnect anyway?",
-                     host, fingerprint];
+                                               @"%@ key fingerprint is %@.\n\nConnect anyway?",
+                     host, hashName, fingerprint];
                 _okToAdd = YES;
                 break;
         }
