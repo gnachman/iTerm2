@@ -18,7 +18,7 @@
     if (linesPtr) {
         *linesPtr = 0;
     }
-    return n / self.width;
+    return n * self.width;
 }
 
 @end

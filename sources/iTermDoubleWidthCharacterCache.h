@@ -56,7 +56,7 @@
 
 - (BOOL)validForWidth:(int)width length:(int)length;
 
-// Gives the offset into the raw line of the `n`th wrapped liens.
+// Gives the offset into the raw line of the `n`th wrapped line.
 // totalLines is provided for debugging purposes and returns the last line considered.
 - (int)offsetForWrappedLine:(int)n totalLines:(out int *)linesPtr;
 

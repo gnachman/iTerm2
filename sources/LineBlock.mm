@@ -355,6 +355,13 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     [self sanityCheckBidiDisplayInfoForRawLine:i];
     [metadata->doubleWidthCharacters sanityCheckWithCharacters:_characterBuffer.pointer + _startOffset + (i > 0 ? cumulative_line_lengths[i - 1] : 0)
                                                         length:[self lengthOfRawLine:i]];
+    if (metadata->width_for_number_of_wrapped_lines > 0) {
+        int actual = [self calculateNumberOfFullLinesWithOffset:[self _lineRawOffset:i]
+                                                         length:[self lengthOfRawLine:i]
+                                                          width:metadata->width_for_number_of_wrapped_lines
+                                                     mayHaveDWC:YES];
+        assert(actual == metadata->number_of_wrapped_lines);
+    }
 }
 
 - (NSString *)description {
@@ -1211,7 +1218,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             ITBetaAssert(*lineNum >= 0, @"Negative lines after consuming spans");
         } else {  // *lineNum <= spans
             // We found the raw line that includes the wrapped line we're searching for.
-            // eat up *lineNum many width-sized wrapped lines from this start of the current full line
+            // eat up *lineNum many width-sized wrapped lines from the start of the current full line
             return (LineBlockLocation){
                 .found = YES,
                 .prev = prev,
