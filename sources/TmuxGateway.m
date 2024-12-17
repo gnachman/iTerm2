@@ -101,6 +101,8 @@ static NSString *kCommandTimestamp = @"timestamp";
     int _sessionID;  // -1 if uninitialized
     BOOL _canWrite;
     NSMutableString *_writeQueue;
+    NSInteger _unresponsivenessGeneration;
+    NSInteger _unresponsivenessBoundary;
 }
 
 @synthesize delegate = delegate_;
@@ -999,18 +1001,47 @@ static NSString *kCommandTimestamp = @"timestamp";
             nil];
 }
 
+static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
+
 - (void)enqueueCommandDict:(NSDictionary *)dict {
     if ([dict[kCommandFlags] intValue] & kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate) {
-        if ([self havePendingCommandEqualTo:dict[kCommandString]] && [self isTmuxUnresponsive]) {
+        const BOOL havePending = [self havePendingCommandEqualTo:dict[kCommandString]];
+        const BOOL unresponsive = [self isTmuxUnresponsive];
+        if (havePending && unresponsive) {
             [delegate_ tmuxGatewayDidTimeOut];
             if (disconnected_) {
                 return;
             }
+        } else if (!havePending && !unresponsive) {
+            // If tmux is unresponsive to this command, post a warning.
+            __weak __typeof(self) weakSelf = self;
+            const NSInteger generation = _unresponsivenessGeneration;
+            _unresponsivenessGeneration += 1;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(TmuxUnresponsiveTimeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [weakSelf checkForCommandTimeout:dict generation:generation];
+            });
         }
     }
     NSMutableDictionary *object = [dict mutableCopy];
     object[kCommandTimestamp] = @(CACurrentMediaTime());
     [commandQueue_ addObject:object];
+}
+
+- (void)checkForCommandTimeout:(NSDictionary *)dict generation:(NSInteger)generation {
+    if (disconnected_) {
+        return;
+    }
+    if (generation < _unresponsivenessBoundary) {
+        // We already posted a warning for another command while this was waiting in the queue.
+        return;
+    }
+    const BOOL havePending = [self havePendingCommandEqualTo:dict[kCommandString]];
+    const BOOL unresponsive = [self isTmuxUnresponsive];
+    if (havePending && unresponsive) {
+        // Don't allow already-queued commands to warn.
+        _unresponsivenessBoundary = _unresponsivenessGeneration;
+        [delegate_ tmuxGatewayDidTimeOut];
+    }
 }
 
 - (BOOL)isTmuxUnresponsive {
@@ -1020,7 +1051,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         if (!sentDate) {
             continue;
         }
-        if (now - sentDate.doubleValue > 5) {
+        if (now - sentDate.doubleValue > TmuxUnresponsiveTimeout) {
             return YES;
         }
     }
