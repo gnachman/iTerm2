@@ -641,7 +641,9 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 }
 
 - (iTermBidiDisplayInfo *)bidiInfoForLine:(int)lineNumber {
-    ITBetaAssert(lineNumber >= 0, @"Negative index to bidiInfoForLine");
+    if (lineNumber < 0) {
+        return nil;
+    }
     const int width = self.currentGrid.size.width;
     int numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:width];
     if (lineNumber >= numLinesInLineBuffer) {
