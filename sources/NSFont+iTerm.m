@@ -68,6 +68,38 @@
     return settings.count > 0;
 }
 
+- (BOOL)it_hasContextualAlternates {
+    static char key;
+    NSNumber *cached = [self it_associatedObjectForKey:&key];
+    if (cached) {
+        return cached.boolValue;
+    }
+    // Convert NSFont to CTFont
+    CTFontRef ctFont = (__bridge CTFontRef)self;
+
+    // Get the font features
+    CFArrayRef features = CTFontCopyFeatures(ctFont);
+    if (!features) {
+        return NO;
+    }
+
+    // Check for contextual alternates (feature type 36)
+    BOOL hasCalt = NO;
+    for (NSDictionary *feature in (__bridge NSArray *)features) {
+        NSNumber *typeIdentifier = feature[(__bridge NSString *)kCTFontFeatureTypeIdentifierKey];
+        if (typeIdentifier && [typeIdentifier integerValue] == kContextualAlternatesType) {
+            hasCalt = YES;
+            break;
+        }
+    }
+
+    // Clean up
+    CFRelease(features);
+
+    [self it_setAssociatedObject:@(hasCalt) forKey:&key];
+    return hasCalt;
+}
+
 static iTermBijection<NSNumber *, NSFont *> *iTermMetalFontBijection(void) {
     static iTermBijection<NSNumber *, NSFont *> *bijection;
     static dispatch_once_t onceToken;

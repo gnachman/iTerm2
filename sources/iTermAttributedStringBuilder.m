@@ -514,7 +514,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 combinedAttributes = [combinedAttributes dictionaryByMergingDictionary:imageAttributes];
             }
             [builder setAttributes:combinedAttributes];
-            if ([[NSFont castFrom:combinedAttributes[NSFontAttributeName]] it_hasStylisticAlternatives]) {
+            if ([[NSFont castFrom:combinedAttributes[NSFontAttributeName]] it_hasStylisticAlternatives] ||
+                [[NSFont castFrom:combinedAttributes[NSFontAttributeName]] it_hasContextualAlternates]) {
                 // CG APIs don't support these so we must use slow core text.
                 [builder disableFastPath];
             }
