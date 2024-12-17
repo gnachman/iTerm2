@@ -626,7 +626,7 @@ static void SwapInt(int *a, int *b) {
 
         VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:note];
         if (screenMark) {
-            const VT100GridCoordRange commandRange = VT100GridCoordRangeFromAbsCoordRange(screenMark.commandRange, overflow);
+            const VT100GridCoordRange commandRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.commandRange, overflow)];
             if (commandRange.start.x >= 0) {
                 VT100GridCoordRange converted;
                 if ([self convertRange:commandRange
@@ -640,7 +640,7 @@ static void SwapInt(int *a, int *b) {
                 }
             }
 
-            const VT100GridCoordRange promptRange = VT100GridCoordRangeFromAbsCoordRange(screenMark.promptRange, overflow);
+            const VT100GridCoordRange promptRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.promptRange, overflow)];
             if (promptRange.start.x >= 0) {
                 VT100GridCoordRange converted;
                 if ([self convertRange:promptRange
@@ -655,6 +655,21 @@ static void SwapInt(int *a, int *b) {
             }
         }
     }];
+}
+
+- (VT100GridCoordRange)safeCoordRange:(VT100GridCoordRange)unsafeRange {
+    const int width = self.width;
+    if (unsafeRange.start.x >= 0 && unsafeRange.end.x < width &&
+        unsafeRange.end.x >= 0 && unsafeRange.end.x < width) {
+        return unsafeRange;
+    }
+    VT100GridCoordRange safe = unsafeRange;
+    int (^clamp)(int, int, int) = ^(int min, int max, int value) {
+        return MAX(MIN(max, value), min);
+    };
+    safe.start.x = clamp(0, width, safe.start.x);
+    safe.end.x = clamp(0, width, safe.end.x);
+    return safe;
 }
 
 - (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize
