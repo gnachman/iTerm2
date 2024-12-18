@@ -21,6 +21,7 @@
     NSButton *_clearButton;
     BOOL _acceptFirstResponder;
     BOOL _mouseDown;
+    iTermShortcut *_savedShortcut;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -43,14 +44,6 @@
         [self addClearButton];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_clearButton release];
-    [_hotkeyBeingRecorded release];
-    [_shortcut release];
-    [_stringValue release];
-    [super dealloc];
 }
 
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
@@ -147,7 +140,7 @@
     NSRectFillUsingOperation(frame, NSCompositingOperationSourceOver);
     [[NSGraphicsContext currentContext] setShouldAntialias:YES];
 
-    NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.alignment = NSTextAlignmentCenter;
     NSDictionary<NSString *, id> *attributes = @{ NSForegroundColorAttributeName: textColor,
                                                   NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
@@ -176,6 +169,9 @@
 
 - (BOOL)becomeFirstResponder {
     [self setNeedsDisplay:YES];
+    if (_acceptFirstResponder) {
+        _savedShortcut = self.shortcut;
+    }
     return _acceptFirstResponder;
 }
 
@@ -236,11 +232,16 @@
         self.shortcut = [iTermShortcut shortcutWithEvent:event
                                            leaderAllowed:_leaderAllowed];
         [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
+        _savedShortcut = nil;
         [[self window] makeFirstResponder:[self window]];
     } else if (event.type == NSEventTypeFlagsChanged) {
         self.hotkeyBeingRecorded = [NSString stringForModifiersWithMask:event.it_modifierFlags];
     }
     [self setNeedsDisplay:YES];
+}
+
+- (void)revert {
+    self.shortcut = _savedShortcut;
 }
 
 - (void)setEnabled:(BOOL)flag {
@@ -253,15 +254,13 @@
 }
 
 - (void)setStringValue:(NSString *)stringValue {
-    [_stringValue autorelease];
     _stringValue = [stringValue copy];
     _clearButton.hidden = stringValue.length == 0;
     [self setNeedsDisplay:YES];
 }
 
 - (void)setShortcut:(iTermShortcut *)shortcut {
-    [_shortcut autorelease];
-    _shortcut = [shortcut retain];
+    _shortcut = shortcut;
     self.stringValue = self.shortcut.stringValue;
 }
 

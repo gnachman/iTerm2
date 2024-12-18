@@ -38,4 +38,8 @@
 - (NSString *)identifierForCode:(NSUInteger)code
                       modifiers:(NSEventModifierFlags)modifiers
                       character:(NSUInteger)character;
+
+// You can call this during shortcutInputView:didReceiveKeyPressEvent: if you don't want to accept it.
+- (void)revert;
+
 @end

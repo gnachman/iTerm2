@@ -583,11 +583,36 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
         }
     } else if (view == _leader) {
         if (event) {
-            [iTermKeyMappings setLeader:[iTermKeystroke withEvent:event]];
+            iTermKeystroke *keystroke = [iTermKeystroke withEvent:event];
+            if ([self shouldUseKeystrokeForLeader:keystroke]) {
+                [iTermKeyMappings setLeader:keystroke];
+            } else {
+                [view revert];
+            }
         } else {
             [iTermKeyMappings setLeader:nil];
         }
     }
+}
+
+- (BOOL)shouldUseKeystrokeForLeader:(iTermKeystroke *)keystroke {
+    if ((keystroke.modifierFlags & (NSEventModifierFlagCommand | NSEventModifierFlagNumericPad)) == 0) {
+        return [self userConfirmsTheyWantsToUseStupidLeader:keystroke];
+    }
+    return YES;
+}
+
+- (BOOL)userConfirmsTheyWantsToUseStupidLeader:(iTermKeystroke *)keystroke {
+    NSString *displayString = [iTermKeystrokeFormatter stringForKeystroke:keystroke];
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Are you sure you want to use %@ as the leader? It’s usually wise to include the ⌘ modifier in your leader to avoid stomping on frequently used keystrokes.", displayString]
+                               actions:@[ @"OK", @"Cancel" ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Confirm Leader"
+                                window:self.view.window];
+    return selection == kiTermWarningSelection0;
 }
 
 - (BOOL)anyProfileHasMappingForKeystroke:(iTermKeystroke *)keystroke {
