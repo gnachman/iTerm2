@@ -55,6 +55,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 @implementation ProfilesSessionPreferencesViewController {
     IBOutlet NSPopUpButton *_onEndAction;
     IBOutlet NSTableView *_jobsTable;
+    IBOutlet NSButton *_addJob;
     IBOutlet NSButton *_removeJob;
     IBOutlet NSButton *_autoLog;
     IBOutlet NSPopUpButton *_loggingStyle;
@@ -159,15 +160,17 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
                  update:^BOOL { [self updatePromptBeforeClosing]; return YES; }
              searchable:NO];
 
-    [self defineControl:_warnIfJobsBesides
-                    key:KEY_PROMPT_CLOSE
-            relatedView:nil
-            displayName:nil
-                   type:kPreferenceInfoTypeRadioButton
-         settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
-                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }
-             searchable:NO];
-    
+    info = [self defineControl:_warnIfJobsBesides
+                           key:KEY_PROMPT_CLOSE
+                   relatedView:nil
+                   displayName:nil
+                          type:kPreferenceInfoTypeRadioButton
+                settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
+                        update:^BOOL { [self updatePromptBeforeClosing]; return YES; }
+                    searchable:NO];
+    info.observer = ^{
+        [weakSelf updateJobsUIEnabled];
+    };
     [self addViewToSearchIndex:_warnContainer
                    displayName:@"Prompt before closing profile"
                        phrases:@[ @"Always prompt before closing profile",
@@ -517,6 +520,15 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
         }
     }
     [self setInt:tag forKey:KEY_PROMPT_CLOSE];
+    [self updateEnabledState];
+    [self updateJobsUIEnabled];
+}
+
+- (void)updateJobsUIEnabled {
+    const BOOL enableTable = ([self intForKey:KEY_PROMPT_CLOSE] == _warnIfJobsBesides.tag);
+    _jobsTable.enabled = enableTable;
+    _addJob.enabled = enableTable;
+    _removeJob.enabled = enableTable &&  ([_jobsTable selectedRow] != -1);
 }
 
 - (void)updatePromptBeforeClosing {
@@ -578,7 +590,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 }
 
 - (void)updateRemoveJobButtonEnabled {
-    _removeJob.enabled = ([_jobsTable selectedRow] != -1);
+    _removeJob.enabled = _jobsTable.isEnabled && ([_jobsTable selectedRow] != -1);
 }
 
 #pragma mark - NSTableViewDataSource
