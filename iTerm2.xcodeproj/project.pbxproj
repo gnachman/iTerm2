@@ -1738,6 +1738,7 @@
 		A65B0400278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B03FE278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h */; };
 		A65B0401278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B03FF278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m */; };
 		A65B1B5C2D1252E300F5A740 /* iTermShortcutInputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D373E4818F3613600773D3E /* iTermShortcutInputView.m */; };
+		A65B1B602D137BF700F5A740 /* PopoverHelpButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65B1B5F2D137BF400F5A740 /* PopoverHelpButton.swift */; };
 		A65B3792295CB769008EEBF3 /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E533B403B2959201A8A066 /* PTYTabView.m */; };
 		A65B49A8244199CF002B1C68 /* iTermSocketUnixDomainAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B49A6244199CF002B1C68 /* iTermSocketUnixDomainAddress.h */; };
 		A65B49A9244199CF002B1C68 /* iTermSocketUnixDomainAddress.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B49A7244199CF002B1C68 /* iTermSocketUnixDomainAddress.m */; };
@@ -6142,6 +6143,7 @@
 		A65B03FD278CA9D500CD889E /* VT100ScreenMutableState+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100ScreenMutableState+Private.h"; sourceTree = "<group>"; };
 		A65B03FE278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100ScreenMutableState+Resizing.h"; sourceTree = "<group>"; };
 		A65B03FF278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100ScreenMutableState+Resizing.m"; sourceTree = "<group>"; };
+		A65B1B5F2D137BF400F5A740 /* PopoverHelpButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverHelpButton.swift; sourceTree = "<group>"; };
 		A65B49A6244199CF002B1C68 /* iTermSocketUnixDomainAddress.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSocketUnixDomainAddress.h; sourceTree = "<group>"; };
 		A65B49A7244199CF002B1C68 /* iTermSocketUnixDomainAddress.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSocketUnixDomainAddress.m; sourceTree = "<group>"; };
 		A65B72501B1A5D7500F947A7 /* WarningSign.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WarningSign.png; path = images/WarningSign.png; sourceTree = "<group>"; };
@@ -8775,6 +8777,7 @@
 		1D373E4618F360C600773D3E /* Misc. Views */ = {
 			isa = PBXGroup;
 			children = (
+				A65B1B5F2D137BF400F5A740 /* PopoverHelpButton.swift */,
 				A665388A2D10AB0B004B723B /* CursorSmearView.swift */,
 				A61F9DD22D0E04A40003FC13 /* ExpandingTextField.swift */,
 				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
@@ -15661,6 +15664,7 @@
 				A6A64E562508A9E10040490B /* iTermSnippetsMenuController.m in Sources */,
 				A630118420E6A613008114B7 /* iTermStatusBarSetupViewController.m in Sources */,
 				5370678C21C9D2780088D0F3 /* SIGVerificationAlgorithm.m in Sources */,
+				A65B1B602D137BF700F5A740 /* PopoverHelpButton.swift in Sources */,
 				A6FF3F2F2435BA3C003CCB03 /* FindView.m in Sources */,
 				A67DAF1D299D61D100AD331A /* iTermTextDrawingHelper.m in Sources */,
 				53E9DFE6220D53110070C9C0 /* SetHostnameTrigger.m in Sources */,
