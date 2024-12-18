@@ -596,7 +596,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 }
 
 - (BOOL)shouldUseKeystrokeForLeader:(iTermKeystroke *)keystroke {
-    if ((keystroke.modifierFlags & (NSEventModifierFlagCommand | NSEventModifierFlagNumericPad)) == 0) {
+    if ((keystroke.modifierFlags & (NSEventModifierFlagCommand | NSEventModifierFlagNumericPad | NSEventModifierFlagOption)) == 0 &&
+        (keystroke.character < NSF1FunctionKey || keystroke.character > NSF12FunctionKey)) {
         return [self userConfirmsTheyWantsToUseStupidLeader:keystroke];
     }
     return YES;
@@ -605,7 +606,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 - (BOOL)userConfirmsTheyWantsToUseStupidLeader:(iTermKeystroke *)keystroke {
     NSString *displayString = [iTermKeystrokeFormatter stringForKeystroke:keystroke];
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Are you sure you want to use %@ as the leader? It’s usually wise to include the ⌘ modifier in your leader to avoid stomping on frequently used keystrokes.", displayString]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Are you sure you want to use %@ as the leader? This may be a frequently used key.", displayString]
                                actions:@[ @"OK", @"Cancel" ]
                              accessory:nil
                             identifier:nil
