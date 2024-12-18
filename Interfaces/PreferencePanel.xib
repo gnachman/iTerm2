@@ -5865,11 +5865,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rkL-re-0L0" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="89" y="238" width="581" height="247"/>
+                                        <rect key="frame" x="89" y="154" width="599" height="331"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2095">
-                                                <rect key="frame" x="142" y="56" width="234" height="16"/>
+                                                <rect key="frame" x="162" y="186" width="234" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Characters considered part of a word:" id="2098">
                                                     <font key="font" metaFont="system"/>
@@ -5878,7 +5878,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1988">
-                                                <rect key="frame" x="143" y="211" width="420" height="18"/>
+                                                <rect key="frame" x="162" y="295" width="420" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Copy to pasteboard on selection" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1989">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5890,7 +5890,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5747">
-                                                <rect key="frame" x="143" y="191" width="420" height="18"/>
+                                                <rect key="frame" x="162" y="275" width="420" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Copied text includes trailing newline" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5748">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5901,7 +5901,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button toolTip="Clipboard access via an escape code poses a security risk if running untrusted applications." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6383">
-                                                <rect key="frame" x="143" y="171" width="420" height="18"/>
+                                                <rect key="frame" x="162" y="245" width="420" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Applications in terminal may access clipboard" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6384">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5912,7 +5912,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wgv-Ah-fFr">
-                                                <rect key="frame" x="143" y="101" width="420" height="18"/>
+                                                <rect key="frame" x="162" y="141" width="420" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">When this option is off, double click selects a word as defined by “characters considered part of word for selection” in the General tab. When this option is on, double click uses smart selection to select file names, URLs, etc., using regular expressions defined in Profiles&gt;Advanced&gt;Smart Selection.</string>
                                                 <buttonCell key="cell" type="check" title="Double-click performs smart selection" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="7XC-p9-8hX">
@@ -5924,7 +5924,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cGv-dv-quI">
-                                                <rect key="frame" x="164" y="146" width="228" height="16"/>
+                                                <rect key="frame" x="183" y="220" width="228" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Allow sending of clipboard contents?" id="HjY-AY-eaJ">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5933,7 +5933,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SKn-XX-BF5">
-                                                <rect key="frame" x="394" y="140" width="124" height="26"/>
+                                                <rect key="frame" x="413" y="214" width="124" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Ask Each Time" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="2" imageScaling="proportionallyDown" inset="2" selectedItem="A38-nc-xyJ" id="Ip6-n3-XSe">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -5950,19 +5950,8 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                     <action selector="settingChanged:" target="9Se-ld-UJa" id="Crg-v5-6ce"/>
                                                 </connections>
                                             </popUpButton>
-                                            <button toolTip="When this is enabled, shift+arrow key will extend an existing selection. If there is no selection, this has no effect." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Nhj-1F-dbm">
-                                                <rect key="frame" x="143" y="81" width="420" height="18"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Automatically enter copy mode on Shift+Arrow key with selection" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="fXR-fI-xdt">
-                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="EiI-P1-hgA"/>
-                                                </connections>
-                                            </button>
                                             <button toolTip="If disabled, then triple click selects one line as it appears onscreen." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GD3-XJ-mYL">
-                                                <rect key="frame" x="143" y="121" width="420" height="18"/>
+                                                <rect key="frame" x="162" y="161" width="420" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Triple-click selects entire wrapped lines" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="XH1-2y-ipC">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5973,7 +5962,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2096">
-                                                <rect key="frame" x="383" y="53" width="178" height="21"/>
+                                                <rect key="frame" x="402" y="183" width="178" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2097">
                                                     <font key="font" metaFont="system"/>
@@ -5986,12 +5975,8 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                     <outlet property="nextKeyView" destination="5051" id="5195"/>
                                                 </connections>
                                             </textField>
-                                            <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="Xsc-Uq-1x3">
-                                                <rect key="frame" x="12" y="42" width="549" height="5"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            </box>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2Pt-rH-WYj">
-                                                <rect key="frame" x="143" y="19" width="378" height="18"/>
+                                                <rect key="frame" x="162" y="75" width="378" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">When this is enabled, you can click on a command or its output to restrict Find and Filter to its output. The selected command gets highlighted and other commands get dimmed. This requires shell integration to be installed.</string>
                                                 <buttonCell key="cell" type="check" title="Clicking on a command selects it to restrict Find and Filter" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="U7X-fp-NxP">
@@ -6000,6 +5985,62 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="settingChanged:" target="9Se-ld-UJa" id="zCk-R7-xJj"/>
+                                                </connections>
+                                            </button>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="J5A-2k-Xnn">
+                                                <rect key="frame" x="83" y="296" width="72" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Copy:" id="Mh7-H7-uUQ">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IhV-Br-WhW">
+                                                <rect key="frame" x="83" y="246" width="72" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Access:" id="twu-ZL-q1e">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ACP-DF-C8h">
+                                                <rect key="frame" x="83" y="186" width="72" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Selection:" id="mBl-f5-7kB">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="a83-pi-dj1">
+                                                <rect key="frame" x="78" y="108" width="77" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Copy Mode:" id="YTS-wq-xBS">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fGi-yx-uR4">
+                                                <rect key="frame" x="18" y="76" width="137" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Command selection:" id="d4O-zL-Pp0">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <button toolTip="When this is enabled, shift+arrow key will extend an existing selection. If there is no selection, this has no effect." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Nhj-1F-dbm">
+                                                <rect key="frame" x="162" y="107" width="420" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Automatically enter copy mode on Shift+Arrow key with selection" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="fXR-fI-xdt">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="EiI-P1-hgA"/>
                                                 </connections>
                                             </button>
                                         </subviews>
