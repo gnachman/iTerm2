@@ -7024,16 +7024,16 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Panes" identifier="2" id="zjb-6I-dDc">
                             <view key="view" id="kid-3c-MWv">
-                                <rect key="frame" x="10" y="33" width="590" height="214"/>
+                                <rect key="frame" x="10" y="33" width="590" height="267"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DgM-Zm-3SV" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="112" y="76" width="368" height="135"/>
+                                        <rect key="frame" x="16" y="129" width="551" height="135"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rf8-fE-qJb">
-                                                <rect key="frame" x="54" y="99" width="267" height="18"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                                <rect key="frame" x="235" y="99" width="267" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Separate status bars per pane" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="pMF-0o-f7A">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
@@ -7043,8 +7043,8 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6051">
-                                                <rect key="frame" x="54" y="119" width="267" height="18"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                                <rect key="frame" x="235" y="119" width="267" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show per-pane title bar with split panes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6052">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
@@ -7054,8 +7054,8 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FvM-qm-P8l">
-                                                <rect key="frame" x="54" y="79" width="267" height="18"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                                <rect key="frame" x="235" y="79" width="267" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Separate background images per pane" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="TMi-gO-FVp">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
@@ -7065,7 +7065,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="d3Q-GV-fUG">
-                                                <rect key="frame" x="54" y="55" width="142" height="16"/>
+                                                <rect key="frame" x="86" y="45" width="142" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Side margins:" id="mgo-bS-seC">
                                                     <font key="font" metaFont="system"/>
@@ -7073,8 +7073,17 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3t3-P2-4sV">
+                                                <rect key="frame" x="86" y="119" width="142" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Per-pane UI:" id="Ela-2n-4A5">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Co8-1H-3eo">
-                                                <rect key="frame" x="54" y="24" width="142" height="16"/>
+                                                <rect key="frame" x="86" y="14" width="142" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Top &amp; bottom margins:" id="moN-8d-dZd">
                                                     <font key="font" metaFont="system"/>
@@ -7083,7 +7092,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="B2G-t0-4Av">
-                                                <rect key="frame" x="204" y="52" width="39" height="21"/>
+                                                <rect key="frame" x="237" y="42" width="39" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="k9e-Jb-hHJ">
                                                     <font key="font" metaFont="system"/>
@@ -7096,7 +7105,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wft-qJ-Yc8">
-                                                <rect key="frame" x="204" y="21" width="39" height="21"/>
+                                                <rect key="frame" x="237" y="11" width="39" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="W1r-ti-mOD">
                                                     <font key="font" metaFont="system"/>
@@ -7109,7 +7118,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </textField>
                                             <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5oY-ZI-y7J">
-                                                <rect key="frame" x="248" y="48" width="19" height="28"/>
+                                                <rect key="frame" x="281" y="38" width="19" height="28"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <stepperCell key="cell" continuous="YES" alignment="left" maxValue="100" id="CVL-uU-dFf"/>
                                                 <connections>
@@ -7117,7 +7126,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </stepper>
                                             <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dFP-N8-R4e">
-                                                <rect key="frame" x="248" y="17" width="19" height="28"/>
+                                                <rect key="frame" x="281" y="7" width="19" height="28"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <stepperCell key="cell" continuous="YES" alignment="left" maxValue="100" id="uEd-N6-4d9"/>
                                                 <connections>
