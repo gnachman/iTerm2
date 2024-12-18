@@ -46,7 +46,8 @@ NS_ASSUME_NONNULL_BEGIN
 minimalFrameDidChangeTo:(NSRect)newFrame;
 - (NSRect)composerManager:(iTermComposerManager *)composerManager
     frameForDesiredHeight:(CGFloat)desiredHeight
-            previousFrame:(NSRect)previousFrame;
+            previousFrame:(NSRect)previousFrame
+   preferredOffsetFromTop:(CGFloat)preferredOffsetFromTop;
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager;
 - (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager
                             prefix:(NSString *)prefix
@@ -73,6 +74,8 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (BOOL)composerManagerShouldForwardCopy:(iTermComposerManager *)composerManager;
 - (void)composerManager:(iTermComposerManager *)composerManager
         forwardMenuItem:(NSMenuItem *)menuItem;
+- (void)composerManager:(iTermComposerManager *)composerManager
+preferredOffsetFromTopDidChange:(CGFloat)offset;
 @end
 
 @interface iTermComposerManager : NSObject
@@ -119,7 +122,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (void)placeCommandInComposer:(NSString *)command;
 - (NSString * _Nullable)statusBarComposerContents;
 - (void)clearStatusBar;
-
+- (void)setPreferredOffsetFromTop:(CGFloat)offset;
 @end
 
 NS_ASSUME_NONNULL_END

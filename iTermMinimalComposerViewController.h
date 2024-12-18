@@ -59,6 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)minimalComposerForwardMenuItem:(NSMenuItem *)menuItem;
 - (NSString * _Nullable)minimalComposer:(iTermMinimalComposerViewController *)composer
              valueOfEnvironmentVariable:(NSString *)name;
+- (void)minimalComposerPreferredOffsetFromTopDidChange:(iTermMinimalComposerViewController *)composer;
 @end
 
 @interface iTermMinimalComposerViewController : NSViewController
@@ -69,6 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL isSeparatorVisible;
 @property (nonatomic, strong) NSColor *separatorColor;
 @property (nonatomic, readonly) NSRect cursorFrameInScreenCoordinates;
+@property (nonatomic) CGFloat preferredOffsetFromTop;
 
 - (void)updateFrame;
 - (void)makeFirstResponder;

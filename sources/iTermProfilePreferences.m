@@ -300,7 +300,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY, KEY_SHOW_TIMESTAMPS,
                              KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE,
                              KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY,
-                             KEY_DYNAMIC_PROFILE_REWRITABLE];
+                             KEY_DYNAMIC_PROFILE_REWRITABLE,
+                             KEY_COMPOSER_TOP_OFFSET];
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];
@@ -570,6 +571,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_ALLOW_TITLE_REPORTING: @NO,
                   KEY_ALLOW_ALTERNATE_MOUSE_SCROLL: @YES,
                   KEY_ALLOW_TITLE_SETTING: @YES,
+                  KEY_COMPOSER_TOP_OFFSET: @0,
                   KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY: @NO,
                   KEY_DISABLE_PRINTING: @NO,
                   KEY_DISABLE_SMCUP_RMCUP: @NO,

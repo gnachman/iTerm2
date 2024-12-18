@@ -6726,6 +6726,8 @@ DLog(args); \
     if (!_composerManager) {
         _composerManager = [[iTermComposerManager alloc] init];
         _composerManager.delegate = self;
+        [_composerManager setPreferredOffsetFromTop:[iTermProfilePreferences doubleForKey:KEY_COMPOSER_TOP_OFFSET
+                                                                                inProfile:self.profile]];
     }
     return _composerManager;
 }
@@ -18588,7 +18590,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSRect)composerManager:(iTermComposerManager *)composerManager
     frameForDesiredHeight:(CGFloat)desiredHeight
-            previousFrame:(NSRect)previousFrame {
+            previousFrame:(NSRect)previousFrame
+   preferredOffsetFromTop:(CGFloat)preferredOffsetFromTop {
     NSRect newFrame = previousFrame;
     newFrame.origin.y = _view.frame.size.height;
 
@@ -18624,10 +18627,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
              @(width), @(actualLinesAboveComposer), @(gridOffsetInRows), @(lineHeight), @(titleBarHeight), @(height), @(gridOffsetInPoints), @(top), @(y));
     } else {
         // Place at top. Includes decoration so a minimum width must be enforced.
-
-        y = paneSize.height - desiredHeight;
+        y = MAX(0, paneSize.height - desiredHeight - preferredOffsetFromTop);
         width = MAX(217, maxWidth);
         height = desiredHeight;
+        CGFloat overage = (y + height) - NSHeight(_view.frame);
+        if (overage > 0) {
+            y = MAX(0, y - overage);
+            overage = (y + height) - NSHeight(_view.frame);
+            if (overage > 0) {
+                desiredHeight -= overage;
+                desiredHeight = MAX(20, desiredHeight);
+            }
+        }
     }
     newFrame = NSMakeRect(newFrame.origin.x,
                           y,
@@ -18725,6 +18736,30 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)composerManager:(iTermComposerManager *)composerManager
         forwardMenuItem:(NSMenuItem *)menuItem {
     [_textview performSelector:menuItem.action withObject:menuItem];
+}
+
+- (void)composerManager:(iTermComposerManager *)composerManager
+preferredOffsetFromTopDidChange:(CGFloat)offset {
+    if (_divorced) {
+        // Try to set it in the original profile.
+        if (!_originalProfile) {
+            return;
+        }
+        ProfileModel *model = [ProfileModel sharedInstance];
+        if ([model bookmarkWithGuid:_originalProfile[KEY_GUID]] == nil) {
+            return;
+        }
+        [iTermProfilePreferences setObject:@(offset)
+                                    forKey:KEY_COMPOSER_TOP_OFFSET
+                                 inProfile:_originalProfile
+                                     model:model];
+        return;
+
+    }
+    [iTermProfilePreferences setObject:@(offset)
+                                forKey:KEY_COMPOSER_TOP_OFFSET
+                             inProfile:self.profile
+                                 model:self.profileModel];
 }
 
 - (BOOL)composerManagerShouldForwardCopy:(iTermComposerManager *)composerManager {

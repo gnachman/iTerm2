@@ -301,6 +301,9 @@
 // moves it to the bottom. This is useful for showing man pages. It's a NSNumber boolean.
 #define KEY_LOCK_SCROLL_ON_LAUNCH            @"Lock Scroll on Launch"
 
+// This setting is not exposed in the settings UI. You can change it with menu commands.
+#define KEY_COMPOSER_TOP_OFFSET             @"Composer Top Offset"
+
 @class iTermVariableScope;
 
 // Posted when a session's unicode version changes.

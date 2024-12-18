@@ -15,7 +15,15 @@
 static float kAnimationDuration = 0.25;
 static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"ComposerHeight";
 
+@class iTermMinimalComposerView;
+
+@protocol iTermMinimalComposerViewDelegate<NSObject>
+- (void)minimalComposerViewDidDrag:(iTermMinimalComposerView *)composerView;
+@end
+
 @interface iTermMinimalComposerView : NSView
+@property (nonatomic, weak) IBOutlet id<iTermMinimalComposerViewDelegate> delegate;
+@property (nonatomic) BOOL draggable;
 @end
 
 @implementation iTermMinimalComposerView
@@ -24,9 +32,86 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     return YES;
 }
 
+// Track mouse movements when it enters the view
+- (void)updateTrackingAreas {
+    [super updateTrackingAreas];
+
+    // Remove old tracking areas
+    for (NSTrackingArea *area in self.trackingAreas) {
+        [self removeTrackingArea:area];
+    }
+
+    // Create a new tracking area
+    NSTrackingArea *trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds
+                                                                options:(NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingActiveAlways)
+                                                                  owner:self
+                                                               userInfo:nil];
+    [self addTrackingArea:trackingArea];
+}
+
+// Called when mouse moves
+- (void)mouseMoved:(NSEvent *)event {
+    NSPoint mouseLocation = [self.superview convertPoint:event.locationInWindow fromView:nil];
+    NSView *hitView = [self hitTest:mouseLocation];
+
+    // Check if the hit view is this view (not a subview)
+    if (hitView == self) {
+        [[NSCursor openHandCursor] set];
+    }
+
+    [super mouseMoved:event];
+}
+
+// Reset cursor when mouse exits the view
+- (void)mouseExited:(NSEvent *)event {
+    [[NSCursor arrowCursor] set];
+    [super mouseExited:event];
+}
+
+- (void)mouseDown:(NSEvent *)event {
+    NSView *superview = self.superview;
+    if (!superview || !self.draggable) {
+        return;
+    }
+
+    const NSPoint mouseDownLocation = event.locationInWindow;
+    const NSPoint originalOrigin = [superview convertPoint:self.frame.origin toView:nil];
+
+    [[self window] trackEventsMatchingMask:(NSEventMaskLeftMouseDragged | NSEventMaskLeftMouseUp)
+                                  timeout:NSEventDurationForever
+                                     mode:NSEventTrackingRunLoopMode
+                                handler:^(NSEvent *trackingEvent, BOOL *stop) {
+        switch (trackingEvent.type) {
+            case NSEventTypeLeftMouseDragged: {
+                // Calculate the drag offset
+                const NSPoint currentLocation = trackingEvent.locationInWindow;
+                const CGFloat deltaY = currentLocation.y - mouseDownLocation.y;
+                const NSPoint newOrigin = NSMakePoint(originalOrigin.x, originalOrigin.y + deltaY);
+
+                NSPoint frameOrigin = [superview convertPoint:newOrigin fromView:nil];
+                frameOrigin.y = MAX(0, MIN(frameOrigin.y, superview.bounds.size.height - self.frame.size.height));
+
+                [self setFrameOrigin:frameOrigin];
+                break;
+            }
+            case NSEventTypeLeftMouseUp:
+                *stop = YES;
+                break;
+
+            default:
+                break;
+        }
+    }];
+    [self.delegate minimalComposerViewDidDrag:self];
+}
+
+- (void)setDelegate:(id<iTermMinimalComposerViewDelegate>)delegate {
+    _delegate = delegate;
+}
+
 @end
 
-@interface iTermMinimalComposerViewController ()<PopupDelegate, iTermComposerTextViewDelegate, iTermDragHandleViewDelegate, iTermPopupWindowPresenter, iTermStatusBarLargeComposerViewControllerDelegate>
+@interface iTermMinimalComposerViewController ()<PopupDelegate, iTermComposerTextViewDelegate, iTermDragHandleViewDelegate, iTermPopupWindowPresenter, iTermStatusBarLargeComposerViewControllerDelegate, iTermMinimalComposerViewDelegate>
 @end
 
 @implementation iTermMinimalComposerViewController {
@@ -130,6 +215,7 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 - (void)setIsSeparatorVisible:(BOOL)isSeparatorVisible {
     _separator.hidden = !isSeparatorVisible;
     _isSeparatorVisible = isSeparatorVisible;
+    ((iTermMinimalComposerView *)self.view).draggable = !isSeparatorVisible;
     [self layoutSubviews];
 }
 
@@ -509,6 +595,13 @@ workingDirectory:(NSString *)pwd
     NSRange range = [_largeComposerViewController.textView selectedRange];
     range.length = 0;
     return [_largeComposerViewController.textView firstRectForCharacterRange:range actualRange:NULL];
+}
+
+#pragma mark - iTermMinimalComposerViewDelegate
+
+- (void)minimalComposerViewDidDrag:(iTermMinimalComposerView *)composerView {
+    _preferredOffsetFromTop = NSHeight(composerView.superview.bounds) - NSMaxY(composerView.frame);
+    [self.delegate minimalComposerPreferredOffsetFromTopDidChange:self];
 }
 
 @end

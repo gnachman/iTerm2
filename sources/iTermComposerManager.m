@@ -26,6 +26,7 @@
     NSString *_saved;
     BOOL _preserveSaved;
     BOOL _dismissCanceled;
+    CGFloat _preferredTopOffset;  // only used for initialization. Not kept up to date.
 }
 
 - (void)setCommand:(NSString *)command {
@@ -231,11 +232,12 @@
 - (void)showMinimalComposerInView:(NSView *)superview becomeFirstResponder:(BOOL)becomeFirstResponder {
     if (_minimalViewController == nil) {
         _minimalViewController = [[iTermMinimalComposerViewController alloc] init];
+        _minimalViewController.preferredOffsetFromTop = _preferredTopOffset;
         _minimalViewController.delegate = self;
     }
     _minimalViewController.isAutoComposer = self.isAutoComposer;
     _minimalViewController.view.frame = NSMakeRect(self.sideMargin,
-                                                   superview.frame.size.height - _minimalViewController.view.frame.size.height,
+                                                   superview.frame.size.height - _minimalViewController.view.frame.size.height - (self.isAutoComposer ? 0 : _minimalViewController.preferredOffsetFromTop),
                                                    _minimalViewController.view.frame.size.width,
                                                    _minimalViewController.view.frame.size.height);
     _minimalViewController.view.appearance = [self.delegate composerManagerAppearance:self];
@@ -379,7 +381,8 @@
 - (NSRect)minimalComposer:(iTermMinimalComposerViewController *)composer frameForHeight:(CGFloat)desiredHeight {
     return [self.delegate composerManager:self
                     frameForDesiredHeight:desiredHeight
-                            previousFrame:composer.view.frame];
+                            previousFrame:composer.view.frame
+                   preferredOffsetFromTop:composer.preferredOffsetFromTop];
 }
 
 - (CGFloat)minimalComposerMaximumHeight:(iTermMinimalComposerViewController *)composer {
@@ -456,6 +459,10 @@
 - (NSString * _Nullable)minimalComposer:(iTermMinimalComposerViewController *)composer
              valueOfEnvironmentVariable:(NSString *)name {
     return [self.delegate composerManager:self valueOfEnvironmentVariable:name];
+}
+
+- (void)minimalComposerPreferredOffsetFromTopDidChange:(iTermMinimalComposerViewController *)composer {
+    [self.delegate composerManager:self preferredOffsetFromTopDidChange:composer.preferredOffsetFromTop];
 }
 
 - (void)dismissMinimalViewAnimated:(BOOL)animated {
@@ -556,6 +563,10 @@
 
 - (void)clearStatusBar {
     [[self statusBarComponent] setStringValue:@""];
+}
+
+- (void)setPreferredOffsetFromTop:(CGFloat)offset {
+    _preferredTopOffset = offset;
 }
 
 - (void)insertText:(NSString *)string {
