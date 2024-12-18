@@ -219,7 +219,7 @@
 
     if (@available(macOS 10.16, *)) {
         // 😢 See issue 9209
-        _subpixelAA.hidden = YES;
+        _subpixelAA.enabled = NO;
     }
 
     _asciiFontPicker.delegate = self;
@@ -404,12 +404,17 @@
 }
 
 - (void)updateThinStrokesEnabled {
-    if (iTermTextIsMonochrome()) {
+    if (@available(macOS 10.16, *)) {
         _subpixelAA.state = NSControlStateValueOff;
+        _subpixelAA.enabled = NO;
     } else {
-        _subpixelAA.state = NSControlStateValueOn;
+        if (iTermTextIsMonochrome()) {
+            _subpixelAA.state = NSControlStateValueOff;
+        } else {
+            _subpixelAA.state = NSControlStateValueOn;
+        }
+        _subpixelAA.enabled = YES;
     }
-    _subpixelAA.enabled = YES;
 }
 
 - (void)updateWarnings {
