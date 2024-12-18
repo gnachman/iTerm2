@@ -9,7 +9,8 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
-static char iTermSliderKVOKey;
+static char iTermSliderValueKVOKey;
+static char iTermSliderEnabledKVOKey;
 
 @interface iTermSlider()<NSTextFieldDelegate>
 @end
@@ -82,6 +83,7 @@ static char iTermSliderKVOKey;
     [self addSubview:_textField];
 }
 
+// Remember to call startObservingSlider during setup and stopObservingSlider during deallocation or cleanup.
 - (CGFloat)widthForTextFieldWithString:(NSString *)string {
     NSTextField *textField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
     textField.stringValue = string;
@@ -127,16 +129,20 @@ static char iTermSliderKVOKey;
     [_slider addObserver:self
               forKeyPath:@"doubleValue"
                  options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew
-                 context:(void *)&iTermSliderKVOKey];
+                 context:(void *)&iTermSliderValueKVOKey];
+    [_slider addObserver:self
+              forKeyPath:@"enabled"
+                 options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew
+                 context:(void *)&iTermSliderEnabledKVOKey];
     [self loadFromSlider];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if (context != &iTermSliderKVOKey) {
-        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    if (context == &iTermSliderValueKVOKey || context == &iTermSliderEnabledKVOKey) {
+        [self loadFromSlider];
         return;
     }
-    [self loadFromSlider];
+    [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
 }
 
 - (void)setTextFieldValue:(double)value {
@@ -158,6 +164,8 @@ static char iTermSliderKVOKey;
 - (void)loadFromSlider {
     [self setTextFieldValue:_slider.doubleValue];
     _stepper.doubleValue = _slider.doubleValue;
+    _stepper.enabled = _slider.enabled;
+    _textField.enabled = _slider.enabled;
 }
 
 - (void)performAction {

@@ -96,7 +96,7 @@ CGFloat iTermMaxBlurRadius(void) {
         }
         BOOL haveTransparency = (strongSelf->_transparency.doubleValue > 0);
         strongSelf->_transparencyAffectsOnlyDefaultBackgroundColor.enabled = haveTransparency;
-        strongSelf->_blurRadius.enabled = haveTransparency;
+        strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSControlStateValueOn) && haveTransparency;
         strongSelf->_useBlur.enabled = haveTransparency;
     };
 
@@ -114,7 +114,8 @@ CGFloat iTermMaxBlurRadius(void) {
         if (!strongSelf) {
             return;
         }
-        strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSControlStateValueOn);
+        BOOL haveTransparency = (strongSelf->_transparency.doubleValue > 0);
+        strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSControlStateValueOn) && haveTransparency;
         [strongSelf updateBlurRadiusWarning];
     };
 
