@@ -3025,7 +3025,7 @@ DQ
                     </connections>
                 </button>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yZc-ct-5Wq" customClass="BFPCompositeView">
-                    <rect key="frame" x="126" y="212" width="544" height="27"/>
+                    <rect key="frame" x="122" y="212" width="544" height="27"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JNC-H4-Kuf">
@@ -3099,7 +3099,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="e3h-Ex-Npu" customClass="BFPCompositeView">
-                            <rect key="frame" x="0.0" y="75" width="400" height="27"/>
+                            <rect key="frame" x="-4" y="75" width="400" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eDY-76-QLx">
