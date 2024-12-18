@@ -6593,11 +6593,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
             <point key="canvasLocation" x="2057" y="17"/>
         </customView>
         <customView id="yCt-fi-XI9" userLabel="Prefs - Appearance" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="623" height="264"/>
+            <rect key="frame" x="0.0" y="0.0" width="623" height="317"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <tabView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="W2g-ef-8zn">
-                    <rect key="frame" x="0.0" y="10" width="610" height="260"/>
+                    <rect key="frame" x="0.0" y="10" width="610" height="313"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
@@ -6847,15 +6847,15 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Tabs" identifier="2" id="med-Jd-f8A">
                             <view key="view" id="z6P-Vz-VbA">
-                                <rect key="frame" x="10" y="33" width="590" height="214"/>
+                                <rect key="frame" x="10" y="33" width="590" height="267"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ksv-Y5-pY9" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="112" y="-3" width="366" height="214"/>
+                                        <rect key="frame" x="33" y="-2" width="516" height="266"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Q0o-aJ-Wec">
-                                                <rect key="frame" x="18" y="98" width="348" height="18"/>
+                                                <rect key="frame" x="148" y="85" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show new-output indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="P1b-LJ-ARG">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6867,7 +6867,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4446">
-                                                <rect key="frame" x="18" y="158" width="348" height="18"/>
+                                                <rect key="frame" x="148" y="145" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab numbers" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4447">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6879,7 +6879,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5374">
-                                                <rect key="frame" x="18" y="118" width="343" height="18"/>
+                                                <rect key="frame" x="148" y="105" width="343" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show activity indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5375">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6891,7 +6891,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4462">
-                                                <rect key="frame" x="18" y="198" width="348" height="18"/>
+                                                <rect key="frame" x="148" y="250" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab bar even when there is only one tab" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4499">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6902,7 +6902,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vJk-74-qzt">
-                                                <rect key="frame" x="18" y="178" width="348" height="18"/>
+                                                <rect key="frame" x="148" y="175" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Preserve window size when tab bar shows or hides" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="9ky-UU-jS2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6913,7 +6913,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1dE-aB-uR8">
-                                                <rect key="frame" x="18" y="138" width="348" height="18"/>
+                                                <rect key="frame" x="148" y="125" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Tabs have close buttons" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="GRU-c6-tJK">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6925,7 +6925,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Esq-U7-Af7">
-                                                <rect key="frame" x="18" y="78" width="348" height="18"/>
+                                                <rect key="frame" x="148" y="229" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Flash tab bar when switching tabs in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="2Eu-ti-9Nf">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6937,7 +6937,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="e4x-7h-mzh">
-                                                <rect key="frame" x="18" y="58" width="348" height="18"/>
+                                                <rect key="frame" x="148" y="209" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab bar in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="UI6-As-YT2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6949,7 +6949,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q7y-hG-x0m" userLabel="Stretch Tabs to Fill Bar">
-                                                <rect key="frame" x="18" y="38" width="348" height="18"/>
+                                                <rect key="frame" x="148" y="51" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Stretch tabs to fill bar" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="X12-cb-Cnf">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6961,7 +6961,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button toolTip="The following tags are recognized: &lt;u&gt;, &lt;i&gt;, and &lt;b&gt;. You can also use &amp;lt; and &amp;amp;." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ids-PU-lco" userLabel="Stretch Tabs to Fill Bar">
-                                                <rect key="frame" x="18" y="18" width="348" height="18"/>
+                                                <rect key="frame" x="148" y="19" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Support basic HTML tags in tab titles" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="RnY-AK-UW0">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6972,6 +6972,51 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                     <outlet property="nextKeyView" destination="5330" id="IO9-5v-iWV"/>
                                                 </connections>
                                             </button>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wdp-g0-Ijc">
+                                                <rect key="frame" x="20" y="251" width="121" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Visibility:" id="Kd3-yO-E1K">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TD2-6Y-yWy">
+                                                <rect key="frame" x="20" y="176" width="121" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Resizing:" id="yre-4a-e3D">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="O6x-0u-3fs">
+                                                <rect key="frame" x="20" y="146" width="121" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Features:" id="u6g-s7-Aas">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rSP-zL-fB8">
+                                                <rect key="frame" x="20" y="52" width="121" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Appearance:" id="v9Q-KQ-omE">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hfd-zQ-47S">
+                                                <rect key="frame" x="20" y="20" width="121" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="HTML titles:" id="3mP-CQ-XJW">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
                                         </subviews>
                                     </customView>
                                 </subviews>
@@ -7168,7 +7213,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                 </tabView>
             </subviews>
             <accessibility identifier="prefsAppearance"/>
-            <point key="canvasLocation" x="-303.5" y="1297"/>
+            <point key="canvasLocation" x="-303.5" y="1323.5"/>
         </customView>
         <customView id="Z7N-XT-vVo" userLabel="Prefs - Keys" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="932" height="471"/>
