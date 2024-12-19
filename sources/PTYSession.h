@@ -397,7 +397,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, assign) BOOL treatAmbiguousWidthAsDoubleWidth;
 
 // True if mouse movements are sent to the host.
-@property(nonatomic, assign) BOOL xtermMouseReporting;
+@property(nonatomic, readonly) BOOL xtermMouseReporting;
 
 // True if the mouse wheel movements are sent to the host.
 @property(nonatomic, assign) BOOL xtermMouseReportingAllowMouseWheel;

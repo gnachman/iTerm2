@@ -641,6 +641,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     NSString *_originatingArrangementName;
     NSInteger _canChangeProfileInArrangementGeneration;
     BOOL _canChangeProfileInArrangement;
+    BOOL _xtermMouseReportingEverAllowed;
 }
 
 @synthesize isDivorced = _divorced;
@@ -4821,8 +4822,8 @@ ITERM_WEAKLY_REFERENCEABLE
     self.endAction = [iTermProfilePreferences unsignedIntegerForKey:KEY_SESSION_END_ACTION inProfile:aDict];
     [self setTreatAmbiguousWidthAsDoubleWidth:[iTermProfilePreferences boolForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH
                                                                         inProfile:aDict]];
-    [self setXtermMouseReporting:[iTermProfilePreferences boolForKey:KEY_XTERM_MOUSE_REPORTING
-                                                           inProfile:aDict]];
+    [self setXtermMouseReportingEverAllowed:[iTermProfilePreferences boolForKey:KEY_XTERM_MOUSE_REPORTING
+                                                                      inProfile:aDict]];
     [self setXtermMouseReportingAllowMouseWheel:[iTermProfilePreferences boolForKey:KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL
                                                                           inProfile:aDict]];
     [self setXtermMouseReportingAllowClicksAndDrags:[iTermProfilePreferences boolForKey:KEY_XTERM_MOUSE_REPORTING_ALLOW_CLICKS_AND_DRAGS
@@ -5513,9 +5514,19 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         object:nil];
 }
 
-- (void)setXtermMouseReporting:(BOOL)set
+- (BOOL)xtermMouseReporting {
+    if (!_xtermMouseReportingEverAllowed) {
+        return NO;
+    }
+    if (!_screen.terminalSoftAlternateScreenMode) {
+        return ![iTermProfilePreferences boolForKey:KEY_RESTRICT_MOUSE_REPORTING_TO_ALTERNATE_SCREEN_MODE inProfile:self.profile];
+    }
+    return YES;
+}
+
+- (void)setXtermMouseReportingEverAllowed:(BOOL)set
 {
-    _xtermMouseReporting = set;
+    _xtermMouseReportingEverAllowed = set;
     [_textview updateCursor:[NSApp currentEvent]];
 }
 
@@ -9718,7 +9729,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             [windowController swapPaneDown];
             break;
         case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
-            [self setXtermMouseReporting:![self xtermMouseReporting]];
+            [self setXtermMouseReportingEverAllowed:![self xtermMouseReporting]];
             break;
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
             [self invokeFunctionCall:action.parameter
@@ -13712,7 +13723,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                              VT100ScreenMutableState *mutableState,
                                              id<VT100ScreenDelegate> delegate) {
-        if (_xtermMouseReporting && terminal.mouseMode != MOUSE_REPORTING_NONE) {
+        if (_xtermMouseReportingEverAllowed && terminal.mouseMode != MOUSE_REPORTING_NONE) {
             NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
             if ([number boolValue]) {
                 terminal.mouseMode = MOUSE_REPORTING_NONE;

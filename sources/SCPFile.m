@@ -787,7 +787,6 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
     __block BOOL result = NO;
     const NMSSHKnownHostStatus status = [self.session knownHostStatusInFiles:nil];
     NSString *host = session.host;
-    const NMSSHSessionHash hash = session.fingerprintHash;
     NSString *hashName = @"";
     switch (session.fingerprintHash) {
         case NMSSHSessionHashMD5:

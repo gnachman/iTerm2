@@ -517,8 +517,8 @@ static void iTermAdvancedSettingsSaveSecureString(NSDictionary *dict, NSString *
     NSString *selectorName = dict[kAdvancedSettingSetter];
     assert(selectorName);
     SEL selector = NSSelectorFromString(selectorName);
-    id newValue = [iTermAdvancedSettingsModel performSelector:selector
-                                                   withObject:value];
+    [iTermAdvancedSettingsModel performSelector:selector
+                                     withObject:value];
 }
 
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {

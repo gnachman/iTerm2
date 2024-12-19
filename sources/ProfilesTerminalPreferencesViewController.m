@@ -30,6 +30,7 @@
     IBOutlet NSButton *_xtermMouseReportingAllowClicksAndDrags;
     IBOutlet NSButton *_allowTitleReporting;
     IBOutlet NSButton *_allowAlternateMouseScroll;
+    IBOutlet NSButton *_restrictMouseReportingToAlternateScreenMode;
     IBOutlet NSButton *_allowPasteBracketing;
     IBOutlet NSButton *_disablePrinting;
     IBOutlet NSButton *_disableAltScreen;
@@ -159,6 +160,11 @@
 
     [self defineControl:_allowAlternateMouseScroll
                     key:KEY_ALLOW_ALTERNATE_MOUSE_SCROLL
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_restrictMouseReportingToAlternateScreenMode
+                    key:KEY_RESTRICT_MOUSE_REPORTING_TO_ALTERNATE_SCREEN_MODE
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
