@@ -1,5 +1,6 @@
 #import "VT100GridTypes.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermASCIITexture.h"
 #import "iTermCursor.h"
 #import "iTermImageRenderer.h"
@@ -16,6 +17,7 @@
 @class iTermKittyImageDraw;
 @class iTermKittyImageRun;
 @class iTermTerminalButton;
+@class iTermMetalView;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -176,7 +178,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 // Our platform independent render class
 NS_CLASS_AVAILABLE(10_11, NA)
-@interface iTermMetalDriver : NSObject<MTKViewDelegate>
+@interface iTermMetalDriver : NSObject<iTermMetalViewDelegate>
 
 @property (nullable, nonatomic, weak) id<iTermMetalDriverDataSource> dataSource;
 @property (nonatomic, readonly) NSString *identifier;
@@ -198,7 +200,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth;
 // block is called.
 // enableSetNeedsDisplay should be NO.
 // The arg to completion is YES on success and NO if the draw was aborted for lack of resources.
-- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion;
+- (void)drawAsynchronouslyInView:(iTermMetalView *)view completion:(void (^)(BOOL))completion;
 - (void)expireNonASCIIGlyphs;
 
 @end

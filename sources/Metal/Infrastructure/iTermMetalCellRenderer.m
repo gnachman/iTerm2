@@ -74,7 +74,7 @@ maximumExtendedDynamicRangeColorComponentValue:maximumExtendedDynamicRangeColorC
 }
 
 - (NSEdgeInsets)margins {
-    // MTKView goes to window's edges. It does not overlap the rounded corners.
+    // iTermMetalView goes to window's edges. It does not overlap the rounded corners.
     const CGSize marginSize =
         CGSizeMake([iTermPreferences intForKey:kPreferenceKeySideMargins] * self.configuration.scale,
                    [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * self.configuration.scale);

@@ -349,15 +349,15 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     self.mainThreadState->legacyScrollbarWidth = legacyScrollbarWidth * scale;
 }
 
-#pragma mark - MTKViewDelegate
+#pragma mark - iTermMetalViewDelegate
 
-- (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size {
+- (void)metalView:(nonnull iTermMetalView *)view drawableSizeWillChange:(CGSize)size {
     self.mainThreadState->viewportSize.x = size.width;
     self.mainThreadState->viewportSize.y = size.height;
 }
 
 // Called whenever the view needs to render a frame
-- (void)drawInMTKView:(nonnull MTKView *)view {
+- (void)drawInMetalView:(nonnull iTermMetalView *)view {
     DLog(@"Draw metal");
     const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     const NSTimeInterval dt = now - _lastFrameStartTime;
@@ -418,7 +418,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     return _maxFramesInFlight;
 }
 
-- (iTermMetalDriverAsyncContext *)newContextForDrawInView:(MTKView *)view count:(int)count {
+- (iTermMetalDriverAsyncContext *)newContextForDrawInView:(iTermMetalView *)view count:(int)count {
     iTermMetalDriverAsyncContext *context = [[iTermMetalDriverAsyncContext alloc] init];
     _context = context;
     context.count = count;
@@ -429,7 +429,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     return context;
 }
 
-- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion {
+- (void)drawAsynchronouslyInView:(iTermMetalView *)view completion:(void (^)(BOOL))completion {
     static _Atomic int count;
     int thisCount = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
     DLog(@"Start asynchronous draw of %@ count=%d", view, thisCount);
@@ -464,7 +464,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     return captureDescriptor;
 }
 
-- (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {
+- (BOOL)reallyDrawInMTKView:(nonnull iTermMetalView *)view startToStartTime:(NSTimeInterval)startToStartTime {
     @synchronized (self) {
         [_inFlightHistogram addValue:_currentFrames.count];
     }
@@ -581,7 +581,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 #pragma mark - Draw Helpers
 
 // Called on the main queue
-- (iTermMetalFrameData *)newFrameDataForView:(MTKView *)view {
+- (iTermMetalFrameData *)newFrameDataForView:(iTermMetalView *)view {
     if (![_dataSource metalDriverShouldDrawFrame]) {
         DLog(@"Metal driver declined to draw");
         return nil;
@@ -628,7 +628,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
 // Runs in private queue
 - (void)performPrivateQueueSetupForFrameData:(iTermMetalFrameData *)frameData
-                                        view:(nonnull MTKView *)view {
+                                        view:(nonnull iTermMetalView *)view {
     DLog(@"Begin private queue setup for frame %@", frameData);
     if ([iTermAdvancedSettingsModel showMetalFPSmeter]) {
         [frameData.perFrameState setDebugString:[self fpsMeterStringForFrameNumber:frameData.frameNumber]];
@@ -767,7 +767,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 }
 
 - (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
-                                      view:(nonnull MTKView *)view
+                                      view:(nonnull iTermMetalView *)view
                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     iTermCellRenderConfiguration *cellConfiguration = frameData.cellConfiguration;
 
@@ -874,7 +874,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 #endif
 
 // Main thread
-- (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
+- (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(iTermMetalView *)view {
     if (frameData.debugInfo) {
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
             frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"
@@ -2329,7 +2329,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     }
 }
 
-- (void)scheduleDrawIfNeededInView:(MTKView *)view {
+- (void)scheduleDrawIfNeededInView:(iTermMetalView *)view {
     const NSTimeInterval duration = self.needsDrawAfterDuration;
     if (duration < INFINITY) {
         void (^block)(void) = ^{

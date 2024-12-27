@@ -60,4 +60,12 @@
 // Accessibility APIs use y=0 at the top of the screen instead of the bottom. <3
 - (NSPoint)viewPointFromAccessibilityScreenPoint:(NSPoint)screenPoint;
 
+// Hack to avoid deprecation warning.
+@property (nonatomic, readonly) BOOL it_canDraw;
+
 @end
+
+@interface NSView(Private)
+- (CGSize)_recommendedDrawableSize;
+@end
+

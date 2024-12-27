@@ -54,76 +54,6 @@ static NSDate* lastResizeDate_;
 
 NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewWasSelectedForInspectionNotification";
 
-@interface iTermMTKView : MTKView
-@end
-
-@implementation iTermMTKView {
-    NSTimer *_timer;
-    NSTimeInterval _lastSetNeedsDisplay;
-}
-
-- (nonnull instancetype)initWithFrame:(CGRect)frameRect device:(nullable id<MTLDevice>)device {
-    self = [super initWithFrame:frameRect device:device];
-    if (self) {
-        if (![iTermAdvancedSettingsModel hdrCursor]) {
-            self.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
-        }
-        [self it_schedule];
-    }
-    return self;
-}
-
-- (void)dealloc {
-    [_timer invalidate];
-}
-
-- (void)it_schedule {
-    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:[iTermAdvancedSettingsModel metalRedrawPeriod]
-                                                  target:self
-                                                selector:@selector(it_redrawPeriodically:)
-                                                userInfo:nil
-                                                 repeats:YES];
-}
-
-- (void)it_redrawPeriodically:(NSTimer *)timer {
-    DLog(@"redrawPeriodically: timer fired");
-    if (self.isHidden || self.alphaValue < 0.01 || self.bounds.size.width == 0 || self.bounds.size.height == 0) {
-        DLog(@"Not visible %@", self);
-        return;
-    }
-    if (round(1000 * timer.timeInterval) != round(1000 * [iTermAdvancedSettingsModel metalRedrawPeriod]))  {
-        DLog(@"Recreate timer");
-        [_timer invalidate];
-        [self it_schedule];
-    }
-    if ([NSDate it_timeSinceBoot] - _lastSetNeedsDisplay < timer.timeInterval) {
-        DLog(@"Redrew recently");
-        return;
-    }
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setNeedsDisplay:(BOOL)needsDisplay {
-    DLog(@"setNeedsDisplay:%@", @(needsDisplay));
-    if (needsDisplay) {
-        _lastSetNeedsDisplay = [NSDate it_timeSinceBoot];
-    }
-    [super setNeedsDisplay:needsDisplay];
-}
-
-- (void)viewDidMoveToWindow {
-    self.colorspace = self.window.screen.colorSpace.CGColorSpace;
-}
-
-- (void)enclosingWindowDidMoveToScreen:(NSScreen *)screen {
-    self.colorspace = self.window.screen.colorSpace.CGColorSpace;
-}
-
-- (void)setColorspace:(CGColorSpaceRef)colorspace {
-    DLog(@"set colorspace of %@ to %@", self, colorspace);
-    [super setColorspace:colorspace];
-}
-@end
 
 @interface iTermHoverContainerView : NSView
 @property (nonatomic, copy) NSString *url;
@@ -804,6 +734,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // Allocate a new metal view
     _metalView = [[iTermMTKView alloc] initWithFrame:_scrollview.contentView.frame
                                               device:[self metalDevice]];
+    id _ignore = [iTermMTKView layerClass];
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     if (iTermTextIsMonochrome()) {
         _metalView.layer.opaque = NO;
@@ -834,11 +765,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _metalView.hidden = NO;
     _metalView.alphaValue = 0;
 
-    // Start the metal driver going. It will receive delegate calls from MTKView that kick off
+    // Start the metal driver going. It will receive delegate calls from iTermMTKView that kick off
     // frame rendering.
     _driver = [[iTermMetalDriver alloc] initWithDevice:_metalView.device];
     _driver.dataSource = dataSource;
-    [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
+    [_driver metalView:_metalView drawableSizeWillChange:_metalView.drawableSize];
     _metalView.delegate = _driver;
     [self metalViewVisibilityDidChange];
 }
@@ -855,7 +786,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)setMetalViewNeedsDisplayInTextViewRect:(NSRect)textViewRect NS_AVAILABLE_MAC(10_11) {
     if (_useMetal) {
-        // TODO: Would be nice to draw only the rect, but I don't see a way to do that with MTKView
+        // TODO: Would be nice to draw only the rect, but I don't see a way to do that with iTermMTKView
         // that doesn't involve doing something nutty like saving a copy of the drawable.
         [_metalView setNeedsDisplay:YES];
         [_scrollview setNeedsDisplay:YES];
@@ -916,7 +847,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)addSubviewBelowFindView:(NSView *)aView {
     if ([aView isKindOfClass:[PTYScrollView class]]) {
         NSIndexSet *indexes = [self.subviews indexesOfObjectsPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            return [obj isKindOfClass:[MTKView class]] || obj == _legacyView;
+            return [obj isKindOfClass:[iTermMTKView class]] || obj == _legacyView;
         }];
         if (indexes.count) {
             // Insert scrollview after metal view and legacy view
@@ -925,7 +856,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             return;
         }
     }
-    if ([aView isKindOfClass:[MTKView class]]) {
+    if ([aView isKindOfClass:[iTermMTKView class]]) {
         NSInteger i = [self.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             return [obj isKindOfClass:[PTYScrollView class]];
         }];
@@ -1093,7 +1024,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)reallyUpdateMetalViewFrame {
     _metalView.frame = self.bounds;
-    [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
+    [_driver metalView:_metalView drawableSizeWillChange:_metalView.drawableSize];
 }
 
 - (NSRect)frameByInsettingForMetal:(NSRect)frame {

@@ -118,7 +118,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @class iTermMetalRendererTransientState;
 @class iTermMetalRowData;
 @class iTermTexturePool;
-@class MTKView;
+@class iTermMetalView;
 @class MTLRenderPassDescriptor;
 @protocol CAMetalDrawable;
 
@@ -139,7 +139,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic) CGSize asciiOffset;
 @property (atomic, strong, nullable) NSString *status;
 @property (atomic, strong) id<MTLDevice> device;
-@property (atomic, strong, readonly) MTKView *view;
+@property (atomic, strong, readonly) iTermMetalView *view;
 @property (atomic, strong, nullable) NSColorSpace *colorSpace;
 @property (nonatomic, readonly) NSInteger frameNumber;
 #if ENABLE_STATS
@@ -178,7 +178,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // Eventually this gets copied to the drawable.
 @property (nonatomic, strong, nullable) MTLRenderPassDescriptor *temporaryRenderPassDescriptor;
 
-- (instancetype)initWithView:(MTKView *)view
+- (instancetype)initWithView:(iTermMetalView *)view
          fullSizeTexturePool:(iTermTexturePool *)fullSizeTexturePool NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

@@ -26,7 +26,7 @@
 //That gets logged when accessing the texture immediately after getting a drawable and before it
 //has been presented. However, that drawable gets touched in two different threads at different
 // points in time, and another drawable gets presented at about the same time in a different thread.
-// So my theory is that MTKView.currentDrawable can be used in a thread besides the main thread but
+// So my theory is that iTermMetalView.currentDrawable can be used in a thread besides the main thread but
 // it always has to be the *same* thread.
 #define ENABLE_DEFER_CURRENT_DRAWABLE 0
 

@@ -8,6 +8,7 @@
 #import "iTermMetalClipView.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermRateLimitedUpdate.h"
 #import <MetalKit/MetalKit.h>
 

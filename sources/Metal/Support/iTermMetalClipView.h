@@ -7,13 +7,13 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class MTKView;
+@class iTermMTKView;
 
 extern NSString *const iTermMetalClipViewWillScroll;
 
 @interface iTermMetalClipView : NSClipView
 
-@property (nonatomic, weak) MTKView *metalView;
+@property (nonatomic, weak) iTermMTKView *metalView;
 @property (nonatomic, weak) NSView *legacyView;
 @property (nonatomic) BOOL useMetal;
 

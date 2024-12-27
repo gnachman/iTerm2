@@ -1739,6 +1739,8 @@
 		A65B0401278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B03FF278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m */; };
 		A65B1B5C2D1252E300F5A740 /* iTermShortcutInputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D373E4818F3613600773D3E /* iTermShortcutInputView.m */; };
 		A65B1B602D137BF700F5A740 /* PopoverHelpButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65B1B5F2D137BF400F5A740 /* PopoverHelpButton.swift */; };
+		A65B1BD32D1E31CB00F5A740 /* iTermMetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65B1B612D16173A00F5A740 /* iTermMetalView.swift */; };
+		A65B1BD52D1E3CC800F5A740 /* iTermMTKView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65B1BD42D1E3CC500F5A740 /* iTermMTKView.swift */; };
 		A65B3792295CB769008EEBF3 /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E533B403B2959201A8A066 /* PTYTabView.m */; };
 		A65B49A8244199CF002B1C68 /* iTermSocketUnixDomainAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B49A6244199CF002B1C68 /* iTermSocketUnixDomainAddress.h */; };
 		A65B49A9244199CF002B1C68 /* iTermSocketUnixDomainAddress.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B49A7244199CF002B1C68 /* iTermSocketUnixDomainAddress.m */; };
@@ -6144,6 +6146,9 @@
 		A65B03FE278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100ScreenMutableState+Resizing.h"; sourceTree = "<group>"; };
 		A65B03FF278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100ScreenMutableState+Resizing.m"; sourceTree = "<group>"; };
 		A65B1B5F2D137BF400F5A740 /* PopoverHelpButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverHelpButton.swift; sourceTree = "<group>"; };
+		A65B1B612D16173A00F5A740 /* iTermMetalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermMetalView.swift; sourceTree = "<group>"; };
+		A65B1BD42D1E3CC500F5A740 /* iTermMTKView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermMTKView.swift; sourceTree = "<group>"; };
+		A65B1C432D1F2EDE00F5A740 /* iTermMetalView_full.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermMetalView_full.swift; sourceTree = "<group>"; };
 		A65B49A6244199CF002B1C68 /* iTermSocketUnixDomainAddress.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSocketUnixDomainAddress.h; sourceTree = "<group>"; };
 		A65B49A7244199CF002B1C68 /* iTermSocketUnixDomainAddress.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSocketUnixDomainAddress.m; sourceTree = "<group>"; };
 		A65B72501B1A5D7500F947A7 /* WarningSign.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WarningSign.png; path = images/WarningSign.png; sourceTree = "<group>"; };
@@ -8777,6 +8782,8 @@
 		1D373E4618F360C600773D3E /* Misc. Views */ = {
 			isa = PBXGroup;
 			children = (
+				A65B1C432D1F2EDE00F5A740 /* iTermMetalView_full.swift */,
+				A65B1B612D16173A00F5A740 /* iTermMetalView.swift */,
 				A65B1B5F2D137BF400F5A740 /* PopoverHelpButton.swift */,
 				A665388A2D10AB0B004B723B /* CursorSmearView.swift */,
 				A61F9DD22D0E04A40003FC13 /* ExpandingTextField.swift */,
@@ -9812,6 +9819,7 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A65B1BD42D1E3CC500F5A740 /* iTermMTKView.swift */,
 				A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */,
 				A6FFAE722CF682B60031FB21 /* iTermDoubleWidthCharacterCache.h */,
 				A62841562CE28BA000D0796B /* iTermWordExtractor.m */,
@@ -15861,6 +15869,7 @@
 				A6B41406211A579300D28207 /* iTermStoplightHotbox.m in Sources */,
 				A691693B2813458F00083F99 /* PortholeFactory.swift in Sources */,
 				A62C8FC3248033C000E22E95 /* iTermTmuxJobManager.m in Sources */,
+				A65B1BD52D1E3CC800F5A740 /* iTermMTKView.swift in Sources */,
 				A63011B220E7EE62008114B7 /* iTermStatusBarKnobNumericViewController.m in Sources */,
 				A619DC4E2CD5A1D0004B8996 /* iTermCoreTextLineRenderingHelper.m in Sources */,
 				A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */,
@@ -16350,6 +16359,7 @@
 				537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */,
 				A6F9EF3820850C41005530F7 /* iTermCompetentTableRowView.m in Sources */,
 				A6D10E3427F7C2BC0026DB56 /* NSRange+MultiCursor.swift in Sources */,
+				A65B1BD32D1E31CB00F5A740 /* iTermMetalView.swift in Sources */,
 				A6D7E0782C236D54007D0A37 /* LineBlockMetadataArray.m in Sources */,
 				A6891DCB2818605500751F40 /* JSONPortholeRenderer.swift in Sources */,
 				A630117720E6971D008114B7 /* iTermStatusBarTextComponent.m in Sources */,

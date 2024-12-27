@@ -6416,7 +6416,7 @@ typedef struct {
     iTermMetalUnavailableReason reason = iTermMetalUnavailableReasonNone;
     BOOL allowed = NO;
     // Note: we turn off metal when dragging a split in a tmux tab because it's hard to keep the
-    // frame of the MTKView correct without resizing it.
+    // frame of the iTermMTKView correct without resizing it.
     if ([self.delegate tabAnyDragInProgress:self] || _isDraggingSplitInTmuxTab) {
         _metalUnavailableReason = iTermMetalUnavailableReasonTabDragInProgress;
     } else if (resizing) {

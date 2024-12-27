@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
 #import "iTermMetalCellRenderer.h"
@@ -116,7 +117,7 @@ static NSInteger gNextFrameDataNumber;
 
 @interface iTermMetalFrameData()
 @property (readonly, strong) NSMutableDictionary<NSString *, __kindof iTermMetalRendererTransientState *> *transientStates;
-@property (atomic, strong, readwrite) MTKView *view;
+@property (atomic, strong, readwrite) iTermMetalView *view;
 @end
 
 @implementation iTermMetalFrameData {
@@ -127,7 +128,7 @@ static NSInteger gNextFrameDataNumber;
     iTermCellRenderConfiguration *_cellConfiguration;
 }
 
-- (instancetype)initWithView:(MTKView *)view fullSizeTexturePool:(iTermTexturePool *)fullSizeTexturePool {
+- (instancetype)initWithView:(iTermMetalView *)view fullSizeTexturePool:(iTermTexturePool *)fullSizeTexturePool {
     self = [super init];
     if (self) {
         _view = view;

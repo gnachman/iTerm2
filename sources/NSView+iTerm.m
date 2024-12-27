@@ -269,4 +269,13 @@ static NSInteger gTakingSnapshot;
     return viewPoint;
 }
 
+// My MTKView clone uses canDraw. I don't understand why the original code did so I'm not
+// interested in changing it and adding weird edge cases. Eventually Apple will have to fix their
+// own use of a deprecated API, at which point I can reverse MTKView and remove this.
+- (BOOL)it_canDraw {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    return [self canDraw];
+#pragma clang diagnostic pop
+}
 @end

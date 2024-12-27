@@ -90,7 +90,7 @@
     NSInteger index = NSNotFound;
 
     // To work around awful performance issues introduced in Mojave caused
-    // by putting a scrollview over the MTKView making the window server do
+    // by putting a scrollview over the iTermMTKView making the window server do
     // an offscreen render (in iOS parlance) we reparent the scroller to be
     // a subview of SessionView. That fixes the performance problem, but
     // introduces a new issue: when the scroller style changes from legacy
