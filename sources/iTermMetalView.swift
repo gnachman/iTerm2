@@ -595,7 +595,7 @@ public class iTermMetalView: NSView, CALayerDelegate {
                     delegate.metalView(self, drawableSizeWillChange: newPixelSize)
                 }
             }
-            drawableSize = newPixelSize
+            _drawableSize = newPixelSize
             sizeDirty = true
         }
     }
