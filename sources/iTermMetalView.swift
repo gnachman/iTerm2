@@ -82,16 +82,94 @@ public class iTermMetalView: NSView, CALayerDelegate {
         }
     }
     private var _currentDrawable: CAMetalDrawable?
+    private class PendingDrawable {
+        let drawable: CAMetalDrawable?
+        let context: LayerContext
+        init(_ context: LayerContext, drawable: CAMetalDrawable?) {
+            self.drawable = drawable
+            self.context = context
+        }
+    }
+    private var pendingDrawablePromise: iTermPromise<PendingDrawable>?
+    private static let getDrawableQueue = DispatchQueue(label: "com.iterm2.get-drawable")
+
+    private struct LayerContext: Equatable {
+        static func == (lhs: iTermMetalView.LayerContext, rhs: iTermMetalView.LayerContext) -> Bool {
+            return (lhs.device === rhs.device &&
+                    lhs.framebufferOnly == rhs.framebufferOnly &&
+                    lhs.presentsWithTransaction == rhs.presentsWithTransaction &&
+                    lhs.pixelFormat == rhs.pixelFormat &&
+                    lhs.colorspace === rhs.colorspace)
+        }
+        
+        weak var device: MTLDevice?
+        var framebufferOnly: Bool
+        var presentsWithTransaction: Bool
+        var pixelFormat: MTLPixelFormat
+        var colorspace: CGColorSpace?
+    }
+
+    private func layerContext(metalLayer: CAMetalLayer) -> LayerContext {
+        LayerContext(device: metalLayer.device,
+                     framebufferOnly: metalLayer.framebufferOnly,
+                     presentsWithTransaction: metalLayer.presentsWithTransaction,
+                     pixelFormat: metalLayer.pixelFormat,
+                     colorspace: metalLayer.colorspace)
+    }
+
+    private func fetchDrawable(timeout: TimeInterval) -> CAMetalDrawable? {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let metalLayer else {
+            return nil
+        }
+        metalLayer.allowsNextDrawableTimeout = false
+
+        let context = layerContext(metalLayer: metalLayer)
+        var timedOut = false
+        while !timedOut {
+            let promise = pendingDrawablePromise ?? iTermPromise<PendingDrawable> { seal in
+                Self.getDrawableQueue.async {
+                    seal.fulfill(PendingDrawable(context, drawable: metalLayer.nextDrawable()))
+                }
+            }
+            var result: CAMetalDrawable?
+            DLog("Will wait for promise")
+            promise.wait(withTimeout: timeout).whenFirst { pending in
+                DLog("Promise fulfilled")
+                if pending.context == context {
+                    result = pending.drawable
+                }
+                pendingDrawablePromise = nil
+            } second: { err in
+                DLog("Promise rejected")
+                precondition(err.code == iTermPromiseErrorCode.timeout.rawValue)
+                pendingDrawablePromise = promise
+                timedOut = true
+            }
+            // If result is not nil, then it is valid and should be returned.
+            // If result is nil then either there was a timeout or the drawable was not usable (e.g., wrong size).
+            if let result {
+                DLog("Returning valid drawable")
+                return result
+            }
+        }
+        DLog("Return nil because of timeout")
+        return nil
+    }
+
+    @objc
+    func currentDrawable(timeout: TimeInterval) -> CAMetalDrawable? {
+        if let _currentDrawable {
+            return _currentDrawable
+        }
+        _currentDrawable = fetchDrawable(timeout: timeout)
+        return _currentDrawable
+    }
 
     @objc
     var currentDrawable: CAMetalDrawable? {
         get {
-            if let _currentDrawable {
-                return _currentDrawable
-            }
-            let drawable = metalLayer?.nextDrawable()
-            _currentDrawable = drawable
-            return _currentDrawable
+            currentDrawable(timeout: .infinity)
         }
     }
 
@@ -176,8 +254,8 @@ public class iTermMetalView: NSView, CALayerDelegate {
     }
 
     @objc
-    public var currentRenderPassDescriptor: MTLRenderPassDescriptor? {
-        guard currentDrawable != nil else {
+    public func currentRenderPassDescriptor(timeout: TimeInterval) -> MTLRenderPassDescriptor? {
+        guard currentDrawable(timeout: timeout) != nil else {
             return nil
         }
         let descriptor = MTLRenderPassDescriptor()
@@ -188,6 +266,11 @@ public class iTermMetalView: NSView, CALayerDelegate {
             descriptor.colorAttachments[i].clearColor = clearColor
         }
         return descriptor
+    }
+
+    @objc
+    public var currentRenderPassDescriptor: MTLRenderPassDescriptor? {
+        return currentRenderPassDescriptor(timeout: .infinity)
     }
 
     private var _preferredFramesPerSecond = 60
@@ -706,3 +789,5 @@ fileprivate func DisplayLinkCallback(displayLink: CVDisplayLink,
     displaySource.add(data: 1)
     return kCVReturnSuccess
 }
+
+extension CAMetalLayer: @unchecked @retroactive Sendable {}

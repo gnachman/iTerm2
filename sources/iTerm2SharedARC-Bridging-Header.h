@@ -25,6 +25,7 @@
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalCellRenderer.h"
 #import "iTermProcess.h"
+#import "iTermPromise.h"
 #import "iTermRemotePreferences.h"
 #import "iTermSearchFieldCell.h"
 #import "iTermSnippetsModel.h"

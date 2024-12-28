@@ -147,7 +147,7 @@ NS_DESIGNATED_INITIALIZER;
 }
 
 - (void)rejectWithDefaultError {
-    [self reject:[NSError errorWithDomain:@"com.iterm2.promise" code:0 userInfo:nil]];
+    [self reject:[NSError errorWithDomain:@"com.iterm2.promise" code:iTermPromiseErrorCodeGeneric userInfo:nil]];
 }
 
 @end
@@ -376,7 +376,13 @@ static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, vo
     return result;
 }
 
+
 - (iTermOr<id, NSError *> *)wait {
+    return [self waitWithTimeout:INFINITY];
+}
+
+
+- (iTermOr *)waitWithTimeout:(NSTimeInterval)timeout {
     dispatch_group_t group = dispatch_group_create();
     @synchronized (_lock) {
         if (self.hasValue) {
@@ -388,7 +394,14 @@ static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, vo
             dispatch_group_leave(group);
         }];
     }
-    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    if (timeout == INFINITY) {
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    } else {
+        if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)))) {
+            // timed out
+            return [iTermOr second:[NSError errorWithDomain:@"com.iterm2.promise" code:iTermPromiseErrorCodeTimeout userInfo:nil]];
+        }
+    }
     @synchronized (_lock) {
         return self.value;
     }

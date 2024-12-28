@@ -919,7 +919,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
             if (frameData.deferCurrentDrawable) {
                 frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"RPD for deferred draw" fast:YES];
             } else {
-                frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
+                frameData.renderPassDescriptor = [view currentRenderPassDescriptorWithTimeout:1.0 / 60.0];
             }
         }];
         if (frameData.renderPassDescriptor == nil) {

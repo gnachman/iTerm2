@@ -9,6 +9,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSUInteger, iTermPromiseErrorCode) {
+    iTermPromiseErrorCodeGeneric,
+    iTermPromiseErrorCodeTimeout
+};
+
 @interface iTermOr<T,U>: NSObject
 @property (nonatomic, readonly) BOOL hasFirst;
 @property (nonatomic, readonly) BOOL hasSecond;
@@ -58,6 +63,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermPromise<T> *)onQueue:(dispatch_queue_t)queue catchError:(void (^)(NSError *error))block;
 
 - (iTermOr<T, NSError *> *)wait;
+- (iTermOr<T, NSError *> *)waitWithTimeout:(NSTimeInterval)timeout;
 
 @end
 
