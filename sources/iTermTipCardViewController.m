@@ -68,9 +68,18 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 - (void)awakeFromNib {
     [self flipSubviews];
     [self setWantsLayer:YES];
-    self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
+    self.layer.backgroundColor = [[NSColor controlBackgroundColor] CGColor];
     self.layer.borderColor = [[NSColor colorWithCalibratedWhite:0.65 alpha:1] CGColor];
     self.layer.borderWidth = 1;
+}
+
+- (void)viewDidChangeEffectiveAppearance {
+    [super viewDidChangeEffectiveAppearance];
+    self.layer.backgroundColor = [[NSColor controlBackgroundColor] CGColor];
+}
+
+- (void)updateLayer {
+    self.layer.backgroundColor = [[NSColor controlBackgroundColor] CGColor];
 }
 
 @end
@@ -102,14 +111,24 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     [super dealloc];
 }
 
++ (NSColor *)tipTextColor {
+    return [NSColor colorWithName:@"iTermTipTextColor" dynamicProvider:^NSColor * _Nonnull(NSAppearance *appearance) {
+        if (appearance.it_isDark) {
+            return [NSColor colorWithWhite:0.77 alpha:1];
+        } else {
+            return [NSColor colorWithWhite:0.23 alpha:1];
+        }
+    }];
+}
 - (void)awakeFromNib {
     _titleBox.delegate = self;
+    _body.textColor = [iTermTipCardViewController tipTextColor];
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    _coverView.color = [NSColor whiteColor];
+    _coverView.color = [NSColor controlBackgroundColor];
 
     // Add a shadow to the card.
     NSShadow *dropShadow = [[[NSShadow alloc] init] autorelease];
@@ -145,14 +164,21 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     [bigTextParagraphStyle setParagraphSpacing:4];
     NSDictionary *bigTextAttributes =
     @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:16] ?: [NSFont systemFontOfSize:16],
-       NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.2 alpha:1],
+       NSForegroundColorAttributeName: [iTermTipCardViewController tipTextColor],
        NSParagraphStyleAttributeName: bigTextParagraphStyle };
 
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     [paragraphStyle setAlignment:NSTextAlignmentRight];
+    NSColor *sigColor = [NSColor colorWithName:@"iTermTipSignatureColor" dynamicProvider:^NSColor * _Nonnull(NSAppearance *appearance) {
+        if (appearance.it_isDark) {
+            return [NSColor colorWithCalibratedWhite:0.7 alpha:1];
+        } else {
+            return [NSColor colorWithCalibratedWhite:0.3 alpha:1];
+        }
+    }];
     NSDictionary *signatureAttributes =
     @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light Italic" size:12] ?: [NSFont systemFontOfSize:12],
-       NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.3 alpha:1],
+       NSForegroundColorAttributeName: sigColor,
        NSParagraphStyleAttributeName: paragraphStyle};
 
     [attributedString iterm_appendString:body

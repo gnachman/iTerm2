@@ -386,8 +386,75 @@ iTermP3Color iTermSRGBColorToP3Color(iTermSRGBColor srgb) {
 }
 
 - (NSString *)shortDescription {
-    return [NSString stringWithFormat:@"(%.2f, %.2f, %.2f)",
-            self.redComponent, self.greenComponent, self.blueComponent];
+    switch (self.type) {
+        case NSColorTypeComponentBased: {
+            NSString *colorSpaceDescription = @"unknown";
+            NSColorSpace *colorSpace = self.colorSpace;
+
+            switch (colorSpace.colorSpaceModel) {
+                case NSColorSpaceModelUnknown:
+                    return @"unknown";
+
+                case NSColorSpaceModelGray: {
+                    colorSpaceDescription = @"grayscale";
+                    CGFloat alpha, white;
+                    [self getWhite:&white alpha:&alpha];
+                    return [NSString stringWithFormat:@"%@#%02X",
+                            colorSpaceDescription,
+                            (int)(white * 255)];
+                }
+
+                case NSColorSpaceModelRGB: {
+                    if (colorSpace == [NSColorSpace sRGBColorSpace]) {
+                        colorSpaceDescription = @"srgb";
+                    } else if (colorSpace == [NSColorSpace displayP3ColorSpace]) {
+                        colorSpaceDescription = @"p3";
+                    } else {
+                        colorSpaceDescription = colorSpace.description;
+                    }
+
+                    CGFloat red, green, blue, alpha;
+                    [self getRed:&red green:&green blue:&blue alpha:&alpha];
+                    return [NSString stringWithFormat:@"%@#%02X%02X%02X",
+                            colorSpaceDescription,
+                            (int)(red * 255), (int)(green * 255), (int)(blue * 255)];
+                }
+
+                case NSColorSpaceModelCMYK: {
+                    colorSpaceDescription = @"cmyk";
+                    CGFloat cyan, magenta, yellow, black, alpha;
+                    [self getCyan:&cyan magenta:&magenta yellow:&yellow black:&black alpha:&alpha];
+                    return [NSString stringWithFormat:@"%@#%02X%02X%02X%02X",
+                            colorSpaceDescription,
+                            (int)(cyan * 255), (int)(magenta * 255), (int)(yellow * 255), (int)(black * 255)];
+                }
+
+                case NSColorSpaceModelLAB: {
+                    return @"lab";  // No API for this
+                }
+
+                case NSColorSpaceModelDeviceN:
+                    return @"deviceN";
+
+                case NSColorSpaceModelIndexed:
+                    return @"indexed";
+
+                case NSColorSpaceModelPatterned:
+                    return @"patterned";
+
+                default:
+                    return @"unknown";
+            }
+        }
+
+        case NSColorTypeCatalog:
+            return self.description;
+
+        case NSColorTypePattern:
+            return @"pattern";
+    }
+
+    return @"unknown";
 }
 
 + (NSColor *)colorPreservingColorspaceFromString:(NSString *)s {
@@ -444,6 +511,46 @@ iTermP3Color iTermSRGBColorToP3Color(iTermSRGBColor srgb) {
                                     blue:blue / 255.0
                                    alpha:1];
     }
+}
+
++ (NSColor *)it_dynamicColorForLightMode:(NSColor *)light
+                                darkMode:(NSColor *)dark {
+    return [NSColor colorWithName:[NSString stringWithFormat:@"iTerm%@_%@DynamicColor", light.shortDescription, dark.shortDescription] dynamicProvider:^NSColor * _Nonnull(NSAppearance *appearance) {
+        if (appearance.it_isDark) {
+            return dark;
+        } else {
+            return light;
+        }
+    }];
+}
+
++ (NSColor *)it_automaticDynamicColorForLightModeColor:(NSColor *)lightModeColor {
+    NSColor *darkModeColor = [lightModeColor it_darkModeCounterpart];
+    return [self it_dynamicColorForLightMode:lightModeColor darkMode:darkModeColor];
+}
+
++ (NSColor *)it_automaticDynamicColorForLightModeWhite:(CGFloat)white
+                                                 alpha:(CGFloat)alpha {
+    return [self it_automaticDynamicColorForLightModeColor:[NSColor colorWithWhite:white alpha:alpha]];
+}
+
+- (NSColor *)it_darkModeCounterpart {
+    NSColor *rgbColor = [self colorUsingColorSpace:[NSColorSpace displayP3ColorSpace]];
+    if (!rgbColor) {
+        return self;
+    }
+
+    CGFloat hue;
+    CGFloat saturation;
+    CGFloat brightness;
+    CGFloat alpha;
+    [rgbColor getHue:&hue saturation:&saturation brightness:&brightness alpha:&alpha];
+
+    CGFloat invertedBrightness = 1.0 - brightness; // Invert brightness
+    return [NSColor colorWithHue:hue
+                      saturation:saturation
+                      brightness:invertedBrightness
+                           alpha:alpha];
 }
 
 + (void)getComponents:(CGFloat *)result

@@ -100,6 +100,16 @@
     self.layer.backgroundColor = [color CGColor];
 }
 
+- (void)viewDidChangeEffectiveAppearance {
+    [super viewDidChangeEffectiveAppearance];
+    self.layer.backgroundColor = [_color CGColor];
+}
+
+- (void)updateLayer {
+    [super updateLayer];
+    self.layer.backgroundColor = [_color CGColor];
+}
+
 - (BOOL)isFlipped {
     return _isFlipped;
 }

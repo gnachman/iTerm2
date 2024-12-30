@@ -113,6 +113,13 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
                         green:(int)green
                          blue:(int)blue;
 
++ (NSColor *)it_dynamicColorForLightMode:(NSColor *)light
+                                darkMode:(NSColor *)dark;
++ (NSColor *)it_automaticDynamicColorForLightModeColor:(NSColor *)lightModeColor;
++ (NSColor *)it_automaticDynamicColorForLightModeWhite:(CGFloat)white
+                                                 alpha:(CGFloat)alpha;
+
+
 // Modify r,g,b to have brightness t, placing the values in result which should hold 4 CGFloats.
 + (void)getComponents:(CGFloat *)result
       forColorWithRed:(CGFloat)r

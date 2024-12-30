@@ -8,7 +8,9 @@
 
 #import "iTermTipCardActionButton.h"
 
+#import "NSAppearance+iTerm.h"
 #import "NSBezierPath+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSView+iTerm.h"
 #import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
@@ -63,7 +65,13 @@ static const CGFloat kStandardButtonHeight = 34;
 }
 
 + (NSColor *)blueColor {
-    return [NSColor colorWithCalibratedRed:0.25 green:0.25 blue:0.75 alpha:1];
+    return [NSColor it_dynamicColorForLightMode:[NSColor colorWithCalibratedRed:0.25 green:0.25 blue:0.75 alpha:1]
+                                       darkMode:[NSColor colorWithCalibratedRed:0.5 green:0.5 blue:1 alpha:1]];
+}
+
++ (NSColor *)highlightColor {
+    return [NSColor it_dynamicColorForLightMode:[NSColor colorWithCalibratedWhite:0.90 alpha:1]
+                                       darkMode:[NSColor colorWithCalibratedWhite:0.15 alpha:1]];
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -72,16 +80,17 @@ static const CGFloat kStandardButtonHeight = 34;
         _desiredHeight = kStandardButtonHeight;
         self.wantsLayer = YES;
         [self makeBackingLayer];
-        self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
+        self.layer.masksToBounds = YES;
+        self.layer.backgroundColor = [[NSColor controlBackgroundColor] CGColor];
         iTermTipCardActionButtonTopDividerView *divider =
             [[[iTermTipCardActionButtonTopDividerView alloc] initWithFrame:NSMakeRect(0, 0, frameRect.size.width, 1)] autorelease];
         divider.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
-        divider.color = [NSColor colorWithCalibratedWhite:0.85 alpha:1];
+        divider.color = [NSColor it_automaticDynamicColorForLightModeWhite:0.85 alpha:1];
         [self addSubview:divider];
 
         _leftDivider = [[[iTermTipCardActionButtonLeftDividerView alloc] initWithFrame:NSMakeRect(0, 0, 1, frameRect.size.height)] autorelease];
         _leftDivider.autoresizingMask = NSViewHeightSizable | NSViewMaxXMargin;
-        _leftDivider.color = [NSColor colorWithCalibratedWhite:0.85 alpha:1];
+        _leftDivider.color = [NSColor it_automaticDynamicColorForLightModeWhite:0.85 alpha:1];
         _leftDivider.hidden = YES;
         [self addSubview:_leftDivider];
 
@@ -89,7 +98,7 @@ static const CGFloat kStandardButtonHeight = 34;
         NSBezierPath *path = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(0, 0, 1, 1)];
         _highlightLayer.path = path.iterm_CGPath;
         _highlightLayer.anchorPoint = CGPointMake(0.5, 0.5);
-        _highlightLayer.fillColor = [[NSColor colorWithCalibratedWhite:0.90 alpha:1] CGColor];
+        _highlightLayer.fillColor = [[iTermTipCardActionButton highlightColor] CGColor];
         [self.layer addSublayer:_highlightLayer];
 
         _textField = [[[NSTextField alloc] initWithFrame:NSMakeRect(42, 5, 200, 17)] autorelease];
@@ -112,14 +121,29 @@ static const CGFloat kStandardButtonHeight = 34;
     [super dealloc];
 }
 
+- (void)viewDidChangeEffectiveAppearance {
+    [super viewDidChangeEffectiveAppearance];
+    self.layer.backgroundColor = [[NSColor controlBackgroundColor] CGColor];
+}
+
+- (void)updateLayer {
+    [super updateLayer];
+    if (_important) {
+        self.layer.backgroundColor = [[NSColor redColor] CGColor];
+    } else {
+        self.layer.backgroundColor = [[NSColor controlBackgroundColor] CGColor];
+    }
+    _highlightLayer.fillColor = [[iTermTipCardActionButton highlightColor] CGColor];
+}
+
 - (void)setImportant:(BOOL)important {
     _important = important;
     if (important) {
-        _textField.textColor = [NSColor whiteColor];
+        _textField.textColor = [NSColor controlBackgroundColor];
         self.layer.backgroundColor = [[NSColor redColor] CGColor];
     } else {
         _textField.textColor = [[self class] blueColor];
-        self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
+        self.layer.backgroundColor = [[NSColor controlBackgroundColor] CGColor];
     }
 }
 
