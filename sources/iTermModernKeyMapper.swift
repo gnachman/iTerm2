@@ -1022,16 +1022,16 @@ fileprivate struct KeyReport {
                           UnicodeScalar("\r").value,
                           UnicodeScalar("\t").value,
                           8, 0x7f]  // backspace
-        if (type == .release || type == .repeat) &&
+        if type == .release &&
             exceptions.contains(event.unicodeKeyCode) &&
             !enhancementFlags.contains(.reportAllKeysAsEscapeCodes) {
             // The Enter, Tab and Backspace keys will not have release events unless Report all
             // keys as escape codes is also set, so that the user can still type reset at a
             // shell prompt when a program that sets this mode ends without resetting it.
             if !enhancementFlags.contains(.reportAllEventTypes) || modifiers.isEmpty {
-                // The spec neglects to mention that in report all event types
+                // The spec neglects to mention that in Report All Event Types
                 // Enter, Tab, Backspace, and Tab report release (Kitty does).
-                DLog("No CSI u for special key release/repeat when not reporting all keys as escape codes")
+                DLog("No CSI u for special key release when not reporting all keys as escape codes")
                 return .nonReportable
             }
         }
