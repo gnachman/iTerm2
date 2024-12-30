@@ -1053,6 +1053,12 @@ static BOOL hasBecomeActive = NO;
     DLog(@"application:didDecodeRestorableState: finished");
 }
 
+- (void)applicationDidResignActive:(NSNotification *)aNotification {
+    DLog(@"******** Resign Active\n%@", [NSThread callStackSymbols]);
+    [_restorableStateController saveRestorableState];
+    [iTermUserDefaults setIgnoreSystemWindowRestoration:[iTermAdvancedSettingsModel useRestorableStateController]];
+}
+
 - (void)applicationWillResignActive:(NSNotification *)notification {
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         [_savedWindowOrder release];
