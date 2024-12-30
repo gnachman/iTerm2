@@ -121,6 +121,23 @@ static const CGFloat kStandardButtonHeight = 34;
     [super dealloc];
 }
 
+- (BOOL)isAccessibilityElement {
+    return YES;
+}
+
+- (NSAccessibilityRole)accessibilityRole {
+    return NSAccessibilityButtonRole;
+}
+
+- (BOOL)accessibilityPerformPress {
+    [self.target performSelector:self.action withObject:self];
+    return YES;
+}
+
+- (id)accessibilityValue {
+    return _titleValue;
+}
+
 - (void)viewDidChangeEffectiveAppearance {
     [super viewDidChangeEffectiveAppearance];
     self.layer.backgroundColor = [[NSColor controlBackgroundColor] CGColor];

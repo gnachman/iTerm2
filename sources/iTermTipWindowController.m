@@ -107,8 +107,8 @@ static const CGFloat kWindowTopMargin = 8;
 // Expanded means the "more options" is open.
 - (void)loadCardExpanded:(BOOL)expanded {
     iTermTipCardViewController *card =
-        [[[iTermTipCardViewController alloc] initWithNibName:@"iTermTipCardViewController"
-                                                      bundle:[NSBundle bundleForClass:self.class]] autorelease];
+    [[[iTermTipCardViewController alloc] initWithNibName:@"iTermTipCardViewController"
+                                                  bundle:[NSBundle bundleForClass:self.class]] autorelease];
     __weak __typeof(self) weakSelf = self;
     card.willDrag = ^{
         [weakSelf willDrag];
@@ -124,6 +124,14 @@ static const CGFloat kWindowTopMargin = 8;
     [self addButtonsToCard:card expanded:expanded];
     [_intermediateView addSubview:_cardViewController.view];
     [self layoutCard:card animated:NO];
+
+    NSView *view = card.view;
+    while (view.superview) {
+        view.superview.accessibilityChildren = @[view];
+        view.accessibilityElement = NO;
+        view = view.superview;
+    }
+
 }
 
 - (void)willDrag {
@@ -319,6 +327,8 @@ static const CGFloat kWindowTopMargin = 8;
     [self.window orderFront:nil];
 
     self.window.level = NSModalPanelWindowLevel;
+    self.window.accessibilityElement = YES;
+    self.window.accessibilityLabel = @"iTerm2 Tip of the Day";
     self.window.opaque = NO;
     self.window.alphaValue = 0;
 

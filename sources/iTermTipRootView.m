@@ -10,6 +10,11 @@
 
 @implementation iTermTipRootView
 
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    self.accessibilityElement = YES;
+}
+
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];
 

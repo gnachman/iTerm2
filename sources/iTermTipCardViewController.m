@@ -123,6 +123,14 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 - (void)awakeFromNib {
     _titleBox.delegate = self;
     _body.textColor = [iTermTipCardViewController tipTextColor];
+    _title.accessibilityElement = YES;
+    _title.accessibilityLabel = @"Tip title";
+
+    _body.accessibilityElement = YES;
+    _body.accessibilityRole = NSAccessibilityStaticTextRole;
+    _body.accessibilityLabel = @"Tip content";
+
+    self.view.accessibilityChildren = @[ _body ];
 }
 
 - (void)viewDidLoad {
@@ -150,6 +158,7 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 
 - (void)setTitleString:(NSString *)titleString {
     _title.stringValue = titleString;
+    NSAccessibilityPostNotification(_title, NSAccessibilityValueChangedNotification);
 }
 
 - (void)setColor:(NSColor *)color {
@@ -189,6 +198,8 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
                           withAttributes:signatureAttributes];
 
     _body.attributedStringValue = attributedString;
+    _body.accessibilityValue = attributedString;
+    NSAccessibilityPostNotification(_body, NSAccessibilityValueChangedNotification);
 }
 
 - (iTermTipCardActionButton *)addActionWithTitle:(NSString *)title
@@ -219,6 +230,7 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     // Place later buttons under earlier buttons and all under body so they can animate in and out.
     [_container addSubview:button positioned:NSWindowBelow relativeTo:viewToPlaceButtonBelow];
 
+    self.view.accessibilityChildren = [@[ _body ] arrayByAddingObjectsFromArray:_actionButtons];
     return button;
 }
 
