@@ -130,4 +130,8 @@ static iTermBijection<NSNumber *, NSFont *> *iTermMetalFontBijection(void) {
     }
 }
 
+- (CGSize)it_pitch {
+    return [@"M" sizeWithAttributes:@{ NSFontAttributeName: self }];
+}
+
 @end

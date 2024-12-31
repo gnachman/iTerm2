@@ -8,9 +8,11 @@
 #import "iTermTimestampDrawHelper.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "NSColor+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "RegexKitLite.h"
 
 const CGFloat iTermTimestampGradientWidth = 20;
@@ -32,6 +34,8 @@ const CGFloat iTermTimestampGradientWidth = 20;
     BOOL _isRetina;
     CGFloat _obscured;
     NSMutableArray<iTermTimestampRow *> *_rows;
+    BOOL _fontIsFixedPitch;
+    NSSize _fontPitch;
 }
 
 - (instancetype)initWithBackgroundColor:(NSColor *)backgroundColor
@@ -51,13 +55,27 @@ const CGFloat iTermTimestampGradientWidth = 20;
         _rowHeight = rowHeight;
         _isRetina = isRetina;
         _rows = [NSMutableArray array];
-        _font = font;
         _obscured = obscured;
+        self.font = font ?: [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]];
     }
     return self;
 }
 
+#pragma mark - Private
+
+- (void)cacheFontPitch {
+    _fontPitch = [self.font it_pitch];
+}
+
 #pragma mark - APIs
+
+- (void)setFont:(NSFont *)font {
+    _font = font;
+    _fontIsFixedPitch = font.isFixedPitch;
+    if (_fontIsFixedPitch) {
+        [self cacheFontPitch];
+    }
+}
 
 - (void)setDate:(NSDate *)timestamp forLine:(int)line {
     NSString *string = [self stringForTimestamp:timestamp
@@ -186,8 +204,14 @@ const CGFloat iTermTimestampGradientWidth = 20;
 }
 
 - (NSRect)frameForString:(NSString *)s line:(int)line maxX:(CGFloat)maxX virtualOffset:(CGFloat)virtualOffset {
-    NSString *widest = [s stringByReplacingOccurrencesOfRegex:@"[\\d\\p{Alphabetic}]" withString:@"M"];
-    NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: self.font ?: [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]] }];
+    NSSize size;
+    if (_fontIsFixedPitch) {
+        size = NSMakeSize(_fontPitch.width * s.length, _fontPitch.height);
+    } else {
+        NSDictionary *attributes = @{ NSFontAttributeName: _font };
+        NSString *widest = [s stringByReplacingOccurrencesOfRegex:@"[\\d\\p{Alphabetic}]" withString:@"M"];
+        size = [widest it_cachingSizeWithAttributes:attributes];
+    }
 
     return [self frameForStringGivenWidth:size.width
                                    height:[self fontHeight]

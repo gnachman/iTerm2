@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSFont *)it_toolbeltFont;
 - (BOOL)it_hasStylisticAlternatives;
 - (BOOL)it_hasContextualAlternates;
+- (CGSize)it_pitch;
 
 + (instancetype _Nullable)it_fontWithMetalID:(int)metalID;
 
