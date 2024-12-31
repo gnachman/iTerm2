@@ -8,6 +8,7 @@
 
 #import "ProfileTagsView.h"
 #import "DebugLogging.h"
+#import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileModel.h"
 
@@ -47,7 +48,9 @@
         _tableView.allowsEmptySelection = YES;
         _tableView.allowsMultipleSelection = YES;
         _tableView.allowsTypeSelect = YES;
-
+        if (@available(macOS 10.16, *)) {
+            _tableView.style = NSTableViewStyleInset;
+        }
         _tagsColumn = [[NSTableColumn alloc] initWithIdentifier:@"tags"];
         [_tagsColumn setEditable:NO];
         [_tableView addTableColumn:_tagsColumn];
@@ -74,6 +77,7 @@
                                                  selector:@selector(reloadAddressBook:)
                                                      name:kReloadAddressBookNotification
                                                    object:nil];
+        [self setFont:[NSFont systemFontOfSize:[NSFont systemFontSize]]];
     }
     return self;
 }
@@ -104,22 +108,13 @@
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
     static NSString *const identifier = @"ProfileTagIdentifier";
-    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
-    if (result == nil) {
-        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
-        if (_font) {
-            result.font = _font;
-        } else {
-            result.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-        }
-    }
-
     NSArray *tuples = [self sortedIndentedTags];
     NSString *value = tuples[row][0];
-    result.stringValue = value;
-    result.toolTip = value;
-
-    return result;
+    NSTableCellView *cell = [tableView newTableCellViewWithTextFieldUsingIdentifier:identifier
+                                                                               font:_font ?: [NSFont systemFontOfSize:[NSFont systemFontSize]]
+                                                                             string:value];
+    cell.toolTip = value;
+    return cell;
 }
 
 #pragma mark - Notifications
@@ -196,8 +191,7 @@
 
 - (void)setFont:(NSFont *)theFont {
     _font = theFont;
-    NSLayoutManager* layoutManager = [[[NSLayoutManager alloc] init] autorelease];
-    [_tableView setRowHeight:[layoutManager defaultLineHeightForFont:theFont]];
+    [_tableView setRowHeight:[NSTableView heightForTextCellUsingFont:theFont]];
 }
 
 @end
