@@ -648,7 +648,7 @@
     if (![[NSNumber castFrom:profile[KEY_DYNAMIC_PROFILE_REWRITABLE]] boolValue]) {
         return;
     }
-    Profile *stripped = [self strippedProfile:profile];
+    Profile *stripped = [self profileForRewritingBasedOn:profile];
     if (!stripped) {
         return;
     }
@@ -667,8 +667,9 @@
     }];
 }
 
-// Here, hydrated means it has been merged with parent profiles.
-- (Profile *)strippedProfile:(Profile *)updatedProfile {
+// Transform the profile into what we want to write to disk. Mostly this involves removing keys that
+// don't need to be there.
+- (Profile *)profileForRewritingBasedOn:(Profile *)updatedProfile {
     Profile *profileOnDisk = [self onDiskEntryForProfile:updatedProfile];
     Profile *prototype = [self prototypeForDynamicProfile:updatedProfile];
     NSMutableDictionary *stripped = [profileOnDisk mutableCopy];

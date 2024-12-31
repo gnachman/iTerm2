@@ -619,9 +619,11 @@ static NSMutableArray<NSString *> *_combinedLog;
         return NO;
     }
 }
+- (void)setBookmark:(Profile*)bookmark atIndex:(int)i {
+    [self setBookmark:bookmark atIndex:i sideEffects:YES];
+}
 
-- (void)setBookmark:(Profile*)bookmark atIndex:(int)i
-{
+- (void)setBookmark:(Profile*)bookmark atIndex:(int)i sideEffects:(BOOL)sideEffects {
     Profile* orig = [bookmarks_ objectAtIndex:i];
     BOOL isDefault = NO;
     if ([[orig objectForKey:KEY_GUID] isEqualToString:defaultBookmarkGuid_]) {
@@ -653,14 +655,20 @@ static NSMutableArray<NSString *> *_combinedLog;
     if (needJournal) {
         [self postChangeNotification];
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfileDidChange object:bookmark[KEY_GUID]];
+    if (sideEffects) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfileDidChange object:bookmark[KEY_GUID]];
+    }
 }
 
-- (void)setBookmark:(Profile*)bookmark withGuid:(NSString*)guid
+- (void)setBookmark:(Profile*)bookmark withGuid:(NSString*)guid {
+    [self setBookmark:bookmark withGuid:guid sideEffects:YES];
+}
+
+- (void)setBookmark:(Profile*)bookmark withGuid:(NSString*)guid sideEffects:(BOOL)sideEffects
 {
     int i = [self indexOfProfileWithGuid:guid];
     if (i >= 0) {
-        [self setBookmark:bookmark atIndex:i];
+        [self setBookmark:bookmark atIndex:i sideEffects:sideEffects];
     }
 }
 
@@ -783,6 +791,13 @@ static NSMutableArray<NSString *> *_combinedLog;
 }
 
 - (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark {
+    return [self setObject:object
+                    forKey:key
+                inBookmark:bookmark
+               sideEffects:YES];
+}
+
+- (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark sideEffects:(BOOL)sideEffects {
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
     if (object == nil) {
         [newDict removeObjectForKey:key];
@@ -792,7 +807,8 @@ static NSMutableArray<NSString *> *_combinedLog;
     NSString* guid = [bookmark objectForKey:KEY_GUID];
     Profile* newBookmark = [NSDictionary dictionaryWithDictionary:newDict];
     [self setBookmark:newBookmark
-             withGuid:guid];
+             withGuid:guid
+          sideEffects:sideEffects];
     return newBookmark;
 }
 

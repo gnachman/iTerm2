@@ -6653,9 +6653,12 @@ DLog(args); \
         ![[ProfileModel sharedInstance] bookmarkWithGuid:existingOriginalGuid] ||
         ![existingOriginalGuid isEqualToString:_originalProfile[KEY_GUID]]) {
         // The bookmark doesn't already have a valid original GUID.
+        // Change without side effects because the GUID change confuses the heck out of dynamic
+        // profiles rewriting. Issue 12081.
         bookmark = [[ProfileModel sessionsInstance] setObject:guid
                                                        forKey:KEY_ORIGINAL_GUID
-                                                   inBookmark:bookmark];
+                                                   inBookmark:bookmark
+                                                  sideEffects:NO];
     }
 
     // Allocate a new guid for this bookmark.
