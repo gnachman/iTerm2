@@ -1451,6 +1451,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)processTypeDidChange:(NSNotification *)notification {
+    DLog(@"Process type did change obj=%@ userinfo=%@\n%@", notification.object, notification.userInfo, [NSThread callStackSymbols]);
     [self updateProcessType];
 }
 
