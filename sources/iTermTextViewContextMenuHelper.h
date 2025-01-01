@@ -162,6 +162,7 @@ runCommandInBackground:(NSString *)command;
 - (id<VT100ScreenMarkReading>)contextMenuCommandWithOutputAtLine:(int)line;
 - (BOOL)contextMenuIsMouseEventReportable:(iTermTextViewContextMenuHelper *)contextMenu
                                  forEvent:(NSEvent *)event;
+- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu markShouldBeFoldable:(id<VT100ScreenMarkReading>)mark;
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>

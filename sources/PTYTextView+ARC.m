@@ -105,6 +105,9 @@ iTermCommandInfoViewControllerDelegate>
         return [iTermAdvancedSettingsModel generativeAIAllowed];
     }
     if (item.action == @selector(foldSelection:)) {
+        if ([self.dataSource terminalSoftAlternateScreenMode] && [self foldWouldTouchMutableArea]) {
+            return NO;
+        }
         if (!self.selection.hasSelection && !self.selection.live) {
             item.title = @"Fold/Unfold";
             return NO;
@@ -159,6 +162,18 @@ iTermCommandInfoViewControllerDelegate>
         }
     }
     return NO;
+}
+
+- (BOOL)foldWouldTouchMutableArea {
+    __block BOOL result = NO;
+    const long long firstMutable = [self.dataSource numberOfScrollbackLines] + [self.dataSource totalScrollbackOverflow];
+    [self.selection.allSubSelections enumerateObjectsUsingBlock:^(iTermSubSelection *subSelection, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (subSelection.absRange.coordRange.end.y >= firstMutable) {
+            result = YES;
+            *stop = YES;
+        }
+    }];
+    return result;
 }
 
 - (IBAction)foldSelection:(id)sender {
@@ -1861,6 +1876,14 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 
 - (BOOL)contextMenuCurrentTabHasMultipleSessions:(iTermTextViewContextMenuHelper *)contextMenu {
     return [self.delegate textViewEnclosingTabHasMultipleSessions];
+}
+
+- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu markShouldBeFoldable:(id<VT100ScreenMarkReading>)mark {
+    if (![self.dataSource terminalSoftAlternateScreenMode]) {
+        return YES;
+    }
+    const long long firstMutable = [self.dataSource numberOfScrollbackLines] + [self.dataSource totalScrollbackOverflow];
+    return [self.dataSource rangeOfCommandAndOutputForMark:mark includeSucessorDivider:NO].end.y < firstMutable;
 }
 
 - (void)contextMenuFoldMark:(id<VT100ScreenMarkReading>)mark {

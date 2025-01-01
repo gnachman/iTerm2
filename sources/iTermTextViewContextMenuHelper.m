@@ -189,7 +189,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         markItem.representedObject = foldMark;
         [contextMenu insertItem:markItem atIndex:0];
         [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
-    } else if (mark && mark.command.length) {
+    } else if (mark && mark.command.length && [self.delegate contextMenu:self markShouldBeFoldable:mark]) {
         NSMenuItem *markItem = [[NSMenuItem alloc] initWithTitle:@"Fold"
                                                           action:@selector(foldCommandMark:)
                                                    keyEquivalent:@""];
