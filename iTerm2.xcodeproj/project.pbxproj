@@ -1339,6 +1339,7 @@
 		A62A1F791E711DD000363EE9 /* iTermHelpMessageViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */; };
 		A62B04A529B428B60077B955 /* Highlightr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; };
 		A62B04A629B428D30077B955 /* Highlightr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A62B36572D24C1A900FDF15E /* SetNamedMarkTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62B36562D24C1A600FDF15E /* SetNamedMarkTrigger.swift */; };
 		A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3A871BCAE03300B5629D /* iTermDirectoryTreeNode.h */; };
 		A62C3A8A1BCAE03300B5629D /* iTermDirectoryTreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3A881BCAE03300B5629D /* iTermDirectoryTreeNode.m */; };
 		A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3A8B1BCAE08300B5629D /* iTermDirectoryTree.h */; };
@@ -1742,6 +1743,7 @@
 		A65B1BD32D1E31CB00F5A740 /* iTermMetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65B1B612D16173A00F5A740 /* iTermMetalView.swift */; };
 		A65B1BD52D1E3CC800F5A740 /* iTermMTKView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65B1BD42D1E3CC500F5A740 /* iTermMTKView.swift */; };
 		A65B1C482D2478B800F5A740 /* NSString+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65B1C472D2478B500F5A740 /* NSString+iTerm.swift */; };
+		A65B1C4A2D2481CE00F5A740 /* FoldTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65B1C492D2481CA00F5A740 /* FoldTrigger.swift */; };
 		A65B3792295CB769008EEBF3 /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E533B403B2959201A8A066 /* PTYTabView.m */; };
 		A65B49A8244199CF002B1C68 /* iTermSocketUnixDomainAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B49A6244199CF002B1C68 /* iTermSocketUnixDomainAddress.h */; };
 		A65B49A9244199CF002B1C68 /* iTermSocketUnixDomainAddress.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B49A7244199CF002B1C68 /* iTermSocketUnixDomainAddress.m */; };
@@ -5768,6 +5770,10 @@
 		A62A1F731E711BC000363EE9 /* iTermHelpMessageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHelpMessageViewController.h; sourceTree = "<group>"; };
 		A62A1F741E711BC000363EE9 /* iTermHelpMessageViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHelpMessageViewController.m; sourceTree = "<group>"; };
 		A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermHelpMessageViewController.xib; sourceTree = "<group>"; };
+		A62B36492D24884700FDF15E /* binding.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = binding.py; sourceTree = "<group>"; };
+		A62B364A2D24884700FDF15E /* filepanel.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = filepanel.py; sourceTree = "<group>"; };
+		A62B364B2D24884700FDF15E /* triggers.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = triggers.py; sourceTree = "<group>"; };
+		A62B36562D24C1A600FDF15E /* SetNamedMarkTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetNamedMarkTrigger.swift; sourceTree = "<group>"; };
 		A62C3A871BCAE03300B5629D /* iTermDirectoryTreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDirectoryTreeNode.h; sourceTree = "<group>"; };
 		A62C3A881BCAE03300B5629D /* iTermDirectoryTreeNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDirectoryTreeNode.m; sourceTree = "<group>"; };
 		A62C3A8B1BCAE08300B5629D /* iTermDirectoryTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDirectoryTree.h; sourceTree = "<group>"; };
@@ -6151,6 +6157,7 @@
 		A65B1BD42D1E3CC500F5A740 /* iTermMTKView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermMTKView.swift; sourceTree = "<group>"; };
 		A65B1C432D1F2EDE00F5A740 /* iTermMetalView_full.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermMetalView_full.swift; sourceTree = "<group>"; };
 		A65B1C472D2478B500F5A740 /* NSString+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSString+iTerm.swift"; sourceTree = "<group>"; };
+		A65B1C492D2481CA00F5A740 /* FoldTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldTrigger.swift; sourceTree = "<group>"; };
 		A65B49A6244199CF002B1C68 /* iTermSocketUnixDomainAddress.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSocketUnixDomainAddress.h; sourceTree = "<group>"; };
 		A65B49A7244199CF002B1C68 /* iTermSocketUnixDomainAddress.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSocketUnixDomainAddress.m; sourceTree = "<group>"; };
 		A65B72501B1A5D7500F947A7 /* WarningSign.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WarningSign.png; path = images/WarningSign.png; sourceTree = "<group>"; };
@@ -8940,6 +8947,8 @@
 		1D9DDE2D142E730700275650 /* Triggers */ = {
 			isa = PBXGroup;
 			children = (
+				A62B36562D24C1A600FDF15E /* SetNamedMarkTrigger.swift */,
+				A65B1C492D2481CA00F5A740 /* FoldTrigger.swift */,
 				1D9DCC15142D7FC10016228A /* AlertTrigger.m */,
 				1D9DCC0D142D7F5F0016228A /* BellTrigger.m */,
 				1D9DCC09142D7F300016228A /* BounceTrigger.m */,
@@ -9331,19 +9340,21 @@
 		530AB86B20AE85DF00D2AA08 /* iterm2 */ = {
 			isa = PBXGroup;
 			children = (
-				A6F2D54C2563455D0036B9C5 /* auth.py */,
 				530AB87220AE85DF00D2AA08 /* __init__.py */,
 				530AB86D20AE85DF00D2AA08 /* _version.py */,
 				A63F2A4523FB8193008DDEA4 /* alert.py */,
 				530AB87320AE85DF00D2AA08 /* api_pb2.py */,
 				530AB88620AE85DF00D2AA08 /* app.py */,
 				A63F2A3C23FB8191008DDEA4 /* arrangement.py */,
+				A6F2D54C2563455D0036B9C5 /* auth.py */,
+				A62B36492D24884700FDF15E /* binding.py */,
 				A63F2A4A23FB8194008DDEA4 /* broadcast.py */,
 				A63F2A4023FB8192008DDEA4 /* capabilities.py */,
 				A63F2A3E23FB8192008DDEA4 /* color.py */,
 				A63F2A4123FB8192008DDEA4 /* colorpresets.py */,
 				530AB88420AE85DF00D2AA08 /* connection.py */,
 				A63F2A4823FB8194008DDEA4 /* customcontrol.py */,
+				A62B364A2D24884700FDF15E /* filepanel.py */,
 				A63F2A4423FB8193008DDEA4 /* focus.py */,
 				A63F2A3B23FB8191008DDEA4 /* keyboard.py */,
 				A63F2A4923FB8194008DDEA4 /* lifecycle.py */,
@@ -9362,6 +9373,7 @@
 				A68A4C892128ED1200424F8A /* tmux.py */,
 				530AB88920AE85DF00D2AA08 /* tool.py */,
 				530AB86F20AE85DF00D2AA08 /* transaction.py */,
+				A62B364B2D24884700FDF15E /* triggers.py */,
 				530AB86E20AE85DF00D2AA08 /* util.py */,
 				A63F2A4723FB8194008DDEA4 /* variables.py */,
 				530AB86C20AE85DF00D2AA08 /* window.py */,
@@ -15842,6 +15854,7 @@
 				A6180D7921A883860073F219 /* iTermBroadcastPasswordHelper.m in Sources */,
 				A67109AC240C677D0018631A /* NSEvent+iTerm.m in Sources */,
 				535EA51420D8C1EB00FC81E0 /* iTermProfilesWindowController.m in Sources */,
+				A65B1C4A2D2481CE00F5A740 /* FoldTrigger.swift in Sources */,
 				A6042CDA25D0CBCD0001C8FE /* NSScroller+iTerm.m in Sources */,
 				A6F0E25A2797536A00022D20 /* JournalingIntervalTree.swift in Sources */,
 				A6A4866F20B67A1600493302 /* iTermSemanticHistoryPrefsController.m in Sources */,
@@ -16478,6 +16491,7 @@
 				A67BCFE8270E702C00636983 /* VT100SavedColors.swift in Sources */,
 				A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */,
 				A6A3D18D2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift in Sources */,
+				A62B36572D24C1A900FDF15E /* SetNamedMarkTrigger.swift in Sources */,
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,
 				A61A859524EFA01800B03880 /* iTermBackgroundCommandRunner.m in Sources */,
 				A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */,

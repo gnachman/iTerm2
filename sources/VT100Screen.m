@@ -245,6 +245,18 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state foldMarksInRange:range];
 }
 
+- (void)foldAbsLineRange:(NSRange)range {
+    const long long overflow = _state.cumulativeScrollbackOverflow;
+    if (NSMaxRange(range) < overflow) {
+        return;
+    }
+    const int start = range.location - overflow;
+    ScreenCharArray *sca = [self screenCharArrayForLine:start];
+    [self replaceRange:VT100GridAbsCoordRangeMake(0, range.location, self.width, NSMaxRange(range))
+              withLine:sca
+          promptLength:0];
+}
+
 - (void)replaceRange:(VT100GridAbsCoordRange)range
             withLine:(ScreenCharArray *)line 
         promptLength:(NSInteger)promptLength {

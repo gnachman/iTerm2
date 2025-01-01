@@ -2686,7 +2686,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
-- (id<iTermMark>)addMarkOnLine:(int)line ofClass:(Class)markClass {
+- (__kindof id<iTermMark>)addMarkOnLine:(int)line ofClass:(Class)markClass {
     return [self addMarkOnLine:line column:-1 ofClass:markClass];
 }
 
@@ -3883,6 +3883,23 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                   removedIntervalTreeObjects:(out NSArray<iTermSavedIntervalTreeObject *> **)removedIntervalTreeObjects
                                 removedLines:(out NSArray<ScreenCharArray *> **)removedLines {
     DLog(@"reallyReplaceRange:%@ withLines:%@", VT100GridAbsCoordRangeDescription(absRange), replacementLines);
+
+    const NSInteger numLinesBeforeFolding = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.height;
+    DLog(@"Buffer size is %@", @(numLinesBeforeFolding));
+    if (numLinesBeforeFolding <= 0 || numLinesBeforeFolding <= absRange.start.y) {
+        DLog(@"Range not in buffer");
+        return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+    }
+    if (absRange.end.y >= numLinesBeforeFolding) {
+        DLog(@"Retry with adjusted range");
+        VT100GridAbsCoordRange fixed = absRange;
+        fixed.end.y = numLinesBeforeFolding - 1;
+        return [self reallyReplaceRange:fixed
+                              withLines:replacementLines
+             removedIntervalTreeObjects:removedIntervalTreeObjects
+                           removedLines:removedLines];
+    }
+
     DLog(@"Before replacing range:");
     DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
 
@@ -3894,7 +3911,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     // Saved removed lines. We'll need this later to puplate removedIntervalTreeObjects.
     NSMutableArray<ScreenCharArray *> *removedSCAs = [NSMutableArray array];
-    for (int i = range.start.y; i <= range.end.y; i++) {
+    for (int i = range.start.y; i <= range.end.y && i < numLinesBeforeFolding; i++) {
         [removedSCAs addObject:[[self screenCharArrayForLine:i] clone]];
     }
     if (removedLines) {
@@ -5714,6 +5731,40 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (BOOL)triggerSessionIsInAlternateScreen {
     return self.terminal.softAlternateScreenMode;
+}
+
+- (void)triggerSession:(Trigger *)trigger
+  addNamedMarkWithName:(NSString *)name
+        atAbsoluteLine:(long long)absLine {
+    id<iTermMark> mark = [self addMarkStartingAtAbsoluteLine:absLine
+                                                     oneLine:NO
+                                                     ofClass:[VT100ScreenMark class]
+                                                    modifier:^(id<iTermMark> mark) {
+        VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
+        screenMark.name = name;
+    }];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+     foldFromNamedMark:(NSString *)markName
+        toAbsoluteLine:(long long)absLine {
+    VT100ScreenMark *mark = (VT100ScreenMark *)[[self namedMarks] firstObjectPassingTest:^BOOL(NSObject *obj) {
+        VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+        return [mark.name isEqualToString:markName];
+    }];
+    if (!mark) {
+        DLog(@"Named mark %@ not found", markName);
+        return;
+    }
+    if (!mark.entry) {
+        DLog(@"Named mark %@ has no entry", markName);
+        return;
+    }
+    const long long startAbsLine = [self absCoordRangeForInterval:mark.entry.interval].start.y;
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenFoldRange:NSMakeRange(startAbsLine, MAX(1, absLine - startAbsLine))];
+        [unpauser unpause];
+    }];
 }
 
 #pragma mark - VT100GridDelegate

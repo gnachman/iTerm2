@@ -14070,6 +14070,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_textview updateCursor:[NSApp currentEvent]];
 }
 
+- (void)screenFoldRange:(NSRange)range {
+    [_screen foldAbsLineRange:range];
+}
+
 #pragma mark - FinalTerm
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range {

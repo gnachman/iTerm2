@@ -93,9 +93,13 @@ extern NSString * const kTriggerDisabledKey;
              rateLimit:(iTermRateLimitedUpdate *)rateLimit
                disable:(void (^)(void))disable;
 - (id<PTYAnnotationReading> _Nullable)triggerSession:(Trigger *)trigger
-                      makeAnnotationInRange:(NSRange)rangeInScreenChars
-                                       line:(long long)lineNumber;
+                               makeAnnotationInRange:(NSRange)rangeInScreenChars
+                                                line:(long long)lineNumber;
 - (BOOL)triggerSessionIsInAlternateScreen;
+- (void)triggerSession:(Trigger *)trigger
+  addNamedMarkWithName:(NSString *)identifier
+        atAbsoluteLine:(long long)absLine;
+- (void)triggerSession:(Trigger *)trigger foldFromNamedMark:(NSString *)identifier toAbsoluteLine:(long long)absLine;
 @end
 
 @interface Trigger : NSObject<iTermObject>

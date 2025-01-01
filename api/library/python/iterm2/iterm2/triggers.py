@@ -61,6 +61,8 @@ def decode_trigger(encoded: dict) -> 'Trigger':
         ShellPromptTrigger._name(): ShellPromptTrigger,
         StopTrigger._name(): StopTrigger,
         UserNotificationTrigger._name(): UserNotificationTrigger,
+        SetNamedMarkTrigger._name(): SetNamedMarkTrigger,
+        FoldTrigger._name(): FoldTrigger,
     }
 
     name = encoded["action"]
@@ -297,6 +299,58 @@ class CaptureTrigger(Trigger):
     @property
     def _param(self):
         return self.__command
+
+class SetNamedMarkTrigger(Trigger):
+    def __init__(self, regex: str, markname: str, instant: bool, enabled: bool):
+        self.__markname = markname
+        super().__init__(regex, self._param, instant, enabled)
+
+    @staticmethod
+    def _name():
+        return "iTermSetNamedMarkTrigger"
+
+    @staticmethod
+    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+        return _futureproof(param, SetNamedMarkTrigger(regex, param, instant, enabled))
+
+    @property
+    def markname(self) -> str:
+        return self.__markname
+
+    @markname.setter
+    def markname(self, value: str):
+        self.__markname = value
+        self.param = self._param
+
+    @property
+    def _param(self):
+        return self.__markname
+
+class FoldTrigger(Trigger):
+    def __init__(self, regex: str, markname: str, instant: bool, enabled: bool):
+        self.__markname = markname
+        super().__init__(regex, self._param, instant, enabled)
+
+    @staticmethod
+    def _name():
+        return "iTermFoldTrigger"
+
+    @staticmethod
+    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+        return _futureproof(param, FoldTrigger(regex, param, instant, enabled))
+
+    @property
+    def markname(self) -> str:
+        return self.__markname
+
+    @markname.setter
+    def markname(self, value: str):
+        self.__markname = value
+        self.param = self._param
+
+    @property
+    def _param(self):
+        return self.__markname
 
 class InjectTrigger(Trigger):
     def __init__(self, regex: str, injection: str, instant: bool, enabled: bool):

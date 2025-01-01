@@ -46,6 +46,10 @@ class Unpauser: NSObject {
     private weak var delegate: UnpauserDelegate?
     private let mutex = Mutex()
     // @objc var stack: String
+    #if DEBUG
+    private var hasBeenUnpaused = false
+    #endif
+
     init(_ delegate: UnpauserDelegate) {
         self.delegate = delegate
         // stack = Thread.callStackSymbols.joined(separator: "\n")
@@ -56,6 +60,9 @@ class Unpauser: NSObject {
     @objc
     func unpause() {
         mutex.sync {
+            #if DEBUG
+            hasBeenUnpaused = true
+            #endif
             // print("Unpause \(self)")
             guard let temp = delegate else {
                 return
@@ -66,11 +73,14 @@ class Unpauser: NSObject {
         }
     }
 
-//    deinit {
+    deinit {
+        #if DEBUG
+        assert(hasBeenUnpaused)
+        #endif
 //        if stack != "" {
 //            fatalError()
 //        }
-//    }
+    }
 }
 
 func CVectorReleaseObjectsAndDestroy(_ vector: CVector) {

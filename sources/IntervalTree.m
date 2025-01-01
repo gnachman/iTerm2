@@ -590,7 +590,7 @@ static NSString *const kIntervalLengthKey = @"Length";
     value.maxLimitAtSubtree = max;
 #if DEBUG
     const long long bruteForced = [self bruteForceMaxLimitAtSubtree:node];
-    assert(max = bruteForced);
+    assert(max == bruteForced);
 #endif
 }
 
