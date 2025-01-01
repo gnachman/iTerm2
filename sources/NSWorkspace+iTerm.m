@@ -52,6 +52,10 @@
         return [self openURL:url];
     }
     NSString *bundleID = [iTermAdvancedSettingsModel browserBundleID];
+    if ([bundleID stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length == 0) {
+        DLog(@"Empty custom bundle ID “%@”", bundleID);
+        return [self openURL:url];
+    }
     NSURL *appURL = [self URLForApplicationWithBundleIdentifier:bundleID];
     if (!appURL) {
         DLog(@"No url for bundle ID %@", bundleID);
