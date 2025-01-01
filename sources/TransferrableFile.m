@@ -134,7 +134,7 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
                                                                        actions:@[ @"Keep Both", @"Replace" ]
                                                                      accessory:nil
                                                                     identifier:@"NoSyncOverwriteOrReplaceFile"
-                                                                   silenceable:kiTermWarningTypePersistent
+                                                                   silenceable:kiTermWarningTypePermanentlySilenceable
                                                                        heading:@"Overwrite existing file?"
                                                                         window:nil];
     if (selection == kiTermWarningSelection1) {
