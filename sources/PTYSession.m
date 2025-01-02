@@ -2443,6 +2443,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (id<ProcessInfoProvider>)processInfoProvider {
+    PTYSession *tmuxGatewaySession = self.tmuxGatewaySession;
+    if (tmuxGatewaySession && self.isTmuxClient && !_conductor) {
+        return [tmuxGatewaySession processInfoProvider];
+    }
     if (!_conductor.framing) {
         return [iTermProcessCache sharedInstance];
     }
@@ -2450,6 +2454,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (id<SessionProcessInfoProvider>)sessionProcessInfoProvider {
+    PTYSession *tmuxGatewaySession = self.tmuxGatewaySession;
+    if (tmuxGatewaySession && self.isTmuxClient && !_conductor && !_tmuxController.serverIsLocal) {
+        return [tmuxGatewaySession sessionProcessInfoProvider];
+    }
     if (!_conductor.framing) {
         return _shell;
     }
@@ -7743,7 +7751,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                 name = @"gateway";
                 terminal.tmuxMode = NO;
                 break;
-            case TMUX_CLIENT:
+            case TMUX_CLIENT: {
                 name = @"client";
                 terminal.tmuxMode = YES;
                 terminal.termType = _tmuxController.defaultTerminal ?: @"screen";
@@ -7754,7 +7762,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                 [self installOtherTmuxMonitors];
                 [self replaceWorkingDirectoryPollerWithTmuxWorkingDirectoryPoller];
                 [self sendTmuxPerPaneReports:PTYSessionTmuxReportAll];
+
+                iTermCPUUtilization *gatewayInstance = [iTermCPUUtilization instanceForSessionID:self.tmuxGatewaySession.guid];
+                iTermCPUUtilization *myInstance = [iTermCPUUtilization instanceForSessionID:self.guid];
+                if (gatewayInstance) {
+                    myInstance.publisher = gatewayInstance.publisher;
+                }
                 break;
+            }
         }
         [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionTmuxRole];
     }];
