@@ -25,7 +25,7 @@ import zipfile
 PROCESSES = {}
 # List of pids that are completed. Their tasks can be awaited and removed.
 COMPLETED = []
-VERBOSE=1
+VERBOSE=0
 LOGFILE=None
 RUNLOOP=None
 TASKS=[]
