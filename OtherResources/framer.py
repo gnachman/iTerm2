@@ -56,12 +56,7 @@ def makeid():
     return squash(int(result))
 
 def log(message):
-    if VERBOSE:
-        global LOGFILE
-        if not LOGFILE:
-            LOGFILE = open("/tmp/framer.txt", "a")
-        print(f'DEBUG {time.time():.6f} {os.getpid()}: {message}', file=LOGFILE)
-        LOGFILE.flush()
+    pass
 
 def send(q, data):
     if QUITTING:
