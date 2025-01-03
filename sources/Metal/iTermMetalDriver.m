@@ -875,11 +875,13 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
 // Main thread
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(iTermMetalView *)view {
+    const NSTimeInterval timeout = 1.0 / 60.0;
+
     if (frameData.debugInfo) {
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
             frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"
                                                                                     fast:NO];
-            frameData.debugRealRenderPassDescriptor = view.currentRenderPassDescriptor;
+            frameData.debugRealRenderPassDescriptor = [view currentRenderPassDescriptorWithTimeout:timeout];
         }];
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
             frameData.destinationDrawable = view.currentDrawable;
@@ -896,7 +898,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 #endif
         if (!frameData.deferCurrentDrawable) {
             NSTimeInterval duration = [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-                frameData.destinationDrawable = view.currentDrawable;
+                frameData.destinationDrawable = [view currentDrawableWithTimeout:timeout];
                 frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
                 frameData.textureIsFamiliar = [self textureIsFamiliar:frameData.destinationDrawable.texture];
@@ -919,7 +921,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
             if (frameData.deferCurrentDrawable) {
                 frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"RPD for deferred draw" fast:YES];
             } else {
-                frameData.renderPassDescriptor = [view currentRenderPassDescriptorWithTimeout:1.0 / 60.0];
+                frameData.renderPassDescriptor = [view currentRenderPassDescriptorWithTimeout:timeout];
             }
         }];
         if (frameData.renderPassDescriptor == nil) {
