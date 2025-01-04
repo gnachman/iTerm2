@@ -62,7 +62,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxDoubleAttachForSessionGUID:(NSString *)sessionGUID;
 - (NSString *)tmuxOwningSessionGUID;
 - (BOOL)tmuxGatewayShouldForceDetach;
-- (void)tmuxGatewayDidTimeOut;
+- (void)tmuxGatewayDidTimeOutDuringInitialization:(BOOL)duringInitialization;
 - (void)tmuxActiveWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
 - (void)tmuxSessionWindowDidChangeTo:(int)windowID;
 - (void)tmuxWindowPaneDidPause:(int)wp notification:(BOOL)notification;
@@ -89,6 +89,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 @property(nonatomic, readonly) BOOL detachSent;
 @property(nonatomic, readonly) BOOL isTmuxUnresponsive;
 @property(nonatomic) BOOL pauseModeEnabled;
+@property(nonatomic, copy) NSString *newline;
 
 - (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate dcsID:(NSString *)dcsID NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

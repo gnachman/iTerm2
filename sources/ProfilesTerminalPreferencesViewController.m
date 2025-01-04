@@ -57,6 +57,8 @@
     IBOutlet NSButton *_sessionEndedAlert;
     IBOutlet NSButton *_terminalGeneratedAlerts;
     IBOutlet NSButton *_dragToScrollInAlternateScreenModeDisabled;
+
+    IBOutlet NSButton *_tmuxNewline;
 }
 
 - (void)awakeFromNib {
@@ -265,7 +267,14 @@
     if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         _shellIntegrationRequiredButton.hidden = YES;
     }
+
+    [self defineControl:_tmuxNewline
+                    key:KEY_TMUX_NEWLINE
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    
     [self addViewToSearchIndex:_filterAlertsButton
+
                    displayName:@"Filter alerts"
                        phrases:@[ @"bell", @"idle", @"session ended", @"new output"]
                            key:nil];

@@ -8022,6 +8022,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     NSString *preferredTmuxClientName = [self preferredTmuxClientName];
     self.tmuxMode = TMUX_GATEWAY;
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self dcsID:dcsID];
+    if ([iTermProfilePreferences boolForKey:KEY_TMUX_NEWLINE inProfile:self.profile]) {
+        _tmuxGateway.newline = @"\n";
+    }
     ProfileModel *model;
     Profile *profile;
     if ([iTermPreferences useTmuxProfile]) {
@@ -8525,7 +8528,21 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }];
 }
 
-- (void)tmuxGatewayDidTimeOut {
+- (void)tmuxGatewayDidTimeOutDuringInitialization:(BOOL)duringInitialization {
+    if (duringInitialization) {
+        const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"It’s taking a long time for tmux to respond. If this is a old or funky system it might expect newline rather than carriage return to end commands. You can adjust the line terminator used by tmux integration in Settings."
+                                   actions:@[ @"OK", @"Reveal Setting" ]
+                                 accessory:nil
+                                identifier:@"NoSyncTmuxHung"
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:@"Slow tmux Response"
+                                    window:nil];
+        if (selection == 1) {
+            [self revealProfileSettingWithKey:KEY_TMUX_NEWLINE];
+        }
+        return;
+    }
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Force Detach?";
     alert.informativeText = @"Tmux is not responding. Would you like to force detach?";

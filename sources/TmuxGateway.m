@@ -18,11 +18,6 @@
 
 NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
 
-#ifdef NEWLINE
-#undef NEWLINE
-#endif
-#define NEWLINE @"\r"
-
 //#define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
@@ -119,6 +114,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         _writeQueue = [NSMutableString string];
         _dcsID = [dcsID copy];
         _sessionID = -1;
+        _newline = @"\r";
     }
     return self;
 }
@@ -812,7 +808,7 @@ static NSString *kCommandTimestamp = @"timestamp";
             [delegate_ tmuxPrintLine:command];
         }
         if ([self versionAtLeastDecimalNumberWithString:@"3.2"]) {
-            [self write:NEWLINE];
+            [self write:self.newline];
         }
         [self hostDisconnected];
     } else if ([command hasPrefix:@"%begin"]) {
@@ -973,7 +969,7 @@ static NSString *kCommandTimestamp = @"timestamp";
 - (void)detach {
     NSString *command = @"detach";
     if (detachSent_ && [self isTmuxUnresponsive]) {
-        [delegate_ tmuxGatewayDidTimeOut];
+        [delegate_ tmuxGatewayDidTimeOutDuringInitialization:NO];
         if (disconnected_) {
             return;
         }
@@ -1008,7 +1004,7 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
         const BOOL havePending = [self havePendingCommandEqualTo:dict[kCommandString]];
         const BOOL unresponsive = [self isTmuxUnresponsive];
         if (havePending && unresponsive) {
-            [delegate_ tmuxGatewayDidTimeOut];
+            [delegate_ tmuxGatewayDidTimeOutDuringInitialization:NO];
             if (disconnected_) {
                 return;
             }
@@ -1040,7 +1036,7 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
     if (havePending && unresponsive) {
         // Don't allow already-queued commands to warn.
         _unresponsivenessBoundary = _unresponsivenessGeneration;
-        [delegate_ tmuxGatewayDidTimeOut];
+        [delegate_ tmuxGatewayDidTimeOutDuringInitialization:NO];
     }
 }
 
@@ -1086,7 +1082,7 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
     if (detachSent_ || disconnected_) {
         return;
     }
-    NSString *commandWithNewline = [command stringByAppendingString:NEWLINE];
+    NSString *commandWithNewline = [command stringByAppendingString:self.newline];
     NSDictionary *dict = [self dictionaryForCommand:commandWithNewline
                                      responseTarget:target
                                    responseSelector:selector
@@ -1133,7 +1129,7 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
         TmuxLog(@"Send command: %@", [dict objectForKey:kCommandString]);
     }
     TmuxLog(@"-- End command list --");
-    [cmd appendString:NEWLINE];
+    [cmd appendString:self.newline];
     TmuxLog(@"Send command: %@", cmd);
     [self write:cmd];
 }

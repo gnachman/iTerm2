@@ -206,6 +206,7 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
     // the face of font sizes by just setting it back to the right size after
     // font size changes are finished happening.
     NSMutableDictionary<NSString *, NSValue *> *_savedFrames;
+    BOOL _phonyCommandOutstanding;
 }
 
 @synthesize gateway = gateway_;
@@ -869,6 +870,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)detach {
     DLog(@"%@: detach", self);
+    _phonyCommandOutstanding = NO;
     self.sessionGuid = nil;
     [listSessionsTimer_ invalidate];
     listSessionsTimer_ = nil;
@@ -1100,11 +1102,27 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)sendPhonyCommand {
+    _phonyCommandOutstanding = YES;
     [gateway_ sendCommand:@"phony-command"
-           responseTarget:nil
-         responseSelector:nil
+           responseTarget:self
+         responseSelector:@selector(phonyCommandDidComplete:)
            responseObject:nil
                     flags:kTmuxGatewayCommandShouldTolerateErrors];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [weakSelf phonyCommandTimeout];
+    });
+}
+
+- (void)phonyCommandDidComplete:(id)result {
+    _phonyCommandOutstanding = NO;
+}
+
+- (void)phonyCommandTimeout {
+    if (!_phonyCommandOutstanding) {
+        return;
+    }
+    [self.gateway.delegate tmuxGatewayDidTimeOutDuringInitialization:YES];
 }
 
 - (void)ping {
