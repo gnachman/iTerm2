@@ -1925,10 +1925,12 @@
         [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
                                              iTermTokenExecutorUnpauser * _Nonnull unpauser) {
             DLog(@"call out to delegate");
+            __block BOOL confirmed = NO;
             [delegate screenDidReceiveBase64FileData:data
                                              confirm:^void(NSString *name,
                                                            NSInteger lengthBefore,
                                                            NSInteger lengthAfter) {
+                confirmed = YES;
                 __strong __typeof(self) strongSelf = weakSelf;
                 if (!strongSelf) {
                     [unpauser unpause];
@@ -1943,6 +1945,9 @@
                                                        queue:queue
                                                     unpauser:unpauser];
             }];
+            if (!confirmed){
+                [unpauser unpause];
+            }
         }];
     }
 }
