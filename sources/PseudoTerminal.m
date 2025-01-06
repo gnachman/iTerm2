@@ -1950,7 +1950,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!soft &&
         [self tabIsAttachedTmuxTabWithSessions:aTab]) {
         if ([self numberOfTabsWithTmuxController:aTab.tmuxController] == 1) {
-            [self killOrHideTmuxWindow];
+            [self killOrHideTmuxWindowForController:aTab.tmuxController];
         } else {
             [self killOrHideTmuxTab:aTab];
         }
@@ -3792,14 +3792,15 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (shouldClose) {
-        [self killOrHideTmuxWindow];
+        [self killOrHideTmuxWindowForController:nil];
     }
 
     DLog(@"Return %@", @(shouldClose));
     return shouldClose;
 }
 
-- (void)killOrHideTmuxWindow {
+// If controller is nil, then do all of them.
+- (void)killOrHideTmuxWindowForController:(TmuxController *)controller {
     int n = 0;
     for (PTYTab *aTab in [self tabs]) {
         if ([aTab isTmuxTab] && !aTab.tmuxController.detached) {
@@ -3831,6 +3832,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
         for (PTYTab *aTab in [self tabs]) {
             if ([aTab isTmuxTab]) {
+                if (controller != nil && aTab.tmuxController != controller) {
+                    continue;
+                }
                 switch (selection) {
                     case kiTermWarningSelection0:
                         [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
