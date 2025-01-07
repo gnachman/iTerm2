@@ -32,6 +32,86 @@ const int kNumberOfSpacesPerTabOpenAdvancedPaste = -3;
 // Was 1024, but this seemed to cause a lot of problems. Let's try this.
 const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 
+@interface iTermCharacterQueue: NSObject
+@property (nonatomic, readonly) NSMutableString *string;
+@property (nonatomic, readonly) NSUInteger length;
+- (instancetype)initWithString:(NSString *)string NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+- (NSRange)rangeOfCharacterFromSet:(NSCharacterSet *)charset inRange:(NSRange)searchRange;
+- (NSRange)makeRangeSafe:(NSRange)unsafe;
+- (NSString *)substringWithRange:(NSRange)range;
+- (void)removeFirstCharacters:(NSUInteger)count;
+- (void)appendString:(NSString *)string;
+@end
+
+@implementation iTermCharacterQueue {
+    NSUInteger _offset;
+}
+- (instancetype)initWithString:(NSString *)string {
+    self = [super init];
+    if (self) {
+        _string = [string mutableCopy];
+    }
+    return self;
+}
+
+- (NSUInteger)length {
+    return _string.length - _offset;
+}
+
+- (NSRange)rangeOfCharacterFromSet:(NSCharacterSet *)charset
+                           inRange:(NSRange)searchRange {
+    const NSRange actual = [_string rangeOfCharacterFromSet:charset
+                                                    options:0
+                                                      range:NSMakeRange(_offset + searchRange.location, searchRange.length)];
+    if (actual.location == NSNotFound) {
+        return actual;
+    }
+    return NSMakeRange(actual.location - _offset,
+                       actual.length);
+}
+
+- (unichar)characterAtIndex:(NSUInteger)i {
+    return [_string characterAtIndex:_offset + i];
+}
+
+- (NSRange)makeRangeSafe:(NSRange)range {
+    if (range.location == NSNotFound || range.length == 0) {
+        return range;
+    }
+    const unichar lastCharacter = [self characterAtIndex:NSMaxRange(range) - 1];
+    if (CFStringIsSurrogateHighCharacter(lastCharacter)) {
+        if (NSMaxRange(range) == self.length) {
+            range.length -= 1;
+        } else {
+            range.length += 1;
+        }
+    }
+    return range;
+}
+
+- (NSRange)underlyingRangeForRange:(NSRange)viewRange {
+    return NSMakeRange(_offset + viewRange.location,
+                       viewRange.length);
+}
+
+- (NSString *)substringWithRange:(NSRange)range {
+    return [_string substringWithRange:[self underlyingRangeForRange:range]];
+}
+
+- (void)removeFirstCharacters:(NSUInteger)count {
+    _offset += count;
+    if (_offset == _string.length) {
+        _string = [@"" mutableCopy];
+        _offset = 0;
+    }
+}
+
+- (void)appendString:(NSString *)string {
+    [_string appendString:string];
+}
+@end
+
 @interface iTermPasteHelper () <iTermPasteViewManagerDelegate>
 @end
 
@@ -40,7 +120,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     PasteContext *_pasteContext;
 
     // Paste from the head of this string from a timer until it's empty.
-    NSMutableString *_buffer;
+    iTermCharacterQueue *_buffer;
     NSTimer *_timer;
     iTermPasteViewManager *_pasteViewManager;
 }
@@ -69,7 +149,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     self = [super init];
     if (self) {
         _eventQueue = [[NSMutableArray alloc] init];
-        _buffer = [[NSMutableString alloc] init];
+        _buffer = [[iTermCharacterQueue alloc] initWithString:@""];
         _pasteViewManager = [[iTermPasteViewManager alloc] init];
         _pasteViewManager.delegate = self;
     }
@@ -110,7 +190,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             [_eventQueue removeAllObjects];
         }
     }
-    _buffer = [[NSMutableString alloc] init];
+    _buffer = [[iTermCharacterQueue alloc] initWithString:@""];
     [self hidePasteIndicator];
     _pasteContext = nil;
     if (!cancel) {
@@ -452,10 +532,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         if (_pasteContext.blockAtNewline) {
             // If there is a newline in the range about to be pasted, only paste up to and including
             // it and the block to YES.
-            NSRange newlineRange = [_buffer rangeOfString:@"\n"];
-            if (newlineRange.location == NSNotFound) {
-                newlineRange = [_buffer rangeOfString:@"\r"];
-            }
+            NSCharacterSet *crlf = [NSCharacterSet characterSetWithCharactersInString:@"\n\r"];
+            const NSRange newlineRange = [_buffer rangeOfCharacterFromSet:crlf inRange:range];
             if (newlineRange.location != NSNotFound) {
                 range.length = newlineRange.location + newlineRange.length;
                 block = YES;
@@ -468,7 +546,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             _pasteContext.progress(_pasteContext.bytesWritten);
         }
     }
-    [_buffer replaceCharactersInRange:range withString:@""];
+    [_buffer removeFirstCharacters:range.length];
 
     [self updatePasteIndicator];
     if ([_buffer length] > 0) {
