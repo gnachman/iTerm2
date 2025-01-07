@@ -13,6 +13,8 @@ import re
 
 # Create a pipe for signal handling
 rfd, wfd = os.pipe()
+flags = fcntl.fcntl(rfd, fcntl.F_GETFL)
+fcntl.fcntl(rfd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
 def make_nonblocking(file_obj):
     fd = file_obj.fileno()
@@ -96,6 +98,10 @@ def run_test_harness(csv_file, output_file):
                 if option_as_alt != lastalt and option_as_alt != "NA":
                     print(f'Change config option-as-alt to {option_as_alt}')
                     lastalt = option_as_alt
+                if option_as_alt == "TRUE":
+                    print(f'\033[?1036h', end='', flush=True)
+                else:
+                    print(f'\033[?1036l', end='', flush=True)
                 if modifiers == "None":
                     mods = ""
                 else:
@@ -103,8 +109,15 @@ def run_test_harness(csv_file, output_file):
                 description = f"{type_} {mods}{key}"
 
                 print(f'\033[={mode}u', end='', flush=True)  # Output control sequence
+                print(f'Mode={mode} keyboard={keyboard} opt-as-alt={option_as_alt}')
                 print(f'Step {step_number}: {description}')
                 print(f'Expecting: {row["Expected output"]}')
+                # Drain SIGINT notifs
+                try:
+                    while True:
+                        os.read(rfd, 1)
+                except:
+                    pass
                 try:
                     signal.signal(signal.SIGINT, signal_handler)
 

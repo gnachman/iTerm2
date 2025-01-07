@@ -722,10 +722,16 @@ extension KeyboardProtocolModifers {
         if event.modifierFlags.contains(.shift) {
             value |= Self.shift.rawValue
         }
-        if event.modifierFlags.contains(.leftOption) && !leftOptionNormal {
+        let exceptions = [UnicodeScalar("\n").value,
+                          UnicodeScalar("\r").value,
+                          UnicodeScalar("\t").value,
+                          8, 0x7f]  // backspace
+
+        let mustReportOption = event.modifierFlags.contains(.function) || exceptions.contains(event.unicodeKeyCode)
+        if event.modifierFlags.contains(.leftOption) && (mustReportOption || !leftOptionNormal) {
             value |= Self.alt.rawValue
         }
-        if event.modifierFlags.contains(.rightOption) && !rightOptionNormal {
+        if event.modifierFlags.contains(.rightOption) && (mustReportOption || !rightOptionNormal) {
             value |= Self.alt.rawValue
         }
         if event.modifierFlags.contains(.control) {
