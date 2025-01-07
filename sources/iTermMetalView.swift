@@ -99,7 +99,8 @@ public class iTermMetalView: NSView, CALayerDelegate {
                     lhs.framebufferOnly == rhs.framebufferOnly &&
                     lhs.presentsWithTransaction == rhs.presentsWithTransaction &&
                     lhs.pixelFormat == rhs.pixelFormat &&
-                    lhs.colorspace === rhs.colorspace)
+                    lhs.colorspace === rhs.colorspace &&
+                    lhs.size == rhs.size)
         }
         
         weak var device: MTLDevice?
@@ -107,6 +108,7 @@ public class iTermMetalView: NSView, CALayerDelegate {
         var presentsWithTransaction: Bool
         var pixelFormat: MTLPixelFormat
         var colorspace: CGColorSpace?
+        var size: CGSize
     }
 
     private func layerContext(metalLayer: CAMetalLayer) -> LayerContext {
@@ -114,7 +116,8 @@ public class iTermMetalView: NSView, CALayerDelegate {
                      framebufferOnly: metalLayer.framebufferOnly,
                      presentsWithTransaction: metalLayer.presentsWithTransaction,
                      pixelFormat: metalLayer.pixelFormat,
-                     colorspace: metalLayer.colorspace)
+                     colorspace: metalLayer.colorspace,
+                     size: metalLayer.drawableSize)
     }
 
     private func fetchDrawable(timeout: TimeInterval) -> CAMetalDrawable? {
