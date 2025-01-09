@@ -107,17 +107,17 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
         return @{};
     }
     return @{ @(0xE0A3): @[@"uniE0A3_column-number", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0B0): @[@"uniE0B0_Powerline_normal-left", 
+              @(0xE0B0): @[@"uniE0B0_Powerline_normal-left",
                            @(iTermPowerlineDrawingOptionsFullBleedLeft)],
-              @(0xE0B2): @[@"uniE0B2_Powerline_normal-right", 
+              @(0xE0B2): @[@"uniE0B2_Powerline_normal-right",
                            @(iTermPowerlineDrawingOptionsFullBleedRight)],
-              @(0xE0B4): @[@"uniE0B4_right-half-circle-thick", 
+              @(0xE0B4): @[@"uniE0B4_right-half-circle-thick",
                            @(iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0B5): @[@"uniE0B5_right-half-circle-thin", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0B6): @[@"uniE0B6_left-half-circle-thick", @(
                            iTermPowerlineDrawingOptionsFullBleedRight)],
               @(0xE0B7): @[@"uniE0B7_left-half-circle-thin", @(iTermPowerlineDrawingOptionsNone)],
-              @(0xE0B8): @[@"uniE0B8_lower-left-triangle", 
+              @(0xE0B8): @[@"uniE0B8_lower-left-triangle",
                            @(iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0C0): @[@"uniE0C0_flame-thick", @(
                            iTermPowerlineDrawingOptionsFullBleedLeft)],
@@ -136,7 +136,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
               @(0xE0C5): @[@"uniE0C4_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsMirrored)],
               @(0xE0C6): @[@"uniE0C6_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsNone)],
               @(0xE0C7): @[@"uniE0C6_PowerlineExtraSymbols", @(iTermPowerlineDrawingOptionsMirrored)],
-              @(0xE0C8): @[@"uniE0C8_PowerlineExtraSymbols", 
+              @(0xE0C8): @[@"uniE0C8_PowerlineExtraSymbols",
                            @(iTermPowerlineDrawingOptionsFullBleedLeft)],
               @(0xE0C9): @[@"uniE0C9_PowerlineExtraSymbols", @(
                            iTermPowerlineDrawingOptionsFullBleedLeft)],
@@ -465,7 +465,7 @@ offset:(CGPoint)offset {
     if (color) {
         image = [cache imageWithName:pdfName size:cellSize color:nil];
     }
-    
+
     if (!image) {
         image = [self newImageForPDFNamed:pdfName
                                  cellSize:cellSize
@@ -496,20 +496,34 @@ offset:(CGPoint)offset {
 
     NSString *path = [[NSBundle bundleForClass:self] pathForResource:pdfName ofType:@"pdf"];
     NSImage *image;
+    NSImageRep *imageRep;
+
     if (path) {
         NSData* pdfData = [NSData dataWithContentsOfFile:path];
-        NSPDFImageRep *pdfImageRep = [NSPDFImageRep imageRepWithData:pdfData];
-        image = [[NSImage alloc] initWithSize:NSMakeSize(cellSize.width * 2,
-                                                         cellSize.height * 2)];
-        [image addRepresentation:pdfImageRep];
+        imageRep = [NSPDFImageRep imageRepWithData:pdfData];
     } else {
         path = [[NSBundle bundleForClass:self] pathForResource:pdfName ofType:@"eps"];
         NSData *data = [NSData dataWithContentsOfFile:path];
-        NSEPSImageRep *epsImageRep = [NSEPSImageRep imageRepWithData:data];
-        image = [[NSImage alloc] initWithSize:NSMakeSize(cellSize.width * 2,
-                                                         cellSize.height * 2)];
-        [image addRepresentation:epsImageRep];
+        imageRep = [NSEPSImageRep imageRepWithData:data];
     }
+
+    double cellProportion = cellSize.width / cellSize.height;
+    double imageProportion = imageRep.size.width / imageRep.size.height;
+
+    int cellWidth;
+    int cellHeight;
+    if (imageProportion > cellProportion) { // the image is wider than the cell
+        cellWidth = cellSize.width * 2;
+        cellHeight = cellWidth * imageRep.size.height / imageRep.size.width;
+    } else {
+        cellHeight = cellSize.height * 2;
+        cellWidth = cellHeight * imageRep.size.width / imageRep.size.height;
+    }
+
+    image = [[NSImage alloc] initWithSize:NSMakeSize(cellWidth,
+                                                     cellHeight)];
+    [image addRepresentation:imageRep];
+
     return image;
 }
 
@@ -522,7 +536,7 @@ offset:(CGPoint)offset {
     if (stretch) {
         return NSMakeRect(0, 0, destinationSize.width, destinationSize.height);
     }
-    
+
     if (pdfAspectRatio > cellAspectRatio) {
         // PDF is wider than cell, so letterbox top and bottom
         const CGFloat letterboxHeight = (destinationSize.height - destinationSize.width / pdfAspectRatio) / 2;
@@ -539,7 +553,7 @@ offset:(CGPoint)offset {
                cellSize:(NSSize)cellSize
                 stretch:(BOOL)stretch
                   color:(CGColorRef)color
-            antialiased:(BOOL)antialiased 
+            antialiased:(BOOL)antialiased
                  offset:(CGPoint)offset {
     NSImage *image = [self imageForPDFNamed:pdfName
                                    cellSize:cellSize
@@ -577,7 +591,7 @@ offset:(CGPoint)offset {
     [ctx restoreGraphicsState];
 }
 
-+ (void)drawBleedForImage:imageRep 
++ (void)drawBleedForImage:imageRep
 destination:(NSRect)destination
 options:(iTermPowerlineDrawingOptions)options
 color:(NSColor *)color {
@@ -631,7 +645,7 @@ color:(NSColor *)color {
     [self drawPDFWithName:name
                   options:(iTermPowerlineDrawingOptions)options.unsignedIntegerValue
                  cellSize:adjustedCellSize
-                  stretch:NO
+                  stretch:YES
                     color:color
               antialiased:YES
                    offset:offset];
