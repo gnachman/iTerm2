@@ -496,20 +496,34 @@ offset:(CGPoint)offset {
 
     NSString *path = [[NSBundle bundleForClass:self] pathForResource:pdfName ofType:@"pdf"];
     NSImage *image;
+    NSImageRep *imageRep;
+    
     if (path) {
         NSData* pdfData = [NSData dataWithContentsOfFile:path];
-        NSPDFImageRep *pdfImageRep = [NSPDFImageRep imageRepWithData:pdfData];
-        image = [[NSImage alloc] initWithSize:NSMakeSize(cellSize.width * 2,
-                                                         cellSize.height * 2)];
-        [image addRepresentation:pdfImageRep];
+        imageRep = [NSPDFImageRep imageRepWithData:pdfData];
     } else {
         path = [[NSBundle bundleForClass:self] pathForResource:pdfName ofType:@"eps"];
         NSData *data = [NSData dataWithContentsOfFile:path];
-        NSEPSImageRep *epsImageRep = [NSEPSImageRep imageRepWithData:data];
-        image = [[NSImage alloc] initWithSize:NSMakeSize(cellSize.width * 2,
-                                                         cellSize.height * 2)];
-        [image addRepresentation:epsImageRep];
+        imageRep = [NSEPSImageRep imageRepWithData:data];
     }
+
+    double cellProportion = cellSize.width / cellSize.height;
+    double imageProportion = imageRep.size.width / imageRep.size.height;
+
+    int cellWidth;
+    int cellHeight;
+    if (imageProportion > cellProportion) { // the image is wider than the cell
+        cellWidth = cellSize.width * 2;
+        cellHeight = cellWidth * imageRep.size.height / imageRep.size.width;
+    } else {
+        cellHeight = cellSize.height * 2;
+        cellWidth = cellHeight * imageRep.size.width / imageRep.size.height;
+    }
+    
+    image = [[NSImage alloc] initWithSize:NSMakeSize(cellWidth,
+                                                     cellHeight)];
+    [image addRepresentation:imageRep];
+
     return image;
 }
 
@@ -541,6 +555,7 @@ offset:(CGPoint)offset {
                   color:(CGColorRef)color
             antialiased:(BOOL)antialiased 
                  offset:(CGPoint)offset {
+    
     NSImage *image = [self imageForPDFNamed:pdfName
                                    cellSize:cellSize
                                 antialiased:antialiased
