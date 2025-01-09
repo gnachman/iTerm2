@@ -352,8 +352,28 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     return iTermModifyOtherKeysMapperDictionary(self, self.delegate);
 }
 
+- (BOOL)shouldHandleBuckyBits {
+    return NO;
+}
+
+- (NSString *)handleKeyDownWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (NSString *)handleKeyUpWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (NSString *)handleFlagsChangedWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
 - (BOOL)wouldReportControlReturn {
     return YES;
+}
+
+- (NSString *)transformedTextToInsert:(NSString *)text {
+    return text;
 }
 
 @end

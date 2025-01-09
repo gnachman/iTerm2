@@ -640,6 +640,22 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
     return !cmdPressed;
 }
 
+- (BOOL)shouldHandleBuckyBits {
+    return NO;
+}
+
+- (NSString *)handleKeyDownWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (NSString *)handleKeyUpWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (NSString *)handleFlagsChangedWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
 - (NSDictionary *)keyMapperDictionaryValue {
     [self.delegate termkeyKeyMapperWillMapKey:self];
     return iTermTermkeyKeyMapperConfigurationDictionary(&_configuration);
@@ -647,6 +663,10 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
 
 - (BOOL)wouldReportControlReturn {
     return YES;
+}
+
+- (NSString *)transformedTextToInsert:(NSString *)text {
+    return text;
 }
 
 @end

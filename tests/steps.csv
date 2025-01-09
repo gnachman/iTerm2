@@ -70,10 +70,19 @@ Backspace,"Press and repeat once",None,NA,US English,2,\u{7f}\u{7f},
 b,"Hit",Option,FALSE,US English,1,∫,
 a,"Hit",Shift Option,FALSE,US English,1,Å,
 Option,"Hit",None,FALSE,US English,24,\e[57443;3u,
-e,"Hit",Option,FALSE,US English,24,\e[57443;3u\e[101;3u,
 a,"Hit",None,FALSE,US English,24,\e[97u,
 a,"Hit",Shift,FALSE,US English,24,\e[57441;2u\e[97;2;65u,
 a,"Hit",Option,FALSE,US English,24,\e[57443;3u\e[97;3;229u,
 /,"Hit",Control Shift,FALSE,US English,24,\e[57442;5u\e[57441;6u\e[47;6u,
 ,,,,,,,
 5,"Hit",Shift Option,FALSE,AZERTY,8,\e[57441;2u\e[57443;4u\e[40;4u,
+,,,,,,,
+x,"Hit",Super,NA,US English,1,\e[120;9u
+x,"Hit",Hyper,NA,US English,1,\e[120;17u
+x,"Hit",Meta,NA,US English,1,\e[120;33u
+,,,,,,,
+None,"Type option-e, then o",None,FALSE,US English,8,\e[57443;3u\e[111u
+None,"Type option-e, then shift-o",None,FALSE,US English,8,\e[57443;3u\e[57441;2u\e[111;2u
+,,,
+c,"Hit",Control Option,FALSE,US English,8,\e[57448;5u\e[57443;7u\e[99;7u
+e,"Press apostrophe and then hit",None,NA,US International PC,9,\e[101u

@@ -303,7 +303,12 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE,
                              KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY,
                              KEY_DYNAMIC_PROFILE_REWRITABLE,
-                             KEY_COMPOSER_TOP_OFFSET];
+                             KEY_COMPOSER_TOP_OFFSET,
+                             KEY_LEFT_CONTROL,
+                             KEY_RIGHT_CONTROL,
+                             KEY_LEFT_COMMAND,
+                             KEY_RIGHT_COMMAND,
+                             KEY_FUNCTION ];
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];
@@ -603,6 +608,11 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_IDLE_PERIOD: @60,
                   KEY_OPTION_KEY_SENDS: @(OPT_NORMAL),
                   KEY_RIGHT_OPTION_KEY_SENDS: @(OPT_NORMAL),
+                  KEY_LEFT_CONTROL: @(iTermBuckyBitRegular),
+                  KEY_RIGHT_CONTROL: @(iTermBuckyBitRegular),
+                  KEY_LEFT_COMMAND: @(iTermBuckyBitRegular),
+                  KEY_RIGHT_COMMAND: @(iTermBuckyBitRegular),
+                  KEY_FUNCTION: @(iTermBuckyBitRegular),
                   KEY_LEFT_OPTION_KEY_CHANGEABLE: @YES,
                   KEY_RIGHT_OPTION_KEY_CHANGEABLE: @NO,
                   KEY_APPLICATION_KEYPAD_ALLOWED: @NO,

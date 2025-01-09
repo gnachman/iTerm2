@@ -84,5 +84,6 @@ extern NSString *const iTermApplicationDidCloseModalWindow;
 - (void)activateAppWithCompletion:(void (^)(void))completion;
 - (void)it_makeWindowKey:(NSWindow *)window;
 - (void)updateAppearance;
+- (BOOL)it_functionPressed;
 
 @end

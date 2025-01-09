@@ -370,6 +370,16 @@ iTermP3Color iTermSRGBColorToP3Color(iTermSRGBColor srgb) {
     return MAX(0, iTermLABDeltaE2000([self labColor], [other labColor]) / 100.0);
 }
 
++ (NSColor *)it_blue {
+    return [NSColor colorWithName:@"iTermBlueTextColor" dynamicProvider:^NSColor * _Nonnull(NSAppearance * _Nonnull appearance) {
+        if (appearance.it_isDark) {
+            return [NSColor colorWithSRGBRed:0.8 green:0.8 blue:1.0 alpha:1.0];
+        } else {
+            return [NSColor colorWithSRGBRed:0.3 green:0.3 blue:0.55 alpha:1.0];
+        }
+    }];
+}
+
 - (iTermLABColor)labColor {
     NSColor *color = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
     const iTermSRGBColor srgb = (iTermSRGBColor) {

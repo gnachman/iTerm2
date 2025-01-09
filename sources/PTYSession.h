@@ -967,6 +967,9 @@ backgroundColor:(NSColor *)backgroundColor;
        inDirectory:(NSString *)directory
             onHost:(NSString *)hostname
             asUser:(NSString *)username;
+- (BOOL)handleKeyDownWithBuckyBits:(NSEvent *)event;
+- (BOOL)handleKeyUpWithBuckyBits:(NSEvent *)event;
+- (BOOL)handleFlagsChangedWithBuckyBits:(NSEvent *)event;
 
 #pragma mark - API
 

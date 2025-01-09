@@ -430,6 +430,22 @@
 
 #pragma mark - iTermKeyMapper
 
+- (BOOL)shouldHandleBuckyBits {
+    return NO;
+}
+
+- (NSString *)handleKeyDownWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (NSString *)handleKeyUpWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (NSString *)handleFlagsChangedWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
 - (void)keyMapperSetEvent:(NSEvent *)event {
     [self updateConfigurationWithEvent:event];
 }
@@ -476,6 +492,10 @@
 
 - (BOOL)wouldReportControlReturn {
     return NO;
+}
+
+- (NSString *)transformedTextToInsert:(NSString *)text {
+    return text;
 }
 
 @end

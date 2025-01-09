@@ -14,6 +14,8 @@
 @property(nonatomic, readonly) NSEvent *mouseDownEventFromGesture;
 @property(nonatomic, readonly) BOOL it_isNumericKeypadKey;
 @property(nonatomic, readonly) BOOL it_isVerticalScroll;
+@property(nonatomic) BOOL it_functionModifierPressed;
+@property(nonatomic) BOOL it_functionModifierPreviouslyPressed;
 
 + (unichar)unicharForKeyWithKeycode:(CGKeyCode)virtualKeyCode
                           modifiers:(UInt32)carbonModifiers;

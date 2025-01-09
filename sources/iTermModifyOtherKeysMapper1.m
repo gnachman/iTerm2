@@ -109,7 +109,23 @@ typedef enum {
               @"modifyOther": iTermModifyOtherKeysMapperDictionary(_modifyOther, self.delegate) };
 }
 
-- (BOOL)wouldReportControlReturn { 
+- (BOOL)shouldHandleBuckyBits {
+    return NO;
+}
+
+- (NSString *)handleKeyDownWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (NSString *)handleKeyUpWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (NSString *)handleFlagsChangedWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (BOOL)wouldReportControlReturn {
     return YES;
 }
 

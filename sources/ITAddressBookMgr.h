@@ -267,6 +267,12 @@
 #define KEY_HOTKEY_ALTERNATE_SHORTCUTS        @"HotKey Alternate Shortcuts"
 #define KEY_USE_LIBTICKIT_PROTOCOL            @"Use libtickit protocol"
 
+#define KEY_LEFT_CONTROL                      @"Left Control Key"  // iTermBuckyBit
+#define KEY_RIGHT_CONTROL                     @"Right Control Key"  // iTermBuckyBit
+#define KEY_LEFT_COMMAND                      @"Left Command Key"  // iTermBuckyBit
+#define KEY_RIGHT_COMMAND                     @"Right Command Key"  // iTermBuckyBit
+#define KEY_FUNCTION                          @"Function Key"  // iTermBuckyBit
+
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
 #define KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS @"Enable Triggers in Interactive Apps"  // Bool
@@ -340,6 +346,13 @@ typedef NS_ENUM(int, iTermOptionKeyBehavior) {
     OPT_NORMAL = 0,
     OPT_META = 1,
     OPT_ESC = 2
+};
+
+typedef NS_ENUM(NSUInteger, iTermBuckyBit) {
+    iTermBuckyBitRegular,
+    iTermBuckyBitHyper,
+    iTermBuckyBitMeta,
+    iTermBuckyBitSuper
 };
 
 // The numerical values for each enum matter because they are used in

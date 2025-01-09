@@ -68,7 +68,7 @@ def unescape_string(s):
 def run_test_harness(csv_file, output_file):
     results = []
 
-    with open(csv_file, mode='r') as file:
+    with open(csv_file, mode='r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         lastkb = ""
         lastalt = ""
@@ -106,7 +106,10 @@ def run_test_harness(csv_file, output_file):
                     mods = ""
                 else:
                     mods = f'{modifiers}-'
-                description = f"{type_} {mods}{key}"
+                if key == "None":
+                    description = type_
+                else:
+                    description = f"{type_} {mods}{key}"
 
                 print(f'\033[={mode}u', end='', flush=True)  # Output control sequence
                 print(f'Mode={mode} keyboard={keyboard} opt-as-alt={option_as_alt}')

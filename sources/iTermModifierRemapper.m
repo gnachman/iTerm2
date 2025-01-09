@@ -292,6 +292,7 @@
             }
         }
     }
+#warning TODO: I think this is broken. I have to watch FlagsChanged. SecondaryFn is set when I press an arrow key.
     if (flags & kCGEventFlagMaskSecondaryFn) {
         andMask &= ~kCGEventFlagMaskSecondaryFn;
         orMask |= [self _cgMaskForFunctionKey];

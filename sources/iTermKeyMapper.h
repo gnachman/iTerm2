@@ -59,6 +59,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)wouldReportControlReturn;
 
+- (BOOL)shouldHandleBuckyBits;
+- (NSString * _Nullable)handleKeyDownWithBuckyBits:(NSEvent *)event;
+- (NSString * _Nullable)handleKeyUpWithBuckyBits:(NSEvent *)event;
+- (NSString * _Nullable)handleFlagsChangedWithBuckyBits:(NSEvent *)event;
+
+// When the IME provides text and calls insertText: the keymapper has a chance to transform
+// it (for example, to CSI-u encode it) in this method.
+- (NSString *)transformedTextToInsert:(NSString *)text;
+
 //@optional
 //- (void)setDelegate:(id)delegate;
 

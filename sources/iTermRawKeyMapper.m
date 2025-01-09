@@ -45,6 +45,26 @@
     return @{};
 }
 
+- (NSString *)transformedTextToInsert:(NSString *)text {
+    return text;
+}
+
+- (BOOL)shouldHandleBuckyBits {
+    return NO;
+}
+
+- (NSString *)handleKeyDownWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (NSString *)handleKeyUpWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
+- (NSString *)handleFlagsChangedWithBuckyBits:(NSEvent *)event {
+    return nil;
+}
+
 - (BOOL)wouldReportControlReturn {
     return YES;
 }

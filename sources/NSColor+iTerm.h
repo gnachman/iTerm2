@@ -183,6 +183,8 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 // Mostly in [0,1] although it could possibly go over 1. It won't go negative.
 - (double)perceptualDistanceTo:(NSColor *)other;
 
++ (NSColor *)it_blue;
+
 @end
 
 @interface NSColorSpace(iTerm)

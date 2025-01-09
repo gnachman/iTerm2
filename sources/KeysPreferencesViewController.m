@@ -26,6 +26,7 @@
 #import "iTermWarning.h"
 #import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSPopUpButton+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -497,13 +498,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             textField.textColor = [NSColor controlTextColor];
         } else {
             remappingAnyModifier = YES;
-            textField.textColor = [NSColor colorWithName:@"iTermBlueTextColor" dynamicProvider:^NSColor * _Nonnull(NSAppearance * _Nonnull appearance) {
-                if (appearance.it_isDark) {
-                    return [NSColor colorWithSRGBRed:0.8 green:0.8 blue:1.0 alpha:1.0];
-                } else {
-                    return [NSColor colorWithSRGBRed:0.3 green:0.3 blue:0.55 alpha:1.0];
-                }
-            }];
+            textField.textColor = [NSColor it_blue];
         }
     }
 

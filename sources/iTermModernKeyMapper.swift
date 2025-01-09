@@ -16,9 +16,27 @@ protocol ModernKeyMapperDelegate: iTermStandardKeyMapperDelegate {
     func modernKeyMapperWillMapKey() -> ObjCModernKeyMapperConfiguration
 }
 
-struct ModernKeyMapperConfiguration {
+extension iTermOptionKeyBehavior: Codable {}
+extension iTermBuckyBit: Codable {}
+
+struct ModernKeyMapperConfiguration: Codable {
     var leftOptionKey: iTermOptionKeyBehavior
     var rightOptionKey: iTermOptionKeyBehavior
+    var leftControlKey: iTermBuckyBit
+    var rightControlKey: iTermBuckyBit
+    var leftCommandKey: iTermBuckyBit
+    var rightCommandKey: iTermBuckyBit
+    var functionKey: iTermBuckyBit
+}
+
+extension ModernKeyMapperConfiguration {
+    func eventIncludesAlt(_ event: NSEvent) -> Bool {
+        let leftOptionNormal = leftOptionKey == .OPT_NORMAL
+        let rightOptionNormal = rightOptionKey == .OPT_NORMAL
+        let optionAsAlt = ((event.it_modifierFlags.contains(.leftOption) && !leftOptionNormal) ||
+                           (event.it_modifierFlags.contains(.rightOption) && !rightOptionNormal))
+        return optionAsAlt
+    }
 }
 
 @objc(iTermModernKeyMapperConfiguration)
@@ -27,9 +45,19 @@ class ObjCModernKeyMapperConfiguration: NSObject {
 
     @objc
     init(leftOptionKey: iTermOptionKeyBehavior,
-         rightOptionKey: iTermOptionKeyBehavior) {
+         rightOptionKey: iTermOptionKeyBehavior,
+         leftControlKey: iTermBuckyBit,
+         rightControlKey: iTermBuckyBit,
+         leftCommandKey: iTermBuckyBit,
+         rightCommandKey: iTermBuckyBit,
+         functionKey: iTermBuckyBit) {
         value = ModernKeyMapperConfiguration(leftOptionKey: leftOptionKey,
-                                             rightOptionKey: rightOptionKey)
+                                             rightOptionKey: rightOptionKey,
+                                             leftControlKey: leftControlKey,
+                                             rightControlKey: rightControlKey,
+                                             leftCommandKey: leftCommandKey,
+                                             rightCommandKey: rightCommandKey,
+                                             functionKey: functionKey)
     }
 }
 
@@ -89,11 +117,12 @@ extension NSEvent.ModifierFlags: Codable {
 
 fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
     var debugDescription: String {
-        return "<KeyEventInfo: type=\(eventType) modifiers=\(modifierFlags) keyCode=\(virtualKeyCode) characters=\(characters ?? "") charactersIgnoringModifiers=\(charactersIgnoringModifiers ?? "")>"
+        return "<KeyEventInfo: type=\(eventType) modifiers=\(modifiers) keyCode=\(virtualKeyCode) characters=\(characters ?? "") charactersIgnoringModifiers=\(charactersIgnoringModifiers ?? "")>"
     }
     var eventType: NSEvent.EventType
-    var previousFlags: NSEvent.ModifierFlags
-    var modifierFlags: NSEvent.ModifierFlags
+    var previousModifiers: UniversalModifierFlags
+    var modifiers: UniversalModifierFlags
+    private let configuration: ModernKeyMapperConfiguration
     var virtualKeyCode: UInt16  // kVK…
     var characters: String?
     var charactersIgnoringModifiers: String?
@@ -119,52 +148,82 @@ fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
     var useNativeOptionBehavior: Bool
 
     var nsevent: NSEvent? {
-        return NSEvent.keyEvent(with: eventType,
-                                location: .zero,
-                                modifierFlags: modifierFlags,
-                                timestamp: Date.timeIntervalSinceReferenceDate,
-                                windowNumber: 0,
-                                context: nil,
-                                characters: characters ?? "",
-                                charactersIgnoringModifiers: charactersIgnoringModifiers ?? "",
-                                isARepeat: isARepeat,
-                                keyCode: virtualKeyCode)
+        let event = NSEvent.keyEvent(with: eventType,
+                                     location: .zero,
+                                     modifierFlags: modifiers.raw.flags,
+                                     timestamp: Date.timeIntervalSinceReferenceDate,
+                                     windowNumber: 0,
+                                     context: nil,
+                                     characters: characters ?? "",
+                                     charactersIgnoringModifiers: charactersIgnoringModifiers ?? "",
+                                     isARepeat: isARepeat,
+                                     keyCode: virtualKeyCode)
+        event?.it_functionModifierPressed = modifiers.raw.functionKeyPressed
+        return event
     }
 
-    init(event: NSEvent, 
+    init(event: NSEvent,
          configuration: ModernKeyMapperConfiguration,
          flags: VT100TerminalKeyReportingFlags) {
         eventType = event.type
-        previousFlags = event.it_previousFlags
-        modifierFlags = event.it_modifierFlags
-        let leftOptionNormal = configuration.leftOptionKey == .OPT_NORMAL
-        let rightOptionNormal = configuration.rightOptionKey == .OPT_NORMAL
-        let optionAsAlt = ((event.it_modifierFlags.contains(.leftOption) && !leftOptionNormal) ||
-                           (event.it_modifierFlags.contains(.rightOption) && !rightOptionNormal))
-
+        self.configuration = configuration
         virtualKeyCode = event.keyCode
+
+        let optionAsAlt = configuration.eventIncludesAlt(event)
+        useNativeOptionBehavior = if event.type == .keyDown || event.type == .keyUp {
+            !flags.contains(.reportAllKeysAsEscapeCodes) && !optionAsAlt
+        } else {
+            true
+        }
+        unicodeKeyCode = if event.type == .keyDown || event.type == .keyUp {
+            event.it_unicodeKeyCode(
+                useNativeOptionBehavior: useNativeOptionBehavior)
+        } else {
+            switch Int(virtualKeyCode) {
+            case kVK_Shift:
+                57441
+            case kVK_RightShift:
+                57447
+            case kVK_Control:
+                57442
+            case kVK_RightControl:
+                57448
+            case kVK_Option:
+                57443
+            case kVK_RightOption:
+                57449
+            case kVK_Command:
+                57444
+            case kVK_RightCommand:
+                57450
+            default:
+                0
+            }
+        }
+
+        modifiers = UniversalModifierFlags(
+            flags: event.it_modifierFlags,
+            functionKeyPressed: event.it_functionModifierPressed,
+            unicodeKeyCode: unicodeKeyCode,
+            configuration: configuration)
+
+        previousModifiers = UniversalModifierFlags(
+            flags: event.it_previousFlags,
+            functionKeyPressed: event.it_functionModifierPreviouslyPressed,
+            unicodeKeyCode: unicodeKeyCode,
+            configuration: configuration)
+
         if event.type == .keyDown || event.type == .keyUp {
             characters = event.characters
             charactersIgnoringModifiers = event.charactersIgnoringModifiers
             isARepeat = event.isARepeat
             useNativeOptionBehavior = !flags.contains(.reportAllKeysAsEscapeCodes) && !optionAsAlt
-            unicodeKeyCode = event.it_unicodeKeyCode(
-                useNativeOptionBehavior: useNativeOptionBehavior)
             csiUNumber = event.it_csiUNumber(useNativeOptionBehavior: useNativeOptionBehavior)
             shiftedKeyCode = event.it_shiftedKeyCode(
                 useNativeOptionBehavior: useNativeOptionBehavior)
             baseLayoutKeyCode = event.it_baseLayoutKeyCode
 
-            let textUsesNativeOptionBehavior = 
-                if event.it_modifierFlags.contains(.leftOption) &&
-                    leftOptionNormal {
-                    true
-                } else if event.it_modifierFlags.contains(.rightOption) &&
-                            rightOptionNormal {
-                    true
-                } else {
-                    false
-                }
+            let textUsesNativeOptionBehavior = modifiers.cooked.contains(.option) && !modifiers.cooked.contains(.alt)
             textAsCodepoints = event.it_textAsCodePoints(
                 useNativeOptionBehavior: textUsesNativeOptionBehavior)
         } else {
@@ -173,26 +232,6 @@ fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
             isARepeat = false
             useNativeOptionBehavior = true
 
-            switch Int(virtualKeyCode) {
-            case kVK_Shift:
-                unicodeKeyCode = 57441
-            case kVK_RightShift:
-                unicodeKeyCode = 57447
-            case kVK_Control:
-                unicodeKeyCode = 57442
-            case kVK_RightControl:
-                unicodeKeyCode = 57448
-            case kVK_Option:
-                unicodeKeyCode = 57443
-            case kVK_RightOption:
-                unicodeKeyCode = 57449
-            case kVK_Command:
-                unicodeKeyCode = 57444
-            case kVK_RightCommand:
-                unicodeKeyCode = 57450
-            default:
-                unicodeKeyCode = 0
-            }
             csiUNumber = unicodeKeyCode
             shiftedKeyCode = nil
             baseLayoutKeyCode = unicodeKeyCode
@@ -222,6 +261,34 @@ class ModernKeyMapper: NSObject, iTermKeyMapper {
     }
 
     private let impl = ModernKeyMapperImpl()
+
+    func shouldHandleBuckyBits() -> Bool {
+        return true
+    }
+
+    func handleKeyDown(withBuckyBits nsevent: NSEvent) -> String? {
+        DLog("handleKeyDown(withBuckyBits \(nsevent)")
+        let event = updateConfiguration(event: nsevent)
+        let result = impl.keyMapperData(forPostCocoaEvent: event)
+        DLog("return \(result?.debugDescription ?? "nil")")
+        return result.map { String(decoding: $0, as: UTF8.self) }
+    }
+
+    func handleKeyUp(withBuckyBits nsevent: NSEvent) -> String? {
+        DLog("handleKeyUp(withBuckyBits \(nsevent)")
+        let event = updateConfiguration(event: nsevent)
+        let result = impl.keyMapperData(forKeyUp: event)
+        DLog("return \(result?.debugDescription ?? "nil")")
+        return result.map { String(decoding: $0, as: UTF8.self) }
+    }
+
+    func handleFlagsChanged(withBuckyBits nsevent: NSEvent) -> String? {
+        DLog("handleFlagsChanged(withBuckyBits \(nsevent)")
+        let event = updateConfiguration(event: nsevent)
+        let result = impl.keyMapperString(forPreCocoaEvent: event)
+        DLog("return \(result?.debugDescription ?? "nil")")
+        return result
+    }
 
     var keyMapperWantsKeyUp: Bool {
         return impl.keyMapperWantsKeyUp
@@ -276,6 +343,10 @@ class ModernKeyMapper: NSObject, iTermKeyMapper {
         return result
     }
 
+    func transformedText(toInsert text: String) -> String {
+        return impl.transformedText(toInsert: text)
+    }
+
     func wouldReportControlReturn() -> Bool {
         return !flags.intersection([.reportAllEventTypes, .reportAllKeysAsEscapeCodes]).isEmpty
     }
@@ -294,7 +365,12 @@ class ModernKeyMapper: NSObject, iTermKeyMapper {
                 delegate.modernKeyMapperWillMapKey().value
             } else {
                 ModernKeyMapperConfiguration(leftOptionKey: .OPT_NORMAL,
-                                             rightOptionKey: .OPT_NORMAL)
+                                             rightOptionKey: .OPT_NORMAL,
+                                             leftControlKey: .regular,
+                                             rightControlKey: .regular,
+                                             leftCommandKey: .regular,
+                                             rightCommandKey: .regular,
+                                             functionKey: .regular)
             }
         impl.configuration = configuration
         let eventInfo = KeyEventInfo(event: event,
@@ -305,12 +381,17 @@ class ModernKeyMapper: NSObject, iTermKeyMapper {
     }
 }
 
-// Public interfaces of the impl that mirror iTermKeyMapper.
+// Public interfaces of the impl that mirrors iTermKeyMapper.
 fileprivate class ModernKeyMapperImpl {
     var flags = VT100TerminalKeyReportingFlags(rawValue: 0)
     weak var delegate: ModernKeyMapperDelegate?
     var configuration = ModernKeyMapperConfiguration(leftOptionKey: .OPT_NORMAL,
-                                                             rightOptionKey: .OPT_NORMAL)
+                                                     rightOptionKey: .OPT_NORMAL,
+                                                     leftControlKey: .regular,
+                                                     rightControlKey: .regular,
+                                                     leftCommandKey: .regular,
+                                                     rightCommandKey: .regular,
+                                                     functionKey: .regular)
     var event: KeyEventInfo?
     private var lastDeadKey: KeyEventInfo?
 
@@ -331,7 +412,7 @@ fileprivate class ModernKeyMapperImpl {
     func keyMapperShouldBypassPreCocoa(for event: KeyEventInfo) -> Bool {
         DLog("keyMapperShouldBypassPreCocoa \(event)")
 
-        if NSEvent.it_isFunctionOrNumericKeypad(modifierFlags: event.modifierFlags) {
+        if NSEvent.it_isFunctionOrNumericKeypad(modifierFlags: event.modifiers.excludingBuckyBits.flags) {
             // The original reason for this clause is in the old iterm codebase (commit f7c8312)
             // where Ujwal wrote:
             //   Fixed problem when PTYSession: -keyDown is never called when numeric or
@@ -350,7 +431,7 @@ fileprivate class ModernKeyMapperImpl {
         }
 
         if NSEvent.it_shouldSendOptionModifiedKey(
-            modifierFlags: event.modifierFlags,
+            modifierFlags: event.modifiers.excludingBuckyBits.flags,
             charactersIgnoringModifiers: event.charactersIgnoringModifiers,
             leftOptionConfig: configuration.leftOptionKey,
             rightOptionConfig: configuration.rightOptionKey) {
@@ -360,7 +441,7 @@ fileprivate class ModernKeyMapperImpl {
         }
 
         if NSEvent.it_isControlCodeWithOption(
-            modifierFlags: event.modifierFlags,
+            modifierFlags: event.modifiers.excludingBuckyBits.flags,
             keyCode: event.virtualKeyCode,
             characters: event.characters,
             charactersIgnoringModifiers: event.charactersIgnoringModifiers) {
@@ -371,15 +452,6 @@ fileprivate class ModernKeyMapperImpl {
             DLog("true: control+option control code")
             return true
         }
-
-        if flags.contains(.reportAllKeysAsEscapeCodes) {
-            // We never want it to get to insertText:.
-            // This breaks IMEs but I don't see how it could support them. My
-            // conclusion is that this is close to a raw mode that deals with
-            // physical keys, not input methods.
-            DLog("true: reporting all keys as escape codes")
-            return true
-        }
         return false
     }
 
@@ -388,11 +460,11 @@ fileprivate class ModernKeyMapperImpl {
         switch event.eventType {
         case .keyDown:
             DLog("keyDown")
-            if event.modifierFlags.contains(.numericPad) {
+            if event.modifiers.excludingBuckyBits.flags.contains(.numericPad) {
                 DLog("numPad")
                 return handle(event: event)?.lossyString
             }
-            if event.modifierFlags.intersection([.control, .command, .option]) != [.control] {
+            if event.modifiers.excludingBuckyBits.flags.intersection([.control, .command, .option]) != [.control] {
                 // If you're holding a modifier other than control (and optionally shift) let it go
                 // to cocoa. Other keymappers are a little more selective, choosing to handle
                 // only valid controls pre-cocoa, but I don't think it matters. I could be wrong.
@@ -418,13 +490,23 @@ fileprivate class ModernKeyMapperImpl {
     private func shouldIgnore(event: KeyEventInfo) -> Bool {
         DLog("shouldIgnore \(event)")
         if event.eventType == .flagsChanged &&
-            event.modifierFlags.subtracting(.function) == event.previousFlags.subtracting(.function) {
-            DLog("only function changed")
+            event.modifiers.forcingOptionToAlt.reportableFlags == event.previousModifiers.forcingOptionToAlt.reportableFlags {
+            DLog("flags changed but none are reportable")
             return true
         }
-        let cmdKeycodes = [kVK_Command, kVK_RightCommand]
-        return (event.modifierFlags.contains(.command) ||
-                cmdKeycodes.contains(Int(event.virtualKeyCode)))
+        let leftCommandShouldReport = configuration.leftCommandKey != .regular
+        let leftCommandInvolved = event.modifiers.raw.flags.contains(.leftCommand) || event.virtualKeyCode == kVK_Command
+        if !leftCommandShouldReport && leftCommandInvolved {
+            DLog("Ignore because left command involved but not reporting")
+            return true
+        }
+        let rightCommandShouldReport = configuration.rightCommandKey != .regular
+        let rightCommandInvolved = event.modifiers.raw.flags.contains(.rightCommand) || event.virtualKeyCode == kVK_RightCommand
+        if !rightCommandShouldReport && rightCommandInvolved {
+            DLog("Ignore because right command involved but not reporting")
+            return true
+        }
+        return false
     }
 
     func keyMapperWantsKeyEquivalent(_ event: KeyEventInfo) -> Bool {
@@ -434,6 +516,35 @@ fileprivate class ModernKeyMapperImpl {
 
     func keyMapperDictionaryValue() -> [AnyHashable : Any] {
         return ["flags": NSNumber(value: flags.rawValue)]
+    }
+
+    func transformedText(toInsert text: String) -> String {
+        if !flags.contains(.reportAllKeysAsEscapeCodes) {
+            return text
+        }
+        let phonyEvent = NSEvent.keyEvent(with: .keyDown,
+                                          location: .zero,
+                                          modifierFlags: NSApp.currentEvent?.modifierFlags ?? [],
+                                          timestamp: Date.timeIntervalSinceReferenceDate,
+                                          windowNumber: 0,
+                                          context: nil,
+                                          characters: text,
+                                          charactersIgnoringModifiers: text,
+                                          isARepeat: false,
+                                          keyCode: NSApp.currentEvent?.keyCode ?? 0)
+        guard let phonyEvent else {
+            return text
+        }
+        let event = KeyEventInfo(event: phonyEvent, configuration: configuration, flags: flags)
+        let keyReport = KeyReport(type: .press, event: event)
+        let encoded = keyReport.encoded(enhancementFlags: flags)
+        switch encoded {
+        case .string(let value):
+            return value
+        case .fallbackToAmbiguous, .nonReportable:
+            DLog("Unexpected result from csiU: \(encoded)")
+            return text
+        }
     }
 
     func keyMapperData(forKeyUp event: KeyEventInfo) -> Data? {
@@ -456,10 +567,6 @@ fileprivate class ModernKeyMapperImpl {
 
 // Implementation details.
 private extension ModernKeyMapperImpl {
-    private var modifiers: KeyboardProtocolModifers {
-        return KeyboardProtocolModifers(rawValue: UInt32(flags.rawValue))
-    }
-
     private func handle(event: KeyEventInfo) -> Data? {
         DLog("handle \(event)")
         if shouldIgnore(event: event) {
@@ -476,32 +583,8 @@ private extension ModernKeyMapperImpl {
         return s.data(using: String.Encoding(rawValue: encoding))
     }
 
-    private func modifiersByRemovingOption(
-        modifiers original: NSEvent.ModifierFlags,
-        leftBehavior: iTermOptionKeyBehavior,
-        rightBehavior: iTermOptionKeyBehavior) -> NSEvent.ModifierFlags {
-            DLog("original=\(original) left=\(leftBehavior) right=\(rightBehavior)")
-            var modifierFlags = original
-            var optionCount = (modifierFlags.contains(.leftOption) ? 0 : 1) + (modifierFlags.contains(.rightOption) ? 0 : 1)
-            if leftBehavior == .OPT_NORMAL
-                && modifierFlags.contains(.leftOption) {
-                optionCount -= 1
-                modifierFlags.subtract(.leftOption)
-            }
-            if rightBehavior == .OPT_NORMAL  && modifierFlags.contains(.rightOption) {
-                optionCount -= 1
-                modifierFlags.subtract(.rightOption)
-            }
-            if optionCount == 0 {
-                modifierFlags.subtract(.option)
-            }
-            DLog("\(modifierFlags)")
-            return modifierFlags
-        }
-
     private func string(for event: KeyEventInfo, preCocoa: Bool) -> String {
         DLog("event=\(event) preCocoa=\(preCocoa)")
-        var modifiedEvent = event
         if !flags.contains(.reportAllKeysAsEscapeCodes) {
             DLog("do NOT report all keys as escape codes")
             // If option is treated as a native key, remove it from the event.
@@ -515,18 +598,8 @@ private extension ModernKeyMapperImpl {
                 DLog("pressed option with normal option behavior")
                 return ""
             }
-            if event.eventType == .flagsChanged {
-                modifiedEvent.modifierFlags = modifiersByRemovingOption(
-                    modifiers: event.modifierFlags,
-                    leftBehavior: configuration.leftOptionKey,
-                    rightBehavior: configuration.rightOptionKey)
-                modifiedEvent.previousFlags = modifiersByRemovingOption(
-                    modifiers: event.previousFlags,
-                    leftBehavior: configuration.leftOptionKey,
-                    rightBehavior: configuration.rightOptionKey)
-            }
         }
-        guard let report = keyReport(for: modifiedEvent) else {
+        guard let report = keyReport(for: event) else {
             DLog("no key report")
             return ""
         }
@@ -535,7 +608,7 @@ private extension ModernKeyMapperImpl {
             DLog("encode returned fallbackToAmbiguous")
             return ambiguousString(keyReport: report,
                                    preCocoa: preCocoa,
-                                   event: modifiedEvent)
+                                   event: event)
         case .nonReportable:
             DLog("encode returned nonReportable")
             return ""
@@ -544,6 +617,7 @@ private extension ModernKeyMapperImpl {
             return value
         }
     }
+
     private func keyReport(for event: KeyEventInfo) -> KeyReport? {
         switch event.eventType {
         case .keyDown:
@@ -563,12 +637,7 @@ private extension ModernKeyMapperImpl {
                 DLog("Ignore flags changed when not reporting all keys as escape codes")
                 return nil
             }
-            let mask: NSEvent.ModifierFlags = [
-                .shift, .control, .option, .command, .leftOption, .rightOption]
-            let before = event.previousFlags.intersection(mask)
-            let after = event.modifierFlags.intersection(mask)
-            let pressed = after.subtracting(before)
-            let isRelease = pressed.isEmpty
+            let isRelease = event.modifiers.cooked.subtracting(event.previousModifiers.cooked).isEmpty
             if isRelease && !flags.contains(.reportAllEventTypes) {
                 // This progressive enhancement (0b10) causes the terminal to
                 // report key repeat and key release events.
@@ -576,11 +645,7 @@ private extension ModernKeyMapperImpl {
                 return nil
             }
             return KeyReport(type: isRelease ? .release : .press,
-                             event: event,
-                             modifiers: KeyboardProtocolModifers(
-                                event,
-                                leftOptionNormal: leftOptionNormal,
-                                rightOptionNormal: rightOptionNormal))
+                             event: event)
         default:
             DLog("Unexpected event type \(event.eventType)")
             return nil
@@ -588,13 +653,8 @@ private extension ModernKeyMapperImpl {
     }
 
     private func regularReport(type: KeyReport.EventType, event: KeyEventInfo) -> KeyReport {
-        let modifiers = KeyboardProtocolModifers(
-            event,
-            leftOptionNormal: leftOptionNormal,
-            rightOptionNormal: rightOptionNormal)
         return KeyReport(type: type,
-                         event: event,
-                         modifiers: modifiers)
+                         event: event)
     }
 
     private func baseLayoutKeyCode(for event: NSEvent) -> UInt32 {
@@ -693,60 +753,6 @@ extension Array where Element == String {
     }
 }
 
-// Same as VT100TerminalKeyReportingFlags
-fileprivate struct KeyboardProtocolModifers: OptionSet {
-    let rawValue: UInt32
-
-    static let shift =     Self.init(rawValue: 0b1)
-    static let alt =       Self.init(rawValue: 0b10)
-    static let ctrl =      Self.init(rawValue: 0b100)
-    static let cmd =       Self.init(rawValue: 0b1000)  // called super in the docs
-    static let hyper =     Self.init(rawValue: 0b10000)  // not relevant on Mac
-    static let meta =      Self.init(rawValue: 0b100000)  // not relevant on Mac
-    static let caps_lock = Self.init(rawValue: 0b1000000)
-    static let num_lock =  Self.init(rawValue: 0b10000000)  // not relevant on Mac
-
-    var encoded: UInt32 {
-        if rawValue == 0 {
-            return 1
-        }
-        return rawValue + 1
-    }
-}
-
-extension KeyboardProtocolModifers {
-    init(_ event: KeyEventInfo,
-         leftOptionNormal: Bool,
-         rightOptionNormal: Bool) {
-        var value = UInt32(0)
-        if event.modifierFlags.contains(.shift) {
-            value |= Self.shift.rawValue
-        }
-        let exceptions = [UnicodeScalar("\n").value,
-                          UnicodeScalar("\r").value,
-                          UnicodeScalar("\t").value,
-                          8, 0x7f]  // backspace
-
-        let mustReportOption = event.modifierFlags.contains(.function) || exceptions.contains(event.unicodeKeyCode)
-        if event.modifierFlags.contains(.leftOption) && (mustReportOption || !leftOptionNormal) {
-            value |= Self.alt.rawValue
-        }
-        if event.modifierFlags.contains(.rightOption) && (mustReportOption || !rightOptionNormal) {
-            value |= Self.alt.rawValue
-        }
-        if event.modifierFlags.contains(.control) {
-            value |= Self.ctrl.rawValue
-        }
-        if event.modifierFlags.contains(.command) {
-            value |= Self.cmd.rawValue
-        }
-        if event.modifierFlags.contains(.capsLock) {
-            value |= Self.caps_lock.rawValue
-        }
-        rawValue = value
-    }
-}
-
 fileprivate struct KeyReport {
     enum EventType: UInt32 {
         case press = 1
@@ -763,23 +769,21 @@ fileprivate struct KeyReport {
 
     var type: EventType
     var event: KeyEventInfo
-    var modifiers: KeyboardProtocolModifers  // won't include alt if alt has native functionality (i.e., not esc+)
+
     private var numpad: Bool {
-        event.modifierFlags.contains(.numericPad)
+        event.modifiers.cooked.contains(.numericKeypad)
     }
 
     private let csi = "\u{001B}["
 
-    init(type: EventType, 
-         event: KeyEventInfo,
-         modifiers: KeyboardProtocolModifers) {
+    init(type: EventType,
+         event: KeyEventInfo) {
         self.type = type
         self.event = event
-        self.modifiers = modifiers
     }
 
     private var eligibleForCSI: Bool {
-        if !modifiers.isEmpty {
+        if !event.modifiers.cooked.reportableFlags.isEmpty {
             return true
         }
         return ![UInt32("\r"),
@@ -789,21 +793,21 @@ fileprivate struct KeyReport {
 
     private var legacyUnderDisambiguateEscape: EncodedKeypress {
         DLog("legacyUnderDisambiguateEscape")
-        let onlyLegacyCompatibleModifiers = modifiers.subtracting([.ctrl, .shift, .num_lock, .caps_lock]).isEmpty
-        if !onlyLegacyCompatibleModifiers {
+        let hasNonlegacyFlags = !event.modifiers.cooked.nonLegacyCompatibleFlags.isEmpty
+        if hasNonlegacyFlags {
             DLog("Non-legacy compatible modifiers found")
             return .nonReportable
         }
 
         // Turning on this flag will cause the terminal to report the Esc, alt+key, ctrl+key,
         // ctrl+alt+key, shift+alt+key keys using CSI u sequences instead of legacy ones.
-        // Here key is any ASCII key as described in Legacy text keys. 
+        // Here key is any ASCII key as described in Legacy text keys.
         if event.unicodeKeyCode == 27 {
             // esc must be reported with CSI u
             DLog("Is esc")
             return .nonReportable
         }
-        let nonLockModifiers = modifiers.subtracting([.caps_lock, .num_lock])
+        let nonLockModifiers = event.modifiers.cooked.nonLockFlags
         guard nonLockModifiers == [] else {
             // keys with reportable modifiers must be reported with CSI u
             DLog("no nonlock modifiers")
@@ -836,6 +840,7 @@ fileprivate struct KeyReport {
             $0.union($1)
         }
         if !legacyKeys.contains(codePoint: event.unicodeKeyCode) && !isBackspace(event) {
+            // Forward Delete, Home, End, Page Up, Page Down, and function keys take this code path.
             DLog("keycode nonlegacy")
             return .nonReportable
         }
@@ -935,8 +940,8 @@ fileprivate struct KeyReport {
             DLog("No CSI u for repeat because non functional")
             return false
         case .BACKSPACE, .ENTER, .TAB:
-            DLog("CSI u for repeat only if there is a modifier in \(modifiers)")
-            return !modifiers.isEmpty
+            DLog("CSI u for repeat only if there is a reportable modifier in \(event.modifiers)")
+            return !event.modifiers.cooked.reportableFlags.isEmpty
         default:
             DLog("CSI u for repeat because functional, not special case")
             return true
@@ -955,7 +960,7 @@ fileprivate struct KeyReport {
              0x7f,
              8,
              27].contains(event.unicodeKeyCode) &&
-            !modifiers.intersection([.alt, .ctrl, .shift]).isEmpty {
+            event.modifiers.cooked.reportableFlags.overlaps([.alt, .control, .shift]) {
             // Use CSI u for tab, newline, backspace, and escape when combined
             // with a modifier. This isn't in the spec as far as I can see but
             // kitty does this.
@@ -973,10 +978,10 @@ fileprivate struct KeyReport {
             return .nonReportable
         }
         if enhancementFlags.contains(.reportAlternateKeys) &&
-            modifiers.contains(.shift) &&
-            !modifiers.intersection([.ctrl, .alt]).isEmpty {
+            event.modifiers.cooked.contains(.shift) &&
+            event.modifiers.cooked.overlaps([.control, .alt]) {
             // This seems to be what Kitty does. It's not in the spec.
-            DLog("Use CSI u when reporting alternate keys with shift and without ctl/alt")
+            DLog("Use CSI u when reporting alternate keys with shift and one of ctl/alt")
             return .nonReportable
         }
         if enhancementFlags.contains(.disambiguateEscape) {
@@ -1014,7 +1019,7 @@ fileprivate struct KeyReport {
     }
 
     var isDeadKey: Bool {
-        let optionPressed = !event.modifierFlags.intersection([.leftOption, .rightOption, .option]).isEmpty
+        let optionPressed = event.modifiers.raw.flags.contains(.option)
         if optionPressed && !event.useNativeOptionBehavior {
             return false
         }
@@ -1034,7 +1039,7 @@ fileprivate struct KeyReport {
             // The Enter, Tab and Backspace keys will not have release events unless Report all
             // keys as escape codes is also set, so that the user can still type reset at a
             // shell prompt when a program that sets this mode ends without resetting it.
-            if !enhancementFlags.contains(.reportAllEventTypes) || modifiers.isEmpty {
+            if !enhancementFlags.contains(.reportAllEventTypes) || event.modifiers.cooked.reportableFlags.isEmpty {
                 // The spec neglects to mention that in Report All Event Types
                 // Enter, Tab, Backspace, and Tab report release (Kitty does).
                 DLog("No CSI u for special key release when not reporting all keys as escape codes")
@@ -1080,7 +1085,7 @@ fileprivate struct KeyReport {
                 // present in the modifiers.
                 // We don't bother reporting shifted and base if they're the
                 // same as the unicode code.
-                if modifiers.contains(.shift) {
+                if event.modifiers.cooked.reportableFlags.contains(.shift) {
                     if (event.csiUNumber == event.baseLayoutKeyCode &&
                         (event.shiftedKeyCode == nil ||
                          event.csiUNumber == event.shiftedKeyCode)) {
@@ -1109,9 +1114,16 @@ fileprivate struct KeyReport {
                 modifierSubparams.append(encodedType)
             }
         }
-        if modifiers.encoded != 1 || !modifierSubparams.isEmpty {
+        let modeSpecificModifiers = if enhancementFlags.contains(.reportAllKeysAsEscapeCodes) {
+            // This is approximately Kitty's behavior. I have a feeling it's an emergent property
+            // of some spaghetti, but it certainly isn't in the spec.
+            event.modifiers.forcingOptionToAlt
+        } else {
+            event.modifiers.cooked
+        }
+        if modeSpecificModifiers.encoded != 1 || !modifierSubparams.isEmpty {
             DLog("Insert modifiers")
-            modifierSubparams.insert(modifiers.encoded, at: 0)
+            modifierSubparams.insert(modeSpecificModifiers.encoded, at: 0)
         }
 
         var controlSequence = ControlSequence()
@@ -1566,3 +1578,262 @@ extension NSEvent {
         return 0
     }
 }
+
+extension OptionSet where Self == Self.Element {
+    public func overlaps(_ other: Self) -> Bool {
+        return !intersection(other).isEmpty
+    }
+}
+
+fileprivate struct UniversalModifierFlags: Codable, CustomDebugStringConvertible {
+    var debugDescription: String {
+        return "raw=\(raw) cooked=\(cooked)"
+    }
+    struct UnambiguousEventModifierFlags: Codable, CustomDebugStringConvertible {
+        var debugDescription: String {
+            "flags=\(flags) functionKey=\(functionKeyPressed)"
+        }
+        var flags: NSEvent.ModifierFlags
+        var functionKeyPressed: Bool
+
+        init(_ event: NSEvent) {
+            flags = event.it_modifierFlags
+            functionKeyPressed = event.it_functionModifierPressed
+        }
+
+        init(flags: NSEvent.ModifierFlags, functionKeyPressed: Bool) {
+            self.flags = flags
+            self.functionKeyPressed = functionKeyPressed
+        }
+
+        var isEmpty: Bool {
+            flags.isEmpty && !functionKeyPressed
+        }
+
+        func intersection(_ rhs: UnambiguousEventModifierFlags) -> UnambiguousEventModifierFlags {
+            return UnambiguousEventModifierFlags(flags: flags.intersection(rhs.flags),
+                                                 functionKeyPressed: functionKeyPressed && rhs.functionKeyPressed)
+        }
+
+        func subtracting(_ rhs: UnambiguousEventModifierFlags) -> UnambiguousEventModifierFlags {
+            return UnambiguousEventModifierFlags(flags: flags.subtracting(rhs.flags),
+                                                 functionKeyPressed: functionKeyPressed && !rhs.functionKeyPressed)
+        }
+    }
+
+    private var buckyBitGenerators: NSEvent.ModifierFlags {
+        var flags: NSEvent.ModifierFlags = []
+        if configuration.leftCommandKey != .regular {
+            flags.insert(.leftCommand)
+        }
+        if configuration.rightCommandKey != .regular {
+            flags.insert(.rightCommand)
+        }
+        if configuration.leftControlKey != .regular {
+            flags.insert(.leftControl)
+        }
+        if configuration.rightControlKey != .regular {
+            flags.insert(.rightControl)
+        }
+        return flags
+    }
+
+    // Just what we got from the NSEvent unmodified.
+    var raw: UnambiguousEventModifierFlags
+
+    // Raw, but with bits unset when they correspond to buckybits (hyper, super, meta).
+    // This should not be used often.
+    var excludingBuckyBits: UnambiguousEventModifierFlags {
+        UnambiguousEventModifierFlags(
+            flags: raw.flags.subtracting(buckyBitGenerators),
+            functionKeyPressed: raw.functionKeyPressed && configuration.functionKey != .regular)
+    }
+
+    let configuration: ModernKeyMapperConfiguration
+
+    // A CookedModifierFlags describes which semantic modifiers are pressed. If right command is
+    // mapped to hyper, then command will *not* be set but hyper will.
+    struct CookedModifierFlags: OptionSet, Codable {
+        static let control = CookedModifierFlags(rawValue: 0b100)
+        static let shift = CookedModifierFlags(rawValue: 0b1)
+        // Only set if reportable
+        static let alt = CookedModifierFlags(rawValue: 0b10)
+        static let hyper = CookedModifierFlags(rawValue: 0b10000)
+        static let meta = CookedModifierFlags(rawValue: 0b100000)
+        static let `super` = CookedModifierFlags(rawValue: 0b1000)
+
+        static let capsLock = CookedModifierFlags(rawValue: 0b1000000)
+        static let numLock =  CookedModifierFlags(rawValue: 0b10000000)
+
+        static let command = CookedModifierFlags(rawValue: 0b1000000000)
+
+        // Physical option key (not configuration-dependent)
+        static let option = CookedModifierFlags(rawValue: 0b10000000000)
+        static let numericKeypad = CookedModifierFlags(rawValue: 0b100000000000)
+
+        var rawValue: UInt32
+
+        private var nonreportableFlags: CookedModifierFlags {
+            [.command, .option, .numericKeypad]
+        }
+
+        // Encoding for CSI u
+        var encoded: UInt32 {
+            let masked = subtracting(nonreportableFlags).rawValue
+            if masked == 0 {
+                return 1
+            }
+            return masked + 1
+        }
+
+        var reportableFlags: CookedModifierFlags {
+            return subtracting(nonreportableFlags)
+        }
+
+        var nonLegacyCompatibleFlags: CookedModifierFlags {
+            return intersection([.hyper, .meta, .`super`, .command, .alt, .option])
+        }
+
+        var nonLockFlags: CookedModifierFlags {
+            return subtracting([.numLock, .capsLock])
+        }
+
+        private static func from(deviceIndependentFlag: NSEvent.ModifierFlags,
+                                 leftFlagSet: Bool,
+                                 rightFlagSet: Bool,
+                                 leftBuckyBit: iTermBuckyBit,
+                                 rightBuckyBit: iTermBuckyBit) -> CookedModifierFlags {
+            // Translate a buckybit configuration to a CookedModifierFlags, using the normal behavior
+            // if the buckybit is set to `regular`.
+            func from(buckyBit: iTermBuckyBit,
+                      defaultFlag: NSEvent.ModifierFlags) -> CookedModifierFlags {
+                func from(nsEventFlag: NSEvent.ModifierFlags) -> CookedModifierFlags {
+                    return switch nsEventFlag {
+                    case .command: .command
+                    case .control: .control
+                    case .shift: .shift
+                    case .option: .option
+                    default: fatalError("Bogus default flag \(nsEventFlag)")
+                    }
+                }
+
+                switch buckyBit {
+                case .regular:
+                    return from(nsEventFlag: defaultFlag)
+                case .hyper:
+                    return .hyper
+                case .meta:
+                    return .meta
+                case .`super`:
+                    return .`super`
+                @unknown default:
+                    fatalError("Bogus bucky bit \(buckyBit.rawValue)")
+                }
+            }
+
+            var result = CookedModifierFlags()
+
+            if deviceIndependentFlag.contains(.command) {
+                if leftFlagSet {
+                    result.insert(from(buckyBit: leftBuckyBit, defaultFlag: deviceIndependentFlag))
+                }
+                if rightFlagSet {
+                    result.insert(from(buckyBit: rightBuckyBit, defaultFlag: deviceIndependentFlag))
+                }
+                return result
+            }
+            if deviceIndependentFlag.contains(.control) {
+                if leftFlagSet {
+                    result.insert(from(buckyBit: leftBuckyBit, defaultFlag: deviceIndependentFlag))
+                }
+                if rightFlagSet {
+                    result.insert(from(buckyBit: rightBuckyBit, defaultFlag: deviceIndependentFlag))
+                }
+                return result
+            }
+            if deviceIndependentFlag.contains(.function) {
+                if leftFlagSet {
+                    result.insert(from(buckyBit: leftBuckyBit, defaultFlag: deviceIndependentFlag))
+                }
+                if rightFlagSet {
+                    result.insert(from(buckyBit: rightBuckyBit, defaultFlag: deviceIndependentFlag))
+                }
+                return result
+            }
+            fatalError("Unexpected device independent flag \(deviceIndependentFlag)")
+        }
+
+        static func create(eventModifierFlags: UnambiguousEventModifierFlags,
+                           configuration: ModernKeyMapperConfiguration,
+                           unicodeKeyCode: UInt32) -> CookedModifierFlags {
+            var result = CookedModifierFlags()
+            if eventModifierFlags.flags.contains(.control) {
+                result.insert(Self.from(deviceIndependentFlag: .control,
+                                        leftFlagSet: eventModifierFlags.flags.contains(.leftControl),
+                                        rightFlagSet: eventModifierFlags.flags.contains(.rightControl),
+                                        leftBuckyBit: configuration.leftControlKey,
+                                        rightBuckyBit: configuration.rightControlKey))
+            }
+            if eventModifierFlags.flags.contains(.command) {
+                result.insert(Self.from(deviceIndependentFlag: .command,
+                                        leftFlagSet: eventModifierFlags.flags.contains(.leftCommand),
+                                        rightFlagSet: eventModifierFlags.flags.contains(.rightCommand),
+                                        leftBuckyBit: configuration.leftCommandKey,
+                                        rightBuckyBit: configuration.rightCommandKey))
+            }
+            if eventModifierFlags.functionKeyPressed {
+                result.insert(Self.from(deviceIndependentFlag: .function,
+                                        leftFlagSet: true,
+                                        rightFlagSet: false,
+                                        leftBuckyBit: configuration.functionKey,
+                                        rightBuckyBit: .regular))
+            }
+            if eventModifierFlags.flags.contains(.shift) {
+                result.insert(.shift)
+            }
+            if eventModifierFlags.flags.contains(.option) {
+                result.insert(.option)
+            }
+            let exceptions = [UnicodeScalar("\n").value,
+                              UnicodeScalar("\r").value,
+                              UnicodeScalar("\t").value,
+                              8, 0x7f]  // backspace
+            let mustUseAlt = eventModifierFlags.flags.contains(.function) || exceptions.contains(unicodeKeyCode)
+            if eventModifierFlags.flags.contains(.leftOption) && (mustUseAlt || configuration.leftOptionKey != .OPT_NORMAL) {
+                result.insert(.alt)
+            }
+            if eventModifierFlags.flags.contains(.rightOption) && (mustUseAlt || configuration.rightOptionKey != .OPT_NORMAL) {
+                result.insert(.alt)
+            }
+            if eventModifierFlags.flags.contains(.capsLock) {
+                result.insert(.capsLock)
+            }
+            if eventModifierFlags.flags.contains(.numericPad) {
+                result.insert(.numericKeypad)
+            }
+            return result
+        }
+    }
+    let cooked: CookedModifierFlags
+
+    // For some reason Kitty reports the option key even when it is not acting as alt. These
+    // are very special reporting flags used only for modifier reporting.
+    var forcingOptionToAlt: CookedModifierFlags {
+        if cooked.contains(.option) {
+            return cooked.union([.alt])
+        }
+        return cooked
+    }
+
+    init(flags: NSEvent.ModifierFlags,
+         functionKeyPressed: Bool,
+         unicodeKeyCode: UInt32,
+         configuration: ModernKeyMapperConfiguration) {
+        raw = UnambiguousEventModifierFlags(flags: flags, functionKeyPressed: functionKeyPressed)
+        self.configuration = configuration
+        cooked = CookedModifierFlags.create(eventModifierFlags: raw,
+                                            configuration: configuration,
+                                            unicodeKeyCode: unicodeKeyCode)
+    }
+}
+

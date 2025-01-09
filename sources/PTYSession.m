@@ -9819,6 +9819,69 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 #pragma mark - Key Handling
 
+- (BOOL)eventUsesBuckyBits:(NSEvent *)event {
+    if (![_keyMapper shouldHandleBuckyBits]) {
+        return NO;
+    }
+    if ([iTermProfilePreferences unsignedIntegerForKey:KEY_LEFT_COMMAND inProfile:self.profile] != iTermBuckyBitRegular &&
+        (event.modifierFlags & NX_DEVICELCMDKEYMASK) != 0) {
+        return YES;
+    }
+    if ([iTermProfilePreferences unsignedIntegerForKey:KEY_RIGHT_COMMAND inProfile:self.profile] != iTermBuckyBitRegular &&
+        (event.modifierFlags & NX_DEVICERCMDKEYMASK) != 0) {
+        return YES;
+    }
+    if ([iTermProfilePreferences unsignedIntegerForKey:KEY_LEFT_CONTROL inProfile:self.profile] != iTermBuckyBitRegular &&
+        (event.modifierFlags & NX_DEVICELCTLKEYMASK) != 0) {
+        return YES;
+    }
+    if ([iTermProfilePreferences unsignedIntegerForKey:KEY_RIGHT_CONTROL inProfile:self.profile] != iTermBuckyBitRegular &&
+        (event.modifierFlags & NX_DEVICERCTLKEYMASK) != 0) {
+        return YES;
+    }
+    if ([iTermProfilePreferences unsignedIntegerForKey:KEY_FUNCTION inProfile:self.profile] != iTermBuckyBitRegular &&
+        (event.modifierFlags & NSEventModifierFlagFunction) != 0) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)handleKeyDownWithBuckyBits:(NSEvent *)event {
+    if (![self eventUsesBuckyBits:event]) {
+        return NO;
+    }
+    NSString *string = [_keyMapper handleKeyDownWithBuckyBits:event];
+    if (!string) {
+        return NO;
+    }
+    [self writeStringWithLatin1Encoding:string];
+    return YES;
+}
+
+- (BOOL)handleKeyUpWithBuckyBits:(NSEvent *)event {
+    if (![self eventUsesBuckyBits:event]) {
+        return NO;
+    }
+    NSString *string = [_keyMapper handleKeyUpWithBuckyBits:event];
+    if (!string) {
+        return NO;
+    }
+    [self writeStringWithLatin1Encoding:string];
+    return YES;
+}
+
+- (BOOL)handleFlagsChangedWithBuckyBits:(NSEvent *)event {
+    if (![self eventUsesBuckyBits:event]) {
+        return NO;
+    }
+    NSString *string = [_keyMapper handleFlagsChangedWithBuckyBits:event];
+    if (!string) {
+        return NO;
+    }
+    [self writeStringWithLatin1Encoding:string];
+    return YES;
+}
+
 - (BOOL)eventNeedsMitigation:(NSEvent *)event {
     if (event.keyCode != kVK_Escape) {
         return NO;
@@ -10252,6 +10315,26 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return [self optionKey];
     }
     return [rightOptPref intValue];
+}
+
+- (iTermBuckyBit)leftControlKey {
+    return [iTermProfilePreferences unsignedIntegerForKey:KEY_LEFT_CONTROL inProfile:self.profile];
+}
+
+- (iTermBuckyBit)rightControlKey {
+    return [iTermProfilePreferences unsignedIntegerForKey:KEY_RIGHT_CONTROL inProfile:self.profile];
+}
+
+- (iTermBuckyBit)leftCommandKey {
+    return [iTermProfilePreferences unsignedIntegerForKey:KEY_LEFT_COMMAND inProfile:self.profile];
+}
+
+- (iTermBuckyBit)rightCommandKey {
+    return [iTermProfilePreferences unsignedIntegerForKey:KEY_RIGHT_COMMAND inProfile:self.profile];
+}
+
+- (iTermBuckyBit)functionKey {
+    return [iTermProfilePreferences unsignedIntegerForKey:KEY_FUNCTION inProfile:self.profile];
 }
 
 - (BOOL)applicationKeypadAllowed
@@ -17967,7 +18050,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (iTermModernKeyMapperConfiguration *)modernKeyMapperWillMapKey {
     iTermModernKeyMapperConfiguration *configuration = [[[iTermModernKeyMapperConfiguration alloc] initWithLeftOptionKey:self.optionKey
-                                                                                                          rightOptionKey:self.rightOptionKey] autorelease];
+                                                                                                          rightOptionKey:self.rightOptionKey
+                                                                                                          leftControlKey:self.leftControlKey
+                                                                                                         rightControlKey:self.rightControlKey
+                                                                                                          leftCommandKey:self.leftCommandKey
+                                                                                                         rightCommandKey:self.rightCommandKey
+                                                                                                             functionKey:self.functionKey] autorelease];
     return configuration;
 }
 

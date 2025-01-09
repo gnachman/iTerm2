@@ -9,6 +9,7 @@
 #import "NSEvent+iTerm.h"
 
 #import "DebugLogging.h"
+#import "NSObject+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 
 #import <Carbon/Carbon.h>
@@ -248,4 +249,25 @@ exit:
     }
     return result;
 }
+
+static char iTermEventFunctionPressedAssociatedObjectKey;
+
+- (void)setIt_functionModifierPressed:(BOOL)value {
+    [self it_setAssociatedObject:@(value) forKey:&iTermEventFunctionPressedAssociatedObjectKey];
+}
+
+- (BOOL)it_functionModifierPressed {
+    return [[self it_associatedObjectForKey:&iTermEventFunctionPressedAssociatedObjectKey] boolValue];
+}
+
+static char iTermEventFunctionPreviouslyPressedAssociatedObjectKey;
+
+- (void)setIt_functionModifierPreviouslyPressed:(BOOL)value {
+    [self it_setAssociatedObject:@(value) forKey:&iTermEventFunctionPreviouslyPressedAssociatedObjectKey];
+}
+
+- (BOOL)it_functionModifierPreviouslyPressed {
+    return [[self it_associatedObjectForKey:&iTermEventFunctionPreviouslyPressedAssociatedObjectKey] boolValue];
+}
+
 @end

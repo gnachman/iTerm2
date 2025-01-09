@@ -197,6 +197,7 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
             _eventBeingHandled = saved;
         }
     }
+    aString = [_keyMapper transformedTextToInsert:aString];
     [self.delegate keyboardHandler:self insertText:aString];
     if ([aString length] > 0) {
         _keyPressHandled = YES;

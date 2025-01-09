@@ -91,6 +91,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     BOOL _activated;
     NSTimeInterval _activationStartTime;
     NSEventModifierFlags _previousFlags;
+    BOOL _functionPressed;
 }
 
 - (void)dealloc {
@@ -492,6 +493,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         if ([self remapEvent:event inResponder:responder currentSession:[currentTerminal currentSession]]) {
             return YES;
         }
+        if ([[self sessionOfFirstResponder] handleKeyDownWithBuckyBits:event]) {
+            return YES;
+        }
     }
 
     return NO;
@@ -528,7 +532,13 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 - (BOOL)handleFlagsChangedEvent:(NSEvent *)event {
     event.it_previousFlags = _previousFlags;
+    event.it_functionModifierPreviouslyPressed = _functionPressed;
     _previousFlags = event.it_modifierFlags;
+    if (event.keyCode == kVK_Function) {
+        _functionPressed = event.modifierFlags & NSEventModifierFlagFunction;
+    }
+    event.it_functionModifierPressed = _functionPressed;
+
     if (_leader && !(event.modifierFlags & iTermLeaderModifierFlag)) {
         DLog(@"Flags changed while leader on. Rewrite event with leader flag and resend");
         NSEvent *flagChangedPlusHelp = [NSEvent keyEventWithType:NSEventTypeFlagsChanged
@@ -550,7 +560,21 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     }
     DLog(@"Posting flags-changed notification for event %@", event);
     [[iTermFlagsChangedNotification notificationWithEvent:event] post];
+
+    if ([[self sessionOfFirstResponder] handleFlagsChangedWithBuckyBits:event]) {
+        return YES;
+    }
+
     return NO;
+}
+
+- (PTYSession *)sessionOfFirstResponder {
+    NSResponder *firstResponder = [self.keyWindow firstResponder];
+    PTYTextView *textView = [PTYTextView castFrom:firstResponder];
+    if (textView) {
+        return [[[iTermController sharedInstance] currentTerminal] currentSession];
+    }
+    return nil;
 }
 
 - (BOOL)handleKeyDownEvent:(NSEvent *)event {
@@ -631,6 +655,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         }
         case NSEventTypeKeyDown:
             DLog(@"begin key-down");
+            event.it_functionModifierPressed = _functionPressed;
             event = [self eventByRemappingForSecureInput:event];
             if (!event) {
                 DLog(@"Disard event");
@@ -645,14 +670,20 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         case NSEventTypeKeyUp:
             DLog(@"begin key-up");
             DLog(@"Key up: %@", event);
+            event.it_functionModifierPressed = _functionPressed;
+            event = [self eventByRemappingForSecureInput:event];
             if (_leader) {
                 [self makeCursorSparkles];
             }
             _it_modifierFlags = event.it_modifierFlags;
+            if ([[self sessionOfFirstResponder] handleKeyUpWithBuckyBits:event]) {
+                return;
+            }
             break;
         case NSEventTypeScrollWheel:
             DLog(@"begin scroll-wheel");
             event = [self eventByRemappingEvent:event];
+            event.it_functionModifierPressed = _functionPressed;
             if (event.momentumPhase == NSEventPhaseChanged ||
                 event.momentumPhase == NSEventPhaseEnded) {
                 [self handleScrollWheelEvent:event];
@@ -672,6 +703,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         case NSEventTypeOtherMouseDragged:
             DLog(@"begin mouse event");
             event = [self eventByRemappingEvent:event];
+            event.it_functionModifierPressed = _functionPressed;
             break;
         default:
             break;
@@ -975,6 +1007,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             self.appearance = [NSAppearance it_appearanceForCurrentTheme];
             return;
     }
+}
+
+- (BOOL)it_functionPressed {
+    return _functionPressed;
 }
 
 @end

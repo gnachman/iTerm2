@@ -10,7 +10,9 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTermApplication.h"
 #import "iTermDisclosableView.h"
+#import "iTermFlagsChangedNotification.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotkeyPreferencesWindowController.h"
 #import "iTermKeyMappingViewController.h"
@@ -22,7 +24,9 @@
 #import "iTermTouchbarMappings.h"
 #import "iTermTuple.h"
 #import "iTermWarning.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
@@ -33,8 +37,9 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 @end
 
 @implementation ProfilesKeysPreferencesViewController {
-    IBOutlet NSMatrix *_optionKeySends;
-    IBOutlet NSMatrix *_rightOptionKeySends;
+    IBOutlet NSPopUpButton *_leftOptionKeyButton;
+    IBOutlet NSPopUpButton *_rightOptionKeyButton;
+
     IBOutlet NSTextField *_optionKeySendsLabel;
     IBOutlet NSTextField *_rightOptionKeySendsLabel;
     IBOutlet NSButton *_leftOptionKeyChangeable;
@@ -51,6 +56,18 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet NSTabView *_tabView;
     IBOutlet NSButton *_treatOptionAsAlt;
 
+    IBOutlet NSButton *_leftControlButton;
+    IBOutlet NSButton *_rightControlButton;
+    IBOutlet NSButton *_leftCommandButton;
+    IBOutlet NSButton *_rightCommandButton;
+    IBOutlet NSButton *_functionButton;
+
+    IBOutlet NSTextField *_leftControlLabel;
+    IBOutlet NSTextField *_rightControlLabel;
+    IBOutlet NSTextField *_leftCommandLabel;
+    IBOutlet NSTextField *_rightCommandLabel;
+    IBOutlet NSTextField *_functionLabel;
+
     iTermHotkeyPreferencesWindowController *_hotkeyPanel;
     NSInteger _posting;
 }
@@ -65,30 +82,30 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                                                  name:kKeyBindingsChangedNotification
                                                object:nil];
     __weak __typeof(self) weakSelf = self;
-    [self defineControl:_optionKeySends
+    [self defineControl:_leftOptionKeyButton
                     key:KEY_OPTION_KEY_SENDS
             relatedView:_optionKeySendsLabel
-                   type:kPreferenceInfoTypeMatrix
+                   type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
                  update:^BOOL{
                      __strong __typeof(weakSelf) strongSelf = weakSelf;
                      if (strongSelf) {
-                         [strongSelf updateOptionKeySendsForControl:strongSelf->_optionKeySends];
+                         [strongSelf updateOptionKeySendsForControl:strongSelf->_leftOptionKeyButton];
                          return YES;
                      } else {
                          return NO;
                      }
                  }];
 
-    [self defineControl:_rightOptionKeySends
+    [self defineControl:_rightOptionKeyButton
                     key:KEY_RIGHT_OPTION_KEY_SENDS
             relatedView:_rightOptionKeySendsLabel
-                   type:kPreferenceInfoTypeMatrix
+                   type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
                  update:^BOOL{
                      __strong __typeof(weakSelf) strongSelf = weakSelf;
                      if (strongSelf) {
-                         [strongSelf updateOptionKeySendsForControl:strongSelf->_rightOptionKeySends];
+                         [strongSelf updateOptionKeySendsForControl:strongSelf->_rightOptionKeyButton];
                          return YES;
                      } else {
                          return NO;
@@ -128,6 +145,33 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
         [weakSelf didToggleLibtickit];
     };
 
+    info = [self defineControl:_leftControlButton
+                           key:KEY_LEFT_CONTROL
+                   relatedView:_leftControlLabel
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^{ [weakSelf updateExtendedModifierLabelColors]; };
+    info = [self defineControl:_rightControlButton
+                           key:KEY_RIGHT_CONTROL
+                   relatedView:_rightControlLabel
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^{ [weakSelf updateExtendedModifierLabelColors]; };
+    info = [self defineControl:_leftCommandButton
+                           key:KEY_LEFT_COMMAND
+                   relatedView:_leftCommandLabel
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^{ [weakSelf updateExtendedModifierLabelColors]; };
+    info = [self defineControl:_rightCommandButton
+                           key:KEY_RIGHT_COMMAND
+                   relatedView:_rightCommandLabel
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^{ [weakSelf updateExtendedModifierLabelColors]; };
+    info = [self defineControl:_functionButton
+                           key:KEY_FUNCTION
+                   relatedView:_functionLabel
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^{ [weakSelf updateExtendedModifierLabelColors]; };
+    [self updateExtendedModifierLabelColors];
+    
     info = [self defineControl:_hasHotkey
                            key:KEY_HAS_HOTKEY
                    relatedView:nil
@@ -158,6 +202,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
     [self updateDeleteSendsCtrlH];
     [_keyMappingViewController hideAddTouchBarItem];
+
+    [iTermFlagsChangedNotification subscribe:self block:^(iTermFlagsChangedNotification * _Nonnull notification) {
+        [weakSelf flagsDidChange];
+    }];
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
@@ -247,8 +295,33 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
 #pragma mark - Actions
 
+- (BOOL)modifiersSet:(NSEventModifierFlags)flags {
+    return ([[NSApp currentEvent] modifierFlags] & flags) == flags;
+}
+- (void)flagsDidChange {
+    NSFont *systemFont = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    NSFont *boldSystemFont = [NSFont boldSystemFontOfSize:[NSFont systemFontSize]];
+
+    _leftControlLabel.font = [self modifiersSet:(NSEventModifierFlagControl | NX_DEVICELCTLKEYMASK)] ? boldSystemFont : systemFont;
+    _rightControlLabel.font = [self modifiersSet:(NSEventModifierFlagControl | NX_DEVICERCTLKEYMASK)] ? boldSystemFont : systemFont;
+
+    _leftCommandLabel.font = [self modifiersSet:(NSEventModifierFlagCommand | NX_DEVICELCMDKEYMASK)] ? boldSystemFont : systemFont;
+    _rightCommandLabel.font = [self modifiersSet:(NSEventModifierFlagCommand | NX_DEVICERCMDKEYMASK)] ? boldSystemFont : systemFont;
+
+    _functionLabel.font = [(iTermApplication *)NSApp it_functionPressed] ? boldSystemFont : systemFont;;
+}
+
 - (IBAction)optionAsMetaHelp:(id)sender {
     [[NSView castFrom:sender] it_showWarningWithMarkdown:@"In most key reporting modes, when reporting special keys like arrows, the ⌥ key may act as either Meta or Alt. Prior to version 3.5.6, iTerm2 used Meta. The default changed to Alt because some programs like Emacs expect it."];
+}
+
+- (void)updateExtendedModifierLabelColors {
+    NSColor *blue = [NSColor it_blue];
+    _leftControlLabel.textColor = _leftControlButton.selectedTag == 0 ? NSColor.controlTextColor : blue;
+    _rightControlLabel.textColor = _rightControlButton.selectedTag == 0 ? NSColor.controlTextColor : blue;
+    _leftCommandLabel.textColor = _leftCommandButton.selectedTag == 0 ? NSColor.controlTextColor : blue;
+    _rightCommandLabel.textColor = _rightCommandButton.selectedTag == 0 ? NSColor.controlTextColor : blue;
+    _functionLabel.textColor = _functionButton.selectedTag == 0 ? NSColor.controlTextColor : blue;
 }
 
 - (void)didToggleLibtickit {
@@ -387,10 +460,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
 #pragma mark - Option Key Sends
 
-- (void)optionKeySendsDidChangeForControl:(NSMatrix *)sender {
-    if (sender == _optionKeySends && [[_optionKeySends selectedCell] tag] == OPT_META) {
+- (void)optionKeySendsDidChangeForControl:(NSPopUpButton *)sender {
+    if (sender == _leftOptionKeyButton && [_leftOptionKeyButton selectedTag] == OPT_META) {
         [self maybeWarnAboutMeta];
-    } else if (sender == _rightOptionKeySends && [[_rightOptionKeySends selectedCell] tag] == OPT_META) {
+    } else if (sender == _rightOptionKeyButton && [_rightOptionKeyButton selectedTag] == OPT_META) {
         [self maybeWarnAboutMeta];
     }
     PreferenceInfo *info = [self infoForControl:sender];
@@ -398,10 +471,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [self setInt:[sender selectedTag] forKey:info.key];
 }
 
-- (void)updateOptionKeySendsForControl:(NSMatrix *)control {
+- (void)updateOptionKeySendsForControl:(NSPopUpButton *)control {
     PreferenceInfo *info = [self infoForControl:control];
     assert(info);
-    [control selectCellWithTag:[self intForKey:info.key]];
+    [control selectItemWithTag:[self intForKey:info.key]];
 }
 
 #pragma mark - iTermKeyMappingViewControllerDelegate
@@ -559,7 +632,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 - (void)maybeWarnAboutMeta {
     [iTermWarning showWarningWithTitle:@"You have chosen to have an option key act as Meta. "
                                        @"This option is useful for backward compatibility with older "
-                                       @"systems. The \"+Esc\" option is recommended for most users."
+                                       @"systems. The \"Esc+\" option is recommended for most users."
                                actions:@[ @"OK" ]
                             identifier:@"NeverWarnAboutMeta"
                            silenceable:kiTermWarningTypePermanentlySilenceable
