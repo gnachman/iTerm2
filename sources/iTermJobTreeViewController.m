@@ -468,9 +468,8 @@ static int gSignalsToList[] = {
 }
 
 - (void)updateKillButtonEnabled {
-    const BOOL shouldBeEnabled = (_outlineView.selectedRowIndexes.count > 0 && [signal_ isValid]);
-    signal_.enabled = shouldBeEnabled;
-    kill_.enabled = shouldBeEnabled;
+    signal_.enabled = _outlineView.selectedRowIndexes.count > 0;
+    kill_.enabled = (_outlineView.selectedRowIndexes.count > 0 && [signal_ isValid]);
 }
 
 - (void)setFont:(NSFont *)font {
