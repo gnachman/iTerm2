@@ -304,7 +304,7 @@ extern NSString *const iTermDefaultAIPrompt;
 
 + (NSString *)warningIdentifierForNeverWarnAboutShortLivedSessions:(NSString *)guid;
 #if DEBUG
-+ (BOOL)pasteboardHasGitlabURL;
++ (NSURL *)gitlabURLOnPasteboard;
 #endif
 
 @end

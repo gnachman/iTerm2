@@ -1101,7 +1101,7 @@ enum {
     if (shouldLoadRemotePrefs && byUI) {
         // Just turned it on.
 #if DEBUG
-        const BOOL gitlab = [iTermPreferences pasteboardHasGitlabURL];
+        const BOOL gitlab = [iTermPreferences gitlabURLOnPasteboard] != nil;
 #else
         const BOOL gitlab = NO;
 #endif

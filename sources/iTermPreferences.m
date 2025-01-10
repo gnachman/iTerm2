@@ -323,24 +323,32 @@ static NSString *sPreviousVersion;
     };
 }
 
-+ (BOOL)pasteboardHasGitlabURL {
++ (NSURL *)gitlabURLOnPasteboard {
     NSString *pasteboardString = [NSString stringFromPasteboard];
+    NSString *const numbers = @"^[0-9a-f]{32}$";
     NSArray<NSString *> *regexen = @[
         @"^https://gitlab\\.com/gnachman/iterm2/uploads/[a-f0-9]*/com\\.googlecode\\.iterm2\\.plist$",
-        @"^https://gitlab\\.com/-/project/[a-f0-9]*/uploads/[a-f0-9]*/com\\.googlecode\\.iterm2\\.plist$"
+        @"^https://gitlab\\.com/-/project/[a-f0-9]*/uploads/[a-f0-9]*/com\\.googlecode\\.iterm2\\.plist$",
+        numbers
     ];
-    return [regexen anyWithBlock:^BOOL(NSString *regex) {
+    NSString *regex = [regexen objectPassingTest:^BOOL(NSString *regex, NSUInteger index, BOOL *stop) {
         return [pasteboardString isMatchedByRegex:regex];
     }];
+    if ([regex isEqual:numbers]) {
+        return [NSURL URLWithString:[NSString stringWithFormat:@"https://gitlab.com/-/project/252461/uploads/%@/com.googlecode.iterm2.plist", pasteboardString]];
+    } else {
+        return [NSURL URLWithString:pasteboardString];
+    }
 }
 
 #if DEBUG
 + (void)handleGitlabURLOnPasteboard {
-    if (![self pasteboardHasGitlabURL]) {
+    NSURL *url = [self gitlabURLOnPasteboard];
+    if (!url) {
         return;
     }
     NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
-    NSString *urlString = [NSString stringFromPasteboard];
+    NSString *urlString = url.absoluteString;
     if ([ud boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder] &&
         [[ud stringForKey:kPreferenceKeyCustomFolder] isEqual:urlString]) {
         return;
