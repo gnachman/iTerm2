@@ -1575,26 +1575,33 @@ DQ
                             <menuItem isSeparatorItem="YES" id="XJx-vd-H4Y">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Merge All Windows" identifier="Merge All Windows" id="Kb8-2V-7Gg">
+                            <menuItem title="Arrange Windows" id="tt8-Pq-lBv">
                                 <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="mergeAllWindows:" target="-1" id="Xzh-bw-9Mo"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="7sO-I5-Tdu">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Arrange Windows Horizontally" identifier="Arrange Windows Horizontally" id="1178">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="arrangeHorizontally:" target="201" id="1179"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Arrange Split Panes Evenly" identifier="Arrange Split Panes Evenly" id="xtk-nu-uNt">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="arrangeSplitPanesEvenly:" target="201" id="eE4-2D-fTq"/>
-                                </connections>
+                                <menu key="submenu" title="Arrange Windows" id="MD6-rO-AU0">
+                                    <items>
+                                        <menuItem title="Merge All Windows" identifier="Merge All Windows" id="Kb8-2V-7Gg">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="mergeAllWindows:" target="-1" id="Xzh-bw-9Mo"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="7sO-I5-Tdu">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                        </menuItem>
+                                        <menuItem title="Arrange Windows Horizontally" identifier="Arrange Windows Horizontally" id="1178">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="arrangeHorizontally:" target="201" id="1179"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Arrange Split Panes Evenly" identifier="Arrange Split Panes Evenly" id="xtk-nu-uNt">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="arrangeSplitPanesEvenly:" target="201" id="eE4-2D-fTq"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1204">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
@@ -1672,6 +1679,12 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem title="Lock Split Pane Width" identifier="Lock Split Pane Width" id="OsT-y6-DSn">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleLockSplitPaneWidth:" target="-1" id="QuG-FK-nTo"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="v5T-Yq-HqS"/>
                             <menuItem title="Resize Window" id="X81-5E-VA5">
                                 <modifierMask key="keyEquivalentModifierMask"/>
@@ -1723,26 +1736,24 @@ DQ
                             <menuItem isSeparatorItem="YES" id="92">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Move Tab Left" keyEquivalent="[" identifier="Move Tab Left" id="1406">
-                                <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="moveTabLeft:" target="-1" id="1410"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Move Tab Right" keyEquivalent="]" identifier="Move Tab Right" id="1408">
-                                <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="moveTabRight:" target="-1" id="1411"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="1405">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Lock Split Pane Width" identifier="Lock Split Pane Width" id="OsT-y6-DSn">
+                            <menuItem title="Move Tab" id="1QV-xl-Oun">
                                 <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="toggleLockSplitPaneWidth:" target="-1" id="QuG-FK-nTo"/>
-                                </connections>
+                                <menu key="submenu" title="Move Tab" id="0pG-gd-cTc">
+                                    <items>
+                                        <menuItem title="Move Tab Left" keyEquivalent="[" identifier="Move Tab Left" id="1406">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="moveTabLeft:" target="-1" id="1410"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Move Tab Right" keyEquivalent="]" identifier="Move Tab Right" id="1408">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="moveTabRight:" target="-1" id="1411"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="iau-F7-eSE">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
