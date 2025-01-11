@@ -334,6 +334,9 @@ static NSString *sPreviousVersion;
     NSString *regex = [regexen objectPassingTest:^BOOL(NSString *regex, NSUInteger index, BOOL *stop) {
         return [pasteboardString isMatchedByRegex:regex];
     }];
+    if (!regex) {
+        return nil;
+    }
     if ([regex isEqual:numbers]) {
         return [NSURL URLWithString:[NSString stringWithFormat:@"https://gitlab.com/-/project/252461/uploads/%@/com.googlecode.iterm2.plist", pasteboardString]];
     } else {
