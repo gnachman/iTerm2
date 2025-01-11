@@ -8247,7 +8247,7 @@ instead of the system keyboard.</string>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="T59-Vc-DXx" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="123" y="144" width="541" height="224"/>
+                                        <rect key="frame" x="122" y="144" width="541" height="224"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6407">
