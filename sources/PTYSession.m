@@ -419,11 +419,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     // Does the terminal think this session is focused?
     BOOL _focused;
 
-    iTermSearchEngine *_tailFindSearchEngine;
+    iTermTailFindController *_tailFindController;
     NSTimer *_tailFindTimer;
-    // A one-shot tail find runs even though the find view is invisible. Once it's done searching,
-    // it doesn't restart itself until the user does cmd-g again. See issue 9964.
-    BOOL _performingOneShotTailFind;
 
     TmuxGateway *_tmuxGateway;
     BOOL _haveKickedOffTmux;
@@ -561,7 +558,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     NSString *_badgeFontName;
     iTermVariableScope *_variablesScope;
-    
+
     BOOL _showingVisualIndicatorForEsc;
 
     iTermPrintGuard *_printGuard;
@@ -762,9 +759,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
         _tmuxSecureLogging = NO;
         assert(_screen.syncDistributor != nil);
-        _tailFindSearchEngine = [[iTermSearchEngine alloc] initWithDataSource:_screen
-                                                              syncDistributor:_screen.syncDistributor];
-        _tailFindSearchEngine.dataSource = _screen;
+        _tailFindController = [[iTermTailFindController alloc] initWithDataSource:_screen syncDistributor:_screen.syncDistributor];
+        _tailFindController.delegate = self;
         _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
@@ -899,8 +895,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
                                                                  object:nil];
         [[NSUserDefaults standardUserDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
                                                               block:^(id _Nonnull newValue) {
-                                                                  [weakSelf themeDidChange];
-                                                              }];
+            [weakSelf themeDidChange];
+        }];
         [NSApp addObserver:self
                 forKeyPath:@"effectiveAppearance"
                    options:NSKeyValueObservingOptionNew
@@ -946,7 +942,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_metalGlue release];
     }
     [_nameController release];
-    [self stopTailFind];  // This frees the substring in the tail find context, if needed.
+    [_tailFindController stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
     [_pasteboard release];
     [_pbtext release];
@@ -974,7 +970,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_upload release];
     [_shell release];
     [_screen release];
-    [_tailFindSearchEngine release];
+    [_tailFindController release];
     [_patternedImage release];
     [_announcements release];
     [_variables release];
@@ -2335,9 +2331,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview clearHighlights:NO];
     [_textview updatePortholeFrames];
     [[_delegate realParentWindow] invalidateRestorableState];
-    __weak __typeof(self) weakSelf = self;
+    __weak __typeof(_tailFindController) weakTailFindController = _tailFindController;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf startTailFindIfVisible];
+        [weakTailFindController startTailFindIfVisible];
     });
     [self updateMetalDriver];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
@@ -2919,7 +2915,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
-        NSDictionary *env = [self environmentForNewJobFromEnvironment:environment ?: @{} 
+        NSDictionary *env = [self environmentForNewJobFromEnvironment:environment ?: @{}
                                                         substitutions:substitutions
                                                           arrangement:arrangementName
                                                       fromArrangement:fromArrangement];
@@ -4645,9 +4641,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                        alpha:1.0];
         case 1:  // Red
             return [NSColor colorWithSRGBRed:0.707443237
-                                        green:0.236600697
-                                         blue:0.163000375
-                                        alpha:1.0];
+                                       green:0.236600697
+                                        blue:0.163000375
+                                       alpha:1.0];
         case 2:  // Green
             return [NSColor colorWithSRGBRed:0.0
                                        green:0.760784328
@@ -4655,19 +4651,19 @@ ITERM_WEAKLY_REFERENCEABLE
                                        alpha:1.0];
         case 3:  // Yellow
             return [NSColor colorWithSRGBRed:0.780586481
-                                        green:0.769594848
-                                         blue:0.0
+                                       green:0.769594848
+                                        blue:0.0
                                        alpha:1.0];
         case 4:  // Blue
             return [NSColor colorWithSRGBRed:0.154043003
-                                        green:0.264743567
-                                         blue:0.782161772
-                                        alpha:1.0];
+                                       green:0.264743567
+                                        blue:0.782161772
+                                       alpha:1.0];
         case 5:  // Magenta
             return [NSColor colorWithSRGBRed:0.752197266
-                                        green:0.249316841
-                                         blue:0.744943619
-                                        alpha:1.0];
+                                       green:0.249316841
+                                        blue:0.744943619
+                                       alpha:1.0];
         case 6:  // Cyan
             return [NSColor colorWithSRGBRed:0.0
                                        green:0.774259031
@@ -4675,9 +4671,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                        alpha:1.0];
         case 7:  // White
             return [NSColor colorWithSRGBRed:0.781039774
-                                        green:0.781058252
-                                         blue:0.781048298
-                                        alpha:1.0];
+                                       green:0.781058252
+                                        blue:0.781048298
+                                       alpha:1.0];
         case 8:  // Bright Black
             return [NSColor colorWithSRGBRed:0.407817602
                                        green:0.407827884
@@ -4685,9 +4681,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                        alpha:1.0];
         case 9:  // Bright Red
             return [NSColor colorWithSRGBRed:0.865951538
-                                        green:0.475240767
-                                         blue:0.458332241
-                                        alpha:1.0];
+                                       green:0.475240767
+                                        blue:0.458332241
+                                       alpha:1.0];
         case 10:  // Bright Green
             return [NSColor colorWithSRGBRed:0.345007032
                                        green:0.904281616
@@ -4695,24 +4691,24 @@ ITERM_WEAKLY_REFERENCEABLE
                                        alpha:1.0];
         case 11:  // Bright Yellow
             return [NSColor colorWithSRGBRed:0.92590332
-                                        green:0.883377552
-                                         blue:0.0
+                                       green:0.883377552
+                                        blue:0.0
                                        alpha:1.0];
         case 12:  // Bright Blue
             return [NSColor colorWithSRGBRed:0.653490782
-                                        green:0.670447171
-                                         blue:0.948532105
-                                        alpha:1.0];
+                                       green:0.670447171
+                                        blue:0.948532105
+                                       alpha:1.0];
         case 13:  // Bright Magenta
             return [NSColor colorWithSRGBRed:0.882156372
-                                        green:0.492726654
-                                         blue:0.882156372
-                                        alpha:1.0];
+                                       green:0.492726654
+                                        blue:0.882156372
+                                       alpha:1.0];
         case 14:  // Bright Cyan
             return [NSColor colorWithSRGBRed:0.375975311
-                                        green:0.992632926
-                                         blue:1.0
-                                        alpha:1.0];
+                                       green:0.992632926
+                                        blue:1.0
+                                       alpha:1.0];
         case 15:  // Bright White
             return [NSColor colorWithSRGBRed:0.999996006
                                        green:1.0
@@ -4720,9 +4716,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                        alpha:1.0];
         default:
             return [NSColor colorWithSRGBRed:1.0
-                                        green:0.0
+                                       green:0.0
                                         blue:0.0
-                                        alpha:1.0];
+                                       alpha:1.0];
     }
 }
 - (void)loadANSIColor:(int)i fromProfile:(Profile *)aDict darkMode:(BOOL)dark to:(NSMutableDictionary<NSNumber *, id> *)dict {
@@ -5986,8 +5982,8 @@ ITERM_WEAKLY_REFERENCEABLE
     // cadence since we might have just become idle.
     self.active = (somethingIsBlinking || transientTitle || animationPlaying);
 
-    if (_tailFindTimer && _view.findViewIsHidden && !_performingOneShotTailFind) {
-        [self stopTailFind];
+    if (_view.findViewIsHidden) {
+        [_tailFindController stopContinuousTailFind];
     }
 
     const BOOL passwordInput = _shell.passwordInput || _conductor.atPasswordPrompt;
@@ -6256,7 +6252,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
     NSDictionary *defaultAttributes = [_textview attributeProviderUsingProcessedColors:YES
                                                            elideDefaultBackgroundColor:elideDefaultBackgroundColor]((screen_char_t){}, nil);
     NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
-                                                                      attributes:defaultAttributes];
+                                                                    attributes:defaultAttributes];
 
     NSAttributedString *newline = [NSAttributedString attributedStringWithString:@"\n"
                                                                       attributes:defaultAttributes];
@@ -6447,8 +6443,8 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
                                                                       @(self.delegate.tmuxWindow)]];
         fontChangeNotificationInProgress = NO;
         [_delegate setTmuxFontTable:_textview.fontTable
-                      hSpacing:_textview.horizontalSpacing
-                      vSpacing:_textview.verticalSpacing];
+                           hSpacing:_textview.horizontalSpacing
+                           vSpacing:_textview.verticalSpacing];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionTmuxFontDidChange
                                                             object:self];
     }
@@ -6480,9 +6476,9 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 
         // Set the font in the bookmark dictionary
         [self setSessionSpecificProfileValues:@{
-                              KEY_NORMAL_FONT: [newFontTable.asciiFont.font stringValue],
-                           KEY_NON_ASCII_FONT: [newFontTable.defaultNonASCIIFont.font stringValue] ?: [NSNull null],
-                              KEY_FONT_CONFIG: newFontTable.configString ?: [NSNull null]
+            KEY_NORMAL_FONT: [newFontTable.asciiFont.font stringValue],
+            KEY_NON_ASCII_FONT: [newFontTable.defaultNonASCIIFont.font stringValue] ?: [NSNull null],
+            KEY_FONT_CONFIG: newFontTable.configString ?: [NSNull null]
         }];
 
         // Update the model's copy of the bookmark.
@@ -6783,14 +6779,14 @@ DLog(args); \
 - (void)searchNext {
     [_view createFindDriverIfNeeded];
     [_view.findDriver searchNext];
-    [self beginOneShotTailFind];
+    [_tailFindController beginOneShotTailFind];
 }
 
 // Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchPrevious {
     [_view createFindDriverIfNeeded];
     [_view.findDriver searchPrevious];
-    [self beginOneShotTailFind];
+    [_tailFindController beginOneShotTailFind];
 }
 
 - (void)resetFindCursor {
@@ -11347,8 +11343,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
     if (minimal) {
         NSColor *backgroundColor = [iTermProfilePreferences colorForKey:KEY_BACKGROUND_COLOR
-                                                              dark:[NSApp effectiveAppearance].it_isDark
-                                                           profile:self.profile];
+                                                                   dark:[NSApp effectiveAppearance].it_isDark
+                                                                profile:self.profile];
         DLog(@"dark=%@", @(backgroundColor.isDark));
         return backgroundColor.isDark;
     }
@@ -12249,113 +12245,46 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 #pragma mark - Tail find
 
-- (void)startTailFindIfVisible {
-    if (!_tailFindTimer &&
-        [_delegate sessionBelongsToVisibleTab]) {
-        [self beginContinuousTailFind];
-    }
-}
-
-- (void)continueTailFind {
-    NSMutableArray<SearchResult *> *results = [NSMutableArray array];
-    BOOL more;
-    VT100GridAbsCoordRange rangeSearched = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
-    NSRange ignore;
-    DLog(@"Continue tail find");
-    more = [_tailFindSearchEngine continueFindAllResults:results
-                                                rangeOut:&ignore
-                                            absLineRange:_textview.findOnPageHelper.absLineRange
-                                           rangeSearched:&rangeSearched];
-    DLog(@"Continue tail find found %@ results, last is %@, more=%@", @(results.count), results.lastObject, @(more));
-    if (VT100GridAbsCoordRangeIsValid(rangeSearched)) {
-        [_textview removeSearchResultsInRange:rangeSearched];
-    }
-    for (SearchResult *r in results) {
-        [_textview addSearchResult:r];
-    }
-    if ([results count]) {
-        [_textview requestDelegateRedraw];
-    }
-    if (more) {
-        DLog(@"Schedule continueTailFind in .01 sec");
-        _tailFindTimer = [NSTimer scheduledTimerWithTimeInterval:0.01
-                                                          target:self
-                                                        selector:@selector(continueTailFind)
-                                                        userInfo:nil
-                                                         repeats:NO];
-    } else {
-        DLog(@"tailfind is all done");
-        // Update the saved position to just before the screen.
-        _screen.searchEngine.lastStartPosition = _tailFindSearchEngine.lastLocationSearched ?: _screen.searchEngine.lastEndOfBufferPosition;
-        [_tailFindTimer invalidate];
-        _tailFindTimer = nil;
-        _performingOneShotTailFind = NO;
-    }
-}
-
-- (void)beginContinuousTailFind {
-    DLog(@"beginContinuousTailFind");
-    _performingOneShotTailFind = NO;
-    [self beginTailFindImpl];
-}
-
-- (void)beginOneShotTailFind {
-    DLog(@"beginOneShotTailFind");
-    if (_tailFindTimer || _performingOneShotTailFind) {
-        return;
-    }
-    _performingOneShotTailFind = YES;
-    if (![self beginTailFindImpl]) {
-        _performingOneShotTailFind = NO;
-    }
-}
-
-- (BOOL)beginTailFindImpl {
-    DLog(@"beginTailFindImpl");
-    if (!_screen.searchEngine.hasRequest) {
-        return NO;
-    }
-    DLog(@"Begin tail find");
-    // Set the starting position to the block & offset that the backward search
-    // began at. Do a forward search from that location.
-    LineBufferPosition *start = _screen.searchEngine.lastStartPosition;
-    LineBufferPosition *candidate = [_screen positionForTailSearchOfScreen];
-    if (!start || [start compare:candidate] == NSOrderedDescending) {
-        start = candidate;
-    }
-    [_tailFindSearchEngine setFindString:_screen.searchEngine.query
-                        forwardDirection:YES
-                                    mode:_screen.searchEngine.mode
-                             startingAtX:0
-                             startingAtY:0
-                              withOffset:0
-                         multipleResults:YES
-                            absLineRange:_textview.findOnPageHelper.absLineRange
-                         forceMainScreen:NO
-                           startPosition:start];
-    [self continueTailFind];
-    return YES;
-}
-
 - (void)sessionContentsChanged:(NSNotification *)notification {
-    if (!_tailFindTimer &&
-        [notification object] == self &&
+    if ([notification object] == self &&
         [_delegate sessionBelongsToVisibleTab]) {
-        DLog(@"Session contents changed. Begin tail find.");
-        __weak __typeof(self) weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf startTailFindIfVisible];
-        });
+        [_tailFindController contentDidChange];
     }
 }
 
-- (void)stopTailFind
-{
-    DLog(@"stop tail find");
-    [_tailFindSearchEngine cancel];
-    [_tailFindTimer invalidate];
-    _tailFindTimer = nil;
+- (BOOL)tailFindControllerBelongsToVisibleTab {
+    return [_delegate sessionBelongsToVisibleTab];
 }
+
+- (iTermFindOnPageHelper *)tailFindControllerFindOnPageHelper {
+    return _textview.findOnPageHelper;
+}
+
+- (void)tailFindControllerRemoveSearchResultsInRange:(VT100GridAbsCoordRange)rangeSearched {
+    [_textview removeSearchResultsInRange:rangeSearched];
+}
+
+- (void)tailFindControllerAddWithSearchResult:(SearchResult *)searchResult {
+    [_textview addSearchResult:searchResult];
+}
+
+- (void)tailFindControllerDoesNeedDisplay {
+    [_textview requestDelegateRedraw];
+}
+
+- (void)tailFindControllerDidFinishAtLocation:(LineBufferPosition *)location {
+    _screen.searchEngine.lastStartPosition = location ?: _screen.searchEngine.lastEndOfBufferPosition;
+}
+
+- (iTermSearchEngine *)tailFindControllerMainSearchEngine {
+    return _screen.searchEngine;
+}
+
+- (LineBufferPosition *)tailFindControllerPositionForTailSearchOfMainSearchEngine {
+    return [_screen positionForTailSearchOfScreen];
+}
+
+#pragma mark - tmux Output
 
 - (void)printTmuxMessage:(NSString *)message {
     DLog(@"%@", message);
@@ -12401,6 +12330,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenResetTailFind {
     _screen.savedFindContextAbsPos = 0;
+    [_screen.searchEngine updateSnapshot];
+    [_screen.searchEngine invalidateLastStartPosition];
+    [_tailFindController reset];
 }
 
 - (void)screenNeedsRedraw {
@@ -15674,7 +15606,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         if (self.shell.winSizeController.timeSinceLastJiggle > 0.25) {
             _newOutput = YES;
         }
-        
+
         // Make sure the screen gets redrawn soonish
         self.active = YES;
 
@@ -16507,7 +16439,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (BOOL)sessionViewShouldUpdateSubviewsFramesAutomatically {
     [_composerManager layout];
-    
+
     // We won't automatically layout the session view's descendents for tmux
     // tabs. Instead the change gets reported to the tmux server and it will
     // send us a new layout.
@@ -16651,7 +16583,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     const BOOL alt = [self.screen terminalSoftAlternateScreenMode];
     const BOOL bottom = _textview.scrolledToBottom;
     DLog(@"alt=%@ bottom=%@", @(alt), @(bottom));
-    return !(alt && bottom);    
+    return !(alt && bottom);
 }
 
 - (id<VT100ScreenMarkReading>)textViewSelectedCommandMark {
@@ -17514,7 +17446,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (components != iTermTitleComponentsCustom) {
         return iTermSessionNameControllerSystemTitleUniqueIdentifier;
     }
-    
+
     iTermTuple<NSString *, NSString *> *tuple = [iTermTuple fromPlistValue:[iTermProfilePreferences stringForKey:KEY_TITLE_FUNC inProfile:_profile]];
     if (tuple.firstObject && tuple.secondObject) {
         return tuple.secondObject;
@@ -19015,7 +18947,7 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
         [_composerManager setPrefix:nil userData:nil];
         [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
             DLog(@"willSendCommand:%@", command);
-            const VT100GridAbsCoord start = 
+            const VT100GridAbsCoord start =
             VT100GridAbsCoordMake(mutableState.currentGrid.cursor.x,
                                   mutableState.currentGrid.cursor.y + mutableState.numberOfScrollbackLines + mutableState.cumulativeScrollbackOverflow);
             [mutableState composerWillSendCommand:command

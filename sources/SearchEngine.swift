@@ -1066,9 +1066,9 @@ class iTermSearchEngine: NSObject, Pausable {
     }
     
     @objc weak var delegate: iTermSearchEngineDelegate?
-    
+
     private var impl: SearchEngine?
-    
+
     // Hey! Something sneaky is happening here so pay attention.
     // We automatically add ourselves to the dataSource's sync distributor so we can
     // automatically pause and update the snapshot when it syncs.
@@ -1293,6 +1293,11 @@ extension iTermSearchEngine {
         lastStartPosition = search(request: request, snapshot: snapshot)
     }
 
+    @objc
+    func invalidateLastStartPosition() {
+        lastStartPosition = nil
+    }
+
     @objc(continueFindAllResults:rangeOut:absLineRange:rangeSearched:)
     func continueFindAllResults(_ results: NSMutableArray,
                                 rangeOut: UnsafeMutablePointer<NSRange>,
@@ -1302,7 +1307,7 @@ extension iTermSearchEngine {
         guard let impl, dataSource != nil, impl.operation != nil else {
             return false
         }
-
+        
         var finished = ObjCBool(false)
         let output = consume(rangeSearched: rangeSearched,
                              lineRange: rangeOut,
@@ -1365,7 +1370,9 @@ class SyncDistributor: NSObject {
         objects.removeAll { box in
             box.value == nil
         }
-        return MultiUnpauser(objects.compactMap({ $0.value?.pause() }))
+        return MultiUnpauser(objects.compactMap({
+            $0.value?.pause()
+        }))
     }
 }
 

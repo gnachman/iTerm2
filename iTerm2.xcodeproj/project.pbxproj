@@ -4151,6 +4151,7 @@
 		A6F3DA97245647E4001D50C9 /* iTermSwipeTracker.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3DA95245647E4001D50C9 /* iTermSwipeTracker.h */; };
 		A6F3DA98245647E4001D50C9 /* iTermSwipeTracker.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F3DA96245647E4001D50C9 /* iTermSwipeTracker.m */; };
 		A6F3E96E1D60E4F0000E97C4 /* iTermInitialDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */; };
+		A6F3EB4F2D32EC5B00612173 /* TailFindController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F3EB4E2D32EC5500612173 /* TailFindController.swift */; };
 		A6F66B8F2C2E2B7600DC3569 /* BTreeIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F66B7C2C2E2B7200DC3569 /* BTreeIndex.swift */; };
 		A6F66B902C2E2B7600DC3569 /* BTreeIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F66B792C2E2B7100DC3569 /* BTreeIterator.swift */; };
 		A6F66B912C2E2B7600DC3569 /* BTreeBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F66B712C2E2B7000DC3569 /* BTreeBuilder.swift */; };
@@ -7570,6 +7571,7 @@
 		A6F3DA96245647E4001D50C9 /* iTermSwipeTracker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSwipeTracker.m; sourceTree = "<group>"; };
 		A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermInitialDirectory.h; sourceTree = "<group>"; };
 		A6F3E96D1D60E4F0000E97C4 /* iTermInitialDirectory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermInitialDirectory.m; sourceTree = "<group>"; };
+		A6F3EB4E2D32EC5500612173 /* TailFindController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TailFindController.swift; sourceTree = "<group>"; };
 		A6F66B6F2C2E2B6F00DC3569 /* Map.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Map.swift; path = BTree/Map.swift; sourceTree = "<group>"; };
 		A6F66B702C2E2B6F00DC3569 /* BridgedList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BridgedList.swift; path = BTree/BridgedList.swift; sourceTree = "<group>"; };
 		A6F66B712C2E2B7000DC3569 /* BTreeBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTreeBuilder.swift; path = BTree/BTreeBuilder.swift; sourceTree = "<group>"; };
@@ -9834,6 +9836,7 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6F3EB4E2D32EC5500612173 /* TailFindController.swift */,
 				A65B1BD42D1E3CC500F5A740 /* iTermMTKView.swift */,
 				A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */,
 				A6FFAE722CF682B60031FB21 /* iTermDoubleWidthCharacterCache.h */,
@@ -16197,6 +16200,7 @@
 				A6F718D42266FDEB0053488E /* iTermSemanticHistoryController.m in Sources */,
 				A634817A24AFC4AF0003C11B /* iTermFocusablePanel.m in Sources */,
 				A6153D4E21F30A9C002976FC /* iTermJobTreeViewController.m in Sources */,
+				A6F3EB4F2D32EC5B00612173 /* TailFindController.swift in Sources */,
 				A6F1B3B92690EA9700546767 /* iTermOptionallyBordered.m in Sources */,
 				A6EC937F24E85CEF00EEADEF /* PasteboardHistory.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
