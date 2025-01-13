@@ -555,7 +555,6 @@ offset:(CGPoint)offset {
                   color:(CGColorRef)color
             antialiased:(BOOL)antialiased 
                  offset:(CGPoint)offset {
-    
     NSImage *image = [self imageForPDFNamed:pdfName
                                    cellSize:cellSize
                                 antialiased:antialiased
@@ -646,7 +645,7 @@ color:(NSColor *)color {
     [self drawPDFWithName:name
                   options:(iTermPowerlineDrawingOptions)options.unsignedIntegerValue
                  cellSize:adjustedCellSize
-                  stretch:NO
+                  stretch:YES
                     color:color
               antialiased:YES
                    offset:offset];
