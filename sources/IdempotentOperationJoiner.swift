@@ -57,7 +57,7 @@ class IdempotentOperationJoiner: NSObject {
     }
 
     private override init() {
-        fatalError()
+        it_fatalError()
     }
 
     private init(_ scheduler: @escaping (IdempotentOperationJoiner) -> Void) {

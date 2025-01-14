@@ -280,7 +280,7 @@ private class ComplexCharRegistryImpl: NSObject {
                 spacingCombiningMarkCodeNumbers.insert(number)
             }
         @unknown default:
-            fatalError()
+            it_fatalError()
         }
         complexCharMap[number] = string
         inverseComplexCharMap[string] = number

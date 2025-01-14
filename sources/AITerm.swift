@@ -800,7 +800,7 @@ class AITermController {
         case .querySent:
             switch event {
             case .begin:
-                fatalError()
+                it_fatalError()
             case .webResponse(let response):
                 if !response.error.isEmpty {
                     let error = response.error

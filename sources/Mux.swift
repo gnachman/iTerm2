@@ -92,7 +92,7 @@ extension Mux {
             var valueObject: AnyObject? {
                 switch self {
                 case .pending, .error:
-                    preconditionFailure()
+                    it_preconditionFailure()
                 case let .value(value):
                     return value
                 }

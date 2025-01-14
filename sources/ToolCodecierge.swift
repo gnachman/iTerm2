@@ -425,7 +425,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
     static func isDynamic() -> Bool { false }
 
     required init!(frame: NSRect, url: URL!, identifier: String!) {
-        fatalError()
+        it_fatalError()
     }
 
     override init(frame frameRect: NSRect) {
@@ -492,7 +492,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     deinit {
@@ -694,7 +694,7 @@ class CodeciergeOnboardingView: NSView {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     private func updateEnabled() {
@@ -832,7 +832,7 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     override func resizeSubviews(withOldSize oldSize: NSSize) {
@@ -1102,7 +1102,7 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     override func resizeSubviews(withOldSize oldSize: NSSize) {
@@ -1246,7 +1246,7 @@ class ClickableTextView: NSTextView, NSTextStorageDelegate {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     override func mouseDown(with event: NSEvent) {

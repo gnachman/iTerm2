@@ -59,7 +59,7 @@ class EventuallyConsistentIntervalTree: IntervalTree {
 
     @available(*, unavailable)
     override init(dictionary: [AnyHashable : Any]) {
-        fatalError()
+        it_fatalError()
     }
 
     @objc

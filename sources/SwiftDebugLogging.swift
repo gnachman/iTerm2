@@ -108,3 +108,92 @@ public func logging<T>(_ prefix: String, closure: () async throws -> T) async re
         }
     }
 }
+
+@_transparent
+func it_assert(
+    _ condition: @autoclosure () -> Bool,
+    _ message: @autoclosure () -> String = "",
+    file: StaticString = #file,
+    line: UInt = #line,
+    function: StaticString = #function
+) {
+    if !condition() {
+        let logMessage = "[ASSERT FAILED] \(message())"
+        LogForNextCrash(file.utf8Start,
+                        Int32(line),
+                        function.utf8Start,
+                        logMessage,
+                        true)
+
+        assertionFailure("\(file):\(line) in \(function): \(logMessage)")
+        iTermCrashWithMessage(file.utf8Start,
+                              Int32(line),
+                              function.utf8Start,
+                              logMessage)
+    }
+}
+
+@_transparent
+func it_fatalError(
+    _ message: @autoclosure () -> String = "",
+    file: StaticString = #file,
+    line: UInt = #line,
+    function: StaticString = #function
+) -> Never {
+    let logMessage = "[FATAL ERROR] \(message())"
+    LogForNextCrash(file.utf8Start,
+                    Int32(line),
+                    function.utf8Start,
+                    logMessage,
+                    true)
+    iTermCrashWithMessage(file.utf8Start,
+                          Int32(line),
+                          function.utf8Start,
+                          logMessage)
+}
+
+@_transparent
+func it_preconditionFailure(
+    _ message: @autoclosure () -> String = "",
+    file: StaticString = #file,
+    line: UInt = #line,
+    function: StaticString = #function
+) -> Never {
+    let logMessage = "[FATAL ERROR] \(message())"
+    LogForNextCrash(file.utf8Start,
+                    Int32(line),
+                    function.utf8Start,
+                    logMessage,
+                    true)
+    iTermCrashWithMessage(file.utf8Start,
+                          Int32(line),
+                          function.utf8Start,
+                          logMessage)
+}
+
+@available(*, unavailable, message: "Use it_assert instead of assert")
+public func assert(
+    _ condition: @autoclosure () -> Bool,
+    _ message: @autoclosure () -> String = "",
+    file: StaticString = #file,
+    line: UInt = #line
+) {
+}
+
+@available(*, unavailable, message: "Use it_fatalError instead of fatalError")
+public func fatalError(
+    _ message: @autoclosure () -> String = "",
+    file: StaticString = #file,
+    line: UInt = #line
+) -> Never {
+    abort()
+}
+
+@available(*, unavailable, message: "Use it_fatalError instead of fatalError")
+public func preconditionFailure(
+    _ message: @autoclosure () -> String = "",
+    file: StaticString = #file,
+    line: UInt = #line
+) -> Never {
+    abort()
+}

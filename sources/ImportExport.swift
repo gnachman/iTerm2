@@ -543,7 +543,7 @@ private struct PythonRuntimesImporterExporter {
                     DLog("canceled/not found/error")
                     result = false
                 @unknown default:
-                    fatalError()
+                    it_fatalError()
                 }
                 if result != nil {
                     DLog("Stop runloop")

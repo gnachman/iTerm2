@@ -1714,7 +1714,7 @@ fileprivate struct UniversalModifierFlags: Codable, CustomDebugStringConvertible
                     case .shift: .shift
                     case .option: .option
                     case .function: nil
-                    default: fatalError("Bogus default flag \(nsEventFlag)")
+                    default: it_fatalError("Bogus default flag \(nsEventFlag)")
                     }
                 }
 

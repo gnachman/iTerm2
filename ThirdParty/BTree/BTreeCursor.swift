@@ -166,13 +166,13 @@ internal struct BTreeCursorPath<Key: Comparable, Value>: BTreePath {
     }
 
     mutating func popFromSlots() {
-        assert(self.slot != nil)
+        it_assert(self.slot != nil)
         offset += node.count - node.offset(ofSlot: slot!)
         slot = nil
     }
 
     mutating func popFromPath() {
-        assert(_path.count > 0 && slot == nil)
+        it_assert(_path.count > 0 && slot == nil)
         let child = node
         node = _path.removeLast()
         node.count += child.count
@@ -180,7 +180,7 @@ internal struct BTreeCursorPath<Key: Comparable, Value>: BTreePath {
     }
 
     mutating func pushToPath() {
-        assert(self.slot != nil)
+        it_assert(self.slot != nil)
         let parent = node
         _path.append(parent)
         node = parent.makeChildUnique(self.slot!)
@@ -190,7 +190,7 @@ internal struct BTreeCursorPath<Key: Comparable, Value>: BTreePath {
     }
 
     mutating func pushToSlots(_ slot: Int, offsetOfSlot: Int) {
-        assert(self.slot == nil)
+        it_assert(self.slot == nil)
         offset -= node.count - offsetOfSlot
         self.slot = slot
     }
@@ -228,7 +228,7 @@ internal struct BTreeCursorPath<Key: Comparable, Value>: BTreePath {
             node.count += childCount
             childCount = node.count
         }
-        assert(root.count == count)
+        it_assert(root.count == count)
         defer { invalidate() }
         return root
     }
@@ -456,7 +456,7 @@ public final class BTreeCursor<Key: Comparable, Value> {
         }
         else {
             moveForward()
-            assert(state.node.isLeaf && state.slot == 0)
+            it_assert(state.node.isLeaf && state.slot == 0)
             state.node.insert(element, inSlot: 0)
         }
         state.fixupAfterInsert()
@@ -473,7 +473,7 @@ public final class BTreeCursor<Key: Comparable, Value> {
         }
         else {
             moveBackward()
-            assert(state.node.isLeaf && state.slot == state.node.elements.count - 1)
+            it_assert(state.node.isLeaf && state.slot == state.node.elements.count - 1)
             state.node.append(element)
             state.slot = state.node.elements.count - 1
             state.offset += 1
@@ -577,7 +577,7 @@ public final class BTreeCursor<Key: Comparable, Value> {
             state.popFromSlots()
         }
         if state.node === state.root && state.node.elements.count == 0 && state.node.children.count == 1 {
-            assert(state.length == 1 && state.slot == nil)
+            it_assert(state.length == 1 && state.slot == nil)
             state.root = state.node.makeChildUnique(0)
             state.node = state.root
         }
@@ -628,7 +628,7 @@ public final class BTreeCursor<Key: Comparable, Value> {
     /// - Complexity: O(log(`count`)) if nodes of this tree are shared with other trees; O(`count`) otherwise.
     public func removeAllBefore(includingCurrent inclusive: Bool) {
         if isAtEnd {
-            assert(!inclusive)
+            it_assert(!inclusive)
             removeAll()
             return
         }
@@ -647,7 +647,7 @@ public final class BTreeCursor<Key: Comparable, Value> {
     /// - Complexity: O(log(`count`)) if nodes of this tree are shared with other trees; O(`count`) otherwise.
     public func removeAllAfter(includingCurrent inclusive: Bool) {
         if isAtEnd {
-            assert(!inclusive)
+            it_assert(!inclusive)
             return
         }
         if !inclusive {

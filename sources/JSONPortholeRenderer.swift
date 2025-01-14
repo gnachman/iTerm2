@@ -206,7 +206,7 @@ fileprivate extension NSAttributedString {
     private static func jsonAttributes(visualAttributes: TextViewPorthole.VisualAttributes,
                                        color: NSColor) -> [NSAttributedString.Key: Any] {
         return basicJSONAttributes(
-            visualAttributes).merging([.foregroundColor: color]) { _, _ in fatalError() }
+            visualAttributes).merging([.foregroundColor: color]) { _, _ in it_fatalError() }
     }
     
     private static func fromJSONindent(

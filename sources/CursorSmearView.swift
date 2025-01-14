@@ -20,7 +20,7 @@ class CursorSmearView: NSView {
     }
     
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     @objc

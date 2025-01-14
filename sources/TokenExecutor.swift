@@ -75,7 +75,7 @@ class Unpauser: NSObject {
 
     deinit {
         #if DEBUG
-        assert(hasBeenUnpaused)
+        it_assert(hasBeenUnpaused)
         #endif
 //        if stack != "" {
 //            fatalError()

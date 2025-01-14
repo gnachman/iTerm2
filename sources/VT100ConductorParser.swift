@@ -356,7 +356,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
             case .blocked:
                 return .blocked
             case .notOSC:
-                fatalError()
+                it_fatalError()
             case .osc(let code, let payload):
                 DLog("Ignore unrecognized osc with code \(code) and payload \(payload)")
                 // Ignore unrecognized OSC

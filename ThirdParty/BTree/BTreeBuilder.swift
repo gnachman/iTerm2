@@ -56,7 +56,7 @@ extension BTree {
         precondition(order > 1)
         precondition(fillFactor >= 0.5 && fillFactor <= 1)
         let keysPerNode = Int(fillFactor * Double(order - 1) + 0.5)
-        assert(keysPerNode >= (order - 1) / 2 && keysPerNode <= order - 1)
+        it_assert(keysPerNode >= (order - 1) / 2 && keysPerNode <= order - 1)
 
         var builder = BTreeBuilder<Key, Value>(order: order, keysPerNode: keysPerNode)
         if dropDuplicates {
@@ -145,7 +145,7 @@ internal struct BTreeBuilder<Key: Comparable, Value> {
     }
 
     mutating func append(_ element: Element) {
-        assert(isValidNextKey(element.0))
+        it_assert(isValidNextKey(element.0))
         switch state {
         case .separator:
             separators.append(element)
@@ -169,12 +169,12 @@ internal struct BTreeBuilder<Key: Comparable, Value> {
     }
 
     mutating func appendWithoutCloning(_ node: Node) {
-        assert(node.order == order)
+        it_assert(node.order == order)
         if node.isEmpty { return }
-        assert(isValidNextKey(node.first!.0))
+        it_assert(isValidNextKey(node.first!.0))
         if node.depth == 0 {
             if state == .separator {
-                assert(seedling.isEmpty)
+                it_assert(seedling.isEmpty)
                 separators.append(node.elements.removeFirst())
                 node.count -= 1
                 state = .element
@@ -213,7 +213,7 @@ internal struct BTreeBuilder<Key: Comparable, Value> {
             saplings.append(cursor.finish())
             separators.append(separator)
         }
-        assert(seedling.isEmpty)
+        it_assert(seedling.isEmpty)
         append(sapling: node)
         state = .separator
     }
@@ -221,7 +221,7 @@ internal struct BTreeBuilder<Key: Comparable, Value> {
     private mutating func append(sapling: Node) {
         var sapling = sapling
         while !saplings.isEmpty {
-            assert(saplings.count == separators.count)
+            it_assert(saplings.count == separators.count)
             var previous = saplings.removeLast()
             let separator = separators.removeLast()
 
@@ -257,7 +257,7 @@ internal struct BTreeBuilder<Key: Comparable, Value> {
             }
             else if let splinter = previous.shiftSlots(separator: separator, node: sapling, target: keysPerNode) {
                 // We have made the previous sapling full; add it as a new one before trying again with the remainder.
-                assert(previous.elements.count == keysPerNode)
+                it_assert(previous.elements.count == keysPerNode)
                 append(sapling: previous)
                 separators.append(splinter.separator)
                 sapling = splinter.node
@@ -274,13 +274,13 @@ internal struct BTreeBuilder<Key: Comparable, Value> {
         // Merge all saplings and the seedling into a single tree.
         var root: Node
         if separators.count == saplings.count - 1 {
-            assert(seedling.count == 0)
+            it_assert(seedling.count == 0)
             root = saplings.removeLast()
         }
         else {
             root = seedling
         }
-        assert(separators.count == saplings.count)
+        it_assert(separators.count == saplings.count)
         while !saplings.isEmpty {
             root = Node.join(left: saplings.removeLast(), separator: separators.removeLast(), right: root)
         }

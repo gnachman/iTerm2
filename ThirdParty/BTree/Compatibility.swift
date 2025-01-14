@@ -7,7 +7,7 @@
 //
 
 private func unavailable() -> Never {
-    fatalError("Unavailable function cannot be called")
+    it_fatalError("Unavailable function cannot be called")
 }
 
 extension BTree {

@@ -60,7 +60,7 @@ class InputSourceForcer: NSObject {
     @objc
     func begin() {
         DLog("Begin input source forcing")
-        assert(!begun)
+        it_assert(!begun)
         active = NSApp.isActive
         begun = true
         update()

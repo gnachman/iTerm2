@@ -101,7 +101,7 @@ extension NSPopUpButton {
                 return false
             }
             @objc func placeholder(_ sender: Any) {
-                fatalError()
+                it_fatalError()
             }
         }
         menu?.addItem(.separator())

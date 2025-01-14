@@ -59,6 +59,6 @@ class ExternalSearchResult: NSObject {
     }
 
     @objc override func isEqual(_ object: Any?) -> Bool {
-        fatalError("Subclasses must override")
+        it_fatalError("Subclasses must override")
     }
 }

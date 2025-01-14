@@ -379,7 +379,7 @@ struct CompressedScreenCharBuffer: Equatable, CustomDebugStringConvertible {
                 _lookupCache.offset += run.codes.count
                 _lookupCache.run += 1
             }
-            fatalError("Index \(i) out of bounds with \(_lookupCache.i) entries")
+            it_fatalError("Index \(i) out of bounds with \(_lookupCache.i) entries")
         }
     }
 
@@ -635,7 +635,7 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
             case .superposition:
                 // You must have acquired a mutation certificate to resize which guarantees no
                 // superposition.
-                fatalError()
+                it_fatalError()
             }
         }
 
@@ -889,7 +889,7 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
             case .uninitialized:
                 return 0
             case .uncompressed:
-                fatalError("Not supported")
+                it_fatalError("Not supported")
             case .compressed(var buffer), .superposition(var buffer, _):
                 var fullLines = 0
                 var i = width
@@ -922,7 +922,7 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         read { state in
             switch state.buffer {
             case .uninitialized, .uncompressed:
-                fatalError("Not supported")
+                it_fatalError("Not supported")
             case .compressed(var innerBuffer), .superposition(var innerBuffer, _):
                 let sca = innerBuffer.screenCharArray(offset: offset,
                                                       length: length,
@@ -944,7 +944,7 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         read { state in
             switch state.buffer {
             case .uninitialized:
-                fatalError()
+                it_fatalError()
             case .uncompressed(let innerBuffer):
                 return ScreenCharArrayToString(innerBuffer.buffer.baseAddress!.advanced(by: offset),
                                                0,

@@ -388,7 +388,7 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
 
     func toggleShouldSendOTP(account pmAccount: PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
         guard let account = pmAccount as? CommandLineProvidedAccount else {
-            fatalError()
+            it_fatalError()
         }
         let recipe = if account.sendOTP {
             mutateTagRecipe(accountID: account.identifier) { tags in

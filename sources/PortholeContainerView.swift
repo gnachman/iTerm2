@@ -97,7 +97,7 @@ class PortholeContainerView: NSView {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("Not implemented")
+        it_fatalError("Not implemented")
     }
 
     override func draw(_ dirtyRect: NSRect) {

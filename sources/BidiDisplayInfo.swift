@@ -549,7 +549,7 @@ fileprivate struct Chunk {
             }
             return [[start, count, stride]]
         default:
-            fatalError()
+            it_fatalError()
         }
     }
 

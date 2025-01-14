@@ -377,7 +377,7 @@ struct LLMProvider {
             case .completions, .legacy:
                 true
             case .gemini:
-                fatalError()
+                it_fatalError()
             }
         case .azure, .gemini:
             false

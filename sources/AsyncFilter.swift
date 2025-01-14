@@ -229,7 +229,7 @@ class FilteringUpdater: HexAddressFormatting {
             DLog("\(hexAddress): FilteringUpdater: update: status != Matched")
             break
         @unknown default:
-            fatalError()
+            it_fatalError()
         }
         if needsToBackUp {
             // We know we searched the last line so prepare to search again from the beginning
@@ -249,7 +249,7 @@ class FilteringUpdater: HexAddressFormatting {
             DLog("\(hexAddress): FilteringUpdater: update: Return true to keep searching")
             return true
         @unknown default:
-            fatalError()
+            it_fatalError()
         }
     }
 }

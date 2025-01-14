@@ -95,7 +95,7 @@ class DoubleTapHotkeyStateMachine: NSObject {
             case .control:
                 return maskedFlags == [.maskControl]
             @unknown default:
-                fatalError()
+                it_fatalError()
             }
         }
     }

@@ -63,7 +63,7 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     func updateColors(textColor: NSColor) {

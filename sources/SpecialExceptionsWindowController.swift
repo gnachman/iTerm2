@@ -540,7 +540,7 @@ extension SpecialExceptionsWindowController: CRUDTableViewControllerDelegate {
         case 2:
             config.entries[row].fontName = newValue
         default:
-            fatalError()
+            it_fatalError()
         }
     }
 
@@ -593,7 +593,7 @@ extension SpecialExceptionsWindowController: CRUDDataProvider {
             case 2:
                 return .string(entry.fontName)
             default:
-                fatalError()
+                it_fatalError()
             }
         }
     }

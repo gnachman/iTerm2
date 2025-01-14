@@ -85,7 +85,7 @@ class ButtonMark: iTermMark, ButtonMarkReading {
         var dict = super.dictionaryValue()!
         if let local = buttonType?.dictionary as? [AnyHashable: Any] {
             dict.merge(local) { _, _ in
-                fatalError()
+                it_fatalError()
             }
         }
         dict["id"] = buttonID

@@ -566,7 +566,7 @@ class TopRightAvoidingTextContainer: NSTextContainer {
     }
 
     required init(coder: NSCoder) {
-        fatalError("Not supported")
+        it_fatalError("Not supported")
     }
 
     override func lineFragmentRect(forProposedRect proposedRect: CGRect,
@@ -620,7 +620,7 @@ extension NSString {
             caseSensitive = substring.rangeOfCharacter(from: CharacterSet.uppercaseLetters) != nil
 
         @unknown default:
-            fatalError()
+            it_fatalError()
         }
 
         let compiledRegex: NSRegularExpression?
@@ -701,7 +701,7 @@ extension TextViewPorthole: ExternalSearchResultOwner {
     }
     func remove(_ result: ExternalSearchResult) {
         guard let myResult = result as? SearchResult else {
-            fatalError()
+            it_fatalError()
         }
         textView.removeTemporaryHighlight(inRange: myResult.range)
     }

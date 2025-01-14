@@ -71,7 +71,7 @@ class iTermSearchRequest: NSObject {
                 .insensitive
             }
         @unknown default:
-            fatalError()
+            it_fatalError()
         }
 
         let initialStart = {
@@ -692,7 +692,7 @@ fileprivate class SearchOperation: Pausable {
             // keep looking
             break
         @unknown default:
-            fatalError()
+            it_fatalError()
         }
     }
 
@@ -728,7 +728,7 @@ fileprivate class SearchOperation: Pausable {
             SELog("This shouldn't happen")
             finish()
 #if DEBUG
-            fatalError()
+            it_fatalError()
 #else
             return
 #endif
@@ -786,7 +786,7 @@ fileprivate class SearchOperation: Pausable {
         SELog("updateSnapshot")
         switch state {
         case .ready, .canceled:
-            fatalError("Logic error")
+            it_fatalError("Logic error")
         case .searching:
             break
         case .finished:

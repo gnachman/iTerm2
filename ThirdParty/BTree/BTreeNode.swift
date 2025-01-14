@@ -50,13 +50,13 @@ internal final class BTreeNode<Key: Comparable, Value> {
     internal var order: Int { return numericCast(_order) }
 
     internal init(order: Int, elements: Array<Element>, children: Array<BTreeNode>, count: Int) {
-        assert(children.count == 0 || elements.count == children.count - 1)
+        it_assert(children.count == 0 || elements.count == children.count - 1)
         self._order = numericCast(order)
         self.elements = elements
         self.children = children
         self.count = count
         self._depth = (children.count == 0 ? 0 : children[0]._depth + 1)
-        assert(children.firstIndex { $0._depth + (1 as Int32) != self._depth } == nil)
+        it_assert(children.firstIndex { $0._depth + (1 as Int32) != self._depth } == nil)
     }
 }
 
@@ -72,8 +72,8 @@ extension BTreeNode {
     }
 
     internal convenience init(left: Node, separator: (Key, Value), right: Node) {
-        assert(left.order == right.order)
-        assert(left.depth == right.depth)
+        it_assert(left.order == right.order)
+        it_assert(left.depth == right.depth)
         self.init(
             order: left.order,
             elements: [separator],
@@ -252,7 +252,7 @@ extension BTreeNode {
 
     /// Return the slot of the element at `offset` in the subtree rooted at this node.
     internal func slot(atOffset offset: Int) -> (index: Int, match: Bool, offset: Int) {
-        assert(offset >= 0 && offset <= count)
+        it_assert(offset >= 0 && offset <= count)
         if offset == count {
             return (index: elements.count, match: isLeaf, offset: count)
         }
@@ -294,7 +294,7 @@ extension BTreeNode {
     /// Return the offset of the element at `slot` in the subtree rooted at this node.
     internal func offset(ofSlot slot: Int) -> Int {
         let c = elements.count
-        assert(slot >= 0 && slot <= c)
+        it_assert(slot >= 0 && slot <= c)
         if isLeaf {
             return slot
         }
@@ -370,7 +370,7 @@ extension BTreeNode {
     ///
     /// - Returns: A splinter containing the higher half of the original node.
     internal func split() -> Splinter {
-        assert(isTooLarge)
+        it_assert(isTooLarge)
         return split(at: elements.count / 2)
     }
 
@@ -390,7 +390,7 @@ extension BTreeNode {
             children.removeSubrange(median + 1 ..< count + 1)
             self.count = median + children.reduce(0, { $0 + $1.count })
         }
-        assert(node.depth == self.depth)
+        it_assert(node.depth == self.depth)
         return Splinter(separator: separator, node: node)
     }
 
@@ -407,7 +407,7 @@ extension BTreeNode {
     /// As a side effect of the process, `self` may itself become undersized, but all of its descendants
     /// become balanced.
     internal func fixDeficiency(_ slot: Int) {
-        assert(!isLeaf && children[slot].isTooSmall)
+        it_assert(!isLeaf && children[slot].isTooSmall)
         if slot > 0 && children[slot - 1].elements.count > minKeys {
             rotateRight(slot)
         }
@@ -425,7 +425,7 @@ extension BTreeNode {
     }
 
     internal func rotateRight(_ slot: Int) {
-        assert(slot > 0)
+        it_assert(slot > 0)
         makeChildUnique(slot)
         makeChildUnique(slot - 1)
         children[slot].elements.insert(elements[slot - 1], at: 0)
@@ -442,7 +442,7 @@ extension BTreeNode {
     }
     
     internal func rotateLeft(_ slot: Int) {
-        assert(slot < children.count - 1)
+        it_assert(slot < children.count - 1)
         makeChildUnique(slot)
         makeChildUnique(slot + 1)
         children[slot].elements.append(elements[slot])
@@ -459,7 +459,7 @@ extension BTreeNode {
     }
 
     internal func collapse(_ slot: Int) {
-        assert(slot < children.count - 1)
+        it_assert(slot < children.count - 1)
         makeChildUnique(slot)
         let next = children.remove(at: slot + 1)
         children[slot].elements.append(elements.remove(at: slot))
@@ -469,7 +469,7 @@ extension BTreeNode {
         if !next.isLeaf {
             children[slot].children.append(contentsOf: next.children)
         }
-        assert(children[slot].isBalanced)
+        it_assert(children[slot].isBalanced)
     }
 }
 
@@ -478,7 +478,7 @@ extension BTreeNode {
 extension BTreeNode {
     /// Shift slots between `self` and `node` such that the number of elements in `self` becomes `target`.
     internal func shiftSlots(separator: Element, node: BTreeNode, target: Int) -> Splinter? {
-        assert(self.depth == node.depth)
+        it_assert(self.depth == node.depth)
 
         let forward = target > self.elements.count
         let delta = abs(target - self.elements.count)
@@ -501,8 +501,8 @@ extension BTreeNode {
 
         let rsep: Element
         if forward { // Transfer slots from right to left
-            assert(lc + delta < self.order)
-            assert(delta <= rc)
+            it_assert(lc + delta < self.order)
+            it_assert(delta <= rc)
 
             rsep = node.elements[delta - 1]
 
@@ -525,8 +525,8 @@ extension BTreeNode {
         }
         else {
             // Transfer slots from left to right
-            assert(rc + delta < node.order)
-            assert(delta <= lc)
+            it_assert(rc + delta < node.order)
+            it_assert(delta <= lc)
 
             rsep = self.elements[lc - delta]
 
@@ -591,12 +591,12 @@ extension BTreeNode {
 
         // Graft the scion into the stock by inserting the contents of its root into `node`.
         if !append { node.swapContents(with: scion) }
-        assert(node.depth == scion.depth)
+        it_assert(node.depth == scion.depth)
         let slotCount = node.elements.count + 1 + scion.elements.count
         let target = slotCount < order ? slotCount : slotCount / 2
         var splinter = node.shiftSlots(separator: separator, node: scion, target: target)
         if splinter != nil {
-            assert(splinter!.node.isBalanced)
+            it_assert(splinter!.node.isBalanced)
             path.removeLast()
             while let s = splinter, !path.isEmpty {
                 let node = path.removeLast()

@@ -172,7 +172,7 @@ class SyntaxHighlighter {
                            attributedString: value,
                            colorMap: colors.colorMap)
             @unknown default:
-                fatalError()
+                it_fatalError()
             }
         } else {
             setTextColor(range: range, color: colors.argument)
@@ -209,7 +209,7 @@ class SyntaxHighlighter {
                           colorMap: colorMap)
                 }
             @unknown default:
-                fatalError()
+                it_fatalError()
             }
         }
     }

@@ -516,8 +516,8 @@ extension BTree {
         edit(
             descend: { node in
                 let slot = node.slot(atOffset: node.count - pos)
-                assert(slot.index == 0 || node.elements[slot.index - 1].0 <= element.0)
-                assert(slot.index == node.elements.count || node.elements[slot.index].0 >= element.0)
+                it_assert(slot.index == 0 || node.elements[slot.index - 1].0 <= element.0)
+                it_assert(slot.index == node.elements.count || node.elements[slot.index].0 >= element.0)
                 if !slot.match {
                     // Continue descending.
                     pos -= node.count - slot.offset
@@ -805,7 +805,7 @@ extension BTree {
                 let slot = node.slot(atOffset: node.count - pos)
                 if !slot.match {
                     // No match yet; continue descending.
-                    assert(!node.isLeaf)
+                    it_assert(!node.isLeaf)
                     pos -= node.count - slot.offset
                     return slot.index
                 }
@@ -835,7 +835,7 @@ extension BTree {
             }
         )
         if root.children.count == 1 {
-            assert(root.elements.count == 0)
+            it_assert(root.elements.count == 0)
             root = root.children[0]
         }
         return old!
@@ -886,7 +886,7 @@ extension BTree {
             }
         )
         if root.children.count == 1 {
-            assert(root.elements.count == 0)
+            it_assert(root.elements.count == 0)
             root = root.children[0]
         }
         return old

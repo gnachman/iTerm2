@@ -95,19 +95,19 @@ internal struct BTreeStrongPath<Key: Comparable, Value>: BTreePath {
     var length: Int { return _path.count + 1 }
 
     mutating func popFromSlots() {
-        assert(self.slot != nil)
+        it_assert(self.slot != nil)
         offset += node.count - node.offset(ofSlot: slot!)
         slot = nil
     }
 
     mutating func popFromPath() {
-        assert(_path.count > 0 && slot == nil)
+        it_assert(_path.count > 0 && slot == nil)
         node = _path.removeLast()
         slot = _slots.removeLast()
     }
 
     mutating func pushToPath() {
-        assert(slot != nil)
+        it_assert(slot != nil)
         let child = node.children[slot!]
         _path.append(node)
         node = child
@@ -116,7 +116,7 @@ internal struct BTreeStrongPath<Key: Comparable, Value>: BTreePath {
     }
 
     mutating func pushToSlots(_ slot: Int, offsetOfSlot: Int) {
-        assert(self.slot == nil)
+        it_assert(self.slot == nil)
         offset -= node.count - offsetOfSlot
         self.slot = slot
     }

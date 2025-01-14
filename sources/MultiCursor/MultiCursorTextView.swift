@@ -393,7 +393,7 @@ extension MultiCursorTextView {
         } else if kind == .byParagraphs {
             temp[index] = extendParagraphLeft(extendParagraphRight(originalRange))
         } else {
-            fatalError()
+            it_fatalError()
         }
         temp.sort { lhs, rhs in
             return lhs.location < rhs.location
@@ -1443,7 +1443,7 @@ extension MultiCursorTextView {
         } else if let string = insertString as? NSAttributedString {
             stringLength = string.string.utf16.count
         } else {
-            fatalError()
+            it_fatalError()
         }
 
         var selectionCharacterRanges: [NSRange] = []

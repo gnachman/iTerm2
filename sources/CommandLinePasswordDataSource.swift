@@ -379,7 +379,7 @@ class CommandLinePasswordDataSource: NSObject {
             } else if let tty = stdin as? TTY {
                 process.standardInput = tty.slave
             } else {
-                fatalError("Don't know what to do with stdin of type \(type(of: stdin))")
+                it_fatalError("Don't know what to do with stdin of type \(type(of: stdin))")
             }
         }
 

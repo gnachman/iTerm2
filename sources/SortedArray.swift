@@ -293,7 +293,7 @@ class SortedArray<T>: CustomDebugStringConvertible {
                 linearSearchCount = 0
                 continue
             }
-            assert(currentLocation < desiredEntry.location)
+            it_assert(currentLocation < desiredEntry.location)
             if linearSearchCount > maximumLinearSearchIterations {
                 // Give up and do a binary search.
                 guard let nextIndex = firstIndexAtOrAfter(location: desiredEntry.location) else {

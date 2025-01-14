@@ -125,18 +125,18 @@ internal struct BTreeWeakPath<Key: Comparable, Value>: BTreePath {
     }
 
     internal func invalid(_ file: StaticString = #file, line: UInt = #line) -> Never  {
-        preconditionFailure("Invalid BTreeIndex", file: file, line: line)
+        it_preconditionFailure("Invalid BTreeIndex", file: file, line: line)
     }
 
     mutating func popFromSlots() {
-        assert(self.slot != nil)
+        it_assert(self.slot != nil)
         let node = self.node
         offset += node.count - node.offset(ofSlot: slot!)
         slot = nil
     }
 
     mutating func popFromPath() {
-        assert(_path.count > 0 && slot == nil)
+        it_assert(_path.count > 0 && slot == nil)
         let child = node
         _node = _path.removeLast()
         expectValid(node.children[_slots.last!] === child)
@@ -144,7 +144,7 @@ internal struct BTreeWeakPath<Key: Comparable, Value>: BTreePath {
     }
 
     mutating func pushToPath() {
-        assert(self.slot != nil)
+        it_assert(self.slot != nil)
         let child = node.children[slot!]
         _path.append(_node)
         _node = Weak(child)
@@ -153,7 +153,7 @@ internal struct BTreeWeakPath<Key: Comparable, Value>: BTreePath {
     }
 
     mutating func pushToSlots(_ slot: Int, offsetOfSlot: Int) {
-        assert(self.slot == nil)
+        it_assert(self.slot == nil)
         offset -= node.count - offsetOfSlot
         self.slot = slot
     }

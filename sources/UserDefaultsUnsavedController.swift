@@ -29,7 +29,7 @@ fileprivate class UnsavedUserDefaultsViewController: NSViewController {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     override func loadView() {
@@ -81,7 +81,7 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("not implemented")
+        it_fatalError("not implemented")
     }
 
     deinit {

@@ -112,7 +112,7 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
     }
 
     override init() {
-        fatalError()
+        it_fatalError()
     }
 
     func createTransientStateStat() -> iTermMetalFrameDataStat {

@@ -88,11 +88,11 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
     }
     
     required init!(frame: NSRect, url: URL!, identifier: String!) {
-        fatalError()
+        it_fatalError()
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     @objc func shutdown() {

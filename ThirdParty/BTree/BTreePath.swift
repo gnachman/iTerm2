@@ -188,7 +188,7 @@ extension BTreePath {
         }
         else {
             // Descend
-            assert(!node.isLeaf)
+            it_assert(!node.isLeaf)
             pushToPath()
             while !node.isLeaf {
                 slot = node.children.count - 1
@@ -252,8 +252,8 @@ extension BTreePath {
 
     /// Starting from an incomplete path, descend to the element at the specified offset.
     mutating func descend(toOffset offset: Int) {
-        assert(offset >= self.offset - node.count && offset <= self.offset)
-        assert(self.slot == nil)
+        it_assert(offset >= self.offset - node.count && offset <= self.offset)
+        it_assert(self.slot == nil)
         var slot = node.slot(atOffset: offset - (self.offset - node.count))
         pushToSlots(slot.index, offsetOfSlot: slot.offset)
         while !slot.match {
@@ -261,13 +261,13 @@ extension BTreePath {
             slot = node.slot(atOffset: offset - (self.offset - node.count))
             pushToSlots(slot.index, offsetOfSlot: slot.offset)
         }
-        assert(self.offset == offset)
-        assert(self.slot != nil)
+        it_assert(self.offset == offset)
+        it_assert(self.slot != nil)
     }
 
     /// Starting from an incomplete path, descend to the element with the specified key.
     mutating func descend(to key: Key, choosing selector: BTreeKeySelector) {
-        assert(self.slot == nil)
+        it_assert(self.slot == nil)
         if count == 0 {
             pushToSlots(0)
             return

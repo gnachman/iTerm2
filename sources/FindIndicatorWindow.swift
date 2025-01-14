@@ -26,7 +26,7 @@ private class FindIndicatorView: NSView, CALayerDelegate {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     func action(for layer: CALayer, forKey event: String) -> CAAction? {
@@ -49,7 +49,7 @@ private class FindIndicatorWindowContentView: NSView, CALayerDelegate {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        it_fatalError("init(coder:) has not been implemented")
     }
 
     func action(for layer: CALayer, forKey event: String) -> CAAction? {

@@ -213,6 +213,13 @@ void TurnOnDebugLoggingAutomatically(void);
 void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 
+_Noreturn NS_INLINE void iTermCrashWithMessage(const char *file,
+                                               int line,
+                                               const char  *function,
+                                               const char  *message) {
+    __assert_rtn(function, file, line, message);
+}
+
 @interface NSException(iTerm)
 @property (nonatomic, readonly) NSArray<NSString *> *it_originalCallStackSymbols;
 @property (nonatomic, readonly) NSString *it_compressedDescription;

@@ -307,7 +307,7 @@ extension LastPassDataSource: PasswordManagerDataSource {
     var sendOTP: Bool { false }
 
     func toggleShouldSendOTP(account: any PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
-        fatalError()
+        it_fatalError()
     }
 
     func fetchAccounts(_ completion: @escaping ([PasswordManagerAccount]) -> ()) {

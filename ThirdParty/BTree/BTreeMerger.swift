@@ -577,7 +577,7 @@ internal struct BTreeMerger<Key: Comparable, Value> {
                 var key: Key
                 repeat {
                     key = a.node.last!.0
-                    assert(a.slot == b.slot)
+                    it_assert(a.slot == b.slot)
                     a.ascendOneLevel()
                     b.ascendOneLevel()
                     if a.isAtEnd || b.isAtEnd {
@@ -716,7 +716,7 @@ internal extension BTreeStrongPath {
     /// If this path got to a slot at the end of a node but it hasn't reached the end of the tree yet,
     /// ascend to the ancestor that holds the key corresponding to the current offset.
     mutating func ascendToKey() {
-        assert(!isAtEnd)
+        it_assert(!isAtEnd)
         while slot == node.elements.count {
             slot = nil
             popFromPath()
@@ -731,10 +731,10 @@ internal extension BTreeStrongPath {
     /// - Complexity: O(log(*n*)) where *n* is the number of elements in the returned part.
     @discardableResult
     mutating func nextPart(until limit: Limit) -> BTreePart<Key, Value> {
-        assert(!isAtEnd && limit.match(self.key))
+        it_assert(!isAtEnd && limit.match(self.key))
 
         // Find furthest ancestor whose entire leftmost subtree is guaranteed to consist of matching elements.
-        assert(!isAtEnd)
+        it_assert(!isAtEnd)
         var includeLeftmostSubtree = false
         if slot == 0 && node.isLeaf {
             while slot == 0, let pk = parentKey, limit.match(pk) {
@@ -749,7 +749,7 @@ internal extension BTreeStrongPath {
         }
 
         // Find range of matching elements in `node`.
-        assert(limit.match(self.key))
+        it_assert(limit.match(self.key))
         let startSlot = slot!
         var endSlot = startSlot + 1
         while endSlot < node.elements.count && limit.match(node.elements[endSlot].0) {

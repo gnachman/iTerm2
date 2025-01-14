@@ -157,7 +157,7 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
     }
 
     func toggleShouldSendOTP(account: any PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
-        fatalError()
+        it_fatalError()
     }
 
     func fetchPassword(_ completion: (String?, String?, Error?) -> ()) {
@@ -218,7 +218,7 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
     }
 
     func toggleShouldSendOTP(account: any PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
-        fatalError()
+        it_fatalError()
     }
 
     func add(userName: String, accountName: String, password: String, completion: (PasswordManagerAccount?, Error?) -> ()) {
