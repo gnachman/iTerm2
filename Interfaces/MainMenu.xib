@@ -831,6 +831,26 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="bWM-We-TVH"/>
+                            <menuItem title="Toolbelt" id="1295">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Toolbelt" id="1296">
+                                    <items>
+                                        <menuItem title="Show Toolbelt" keyEquivalent="B" identifier="Show Toolbelt" id="1297">
+                                            <connections>
+                                                <action selector="toggleToolbeltVisibility:" target="-1" id="v3c-uP-c8Q"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Set Default Width" identifier="Set Default Width" id="81r-Vc-nVm">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="setDefaultToolbeltWidth:" target="-1" id="QNN-Mh-iac"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="1298"/>
+                                    </items>
+                                </menu>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="pT2-uv-5Ky"/>
                             <menuItem title="Use Transparency" keyEquivalent="u" identifier="Use Transparency" id="1228">
                                 <connections>
                                     <action selector="toggleUseTransparency:" target="201" id="1229"/>
@@ -1412,65 +1432,6 @@ DQ
                         <accessibility identifier=".Profiles"/>
                     </menu>
                 </menuItem>
-                <menuItem title="Toolbelt" id="1295">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="Toolbelt" id="1296">
-                        <items>
-                            <menuItem title="Show Toolbelt" keyEquivalent="B" identifier="Show Toolbelt" id="1297">
-                                <connections>
-                                    <action selector="toggleToolbeltVisibility:" target="-1" id="v3c-uP-c8Q"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Set Default Width" identifier="Set Default Width" id="81r-Vc-nVm">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="setDefaultToolbeltWidth:" target="-1" id="QNN-Mh-iac"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="1298"/>
-                        </items>
-                    </menu>
-                </menuItem>
-                <menuItem title="Arrangements" id="OBk-Hd-j3M">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="Arrangements" id="7ay-jv-hQe">
-                        <items>
-                            <menuItem title="Save Window Arrangement" keyEquivalent="S" identifier="Save Window Arrangement" id="1205">
-                                <connections>
-                                    <action selector="saveWindowArrangement:" target="201" id="1206"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Save Current Window as Arrangement" alternate="YES" keyEquivalent="S" identifier="Save Current Window as Arrangement" id="D5Y-FD-IWK">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="saveCurrentWindowAsArrangement:" target="201" id="FAg-xE-xg0"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="eR0-U5-Xsf"/>
-                            <menuItem title="Load Arrangement from File…" identifier="Load Arrangement from File…" id="wNF-TH-Fz5">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="importWindowArrangement:" target="201" id="2uC-bW-99w"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Restore Window Arrangement" id="1280">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="Restore Window Arrangement" id="1281"/>
-                            </menuItem>
-                            <menuItem title="Restore Window Arrangement as Tabs" id="z6V-EJ-Ntf" userLabel="Restore Window Arrangement as Tabs">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="Restore Window Arrangement as Tabs" id="fEX-7N-c8a"/>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="K2C-cn-9vm"/>
-                            <menuItem title="Change Profile in Arrangement…" identifier="Change Profile in Arrangement…" id="58Y-0j-mff">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="changeProfileInArrangement:" target="-1" id="CKN-FY-1kR"/>
-                                </connections>
-                            </menuItem>
-                        </items>
-                    </menu>
-                </menuItem>
                 <menuItem title="Window" id="19">
                     <menu key="submenu" title="Window" systemMenu="window" id="24">
                         <items>
@@ -1486,6 +1447,47 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="24F-Ft-dce"/>
+                            <menuItem title="Arrangements" id="OBk-Hd-j3M">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Arrangements" id="7ay-jv-hQe">
+                                    <items>
+                                        <menuItem title="Save Window Arrangement" keyEquivalent="S" identifier="Save Window Arrangement" id="1205">
+                                            <connections>
+                                                <action selector="saveWindowArrangement:" target="201" id="1206"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Save Current Window as Arrangement" alternate="YES" keyEquivalent="S" identifier="Save Current Window as Arrangement" id="D5Y-FD-IWK">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="saveCurrentWindowAsArrangement:" target="201" id="FAg-xE-xg0"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="eR0-U5-Xsf"/>
+                                        <menuItem title="Load Arrangement from File…" identifier="Load Arrangement from File…" id="wNF-TH-Fz5">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="importWindowArrangement:" target="201" id="2uC-bW-99w"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Restore Window Arrangement" id="1280">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <menu key="submenu" title="Restore Window Arrangement" id="1281"/>
+                                        </menuItem>
+                                        <menuItem title="Restore Window Arrangement as Tabs" id="z6V-EJ-Ntf" userLabel="Restore Window Arrangement as Tabs">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <menu key="submenu" title="Restore Window Arrangement as Tabs" id="fEX-7N-c8a"/>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="K2C-cn-9vm"/>
+                                        <menuItem title="Change Profile in Arrangement…" identifier="Change Profile in Arrangement…" id="58Y-0j-mff">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="changeProfileInArrangement:" target="-1" id="CKN-FY-1kR"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="8EB-Jn-Xxs"/>
                             <menuItem title="Edit Tab Title" identifier="Edit Tab Title" id="o4x-qQ-aC9">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
