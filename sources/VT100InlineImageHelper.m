@@ -239,24 +239,26 @@
         return NO;
     }
 
-    VT100GridAbsCoordRange range;
-    range.start.y = [self.delegate inlineImageCursorAbsoluteCoord].y;
-    range.start.x = 0;
-    NSArray<NSString *> *lines = [contentString componentsSeparatedByString:@"\n"];
-    for (NSString *line in lines) {
-        [self.delegate inlineImageAppendStringAtCursor:line];
-        [self.delegate inlineImageAppendLinefeed];
-        grid.cursorX = 0;
-    }
+    [self.delegate inlineImagePerformBlockWithoutScrollRegions:^{
+        VT100GridAbsCoordRange range;
+        range.start.y = [self.delegate inlineImageCursorAbsoluteCoord].y;
+        range.start.x = 0;
+        NSArray<NSString *> *lines = [contentString componentsSeparatedByString:@"\n"];
+        for (NSString *line in lines) {
+            [self.delegate inlineImageAppendStringAtCursor:line];
+            [self.delegate inlineImageAppendLinefeed];
+            grid.cursorX = 0;
+        }
 
 
-    range.end.y = [self.delegate inlineImageCursorAbsoluteCoord].y - 1;
-    range.end.x = grid.size.width - 1;
+        range.end.y = [self.delegate inlineImageCursorAbsoluteCoord].y - 1;
+        range.end.x = grid.size.width - 1;
 
-    [self.delegate inlineImageDidCreateTextDocumentInRange:range
-                                                      type:self.type
-                                                  filename:_name
-                                                 forceWide:_forceWide];
+        [self.delegate inlineImageDidCreateTextDocumentInRange:range
+                                                          type:self.type
+                                                      filename:_name
+                                                     forceWide:_forceWide];
+    }];
     return YES;
 }
 

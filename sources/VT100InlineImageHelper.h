@@ -36,7 +36,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (VT100GridAbsCoord)inlineImageCursorAbsoluteCoord;
 - (void)inlineImageAppendStringAtCursor:(NSString *)string;
 - (BOOL)inlineImageLinefeedWouldScroll;
-
+- (void)inlineImagePerformBlockWithoutScrollRegions:(void (^NS_NOESCAPE)(void))block;
 @end
 
 // Take an image as base-64 encoded compressed image, sixel data, or an NSImage

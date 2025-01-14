@@ -814,6 +814,22 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     }
 }
 
+- (void)performBlockWithoutScrollRegions:(void (^NS_NOESCAPE)(void))block {
+    const VT100GridRange scrollRegionRows = scrollRegionRows_;
+    const VT100GridRange scrollRegionCols = scrollRegionCols_;
+    const BOOL useScrollRegionCols = useScrollRegionCols_;
+
+    scrollRegionRows_ = VT100GridRangeMake(0, size_.height);
+    scrollRegionCols_ = VT100GridRangeMake(0, size_.width);
+    useScrollRegionCols_ = NO;
+
+    block();
+
+    scrollRegionRows_ = scrollRegionRows;
+    scrollRegionCols_ = scrollRegionCols;
+    useScrollRegionCols_ = useScrollRegionCols;
+}
+
 - (void)mutateCharactersInRange:(VT100GridCoordRange)range
                           block:(void (^)(screen_char_t *sct,
                                           iTermExternalAttribute **eaOut,

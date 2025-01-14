@@ -5826,6 +5826,10 @@ launchCoprocessWithCommand:(NSString *)command
     [self appendLineFeed];
 }
 
+- (void)inlineImagePerformBlockWithoutScrollRegions:(void (^NS_NOESCAPE)(void))block {
+    [self.currentGrid performBlockWithoutScrollRegions:block];
+}
+
 - (BOOL)inlineImageLinefeedWouldScroll {
     return self.currentGrid.cursor.y == VT100GridRangeMax(self.currentGrid.scrollRegionRows);
 }

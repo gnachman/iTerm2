@@ -384,6 +384,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                                           BOOL *stop))block;
 
 - (void)enumerateParagraphs:(void (^)(int startLine, NSArray<MutableScreenCharArray *> *scas))closure;
+- (void)performBlockWithoutScrollRegions:(void (^NS_NOESCAPE)(void))block;
 
 // Returns YES if it must be recomputed for all lines. Returns NO if you can look only at dirty lines.
 - (BOOL)eraseBidiInfoInDirtyLines;
