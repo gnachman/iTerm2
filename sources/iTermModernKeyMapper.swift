@@ -1706,13 +1706,14 @@ fileprivate struct UniversalModifierFlags: Codable, CustomDebugStringConvertible
             // Translate a buckybit configuration to a CookedModifierFlags, using the normal behavior
             // if the buckybit is set to `regular`.
             func from(buckyBit: iTermBuckyBit,
-                      defaultFlag: NSEvent.ModifierFlags) -> CookedModifierFlags {
-                func from(nsEventFlag: NSEvent.ModifierFlags) -> CookedModifierFlags {
+                      defaultFlag: NSEvent.ModifierFlags) -> CookedModifierFlags? {
+                func from(nsEventFlag: NSEvent.ModifierFlags) -> CookedModifierFlags? {
                     return switch nsEventFlag {
                     case .command: .command
                     case .control: .control
                     case .shift: .shift
                     case .option: .option
+                    case .function: nil
                     default: fatalError("Bogus default flag \(nsEventFlag)")
                     }
                 }
@@ -1727,40 +1728,40 @@ fileprivate struct UniversalModifierFlags: Codable, CustomDebugStringConvertible
                 case .`super`:
                     return .`super`
                 @unknown default:
-                    fatalError("Bogus bucky bit \(buckyBit.rawValue)")
+                    it_fatalError("Bogus bucky bit \(buckyBit.rawValue)")
                 }
             }
 
             var result = CookedModifierFlags()
 
             if deviceIndependentFlag.contains(.command) {
-                if leftFlagSet {
-                    result.insert(from(buckyBit: leftBuckyBit, defaultFlag: deviceIndependentFlag))
+                if leftFlagSet, let cooked = from(buckyBit: leftBuckyBit, defaultFlag: deviceIndependentFlag) {
+                    result.insert(cooked)
                 }
-                if rightFlagSet {
-                    result.insert(from(buckyBit: rightBuckyBit, defaultFlag: deviceIndependentFlag))
+                if rightFlagSet, let cooked = from(buckyBit: rightBuckyBit, defaultFlag: deviceIndependentFlag) {
+                    result.insert(cooked)
                 }
                 return result
             }
             if deviceIndependentFlag.contains(.control) {
-                if leftFlagSet {
-                    result.insert(from(buckyBit: leftBuckyBit, defaultFlag: deviceIndependentFlag))
+                if leftFlagSet, let cooked = from(buckyBit: leftBuckyBit, defaultFlag: deviceIndependentFlag) {
+                    result.insert(cooked)
                 }
-                if rightFlagSet {
-                    result.insert(from(buckyBit: rightBuckyBit, defaultFlag: deviceIndependentFlag))
+                if rightFlagSet, let cooked = from(buckyBit: rightBuckyBit, defaultFlag: deviceIndependentFlag) {
+                    result.insert(cooked)
                 }
                 return result
             }
             if deviceIndependentFlag.contains(.function) {
-                if leftFlagSet {
-                    result.insert(from(buckyBit: leftBuckyBit, defaultFlag: deviceIndependentFlag))
+                if leftFlagSet, let cooked = from(buckyBit: leftBuckyBit, defaultFlag: deviceIndependentFlag) {
+                    result.insert(cooked)
                 }
-                if rightFlagSet {
-                    result.insert(from(buckyBit: rightBuckyBit, defaultFlag: deviceIndependentFlag))
+                if rightFlagSet, let cooked = from(buckyBit: rightBuckyBit, defaultFlag: deviceIndependentFlag) {
+                    result.insert(cooked)
                 }
                 return result
             }
-            fatalError("Unexpected device independent flag \(deviceIndependentFlag)")
+            it_fatalError("Unexpected device independent flag \(deviceIndependentFlag)")
         }
 
         static func create(eventModifierFlags: UnambiguousEventModifierFlags,
