@@ -129,6 +129,9 @@ typedef enum {
     return YES;
 }
 
+- (NSString *)transformedTextToInsert:(NSString *)text {
+    return text;
+}
 
 - (iTermModifyOtherKeysMapper1KeyType)keyTypeForEvent:(NSEvent *)event {
     if (event.modifierFlags & NSEventModifierFlagFunction) {
