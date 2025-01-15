@@ -1076,9 +1076,11 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
     DLog(@"Application did become active. Key window is %@", NSApp.keyWindow);
     DLog(@"Ordered windows are\n%@", NSApp.orderedWindows);
+    /*
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] && _savedWindowOrder) {
         [_savedWindowOrder restore];
     }
+     */
     [_savedWindowOrder release];
     _savedWindowOrder = nil;
 
