@@ -461,7 +461,7 @@ function iterm2_end_osc {
 }
 
 function iterm2_print_state_data() {
-  local _iterm2_hostname="${iterm2_hostname}"
+  local _iterm2_hostname="${iterm2_hostname-}"
   if [ -z "${iterm2_hostname:-}" ]; then
     _iterm2_hostname=$(hostname -f 2>/dev/null)
   fi
@@ -623,7 +623,7 @@ function __iterm2_prompt_command () {
     \local iterm2_prompt_prefix_value="$(iterm2_prompt_prefix)"
 
     # Add the mark unless the prompt includes '$(iterm2_prompt_mark)' as a substring.
-    if [[ $ITERM_ORIG_PS1 != *'$(iterm2_prompt_mark)'* && x$ITERM2_SQUELCH_MARK = x ]]
+    if [[ $ITERM_ORIG_PS1 != *'$(iterm2_prompt_mark)'* && x${ITERM2_SQUELCH_MARK-} = x ]]
     then
       iterm2_prompt_prefix_value="$iterm2_prompt_prefix_value$(iterm2_prompt_mark)"
     fi
