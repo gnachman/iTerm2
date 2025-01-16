@@ -301,10 +301,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                        passthrough:_customDirectory.delegate
                                                      functionsOnly:NO];
     _customDirectory.delegate = _customDirectoryTextFieldDelegate;
-    [self defineUnsearchableControl:_customDirectory
-                                key:KEY_WORKING_DIRECTORY
-                               type:kPreferenceInfoTypeStringTextField];
-
+    info = [self defineUnsearchableControl:_customDirectory
+                                       key:KEY_WORKING_DIRECTORY
+                                      type:kPreferenceInfoTypeStringTextField];
+    info.hasDefaultValue = ^BOOL{
+        // Because new profiles are initialized with NSHomeDirectory here.
+        return [[weakSelf objectForKey:KEY_WORKING_DIRECTORY] isEqual:NSHomeDirectory()];
+    };
     [self addViewToSearchIndex:_editBadgeButton
                    displayName:@"Edit badge appearance"
                        phrases:@[ @"Badge font",

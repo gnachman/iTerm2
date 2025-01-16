@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTermPreferences.h"
+#import "iTermSlider.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -41,6 +42,7 @@ NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChangeFromO
 // key for userInfo dictionary of kPreferenceDidChangeFromOtherPanel notification having
 // key of changed preference.
 NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
+NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPreferencesDidToggleIndicateNonDefaultValues";
 
 @interface iTermPreferencesBaseViewController()
 // If set to YES, then controls won't be updated with values from backing store when it changes.
@@ -71,6 +73,11 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         _keysWithSyntheticSetters = [NSMutableSet set];
         _docs = [NSMutableArray array];
         _otherSearchableViews = [NSPointerArray weakObjectsPointerArray];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(didToggleIndicateNonDefaultValues:)
+                                                     name:iTermPreferencesDidToggleIndicateNonDefaultValues
+                                                   object:nil];
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(preferenceDidChangeFromOtherPanel:)
                                                      name:kPreferenceDidChangeFromOtherPanel
@@ -255,8 +262,10 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 }
 
 - (BOOL)valueOfKeyEqualsDefaultValue:(NSString *)key {
+    // I use nonzero epsilon because otherwise colors don't compare equal when they ought to.
     return [NSObject object:[iTermPreferences defaultObjectForKey:key]
-            isEqualToObject:[self objectForKey:key]];
+    isNullablyEqualToObject:[self objectForKey:key]
+                    epsilon:0.001];
 }
 
 - (BOOL)shouldUpdateOtherPanels {
@@ -369,7 +378,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                                                             object:self
                                                           userInfo:@{ kPreferenceDidChangeFromOtherPanelKeyUserInfoKey: info.key }];
     }
-
+    [self updateNonDefaultIndicatorVisibleForInfo:info];
 }
 
 - (PreferenceInfo *)defineControl:(NSControl *)control
@@ -637,6 +646,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     }
     if (info.onUpdate) {
         if (info.onUpdate()) {
+            [self updateNonDefaultIndicatorVisibleForInfo:info];
             return;
         }
     }
@@ -749,6 +759,16 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     if (info.observer) {
         info.observer();
     }
+    [self updateNonDefaultIndicatorVisibleForInfo:info];
+}
+
+- (void)updateNonDefaultIndicatorVisibleForInfo:(PreferenceInfo *)info {
+    const BOOL hasDefaultValue = info.hasDefaultValue != nil ? info.hasDefaultValue() : [self valueOfKeyEqualsDefaultValue:info.key];
+    NSView *view = [NSView castFrom:info.control];
+    if ([view.superview isKindOfClass:[iTermSlider class]]) {
+        view = view.superview;
+    }
+    view.it_showNonDefaultIndicator = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] && !hasDefaultValue;
 }
 
 - (void)updateEnabledState {
@@ -942,6 +962,22 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 }
 
 #pragma mark - Notifications
+
+- (void)didToggleIndicateNonDefaultValues:(NSNotification *)notification {
+    [self updateNonDefaultIndicators];
+}
+
+- (void)updateNonDefaultIndicators {
+    for (NSControl *key in _keyMap.keyEnumerator) {
+        if (!key) {
+            continue;
+        }
+        PreferenceInfo *info = [_keyMap objectForKey:key];
+        if (info) {
+            [self updateValueForInfo:info];
+        }
+    }
+}
 
 - (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
     NSString *key = notification.userInfo[kPreferenceDidChangeFromOtherPanelKeyUserInfoKey];

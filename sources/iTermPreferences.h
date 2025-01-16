@@ -129,6 +129,7 @@ extern NSString *const kPhonyPreferenceKeyInstallAIPlugin;
 extern NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents;
 extern NSString *const kPreferenceKeyAITermURL;
 extern NSString *const kPreferenceKeyAITermUseLegacyAPI;
+extern NSString *const kPreferenceKeyIndicateNonDefaultValues;
 
 // Appearance
 extern NSString *const kPreferenceKeyTabStyle_Deprecated;

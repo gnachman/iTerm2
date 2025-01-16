@@ -341,6 +341,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     NSToolbarItem *_searchFieldToolbarItem;
 #ifdef MAC_OS_X_VERSION_10_16
     NSSearchToolbarItem *_bigSurSearchFieldToolbarItem NS_AVAILABLE_MAC(10_16);
+    NSMenuItem *_showNonDefaultValuesMenuItem NS_AVAILABLE_MAC(10_16);
 #endif
     NSDictionary<NSString *, NSString *> *_keywords;
     NSDictionary<NSString *, id<iTermSearchableViewController>> *_keywordToViewController;
@@ -734,13 +735,43 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 #ifdef MAC_OS_X_VERSION_10_16
-- (NSSearchToolbarItem *)bigSurSearchFieldToolbarItem NS_AVAILABLE_MAC(10_16){
+- (NSSearchToolbarItem *)bigSurSearchFieldToolbarItem NS_AVAILABLE_MAC(10_16) {
     if (!_bigSurSearchFieldToolbarItem) {
         _bigSurSearchFieldToolbarItem = [[NSSearchToolbarItem alloc] initWithItemIdentifier:iTermPreferencePanelSearchFieldToolbarItemIdentifier];
         _bigSurSearchFieldToolbarItem.label = @"";
         _bigSurSearchFieldToolbarItem.searchField.delegate = self;
+
+        NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Search Options"];
+        NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:@"Show indicators for non-default values"
+                                                          action:@selector(toggleIndicateNonDefaultValues:)
+                                                   keyEquivalent:@""];
+        menuItem.target = self;
+        menuItem.state = NSControlStateValueOff;
+
+        [menu addItem:menuItem];
+        _bigSurSearchFieldToolbarItem.searchField.searchMenuTemplate = menu;
+
+        // Store the reference to the menu item for later use
+        _showNonDefaultValuesMenuItem = menuItem;
     }
     return _bigSurSearchFieldToolbarItem;
+}
+
+- (void)toggleIndicateNonDefaultValues:(id)sender NS_AVAILABLE_MAC(10_16) {
+    [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues]
+                       forKey:kPreferenceKeyIndicateNonDefaultValues];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermPreferencesDidToggleIndicateNonDefaultValues
+                                                        object:nil];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (@available(macOS 10.16, *)) {
+        if (menuItem.action == @selector(toggleIndicateNonDefaultValues:)) {
+            menuItem.state = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] ? NSControlStateValueOn: NSControlStateValueOff;
+            return YES;
+        }
+    }
+    return YES;
 }
 #endif
 

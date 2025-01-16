@@ -879,6 +879,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 
     // macOS 10.13 has switched to unicode 9 widths. If you're sshing somewhere then you're
     // going to have a bad time. My hope is that this makes people happier on balance.
+    // NOTE: IF YOU CHANGE THIS ALSO UPDATE ProfilesTextPreferencseViewController.m's hasDefaultValue closure.
     return @9;
 }
 

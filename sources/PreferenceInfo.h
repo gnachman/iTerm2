@@ -93,6 +93,10 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 @property(nonatomic, copy) id (^syntheticGetter)(void);
 @property(nonatomic, copy) void (^syntheticSetter)(id newValue);
 
+// If you define a customSettingChangedHandler and don't store the setting in user defaults under `key`,
+// then you should also override this to indicate whether the current value is the default value.
+@property(nonatomic, copy) BOOL (^hasDefaultValue)(void);
+
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
                                  control:(NSControl *)control;

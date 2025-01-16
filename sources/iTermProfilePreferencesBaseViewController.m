@@ -239,8 +239,17 @@
 }
 
 - (BOOL)valueOfKeyEqualsDefaultValue:(NSString *)key {
-    return [NSObject object:[iTermProfilePreferences defaultObjectForKey:key]
-            isEqualToObject:[self objectForKey:key]];
+    static NSDictionary *presetsDict;
+    static dispatch_once_t onceToken;
+    // See discussion in issue 11998 for why I do this.
+    dispatch_once(&onceToken, ^{
+        NSString *plistFile = [[NSBundle bundleForClass:[self class]]
+                                        pathForResource:@"DefaultBookmark"
+                                                 ofType:@"plist"];
+        presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+    });
+    id defaultValue = presetsDict[key] ?: [iTermProfilePreferences defaultObjectForKey:key];
+    return [NSObject object:defaultValue isNullablyEqualToObject:[self objectForKey:key] epsilon:0.001];
 }
 
 - (void)willReloadProfile {

@@ -140,6 +140,10 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         [weakSelf postRefreshNotification];
         [weakSelf updateProxyIconEnabled];
     };
+    info.hasDefaultValue = ^BOOL{
+        return [weakSelf unsignedIntegerForKey:kPreferenceKeyTabStyle] == TAB_STYLE_AUTOMATIC;
+    };
+    [self updateNonDefaultIndicatorVisibleForInfo:info];
 
     info = [self defineControl:_sideMargins
                            key:kPreferenceKeySideMargins

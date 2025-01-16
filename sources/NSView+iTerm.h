@@ -62,6 +62,7 @@
 
 // Hack to avoid deprecation warning.
 @property (nonatomic, readonly) BOOL it_canDraw;
+@property(nonatomic) BOOL it_showNonDefaultIndicator;
 
 @end
 

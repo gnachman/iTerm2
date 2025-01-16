@@ -11,6 +11,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermApplication.h"
 #import "iTermTextPopoverViewController.h"
+#import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSWindow+iTerm.h"
 
@@ -278,4 +279,25 @@ static NSInteger gTakingSnapshot;
     return [self canDraw];
 #pragma clang diagnostic pop
 }
+
+- (iTermNonDefaultIndicator *)it_nonDefaultIndicator {
+    return [[self subviews] objectPassingTest:^BOOL(__kindof NSView *view, NSUInteger index, BOOL *stop) {
+        return [view isKindOfClass:[iTermNonDefaultIndicator class]];
+    }];
+}
+
+- (void)setIt_showNonDefaultIndicator:(BOOL)shouldShow {
+    NSView *ndv = [self it_nonDefaultIndicator];
+    if (shouldShow && !ndv) {
+        ndv = [[iTermNonDefaultIndicator alloc] init];
+        [self addSubview:ndv];
+    } else if (!shouldShow && ndv) {
+        [ndv removeFromSuperview];
+    }
+}
+
+- (BOOL)it_showNonDefaultIndicator {
+    return [self it_nonDefaultIndicator] != nil;
+}
+
 @end

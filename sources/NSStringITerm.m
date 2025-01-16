@@ -2851,6 +2851,10 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     return sanitized;
 }
 
+- (BOOL)it_hasZeroValue {
+    return [self isEqualToString:@""];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

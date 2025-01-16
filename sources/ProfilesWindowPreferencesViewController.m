@@ -386,6 +386,16 @@ CGFloat iTermMaxBlurRadius(void) {
         [_useBackgroundImage setState:NSControlStateValueOff];
         self.backgroundImageFilename = nil;
     }
+    [self updatePrivateNonDefaultInicators];
+}
+
+- (void)updateNonDefaultIndicators {
+    [super updateNonDefaultIndicators];
+    [self updatePrivateNonDefaultInicators];
+}
+
+- (void)updatePrivateNonDefaultInicators {
+    _useBackgroundImage.it_showNonDefaultIndicator = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] && _useBackgroundImage.state == NSControlStateValueOn;
 }
 
 - (BOOL)checkImage:(NSString *)filename {

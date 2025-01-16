@@ -202,6 +202,7 @@ NSString *const kPreferenceKeyAIModel = @"AiModel";
 NSString *const kPreferenceKeyAITokenLimit = @"AiMaxTokens";
 NSString *const kPreferenceKeyAITermURL = @"AitermURL";
 NSString *const kPreferenceKeyAITermUseLegacyAPI = @"AitermUseLegacyAPI";
+NSString *const kPreferenceKeyIndicateNonDefaultValues  = @"NoSyncHideDefaultValuedSettings";
 
 NSString *const iTermDefaultAIPrompt = @"Return commands suitable for copy/pasting into \\(shell) on \\(uname). Do NOT include commentary NOR Markdown triple-backtick code blocks as your whole response will be copied into my terminal automatically.\n"
 @"\n"
@@ -454,6 +455,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAITokenLimit: @4000,
                   kPreferenceKeyAITermURL: @"https://api.openai.com/v1/completions",
                   kPreferenceKeyAITermUseLegacyAPI: @NO,
+                  kPreferenceKeyIndicateNonDefaultValues: @NO,
 
                   kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),

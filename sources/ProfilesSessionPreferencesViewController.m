@@ -311,6 +311,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
                       settingChanged:nil
                               update:nil
                           searchable:YES];
+    __weak __typeof(info) weakInfo = info;
     info.syntheticGetter = ^id{
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
@@ -338,10 +339,26 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
         } else {
             [iTermWarning setIdentifier:theKey permanentSelection:kiTermWarningSelection0];
         }
+        if (weakInfo) {
+            [weakSelf updateNonDefaultIndicatorVisibleForInfo:weakInfo];
+        }
     };
     info.shouldBeEnabled = ^BOOL {
         return [self unsignedIntegerForKey:KEY_SESSION_END_ACTION] == iTermSessionEndActionClose;
     };
+    info.hasDefaultValue = ^BOOL{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return YES;
+        }
+        NSString *guid = [strongSelf stringForKey:KEY_GUID];
+        if (!guid) {
+            return YES;
+        }
+        NSString *theKey = [iTermPreferences warningIdentifierForNeverWarnAboutShortLivedSessions:guid];
+        return ![iTermWarning identifierIsSilenced:theKey];
+    };
+    [self updateNonDefaultIndicatorVisibleForInfo:info];
     [self addViewToSearchIndex:_configureStatusBar
                    displayName:@"Configure status bar"
                        phrases:@[]
@@ -386,6 +403,9 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     [_jobsTable reloadData];
     [self updateRemoveJobButtonEnabled];
     [self updateStatusBarSettingsEnabled];
+    if (_awoken) {
+        [self updateNonDefaultIndicatorVisibleForInfo:[self infoForControl:_logFilenameFormat]];
+    }
 }
 
 - (NSArray *)keysForBulkCopy {

@@ -29,6 +29,7 @@
 #import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSPopUpButton+iTerm.h"
+#import "NSView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 #import "PSMTabBarControl.h"
@@ -92,6 +93,15 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+- (void)updateNonDefaultIndicators {
+    [super updateNonDefaultIndicators];
+    [self updatePrivateNonDefaultInicators];
+}
+
+- (void)updatePrivateNonDefaultInicators {
+    _leader.it_showNonDefaultIndicator = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] && _leader.stringValue.length > 0;
+}
+
 - (void)awakeFromNib {
     PreferenceInfo *info;
     __weak __typeof(self) weakSelf = self;
@@ -99,6 +109,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     _leader.leaderAllowed = NO;
     iTermKeystroke *leaderKeystroke = [iTermKeyMappings leader];
     _leader.stringValue = leaderKeystroke ? [iTermKeystrokeFormatter stringForKeystroke:leaderKeystroke] : @"";
+    [self updatePrivateNonDefaultInicators];
 
     _hotkeyField.leaderAllowed = NO;
 
@@ -587,6 +598,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
         } else {
             [iTermKeyMappings setLeader:nil];
         }
+        [self updatePrivateNonDefaultInicators];
     }
 }
 

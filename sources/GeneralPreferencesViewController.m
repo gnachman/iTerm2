@@ -232,11 +232,11 @@ enum {
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_openWindowsAtStartup
-                    key:kPreferenceKeyOpenArrangementAtStartup
-            relatedView:_openWindowsAtStartupLabel
-                   type:kPreferenceInfoTypeCheckbox
-         settingChanged:^(id sender) {
+    info = [self defineControl:_openWindowsAtStartup
+                           key:kPreferenceKeyOpenArrangementAtStartup
+                   relatedView:_openWindowsAtStartupLabel
+                          type:kPreferenceInfoTypeCheckbox
+                settingChanged:^(id sender) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
@@ -274,6 +274,11 @@ enum {
         [strongSelf updateEnabledState];
         return YES;
     }];
+    info.hasDefaultValue = ^BOOL{
+        return [weakSelf boolForKey:kPreferenceKeyOpenArrangementAtStartup] == NO && [weakSelf boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] == NO;
+    };
+    [self updateNonDefaultIndicatorVisibleForInfo:info];
+
     [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
 
     [self defineControl:_restoreWindowsToSameSpaces

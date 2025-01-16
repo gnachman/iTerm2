@@ -165,6 +165,23 @@ static void (*originalNSThemeZoomWidgetCellShowMenuIMP)(id, SEL, id) = NULL;
     return [a isEqual:b];
 }
 
++ (BOOL)object:(NSObject * _Nullable)a isNullablyEqualToObject:(NSObject * _Nullable)b epsilon:(CGFloat)epsilon {
+    if ([self object:a isApproximatelyEqualToObject:b epsilon:epsilon]) {
+        return YES;
+    }
+    if (a == nil && [b it_hasZeroValue]) {
+        return YES;
+    }
+    if (b == nil && [a it_hasZeroValue]) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)it_hasZeroValue {
+    return NO;
+}
+
 + (BOOL)object:(__kindof NSObject *)a isApproximatelyEqualToObject:(__kindof NSObject *)b epsilon:(double)epsilon {
     if (a == b) {
         return YES;

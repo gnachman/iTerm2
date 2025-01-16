@@ -21,6 +21,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanel;
 
 // Used in preferenceDidChangeFromOtherPanel:'s notification's user info dictionary.
 extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
+extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 
 // View controllers for tabs in the Preferences dialog inherit from this class. Consider it
 // abstract. The pattern is to call -defineControl:key:type: in -awakeFromNib for each control.
@@ -178,5 +179,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 - (BOOL)keyHasSyntheticSetter:(NSString *)key;
 - (id)syntheticObjectForKey:(NSString *)key;
 - (void)setSyntheticValue:(id)value forKey:(NSString *)key;
+- (void)updateNonDefaultIndicatorVisibleForInfo:(PreferenceInfo *)info;
+- (void)updateNonDefaultIndicators;
 
 @end

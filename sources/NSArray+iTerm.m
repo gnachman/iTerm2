@@ -692,6 +692,10 @@ void iTermFreeeNullTerminatedCStringArray(char **array) {
     }];
 }
 
+- (BOOL)it_hasZeroValue {
+    return [self isEqualToArray:@[]];
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

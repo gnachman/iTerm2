@@ -50,7 +50,13 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 // For Swift convenience.
 @property(nonatomic, readonly) NSString *it_addressString;
 
+// Override this if you can compare your current value to a value equal to nil for the purposes of object:isNullablyEqualToObject:
+@property(nonatomic, readonly) BOOL it_hasZeroValue;
+
 + (BOOL)object:(NSObject * _Nullable)a isEqualToObject:(NSObject * _Nullable)b;
+
+// nil == "", nil == @0, nil == @[], nil == @{}
++ (BOOL)object:(NSObject * _Nullable)a isNullablyEqualToObject:(NSObject * _Nullable)b epsilon:(CGFloat)epsilon;
 
 // Supports NSArray, NSDictionary, and NSNumber.
 + (BOOL)object:(__kindof NSObject * _Nullable)a isApproximatelyEqualToObject:(__kindof NSObject * _Nullable)b epsilon:(double)epsilon;

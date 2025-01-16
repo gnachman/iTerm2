@@ -189,6 +189,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
             strongSelf->_configureHotKey.enabled = strongSelf->_hasHotkey.state == NSControlStateValueOn;
         }
     };
+    info.hasDefaultValue = ^BOOL{
+        return ![weakSelf boolForKey:KEY_HAS_HOTKEY];
+    };
+    [self updateNonDefaultIndicatorVisibleForInfo:info];
 
     [self addViewToSearchIndex:_configureHotKey
                    displayName:@"Configure hotkey window"
@@ -445,6 +449,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
         [iTermKeyMappings removeKeystroke:[iTermKeystroke backspace]
                               fromProfile:mutableProfile];
     }
+    [self updatePrivateNonDefaultInicators];
     [self commitChangesToProfile:mutableProfile];
 }
 
@@ -456,6 +461,17 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                                                                   keyMappings:profile[KEY_KEYBOARD_MAP]];
     const BOOL sendCH = (action.keyAction == KEY_ACTION_SEND_C_H_BACKSPACE);
     _deleteSendsCtrlHButton.state = (sendCH ? NSControlStateValueOn : NSControlStateValueOff);
+    [self updatePrivateNonDefaultInicators];
+}
+
+- (void)updateNonDefaultIndicators {
+    [super updateNonDefaultIndicators];
+    [self updatePrivateNonDefaultInicators];
+}
+
+- (void)updatePrivateNonDefaultInicators {
+    BOOL sendCtrlH = ([_deleteSendsCtrlHButton state] == NSControlStateValueOn);
+    _deleteSendsCtrlHButton.it_showNonDefaultIndicator = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] && sendCtrlH;
 }
 
 #pragma mark - Option Key Sends

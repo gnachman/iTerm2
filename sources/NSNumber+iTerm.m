@@ -22,4 +22,8 @@
     }
 }
 
+- (BOOL)it_hasZeroValue {
+    return [self isEqualToNumber:@0];
+}
+
 @end

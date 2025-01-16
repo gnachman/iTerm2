@@ -496,6 +496,10 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
     return result;
 }
 
+- (BOOL)it_hasZeroValue {
+    return [self isEqualToDictionary:@{}];
+}
+
 @end
 
 @implementation NSMutableDictionary (iTerm)
