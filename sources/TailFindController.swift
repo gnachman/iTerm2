@@ -119,8 +119,10 @@ extension TailFindController {
         }
         if more {
             DLog("Reschedule timer")
-            timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak self] _ in
-                self?.continueTailFind()
+            if timer == nil {
+                timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak self] _ in
+                    self?.continueTailFind()
+                }
             }
         } else {
             DLog("Tail find is done")
