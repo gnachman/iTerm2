@@ -32,6 +32,9 @@ class WindowOrderRestorer: NSObject {
 
     func reorderWindows(to desiredOrder: [NSWindow]) {
         for (i, window) in desiredOrder.enumerated() {
+            guard window.isOnActiveSpace else {
+                continue
+            }
             if let below = desiredOrder[safe: i - 1] {
                 window.order(.below, relativeTo: below.windowNumber)
             } else if let above = desiredOrder[safe: i + 1] {
