@@ -40,7 +40,7 @@
 
 #include "libssh2.h"
 
-#ifndef WIN32
+#ifndef LIBSSH2_WIN32
 #include <unistd.h>
 #endif
 
@@ -165,19 +165,19 @@ struct _LIBSSH2_SFTP_STATVFS {
 
 /* macros to check for specific file types, added in 1.2.5 */
 #define LIBSSH2_SFTP_S_ISLNK(m) \
-  (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFLNK)
+    (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFLNK)
 #define LIBSSH2_SFTP_S_ISREG(m) \
-  (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFREG)
+    (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFREG)
 #define LIBSSH2_SFTP_S_ISDIR(m) \
-  (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFDIR)
+    (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFDIR)
 #define LIBSSH2_SFTP_S_ISCHR(m) \
-  (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFCHR)
+    (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFCHR)
 #define LIBSSH2_SFTP_S_ISBLK(m) \
-  (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFBLK)
+    (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFBLK)
 #define LIBSSH2_SFTP_S_ISFIFO(m) \
-  (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFIFO)
+    (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFIFO)
 #define LIBSSH2_SFTP_S_ISSOCK(m) \
-  (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFSOCK)
+    (((m) & LIBSSH2_SFTP_S_IFMT) == LIBSSH2_SFTP_S_IFSOCK)
 
 /* SFTP File Transfer Flags -- (e.g. flags parameter to sftp_open())
  * Danger will robinson... APPEND doesn't have any effect on OpenSSH servers */
@@ -189,32 +189,32 @@ struct _LIBSSH2_SFTP_STATVFS {
 #define LIBSSH2_FXF_EXCL                        0x00000020
 
 /* SFTP Status Codes (returned by libssh2_sftp_last_error() ) */
-#define LIBSSH2_FX_OK                       0
-#define LIBSSH2_FX_EOF                      1
-#define LIBSSH2_FX_NO_SUCH_FILE             2
-#define LIBSSH2_FX_PERMISSION_DENIED        3
-#define LIBSSH2_FX_FAILURE                  4
-#define LIBSSH2_FX_BAD_MESSAGE              5
-#define LIBSSH2_FX_NO_CONNECTION            6
-#define LIBSSH2_FX_CONNECTION_LOST          7
-#define LIBSSH2_FX_OP_UNSUPPORTED           8
-#define LIBSSH2_FX_INVALID_HANDLE           9
-#define LIBSSH2_FX_NO_SUCH_PATH             10
-#define LIBSSH2_FX_FILE_ALREADY_EXISTS      11
-#define LIBSSH2_FX_WRITE_PROTECT            12
-#define LIBSSH2_FX_NO_MEDIA                 13
-#define LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM   14
-#define LIBSSH2_FX_QUOTA_EXCEEDED           15
-#define LIBSSH2_FX_UNKNOWN_PRINCIPLE        16 /* Initial mis-spelling */
-#define LIBSSH2_FX_UNKNOWN_PRINCIPAL        16
-#define LIBSSH2_FX_LOCK_CONFlICT            17 /* Initial mis-spelling */
-#define LIBSSH2_FX_LOCK_CONFLICT            17
-#define LIBSSH2_FX_DIR_NOT_EMPTY            18
-#define LIBSSH2_FX_NOT_A_DIRECTORY          19
-#define LIBSSH2_FX_INVALID_FILENAME         20
-#define LIBSSH2_FX_LINK_LOOP                21
+#define LIBSSH2_FX_OK                       0UL
+#define LIBSSH2_FX_EOF                      1UL
+#define LIBSSH2_FX_NO_SUCH_FILE             2UL
+#define LIBSSH2_FX_PERMISSION_DENIED        3UL
+#define LIBSSH2_FX_FAILURE                  4UL
+#define LIBSSH2_FX_BAD_MESSAGE              5UL
+#define LIBSSH2_FX_NO_CONNECTION            6UL
+#define LIBSSH2_FX_CONNECTION_LOST          7UL
+#define LIBSSH2_FX_OP_UNSUPPORTED           8UL
+#define LIBSSH2_FX_INVALID_HANDLE           9UL
+#define LIBSSH2_FX_NO_SUCH_PATH             10UL
+#define LIBSSH2_FX_FILE_ALREADY_EXISTS      11UL
+#define LIBSSH2_FX_WRITE_PROTECT            12UL
+#define LIBSSH2_FX_NO_MEDIA                 13UL
+#define LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM   14UL
+#define LIBSSH2_FX_QUOTA_EXCEEDED           15UL
+#define LIBSSH2_FX_UNKNOWN_PRINCIPLE        16UL /* Initial mis-spelling */
+#define LIBSSH2_FX_UNKNOWN_PRINCIPAL        16UL
+#define LIBSSH2_FX_LOCK_CONFlICT            17UL /* Initial mis-spelling */
+#define LIBSSH2_FX_LOCK_CONFLICT            17UL
+#define LIBSSH2_FX_DIR_NOT_EMPTY            18UL
+#define LIBSSH2_FX_NOT_A_DIRECTORY          19UL
+#define LIBSSH2_FX_INVALID_FILENAME         20UL
+#define LIBSSH2_FX_LINK_LOOP                21UL
 
-/* Returned by any function that would block during a read/write opperation */
+/* Returned by any function that would block during a read/write operation */
 #define LIBSSH2SFTP_EAGAIN LIBSSH2_ERROR_EAGAIN
 
 /* SFTP API */
@@ -230,12 +230,25 @@ libssh2_sftp_open_ex(LIBSSH2_SFTP *sftp,
                      unsigned int filename_len,
                      unsigned long flags,
                      long mode, int open_type);
-#define libssh2_sftp_open(sftp, filename, flags, mode)                  \
-    libssh2_sftp_open_ex((sftp), (filename), strlen(filename), (flags), \
-                         (mode), LIBSSH2_SFTP_OPENFILE)
+#define libssh2_sftp_open(sftp, filename, flags, mode) \
+    libssh2_sftp_open_ex((sftp), \
+                         (filename), (unsigned int)strlen(filename), \
+                         (flags), (mode), LIBSSH2_SFTP_OPENFILE)
 #define libssh2_sftp_opendir(sftp, path) \
-    libssh2_sftp_open_ex((sftp), (path), strlen(path), 0, 0, \
-                         LIBSSH2_SFTP_OPENDIR)
+    libssh2_sftp_open_ex((sftp), \
+                         (path), (unsigned int)strlen(path), \
+                         0, 0, LIBSSH2_SFTP_OPENDIR)
+LIBSSH2_API LIBSSH2_SFTP_HANDLE *
+libssh2_sftp_open_ex_r(LIBSSH2_SFTP *sftp,
+                       const char *filename,
+                       size_t filename_len,
+                       unsigned long flags,
+                       long mode, int open_type,
+                       LIBSSH2_SFTP_ATTRIBUTES *attrs);
+#define libssh2_sftp_open_r(sftp, filename, flags, mode, attrs) \
+    libssh2_sftp_open_ex_r((sftp), (filename), strlen(filename), \
+                           (flags), (mode), LIBSSH2_SFTP_OPENFILE, \
+                           (attrs))
 
 LIBSSH2_API ssize_t libssh2_sftp_read(LIBSSH2_SFTP_HANDLE *handle,
                                       char *buffer, size_t buffer_maxlen);
@@ -245,7 +258,7 @@ LIBSSH2_API int libssh2_sftp_readdir_ex(LIBSSH2_SFTP_HANDLE *handle, \
                                         char *longentry,
                                         size_t longentry_maxlen,
                                         LIBSSH2_SFTP_ATTRIBUTES *attrs);
-#define libssh2_sftp_readdir(handle, buffer, buffer_maxlen, attrs)      \
+#define libssh2_sftp_readdir(handle, buffer, buffer_maxlen, attrs) \
     libssh2_sftp_readdir_ex((handle), (buffer), (buffer_maxlen), NULL, 0, \
                             (attrs))
 
@@ -281,8 +294,9 @@ LIBSSH2_API int libssh2_sftp_rename_ex(LIBSSH2_SFTP *sftp,
                                        unsigned int dest_filename_len,
                                        long flags);
 #define libssh2_sftp_rename(sftp, sourcefile, destfile) \
-    libssh2_sftp_rename_ex((sftp), (sourcefile), strlen(sourcefile), \
-                           (destfile), strlen(destfile),                \
+    libssh2_sftp_rename_ex((sftp), \
+                           (sourcefile), (unsigned int)strlen(sourcefile), \
+                           (destfile), (unsigned int)strlen(destfile), \
                            LIBSSH2_SFTP_RENAME_OVERWRITE | \
                            LIBSSH2_SFTP_RENAME_ATOMIC | \
                            LIBSSH2_SFTP_RENAME_NATIVE)
@@ -305,13 +319,13 @@ LIBSSH2_API int libssh2_sftp_mkdir_ex(LIBSSH2_SFTP *sftp,
                                       const char *path,
                                       unsigned int path_len, long mode);
 #define libssh2_sftp_mkdir(sftp, path, mode) \
-    libssh2_sftp_mkdir_ex((sftp), (path), strlen(path), (mode))
+    libssh2_sftp_mkdir_ex((sftp), (path), (unsigned int)strlen(path), (mode))
 
 LIBSSH2_API int libssh2_sftp_rmdir_ex(LIBSSH2_SFTP *sftp,
                                       const char *path,
                                       unsigned int path_len);
 #define libssh2_sftp_rmdir(sftp, path) \
-    libssh2_sftp_rmdir_ex((sftp), (path), strlen(path))
+    libssh2_sftp_rmdir_ex((sftp), (path), (unsigned int)strlen(path))
 
 LIBSSH2_API int libssh2_sftp_stat_ex(LIBSSH2_SFTP *sftp,
                                      const char *path,
@@ -319,14 +333,14 @@ LIBSSH2_API int libssh2_sftp_stat_ex(LIBSSH2_SFTP *sftp,
                                      int stat_type,
                                      LIBSSH2_SFTP_ATTRIBUTES *attrs);
 #define libssh2_sftp_stat(sftp, path, attrs) \
-    libssh2_sftp_stat_ex((sftp), (path), strlen(path), LIBSSH2_SFTP_STAT, \
-                         (attrs))
+    libssh2_sftp_stat_ex((sftp), (path), (unsigned int)strlen(path), \
+                         LIBSSH2_SFTP_STAT, (attrs))
 #define libssh2_sftp_lstat(sftp, path, attrs) \
-    libssh2_sftp_stat_ex((sftp), (path), strlen(path), LIBSSH2_SFTP_LSTAT, \
-                         (attrs))
+    libssh2_sftp_stat_ex((sftp), (path), (unsigned int)strlen(path), \
+                         LIBSSH2_SFTP_LSTAT, (attrs))
 #define libssh2_sftp_setstat(sftp, path, attrs) \
-    libssh2_sftp_stat_ex((sftp), (path), strlen(path), LIBSSH2_SFTP_SETSTAT, \
-                         (attrs))
+    libssh2_sftp_stat_ex((sftp), (path), (unsigned int)strlen(path), \
+                         LIBSSH2_SFTP_SETSTAT, (attrs))
 
 LIBSSH2_API int libssh2_sftp_symlink_ex(LIBSSH2_SFTP *sftp,
                                         const char *path,
@@ -335,13 +349,19 @@ LIBSSH2_API int libssh2_sftp_symlink_ex(LIBSSH2_SFTP *sftp,
                                         unsigned int target_len,
                                         int link_type);
 #define libssh2_sftp_symlink(sftp, orig, linkpath) \
-    libssh2_sftp_symlink_ex((sftp), (orig), strlen(orig), (linkpath), \
-                            strlen(linkpath), LIBSSH2_SFTP_SYMLINK)
+    libssh2_sftp_symlink_ex((sftp), \
+                            (orig), (unsigned int)strlen(orig), \
+                            (linkpath), (unsigned int)strlen(linkpath), \
+                            LIBSSH2_SFTP_SYMLINK)
 #define libssh2_sftp_readlink(sftp, path, target, maxlen) \
-    libssh2_sftp_symlink_ex((sftp), (path), strlen(path), (target), (maxlen), \
-    LIBSSH2_SFTP_READLINK)
+    libssh2_sftp_symlink_ex((sftp), \
+                            (path), (unsigned int)strlen(path), \
+                            (target), (maxlen), \
+                            LIBSSH2_SFTP_READLINK)
 #define libssh2_sftp_realpath(sftp, path, target, maxlen) \
-    libssh2_sftp_symlink_ex((sftp), (path), strlen(path), (target), (maxlen), \
+    libssh2_sftp_symlink_ex((sftp), \
+                            (path), (unsigned int)strlen(path), \
+                            (target), (maxlen), \
                             LIBSSH2_SFTP_REALPATH)
 
 #ifdef __cplusplus

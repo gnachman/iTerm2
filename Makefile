@@ -167,6 +167,7 @@ CoreParse: force
 NMSSH: force fatlibssh2
 	echo Begin building NMSSH
 	rm -rf ThirdParty/NMSSH.framework
+	cp submodules/libssh2/include/* submodules/NMSSH/NMSSH-OSX/Libraries/include/libssh2
 	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty OTHER_LDFLAGS="-ld_classic"
 
 paranoidNMSSH: force
