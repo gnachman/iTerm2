@@ -19,6 +19,7 @@
         } else {
             self.previouslyActiveAppPID = @(processID);
         }
+        self.previouslyActiveAppBundleID = bundleIdentifier;
         DLog(@"Previously active pid for %p is %@", self, @(processID));
         _itermWasActiveWhenHotkeyOpened = [NSApp isActive];
         DLog(@"_itermWasActiveWhenHotkeyOpened=%@", @(_itermWasActiveWhenHotkeyOpened));
@@ -41,11 +42,12 @@
 - (void)dealloc {
     [_owner release];
     [_previouslyActiveAppPID release];
+    [_previouslyActiveAppBundleID release];
     [super dealloc];
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p itermWasActive=%@ other app pid=%@>", self.class, self, @(_itermWasActiveWhenHotkeyOpened), self.previouslyActiveAppPID];
+    return [NSString stringWithFormat:@"<%@: %p itermWasActive=%@ other app pid=%@, bundleID=%@>", self.class, self, @(_itermWasActiveWhenHotkeyOpened), self.previouslyActiveAppPID, self.previouslyActiveAppBundleID];
 }
 
 - (NSRunningApplication *)appToSwitchBackToIfAllowed {
@@ -78,6 +80,7 @@
 }
 
 - (BOOL)restorePreviouslyActiveApp {
+    DLog(@"%@", self);
     if (!_previouslyActiveAppPID) {
         DLog(@"Don't have a previously active app PID");
         return NO;
@@ -87,16 +90,17 @@
     BOOL result = NO;
     if (app) {
         DLog(@"Restore app %@", app);
-        DLog(@"** Restor previously active app from\n%@", [NSThread callStackSymbols]);
+        DLog(@"** Restore previously active app from\n%@", [NSThread callStackSymbols]);
         result = [app activateWithOptions:0];
         DLog(@"activateWithOptions:0 returned %@", @(result));
     }
+    DLog(@"Erase previouslyActiveAppPID");
     self.previouslyActiveAppPID = nil;
     return result;
 }
 
 - (BOOL)restoreAllowingAppSwitch:(BOOL)allowAppSwitch {
-    DLog(@"Restore %p with previously active app %@", self, _previouslyActiveAppPID);
+    DLog(@"Restore %p with previously active app %@ (%@)", self, _previouslyActiveAppPID, _previouslyActiveAppBundleID);
     BOOL result = allowAppSwitch && [self restorePreviouslyActiveApp];
     if (self.itermWasActiveWhenHotkeyOpened) {
         PseudoTerminal *currentTerm = [[iTermController sharedInstance] currentTerminal];

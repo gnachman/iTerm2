@@ -6,6 +6,7 @@
 
 // For restoring previously active app when exiting hotkey window.
 @property(nonatomic, copy) NSNumber *previouslyActiveAppPID;
+@property(nonatomic, copy) NSString *previouslyActiveAppBundleID;
 
 // Set when iTerm was key at the time the hotkey window was opened.
 @property(nonatomic) BOOL itermWasActiveWhenHotkeyOpened;
