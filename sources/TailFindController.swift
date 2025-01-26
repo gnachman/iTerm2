@@ -87,6 +87,7 @@ class TailFindController: NSObject {
 
     @objc
     func reset() {
+        DLog("Reset tail find")
         timer?.invalidate()
         timer = nil
         searchEngine.updateSnapshot()
@@ -159,6 +160,7 @@ extension TailFindController {
         } else {
             start = candidate
         }
+        DLog("Begin tail find starting at \(start). Last position is \(candidate).")
         searchEngine.setFind(mainSearchEngine.query!,
                              forwardDirection: true,
                              mode: mainSearchEngine.mode,

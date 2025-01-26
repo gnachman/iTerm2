@@ -2328,6 +2328,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     NSMutableIndexSet *cleanLines = [NSMutableIndexSet indexSet];
     if (allDirty) {
         foundDirty = YES;
+        DLog(@"allDirty=YES");
         const NSRange range = NSMakeRange(lineStart + totalScrollbackOverflow,
                                           lineEnd - lineStart);
         [_findOnPageHelper removeHighlightsInRange:range];
@@ -2340,6 +2341,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                 range = VT100GridRangeMake(0, width);
             }
             if (range.length > 0) {
+                DLog(@"Line %d is dirty", y);
                 foundDirty = YES;
                 // TODO: It would be more correct to remove all search results from this point down and reset the cursor location to the start of the first dirty line. VT100Screen.savedFindContextAbsPos can be after some of the dirty cells causing them not to be searched.
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];

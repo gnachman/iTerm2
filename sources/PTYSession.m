@@ -10548,10 +10548,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }];
     }
 
-    // I used to remove the tail-find timer here (commit 86477b98076802412a9a02c4b88ca1ee4b5b4d66) but I'm not quite sure why.
-    // I do see that I wanted to start a new search since things had changed, but I'm not
-    // convinced that it's the best solution. It certainly doesn't work well with the
-    // async search engine, which can fail to make progress when it is constantly restarted.
+    // Commit 86477b98076802412a9a02c4b88ca1ee4b5b4d66 wrongly removed code to restart
+    // tail find. Because of its removal tail find didn't really work. This isn't terribly
+    // performant but at least it's correct.
+    [_tailFindController reset];
 }
 
 - (void)textViewBeginDrag

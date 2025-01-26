@@ -94,9 +94,19 @@ class iTermSearchRequest: NSObject {
             return candidate
         }()
 
+        let direction: SearchRequest.Direction = options.contains(.optBackwards) ? .backwards : .forwards
+        let safeStartPosition: LineBufferPosition?
+
+        // Ensure the start position we use is not before the actual start. This is a targeted hack
+        // to fix a bug in tail search.
+        if let startPosition, direction == .forwards, snapshot.lineBuffer.firstPosition().compare(startPosition) == .orderedDescending {
+            safeStartPosition = snapshot.lineBuffer.firstPosition()
+        } else {
+            safeStartPosition = startPosition
+        }
         return SearchRequest(
             absLineRange: absLineRange,
-            direction: options.contains(.optBackwards) ? .backwards : .forwards,
+            direction: direction,
             regex: mode == .caseInsensitiveRegex || mode == .caseSensitiveRegex,
             query: query,
             caseSensitivity: caseSensitivity,
@@ -108,7 +118,7 @@ class iTermSearchRequest: NSObject {
             forceMainScreen: forceMainScreen,
             initialStart: initialStart,
             offset: offset,
-            startPosition: startPosition,
+            startPosition: safeStartPosition,
             maxQueueSize: maxQueueSize)
     }
 
@@ -509,8 +519,8 @@ fileprivate class SearchOperation: Pausable {
             if wrapped {
                 self.wrapped = true
                 start = request.wrappedStartPosition(width: snapshot.width(),
-                                                            cumulativeOverflow: snapshot.cumulativeOverflow,
-                                                            lineBuffer: snapshot.lineBuffer)
+                                                     cumulativeOverflow: snapshot.cumulativeOverflow,
+                                                     lineBuffer: snapshot.lineBuffer)
                 if let position = request.stopPosition(lineBuffer: snapshot.lineBuffer,
                                                        width: snapshot.width(),
                                                        overflow: snapshot.cumulativeOverflow,
