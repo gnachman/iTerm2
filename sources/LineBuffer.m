@@ -359,8 +359,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                             i + num_dropped_blocks,
                             @(pos),
                             @(rawSpaceUsed)]];
+        [strings addObject:[_lineBlocks[i] dumpStringWithDroppedChars:pos]];
         pos += rawSpaceUsed;
-        [strings addObject:[_lineBlocks[i] dumpStringWithDroppedChars:droppedChars]];
     }
     return [strings componentsJoinedByString:@"\n"];
 }
