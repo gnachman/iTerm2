@@ -1505,6 +1505,9 @@ void TurnOnDebugLoggingAutomatically(void) {
         [[iTermCommandExplainer instance] explainWithURL:url];
         return YES;
     }
+    if ([components.path isEqualToString:@"disable-secure-keyboard-entry-indicator"] && internal) {
+        [iTermAdvancedSettingsModel setShowSecureKeyboardEntryIndicator:NO];
+    }
     if ([components.path isEqualToString:@"copy-block"]) {
         NSString *guid = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
             return [element.name isEqualToString:@"guid"];

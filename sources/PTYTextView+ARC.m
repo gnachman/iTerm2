@@ -897,7 +897,11 @@ iTermCommandInfoViewControllerDelegate>
     [_indicatorMessagePopoverViewController view];
     _indicatorMessagePopoverViewController.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     _indicatorMessagePopoverViewController.textView.drawsBackground = NO;
-    [_indicatorMessagePopoverViewController appendString:message];
+
+    NSAttributedString *attributedString = [NSAttributedString attributedStringWithMarkdown:message
+                                                                                   font:[NSFont systemFontOfSize:[NSFont systemFontSize]]
+                                                                         paragraphStyle:[NSParagraphStyle defaultParagraphStyle]];
+    [_indicatorMessagePopoverViewController appendAttributedString:attributedString];
     const NSRect textViewFrame = [_indicatorMessagePopoverViewController.view convertRect:_indicatorMessagePopoverViewController.textView.bounds
                                                                                  fromView:_indicatorMessagePopoverViewController.textView];
     const CGFloat horizontalInsets = NSWidth(_indicatorMessagePopoverViewController.view.bounds) - NSWidth(textViewFrame);

@@ -268,6 +268,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 }
 
 - (NSString *)helpTextForIndicatorWithName:(NSString *)name {
+    // NOTE: These messages are interpreted as markdown.
     NSDictionary<NSString *, NSString *> *messages = @{
         kItermIndicatorBroadcastInput: @"Keyboard input gets broadcast to other sessions.",
         kiTermIndicatorMaximized: @"This is a maximized split pane.",
@@ -278,8 +279,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorFilter: @"Filtering.",
         kiTermIndicatorCopyMode: @"In copy mode.",
         kiTermIndicatorDebugLogging: @"Debug logging is enabled.",
-        kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.",
-        kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on.",
+        kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
+        kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
         kiTermIndicatorPinned: @"This Hotkey Window is pinned."
     };
     return messages[name];
