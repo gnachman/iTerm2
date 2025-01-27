@@ -439,7 +439,7 @@ struct LLMModernResponseParser: LLMResponseParser {
         var created: Int
         var model: String?
         var choices: [Choice]
-        var usage: Usage
+        var usage: Usage?  // see issue 12134
 
         struct Choice: Codable {
             var index: Int
