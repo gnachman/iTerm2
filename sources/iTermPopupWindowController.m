@@ -659,4 +659,7 @@
 - (void)previewCurrentRow {
 }
 
+- (BOOL)shouldEscapeShellCharacters {
+    return NO;
+}
 @end

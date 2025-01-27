@@ -337,8 +337,12 @@
     return self;
 }
 
-- (void)popupInsertText:(NSString *)text {
-    [self.textView insertText:text replacementRange:self.textView.selectedRange];
+- (void)popupInsertText:(NSString *)text popup:(iTermPopupWindowController *)popupWindowController {
+    NSString *string = text;
+    if ([popupWindowController shouldEscapeShellCharacters]) {
+        string = [text stringWithEscapedShellCharactersIncludingNewlines:YES];
+    }
+    [self.textView insertText:string replacementRange:self.textView.selectedRange];
 }
 
 - (void)popupPreview:(NSString *)text {

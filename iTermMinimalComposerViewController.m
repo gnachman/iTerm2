@@ -545,8 +545,12 @@ workingDirectory:(NSString *)pwd
     return self;
 }
 
-- (void)popupInsertText:(NSString *)text {
-    [_largeComposerViewController.textView insertText:text
+- (void)popupInsertText:(NSString *)text popup:(iTermPopupWindowController *)popupWindowController {
+    NSString *string = text;
+    if ([popupWindowController shouldEscapeShellCharacters]) {
+        string = [text stringWithEscapedShellCharactersIncludingNewlines:YES];
+    }
+    [_largeComposerViewController.textView insertText:string
                                      replacementRange:_largeComposerViewController.textView.selectedRange];
 }
 

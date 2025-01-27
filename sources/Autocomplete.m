@@ -469,11 +469,11 @@ precededByWhitespace:(BOOL)precededByWhitespace
         PopupEntry* e = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
         [stack_ removeAllObjects];
         if (moreText_) {
-            [[self delegate] popupInsertText:moreText_];
+            [[self delegate] popupInsertText:moreText_ popup:self];
             [moreText_ release];
             moreText_ = nil;
         }
-        [[self delegate] popupInsertText:[e mainValue]];
+        [[self delegate] popupInsertText:[e mainValue] popup:self];
         [super rowSelected:sender];
     }
 }

@@ -24,7 +24,7 @@
 - (VT100Screen *)popupVT100Screen;
 - (id<iTermPopupWindowPresenter>)popupPresenter;
 - (void)popupPreview:(NSString *)text;
-- (void)popupInsertText:(NSString *)text;
+- (void)popupInsertText:(NSString *)text popup:(iTermPopupWindowController *)popupWindowController;
 - (void)popupKeyDown:(NSEvent *)event;
 // Return YES if the delegate handles it, NO if Popup should handle it.
 - (BOOL)popupHandleSelector:(SEL)selector string:(NSString *)string currentValue:(NSString *)currentValue;
@@ -104,5 +104,6 @@
                                      baseAttributes:(NSDictionary *)baseAttributes;
 - (BOOL)passKeyEventToDelegateForSelector:(SEL)selector string:(NSString *)string;
 - (void)previewCurrentRow;
+- (BOOL)shouldEscapeShellCharacters;
 
 @end

@@ -15874,17 +15874,25 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return self;
 }
 
-- (void)popupInsertText:(NSString *)string {
+- (void)popupInsertText:(NSString *)string popup:(iTermPopupWindowController *)popupWindowController {
     id<iTermPopupWindowHosting> host = [self popupHost];
     if (host) {
-        [host popupWindowHostingInsertText:string];
+        if ([popupWindowController shouldEscapeShellCharacters]) {
+            [host popupWindowHostingInsertText:[string stringWithEscapedShellCharactersIncludingNewlines:YES]];
+        } else {
+            [host popupWindowHostingInsertText:string];
+        }
         return;
     }
     if (_composerManager.dropDownComposerViewIsVisible) {
         [_composerManager insertText:string];
         return;
     }
-    [self insertText:string];
+    if ([popupWindowController shouldEscapeShellCharacters] && [_screen isAtCommandPrompt]) {
+        [self insertText:[string stringWithEscapedShellCharactersIncludingNewlines:YES]];
+    } else {
+        [self insertText:string];
+    }
 }
 
 - (void)popupPreview:(NSString *)text {

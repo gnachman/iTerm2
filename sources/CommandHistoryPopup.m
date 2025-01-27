@@ -127,16 +127,17 @@
         const NSEventModifierFlags flags = [[iTermApplication sharedApplication] it_modifierFlags];
         const NSEventModifierFlags mask = NSEventModifierFlagShift | NSEventModifierFlagOption;
         if (!_autocomplete || (flags & mask) == NSEventModifierFlagShift) {
-            [self.delegate popupInsertText:string];
+            [self.delegate popupInsertText:string popup:self];
             [super rowSelected:sender];
             return;
         } else if (_autocomplete && (flags & mask) == NSEventModifierFlagOption) {
-            [self.delegate popupInsertText:[string stringByAppendingString:@"\n"]];
+            [self.delegate popupInsertText:[string stringByAppendingString:@"\n"]
+                                     popup:self];
             [super rowSelected:sender];
             return;
         }
     }
-    [self.delegate popupInsertText:@"\n"];
+    [self.delegate popupInsertText:@"\n" popup:self];
     [super rowSelected:sender];
 }
 
