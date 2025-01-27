@@ -242,7 +242,6 @@ static BOOL hasBecomeActive = NO;
     iTermRestorableStateController *_restorableStateController;
     iTermUntitledWindowStateMachine *_untitledWindowStateMachine;
     iTermGlobalSearchWindowController *_globalSearchWindowController;
-    iTermWindowOrderRestorer *_savedWindowOrder;
 }
 
 - (instancetype)init {
@@ -322,7 +321,6 @@ static BOOL hasBecomeActive = NO;
     [_focusFollowsMouseController release];
     [_globalScopeController release];
     [_untitledWindowStateMachine release];
-    [_savedWindowOrder release];
 
     [super dealloc];
 }
@@ -1060,11 +1058,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)applicationWillResignActive:(NSNotification *)notification {
-    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
-        [_savedWindowOrder release];
-        _savedWindowOrder = [[iTermWindowOrderRestorer alloc] init];
-        DLog(@"Application will resign active. Ordered windows are:\n%@", NSApp.orderedWindows);
-    }
+    DLog(@"Application will resign active.");
 }
 
 - (void)applicationWillHide:(NSNotification *)aNotification {
@@ -1076,11 +1070,6 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
     DLog(@"Application did become active. Key window is %@", NSApp.keyWindow);
     DLog(@"Ordered windows are\n%@", NSApp.orderedWindows);
-    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] && _savedWindowOrder) {
-        [_savedWindowOrder restore];
-    }
-    [_savedWindowOrder release];
-    _savedWindowOrder = nil;
 
     hasBecomeActive = YES;
     [self hideStuckToolTips];
