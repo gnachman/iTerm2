@@ -103,6 +103,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSDictionary *)dictionaryValueWithOffset:(long long)offset;
 - (void)enumerateLimitsAfter:(long long)minimumLimit
                        block:(void (^)(id<IntervalTreeObject> object, BOOL *stop))block;
+- (NSString *)debugString;
 
 @end
 

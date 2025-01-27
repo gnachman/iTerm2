@@ -42,6 +42,7 @@
  * @param ident				The indent to use.
  */
 - (void) printWithIndent:(int)indent;
-
+- (NSString *)stringWithIndent:(int)indent
+                 dataFormatter:(NSString *(^NS_NOESCAPE)(NSString *, id data))dataFormatter;
 
 @end

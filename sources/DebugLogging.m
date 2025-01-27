@@ -81,6 +81,7 @@ static void WriteDebugLogHeader(void) {
     for (NSString *key in [[gPinnedMessages allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [pinnedMessages appendString:gPinnedMessages[key]];
     }
+    NSString *itd = [[[[[iTermController sharedInstance] currentTerminal] currentSession] screen] intervalTreeDump];
     NSString *header = [NSString stringWithFormat:
                         @"iTerm2 version: %@\n"
                         @"Date: %@ (%lld)\n"
@@ -91,7 +92,9 @@ static void WriteDebugLogHeader(void) {
                         @"Windows: %@\n"
                         @"Ordered windows: %@\n"
                         @"Pinned messages: %@\n"
+                        @"Interval tree of current session:\n%@\n"
                         @"------ END HEADER ------\n\n",
+
                         [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
                         [NSDate date],
                         (long long)[[NSDate date] timeIntervalSince1970],
@@ -101,7 +104,8 @@ static void WriteDebugLogHeader(void) {
                         [[NSApplication sharedApplication] keyWindow],
                         windows,
                         [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
-                        pinnedMessages];
+                        pinnedMessages,
+                        itd];
     gDebugLogHeader = [header copy];
 }
 
@@ -114,10 +118,13 @@ static void WriteDebugLogFooter(void) {
                       @"------ BEGIN FOOTER -----\n"
                       @"Screens: %@\n"
                       @"Windows: %@\n"
-                      @"Ordered windows: %@\n",
+                      @"Ordered windows: %@\n"
+                      @"Interval tree of current session:\n%@\n",
+
                       iTermScreensInfo(),
                       windows,
-                      [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
+                      [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
+                      [[[[[iTermController sharedInstance] currentTerminal] currentSession] screen] intervalTreeDump]];
   [gDebugLogStr appendString:footer];
 }
 

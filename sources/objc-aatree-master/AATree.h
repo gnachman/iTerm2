@@ -156,7 +156,7 @@
  * @abstract				Display the tree using NSLog().
  */
 - (void) print;
-
+- (NSString *)debugStringWithDataFormatter:(NSString *(^NS_NOESCAPE)(NSString *indent, id data))dataFormatter;
 
 /*!
  * @abstract				Delete the data object bound to the specified key.

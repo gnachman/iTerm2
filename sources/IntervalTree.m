@@ -326,6 +326,10 @@ static NSString *const kIntervalLengthKey = @"Length";
             self.class, self, self.location, self.limit];
 }
 
+- (NSString *)shortDescription {
+    return [NSString stringWithFormat:@"[%lld, %lld)", self.location, self.limit];
+}
+
 - (void)boundsCheck {
     assert(_location >= kMinLocation);
     assert(_length >= 0);
@@ -460,6 +464,17 @@ static NSString *const kIntervalLengthKey = @"Length";
     _tree.delegate = nil;
     [_tree release];
     [super dealloc];
+}
+
+- (NSString *)debugString {
+    return [_tree debugStringWithDataFormatter:^NSString *(NSString *indent, id data) {
+        IntervalTreeValue *value = data;
+        NSMutableArray *strings = [NSMutableArray array];
+        for (IntervalTreeEntry *entry in value.entries) {
+            [strings addObject:[NSString stringWithFormat:@"%@%@%@", indent, entry.interval.shortDescription, entry.object.debugDescription]];
+        }
+        return [strings componentsJoinedByString:@"\n"];
+    }];
 }
 
 - (void)restoreFromDictionary:(NSDictionary *)dict {
@@ -1237,10 +1252,6 @@ static NSString *const kIntervalLengthKey = @"Length";
     if (_tree.root) {
         [self sanityCheckAtNode:_tree.root];
     }
-}
-
-- (NSString *)debugString {
-    return [_tree description];
 }
 
 - (NSDictionary *)dictionaryValueWithOffset:(long long)offset {

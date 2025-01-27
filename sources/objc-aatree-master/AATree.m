@@ -180,6 +180,10 @@
     return [NSString stringWithFormat:@"<%@: %p count=%@ root=%@>", self.class, self, @(self.count), self.root];
 }
 
+- (NSString *)debugStringWithDataFormatter:(NSString *(^NS_NOESCAPE)(NSString *indent, id data))dataFormatter {
+    return [root stringWithIndent:0 dataFormatter:dataFormatter];
+}
+
 - (void)setCount:(NSUInteger)newCount {
     count = newCount;
 }

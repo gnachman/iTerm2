@@ -68,6 +68,33 @@
 	if (left) [left printWithIndent:(indent+1)];
 }
 
+- (NSString *)stringWithIndent:(int)indent
+                 dataFormatter:(NSString *(^NS_NOESCAPE)(NSString *, id data))dataFormatter {
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+
+    if (right) {
+        NSString *s = [right stringWithIndent:(indent+1) dataFormatter:dataFormatter];
+        if (s.length) {
+            [parts addObject:s];
+        }
+    }
+
+    NSMutableString *pre = [[NSMutableString alloc] init];
+    for (int i=0; i<indent; i++) {
+        [pre appendString:@"   "];
+    }
+    [parts addObject:[NSString stringWithFormat:@"%@%@- (%i)\n%@", pre, key, level, dataFormatter([pre stringByAppendingString:@" |-"], data)]];
+    [pre release];
+
+    if (left) {
+        NSString *s = [left stringWithIndent:(indent+1) dataFormatter:dataFormatter];
+        if (s.length) {
+            [parts addObject:s];
+        }
+    }
+    return [parts componentsJoinedByString:@"\n"];
+}
+
 #if DEBUG
 - (void)setLeft:(AATreeNode *)newValue {
     @synchronized (self) {

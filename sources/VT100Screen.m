@@ -1483,6 +1483,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     };
 }
 
+- (NSString *)intervalTreeDump {
+    return [_state.intervalTree debugString];
+}
+
 - (void)updateSearchBuffer:(BOOL)force {
     if (!_state) {
         return;
