@@ -2940,6 +2940,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                         hasBadPWD:env[PWD_ENVNAME]];
                 }];
             }
+            DLog(@"Will call injectShellIntegration");
             [self injectShellIntegrationWithEnvironment:env
                                                    args:argv
                                              completion:^(NSDictionary<NSString *, NSString *> *env,
@@ -2967,13 +2968,16 @@ ITERM_WEAKLY_REFERENCEABLE
                                          args:(NSArray<NSString *> *)argv
                                    completion:(void (^)(NSDictionary<NSString *, NSString *> *,
                                                         NSArray<NSString *> *))completion {
+    DLog(@"env=%@ argv=%@", env, argv);
     if (![iTermProfilePreferences boolForKey:KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY inProfile:self.profile]) {
+        DLog(@"Injection disabled in profile %@", self.profile[KEY_GUID]);
         completion(env, argv);
         return;
     }
     ShellIntegrationInjector *injector = [ShellIntegrationInjector instance];
     NSString *dir = NSBundle.shellIntegrationDirectory;
     if (!dir) {
+        DLog(@"Failed to get shell integration directory");
         completion(env, argv);
         return;
     }

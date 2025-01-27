@@ -43,6 +43,7 @@ import Foundation
                                       env: [String: String],
                                       argv: [String],
                                       completion: @escaping ([String: String], [String]) -> ()) {
+        DLog("shellIntegrationDir=\(shellIntegrationDir), env=\(env) argv=\(argv)")
         let (env, args) = modifyShellEnvironment(shellIntegrationDir: shellIntegrationDir,
                                                  env: env,
                                                  argv: argv)
@@ -52,22 +53,30 @@ import Foundation
     func modifyShellEnvironment(shellIntegrationDir: String,
                                 env: [String: String],
                                 argv: [String]) -> ([String: String], [String]) {
+        DLog("shellIntegrationDir=\(shellIntegrationDir), env=\(env) argv=\(argv)")
         switch ShellLauncherInfo(argv) {
         case .command:
+            DLog("Is regular command")
             guard let injector = ShellIntegrationInjectionFactory().createInjector(
                 shellIntegrationDir: shellIntegrationDir,
                 path: argv[0]) else {
+                DLog("Failed to create injector")
                 return (env, argv)
             }
             // Keep injector from getting dealloced
-            return injector.computeModified(env: env, argv: argv)
+            DLog("Using \(injector)")
+            let result = injector.computeModified(env: env, argv: argv)
+            DLog("Returning \(result)")
+            return result
         case .customShell(let shell):
+            DLog("Is custom shell - WILL RECURSE")
             let (newEnv, newArgs) = modifyShellEnvironment(
                 shellIntegrationDir: shellIntegrationDir,
                 env: env,
                 argv: [shell])
             return (newEnv, Array(argv + newArgs.dropFirst()))
         case .loginShell(let shell):
+            DLog("Is login shell - WILL RECURSE")
             let (newEnv, newArgs) = modifyShellEnvironment(
                 shellIntegrationDir: shellIntegrationDir,
                 env: env,
@@ -150,12 +159,16 @@ fileprivate class ShellIntegrationInjectionFactory {
         }
         switch Shell(path: path) {
         case .none:
+            DLog("Don't know what shell \(path) is")
             return nil
         case .fish:
+            DLog("fish")
             return FishShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
         case .bash:
+            DLog("bash")
             return BashShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
         case .zsh:
+            DLog("zsh")
             return ZshShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
         }
     }
@@ -176,7 +189,6 @@ fileprivate protocol ShellIntegrationInjecting {
 fileprivate struct Env {
     static let XDG_DATA_DIRS = "XDG_DATA_DIRS"
     static let HOME = "HOME"
-    static let PATH = "PATH"
 }
 
 fileprivate class BaseShellIntegrationInjection {
