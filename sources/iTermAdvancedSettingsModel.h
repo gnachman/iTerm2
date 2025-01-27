@@ -356,7 +356,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showLocationsInScrollbar;
 + (BOOL)showMarksInScrollbar;
 + (BOOL)showPinnedIndicator;
-+ (BOOL)setShowSecureKeyboardEntryIndicator:(BOOL)value;
++ (void)setShowSecureKeyboardEntryIndicator:(BOOL)value;
 + (BOOL)showSecureKeyboardEntryIndicator;
 + (BOOL)showSessionRestoredBanner;
 + (BOOL)showTimestampsByDefault;
