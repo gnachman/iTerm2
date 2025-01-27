@@ -800,6 +800,7 @@ DEFINE_STRING(codeciergeRegularPrompt, @"You help a me in a terminal emulator. M
 DEFINE_BOOL(generativeAIAllowed, YES, SECTION_GENERAL @"Allow the use of large language model APIs?\nThe purpose of this setting is to make it easy for managed environments to disable the use of LLMs. The user defaults key is `GenerativeAIAllowed`.");
 DEFINE_STRING(llmPlatform, @"OpenAI", SECTION_GENERAL @"LLM Platform.\nLegal values are: OpenAI, Azure, Gemini. This determines the format of requests and responses.");
 DEFINE_BOOL(bidi, NO, SECTION_EXPERIMENTAL @"Support right-to-left text?\nThis also enables ligature support in the GPU renderer.");
+DEFINE_BOOL(alternateScreenBidi, NO, SECTION_EXPERIMENTAL @"When right-to-left text support is enabled, also support it in alternate screen mode?");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

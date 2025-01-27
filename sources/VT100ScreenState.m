@@ -647,8 +647,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     const int width = self.currentGrid.size.width;
     int numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:width];
     if (lineNumber >= numLinesInLineBuffer) {
-        if (self.currentGrid == self.primaryGrid) {
-            return [self.primaryGrid bidiInfoForLine:lineNumber - numLinesInLineBuffer];
+        if (!self.terminalSoftAlternateScreenMode || iTermAdvancedSettingsModel.alternateScreenBidi) {
+            return [self.currentGrid bidiInfoForLine:lineNumber - numLinesInLineBuffer];
         } else {
             return nil;
         }

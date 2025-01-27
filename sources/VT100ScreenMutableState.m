@@ -4414,15 +4414,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)shouldPopulateRTLState {
-    if (self.currentGrid != self.primaryGrid) {
+    if (self.terminal.softAlternateScreenMode && !iTermAdvancedSettingsModel.alternateScreenBidi) {
         return NO;
     }
-    return self.linebuffer.lastRawLine.metadata.rtlFound || self.primaryGrid.mayContainRTL;
+    return self.linebuffer.lastRawLine.metadata.rtlFound || self.currentGrid.mayContainRTL;
 }
 
 // Set the RTL status for all cells in the primary grid. This may require modifying the last line
 // of the line buffer as well since a proper bidi analysis can only be done on full paragraphs, not
 // on line segments.
+// It's up to the caller to avoid calling this in alternate screen mode if they prefer not to use
+// bidi there.
 - (void)populateRTLState {
     const int width = self.width;
     __block ScreenCharArray *prefix = nil;
@@ -4431,14 +4433,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         prefix = [self.linebuffer lastRawLine];
         [prefix makeSafe];
     }
-    const BOOL updateDirtyLinesOnly = ![self.primaryGrid eraseBidiInfoInDirtyLines];
-    [self.primaryGrid enumerateParagraphs:^(int line, NSArray<MutableScreenCharArray *> *scas) {
-        if (updateDirtyLinesOnly && ![self.primaryGrid anyLineDirtyInRange:NSMakeRange(line, scas.count)]) {
+    VT100Grid *grid = self.currentGrid;
+    const BOOL updateDirtyLinesOnly = ![grid eraseBidiInfoInDirtyLines];
+    [grid enumerateParagraphs:^(int line, NSArray<MutableScreenCharArray *> *scas) {
+        if (updateDirtyLinesOnly && ![grid anyLineDirtyInRange:NSMakeRange(line, scas.count)]) {
             return;
         }
-        if (![self.primaryGrid mayContainRTLInRange:NSMakeRange(line, scas.count)]) {
+        if (![grid mayContainRTLInRange:NSMakeRange(line, scas.count)]) {
             for (int i = 0; i < scas.count; i++) {
-                [self.primaryGrid setBidiInfo:nil forLine:line + i];
+                [grid setBidiInfo:nil forLine:line + i];
             }
             return;
         }
@@ -4451,7 +4454,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             iTermBidiDisplayInfo *bidiInfo = [[iTermBidiDisplayInfo alloc] initWithScreenCharArray:scas[0]
                                                                                           paddedTo:width];
             DLog(@"Simple case for line %d. Set bidi info to %@", line, bidiInfo);
-            [self.primaryGrid setBidiInfo:bidiInfo forLine:line];
+            [grid setBidiInfo:bidiInfo forLine:line];
             [iTermBidiDisplayInfo annotateWithBidiInfo:bidiInfo msca:scas[0]];
             return;
         }
@@ -4482,10 +4485,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             iTermBidiDisplayInfo *sub = [bidiInfo subInfoInRange:NSMakeRange(offset, lineLength)
                                                    paddedToWidth:width];
             DLog(@"Set bidi for line %d to %@", lineOffset + line, sub);
-            [self.primaryGrid setBidiInfo:sub forLine:lineOffset + line];
-            [self.primaryGrid setCharactersInLine:lineOffset + line
-                                               to:joined.line + offset
-                                           length:lineLength];
+            [grid setBidiInfo:sub forLine:lineOffset + line];
+            [grid setCharactersInLine:lineOffset + line
+                                   to:joined.line + offset
+                               length:lineLength];
 
             offset += lineLength;
         }
