@@ -140,6 +140,7 @@
 - (void)setFrame:(NSRect)frame {
     DLog(@"%@: set frame to %@ from %@\n%@", self, NSStringFromRect(frame), NSStringFromRect(self.frame), [NSThread callStackSymbols]);
     [super setFrame:frame];
+    [_ptyScrollerDelegate ptyScrollerFrameDidChange];
 }
 
 - (void)setFrameSize:(NSSize)newSize {

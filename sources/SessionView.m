@@ -2076,6 +2076,10 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 #pragma mark - PTYScrollerDelegate
 
+- (void)ptyScrollerFrameDidChange {
+    [self updateMinimapFrameAnimated:NO];
+}
+
 - (void)userScrollDidChange:(BOOL)userScroll {
     [self.delegate sessionViewUserScrollDidChange:userScroll];
 }
