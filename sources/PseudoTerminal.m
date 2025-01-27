@@ -5967,7 +5967,9 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Load auto-save frame");
     iTermTerminalWindow *window = [self ptyWindow];
     NSRect frame = [window frame];
-    if ([window setFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]]) {
+    NSString *name = [NSString stringWithFormat:kWindowNameFormat, uniqueNumber_];
+    const BOOL hadAutoSaveFrame = [window setFrameUsingName:name];
+    if (hadAutoSaveFrame) {
         DLog(@"Had an auto save frame of %@", NSStringFromRect(window.frame));
         frame.origin = [window frame].origin;
         frame.origin.y += [window frame].size.height - frame.size.height;
@@ -5976,6 +5978,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     DLog(@"Update frame to %@", NSStringFromRect(frame));
     [window setFrame:frame display:NO];
+    if (hadAutoSaveFrame) {
+        DLog(@"Replace autosaved frame");
+        [[self window] saveFrameUsingName:name];
+    }
 }
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
