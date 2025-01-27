@@ -10363,10 +10363,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (flags & kPTYSessionPasteWithShellEscapedTabs) {
         tabTransform = kTabTransformEscapeWithCtrlV;
     } else if (!_screen.terminalBracketedPasteMode) {
+        DLog(@"Not in bracketed paste mode");
         spacesPerTab = [_pasteHelper numberOfSpacesToConvertTabsTo:theString];
         if (spacesPerTab >= 0) {
             tabTransform = kTabTransformConvertToSpaces;
         } else if (spacesPerTab == kNumberOfSpacesPerTabOpenAdvancedPaste) {
+            DLog(@"Using advanced paste because of tabs");
             [_pasteHelper showAdvancedPasteWithFlags:flags];
             return;
         } else if (spacesPerTab == kNumberOfSpacesPerTabCancel) {
@@ -12057,6 +12059,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)openAdvancedPasteWithText:(NSString *)text escaping:(iTermSendTextEscaping)escaping {
+    DLog(@"openAdvancedPasteWithText:%@ escaping:%@", text, @(escaping));
     NSString *escaped = [self escapedText:text mode:escaping];
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];

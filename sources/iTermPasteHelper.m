@@ -623,7 +623,9 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 
 // This may modify pasteEvent.string.
 - (BOOL)maybeWarnAboutMultiLinePaste:(PasteEvent *)pasteEvent {
+    DLog(@"Begin");
     const int limit = [iTermAdvancedSettingsModel alwaysWarnBeforePastingOverSize];
+    DLog(@"limit=%@, length=%@", @(limit), @(pasteEvent.string.length));
     if (limit >= 0) {
         if (pasteEvent.string.length > limit) {
             NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
@@ -640,8 +642,10 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                 case kiTermWarningSelection0:
                     break;
                 case kiTermWarningSelection1:
+                    DLog(@"canceled 'ok to paste N characters': return NO");
                     return NO;
                 case kiTermWarningSelection2:
+                    DLog(@"chose Advanced for 'ok to paste N characters': return NO");
                     [self showAdvancedPasteWithFlags:0];
                     return NO;
                 default:
@@ -650,6 +654,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         }
     }
     if (pasteEvent.flags & kPasteFlagsRemovingNewlines) {
+        DLog(@"removing newlines: return YES");
         return YES;
     }
 
@@ -657,18 +662,22 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         [NSCharacterSet characterSetWithCharactersInString:@"\r\n"];
     NSRange rangeOfFirstNewline = [pasteEvent.string rangeOfCharacterFromSet:newlineCharacterSet];
     if (rangeOfFirstNewline.length == 0) {
+        DLog(@"No first newline: return YES");
         return YES;
     }
     if ([iTermAdvancedSettingsModel suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline] &&
         rangeOfFirstNewline.location == pasteEvent.string.length - 1) {
+        DLog(@"suppressing multiline paste warning for one line plus newline and that condition is met: return YES");
         return YES;
     }
     BOOL atShellPrompt = [_delegate pasteHelperIsAtShellPrompt];
     if ([iTermAdvancedSettingsModel suppressMultilinePasteWarningWhenNotAtShellPrompt] &&
         !atShellPrompt) {
+        DLog(@"suppress multiline paste warning when not at shell prompt and that condition is met: return YES");
         return YES;
     }
     if (pasteEvent.suppressMultilinePasteWarning) {
+        DLog(@"suppress multiline paste warning is on: return YES");
         return YES;
     }
     NSArray *lines = [pasteEvent.string componentsSeparatedByRegex:@"(?:\r\n)|(?:\r)|(?:\n)"];
@@ -684,6 +693,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         [iTermWarningAction warningActionWithLabel:@"Paste Without Newline"
                                              block:^(iTermWarningSelection selection) {
             [pasteEvent trimNewlines];
+            DLog(@"paste without newline selected: set result to YES");
             result = YES;
         }];
 
@@ -697,6 +707,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                         (int)[lines count]];
         } else {
             prompt = [iTermAdvancedSettingsModel promptForPasteWhenNotAtPrompt];
+            DLog(@"set prompt to %@: there are multiple lines and we are not at the shell prompt", @(prompt));
             theTitle = [NSString stringWithFormat:@"OK to paste %d lines?",
                         (int)[lines count]];
         }
@@ -707,11 +718,13 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             theTitle = @"OK to paste one line ending in a newline at shell prompt?";
         } else {
             prompt = [iTermAdvancedSettingsModel promptForPasteWhenNotAtPrompt];
+            DLog(@"set prompt to %@: pasting 0 or 1 lines and not at shell prompt", @(prompt));
             theTitle = @"OK to paste one line ending in a newline?";
         }
     }
 
     if (!prompt) {
+        DLog(@"prompt is NO: return YES");
         return YES;
     }
     // Issue 5115
@@ -722,6 +735,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             flags |= kPTYSessionPasteSlowly;
             // The other two flags do not appear to be used
         }
+        DLog(@"Advanced chosen: set result to NO");
         [self showAdvancedPasteWithFlags:flags];
         result = NO;
     }]];
@@ -734,10 +748,12 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     warning.cancelLabel = @"Cancel";
     warning.window = [[self.delegate pasteHelperViewForIndicator] window];
     [warning runModal];
+    DLog(@"Return result of %@", @(result));
     return result;
 }
 
 - (void)showAdvancedPasteWithFlags:(PTYSessionPasteFlags)flags {
+    DLog(@"show advanced paste\n%@", [NSThread callStackSymbols]);
     PasteEvent *temporaryEvent = [self pasteEventWithString:@""
                                                      slowly:!!(flags & kPTYSessionPasteSlowly)
                                            escapeShellChars:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
@@ -783,6 +799,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                 [accessoryController saveToUserDefaults];
                 return accessoryController.numberOfSpaces;
             case kiTermWarningSelection3:  // Advanced
+                DLog(@"You chose to use advanced paste when there are tabs");
                 return kNumberOfSpacesPerTabOpenAdvancedPaste;
             default:
                 return kNumberOfSpacesPerTabNoConversion;
