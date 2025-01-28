@@ -377,7 +377,7 @@ enum {
     };
 
     _advancedGPUWindowController = [[iTermAdvancedGPUSettingsWindowController alloc] initWithWindowNibName:@"iTermAdvancedGPUSettingsWindowController"];
-    [_advancedGPUWindowController window];
+    [_advancedGPUWindowController.window orderOut:nil];
     _advancedGPUWindowController.viewController.disableWhenDisconnected.target = self;
     _advancedGPUWindowController.viewController.disableWhenDisconnected.action = @selector(settingChanged:);
     info = [self defineUnsearchableControl:_advancedGPUWindowController.viewController.disableWhenDisconnected
