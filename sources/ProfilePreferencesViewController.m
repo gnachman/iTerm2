@@ -650,6 +650,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSMutableDictionary* copyOfSource = [sourceProfile mutableCopy];
     [copyOfSource setObject:profileGuid forKey:KEY_GUID];
     [copyOfSource removeObjectForKey:KEY_ORIGINAL_GUID];
+    [copyOfSource removeObjectForKey:KEY_SESSION_HOTKEY];
     [copyOfSource setObject:[destination objectForKey:KEY_NAME] forKey:KEY_NAME];
     [[ProfileModel sharedInstance] setBookmark:copyOfSource withGuid:profileGuid];
 
