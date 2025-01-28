@@ -7840,10 +7840,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
-- (IBAction)captureNextMetalFrame:(id)sender {
+- (BOOL)isMetalCaptureEnabled {
     NSDictionary *infoPlist = [[NSBundle mainBundle] infoDictionary];
     NSNumber *metalCaptureEnabled = infoPlist[@"MetalCaptureEnabled"];
-    if (!metalCaptureEnabled.boolValue && ![[NSUserDefaults standardUserDefaults] boolForKey:@"MetalCaptureEnabled"]) {
+    return metalCaptureEnabled.boolValue || [[NSUserDefaults standardUserDefaults] boolForKey:@"MetalCaptureEnabled"];
+}
+
+- (IBAction)captureNextMetalFrame:(id)sender {
+    if (!self.isMetalCaptureEnabled) {
         [self turnOnMetalCaptureInInfoPlist];
         return;
     }
@@ -10706,7 +10710,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if ([item action] == @selector(zoomOut:)) {
         return self.currentSession.textViewIsZoomedIn || self.currentSession.textViewIsFiltered;
     } else if (item.action == @selector(captureNextMetalFrame:)) {
-        return self.currentSession.canProduceMetalFramecap;
+        const BOOL enabled = self.currentSession.canProduceMetalFramecap;
+        if (!self.isMetalCaptureEnabled) {
+            item.title = @"Enable GPU Frame Capture";
+        } else {
+            item.title = @"Capture GPU Frame";
+        }
+        return enabled;
     } else if (item.action == @selector(exportRecording:)) {
         return !self.currentSession.screen.dvr.empty;
     } else if (item.action == @selector(toggleSizeChangesAffectProfile:)) {

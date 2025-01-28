@@ -151,6 +151,7 @@
     if (useMetal == _useMetal) {
         return;
     }
+    DLog(@"Set useMetal to %@ from %@", @(useMetal), [NSThread callStackSymbols]);
     _useMetal = useMetal;
     [self setNeedsDisplay:YES];
 }

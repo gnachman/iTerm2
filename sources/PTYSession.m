@@ -7257,6 +7257,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (BOOL)canProduceMetalFramecap {
+    DLog(@"useMetal=%@ view.metalView.alphaValue=%@ wrapper.useMetal=%@ textview.suppressDrawing=%@",
+         @(_useMetal),
+         @(_view.metalView.alphaValue == 1),
+         @(_wrapper.useMetal),
+         @(_textview.suppressDrawing));
     return _useMetal && _view.metalView.alphaValue == 1 && _wrapper.useMetal && _textview.suppressDrawing;
 }
 

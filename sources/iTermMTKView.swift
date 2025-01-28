@@ -27,6 +27,15 @@ public class iTermMTKView: iTermMetalView {
         _timer?.invalidate()
     }
 
+    override public var alphaValue: CGFloat {
+        set {
+            super.alphaValue = newValue
+            DLog("Set alpha value of \(self) to \(newValue) from \(Thread.callStackSymbols)")
+        }
+        get {
+            super.alphaValue
+        }
+    }
     private func it_schedule() {
         _timer = Timer.scheduledWeakTimer(
             withTimeInterval: iTermAdvancedSettingsModel.metalRedrawPeriod(),

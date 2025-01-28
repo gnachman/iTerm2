@@ -1566,6 +1566,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     if (suppressDrawing == _suppressDrawing) {
         return;
     }
+    DLog(@"Set suppressDrawing to %@ from %@", @(suppressDrawing), [NSThread callStackSymbols]);
     _suppressDrawing = suppressDrawing;
     if (PTYTextView.useLayerForBetterPerformance) {
         if (@available(macOS 10.15, *)) {} {
