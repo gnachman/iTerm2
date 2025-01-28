@@ -20,7 +20,8 @@ import Foundation
         case command
 
         init(_ argv: [String]) {
-            guard argv.starts(with: ["/usr/bin/login", "-fpl"]),
+            // NOTE: This must be kept in sync with -[ITAddressBookMgr shellLauncherCommandWithCustomShell:]
+            guard argv.starts(with: ["/usr/bin/login", "-fpl"]) || argv.starts(with: ["/usr/bin/login", "-fqpl"]),
                   argv.get(3, default: "").lastPathComponent == "ShellLauncher",
                   argv.get(4, default: "") == "--launch_shell" else {
                 self = .command

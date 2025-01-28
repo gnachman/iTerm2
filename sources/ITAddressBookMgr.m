@@ -595,6 +595,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     NSString *customShellArg = sanitizedCustomShell ? [@" SHELL=" stringByAppendingString:sanitizedCustomShell] : @"";
     NSString *shellLauncher = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"ShellLauncher"];
 
+    // NOTE: If you change this also update ShellLauncherInfo.init(_:)
     return [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell%@",
             [self hushlogin] ? @"q" : @"",
             [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
