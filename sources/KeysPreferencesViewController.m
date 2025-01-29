@@ -107,11 +107,13 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     __weak __typeof(self) weakSelf = self;
 
     _leader.leaderAllowed = NO;
+    _leader.purpose = @"as the leader";
     iTermKeystroke *leaderKeystroke = [iTermKeyMappings leader];
     _leader.stringValue = leaderKeystroke ? [iTermKeystrokeFormatter stringForKeystroke:leaderKeystroke] : @"";
     [self updatePrivateNonDefaultInicators];
 
     _hotkeyField.leaderAllowed = NO;
+    _hotkeyField.purpose = @"as a hotkey";
 
     [_keyMappingViewController addViewsToSearchIndex:self];
 
@@ -590,37 +592,12 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     } else if (view == _leader) {
         if (event) {
             iTermKeystroke *keystroke = [iTermKeystroke withEvent:event];
-            if ([self shouldUseKeystrokeForLeader:keystroke]) {
-                [iTermKeyMappings setLeader:keystroke];
-            } else {
-                [view revert];
-            }
+            [iTermKeyMappings setLeader:keystroke];
         } else {
             [iTermKeyMappings setLeader:nil];
         }
         [self updatePrivateNonDefaultInicators];
     }
-}
-
-- (BOOL)shouldUseKeystrokeForLeader:(iTermKeystroke *)keystroke {
-    if ((keystroke.modifierFlags & (NSEventModifierFlagCommand | NSEventModifierFlagNumericPad | NSEventModifierFlagOption)) == 0 &&
-        (keystroke.character < NSF1FunctionKey || keystroke.character > NSF12FunctionKey)) {
-        return [self userConfirmsTheyWantsToUseStupidLeader:keystroke];
-    }
-    return YES;
-}
-
-- (BOOL)userConfirmsTheyWantsToUseStupidLeader:(iTermKeystroke *)keystroke {
-    NSString *displayString = [iTermKeystrokeFormatter stringForKeystroke:keystroke];
-    const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Are you sure you want to use %@ as the leader? This may be a frequently used key.", displayString]
-                               actions:@[ @"OK", @"Cancel" ]
-                             accessory:nil
-                            identifier:nil
-                           silenceable:kiTermWarningTypePersistent
-                               heading:@"Confirm Leader"
-                                window:self.view.window];
-    return selection == kiTermWarningSelection0;
 }
 
 - (BOOL)anyProfileHasMappingForKeystroke:(iTermKeystroke *)keystroke {

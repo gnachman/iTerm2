@@ -30,6 +30,7 @@
 @property(nonatomic, assign) NSBackgroundStyle backgroundStyle;
 @property(nonatomic, retain) iTermShortcut *shortcut;
 @property(nonatomic) BOOL leaderAllowed;
+@property(nonatomic, copy) NSString *purpose;  // if you set this then the user will need to confirm likely-accidental keypresses. It should be a phrase like "as a hotkey".
 
 - (void)handleShortcutEvent:(NSEvent *)event;
 

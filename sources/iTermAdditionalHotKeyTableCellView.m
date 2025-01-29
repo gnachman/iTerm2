@@ -17,6 +17,7 @@
 }
 
 - (void)awakeFromNib {
+    _shortcut.purpose = @"as a hotkey";
     _shortcut.shortcutDelegate = self;
 }
 

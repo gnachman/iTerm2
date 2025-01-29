@@ -22,7 +22,7 @@ extern CGFloat kShortcutPreferredHeight;
 @property(nonatomic, assign) NSEventModifierFlags modifiers;
 @property(nonatomic, copy) NSString *characters;
 @property(nonatomic, copy) NSString *charactersIgnoringModifiers;
-
+@property(nonatomic, readonly) BOOL smellsAccidental;
 @property(nonatomic, readonly) iTermKeystroke *keystroke;
 
 // Suitable for display.

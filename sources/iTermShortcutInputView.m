@@ -12,6 +12,7 @@
 #import "NSStringITerm.h"
 #import "NSImage+iTerm.h"
 #import "iTermKeyMappings.h"
+#import "iTermWarning.h"
 
 @interface iTermShortcutInputView()
 @property(nonatomic, copy) NSString *hotkeyBeingRecorded;
@@ -228,9 +229,27 @@
 
 - (void)handleShortcutEvent:(NSEvent *)event {
     if (event.type == NSEventTypeKeyDown) {
+        iTermShortcut *shortcut = [iTermShortcut shortcutWithEvent:event
+                                                     leaderAllowed:_leaderAllowed];
+        if (self.purpose && shortcut.smellsAccidental) {
+            const iTermWarningSelection selection =
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Are you sure you want to use “%@” %@? This looks like a commonly used keystroke.", shortcut.stringValue, self.purpose]
+                                       actions:@[ @"OK", @"Cancel" ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Confirm Shortcut"
+                                        window:self.window];
+            if (selection == kiTermWarningSelection1) {
+                [self revert];
+                self.hotkeyBeingRecorded = nil;
+                [[self window] makeFirstResponder:[self window]];
+                [self setNeedsDisplay:YES];
+                return;
+            }
+        }
         self.hotkeyBeingRecorded = nil;
-        self.shortcut = [iTermShortcut shortcutWithEvent:event
-                                           leaderAllowed:_leaderAllowed];
+        self.shortcut = shortcut;
         [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
         _savedShortcut = nil;
         [[self window] makeFirstResponder:[self window]];
