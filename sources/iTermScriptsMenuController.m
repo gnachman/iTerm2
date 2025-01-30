@@ -202,7 +202,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSArray<iTermScriptItem *> *)scriptItems {
+    DLog(@"begin");
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        DLog(@"not homeDirectoryDotDir");
         return @[];
     }
     NSFileManager *fm = [NSFileManager defaultManager];
@@ -221,6 +223,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)populateScriptItem:(iTermScriptItem *)parentFolderItem
               originalRoot:(NSString *)originalRoot
               clockWatcher:(iTermClockWatcher *)clockWatcher {
+    DLog(@"parentFolderItem=%@ originalRoot=%@", parentFolderItem, originalRoot);
     if (_disableEnumeration) {
         return;
     }
@@ -287,6 +290,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)didFindScriptArchive:(NSString *)file autolaunch:(BOOL)autolaunch {
+    DLog(@"didFindScriptArchive:%@ autolaunch:%@", file, @(autolaunch));
     static NSMutableSet<NSString *> *alreadyFound;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -310,24 +314,26 @@ NS_ASSUME_NONNULL_BEGIN
             if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
                 break;
             }
+            DLog(@"Import from %@", url);
             [iTermScriptImporter importScriptFromURL:url
                                        userInitiated:YES
                                      offerAutoLaunch:autolaunch
                                        callbackQueue:dispatch_get_main_queue()
                                              avoidUI:NO
                                           completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
-                                              if (quiet) {
-                                                  return;
-                                              }
-                                              if (errorMessage == nil) {
-                                                  [[NSFileManager defaultManager] trashItemAtURL:url
-                                                                                resultingItemURL:nil
-                                                                                           error:nil];
-                                              }
-                                              [self importDidFinishWithErrorMessage:errorMessage
-                                                                           location:location
-                                                                        originalURL:url];
-                                          }];
+                DLog(@"Completed with %@", errorMessage);
+                if (quiet) {
+                    return;
+                }
+                if (errorMessage == nil) {
+                    [[NSFileManager defaultManager] trashItemAtURL:url
+                                                  resultingItemURL:nil
+                                                             error:nil];
+                }
+                [self importDidFinishWithErrorMessage:errorMessage
+                                             location:location
+                                          originalURL:url];
+            }];
             break;
         }
         case kiTermWarningSelection1:
@@ -368,6 +374,7 @@ NS_ASSUME_NONNULL_BEGIN
         [self runAutoLaunchScripts];
         return YES;
     } else {
+        DLog(@"Not running auto-launch scripts");
         _ranAutoLaunchScript = YES;
         return NO;
     }
@@ -432,6 +439,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         return;
     }
+    DLog(@"begin");
     NSOpenPanel *panel = [[NSOpenPanel alloc] init];
     panel.allowedFileTypes = @[ @"zip", @"its", @"py" ];
     panel.allowsMultipleSelection = YES;
@@ -446,7 +454,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)importFromURL:(NSURL *)url {
+    DLog(@"%@", url);
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        DLog(@"Not homeDirectoryDotDir");
         return;
     }
     [iTermScriptImporter importScriptFromURL:url
@@ -455,21 +465,23 @@ NS_ASSUME_NONNULL_BEGIN
                                callbackQueue:dispatch_get_main_queue()
                                      avoidUI:NO
                                   completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
-                                      // Mojave deadlocks if you do this without the dispatch_async
-                                      dispatch_async(dispatch_get_main_queue(), ^{
-                                          if (quiet) {
-                                              return;
-                                          }
-                                          [self importDidFinishWithErrorMessage:errorMessage
-                                                                       location:location
-                                                                    originalURL:url];
-                                      });
-                                  }];
+        DLog(@"%@", errorMessage);
+        // Mojave deadlocks if you do this without the dispatch_async
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (quiet) {
+                return;
+            }
+            [self importDidFinishWithErrorMessage:errorMessage
+                                         location:location
+                                      originalURL:url];
+        });
+    }];
 }
 
 - (void)importDidFinishWithErrorMessage:(nullable NSString *)errorMessage
                                location:(NSURL *)location
                             originalURL:(NSURL *)url {
+    DLog(@"error=%@ location=%@ url=%@", errorMessage, location, url);
     if (errorMessage) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Could Not Install Script";
@@ -540,6 +552,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)launchOrTerminateScript:(NSMenuItem *)sender {
     NSString *fullPath = sender.identifier;
+    DLog(@"%@", fullPath);
     iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] runningEntryWithPath:fullPath];
     if (entry) {
         [entry kill];
@@ -564,6 +577,7 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
     NSString *fullPath = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:path];
+    DLog(@"fullPath=%@ args=%@ explicitUserAction=%@", fullPath, arguments, @(explicitUserAction));
     [self launchScriptWithAbsolutePath:fullPath
                              arguments:arguments
                     explicitUserAction:explicitUserAction];
@@ -687,6 +701,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)newPythonScript {
+    DLog(@"begin");
     __weak __typeof(self) weakSelf = self;
     iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
     [downloader downloadOptionalComponentsIfNeededWithConfirmation:YES
@@ -694,6 +709,7 @@ NS_ASSUME_NONNULL_BEGIN
                                          minimumEnvironmentVersion:0
                                                 requiredToContinue:YES
                                                     withCompletion:^(iTermPythonRuntimeDownloaderStatus status) {
+        DLog(@"status=%@", @(status));
         switch (status) {
             case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
             case iTermPythonRuntimeDownloaderStatusCanceledByUser:
@@ -710,18 +726,21 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)reallyCreateNewPythonScript {
+    DLog(@"begin");
     iTermScriptTemplatePickerWindowController *picker = [[iTermScriptTemplatePickerWindowController alloc] initWithWindowNibName:@"iTermScriptTemplatePickerWindowController"];
     [NSApp runModalForWindow:picker.window];
     [picker.window close];
 
     if (picker.selectedEnvironment == iTermScriptEnvironmentNone ||
         picker.selectedTemplate == iTermScriptTemplateNone) {
+        DLog(@"no env/template");
         return;
     }
 
     NSArray<NSString *> *dependencies = nil;
     NSString *pythonVersion = nil;
     NSURL *url = [self runSavePanelForNewScriptWithPicker:picker dependencies:&dependencies pythonVersion:&pythonVersion];
+    DLog(@"%@", url);
     if (url) {
         [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                             pythonVersion:pythonVersion
@@ -729,6 +748,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                                        requiredToContinue:YES
                                                                                            withCompletion:
          ^(iTermPythonRuntimeDownloaderStatus status) {
+            DLog(@"status=%@", @(status));
              switch (status) {
                  case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
                  case iTermPythonRuntimeDownloaderStatusCanceledByUser:
@@ -751,6 +771,7 @@ NS_ASSUME_NONNULL_BEGIN
                                   picker:(iTermScriptTemplatePickerWindowController *)picker
                             dependencies:(NSArray<NSString *> *)dependencies
                            pythonVersion:(nullable NSString *)pythonVersion {
+    DLog(@"url=%@ deps=%@ pythonVersion=%@ selectedEnvironment=%@", url, dependencies, pythonVersion, @(picker.selectedEnvironment));
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
         NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
@@ -1108,6 +1129,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (BOOL)autoLaunchFolderExists {
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        DLog(@"Not homeDirectoryDotDir");
         return NO;
     }
     return ([[NSFileManager defaultManager] fileExistsAtPath:iTermScriptsMenuController.legacyAutolaunchScriptPath] ||
@@ -1116,6 +1138,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)shouldRunAutoLaunchScripts {
     if (_ranAutoLaunchScript) {
+        DLog(@"Already ran");
         return NO;
     }
     return [iTermScriptsMenuController autoLaunchFolderExists];
@@ -1131,11 +1154,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)runModernAutoLaunchScripts {
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        DLog(@"Not homeDirectoryDotDir");
         return;
     }
     NSString *scriptsPath = [[NSFileManager defaultManager] autolaunchScriptPath];
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:scriptsPath];
     for (NSString *file in enumerator) {
+        DLog(@"%@", file);
         if ([file hasPrefix:@"."]) {
             continue;
         }
@@ -1148,6 +1173,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)runAutoLaunchScript:(NSString *)path {
+    DLog(@"%@", path);
     [self launchScriptWithAbsolutePath:path arguments:@[] explicitUserAction:NO];
 }
 

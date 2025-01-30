@@ -499,12 +499,14 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
 
 - (void)launchScript {
     if (!_savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier) {
+        DLog(@"No uniqueIdentifier");
         return;
     }
     NSString *fullPath = [self fullPathOfScript];
     if (!fullPath) {
         return;
     }
+    DLog(@"%@", fullPath);
     iTermScriptsMenuController *menuController = [[[iTermApplication sharedApplication] delegate] scriptsMenuController];
     [menuController launchScriptWithAbsolutePath:fullPath arguments:@[] explicitUserAction:YES];
     _dateOfLaunchToFix = [NSDate date];

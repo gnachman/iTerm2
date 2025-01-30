@@ -755,7 +755,7 @@ private struct ScriptsImporterExporter {
                                          offerAutoLaunch: autolaunch,
                                          callbackQueue: DispatchQueue.main,
                                          avoidUI: true) { maybeErrorMessage, _, _ in
-            DLog("Done")
+            DLog("Done \(String(describing: maybeErrorMessage))")
             error = maybeErrorMessage
             unblockRunloop = true
             CFRunLoopStop(RunLoop.current.getCFRunLoop())

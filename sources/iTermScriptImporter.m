@@ -57,7 +57,8 @@ static BOOL sInstallingScript;
                     userInitiated:(BOOL)userInitiated
                   offerAutoLaunch:(BOOL)offerAutoLaunch
                     callbackQueue:(dispatch_queue_t)callbackQueue
-                          avoidUI:(BOOL)avoidUI                       completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
+                          avoidUI:(BOOL)avoidUI
+                       completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
     DLog(@"downloadedURL=%@ userInitiated=%@ offerAutoLauch=%@", downloadedURL, @(userInitiated), @(offerAutoLaunch));
     if (sInstallingScript) {
         DLog(@"already installing");
@@ -223,6 +224,7 @@ static BOOL sInstallingScript;
                      completion:(void (^)(NSURL *, NSString *))completion {
     NSError *innerError = nil;
     const BOOL ok = [verifier copyPayloadToURL:zipURL error:&innerError];
+    DLog(@"%@", innerError);
     if (!ok) {
         completion(nil, innerError.localizedDescription ?: @"Unknown error");
         return;
@@ -258,6 +260,13 @@ static BOOL sInstallingScript;
                         reveal:(BOOL)reveal
                        avoidUI:(BOOL)avoidUI
                 withCompletion:(void (^)(NSString *errorMessage, BOOL, NSURL *location))completion {
+    DLog(@"didUnzipSuccessfullyTo:%@, trusted:%@, offerAutoLaunch:%@, reveal:%@, avoidUI:%@",
+         tempDir,
+         @(trusted),
+         @(offerAutoLaunch),
+         @(reveal),
+         @(avoidUI));
+
     if (reveal) {
         DLog(@"Reveal in finder");
         [[NSWorkspace sharedWorkspace] it_openURL:[NSURL fileURLWithPath:tempDir]];

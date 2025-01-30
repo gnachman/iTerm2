@@ -13,6 +13,7 @@
 #import "iTermScriptsMenuController.h"
 #import "iTermSessionLauncher.h"
 #import "iTermSnippetsMenuController.h"
+#import "DebugLogging.h"
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -226,6 +227,7 @@
 
     if (row >= 0) {
         id object = [self.model objectAtIndex:row];
+        DLog(@"%@", object);
         if ([object isKindOfClass:[PTYSession class]]) {
             // Switch to session
             PTYSession *session = object;

@@ -850,6 +850,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
          [[NSNotificationCenter defaultCenter] removeObserver:token];
          [pleaseWait.window close];
         self->_busy--;
+        DLog(@"status=%@", @(status));
         completion(status == iTermInstallPythonStatusOK);
     }];
 }
@@ -920,6 +921,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                         }
                         [messages addObject:[NSString stringWithFormat:@"%@\n%@", failures[i], stringOutput]];
                     }
+                    DLog(@"%@", messages);
                     iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
                                                                                            prompt:@"Output"
                                                                                           message:[messages componentsJoinedByString:@"\n\n"]];
@@ -946,6 +948,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                     alert.messageText = @"Could not determine Python version";
                     alert.informativeText = @"Please file an issue report.";
                     [alert runModal];
+                    DLog(@"Could not determine Python version");
                     completion(iTermInstallPythonStatusGeneralFailure);
                     return;
                 }

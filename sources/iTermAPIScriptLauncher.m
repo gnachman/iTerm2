@@ -35,6 +35,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 + (void)launchScript:(NSString *)filename
            arguments:(NSArray<NSString *> *)arguments
   explicitUserAction:(BOOL)explicitUserAction {
+    DLog(@"filename=%@ arguments=%@ explicitUserAction=%@", filename, arguments, @(explicitUserAction));
     [self launchScript:filename
               fullPath:filename
              arguments:arguments
@@ -61,6 +62,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 + (void)upgradeFullEnvironmentScriptAt:(NSString *)fullPath
                           configParser:(iTermSetupCfgParser *)configParser
                             completion:(void (^)(NSString *))completion {
+    DLog(@"%@", fullPath);
     NSString *message = [NSString stringWithFormat:@"The Python API script “%@” needs a newer version of the runtime environment for security reasons. You must upgrade it before this version of iTerm2 can launch the script.", fullPath.lastPathComponent];
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
@@ -85,6 +87,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 + (void)downloadIfNeededAndUpgradeFullEnvironmentScriptAt:(NSString *)fullPath
                                              configParser:(iTermSetupCfgParser *)configParser
                                                completion:(void (^)(NSString *))completion {
+    DLog(@"fullPath=%@", fullPath);
     iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
     if ([downloader installedVersionWithPythonVersion:configParser.pythonVersion] >= iTermMinimumPythonEnvironmentVersion) {
         [self reallyUpgradeFullEnvironmentScriptAt:fullPath
@@ -160,6 +163,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                   configParser:(iTermSetupCfgParser *)configParser
                                     virtualEnv:(NSString *)originalVirtualenv
                                     completion:(void (^)(NSString *))completion {
+    DLog(@"fullPath=%@ originalVirtualenv=%@", fullPath, originalVirtualenv);
     NSString *virtualenv = originalVirtualenv;
     NSString *iterm2env = [fullPath stringByAppendingPathComponent:@"iterm2env"];
     NSString *saved = [fullPath stringByAppendingPathComponent:@"saved-iterm2env"];
@@ -178,6 +182,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     }
 
     const int version = [self environmentVersionAt:iterm2env];
+    DLog(@"version=%@", @(version));
     if (version < iTermMinimumPythonEnvironmentVersion) {
         [self upgradeFullEnvironmentScriptAt:fullPath
                                 configParser:configParser
@@ -193,10 +198,18 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
       withVirtualEnv:(NSString *)virtualenv
         setupCfgPath:(NSString *)setupCfgPath
   explicitUserAction:(BOOL)explicitUserAction {
+    DLog(@"launchScript:%@ fullPath:%@ arguments:%@ withVirtualEnv:%@ setupCfgPath:%@ explicitUserAction:%@",
+         filename,
+         fullPath,
+         arguments,
+         virtualenv,
+         setupCfgPath,
+         @(explicitUserAction));
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         return;
     }
     [self installRosettaIfNeededThen:^{
+        DLog(@"virtualenv=%@", virtualenv);
         if (virtualenv != nil) {
             // This is a full-environment script. Check if its environment version is supported and
             // offer to upgrade.
@@ -223,6 +236,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                                                                        requiredToContinue:YES
                                                                                            withCompletion:
          ^(iTermPythonRuntimeDownloaderStatus status) {
+            DLog(@"status=%@", @(status));
             switch (status) {
                 case iTermPythonRuntimeDownloaderStatusNotNeeded:
                 case iTermPythonRuntimeDownloaderStatusDownloaded:
@@ -338,6 +352,14 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
             withVirtualEnv:(NSString *)virtualenv
              pythonVersion:(NSString *)pythonVersion
         explicitUserAction:(BOOL)explicitUserAction {
+     DLog(@"reallyLaunchScript:%@ fullPath:%@ arguments:%@ withVirtualEnv:%@ pythonVersion:%@ explicitUserAction:%@",
+          filename,
+          fullPath,
+          arguments,
+          virtualenv,
+          pythonVersion,
+          @(explicitUserAction));
+
     if (explicitUserAction) {
         if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
             return;
@@ -379,6 +401,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                 pythonVersion:pythonVersion];
     }
     @catch (NSException *e) {
+        DLog(@"%@", e);
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
         [entry addOutput:[NSString stringWithFormat:@"ERROR: Failed to launch: %@", e.reason]
               completion:^{}];
@@ -393,6 +416,14 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                     key:(NSString *)key
          withVirtualEnv:(NSString *)virtualenv
           pythonVersion:(NSString *)pythonVersion {
+    DLog(@"tryLaunchScript:%@ arguments:%@ historyEntry:%@ key:%@ withVirtualEnv:%@ pythonVersion:%@",
+         filename,
+         arguments,
+         entry,
+         key,
+         virtualenv,
+         pythonVersion);
+
     NSTask *task = [[NSTask alloc] init];
 
     // Run through the user's shell so their PATH is set properly.
@@ -428,6 +459,8 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
     [entry addOutput:[NSString stringWithFormat:@"%@ %@\n", task.launchPath, [task.arguments componentsJoinedByString:@" "]]
           completion:^{}];
+    DLog(@"cookie=%@ standardEnv=%@ searchPath=%@, path=%@, standardPythonVersion=%@ environment=%@",
+         cookie, standardEnv, searchPath, path, standardPythonVersion, task.environment);
     [task launch];   // This can throw
     entry.pids = @[ @(task.processIdentifier) ];
     [self waitForTask:task readFromPipe:pipe historyEntry:entry];

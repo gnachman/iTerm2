@@ -20,6 +20,7 @@
 
 - (id)performDefaultImplementation {
     NSString *scriptName = self.directParameter;
+    DLog(@"%@", scriptName);
     if (!scriptName) {
         [self setScriptErrorNumber:1];
         [self setScriptErrorString:@"No script name was specified"];
@@ -64,7 +65,9 @@
 }
 
 - (void)launchPythonScript:(NSString *)script arguments:(NSArray<NSString *> *)arguments {
+    DLog(@"script=%@ arguments=%@", script, arguments);
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        DLog(@"Not homeDirectoryDotDir");
         return;
     }
     [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] launchScriptWithRelativePath:script

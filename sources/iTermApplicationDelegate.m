@@ -632,13 +632,14 @@ static BOOL hasBecomeActive = NO;
                                    callbackQueue:dispatch_get_main_queue()
                                          avoidUI:NO
                                       completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
-                                          if (quiet) {
-                                              return;
-                                          }
-                                          [self->_scriptsMenuController importDidFinishWithErrorMessage:errorMessage
-                                                                                               location:location
-                                                                                            originalURL:[NSURL fileURLWithPath:filename]];
-                                      }];
+            DLog(@"%@", errorMessage);
+            if (quiet) {
+                return;
+            }
+            [self->_scriptsMenuController importDidFinishWithErrorMessage:errorMessage
+                                                                 location:location
+                                                              originalURL:[NSURL fileURLWithPath:filename]];
+        }];
         return YES;
     }
     if ([[filename pathExtension] isEqualToString:@"itermtab"]) {
@@ -1733,6 +1734,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     BOOL ranAutoLaunchScripts = NO;
     if (![self isAppleScriptTestApp] &&
         ![[NSApplication sharedApplication] isRunningUnitTests]) {
+        DLog(@"Run autolaunch scripts if needed");
         ranAutoLaunchScripts = [self.scriptsMenuController runAutoLaunchScriptsIfNeeded];
     }
     DLog(@"ranAutoLaunchScripts=%@", @(ranAutoLaunchScripts));
@@ -2350,7 +2352,9 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (IBAction)installPythonRuntime:(id)sender {  // Explicit request from menu item
+    DLog(@"%@", sender);
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        DLog(@"Not homeDirectoryDotDir");
         return;
     }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:NO
@@ -2408,7 +2412,9 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (IBAction)openREPL:(id)sender {
+    DLog(@"%@", sender);
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        DLog(@"Not homeDirectoryDotDir");
         return;
     }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES

@@ -7,6 +7,7 @@
 
 #import "iTermOptionalComponentDownloadWindowController.h"
 
+#import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -46,7 +47,13 @@ const int iTermMinimumPythonEnvironmentVersion = 72;
         _nextPhaseFactory = [nextPhaseFactory copy];
         _continuationsLeft = 10;
     }
+    DLog(@"%@", self);
     return self;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p url=%@ title=%@ nextPhaseFactory=%@ continuationsLeft=%@ downloading=%@ task=%@>",
+            NSStringFromClass([self class]), self, _url, _title, _nextPhaseFactory, @(_continuationsLeft), @(self.downloading), _task];
 }
 
 - (BOOL)progressIsDeterminant {
@@ -62,6 +69,7 @@ const int iTermMinimumPythonEnvironmentVersion = 72;
 }
 
 - (void)download {
+    DLog(@"begin %@", self);
     assert(!_urlSession);
     assert(!_task);
 
@@ -76,6 +84,7 @@ const int iTermMinimumPythonEnvironmentVersion = 72;
 }
 
 - (void)cancel {
+    DLog(@"cancel %@", self);
     const BOOL wasDownloading = self.downloading;
     self.downloading = NO;
     [_task cancel];
@@ -96,6 +105,7 @@ const int iTermMinimumPythonEnvironmentVersion = 72;
       didWriteData:(int64_t)bytesWritten
  totalBytesWritten:(int64_t)totalBytesWritten
 totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
+    DLog(@"wrote %@/%@ %@", @(totalBytesWritten), @(totalBytesExpectedToWrite), self);
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.downloading) {
             // Was not canceled
@@ -107,6 +117,7 @@ totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
 - (void)URLSession:(NSURLSession *)session
       downloadTask:(NSURLSessionDownloadTask *)downloadTask
 didFinishDownloadingToURL:(NSURL *)location {
+    DLog(@"didFinishDownloadingToURL:%@ %@", location, self);
     _stream = [NSInputStream inputStreamWithURL:location];
     [_stream open];
 }
@@ -114,6 +125,7 @@ didFinishDownloadingToURL:(NSURL *)location {
 - (void)URLSession:(NSURLSession *)session
               task:(NSURLSessionTask *)task
 didCompleteWithError:(nullable NSError *)error {
+    DLog(@"didCompleteWithError:%@ %@", error, self);
     if ([error.domain isEqualToString:NSURLErrorDomain] &&
         error.code == kCFURLErrorNetworkConnectionLost &&
         _continuationsLeft > 0) {
@@ -128,7 +140,9 @@ didCompleteWithError:(nullable NSError *)error {
         // This is an attempt to route around the damage. I was able to reproduce the problem and
         // verify that this fixes it.
         NSData *resumeData = [error.userInfo objectForKey:NSURLSessionDownloadTaskResumeData];
+        DLog(@"Big Sur bug detected. resumeData.length=%@", @(resumeData.length));
         if (resumeData.length > 0) {
+            DLog(@"Resuming");
             _continuationsLeft -= 1;
             NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
             _urlSession = [NSURLSession sessionWithConfiguration:sessionConfig
@@ -141,15 +155,18 @@ didCompleteWithError:(nullable NSError *)error {
     }
     if (!error) {
         int statusCode = [[NSHTTPURLResponse castFrom:task.response] statusCode];
+        DLog(@"No error. statusCode=%@", @(statusCode));
         if (statusCode != 200 && statusCode != 206) {
             error = [NSError errorWithDomain:@"com.iterm2" code:1 userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Server returned status code %@: %@", @(statusCode), [NSHTTPURLResponse localizedStringForStatusCode:statusCode] ] }];
         }
     }
     dispatch_async(dispatch_get_main_queue(), ^{
         if (!self.downloading) {
+            DLog(@"was canceled %@", self);
             // Was canceled
             return;
         }
+        DLog(@"mark complete %@", self);
         self.downloading = NO;
         self->_urlSession = nil;
         self->_task = nil;
@@ -235,7 +252,9 @@ didCompleteWithError:(nullable NSError *)error {
 }
 
 - (NSDictionary *)parsedManifestFromInputStream:(NSInputStream *)stream {
-    id obj = [NSJSONSerialization JSONObjectWithStream:stream options:0 error:nil];
+    NSError *error = nil;
+    id obj = [NSJSONSerialization JSONObjectWithStream:stream options:0 error:&error];
+    DLog(@"%@: obj=%@, error=%@", self, obj, error);
     NSArray *array = [NSArray castFrom:obj];
     if (!array) {
         return nil;
@@ -280,18 +299,21 @@ didCompleteWithError:(nullable NSError *)error {
             }
         }
     }
+    DLog(@"%@", bestDict);
     return bestDict;
 }
 
 - (void)URLSession:(NSURLSession *)session
               task:(NSURLSessionTask *)task
 didCompleteWithError:(nullable NSError *)error {
+    DLog(@"didCompleteWithError:%@ - %@", error, self);
     if (!error) {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSDictionary *dict = [self parsedManifestFromInputStream:self.stream];
             NSError *innerError = nil;
             const int version = [dict[@"version"] intValue];
             if (version < iTermMinimumPythonEnvironmentVersion) {
+                DLog(@"%@ < %@: %@", @(version), @(iTermMinimumPythonEnvironmentVersion), self);
                 innerError = [NSError errorWithDomain:@"com.iterm2" code:3 userInfo:@{ NSLocalizedDescriptionKey: @"☹️ No usable version found." }];
             } else if (dict) {
                 self->_fullComponent =
@@ -314,12 +336,16 @@ didCompleteWithError:(nullable NSError *)error {
                 
                 self->_version = version;
                 self->_pythonVersionsInArchive = [dict[@"python_versions"] copy];
+                DLog(@"version=%@ pythonVersionsInArchive=%@ sitePackageDependencies=%@ self=%@",
+                     @(self->_version), self->_pythonVersionsInArchive, NSStringFromRange(self->_sitePackagesDependencies), self);
             } else {
+                DLog(@"malformed manifest");
                 innerError = [NSError errorWithDomain:@"com.iterm2" code:2 userInfo:@{ NSLocalizedDescriptionKey: @"☹️ Malformed manifest." }];
             }
             [super URLSession:session task:task didCompleteWithError:innerError];
         });
     } else {
+        DLog(@"fail");
         [super URLSession:session task:task didCompleteWithError:error];
     }
 }
@@ -387,6 +413,7 @@ didCompleteWithError:(nullable NSError *)error {
 }
 
 - (void)beginPhase:(iTermOptionalComponentDownloadPhase *)phase {
+    DLog(@"begin phase %@ - %@", phase, self);
     const BOOL determinant = phase.progressIsDeterminant;
     _progressIndicator.hidden = !determinant;
     _installIndicator.hidden = determinant;
@@ -411,6 +438,7 @@ didCompleteWithError:(nullable NSError *)error {
 }
 
 - (void)showMessage:(NSString *)message {
+    DLog(@"message=%@", message);
     _showingMessage = YES;
     _titleLabel.stringValue = message;
     _progressLabel.stringValue = @"";
@@ -420,15 +448,19 @@ didCompleteWithError:(nullable NSError *)error {
 
 - (IBAction)button:(id)sender {
     if (_showingMessage) {
+        DLog(@"close");
         [self.window close];
     } else if (_currentPhase.downloading) {
+        DLog(@"cancel");
         [_currentPhase cancel];
     } else {
+        DLog(@"begin");
         [self beginPhase:_firstPhase];
     }
 }
 
 - (void)downloadDidFailWithError:(NSError *)error {
+    DLog(@"error=%@ %@", error, self);
     _button.enabled = YES;
     _button.title = @"Try Again";
     if (error.code == -999 && [error.domain isEqualToString:@"com.iterm2"]) {
@@ -447,15 +479,19 @@ didCompleteWithError:(nullable NSError *)error {
 #pragma mark - iTermOptionalComponentDownloadPhaseDelegate
 
 - (void)optionalComponentDownloadPhaseDidComplete:(iTermOptionalComponentDownloadPhase *)sender {
+    DLog(@"optionalComponentDownloadPhaseDidComplete:%@ %@", sender, self);
     if (sender.error) {
+        DLog(@"%@", sender.error);
         [self downloadDidFailWithError:sender.error];
         return;
     }
     iTermOptionalComponentDownloadPhase *nextPhase = sender.nextPhaseFactory ? sender.nextPhaseFactory(_currentPhase) : nil;
     if (nextPhase) {
+        DLog(@"Next phase is %@", nextPhase);
         [self beginPhase:nextPhase];
         return;
     }
+    DLog(@"Run completion for current phase %@", _currentPhase);
     iTermOptionalComponentDownloadPhase *phase = _currentPhase;
     _currentPhase = nil;
     self.completion(phase);
@@ -464,6 +500,7 @@ didCompleteWithError:(nullable NSError *)error {
 - (void)optionalComponentDownloadPhase:(iTermOptionalComponentDownloadPhase *)sender
                     didProgressToBytes:(double)bytesWritten
                                ofTotal:(double)totalBytes {
+    DLog(@"downloaded %@/%@ %@", @(bytesWritten), @(totalBytes), self);
     self->_progressIndicator.doubleValue = bytesWritten / totalBytes;
     self->_progressLabel.stringValue = [NSString stringWithFormat:@"%@ of %@",
                                         [NSString it_formatBytes:bytesWritten],
