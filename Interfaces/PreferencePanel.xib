@@ -5062,12 +5062,12 @@ Refer to the manuals for individual applications to see if they support these mo
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView identifier="KeyMappingsViewWrapper" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4TC-Ri-lNP">
-                                        <rect key="frame" x="0.0" y="-14" width="922" height="420"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <rect key="frame" x="0.0" y="-14" width="820" height="420"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                         <subviews>
                                             <customView identifier="ExternalView" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6sa-Ma-Wvi">
-                                                <rect key="frame" x="0.0" y="44" width="830" height="376"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <rect key="frame" x="0.0" y="44" width="820" height="376"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                             </customView>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fRb-hJ-joB">
                                                 <rect key="frame" x="339" y="19" width="151" height="18"/>
@@ -5090,7 +5090,7 @@ Refer to the manuals for individual applications to see if they support these mo
                 </tabView>
             </subviews>
             <accessibility identifier="prefsProfilesKeys"/>
-            <point key="canvasLocation" x="744" y="-115.5"/>
+            <point key="canvasLocation" x="756" y="311"/>
         </customView>
         <customView id="prV-vq-Wo2" userLabel="Prefs - Profiles - Advanced" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="800" height="396"/>
@@ -7475,7 +7475,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                         <subviews>
                                             <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zLA-QA-WQd">
                                                 <rect key="frame" x="20" y="71" width="825" height="344"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                             </customView>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="blX-M8-y6R">
                                                 <rect key="frame" x="279" y="20" width="50" height="16"/>
