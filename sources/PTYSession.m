@@ -4188,7 +4188,12 @@ ITERM_WEAKLY_REFERENCEABLE
         } copy];
     } else {
         NSString *escapedDirectory = [directory stringWithEscapedShellCharactersIncludingNewlines:YES];
-        NSString *text = [NSString stringWithFormat:@"cd %@ && %@\n", escapedDirectory, command];
+        NSString *text;
+        if (escapedDirectory.length > 0) {
+            text = [NSString stringWithFormat:@"cd %@ && %@\n", escapedDirectory, command];
+        } else {
+            text = [NSString stringWithFormat:@"%@\n", command];
+        }
         [self pasteCommand:text];
     }
 }
