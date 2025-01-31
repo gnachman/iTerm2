@@ -16,10 +16,8 @@
 
 @implementation iTermTmuxOptionMonitor {
     NSTimer *_timer;
-    NSString *_format;
     BOOL _haveOutstandingRequest;
     NSString *_target;
-    NSString *_variableName;
     NSString *_fallbackVariableName;
     void (^_block)(NSString *);
     iTermTmuxSubscriptionHandle *_subscriptionHandle;

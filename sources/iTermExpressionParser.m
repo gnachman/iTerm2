@@ -368,9 +368,11 @@
     }
 
     if (!indexNumber) {
+        // This is a plain variable reference, e.g. \(name)
         return [iTermTriple tripleWithObject:untypedValue andObject:nil object:path];
     }
 
+    // Succeed iff this is an array dereference, like \(user.myarray[1])
     NSArray *array = [NSArray castFrom:untypedValue];
     if (!array) {
         NSString *reason = [NSString stringWithFormat:@"Variable “%@” is of type %@, not array", path, NSStringFromClass([untypedValue class])];

@@ -639,6 +639,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     NSInteger _canChangeProfileInArrangementGeneration;
     BOOL _canChangeProfileInArrangement;
     BOOL _xtermMouseReportingEverAllowed;
+    NSMutableArray<iTermTmuxOptionMonitor *> *_userTmuxOptionMonitors;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1084,6 +1085,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_defaultPointer release];
     [_originatingArrangement release];
     [_originatingArrangementName release];
+    [_userTmuxOptionMonitors release];
 
     [super dealloc];
 }
@@ -3718,6 +3720,37 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *string = [[[NSString alloc] initWithData:data encoding:self.encoding] autorelease];
     [self writeTask:string];
 }
+
+- (id)tmuxFormat:(NSString *)tmuxFormat error:(out NSError **)errorPtr {
+    if (!self.tmuxController.gateway) {
+        DLog(@"No gateway for %@", tmuxFormat);
+        *errorPtr = [NSError errorWithDomain:@"com.iterm2.bind-tmux-format"
+                                        code:0
+                                    userInfo:@{ NSLocalizedDescriptionKey: @"Session is not a tmux client" }];
+        return nil;
+    }
+    iTermTmuxOptionMonitor *mon = [_userTmuxOptionMonitors objectPassingTest:^BOOL(iTermTmuxOptionMonitor *candidate, NSUInteger index, BOOL *stop) {
+        return [candidate.format isEqualToString:tmuxFormat];
+    }];
+    if (!mon) {
+        DLog(@"Register monitor for %@", tmuxFormat);
+        mon = [[iTermTmuxOptionMonitor alloc] initWithGateway:self.tmuxController.gateway
+                                                        scope:self.variablesScope
+                                         fallbackVariableName:nil
+                                                       format:tmuxFormat
+                                                       target:[NSString stringWithFormat:@"%%%d", self.tmuxPane]
+                                                 variableName:nil
+                                                        block:^(NSString *newValue) {
+        }];
+        if (!_userTmuxOptionMonitors) {
+            _userTmuxOptionMonitors = [[NSMutableArray alloc] init];
+        }
+        [_userTmuxOptionMonitors addObject:mon];
+    }
+    DLog(@"Value for %@ is %@", tmuxFormat, mon.lastValue);
+    return mon.lastValue ?: @"";
+}
+
 
 - (void)threadedTaskBrokenPipe {
     DLog(@"threaded task broken pipe");

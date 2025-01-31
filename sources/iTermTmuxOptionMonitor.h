@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) iTermVariableScope *scope;
 @property (nonatomic) NSTimeInterval interval;
 @property (nullable, nonatomic, readonly) NSString *lastValue;
+@property (nonatomic, readonly) NSString *variableName;
+@property (nonatomic, readonly) NSString *format;
 
 - (instancetype)init NS_UNAVAILABLE;
 

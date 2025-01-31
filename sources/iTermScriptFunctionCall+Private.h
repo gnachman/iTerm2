@@ -7,6 +7,8 @@
 
 #import "iTermScriptFunctionCall.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class iTermParsedExpression;
 
 @interface iTermScriptFunctionCall()
@@ -16,7 +18,7 @@
 @property (nonatomic, readonly) NSString *connectionKey;
 
 - (void)performFunctionCallFromInvocation:(NSString *)invocation
-                                 receiver:(NSString *)receiver
+                                 receiver:(NSString * _Nullable)receiver
                                     scope:(iTermVariableScope *)scope
                                   timeout:(NSTimeInterval)timeout
                                completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
@@ -24,3 +26,5 @@
 - (void)addParameterWithName:(NSString *)name parsedExpression:(iTermParsedExpression *)expression;
 
 @end
+
+NS_ASSUME_NONNULL_END
