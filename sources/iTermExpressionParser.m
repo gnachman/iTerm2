@@ -16,6 +16,7 @@
 #import "iTermScriptFunctionCall.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermSwiftyStringRecognizer.h"
+#import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -44,6 +45,7 @@
         case iTermParsedExpressionTypeArrayLookup:
         case iTermParsedExpressionTypeVariableReference:
         case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeReference:
         case iTermParsedExpressionTypeBoolean:
         case iTermParsedExpressionTypeString:
         case iTermParsedExpressionTypeArrayOfExpressions:
@@ -162,9 +164,9 @@
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"["]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"]"]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@";"]];
+    [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"&"]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"true"]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"false"]];
-    [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"=>"]];
     [tokenizer addTokenRecogniser:[CPNumberRecogniser numberRecogniser]];
     [tokenizer addTokenRecogniser:[CPWhiteSpaceRecogniser whiteSpaceRecogniser]];
     [tokenizer addTokenRecogniser:[CPIdentifierRecogniser identifierRecogniser]];
@@ -213,7 +215,6 @@
 
 - (iTermParsedExpression *)parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)fqName
                                                                          arglist:(NSArray<iTermFunctionArgument *> *)argsArray
-                                                                         boundTo:(NSString *)bindingPath
                                                                            error:(out NSError **)error {
     NSString *name;
     NSString *namespace;
@@ -231,11 +232,6 @@
         [call addParameterWithName:arg.name
                   parsedExpression:arg.expression];
     }
-    if (bindingPath) {
-        call.bindingPath = bindingPath;
-        // If this is a recording scope, make note of the dependency.
-        [_scope valueForVariableName:bindingPath];
-    }
     if (error) {
         *error = nil;
     }
@@ -243,11 +239,22 @@
 }
 
 - (iTermFunctionArgument *)newFunctionArgumentWithName:(NSString *)name
-                                            expression:(iTermParsedExpression *)expression {
+                                            expression:(iTermParsedExpression *)expression
+                                       passByReference:(BOOL)passByReference {
     iTermFunctionArgument *arg = [[iTermFunctionArgument alloc] init];
     arg.name = name;
     arg.expression = expression;
+    arg.passByReference = passByReference;
     return arg;
+}
+
+- (iTermParsedExpression *)parsedExpressionWithReferenceToPath:(NSString *)path {
+    if (![_scope userWritableContainerExistsForPath:path]) {
+        return [[iTermParsedExpression alloc] initWithErrorCode:3 reason:[NSString stringWithFormat:@"Can’t form reference to non-existent or read-only container for variable %@", path]];
+    }
+    iTermVariableReference *ref = [[iTermVariableReference alloc] initWithPath:path
+                                                                        vendor:_scope];
+    return [[iTermParsedExpression alloc] initWithReference:ref];
 }
 
 - (iTermParsedExpression *)parsedExpressionWithValue:(id)value
@@ -419,25 +426,11 @@
         return [weakSelf callSequenceWithCalls:@[call.functionCall]];
     }];
 
-    [_grammarProcessor addProductionRule:@"call ::= <path> <arglist> '=>' <path>"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-        NSError *error = nil;
-        iTermParsedExpression *result = [weakSelf parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)syntaxTree.children[0]
-                                                                                                arglist:syntaxTree.children[1]
-                                                                                                boundTo:syntaxTree.children[3]
-                                                                                                  error:&error];
-        if (error) {
-            return [[iTermParsedExpression alloc] initWithError:error];
-        }
-        return result;
-    }];
-
     [_grammarProcessor addProductionRule:@"call ::= <path> <arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         NSError *error = nil;
         iTermParsedExpression *result = [weakSelf parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)syntaxTree.children[0]
                                                                                                 arglist:syntaxTree.children[1]
-                                                                                                boundTo:nil
                                                                                                   error:&error];
         if (error) {
             return [[iTermParsedExpression alloc] initWithError:error];
@@ -460,10 +453,26 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         return [@[ syntaxTree.children[0] ] arrayByAddingObjectsFromArray:syntaxTree.children[2]];
     }];
+    [_grammarProcessor addProductionRule:@"arg ::= 'Identifier' ':' '&' <path>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+        NSString *path = syntaxTree.children[3];
+        iTermParsedExpression *ref = [weakSelf parsedExpressionWithReferenceToPath:path];
+        if ([path isEqualToString:@"null"]) {
+            NSError *error = [NSError errorWithDomain:@"com.iterm2.parser"
+                                                 code:2
+                                             userInfo:@{ NSLocalizedDescriptionKey: @"&null is never allowed" }];
+            return [[iTermParsedExpression alloc] initWithError:error];
+        }
+        [weakSelf pathOrDereferencedArrayFromPath:path index:nil];  // just for the recording scope side-effect
+        return [weakSelf newFunctionArgumentWithName:[(CPIdentifierToken *)syntaxTree.children[0] identifier]
+                                          expression:ref
+                                     passByReference:YES];
+    }];
     [_grammarProcessor addProductionRule:@"arg ::= 'Identifier' ':' <expression>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         return [weakSelf newFunctionArgumentWithName:[(CPIdentifierToken *)syntaxTree.children[0] identifier]
-                                          expression:syntaxTree.children[2]];
+                                          expression:syntaxTree.children[2]
+                                     passByReference:NO];
     }];
     [_grammarProcessor addProductionRule:@"expression ::= <path_or_dereferenced_array>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {

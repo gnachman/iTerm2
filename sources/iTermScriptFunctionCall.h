@@ -18,10 +18,6 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
 @property (nonatomic, readonly) NSString *signature;
 @property (nonatomic, readonly) NSString *name;
 
-// If set, the function will update the variable at this path when its value would change asynchronously.
-// Not all functions support this feature.
-@property (nonatomic, copy) NSString *bindingPath;
-
 // The 'invocation' must be a function call and cannot be any other kind of expression.
 // Hold a reference to the result until you no longer care to receive the completion block, or pass retainSelf: YES
 + (iTermParsedExpression *)callFunction:(NSString *)invocation

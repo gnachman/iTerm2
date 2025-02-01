@@ -19,34 +19,39 @@ extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
         /// Bind a tmux format string (e.g., `#{T:set-titles-string}` to a user-defined variable (e.g., `user.tmuxTitle`).
         let formatKey = "format"
         let sessionIDKey = "session_id"
-        let builtInFunction = iTermBuiltInFunction(name: "tmux_format",
-                                                   arguments: [formatKey: NSString.self,
-                                                            sessionIDKey: NSString.self],
-                                                   optionalArguments: [sessionIDKey],
-                                                   defaultValues: [sessionIDKey: iTermVariableKeySessionID],
-                                                   context: .session) {
-                                                       parameters, completion in
-                                                       guard let sessionID = parameters[sessionIDKey] as? String else {
-                                                           completion(nil, error(message: "Missing \(sessionIDKey). This shouldn't happen so please report a bug."))
-                                                           return
-                                                       }
-                                                       guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
-                                                           completion(nil, error(message: "No such session"))
-                                                           return
-                                                       }
-                                                       execute(session: session,
-                                                               format: parameters[formatKey] as? String,
-                                                               bindingPath: parameters[iTermBuiltInFunctionBindingPath] as? String,
-                                                               bindingScope: parameters[iTermBuiltInFunctionBindingScope] as? iTermVariableScope,
-                                                               completion: completion)
-                                                   }
+        let backingVariableKey = "backing_var"
+        let builtInFunction = iTermBuiltInFunction(
+            name: "tmux_format",
+            arguments: [formatKey: NSString.self,
+                     sessionIDKey: NSString.self,
+               backingVariableKey: iTermVariableReference<AnyObject>.self],
+            optionalArguments: [sessionIDKey],
+            defaultValues: [sessionIDKey: iTermVariableKeySessionID],
+            context: .session) {
+                parameters, completion in
+                guard let sessionID = parameters[sessionIDKey] as? String else {
+                    completion(nil, error(message: "Missing \(sessionIDKey). This shouldn't happen so please report a bug."))
+                    return
+                }
+                guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
+                    completion(nil, error(message: "No such session"))
+                    return
+                }
+                guard let ref = parameters[backingVariableKey] as? iTermVariableReference<AnyObject> else {
+                    completion(nil, error(message: "Type mismatch for \(backingVariableKey). Must be a path reference."))
+                    return
+                }
+                execute(session: session,
+                        format: parameters[formatKey] as? String,
+                        ref: ref,
+                        completion: completion)
+            }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")
     }
 
     private static func execute(session: PTYSession,
                                 format: String?,
-                                bindingPath: String?,
-                                bindingScope: iTermVariableScope?,
+                                ref: iTermVariableReference<AnyObject>,
                                 completion: iTermBuiltInFunctionCompletionBlock) {
         guard let format else {
             completion(nil, Self.error(message: "Invalid format"))
@@ -54,8 +59,7 @@ extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
         }
         do {
             let value = try session.tmuxFormat(format,
-                                               bindingPath: bindingPath,
-                                               bindingScope: bindingScope)
+                                               reference: ref)
             completion(value, nil)
         } catch {
             completion(nil, error)

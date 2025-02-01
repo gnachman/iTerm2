@@ -8,6 +8,7 @@
 #import "iTermParsedExpression.h"
 
 #import "iTermScriptFunctionCall.h"
+#import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -77,6 +78,9 @@
         case iTermParsedExpressionTypeNumber:
         case iTermParsedExpressionTypeBoolean:
             value = [self.number stringValue];
+            break;
+        case iTermParsedExpressionTypeReference:
+            value = self.reference.path;
             break;
         case iTermParsedExpressionTypeString:
             value = self.string;
@@ -201,6 +205,15 @@
     return self;
 }
 
+- (instancetype)initWithReference:(iTermVariableReference *)ref {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeReference;
+        _object = ref;
+    }
+    return self;
+}
+
 - (instancetype)initWithNumber:(NSNumber *)number {
     self = [super init];
     if (self) {
@@ -263,6 +276,11 @@
     return _object;
 }
 
+- (iTermVariableReference *)reference {
+    assert([_object isKindOfClass:[iTermVariableReference class]]);
+    return (iTermVariableReference *)_object;
+}
+
 - (NSNumber *)number {
     assert([_object isKindOfClass:[NSNumber class]]);
     return _object;
@@ -304,6 +322,7 @@
         case iTermParsedExpressionTypeNil:
         case iTermParsedExpressionTypeError:
         case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeReference:
         case iTermParsedExpressionTypeBoolean:
         case iTermParsedExpressionTypeString:
         case iTermParsedExpressionTypeArrayOfValues:

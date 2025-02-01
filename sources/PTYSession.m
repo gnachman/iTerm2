@@ -721,6 +721,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         [self.variablesScope setValue:_variables forVariableNamed:@"session" weak:YES];
         _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
                                                            owner:self];
+        _userVariables.isUserWritable = YES;
         [self.variablesScope setValue:_userVariables forVariableNamed:@"user"];
 
         _creationDate = [[NSDate date] retain];
@@ -3722,12 +3723,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (id)tmuxFormat:(NSString *)tmuxFormat
-     bindingPath:(NSString *)bindingPath
-    bindingScope:(iTermVariableScope *)scope
+       reference:(iTermVariableReference *)ref
            error:(out NSError **)errorPtr {
-    if (bindingPath != nil) {
-        assert(scope != nil);
-    }
     if (!self.tmuxController.gateway) {
         DLog(@"No gateway for %@", tmuxFormat);
         *errorPtr = [NSError errorWithDomain:@"com.iterm2.bind-tmux-format"
@@ -3741,11 +3738,11 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!mon) {
         DLog(@"Register monitor for %@", tmuxFormat);
         mon = [[iTermTmuxOptionMonitor alloc] initWithGateway:self.tmuxController.gateway
-                                                        scope:scope
+                                                        scope:ref.vendor
                                          fallbackVariableName:nil
                                                        format:tmuxFormat
                                                        target:[NSString stringWithFormat:@"%%%d", self.tmuxPane]
-                                                 variableName:bindingPath
+                                                 variableName:ref.path
                                                         block:^(NSString *newValue) {
         }];
         if (!_userTmuxOptionMonitors) {

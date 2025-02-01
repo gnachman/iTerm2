@@ -11,11 +11,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class TmuxGateway;
 @class iTermVariableScope;
+@protocol iTermVariableVendor;
 
 @interface iTermTmuxOptionMonitor : NSObject
 
 @property (nonatomic, weak) TmuxGateway *gateway;
-@property (nullable, nonatomic, strong) iTermVariableScope *scope;
+@property (nullable, nonatomic, strong) id<iTermVariableVendor> scope;
 @property (nonatomic) NSTimeInterval interval;
 @property (nullable, nonatomic, readonly) NSString *lastValue;
 @property (nonatomic, readonly) NSString *variableName;
@@ -26,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 // If `fallbackVariableName` is nonnil, the value of the variable named
 // `fallbackVariableName` will be used for tmux 2.8 and earlier.
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
-                          scope:(iTermVariableScope *)scope
+                          scope:(id<iTermVariableVendor>)scope
            fallbackVariableName:(nullable NSString *)fallbackVariableName
                          format:(NSString *)format
                          target:(NSString *)tmuxTarget

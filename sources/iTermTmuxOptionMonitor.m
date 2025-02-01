@@ -24,7 +24,7 @@
 }
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
-                          scope:(iTermVariableScope *)scope
+                          scope:(id<iTermVariableVendor>)scope
            fallbackVariableName:(NSString *)fallbackVariableName
                          format:(NSString *)format
                          target:(NSString *)target

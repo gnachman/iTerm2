@@ -11,9 +11,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-extern NSString *const iTermBuiltInFunctionBindingPath;
-extern NSString *const iTermBuiltInFunctionBindingScope;
-
 NSString *iTermFunctionSignatureFromNamespaceAndNameAndArguments(NSString * _Nullable namespace_, NSString *name, NSArray<NSString *> *argumentNames);
 
 // Returns all combinations of valid arguments. Of size pow(2,optionalArguments.count).
@@ -89,7 +86,6 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
                    namespace:(NSString *)namespace_
                   parameters:(NSDictionary<NSString *, id> *)parameters
                        scope:(iTermVariableScope *)scope
-                 bindingPath:(NSString *)bindingPath
                   completion:(iTermBuiltInFunctionCompletionBlock)completion;
 
 - (NSError *)undeclaredIdentifierError:(NSString *)identifier;

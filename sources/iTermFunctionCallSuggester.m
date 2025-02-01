@@ -164,6 +164,13 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         return syntaxTree.children[0];
                            }];
+    [_grammarProcessor addProductionRule:@"completearg ::= 'Identifier' ':' '&' <path>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+        NSDictionary *expr = @{ @"path": syntaxTree.children[3] };
+        return @{ @"identifier": [syntaxTree.children[0] identifier],
+                  @"colon": @YES,
+                  @"expression": expr };
+    }];
     [_grammarProcessor addProductionRule:@"completearg ::= 'Identifier' ':' <expression>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         return @{ @"identifier": [syntaxTree.children[0] identifier],
@@ -242,22 +249,6 @@
                                        [syntaxTree.children[0] identifier],
                                        syntaxTree.children[2]];
                            }];
-    [_grammarProcessor addProductionRule:@"composed_call ::= <funcname> <composed_arglist> '='"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [weakSelf callWithName:syntaxTree.children[0]
-                                                     arglist:syntaxTree.children[1]];
-                           }];
-    [_grammarProcessor addProductionRule:@"composed_call ::= <funcname> <composed_arglist> '=>'"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [weakSelf callWithName:syntaxTree.children[0]
-                                                     arglist:syntaxTree.children[1]];
-                           }];
-    [_grammarProcessor addProductionRule:@"composed_call ::= <funcname> <composed_arglist> '=>' <path>"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-        return [weakSelf callWithName:syntaxTree.children[0]
-                              arglist:syntaxTree.children[1]
-                          bindingPath:syntaxTree.children[3]];
-    }];
     [_grammarProcessor addProductionRule:@"composed_call ::= <funcname> <composed_arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return [weakSelf callWithName:syntaxTree.children[0]
@@ -414,8 +405,9 @@
                 }];
             }
         }
-        return [self pathsAndFunctionSuggestionsWithPrefix:expression[@"path"]
-                                                legalPaths:legalPaths];
+        NSArray<NSString *> *suggestions = [self pathsAndFunctionSuggestionsWithPrefix:expression[@"path"]
+                                                                            legalPaths:legalPaths];
+        return suggestions;
     }
 }
 
@@ -458,22 +450,6 @@
     if (arglist[@"partial-arglist"]) {
         return [self suggestedNextArgumentForExistingArgs:arglist[@"args"]
                                                  function:function];
-    }
-    return @[];
-}
-
-- (id)callWithName:(NSString *)function
-           arglist:(id)maybeArglistDict
-       bindingPath:(NSString *)path {
-    NSDictionary *arglist = [NSDictionary castFrom:maybeArglistDict];
-    if (arglist[@"partial-arglist"]) {
-        return [self suggestedNextArgumentForExistingArgs:arglist[@"args"]
-                                                 function:function];
-    }
-    if (path) {
-        return [self suggestedExpressions:@{ @"path": path }
-                         nextArgumentName:nil
-                         valuesMustBeArgs:NO];
     }
     return @[];
 }

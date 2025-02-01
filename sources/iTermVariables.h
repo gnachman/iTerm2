@@ -122,6 +122,7 @@ extern NSString *const iTermVariableKeyWindowIsHotkeyWindow;
 
 // If you set this then the frame can be searched globally.
 @property (nonatomic, nullable, copy) NSString *primaryKey;
+@property (nonatomic) BOOL isUserWritable;
 
 + (instancetype)globalInstance;
 

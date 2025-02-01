@@ -75,6 +75,7 @@
 #import "iTermURLStore.h"
 #import "iTermUserDefaults.h"
 #import "iTermUserDefaultsObserver.h"
+#import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 #import "iTermVariables.h"
 #import "iTermVirtualOffset.h"

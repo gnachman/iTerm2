@@ -66,6 +66,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermVariableScope *)variableScopeByAddingBackreferences:(NSArray<NSString *> *)backreferences
                                                       owner:(id<iTermObject>)owner;
+- (BOOL)userWritableContainerExistsForPath:(NSString *)path;
+
 @end
 
 // A scope that remembers which variables were referred to.

@@ -55,6 +55,7 @@ extern NSString *const PTYCommandDidExitNotification;
 @class iTermScriptHistoryEntry;
 @class iTermStatusBarViewController;
 @class iTermSwiftyStringGraph;
+@class iTermVariableReference;
 @class iTermVariables;
 @class iTermVariableScope;
 @class PTYSessionZoomState;
@@ -902,9 +903,9 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Make this session's textview the first responder.
 - (void)takeFocus;
+
 - (id)tmuxFormat:(NSString *)tmuxFormat
-     bindingPath:(NSString *)bindingPath
-    bindingScope:(iTermVariableScope *)scope
+       reference:(iTermVariableReference *)ref
            error:(out NSError **)errorPtr;
 
 // Show an announcement explaining why a restored session is an orphan.

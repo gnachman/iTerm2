@@ -255,6 +255,7 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
         case iTermParsedExpressionTypeString:
         case iTermParsedExpressionTypeNumber:
         case iTermParsedExpressionTypeBoolean:
+        case iTermParsedExpressionTypeReference:
             completion(parsedExpression.object, nil, nil);
             return;
 

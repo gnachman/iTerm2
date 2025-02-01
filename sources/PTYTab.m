@@ -436,6 +436,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _variables.primaryKey = @"id";
     _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab
                                                        owner:self];
+    _userVariables.isUserWritable = YES;
     [self.variablesScope setValue:_userVariables forVariableNamed:@"user"];
     [self.variablesScope setValue:[iTermVariables globalInstance] forVariableNamed:iTermVariableKeyGlobalScopeName];
     [self.variablesScope setValue:[@(self.uniqueId) stringValue] forVariableNamed:iTermVariableKeyTabID];

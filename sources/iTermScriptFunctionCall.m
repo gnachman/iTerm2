@@ -149,6 +149,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
         case iTermParsedExpressionTypeArrayOfValues:
         case iTermParsedExpressionTypeArrayOfExpressions:
         case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeReference:
         case iTermParsedExpressionTypeBoolean:
         case iTermParsedExpressionTypeString: {
             NSString *reason = @"Expected a function call, not a literal";
@@ -396,13 +397,6 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
         completion(nil, depError, missing);
         return;
     }
-    if (_bindingPath) {
-        id value = [scope valueForVariableName:_bindingPath];
-        if (value) {
-            completion(value, nil, nil);
-            return;
-        }
-    }
     if (receiver) {
         iTermCallMethodByIdentifier(receiver,
                                     self.fullyQualifiedName,
@@ -468,7 +462,6 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                     namespace:_namespace
                    parameters:parameterValues
                         scope:scope
-                  bindingPath:_bindingPath
                    completion:completion];
 }
 

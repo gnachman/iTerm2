@@ -11,6 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermScriptFunctionCall;
 @class iTermVariableScope;
+@class iTermVariableReference;
 
 typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
     iTermParsedExpressionTypeNil,
@@ -21,6 +22,8 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
     iTermParsedExpressionTypeFunctionCall,
     iTermParsedExpressionTypeError,
     iTermParsedExpressionTypeInterpolatedString,
+    iTermParsedExpressionTypeReference,
+
     // These two are only produced if you request an AST from the expression parser
     iTermParsedExpressionTypeVariableReference,
     iTermParsedExpressionTypeArrayLookup,
@@ -80,6 +83,7 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 - (instancetype)initWithArrayOfValues:(NSArray *)array;
 - (instancetype)initWithPlaceholder:(id<iTermExpressionParserPlaceholder>)placeholder
                            optional:(BOOL)optional;
+- (instancetype)initWithReference:(iTermVariableReference *)ref;
 - (BOOL)containsAnyFunctionCall;
 
 @end

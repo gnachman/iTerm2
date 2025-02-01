@@ -296,6 +296,14 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+- (BOOL)userWritableContainerExistsForPath:(NSString *)path {
+    NSString *terminal;
+    iTermVariables *vars = [self ownerOfTerminalForPath:path
+                                             forWriting:YES
+                                               terminal:&terminal];
+    return vars.isUserWritable;
+}
+
 - (void)addLinksToReference:(id<iTermVariableReference>)reference {
     NSString *tail;
     iTermVariables *variables = [self ownerForKey:reference.path forWriting:YES stripped:&tail];

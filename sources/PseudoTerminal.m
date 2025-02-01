@@ -570,6 +570,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                                                                owner:self] autorelease]];
     _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
                                                        owner:self];
+    _userVariables.isUserWritable = YES;
     [_scope setValue:_userVariables forVariableNamed:@"user"];
     _proxyIconOrderEnforcer = [[iTermOrderEnforcer alloc] init];
     _toggleFullScreenModeCompletionBlocks = [[NSMutableArray alloc] init];

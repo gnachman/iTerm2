@@ -646,6 +646,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                 case iTermParsedExpressionTypeArrayOfValues:
                 case iTermParsedExpressionTypeArrayOfExpressions:
                 case iTermParsedExpressionTypeNumber:
+                case iTermParsedExpressionTypeReference:
                 case iTermParsedExpressionTypeBoolean:
                 case iTermParsedExpressionTypeError:
                 case iTermParsedExpressionTypeString:
@@ -670,6 +671,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             case iTermParsedExpressionTypeArrayOfValues:
             case iTermParsedExpressionTypeArrayOfExpressions:
             case iTermParsedExpressionTypeNumber:
+            case iTermParsedExpressionTypeReference:
             case iTermParsedExpressionTypeBoolean:
             case iTermParsedExpressionTypeError:
             case iTermParsedExpressionTypeString:
