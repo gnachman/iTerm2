@@ -659,6 +659,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     return _fullScreen;
 }
 
+
 - (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen {
     NSRect screenFrame = [screen frame];
     NSRect frameMinusMenuBar = [screen frameExceptMenuBar];

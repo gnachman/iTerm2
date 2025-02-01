@@ -70,3 +70,20 @@
 - (CGSize)_recommendedDrawableSize;
 @end
 
+
+NS_INLINE NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container) {
+    CGFloat centerOfContainer = NSMidX(container);
+    CGFloat centerOfFrame = NSMidX(frameToCenter);
+    CGFloat diff = centerOfContainer - centerOfFrame;
+    frameToCenter.origin.x += diff;
+    return frameToCenter;
+}
+
+NS_INLINE NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect container) {
+    CGFloat centerOfContainer = NSMidY(container);
+    CGFloat centerOfFrame = NSMidY(frameToCenter);
+    CGFloat diff = centerOfContainer - centerOfFrame;
+    frameToCenter.origin.y += diff;
+    return frameToCenter;
+}
+

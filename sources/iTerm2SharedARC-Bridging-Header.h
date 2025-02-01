@@ -105,6 +105,7 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import "NSResponder+iTerm.h"
+#import "NSScroller+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTableView+iTerm.h"

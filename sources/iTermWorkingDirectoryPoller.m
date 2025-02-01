@@ -11,6 +11,7 @@
 #import "iTermLSOF.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermTmuxOptionMonitor.h"
+#import "iTermVariableScope.h"
 
 typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
 

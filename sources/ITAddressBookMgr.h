@@ -358,7 +358,7 @@ typedef NS_ENUM(NSUInteger, iTermBuckyBit) {
 // The numerical values for each enum matter because they are used in
 // the UI as "tag" values for each select list item. They are also
 // stored in saved arrangements.
-typedef enum {
+typedef NS_ENUM(int, iTermWindowType) {
     WINDOW_TYPE_NORMAL = 0,  // May be converted to compact depending on theme
     WINDOW_TYPE_TRADITIONAL_FULL_SCREEN = 1,  // Pre-Lion fullscreen
     // note: 2 is out of order below
@@ -386,7 +386,7 @@ typedef enum {
 
     WINDOW_TYPE_MAXIMIZED = 15,
     WINDOW_TYPE_COMPACT_MAXIMIZED = 16
-} iTermWindowType;
+};
 
 iTermWindowType iTermWindowDefaultType(void);
 iTermWindowType iTermThemedWindowType(iTermWindowType windowType);

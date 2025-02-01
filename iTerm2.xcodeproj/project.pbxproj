@@ -3010,6 +3010,7 @@
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
 		A6C5EDCF2D4D6CFA000D9E85 /* TmuxFormatBuiltInCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C5EDCE2D4D6CF3000D9E85 /* TmuxFormatBuiltInCommand.swift */; };
+		A6C5EDD12D4EA802000D9E85 /* iTermLayoutArithmetic.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C5EDD02D4EA7F5000D9E85 /* iTermLayoutArithmetic.swift */; };
 		A6C760431B45C4CF00E3C992 /* NSTableColumn+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */; };
 		A6C760451B45C4CF00E3C992 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD6180B8118004E56D5 /* Cocoa.framework */; };
 		A6C760471B45C4CF00E3C992 /* SSKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8F1923E89100DF1410 /* SSKeychain.h */; };
@@ -7084,6 +7085,7 @@
 		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C5EDCE2D4D6CF3000D9E85 /* TmuxFormatBuiltInCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxFormatBuiltInCommand.swift; sourceTree = "<group>"; };
+		A6C5EDD02D4EA7F5000D9E85 /* iTermLayoutArithmetic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermLayoutArithmetic.swift; sourceTree = "<group>"; };
 		A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiTerm2Shared.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iTerm2XCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C7641F1B45CB2800E3C992 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -9839,6 +9841,7 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6C5EDD02D4EA7F5000D9E85 /* iTermLayoutArithmetic.swift */,
 				A6F3EB4E2D32EC5500612173 /* TailFindController.swift */,
 				A65B1BD42D1E3CC500F5A740 /* iTermMTKView.swift */,
 				A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */,
@@ -16442,6 +16445,7 @@
 				A691693D281345AF00083F99 /* SaneButton.swift in Sources */,
 				5370678621C9D2780088D0F3 /* SIGError.m in Sources */,
 				A618FFC62245F6A300B8FD88 /* iTermStatusBarActionComponent.m in Sources */,
+				A6C5EDD12D4EA802000D9E85 /* iTermLayoutArithmetic.swift in Sources */,
 				A64511C823806FBA00EB6ADF /* iTermLegacyJobManager.m in Sources */,
 				A6D1A3F32C7E9ABD00FECDF2 /* DoublyLinkedList.swift in Sources */,
 				A67A69002A00930F0027B550 /* AutoResizingTextView.swift in Sources */,
