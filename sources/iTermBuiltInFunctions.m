@@ -18,6 +18,9 @@
 
 #import <objc/runtime.h>
 
+NSString *const iTermBuiltInFunctionBindingPath = @"__binding_path";
+NSString *const iTermBuiltInFunctionBindingScope = @"__binding_scope";
+
 NSArray<NSString *> *iTermAllFunctionSignaturesFromNamespaceAndNameAndArguments(NSString *namespace,
                                                                                 NSString *name,
                                                                                 NSArray<NSString *> *argumentNames,
@@ -229,6 +232,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
                    namespace:(NSString *)namespace
                   parameters:(NSDictionary<NSString *, id> *)parameters
                        scope:(iTermVariableScope *)scope
+                 bindingPath:(NSString *)bindingPath
                   completion:(nonnull iTermBuiltInFunctionCompletionBlock)completion {
     NSArray<NSString *> *arguments = parameters.allKeys;
     NSString *signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, name, arguments);
@@ -258,6 +262,10 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
         return;
     }
 
+    if (bindingPath) {
+        amendedParameters[iTermBuiltInFunctionBindingPath] = bindingPath;
+        amendedParameters[iTermBuiltInFunctionBindingScope] = scope;
+    }
     function.block([amendedParameters dictionaryByRemovingNullValues], completion);
 }
 

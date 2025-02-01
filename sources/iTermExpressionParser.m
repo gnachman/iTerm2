@@ -148,6 +148,7 @@
     return stringRecogniser;
 }
 
+// Note that iTermFunctionCallSuggester also uses this.
 + (CPTokeniser *)newTokenizer {
     CPTokeniser *tokenizer;
     tokenizer = [[CPTokeniser alloc] init];
@@ -163,6 +164,7 @@
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@";"]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"true"]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"false"]];
+    [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"=>"]];
     [tokenizer addTokenRecogniser:[CPNumberRecogniser numberRecogniser]];
     [tokenizer addTokenRecogniser:[CPWhiteSpaceRecogniser whiteSpaceRecogniser]];
     [tokenizer addTokenRecogniser:[CPIdentifierRecogniser identifierRecogniser]];
@@ -211,6 +213,7 @@
 
 - (iTermParsedExpression *)parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)fqName
                                                                          arglist:(NSArray<iTermFunctionArgument *> *)argsArray
+                                                                         boundTo:(NSString *)bindingPath
                                                                            error:(out NSError **)error {
     NSString *name;
     NSString *namespace;
@@ -228,7 +231,11 @@
         [call addParameterWithName:arg.name
                   parsedExpression:arg.expression];
     }
-
+    if (bindingPath) {
+        call.bindingPath = bindingPath;
+        // If this is a recording scope, make note of the dependency.
+        [_scope valueForVariableName:bindingPath];
+    }
     if (error) {
         *error = nil;
     }
@@ -412,11 +419,25 @@
         return [weakSelf callSequenceWithCalls:@[call.functionCall]];
     }];
 
+    [_grammarProcessor addProductionRule:@"call ::= <path> <arglist> '=>' <path>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+        NSError *error = nil;
+        iTermParsedExpression *result = [weakSelf parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)syntaxTree.children[0]
+                                                                                                arglist:syntaxTree.children[1]
+                                                                                                boundTo:syntaxTree.children[3]
+                                                                                                  error:&error];
+        if (error) {
+            return [[iTermParsedExpression alloc] initWithError:error];
+        }
+        return result;
+    }];
+
     [_grammarProcessor addProductionRule:@"call ::= <path> <arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         NSError *error = nil;
         iTermParsedExpression *result = [weakSelf parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)syntaxTree.children[0]
                                                                                                 arglist:syntaxTree.children[1]
+                                                                                                boundTo:nil
                                                                                                   error:&error];
         if (error) {
             return [[iTermParsedExpression alloc] initWithError:error];

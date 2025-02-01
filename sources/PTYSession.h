@@ -902,7 +902,10 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Make this session's textview the first responder.
 - (void)takeFocus;
-- (id)tmuxFormat:(NSString *)tmuxFormat error:(out NSError **)errorPtr;
+- (id)tmuxFormat:(NSString *)tmuxFormat
+     bindingPath:(NSString *)bindingPath
+    bindingScope:(iTermVariableScope *)scope
+           error:(out NSError **)errorPtr;
 
 // Show an announcement explaining why a restored session is an orphan.
 - (void)showOrphanAnnouncement;

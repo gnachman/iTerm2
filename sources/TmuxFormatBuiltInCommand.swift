@@ -36,6 +36,8 @@ extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
                                                        }
                                                        execute(session: session,
                                                                format: parameters[formatKey] as? String,
+                                                               bindingPath: parameters[iTermBuiltInFunctionBindingPath] as? String,
+                                                               bindingScope: parameters[iTermBuiltInFunctionBindingScope] as? iTermVariableScope,
                                                                completion: completion)
                                                    }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")
@@ -43,13 +45,17 @@ extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
 
     private static func execute(session: PTYSession,
                                 format: String?,
+                                bindingPath: String?,
+                                bindingScope: iTermVariableScope?,
                                 completion: iTermBuiltInFunctionCompletionBlock) {
         guard let format else {
             completion(nil, Self.error(message: "Invalid format"))
             return
         }
         do {
-            let value = try session.tmuxFormat(format)
+            let value = try session.tmuxFormat(format,
+                                               bindingPath: bindingPath,
+                                               bindingScope: bindingScope)
             completion(value, nil)
         } catch {
             completion(nil, error)

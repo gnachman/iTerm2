@@ -3721,7 +3721,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [self writeTask:string];
 }
 
-- (id)tmuxFormat:(NSString *)tmuxFormat error:(out NSError **)errorPtr {
+- (id)tmuxFormat:(NSString *)tmuxFormat
+     bindingPath:(NSString *)bindingPath
+    bindingScope:(iTermVariableScope *)scope
+           error:(out NSError **)errorPtr {
+    if (bindingPath != nil) {
+        assert(scope != nil);
+    }
     if (!self.tmuxController.gateway) {
         DLog(@"No gateway for %@", tmuxFormat);
         *errorPtr = [NSError errorWithDomain:@"com.iterm2.bind-tmux-format"
@@ -3735,11 +3741,11 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!mon) {
         DLog(@"Register monitor for %@", tmuxFormat);
         mon = [[iTermTmuxOptionMonitor alloc] initWithGateway:self.tmuxController.gateway
-                                                        scope:self.variablesScope
+                                                        scope:scope
                                          fallbackVariableName:nil
                                                        format:tmuxFormat
                                                        target:[NSString stringWithFormat:@"%%%d", self.tmuxPane]
-                                                 variableName:nil
+                                                 variableName:bindingPath
                                                         block:^(NSString *newValue) {
         }];
         if (!_userTmuxOptionMonitors) {
