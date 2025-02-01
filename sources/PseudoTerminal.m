@@ -4596,8 +4596,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession* session = [tab activeSession];
 
     // Get the width and height of characters in this session.
-    float charWidth = [[session textview] charWidth];
-    float charHeight = [[session textview] lineHeight];
+    const NSSize cellSize = session.textview.cellSize;
 
     // Decide when to snap.  (We snap unless control, and only control, is held down.)
     const NSUInteger theMask =
@@ -4638,39 +4637,31 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     // Compute proposed tab size (window minus decorations).
-    NSSize decorationSize = [self windowDecorationSize];
-    NSSize internalDecorationSize = self.currentSession.view.internalDecorationSize;
-    NSSize tabSize = NSMakeSize(proposedFrameSize.width - decorationSize.width - internalDecorationSize.width,
-                                proposedFrameSize.height - decorationSize.height - internalDecorationSize.height);
+    const NSSize decorationSize = [self windowDecorationSize];
+    const NSSize internalDecorationSize = self.currentSession.view.internalDecorationSize;
+    const NSSize unsnappedTabSize = [iTermLayoutArithmetic tabSizeFromWindowSize:proposedFrameSize
+                                                                  decorationSize:decorationSize
+                                                          internalDecorationSize:internalDecorationSize];
 
     // Snap proposed tab size to grid.  The snapping uses a grid spaced to
     // match the current pane's character size and aligned so margins are
     // correct if all we have is a single pane.
-    BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-    NSSize contentSize =
-        [NSScrollView contentSizeForFrameSize:tabSize
-                  horizontalScrollerClass:nil
-                    verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
-                               borderType:NSNoBorder
-                              controlSize:NSControlSizeRegular
-                            scrollerStyle:[self scrollerStyle]];
-
-    int screenWidth = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / charWidth;
-    int screenHeight = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / charHeight;
-
+    const BOOL hasScrollbar = [self scrollbarShouldBeVisible];
+    NSSize contentSize = [iTermLayoutArithmetic contentSizeFromTabSize:unsnappedTabSize
+                                                          hasScrollbar:hasScrollbar
+                                                         scrollerStyle:self.scrollerStyle];
+    const VT100GridSize screenGridSize = [iTermLayoutArithmetic gridSizeFromContentSize:contentSize
+                                                                               cellSize:cellSize];
+    const NSSize snappedSize = [iTermLayoutArithmetic contentSizeFromGridSize:screenGridSize cellSize:cellSize];
     if (snapWidth) {
-      contentSize.width = screenWidth * charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
+        contentSize.width = snappedSize.width;
     }
     if (snapHeight) {
-      contentSize.height = screenHeight * charHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
+        contentSize.height = snappedSize.height;
     }
-    tabSize =
-        [PTYScrollView frameSizeForContentSize:contentSize
-                       horizontalScrollerClass:nil
-                         verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
-                                    borderType:NSNoBorder
-                                   controlSize:NSControlSizeRegular
-                                 scrollerStyle:[self scrollerStyle]];
+    NSSize tabSize = [iTermLayoutArithmetic tabSizeFromContentSize:contentSize
+                                                      hasScrollbar:hasScrollbar
+                                                     scrollerStyle:self.scrollerStyle];
     // Respect minimum tab sizes.
     for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
         PTYTab* theTab = [tabViewItem identifier];
@@ -4680,28 +4671,29 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     // Compute new window size from tab size.
-    proposedFrameSize.width = tabSize.width + decorationSize.width + internalDecorationSize.width;
-    proposedFrameSize.height = tabSize.height + decorationSize.height + internalDecorationSize.height;
+    proposedFrameSize = [iTermLayoutArithmetic windowSizeFromTabSize:tabSize
+                                                      decorationSize:decorationSize
+                                              internalDecorationSize:internalDecorationSize];
 
     // Apply maximum window size.
     NSSize maxFrameSize = [self maxFrame].size;
     proposedFrameSize.height = MIN(maxFrameSize.height, proposedFrameSize.height);
 
     // If snapping, reject the new size if the mouse has not moved at least
-    // half the current grid size in a given direction.  This is really
+    // half the current cell size in a given direction.  This is really
     // important to the feel of the snapping, especially when the window is
     // not aligned to the grid (e.g. after switching to a tab with a
     // different font size).
     NSSize senderSize = [sender frame].size;
     if (snapWidth) {
       CGFloat deltaX = floor(fabs(senderSize.width - proposedFrameSize.width));
-      if (deltaX < floor(charWidth / 2)) {
+      if (deltaX < floor(cellSize.width / 2)) {
         proposedFrameSize.width = senderSize.width;
       }
     }
     if (snapHeight) {
       int deltaY = floor(fabs(senderSize.height - proposedFrameSize.height));
-      if (deltaY < floor(charHeight / 2)) {
+      if (deltaY < floor(cellSize.height / 2)) {
         proposedFrameSize.height = senderSize.height;
       }
     }
@@ -4712,9 +4704,9 @@ ITERM_WEAKLY_REFERENCEABLE
           NSStringFromSize(screenFrame.size),
           NSStringFromSize(proposedFrameSize),
           NSStringFromSize(originalProposal),
-          NSStringFromSize(NSMakeSize(charWidth, charHeight)));
+          NSStringFromSize(NSMakeSize(cellSize.width, cellSize.height)));
     if (snapWidth &&
-        proposedFrameSize.width + charWidth > screenFrame.size.width &&
+        proposedFrameSize.width + cellSize.width > screenFrame.size.width &&
         proposedFrameSize.width < screenFrame.size.width) {
         CGFloat snappedMargin = screenFrame.size.width - proposedFrameSize.width;
         CGFloat desiredMargin = screenFrame.size.width - originalProposal.width;
@@ -4723,7 +4715,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     if (snapHeight &&
-        proposedFrameSize.height + charHeight > screenFrame.size.height &&
+        proposedFrameSize.height + cellSize.height > screenFrame.size.height &&
         proposedFrameSize.height < screenFrame.size.height) {
         CGFloat snappedMargin = screenFrame.size.height - proposedFrameSize.height;
         CGFloat desiredMargin = screenFrame.size.height - originalProposal.height;

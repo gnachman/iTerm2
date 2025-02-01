@@ -409,6 +409,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 // Size of a character.
 @property(nonatomic, readonly) double lineHeight;
 @property(nonatomic, readonly) double charWidth;
+@property(nonatomic, readonly) NSSize cellSize;
 
 @property(nonatomic, readonly) double charWidthWithoutSpacing;
 @property(nonatomic, readonly) double charHeightWithoutSpacing;

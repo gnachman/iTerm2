@@ -23,7 +23,40 @@ class LayoutArithmetic: NSObject {
         NSSize(width: CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins)),
                height: CGFloat(iTermPreferences.int(forKey: kPreferenceKeyTopBottomMargins)))
     }
+}
 
+// Convert between different size types
+/// Some terms used here:
+///   * `window decoration size`: The sum of points used outside the tabview. Includes the toolbelt, title bar, window chrome, etc.
+///   * `window size`: The size of a window's frame. includes everything in the window (title bar, etc.)
+///   * `tab size`: The size of a window's content excluding decoration (toolbelt, tabbar, etc.) and also excluding internal decorations of the session (e.g., the per-pane titlebar)
+///   * `content size`: The size of a tab excluding scrollbars.
+@objc
+extension LayoutArithmetic {
+    // MARK: - Compute tab size
+    @objc
+    static func tabSizeFromWindowSize(_ windowSize: NSSize,
+                                      decorationSize: NSSize,
+                                      internalDecorationSize:  NSSize) -> NSSize {
+        return NSSize(width: windowSize.width - decorationSize.width - internalDecorationSize.width,
+                      height: windowSize.height - decorationSize.height - internalDecorationSize.height)
+    }
+
+    @objc(tabSizeFromContentSize:hasScrollbar:scrollerStyle:)
+    static func tabSizeFromContentSize(_ contentSize: NSSize,
+                                       hasScrollbar: Bool,
+                                       scrollerStyle: NSScroller.Style) -> NSSize {
+        PTYScrollView.frameSize(forContentSize: contentSize,
+                                horizontalScrollerClass: nil,
+                                verticalScrollerClass: hasScrollbar ? PTYScroller.self : nil,
+                                borderType: .noBorder,
+                                controlSize: .regular,
+                                scrollerStyle: scrollerStyle)
+    }
+
+    // MARK: - Compute window size
+
+    @objc
     static func windowSize(cellSize: NSSize,
                            windowDecorationSize: NSSize,
                            gridSize: VT100GridSize) -> NSSize {
@@ -31,6 +64,47 @@ class LayoutArithmetic: NSObject {
                       height: cellSize.height * CGFloat(gridSize.height) + 2 * margins.height + windowDecorationSize.height)
     }
 
+    @objc
+    static func windowSizeFromTabSize(_ tabSize: NSSize,
+                                      decorationSize: NSSize,
+                                      internalDecorationSize: NSSize) -> NSSize {
+        return NSSize(width: tabSize.width + decorationSize.width + internalDecorationSize.width,
+                      height: tabSize.height + decorationSize.height + internalDecorationSize.height)
+    }
+
+    // MARK: - Compute grid size
+
+    @objc(gridSizeFromContentSize:cellSize:)
+    static func gridSizeFromContentSize(_ contentSize: NSSize,
+                                        cellSize: NSSize) -> VT100GridSize {
+        VT100GridSize(width: Int32(clamping: (contentSize.width - margins.width * 2) / cellSize.width),
+                      height: Int32(clamping: (contentSize.height - margins.height * 2) / cellSize.height))
+    }
+
+    // MARK: - Compute content size
+
+    @objc(contentSizeFromGridSize:cellSize:)
+    static func contentSizeFromGridSize(_ gridSize: VT100GridSize,
+                                       cellSize: NSSize) -> NSSize {
+        return NSSize(width: CGFloat(gridSize.width) * cellSize.width + margins.width * 2,
+                      height: CGFloat(gridSize.height) * cellSize.height + margins.height * 2)
+    }
+
+    @objc
+    static func contentSizeFromTabSize(_ tabSize: NSSize,
+                                       hasScrollbar: Bool,
+                                       scrollerStyle: NSScroller.Style) -> NSSize {
+        return NSScrollView.contentSize(forFrameSize: tabSize,
+                                        horizontalScrollerClass: nil,
+                                        verticalScrollerClass: hasScrollbar ? PTYScroller.self : nil,
+                                        borderType: .noBorder,
+                                        controlSize: .regular,
+                                        scrollerStyle: scrollerStyle)
+    }
+}
+
+// Frame canonicalization
+extension LayoutArithmetic {
     private enum Alignment {
         case left
         case right

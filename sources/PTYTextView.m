@@ -2079,6 +2079,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [self requestDelegateRedraw];
 }
 
+- (NSSize)cellSize {
+    return NSMakeSize(_charWidth, _lineHeight);
+}
+
 - (void)setLineHeight:(double)aLineHeight {
     _lineHeight = ceil(aLineHeight);
     _drawingHelper.cellSize = NSMakeSize(_charWidth, _lineHeight);
