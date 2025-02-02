@@ -4259,15 +4259,15 @@ ITERM_WEAKLY_REFERENCEABLE
         return self.window.frame;
     }
     return [iTermLayoutArithmetic canonicalFrameWithWindowType:self.windowType
-                                             desiredGridSize:VT100GridSizeMake(desiredColumns_, desiredRows_)
-                                                preserveSize:preserveSize
-                                                 screenFrame:screen.frame
-                                          screenVisibleFrame:screenVisibleFrame
-                        screenVisibleFrameIgnoringHiddenDock:screenVisibleFrameIgnoringHiddenDock
-                                               originalFrame:frame
-                                                    cellSize:NSMakeSize(session.textview.charWidth, session.textview.lineHeight)
-                                        windowDecorationSize:decorationSize
-                                            traditionalFrame:[self traditionalFullScreenFrameForScreen:screen]];
+                                               desiredGridSize:VT100GridSizeMake(desiredColumns_, desiredRows_)
+                                                  preserveSize:preserveSize
+                                                   screenFrame:screen.frame
+                                            screenVisibleFrame:screenVisibleFrame
+                          screenVisibleFrameIgnoringHiddenDock:screenVisibleFrameIgnoringHiddenDock
+                                                 originalFrame:frame
+                                                      cellSize:session.textview.cellSize
+                                          windowDecorationSize:decorationSize
+                                              traditionalFrame:[self traditionalFullScreenFrameForScreen:screen]];
 }
 
 - (void)screenParametersDidChange {
@@ -5094,22 +5094,21 @@ ITERM_WEAKLY_REFERENCEABLE
     return changed;
 }
 
-// This is a hack to fix the problem of exiting a fullscreen window that as never not-fullscreen.
+// This is a hack to fix the problem of exiting a fullscreen window that was never not-fullscreen.
 // We need to have some size to go to. This method computes the size based on the current session's
 // profile's rows and columns setting plus the window decoration size. It's sort of arbitrary
 // because split panes will have to share that space, but there's no perfect solution to this issue.
 - (NSSize)preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration {
     PTYSession *session = [self currentSession];
     PTYTextView *textView = session.textview;
-    NSSize cellSize = NSMakeSize(textView.charWidth, textView.lineHeight);
-    NSSize decorationSize = [self windowDecorationSize];
-    VT100GridSize sessionSize =
+    const VT100GridSize sessionSize =
     VT100GridSizeMake(MIN(iTermMaxInitialSessionSize,
                           [session.profile[KEY_COLUMNS] intValue]),
                       MIN(iTermMaxInitialSessionSize,
                           [session.profile[KEY_ROWS] intValue]));
-    return NSMakeSize([iTermPreferences intForKey:kPreferenceKeySideMargins] * 2 + sessionSize.width * cellSize.width + decorationSize.width,
-                      [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2 + sessionSize.height * cellSize.height + decorationSize.height);
+    return [iTermLayoutArithmetic windowSizeFromGridSize:sessionSize
+                                                cellSize:textView.cellSize
+                                          decorationSize:[self windowDecorationSize]];
 }
 
 - (void)addShortcutAccessorViewControllerToTitleBarIfNeeded {
