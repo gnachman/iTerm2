@@ -505,6 +505,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_showBottomStatusBar) {
         size.height += iTermGetStatusBarHeight();
     }
+    size.width += iTermScrollbarWidth();
     return size;
 }
 

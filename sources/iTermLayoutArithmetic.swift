@@ -65,14 +65,6 @@ extension LayoutArithmetic {
     }
 
     @objc
-    static func windowSize(cellSize: NSSize,
-                           windowDecorationSize: NSSize,
-                           gridSize: VT100GridSize) -> NSSize {
-        return NSSize(width: cellSize.width * CGFloat(gridSize.width) + 2 * margins.width + windowDecorationSize.width + iTermScrollbarWidth(),
-                      height: cellSize.height * CGFloat(gridSize.height) + 2 * margins.height + windowDecorationSize.height)
-    }
-
-    @objc
     static func windowSizeFromTabSize(_ tabSize: NSSize,
                                       decorationSize: NSSize,
                                       internalDecorationSize: NSSize) -> NSSize {
@@ -276,11 +268,13 @@ extension LayoutArithmetic {
                                originalFrame: NSRect,
                                cellSize: NSSize,
                                windowDecorationSize: NSSize,
+                               internalDecorationSize: NSSize,
                                traditionalFrame: NSRect) -> NSRect {
         let edgeSpanning = windowType.isEdgeSpanning
-        let windowSizeForDesiredGridSize = windowSize(cellSize: cellSize,
-                                                      windowDecorationSize: windowDecorationSize,
-                                                      gridSize: desiredGridSize)
+        let windowSizeForDesiredGridSize = windowSizeFromGridSize(desiredGridSize,
+                                                                  cellSize: cellSize,
+                                                                  decorationSize: windowDecorationSize,
+                                                                  internalDecorationSize: internalDecorationSize)
         var frame = originalFrame
         switch windowType {
         case .WINDOW_TYPE_TOP_PARTIAL, .WINDOW_TYPE_TOP:

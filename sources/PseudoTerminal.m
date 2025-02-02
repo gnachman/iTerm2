@@ -4267,6 +4267,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  originalFrame:frame
                                                       cellSize:session.textview.cellSize
                                           windowDecorationSize:decorationSize
+                                        internalDecorationSize:session.view.internalDecorationSize
                                               traditionalFrame:[self traditionalFullScreenFrameForScreen:screen]];
 }
 
