@@ -8,14 +8,20 @@
 import Foundation
 
 extension NSSize {
+    // MARK: - NSSize ⋆ CGFloat
     static func *(lhs: NSSize, rhs: CGFloat) -> NSSize {
         return NSSize(width: lhs.width * rhs, height: lhs.height * rhs)
     }
     static func /(lhs: NSSize, rhs: CGFloat) -> NSSize {
         return NSSize(width: lhs.width / rhs, height: lhs.height / rhs)
     }
+
+    // MARK: - NSSize ⋆ CGFloat
     static func /(lhs: NSSize, rhs: NSSize) -> NSSize {
         return NSSize(width: lhs.width / rhs.width, height: lhs.height / rhs.height)
+    }
+    static func +(lhs: NSSize, rhs: NSSize) -> NSSize {
+        return NSSize(width: lhs.width + rhs.width, height: lhs.height + rhs.height)
     }
 }
 

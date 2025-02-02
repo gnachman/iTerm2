@@ -5108,7 +5108,8 @@ ITERM_WEAKLY_REFERENCEABLE
                           [session.profile[KEY_ROWS] intValue]));
     return [iTermLayoutArithmetic windowSizeFromGridSize:sessionSize
                                                 cellSize:textView.cellSize
-                                          decorationSize:[self windowDecorationSize]];
+                                          decorationSize:[self windowDecorationSize]
+                                  internalDecorationSize:self.currentSession.view.internalDecorationSize];
 }
 
 - (void)addShortcutAccessorViewControllerToTitleBarIfNeeded {

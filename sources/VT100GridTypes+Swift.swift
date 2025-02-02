@@ -84,3 +84,10 @@ extension Range {
         }
     }
 }
+
+extension VT100GridSize {
+    static func *(lhs: VT100GridSize, rhs: NSSize) -> NSSize {
+        return NSSize(width: CGFloat(lhs.width) * rhs.width,
+                      height: CGFloat(lhs.height) * rhs.height)
+    }
+}

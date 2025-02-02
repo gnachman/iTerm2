@@ -56,13 +56,12 @@ extension LayoutArithmetic {
 
     // MARK: - Compute window size
 
-    #warning("TODO: Shouldn't this take internal decoration size into account?")
     @objc
     static func windowSizeFromGridSize(_ gridSize: VT100GridSize,
                                        cellSize: NSSize,
-                                       decorationSize: NSSize) -> NSSize {
-        return NSSize(width: margins.width * 2 + CGFloat(gridSize.width) * cellSize.width + decorationSize.width,
-                      height: margins.height * 2 + CGFloat(gridSize.height) * cellSize.height + decorationSize.height)
+                                       decorationSize: NSSize,
+                                       internalDecorationSize: NSSize) -> NSSize {
+        return margins * 2.0 + gridSize * cellSize + decorationSize + internalDecorationSize
     }
 
     @objc
