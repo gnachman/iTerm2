@@ -2170,13 +2170,13 @@ ITERM_WEAKLY_REFERENCEABLE
     _view.scrollview.hasVerticalRuler = [parent scrollbarShouldBeVisible];
 
     // Allocate a text view
-    NSSize aSize = [_view.scrollview contentSize];
-    _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
+    const NSSize scrollViewContentSize = [_view.scrollview contentSize];
+    _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, scrollViewContentSize.width, scrollViewContentSize.height)];
 
     _textview = [[PTYTextView alloc] initWithFrame:NSMakeRect(0,
                                                               [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins],
-                                                              aSize.width,
-                                                              aSize.height)];
+                                                              scrollViewContentSize.width,
+                                                              scrollViewContentSize.height)];
     _textview.colorMap = _screen.colorMap;
     _textview.keyboardHandler.keyMapper = _keyMapper;
     _view.mainResponder = _textview;
@@ -2190,7 +2190,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
 
     [_wrapper addSubview:_textview];
-    [_textview setFrame:NSMakeRect(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], aSize.width, aSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins])];
+    [_textview setFrame:NSMakeRect(0,
+                                   [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins],
+                                   scrollViewContentSize.width,
+                                   scrollViewContentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins])];
 
     // assign terminal and task objects
     // Pause token execution in case the caller needs to modify terminal state before it starts running.
@@ -2207,22 +2210,15 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.variablesScope setValue:_shell.tty forVariableNamed:iTermVariableKeySessionTTY];
         [self.variablesScope setValue:@(_screen.terminalMouseMode) forVariableNamed:iTermVariableKeySessionMouseReportingMode];
 
-        // initialize the screen
-        // TODO: Shouldn't this take the scrollbar into account?
-        NSSize contentSize = [PTYScrollView contentSizeForFrameSize:aSize
-                                            horizontalScrollerClass:nil
-                                              verticalScrollerClass:parent.scrollbarShouldBeVisible ? [[_view.scrollview verticalScroller] class] : nil
-                                                         borderType:_view.scrollview.borderType
-                                                        controlSize:NSControlSizeRegular
-                                                      scrollerStyle:_view.scrollview.scrollerStyle];
-
-        int width = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / [_textview charWidth];
-        int height = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / [_textview lineHeight];
-        [_screen destructivelySetScreenWidth:width
-                                      height:height
+        // Set the screen's size to the grid that fits it.
+        const NSSize cellSize = _textview.cellSize;
+        const VT100GridSize gridSize = [iTermLayoutArithmetic gridSizeFromContentSize:scrollViewContentSize
+                                                                             cellSize:cellSize];
+        [_screen destructivelySetScreenWidth:gridSize.width
+                                      height:gridSize.height
                                 mutableState:mutableState];
-        [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(width),
-                                                        iTermVariableKeySessionRows: @(height) }];
+        [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(gridSize.width),
+                                                        iTermVariableKeySessionRows: @(gridSize.height) }];
     }];
 
     [_textview setDataSource:_screen];
