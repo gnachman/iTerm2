@@ -4252,8 +4252,8 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Window has no tabs. Returning early.");
         return self.window.frame;
     }
-    PtyLog(@"Decoration size is %@", [NSValue valueWithSize:decorationSize]);
-    PtyLog(@"Line height is %f, char width is %f", (float) [[session textview] lineHeight], [[session textview] charWidth]);
+    PtyLog(@"Decoration size is %@", NSStringFromSize(decorationSize));
+    PtyLog(@"Cell size is %@", NSStringFromSize(session.textview.cellSize));
     if (session.textview.lineHeight == 0 || session.textview.charWidth == 0) {
         DLog(@"Line height or char width is 0. Returning existing frame. session=%@", session);
         return self.window.frame;
@@ -9870,18 +9870,17 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     [_contentView layoutSubviews];
 }
 
-// Returns the width of characters in pixels in the session with the widest
+// Returns the width of characters in points in the session with the widest
 // characters. Fills in *numChars with the number of columns in that session.
-- (float)maxCharWidth:(int*)numChars
-{
+- (float)maxCharWidth:(int *)numChars {
     float max=0;
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
         PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
         for (PTYSession* session in [tab sessions]) {
-            float w =[[session textview] charWidth];
-            PtyLog(@"maxCharWidth - session %d has %dx%d, chars are %fx%f",
-                   i, [session columns], [session rows], [[session textview] charWidth],
-                   [[session textview] lineHeight]);
+            const CGFloat w = session.textview.cellSize.width;
+            PtyLog(@"maxCharWidth - session %d has %dx%d, chars are %@",
+                   i, [session columns], [session rows],
+                   NSStringFromSize(session.textview.cellSize));
             if (w > max) {
                 max = w;
                 if (numChars) {
@@ -9893,17 +9892,16 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     return max;
 }
 
-// Returns the height of characters in pixels in the session with the tallest
+// Returns the height of characters in points in the session with the tallest
 // characters. Fills in *numChars with the number of rows in that session.
-- (float)maxCharHeight:(int*)numChars
-{
+- (float)maxCharHeight:(int *)numChars {
     float max=0;
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
         PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
         for (PTYSession* session in [tab sessions]) {
-            float h =[[session textview] lineHeight];
-            PtyLog(@"maxCharHeight - session %d has %dx%d, chars are %fx%f", i, [session columns],
-                   [session rows], [[session textview] charWidth], [[session textview] lineHeight]);
+            const CGFloat h = session.textview.cellSize.height;
+            PtyLog(@"maxCharHeight - session %d has %dx%d, chars are %@", i, [session columns],
+                   [session rows], NSStringFromSize(session.textview.cellSize));
             if (h > max) {
                 max = h;
                 if (numChars) {
@@ -9915,19 +9913,18 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     return max;
 }
 
-// Returns the width of characters in pixels in the overall widest session.
+// Returns the width of characters in points in the overall widest session.
 // Fills in *numChars with the number of columns in that session.
-- (float)widestSessionWidth:(int*)numChars
-{
+- (float)widestSessionWidth:(int *)numChars {
     float max=0;
     float ch=0;
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
         PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
         for (PTYSession* session in [tab sessions]) {
-            float w = [[session textview] charWidth];
-            PtyLog(@"widestSessionWidth - session %d has %dx%d, chars are %fx%f", i,
-                   [session columns], [session rows], [[session textview] charWidth],
-                   [[session textview] lineHeight]);
+            const CGFloat w = session.textview.cellSize.width;
+            PtyLog(@"widestSessionWidth - session %d has %dx%d, chars are %@", i,
+                   [session columns], [session rows],
+                   NSStringFromSize(session.textview.cellSize));
             if (w * [session columns] > max) {
                 max = w;
                 ch = [[session textview] charWidth];
@@ -9938,20 +9935,21 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     return ch;
 }
 
-// Returns the height of characters in pixels in the overall tallest session.
+// Returns the height of characters in points in the overall tallest session.
 // Fills in *numChars with the number of rows in that session.
-- (float)tallestSessionHeight:(int*)numChars
-{
+- (float)tallestSessionHeight:(int *)numChars {
     float max=0;
     float ch=0;
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
         PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
         for (PTYSession* session in [tab sessions]) {
-            float h = [[session textview] lineHeight];
-            PtyLog(@"tallestSessionheight - session %d has %dx%d, chars are %fx%f", i, [session columns], [session rows], [[session textview] charWidth], [[session textview] lineHeight]);
+            const CGFloat h = session.textview.cellSize.height;
+            PtyLog(@"tallestSessionheight - session %d has %dx%d, chars are %@",
+                   i, [session columns], [session rows],
+                   NSStringFromSize(session.textview.cellSize));
             if (h * [session rows] > max) {
                 max = h * [session rows];
-                ch = [[session textview] lineHeight];
+                ch = h;
                 *numChars = [session rows];
             }
         }
@@ -9960,8 +9958,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 // Copy state from 'other' to this terminal.
-- (void)copySettingsFrom:(PseudoTerminal*)other
-{
+- (void)copySettingsFrom:(PseudoTerminal *)other {
     if ([other inInstantReplay]) {
         [other closeInstantReplayWindow];
         [self showHideInstantReplay];
@@ -10122,7 +10119,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         NSSize maxGrowth;
         maxGrowth.width = maxTabSize.width - currentSize.width;
         maxGrowth.height = maxTabSize.height - currentSize.height;
-        int maxNewRows = maxGrowth.height / [[aSession textview] lineHeight];
+        const NSSize cellSize = aSession.textview.cellSize;
+        int maxNewRows = maxGrowth.height / cellSize.height;
 
         // 3. Compute the number of rows and columns we're trying to grow by.
         int newRows = rows - [aSession rows];
@@ -10135,8 +10133,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         // Note that this typically gets deferred. See the comment in sessionInitiatedResize:width:height:.
         [aSession setSize:VT100GridSizeMake(width, height)];
         [[aSession.view scrollview] setHasVerticalScroller:hasScrollbar];
-        [[aSession.view scrollview] setLineScroll:[[aSession textview] lineHeight]];
-        [[aSession.view scrollview] setPageScroll:2*[[aSession textview] lineHeight]];
+        [[aSession.view scrollview] setLineScroll:cellSize.height];
+        [[aSession.view scrollview] setPageScroll:2.0 * cellSize.height];
         if ([aSession backgroundImagePath]) {
             [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
         }
