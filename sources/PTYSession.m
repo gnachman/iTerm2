@@ -2413,7 +2413,7 @@ ITERM_WEAKLY_REFERENCEABLE
             result -= iTermGetStatusBarHeight();
         }
         result -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
-        int iLineHeight = [_textview lineHeight];
+        int iLineHeight = _textview.cellSize.height;
         if (iLineHeight == 0) {
             return 0;
         }
@@ -2424,7 +2424,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return result;
     } else {
         result -= [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
-        int iCharWidth = [_textview charWidth];
+        int iCharWidth = _textview.cellSize.width;
         if (iCharWidth == 0) {
             return 0;
         }
