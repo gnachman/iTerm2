@@ -182,7 +182,10 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
     [self updateForTransparency:(NSWindow<PTYWindow> *)myWindow];
     [self updateTitlebarSeparatorStyle];
+    NSWindow *oldWindow = self.window;
     [self setWindow:myWindow];
+    [oldWindow close];
+    [oldWindow orderOut:nil];
 
     if (@available(macOS 10.16, *)) {
         // TODO
@@ -639,7 +642,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
             break;
     }
 
-    [self.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
+    [self performSelector:@selector(makeCurrentWindowKeyAndOrderFront) withObject:nil afterDelay:0];
     [self.window makeFirstResponder:[[self currentSession] textview]];
     if (iTermWindowTypeIsCompact(self.savedWindowType) ||
         iTermWindowTypeIsCompact(self.windowType)) {
@@ -653,6 +656,10 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self updateUseMetalInAllTabs];
     [self updateForTransparency:self.ptyWindow];
     [self updateWindowMenu];
+}
+
+- (void)makeCurrentWindowKeyAndOrderFront {
+    [self.window makeKeyAndOrderFront:nil];
 }
 
 - (BOOL)fullScreenImpl {
