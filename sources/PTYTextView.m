@@ -2067,9 +2067,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     [self updateMarkedTextAttributes];
 
-    NSScrollView* scrollview = [self enclosingScrollView];
-    [scrollview setLineScroll:[self lineHeight]];
-    [scrollview setPageScroll:2 * [self lineHeight]];
+    PTYScrollView *scrollview = [PTYScrollView castFrom:[self enclosingScrollView]];
+    [scrollview setTerminalCellSize:self.cellSize];
     [self updateNoteViewFrames];
     [self updatePortholeFrames];
     [_delegate textViewFontDidChange];

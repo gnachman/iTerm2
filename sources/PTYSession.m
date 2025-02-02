@@ -2228,8 +2228,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view.scrollview setDocumentView:_wrapper];
     [_wrapper release];
     [_view.scrollview setDocumentCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
-    [_view.scrollview setLineScroll:[_textview lineHeight]];
-    [_view.scrollview setPageScroll:2 * [_textview lineHeight]];
+    [_view.scrollview setTerminalCellSize:_textview.cellSize];
     [_view.scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
 
     _antiIdleCode = 0;

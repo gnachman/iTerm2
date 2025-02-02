@@ -315,4 +315,9 @@
     [super setVerticalScroller:verticalScroller];
 }
 
+- (void)setTerminalCellSize:(NSSize)size {
+    [self setLineScroll:size.height];
+    [self setPageScroll:2 * size.height];
+}
+
 @end

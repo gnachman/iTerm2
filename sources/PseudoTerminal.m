@@ -10133,8 +10133,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         // Note that this typically gets deferred. See the comment in sessionInitiatedResize:width:height:.
         [aSession setSize:VT100GridSizeMake(width, height)];
         [[aSession.view scrollview] setHasVerticalScroller:hasScrollbar];
-        [[aSession.view scrollview] setLineScroll:cellSize.height];
-        [[aSession.view scrollview] setPageScroll:2.0 * cellSize.height];
+        [aSession.view.scrollview setTerminalCellSize:cellSize];
         if ([aSession backgroundImagePath]) {
             [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
         }

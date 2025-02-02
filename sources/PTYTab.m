@@ -2606,8 +2606,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     PtyLog(@"fitSessionToCurrentViewSize -  calling setSize:%@", VT100GridSizeDescription(newSize));
     [aSession setSize:newSize];
-    [[aSession.view scrollview] setLineScroll:[[aSession textview] lineHeight]];
-    [[aSession.view scrollview] setPageScroll:2 * [[aSession textview] lineHeight]];
+    [aSession.view.scrollview setTerminalCellSize:aSession.textview.cellSize];
     if ([aSession backgroundImagePath]) {
         [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
     }
