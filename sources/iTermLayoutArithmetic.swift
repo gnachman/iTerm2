@@ -103,7 +103,7 @@ extension LayoutArithmetic {
     }
 }
 
-// Frame canonicalization
+// MARK: - Frame Canonicalization
 extension LayoutArithmetic {
     private enum Alignment {
         case left
