@@ -428,6 +428,13 @@ NS_INLINE VT100GridCoordRange VT100GridCoordRangeMake(int startX, int startY, in
     return coordRange;
 }
 
+NS_INLINE VT100GridCoordRange VT100GridCoordRangeFromRect(VT100GridRect rect) {
+    return VT100GridCoordRangeMake(rect.origin.x,
+                                   rect.origin.y,
+                                   rect.origin.x + rect.size.width,
+                                   rect.origin.y + rect.size.height - 1);
+}
+
 NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeMake(int startX,
                                                             long long startY,
                                                             int endX,

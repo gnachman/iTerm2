@@ -580,9 +580,11 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (BOOL)scrolledToBottom {
+#warning TODO: Audit all calls to gridRectWithvisibleRect to ensure they consistently use the same rect. self.enclosingScrollView.documentVisibleRect is different than self.visibleRect because my superview is the document view.
     const VT100GridRect gridRect = [iTermLayoutArithmetic gridRectWithVisibleRect:self.visibleRect
                                                                            excess:self.excess
-                                                                         cellSize:self.cellSize];
+                                                                         cellSize:self.cellSize
+                                                                         maxWidth:INT_MAX];
     return gridRect.origin.y + gridRect.size.height == [_dataSource numberOfLines];
 }
 
@@ -756,7 +758,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (long long)absoluteScrollPosition {
     const VT100GridRect visibleGridRect = [iTermLayoutArithmetic gridRectWithVisibleRect:self.visibleRect
                                                                                   excess:self.excess
-                                                                                cellSize:self.cellSize];
+                                                                                cellSize:self.cellSize
+                                                                                maxWidth:INT_MAX];
     return visibleGridRect.origin.y + _dataSource.totalScrollbackOverflow;
 }
 
@@ -837,7 +840,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (void)scrollToCenterLine:(int)line {
     const int numberOfVisibleLines = [iTermLayoutArithmetic gridRectWithVisibleRect:self.visibleRect
                                                                              excess:self.excess
-                                                                           cellSize:self.cellSize].size.height;
+                                                                           cellSize:self.cellSize
+                                                                           maxWidth:INT_MAX].size.height;
     const NSRect frame = [iTermLayoutArithmetic frameInTextViewOfLinesAroundLine:line
                                                                           radius:(numberOfVisibleLines - 1) / 2
                                                                         cellSize:self.cellSize
@@ -848,7 +852,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (NSRange)visibleRelativeRange {
     const VT100GridRect rect = [iTermLayoutArithmetic gridRectWithVisibleRect:self.enclosingScrollView.documentVisibleRect
                                                                        excess:self.excess
-                                                                     cellSize:self.cellSize];
+                                                                     cellSize:self.cellSize
+                                                                     maxWidth:INT_MAX];
     return NSMakeRange(rect.origin.y, rect.size.height);
 }
 
@@ -4095,22 +4100,17 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 #pragma mark - Printing
 
 - (void)print:(id)sender {
-    NSRect visibleRect;
-    int lineOffset, numLines;
-    int type = sender ? [sender tag] : 0;
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    const int type = sender ? [sender tag] : 0;
 
     switch (type) {
-        case 0: // visible range
-            visibleRect = [[self enclosingScrollView] documentVisibleRect];
-            // Starting from which line?
-            lineOffset = visibleRect.origin.y / _lineHeight;
-            // How many lines do we need to draw?
-            numLines = visibleRect.size.height / _lineHeight;
-            VT100GridCoordRange coordRange = VT100GridCoordRangeMake(0,
-                                                                     lineOffset,
-                                                                     [_dataSource width],
-                                                                     lineOffset + numLines - 1);
+        case 0: {  // visible range
+            const NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+            const VT100GridRect coordRect = [iTermLayoutArithmetic gridRectWithVisibleRect:visibleRect
+                                                                                    excess:self.excess
+                                                                                  cellSize:self.cellSize
+                                                                                  maxWidth:_dataSource.width];
+            const VT100GridCoordRange coordRange = VT100GridCoordRangeFromRect(coordRect);
+            iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
                                        attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
                 return [self charAttributes:theChar externalAttributes:ea processed:NO elideDefaultBackgroundColor:NO];
@@ -4124,6 +4124,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                        continuationChars:nil
                                                   coords:nil]];
             break;
+        }
         case 1: // text selection
             [self printContent:[self selectedAttributedTextWithPad:NO]];
             break;
@@ -4169,6 +4170,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                                             attributes:attributes] autorelease];
     }
     [[tempView textStorage] setAttributedString:attributedString];
+    [tempView sizeToFit];
 
     // Now print the temporary view.
     NSPrintOperation *operation = [NSPrintOperation printOperationWithView:tempView printInfo:printInfo];
