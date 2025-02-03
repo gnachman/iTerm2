@@ -1331,8 +1331,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         return result;
     }
     const NSRect documentVisibleRect = self.enclosingScrollView.documentVisibleRect;
-    const int overflow = [_dataSource scrollbackOverflow];
-    const int firstRow = MAX(0, documentVisibleRect.origin.y / _lineHeight - overflow) + _drawingHelper.numberOfIMELines;
+    const VT100GridRect visibleGridRect = [iTermLayoutArithmetic gridRectWithVisibleRect:documentVisibleRect
+                                                                                  excess:self.excess
+                                                                                cellSize:self.cellSize];
+    const int firstRow = visibleGridRect.origin.y + _drawingHelper.numberOfIMELines;
     const NSRect result = [self visibleRectExcludingTopMargin:!includeTopMargin
                                                 startingAtRow:firstRow];
     DLog(@"adjustedDocumentVisibleRect is %@", NSStringFromRect(result));
