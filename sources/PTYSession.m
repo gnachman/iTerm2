@@ -6160,6 +6160,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_screen width];
 }
 
+- (VT100GridSize)gridSize {
+    return _screen.currentGrid.size;
+}
+
 - (NSFont *)fontWithRelativeSize:(int)dir from:(NSFont*)font {
     return [font it_fontByAddingToPointSize:dir];
 }

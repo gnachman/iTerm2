@@ -437,6 +437,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 @property(nonatomic, readonly) int columns;
 @property(nonatomic, readonly) int rows;
+@property(nonatomic, readonly) VT100GridSize gridSize;
 
 // Returns whether this session considers itself eligible to use the Metal renderer.
 @property(nonatomic, readonly) BOOL metalAllowed;

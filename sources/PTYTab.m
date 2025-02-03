@@ -2139,11 +2139,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 + (NSSize)_sessionSizeWithCellSize:(NSSize)cellSize
-                        dimensions:(NSSize)dimensions
+                          gridSize:(VT100GridSize)gridSize
                         showTitles:(BOOL)showTitles
                showBottomStatusBar:(BOOL)showBottomStatusBar
                         inTerminal:(id<WindowControllerInterface>)term {
-    const VT100GridSize gridSize = VT100GridSizeMake(dimensions.width, dimensions.height);
     DLog(@"    calculating session size based on grid size %@", VT100GridSizeDescription(gridSize));
     DLog(@"    cell size is %@", NSStringFromSize(cellSize));
     const BOOL hasScrollbar = [term scrollbarShouldBeVisible];
@@ -2162,8 +2161,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (NSSize)_sessionSize:(SessionView *)sessionView {
     PTYSession *session = [self sessionForSessionView:sessionView];
     DLog(@"Compute size of session %@", session);
-    return [PTYTab _sessionSizeWithCellSize:NSMakeSize([[session textview] charWidth], [[session textview] lineHeight])
-                                 dimensions:NSMakeSize([session columns], [session rows])
+    return [PTYTab _sessionSizeWithCellSize:session.textview.cellSize
+                                   gridSize:session.gridSize
                                  showTitles:[sessionView showTitle]
                         showBottomStatusBar:sessionView.showBottomStatusBar
                                  inTerminal:parentWindow_];
@@ -3606,8 +3605,8 @@ typedef struct {
             DLog(@"Leaf node. Compute size of session");
             const NSSize cellSize = [self cellSizeForBookmark:profile];
             const NSSize size = [PTYTab _sessionSizeWithCellSize:cellSize
-                                                      dimensions:NSMakeSize([parseTree[kLayoutDictWidthKey] intValue],
-                                                                            [parseTree[kLayoutDictHeightKey] intValue])
+                                                      gridSize:VT100GridSizeMake([parseTree[kLayoutDictWidthKey] intValue],
+                                                                                 [parseTree[kLayoutDictHeightKey] intValue])
                                                       showTitles:showTitles
                                              showBottomStatusBar:showBottomStatusBar
                                                       inTerminal:term];
@@ -4595,8 +4594,8 @@ typedef struct {
         } else if (sessionView) {
             PTYSession *session = (PTYSession *)sessionView.delegate;
             newSubviewSize = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:session.profile]
-                                                   dimensions:NSMakeSize(link.session.gridSize.width,
-                                                                         link.session.gridSize.height)
+                                                     gridSize:VT100GridSizeMake(link.session.gridSize.width,
+                                                                                link.session.gridSize.height)
                                                    showTitles:sessionView.showTitle
                                           showBottomStatusBar:sessionView.showBottomStatusBar
                                                    inTerminal:realParentWindow_];
@@ -5118,7 +5117,7 @@ typedef struct {
     const BOOL perPanelTitleBarsEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
     const BOOL showTitles = perPanelTitleBarsEnabled;
     NSSize size = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]]
-                                        dimensions:NSMakeSize(gridSize.width, gridSize.height)
+                                          gridSize:gridSize
                                         showTitles:showTitles
                                showBottomStatusBar:NO
                                         inTerminal:self.realParentWindow];
