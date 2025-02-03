@@ -1317,7 +1317,7 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (CGFloat)urlActionHelperLineHeight:(iTermURLActionHelper *)helper {
-    return self.lineHeight;
+    return self.cellSize.height;
 }
 
 - (void)urlActionHelper:(iTermURLActionHelper *)helper launchProfileInCurrentTerminal:(Profile *)profile withURL:(NSURL *)url {
@@ -1404,7 +1404,10 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (BOOL)imageIsVisible:(id<iTermImageInfoReading>)image {
-    int firstVisibleLine = [[self enclosingScrollView] documentVisibleRect].origin.y / self.lineHeight;
+    const int firstVisibleLine = [iTermLayoutArithmetic gridRectWithVisibleRect:self.enclosingScrollView.documentVisibleRect
+                                                                         excess:self.excess
+                                                                       cellSize:self.cellSize
+                                                                       maxWidth:self.dataSource.width].origin.y;
     int width = [self.dataSource width];
     for (int y = 0; y < [self.dataSource height]; y++) {
         const screen_char_t *theLine = [self.dataSource screenCharArrayForLine:y + firstVisibleLine].line;
