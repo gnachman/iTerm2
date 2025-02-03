@@ -430,4 +430,14 @@ extension LayoutArithmetic {
                       width: viewWidth,
                       height: cellSize.height * CGFloat(range.length))
     }
+
+    @objc(frameInTextViewForLineRange:cellSize:viewWidth:)
+    static func frameInTextViewForLineRange(range: NSRange,
+                                            cellSize: NSSize,
+                                            viewWidth: CGFloat) -> NSRect {
+        return frameInTextViewForAbsLineRange(range: range,
+                                              cumulativeOverflow: 0,
+                                              cellSize: cellSize,
+                                              viewWidth: viewWidth)
+    }
 }

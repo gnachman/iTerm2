@@ -814,14 +814,15 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         return;
     }
     [self withRelativeCoordRange:[_selection spanningAbsRange] block:^(VT100GridCoordRange range) {
-        NSRect aFrame;
-        aFrame.origin.x = 0;
-        aFrame.origin.y = range.start.y * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];  // allow for top margin
-        aFrame.size.width = [self frame].size.width;
-        aFrame.size.height = (range.end.y - range.start.y + 1) * _lineHeight;
+        const NSRect frame = [iTermLayoutArithmetic frameInTextViewForLineRange:NSMakeRange(range.start.y,
+                                                                                               range.end.y - range.start.y + 1)
+                                                                cellSize:self.cellSize
+                                                                      viewWidth:self.visibleRect.size.width];
+
         NSScrollView *scrollView = self.enclosingScrollView;
         [self cancelMomentumScroll];
         [self lockScroll];
+        [self scrollRectToVisible:frame];
     }];
 }
 
