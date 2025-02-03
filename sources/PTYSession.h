@@ -770,7 +770,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // If vertically is true, proposedSize is a height, else it's a width.
 // Example: If the line height is 10 (no margin) and you give a proposed size of 101,
 // 1 is returned. If you give a proposed size of 99, -1 is returned.
-- (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically;
+- (CGFloat)overUnder:(CGFloat)proposedSize inVerticalDimension:(BOOL)vertically;
 
 - (void)pushWindowTitle;
 - (void)popWindowTitle;

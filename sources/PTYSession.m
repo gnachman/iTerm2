@@ -2403,37 +2403,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self view] setSplitSelectionMode:mode move:move session:self];
 }
 
-- (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically {
-    int result = proposedSize;
-    if (vertically) {
-        if ([_view showTitle]) {
-            result -= [SessionView titleHeight];
-        }
-        if (_view.showBottomStatusBar) {
-            result -= iTermGetStatusBarHeight();
-        }
-        result -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
-        int iLineHeight = _textview.cellSize.height;
-        if (iLineHeight == 0) {
-            return 0;
-        }
-        result %= iLineHeight;
-        if (result > iLineHeight / 2) {
-            result -= iLineHeight;
-        }
-        return result;
-    } else {
-        result -= [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
-        int iCharWidth = _textview.cellSize.width;
-        if (iCharWidth == 0) {
-            return 0;
-        }
-        result %= iCharWidth;
-        if (result > iCharWidth / 2) {
-            result -= iCharWidth;
-        }
-    }
-    return result;
+- (CGFloat)overUnder:(CGFloat)proposedSize inVerticalDimension:(BOOL)vertically {
+    const NSSize temp = NSMakeSize(proposedSize, proposedSize);
+    NSSize result = [iTermLayoutArithmetic pointErrorForSize:temp
+                                                    cellSize:_textview.cellSize
+                                      internalDecorationSize:_view.internalDecorationSize];
+    return vertically ? result.height : result.width;
 }
 
 - (id<ProcessInfoProvider>)processInfoProvider {

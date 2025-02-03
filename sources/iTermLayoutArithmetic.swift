@@ -337,3 +337,22 @@ extension LayoutArithmetic {
     }
 }
 
+// MARK: - Comparison
+
+// Returns the number of points over or under the an ideal size.
+// Will never exceed +/- cell size/2.
+// Example: If the line height is 10 (no margin) and you give a proposed size of 101,
+// 1 is returned. If you give a proposed size of 99, -1 is returned.
+extension LayoutArithmetic {
+    @objc
+    static func pointError(forSize proposedSize: NSSize,
+                           cellSize: NSSize,
+                           internalDecorationSize:  NSSize) -> NSSize {
+        let temp = (proposedSize - internalDecorationSize - margins * 2)
+            .truncatingRemainder(dividingBy: cellSize)
+            .map { $0.isNaN ? 0.0 : $0 }
+        return zip(temp, cellSize).map {
+            $0 > $1 / 2 ? $0 - $1 : $0
+        }
+    }
+}

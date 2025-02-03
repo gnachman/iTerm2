@@ -6058,11 +6058,11 @@ typedef struct {
             SetWithGrainDim(isVertical, &size, [[sizes objectAtIndex:i] doubleValue]);
             SessionView *sessionView = (SessionView *) [[splitView subviews] objectAtIndex:i];
             PTYSession *aSession = [self sessionForSessionView:sessionView];
-            int ou = [aSession overUnder:WithGrainDim(isVertical, size) inVerticalDimension:!isVertical];
+            const CGFloat ou = [aSession overUnder:WithGrainDim(isVertical, size) inVerticalDimension:!isVertical];
             if (ou > 0) {
-                [over setObject:[NSNumber numberWithInt:ou] forKey:[NSNumber numberWithInt:i]];
+                over[@(i)] = @((int)ou);
             } else if (ou < 0) {
-                [under setObject:[NSNumber numberWithInt:-ou] forKey:[NSNumber numberWithInt:i]];
+                over[@(i)] = @((int)-ou);
             }
         }
 
