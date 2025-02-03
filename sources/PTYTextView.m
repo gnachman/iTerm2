@@ -3827,9 +3827,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                        numberOfValidItems:(int *)numberOfValidItemsPtr {
     NSPasteboard *pb = [sender draggingPasteboard];
     NSArray *types = [pb types];
-    NSPoint windowDropPoint = [sender draggingLocation];
-    NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
-    int dropLine = dropPoint.y / _lineHeight;
+    const NSPoint windowDropPoint = [sender draggingLocation];
+    const NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+    const int dropLine = [iTermLayoutArithmetic gridCoordForTextViewPointWithPoint:dropPoint
+                                                                          cellSize:self.cellSize
+                                                                           roundUp:NO
+                                                                        upperBound:INT_MAX].y;
     SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];
 
     // It's ok to upload if a file is being dragged in and the drop location has a remote host path.
