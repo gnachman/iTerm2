@@ -208,35 +208,23 @@ iTermCommandInfoViewControllerDelegate>
 
 - (VT100GridCoord)coordForPoint:(NSPoint)locationInTextView
        allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
-    int x, y;
-    int width = [self.dataSource width];
-
-    x = (locationInTextView.x - [iTermPreferences intForKey:kPreferenceKeySideMargins] + self.charWidth * [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor]) / self.charWidth;
-    if (x < 0) {
-        x = 0;
-    }
-
     // The rect we draw may be different than the document visible rect. Mouse events should be
     // interpreted relative to what is drawn. We compute the click location relative to the
     // documentVisibleRect and then convert it to be in the space of the adjustedDocumentVisibleRect
-    // (which corresponds to what the thinks they clicked on).
+    // (which corresponds to what the user thinks they clicked on). This can happen if scrollback
+    // overflow is accrued after a call to -refresh. I'm not actually sure it's possible any more
+    // with the mutation thread being separate from the main thread, so this might be
+    // unnecessary.
     const NSRect adjustedVisibleRect = [self adjustedDocumentVisibleRect];
     const NSRect scrollviewVisibleRect = [self.enclosingScrollView documentVisibleRect];
-    const CGFloat relativeY = locationInTextView.y - NSMinY(scrollviewVisibleRect);
-    const CGFloat correctedY = NSMinY(adjustedVisibleRect) + relativeY;
-
-    y = correctedY / self.lineHeight;
-
-    int limit;
-    if (allowRightMarginOverflow) {
-        limit = width;
-    } else {
-        limit = width - 1;
-    }
-    x = MIN(x, limit);
-    y = MIN(y, [self.dataSource numberOfLines] - 1);
-
-    return VT100GridCoordMake(x, y);
+    
+    return [iTermLayoutArithmetic coordForPoint:locationInTextView
+                       allowRightMarginOverflow:allowRightMarginOverflow
+                                       cellSize:self.cellSize
+                                       gridSize:self.dataSource.gridSize
+                                  numberOfLines:self.dataSource.numberOfLines
+                             horizontalFraction:[iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor]
+                                         origin:NSMakePoint(0, NSMinY(adjustedVisibleRect) - NSMinY(scrollviewVisibleRect))];
 }
 
 // Returns VT100GridCoordInvalid if event not on any cell

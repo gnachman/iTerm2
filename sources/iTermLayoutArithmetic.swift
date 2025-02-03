@@ -561,4 +561,21 @@ extension LayoutArithmetic {
                                   y: Int32(clamping: max(0.0, point.y - originPoint.y) / cellSize.height)))
 
     }
+
+    @objc
+    static func coordForPoint(_ locationInTextView: NSPoint,
+                              allowRightMarginOverflow: Bool,
+                              cellSize: NSSize,
+                              gridSize: VT100GridSize,
+                              numberOfLines: Int32,
+                              horizontalFraction: CGFloat,
+                              origin: NSPoint) -> VT100GridCoord {
+        let xLimit = allowRightMarginOverflow ? gridSize.width : gridSize.width - 1
+        let floatX = (locationInTextView.x + origin.x - margins.width + cellSize.width * horizontalFraction) / cellSize.width
+        let x = min(xLimit, max(0, Int32(clamping: floatX)))
+
+        let floatY = (locationInTextView.y + origin.y) / cellSize.height
+        let y = min(numberOfLines - 1, Int32(clamping: floatY))
+        return VT100GridCoord(x: x, y: y)
+    }
 }
