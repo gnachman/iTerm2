@@ -367,3 +367,14 @@ extension LayoutArithmetic {
         }
     }
 }
+
+extension LayoutArithmetic {
+    @objc
+    static func frameInTextViewForCoord(_ coord: VT100GridCoord,
+                                        cellSize: NSSize) -> NSRect {
+        return NSRect(x: margins.width + CGFloat(coord.x) * cellSize.width,
+                      y: CGFloat(coord.y) * cellSize.height,
+                      width: cellSize.width,
+                      height: cellSize.height)
+    }
+}
