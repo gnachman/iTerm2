@@ -53,6 +53,7 @@
 - (BOOL)terminalSoftAlternateScreenMode;
 - (BOOL)terminalAutorepeatMode;
 - (int)height;
+- (VT100GridSize)gridSize;
 
 // Cursor position is 1-based (the top left is at 1,1).
 - (int)cursorX;

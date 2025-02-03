@@ -336,6 +336,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.currentGrid.size.height;
 }
 
+- (VT100GridSize)gridSize {
+    return _state.currentGrid.size;
+}
+
 - (int)cursorX {
     return _state.cursorX;
 }

@@ -859,7 +859,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     if (includeOffscreenCommandLine) {
         return range;
     }
-    const int topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const int topBottomMargin = [iTermLayoutArithmetic margins].height;
     if (![_delegate textViewShouldShowOffscreenCommandLineAt:relativeRange.location]) {
         return range;
     }
@@ -872,8 +872,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     }
     const NSRect visibleRect = [self adjustedDocumentVisibleRectIncludingTopMargin:NO];
     const NSRect frame = [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:visibleRect
-                                                                                cellSize:NSMakeSize(_charWidth, _lineHeight)
-                                                                                gridSize:VT100GridSizeMake(_dataSource.width, _dataSource.height)];
+                                                                                cellSize:self.cellSize
+                                                                                gridSize:_dataSource.gridSize];
     const int numLines = ceil(frame.size.height / _lineHeight);
     if (range.length <= numLines) {
         return NSMakeRange(range.location, 0);
