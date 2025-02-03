@@ -4632,10 +4632,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 #pragma mark - Find Cursor
 
 - (NSRect)rectForCoord:(VT100GridCoord)coord {
-    return NSMakeRect([iTermPreferences intForKey:kPreferenceKeySideMargins] + coord.x * _charWidth,
-                      coord.y * _lineHeight,
-                      _charWidth,
-                      _lineHeight);
+    return [iTermLayoutArithmetic frameInTextViewForCoord:coord cellSize:self.cellSize];
 }
 
 - (NSRect)rectForGridCoord:(VT100GridCoord)coord {
