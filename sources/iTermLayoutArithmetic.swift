@@ -511,7 +511,7 @@ extension LayoutArithmetic {
                                           roundUp: Bool,
                                           upperBound: Int32) -> VT100GridCoord {
         let fractionalLine = point.y / cellSize.height
-        return VT100GridCoord(x: Int32(clamping: point.x / cellSize.width),
+        return VT100GridCoord(x: Int32(clamping: (point.x - margins.width) / cellSize.width),
                               y: min(upperBound, max(0, Int32(clamping:  roundUp ? ceil(fractionalLine) : fractionalLine))))
 
     }

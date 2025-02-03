@@ -3885,7 +3885,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)_dragImage:(id<iTermImageInfoReading>)imageInfo forEvent:(NSEvent *)theEvent {
-    NSImage *icon = [imageInfo imageWithCellSize:NSMakeSize(_charWidth, _lineHeight)
+    NSImage *icon = [imageInfo imageWithCellSize:self.cellSize
                                            scale:1];
 
     NSData *imageData = imageInfo.data;
@@ -3899,8 +3899,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // drag from center of the image
     NSPoint dragPoint = [self convertPoint:[theEvent locationInWindow] fromView:nil];
 
-    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _charWidth,
-                                              dragPoint.y / _lineHeight);
+    const VT100GridCoord coord = [iTermLayoutArithmetic gridCoordForTextViewPointWithPoint:dragPoint
+                                                                                  cellSize:self.cellSize
+                                                                                   roundUp:NO
+                                                                                upperBound:INT_MAX];
     const screen_char_t* theLine = [_dataSource screenCharArrayForLine:coord.y].line;
     if (theLine &&
         coord.x < [_dataSource width] &&
@@ -3915,8 +3917,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                                             coord.y - pos.y);
 
         // Compute the pixel coordinate of the image's top left point
-        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
-                                                imageCellOrigin.y * _lineHeight);
+        const NSPoint imageTopLeftPoint = [iTermLayoutArithmetic frameInTextViewForCoord:imageCellOrigin
+                                                                                cellSize:self.cellSize].origin;
 
         // Compute the distance from the click location to the image's origin
         NSPoint offset = NSMakePoint(dragPoint.x - imageTopLeftPoint.x,
