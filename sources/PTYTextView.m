@@ -3790,9 +3790,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 // Called when the dragged object is moved within our drop area
 //
 - (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender {
-    NSPoint windowDropPoint = [sender draggingLocation];
-    NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
-    int dropLine = dropPoint.y / _lineHeight;
+    const NSPoint windowDropPoint = [sender draggingLocation];
+    const NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+    const int dropLine = [iTermLayoutArithmetic gridCoordForTextViewPointWithPoint:dropPoint
+                                                                          cellSize:self.cellSize
+                                                                           roundUp:NO
+                                                                        upperBound:INT_MAX].y;
     if (dropLine != _drawingHelper.dropLine) {
         _drawingHelper.dropLine = dropLine;
         [self requestDelegateRedraw];
