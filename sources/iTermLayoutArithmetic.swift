@@ -393,6 +393,15 @@ extension LayoutArithmetic {
     }
 
     @objc
+    static func frameInTextViewForGridRect(_ gridRect: VT100GridRect,
+                                           cellSize: NSSize) -> NSRect {
+        return NSRect(x: margins.width + CGFloat(gridRect.origin.x) * cellSize.width,
+                      y: CGFloat(gridRect.origin.y) * cellSize.height,
+                      width: cellSize.width * CGFloat(gridRect.size.width),
+                      height: cellSize.height * CGFloat(gridRect.size.height))
+    }
+
+    @objc
     static func gridRect(visibleRect: NSRect,
                          excess: CGFloat,
                          cellSize: NSSize,

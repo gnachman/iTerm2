@@ -348,6 +348,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.cursorY;
 }
 
+- (VT100GridCoord)cursorCoord {
+    return _state.cursorCoord;
+}
+
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int, ScreenCharArray *, iTermImmutableMetadata, BOOL *))block {
     [_state enumerateLinesInRange:range block:block];
 }

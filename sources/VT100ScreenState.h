@@ -276,6 +276,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 
 @property (nonatomic, readonly) int cursorY;
 @property (nonatomic, readonly) int cursorX;
+@property (nonatomic, readonly) VT100GridCoord cursorCoord;
 @property (nonatomic, readonly) int width;
 @property (nonatomic, readonly) int height;
 @property (nonatomic, readonly) BOOL cursorOutsideLeftRightMargin;

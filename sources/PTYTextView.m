@@ -4334,14 +4334,15 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return (long)self; // not sure about this
 }
 
+// This is an NSTextInputClient method.
 - (NSRect)firstRectForCharacterRange:(NSRange)theRange actualRange:(NSRangePointer)actualRange {
-    int y = [_dataSource cursorY] - 1;
-    int x = [_dataSource cursorX] - 1;
-
-    NSRect rect=NSMakeRect(x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
-                           (y + [_dataSource numberOfLines] - [_dataSource height] + 1) * _lineHeight,
-                           _charWidth * theRange.length,
-                           _lineHeight);
+    const VT100GridCoord cursorCoord = _dataSource.cursorCoord;
+    const VT100GridRect gridRect = VT100GridRectMake(cursorCoord.x,
+                                                     cursorCoord.y + _dataSource.numberOfLines - _dataSource.height + 1,
+                                                     theRange.length,
+                                                     1);
+    NSRect rect = [iTermLayoutArithmetic frameInTextViewForGridRect:gridRect
+                                                           cellSize:self.cellSize];
     rect.origin = [[self window] pointToScreenCoords:[self convertPoint:rect.origin toView:nil]];
     if (actualRange) {
         *actualRange = theRange;

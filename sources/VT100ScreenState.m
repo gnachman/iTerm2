@@ -428,6 +428,10 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return self.currentGrid.cursorX + 1;
 }
 
+- (VT100GridCoord)cursorCoord {
+    return self.currentGrid.cursor;
+}
+
 - (int)width {
     return self.currentGrid.size.width;
 }
