@@ -121,7 +121,7 @@ extension PTYTextView: ExternalSearchResultsController {
         porthole.savedLines = (relativeRange.start.y ... relativeRange.end.y).map { i in
             dataSource.screenCharArray(forLine: i).copy() as! ScreenCharArray
         }
-        dataSource.replace(absRange, with: porthole, ofHeight: Int32(ceil(desiredHeight / lineHeight)))
+        dataSource.replace(absRange, with: porthole, ofHeight: Int32(ceil(desiredHeight / cellSize.height)))
     }
 
     private func makePorthole(for config: PortholeConfig) -> Porthole {
@@ -149,7 +149,7 @@ extension PTYTextView: ExternalSearchResultsController {
         }
         let hmargin = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
         let desiredHeight = porthole.fit(toWidth: bounds.width - hmargin * 2)
-        dataSource.changeHeight(of: porthole.mark, to: Int32(ceil(desiredHeight / lineHeight)))
+        dataSource.changeHeight(of: porthole.mark, to: Int32(ceil(desiredHeight / cellSize.height)))
     }
 
     @objc
@@ -296,7 +296,8 @@ extension PTYTextView: ExternalSearchResultsController {
         if lastPortholeWidth == cellWidth && !force {
             // Calculating porthole size is very slow because NSView is a catastrophe so avoid doing
             // it if the width is unchanged.
-            let y = CGFloat(lineRange.lowerBound) * lineHeight + vmargin + innerMargin
+            let y = LayoutArithmetic.frameInTextViewForCoord(VT100GridCoord(x: 0, y: lineRange.lowerBound),
+                                                             cellSize: self.cellSize).minY + innerMargin
             DLog("y=\(y) range=\(String(describing: VT100GridCoordRangeDescription(gridCoordRange ))) overflow=\(dataSource.scrollbackOverflow())")
             porthole.set(frame: NSRect(x: hmargin,
                                        y: y,
