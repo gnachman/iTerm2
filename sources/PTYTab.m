@@ -597,9 +597,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 }
             } else {
                 // Get the proper size and return yes if it should change.
-                NSSize size = [self sessionSizeForViewSize:aSession];
-                if (size.width != [aSession columns] ||
-                    size.height != [aSession rows]) {
+                const VT100GridSize size = [self sessionSizeForViewSize:aSession];
+                if (!VT100GridSizeEquals(size, aSession.gridSize)) {
                     anyChange = YES;
                 }
             }
@@ -2532,29 +2531,27 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self fitSubviewsToRoot];
 }
 
-- (NSSize)sessionSizeForViewSize:(PTYSession *)aSession {
+- (VT100GridSize)sessionSizeForViewSize:(PTYSession *)aSession {
     PtyLog(@"PTYTab fitSessionToCurrentViewSzie");
     PtyLog(@"fitSessionToCurrentViewSize begins");
     [aSession setScrollBarVisible:[parentWindow_ scrollbarShouldBeVisible]
                             style:[parentWindow_ scrollerStyle]];
-    NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
-    DLog(@"Max size is %@", [NSValue valueWithSize:size]);
-    const NSSize cellSize = NSMakeSize(MAX(1.0, [[aSession textview] charWidth]),
-                                       MAX(1.0, [[aSession textview] lineHeight]));
-    int width = (size.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width;
-    int height = (size.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height;
-    PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
-    if (width <= 0) {
-        XLog(@"WARNING: Session has %d width", width);
-        width = 1;
+    const NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
+    DLog(@"Max size is %@", NSStringFromSize(size));
+    VT100GridSize result = [iTermLayoutArithmetic gridSizeFromContentSize:size cellSize:aSession.textview.cellSize];
+    PtyLog(@"fitSessionToCurrentViewSize %@ gives %@", NSStringFromSize(size), VT100GridSizeDescription(result));
+    if (result.width <= 0) {
+        XLog(@"WARNING: Session has %d width", result.width);
+        result.width = 1;
     }
-    if (height <= 0) {
-        XLog(@"WARNING: Session has %d height", height);
-        height = 1;
+    if (result.height <= 0) {
+        XLog(@"WARNING: Session has %d height", result.height);
+        result.height = 1;
     }
 
-    PtyLog(@"PTYTab sessionSizeForViewSize: view is %fx%f, set screen to %dx%d", size.width, size.height, width, height);
-    return NSMakeSize(width, height);
+    PtyLog(@"PTYTab sessionSizeForViewSize: view is %@, set screen to %@",
+           NSStringFromSize(size), VT100GridSizeDescription(result));
+    return result;
 }
 
 // Resize a session's rows and columns for the existing pixel size of its
@@ -2568,8 +2565,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             result = NO;
             return;
         }
-        NSSize temp = [self sessionSizeForViewSize:aSession];
-        result = [self resizeSession:aSession toSize:VT100GridSizeMake(temp.width, temp.height)];
+        const VT100GridSize temp = [self sessionSizeForViewSize:aSession];
+        result = [self resizeSession:aSession toSize:temp];
     }];
     return result;
 }

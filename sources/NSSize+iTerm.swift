@@ -71,3 +71,7 @@ func zip(_ lhs: NSSize, _ rhs: NSSize) -> SizeZip {
     SizeZip(lhs: lhs, rhs: rhs)
 }
 
+func max(_ lhs: NSSize, _ rhs: NSSize) -> NSSize {
+    return NSSize(width: max(lhs.width, rhs.width),
+                  height: max(lhs.height, rhs.height))
+}

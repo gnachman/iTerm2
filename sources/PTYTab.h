@@ -167,7 +167,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (void)setFakeParentWindow:(FakeWindow*)theParent;
 
 - (BOOL)isForegroundTab;
-- (NSSize)sessionSizeForViewSize:(PTYSession *)aSession;
+- (VT100GridSize)sessionSizeForViewSize:(PTYSession *)aSession;
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession;
 // Fit session views to scroll views.
 // This is useful for a tmux tab where scrollviews sizes are not tightly coupled to the

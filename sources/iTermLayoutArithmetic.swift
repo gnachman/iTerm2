@@ -101,7 +101,7 @@ extension LayoutArithmetic {
     @objc(gridSizeFromContentSize:cellSize:)
     static func gridSizeFromContentSize(_ contentSize: NSSize,
                                         cellSize: NSSize) -> VT100GridSize {
-        let temp = (contentSize - margins * 2) / cellSize
+        let temp = (contentSize - margins * 2) / max(cellSize, NSSize(width: 1.0, height: 1.0))
         return VT100GridSize(width: Int32(clamping: temp.width),
                              height: Int32(clamping: temp.height))
     }
