@@ -905,7 +905,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 // Overrides an NSView method.
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect {
-    proposedVisibleRect.origin.y = (int)(proposedVisibleRect.origin.y / _lineHeight + 0.5) * _lineHeight;
+    const CGFloat cellHeight = self.cellSize.height;
+    proposedVisibleRect.origin.y = (int)(proposedVisibleRect.origin.y / cellHeight + 0.5) * cellHeight;
     return proposedVisibleRect;
 }
 
