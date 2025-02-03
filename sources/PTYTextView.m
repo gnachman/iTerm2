@@ -3954,7 +3954,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         length = 15;
     }
 
-    imageSize = NSMakeSize(_charWidth * length, _lineHeight);
+    const NSSize cellSize = self.cellSize;
+    imageSize = NSMakeSize(cellSize.width * length, cellSize.height);
     anImage = [[[NSImage alloc] initWithSize:imageSize] autorelease];
     [anImage lockFocus];
     if ([aString length] > 15) {
@@ -3964,7 +3965,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         tmpString = [aString substringWithRange:NSMakeRange(0, length)];
     }
 
-    [tmpString drawInRect:NSMakeRect(0, 0, _charWidth * length, _lineHeight) withAttributes:nil];
+    [tmpString drawInRect:NSMakeRect(0, 0, _charWidth * length, cellSize.height) withAttributes:nil];
     [anImage unlockFocus];
 
     // tell our app not switch windows (currently not working)
