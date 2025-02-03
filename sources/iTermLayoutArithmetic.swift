@@ -504,4 +504,15 @@ extension LayoutArithmetic {
                                cellSize: NSSize) -> Int32 {
         return Int32(clamping: yCoordinate / CGFloat(cellSize.height))
     }
+
+    @objc(gridCoordForTextViewPointWithPoint:cellSize:roundUp:upperBound:)
+    static func gridCoordForTextViewPoint(_ point: NSPoint,
+                                         cellSize: NSSize,
+                                          roundUp: Bool,
+                                          upperBound: Int32) -> VT100GridCoord {
+        let fractionalLine = point.y / cellSize.height
+        return VT100GridCoord(x: Int32(clamping: point.x / cellSize.width),
+                              y: min(upperBound, max(0, Int32(clamping:  roundUp ? ceil(fractionalLine) : fractionalLine))))
+
+    }
 }

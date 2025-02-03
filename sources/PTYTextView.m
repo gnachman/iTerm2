@@ -2563,18 +2563,26 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
 }
 
+// Visible chars that have changed selection status are dirty
+// Also mark blinking text as dirty if needed
 - (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width {
     BOOL anyBlinkers = NO;
-    // Visible chars that have changed selection status are dirty
-    // Also mark blinking text as dirty if needed
-    int lineStart = ([self visibleRect].origin.y + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
-    int lineEnd = ceil(([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight);
-    if (lineStart < 0) {
-        lineStart = 0;
-    }
-    if (lineEnd > [_dataSource numberOfLines]) {
-        lineEnd = [_dataSource numberOfLines];
-    }
+    // We add the top margin to point.y because the visible rect when scrolled all the way to
+    // the top has minY = -margins.height. That's because the textview is located a vmargin down
+    // from the top of the document view so we have a top margin only when scrolled all the way
+    // to the top.
+    const CGFloat topY = [self visibleRect].origin.y + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const int lineStart = [iTermLayoutArithmetic gridCoordForTextViewPointWithPoint:NSMakePoint(0, topY)
+                                                                           cellSize:self.cellSize
+                                                                            roundUp:NO
+                                                                         upperBound:INT_MAX].y;
+
+    const CGFloat bottomY = NSMaxY(self.visibleRect) - self.excess;
+    const int lineEnd = [iTermLayoutArithmetic gridCoordForTextViewPointWithPoint:NSMakePoint(0, bottomY)
+                                                                         cellSize:self.cellSize
+                                                                          roundUp:YES
+                                                                       upperBound:_dataSource.numberOfLines].y;
+
     NSArray<ScreenCharArray *> *lines = nil;
     if (_blinkAllowed) {
         lines = [_dataSource linesInRange:NSMakeRange(lineStart, lineEnd - lineStart)];
@@ -2590,14 +2598,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                 anyBlinkers |= charBlinks;
                 const BOOL blinked = redrawBlink && charBlinks;
                 if (blinked) {
-                    NSRect dirtyRect = [self visibleRect];
-                    dirtyRect.origin.y = y * _lineHeight;
-                    dirtyRect.size.height = _lineHeight;
-                    if (gDebugLogging) {
-                        DLog(@"Found blinking char on line %d", y);
-                    }
-                    const NSRect rect = [self rectWithHalo:dirtyRect];
-                    DLog(@"Redraw rect for line y=%d i=%d blink: %@", y, i, NSStringFromRect(rect));
+                    DLog(@"Found blinking char on line %d", y);
                     [self requestDelegateRedraw];
                     break;
                 }
@@ -2610,12 +2611,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         NSIndexSet *wereSelected = [_oldSelection selectedIndexesOnAbsoluteLine:y + overflow];
         if (![areSelected isEqualToIndexSet:wereSelected]) {
             // Just redraw the whole line for simplicity.
-            NSRect dirtyRect = [self visibleRect];
-            dirtyRect.origin.y = y * _lineHeight;
-            dirtyRect.size.height = _lineHeight;
-            if (gDebugLogging) {
-                DLog(@"found selection change on line %d", y);
-            }
+            DLog(@"found selection change on line %d", y);
             [self requestDelegateRedraw];
         }
     }
