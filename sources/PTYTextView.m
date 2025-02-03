@@ -1355,7 +1355,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // called. Force the last lines to be drawn so the screen doesn't appear to jump as in issue
     // 9676.
     const int height = _dataSource.height;
-    const CGFloat virtualOffset = (_dataSource.numberOfLines - height + _drawingHelper.numberOfIMELines) * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const int firstLine = _dataSource.numberOfLines - height + _drawingHelper.numberOfIMELines;
+    const CGFloat virtualOffset = [iTermLayoutArithmetic frameInTextViewForLineRange:NSMakeRange(MAX(0, firstLine), 0)
+                                                                            cellSize:self.cellSize
+                                                                           viewWidth:NSWidth(self.visibleRect)].origin.y;
     DLog(@"Force draw last rows. numberOfLines=%@ height=%@ lineHeight=%@ bottomMargins=%@ -> virtualOffset=%@",
          @(_dataSource.numberOfLines), @(height), @(_lineHeight), @([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]), @(virtualOffset));
     return virtualOffset;
