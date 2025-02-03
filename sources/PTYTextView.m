@@ -4043,9 +4043,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (BOOL)uploadFilenamesOnPasteboard:(NSPasteboard *)pasteboard location:(NSPoint)windowDropPoint {
     // Upload a file.
-    NSArray *types = [pasteboard types];
-    NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
-    int dropLine = dropPoint.y / _lineHeight;
+    const NSArray<NSPasteboardType> *types = [pasteboard types];
+    const NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+    const int dropLine = [iTermLayoutArithmetic gridCoordForTextViewPointWithPoint:dropPoint
+                                                                          cellSize:self.cellSize
+                                                                           roundUp:NO
+                                                                        upperBound:INT_MAX].y;
     SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];
     NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:NO];
     if ([types containsObject:NSPasteboardTypeFileURL] && filenames.count && dropScpPath) {
