@@ -846,11 +846,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (NSRange)visibleRelativeRange {
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    const int firstVisibleLine = visibleRect.origin.y / _lineHeight;
-    const int lastVisibleLine = firstVisibleLine + [_dataSource height];
-    const NSRange currentlyVisibleRange = NSMakeRange(firstVisibleLine, lastVisibleLine - firstVisibleLine);
-    return currentlyVisibleRange;
+    const VT100GridRect rect = [iTermLayoutArithmetic gridRectWithVisibleRect:self.enclosingScrollView.documentVisibleRect
+                                                                       excess:self.excess
+                                                                     cellSize:self.cellSize];
+    return NSMakeRange(rect.origin.y, rect.size.height);
 }
 
 - (NSRange)visibleAbsoluteRangeIncludingOffscreenCommandLineIfVisible:(BOOL)includeOffscreenCommandLine {
