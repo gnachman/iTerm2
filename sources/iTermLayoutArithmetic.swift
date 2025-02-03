@@ -440,4 +440,16 @@ extension LayoutArithmetic {
                                               cellSize: cellSize,
                                               viewWidth: viewWidth)
     }
+
+    @objc(frameInTextViewOfLinesAroundLine:radius:cellSize:visibleRect:)
+    static func frameInTextViewOfLines(aroundLine line: Int32,
+                                       radius: Int32,
+                                       cellSize: NSSize,
+                                       bounds: NSRect) -> NSRect {
+        let range = NSRange(from: max(0, Int(line - radius)),
+                            to: Int(line + radius + 1))
+        return frameInTextViewForLineRange(range: range,
+                                           cellSize: cellSize,
+                                           viewWidth: bounds.width).intersection(bounds)
+    }
 }

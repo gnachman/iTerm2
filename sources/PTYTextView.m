@@ -835,23 +835,14 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (void)scrollToCenterLine:(int)line {
-    NSRect visible = [self visibleRect];
-    int visibleLines = (visible.size.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / _lineHeight;
-    int lineMargin = (visibleLines - 1) / 2;
-    double margin = lineMargin * _lineHeight;
-
-    NSRect aFrame;
-    aFrame.origin.x = 0;
-    aFrame.origin.y = MAX(0, line * _lineHeight - margin);
-    aFrame.size.width = [self frame].size.width;
-    aFrame.size.height = margin * 2 + _lineHeight;
-    double end = aFrame.origin.y + aFrame.size.height;
-    NSRect total = [self frame];
-    if (end > total.size.height) {
-        double err = end - total.size.height;
-        aFrame.size.height -= err;
-    }
-    [self scrollRectToVisible:aFrame];
+    const int numberOfVisibleLines = [iTermLayoutArithmetic gridRectWithVisibleRect:self.visibleRect
+                                                                             excess:self.excess
+                                                                           cellSize:self.cellSize].size.height;
+    const NSRect frame = [iTermLayoutArithmetic frameInTextViewOfLinesAroundLine:line
+                                                                          radius:(numberOfVisibleLines - 1) / 2
+                                                                        cellSize:self.cellSize
+                                                                     visibleRect:self.bounds];
+    [self scrollRectToVisible:frame];
 }
 
 - (NSRange)visibleRelativeRange {
