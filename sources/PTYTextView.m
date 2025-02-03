@@ -834,15 +834,6 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 }
 
-- (void)_scrollToLine:(int)line {
-    NSRect aFrame;
-    aFrame.origin.x = 0;
-    aFrame.origin.y = line * _lineHeight;
-    aFrame.size.width = [self frame].size.width;
-    aFrame.size.height = _lineHeight;
-    [self scrollRectToVisible:aFrame];
-}
-
 - (void)scrollToCenterLine:(int)line {
     NSRect visible = [self visibleRect];
     int visibleLines = (visible.size.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / _lineHeight;
