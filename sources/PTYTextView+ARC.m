@@ -248,8 +248,7 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (NSPoint)pointForCoord:(VT100GridCoord)coord {
-    return NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + coord.x * self.charWidth,
-                       coord.y * self.lineHeight);
+    return [iTermLayoutArithmetic frameInTextViewForCoord:coord cellSize:self.cellSize].origin;
 }
 
 - (VT100GridCoord)coordForPointInWindow:(NSPoint)point {
