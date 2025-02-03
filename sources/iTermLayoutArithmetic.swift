@@ -51,8 +51,7 @@ extension LayoutArithmetic {
     static func tabSizeFromWindowSize(_ windowSize: NSSize,
                                       decorationSize: NSSize,
                                       internalDecorationSize:  NSSize) -> NSSize {
-        return NSSize(width: windowSize.width - decorationSize.width - internalDecorationSize.width,
-                      height: windowSize.height - decorationSize.height - internalDecorationSize.height)
+        return windowSize - decorationSize - internalDecorationSize
     }
 
     @objc(tabSizeFromContentSize:hasScrollbar:scrollerStyle:)
@@ -81,8 +80,7 @@ extension LayoutArithmetic {
     static func windowSizeFromTabSize(_ tabSize: NSSize,
                                       decorationSize: NSSize,
                                       internalDecorationSize: NSSize) -> NSSize {
-        return NSSize(width: tabSize.width + decorationSize.width + internalDecorationSize.width,
-                      height: tabSize.height + decorationSize.height + internalDecorationSize.height)
+        return tabSize + decorationSize + internalDecorationSize
     }
 
     // MARK: - Compute grid size
@@ -90,8 +88,9 @@ extension LayoutArithmetic {
     @objc(gridSizeFromContentSize:cellSize:)
     static func gridSizeFromContentSize(_ contentSize: NSSize,
                                         cellSize: NSSize) -> VT100GridSize {
-        VT100GridSize(width: Int32(clamping: (contentSize.width - margins.width * 2) / cellSize.width),
-                      height: Int32(clamping: (contentSize.height - margins.height * 2) / cellSize.height))
+        let temp = (contentSize - margins * 2) / cellSize
+        return VT100GridSize(width: Int32(clamping: temp.width),
+                             height: Int32(clamping: temp.height))
     }
 
     // MARK: - Compute content size
