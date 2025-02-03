@@ -5749,13 +5749,17 @@ static NSString *iTermStringFromRange(NSRange range) {
     return VT100GridCoordMake(coord.x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:coord.y]);
 }
 
-- (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
-    coordRange.start.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
-    coordRange.end.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
-    NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins])),
-                               MAX(0, coordRange.start.y * _lineHeight),
-                               MAX(0, (coordRange.end.x - coordRange.start.x) * _charWidth),
-                               MAX(0, (coordRange.end.y - coordRange.start.y + 1) * _lineHeight));
+- (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)crazyCoordRange {
+    const int startY = [self accessibilityHelperLineNumberForAccessibilityLineNumber:crazyCoordRange.start.y];
+    const int endY = [self accessibilityHelperLineNumberForAccessibilityLineNumber:crazyCoordRange.end.y];
+    const VT100GridCoordRange coordRange = VT100GridCoordRangeMake(crazyCoordRange.start.x,
+                                                                   startY,
+                                                                   crazyCoordRange.end.x,
+                                                                   endY);
+
+    NSRect result = [iTermLayoutArithmetic frameInTextViewForCoordRange:coordRange
+                                                                  width:[_dataSource width]
+                                                               cellSize:self.cellSize];
     result = [self convertRect:result toView:nil];
     result = [self.window convertRectToScreen:result];
     return result;

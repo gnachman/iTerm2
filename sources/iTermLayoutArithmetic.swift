@@ -402,6 +402,31 @@ extension LayoutArithmetic {
     }
 
     @objc
+    static func frameInTextViewForCoordRange(_ coordRange: VT100GridCoordRange,
+                                             width: Int32,
+                                             cellSize: NSSize) -> NSRect {
+        let startTopLeft = frameInTextViewForCoord(coordRange.start, cellSize: cellSize).origin
+        let endBottomRight = frameInTextViewForCoord(coordRange.end + VT100GridSize(width: 0, height: 1),
+                                                     cellSize: cellSize).origin
+
+        let minX = if startTopLeft.x <= endBottomRight.x {
+            startTopLeft.x
+        } else {
+            margins.width
+        }
+
+        let maxX = if coordRange.start.y == coordRange.end.y {
+            endBottomRight.x
+        } else {
+            margins.width + CGFloat(width) * cellSize.width
+        }
+        return NSRect(x: minX,
+                      y: startTopLeft.y,
+                      width: maxX - minX,
+                      height: endBottomRight.y - startTopLeft.y)
+    }
+
+    @objc
     static func gridRect(visibleRect: NSRect,
                          excess: CGFloat,
                          cellSize: NSSize,

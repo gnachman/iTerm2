@@ -30,6 +30,10 @@ extension VT100GridCoord {
     func absolute(overflow: Int64) -> VT100GridAbsCoord {
         return VT100GridAbsCoordFromCoord(self, overflow)
     }
+    static func +(lhs: VT100GridCoord, rhs: VT100GridSize) -> VT100GridCoord {
+        return VT100GridCoord(x: lhs.x + rhs.width,
+                              y: lhs.y + rhs.height)
+    }
 }
 
 extension VT100GridAbsCoord {
