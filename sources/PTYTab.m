@@ -6151,9 +6151,9 @@ typedef struct {
     if ([theView isKindOfClass:[SessionView class]]) {
         SessionView *sessionView = theView;
         if (wantWidth) {
-            return [[[self sessionForSessionView:sessionView] textview] charWidth];
+            return [[[self sessionForSessionView:sessionView] textview] cellSize].width;
         } else {
-            return [[[self sessionForSessionView:sessionView] textview] lineHeight];
+            return [[[self sessionForSessionView:sessionView] textview] cellSize].height;
         }
     } else {
         CGFloat maxStep = 0;
