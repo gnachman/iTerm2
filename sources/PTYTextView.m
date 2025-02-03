@@ -1869,7 +1869,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (NSRect)offscreenCommandLineFrameForView:(NSView *)view {
     NSRect base = [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:self.enclosingScrollView.documentVisibleRect
-                                                                         cellSize:NSMakeSize(self.charWidth, self.lineHeight)
+                                                                         cellSize:self.cellSize
                                                                          gridSize:VT100GridSizeMake(self.dataSource.width,
                                                                                                     self.dataSource.height)];
     return [self convertRect:base toView:view];
@@ -1883,9 +1883,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (CGFloat)desiredHeight {
     // Force the height to always be correct
-    return ([_dataSource numberOfLines] * _lineHeight +
-            [self excess] +
-            _drawingHelper.numberOfIMELines * _lineHeight);
+    return [iTermLayoutArithmetic heightForTextViewLineCount:[_dataSource numberOfLines] + _drawingHelper.numberOfIMELines
+                                                      excess:self.excess
+                                                    cellSize:self.cellSize];
 }
 
 - (NSPoint)locationInTextViewFromEvent:(NSEvent *)event {

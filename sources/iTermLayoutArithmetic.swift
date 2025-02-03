@@ -491,4 +491,11 @@ extension LayoutArithmetic {
                    bottomMarginHeight)  // Never have less than margins.height excess, but it can be more (if another tab has a bigger font)
 
     }
+
+    @objc(heightForTextViewLineCount:excess:cellSize:)
+    static func heightForTextViewLines(count: Int32,
+                                       excess: CGFloat,
+                                       cellSize: NSSize) -> CGFloat {
+        return CGFloat(count) * cellSize.height + excess
+    }
 }
