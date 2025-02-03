@@ -498,4 +498,11 @@ extension LayoutArithmetic {
                                        cellSize: NSSize) -> CGFloat {
         return CGFloat(count) * cellSize.height + excess
     }
+
+    @objc
+    static func textViewLineAt(yCoordinate: CGFloat,
+                               cellSize: NSSize) -> Int32 {
+        return Int32(clamping: yCoordinate / CGFloat(cellSize.height))
+    }
+
 }

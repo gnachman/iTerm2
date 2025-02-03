@@ -1918,8 +1918,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (long long)firstVisibleAbsoluteLineNumber {
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    long long firstVisibleLine = visibleRect.origin.y / _lineHeight;
+    const NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    const long long firstVisibleLine = [iTermLayoutArithmetic textViewLineAtYCoordinate:NSMinY(visibleRect)
+                                                                               cellSize:self.cellSize];
     return firstVisibleLine + _dataSource.totalScrollbackOverflow;
 }
 
