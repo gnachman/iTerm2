@@ -4652,8 +4652,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     } else {
         cursorCenter = [self cursorFrame].origin;
     }
-    cursorCenter.x += _charWidth / 2;
-    cursorCenter.y += _lineHeight / 2;
+    const NSSize cellSize = self.cellSize;
+    cursorCenter.x += cellSize.width / 2;
+    cursorCenter.y += cellSize.height / 2;
     NSPoint cursorCenterInWindowCoords = [self convertPoint:cursorCenter toView:nil];
     return  [[self window] pointToScreenCoords:cursorCenterInWindowCoords];
 }
@@ -5029,15 +5030,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 #pragma mark - Mouse reporting
 
 - (NSRect)liveRect {
-    int numLines = [_dataSource numberOfLines];
-    NSRect rect;
-    int height = [_dataSource height];
-    rect.origin.y = numLines - height;
-    rect.origin.y *= _lineHeight;
-    rect.origin.x = [iTermPreferences intForKey:kPreferenceKeySideMargins];
-    rect.size.width = _charWidth * [_dataSource width];
-    rect.size.height = _lineHeight * [_dataSource height];
-    return rect;
+    const int numLines = [_dataSource numberOfLines];
+    const int height = [_dataSource height];
+    return [iTermLayoutArithmetic frameInTextViewForGridRect:VT100GridRectMake(0,
+                                                                               numLines - height,
+                                                                               [_dataSource width],
+                                                                               height)
+                                                    cellSize:self.cellSize];
 }
 
 - (NSPoint)pointForEvent:(NSEvent *)event {
