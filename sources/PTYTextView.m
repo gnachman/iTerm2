@@ -2054,13 +2054,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (void)setLineHeight:(double)aLineHeight {
     _lineHeight = ceil(aLineHeight);
-    _drawingHelper.cellSize = NSMakeSize(_charWidth, _lineHeight);
+    _drawingHelper.cellSize = self.cellSize;
     _drawingHelper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
 }
 
 - (void)setCharWidth:(double)width {
     _charWidth = ceil(width);
-    _drawingHelper.cellSize = NSMakeSize(_charWidth, _lineHeight);
+    _drawingHelper.cellSize = self.cellSize;
     _drawingHelper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
 }
 
