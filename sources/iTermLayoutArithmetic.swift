@@ -391,4 +391,20 @@ extension LayoutArithmetic {
                       width: cellSize.width,
                       height: cellSize.height)
     }
+
+    @objc
+    static func gridRect(visibleRect: NSRect,
+                         excess: CGFloat,
+                         cellSize: NSSize) -> VT100GridRect {
+        let lastVisibleRow = (Int32(clamping: visibleRect.maxY - excess)) / Int32(clamping: cellSize.height)
+        let numberOfVisibleRows = Int32(clamping:visibleRect.height - excess - margins.height) / Int32(clamping: cellSize.height)
+
+        return VT100GridRect(
+            origin: VT100GridCoord(
+                x: Int32(clamping: (max(0.0, visibleRect.minX - margins.width)) / cellSize.width),
+                y: Int32(clamping: lastVisibleRow - numberOfVisibleRows)),
+            size: VT100GridSize(
+                width: Int32(clamping: (visibleRect.width - margins.width * 2) / cellSize.width),
+                height: numberOfVisibleRows))
+    }
 }

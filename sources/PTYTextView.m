@@ -580,7 +580,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (BOOL)scrolledToBottom {
-    return ((NSMaxY([self visibleRect]) - [self excess]) / _lineHeight == [_dataSource numberOfLines]);
+    const VT100GridRect gridRect = [iTermLayoutArithmetic gridRectWithVisibleRect:self.visibleRect
+                                                                           excess:self.excess
+                                                                         cellSize:self.cellSize];
+    return gridRect.origin.y + gridRect.size.height == [_dataSource numberOfLines];
 }
 
 - (void)scrollLineUp:(id)sender {
