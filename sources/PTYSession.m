@@ -11448,10 +11448,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (NSRect)boundingFrameForWindowedRange:(VT100GridWindowedRange)range {
     const NSRect visibleRect = _textview.enclosingScrollView.documentVisibleRect;
     const VT100GridRect gridRect = VT100GridWindowedRangeBoundingRect(range);
-    const NSRect topLeft = [_textview rectForCoord:VT100GridRectTopLeft(gridRect)];
-    const NSRect topRight = [_textview rectForCoord:VT100GridRectTopRight(gridRect)];
-    const NSRect bottomLeft = [_textview rectForCoord:VT100GridRectBottomLeft(gridRect)];
-    const NSRect bottomRight = [_textview rectForCoord:VT100GridRectBottomRight(gridRect)];
+    const NSRect topLeft = [_textview frameForCoord:VT100GridRectTopLeft(gridRect)];
+    const NSRect topRight = [_textview frameForCoord:VT100GridRectTopRight(gridRect)];
+    const NSRect bottomLeft = [_textview frameForCoord:VT100GridRectBottomLeft(gridRect)];
+    const NSRect bottomRight = [_textview frameForCoord:VT100GridRectBottomRight(gridRect)];
     const NSRect anchorRect = NSUnionRect(NSUnionRect(NSUnionRect(topLeft, topRight), bottomLeft), bottomRight);
     const NSRect visibleAnchorRect = NSIntersectionRect(anchorRect, visibleRect);
     return [_view convertRect:visibleAnchorRect fromView:_textview];

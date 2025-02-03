@@ -667,7 +667,7 @@ extension PTYTextView: NSViewContentSelectionInfo {
             coords.append(VT100GridCoord(x: width - 1, y: relativeStart.y))
             coords.append(VT100GridCoord(x: 0, y: relativeEnd.y))
         }
-        let rects = coords.map { rect(for: $0) }
+        let rects = coords.map { frame(for: $0) }
         return rects.reduce(into: rects.first!) { partialResult, rect in
             partialResult = partialResult.union(rect)
         }
@@ -714,7 +714,7 @@ extension PTYTextView: NSViewContentSelectionInfo {
                                          y: dataSource.numberOfScrollbackLines() + dataSource.cursorY() - 1)
         let cursorAbsCoord = VT100GridAbsCoordFromCoord(cursorCoord, offset)
         if visibleAbsLines.contains(cursorAbsCoord.y) {
-            return rect(for: cursorCoord)
+            return frame(for: cursorCoord)
         }
         return .null
      }

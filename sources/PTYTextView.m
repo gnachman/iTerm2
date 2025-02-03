@@ -4631,13 +4631,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 #pragma mark - Find Cursor
 
-- (NSRect)rectForCoord:(VT100GridCoord)coord {
-    return [iTermLayoutArithmetic frameInTextViewForCoord:coord cellSize:self.cellSize];
-}
-
 - (NSRect)rectForGridCoord:(VT100GridCoord)coord {
     const int firstGridLine = [_dataSource numberOfLines] - [_dataSource height];
-    return [self rectForCoord:VT100GridCoordMake(coord.x, firstGridLine + coord.y)];
+    return [self frameForCoord:VT100GridCoordMake(coord.x, firstGridLine + coord.y)];
 }
 
 - (NSRect)cursorFrame {

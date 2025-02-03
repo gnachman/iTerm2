@@ -2011,7 +2011,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     if (!ok) {
         return NSZeroRect;
     }
-    return [self rectForCoord:relative];
+    return [self frameForCoord:relative];
 }
 
 - (ContentNavigationShortcutView *)addViewForContentNavigationShortcut:(iTermContentNavigationShortcut *)shortcut

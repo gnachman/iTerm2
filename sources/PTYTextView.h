@@ -737,7 +737,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)drawRect:(NSRect)rect inView:(NSView *)view;
 
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
-- (NSRect)rectForCoord:(VT100GridCoord)coord;
 - (void)updateSubviewFrames;
 - (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed
                                                                         elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor;
