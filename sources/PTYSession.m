@@ -16557,18 +16557,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     const int cx = [self.screen cursorX] - 1;
     const int cy = [self.screen cursorY];
     const NSSize cellSize = self.textview.cellSize;
-    const CGFloat charWidth = [self.textview charWidth];
-    const CGFloat lineHeight = [self.textview lineHeight];
     const VT100GridCoord coord =
         VT100GridCoordMake(cx,
                            ([self.screen numberOfLines] - [self.screen height] + cy));
+
     const NSPoint p = [iTermLayoutArithmetic frameInTextViewForCoord:coord
-                                                            cellSize:cellSize].origin;
+                                                                   cellSize:cellSize].origin;
     const NSPoint origin = [self.textview.window pointToScreenCoords:[self.textview convertPoint:p toView:nil]];
     return NSMakeRect(origin.x,
                       origin.y,
-                      charWidth,
-                      lineHeight);
+                      cellSize.width,
+                      cellSize.height);
 }
 
 - (void)textViewDidReceiveSingleClick {
