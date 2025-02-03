@@ -3332,8 +3332,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)highlightMarkOnLine:(int)line hasErrorCode:(BOOL)hasErrorCode {
-    const CGFloat y = line * _lineHeight + NSMinY(self.frame);
-    NSView *highlightingView = [[[iTermHighlightRowView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, _lineHeight)] autorelease];
+    const NSRect frame = [iTermLayoutArithmetic frameInTextViewExcludingTopMargin:YES
+                                                                         fromLine:line
+                                                                         cellSize:self.cellSize
+                                                                      visibleRect:self.visibleRect];
+    const CGFloat y = NSMinY(frame) + NSMinY(self.frame);  // add my y origin because this will be a subview of the document view.
+    NSView *highlightingView = [[[iTermHighlightRowView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, self.cellSize.height)] autorelease];
     [highlightingView setWantsLayer:YES];
     [self.enclosingScrollView.documentView addSubview:highlightingView];
 
