@@ -4462,10 +4462,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (NSRect)frameForCoord:(VT100GridCoord)coord {
-    return NSMakeRect(MAX(0, floor(coord.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins])),
-                      MAX(0, coord.y * _lineHeight),
-                      _charWidth,
-                      _lineHeight);
+    return [iTermLayoutArithmetic frameInTextViewForCoord:coord cellSize:self.cellSize];
 }
 
 - (iTermTextExtractor *)bidiExtractor {
