@@ -580,8 +580,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (BOOL)scrolledToBottom {
-    return (([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight ==
-            [_dataSource numberOfLines]);
+    return ((NSMaxY([self visibleRect]) - [self excess]) / _lineHeight == [_dataSource numberOfLines]);
 }
 
 - (void)scrollLineUp:(id)sender {

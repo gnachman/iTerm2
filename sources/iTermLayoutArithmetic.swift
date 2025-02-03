@@ -381,6 +381,7 @@ extension LayoutArithmetic {
     }
 }
 
+// MARK: - PTYTextView utilities
 extension LayoutArithmetic {
     @objc
     static func frameInTextViewForCoord(_ coord: VT100GridCoord,
