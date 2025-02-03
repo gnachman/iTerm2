@@ -504,5 +504,4 @@ extension LayoutArithmetic {
                                cellSize: NSSize) -> Int32 {
         return Int32(clamping: yCoordinate / CGFloat(cellSize.height))
     }
-
 }

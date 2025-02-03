@@ -1924,16 +1924,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return firstVisibleLine + _dataSource.totalScrollbackOverflow;
 }
 
-- (NSRect)gridRect {
-    NSRect visibleRect = [self visibleRect];
-    int lineStart = [_dataSource numberOfLines] - [_dataSource height];
-    int lineEnd = [_dataSource numberOfLines];
-    return NSMakeRect(visibleRect.origin.x,
-                      lineStart * _lineHeight,
-                      visibleRect.origin.x + visibleRect.size.width,
-                      (lineEnd - lineStart + 1) * _lineHeight);
-}
-
 - (NSRect)rectWithHalo:(NSRect)rect {
     const int kHaloWidth = 4;
     rect.origin.x = rect.origin.x - _charWidth * kHaloWidth;
