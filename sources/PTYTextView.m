@@ -760,14 +760,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return visibleGridRect.origin.y + _dataSource.totalScrollbackOverflow;
 }
 
-- (void)scrollToAbsoluteOffset:(long long)absOff height:(int)height
-{
-    NSRect aFrame;
-    aFrame.origin.x = 0;
-    aFrame.origin.y = (absOff - [_dataSource totalScrollbackOverflow]) * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    aFrame.size.width = [self frame].size.width;
-    aFrame.size.height = _lineHeight * height;
-    [self scrollRectToVisible: aFrame];
+- (void)scrollToAbsoluteOffset:(long long)absOff height:(int)height {
+    const NSRect frame = [iTermLayoutArithmetic frameInTextViewForAbsLineRange:NSMakeRange(absOff, height)
+                                                            cumulativeOverflow:_dataSource.totalScrollbackOverflow
+                                                                      cellSize:self.cellSize
+                                                                     viewWidth:self.frame.size.width];
+    [self scrollRectToVisible: frame];
     [self cancelMomentumScroll];
     [self lockScroll];
 }
