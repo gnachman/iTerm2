@@ -6184,11 +6184,11 @@ ITERM_WEAKLY_REFERENCEABLE
         // session.
         return;
     }
-    DLog(@"Line height was %f", [_textview lineHeight]);
+    DLog(@"Cell size before: %@", NSStringFromSize(_textview.cellSize));
     [_textview setFontTable:newFontTable
           horizontalSpacing:horizontalSpacing
             verticalSpacing:verticalSpacing];
-    DLog(@"Line height is now %f", [_textview lineHeight]);
+    DLog(@"Cell size after: %@", NSStringFromSize(_textview.cellSize));
     [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled];
     [_composerManager updateFont];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
@@ -7449,7 +7449,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
     DLog(@"%@", self);
-    const CGSize cellSize = CGSizeMake(_textview.charWidth, _textview.lineHeight);
+    const CGSize cellSize = _textview.cellSize;
     CGSize glyphSize;
     const CGFloat scale = _view.window.backingScaleFactor ?: 1;
     NSRect rect = [iTermCharacterSource boundingRectForCharactersInRange:NSMakeRange(32, 127-32)
@@ -11890,11 +11890,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     const int vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     const int rows = visibleRange.end.y - visibleRange.start.y + 1;
     const VT100GridSize gridSize = VT100GridSizeMake(maxX - minX, rows);
-    const CGFloat cellWidth = [_textview charWidth];
-    const CGFloat cellHeight = [_textview lineHeight];
+    const NSSize cellSize = _textview.cellSize;
     const NSSize padding = iTermTextClipDrawing.padding;
-    const NSSize imageSize = NSMakeSize(_screen.width * cellWidth + padding.width * 2,
-                                        gridSize.height * cellHeight + padding.height * 2);
+    const NSSize imageSize = NSMakeSize(_screen.width * cellSize.width + padding.width * 2,
+                                        gridSize.height * cellSize.height + padding.height * 2);
     NSImage *image = [NSImage flippedImageOfSize:imageSize drawBlock:^{
         [NSGraphicsContext.currentContext saveGraphicsState];
         NSAffineTransform *transform = [NSAffineTransform transform];
@@ -11905,15 +11904,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                                   range:visibleRange];
         [NSGraphicsContext.currentContext restoreGraphicsState];
     }];
-    const NSRect subrect = NSMakeRect(hmargin + minX * cellWidth,
+    const NSRect subrect = NSMakeRect(hmargin + minX * cellSize.width,
                                       0,
-                                      (maxX - minX) * cellWidth + padding.width * 2,
-                                      rows * cellHeight + padding.height * 2);
+                                      (maxX - minX) * cellSize.width + padding.width * 2,
+                                      rows * cellSize.height + padding.height * 2);
     NSImage *cropped = [image it_subimageWithRect:subrect];
     // The rect in legacyView that matches `subrect`.
     NSRect sourceRect =
     NSMakeRect(subrect.origin.x - padding.width,
-               (visibleRange.start.y - visibleLines.location) * _textview.lineHeight + vmargin - padding.height,
+               (visibleRange.start.y - visibleLines.location) * cellSize.height + vmargin - padding.height,
                cropped.size.width,
                cropped.size.height);
 
@@ -12964,7 +12963,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (NSSize)screenCellSize {
-    return NSMakeSize([_textview charWidth], [_textview lineHeight]);
+    return _textview.cellSize;
 }
 
 - (void)screenDidClearScrollbackBuffer {
@@ -14385,7 +14384,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _config.clearScrollbackAllowed = clearScrollbackAllowed;
         dirty = YES;
     }
-    const NSSize cellSize = NSMakeSize([_textview charWidth], [_textview lineHeight]);
+    const NSSize cellSize = _textview.cellSize;
     if (!NSEqualSizes(cellSize, _config.cellSize)) {
         _config.cellSize = cellSize;
         dirty = YES;
@@ -14478,7 +14477,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
     NSNumber *desiredComposerRows = nil;
     if ([iTermPreferences boolForKey:kPreferenceAutoComposer] && _promptStateAllowsAutoComposer) {
-        const int desiredRows = MAX(1, _composerManager.desiredHeight / _textview.lineHeight);
+        const int desiredRows = MAX(1, _composerManager.desiredHeight / _textview.cellSize.height);
         desiredComposerRows = @(desiredRows);
     }
     if (![NSObject object:desiredComposerRows isEqualToObject:_config.desiredComposerRows]) {
@@ -16075,7 +16074,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return NSMakeRect(0,
                       bottomMarginHeight,
                       NSWidth(_textview.bounds),
-                      _textview.lineHeight * _screen.height);
+                      _textview.cellSize.height * _screen.height);
 }
 
 - (CGFloat)sessionViewBottomMarginHeight {
@@ -16163,7 +16162,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (NSSize)sessionViewCellSize {
-    return NSMakeSize([_textview charWidth], [_textview lineHeight]);
+    return _textview.cellSize;
 }
 
 - (VT100GridSize)sessionViewGridSize {
@@ -16478,9 +16477,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSSize)sessionViewScrollViewWillResize:(NSSize)proposedSize {
     if ([self isTmuxClient] && ![_delegate sessionBelongsToTmuxTabWhoseSplitsAreBeingDragged]) {
-        NSSize idealSize = [self idealScrollViewSizeWithStyle:_view.scrollview.scrollerStyle];
-        NSSize maximumSize = NSMakeSize(idealSize.width + _textview.charWidth - 1,
-                                        idealSize.height + _textview.lineHeight - 1);
+        const NSSize idealSize = [self idealScrollViewSizeWithStyle:_view.scrollview.scrollerStyle];
+        const NSSize cellSize = _textview.cellSize;
+        const NSSize maximumSize = NSMakeSize(idealSize.width + cellSize.width - 1,
+                                              idealSize.height + cellSize.height - 1);
         DLog(@"is a tmux client, so tweaking the proposed size. idealSize=%@ maximumSize=%@",
              NSStringFromSize(idealSize), NSStringFromSize(maximumSize));
         return NSMakeSize(MIN(proposedSize.width, maximumSize.width),

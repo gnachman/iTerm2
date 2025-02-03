@@ -497,16 +497,16 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return self.findDriver;
 }
 
+- (NSEdgeInsets)internalDecorationInsets {
+    return NSEdgeInsetsMake(_showTitle ? _title.frame.size.height : 0.0,
+                            0,
+                            _showBottomStatusBar ? iTermGetStatusBarHeight() : 0.0,
+                            iTermScrollbarWidth());
+}
+
 - (NSSize)internalDecorationSize {
-    NSSize size = NSZeroSize;
-    if (_showTitle) {
-        size.height += _title.frame.size.height;
-    }
-    if (_showBottomStatusBar) {
-        size.height += iTermGetStatusBarHeight();
-    }
-    size.width += iTermScrollbarWidth();
-    return size;
+    const NSEdgeInsets insets = [self internalDecorationInsets];
+    return NSMakeSize(insets.left + insets.right, insets.top + insets.bottom);
 }
 
 - (void)loadTemporaryStatusBarFindDriverWithStatusBarViewController:(iTermStatusBarViewController *)statusBarViewController {
@@ -1867,19 +1867,24 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     [_dropDownFindViewController setOffsetFromTopRightOfSuperview:NSMakeSize(30, 0)];
 }
 
+static NSString *NSStringFromEdgeInsets(NSEdgeInsets insets) {
+    return [NSString stringWithFormat:@"(top=%f left=%f bottom=%f right=%f)",
+            insets.top, insets.left, insets.bottom, insets.right];
+}
+
 - (void)updateScrollViewFrame {
     DLog(@"update scrollview frame");
-    CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
-    CGFloat reservedSpaceOnBottom = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
+    const NSEdgeInsets internalDecorationInsets = self.internalDecorationInsets;
+    const NSSize internalDecorationSize = self.internalDecorationSize;
     NSSize proposedSize = NSMakeSize(self.frame.size.width,
-                                     self.frame.size.height - titleHeight - reservedSpaceOnBottom);
+                                     self.frame.size.height - internalDecorationSize.height);
     NSSize size = [_delegate sessionViewScrollViewWillResize:proposedSize];
     NSRect rect = NSMakeRect(0,
-                             reservedSpaceOnBottom + proposedSize.height - size.height,
+                             internalDecorationInsets.bottom + proposedSize.height - size.height,
                              size.width,
                              size.height);
-    DLog(@"titleHeight=%@ bottomStatusBarHeight=%@ proposedSize=%@ size=%@ rect=%@",
-         @(titleHeight), @(reservedSpaceOnBottom), NSStringFromSize(proposedSize), NSStringFromSize(size),
+    DLog(@"insets=%@ proposedSize=%@ size=%@ rect=%@",
+         NSStringFromEdgeInsets(internalDecorationInsets), NSStringFromSize(proposedSize), NSStringFromSize(size),
          NSStringFromRect(rect));
     [self scrollview].frame = rect;
     DLog(@"Scrollview frame is now %@", NSStringFromRect(self.scrollview.frame));
