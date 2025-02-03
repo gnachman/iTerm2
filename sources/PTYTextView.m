@@ -3425,8 +3425,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     for (PTYNoteViewController *note in _notes) {
         VT100GridCoordRange coordRange = [_dataSource coordRangeOfAnnotation:note.annotation];
         if (coordRange.end.y >= 0) {
-            [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
-                                        (1 + coordRange.end.y) * _lineHeight)];
+            const NSPoint point = [iTermLayoutArithmetic frameInTextViewForCoord:VT100GridCoordMake(coordRange.end.x,
+                                                                                                    coordRange.end.y + 1)
+                                                                        cellSize:self.cellSize].origin;
+            [note setAnchor:point];
         }
     }
 }
