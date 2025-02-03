@@ -878,7 +878,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     const NSRect frame = [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:visibleRect
                                                                                 cellSize:self.cellSize
                                                                                 gridSize:_dataSource.gridSize];
-    const int numLines = ceil(frame.size.height / _lineHeight);
+    const int numLines = ceil(frame.size.height / self.cellSize.height);
     if (range.length <= numLines) {
         return NSMakeRange(range.location, 0);
     }
@@ -1363,8 +1363,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     const CGFloat virtualOffset = [iTermLayoutArithmetic frameInTextViewForLineRange:NSMakeRange(MAX(0, firstLine), 0)
                                                                             cellSize:self.cellSize
                                                                            viewWidth:NSWidth(self.visibleRect)].origin.y;
-    DLog(@"Force draw last rows. numberOfLines=%@ height=%@ lineHeight=%@ bottomMargins=%@ -> virtualOffset=%@",
-         @(_dataSource.numberOfLines), @(height), @(_lineHeight), @([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]), @(virtualOffset));
+    DLog(@"Force draw last rows. numberOfLines=%@ height=%@ cellSize=%@ bottomMargins=%@ -> virtualOffset=%@",
+         @(_dataSource.numberOfLines), @(height), NSStringFromSize(self.cellSize), @([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]), @(virtualOffset));
     return virtualOffset;
 }
 
@@ -1926,16 +1926,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     const long long firstVisibleLine = [iTermLayoutArithmetic textViewLineAtYCoordinate:NSMinY(visibleRect)
                                                                                cellSize:self.cellSize];
     return firstVisibleLine + _dataSource.totalScrollbackOverflow;
-}
-
-- (NSRect)rectWithHalo:(NSRect)rect {
-    const int kHaloWidth = 4;
-    rect.origin.x = rect.origin.x - _charWidth * kHaloWidth;
-    rect.origin.y -= _lineHeight;
-    rect.size.width = self.frame.size.width + _charWidth * 2 * kHaloWidth;
-    rect.size.height += _lineHeight * 2;
-
-    return rect;
 }
 
 #pragma mark - Accessors

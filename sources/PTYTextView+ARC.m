@@ -440,9 +440,8 @@ iTermCommandInfoViewControllerDelegate>
     if (offscreenCommandLine) {
         NSRect rect =
         [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:[self adjustedDocumentVisibleRect]
-                                                               cellSize:NSMakeSize(self.charWidth, self.lineHeight)
-                                                               gridSize:VT100GridSizeMake(self.dataSource.width,
-                                                                                          self.dataSource.height)];
+                                                               cellSize:self.cellSize
+                                                               gridSize:self.dataSource.gridSize];
         const NSPoint viewPoint = [self convertPoint:windowPoint fromView:nil];
         if (NSPointInRect(viewPoint, rect)) {
             DLog(@"Cursor in OCL");
@@ -701,10 +700,11 @@ iTermCommandInfoViewControllerDelegate>
 
     if (url) {
         NSPoint windowPoint = event.locationInWindow;
-        NSRect windowRect = NSMakeRect(windowPoint.x - self.charWidth / 2,
-                                       windowPoint.y - self.lineHeight / 2,
-                                       self.charWidth,
-                                       self.lineHeight);
+        const NSSize cellSize = self.cellSize;
+        NSRect windowRect = NSMakeRect(windowPoint.x - cellSize.width / 2,
+                                       windowPoint.y - cellSize.height / 2,
+                                       cellSize.width,
+                                       cellSize.height);
 
         NSRect screenRect = [self.window convertRectToScreen:windowRect];
         self.quickLookController = [[iTermQuickLookController alloc] init];
@@ -738,7 +738,7 @@ iTermCommandInfoViewControllerDelegate>
                                                   coords:nil];
     if (word.length) {
         NSPoint point = [self pointForCoord:range.coordRange.start];
-        point.y += self.lineHeight;
+        point.y += self.cellSize.height;
         NSDictionary *attributes = [word attributesAtIndex:0 effectiveRange:nil];
         if (attributes[NSFontAttributeName]) {
             NSFont *font = attributes[NSFontAttributeName];
@@ -763,10 +763,11 @@ iTermCommandInfoViewControllerDelegate>
                                                                                             backupURL:url];
         popover.contentViewController = viewController;
         popover.contentSize = viewController.view.frame.size;
-        NSRect rect = NSMakeRect(pointInWindow.x - self.charWidth / 2,
-                                 pointInWindow.y - self.lineHeight / 2,
-                                 self.charWidth,
-                                 self.lineHeight);
+        const NSSize cellSize = self.cellSize;
+        NSRect rect = NSMakeRect(pointInWindow.x - cellSize.width / 2,
+                                 pointInWindow.y - cellSize.height / 2,
+                                 cellSize.width,
+                                 cellSize.height);
         rect = [self convertRect:rect fromView:nil];
         popover.behavior = NSPopoverBehaviorSemitransient;
         popover.delegate = self;
@@ -1300,13 +1301,14 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (NSPoint)urlActionHelper:(iTermURLActionHelper *)helper pointForCoord:(VT100GridCoord)coord {
-    NSRect windowRect = [self convertRect:NSMakeRect(coord.x * self.charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
-                                                     coord.y * self.lineHeight,
+    const NSPoint pointInView = [iTermLayoutArithmetic frameInTextViewForCoord:coord cellSize:self.cellSize].origin;
+    NSRect windowRect = [self convertRect:NSMakeRect(pointInView.x,
+                                                     pointInView.y,
                                                      0,
                                                      0)
                                    toView:nil];
     NSPoint point = [[self window] convertRectToScreen:windowRect].origin;
-    point.y -= self.lineHeight;
+    point.y -= self.cellSize.height;
     return point;
 }
 
