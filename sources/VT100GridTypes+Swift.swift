@@ -95,3 +95,8 @@ extension VT100GridSize {
                       height: CGFloat(lhs.height) * rhs.height)
     }
 }
+
+func min(_ lhs: VT100GridCoord, _ rhs: VT100GridCoord) -> VT100GridCoord {
+    return VT100GridCoord(x: min(lhs.x, rhs.x),
+                          y: min(lhs.y, rhs.y))
+}

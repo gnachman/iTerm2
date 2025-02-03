@@ -6306,18 +6306,25 @@ static NSString *iTermStringFromRange(NSRange range) {
     return [self coordForPointInWindow:point];
 }
 
+- (VT100GridCoord)bottomRightmostValidCoord {
+    return VT100GridCoordMake(self.dataSource.width - 1,
+                              self.dataSource.height - 1);
+}
+
 - (VT100GridCoord)mouseHandlerCoordForPointInView:(NSPoint)point {
     const NSRect liveRect = [self liveRect];
     const VT100GridCoord result = [iTermLayoutArithmetic coordOffsetInTextViewFromPoint:liveRect.origin
                                                                                 toPoint:point
-                                                                               cellSize:self.cellSize];
+                                                                               cellSize:self.cellSize
+                                                                               maxCoord:self.bottomRightmostValidCoord];
     return result;
 }
 
 - (NSPoint)mouseHandlerReportablePointForPointInView:(NSPoint)point {
-    NSRect liveRect = [self liveRect];
-    const NSPoint limit = NSMakePoint(_charWidth * self.dataSource.width - 1,
-                                      _lineHeight * self.dataSource.height - 1);
+    const NSRect liveRect = [self liveRect];
+    const NSSize cellSize = self.cellSize;
+    const NSPoint limit = NSMakePoint(cellSize.width * self.dataSource.width - 1,
+                                      cellSize.height * self.dataSource.height - 1);
     return NSMakePoint(MAX(0, MIN(limit.x, point.x - liveRect.origin.x)),
                        MAX(0, MIN(limit.y, point.y - liveRect.origin.y)));
 

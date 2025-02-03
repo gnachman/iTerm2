@@ -554,9 +554,11 @@ extension LayoutArithmetic {
     @objc
     static func coordOffsetInTextView(fromPoint originPoint: NSPoint,
                                       toPoint point: NSPoint,
-                                      cellSize: NSSize) -> VT100GridCoord {
-        return VT100GridCoord(x: Int32(clamping: max(0.0, point.x - originPoint.x) / cellSize.width),
-                              y: Int32(clamping: max(0.0, point.y - originPoint.y) / cellSize.height))
+                                      cellSize: NSSize,
+                                      maxCoord: VT100GridCoord) -> VT100GridCoord {
+        return min(maxCoord,
+                   VT100GridCoord(x: Int32(clamping: max(0.0, point.x - originPoint.x) / cellSize.width),
+                                  y: Int32(clamping: max(0.0, point.y - originPoint.y) / cellSize.height)))
 
     }
 }
