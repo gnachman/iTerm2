@@ -18715,18 +18715,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             lineAbove = MAX(1, lineAbove);
         }
         const int actualLinesAboveComposer = MAX(1, _screen.height - lineAbove);
-        const CGFloat lineHeight = _textview.lineHeight;
-        const int desiredLines = ceil(desiredHeight / lineHeight);
+        const NSSize cellSize = _textview.cellSize;
+        const int desiredLines = ceil(desiredHeight / cellSize.height);
         const int linesOfHeight = MIN(actualLinesAboveComposer, desiredLines);
         const int gridOffsetInRows = _screen.height - linesOfHeight;
         const CGFloat titleBarHeight = (_view.showTitle ? SessionView.titleHeight : 0);
-        height = (linesOfHeight + 0.5) * lineHeight;
-        const CGFloat gridOffsetInPoints = gridOffsetInRows * lineHeight;
+        height = (linesOfHeight + 0.5) * cellSize.height;
+        const CGFloat gridOffsetInPoints = gridOffsetInRows * cellSize.height;
         const CGFloat top = vmargin + titleBarHeight + gridOffsetInPoints;
         y = MAX(0, paneSize.height - top - height);
 
         DLog(@"width=%@ actualLinesFree=%@ gridOffsetInRows=%@ lineHeight=%@ titleBarHeight=%@ height=%@ gridOffsetInPoints=%@ top=%@ y=%@",
-             @(width), @(actualLinesAboveComposer), @(gridOffsetInRows), @(lineHeight), @(titleBarHeight), @(height), @(gridOffsetInPoints), @(top), @(y));
+             @(width), @(actualLinesAboveComposer), @(gridOffsetInRows), @(cellSize.height), @(titleBarHeight), @(height), @(gridOffsetInPoints), @(top), @(y));
     } else {
         // Place at top. Includes decoration so a minimum width must be enforced.
         y = MAX(0, paneSize.height - desiredHeight - preferredOffsetFromTop);
@@ -18771,7 +18771,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager {
-    return _textview.lineHeight;
+    return _textview.cellSize.height;
 }
 
 - (void)composerManagerClear:(iTermComposerManager *)composerManager {

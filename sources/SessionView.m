@@ -1380,6 +1380,20 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     return lastResizeDate_;
 }
 
++ (NSEdgeInsets)internalDecorationInsetsWithTitlebar:(BOOL)showTitles
+                                     bottomStatusBar:(BOOL)showBottomStatusBar {
+    return NSEdgeInsetsMake(showTitles ? [self titleHeight] : 0.0,
+                            0,
+                            showBottomStatusBar ? iTermGetStatusBarHeight() : 0.0,
+                            iTermScrollbarWidth());
+}
+
++ (NSSize)internalDecorationSizeWithTitlebar:(BOOL)showTitles
+                             bottomStatusBar:(BOOL)showBottomStatusBar {
+    const NSEdgeInsets insets = [self internalDecorationInsetsWithTitlebar:showTitles bottomStatusBar:showBottomStatusBar];
+    return NSMakeSize(insets.left + insets.right, insets.top + insets.bottom);
+}
+
 // This is called as part of the live resizing protocol when you let up the mouse button.
 - (void)viewDidEndLiveResize {
     lastResizeDate_ = [NSDate date];

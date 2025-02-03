@@ -2143,32 +2143,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                         showTitles:(BOOL)showTitles
                showBottomStatusBar:(BOOL)showBottomStatusBar
                         inTerminal:(id<WindowControllerInterface>)term {
-    int rows = dimensions.height;
-    int columns = dimensions.width;
-    double charWidth = cellSize.width;
-    double lineHeight = cellSize.height;
-    NSSize size;
-    DLog(@"    calculating session size based on %dx%d cells", columns, rows);
-    DLog(@"    cell size is %@", NSStringFromSize(NSMakeSize(charWidth, lineHeight)));
-    size.width = columns * charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
-    size.height = rows * lineHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
-    DLog(@"    size for content is %@", NSStringFromSize(size));
-    BOOL hasScrollbar = [term scrollbarShouldBeVisible];
-    DLog(@"    term=%@, hasScrollbar=%@, scrollerStyle=%@, NSScroller.preferredScrollerStyle=%@", term, @(hasScrollbar), @([term scrollerStyle]), @([NSScroller preferredScrollerStyle]));
-    NSSize outerSize =
-        [PTYScrollView frameSizeForContentSize:size
-                       horizontalScrollerClass:nil
-                         verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
-                                    borderType:NSNoBorder
-                                   controlSize:NSControlSizeRegular
-                                 scrollerStyle:[term scrollerStyle]];
-    if (showTitles) {
-        outerSize.height += [SessionView titleHeight];
-    }
-    if (showBottomStatusBar) {
-        outerSize.height += iTermGetStatusBarHeight();
-    }
-    DLog(@"session size, including space for the scrollview's decoration, is %@", NSStringFromSize(outerSize));
+    const VT100GridSize gridSize = VT100GridSizeMake(dimensions.width, dimensions.height);
+    DLog(@"    calculating session size based on grid size %@", VT100GridSizeDescription(gridSize));
+    DLog(@"    cell size is %@", NSStringFromSize(cellSize));
+    const BOOL hasScrollbar = [term scrollbarShouldBeVisible];
+    DLog(@"    term=%@, hasScrollbar=%@, scrollerStyle=%@, NSScroller.preferredScrollerStyle=%@",
+         term, @(hasScrollbar), @([term scrollerStyle]), @([NSScroller preferredScrollerStyle]));
+    const NSSize outerSize = [iTermLayoutArithmetic sessionViewSizeFromGridSize:gridSize
+                                                                       cellSize:cellSize
+                                                                   hasScrollbar:hasScrollbar
+                                                                  scrollerStyle:term.scrollerStyle
+                                                         internalDecorationSize:[SessionView internalDecorationSizeWithTitlebar:showTitles
+                                                                                                                bottomStatusBar:showBottomStatusBar]];
+    DLog(@"session size, including space for the internal decoration, is %@", NSStringFromSize(outerSize));
     return outerSize;
 }
 

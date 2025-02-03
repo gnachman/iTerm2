@@ -31,9 +31,23 @@ class LayoutArithmetic: NSObject {
 ///   * `window size`: The size of a window's frame. includes everything in the window (title bar, etc.)
 ///   * `content size`: The size of a tab excluding scrollbars.
 ///   * `tab size`: Content size plus scrollbars
+///   * `sessionView size`: tab size plus internal decorations
 @objc
 extension LayoutArithmetic {
-    // MARK: - Compute Scrollview Size
+    // MARK: - Compute sessionview size
+    @objc
+    static func sessionViewSizeFromGridSize(_ gridSize: VT100GridSize,
+                                            cellSize: NSSize,
+                                            hasScrollbar: Bool,
+                                            scrollerStyle: NSScroller.Style,
+                                            internalDecorationSize: NSSize) -> NSSize {
+        return tabSizeFromGridSize(gridSize,
+                                   cellSize: cellSize,
+                                   hasScrollbar: hasScrollbar,
+                                   scrollerStyle: scrollerStyle) + internalDecorationSize
+    }
+
+    // MARK: - Compute tab size
     @objc
     static func tabSizeFromGridSize(_ gridSize: VT100GridSize,
                                            cellSize: NSSize,
@@ -46,11 +60,10 @@ extension LayoutArithmetic {
                                       scrollerStyle: scrollerStyle)
     }
 
-    // MARK: - Compute tab size
     @objc
     static func tabSizeFromWindowSize(_ windowSize: NSSize,
                                       decorationSize: NSSize,
-                                      internalDecorationSize:  NSSize) -> NSSize {
+                                      internalDecorationSize: NSSize) -> NSSize {
         return windowSize - decorationSize - internalDecorationSize
     }
 

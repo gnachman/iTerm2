@@ -222,6 +222,9 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;
 + (void)windowDidResize;
++ (NSSize)internalDecorationSizeWithTitlebar:(BOOL)showTitles bottomStatusBar:(BOOL)showBottomStatusBar;
++ (NSEdgeInsets)internalDecorationInsetsWithTitlebar:(BOOL)showTitles
+                                     bottomStatusBar:(BOOL)showBottomStatusBar;
 
 - (void)setMetalViewNeedsDisplayInTextViewRect:(NSRect)textViewRect NS_AVAILABLE_MAC(10_11);
 
