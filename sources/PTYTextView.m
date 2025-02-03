@@ -1745,15 +1745,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 // Number of extra lines below the last line of text that are always the background color.
 // This is 2 except for just after the frame has changed and things are resizing.
-- (double)excess {
-    NSRect visibleRectExcludingTopAndBottomMargins = [self scrollViewContentSize];
-    visibleRectExcludingTopAndBottomMargins.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;  // Height without top and bottom margins.
-    int rows = visibleRectExcludingTopAndBottomMargins.size.height / _lineHeight;
-    double heightOfTextRows = rows * _lineHeight;
-    const CGFloat bottomMarginHeight = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    const CGFloat visibleHeightExceptTopMargin = NSHeight(visibleRectExcludingTopAndBottomMargins) + bottomMarginHeight;
-    return MAX(visibleHeightExceptTopMargin - heightOfTextRows,
-               bottomMarginHeight);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
+- (CGFloat)excess {
+    return [iTermLayoutArithmetic textViewExcessHeightForContentSize:[self scrollViewContentSize].size
+                                                            cellSize:self.cellSize];
 }
 
 - (void)maybeInvalidateWindowShadow {

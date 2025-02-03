@@ -486,7 +486,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic, readonly) iTermFindOnPageHelper *findOnPageHelper;
 
 // This is the height of the bottom margin.
-@property (nonatomic, readonly) double excess;
+@property (nonatomic, readonly) CGFloat excess;
 @property (nonatomic, readonly) CGFloat virtualOffset;
 
 @property (nonatomic, readonly) BOOL wantsMouseMovementEvents;

@@ -476,4 +476,19 @@ extension LayoutArithmetic {
         return rect
 
     }
+
+    @objc
+    static func textViewExcessHeight(forContentSize contentSize: NSSize,
+                                     cellSize: NSSize) -> CGFloat {
+        let vmargin = margins.height
+        var visibleRectExcludingTopAndBottomMargins = NSRect(origin: .zero, size: contentSize)
+        visibleRectExcludingTopAndBottomMargins.size.height -= vmargin * 2  // Height without top and bottom margins.
+        let rows = Int32(clamping: visibleRectExcludingTopAndBottomMargins.size.height / cellSize.height)
+        let heightOfTextRows = CGFloat(rows) * cellSize.height
+        let bottomMarginHeight = vmargin
+        let visibleHeightExceptTopMargin = visibleRectExcludingTopAndBottomMargins.height + bottomMarginHeight
+        return max(visibleHeightExceptTopMargin - heightOfTextRows,
+                   bottomMarginHeight)  // Never have less than margins.height excess, but it can be more (if another tab has a bigger font)
+
+    }
 }
