@@ -5740,10 +5740,13 @@ static NSString *iTermStringFromRange(NSRange range) {
 // WARNING! accessibilityScreenPosition is idiotic: y=0 is the top of the main screen and it increases going down.
 - (VT100GridCoord)accessibilityHelperCoordForPoint:(NSPoint)accessibilityScreenPosition {
     const NSPoint locationInTextView = [self viewPointFromAccessibilityScreenPoint:accessibilityScreenPosition];
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    int x = (locationInTextView.x - [iTermPreferences intForKey:kPreferenceKeySideMargins] - visibleRect.origin.x) / _charWidth;
-    int y = locationInTextView.y / _lineHeight;
-    return VT100GridCoordMake(x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
+    const VT100GridCoord coord = [iTermLayoutArithmetic gridCoordForTextViewPointWithPoint:locationInTextView
+                                                                                  cellSize:self.cellSize
+                                                                                   roundUp:NO
+                                                                                upperBound:INT_MAX];
+    DLog(@"coord=%@ pos=%@ cellsize=%@", VT100GridCoordDescription(coord),
+         NSStringFromPoint(accessibilityScreenPosition), NSStringFromSize(self.cellSize));
+    return VT100GridCoordMake(coord.x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:coord.y]);
 }
 
 - (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
