@@ -2168,24 +2168,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  inTerminal:parentWindow_];
 }
 
-- (NSSize)_minSessionSize:(SessionView*)sessionView respectPinning:(BOOL)respectPinning {
-    NSSize size;
+- (NSSize)_minSessionSize:(SessionView *)sessionView respectPinning:(BOOL)respectPinning {
     PTYSession *session = [self sessionForSessionView:sessionView];
-    size.width = kVT100ScreenMinColumns * [[session textview] charWidth] + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
-    size.height = kVT100ScreenMinRows * [[session textview] lineHeight] + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
-
-    BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
-    NSSize scrollViewSize =
-        [PTYScrollView frameSizeForContentSize:size
-                       horizontalScrollerClass:nil
-                         verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
-                                    borderType:NSNoBorder
-                                   controlSize:NSControlSizeRegular
-                                 scrollerStyle:[parentWindow_ scrollerStyle]];
+    const VT100GridSize minimumGridSize = VT100GridSizeMake(kVT100ScreenMinColumns,
+                                                            kVT100ScreenMinRows);
+    NSSize sessionVieSize = [iTermLayoutArithmetic sessionViewSizeFromGridSize:minimumGridSize
+                                                                      cellSize:session.textview.cellSize
+                                                                  hasScrollbar:[parentWindow_ scrollbarShouldBeVisible]
+                                                                 scrollerStyle:[parentWindow_ scrollerStyle]
+                                                        internalDecorationSize:sessionView.internalDecorationSize];
     if (respectPinning && sessionView.preferredWidth != nil) {
-        scrollViewSize.width = sessionView.preferredWidth.doubleValue;
+        sessionVieSize.width = sessionView.preferredWidth.doubleValue;
     }
-    return scrollViewSize;
+    return sessionVieSize;
 }
 
 // Return the size of a tree of splits based on the rows/cols in each session.
