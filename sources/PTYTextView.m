@@ -1505,18 +1505,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                  startingAtRow:_dataSource.numberOfLines - height + _drawingHelper.numberOfIMELines];
 }
 
+// This is necessary because of the special case in -drawRect:inView:
 - (NSRect)visibleRectExcludingTopMargin:(BOOL)excludeTopMargin
                           startingAtRow:(int)row {
-    // This is necessary because of the special case in -drawRect:inView:
-    NSRect rect = self.enclosingScrollView.documentVisibleRect;
-    // Subtract the top margin's height.
-    rect.origin.y = row * _lineHeight;
-    if (excludeTopMargin) {
-        rect.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    } else {
-        rect.origin.y -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    }
-    return rect;
+    return [iTermLayoutArithmetic frameInTextViewExcludingTopMargin:excludeTopMargin
+                                                           fromLine:row
+                                                           cellSize:self.cellSize
+                                                        visibleRect:self.enclosingScrollView.documentVisibleRect];
 }
 
 - (void)performBlockWithFlickerFixerGrid:(void (NS_NOESCAPE ^)(void))block {

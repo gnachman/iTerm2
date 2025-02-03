@@ -458,4 +458,22 @@ extension LayoutArithmetic {
                                            cellSize: cellSize,
                                            viewWidth: bounds.width).intersection(bounds)
     }
+
+    // NOTE: This returns a rect that can go past the bottom of the actual visible rect. This is
+    // bugwards compatible with the previous implementation.
+    @objc(frameInTextViewExcludingTopMargin:fromLine:cellSize:visibleRect:)
+    static func frameInTextView(excludingTopMargin excludeTopMargin: Bool,
+                                fromLine line: Int32,
+                                cellSize: NSSize,
+                                visibleRect: NSRect) -> NSRect {
+        var rect = visibleRect
+        rect.origin.y = CGFloat(line) * cellSize.height
+        if excludeTopMargin {
+            rect.size.height -= margins.height
+        } else {
+            rect.origin.y -= margins.height
+        }
+        return rect
+
+    }
 }
