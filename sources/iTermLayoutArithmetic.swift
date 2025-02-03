@@ -550,4 +550,13 @@ extension LayoutArithmetic {
                               y: min(upperBound, max(0, Int32(clamping:  roundUp ? ceil(fractionalLine) : fractionalLine))))
 
     }
+
+    @objc
+    static func coordOffsetInTextView(fromPoint originPoint: NSPoint,
+                                      toPoint point: NSPoint,
+                                      cellSize: NSSize) -> VT100GridCoord {
+        return VT100GridCoord(x: Int32(clamping: max(0.0, point.x - originPoint.x) / cellSize.width),
+                              y: Int32(clamping: max(0.0, point.y - originPoint.y) / cellSize.height))
+
+    }
 }

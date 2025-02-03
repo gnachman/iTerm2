@@ -6161,7 +6161,7 @@ static NSString *iTermStringFromRange(NSRange range) {
         }
         if (_drawingHelper.offscreenCommandLine) {
             NSRect rect = [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:[self adjustedDocumentVisibleRect]
-                                                                                 cellSize:NSMakeSize(_charWidth, _lineHeight)
+                                                                                 cellSize:self.cellSize
                                                                                  gridSize:VT100GridSizeMake(_dataSource.width, _dataSource.height)];
             const NSPoint viewPoint = [self convertPoint:windowPoint fromView:nil];
             if (NSPointInRect(viewPoint, rect)) {
@@ -6307,12 +6307,11 @@ static NSString *iTermStringFromRange(NSRange range) {
 }
 
 - (VT100GridCoord)mouseHandlerCoordForPointInView:(NSPoint)point {
-    NSRect liveRect = [self liveRect];
-    VT100GridCoord coord = VT100GridCoordMake((point.x - liveRect.origin.x) / _charWidth,
-                                              (point.y - liveRect.origin.y) / _lineHeight);
-    coord.x = MAX(0, coord.x);
-    coord.y = MAX(0, coord.y);
-    return coord;
+    const NSRect liveRect = [self liveRect];
+    const VT100GridCoord result = [iTermLayoutArithmetic coordOffsetInTextViewFromPoint:liveRect.origin
+                                                                                toPoint:point
+                                                                               cellSize:self.cellSize];
+    return result;
 }
 
 - (NSPoint)mouseHandlerReportablePointForPointInView:(NSPoint)point {
