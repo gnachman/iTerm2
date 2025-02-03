@@ -29,10 +29,23 @@ class LayoutArithmetic: NSObject {
 /// Some terms used here:
 ///   * `window decoration size`: The sum of points used outside the tabview. Includes the toolbelt, title bar, window chrome, etc.
 ///   * `window size`: The size of a window's frame. includes everything in the window (title bar, etc.)
-///   * `tab size`: The size of a window's content excluding decoration (toolbelt, tabbar, etc.) and also excluding internal decorations of the session (e.g., the per-pane titlebar)
 ///   * `content size`: The size of a tab excluding scrollbars.
+///   * `tab size`: Content size plus scrollbars
 @objc
 extension LayoutArithmetic {
+    // MARK: - Compute Scrollview Size
+    @objc
+    static func tabSizeFromGridSize(_ gridSize: VT100GridSize,
+                                           cellSize: NSSize,
+                                           hasScrollbar: Bool,
+                                           scrollerStyle: NSScroller.Style) -> NSSize {
+        let contentSize = contentSizeFromGridSize(gridSize,
+                                                  cellSize: cellSize)
+        return tabSizeFromContentSize(contentSize,
+                                      hasScrollbar: hasScrollbar,
+                                      scrollerStyle: scrollerStyle)
+    }
+
     // MARK: - Compute tab size
     @objc
     static func tabSizeFromWindowSize(_ windowSize: NSSize,
@@ -86,8 +99,7 @@ extension LayoutArithmetic {
     @objc(contentSizeFromGridSize:cellSize:)
     static func contentSizeFromGridSize(_ gridSize: VT100GridSize,
                                        cellSize: NSSize) -> NSSize {
-        return NSSize(width: CGFloat(gridSize.width) * cellSize.width + margins.width * 2,
-                      height: CGFloat(gridSize.height) * cellSize.height + margins.height * 2)
+        return gridSize * cellSize + margins * 2
     }
 
     @objc

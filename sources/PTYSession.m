@@ -3946,17 +3946,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle {
-    NSSize innerSize = NSMakeSize([_screen width] * [_textview charWidth] + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
-                                  [_screen height] * [_textview lineHeight] + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
-    BOOL hasScrollbar = [[_delegate realParentWindow] scrollbarShouldBeVisible];
-    NSSize outerSize =
-    [PTYScrollView frameSizeForContentSize:innerSize
-                   horizontalScrollerClass:nil
-                     verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
-                                borderType:NSNoBorder
-                               controlSize:NSControlSizeRegular
-                             scrollerStyle:scrollerStyle];
-    return outerSize;
+    const BOOL hasScrollbar = [[_delegate realParentWindow] scrollbarShouldBeVisible];
+    return [iTermLayoutArithmetic tabSizeFromGridSize:_screen.size
+                                             cellSize:_textview.cellSize
+                                         hasScrollbar:hasScrollbar
+                                        scrollerStyle:scrollerStyle];
 }
 
 - (BOOL)setScrollBarVisible:(BOOL)visible style:(NSScrollerStyle)style {
