@@ -614,11 +614,11 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     if ([_dataSource numberOfLines] <= 0) {
       return;
     }
-    NSRect lastLine = [self visibleRect];
-    lastLine.origin.y = (([_dataSource numberOfLines] - 1) * _lineHeight +
-                         [self excess] +
-                         _drawingHelper.numberOfIMELines * _lineHeight);
-    lastLine.size.height = _lineHeight;
+    const NSRect lastLine = [iTermLayoutArithmetic frameInTextViewForLastVisibleLineWithVisibleRect:self.visibleRect
+                                                                                             excess:self.excess
+                                                                                      numberOfLines:_dataSource.numberOfLines
+                                                                                   numberOfIMELines:_drawingHelper.numberOfIMELines
+                                                                                           cellSize:self.cellSize];
     if (!NSContainsRect(self.visibleRect, lastLine)) {
         [self scrollRectToVisible:lastLine];
     }

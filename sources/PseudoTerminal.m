@@ -4254,7 +4254,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     PtyLog(@"Decoration size is %@", NSStringFromSize(decorationSize));
     PtyLog(@"Cell size is %@", NSStringFromSize(session.textview.cellSize));
-    if (session.textview.lineHeight == 0 || session.textview.charWidth == 0) {
+    const NSSize cellSize = session.textview.cellSize;
+    if (cellSize.width == 0 || cellSize.height == 0) {
         DLog(@"Line height or char width is 0. Returning existing frame. session=%@", session);
         return self.window.frame;
     }

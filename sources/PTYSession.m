@@ -18729,7 +18729,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         const CGFloat top = vmargin + titleBarHeight + gridOffsetInPoints;
         y = MAX(0, paneSize.height - top - height);
 
-        DLog(@"width=%@ actualLinesFree=%@ gridOffsetInRows=%@ lineHeight=%@ titleBarHeight=%@ height=%@ gridOffsetInPoints=%@ top=%@ y=%@",
+        DLog(@"width=%@ actualLinesFree=%@ gridOffsetInRows=%@ cellSize.height=%@ titleBarHeight=%@ height=%@ gridOffsetInPoints=%@ top=%@ y=%@",
              @(width), @(actualLinesAboveComposer), @(gridOffsetInRows), @(cellSize.height), @(titleBarHeight), @(height), @(gridOffsetInPoints), @(top), @(y));
     } else {
         // Place at top. Includes decoration so a minimum width must be enforced.

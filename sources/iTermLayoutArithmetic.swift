@@ -407,4 +407,16 @@ extension LayoutArithmetic {
                 width: Int32(clamping: (visibleRect.width - margins.width * 2) / cellSize.width),
                 height: numberOfVisibleRows))
     }
+
+    @objc
+    static func frameInTextViewForLastVisibleLine(visibleRect: NSRect,
+                                                  excess: CGFloat,
+                                                  numberOfLines: Int32,
+                                                  numberOfIMELines: Int32,
+                                                  cellSize: NSSize) -> NSRect {
+        var result = visibleRect
+        result.origin.y = CGFloat(numberOfLines + numberOfIMELines - 1) * cellSize.height + excess
+        result.size.height = cellSize.height
+        return result
+    }
 }
