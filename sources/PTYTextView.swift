@@ -275,7 +275,8 @@ extension PTYTextView: ExternalSearchResultsController {
     }
 
     // If force is true, recalculate the height even if the textview's width hasn't changed since
-    // the last time this method was called.
+    // the last time this method was called. NOTE: Portholes never seem to have had the ability
+    // to change their height and force does nothing :(
     private func updatePortholeFrame(_ objcPorthole: ObjCPorthole, force: Bool) {
         DLog("updatePortholeFrame(\(objcPorthole)")
         let porthole = objcPorthole as! Porthole
@@ -293,23 +294,21 @@ extension PTYTextView: ExternalSearchResultsController {
         let vmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeyTopBottomMargins))
         let cellWidth = dataSource.width()
         let innerMargin = porthole.outerMargin
-        if lastPortholeWidth == cellWidth && !force {
-            // Calculating porthole size is very slow because NSView is a catastrophe so avoid doing
-            // it if the width is unchanged.
-            let y = LayoutArithmetic.frameInTextViewForCoord(VT100GridCoord(x: 0, y: lineRange.lowerBound),
-                                                             cellSize: self.cellSize).minY + innerMargin
-            DLog("y=\(y) range=\(String(describing: VT100GridCoordRangeDescription(gridCoordRange ))) overflow=\(dataSource.scrollbackOverflow())")
-            porthole.set(frame: NSRect(x: hmargin,
-                                       y: y,
-                                       width: bounds.width - hmargin * 2,
-                                       height: CGFloat(lineRange.count) * lineHeight - innerMargin * 2))
-        } else {
+        if lastPortholeWidth != cellWidth || force {
             lastPortholeWidth = cellWidth
-            porthole.set(frame: NSRect(x: hmargin,
-                                       y: CGFloat(lineRange.lowerBound) * lineHeight + vmargin + innerMargin,
-                                       width: bounds.width - hmargin * 2,
-                                       height: CGFloat(lineRange.count) * lineHeight - innerMargin * 2))
         }
+        let gridRect = VT100GridRectMake(0,
+                                         lineRange.lowerBound,
+                                         dataSource.width(),
+                                         Int32(clamping: lineRange.count))
+        var frame = LayoutArithmetic.widthFillingFrameInTextViewForGridRect(gridRect,
+                                                                            boundsWidth: bounds.width,
+                                                                            cellSize: cellSize)
+        frame.origin.y += innerMargin
+        frame.size.height -= innerMargin * 2
+        DLog("lineRange=\(lineRange) range=\(String(describing: VT100GridCoordRangeDescription(gridCoordRange ))) overflow=\(dataSource.scrollbackOverflow()) frame=\(frame)")
+        porthole.set(frame: frame)
+
         updateAlphaValue()
     }
 
