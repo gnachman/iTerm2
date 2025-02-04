@@ -153,8 +153,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                _textView.dataSource.height))) {
         return;
     }
-    if (!CGSizeEqualToSize(state.cellSize,
-                           CGSizeMake(_textView.charWidth, _textView.lineHeight))) {
+    if (!CGSizeEqualToSize(state.cellSize, _textView.cellSize)) {
         return;
     }
     if (state.scale != _textView.window.backingScaleFactor) {
