@@ -409,8 +409,6 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 // Size of a character.
 @property(nonatomic, readonly) NSSize cellSize;
 
-@property(nonatomic, readonly) double charWidthWithoutSpacing;
-@property(nonatomic, readonly) double charHeightWithoutSpacing;
 @property(nonatomic, readonly) NSSize cellSizeWithoutSpacing;
 
 // Is the cursor visible? Defaults to YES.

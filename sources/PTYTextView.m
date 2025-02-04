@@ -129,8 +129,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     BOOL _inRefresh;
 
     // geometry
-    double _lineHeight;
-    double _charWidth;
+    NSSize _cellSize;
+    NSSize _cellSizeWithoutSpacing;
 
     // NSTextInputClient support
 
@@ -692,7 +692,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return _keyboardHandler.keyIsARepeat;
 }
 
-// Compute the length, in _charWidth cells, of the input method text.
+// Compute the length, in cellSize.width cells, of the input method text.
 - (int)inputMethodEditorLength {
     if (![self hasMarkedText]) {
         return 0;
@@ -2015,16 +2015,18 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYTextViewWillChangeFontNotification object:self];
     }
 
-    NSSize sz = [PTYTextView charSizeForFont:fontTable.fontForCharacterSizeCalculations
-                           horizontalSpacing:1.0
-                             verticalSpacing:1.0];
+    const NSSize cellSizeWithoutSpacing = [PTYTextView charSizeForFont:fontTable.fontForCharacterSizeCalculations
+                                                     horizontalSpacing:1.0
+                                                       verticalSpacing:1.0];
 
-    _charWidthWithoutSpacing = sz.width;
-    _charHeightWithoutSpacing = sz.height;
     _horizontalSpacing = horizontalSpacing;
     _verticalSpacing = verticalSpacing;
-    self.charWidth = ceil(_charWidthWithoutSpacing * horizontalSpacing);
-    self.lineHeight = ceil(_charHeightWithoutSpacing * verticalSpacing);
+
+    _cellSizeWithoutSpacing = cellSizeWithoutSpacing;
+    _cellSize = NSMakeSize(ceil(_cellSizeWithoutSpacing.width * horizontalSpacing),
+                           ceil(_cellSizeWithoutSpacing.height * verticalSpacing));
+    _drawingHelper.cellSize = self.cellSize;
+    _drawingHelper.cellSizeWithoutSpacing = _cellSizeWithoutSpacing;
 
     [_fontTable autorelease];
     _fontTable = [fontTable retain];
@@ -2043,23 +2045,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (NSSize)cellSize {
-    return NSMakeSize(_charWidth, _lineHeight);
-}
-
-- (void)setLineHeight:(double)aLineHeight {
-    _lineHeight = ceil(aLineHeight);
-    _drawingHelper.cellSize = self.cellSize;
-    _drawingHelper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
-}
-
-- (void)setCharWidth:(double)width {
-    _charWidth = ceil(width);
-    _drawingHelper.cellSize = self.cellSize;
-    _drawingHelper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
+    return _cellSize;
 }
 
 - (NSSize)cellSizeWithoutSpacing {
-    return NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
+    return _cellSizeWithoutSpacing;
 }
 
 - (void)toggleShowTimestamps:(id)sender {
