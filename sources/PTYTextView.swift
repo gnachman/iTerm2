@@ -421,7 +421,10 @@ extension PTYTextView: ExternalSearchResultsController {
             if scroll {
                 // This is necessary when there's a horizontally scrolling scrollview in the porthole
                 // in order to make PTYScrollView move vertically.
-                let line = Int32(rect.midY / lineHeight)
+                let line = LayoutArithmetic.gridCoordForTextViewPoint(rect.center,
+                                                                      cellSize: cellSize,
+                                                                      roundUp: false,
+                                                                      upperBound: .max).y
                 self.scroll(toCenterLine: line)
                 (enclosingScrollView?.verticalScroller as? PTYScroller)?.userScroll = true
             }
