@@ -11,7 +11,7 @@
 
 @protocol iTermSelectionScrollHelperDelegate <NSObject>
 
-- (CGFloat)lineHeight;
+- (NSSize)cellSize;
 - (CGFloat)excess;
 - (BOOL)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView;
 - (void)selectionScrollWillStart;

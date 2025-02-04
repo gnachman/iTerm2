@@ -58,7 +58,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionScrollDirection) {
     const int kMaxLines = 100;
     int numLines = MIN(kMaxLines, MAX(1, actualDelay / _prevScrollDelay));
     NSRect visibleRect = _delegate.visibleRect;
-    CGFloat lineHeight = _delegate.lineHeight;
+    const CGFloat lineHeight = _delegate.cellSize.height;
     int y = 0;
 
     switch (_selectionScrollDirection) {

@@ -432,7 +432,7 @@ extension PTYTextView: ExternalSearchResultsController {
                 start: VT100GridCoord(x: 0,
                                       y: y),
                 end: VT100GridCoord(x: 0,
-                                    y: y + Int32(floor(rect.height / lineHeight))))
+                                    y: y + Int32(floor(rect.height / cellSize.height))))
         } else {
             return VT100GridCoordRange(start: VT100GridCoord(x: 0, y: y),
                                        end: VT100GridCoord(x: 0, y: y + result.numLines))
