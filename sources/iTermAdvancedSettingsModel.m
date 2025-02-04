@@ -338,7 +338,7 @@ DEFINE_FLOAT(scrollWheelAcceleration, 1, SECTION_MOUSE @"Speed up scroll gesture
 // This defines the fraction of a character's width on its right side that is used to
 // select the NEXT character.
 //        |   A rightward drag beginning left of the bar selects G.
-//        <-> [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor] * charWidth
+//        <-> [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor] * cellSize.width
 //  <-------> Character width
 //   .-----.  .      :
 //  ;         :      :

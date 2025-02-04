@@ -2058,6 +2058,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _drawingHelper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
 }
 
+- (NSSize)cellSizeWithoutSpacing {
+    return NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
+}
+
 - (void)toggleShowTimestamps:(id)sender {
     [self.delegate textviewToggleTimestampsMode];
 }
@@ -3959,7 +3963,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         tmpString = [aString substringWithRange:NSMakeRange(0, length)];
     }
 
-    [tmpString drawInRect:NSMakeRect(0, 0, _charWidth * length, cellSize.height) withAttributes:nil];
+    [tmpString drawInRect:NSMakeRect(0, 0, cellSize.width * length, cellSize.height) withAttributes:nil];
     [anImage unlockFocus];
 
     // tell our app not switch windows (currently not working)
@@ -4316,7 +4320,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (NSUInteger)characterIndexForPoint:(NSPoint)thePoint {
-    return MAX(0, thePoint.x / _charWidth);
+    return MAX(0, thePoint.x / self.cellSize.width);
 }
 
 - (long)conversationIdentifier {
@@ -6443,9 +6447,9 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
     // Horizontal scroll
     CGFloat delta;
     if ([iTermAdvancedSettingsModel useModernScrollWheelAccumulator]) {
-        delta = [_horizontalScrollAccumulator deltaForEvent:event increment:self.charWidth];
+        delta = [_horizontalScrollAccumulator deltaForEvent:event increment:self.cellSize.width];
     } else {
-        delta = [_horizontalScrollAccumulator legacyDeltaForEvent:event increment:self.charWidth];
+        delta = [_horizontalScrollAccumulator legacyDeltaForEvent:event increment:self.cellSize.width];
     }
     return [self scrollDeltaXAdjustedForMouseReporting:delta];
 }
@@ -6563,7 +6567,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 }
 
 - (CGFloat)scrollDeltaXAdjustedForMouseReporting:(CGFloat)deltaX {
-    return [self scrollDeltaWithUnit:self.charWidth delta:deltaX];
+    return [self scrollDeltaWithUnit:self.cellSize.width delta:deltaX];
 }
 
 - (CGFloat)scrollDeltaWithUnit:(CGFloat)unit delta:(CGFloat)delta {
@@ -6589,7 +6593,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
                                                increment:self.enclosingScrollView.verticalLineScroll];
     } else {
         delta.width = [_horizontalScrollAccumulator deltaForEvent:event
-                                                        increment:self.charWidth];
+                                                        increment:self.cellSize.width];
     }
     return [self scrollDeltaAdjustedForMouseReporting:delta];
 }

@@ -407,12 +407,11 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 @property(nonatomic, readonly) iTermFontTable *fontTable;
 
 // Size of a character.
-@property(nonatomic, readonly) double lineHeight;
-@property(nonatomic, readonly) double charWidth;
 @property(nonatomic, readonly) NSSize cellSize;
 
 @property(nonatomic, readonly) double charWidthWithoutSpacing;
 @property(nonatomic, readonly) double charHeightWithoutSpacing;
+@property(nonatomic, readonly) NSSize cellSizeWithoutSpacing;
 
 // Is the cursor visible? Defaults to YES.
 @property(nonatomic, assign) BOOL cursorVisible;

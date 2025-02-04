@@ -9928,7 +9928,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                    NSStringFromSize(session.textview.cellSize));
             if (w * [session columns] > max) {
                 max = w;
-                ch = [[session textview] charWidth];
+                ch = [[session textview] cellSize].width;
                 *numChars = [session columns];
             }
         }

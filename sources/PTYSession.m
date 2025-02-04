@@ -6230,7 +6230,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
     NSMutableAttributedString *prompt = [self attributedStringForScreenChars:promptText
                                                  elideDefaultBackgroundColor:elideDefaultBackgroundColor];
     const CGFloat kern = [NSMutableAttributedString kernForString:@"W"
-                                                      toHaveWidth:_textview.charWidth
+                                                      toHaveWidth:_textview.cellSize.width
                                                          withFont:_textview.fontTable.asciiFont.font];
     [prompt addAttributes:@{ NSKernAttributeName: @(kern) }
                     range:NSMakeRange(0, prompt.length)];
@@ -7513,7 +7513,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         return;
     }
     [_view.driver setCellSize:cellSize
-       cellSizeWithoutSpacing:CGSizeMake(_textview.charWidthWithoutSpacing, _textview.charHeightWithoutSpacing)
+       cellSizeWithoutSpacing:_textview.cellSizeWithoutSpacing
                     glyphSize:glyphSize
                      gridSize:_screen.currentGrid.size
                   asciiOffset:asciiOffset
