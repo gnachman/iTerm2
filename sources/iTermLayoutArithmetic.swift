@@ -409,6 +409,12 @@ extension LayoutArithmetic {
     }
 
     @objc
+    static func firstVisibleRowInTextView(documentVisibleRect: NSRect,  // enclosingScrollView.documentVisibleRect
+                                          cellSize:NSSize) -> Int32 {
+        return Int32(clamping: documentVisibleRect.minY / cellSize.height)
+    }
+
+    @objc
     static func frameInTextViewForLastVisibleLine(visibleRect: NSRect,
                                                   excess: CGFloat,
                                                   numberOfLines: Int32,
