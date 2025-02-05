@@ -10,7 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermTmuxOptionMonitor;
-@class iTermVariableScope;
+@protocol iTermVariableVendor;
 @class TmuxGateway;
 
 @protocol iTermWorkingDirectoryPollerDelegate<NSObject>
@@ -27,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithTmuxGateway:(TmuxGateway *)gateway
-                              scope:(iTermVariableScope *)scope
+                              scope:(id<iTermVariableVendor>)scope
                          windowPane:(int)windowPane;
 
 - (void)poll;

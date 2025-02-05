@@ -34,7 +34,7 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
 }
 
 - (instancetype)initWithTmuxGateway:(TmuxGateway *)gateway
-                              scope:(iTermVariableScope *)scope
+                              scope:(id<iTermVariableVendor>)scope
                          windowPane:(int)windowPane {
     self = [self init];
     if (self) {
