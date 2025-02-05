@@ -9367,6 +9367,11 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     [self scrollerStyleOrRightExtraDidChange];
 }
 
+- (void)setWindow:(NSWindow *)window {
+    DLog(@"self=%@ %@", self, [NSThread callStackSymbols]);
+    [super setWindow:window];
+}
+
 - (void)scrollerStyleOrRightExtraDidChange {
     DLog(@"scrollerStyleOrRightExtraDidChange");
     [self updateSessionScrollbars];

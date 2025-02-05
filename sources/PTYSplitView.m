@@ -12,6 +12,7 @@
 #import "iTermPreferences.h"
 #import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSView+RecursiveDescription.h"
 #import "PTYWindow.h"
 
 @implementation PTYSplitViewDividerInfo
@@ -229,15 +230,19 @@
 }
 
 - (void)didAddSubview:(NSView *)subview {
+    DLog(@"Add %@ to %@:\n%@", subview, self, [NSThread callStackSymbols]);
     [super didAddSubview:subview];
     [self.delegate splitViewDidChangeSubviews:self];
     [self performSelector:@selector(forceRedraw) withObject:nil afterDelay:0];
+    DLog(@"%@", self.iterm_recursiveDescription);
 }
 
 - (void)willRemoveSubview:(NSView *)subview {
+    DLog(@"Will remove subview %@ from %@:\n%@", subview, self, [NSThread callStackSymbols]);
     if (_dead) {
         // Was called from within superclass's -dealloc, and trying to construct a weak reference
         // will crash.
+        DLog(@"Already dead");
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -250,6 +255,7 @@
     });
     [super willRemoveSubview:subview];
     [self performSelector:@selector(forceRedraw) withObject:nil afterDelay:0];
+    DLog(@"%@", self.iterm_recursiveDescription);
 }
 
 - (void)forceRedraw {
