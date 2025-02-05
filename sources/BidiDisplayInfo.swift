@@ -194,7 +194,7 @@ fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
     let paragraphIsRTL: Bool =
         if let firstStrongLTR, let firstStrongRTL {
             firstStrongLTR.lowerBound > firstStrongRTL.lowerBound
-        } else if let firstStrongRTL {
+        } else if firstStrongRTL != nil {
             true
         } else {
             false
