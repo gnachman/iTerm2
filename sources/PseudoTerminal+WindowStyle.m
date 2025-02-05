@@ -182,8 +182,12 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
     [self updateForTransparency:(NSWindow<PTYWindow> *)myWindow];
     [self updateTitlebarSeparatorStyle];
+    NSWindow *oldWindow = self.window;
     [self setWindow:myWindow];
-
+    if (oldWindow != self.window) {
+        [oldWindow orderOut:nil];
+        [oldWindow close];
+    }
     if (@available(macOS 10.16, *)) {
         // TODO
     } else {
@@ -267,7 +271,9 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)changeToWindowType:(iTermWindowType)newWindowType {
+    DLog(@"%@ %@", self, @(newWindowType));
     if (newWindowType == self.windowType) {
+        DLog(@"Already that type");
         return;
     }
     // The general categories of window are:
@@ -276,11 +282,13 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     // Normal
     // No title bar
     if (![self windowTypeIsFullScreen:newWindowType] && [self windowTypeIsFullScreen:self.windowType]) {
-        // Exit full screen mode.
+        DLog(@"Exit full screen mode.");
         [self toggleFullScreenMode:nil completion:^(BOOL ok) {
             if (!ok) {
+                DLog(@"Not ok");
                 return;
             }
+            DLog(@"Recursing");
             [self changeToWindowType:newWindowType];
         }];
         return;
@@ -301,7 +309,9 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
+            DLog(@"edge-attached");
             if ([self windowTypeHasTitleBar:self.windowType]) {
+                DLog(@"Window type has title bar");
                 [self updateWindowForWindowType:newWindowType];
                 self.windowType = newWindowType;
                 [self updateTabColors];
@@ -319,7 +329,9 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_NORMAL:
+            DLog(@"normalish");
             if (![self windowTypeHasTitleBar:self.windowType]) {
+                DLog(@"Window type has title bar");
                 [self updateWindowForWindowType:newWindowType];
                 self.windowType = newWindowType;
                 [self updateTabColors];
@@ -335,14 +347,18 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+            DLog(@"full screen");
             if (self.anyFullScreen) {
+                DLog(@"Already full screen");
                 return;
             }
             [self toggleFullScreenMode:nil];
             return;
 
         case WINDOW_TYPE_NO_TITLE_BAR:
+            DLog(@"No title bar");
             if ([self windowTypeHasTitleBar:self.windowType]) {
+                DLog(@"Window type has title bar");
                 [self updateWindowForWindowType:newWindowType];
                 self.windowType = newWindowType;
                 [self updateTabColors];
@@ -639,7 +655,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
             break;
     }
 
-    [self.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
+    [self performSelector:@selector(makeWindowKeyAndOrderFront) withObject:nil afterDelay:0];
     [self.window makeFirstResponder:[[self currentSession] textview]];
     if (iTermWindowTypeIsCompact(self.savedWindowType) ||
         iTermWindowTypeIsCompact(self.windowType)) {
@@ -653,6 +669,10 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self updateUseMetalInAllTabs];
     [self updateForTransparency:self.ptyWindow];
     [self updateWindowMenu];
+}
+
+- (void)makeWindowKeyAndOrderFront {
+    [self.window makeKeyAndOrderFront:nil];
 }
 
 - (BOOL)fullScreenImpl {
