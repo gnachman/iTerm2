@@ -152,6 +152,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (NSRect)sessionViewOffscreenCommandLineFrameForView:(NSView *)view;
 - (void)sessionViewUpdateComposerFrame;
 - (NSDictionary *)sessionViewStatusBarAdvancedConfigurationDictionary;
+- (CGFloat)desiredRightExtra;
 
 @end
 
@@ -194,6 +195,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 
 @property(nonatomic) CGFloat composerHeight;
 @property(nonatomic, strong) NSNumber *preferredWidth;
+@property(nonatomic, readonly) CGFloat desiredRightExtra;
 
 // For macOS 10.14+ when subpixel AA is OFF, this draws the default background color. When there's
 // a background image it will be translucent to effect blending. When subpixel AA is ON or the OS
@@ -205,6 +207,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // How far the metal view extends beyond the visible part of the viewport, such as under the title
 // bar or bottom per-pane status bar.
 @property(nonatomic, readonly) NSEdgeInsets extraMargins;
+@property (nonatomic) CGFloat actualRightExtra;
 
 - (void)setTerminalBackgroundColor:(NSColor *)color;
 

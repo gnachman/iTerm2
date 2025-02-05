@@ -107,7 +107,7 @@
     const CGFloat gridWidth = self.cellConfiguration.gridSize.width * self.cellConfiguration.cellSize.width;
     const NSEdgeInsets margins = self.margins;
     // The right gutter includes the scrollbar if legacy scrollbars are on.
-    const CGFloat rightGutterWidth = self.configuration.viewportSize.x - margins.left - margins.right - gridWidth;
+    const CGFloat rightGutterWidth = self.configuration.viewportSize.x - margins.left - margins.right - gridWidth - self.configuration.rightExtraPixels;
 
     [_timestamps enumerateObjectsUsingBlock:^(NSDate * _Nonnull date, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermTimestampKey *key = [[iTermTimestampKey alloc] init];

@@ -2142,6 +2142,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                         dimensions:(NSSize)dimensions
                         showTitles:(BOOL)showTitles
                showBottomStatusBar:(BOOL)showBottomStatusBar
+                        rightExtra:(CGFloat)rightExtra
                         inTerminal:(id<WindowControllerInterface>)term {
     int rows = dimensions.height;
     int columns = dimensions.width;
@@ -2161,7 +2162,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                          verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
                                     borderType:NSNoBorder
                                    controlSize:NSControlSizeRegular
-                                 scrollerStyle:[term scrollerStyle]];
+                                 scrollerStyle:[term scrollerStyle]
+                                    rightExtra:rightExtra];
     if (showTitles) {
         outerSize.height += [SessionView titleHeight];
     }
@@ -2179,6 +2181,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  dimensions:NSMakeSize([session columns], [session rows])
                                  showTitles:[sessionView showTitle]
                         showBottomStatusBar:sessionView.showBottomStatusBar
+                                 rightExtra:session.desiredRightExtra
                                  inTerminal:parentWindow_];
 }
 
@@ -2195,7 +2198,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                          verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
                                     borderType:NSNoBorder
                                    controlSize:NSControlSizeRegular
-                                 scrollerStyle:[parentWindow_ scrollerStyle]];
+                                 scrollerStyle:[parentWindow_ scrollerStyle]
+                                    rightExtra:session.desiredRightExtra];
     if (respectPinning && sessionView.preferredWidth != nil) {
         scrollViewSize.width = sessionView.preferredWidth.doubleValue;
     }
@@ -3624,6 +3628,7 @@ typedef struct {
                                                                             [parseTree[kLayoutDictHeightKey] intValue])
                                                       showTitles:showTitles
                                              showBottomStatusBar:showBottomStatusBar
+                                                      rightExtra:[PTYSession desiredRightExtraForProfile:profile]
                                                       inTerminal:term];
             parseTree[kLayoutDictPixelWidthKey] = @(size.width);
             parseTree[kLayoutDictPixelHeightKey] = @(size.height);
@@ -3975,12 +3980,13 @@ typedef struct {
             // contain. The PTYScrollView might be smaller than it so it's not
             // relevant.
             NSRect sessionViewFrame = [session.view.scrollview frame];
-            NSSize contentSize = [NSScrollView contentSizeForFrameSize:sessionViewFrame.size
-                                               horizontalScrollerClass:nil
-                                                 verticalScrollerClass:[realParentWindow_ scrollbarShouldBeVisible] ? [[session.view.scrollview verticalScroller] class] : nil
-                                                            borderType:session.view.scrollview.borderType
-                                                           controlSize:NSControlSizeRegular
-                                                         scrollerStyle:session.view.scrollview.scrollerStyle];
+            NSSize contentSize = [PTYScrollView contentSizeForFrameSize:sessionViewFrame.size
+                                                horizontalScrollerClass:nil
+                                                  verticalScrollerClass:[realParentWindow_ scrollbarShouldBeVisible] ? [[session.view.scrollview verticalScroller] class] : nil
+                                                             borderType:session.view.scrollview.borderType
+                                                            controlSize:NSControlSizeRegular
+                                                          scrollerStyle:session.view.scrollview.scrollerStyle
+                                                             rightExtra:session.desiredRightExtra];
 
             int chars = forHeight ? (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height :
                                     (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width;
@@ -4036,81 +4042,7 @@ typedef struct {
     VT100GridSize cells;
 } PTYTabDecorationSize;
 
-// This is only used for tmux tabs.
-// Measure the decoration size of a view. The view is either a split view or a session view.
-//
-// For a vertical split view:
-//  points.width = (number of dividers) * (divider thickness) + Σ(child decoration point width)
-//  points.height = max(child decoration point height)
-//  cells.width = Σ(child decoration cell width) + (number of dividers)
-//  cells.height = max(child decoration cell height)
-//
-// For a horizontal split view:
-//  points.width = max(child decoration point width)
-//  points.height = (number of dividers) * (divider thickness) + Σ(child decoration point height)
-//  cells.width = max(child decoration cell width)
-//  cells.height = Σ(child decoration cell height) + (number of dividers)
-//
-// For a session view:
-//   points.width = margins' widths + legacy scroll bar width
-//   points.height = margins' heights + title bar height + status bar height
-//   cells.width = 0
-//   cells.height = 0
-+ (PTYTabDecorationSize)_recursiveDecorationSize:(__kindof NSView *)view {
-    if ([view isKindOfClass:[NSSplitView class]]) {
-        NSSplitView *splitView = view;
-        if (splitView.vertical) {
-            const NSInteger numberOfDividers = MAX(1, splitView.subviews.count) - 1;
-            const CGFloat dividerPoints = numberOfDividers * splitView.dividerThickness;
-            PTYTabDecorationSize result = {
-                .points = NSMakeSize(dividerPoints, 0),
-                .cells = VT100GridSizeMake(numberOfDividers, 0)
-            };
-            for (NSView *childView in splitView.subviews) {
-                const PTYTabDecorationSize childSize = [self _recursiveDecorationSize:childView];
-                result.points.width += childSize.points.width;
-                result.cells.width += childSize.cells.width;
-                result.points.height = MAX(result.points.height, childSize.points.height);
-                result.cells.height = MAX(result.cells.height, childSize.cells.height);
-            }
-            return result;
-        } else {
-            const NSInteger numberOfDividers = MAX(1, splitView.subviews.count) - 1;
-            const CGFloat dividerPoints = numberOfDividers * splitView.dividerThickness;
-            PTYTabDecorationSize result = {
-                .points = NSMakeSize(0, dividerPoints),
-                .cells = VT100GridSizeMake(0, numberOfDividers)
-            };
-            for (NSView *childView in splitView.subviews) {
-                const PTYTabDecorationSize childSize = [self _recursiveDecorationSize:childView];
-                result.points.width = MAX(result.points.width, childSize.points.width);
-                result.cells.width = MAX(result.cells.width, childSize.cells.width);
-                result.points.height += childSize.points.height;
-                result.cells.height += childSize.cells.height;
-            }
-            return result;
-        }
-    } else {
-        SessionView *sessionView = view;
-        const NSSize scrollViewDecorationSize = [NSScrollView frameSizeForContentSize:NSMakeSize(0, 0)
-                                                              horizontalScrollerClass:nil
-                                                                verticalScrollerClass:sessionView.scrollview.hasVerticalScroller ? sessionView.scrollview.verticalScroller.class : nil
-                                                                           borderType:sessionView.scrollview.borderType
-                                                                          controlSize:NSControlSizeRegular
-                                                                        scrollerStyle:sessionView.scrollview.scrollerStyle];
-        const CGFloat titleBarHeight = sessionView.showTitle ? SessionView.titleHeight : 0;
-        // NOTE: At the time of writing tmux tabs can’t have per-pane status bars. Should that ever
-        // change, this line of code might prevent a bug.
-        const CGFloat statusBarHeight = sessionView.showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
-        const CGSize margins = NSMakeSize([iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
-                                          [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
-        return (PTYTabDecorationSize) {
-            .points = NSMakeSize(scrollViewDecorationSize.width + margins.width,
-                                 titleBarHeight + statusBarHeight + margins.height),
-            .cells = VT100GridSizeMake(0, 0)
-        };
-    }
-}
+
 
 - (NSSize)tmuxSize {
     if (self.tmuxController.variableWindowSize) {
@@ -4315,12 +4247,13 @@ typedef struct {
 
         NSArray<NSNumber *> *decorationSizes =
         [sessionViewsInSlice mapWithBlock:^id(SessionView *sessionView) {
-            const NSSize scrollViewDecorationSize = [NSScrollView frameSizeForContentSize:NSMakeSize(0, 0)
-                                                                  horizontalScrollerClass:nil
-                                                                    verticalScrollerClass:sessionView.scrollview.hasVerticalScroller ? sessionView.scrollview.verticalScroller.class : nil
-                                                                               borderType:sessionView.scrollview.borderType
-                                                                              controlSize:NSControlSizeRegular
-                                                                            scrollerStyle:sessionView.scrollview.scrollerStyle];
+            const NSSize scrollViewDecorationSize = [PTYScrollView frameSizeForContentSize:NSMakeSize(0, 0)
+                                                                   horizontalScrollerClass:nil
+                                                                     verticalScrollerClass:sessionView.scrollview.hasVerticalScroller ? sessionView.scrollview.verticalScroller.class : nil
+                                                                                borderType:sessionView.scrollview.borderType
+                                                                               controlSize:NSControlSizeRegular
+                                                                             scrollerStyle:sessionView.scrollview.scrollerStyle
+                                                                                rightExtra:sessionView.desiredRightExtra];
             return @(margins.width + scrollViewDecorationSize.width);
         }];
         const CGFloat totalDecorationSize = [decorationSizes sumOfNumbers] + numberOfDividers * dividerThickness;
@@ -4613,6 +4546,7 @@ typedef struct {
                                                                          link.session.gridSize.height)
                                                    showTitles:sessionView.showTitle
                                           showBottomStatusBar:sessionView.showBottomStatusBar
+                                                   rightExtra:session.desiredRightExtra
                                                    inTerminal:realParentWindow_];
         } else {
             assert(false);
@@ -5135,6 +5069,7 @@ typedef struct {
                                         dimensions:NSMakeSize(gridSize.width, gridSize.height)
                                         showTitles:showTitles
                                showBottomStatusBar:NO
+                                        rightExtra:sessionView.desiredRightExtra
                                         inTerminal:self.realParentWindow];
     NSRect frame = {
         .origin = sessionView.frame.origin,
@@ -6681,12 +6616,13 @@ typedef struct {
         DLog(@"Compute size from frame %@", NSStringFromSize(frameSize));
         PTYSession *anySession = self.sessions.firstObject;
 
-        NSSize contentSize = [NSScrollView contentSizeForFrameSize:frameSize
-                                           horizontalScrollerClass:nil
-                                             verticalScrollerClass:[realParentWindow_ scrollbarShouldBeVisible] ? [[anySession.view.scrollview verticalScroller] class] : nil
-                                                        borderType:anySession.view.scrollview.borderType
-                                                       controlSize:NSControlSizeRegular
-                                                     scrollerStyle:anySession.view.scrollview.scrollerStyle];
+        NSSize contentSize = [PTYScrollView contentSizeForFrameSize:frameSize
+                                            horizontalScrollerClass:nil
+                                              verticalScrollerClass:[realParentWindow_ scrollbarShouldBeVisible] ? [[anySession.view.scrollview verticalScroller] class] : nil
+                                                         borderType:anySession.view.scrollview.borderType
+                                                        controlSize:NSControlSizeRegular
+                                                      scrollerStyle:anySession.view.scrollview.scrollerStyle
+                                                         rightExtra:[PTYSession desiredRightExtraForProfile:profile]];
         NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
         return VT100GridSizeMake((contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width,
                                  (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height);

@@ -24,6 +24,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) vector_uint2 viewportSizeExcludingLegacyScrollbars;
 @property (nonatomic, readonly) CGFloat scale;
 @property (nonatomic, readonly) BOOL hasBackgroundImage;
+@property (nonatomic, readonly) CGFloat rightExtraPixels;
 
 // NOT flipped. top means top, bottom means bottom.
 @property (nonatomic, readonly) NSEdgeInsets extraMargins;
@@ -37,7 +38,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                         extraMargins:(NSEdgeInsets)extraMargins
 maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
-                          colorSpace:(NSColorSpace *)colorSpace NS_DESIGNATED_INITIALIZER;
+                          colorSpace:(NSColorSpace *)colorSpace
+                    rightExtraPixels:(CGFloat)rightExtraPixels NS_DESIGNATED_INITIALIZER;
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)

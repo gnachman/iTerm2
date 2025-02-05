@@ -348,6 +348,7 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 @property (nonatomic, copy) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
 @property (nonatomic, copy) NSIndexSet *folds;
 @property (nonatomic, readonly) iTermAttributedStringBuilder *attributedStringBuilder;
+@property (nonatomic) CGFloat rightExtra;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;

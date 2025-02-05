@@ -314,6 +314,8 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewSmearCursorFrom:(NSRect)from
                              to:(NSRect)to
                           color:(NSColor *)color;
+- (CGFloat)textViewRightExtra;
+
 @end
 
 @interface iTermHighlightedRow : NSObject

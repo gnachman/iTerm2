@@ -315,4 +315,64 @@
     [super setVerticalScroller:verticalScroller];
 }
 
++ (NSSize)frameSizeForContentSize:(NSSize)cSize
+          horizontalScrollerClass:(Class)horizontalScrollerClass
+            verticalScrollerClass:(Class)verticalScrollerClass
+                       borderType:(NSBorderType)type
+                      controlSize:(NSControlSize)controlSize
+                    scrollerStyle:(NSScrollerStyle)scrollerStyle
+                       rightExtra:(CGFloat)rightExtra {
+    NSSize size = [super frameSizeForContentSize:cSize
+                         horizontalScrollerClass:horizontalScrollerClass
+                           verticalScrollerClass:verticalScrollerClass
+                                      borderType:type
+                                     controlSize:controlSize
+                                   scrollerStyle:scrollerStyle];
+    size.width += rightExtra;
+    return size;
+}
+
++ (NSSize)frameSizeForContentSize:(NSSize)cSize
+            hasHorizontalScroller:(BOOL)hFlag
+              hasVerticalScroller:(BOOL)vFlag
+                       borderType:(NSBorderType)type
+                       rightExtra:(CGFloat)rightExtra API_DEPRECATED("Use +frameSizeForContentSize:horizontalScrollerClass:verticalScrollerClass:borderType:controlSize:scrollerStyle: instead", macos(10.0,10.7)) {
+    NSSize size = [super frameSizeForContentSize:cSize
+                           hasHorizontalScroller:hFlag
+                           hasVerticalScroller:vFlag
+                                      borderType:type];
+    size.width += rightExtra;
+    return size;
+}
+
++ (NSSize)contentSizeForFrameSize:(NSSize)fSize
+          horizontalScrollerClass:(Class)horizontalScrollerClass
+            verticalScrollerClass:(Class)verticalScrollerClass
+                       borderType:(NSBorderType)type
+                      controlSize:(NSControlSize)controlSize
+                    scrollerStyle:(NSScrollerStyle)scrollerStyle
+                       rightExtra:(CGFloat)rightExtra {
+    NSSize size = [super contentSizeForFrameSize:fSize
+                         horizontalScrollerClass:horizontalScrollerClass
+                           verticalScrollerClass:verticalScrollerClass
+                                      borderType:type
+                                     controlSize:controlSize
+                                   scrollerStyle:scrollerStyle];
+    size.width -= rightExtra;
+    return size;
+}
+
++ (NSSize)contentSizeForFrameSize:(NSSize)fSize
+            hasHorizontalScroller:(BOOL)hFlag
+              hasVerticalScroller:(BOOL)vFlag
+                       borderType:(NSBorderType)type
+                       rightExtra:(CGFloat)rightExtra API_DEPRECATED("Use +frameSizeForContentSize:horizontalScrollerClass:verticalScrollerClass:borderType:controlSize:scrollerStyle: instead", macos(10.0,10.7)) {
+    NSSize size = [super contentSizeForFrameSize:fSize
+                           hasHorizontalScroller:hFlag
+                             hasVerticalScroller:vFlag
+                                      borderType:type];
+    size.width -= rightExtra;
+    return size;
+}
+
 @end

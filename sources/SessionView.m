@@ -734,7 +734,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // Allocate a new metal view
     _metalView = [[iTermMTKView alloc] initWithFrame:_scrollview.contentView.frame
                                               device:[self metalDevice]];
-    id _ignore = [iTermMTKView layerClass];
+    (void)[iTermMTKView layerClass];
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     if (iTermTextIsMonochrome()) {
         _metalView.layer.opaque = NO;
@@ -1152,6 +1152,10 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     // Track the terminal. Resume normal mode on exit.
     SessionViewTrackingModeTrackTerminalFragile
 };
+
+- (CGFloat)desiredRightExtra {
+    return _delegate.desiredRightExtra;
+}
 
 - (SessionViewTrackingMode)desiredTrackingMode {
     DLog(@"desiredTrackingMode %@", self);
@@ -1792,7 +1796,8 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
                          verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
                                     borderType:NSNoBorder
                                    controlSize:NSControlSizeRegular
-                                 scrollerStyle:[[self scrollview] scrollerStyle]];
+                                 scrollerStyle:[[self scrollview] scrollerStyle]
+                                    rightExtra:_delegate.desiredRightExtra];
 
     if (_showTitle) {
         size.height += iTermGetSessionViewTitleHeight();
@@ -1821,12 +1826,13 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         verticalScrollerClass = nil;
     }
     NSSize contentSize =
-            [NSScrollView contentSizeForFrameSize:size
-                          horizontalScrollerClass:nil
-                            verticalScrollerClass:verticalScrollerClass
-                                       borderType:[[self scrollview] borderType]
-                                      controlSize:NSControlSizeRegular
-                                    scrollerStyle:[[[self scrollview] verticalScroller] scrollerStyle]];
+        [PTYScrollView contentSizeForFrameSize:size
+                       horizontalScrollerClass:nil
+                         verticalScrollerClass:verticalScrollerClass
+                                    borderType:[[self scrollview] borderType]
+                                   controlSize:NSControlSizeRegular
+                                 scrollerStyle:[[[self scrollview] verticalScroller] scrollerStyle]
+                                    rightExtra:_delegate.desiredRightExtra];
     DLog(@"contentSize=%@", NSStringFromSize(contentSize));
     return contentSize;
 }

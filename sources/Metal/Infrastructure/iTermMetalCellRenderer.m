@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
                         extraMargins:(NSEdgeInsets)extraMargins
 maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
                           colorSpace:(NSColorSpace *)colorSpace
+                    rightExtraPixels:(CGFloat)rightExtraPixels
                             cellSize:(CGSize)cellSize
                            glyphSize:(CGSize)glyphSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
@@ -26,7 +27,8 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
                     hasBackgroundImage:hasBackgroundImage
                           extraMargins:extraMargins
 maximumExtendedDynamicRangeColorComponentValue:maximumExtendedDynamicRangeColorComponentValue
-                            colorSpace:colorSpace];
+                            colorSpace:colorSpace
+                      rightExtraPixels:rightExtraPixels];
     if (self) {
         _cellSize = cellSize;
         _cellSizeWithoutSpacing = cellSizeWithoutSpacing;

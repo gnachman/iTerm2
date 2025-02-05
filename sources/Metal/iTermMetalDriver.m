@@ -93,6 +93,7 @@ typedef struct {
 #endif
     CGFloat maximumExtendedDynamicRangeColorComponentValue NS_AVAILABLE_MAC(10_15);
     CGFloat legacyScrollbarWidth;
+    CGFloat rightExtraPixels;
 } iTermMetalDriverMainThreadState;
 
 @interface iTermMetalDriver()
@@ -318,7 +319,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         asciiOffset:(CGSize)asciiOffset
               scale:(CGFloat)scale
             context:(CGContextRef)context
-legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
+legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
+   rightExtraPoints:(CGFloat)rightExtraPoints {
     scale = MAX(1, scale);
     cellSize.width *= scale;
     cellSize.height *= scale;
@@ -347,6 +349,8 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     self.mainThreadState->asciiOffset = asciiOffset;
     self.mainThreadState->context = context;
     self.mainThreadState->legacyScrollbarWidth = legacyScrollbarWidth * scale;
+    self.mainThreadState->rightExtraPixels = rightExtraPoints * scale;
+
 }
 
 #pragma mark - iTermMetalViewDelegate
@@ -592,6 +596,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtExtractFromApp ofBlock:^{
         frameData.viewportSize = self.mainThreadState->viewportSize;
         frameData.legacyScrollbarWidth = self.mainThreadState->legacyScrollbarWidth;
+        frameData.rightExtraPixels = self.mainThreadState->rightExtraPixels;
         frameData.asciiOffset = self.mainThreadState->asciiOffset;
 
         // This is the slow part

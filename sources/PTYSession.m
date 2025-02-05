@@ -2214,7 +2214,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                               verticalScrollerClass:parent.scrollbarShouldBeVisible ? [[_view.scrollview verticalScroller] class] : nil
                                                          borderType:_view.scrollview.borderType
                                                         controlSize:NSControlSizeRegular
-                                                      scrollerStyle:_view.scrollview.scrollerStyle];
+                                                      scrollerStyle:_view.scrollview.scrollerStyle
+                                                         rightExtra:self.desiredRightExtra];
 
         int width = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / [_textview charWidth];
         int height = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / [_textview lineHeight];
@@ -3985,8 +3986,33 @@ ITERM_WEAKLY_REFERENCEABLE
                      verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
                                 borderType:NSNoBorder
                                controlSize:NSControlSizeRegular
-                             scrollerStyle:scrollerStyle];
+                             scrollerStyle:scrollerStyle
+                                rightExtra:self.desiredRightExtra];
     return outerSize;
+}
+
+- (CGFloat)desiredRightExtra {
+    return [PTYSession desiredRightExtraForProfile:self.profile];
+}
+
++ (iTermTimestampsMode)desiredTimestampsModeForProfile:(Profile *)profile {
+    if (![iTermProfilePreferences boolForKey:KEY_TIMESTAMPS_VISIBLE inProfile:profile]) {
+        return iTermTimestampsModeOff;
+    }
+    return (iTermTimestampsMode)[iTermProfilePreferences unsignedIntegerForKey:KEY_TIMESTAMPS_STYLE
+                                                                     inProfile:profile];
+}
+
+- (iTermTimestampsMode)desiredTimestampMode {
+    return [PTYSession desiredTimestampsModeForProfile:self.profile];
+}
+
++ (CGFloat)desiredRightExtraForProfile:(Profile *)profile {
+    if ([self desiredTimestampsModeForProfile:profile] == iTermTimestampsModeAdjacent) {
+        return 100.0;
+    } else {
+        return 0;
+    }
 }
 
 - (BOOL)setScrollBarVisible:(BOOL)visible style:(NSScrollerStyle)style {
@@ -4001,7 +4027,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [[self.view scrollview] setScrollerStyle:style];
     [[self textview] updateScrollerForBackgroundColor];
-
+    if (self.view.actualRightExtra != self.desiredRightExtra) {
+        self.view.actualRightExtra = self.desiredRightExtra;
+        [self updateMetalDriver];
+        changed = YES;
+    }
     if (changed) {
         [self.view updateLayout];
     }
@@ -5698,8 +5728,12 @@ ITERM_WEAKLY_REFERENCEABLE
         [_originalProfile retain];
     }
 
+    const CGFloat previousRightExtra = [self desiredRightExtra];
     [_profile release];
     _profile = [mutableProfile retain];
+    if (previousRightExtra != self.desiredRightExtra) {
+        [self.delegate.realParentWindow rightExtraDidChange];
+    }
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
     [self invalidateBlend];
     [[_delegate realParentWindow] invalidateRestorableState];
@@ -7575,7 +7609,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                   asciiOffset:asciiOffset
                         scale:_view.window.screen.backingScaleFactor
                       context:_metalContext
-         legacyScrollbarWidth:self.legacyScrollbarWidth];
+         legacyScrollbarWidth:self.legacyScrollbarWidth
+             rightExtraPoints:_view.actualRightExtra];
 }
 
 - (CGFloat)legacyScrollbarWidth {
@@ -11844,23 +11879,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS inProfile:self.profile];
 }
 
+- (iTermTimestampsMode)timestampsMode {
+    return [self desiredTimestampMode];
+}
+
 - (iTermTimestampsMode)textviewTimestampsMode {
-    return (iTermTimestampsMode)[iTermProfilePreferences unsignedIntegerForKey:KEY_SHOW_TIMESTAMPS inProfile:self.profile];
+    return [self timestampsMode];
+}
+
+- (CGFloat)textViewRightExtra {
+    return self.view.actualRightExtra;
 }
 
 - (void)textviewToggleTimestampsMode {
-    iTermTimestampsMode mode = iTermTimestampsModeOff;
-    switch ([self textviewTimestampsMode]) {
-        case iTermTimestampsModeOff:
-            mode = iTermTimestampsModeOn;
-            break;
-        case iTermTimestampsModeOn:
-        case iTermTimestampsModeHover:
-            mode = iTermTimestampsModeOff;
-            break;
-    }
-    [self setSessionSpecificProfileValues:@{ KEY_SHOW_TIMESTAMPS: @(mode) }];
-    [_textview requestDelegateRedraw];
+    const BOOL alreadyVisible = [self desiredTimestampMode] != iTermTimestampsModeOff;
+    const BOOL shouldBeVisible = !alreadyVisible;
+    [self setSessionSpecificProfileValues:@{ KEY_TIMESTAMPS_VISIBLE: @(shouldBeVisible) }];
 }
 
 - (void)textViewSetClickCoord:(VT100GridAbsCoord)coord

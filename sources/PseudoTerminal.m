@@ -443,6 +443,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // Issue 10551
     iTermTextView *_fieldEditor;
     BOOL _needsCanonicalize;
+
+    iTermIdempotentOperationJoiner *_rightExtraJoiner;
 }
 
 @synthesize scope = _scope;
@@ -1086,6 +1088,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_proxyIconOrderEnforcer release];
     [_swipeIdentifier release];
     [_fieldEditor release];
+    [_rightExtraJoiner release];
 
     [super dealloc];
 }
@@ -1268,6 +1271,16 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)draggingDidBeginOrEnd:(NSNotification *)notification {
     [self updateUseMetalInAllTabs];
+}
+
+- (void)rightExtraDidChange {
+    if (!_rightExtraJoiner) {
+        _rightExtraJoiner = [[iTermIdempotentOperationJoiner asyncJoiner:dispatch_get_main_queue()] retain];
+    }
+    __weak __typeof(self) weakSelf = self;
+    [_rightExtraJoiner setNeedsUpdateWithBlock:^{
+        [weakSelf scrollerStyleOrRightExtraDidChange];
+    }];
 }
 
 - (void)tmuxFontDidChange:(NSNotification *)notification {
@@ -4790,12 +4803,13 @@ ITERM_WEAKLY_REFERENCEABLE
     // correct if all we have is a single pane.
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
     NSSize contentSize =
-        [NSScrollView contentSizeForFrameSize:tabSize
-                  horizontalScrollerClass:nil
-                    verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
-                               borderType:NSNoBorder
-                              controlSize:NSControlSizeRegular
-                            scrollerStyle:[self scrollerStyle]];
+        [PTYScrollView contentSizeForFrameSize:tabSize
+                       horizontalScrollerClass:nil
+                         verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
+                                    borderType:NSNoBorder
+                                   controlSize:NSControlSizeRegular
+                                 scrollerStyle:[self scrollerStyle]
+                                    rightExtra:self.currentSession.desiredRightExtra];
 
     int screenWidth = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / charWidth;
     int screenHeight = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / charHeight;
@@ -4812,7 +4826,8 @@ ITERM_WEAKLY_REFERENCEABLE
                          verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
                                     borderType:NSNoBorder
                                    controlSize:NSControlSizeRegular
-                                 scrollerStyle:[self scrollerStyle]];
+                                 scrollerStyle:[self scrollerStyle]
+                                    rightExtra:self.currentSession.desiredRightExtra];
     // Respect minimum tab sizes.
     for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
         PTYTab* theTab = [tabViewItem identifier];
@@ -9349,7 +9364,11 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 - (void)scrollerStyleDidChange:(NSNotification *)notification {
     DLog(@"scrollerStyleDidChange %@", @([NSScroller preferredScrollerStyle]));
+    [self scrollerStyleOrRightExtraDidChange];
+}
 
+- (void)scrollerStyleOrRightExtraDidChange {
+    DLog(@"scrollerStyleOrRightExtraDidChange");
     [self updateSessionScrollbars];
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
@@ -10184,12 +10203,13 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if (size != nil) {
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
         NSSize contentSize =
-            [NSScrollView contentSizeForFrameSize:*size
-                      horizontalScrollerClass:nil
-                        verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
-                                   borderType:NSNoBorder
-                                  controlSize:NSControlSizeRegular
-                                scrollerStyle:[self scrollerStyle]];
+            [PTYScrollView contentSizeForFrameSize:*size
+                           horizontalScrollerClass:nil
+                             verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
+                                        borderType:NSNoBorder
+                                       controlSize:NSControlSizeRegular
+                                     scrollerStyle:[self scrollerStyle]
+                                        rightExtra:self.currentSession.desiredRightExtra];
         rows = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / charSize.height;
         columns = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / charSize.width;
         sessionRect.origin = NSZeroPoint;

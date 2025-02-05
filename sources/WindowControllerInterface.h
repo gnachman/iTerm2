@@ -299,6 +299,7 @@
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
 
 - (void)tabDidClearScrollbackBufferInSession:(PTYSession *)session;
+- (void)rightExtraDidChange;
 
 #pragma mark - Instant replay
 

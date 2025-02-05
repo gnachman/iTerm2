@@ -299,7 +299,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_USE_LIBTICKIT_PROTOCOL, KEY_WINDOW_TYPE, KEY_ALLOW_PASTE_BRACKETING,
                              KEY_PREVENT_APS, KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS,
                              KEY_TREAT_OPTION_AS_ALT,
-                             KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY, KEY_SHOW_TIMESTAMPS,
+                             KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY, KEY_TIMESTAMPS_STYLE,
+                             KEY_TIMESTAMPS_VISIBLE,
                              KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE,
                              KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY,
                              KEY_DYNAMIC_PROFILE_REWRITABLE,
@@ -652,7 +653,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_ALLOW_PASTE_BRACKETING: @YES,
                   KEY_PREVENT_APS: @NO,
                   KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY: @NO,
-                  KEY_SHOW_TIMESTAMPS: @([iTermAdvancedSettingsModel showTimestampsByDefault] ? iTermTimestampsModeOn : iTermTimestampsModeOff),
+                  KEY_TIMESTAMPS_STYLE: @(iTermTimestampsModeOverlap),
+                  // Migration path for former advanced setting
+                  KEY_TIMESTAMPS_VISIBLE: [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowTimestampsByDefault"] ?: @NO,
                   KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @NO,
                   KEY_SNIPPETS_FILTER: @[],
 
@@ -807,7 +810,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BRIGHTEN_BOLD_TEXT: PROFILE_BLOCK(brightenBoldText),
                   KEY_BRIGHTEN_BOLD_TEXT COLORS_LIGHT_MODE_SUFFIX: PROFILE_BLOCK(brightenBoldTextLight),
                   KEY_BRIGHTEN_BOLD_TEXT COLORS_DARK_MODE_SUFFIX: PROFILE_BLOCK(brightenBoldTextDark),
-                  KEY_TREAT_OPTION_AS_ALT: PROFILE_BLOCK(treatOptionAsAlt)
+                  KEY_TREAT_OPTION_AS_ALT: PROFILE_BLOCK(treatOptionAsAlt),
+                  KEY_TIMESTAMPS_STYLE: PROFILE_BLOCK(timestampsStyle),
+                  KEY_TIMESTAMPS_VISIBLE: PROFILE_BLOCK(timestampsVisible),
                 };
     }
     return dict;
@@ -958,6 +963,34 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     // this setting directly, fall back to the "use bold color" setting.
     return [self objectForKey:KEY_USE_BOLD_COLOR
                     inProfile:profile];
+}
+
++ (id)timestampsStyle:(Profile *)profile {
+    id actual = profile[KEY_TIMESTAMPS_STYLE];
+    if (actual) {
+        return actual;
+    }
+    NSNumber *fallback = [NSNumber castFrom:profile[KEY_SHOW_TIMESTAMPS]];
+    if (!fallback || fallback.unsignedIntegerValue == iTermTimestampsModeOff) {
+        return @(iTermTimestampsModeOverlap);
+    }
+    return fallback;
+}
+
++ (id)timestampsVisible:(Profile *)profile {
+    NSNumber *visibleSetting = [NSNumber castFrom:profile[KEY_TIMESTAMPS_VISIBLE]];
+    NSNumber *legacySetting = [NSNumber castFrom:profile[KEY_SHOW_TIMESTAMPS]];
+
+    if (visibleSetting) {
+        // Modern code path
+        return visibleSetting;
+    }
+    if (legacySetting) {
+        // Migreate legacy setting
+        return @(((iTermTimestampsMode)legacySetting.unsignedIntegerValue) != iTermTimestampsModeOff);
+    }
+    // Default code path
+    return @NO;
 }
 
 + (id)treatOptionAsAlt:(Profile *)profile {

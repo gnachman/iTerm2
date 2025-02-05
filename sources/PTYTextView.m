@@ -470,7 +470,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     }
     if ([item action] == @selector(toggleShowTimestamps:)) {
         switch ([self.delegate textviewTimestampsMode]) {
-            case iTermTimestampsModeOn:
+            case iTermTimestampsModeOverlap:
+            case iTermTimestampsModeAdjacent:
                 item.state = NSControlStateValueOn;
                 break;
             case iTermTimestampsModeOff:
@@ -818,7 +819,6 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         aFrame.origin.y = range.start.y * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];  // allow for top margin
         aFrame.size.width = [self frame].size.width;
         aFrame.size.height = (range.end.y - range.start.y + 1) * _lineHeight;
-        NSScrollView *scrollView = self.enclosingScrollView;
         [self cancelMomentumScroll];
         [self lockScroll];
     }];
@@ -1653,7 +1653,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _drawingHelper.kittyImageDraws = [self.dataSource kittyImageDraws];
     const VT100GridRange range = [self rangeOfVisibleLines];
     _drawingHelper.folds = [self.dataSource foldsInRange:range];
-    
+    _drawingHelper.rightExtra = self.delegate.textViewRightExtra;
+
     [_drawingHelper updateCachedMetrics];
     if (@available(macOS 11, *)) {
         [_drawingHelper updateButtonFrames];
@@ -2110,7 +2111,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (BOOL)showTimestamps {
     switch ([self.delegate textviewTimestampsMode]) {
-        case iTermTimestampsModeOn:
+        case iTermTimestampsModeOverlap:
+        case iTermTimestampsModeAdjacent:
             return YES;
         case iTermTimestampsModeOff:
             return NO;

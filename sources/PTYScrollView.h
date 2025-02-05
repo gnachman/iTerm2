@@ -67,4 +67,61 @@ typedef NS_ENUM(NSUInteger, PTYScrollerState) {
 // integer.
 - (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent;
 
+// These overrides a gross hack for putting extra content inside the scrollview next to terminal
+// contents. The "rightExtra" value should arguably be folded into cSize/fSize, but then the type
+// system wouldn't be able to help me find all the places where we add extra size to the right-hand
+// side of a scrolleriew (such as we already do for legacy scrollers), which happens to be exactly
+// what is needed for timestamps adjacent to content.
++ (NSSize)frameSizeForContentSize:(NSSize)cSize
+          horizontalScrollerClass:(Class)horizontalScrollerClass
+            verticalScrollerClass:(Class)verticalScrollerClass
+                       borderType:(NSBorderType)type
+                      controlSize:(NSControlSize)controlSize
+                    scrollerStyle:(NSScrollerStyle)scrollerStyle NS_UNAVAILABLE;
+
++ (NSSize)frameSizeForContentSize:(NSSize)cSize
+            hasHorizontalScroller:(BOOL)hFlag
+              hasVerticalScroller:(BOOL)vFlag
+                       borderType:(NSBorderType)type NS_UNAVAILABLE;
+
++ (NSSize)frameSizeForContentSize:(NSSize)cSize
+          horizontalScrollerClass:(Class)horizontalScrollerClass
+            verticalScrollerClass:(Class)verticalScrollerClass
+                       borderType:(NSBorderType)type
+                      controlSize:(NSControlSize)controlSize
+                    scrollerStyle:(NSScrollerStyle)scrollerStyle
+                       rightExtra:(CGFloat)rightExtra;
+
++ (NSSize)frameSizeForContentSize:(NSSize)cSize
+            hasHorizontalScroller:(BOOL)hFlag
+              hasVerticalScroller:(BOOL)vFlag
+                       borderType:(NSBorderType)type
+                       rightExtra:(CGFloat)rightExtra;
+
++ (NSSize)contentSizeForFrameSize:(NSSize)fSize
+          horizontalScrollerClass:(Class)horizontalScrollerClass
+            verticalScrollerClass:(Class)verticalScrollerClass
+                       borderType:(NSBorderType)type
+                      controlSize:(NSControlSize)controlSize
+                    scrollerStyle:(NSScrollerStyle)scrollerStyle NS_UNAVAILABLE;
+
++ (NSSize)contentSizeForFrameSize:(NSSize)fSize
+            hasHorizontalScroller:(BOOL)hFlag
+              hasVerticalScroller:(BOOL)vFlag
+                       borderType:(NSBorderType)type NS_UNAVAILABLE;
+
++ (NSSize)contentSizeForFrameSize:(NSSize)fSize
+          horizontalScrollerClass:(Class)horizontalScrollerClass
+            verticalScrollerClass:(Class)verticalScrollerClass
+                       borderType:(NSBorderType)type
+                      controlSize:(NSControlSize)controlSize
+                    scrollerStyle:(NSScrollerStyle)scrollerStyle
+                       rightExtra:(CGFloat)rightExtra;
+
++ (NSSize)contentSizeForFrameSize:(NSSize)fSize
+            hasHorizontalScroller:(BOOL)hFlag
+              hasVerticalScroller:(BOOL)vFlag
+                       borderType:(NSBorderType)type
+                       rightExtra:(CGFloat)rightExtra;
+
 @end

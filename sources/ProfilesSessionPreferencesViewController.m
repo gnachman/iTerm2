@@ -83,6 +83,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     IBOutlet NSButton *_openPasswordManagerAutomatically;
     IBOutlet NSPopUpButton *_showTimestampsPopup;
+    IBOutlet NSButton *_timestampsEnabled;
     IBOutlet NSTextField *_showTimestampsLabel;
     IBOutlet NSButton *_warnAboutShortLivedSessions;
 
@@ -298,10 +299,15 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_showTimestampsPopup
-                    key:KEY_SHOW_TIMESTAMPS
-            relatedView:_showTimestampsLabel
-                   type:kPreferenceInfoTypePopup];
+    info = [self defineControl:_showTimestampsPopup
+                           key:KEY_TIMESTAMPS_STYLE
+                   relatedView:_showTimestampsLabel
+                          type:kPreferenceInfoTypePopup];
+
+    info = [self defineControl:_timestampsEnabled
+                    key:KEY_TIMESTAMPS_VISIBLE
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     info = [self unsafeDefineControl:_warnAboutShortLivedSessions
                                  key:ProfilesSessionPreferencesViewControllerPhonyShortLivedSessionsKey

@@ -239,7 +239,13 @@
 #define KEY_STATUS_BAR_LAYOUT                 @"Status Bar Layout"
 #define KEY_LOGGING_STYLE                     @"Plain Text Logging"  // Formerly a boolean (false=raw, true=text) now an integer (iTermLoggingStyle)
 #define KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY @"Open Password Manager Automatically"
+
+// NOTE: KEY_SHOW_TIMESTAMPS was the original value. It is no longer used, and we just keep it around for migration to the new settings.
 #define KEY_SHOW_TIMESTAMPS                   @"Show Timestamps"  // NSNumber iTermTimestampsMode
+
+// These have computed values to ease migration from KEY_SHOW_TIMESTAMPS.
+#define KEY_TIMESTAMPS_STYLE                  @"Timestamps Style"  // Cannot be .off
+#define KEY_TIMESTAMPS_VISIBLE                @"Timestamps Visible"  // Boolean
 
 // Keyboard
 #define KEY_KEYBOARD_MAP                      @"Keyboard Map"
@@ -458,8 +464,9 @@ typedef NS_ENUM(NSUInteger, iTermProfileIcon) {
 
 typedef NS_ENUM(NSUInteger, iTermTimestampsMode) {
     iTermTimestampsModeOff,
-    iTermTimestampsModeOn,
-    iTermTimestampsModeHover
+    iTermTimestampsModeOverlap,
+    iTermTimestampsModeHover,
+    iTermTimestampsModeAdjacent
 };
 
 typedef NS_ENUM(NSUInteger, iTermLoggingStyle) {

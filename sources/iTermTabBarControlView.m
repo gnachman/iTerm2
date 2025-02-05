@@ -14,7 +14,7 @@
 #import "NSView+iTerm.h"
 #import "NSWindow+iTerm.h"
 
-@interface NSView (Private)
+@interface NSView (Private2)
 - (NSRect)_opaqueRectForWindowMoveWhenInTitlebar;
 @end
 

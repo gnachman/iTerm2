@@ -975,6 +975,8 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)handleKeyDownWithBuckyBits:(NSEvent *)event;
 - (BOOL)handleKeyUpWithBuckyBits:(NSEvent *)event;
 - (BOOL)handleFlagsChangedWithBuckyBits:(NSEvent *)event;
+- (CGFloat)desiredRightExtra;
++ (CGFloat)desiredRightExtraForProfile:(Profile *)profile;
 
 #pragma mark - API
 

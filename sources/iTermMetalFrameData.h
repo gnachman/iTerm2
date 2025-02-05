@@ -162,6 +162,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) BOOL textureIsFamiliar;
 #endif  // ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 @property (nonatomic) CGFloat maximumExtendedDynamicRangeColorComponentValue;
+@property (nonatomic) CGFloat rightExtraPixels;
 @property (nonatomic) CGFloat vmargin;
 
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)

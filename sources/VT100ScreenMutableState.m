@@ -5739,10 +5739,10 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)triggerSession:(Trigger *)trigger
   addNamedMarkWithName:(NSString *)name
         atAbsoluteLine:(long long)absLine {
-    id<iTermMark> mark = [self addMarkStartingAtAbsoluteLine:absLine
-                                                     oneLine:NO
-                                                     ofClass:[VT100ScreenMark class]
-                                                    modifier:^(id<iTermMark> mark) {
+    [self addMarkStartingAtAbsoluteLine:absLine
+                                oneLine:NO
+                                ofClass:[VT100ScreenMark class]
+                               modifier:^(id<iTermMark> mark) {
         VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
         screenMark.name = name;
     }];
