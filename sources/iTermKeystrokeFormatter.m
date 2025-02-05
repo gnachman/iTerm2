@@ -8,6 +8,7 @@
 #import "iTermKeystrokeFormatter.h"
 
 #import "iTermKeystroke.h"
+#import "DebugLogging.h"
 #import "NSStringITerm.h"
 
 #import <Carbon/Carbon.h>
@@ -33,23 +34,27 @@
                     hasKeyCode:(BOOL)hasKeyCode
                      character:(unichar)character
                        isArrow:(BOOL *)isArrow {
+    DLog(@"stringForKeyCode:%@ hasKeyCode:%@ character:%@", @(virtualKeyCode), (hasKeyCode), @(character));
     TISInputSourceRef inputSource = NULL;
     NSString *result = nil;
 
     if (hasKeyCode) {
         inputSource = TISCopyCurrentKeyboardInputSource();
         if (inputSource == NULL) {
+            DLog(@"nil input source");
             goto exit;
         }
 
         CFDataRef keyLayoutData = TISGetInputSourceProperty(inputSource,
                                                             kTISPropertyUnicodeKeyLayoutData);
         if (keyLayoutData == NULL) {
+            DLog(@"nil key layout data");
             goto exit;
         }
 
         const UCKeyboardLayout *keyLayoutPtr = (const UCKeyboardLayout *)CFDataGetBytePtr(keyLayoutData);
         if (keyLayoutPtr == NULL) {
+            DLog(@"nil key layout");
             goto exit;
         }
 
@@ -68,18 +73,22 @@
                                          &actualStringLength,
                                          unicodeString);
         if (status != noErr) {
+            DLog(@"status %@", @(status));
             goto exit;
         }
 
         if (actualStringLength == 0) {
+            DLog(@"empty actual string");
             goto exit;
         }
 
         if (unicodeString[0] <= ' ' || unicodeString[0] == 127) {
+            DLog(@"invalid unicodeString[0] %@", @(unicodeString[0]));
             goto exit;
         }
 
         result = [NSString stringWithCharacters:unicodeString length:actualStringLength];
+        DLog(@"result=%@", result);
     }
 
 exit:
@@ -93,6 +102,7 @@ exit:
 }
 
 + (NSString *)stringForCharacter:(unsigned int)character isArrow:(BOOL *)isArrowPtr {
+    DLog(@"stringForCharacter:%@", @(character));
     BOOL isArrow = NO;
     NSString *aString = nil;
     switch (character) {
@@ -223,8 +233,10 @@ exit:
 
         default:
             if (character > ' ' && (character < 0xe800 || character > 0xfdff) && character < 0xffff) {
+                DLog(@"Is regular character");
                 aString = [NSString stringWithFormat:@"%C", (unichar)character];
             } else {
+                DLog(@"Is special");
                 switch (character) {
                     case ' ':
                         aString = @"Space";
