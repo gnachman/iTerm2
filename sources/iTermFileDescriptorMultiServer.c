@@ -460,7 +460,12 @@ static int WaitForAllProcesses(int connectionFd) {
         }
         const pid_t pid = WaitPidNoHang(children[i].pid, &children[i].status);
         if (pid > 0) {
-            FDLog(LOG_DEBUG, "Child with pid %d exited with status %d", (int)pid, children[i].status);
+            const int status = children[i].status;
+            FDLog(LOG_DEBUG, "Child with pid %d exited with status %d (exited=%d, exit status=%d, signaled=%d, signal=%d, stopped=%d, coredump=%d, stop signal=%d)",
+                  (int)pid, status,
+                  WIFEXITED(status), WEXITSTATUS(status),
+                  WIFSIGNALED(status), WTERMSIG(status),
+                  WIFSTOPPED(status), WCOREDUMP(status), WSTOPSIG(status));
             children[i].terminated = 1;
             if (!children[i].willTerminate &&
                 connectionFd >= 0 &&
