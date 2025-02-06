@@ -834,6 +834,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         NSScrollView *scrollView = self.enclosingScrollView;
         [self cancelMomentumScroll];
         [self lockScroll];
+        [self scrollRectToVisible:aFrame];
     }];
 }
 
