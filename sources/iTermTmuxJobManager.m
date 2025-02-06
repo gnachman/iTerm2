@@ -63,7 +63,8 @@
                      initialPwd:(NSString *)initialPwd
                      newEnviron:(NSArray<NSString *> *)newEnviron
                            task:(id<iTermTask>)task
-                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion  {
+                     completion:(void (^)(iTermJobManagerForkAndExecStatus,
+                                          NSNumber *))completion  {
     assert(NO);
 }
 

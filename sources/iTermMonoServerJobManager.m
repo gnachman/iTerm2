@@ -89,14 +89,15 @@
                      initialPwd:(NSString *)initialPwd
                      newEnviron:(NSArray<NSString *> *)newEnviron
                            task:(id<iTermTask>)task
-                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion  {
+                     completion:(void (^)(iTermJobManagerForkAndExecStatus, NSNumber *))completion  {
     // Completion wrapper. NOT called on self.queue because that will deadlock.
-    void (^wrapper)(iTermJobManagerForkAndExecStatus) = ^(iTermJobManagerForkAndExecStatus status) {
+    void (^wrapper)(iTermJobManagerForkAndExecStatus, NSNumber *) = ^(iTermJobManagerForkAndExecStatus status,
+                                                                      NSNumber *optionalErrorCode) {
         if (status == iTermJobManagerForkAndExecStatusSuccess) {
             DLog(@"Register %@ after fork and exec", @(task.pid));
             [[TaskNotifier sharedInstance] registerTask:task];
         }
-        completion(status);
+        completion(status, optionalErrorCode);
     };
 
     __block iTermJobManagerForkAndExecStatus savedStatus = iTermJobManagerForkAndExecStatusSuccess;
@@ -107,11 +108,12 @@
                                 initialPwd:initialPwd
                                 newEnviron:newEnviron
                                       task:task
-                                completion:^(iTermJobManagerForkAndExecStatus status) {
+                                completion:^(iTermJobManagerForkAndExecStatus status,
+                                             NSNumber *optionalErrorCode) {
             // Completion handler called after queueForkAndExecWithTtyState returns, but still
             // on self.queue.
             dispatch_async(dispatch_get_main_queue(), ^{
-                wrapper(savedStatus);
+                wrapper(savedStatus, nil);
             });
         }];
     });
@@ -123,13 +125,14 @@
                           initialPwd:(NSString *)initialPwd
                           newEnviron:(NSArray<NSString *> *)newEnviron
                                 task:(id<iTermTask>)task
-                          completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+                          completion:(void (^)(iTermJobManagerForkAndExecStatus,
+                                               NSNumber *))completion {
     // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
     DLog(@"get path to UDS");
     NSString *unixDomainSocketPath = [self pathToNewUnixDomainSocket];
     DLog(@"done");
     if (unixDomainSocketPath == nil) {
-        completion(iTermJobManagerForkAndExecStatusTempFileError);
+        completion(iTermJobManagerForkAndExecStatusTempFileError, nil);
         return;
     }
 
@@ -163,7 +166,7 @@
     _serverPid = forkState.pid;
 
     if (forkState.pid < (pid_t)0) {
-        completion(iTermJobManagerForkAndExecStatusFailedToFork);
+        completion(iTermJobManagerForkAndExecStatusFailedToFork, nil);
         return;
     }
 
@@ -176,7 +179,7 @@
 - (void)queueDidForkParent:(const iTermForkState *)forkStatePtr
                   ttyState:(iTermTTYState)ttyState
                       task:(id<iTermTask>)task
-                completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+                completion:(void (^)(iTermJobManagerForkAndExecStatus, NSNumber *))completion {
     // Make sure the master side of the pty is closed on future exec() calls.
     DLog(@"fcntl");
     fcntl(self.fd, F_SETFD, fcntl(self.fd, F_GETFD) | FD_CLOEXEC);
@@ -198,7 +201,7 @@
                                                 ttyState:ttyState
                                         serverConnection:serverConnection
                                                     task:task];
-            completion(status);
+            completion(status, nil);
         });
     });
 }

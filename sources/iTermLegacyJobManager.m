@@ -75,7 +75,8 @@
                      initialPwd:(NSString *)initialPwd
                      newEnviron:(NSArray<NSString *> *)newEnviron
                            task:(id<iTermTask>)task
-                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion  {
+                     completion:(void (^)(iTermJobManagerForkAndExecStatus,
+                                          NSNumber *))completion  {
     __block iTermJobManagerForkAndExecStatus status = iTermJobManagerForkAndExecStatusSuccess;
     dispatch_sync(self.queue, ^{
         status =
@@ -91,7 +92,7 @@
         [[TaskNotifier sharedInstance] registerTask:task];
     }
     if (completion) {
-        completion(status);
+        completion(status, nil);
     }
 }
 

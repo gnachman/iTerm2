@@ -125,7 +125,8 @@ typedef struct {
                      initialPwd:(NSString *)initialPwd
                      newEnviron:(NSArray<NSString *> *)newEnviron
                            task:(id<iTermTask>)task
-                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion  {
+                     completion:(void (^)(iTermJobManagerForkAndExecStatus,
+                                          NSNumber *optionalErrorCode))completion  {
     DLog(@"begin");
     iTermMultiServerJobManagerForkRequest forkRequest = {
         .ttyState = ttyState,
@@ -138,7 +139,7 @@ typedef struct {
                                                                   iTermMultiServerConnection *conn) {
         DLog(@"Callback for %@ run with connection %@", self, conn);
         if (!conn) {
-            completion(iTermJobManagerForkAndExecStatusServerLaunchFailed);
+            completion(iTermJobManagerForkAndExecStatusServerLaunchFailed, nil);
             return;
         }
         DLog(@"Set conn of %@ to %@", self, conn);
@@ -147,11 +148,12 @@ typedef struct {
                                    connection:conn
                                          task:task
                                         state:state
-                                   completion:^(iTermJobManagerForkAndExecStatus status) {
+                                   completion:^(iTermJobManagerForkAndExecStatus status,
+                                                NSNumber *optionalErrorCode) {
             iTermFreeeNullTerminatedCStringArray(forkRequest.argv);
             iTermFreeeNullTerminatedCStringArray(forkRequest.environ);
             if (completion) {
-                completion(status);
+                completion(status, optionalErrorCode);
             }
         }];
     }];
@@ -162,7 +164,8 @@ typedef struct {
                              connection:(iTermMultiServerConnection *)conn
                                    task:(id<iTermTask>)task
                                   state:(iTermMultiServerJobManagerState *)state
-                             completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+                             completion:(void (^)(iTermJobManagerForkAndExecStatus,
+                                                  NSNumber *code))completion {
     DLog(@"begin");
     [state check];
 
@@ -179,7 +182,7 @@ typedef struct {
                 DLog(@"Register %@ after server successfully execs job", @(child.pid));
                 [[TaskNotifier sharedInstance] registerTask:task];
                 [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-                completion(iTermJobManagerForkAndExecStatusSuccess);
+                completion(iTermJobManagerForkAndExecStatusSuccess, nil);
             });
         } error:
          ^(NSError * _Nonnull error) {
@@ -197,11 +200,12 @@ typedef struct {
                 case iTermFileDescriptorMultiClientErrorCannotConnect:
                 case iTermFileDescriptorMultiClientErrorProtocolError:
                 case iTermFileDescriptorMultiClientErrorAlreadyWaited:
-                    completion(iTermJobManagerForkAndExecStatusServerError);
+                    completion(iTermJobManagerForkAndExecStatusServerError, nil);
                     return;
                     
                 case iTermFileDescriptorMultiClientErrorCodeForkFailed:
-                    completion(iTermJobManagerForkAndExecStatusFailedToFork);
+                    completion(iTermJobManagerForkAndExecStatusFailedToFork,
+                               error.userInfo[@"code"]);
                     return;
             }
             assert(NO);

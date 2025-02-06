@@ -752,11 +752,11 @@ static void HandleSigChld(int n) {
                                   newEnviron:newEnviron
                                         task:self
                                   completion:
-     ^(iTermJobManagerForkAndExecStatus status) {
+     ^(iTermJobManagerForkAndExecStatus status, NSNumber *optionalErrorCode) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self didForkAndExec:progpath
                       withStatus:status
-                     errorNumber:errno];
+               optionalErrorCode:optionalErrorCode];
             if (completion) {
                 completion();
             }
@@ -767,7 +767,7 @@ static void HandleSigChld(int n) {
 // Main queue
 - (void)didForkAndExec:(NSString *)progpath
             withStatus:(iTermJobManagerForkAndExecStatus)status
-           errorNumber:(int)errorNumber {
+     optionalErrorCode:(NSNumber *)optionalErrorCode {
     switch (status) {
         case iTermJobManagerForkAndExecStatusSuccess:
             // Parent
@@ -779,11 +779,17 @@ static void HandleSigChld(int n) {
             [self showFailedToCreateTempSocketError];
             break;
 
-        case iTermJobManagerForkAndExecStatusFailedToFork:
-            DLog(@"Unable to fork %@: %s", progpath, strerror(errorNumber));
+        case iTermJobManagerForkAndExecStatusFailedToFork: {
+            DLog(@"Unable to fork %@: %s", progpath, strerror(optionalErrorCode.intValue));
+            NSString *error = @"Unable to fork child process: you may have too many processes already running.";
+            if (optionalErrorCode) {
+                error = [NSString stringWithFormat:@"%@ The system error was: %s", error, strerror(optionalErrorCode.intValue)];
+            }
             [[iTermNotificationController sharedInstance] notify:@"Unable to fork!"
-                                                 withDescription:@"You may have too many processes already running."];
+                                                 withDescription:error];
+            [self.delegate taskDiedWithError:error];
             break;
+        }
 
         case iTermJobManagerForkAndExecStatusTaskDiedImmediately:
         case iTermJobManagerForkAndExecStatusServerError:

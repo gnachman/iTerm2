@@ -580,7 +580,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
 
     if (launch.status != 0) {
         DLog(@"handleLaunch: error status %@ for %@", @(launch.status), _socketPath);
-        [pendingLaunch.launchCallback invokeWithObject:[iTermResult withError:self.forkError]];
+        [pendingLaunch.launchCallback invokeWithObject:[iTermResult withError:[self forkErrorWithCode:launch.status]]];
         [pendingLaunch invalidate];
         return;
     }
@@ -1354,10 +1354,10 @@ static void HexDump(NSData *data) {
 
 #pragma mark - Error Helpers
 
-- (NSError *)forkError {
+- (NSError *)forkErrorWithCode:(int)code {
     return [NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
                                code:iTermFileDescriptorMultiClientErrorCodeForkFailed
-                           userInfo:nil];
+                           userInfo:@{ @"code": @(code) }];
 }
 
 - (NSError *)connectionLostError {

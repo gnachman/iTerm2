@@ -28,6 +28,7 @@
 
 // Called on main thread from within launchWithPath:arguments:environment:customShell:gridSize:viewSize:isUTF8:.
 - (void)taskDiedImmediately;
+- (void)taskDiedWithError:(NSString *)error;
 
 // Main thread
 - (void)taskDidChangeTTY:(PTYTask *)task;
@@ -101,7 +102,8 @@ typedef struct {
                      initialPwd:(NSString *)initialPwd
                      newEnviron:(NSArray<NSString *> *)newEnviron
                            task:(id<iTermTask>)task
-                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion;
+                     completion:(void (^)(iTermJobManagerForkAndExecStatus,
+                                          NSNumber *optionalErrorCode))completion;
 
 typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
     iTermJobManagerAttachResultsAttached = (1 << 0),

@@ -3681,6 +3681,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                              VT100ScreenMutableState *mutableState,
                                              id<VT100ScreenDelegate> delegate) {
+        if (mutableState.cursorX == 1 && mutableState.cursorY == 1 && mutableState.numberOfScrollbackLines == 0) {
+            // The session is completely empty. Add some newlines so the error isn't hidden by the announcement.
+            for (int i = 0; i < mutableState.height; i++) {
+                [mutableState appendLineFeed];
+            }
+        }
+
         NSString *const message = [NSString stringWithFormat:@" %@ ", unpaddedMessage];
         if (mutableState.cursorX != 1) {
             [mutableState appendCarriageReturnLineFeed];
@@ -3795,6 +3802,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self performSelector:@selector(brokenPipe) withObject:nil afterDelay:0];
 }
 
+- (void)taskDiedWithError:(NSString *)error {
+    [self performSelector:@selector(brokenPipeWithError:) withObject:error afterDelay:0];
+}
+
 - (void)taskDidChangeTTY:(PTYTask *)task {
     [self.variablesScope setValue:task.tty forVariableNamed:iTermVariableKeySessionTTY];
 }
@@ -3844,7 +3855,11 @@ ITERM_WEAKLY_REFERENCEABLE
 // Called when the file descriptor closes. If -terminate was already called this does nothing.
 // Otherwise, you can call replaceTerminatedShellWithNewInstance after this to restart the session.
 - (void)brokenPipe {
-    DLog(@"  brokenPipe %@ task=%@\n%@", self, self.shell, [NSThread callStackSymbols]);
+    [self brokenPipeWithError:@"Session Ended"];
+}
+
+- (void)brokenPipeWithError:(NSString *)message {
+    DLog(@"  brokenPipe %@ task=%@ message=%@\n%@", self, self.shell, message, [NSThread callStackSymbols]);
     if (_exited) {
         DLog(@"  brokenPipe: Already exited");
         return;
@@ -3886,7 +3901,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.tmuxMode == TMUX_GATEWAY) {
         [self forceTmuxDetach];
     }
-    [self appendBrokenPipeMessage:@"Session Ended"];
+    [self appendBrokenPipeMessage:message];
     switch (self.endAction) {
         case iTermSessionEndActionClose:
             if ([_delegate sessionShouldAutoClose:self]) {
