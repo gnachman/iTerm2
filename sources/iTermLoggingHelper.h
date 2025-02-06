@@ -72,7 +72,8 @@ extern NSString *const iTermLoggingHelperErrorNotificationGUIDKey;
 - (void)setPath:(NSString *)path enabled:(BOOL)enabled
           style:(iTermLoggingStyle)style
 asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
-         append:(nullable NSNumber *)append;
+         append:(nullable NSNumber *)append
+         window:(nullable NSWindow *)window;
 - (void)stop;
 
 - (void)logData:(NSData *)data;

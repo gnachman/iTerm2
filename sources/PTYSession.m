@@ -2054,7 +2054,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                           enabled:YES
                                             style:loggingStyle
                                 asciicastMetadata:[aSession asciicastMetadata]
-                                           append:@YES];
+                                           append:@YES
+                                           window:aSession.view.window];
             }
             [aSession autorelease];
             runCommandBlock(finish);
@@ -2932,7 +2933,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                     style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE
                                                                                                                       inProfile:self.profile])
                         asciicastMetadata:[self asciicastMetadata]
-                                   append:nil];
+                                   append:nil
+                                   window:self.view.window];
             if (env[PWD_ENVNAME] && arrangementName && _arrangementGUID) {
                 __weak __typeof(self) weakSelf = self;
                 [[iTermSlowOperationGateway sharedInstance] checkIfDirectoryExists:env[PWD_ENVNAME]
@@ -5635,7 +5637,8 @@ ITERM_WEAKLY_REFERENCEABLE
                           enabled:YES
                             style:style
                 asciicastMetadata:[self asciicastMetadata]
-                           append:@(shouldAppend)];
+                           append:@(shouldAppend)
+                           window:self.view.window];
 }
 
 - (void)logStop {

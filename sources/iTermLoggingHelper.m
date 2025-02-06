@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermNotificationController.h"
 #import "iTermVariableScope+Session.h"
@@ -97,10 +98,19 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
         enabled:(BOOL)enabled
           style:(iTermLoggingStyle)style
 asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
-         append:(nullable NSNumber *)append {
+         append:(nullable NSNumber *)append
+         window:(nullable NSWindow *)window {
+    if (path) {
+        const BOOL ok =[[NSFileManager defaultManager] it_promptToCreateEnclosingDirectoryFor:path
+                                                                                        title:@"Logging Folder Not Found"
+                                                                                   identifier:@"LoggingFolder"
+                                                                                       window:window];
+        if (!ok) {
+            return;
+        }
+    }
     const BOOL wasLoggingRaw = self.isLoggingRaw;
     const BOOL wasLoggingCooked = self.isLoggingCooked;
-
     _path = [path copy];
     _enabled = path != nil && enabled;
     _style = style;
