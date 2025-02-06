@@ -821,6 +821,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         aFrame.size.height = (range.end.y - range.start.y + 1) * _lineHeight;
         [self cancelMomentumScroll];
         [self lockScroll];
+        [self scrollRectToVisible:aFrame];
     }];
 }
 
