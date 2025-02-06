@@ -231,6 +231,10 @@
     DLog(@"Need to convert colorspace. Best rep is %@", rep);
     CGImageRef cgImage = [rep CGImageForProposedRect:nil context:nil hints:nil];
     DLog(@"cgImage=%@", cgImage);
+    if (cgImage == nil) {
+        // I've noticed this happens when low on memory. bitmapImageRepByConvertingToColorSpace will die with an assertion, so better to return nil now.
+        return nil;
+    }
     NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
     DLog(@"bitmap=%@", bitmap);
     bitmap = [bitmap bitmapImageRepByConvertingToColorSpace:colorSpace renderingIntent:NSColorRenderingIntentDefault];
