@@ -789,7 +789,7 @@ DEFINE_STRING(aiModernModelPrefixes, @"gpt-", SECTION_EXPERIMENTAL @"AI model na
 DEFINE_BOOL(addUtilitiesToPATH, YES, SECTION_EXPERIMENTAL @"Add path to iTerm2 utilities to $PATH for new sessions?");
 DEFINE_BOOL(autoSearch, NO, SECTION_EXPERIMENTAL @"Automatically search for selected text after making a selection?");
 DEFINE_BOOL(smartLoggingWithAutoComposer, NO, SECTION_EXPERIMENTAL @"Enable more compact logging when using auto composer?\nThis will avoid logging raw data in your prompt and your interactions with it. Instead, the prompt is logged once in plain text and the command is logged when sent.");
-DEFINE_BOOL(disclaimChildren, NO, SECTION_EXPERIMENTAL @"Disclaim ownership of children.\nBy enabling this, when launching a Cocoa app from a terminal window TCC should attribute ownership to the app, not iTerm2, for permissions. In order for changes to this setting to take effect, you must kill iTermServer.");
+DEFINE_BOOL(disclaimChildren, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Disclaim ownership of children.\nBy enabling this, when launching a Cocoa app from a terminal window TCC should attribute ownership to the app, not iTerm2, for permissions. In order for changes to this setting to take effect, you must kill iTermServer.");
 DEFINE_BOOL(restoreKeyModeAutomaticallyOnHostChange, YES, SECTION_EXPERIMENTAL @"Automatically restore keyboard mode when an ssh session ends?");
 DEFINE_BOOL(useSSHIntegrationForURLOpening, NO, SECTION_EXPERIMENTAL @"Use SSH integration when opening an ssh: URL");
 DEFINE_BOOL(chaseAnchoredScreen, NO, SECTION_EXPERIMENTAL @"Aggressively keep windows on the screen they were configured to be on");
