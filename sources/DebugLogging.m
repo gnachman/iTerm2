@@ -41,6 +41,14 @@ static void AppendWindowDescription(NSWindow *window, NSMutableString *windows) 
      window,
      [window delegate],
      [window.contentView iterm_recursiveDescription]];
+
+    PseudoTerminal *term = [PseudoTerminal castFrom:window.delegate];
+    if (term) {
+        for (PTYSession *session in term.allSessions) {
+            NSString *itd = [[session screen] intervalTreeDump];
+            [windows appendFormat:@"For %@:\n%@\n\n", session, itd];
+        }
+    }
 }
 
 static NSString *iTermMachineInfo(void) {
@@ -81,7 +89,6 @@ static void WriteDebugLogHeader(void) {
     for (NSString *key in [[gPinnedMessages allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [pinnedMessages appendString:gPinnedMessages[key]];
     }
-    NSString *itd = [[[[[iTermController sharedInstance] currentTerminal] currentSession] screen] intervalTreeDump];
     NSString *header = [NSString stringWithFormat:
                         @"iTerm2 version: %@\n"
                         @"Date: %@ (%lld)\n"
@@ -92,7 +99,6 @@ static void WriteDebugLogHeader(void) {
                         @"Windows: %@\n"
                         @"Ordered windows: %@\n"
                         @"Pinned messages: %@\n"
-                        @"Interval tree of current session:\n%@\n"
                         @"------ END HEADER ------\n\n",
 
                         [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
@@ -104,8 +110,7 @@ static void WriteDebugLogHeader(void) {
                         [[NSApplication sharedApplication] keyWindow],
                         windows,
                         [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
-                        pinnedMessages,
-                        itd];
+                        pinnedMessages];
     gDebugLogHeader = [header copy];
 }
 
@@ -118,13 +123,11 @@ static void WriteDebugLogFooter(void) {
                       @"------ BEGIN FOOTER -----\n"
                       @"Screens: %@\n"
                       @"Windows: %@\n"
-                      @"Ordered windows: %@\n"
-                      @"Interval tree of current session:\n%@\n",
+                      @"Ordered windows: %@\n",
 
                       iTermScreensInfo(),
                       windows,
-                      [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
-                      [[[[[iTermController sharedInstance] currentTerminal] currentSession] screen] intervalTreeDump]];
+                      [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
   [gDebugLogStr appendString:footer];
 }
 
