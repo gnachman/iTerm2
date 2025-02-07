@@ -15,6 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)requestPath:(NSString *)path completion:(void (^)(iTermGitState * _Nullable))completion;
 - (void)invalidateCacheForPath:(NSString *)path;
 - (NSString *)cachedBranchForPath:(NSString *)path;
+- (NSString *)debugInfoForDirectory:(NSString *)path;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -10,6 +10,18 @@
 #import "iTermGitState.h"
 
 #include <fnmatch.h>
+#include <mach/mach_time.h>
+
+static double iTermGitClientTimeSinceBoot(void) {
+    const uint64_t elapsed = mach_absolute_time();
+    mach_timebase_info_data_t timebase;
+
+    mach_timebase_info(&timebase);
+
+    const double nanoseconds = (double)elapsed * timebase.numer / timebase.denom;
+    const double nanosPerSecond = 1.0e9;
+    return nanoseconds / nanosPerSecond;
+}
 
 typedef void (^DeferralBlock)(void);
 
@@ -294,6 +306,7 @@ static int GitForEachCallback(git_reference *ref, void *data) {
 
     // Get branch
     iTermGitState *state = [[iTermGitState alloc] init];
+    state.creationTime = iTermGitClientTimeSinceBoot();
     state.branch = [client branchAt:headRef];
     if (!state.branch) {
         return nil;

@@ -18,7 +18,6 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermGitPoller {
     iTermRateLimitedUpdate *_rateLimit;
     NSTimer *_timer;
-    NSDate *_lastPollTime;
     void (^_update)(void);
 }
 

@@ -81,5 +81,10 @@ NSArray<NSString *> *iTermGitStatePaths(void) {
             _directory, _xcode, _pushArrow, _pullArrow, _branch, @(_dirty), @(_adds), @(_deletes)];
 }
 
+- (NSString *)prettyDescription {
+    return [NSString stringWithFormat:@"dir=%@ xcode=%@ push=%@ pull=%@ branch=%@ dirty=%@ adds=%@ deletes=%@",
+            _directory, _xcode, _pushArrow, _pullArrow, _branch, @(_dirty), @(_adds), @(_deletes)];
+
+}
 @end
 

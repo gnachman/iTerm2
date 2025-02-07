@@ -49,6 +49,14 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable);
     return _cache[path].branch;
 }
 
+- (NSString *)debugInfoForDirectory:(NSString *)path {
+    iTermGitState *existing = _cache[path];
+    NSMutableArray<iTermGitPollWorkerCompletionBlock> *pending = _pending[path];
+    return [NSString stringWithFormat:@"Cache status: %@\nPending calls: %@\n",
+            existing ? [NSString stringWithFormat:@"Have cached value of age %@", @(existing.age)] : @"No cached value",
+            @(pending.count)];
+}
+
 - (void)requestPath:(NSString *)path completion:(void (^)(iTermGitState * _Nullable))completion {
     DLog(@"requestPath:%@", path);
     const NSTimeInterval ttl = 1;

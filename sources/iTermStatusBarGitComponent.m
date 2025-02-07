@@ -13,6 +13,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCommandRunner.h"
 #import "iTermController.h"
+#import "iTermGitPollWorker.h"
 #import "iTermGitPoller.h"
 #import "iTermGitState+MainApp.h"
 #import "iTermSlowOperationGateway.h"
@@ -448,6 +449,11 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     }
 
     if (self.currentState.branch.length == 0) {
+        NSMenu *menu = [[NSMenu alloc] init];
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Show Debug Info" action:@selector(debug) keyEquivalent:@""];
+        item.target = self;
+        [menu addItem:item];
+        [menu popUpMenuPositioningItem:menu.itemArray.firstObject atLocation:NSMakePoint(0, 0) inView:containingView];
         return;
     }
     iTermGitState *state = self.currentState.copy;
@@ -493,6 +499,8 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
             }
             addItem([NSString stringWithFormat:@"Check out %@", branch], @selector(checkout:), YES).userData = branch;
         }
+        [menu addItem:[NSMenuItem separatorItem]];
+        addItem(@"Show Debug Info", @selector(debug), YES);
         [menu popUpMenuPositioningItem:menu.itemArray.firstObject atLocation:NSMakePoint(0, 0) inView:containingView];
     }];
 }
@@ -603,6 +611,31 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     NSMenuItem *menuItem = sender;
     iTermGitMenuItemContext *context = menuItem.representedObject;
     [self runGitInWindowWithArguments:@[ @"commit" ] pwd:context.directory status:@"Committing…" bury:NO];
+}
+
+- (void)debug {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Debug Info";
+    alert.informativeText = [NSString stringWithFormat:
+                             @"Directory: %@\n"
+                             @"Polling cadence: %@ sec\n"
+                             @"Polling enabled: %@\n"
+                             @"Last polled %@ seconds ago\n"
+                             @"Repo state: %@\n"
+                             @"%@",
+                             _gitPoller.currentDirectory,
+                             @(_gitPoller.cadence),
+                             _gitPoller.enabled ? @"Yes" : @"No",
+                             @(-[_gitPoller lastPollTime].timeIntervalSinceNow),
+                             [_gitPoller.state prettyDescription],
+                             [[iTermGitPollWorker sharedInstance] debugInfoForDirectory:_gitPoller.currentDirectory]];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Copy"];
+    if ([alert runModal] == NSAlertSecondButtonReturn) {
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        [pasteboard clearContents];
+        [pasteboard setString:alert.informativeText forType:NSPasteboardTypeString];
+    }
 }
 
 - (void)addAndCommit:(id)sender {

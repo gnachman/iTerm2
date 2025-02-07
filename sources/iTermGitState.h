@@ -39,6 +39,8 @@ typedef NS_ENUM(NSInteger, iTermGitRepoState) {
 @property (nonatomic) NSInteger deletes;
 @property (nonatomic) NSTimeInterval creationTime;
 @property (nonatomic) iTermGitRepoState repoState;
+
+- (NSString *)prettyDescription;
 @end
 
 
