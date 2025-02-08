@@ -470,13 +470,16 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
                                                                      token:result];
             switch (hookResult) {
                 case VT100DCSParserHookResultBlocked:
+                    DLog(@"Hook blocked");
                     _hookFinished = NO;
                     blocked = YES;
                     break;
                 case VT100DCSParserHookResultCanReadAgain:
+                    DLog(@"Hook can read again");
                     _hookFinished = NO;
                     break;
                 case VT100DCSParserHookResultUnhook:
+                    DLog(@"Hook wants to unhook");
                     _hookFinished = YES;
                     [self unhook];
                     break;

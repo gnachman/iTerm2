@@ -71,14 +71,30 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         }
     }
 
-    enum OSCParserResult {
+    enum OSCParserResult: CustomDebugStringConvertible {
+        var debugDescription: String {
+            switch self {
+            case .notOSC: "notOSC"
+            case .osc(let n, let param): "osc(\(n), \(param))"
+            case .blocked: "blocked"
+            }
+        }
         case notOSC
         case osc(Int, String)
         case blocked
     }
     private func parseNextOSC(_ context: UnsafeMutablePointer<iTermParserContext>,
                               skipInitialGarbage: Bool) -> OSCParserResult {
-        enum State {
+        enum State: CustomDebugStringConvertible {
+            var debugDescription: String {
+                switch self {
+                case .ground: "ground"
+                case .esc: "esc"
+                case .osc(let param): "osc(\(param))"
+                case .oscParam(let n, let param): "oscParam(\(n), \(param))"
+                case .oscEsc(let n, let param): "oscEsc(\(n), \(param))"
+                }
+            }
             case ground
             case esc
             case osc(String)
@@ -94,6 +110,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         var checkpoint = iTermParserNumberOfBytesConsumed(context)
         var state: State = State.ground {
             didSet {
+                DLog("state <- \(state.debugDescription)")
                 switch state {
                 case .ground:
                     checkpoint = iTermParserNumberOfBytesConsumed(context)
@@ -102,24 +119,29 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 }
             }
         }
+        DLog("begin skipInitialGarbage=\(skipInitialGarbage)")
         while iTermParserCanAdvance(context) {
             let c = iTermParserConsume(context)
+            DLog("Iterating in parseNextOSC. state=\(state). c=\(c)")
             switch state {
             case .ground:
                 if c == esc {
                     state = .esc
                 } else {
                     if !skipInitialGarbage {
+                        DLog("backtracking and failing")
                         iTermParserBacktrack(context, offset: checkpoint)
                         return .notOSC
                     }
                     checkpoint = iTermParserNumberOfBytesConsumed(context)
+                    DLog("Save checkpoint")
                 }
             case .esc:
                 if c == closeBracket {
                     state = .osc("")
                 } else {
                     if !skipInitialGarbage {
+                        DLog("backtracking and failing")
                         iTermParserBacktrack(context, offset: checkpoint)
                         return .notOSC
                     }
@@ -132,6 +154,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                     state = .oscParam(code, "")
                 } else {
                     if !skipInitialGarbage {
+                        DLog("backtracking and failing")
                         iTermParserBacktrack(context, offset: checkpoint)
                         return .notOSC
                     }
@@ -147,6 +170,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 if c == backslash {
                     // Ignore any unrecognized paramters which may come before the colon and then
                     // ignore the colon itself.
+                    DLog("Returning osc")
                     return .osc(code, String(payload.substringAfterFirst(":")))
                 } else {
                     // esc followed by anything but a backslash inside an OSC means the OSC was
@@ -155,6 +179,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                     //   \e]134;                 <- start parsing with this line having truncated output from child
                     // \e]134;%end 123\e\\       <- this is a well formed osc, which is what we ought to find
                     if !skipInitialGarbage {
+                        DLog("backtracking and failing")
                         iTermParserBacktrack(context, offset: checkpoint)
                         return .notOSC
                     }
@@ -164,12 +189,14 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 }
             }
         }
+        DLog("EOF backtracking and failing after exiting loop")
         iTermParserBacktrack(context, offset: checkpoint)
         return .blocked
     }
 
     private func parseNextLine(_ context: UnsafeMutablePointer<iTermParserContext>) -> Data? {
         let bytesTilNewline = iTermParserNumberOfBytesUntilCharacter(context, "\n".firstASCIICharacter)
+        DLog("bytesTilNewline=\(bytesTilNewline)")
         if bytesTilNewline == -1 {
             DLog("No newline found")
             return nil
@@ -177,7 +204,9 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         let bytes = iTermParserPeekRawBytes(context, bytesTilNewline)
         let buffer = UnsafeBufferPointer(start: bytes, count: Int(bytesTilNewline))
         iTermParserAdvanceMultiple(context, bytesTilNewline)
-        return Data(buffer: buffer)
+        let data = Data(buffer: buffer)
+        DLog("data=\(data.stringOrHex)")
+        return data
     }
 
     private enum ProcessingResult {
@@ -196,7 +225,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
             DLog("non-utf8 data \((lineData as NSData).it_hexEncoded())")
             return .unhook
         }
-        DLog("In initial state. Accept line as SSH_INIT.")
+        DLog("In initial state. Accept line as SSH_INIT. line=\(line)")
         token.type = SSH_INIT
         token.string = line + " " + uniqueID
         state = .ground
@@ -297,7 +326,10 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         return .unhook
     }
 
-    struct ConditionalPeekResult {
+    struct ConditionalPeekResult: CustomDebugStringConvertible {
+        var debugDescription: String {
+            "<ConditionalPeekResult offset=\(offset) result=\(result.debugDescription)>"
+        }
         let context: UnsafeMutablePointer<iTermParserContext>
         var offset: Int
         var result: OSCParserResult
@@ -320,7 +352,9 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
     // If the context starts with an OSC, it's not one we care about. Stop before an osc beginning
     // after the first bytes.
     private func consumeUntilStartOfNextOSCOrEnd(_ context: UnsafeMutablePointer<iTermParserContext>) -> DataOrOSC {
+        DLog("begin")
         if !iTermParserCanAdvance(context) {
+            DLog("was empty")
             return .eof
         }
         let esc = UInt8(VT100CC_ESC.rawValue)
@@ -341,13 +375,16 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                                          count: Int(bytesToConsume))
         let data = Data(buffer: buffer)
         iTermParserAdvanceMultiple(context, bytesToConsume)
+        DLog("consumed \(bytesToConsume) bytes: \(data.stringOrHex)")
         return .data(data)
     }
 
     private func parseGround(_ context: UnsafeMutablePointer<iTermParserContext>,
                              token result: VT100Token) -> VT100DCSParserHookResult {
         // Base state, possibly pre-framer. Everything should be wrapped in OSC 134 or 135.
+        DLog("Begin")
         while iTermParserCanAdvance(context) {
+            DLog("Iterating in parseGround")
             switch parseNextOSC(context, skipInitialGarbage: true) {
             case .osc(134, let payload):
                 return parseFramerPayload(payload, into: result)
@@ -368,10 +405,13 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
     private func parseBody(_ context: UnsafeMutablePointer<iTermParserContext>,
                            identifier id: String,
                            token result: VT100Token) -> VT100DCSParserHookResult {
+        DLog("begin id=\(id)")
         if !iTermParserCanAdvance(context) {
+            DLog("blocked")
             return .canReadAgain
         }
         let peek = conditionallyPeekOSC(context)
+        DLog("peek=\(peek.debugDescription)")
         switch peek.result {
         case .osc(134, let payload), .osc(135, let payload):
             DLog("While parsing body, found osc with payload \(payload.semiVerboseDescription)")
@@ -401,8 +441,10 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
     private func parseOutput(_ context: UnsafeMutablePointer<iTermParserContext>,
                              builder: SSHOutputTokenBuilder,
                              token: VT100Token) -> VT100DCSParserHookResult {
+        DLog("parse output")
         let terminator = "%end \(builder.identifier)"
         let peek = conditionallyPeekOSC(context)
+        DLog("peek=\(peek.debugDescription)")
         switch peek.result {
         case .osc(134, terminator):
             DLog("found terminator for identifier \(builder.identifier)")
@@ -418,6 +460,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
             peek.backtrack()
             return .blocked
         case .notOSC, .osc(_, _):
+            DLog("backtracking")
             peek.backtrack()
             switch consumeUntilStartOfNextOSCOrEnd(context) {
             case .eof:

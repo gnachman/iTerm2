@@ -6,6 +6,8 @@
 //
 //  Utilities for parsing escape codes.
 
+#import "NSStringITerm.h"
+
 typedef struct {
     // Pointer to next character to read.
     unsigned char *datap;
@@ -26,7 +28,7 @@ NS_INLINE iTermParserContext iTermParserContextMake(unsigned char *datap, int le
 
 NS_INLINE NSString *iTermParserDebugString(iTermParserContext *context) {
     NSData *data = [NSData dataWithBytes:context->datap length:context->datalen];
-    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    return [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] stringByReplacingControlCharactersWithCaretLetter];
 }
 
 NS_INLINE BOOL iTermParserCanAdvance(iTermParserContext *context) {
