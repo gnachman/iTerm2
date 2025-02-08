@@ -225,10 +225,10 @@ struct LLMRequestBuilder {
         switch provider.platform {
         case .openAI:
             ["Content-Type": "application/json",
-             "Authorization": "Bearer " + apiKey]
+             "Authorization": "Bearer " + apiKey.trimmingCharacters(in: .whitespacesAndNewlines)]
         case .azure:
             [ "Content-Type": "application/json",
-              "api-key": apiKey ]
+              "api-key": apiKey.trimmingCharacters(in: .whitespacesAndNewlines) ]
         case .gemini:
             ["Content-Type": "application/json"]
         }
