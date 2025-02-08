@@ -389,16 +389,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)orderWindow:(NSWindowOrderingMode)place relativeTo:(NSInteger)otherWin {
-    if (place != NSWindowOut) {
-        assert(self.delegate != nil);
-    }
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     [super orderWindow:place relativeTo:otherWin];
 }
 
 - (void)orderFrontRegardless {
-    assert(self.delegate != nil);
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     DLog(@"%@\n%@", NSStringFromSelector(_cmd), [NSThread callStackSymbols]);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
@@ -406,7 +402,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)orderFront:(nullable id)sender {
-    assert(self.delegate != nil);
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     DLog(@"%@\n%@", NSStringFromSelector(_cmd), [NSThread callStackSymbols]);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
@@ -414,7 +409,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)orderBack:(nullable id)sender {
-    assert(self.delegate != nil);
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     DLog(@"%@\n%@", NSStringFromSelector(_cmd), [NSThread callStackSymbols]);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
@@ -428,7 +422,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setOrderedIndex:(NSInteger)orderedIndex {
-    assert(self.delegate != nil);
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     [super setOrderedIndex:orderedIndex];
