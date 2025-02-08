@@ -119,7 +119,7 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
 #include "iTermWindowImpl.m"
 #undef THE_CLASS
 
-#define ENABLE_COMPACT_WINDOW_HACK 1
+//#define ENABLE_COMPACT_WINDOW_HACK 1
 #define THE_CLASS iTermCompactWindow
 #include "iTermWindowImpl.m"
 #undef THE_CLASS
