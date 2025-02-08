@@ -309,13 +309,16 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 // #!/usr/bin/env python3.7
 // and returns "3.7", or nil if it was malformed.
 + (NSString *)inferredPythonVersionFromScriptAt:(NSString *)path {
+    DLog(@"Getting version from %@", path);
     FILE *file = fopen(path.UTF8String, "r");
     if (!file) {
+        DLog(@"Failed to open it: %s", strerror(errno));
         return nil;
     }
     size_t length;
     char *byteArray = fgetln(file, &length);
     if (length == 0 || byteArray == NULL) {
+        DLog(@"File is empty");
         fclose(file);
         return nil;
     }
@@ -324,25 +327,32 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     NSString *line = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     NSString *const expectedPrefix = @"#!/usr/bin/env python";
     if (![line hasPrefix:expectedPrefix]) {
+        DLog(@"First line does not match expected prefix. It is: %@", line);
         return nil;
     }
     NSString *candidate = [[line substringFromIndex:expectedPrefix.length] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];;
     if (candidate.length == 0) {
+        DLog(@"Empty candidate");
         return nil;
     }
 
     NSArray<NSString *> *parts = [candidate componentsSeparatedByString:@"."];
     const BOOL allNumeric = [parts allWithBlock:^BOOL(NSString *anObject) {
+        DLog(@"Consider part %@. isNumeric=%@", anObject, @(anObject.isNumeric));
         return [anObject isNumeric];
     }];
+    DLog(@"parts=%@", parts);
     if (!allNumeric) {
+        DLog(@"Not all parts numeric");
         return nil;
     }
 
     if (parts.count < 2) {
+        DLog(@"Not enough parts");
         return nil;
     }
 
+    DLog(@"Return %@", candidate);
     return candidate;
 }
 
