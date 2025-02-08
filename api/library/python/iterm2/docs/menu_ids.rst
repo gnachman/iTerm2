@@ -115,7 +115,9 @@ Edit > Marks and Annotations > Alerts > Alert on Next Mark                      
 Edit > Marks and Annotations > Alerts > Alert on Marks in Offscreen Sessions            `Marks and Alerts.Alerts.Alert on Marks in Offscreen Sessions`                
 Edit > Marks and Annotations > Alerts > Show Modal Alert Box                            `Marks and Annotations.Alerts.Show Modal Alert Box`                           
 Edit > Marks and Annotations > Alerts > Post Notification                               `Marks and Annotations.Alerts.Post Notification`                              
+Edit > Marks and Annotations > Alerts > Play a Sound                                    `Marks and Notes.Alerts.Play a Sound`                                         
 Edit > Set Named Mark                                                                   `Set Named Mark`                                                              
+Edit > Fold Selected Lines                                                              `Fold Selected Lines`                                                         
 Edit > Clear Buffer                                                                     `Clear Buffer`                                                                
 Edit > Clear Instant Replay                                                             `Clear Instant Replay`                                                        
 Edit > Clear Scrollback Buffer                                                          `Clear Scrollback Buffer`                                                     
@@ -123,6 +125,8 @@ Edit > Clear to Start of Selection                                              
 Edit > Clear to Last Mark                                                               `Clear to Last Mark`                                                          
 View > Show Tabs in Fullscreen                                                          `Show Tabs in Fullscreen`                                                     
 View > Toggle Full Screen                                                               `Toggle Full Screen`                                                          
+View > Toolbelt > Show Toolbelt                                                         `Show Toolbelt`                                                               
+View > Toolbelt > Set Default Width                                                     `Set Default Width`                                                           
 View > Use Transparency                                                                 `Use Transparency`                                                            
 View > Disable Transparency for Active Window                                           `Disable Transparency for Active Window`                                      
 View > Zoom In on Selection                                                             `Zoom In on Selection`                                                        
@@ -158,6 +162,9 @@ Session > Triggers > Enable All                                                 
 Session > Triggers > Disable All                                                        `Triggers.Disable All`                                                        
 Session > Reset                                                                         `Reset`                                                                       
 Session > Reset Character Set                                                           `Reset Character Set`                                                         
+Session > Move Session > Move Session to Window                                         `Move Session to Window`                                                      
+Session > Move Session > Move Session to Tab                                            `Move Session to Tab`                                                         
+Session > Move Session > Move Session to Split Pane                                     `Move Session to Split Pane`                                                  
 Session > Log > Log to File                                                             `Log.Toggle`                                                                  
 Session > Log > Import Recording                                                        `Log.ImportRecording`                                                         
 Session > Log > Export Recording                                                        `Log.ExportRecording`                                                         
@@ -197,10 +204,12 @@ Scripts > Manage > Console                                                      
 Profiles > Open Profiles…                                                               `Open Profiles…`                                                              
 Profiles > Press Option for New Window                                                  `Press Option for New Window`                                                 
 Profiles > Open In New Window                                                           `Open In New Window`                                                          
-Toolbelt > Show Toolbelt                                                                `Show Toolbelt`                                                               
-Toolbelt > Set Default Width                                                            `Set Default Width`                                                           
 Window > Minimize                                                                       `Minimize`                                                                    
 Window > Zoom                                                                           `Zoom`                                                                        
+Window > Arrangements > Save Window Arrangement                                         `Save Window Arrangement`                                                     
+Window > Arrangements > Save Current Window as Arrangement                              `Save Current Window as Arrangement`                                          
+Window > Arrangements > Load Arrangement from File…                                     `Load Arrangement from File…`                                                 
+Window > Arrangements > Change Profile in Arrangement…                                  `Change Profile in Arrangement…`                                              
 Window > Edit Tab Title                                                                 `Edit Tab Title`                                                              
 Window > Edit Window Title                                                              `Edit Window Title`                                                           
 Window > Window Style > Normal                                                          `Window Style.Normal`                                                         
@@ -215,14 +224,9 @@ Window > Window Style > Bottom of Screen                                        
 Window > Window Style > Top of Screen                                                   `Window Style.Top of Screen`                                                  
 Window > Window Style > Left of Screen                                                  `Window Style.Left of Screen`                                                 
 Window > Window Style > Right of Screen                                                 `Window Style.Right of Screen`                                                
-Window > Merge All Windows                                                              `Merge All Windows`                                                           
-Window > Arrange Windows Horizontally                                                   `Arrange Windows Horizontally`                                                
-Window > Arrange Split Panes Evenly                                                     `Arrange Split Panes Evenly`                                                  
-Window > Move Session to Window                                                         `Move Session to Window`                                                      
-Window > Move Session to Tab                                                            `Move Session to Tab`                                                         
-Window > Move Session to Split Pane                                                     `Move Session to Split Pane`                                                  
-Window > Save Window Arrangement                                                        `Save Window Arrangement`                                                     
-Window > Save Current Window as Arrangement                                             `Save Current Window as Arrangement`                                          
+Window > Arrange Windows > Merge All Windows                                            `Merge All Windows`                                                           
+Window > Arrange Windows > Arrange Windows Horizontally                                 `Arrange Windows Horizontally`                                                
+Window > Arrange Windows > Arrange Split Panes Evenly                                   `Arrange Split Panes Evenly`                                                  
 Window > Select Split Pane > Select Pane Above                                          `Select Split Pane.Select Pane Above`                                         
 Window > Select Split Pane > Select Pane Below                                          `Select Split Pane.Select Pane Below`                                         
 Window > Select Split Pane > Select Pane Left                                           `Select Split Pane.Select Pane Left`                                          
@@ -233,14 +237,15 @@ Window > Resize Split Pane > Move Divider Up                                    
 Window > Resize Split Pane > Move Divider Down                                          `Resize Split Pane.Move Divider Down`                                         
 Window > Resize Split Pane > Move Divider Left                                          `Resize Split Pane.Move Divider Left`                                         
 Window > Resize Split Pane > Move Divider Right                                         `Resize Split Pane.Move Divider Right`                                        
+Window > Lock Split Pane Width                                                          `Lock Split Pane Width`                                                       
 Window > Resize Window > Decrease Height                                                `Resize Window.Decrease Height`                                               
 Window > Resize Window > Increase Height                                                `Resize Window.Increase Height`                                               
 Window > Resize Window > Decrease Width                                                 `Resize Window.Decrease Width`                                                
 Window > Resize Window > Increase Width                                                 `Resize Window.Increase Width`                                                
 Window > Select Next Tab                                                                `Select Next Tab`                                                             
 Window > Select Previous Tab                                                            `Select Previous Tab`                                                         
-Window > Move Tab Left                                                                  `Move Tab Left`                                                               
-Window > Move Tab Right                                                                 `Move Tab Right`                                                              
+Window > Move Tab > Move Tab Left                                                       `Move Tab Left`                                                               
+Window > Move Tab > Move Tab Right                                                      `Move Tab Right`                                                              
 Window > Password Manager                                                               `Password Manager`                                                            
 Window > Pin Hotkey Window                                                              `Pin Hotkey Window`                                                           
 Window > Bring All To Front                                                             `Bring All To Front`                                                          
