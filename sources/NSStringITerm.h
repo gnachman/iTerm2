@@ -373,6 +373,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
                             imageMSB:(out int *)imageMSB;
 
 @property (nonatomic, readonly) NSString *it_sanitized;
+@property(nonatomic, readonly) NSString *stringEnclosedInMarkdownInlineCode;
 
 @end
 

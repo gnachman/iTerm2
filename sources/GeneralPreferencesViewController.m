@@ -188,6 +188,19 @@ enum {
 
     IBOutlet NSTextField *_customAIEndpoint;
     IBOutlet NSButton *_useLegacyCompletionsAPI;
+
+    IBOutlet NSTextField *_checkTerminalStateLabel; // Check Terminal State
+    IBOutlet NSPopUpButton *_checkTerminalStateButton;
+    IBOutlet NSTextField *_runCommandsLabel; // Run Commands
+    IBOutlet NSPopUpButton *_runCommandsButton;
+    IBOutlet NSTextField *_viewHistoryLabel; // View History
+    IBOutlet NSPopUpButton *_viewHistoryButton;
+    IBOutlet NSTextField *_writeToClipboardLabel; // Write to the Clipboard
+    IBOutlet NSPopUpButton *_writeToClipboardButton;
+    IBOutlet NSTextField *_typeForYouLabel; // Type for You
+    IBOutlet NSPopUpButton *_typeForYouButton;
+    IBOutlet NSTextField *_viewManpagesLabel; // View Manpages
+    IBOutlet NSPopUpButton *_viewManpagesButton;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -700,6 +713,37 @@ enum {
         [weakSelf updateEnabledState];
         return NO;
     };
+
+    info = [self defineControl:_checkTerminalStateButton
+                           key:kPreferenceKeyAIPermissionCheckTerminalState
+                   relatedView:_checkTerminalStateLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_runCommandsButton
+                           key:kPreferenceKeyAIPermissionRunCommands
+                   relatedView:_runCommandsLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_viewHistoryButton
+                           key:kPreferenceKeyAIPermissionViewHistory
+                   relatedView:_viewHistoryLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_writeToClipboardButton
+                           key:kPreferenceKeyAIPermissionWriteToClipboard
+                   relatedView:_writeToClipboardLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_typeForYouButton
+                           key:kPreferenceKeyAIPermissionTypeForYou
+                   relatedView:_typeForYouLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_viewManpagesButton
+                           key:kPreferenceKeyAIPermissionViewManpages
+                   relatedView:_viewManpagesLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
 
     info = [self defineControl:_aiModel
                            key:kPreferenceKeyAIModel

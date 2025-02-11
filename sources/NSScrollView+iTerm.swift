@@ -35,3 +35,24 @@ extension NSScrollView {
         return scrollView
     }
 }
+
+extension NSScrollView {
+    var distanceToTop: CGFloat {
+        get {
+            guard let documentView else {
+                return 0
+            }
+            return documentView.bounds.height - contentView.bounds.maxY
+        }
+        set {
+            guard let documentView else {
+                return
+            }
+            var bounds = contentView.bounds
+            let newOrigin = documentView.bounds.height - newValue - contentView.bounds.height
+            bounds.origin.y = newOrigin
+            contentView.bounds = bounds
+        }
+    }
+}
+

@@ -287,7 +287,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [_selectionScrollHelper disableUntilMouseUp];
     }
     if (_numTouches <= 1) {
-        [self.mouseDelegate mouseHandlerDidSingleClick:self];
+        [self.mouseDelegate mouseHandlerDidSingleClick:self
+                                                 event:event];
     }
 
     DLog(@"Set mouseDown=YES.");

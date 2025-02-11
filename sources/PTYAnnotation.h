@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, readonly) NSString *stringValue;
 @property(nonatomic, nullable, weak) id<PTYAnnotationDelegate> delegate;
 @property(nonatomic, nullable, weak, readonly) id<PTYAnnotationReading> progenitor;  // The doppelganger's creator
+@property(nonatomic, readonly) NSString *uniqueID;
 
 - (id<PTYAnnotationReading>)doppelganger;
 @end

@@ -19,11 +19,19 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) iTermGridCoordArray *gridCoords;
 @property (nonatomic, readonly) NSInteger length;
 
+- (instancetype)initWithString:(NSString *)string gridCoords:(iTermGridCoordArray *)gridCoords;
+
+- (void)prependString:(NSString *)string at:(VT100GridCoord)coord;
 - (void)appendString:(NSString *)string at:(VT100GridCoord)coord;
+- (void)appendLocatedString:(iTermLocatedString *)string;
 - (void)erase;
 - (void)dropFirst:(NSInteger)count;
 - (void)trimTrailingWhitespace;
 - (void)removeOcurrencesOfString:(NSString *)string;
+
+// Preserves the location, even if replacement is not the same length
+- (void)replaceCharactersInRange:(NSRange)range withString:(NSString *)replacement;
+- (NSInteger)offsetOfLineNumber:(int)lineNumber;
 
 @end
 

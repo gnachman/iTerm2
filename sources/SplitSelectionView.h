@@ -31,7 +31,8 @@ typedef NS_ENUM(NSInteger, SplitSelectionViewMode) {
     SplitSelectionViewModeTargetSwap,
 
     // Clicking selects
-    SplitSelectionViewModeInspect
+    SplitSelectionViewModeInspect,
+    SplitSelectionViewModeSelect
 };
 
 @class PTYSession;

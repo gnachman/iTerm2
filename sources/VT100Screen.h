@@ -207,7 +207,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int line, ScreenCharArray *, iTermImmutableMetadata, BOOL *))block;
 
-- (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block;
+- (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger, id<IntervalTreeObject>))block;
 - (void)setColorsFromDictionary:(NSDictionary<NSNumber *, id> *)dict;
 - (void)setColor:(NSColor *)color forKey:(int)key;
 - (void)userDidPressReturn;
@@ -262,6 +262,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (NSArray<id<VT100ScreenMarkReading>> *)namedMarks;
 - (long long)startAbsLineForBlock:(NSString *)blockID;
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
+- (void)pauseAtNextPrompt:(void (^)(void))paused;
 - (long long)absLineNumberOfLastLineInLineBuffer;
 - (iTermTerminalContentSnapshot *)snapshotForcingPrimaryGrid:(BOOL)forcePrimary;
 - (LineBufferPosition *)positionForTailSearchOfScreen;

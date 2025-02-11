@@ -14,16 +14,18 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermDatabaseResultSet<NSObject>
 - (BOOL)next;
 - (void)close;
-- (NSString *)stringForColumn:(NSString *)columnName;
+- (NSString * _Nullable)stringForColumn:(NSString *)columnName;
 - (long long)longLongIntForColumn:(NSString *)columnName;
-- (NSData *)dataForColumn:(NSString *)columnName;
-- (NSDate *)dateForColumn:(NSString *)columnName;
+- (NSData * _Nullable)dataForColumn:(NSString *)columnName;
+- (NSDate * _Nullable)dateForColumn:(NSString *)columnName;
 @end
 
 @protocol iTermDatabase<NSObject>
 - (BOOL)executeUpdate:(NSString*)sql, ...;
+- (BOOL)executeUpdate:(NSString *)sql withArguments:(NSArray *)arguments;  // for swift
 - (NSNumber * _Nullable)lastInsertRowId;
 - (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql, ...;
+- (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql withArguments:(NSArray *)arguments;  // for swift
 - (BOOL)open;
 - (BOOL)close;
 - (BOOL)lock;

@@ -152,6 +152,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermStatusBarFilterComponent *_temporaryFilterComponent;
     iTermCursorSmearView *_smearView;
     NSInteger _contentViewIndex;  // for metal or legacy view - whatever draws terminal content goes at this index.
+    iTermSelectSessionButton *_sessionSelectorButton;
 }
 
 + (double)titleHeight {
@@ -276,9 +277,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             [self addSubviewBelowFindView:_scrollview.verticalScroller];
             _scrollview.verticalScroller.frame = [self frameForScroller];
         }
+        [self updateSessionSelectorButton];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(scrollerStyleDidChange:)
                                                      name:@"NSPreferredScrollerStyleDidChangeNotification"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(sessionSelectorStatusDidChange:)
+                                                     name:iTermSessionSelector.statusDidChange
                                                    object:nil];
     }
     return self;
@@ -886,6 +892,42 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                               toView:self];
 }
 
+- (void)sessionSelectorStatusDidChange:(NSNotification *)notification {
+    [self updateSessionSelectorButton];
+}
+
+- (void)updateSessionSelectorButton {
+    NSString *reason = iTermSessionSelector.currentReason;
+    if (reason != nil && _sessionSelectorButton.superview == nil) {
+        [self addSessionSelectorButtonWithReason:reason];
+    } else if (!iTermSessionSelector.isActive && _sessionSelectorButton.superview != nil) {
+        [_sessionSelectorButton removeFromSuperview];
+        _sessionSelectorButton = nil;
+    }
+}
+
+- (void)addSessionSelectorButtonWithReason:(NSString *)reason {
+    _sessionSelectorButton = [[iTermSelectSessionButton alloc] initWithTitle:reason];
+    __weak __typeof(self) weakSelf = self;
+    _sessionSelectorButton.onButtonClicked = ^{
+        [weakSelf didSelectThisSession:nil];
+    };
+    [self addSubview:_sessionSelectorButton];
+    [self updateSessionSelectorButtonFrame];
+}
+
+- (void)updateSessionSelectorButtonFrame {
+    [_sessionSelectorButton sizeToFit];
+    NSRect frame = _sessionSelectorButton.frame;
+    frame.origin.x = (self.bounds.size.width - frame.size.width) / 2;
+    frame.origin.y = (self.bounds.size.height - frame.size.height) / 2;
+    _sessionSelectorButton.frame = frame;
+}
+
+- (void)didSelectThisSession:(id)sender {
+    [iTermSessionSelector didSelect:(PTYSession *)self.delegate];
+}
+
 - (void)scrollerStyleDidChange:(NSNotification *)notification {
     [self updateLayout];
 }
@@ -980,6 +1022,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _hoverURLTextField.frame = frame;
     }
     [self updateAnnouncementFrame];
+    [self updateSessionSelectorButtonFrame];
 
     if (_useMetal) {
         [self updateMetalViewFrame];
@@ -1011,6 +1054,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     rect.size.height = NSHeight(_scrollview.documentVisibleRect);
     _legacyView.frame = rect;
 }
+
 - (void)didBecomeVisible {
     [[self.delegate sessionViewStatusBarViewController] updateColors];
 }
@@ -1406,6 +1450,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
             delegate = [MovePaneController sharedInstance];
             break;
         case SplitSelectionViewModeInspect:
+        case SplitSelectionViewModeSelect:
             delegate = self;
             break;
     }
@@ -1450,6 +1495,10 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
         case kSplitSelectionModeInspect:
             [self createSplitSelectionViewWithMode:SplitSelectionViewModeInspect session:session];
+            break;
+
+        case kSplitSelectionModeSelect:
+            [self createSplitSelectionViewWithMode:SplitSelectionViewModeSelect session:session];
             break;
     }
 }

@@ -32,6 +32,25 @@ extension VT100GridCoord {
     }
 }
 
+extension VT100GridCoord: Codable {
+    enum CodingKeys: String, CodingKey {
+        case x, y
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let x = try container.decode(Int32.self, forKey: .x)
+        let y = try container.decode(Int32.self, forKey: .y)
+        self = VT100GridCoord(x: x, y: y)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(x, forKey: .x)
+        try container.encode(y, forKey: .y)
+    }
+}
+
 extension VT100GridAbsCoord {
     func relative(overflow: Int64) -> VT100GridCoord? {
         var ok = ObjCBool(false)

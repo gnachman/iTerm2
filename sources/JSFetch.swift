@@ -14,7 +14,7 @@ class PluginClient {
 
     private class HTTPStreamDelegate: NSObject, URLSessionDataDelegate {
         var receivedData = Data()
-        let callback: (String?, String?) -> Void
+        let callback: (String, String?) -> Void
 
         init(callback: @escaping (String?, String?) -> Void) {
             self.callback = callback
@@ -28,6 +28,10 @@ class PluginClient {
         func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
             DLog("HTTP append data")
             receivedData.append(data)
+            if let chunk = String(data: data, encoding: .utf8) {
+                // Immediately send the chunk down the pipeline.
+                callback(chunk, nil)
+            }
         }
 
         func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
@@ -50,7 +54,8 @@ class PluginClient {
               ResponseType: Codable>(code: String,
                                      functionName: String,
                                      request: RequestType?,
-                                     async: Bool) throws -> ResponseType {
+                                     async: Bool,
+                                     stream: ((String) -> ())?) throws -> ResponseType {
         DLog("Call \(functionName) with \(request?.debugDescription ?? "(nil)"), async=\(async)")
         let args: [String]
         if let request {
@@ -67,9 +72,9 @@ class PluginClient {
         }
         do {
             if async {
-                return try callAsync(code: code, functionName: functionName, arguments: args)
+                return try callAsync(code: code, functionName: functionName, arguments: args, stream: stream)
             } else {
-                return try callSync(code: code, functionName: functionName, arguments: args)
+                return try callSync(code: code, functionName: functionName, arguments: args, stream: stream)
             }
         } catch {
             DLog(error.localizedDescription)
@@ -103,7 +108,7 @@ class PluginClient {
         task?.resume()
     }
 
-    private func registerFunctions(context: JSContext) {
+    private func registerFunctions(context: JSContext, stream: ((String) -> ())?) {
         DLog("registerFunctions")
         let performRequest: @convention(block) (String, String, [String: String], String, JSValue) -> Void = { [weak self]
             method, url, headers, body, callback in
@@ -115,13 +120,27 @@ class PluginClient {
             self.performHTTPRequest(method: method,
                                url: url,
                                headers: headers,
-                               body: body) { data, error in
-                let callbackArguments = [data as Any, error as Any]
+                               body: body) { string, error in
+                if error == nil, let string, stream != nil {
+                    if let streamCallback = context.objectForKeyedSubscript("onStream"), !streamCallback.isUndefined {
+                        streamCallback.call(withArguments: [string as Any])
+                    }
+                    return
+                }
+                let callbackArguments = [string as Any, error as Any]
                 callback.call(withArguments: callbackArguments)
             }
         }
         context.setObject(performRequest, forKeyedSubscript: "performHTTPRequest" as (NSCopying & NSObjectProtocol))
 
+        if let stream {
+            let streamFunction: @convention(block) (String) -> Void = { string in
+                DispatchQueue.main.async {
+                    stream(string)
+                }
+            }
+            context.setObject(streamFunction, forKeyedSubscript: "onStream" as (NSCopying & NSObjectProtocol))
+        }
         let logMessage: @convention(block) (JSValue) -> Void = { message in
             DLog("JS: \(message.toString() ?? "(nil)")")
         }
@@ -129,14 +148,15 @@ class PluginClient {
     }
 
     private func callSync<ResponseType: Codable>(code: String,
-                                         functionName: String,
-                                         arguments: [String]) throws -> ResponseType {
+                                                 functionName: String,
+                                                 arguments: [String],
+                                                 stream: ((String) -> ())?) throws -> ResponseType {
         DLog("callSync \(functionName)")
         // Create a JSContext
         guard let context = JSContext() else {
             throw PluginError(reason: "Could not create context for plugin")
         }
-        registerFunctions(context: context)
+        registerFunctions(context: context, stream: stream)
         context.evaluateScript(code)
         var exc: String?
         context.exceptionHandler = { context, exception in
@@ -167,7 +187,10 @@ class PluginClient {
         }
     }
 
-    private func callAsync<ResponseType: Codable>(code: String, functionName: String, arguments: [String]) throws -> ResponseType {
+    private func callAsync<ResponseType: Codable>(code: String,
+                                                  functionName: String,
+                                                  arguments: [String],
+                                                  stream: ((String) -> ())?) throws -> ResponseType {
         DLog("callAsync \(functionName)")
         // Create a JSContext
         guard let context = JSContext() else {
@@ -175,7 +198,7 @@ class PluginClient {
         }
 
         // Register performHTTPRequest or any other required function
-        registerFunctions(context: context)
+        registerFunctions(context: context, stream: stream)
 
         // Handle JavaScript errors
         context.exceptionHandler = { context, exception in

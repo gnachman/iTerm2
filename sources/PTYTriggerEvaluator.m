@@ -126,7 +126,10 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         for (iTermExpectation *expectation in [_expect.expectations copy]) {
             NSArray<NSString *> *capture = [stringLine.stringValue captureComponentsMatchedByRegex:expectation.regex];
             if (capture.count) {
-                [expectation didMatchWithCaptureGroups:capture];
+                [expectation didMatchWithCaptureGroups:capture
+                                            dispatcher:^(void (^closure)(void)) {
+                    [self.delegate triggerEvaluatorScheduleSideEffect:self block:closure];
+                }];
             }
         }
 

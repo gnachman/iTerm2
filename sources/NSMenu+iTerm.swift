@@ -98,3 +98,20 @@ extension NSMenuItem {
         return copiedItem
     }
 }
+
+extension NSMenu {
+    func addItem(withTitle title: String, action: Selector, target: AnyObject, state: NSControl.StateValue, object: Any?) {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.state = state
+        item.target = target
+        item.representedObject = object
+        addItem(item)
+    }
+    func addItem(withTitle title: String, action: Selector, target: AnyObject) {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.target = target
+        addItem(item)
+    }
+}
+
+

@@ -177,6 +177,8 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 #pragma mark - Marks
 
 - (VT100GridCoordRange)coordRangeForMark:(id<VT100ScreenMarkReading>)mark;
+- (BOOL)revealAnnotationsAt:(VT100GridCoord)coord toggle:(BOOL)toggle;
+- (void)hideAllAnnotations;
 
 @end
 

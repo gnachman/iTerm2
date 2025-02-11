@@ -6,7 +6,6 @@
 //
 
 import AppKit
-import SwiftyMarkdown
 
 fileprivate protocol ToolCodeciergeSessionDelegate: AnyObject {
     func sessionBusyDidChange(session: ToolCodecierge.Session, busy: Bool)
@@ -18,6 +17,16 @@ fileprivate protocol ToolCodeciergeSessionDelegate: AnyObject {
     var sessionWindow: NSWindow? { get }
 }
 
+struct TerminalCommand: Codable {
+    var username: String?
+    var hostname: String?
+    var directory: String?
+    var command: String
+    var output: String
+    var exitCode: Int32
+    var url: URL
+}
+
 @objc(iTermToolCodecierge)
 class ToolCodecierge: NSView, ToolbeltTool {
     private var onboardingView: CodeciergeOnboardingView!
@@ -25,6 +34,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
     private var suggestionView: CodeciergeSuggestionView!
     override var isFlipped: Bool { true }
     private var notificationObserver: (any NSObjectProtocol)?
+    typealias Command = TerminalCommand
 
     private class SessionRegistry {
         static var instance = SessionRegistry()
@@ -52,15 +62,6 @@ class ToolCodecierge: NSView, ToolbeltTool {
         case running
     }
 
-    fileprivate struct Command {
-        var username: String?
-        var hostname: String?
-        var directory: String?
-        var command: String
-        var output: String
-        var exitCode: Int32
-    }
-
     fileprivate struct History {
         var commands: [Command] = []
     }
@@ -86,10 +87,13 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     let content = format
                         .replacingOccurrences(of: "$GOAL", with: goal)
                         .replacingOccurrences(of: "$CONTEXT", with: contextualInfo)
-                    initialMessages.append(AITermController.Message(role: "system", content: content))
-                    conversation = AIConversation(window: window, messages: initialMessages)
+                    initialMessages.append(AITermController.Message(role: .system, content: content))
+                    conversation = AIConversation(registrationProvider: window,
+                                                  messages: initialMessages)
                     if ghostRiding {
                         do {
+                            // This struct defines inputs to the function call. The LLM will populate
+                            // all the fields of the struct. Reflection is used to make this possible.
                             struct ExecuteCommand: Codable {
                                 var command: String = ""
                             }
@@ -102,10 +106,10 @@ class ToolCodecierge: NSView, ToolbeltTool {
                             conversation?.define(
                                 function: decl,
                                 arguments: ExecuteCommand.self,
-                                implementation: { [weak self] command, controller, completion in
+                                implementation: { [weak self] _, command, completion in
                                     guard let self,
                                           let session = iTermController.sharedInstance().session(withGUID: guid) else {
-                                        completion(.failure(AIConversation.AIError("The session no longer exists")))
+                                        completion(.failure(AIError("The session no longer exists")))
                                         return
                                     }
                                     session.writeTask(command.command.trimmingTrailingNewline + "\n")
@@ -129,10 +133,10 @@ class ToolCodecierge: NSView, ToolbeltTool {
                             conversation?.define(
                                 function: decl,
                                 arguments: WriteCommand.self,
-                                implementation: { [weak self] command, controller, completion in
+                                implementation: { [weak self] _, command, completion in
                                     guard let self,
                                           let session = iTermController.sharedInstance().session(withGUID: guid) else {
-                                        completion(.failure(AIConversation.AIError("The session no longer exists")))
+                                        completion(.failure(AIError("The session no longer exists")))
                                         return
                                     }
                                     session.sendTextSlowly("cat > \(command.filename)\n")
@@ -184,21 +188,22 @@ class ToolCodecierge: NSView, ToolbeltTool {
 
         init(_ guid: String) {
             self.guid = guid
-            observer = NotificationCenter.default.addObserver(forName: Notification.Name("PTYCommandDidExitNotification"),
+            observer = NotificationCenter.default.addObserver(forName: Notification.Name.PTYCommandDidExit,
                                                    object: guid,
                                                    queue: nil) { [weak self] notif in
                 guard let self, let delegate, delegate.sessionEnabled(self) else { return }
                 guard let userInfo = notif.userInfo,
-                      let command = userInfo["command"] as? String else {
+                      let command = userInfo[PTYCommandDidExitUserInfoKeyCommand] as? String else {
                     return
                 }
 
-                let exitCode = (userInfo["exitCode"] as? Int32) ?? 0
-                let directory = userInfo["directory"] as? String
-                let remoteHost = userInfo["remoteHost"] as? VT100RemoteHostReading
-                let startLine = userInfo["startLine"] as! Int32
-                let lineCount = userInfo["lineCount"] as! Int32
-                let snapshot = userInfo["snapshot"] as! TerminalContentSnapshot
+                let exitCode = (userInfo[PTYCommandDidExitUserInfoKeyExitCode] as? Int32) ?? 0
+                let directory = userInfo[PTYCommandDidExitUserInfoKeyDirectory] as? String
+                let remoteHost = userInfo[PTYCommandDidExitUserInfoKeyRemoteHost] as? VT100RemoteHostReading
+                let startLine = userInfo[PTYCommandDidExitUserInfoKeyStartLine] as! Int32
+                let lineCount = userInfo[PTYCommandDidExitUserInfoKeyLineCount] as! Int32
+                let snapshot = userInfo[PTYCommandDidExitUserInfoKeySnapshot] as! TerminalContentSnapshot
+                let url = userInfo[PTYCommandDidExitUserInfoKeyURL] as! URL
                 let extractor = iTermTextExtractor(dataSource: snapshot)
                 let content = extractor.content(
                     in: VT100GridWindowedRange(
@@ -219,7 +224,8 @@ class ToolCodecierge: NSView, ToolbeltTool {
                               exitCode: exitCode,
                               directory: directory,
                               output: content,
-                              remoteHost: remoteHost)
+                              remoteHost: remoteHost,
+                              url: url)
                 delegate.sessionDidReceiveCommand(session: self, command: command)
             }
         }
@@ -234,13 +240,15 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                    exitCode: Int32,
                                    directory: String?,
                                    output: String,
-                                   remoteHost: VT100RemoteHostReading?) {
+                                   remoteHost: VT100RemoteHostReading?,
+                                   url: URL) {
             let command = Command(username: remoteHost?.username,
                                   hostname: remoteHost?.hostname,
                                   directory: directory,
                                   command: command,
                                   output: output,
-                                  exitCode: exitCode)
+                                  exitCode: exitCode,
+                                  url: url)
             updateHistory(command: command)
             if running {
                 commandCount += 1
@@ -287,12 +295,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                         delegate?.session(session: self, didProduceText: updated.messages.last!.content ?? "")
                     case .failure(let error):
                         DLog("\(error)")
-                        let reason = if let aiError = error as? AIConversation.AIError {
-                            aiError.message
-                        } else {
-                            error.localizedDescription
-                        }
-                        delegate?.session(session: self, didProduceText: "There was an error: \(reason)")
+                        delegate?.session(session: self, didProduceText: "There was an error: \(error.localizedDescription)")
                     }
                 }
             }
@@ -944,99 +947,15 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
         }
     }
 
-    private func sanitizeMarkdown(_ input: String) -> String {
-        // Regular expression pattern to match leading spaces followed by ``` and optional lowercase letters till the end of the string
-        let pattern = "^ *```[a-z]*$"
-
-        // Create a regular expression object
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-            return input
-        }
-
-        // Check if the input matches the pattern
-        let range = NSRange(input.startIndex..<input.endIndex, in: input)
-        let matches = regex.matches(in: input, options: [], range: range)
-
-        // If there's a match, remove the leading spaces
-        if let match = matches.first, match.range.length > 0 {
-            let result = input.replacingOccurrences(of: " ", with: "", options: [], range: input.startIndex..<input.index(input.startIndex, offsetBy: match.range.length))
-            return result
-        }
-
-        // Return the original string if there's no match
-        return input
-    }
-
     var suggestion: String {
         get {
             textView.string
         }
         set {
-            let massagedValue = newValue.components(separatedBy: "\n").map { sanitizeMarkdown($0) }.joined(separator: "\n")
-
-            let md = SwiftyMarkdown(string: massagedValue)
-            let pointSize = NSFont.systemFontSize
-            if let fixedPitchFontName = NSFont.userFixedPitchFont(ofSize: pointSize)?.fontName {
-                md.code.fontName = fixedPitchFontName
+            let attributedString = AttributedStringForGPTMarkdown(newValue) { [weak self] in
+                self?.didCopyCallback()
             }
-            md.setFontSizeForAllStyles(with: pointSize)
-
-            md.h1.fontSize = max(4, round(pointSize * 2))
-            md.h2.fontSize = max(4, round(pointSize * 1.5))
-            md.h3.fontSize = max(4, round(pointSize * 1.3))
-            md.h4.fontSize = max(4, round(pointSize * 1.0))
-            md.h5.fontSize = max(4, round(pointSize * 0.8))
-            md.h6.fontSize = max(4, round(pointSize * 0.7))
-
-            md.setFontColorForAllStyles(with: .textColor)
-
-            let attributedString = md.attributedString()
-            if #available(macOS 11.0, *) {
-                let image = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy")!
-                let modified = attributedString.mutableCopy() as! NSMutableAttributedString
-                var ranges = [NSRange]()
-                let utf16String = attributedString.string.utf16
-                attributedString.enumerateAttribute(.swiftyMarkdownLineStyle, in: NSRange(from: 0, to: attributedString.length)) { value, range, stopPtr in
-                    guard value as? String == "codeblock" else {
-                        return
-                    }
-                    if let previous = ranges.last {
-                        let startIndex = utf16String.index(utf16String.startIndex, offsetBy: previous.upperBound)
-                        let endIndex = utf16String.index(utf16String.startIndex, offsetBy: range.lowerBound)
-                        let utf16CodeUnits = Array(utf16String[startIndex..<endIndex])
-                        let substringToCheck = String(utf16CodeUnits: utf16CodeUnits, count: utf16CodeUnits.count)
-                        if substringToCheck.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            // The area between this range and the last contains contains only whitespace characters
-                            ranges.removeLast()
-                            ranges.append(NSRange(location: previous.location,
-                                                  length: range.upperBound - previous.location))
-                            return
-                        }
-                    }
-                    ranges.append(range)
-                }
-                for range in ranges.reversed() {
-                    modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { [weak self] point in
-                        guard let self else {
-                            return
-                        }
-                        NSPasteboard.general.declareTypes([.string], owner: self)
-                        NSPasteboard.general.setString(attributedString.string.substring(nsrange: range), forType: .string)
-                        ToastWindowController.showToast(withMessage: "Copied", duration: 1, screenCoordinate: point, pointSize: 12)
-                        didCopyCallback()
-                    }
-                    modified.insert(
-                        NSAttributedString(
-                            string: " ",
-                            attributes: modified.attributes(
-                                at: range.location + 1,
-                                effectiveRange: nil)),
-                        at: range.location + 1)
-                }
-                textView.textStorage?.setAttributedString(modified)
-            } else {
-                textView.textStorage?.setAttributedString(attributedString)
-            }
+            textView.textStorage?.setAttributedString(attributedString)
             layoutSubviews()
         }
     }
@@ -1249,11 +1168,39 @@ class ClickableTextView: NSTextView, NSTextStorageDelegate {
         it_fatalError("init(coder:) has not been implemented")
     }
 
+    override func mouseMoved(with event: NSEvent) {
+        if overClickable(event: event) != nil || linkURLAt(event: event) != nil {
+            NSCursor.pointingHand.set()
+        } else {
+            NSCursor.iBeam.set()
+        }
+    }
+
+    private var trackingArea: NSTrackingArea?
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea {
+            removeTrackingArea(trackingArea)
+            self.trackingArea = nil
+        }
+        guard let superview else {
+            return
+        }
+        trackingArea = NSTrackingArea(rect: frame,
+                                      options: [.mouseEnteredAndExited, .activeAlways],
+                                      owner: superview,
+                                      userInfo: nil)
+        if let trackingArea {
+            superview.addTrackingArea(trackingArea)
+        }
+    }
+
     override func mouseDown(with event: NSEvent) {
         let point = self.convert(event.locationInWindow, from: nil)
         let index = self.characterIndexForInsertion(at: point)
 
-        if overClickable(event: event) != nil {
+        if overClickable(event: event) != nil || linkURLAt(event: event) != nil {
             clickedRange = NSRange(location: index, length: 1)
         } else {
             clickedRange = nil
@@ -1276,9 +1223,29 @@ class ClickableTextView: NSTextView, NSTextStorageDelegate {
            let window,
            clickedRange.contains(index) {
             action(window.convertPoint(toScreen: event.locationInWindow))
+        } else if let url = linkURLAt(event: event) {
+            NSWorkspace.shared.it_open(url)
         }
         self.clickedRange = nil
         super.mouseUp(with: event)
+    }
+
+    private func linkURLAt(event: NSEvent) -> URL? {
+        guard let window = self.window else {
+            return nil
+        }
+        let point = window.convertPoint(toScreen: event.locationInWindow)
+        let index = characterIndex(for: point)
+
+        if let textStorage = self.textStorage,
+           index != NSNotFound,
+           index >= 0,
+           index < textStorage.string.count,
+           let string = textStorage.attributes(at: index, effectiveRange: nil)[.link] as? String {
+            return URL(string: string)
+        }
+        return nil
+
     }
 
     private func overClickable(event: NSEvent) -> ((NSPoint) -> ())? {

@@ -12,6 +12,12 @@
 extern NSString *const iTermMetalSettingsDidChangeNotification;
 extern NSString *const iTermAutoComposerDidChangeNotification;
 
+typedef NS_ENUM(NSUInteger, iTermAIPermission) {
+    iTermAIPermissionAsk = 0,
+    iTermAIPermissionAllow = 1,
+    iTermAIPermissionNever = 2
+};
+
 // Values for kPreferenceKeyOpenTmuxWindowsIn (corresponds to tags in control).
 typedef NS_ENUM(NSInteger, iTermOpenTmuxWindowsMode) {
     kOpenTmuxWindowsAsNativeWindows = 0,
@@ -130,6 +136,13 @@ extern NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents;
 extern NSString *const kPreferenceKeyAITermURL;
 extern NSString *const kPreferenceKeyAITermUseLegacyAPI;
 extern NSString *const kPreferenceKeyIndicateNonDefaultValues;
+
+extern NSString *const kPreferenceKeyAIPermissionCheckTerminalState;
+extern NSString *const kPreferenceKeyAIPermissionRunCommands;
+extern NSString *const kPreferenceKeyAIPermissionViewHistory;
+extern NSString *const kPreferenceKeyAIPermissionWriteToClipboard;
+extern NSString *const kPreferenceKeyAIPermissionTypeForYou;
+extern NSString *const kPreferenceKeyAIPermissionViewManpages;
 
 // Appearance
 extern NSString *const kPreferenceKeyTabStyle_Deprecated;

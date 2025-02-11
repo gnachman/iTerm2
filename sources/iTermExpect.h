@@ -37,7 +37,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, readonly) NSDate *deadline;
 
 // This is to be called on the mutation thread.
-- (void)didMatchWithCaptureGroups:(NSArray<NSString *> *)captureGroups;
+- (void)didMatchWithCaptureGroups:(NSArray<NSString *> *)captureGroups
+                       dispatcher:(void (^)(void (^)(void)))dispatcher;
 
 @end
 

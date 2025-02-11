@@ -254,6 +254,9 @@ static BOOL gShowingWarning;
     for (iTermWarningAction *action in _warningActions) {
         [alert addButtonWithTitle:action.label];
         NSButton *button = alert.buttons.lastObject;
+        if (@available(macOS 11, *)) {
+            button.hasDestructiveAction = action.destructive;
+        }
         if (action.keyEquivalent) {
             button.keyEquivalent = action.keyEquivalent;
         } else {

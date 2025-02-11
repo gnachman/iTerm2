@@ -3,8 +3,10 @@ import JavaScriptCore
 
 protocol AITermControllerDelegate: AnyObject {
     func aitermControllerWillSendRequest(_ sender: AITermController)
-    func aitermController(_ sender: AITermController, offerChoices: [String])
-    func aitermController(_ sender: AITermController, didFailWithErrorMessage: String)
+    func aitermController(_ sender: AITermController, offerChoice: String)
+    // update will be nil upon completion
+    func aitermController(_ sender: AITermController, didStreamUpdate update: String?)
+    func aitermController(_ sender: AITermController, didFailWithError: Error)
     func aitermControllerRequestRegistration(_ sender: AITermController,
                                              completion: @escaping (AITermController.Registration) -> ())
 }
@@ -22,7 +24,7 @@ struct WebRequest: Codable, CustomDebugStringConvertible {
 
 struct WebResponse: Codable {
     var data: String
-    var error: String
+    var error: String?
 }
 
 struct PluginError: Error, CustomDebugStringConvertible {
@@ -109,19 +111,21 @@ struct Plugin {
         let string: String = try PluginClient.instance.call(code: code,
                                                             functionName: "version",
                                                             request: nil as Optional<String>,
-                                                            async: false)
+                                                            async: false,
+                                                            stream: nil)
         guard let decimal = Decimal(string: string) else {
             throw PluginError(reason: "Invalid version string: \(string)")
         }
         return decimal
     }
 
-    func load(webRequest: WebRequest) throws -> WebResponse {
+    func load(webRequest: WebRequest, stream: ((String) -> ())?) throws -> WebResponse {
         DLog("load \(webRequest)")
         return try PluginClient.instance.call(code: code,
                                               functionName: "request",
                                               request: webRequest,
-                                              async: true)
+                                              async: true,
+                                              stream: stream)
     }
 }
 
@@ -259,28 +263,37 @@ class iTermAIClient {
     }
 
     func request(webRequest: WebRequest,
+                 stream: ((String) -> ())?,
                  completion: @escaping (Result<WebResponse, PluginError>) -> ()) -> Cancellation {
         let cancellation = Cancellation()
         executionQueue.async {
             switch Plugin.instance() {
             case .success(let plugin):
                 do {
-                    let response = try plugin.load(webRequest: webRequest)
+                    let response = try plugin.load(webRequest: webRequest, stream: stream)
                     DispatchQueue.main.async {
-                        completion(.success(response))
+                        if !cancellation.canceled {
+                            completion(.success(response))
+                        }
                     }
                 } catch let error as PluginError {
                     DispatchQueue.main.async {
-                        completion(.failure(error))
+                        if !cancellation.canceled {
+                            completion(.failure(error))
+                        }
                     }
                 } catch {
                     DispatchQueue.main.async {
-                        completion(.failure(PluginError(reason: "Unexpected exception: \(error.localizedDescription)")))
+                        if !cancellation.canceled {
+                            completion(.failure(PluginError(reason: "Unexpected exception: \(error.localizedDescription)")))
+                        }
                     }
                 }
             case .failure(let error):
                 DispatchQueue.main.async {
-                    completion(.failure(error))
+                    if !cancellation.canceled {
+                        completion(.failure(error))
+                    }
                 }
             }
         }
@@ -417,6 +430,13 @@ class AITermControllerRegistrationHelper {
     }
 }
 
+extension NSWindow: AIRegistrationProvider {
+    func registrationProviderRequestRegistration(_ completion: @escaping (AITermController.Registration?) -> ()) {
+        AITermControllerRegistrationHelper.instance.requestRegistration(in: self,
+                                                                        completion: completion)
+    }
+}
+
 @objc
 class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     private struct CachedKey {
@@ -424,7 +444,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         var value: String?
     }
     private let controller: AITermController
-    private var handler: (([String]?, String?) -> ())?
+    private var handler: ((Result<String, Error>) -> ())?
     private let ownerWindow: NSWindow
     private let query: String
     private let pleaseWait: PleaseWaitWindow
@@ -477,16 +497,20 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     init(query: String,
          scope: iTermVariableScope,
          window: NSWindow,
-         handler: @escaping ([String]?, String?) -> ()) {
+         handler: @escaping (iTermOr<NSString, NSError>) -> ()) {
         let pleaseWait = PleaseWaitWindow(owningWindow: window,
                                           message: "Thinking…",
                                           image: NSImage.it_imageNamed("aiterm", for: AITermControllerObjC.self))
         self.pleaseWait = pleaseWait
         var cancel: (() -> ())?
         var shouldCancel = false
-        self.handler = { choices, error in
+        self.handler = { result in
             if !pleaseWait.canceled {
-                handler(choices, error)
+                result.handle { choice in
+                    handler(iTermOr.first(choice as NSString))
+                } failure: { error in
+                    handler(iTermOr.second(error as NSError))
+                }
             } else {
                 shouldCancel = true
                 cancel?()
@@ -537,17 +561,21 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         pleaseWait.run()
     }
 
-    func aitermController(_ sender: AITermController, offerChoices choices: [String]) {
+    func aitermController(_ sender: AITermController, didStreamUpdate update: String?) {
+        it_fatalError("Streaming not supported in the objective c interface")
+    }
+
+    func aitermController(_ sender: AITermController, offerChoice choice: String) {
         pleaseWait.stop()
         DispatchQueue.main.async {
-            self.handler?(choices, nil)
+            self.handler?(.success(choice))
         }
     }
 
-    func aitermController(_ sender: AITermController, didFailWithErrorMessage errorMessage: String) {
+    func aitermController(_ sender: AITermController, didFailWithError error: Error) {
         pleaseWait.stop()
         DispatchQueue.main.async {
-            self.handler?(nil, errorMessage)
+            self.handler?(.failure(error))
         }
     }
 
@@ -560,7 +588,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
             if let registration {
                 completion(registration)
             } else {
-                handler?(nil, nil)
+                handler?(.failure(AIError("You must provide a valid API key to use AI features in iTerm2.")))
             }
         }
     }
@@ -673,15 +701,16 @@ class AITermController {
         var debugDescription: String {
             switch self {
             case .ground: return "ground"
-            case .initialized(query: let query): return "initialized(\(query))"
-            case .initializedMessages(messages: let messages): return "initializedMessages(\(messages.count) messages)"
+            case .initialized(query: let query, stream: let stream): return "initialized(\(query), stream=\(stream)"
+            case .initializedMessages(messages: let messages, stream: let stream): return "initializedMessages(\(messages.count) messages, stream=\(stream)"
             case .querySent: return "querySent"
             }
         }
         case ground
-        case initialized(query: String)
-        case initializedMessages(messages: [Message])
-        case querySent(messages: [Message])
+        case initialized(query: String, stream: Bool)
+        case initializedMessages(messages: [Message], stream: Bool)
+        // streamParserState is nil if streaming is unsupported, otherwise it will be nonnil but perhaps empty
+        case querySent(messages: [Message], streamParserState: StreamParserState?)
     }
 
     enum Event: CustomDebugStringConvertible {
@@ -691,13 +720,15 @@ class AITermController {
             case .error(reason: let reason): return "error(\(reason))"
             case .pluginError(let error): return "pluginError(\(error.reason))"
             case .webResponse: return "webResponse"
+            case .word(let word): return "<stream \(word)>"
             case .cancel: return "Cancel"
             }
         }
         case begin
-        case error(reason: String)
+        case error(any Error)
         case pluginError(PluginError)
         case webResponse(WebResponse)
+        case word(String)
         case cancel
     }
 
@@ -715,16 +746,18 @@ class AITermController {
         self.registration = registration
     }
 
-    func request(query: String) {
-        precondition(state == .ground)
-        state = .initialized(query: query)
+    func request(query: String, stream: Bool = false) {
+        state = .initialized(query: query, stream: stream)
         handle(event: .begin, legacy: false)
     }
 
-    func request(messages: [Message]) {
-        precondition(state == .ground)
-        state = .initializedMessages(messages: messages)
+    func request(messages: [Message], stream: Bool = false) {
+        state = .initializedMessages(messages: messages, stream: stream)
         handle(event: .begin, legacy: false)
+    }
+
+    func removeAllFunctions() {
+        functions.removeAll()
     }
 
     func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, arguments: T.Type, implementation: @escaping LLM.Function<T>.Impl) {
@@ -738,6 +771,7 @@ class AITermController {
     func cancel() {
         cancellation?.cancel()
         cancellation = nil
+        state = .ground
     }
 
     private func handle(event: Event, legacy: Bool) {
@@ -747,7 +781,7 @@ class AITermController {
             DLog("Ignore \(event) in ground state.")
             break
 
-        case .initialized(query: let query):
+        case .initialized(query: let query, stream: let stream):
             switch event {
             case .begin:
                 guard let registration else {
@@ -755,12 +789,17 @@ class AITermController {
                     return
                 }
                 DispatchQueue.main.async { [self] in
-                    makeAPICall(query: query, registration: registration)
+                    makeAPICall(query: query,
+                                registration: registration,
+                                stream: stream ? { [weak self] word in
+                        self?.handle(event: .word(word), legacy: legacy)
+                    } : nil)
                 }
                 delegate?.aitermControllerWillSendRequest(self)
-            case .error(reason: let reason):
-                DLog("error: \(reason)")
+            case .error(let error):
+                DLog("error: \(error)")
                 state = .ground
+                delegate?.aitermController(self, didFailWithError: error)
             case .pluginError(let error):
                 DLog("plugin error: \(error.reason)")
                 state = .ground
@@ -770,9 +809,12 @@ class AITermController {
             case .cancel:
                 DLog("Cancel")
                 state = .ground
+            case .word:
+                DLog("Ignore unexpected word")
+                break
             }
 
-        case .initializedMessages(messages: let messages):
+        case .initializedMessages(messages: let messages, stream: let stream):
             switch event {
             case .begin:
                 guard let registration else {
@@ -780,14 +822,20 @@ class AITermController {
                     return
                 }
                 DispatchQueue.main.async { [self] in
-                    makeAPICall(messages: messages, registration: registration)
+                    makeAPICall(messages: messages,
+                                registration: registration,
+                                stream: stream ? { [weak self] word in
+                        self?.handle(event: .word(word), legacy: legacy)
+                    } : nil)
                 }
                 delegate?.aitermControllerWillSendRequest(self)
             case .pluginError(let error):
                 DLog("plugin error: \(error.reason)")
                 state = .ground
-            case .error(let reason):
-                DLog("error: \(reason)")
+            case .error(let error):
+                DLog("error: \(error)")
+                state = .ground
+                delegate?.aitermController(self, didFailWithError: error)
                 state = .ground
             case .webResponse:
                 DLog("Unexpected event \(event) in \(state)")
@@ -795,36 +843,54 @@ class AITermController {
             case .cancel:
                 DLog("Cancel")
                 state = .ground
+            case .word:
+                DLog("Ignore unexpected word")
+                break
             }
 
-        case .querySent:
+        case .querySent(messages: let messages, streamParserState: let streamParserState):
             switch event {
             case .begin:
                 it_fatalError()
             case .webResponse(let response):
-                if !response.error.isEmpty {
-                    let error = response.error
+                if let error = response.error, !error.isEmpty {
                     let provider = llmProvider.displayName
                     var message = "Error from \(provider): \(error)"
                     if let reason = LLMErrorParser.errorReason(data: response.data.lossyData), !reason.isEmpty {
                         message += " " + reason
                     }
-                    handle(event: .error(reason: message), legacy: false)
+                    handle(event: .error(AIError(message)), legacy: false)
+                } else if let streamParserState {
+                    _ = parseStreamingResponse(data: response.data.data(using: .utf8)!,
+                                               legacy: legacy,
+                                               final: true,
+                                               parserState: streamParserState)
                 } else {
-                    parseResponse(data: response.data.data(using: .utf8)!, legacy: legacy)
+                    parseNonStreamingResponse(data: response.data.data(using: .utf8)!,
+                                              legacy: legacy)
                 }
             case .pluginError(let error):
-                handle(event: .error(reason: error.reason), legacy: false)
+                handle(event: .error(error), legacy: false)
             case .cancel:
                 state = .ground
-            case .error(reason: let reason):
-                DLog("error: \(reason)")
+            case .error(let error):
+                DLog("error: \(error)")
                 state = .ground
-                delegate?.aitermController(self, didFailWithErrorMessage: reason)
+                delegate?.aitermController(self, didFailWithError: error)
+            case .word(let word):
+                DLog("stream \(word)")
+                let updated = parseStreamingResponse(
+                    data: word.data(using: .utf8)!,
+                    legacy: legacy,
+                    final: false,
+                    parserState: streamParserState ?? StreamParserState(message: LLM.Message(role: nil),
+                                                                        buffer: Data()))
+                if let updated {
+                    state = .querySent(messages: messages, streamParserState: updated)
+                }
             }
         }
     }
-
 
     private func requestRegistration(continuation: State) {
         state = .ground
@@ -843,8 +909,10 @@ class AITermController {
         return URL(string: value) ?? URL(string: "about:empty")!
     }
 
-    private func makeAPICall(query: String, registration: Registration) {
-        makeAPICall(messages: [Message(role: "user", content: query)], registration: registration)
+    private func makeAPICall(query: String, registration: Registration, stream: ((String) -> ())?) {
+        makeAPICall(messages: [Message(role: .user, content: query)],
+                    registration: registration,
+                    stream: stream)
     }
 
     private let client = iTermAIClient()
@@ -867,19 +935,26 @@ class AITermController {
         Self.provider
     }
 
-    private func makeAPICall(messages: [Message], registration: Registration) {
-        let builder = LLMRequestBuilder(provider: llmProvider,
+    private func makeAPICall(messages: [Message], registration: Registration, stream: ((String) -> ())?) {
+        var builder = LLMRequestBuilder(provider: llmProvider,
                                         apiKey: registration.apiKey,
                                         messages: messages,
                                         functions: functions)
+        builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
-            handle(event: .error(reason: "Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")"),
+            handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")),
                    legacy: false)
             return
         }
-        let request = builder.webRequest
         let legacy = llmProvider.version == .legacy
-        cancellation = client.request(webRequest: request, completion: { [weak self] result in
+        let request: WebRequest
+        do {
+            request = try builder.webRequest()
+        } catch {
+            handle(event: .error(error), legacy: legacy)
+            return
+        }
+        cancellation = client.request(webRequest: request, stream: stream) { [weak self] result in
             switch result {
             case .success(let response):
                 self?.handle(event: .webResponse(response),
@@ -888,30 +963,137 @@ class AITermController {
                 self?.handle(event: .pluginError(error),
                              legacy: legacy)
             }
-        })
-        state = .querySent(messages: messages)
+        }
+        state = .querySent(messages: messages,
+                           streamParserState: stream == nil ? nil : StreamParserState(message: LLM.Message(role: nil),
+                                                                                      buffer: Data()))
     }
 
-    private func parseResponse(data: Data, legacy: Bool) {
+    private func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
+        let input = rawInput.trimmingLeadingCharacters(in: .whitespacesAndNewlines)
+        guard let newlineRange = input.range(of: "\n") else {
+            return (nil, String(input))
+        }
+
+        // Extract the first line (up to, but not including, the newline)
+        let firstLine = input[..<newlineRange.lowerBound]
+        // Everything after the newline is the remainder.
+        let remainder = input[newlineRange.upperBound...]
+
+        // Ensure the line starts with "data:".
+        let prefix = "data:"
+        guard firstLine.hasPrefix(prefix) else {
+            // If not, we can't extract a valid JSON object.
+            return (nil, String(input))
+        }
+
+        // Remove the prefix and trim whitespace to get the JSON object.
+        let jsonPart = firstLine.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
+
+        return (String(jsonPart.removing(prefix: "data:")), String(remainder))
+    }
+
+    struct StreamParserState: Equatable {
+        var message: LLM.Message
+        var buffer: Data
+    }
+
+    private func parseStreamingResponse(data: Data, legacy: Bool, final: Bool, parserState: StreamParserState) -> StreamParserState? {
+        var accumulatingMessage = parserState.message
+        if final {
+            if let functionCall = accumulatingMessage.function_call {
+                doFunctionCall(accumulatingMessage, call: functionCall)
+            } else {
+                delegate?.aitermController(self, didStreamUpdate: nil)
+            }
+            state = .ground
+            return nil
+        }
+        DLog("------- parse new stream response of length \(data.count) -------------")
+        let string = String(data: parserState.buffer + data, encoding: .utf8) ?? ""
+        var (first, rest) = splitFirstJSONEvent(from: string)
+
+        let drain = {
+            if let string = accumulatingMessage.content, !string.isEmpty {
+                DLog("drain with content: \(accumulatingMessage)")
+                self.delegate?.aitermController(self, didStreamUpdate: string)
+                accumulatingMessage.content = nil
+            }
+        }
         do {
-            var parser = llmProvider.responseParser()
+            defer { drain() }
+            while first != nil {
+                if let first, let firstData = first.data(using: .utf8) {
+                    if first == "[DONE]" {
+                        break
+                    }
+                    do {
+                        var parser = llmProvider.responseParser(stream: true)
+                        let response = try parser.parse(data: firstData)
+                        guard let choice = response.choiceMessages.first else {
+#if DEBUG
+                            it_fatalError("Unexpected choiceless message \(firstData.stringOrHex)")
+#endif
+                            continue
+                        }
+                        if let role = choice.role {
+                            accumulatingMessage.role = role
+                        }
+                        if let functionCall = choice.function_call {
+                            drain()
+                            if accumulatingMessage.function_call == nil {
+                                accumulatingMessage.function_call = .init(name: "", arguments: "")
+                            }
+                            accumulatingMessage.function_call!.name! += (functionCall.name ?? "")
+                            accumulatingMessage.function_call!.arguments! += (functionCall.arguments ?? "")
+                        }
+                        if let additionalContent = choice.content {
+                            if accumulatingMessage.content == nil {
+                                accumulatingMessage.content = ""
+                            }
+                            accumulatingMessage.content! += additionalContent
+                        }
+                    } catch {
+                        drain()
+                        if let reason = LLMErrorParser.errorReason(data: firstData) {
+                            handle(event: .error(AIError("Could not decode response: " + reason)),
+                                   legacy: legacy)
+                            return nil
+                        } else {
+                            handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(first)")),
+                                   legacy: legacy)
+                            return nil
+                        }
+                    }
+                }
+                (first, rest) = splitFirstJSONEvent(from: rest)
+            }
+        }
+
+        return StreamParserState(message: accumulatingMessage, buffer: rest.data(using: .utf8)!)
+    }
+
+    private func parseNonStreamingResponse(data: Data, legacy: Bool) {
+        do {
+            var parser = llmProvider.responseParser(stream: false)
             let response = try parser.parse(data: data)
             if let topChoice = response.choiceMessages.first, let functionCall = topChoice.function_call {
                 doFunctionCall(topChoice, call: functionCall)
                 return
             }
             let choices = response.choiceMessages.compactMap { $0.trimmedString }
-            guard !choices.isEmpty else {
+            guard let choice = choices.first else {
+                delegate?.aitermController(self, didFailWithError: AIError("Empty response from server"))
                 return
             }
             state = .ground
-            delegate?.aitermController(self, offerChoices: choices)
+            delegate?.aitermController(self, offerChoice: choice)
         } catch {
             if let reason = LLMErrorParser.errorReason(data: data) {
-                handle(event: .error(reason: "Could not decode response: " + reason),
+                handle(event: .error(AIError("Could not decode response: " + reason)),
                        legacy: legacy)
             } else {
-                handle(event: .error(reason: "Failed to decode API response: \(error). Data is: \(data.stringOrHex)"),
+                handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(data.stringOrHex)")),
                        legacy: legacy)
             }
         }
@@ -922,17 +1104,18 @@ class AITermController {
         case .ground, .initialized, .initializedMessages:
             DLog("Unexpected function call in state \(state)")
             return
-        case .querySent(let messages):
+        case .querySent(let messages, _):
             var amended = messages
             amended.append(message)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
-                DLog("Invoke function with arguments \(functionCall.arguments)")
-                impl.invoke(json: functionCall.arguments.data(using: .utf8)!, llm: self) { [weak self] result in
+                DLog("Invoke function with arguments \(functionCall.arguments ?? "")")
+                impl.invoke(message: message,
+                            json: (functionCall.arguments ?? "").data(using: .utf8)!) { [weak self] result in
                     guard let self else { return }
                     switch result {
                     case .success(let response):
-                        DLog("Response to function call with arguments \(functionCall.arguments): \(response)")
-                        amended.append(Message(role: "function",
+                        DLog("Response to function call with arguments \(functionCall.arguments ?? ""): \(response)")
+                        amended.append(Message(role: .function,
                                                content: response,
                                                name: functionCall.name))
                         state = .ground
@@ -943,14 +1126,14 @@ class AITermController {
                         return
                     case .failure(let error):
                         DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
-                        handle(event: .error(reason: error.localizedDescription),
+                        handle(event: .error(error),
                                legacy: false)
                         return
                     }
                 }
                 return
             }
-            amended.append(Message(role: "user",
+            amended.append(Message(role: .user,
                                    content: "There is no registered function by that name. Try again."))
             request(messages: amended)
         }
@@ -1079,64 +1262,99 @@ class AITermRegistrationWindow: NSWindow {
     }
 }
 
-struct AIConversation {
-    public struct AIError: Error, CustomStringConvertible {
-        public internal(set) var message: String
+@objc public class iTermAIError: NSObject {
+    @objc static let domain = "com.iterm2.ai"
+    @objc(iTermAIErrorType) public enum ErrorType: Int, Codable {
+        case generic = 0
+        case requestTooLarge = 1
+    }
+}
 
-        public init(_ message: String) {
-            self.message = message
-        }
+public struct AIError: LocalizedError, CustomStringConvertible, CustomNSError, Codable {
+    public internal(set) var message: String
+    public internal(set) var type = iTermAIError.ErrorType.generic
 
-        public var description: String {
-            message
-        }
-
-        var localizedDescription: String {
-            message
-        }
+    public init(_ message: String) {
+        self.message = message
     }
 
+    public init(_ message: String, type: iTermAIError.ErrorType) {
+        self.message = message
+        self.type = type
+    }
+
+    public var errorDescription: String? {
+        message
+    }
+
+    public var description: String {
+        message
+    }
+
+    var localizedDescription: String {
+        message
+    }
+
+    static var requestTooLarge: AIError {
+        AIError("Request too large", type: .requestTooLarge)
+    }
+
+    public static var errorDomain: String { iTermAIError.domain }
+    public var errorCode: Int { type.rawValue }
+}
+
+protocol AIRegistrationProvider: AnyObject {
+    func registrationProviderRequestRegistration(
+        _ completion: @escaping (AITermController.Registration?) -> ())
+}
+
+struct AIConversation {
     private class Delegate: AITermControllerDelegate {
         private(set) var busy = false
         var completion: ((Result<String, Error>) -> ())?
+        var streaming: ((String) -> ())?
         var registrationNeeded: ((@escaping (AITermController.Registration) -> ()) -> ())?
 
         func aitermControllerWillSendRequest(_ sender: AITermController) {
             busy = true
         }
         
-        func aitermController(_ sender: AITermController, offerChoices: [String]) {
+        func aitermController(_ sender: AITermController, offerChoice choice: String) {
             busy = false
-            if let choice = offerChoices.first {
-                completion?(Result.success(choice))
-            } else {
-                completion?(Result.failure(AIError("Empty response from OpenAI")))
-            }
+            completion?(Result.success(choice))
         }
         
-        func aitermController(_ sender: AITermController, didFailWithErrorMessage message: String) {
+        func aitermController(_ sender: AITermController, didFailWithError error: Error) {
             busy = false
-            completion?(Result.failure(AIError(message)))
+            completion?(Result.failure(error))
         }
         
         func aitermControllerRequestRegistration(_ sender: AITermController,
                                                  completion: @escaping (AITermController.Registration) -> ()) {
             registrationNeeded?(completion)
         }
+
+        func aitermController(_ sender: AITermController, didStreamUpdate update: String?) {
+            if let update {
+                streaming?(update)
+            } else {
+                completion?(.success(""))
+            }
+        }
     }
 
     var messages: [AITermController.Message]
     private var controller: AITermController
     private var delegate = Delegate()
-    private weak var window: NSWindow?
+    private(set) weak var registrationProvider: AIRegistrationProvider?
     var maxTokens: Int {
         return Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit) - iTermAdvancedSettingsModel.aiResponseMaxTokens())
     }
     var busy: Bool { delegate.busy }
 
-    init(window: NSWindow,
+    init(registrationProvider: AIRegistrationProvider?,
          messages: [AITermController.Message] = []) {
-        self.window = window
+        self.registrationProvider = registrationProvider
         self.messages = messages
         controller = AITermController(registration: AITermControllerRegistrationHelper.instance.registration)
         controller.delegate = delegate
@@ -1144,40 +1362,88 @@ struct AIConversation {
         controller.truncate = { truncate(messages: $0, maxTokens: maxTokens) }
     }
 
-    func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, 
+    func removeAllFunctions() {
+        controller.removeAllFunctions()
+    }
+
+    func define<T: Codable>(function decl: ChatGPTFunctionDeclaration,
                             arguments: T.Type,
                             implementation: @escaping LLM.Function<T>.Impl) {
         controller.define(function: decl, arguments: arguments, implementation: implementation)
     }
 
-    mutating func add(text: String, role: String = "user") {
-        messages.append(AITermController.Message(role: role, content: text))
+    var systemMessage: String? {
+        didSet {
+            if messages.first?.role == .system {
+                messages.removeFirst()
+            }
+            if let systemMessage {
+                messages.insert(LLM.Message(role: .system,
+                                            content: systemMessage),
+                                at: 0)
+            }
+        }
+    }
+    mutating func add(_ aiMessage: AITermController.Message) {
+        while messages.last?.role == aiMessage.role {
+            messages.removeLast()
+        }
+        messages.append(aiMessage)
+    }
+    
+    mutating func add(text: String, role: LLM.Message.Role = .user) {
+        add(AITermController.Message(role: role, content: text))
     }
 
     mutating func complete(_ completion: @escaping (Result<AIConversation, Error>) -> ()) {
+        complete(streaming: nil, completion: completion)
+    }
+
+    mutating func complete(streaming: ((String) -> ())?,
+                           completion: @escaping (Result<AIConversation, Error>) -> ()) {
         precondition(!messages.isEmpty)
-        precondition(!delegate.busy)
-        let prior = messages
-        guard let window = self.window else {
-            completion(.failure(AIError("No window")))
-            return
+
+        if delegate.busy {
+            controller.cancel()
+            delegate.completion = { _ in }
+            delegate.streaming = nil
+            delegate.registrationNeeded = { _ in }
         }
+
+        let prior = messages
         let controller = self.controller
         let messages = self.truncatedMessages
-        delegate.registrationNeeded = { regCompletion in
-            AITermControllerRegistrationHelper.instance.requestRegistration(in: window) { registration in
-                if let registration {
-                    regCompletion(registration)
-                    controller.request(messages: messages)
+        delegate.registrationNeeded = { [weak registrationProvider] regCompletion in
+            if let registrationProvider {
+                registrationProvider.registrationProviderRequestRegistration() { registration in
+                    if let registration {
+                        regCompletion(registration)
+                        controller.request(messages: messages)
+                    } else {
+                        completion(.failure(AIError("You must provide a valid API key to use AI features in iTerm2.")))
+                    }
                 }
+            } else {
+                DLog("No registration provider found")
+                completion(.failure(AIError("You must provide a valid API key to use AI features in iTerm2")))
             }
         }
 
-        delegate.completion = { result in
+        var accumulator = ""
+        if let streaming {
+            delegate.streaming = { update in
+                accumulator += update
+                streaming(update)
+            }
+        }
+
+        delegate.completion = { [weak registrationProvider] result in
             switch result {
             case .success(let text):
-                let message = AITermController.Message(role: "assistant", content: text)
-                let amended = AIConversation(window: window, messages: prior + [message])
+                let message = AITermController.Message(role: .assistant,
+                                                       content: accumulator + text)
+                let amended = AIConversation(registrationProvider: registrationProvider,
+                                             messages: prior + [message])
                 amended.controller.define(functions: controller.functions)
                 completion(.success(amended))
             break
@@ -1186,7 +1452,7 @@ struct AIConversation {
             break
             }
         }
-        controller.request(messages: truncatedMessages)
+        controller.request(messages: truncatedMessages, stream: streaming != nil)
     }
 
     private var truncatedMessages: [AITermController.Message] {
@@ -1206,7 +1472,7 @@ func truncate(messages: [AITermController.Message], maxTokens: Int) -> [AITermCo
         if tokens < maxTokens {
             break
         }
-        if messages[i].role == "system" {
+        if messages[i].role == .system {
             continue
         }
         if i == messages.count - 1 {
@@ -1246,5 +1512,23 @@ extension String {
 extension Data {
     var lossyString: String {
         return String(decoding: self, as: UTF8.self)
+    }
+}
+
+extension Result {
+    func handle<T>(success: (Success) throws -> (T), failure: (Failure) throws -> (T)) rethrows -> T {
+        switch self {
+        case .success(let value):
+            try success(value)
+        case .failure(let value):
+            try failure(value)
+        }
+    }
+
+    var successValue: Success? {
+        switch self {
+        case .success(let value): value
+        case .failure(_): nil
+        }
     }
 }

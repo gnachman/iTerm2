@@ -9,8 +9,36 @@ import Foundation
 
 // This is a performance optimization because NSValue is kinda pokey.
 @objc(iTermGridCoordArray)
-class GridCoordArray: NSObject {
+class GridCoordArray: NSObject, Codable {
     private var coords = [VT100GridCoord]()
+
+    override init() {
+        super.init()
+    }
+
+    init(_ coords: [VT100GridCoord]) {
+        self.coords = coords
+        super.init()
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case coords
+    }
+
+    required convenience init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let decodedCoords = try container.decode([VT100GridCoord].self, forKey: .coords)
+        self.init(decodedCoords)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(coords, forKey: .coords)
+    }
+
+    @objc override func mutableCopy() -> Any {
+        return GridCoordArray(coords)
+    }
 
     @objc var last: VT100GridCoord {
         return coords.last ?? VT100GridCoord(x: 0, y: 0)
@@ -27,6 +55,12 @@ class GridCoordArray: NSObject {
     @objc func append(coord: VT100GridCoord, repeating: Int) {
         for _ in 0..<repeating {
             coords.append(coord)
+        }
+    }
+
+    @objc func prepend(coord: VT100GridCoord, repeating: Int) {
+        for _ in 0..<repeating {
+            coords.insert(coord, at: 0)
         }
     }
 
@@ -59,4 +93,18 @@ class GridCoordArray: NSObject {
     @objc(appendContentsOfArray:) func appendContentsOfArray(_ array: GridCoordArray) {
         coords.append(contentsOf: array.coords)
     }
+
+    @objc(resizeRange:to:)
+    func resizeRange(_ original: NSRange, to replacement: NSRange) {
+        let subrange = Range(original)!
+        var updated = coords[subrange]
+        while updated.count > replacement.length {
+            updated.removeLast()
+        }
+        while updated.count < replacement.length {
+            updated.append(updated.last!)
+        }
+        coords.replaceSubrange(subrange, with: updated)
+    }
 }
+

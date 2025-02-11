@@ -34,7 +34,7 @@
                     hasKeyCode:(BOOL)hasKeyCode
                      character:(unichar)character
                        isArrow:(BOOL *)isArrow {
-    DLog(@"stringForKeyCode:%@ hasKeyCode:%@ character:%@", @(virtualKeyCode), (hasKeyCode), @(character));
+    DLog(@"stringForKeyCode:%@ hasKeyCode:%@ character:%@", @(virtualKeyCode), @(hasKeyCode), @(character));
     TISInputSourceRef inputSource = NULL;
     NSString *result = nil;
 

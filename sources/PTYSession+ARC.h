@@ -8,6 +8,7 @@
 #import "PTYSession.h"
 #import "iTermMetadata.h"
 
+@class AITermControllerObjC;
 @protocol iTermPopupWindowHosting;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -23,11 +24,11 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Expect
 
 - (void)watchForPasteBracketingOopsieWithPrefix:(NSString *)prefix;
-- (void)addExpectation:(NSString *)regex
-                 after:(nullable iTermExpectation *)predecessor
-              deadline:(nullable NSDate *)deadline
-            willExpect:(void (^ _Nullable)(void))willExpect
-            completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion;
+- (iTermExpectation *)addExpectation:(NSString *)regex
+                               after:(nullable iTermExpectation *)predecessor
+                            deadline:(nullable NSDate *)deadline
+                          willExpect:(void (^ _Nullable)(void))willExpect
+                          completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion;
 
 #pragma mark - Private
 
@@ -39,6 +40,11 @@ NS_ASSUME_NONNULL_BEGIN
           lineBufferGeneration:(long long)lineBufferGeneration;
 - (void)maybeTurnOffPasteBracketing;
 - (id<iTermPopupWindowHosting> _Nullable)popupHost;
+
+#pragma mark - AITerm
+
+- (void)removeAITerm;
+- (void)setAITerm:(AITermControllerObjC *)aiterm;
 
 @end
 

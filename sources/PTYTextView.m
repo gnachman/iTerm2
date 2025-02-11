@@ -292,6 +292,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                                  selector:@selector(applicationDidResignActive:)
                                                      name:NSApplicationDidResignActiveNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(redrawTerminalsNotification:)
+                                                     name:iTermChatDatabase.redrawTerminalsNotification
+                                                   object:nil];
 
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
         _semanticHistoryController.delegate = self;
@@ -1000,7 +1004,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     // If you change tabs while dragging you never get a mouseUp. Issue 8350.
     [_selection endLiveSelection];
     if (self.window == nil) {
-        [_shellIntegrationInstallerWindow close];
+        [(NSWindowController *)_shellIntegrationInstallerWindow close];
         _shellIntegrationInstallerWindow = nil;
     }
     [super viewDidMoveToWindow];
@@ -1852,7 +1856,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_indicatorsHelper setIndicator:kiTermIndicatorPinned
                             visible:[_delegate textViewInPinnedHotkeyWindow]
                      darkBackground:isDark];
-
+    [_indicatorsHelper setIndicator:kiTermIndicatorAIChatLinked
+                            visible:[_delegate textViewSessionIsLinkedToAIChat]
+                     darkBackground:isDark];
+    [_indicatorsHelper setIndicator:kiTermIndicatorAIChatStreaming
+                            visible:[_delegate textViewSessionIsStreamingToAIChat]
+                     darkBackground:isDark];
     const BOOL secureByUser = [[iTermSecureKeyboardEntryController sharedInstance] enabledByUserDefault];
     const BOOL secure = [[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
     const BOOL allowSecureKeyboardEntryIndicator = [iTermAdvancedSettingsModel showSecureKeyboardEntryIndicator];
@@ -3444,7 +3453,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
     [self withRelativeCoordRange:_selection.lastAbsRange.coordRange block:^(VT100GridCoordRange range) {
         PTYAnnotation *annotation = [[[PTYAnnotation alloc] init] autorelease];
-        [_dataSource addNote:annotation inRange:range focus:YES];
+        [_dataSource addNote:annotation inRange:range focus:YES visible:YES];
     }];
 }
 
@@ -4815,6 +4824,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [self refuseFirstResponderAtCurrentMouseLocation];
 }
 
+- (void)redrawTerminalsNotification:(NSNotification *)notification {
+    [self requestDelegateRedraw];
+}
+
 - (void)refreshTerminal:(NSNotification *)notification {
     [self requestDelegateRedraw];
 }
@@ -4850,6 +4863,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [[iTermFindPasteboard sharedInstance] updateObservers:_delegate internallyGenerated:YES];
         }
     }
+    [self.delegate textViewLiveSelectionDidEnd];
 }
 
 - (VT100GridRange)selectionRangeOfTerminalNullsOnAbsoluteLine:(long long)absLineNumber {
@@ -6171,7 +6185,8 @@ static NSString *iTermStringFromRange(NSRange range) {
     if (event.type == NSEventTypeLeftMouseUp && event.clickCount == 1) {
         const NSPoint windowPoint = [event locationInWindow];
         const NSPoint enclosingViewPoint = [self.enclosingScrollView convertPoint:windowPoint fromView:nil];
-        NSString *message = [_indicatorsHelper helpTextForIndicatorAt:enclosingViewPoint];
+        NSString *message = [_indicatorsHelper helpTextForIndicatorAt:enclosingViewPoint
+                                                            sessionID:[_delegate.textViewVariablesScope valueForVariableName:iTermVariableKeySessionID]];
         if (message) {
             [self showIndicatorMessage:message at:enclosingViewPoint];
             return VT100GridCoordMake(-1, -1);
@@ -6198,6 +6213,9 @@ static NSString *iTermStringFromRange(NSRange range) {
             [self foldCommandMark:commandMark];
             return VT100GridCoordMake(-1, -1);
         } else if (!firstMouse) {
+            if ([self revealAnnotationsAt:[self coordForEvent:event] toggle:YES]) {
+                return VT100GridCoordMake(-1, -1);
+            }
             const NSPoint temp =
             [self clickPoint:event allowRightMarginOverflow:allowRightMarginOverflow];
             const VT100GridCoord selectAtCoord = VT100GridCoordMake(temp.x, temp.y);
@@ -6270,13 +6288,19 @@ static NSString *iTermStringFromRange(NSRange range) {
     return _dataSource.terminalMouseMode;
 }
 
-- (void)mouseHandlerDidSingleClick:(PTYMouseHandler *)handler {
-    for (NSView *view in [self subviews]) {
-        if ([view isKindOfClass:[PTYNoteView class]]) {
-            PTYNoteView *noteView = (PTYNoteView *)view;
-            [noteView.delegate.noteViewController setNoteHidden:YES];
-        }
+- (void)mouseHandlerDidSingleClick:(PTYMouseHandler *)handler event:(NSEvent *)event {
+    const VT100GridCoord coord = [self coordForEvent:event];
+    const VT100GridCoordRange coordRange =
+        VT100GridCoordRangeMake(coord.x,
+                                coord.y,
+                                coord.x + 1,
+                                coord.y);
+    if ([[self.dataSource annotationsInRange:coordRange] count]) {
+        // If you clicked on an annotation we want to toggle it, not hide all of them.
+        return;
     }
+
+    [self hideAllAnnotations];
 }
 
 - (iTermSelection *)mouseHandlerCurrentSelection:(PTYMouseHandler *)handler {

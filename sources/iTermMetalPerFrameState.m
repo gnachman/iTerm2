@@ -530,6 +530,7 @@ typedef struct {
     [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame andDraw:NO block:^(NSString *identifier, NSImage *image, NSRect rect, BOOL dark) {
         iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];
         indicator.identifier = identifier;
+        assert(image);
         indicator.image = image;
         indicator.frame = rect;
         indicator.alpha = 0.75;
@@ -540,6 +541,7 @@ typedef struct {
         iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];
         indicator.identifier = identifier;
         indicator.image = image;
+        assert(image);
         indicator.frame = rect;
         indicator.alpha = alpha;
         indicator.dark = dark;

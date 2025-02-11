@@ -77,16 +77,20 @@
     return self;
 }
 
-- (void)didMatchWithCaptureGroups:(NSArray<NSString *> *)captureGroups {
+- (void)didMatchWithCaptureGroups:(NSArray<NSString *> *)captureGroups
+                       dispatcher:(void (^)(void (^)(void)))dispatcher {
     if (self.original) {
         iTermExpectation *original = self.original;
         original.matchPending = YES;
-        dispatch_async(dispatch_get_main_queue(), ^{
+        dispatcher(^{
             original.matchPending = NO;
             if (original.hasCompleted) {
                 return;
             }
-            [original didMatchWithCaptureGroups:captureGroups];
+            [original didMatchWithCaptureGroups:captureGroups
+                                     dispatcher:^(void (^closure)(void)) {
+                closure();
+            }];
         });
     }
     _hasCompleted = YES;

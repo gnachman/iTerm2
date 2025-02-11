@@ -48,6 +48,17 @@
     [NSAppearance setCurrentAppearance:saved];
 }
 
+- (void)it_performAsCurrentDrawingAppearance:(void (^NS_NOESCAPE)(void))block {
+    if (@available(macOS 11, *)) {
+        [self performAsCurrentDrawingAppearance:block];
+    } else {
+        NSAppearance *saved = [NSAppearance currentAppearance];
+        [NSAppearance setCurrentAppearance:self];
+        block();
+        [NSAppearance setCurrentAppearance:saved];
+    }
+}
+
 - (iTermPreferencesTabStyle)it_tabStyle:(iTermPreferencesTabStyle)tabStyle {
     switch (tabStyle) {
         case TAB_STYLE_AUTOMATIC:

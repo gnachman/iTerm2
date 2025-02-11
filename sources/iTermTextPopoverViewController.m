@@ -96,6 +96,9 @@ const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
     if (!url) {
         return NO;
     }
+    if (self.closeOnLinkClick) {
+        [self.popover close];
+    }
     return [[[iTermApplication sharedApplication] delegate] handleInternalURL:url];
 }
 

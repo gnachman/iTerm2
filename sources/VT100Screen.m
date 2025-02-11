@@ -807,7 +807,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return nil;
 }
 
-- (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block {
+- (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger, id<IntervalTreeObject>))block {
     const NSInteger overflow = _state.cumulativeScrollbackOverflow;
     for (NSArray *objects in _state.intervalTree.forwardLimitEnumerator) {
         for (id<IntervalTreeObject> obj in objects) {
@@ -816,7 +816,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                 continue;
             }
             NSInteger line = [_state coordRangeForInterval:obj.entry.interval].start.y + overflow;
-            block(type, line);
+            block(type, line, obj);
         }
     }
 }
@@ -927,6 +927,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (id<VT100ScreenMarkReading>)markOnLine:(int)line {
     return [_state markOnLine:line];
+}
+
+- (void)pauseAtNextPrompt:(void (^)(void))paused {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState pauseAtNextPrompt:paused];
+    }];
 }
 
 // TODO: This is mighty similar to -[VT100ScreenState rangeOfOutputForCommandMark:] and is implemented quite differently!
@@ -1111,6 +1117,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
     return [_state coordRangeForInterval:interval];
+}
+
+- (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)absCoordRange {
+    return [_state intervalForGridAbsCoordRange:absCoordRange];
 }
 
 - (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval {
@@ -1598,9 +1608,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)addNote:(PTYAnnotation *)note
         inRange:(VT100GridCoordRange)range
-          focus:(BOOL)focus {
+          focus:(BOOL)focus
+        visible:(BOOL)visible {
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState addAnnotation:note inRange:range focus:focus visible:YES];
+        [mutableState addAnnotation:note inRange:range focus:focus visible:visible];
     }];
 }
 

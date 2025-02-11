@@ -218,6 +218,13 @@
     return [NSImage imageWithSystemSymbolName:name accessibilityDescription:accessibilityDescription];
 }
 
++ (NSImage *)it_imageForSymbolName:(NSString *)name accessibilityDescription:(NSString *)description fallbackImageName:(NSString *)fallbackImageName forClass:(Class)theClass {
+    if (@available(macOS 11, *)) {
+        return [NSImage imageWithSystemSymbolName:name accessibilityDescription:description];
+    }
+    return [NSImage it_imageNamed:fallbackImageName forClass:theClass];
+}
+
 + (NSImage *)it_hamburgerForClass:(Class)theClass {
     if (@available(macOS 10.16, *)) {
         return [self it_imageForSymbolName:@"ellipsis.circle" accessibilityDescription:@"Menu"];

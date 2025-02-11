@@ -10,19 +10,27 @@ import Foundation
 enum LLM {
     protocol AnyResponse {
         var choiceMessages: [Message] { get }
+        var isStreamingResponse: Bool { get }
     }
 
     struct Message: Codable, Equatable {
-        var role = "user"
+        enum Role: String, Codable {
+            case user
+            case assistant
+            case system
+            case function
+        }
+        var role: Role? = .user
         var content: String?
 
         // For function calling
-        var name: String?
+        var name: String?  // in the response only
         var function_call: FunctionCall?
 
         struct FunctionCall: Codable, Equatable {
-            var name: String
-            var arguments: String
+            // These are optional because they can be omitted when streaming. Otherwise they are always present.
+            var name: String?
+            var arguments: String?
         }
 
         enum CodingKeys: String, CodingKey {
@@ -71,21 +79,25 @@ enum LLM {
     protocol AnyFunction {
         var typeErasedParameterType: Any.Type { get }
         var decl: ChatGPTFunctionDeclaration { get }
-        func invoke(json: Data, llm: AITermController, completion: @escaping (Result<String, Error>) -> ())
+        func invoke(message: LLM.Message,
+                    json: Data,
+                    completion: @escaping (Result<String, Error>) -> ())
     }
 
     struct Function<T: Codable>: AnyFunction {
-        typealias Impl = (T, AITermController, @escaping (Result<String, Error>) -> ()) -> ()
+        typealias Impl = (LLM.Message, T, @escaping (Result<String, Error>) -> ()) -> ()
 
         var decl: ChatGPTFunctionDeclaration
         var call: Impl
         var parameterType: T.Type
 
         var typeErasedParameterType: Any.Type { parameterType }
-        func invoke(json: Data, llm: AITermController, completion: @escaping (Result<String, Error>) -> ()) {
+        func invoke(message: Message,
+                    json: Data,
+                    completion: @escaping (Result<String, Error>) -> ()) {
             do {
                 let value = try JSONDecoder().decode(parameterType, from: json)
-                call(value, llm, completion)
+                call(message, value, completion)
             } catch {
                 DLog("\(error.localizedDescription)")
                 completion(.failure(error))
@@ -105,12 +117,15 @@ fileprivate struct LegacyBodyRequestBuilder {
         var temperature: Int?
     }
 
-    var body: Data {
+    func body() throws -> Data {
         let query = messages.compactMap { $0.content }.joined(separator: "\n")
         let body = LegacyBody(model: provider.dynamicModelsSupported ? provider.model : nil,
                               prompt: query,
                               max_tokens: provider.maxTokens(functions: [], messages: messages),
                               temperature: provider.temperatureSupported ? 0 : nil)
+        if body.max_tokens < 2 {
+            throw AIError.requestTooLarge
+        }
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
         return bodyData
@@ -130,18 +145,23 @@ fileprivate struct GeminiRequestBuilder: Codable {
     }
 
     init(messages: [LLM.Message]) {
-        self.contents = messages.map { message in
-            let role = if message.role == "user" {
-                message.role
-            } else {
-                "model"
+        self.contents = messages.compactMap { message in
+            // NOTE: role changed when AI chat was added but I am not able to test it, so if someone complains it's probably a bug here.
+            let role: String? = switch message.role {
+            case .user: "user"
+            case .assistant: "model"
+            case .system: "system"
+            case .function, .none: nil
+            }
+            guard let role else {
+                return nil
             }
             return Content(role: role,
                            parts: [Content.Part(text: message.content ?? "")])
         }
     }
 
-    var body: Data {
+    func body() throws -> Data {
         return try! JSONEncoder().encode(self)
     }
 }
@@ -150,6 +170,7 @@ fileprivate struct ModernBodyRequestBuilder {
     var messages: [LLM.Message]
     var provider: LLMProvider
     var functions = [LLM.AnyFunction]()
+    var stream: Bool
 
     private struct Body: Codable {
         var model: String?
@@ -158,9 +179,10 @@ fileprivate struct ModernBodyRequestBuilder {
         var temperature: Int? = 0
         var functions: [ChatGPTFunctionDeclaration]? = nil
         var function_call: String? = nil  // "none" and "auto" also allowed
+        var stream: Bool
     }
 
-    var body: Data {
+    func body() throws -> Data {
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
         // answer the same length as the query.
         let maybeDecls = functions.isEmpty ? nil : functions.map { $0.decl }
@@ -169,8 +191,12 @@ fileprivate struct ModernBodyRequestBuilder {
                         max_tokens: provider.maxTokens(functions: functions, messages: messages),
                         temperature: provider.temperatureSupported ? 0 : nil,
                         functions: maybeDecls,
-                        function_call: functions.isEmpty ? nil : "auto")
+                        function_call: functions.isEmpty ? nil : "auto",
+                        stream: stream)
         DLog("REQUEST:\n\(body)")
+        if body.max_tokens < 2 {
+            throw AIError.requestTooLarge
+        }
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
         return bodyData
@@ -189,16 +215,16 @@ fileprivate struct O1BodyRequestBuilder {
         var max_completion_tokens: Int
     }
 
-    var body: Data {
+    func body() throws -> Data {
         // O1 doesn't support "system", so replace it with user.
         let modifiedMessages = switch provider.version {
         case .o1:
             messages.map { message in
-                if message.role != "system" {
+                if message.role != .system {
                     return message
                 }
                 var temp = message
-                temp.role = "user"
+                temp.role = .user
                 return temp
             }
         case .completions, .gemini, .legacy:
@@ -207,6 +233,9 @@ fileprivate struct O1BodyRequestBuilder {
         let body = Body(model: provider.dynamicModelsSupported ? provider.model : nil,
                         messages: modifiedMessages,
                         max_completion_tokens: provider.maxTokens(functions: [], messages: messages))
+        if body.max_completion_tokens < 2 {
+            throw AIError.requestTooLarge
+        }
         DLog("REQUEST:\n\(body)")
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
@@ -220,6 +249,7 @@ struct LLMRequestBuilder {
     var apiKey: String
     var messages: [LLM.Message]
     var functions = [LLM.AnyFunction]()
+    var stream = false
 
     var headers: [String: String] {
         switch provider.platform {
@@ -236,28 +266,29 @@ struct LLMRequestBuilder {
 
     var method: String { "POST" }
 
-    var body: Data {
+    func body() throws -> Data {
         switch provider.version {
         case .legacy:
-            return LegacyBodyRequestBuilder(messages: messages,
-                                            provider: provider).body
+            try LegacyBodyRequestBuilder(messages: messages,
+                                         provider: provider).body()
         case .completions:
-            return ModernBodyRequestBuilder(messages: messages,
-                                            provider: provider,
-                                            functions: functions).body
+            try ModernBodyRequestBuilder(messages: messages,
+                                         provider: provider,
+                                         functions: functions,
+                                         stream: stream).body()
         case .o1:
-            return O1BodyRequestBuilder(messages: messages,
-                                        provider: provider).body
+            try O1BodyRequestBuilder(messages: messages,
+                                     provider: provider).body()
 
         case .gemini:
-            return GeminiRequestBuilder(messages: messages).body
+            try GeminiRequestBuilder(messages: messages).body()
         }
     }
 
-    var webRequest: WebRequest {
+    func webRequest() throws -> WebRequest {
         WebRequest(headers: headers,
                    method: method,
-                   body: body.lossyString,
+                   body: try body().lossyString,
                    url: provider.url(apiKey: apiKey).absoluteString)
     }
 }
@@ -416,10 +447,18 @@ struct LLMProvider {
         return naiveLimit
     }
 
-    func responseParser() -> LLMResponseParser {
+    func requestIsTooLarge(body: String) -> Bool {
+        return OpenAIMetadata.instance.tokens(in: body) >= Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit))
+    }
+
+    func responseParser(stream: Bool) -> LLMResponseParser {
         switch version {
         case .completions, .o1:
-            return LLMModernResponseParser()
+            if stream {
+                return LLMModernStreamingResponseParser()
+            } else {
+                return LLMModernResponseParser()
+            }
         case .legacy:
             return LLMLegacyResponseParser()
         case .gemini:
@@ -434,6 +473,7 @@ protocol LLMResponseParser {
 
 struct LLMModernResponseParser: LLMResponseParser {
     struct ModernResponse: Codable, LLM.AnyResponse {
+        var isStreamingResponse: Bool { false }
         var id: String
         var object: String
         var created: Int
@@ -457,6 +497,7 @@ struct LLMModernResponseParser: LLMResponseParser {
             return choices.map { $0.message }
         }
     }
+
     var parsedResponse: ModernResponse?
 
     mutating func parse(data: Data) throws -> LLM.AnyResponse {
@@ -468,8 +509,46 @@ struct LLMModernResponseParser: LLMResponseParser {
     }
 }
 
+struct LLMModernStreamingResponseParser: LLMResponseParser {
+    struct ModernStreamingResponse: Codable, LLM.AnyResponse {
+        var isStreamingResponse: Bool { true }
+
+        let id: String?
+        let object: String?
+        let created: TimeInterval?
+        let model: String?
+        let choices: [UpdateChoice]
+
+        struct UpdateChoice: Codable {
+            // The delta holds the incremental text update.
+            let delta: LLM.Message
+            let index: Int
+            // For update chunks, finish_reason is nil.
+            let finish_reason: String?
+        }
+
+        var choiceMessages: [LLM.Message] {
+            return choices.map {
+                LLM.Message(role: .assistant,
+                            content: $0.delta.content ?? "",
+                            function_call: $0.delta.function_call)
+            }
+        }
+    }
+    var parsedResponse: ModernStreamingResponse?
+
+    mutating func parse(data: Data) throws -> LLM.AnyResponse {
+        let decoder = JSONDecoder()
+        let response =  try decoder.decode(ModernStreamingResponse.self, from: data)
+        DLog("RESPONSE:\n\(response)")
+        parsedResponse = response
+        return response
+    }
+}
+
 struct LLMLegacyResponseParser: LLMResponseParser {
     struct LegacyResponse: Codable, LLM.AnyResponse {
+        var isStreamingResponse: Bool { false }
         var id: String
         var object: String
         var created: Int
@@ -492,7 +571,8 @@ struct LLMLegacyResponseParser: LLMResponseParser {
 
         var choiceMessages: [LLM.Message] {
             return choices.map {
-                LLM.Message(role: "model", content: $0.text)
+                #warning("TODO: This used to use 'model', not sure why. I changed it to an enum that combines .assistant and .model")
+                return LLM.Message(role: .assistant, content: $0.text)
             }
         }
     }
@@ -509,12 +589,13 @@ struct LLMLegacyResponseParser: LLMResponseParser {
 
 struct LLMGeminiResponseParser: LLMResponseParser {
     struct GeminiResponse: Codable, LLM.AnyResponse {
+        var isStreamingResponse: Bool { false }
         var choiceMessages: [LLM.Message] {
             candidates.map {
                 let role = if let content = $0.content {
-                    content.role == "model" ? "assistant" : "user"
+                    content.role == "model" ? LLM.Message.Role.assistant : LLM.Message.Role.user
                 } else {
-                    "assistant"  // failed, probably because of safety
+                    LLM.Message.Role.assistant  // failed, probably because of safety
                 }
                 return if let text = $0.content?.parts.first?.text {
                     LLM.Message(role: role, content: text)
@@ -570,3 +651,4 @@ struct LLMErrorParser {
         return parser.parse(data: data)
     }
 }
+

@@ -213,7 +213,16 @@ NSString *const PTYSessionRevivedNotification = @"PTYSessionRevivedNotification"
 NSString *const iTermSessionWillTerminateNotification = @"iTermSessionDidTerminate";
 NSString *const PTYSessionDidResizeNotification = @"PTYSessionDidResizeNotification";
 NSString *const PTYSessionDidDealloc = @"PTYSessionDidDealloc";
-NSString *const PTYCommandDidExitNotification = @"PTYCommandDidExitNotification";
+NSNotificationName const PTYCommandDidExitNotification = @"PTYCommandDidExitNotification";
+
+NSString *const PTYCommandDidExitUserInfoKeyCommand = @"Command";
+NSString *const PTYCommandDidExitUserInfoKeyExitCode = @"Code";
+NSString *const PTYCommandDidExitUserInfoKeyRemoteHost = @"Host";
+NSString *const PTYCommandDidExitUserInfoKeyDirectory = @"Directory";
+NSString *const PTYCommandDidExitUserInfoKeySnapshot = @"Snapshot";
+NSString *const PTYCommandDidExitUserInfoKeyStartLine = @"Line";
+NSString *const PTYCommandDidExitUserInfoKeyLineCount = @"Count";
+NSString *const PTYCommandDidExitUserInfoKeyURL = @"URL";
 
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
@@ -604,7 +613,6 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     BOOL _profileDidChange;
     NSInteger _estimatedThroughput;
     iTermPasteboardReporter *_pasteboardReporter;
-    iTermConductor *_conductor;
     iTermSSHState _sshState;
     // (unique ID, hostname)
     NSMutableData *_sshWriteQueue;
@@ -613,7 +621,6 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     // Are we currently enqueuing the bytes to write a focus report?
     BOOL _reportingFocus;
 
-    AITermControllerObjC *_aiterm;
     NSMutableArray<NSString *> *_commandQueue;
     NSMutableArray<iTermSSHReconnectionInfo *> *_pendingJumps;
 
@@ -810,6 +817,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         _hostStack = [[NSMutableArray alloc] init];
         [iTermCPUUtilization instanceForSessionID:_guid];
         _canChangeProfileInArrangementGeneration = -1;
+        _runningRemoteCommand = [[iTermRunningRemoteCommand alloc] init];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -1087,6 +1095,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_originatingArrangement release];
     [_originatingArrangementName release];
     [_userTmuxOptionMonitors release];
+    [_runningRemoteCommand release];
 
     [super dealloc];
 }
@@ -8300,16 +8309,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX,
                                                        _screen.cursorY - 1)];
         if (VT100GridCoordRangeLength(rangeAtCursor, _screen.width) > 0) {
-            [_screen addNote:note inRange:rangeAtCursor focus:YES];
+            [_screen addNote:note inRange:rangeAtCursor focus:YES visible:YES];
         } else if (VT100GridCoordRangeLength(rangeAfterCursor, _screen.width) > 0) {
-            [_screen addNote:note inRange:rangeAfterCursor focus:YES];
+            [_screen addNote:note inRange:rangeAfterCursor focus:YES visible:YES];
         } else if (VT100GridCoordRangeLength(rangeBeforeCursor, _screen.width) > 0) {
-            [_screen addNote:note inRange:rangeBeforeCursor focus:YES];
+            [_screen addNote:note inRange:rangeBeforeCursor focus:YES visible:YES];
         } else {
             int y = _screen.cursorY - 1 + [_screen numberOfScrollbackLines];
             [_screen addNote:note
                      inRange:VT100GridCoordRangeMake(0, y, _screen.width, y)
-                       focus:YES];
+                       focus:YES
+                     visible:YES];
         }
     }];
 }
@@ -8493,6 +8503,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         VT100GridRange range = [_screen lineNumberRangeOfInterval:mark.entry.interval];
         [_textview scrollLineNumberRangeIntoView:range];
         [self highlightMarkOrNote:mark];
+    }
+}
+
+- (void)revealPromptMarkWithID:(NSString *)guid {
+    id<VT100ScreenMarkReading> mark = [_screen promptMarkWithGUID:guid];
+    if (mark) {
+        [self scrollToMark:mark];
+        VT100GridRange range = [_screen lineNumberRangeOfInterval:mark.entry.interval];
+        [_textview highlightMarkOnLine:range.location hasErrorCode:mark.code != 0];
+        const NSPoint locationInTextView = [_textview pointForCoord:VT100GridCoordMake(0, range.location)];
+        const NSPoint locationInWindow = [_textview convertPoint:locationInTextView toView:nil];
+        [_textview showCommandInfoForMark:mark at:locationInWindow];
     }
 }
 
@@ -11320,6 +11342,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return self.variablesScope;
 }
 
+- (NSView *)genericView {
+    return _view;
+}
+
 - (BOOL)textViewSuppressingAllOutput {
     return _suppressAllOutput;
 }
@@ -11330,6 +11356,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)textViewIsFiltered {
     return _liveSession && _filter;
+}
+
+- (BOOL)textViewSessionIsLinkedToAIChat {
+    return [iTermChatDatabase chatIDsForSession:_guid].count > 0;
+}
+
+- (BOOL)textViewSessionIsStreamingToAIChat {
+    return [[iTermChatWindowController instanceIfExists] isStreamingToGuid:self.guid];
 }
 
 - (BOOL)textViewInPinnedHotkeyWindow {
@@ -11907,6 +11941,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (CGFloat)textViewRightExtra {
     return self.view.actualRightExtra;
+}
+
+- (void)textViewLiveSelectionDidEnd {
+    if (_textview._haveShortSelection) {
+        [[iTermChatWindowController instanceShowingErrors:NO] setSelectionText:_textview.selectedText forSession:self.guid];
+    }
 }
 
 - (void)textviewToggleTimestampsMode {
@@ -13161,6 +13201,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_delegate setActiveSessionPreservingMaximization:self];
 }
 
+- (void)revealSelection:(iTermSelection *)selection {
+    [_textview setSelection:selection];
+    [_textview scrollToSelection];
+}
+
 - (void)makeActive {
     [self.delegate sessionActivate:self];
 }
@@ -14244,6 +14289,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (NSString *)currentCommandUpToCursor {
+    if (_screen.commandRange.start.x < 0) {
+        return nil;
+    } else {
+        VT100GridCoordRange range = _screen.commandRange;
+        range.end.x = _screen.cursorX;
+        range.end.y = _screen.cursorY - 1 + _screen.numberOfScrollbackLines;
+        return [_screen commandInRange:range];
+    }
+}
+
 - (BOOL)eligibleForAutoCommandHistory {
     if (!_textview.cursorVisible) {
         return NO;
@@ -14354,18 +14410,21 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenCommandDidAbortOnLine:(int)line
                         outputRange:(VT100GridCoordRange)outputRange
-                            command:(NSString *)command {
+                            command:(NSString *)command
+                               mark:(id<VT100ScreenMarkReading>)mark {
     [_appSwitchingPreventionDetector commandDidFinishWithStatus:-1];
-    NSDictionary *userInfo = @{ @"remoteHost": (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
-                                @"directory": (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
-                                @"snapshot": [self contentSnapshot],
-                                @"startLine": @(outputRange.start.y),
-                                @"lineCount": @(outputRange.end.y - outputRange.start.y + 1),
-                                @"command": (id)command ?: (id)[NSNull null]};
+    NSDictionary *userInfo = @{
+        PTYCommandDidExitUserInfoKeyRemoteHost: (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
+        PTYCommandDidExitUserInfoKeyDirectory: (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
+        PTYCommandDidExitUserInfoKeySnapshot: [self contentSnapshot],
+        PTYCommandDidExitUserInfoKeyStartLine: @(outputRange.start.y),
+        PTYCommandDidExitUserInfoKeyLineCount: @(outputRange.end.y - outputRange.start.y + 1),
+        PTYCommandDidExitUserInfoKeyCommand: (id)command ?: (id)[NSNull null],
+        PTYCommandDidExitUserInfoKeyURL: [self urlForPromptMark:mark]};
     userInfo = [userInfo dictionaryByRemovingNullValues];
     // This runs in a side-effect and notification observers might want a modal runloop.
     dispatch_async(dispatch_get_main_queue(), ^{
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"PTYCommandDidExitNotification"
+        [[NSNotificationCenter defaultCenter] postNotificationName:PTYCommandDidExitNotification
                                                             object:_guid
                                                           userInfo:userInfo];
     });
@@ -14391,17 +14450,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         const VT100GridRange lineRange = [_screen lineNumberRangeOfInterval:maybeMark.entry.interval];
         const int line = lineRange.location;
         const VT100GridCoordRange outputRange = [_screen rangeOfOutputForCommandMark:maybeMark];
-        NSDictionary *userInfo = @{ @"command": maybeMark.command ?: (id)[NSNull null],
-                                    @"exitCode": @(maybeMark.code),
-                                    @"remoteHost": (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
-                                    @"directory": (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
-                                    @"snapshot": [self contentSnapshot],
-                                    @"startLine": @(outputRange.start.y),
-                                    @"lineCount": @(outputRange.end.y - outputRange.start.y + 1) };
+        NSDictionary *userInfo = @{
+            PTYCommandDidExitUserInfoKeyCommand: maybeMark.command ?: (id)[NSNull null],
+            PTYCommandDidExitUserInfoKeyExitCode: @(maybeMark.code),
+            PTYCommandDidExitUserInfoKeyRemoteHost: (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
+            PTYCommandDidExitUserInfoKeyDirectory: (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
+            PTYCommandDidExitUserInfoKeySnapshot: [self contentSnapshot],
+            PTYCommandDidExitUserInfoKeyStartLine: @(outputRange.start.y),
+            PTYCommandDidExitUserInfoKeyLineCount: @(outputRange.end.y - outputRange.start.y + 1),
+            PTYCommandDidExitUserInfoKeyURL: [self urlForPromptMark:maybeMark] };
         userInfo = [userInfo dictionaryByRemovingNullValues];
         // This runs in a side-effect and notification observers might want a modal runloop.
         dispatch_async(dispatch_get_main_queue(), ^{
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"PTYCommandDidExitNotification"
+            [[NSNotificationCenter defaultCenter] postNotificationName:PTYCommandDidExitNotification
                                                                 object:_guid
                                                               userInfo:userInfo];
         });
@@ -16352,7 +16413,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (defaultString.length > 0 && bypassable && [[NSUserDefaults standardUserDefaults] boolForKey:bypassKey]) {
         return defaultString;
     }
-    NSAlert *alert = [[NSAlert alloc] init];
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     [alert setMessageText:@"Describe the command you want to run in plain English. Press ⇧⏎ to send."];
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
@@ -16435,6 +16496,110 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return nil;
 }
 
+- (iTermSelection *)selectionForOutputToExplainWithAI:(out BOOL *)truncated {
+    if (_textview.selection.hasSelection) {
+        return _textview.selection;
+    }
+    id<VT100ScreenMarkReading> mark = _selectedCommandMark ?: _screen.lastCommandMark;
+    if (mark) {
+        if (truncated) {
+            *truncated = NO;
+        }
+        const VT100GridCoordRange range = [self.screen rangeOfOutputForCommandMark:mark];
+        VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range,
+                                                                               _screen.totalScrollbackOverflow);
+        // Performance is extremely bad with giant messages.
+        const long long maxLines = 1000;
+        if (absRange.end.y - absRange.start.y > maxLines) {
+            absRange.start.y = absRange.end.y - maxLines;
+            if (truncated) {
+                *truncated = YES;
+            }
+        }
+        const VT100GridAbsWindowedRange windowedRange = VT100GridAbsWindowedRangeMake(absRange, 0, 0);
+        iTermSelection *selection = [[[iTermSelection alloc] init] autorelease];
+        selection.delegate = _textview;
+        iTermSubSelection *sub = [iTermSubSelection subSelectionWithAbsRange:windowedRange
+                                                                        mode:kiTermSelectionModeCharacter
+                                                                       width:_screen.width];
+        [selection addSubSelection:sub];
+        return selection;
+    }
+    return nil;
+}
+
+- (NSString *)commandForOutputToExplainWithAI {
+    if (_textview.selection.hasSelection) {
+        const VT100GridAbsCoordRange span = _textview.selection.spanningAbsRange;
+        Interval *interval = [_screen intervalForGridAbsCoordRange:span];
+        Interval *start = [Interval intervalWithLocation:interval.location length:0];
+        id<VT100ScreenMarkReading> startMark = [_screen screenMarkBefore:start];
+        Interval *end = [Interval intervalWithLocation:interval.limit - 1 length:0];
+        id<VT100ScreenMarkReading> endMark = [_screen screenMarkBefore:end];
+        if (startMark == endMark) {
+            return startMark.command;
+        }
+        return nil;
+    }
+    id<VT100ScreenMarkReading> mark = _selectedCommandMark ?: _screen.lastCommandMark;
+    return mark.command;
+}
+
+- (NSString *)titleForExplainWithAI {
+    if (_textview.selection.hasSelection) {
+        return [[_textview selectedText] ellipsizedDescriptionNoLongerThan:16];
+    }
+    if (_selectedCommandMark) {
+        if (_selectedCommandMark.command.length) {
+            return _selectedCommandMark.command;
+        }
+        return @"Command output";
+    }
+    if (_screen.lastCommandMark) {
+        if (_screen.lastCommandMark.command.length) {
+            return _screen.lastCommandMark.command;
+        }
+        return @"Command output";
+    }
+    return nil;
+}
+
+- (NSString *)subjectMatterToExplainWithAI {
+    if (_textview.selection.hasSelection) {
+        return [[_textview selectedText] ellipsizedDescriptionNoLongerThan:16].stringEnclosedInMarkdownInlineCode ?: @"some selected text";
+    }
+    if (_selectedCommandMark) {
+        if (_selectedCommandMark.command.length) {
+            return _selectedCommandMark.command.stringEnclosedInMarkdownInlineCode;
+        }
+        return @"the selected command";
+    }
+    if (_screen.lastCommandMark) {
+        if (_screen.lastCommandMark.command.length) {
+            return _screen.lastCommandMark.command.stringEnclosedInMarkdownInlineCode;
+        }
+        return @"the last command";
+    }
+    return nil;
+}
+
+- (void)textViewExplainOutputWithAI {
+    BOOL truncated = NO;
+    iTermSelection *selection = [self selectionForOutputToExplainWithAI:&truncated];
+    if (selection) {
+        [self explainSelectionWithAI:selection
+                           truncated:truncated
+                            snapshot:self.screen.snapshotDataSource
+                             command:[self commandForOutputToExplainWithAI]
+                       subjectMatter:[self subjectMatterToExplainWithAI]
+                               title:[self titleForExplainWithAI]];
+    }
+}
+
+- (BOOL)textViewCanExplainOutputWithAI {
+    return [self selectionForOutputToExplainWithAI:nil] != nil;
+}
+
 - (void)textViewPerformNaturalLanguageQuery {
     [self reallyPerformNaturalLanguageQuery:[self naturalLanguageQuery] completion:nil];
 }
@@ -16450,10 +16615,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _aiterm = [[AITermControllerObjC alloc] initWithQuery:query
                                                     scope:self.variablesScope
                                                  inWindow:self.view.window
-                                               completion:^(NSArray<NSString *> * _Nullable choices, NSString * _Nullable error) {
-        [weakSelf handleAIChoices:choices error:error];
+                                               completion:^(iTermOr<NSString *,NSError *> *result) {
+        [weakSelf handleAIResult:result];
         if (completion) {
-            completion(choices.count > 0 && !error);
+            completion(result.hasFirst);
         }
     }];
 }
@@ -16501,23 +16666,20 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [iTermProfilePreferences boolForKey:key inProfile:self.profile];
 }
 
-- (void)handleAIChoices:(NSArray<NSString *> *)choices error:(NSString *)error {
-    if (error) {
-        [iTermWarning showWarningWithTitle:error
+- (void)handleAIResult:(iTermOr<NSString *, NSError *> *)result {
+    [result whenFirst:^(NSString *choice) {
+        [self setComposerString:choice forceLarge:YES];
+        DLog(@"handleAIChoices -> makeComposerFirstResponder");
+        [self makeComposerFirstResponderIfAllowed];
+    } second:^(NSError *error) {
+        [iTermWarning showWarningWithTitle:error.localizedDescription
                                    actions:@[ @"OK" ]
                                  accessory:nil
                                 identifier:nil
                                silenceable:kiTermWarningTypePersistent
                                    heading:@"AI Error"
                                     window:self.view.window];
-        return;
-    }
-    if (choices.count == 0) {
-        return;
-    }
-    [self setComposerString:choices[0] forceLarge:YES];
-    DLog(@"handleAIChoices -> makeComposerFirstResponder");
-    [self makeComposerFirstResponderIfAllowed];
+    }];
 }
 
 - (BOOL)sessionViewTerminalIsFirstResponder {
@@ -19206,7 +19368,7 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
     [_view.marksMinimap removeAllObjects];
     const NSInteger count = (NSInteger)iTermIntervalTreeObjectTypeUnknown;
     NSMutableDictionary<NSNumber *, NSMutableIndexSet *> *sets = [NSMutableDictionary dictionary];
-    [_screen enumerateObservableMarks:^(iTermIntervalTreeObjectType type, NSInteger line) {
+    [_screen enumerateObservableMarks:^(iTermIntervalTreeObjectType type, NSInteger line, id<IntervalTreeObject> obj) {
         NSMutableIndexSet *set = sets[@(type)];
         if (!set) {
             set = [NSMutableIndexSet indexSet];

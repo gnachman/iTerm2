@@ -37,6 +37,8 @@
 
 @class PTYSessionPublishRequest;
 @class iTermComposerManager;
+@class iTermConductor;
+@class AITermControllerObjC;
 
 @interface PTYSession () <
 iTermAutomaticProfileSwitcherDelegate,
@@ -78,6 +80,7 @@ TriggerDelegate> {
     NSMutableArray<PTYSessionPublishRequest *> *_pendingPublishRequests;
     iTermComposerManager *_composerManager;
     iTermAppSwitchingPreventionDetector *_appSwitchingPreventionDetector;
+    AITermControllerObjC *_aiterm;
 }
 
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;

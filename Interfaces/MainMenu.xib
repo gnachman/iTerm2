@@ -515,6 +515,12 @@ DQ
                                     <action selector="performNaturalLanguageQuery:" target="-1" id="oJ4-at-Hbh"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Explain Output with AI" keyEquivalent="y" identifier="Explain Output with AI" id="vlr-uw-Err">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="explainOutputWithAI:" target="-1" id="fVo-Xm-7jt"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="jHq-aL-J2z"/>
                             <menuItem title="Snippets" id="s0f-jP-7Pk" userLabel="Snippets">
                                 <modifierMask key="keyEquivalentModifierMask"/>
@@ -1052,6 +1058,12 @@ DQ
                             <menuItem title="Open Paste History…" keyEquivalent="H" identifier="Open Paste History…" id="1142">
                                 <connections>
                                     <action selector="openPasteHistory:" target="-1" id="1143"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Open AI Chat…" keyEquivalent="Y" identifier="Open AI Chat" id="tkq-fN-kF5">
+                                <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                <connections>
+                                    <action selector="openAIChat:" target="-1" id="e9b-aj-NLF"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="908">
@@ -1763,7 +1775,12 @@ DQ
                             <menuItem title="Password Manager" keyEquivalent="f" identifier="Password Manager" id="5">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
-                                    <action selector="openPasswordManager:" target="201" id="wbL-5o-kEN"/>
+                                    <action selector="openPasswordManager:" target="-1" id="tkA-Pd-uSe"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="AI Chats" keyEquivalent="Y" identifier="AI Chats" id="okQ-cw-xCt">
+                                <connections>
+                                    <action selector="openAIChats:" target="201" id="Xdw-Tb-nB2"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="zl8-Q7-4RO">

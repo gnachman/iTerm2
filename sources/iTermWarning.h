@@ -30,6 +30,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @interface iTermWarningAction : NSObject
 
 @property (nonatomic, strong) NSString * _Nullable keyEquivalent;
+@property (nonatomic) BOOL destructive;
 
 + (instancetype)warningActionWithLabel:(NSString *)label
                                  block:(iTermWarningActionBlock _Nullable)block;

@@ -1543,12 +1543,171 @@ void TurnOnDebugLoggingAutomatically(void) {
         [TriggerController importTriggersFromURL:url];
         return YES;
     }
+    if ([components.path isEqualToString:@"/compound-location"]) {
+        [self revealLocationFromURL:url];
+    }
+    if ([components.path isEqualToString:@"annotation"]) {
+        [self revealAnnotationFromURL:url];
+    }
+    if ([components.path isEqualToString:@"unlink-session-chat"]) {
+        [self unlinkSessionChatFromURL:url];
+    }
+    if ([components.path isEqualToString:@"reveal-chat-for-session"]) {
+        [self revealChatForSessionFromURL:url];
+    }
+    if ([components.path isEqualToString:@"reveal-mark"]) {
+        [self revealMarkFromURL:url];
+    }
+    if ([components.path isEqualToString:@"disable-streaming-session-chat"]) {
+        [self stopStreamingSessionChatFromURL:url];
+    }
     return NO;
 }
 
 - (void)disableCommandSelection {
     [iTermPreferences setBool:NO forKey:kPreferenceKeyClickToSelectCommand];
     [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyClickToSelectCommand];
+}
+
+- (void)revealChatForSessionFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *token = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"t"]) {
+            token = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    if (![[NSWorkspace sharedWorkspace] it_checkToken:token]) {
+        return;
+    }
+    NSString *chatID = [iTermChatDatabase firstChatIDForSessionGuid:guid];
+    if (!chatID) {
+        return;
+    }
+    [[iTermChatWindowController instanceShowingErrors:YES] showChatWindow];
+    [[iTermChatWindowController instanceShowingErrors:NO] selectChatWithID:chatID];
+
+}
+
+- (void)stopStreamingSessionChatFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *token = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"t"]) {
+            token = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    if (![[NSWorkspace sharedWorkspace] it_checkToken:token]) {
+        return;
+    }
+    [[iTermChatWindowController instanceIfExists] stopStreamingSession:guid];
+}
+
+- (void)unlinkSessionChatFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *token = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"t"]) {
+            token = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    if (![[NSWorkspace sharedWorkspace] it_checkToken:token]) {
+        return;
+    }
+    [iTermChatDatabase unlinkSessionGuid:guid];
+}
+
+- (void)revealMarkFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *markID = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"m"] && !markID) {
+            markID = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    if (!session) {
+        return;
+    }
+    [session revealPromptMarkWithID:markID];
+    [session reveal];
+}
+
+- (void)revealAnnotationFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *ann = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"ann"] && !ann) {
+            ann = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    if (!session) {
+        return;
+    }
+    [session revealAnnotation:ann];
+    [session reveal];
+}
+
+- (void)revealLocationFromURL:(NSURL *)url {
+    NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+    iTermSelection *selection = [[[iTermSelection alloc] init] autorelease];
+    NSString *guid = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"session"]) {
+            guid = item.value;
+            break;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    selection.delegate = session.textview;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"sub"]) {
+            iTermSubSelection *sub = [[[iTermSubSelection alloc] initWithCompactString:item.value
+                                                                                screen:session.screen] autorelease];
+            if (sub) {
+                [selection addSubSelection:sub];
+            }
+        }
+    }
+    if (selection.allSubSelections.count == 0) {
+        return;
+    }
+    [session reveal];
+    [session revealSelection:selection];
 }
 
 - (void)runCommandFromURL:(NSURLComponents *)components internal:(BOOL)internal {
@@ -2060,6 +2219,11 @@ void TurnOnDebugLoggingAutomatically(void) {
 - (IBAction)openPasswordManager:(id)sender {
     DLog(@"Menu item selected");
     [self openPasswordManagerToAccountName:nil inSession:nil];
+}
+
+- (IBAction)openAIChats:(id)sender {
+    [[iTermChatWindowController instanceShowingErrors:YES] showChatWindow];
+    [[iTermChatWindowController instanceShowingErrors:NO] createNewChatIfNeeded];
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem {

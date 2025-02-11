@@ -40,17 +40,29 @@ extern NSString *const PTYSessionRevivedNotification;
 extern NSString *const iTermSessionWillTerminateNotification;
 extern NSString *const PTYSessionDidResizeNotification;
 extern NSString *const PTYSessionDidDealloc;
-extern NSString *const PTYCommandDidExitNotification;
+extern NSNotificationName const PTYCommandDidExitNotification;
+
+extern NSString *const PTYCommandDidExitUserInfoKeyCommand;
+extern NSString *const PTYCommandDidExitUserInfoKeyExitCode;
+extern NSString *const PTYCommandDidExitUserInfoKeyRemoteHost;
+extern NSString *const PTYCommandDidExitUserInfoKeyDirectory;
+extern NSString *const PTYCommandDidExitUserInfoKeySnapshot;
+extern NSString *const PTYCommandDidExitUserInfoKeyStartLine;
+extern NSString *const PTYCommandDidExitUserInfoKeyLineCount;
+extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;
 @class FakeWindow;
 @class iTermAction;
 @class iTermAnnouncementViewController;
+@class iTermConductor;
 @protocol iTermContentSubscriber;
 @class iTermEchoProbe;
+@class iTermExpect;
 @class iTermImageWrapper;
 @class iTermKeyBindingAction;
+@class iTermRunningRemoteCommand;
 @class iTermSSHReconnectionInfo;
 @class iTermScriptHistoryEntry;
 @class iTermStatusBarViewController;
@@ -84,7 +96,8 @@ typedef NS_ENUM(NSInteger, SplitSelectionMode) {
     kSplitSelectionModeOn,
     kSplitSelectionModeOff,
     kSplitSelectionModeCancel,
-    kSplitSelectionModeInspect
+    kSplitSelectionModeInspect,
+    kSplitSelectionModeSelect
 };
 
 typedef enum {
@@ -373,8 +386,9 @@ backgroundColor:(NSColor *)backgroundColor;
 // Screen contents, plus scrollback buffer.
 @property(nonatomic, retain) VT100Screen *screen;
 
-// The view in which this session's objects live.
+// The view in which this session's objects live. Can't call this from swift because of dependency madness.
 @property(nonatomic, retain) SessionView *view;
+@property(nonatomic, readonly) NSView *genericView;  // Use this from swift
 
 // The view that contains all the visible text in this session and that does most input handling.
 // This is the one and only subview of the document view of -scrollview.
@@ -478,6 +492,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // FinalTerm
 @property(nonatomic, readonly) NSArray *autocompleteSuggestionsForCurrentCommand;
 @property(nonatomic, readonly) NSString *currentCommand;
+@property(nonatomic, readonly) NSString *currentCommandUpToCursor;
 
 // Session is not in foreground and notifications are enabled on the screen.
 @property(nonatomic, readonly) BOOL shouldPostUserNotification;
@@ -588,6 +603,9 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) BOOL shouldShowAutoComposer;
 @property(nonatomic, readonly) NSString *regularExpressonForNonLowPrecisionSmartSelectionRulesCombined;
 @property(nonatomic, strong) NSCursor *defaultPointer;
+@property(nonatomic, readonly) iTermConductor *conductor;
+@property(nonatomic, readonly) iTermExpect *expect;
+@property(nonatomic, strong) iTermRunningRemoteCommand *runningRemoteCommand;
 
 #pragma mark - methods
 
@@ -856,11 +874,14 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)nextAnnotation;
 - (void)scrollToMark:(id<iTermMark>)mark;
 - (void)scrollToMarkWithGUID:(NSString *)guid;
+- (void)revealPromptMarkWithID:(NSString *)guid;
 - (void)saveScrollPositionWithName:(NSString *)name;
 - (void)renameMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName;
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
+- (void)revealSelection:(iTermSelection *)selection;
+- (void)highlightMarkOrNote:(id<IntervalTreeImmutableObject>)obj;
 
 // Make this session active in its tab but don't reveal the tab or window if not already active.
 - (void)makeActive;

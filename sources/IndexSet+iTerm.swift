@@ -20,4 +20,9 @@ extension IndexSet {
         }
         return nil
     }
+
+    var enumeratedDescription: String {
+        map { String($0) }.joined(separator: ", ")
+    }
 }
+

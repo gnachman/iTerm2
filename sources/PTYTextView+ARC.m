@@ -104,6 +104,9 @@ iTermCommandInfoViewControllerDelegate>
     if (item.action == @selector(performNaturalLanguageQuery:)) {
         return [iTermAdvancedSettingsModel generativeAIAllowed];
     }
+    if (item.action == @selector(explainOutputWithAI:)) {
+        return [self.delegate textViewCanExplainOutputWithAI];
+    }
     if (item.action == @selector(foldSelection:)) {
         if ([self.dataSource terminalSoftAlternateScreenMode] && [self foldWouldTouchMutableArea]) {
             return NO;
@@ -149,6 +152,10 @@ iTermCommandInfoViewControllerDelegate>
 
 - (IBAction)performNaturalLanguageQuery:(id)sender {
     [self.delegate textViewPerformNaturalLanguageQuery];
+}
+
+- (IBAction)explainOutputWithAI:(id)sender {
+    [self.delegate textViewExplainOutputWithAI];
 }
 
 - (BOOL)selectionContainsFold {
@@ -912,6 +919,7 @@ iTermCommandInfoViewControllerDelegate>
     frame.size.height = [_indicatorMessagePopoverViewController.textView.attributedString heightForWidth:frame.size.width - horizontalInsets] + verticalInsets;
     
     _indicatorMessagePopoverViewController.view.frame = frame;
+    _indicatorMessagePopoverViewController.closeOnLinkClick = YES;
     [_indicatorMessagePopoverViewController.popover showRelativeToRect:NSMakeRect(point.x, point.y, 1, 1)
                                                                 ofView:self.enclosingScrollView
                                                          preferredEdge:NSRectEdgeMaxY];
@@ -1574,14 +1582,34 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
 
 - (void)contextMenuRevealAnnotations:(iTermTextViewContextMenuHelper *)contextMenu
                                   at:(VT100GridCoord)coord {
+    [self revealAnnotationsAt:coord toggle:NO];
+}
+
+- (BOOL)revealAnnotationsAt:(VT100GridCoord)coord toggle:(BOOL)toggle {
     const VT100GridCoordRange coordRange =
         VT100GridCoordRangeMake(coord.x,
                                 coord.y,
                                 coord.x + 1,
                                 coord.y);
+    BOOL found = NO;
     for (id<PTYAnnotationReading> annotation in [self.dataSource annotationsInRange:coordRange]) {
         PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
-        [note setNoteHidden:NO];
+        if (toggle) {
+            [note setNoteHidden:![note isNoteHidden]];
+        } else {
+            [note setNoteHidden:NO];
+        }
+        found = YES;
+    }
+    return found;
+}
+
+- (void)hideAllAnnotations {
+    for (NSView *view in [self subviews]) {
+        if ([view isKindOfClass:[PTYNoteView class]]) {
+            PTYNoteView *noteView = (PTYNoteView *)view;
+            [noteView.delegate.noteViewController setNoteHidden:YES];
+        }
     }
 }
 

@@ -187,6 +187,8 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewShouldShowMarkIndicators;
 - (BOOL)textViewIsFiltered;
 - (BOOL)textViewInPinnedHotkeyWindow;
+- (BOOL)textViewSessionIsLinkedToAIChat;
+- (BOOL)textViewSessionIsStreamingToAIChat;
 
 // Is it possible to restart this session?
 - (BOOL)isRestartable;
@@ -284,6 +286,8 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewPasteFiles:(NSArray<NSString *> *)filenames;
 - (NSString *)textViewNaturalLanguageQuery;
 - (void)textViewPerformNaturalLanguageQuery;
+- (BOOL)textViewCanExplainOutputWithAI;
+- (void)textViewExplainOutputWithAI;
 - (void)textViewUpdateTrackingAreas;
 - (BOOL)textViewShouldShowOffscreenCommandLineAt:(int)location;
 - (BOOL)textViewShouldUseSelectedTextColor;
@@ -315,6 +319,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
                              to:(NSRect)to
                           color:(NSColor *)color;
 - (CGFloat)textViewRightExtra;
+- (void)textViewLiveSelectionDidEnd;
 
 @end
 

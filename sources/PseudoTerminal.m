@@ -8077,6 +8077,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self.currentSession toggleTriggerEnabledAtIndex:[[sender representedObject] integerValue]];
 }
 
+- (IBAction)openAIChat:(id)sender {
+    [[iTermChatWindowController instanceShowingErrors:YES] showChatWindow];
+    [[iTermChatWindowController instanceShowingErrors:NO] revealOrCreateChatAboutSessionGuid:self.currentSession.guid
+                                                                                        name:self.currentSession.name];
+}
+
 - (IBAction)openPasteHistory:(id)sender {
     if (!pbHistoryView) {
         pbHistoryView = [[PasteboardHistoryWindowController alloc] init];

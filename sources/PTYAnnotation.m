@@ -8,6 +8,7 @@
 #import "PTYAnnotation.h"
 
 static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
+static NSString *const PTYAnnotationDictionaryKeyUniqueID = @"UniqueID";
 
 @implementation PTYAnnotation {
     BOOL _deferHide;
@@ -18,11 +19,13 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
 @synthesize progenitor = _progenitor;
 @synthesize entry = _entry;
 @synthesize delegate = _delegate;
+@synthesize uniqueID = _uniqueID;
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         _stringValue = @"";
+        _uniqueID = [[NSUUID UUID] UUIDString];
     }
     return self;
 }
@@ -31,6 +34,7 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
     self = [self init];
     if (self) {
         _stringValue = [dict[PTYAnnotationDictionaryKeyText] copy] ?: @"";
+        _uniqueID = [dict[PTYAnnotationDictionaryKeyUniqueID] copy] ?: @"";
     }
     return self;
 }
@@ -48,11 +52,12 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
 }
 
 - (NSDictionary *)dictionaryValue {
-    return @{ PTYAnnotationDictionaryKeyText: _stringValue.copy };
+    return @{ PTYAnnotationDictionaryKeyText: _stringValue.copy,
+              PTYAnnotationDictionaryKeyUniqueID: _uniqueID };
 }
 
 - (instancetype)copyOfIntervalTreeObject {
-    PTYAnnotation *copy = [[PTYAnnotation alloc] init];
+    PTYAnnotation *copy = [[PTYAnnotation alloc] initWithDictionary:self.dictionaryValue];
     copy.stringValue = _stringValue;
     return copy;
 }

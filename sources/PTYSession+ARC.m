@@ -27,6 +27,7 @@
 #import "NSStringITerm.h"
 #import "NSWindow+PSM.h"
 #import "PTYSession.h"
+#import "PTYSession+Private.h"
 
 extern NSString *const SESSION_ARRANGEMENT_TMUX_PANE;
 extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
@@ -184,16 +185,16 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     }];
 }
 
-- (void)addExpectation:(NSString *)regex
-                 after:(nullable iTermExpectation *)predecessor
-              deadline:(nullable NSDate *)deadline
-            willExpect:(void (^ _Nullable)(void))willExpect
-            completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion {
-    [_expect expectRegularExpression:regex
-                               after:predecessor
-                            deadline:deadline
-                          willExpect:willExpect
-                          completion:completion];
+- (iTermExpectation *)addExpectation:(NSString *)regex
+                               after:(nullable iTermExpectation *)predecessor
+                            deadline:(nullable NSDate *)deadline
+                          willExpect:(void (^ _Nullable)(void))willExpect
+                          completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion {
+    return [_expect expectRegularExpression:regex
+                                      after:predecessor
+                                   deadline:deadline
+                                 willExpect:willExpect
+                                 completion:completion];
 }
 
 - (void)didFindPasteBracketingOopsie {
@@ -301,6 +302,19 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     }
     DLog(@"Done sending pending publish requests. Queue size is %@", @(_pendingPublishRequests.count));
 }
+
+#pragma mark - AITerm
+
+- (void)removeAITerm {
+    [_aiterm invalidate];
+    _aiterm = nil;
+}
+
+- (void)setAITerm:(AITermControllerObjC *)aiterm {
+    [self removeAITerm];
+    _aiterm = aiterm;
+}
+
 
 @end
 
