@@ -308,6 +308,36 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
     return path;
 }
 
+- (void)viewDidMoveToSuperview {
+    [super viewDidMoveToSuperview];
+
+    NSClickGestureRecognizer *clickRecognizer = [[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(handleClick:)];
+    [self addGestureRecognizer:clickRecognizer];
+}
+
+- (void)handleClick:(NSClickGestureRecognizer *)recognizer {
+    if (recognizer.state == NSGestureRecognizerStateRecognized) {
+        [self reorderAboveSiblings];
+    }
+}
+
+- (void)reorderAboveSiblings {
+    NSView *superview = self.superview;
+    if (!superview) {
+        return;
+    }
+    
+    NSArray<NSView *> *subviews = superview.subviews;
+
+    NSUInteger highestIndex = [subviews indexOfObjectWithOptions:NSEnumerationReverse
+                                                 passingTest:^BOOL(NSView *subview, NSUInteger idx, BOOL *stop) {
+        return [subview isKindOfClass:[self class]] && subview != self;
+    }];
+
+    if (highestIndex != NSNotFound) {
+        [superview addSubview:self positioned:NSWindowAbove relativeTo:subviews[highestIndex]];
+    }
+}
 - (void)drawRect:(NSRect)dirtyRect
 {
     [super drawRect:dirtyRect];

@@ -373,8 +373,9 @@ backgroundColor:(NSColor *)backgroundColor;
 // Screen contents, plus scrollback buffer.
 @property(nonatomic, retain) VT100Screen *screen;
 
-// The view in which this session's objects live.
+// The view in which this session's objects live. Can't call this from swift because of dependency madness.
 @property(nonatomic, retain) SessionView *view;
+@property(nonatomic, readonly) NSView *genericView;  // Use this from swift
 
 // The view that contains all the visible text in this session and that does most input handling.
 // This is the one and only subview of the document view of -scrollview.

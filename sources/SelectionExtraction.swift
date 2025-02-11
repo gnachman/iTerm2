@@ -164,7 +164,7 @@ class SelectionExtractor: NSObject {
                 return
             }
             DLog("\(it_addressString) work on \(VT100GridAbsWindowedRangeDescription(absRange))")
-            _ = self.withRelativeWindowedRange(absRange) { [unowned self] proposedRange in
+            _ = withRelativeWindowedRange(absRange) { [unowned self] proposedRange in
                 if proposedRange.coordRange.end.y < minimumLineNumber {
                     return
                 }
@@ -192,16 +192,11 @@ class SelectionExtractor: NSObject {
                 }
                 atomicExtractor.set(extractor)
                 extractor.addTimestamps = addTimestamps
-                let content = extractor.content(in: range,
-                                                attributeProvider: attributeProvider,
-                                                nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
-                                                pad: false,
-                                                includeLastNewline: options.contains(.copyLastNewline),
-                                                trimTrailingWhitespace: options.contains(.trimWhitespace),
-                                                cappedAtSize: cap,
-                                                truncateTail: true,
-                                                continuationChars: nil,
-                                                coords: nil)
+                let content = content(in: range,
+                                      attributeProvider: attributeProvider,
+                                      options: options,
+                                      cappedAtSize: cap,
+                                      extractor: extractor)
                 atomicExtractor.set(nil)
                 result.appendSelectionContent(content, newline: eol)
             }
@@ -209,6 +204,23 @@ class SelectionExtractor: NSObject {
             fractionSoFar += subselectionWeight
         }
         DLog("Finish extracting \(String(describing: selection.allSubSelections)). canceled=\(_canceled.value) self=\(self)")
+    }
+
+    fileprivate func content(in range: VT100GridWindowedRange,
+                             attributeProvider: ((screen_char_t, iTermExternalAttribute) -> [AnyHashable: Any])?,
+                             options: iTermSelectionExtractorOptions,
+                             cappedAtSize cap: Int32,
+                             extractor: iTermTextExtractor) -> Any {
+        return extractor.content(in: range,
+                                 attributeProvider: attributeProvider,
+                                 nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+                                 pad: false,
+                                 includeLastNewline: options.contains(.copyLastNewline),
+                                 trimTrailingWhitespace: options.contains(.trimWhitespace),
+                                 cappedAtSize: cap,
+                                 truncateTail: true,
+                                 continuationChars: nil,
+                                 coords: nil)
     }
 
     fileprivate func cancel() {
@@ -280,6 +292,41 @@ class AttributedStringSelectionExtractor: SelectionExtractor {
         }
         super.extract(result, attributeProvider: attributeProvider)
         return result
+    }
+}
+
+extension iTermLocatedString: Destination {
+    func appendSelectionContent(_ value: Any, newline: Bool) {
+        let sub = value as! iTermLocatedString
+        append(sub)
+    }
+}
+
+class LocatedStringSelectionExtractor: SelectionExtractor {
+    func extract() -> iTermLocatedString {
+        let result = iTermLocatedString()
+        if !selection.hasSelection {
+            return result
+        }
+
+        super.extract(result, attributeProvider: nil)
+        return result
+    }
+
+    fileprivate override func content(in range: VT100GridWindowedRange,
+                                      attributeProvider: ((screen_char_t,iTermExternalAttribute) -> [AnyHashable : Any])?,
+                                      options: iTermSelectionExtractorOptions,
+                                      cappedAtSize cap: Int32,
+                                      extractor: iTermTextExtractor) -> Any {
+        return extractor.locatedString(in: range,
+                                       attributeProvider: attributeProvider,
+                                       nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+                                       pad: false,
+                                       includeLastNewline: options.contains(.copyLastNewline),
+                                       trimTrailingWhitespace: options.contains(.trimWhitespace),
+                                       cappedAtSize: cap,
+                                       truncateTail: true,
+                                       continuationChars: nil)
     }
 }
 
@@ -397,4 +444,19 @@ class AsyncSelectionProvider: NSObject, NSPasteboardWriting {
                         pasteboard: NSPasteboard) -> NSPasteboard.WritingOptions {
         return .promised
     }
+}
+
+func withRelativeWindowedRange(_ range: VT100GridAbsWindowedRange,
+                               cumulativeOverflow: Int64,
+                               closure: (VT100GridWindowedRange) -> Void) -> Bool {
+    if range.coordRange.start.y < cumulativeOverflow || range.coordRange.start.y - cumulativeOverflow > Int32.max {
+        return false
+    }
+    if range.coordRange.end.y < cumulativeOverflow || range.coordRange.end.y - cumulativeOverflow > Int32.max {
+        return false
+    }
+    let relative = VT100GridWindowedRangeFromAbsWindowedRange(range, cumulativeOverflow)
+    closure(relative)
+    return true
+
 }

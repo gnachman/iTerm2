@@ -252,19 +252,21 @@
     _aitermController = [[AITermControllerObjC alloc] initWithQuery:self.aiPrompt
                                                               scope:self.scope
                                                            inWindow:self.view.window
-                                                         completion:^(NSArray<NSString *> *choices, NSString *error) {
-        if (choices.count >= 1) {
-            [weakSelf acceptSuggestion:choices[0]];
-            [weakSelf.textView.window makeFirstResponder:weakSelf.textView];
-        } else if (error) {
-            [iTermWarning showWarningWithTitle:error
+                                                         completion:^(iTermOr<NSArray *,NSError *> *result) {
+        [result whenFirst:^(NSArray *choices) {
+            if (choices.count >= 1) {
+                [weakSelf acceptSuggestion:choices[0]];
+                [weakSelf.textView.window makeFirstResponder:weakSelf.textView];
+            }
+        } second:^(NSError *error) {
+            [iTermWarning showWarningWithTitle:error.localizedDescription
                                        actions:@[ @"OK" ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
                                        heading:@"AI Error"
                                         window:weakSelf.view.window];
-        }
+        }];
     }];
 }
 

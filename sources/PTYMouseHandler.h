@@ -36,7 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
       coordIsMutable:(VT100GridCoord)coord;
 - (MouseMode)mouseHandlerMouseMode:(PTYMouseHandler *)handler;
 - (BOOL)mouseHandlerReportingAllowed:(PTYMouseHandler *)handler;
-- (void)mouseHandlerDidSingleClick:(PTYMouseHandler *)handler;
+- (void)mouseHandlerDidSingleClick:(PTYMouseHandler *)handler
+                             event:(NSEvent *)event;
 - (iTermSelection *)mouseHandlerCurrentSelection:(PTYMouseHandler *)handler;
 - (id<iTermImageInfoReading>)mouseHandler:(PTYMouseHandler *)handler imageAt:(VT100GridCoord)coord;
 - (void)mouseHandlerLockScrolling:(PTYMouseHandler *)handler;

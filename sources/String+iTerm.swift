@@ -220,3 +220,58 @@ extension String {
         return result
     }
 }
+
+extension String {
+    var entireRange: Range<Index> {
+        startIndex..<endIndex
+    }
+
+    public func nsrangeOfUTF16Character(from aSet: CharacterSet,
+                                        options mask: String.CompareOptions = [],
+                                        range aRange: Range<Self.Index>? = nil) -> NSRange? {
+        guard let range = rangeOfCharacter(from: aSet, options: mask, range: aRange) else {
+            return nil
+        }
+        let location = utf16.distance(from: utf16.startIndex, to: range.lowerBound.samePosition(in: utf16)!)
+        let length = utf16.distance(from: range.lowerBound.samePosition(in: utf16)!,
+                                    to: range.upperBound.samePosition(in: utf16)!)
+        return NSRange(location: location, length: length)
+    }
+
+    // UTF-16 offsets to String.Index
+    public func range(lowerBound: Int, upperBound: Int) -> Range<String.Index> {
+        let lower = utf16.index(utf16.startIndex, offsetBy: lowerBound, limitedBy: utf16.endIndex)
+        let upper = utf16.index(utf16.startIndex, offsetBy: upperBound, limitedBy: utf16.endIndex)
+
+        guard let lowerIndex = lower?.samePosition(in: self),
+              let upperIndex = upper?.samePosition(in: self) else {
+            it_fatalError("Invalid UTF-16 offsets for range conversion")
+        }
+
+        return lowerIndex..<upperIndex
+    }
+}
+
+extension String {
+    func utf16OffsetOfLine(_ n: Int) -> Int? {
+        guard n >= 0 else { return nil }
+
+        var offset = 0
+        var lineCount = 0
+        let utf16View = self.utf16
+
+        for (i, character) in utf16View.enumerated() {
+            if lineCount == n {
+                return offset
+            }
+
+            if character == 0x0A { // '\n' in UTF-16
+                lineCount += 1
+                offset = i + 1
+            }
+        }
+
+        return lineCount == n ? offset : nil
+    }
+}
+

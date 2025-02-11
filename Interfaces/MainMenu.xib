@@ -515,6 +515,12 @@ DQ
                                     <action selector="performNaturalLanguageQuery:" target="-1" id="oJ4-at-Hbh"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Explain Output with AI" keyEquivalent="y" identifier="Explain Output with AI" id="vlr-uw-Err">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="explainOutputWithAI:" target="-1" id="fVo-Xm-7jt"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="jHq-aL-J2z"/>
                             <menuItem title="Snippets" id="s0f-jP-7Pk" userLabel="Snippets">
                                 <modifierMask key="keyEquivalentModifierMask"/>

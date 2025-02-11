@@ -30,6 +30,12 @@ class GridCoordArray: NSObject {
         }
     }
 
+    @objc func prepend(coord: VT100GridCoord, repeating: Int) {
+        for _ in 0..<repeating {
+            coords.insert(coord, at: 0)
+        }
+    }
+
     @objc func removeFirst(_ n: Int) {
         coords.removeFirst(n)
     }
@@ -58,5 +64,18 @@ class GridCoordArray: NSObject {
 
     @objc(appendContentsOfArray:) func appendContentsOfArray(_ array: GridCoordArray) {
         coords.append(contentsOf: array.coords)
+    }
+
+    @objc(resizeRange:to:)
+    func resizeRange(_ original: NSRange, to replacement: NSRange) {
+        let subrange = Range(original)!
+        var updated = coords[subrange]
+        while updated.count > replacement.length {
+            updated.removeLast()
+        }
+        while updated.count < replacement.length {
+            updated.append(updated.last!)
+        }
+        coords.replaceSubrange(subrange, with: updated)
     }
 }

@@ -6198,6 +6198,9 @@ static NSString *iTermStringFromRange(NSRange range) {
             [self foldCommandMark:commandMark];
             return VT100GridCoordMake(-1, -1);
         } else if (!firstMouse) {
+            if ([self revealAnnotationsAt:[self coordForEvent:event] toggle:YES]) {
+                return VT100GridCoordMake(-1, -1);
+            }
             const NSPoint temp =
             [self clickPoint:event allowRightMarginOverflow:allowRightMarginOverflow];
             const VT100GridCoord selectAtCoord = VT100GridCoordMake(temp.x, temp.y);
@@ -6270,13 +6273,19 @@ static NSString *iTermStringFromRange(NSRange range) {
     return _dataSource.terminalMouseMode;
 }
 
-- (void)mouseHandlerDidSingleClick:(PTYMouseHandler *)handler {
-    for (NSView *view in [self subviews]) {
-        if ([view isKindOfClass:[PTYNoteView class]]) {
-            PTYNoteView *noteView = (PTYNoteView *)view;
-            [noteView.delegate.noteViewController setNoteHidden:YES];
-        }
+- (void)mouseHandlerDidSingleClick:(PTYMouseHandler *)handler event:(NSEvent *)event {
+    const VT100GridCoord coord = [self coordForEvent:event];
+    const VT100GridCoordRange coordRange =
+        VT100GridCoordRangeMake(coord.x,
+                                coord.y,
+                                coord.x + 1,
+                                coord.y);
+    if ([[self.dataSource annotationsInRange:coordRange] count]) {
+        // If you clicked on an annotation we want to toggle it, not hide all of them.
+        return;
     }
+
+    [self hideAllAnnotations];
 }
 
 - (iTermSelection *)mouseHandlerCurrentSelection:(PTYMouseHandler *)handler {

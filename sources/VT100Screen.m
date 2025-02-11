@@ -1113,6 +1113,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state coordRangeForInterval:interval];
 }
 
+- (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)absCoordRange {
+    return [_state intervalForGridAbsCoordRange:absCoordRange];
+}
+
 - (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval {
     return [_state absCoordRangeForInterval:interval];
 }

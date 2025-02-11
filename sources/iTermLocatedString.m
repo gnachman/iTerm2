@@ -23,6 +23,16 @@
     return self;
 }
 
+- (void)appendLocatedString:(iTermLocatedString *)locatedString {
+    [_string appendString:locatedString.string];
+    [_gridCoords appendContentsOfArray:locatedString.gridCoords];
+}
+
+- (void)prependString:(NSString *)string at:(VT100GridCoord)coord {
+    [_string insertString:string atIndex:0];
+    [self prependCoordsForString:string at:coord];
+}
+
 - (void)appendString:(NSString *)string at:(VT100GridCoord)coord {
     [_string appendString:string];
     [self appendCoordsForString:string at:coord];
@@ -31,6 +41,11 @@
 - (void)appendCoordsForString:(NSString *)string at:(VT100GridCoord)coord {
     const NSInteger length = string.length;
     [_gridCoords appendWithCoord:coord repeating:length];
+}
+
+- (void)prependCoordsForString:(NSString *)string at:(VT100GridCoord)coord {
+    const NSInteger length = string.length;
+    [_gridCoords prependWithCoord:coord repeating:length];
 }
 
 - (void)erase {
@@ -62,6 +77,35 @@
     }];
 }
 
+- (void)replaceCharactersInRange:(NSRange)range withString:(NSString *)replacement {
+    [_string replaceCharactersInRange:range withString:replacement];
+    [_gridCoords resizeRange:range
+                          to:NSMakeRange(range.location, replacement.length)];
+}
+
+- (NSInteger)offsetOfLineNumber:(int)lineNumber {
+    if (lineNumber <= 0) {
+        return 0;
+    }
+
+    const NSUInteger length = _string.length;
+    NSUInteger offset = 0;
+    int currentLine = 0;
+
+    while (currentLine < lineNumber && offset < length) {
+        NSRange range = [_string rangeOfCharacterFromSet:[NSCharacterSet newlineCharacterSet]
+                                                 options:0
+                                                   range:NSMakeRange(offset, length - offset)];
+        if (range.location == NSNotFound) {
+            return NSNotFound; // LineNumber exceeds total lines
+        }
+
+        offset = range.location + 1;
+        currentLine += 1;
+    }
+
+    return (currentLine == lineNumber) ? offset : NSNotFound;
+}
 @end
 
 @implementation iTermLocatedAttributedString {

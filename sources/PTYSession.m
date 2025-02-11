@@ -613,7 +613,6 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     // Are we currently enqueuing the bytes to write a focus report?
     BOOL _reportingFocus;
 
-    AITermControllerObjC *_aiterm;
     NSMutableArray<NSString *> *_commandQueue;
     NSMutableArray<iTermSSHReconnectionInfo *> *_pendingJumps;
 
@@ -11320,6 +11319,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return self.variablesScope;
 }
 
+- (NSView *)genericView {
+    return _view;
+}
+
 - (BOOL)textViewSuppressingAllOutput {
     return _suppressAllOutput;
 }
@@ -16352,7 +16355,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (defaultString.length > 0 && bypassable && [[NSUserDefaults standardUserDefaults] boolForKey:bypassKey]) {
         return defaultString;
     }
-    NSAlert *alert = [[NSAlert alloc] init];
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     [alert setMessageText:@"Describe the command you want to run in plain English. Press ⇧⏎ to send."];
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
@@ -16435,6 +16438,71 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return nil;
 }
 
+- (iTermSelection *)selectionForOutputToExplainWithAI {
+    if (_textview.selection.hasSelection) {
+        return _textview.selection;
+    }
+    id<VT100ScreenMarkReading> mark = _selectedCommandMark ?: _screen.lastCommandMark;
+    if (mark) {
+        const VT100GridCoordRange range = [self.screen rangeOfOutputForCommandMark:mark];
+        const VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range,
+                                                                                     _screen.totalScrollbackOverflow);
+        const VT100GridAbsWindowedRange windowedRange = VT100GridAbsWindowedRangeMake(absRange, 0, 0);
+        iTermSelection *selection = [[[iTermSelection alloc] init] autorelease];
+        selection.delegate = _textview;
+        iTermSubSelection *sub = [iTermSubSelection subSelectionWithAbsRange:windowedRange
+                                                                        mode:kiTermSelectionModeCharacter
+                                                                       width:_screen.width];
+        [selection addSubSelection:sub];
+        return selection;
+    }
+    return nil;
+}
+
+- (NSString *)commandForOutputToExplainWithAI {
+    if (_textview.selection.hasSelection) {
+        const VT100GridAbsCoordRange span = _textview.selection.spanningAbsRange;
+        Interval *interval = [_screen intervalForGridAbsCoordRange:span];
+        Interval *start = [Interval intervalWithLocation:interval.location length:0];
+        id<VT100ScreenMarkReading> startMark = [_screen screenMarkBefore:start];
+        Interval *end = [Interval intervalWithLocation:interval.limit - 1 length:0];
+        id<VT100ScreenMarkReading> endMark = [_screen screenMarkBefore:end];
+        if (startMark == endMark) {
+            return startMark.command;
+        }
+        return nil;
+    }
+    id<VT100ScreenMarkReading> mark = _selectedCommandMark ?: _screen.lastCommandMark;
+    return mark.command;
+}
+
+- (NSString *)subjectMatterToExplainWithAI {
+    if (_textview.selection.hasSelection) {
+        return @"the selected text";
+    }
+    if (_selectedCommandMark) {
+        return @"the selected command";
+    }
+    if (_screen.lastCommandMark) {
+        return @"the last command";
+    }
+    return nil;
+}
+
+- (void)textViewExplainOutputWithAI {
+    iTermSelection *selection = [self selectionForOutputToExplainWithAI];
+    if (selection) {
+        [self explainSelectionWithAI:selection
+                            snapshot:self.screen.snapshotDataSource
+                             command:[self commandForOutputToExplainWithAI]
+                       subjectMatter:[self subjectMatterToExplainWithAI]];
+    }
+}
+
+- (BOOL)textViewCanExplainOutputWithAI {
+    return [self selectionForOutputToExplainWithAI] != nil;
+}
+
 - (void)textViewPerformNaturalLanguageQuery {
     [self reallyPerformNaturalLanguageQuery:[self naturalLanguageQuery] completion:nil];
 }
@@ -16450,10 +16518,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _aiterm = [[AITermControllerObjC alloc] initWithQuery:query
                                                     scope:self.variablesScope
                                                  inWindow:self.view.window
-                                               completion:^(NSArray<NSString *> * _Nullable choices, NSString * _Nullable error) {
-        [weakSelf handleAIChoices:choices error:error];
+                                               completion:^(iTermOr<NSString *,NSError *> *result) {
+        [weakSelf handleAIResult:result];
         if (completion) {
-            completion(choices.count > 0 && !error);
+            completion(result.hasFirst);
         }
     }];
 }
@@ -16501,23 +16569,20 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [iTermProfilePreferences boolForKey:key inProfile:self.profile];
 }
 
-- (void)handleAIChoices:(NSArray<NSString *> *)choices error:(NSString *)error {
-    if (error) {
-        [iTermWarning showWarningWithTitle:error
+- (void)handleAIResult:(iTermOr<NSString *, NSError *> *)result {
+    [result whenFirst:^(NSString *choice) {
+        [self setComposerString:choice forceLarge:YES];
+        DLog(@"handleAIChoices -> makeComposerFirstResponder");
+        [self makeComposerFirstResponderIfAllowed];
+    } second:^(NSError *error) {
+        [iTermWarning showWarningWithTitle:error.localizedDescription
                                    actions:@[ @"OK" ]
                                  accessory:nil
                                 identifier:nil
                                silenceable:kiTermWarningTypePersistent
                                    heading:@"AI Error"
                                     window:self.view.window];
-        return;
-    }
-    if (choices.count == 0) {
-        return;
-    }
-    [self setComposerString:choices[0] forceLarge:YES];
-    DLog(@"handleAIChoices -> makeComposerFirstResponder");
-    [self makeComposerFirstResponderIfAllowed];
+    }];
 }
 
 - (BOOL)sessionViewTerminalIsFirstResponder {

@@ -106,6 +106,7 @@
 
 - (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval;
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
+- (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)absCoordRange;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
 

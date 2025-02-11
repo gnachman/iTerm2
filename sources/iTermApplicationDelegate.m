@@ -1245,6 +1245,11 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    iTermChatWindowController *w = [[iTermChatWindowController alloc] initWithTitle:@"Test"];
+    [w showChatWindow];
+    [w.chatViewController appendAgentMessage:@"To commit your code, you can follow these steps:\n\n1. First, ensure that all the changes you want to commit are staged. You can stage the modified files by using the command:\n   ```\n   git add <file>\n   ```\n   Replace `<file>` with the name of the file you want to stage. If you want to stage all modified files, you can use:\n   ```\n   git add .\n   ```\n\n2. Once your changes are staged, you can commit them with a message describing the changes. Use the following command:\n   ```\n   git commit -m \"Your commit message here\"\n   ```\n"];
+    [w.chatViewController commit];
+
     DLog(@"didFinishLaunching");
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];

@@ -3,8 +3,8 @@ import JavaScriptCore
 
 protocol AITermControllerDelegate: AnyObject {
     func aitermControllerWillSendRequest(_ sender: AITermController)
-    func aitermController(_ sender: AITermController, offerChoices: [String])
-    func aitermController(_ sender: AITermController, didFailWithErrorMessage: String)
+    func aitermController(_ sender: AITermController, offerChoice: String)
+    func aitermController(_ sender: AITermController, didFailWithError: Error)
     func aitermControllerRequestRegistration(_ sender: AITermController,
                                              completion: @escaping (AITermController.Registration) -> ())
 }
@@ -424,7 +424,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         var value: String?
     }
     private let controller: AITermController
-    private var handler: (([String]?, String?) -> ())?
+    private var handler: ((Result<String, Error>) -> ())?
     private let ownerWindow: NSWindow
     private let query: String
     private let pleaseWait: PleaseWaitWindow
@@ -477,16 +477,20 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     init(query: String,
          scope: iTermVariableScope,
          window: NSWindow,
-         handler: @escaping ([String]?, String?) -> ()) {
+         handler: @escaping (iTermOr<NSString, NSError>) -> ()) {
         let pleaseWait = PleaseWaitWindow(owningWindow: window,
                                           message: "Thinking…",
                                           image: NSImage.it_imageNamed("aiterm", for: AITermControllerObjC.self))
         self.pleaseWait = pleaseWait
         var cancel: (() -> ())?
         var shouldCancel = false
-        self.handler = { choices, error in
+        self.handler = { result in
             if !pleaseWait.canceled {
-                handler(choices, error)
+                result.handle { choice in
+                    handler(iTermOr.first(choice as NSString))
+                } failure: { error in
+                    handler(iTermOr.second(error as NSError))
+                }
             } else {
                 shouldCancel = true
                 cancel?()
@@ -537,17 +541,17 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         pleaseWait.run()
     }
 
-    func aitermController(_ sender: AITermController, offerChoices choices: [String]) {
+    func aitermController(_ sender: AITermController, offerChoice choice: String) {
         pleaseWait.stop()
         DispatchQueue.main.async {
-            self.handler?(choices, nil)
+            self.handler?(.success(choice))
         }
     }
 
-    func aitermController(_ sender: AITermController, didFailWithErrorMessage errorMessage: String) {
+    func aitermController(_ sender: AITermController, didFailWithError error: Error) {
         pleaseWait.stop()
         DispatchQueue.main.async {
-            self.handler?(nil, errorMessage)
+            self.handler?(.failure(error))
         }
     }
 
@@ -560,7 +564,8 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
             if let registration {
                 completion(registration)
             } else {
-                handler?(nil, nil)
+                #warning("TODO: Test thsi!")
+                handler?(.failure(AIError("Permission denied")))
             }
         }
     }
@@ -695,7 +700,7 @@ class AITermController {
             }
         }
         case begin
-        case error(reason: String)
+        case error(any Error)
         case pluginError(PluginError)
         case webResponse(WebResponse)
         case cancel
@@ -758,9 +763,10 @@ class AITermController {
                     makeAPICall(query: query, registration: registration)
                 }
                 delegate?.aitermControllerWillSendRequest(self)
-            case .error(reason: let reason):
-                DLog("error: \(reason)")
+            case .error(let error):
+                DLog("error: \(error)")
                 state = .ground
+                delegate?.aitermController(self, didFailWithError: error)
             case .pluginError(let error):
                 DLog("plugin error: \(error.reason)")
                 state = .ground
@@ -786,8 +792,10 @@ class AITermController {
             case .pluginError(let error):
                 DLog("plugin error: \(error.reason)")
                 state = .ground
-            case .error(let reason):
-                DLog("error: \(reason)")
+            case .error(let error):
+                DLog("error: \(error)")
+                state = .ground
+                delegate?.aitermController(self, didFailWithError: error)
                 state = .ground
             case .webResponse:
                 DLog("Unexpected event \(event) in \(state)")
@@ -809,18 +817,18 @@ class AITermController {
                     if let reason = LLMErrorParser.errorReason(data: response.data.lossyData), !reason.isEmpty {
                         message += " " + reason
                     }
-                    handle(event: .error(reason: message), legacy: false)
+                    handle(event: .error(AIError(message)), legacy: false)
                 } else {
                     parseResponse(data: response.data.data(using: .utf8)!, legacy: legacy)
                 }
             case .pluginError(let error):
-                handle(event: .error(reason: error.reason), legacy: false)
+                handle(event: .error(error), legacy: false)
             case .cancel:
                 state = .ground
-            case .error(reason: let reason):
-                DLog("error: \(reason)")
+            case .error(let error):
+                DLog("error: \(error)")
                 state = .ground
-                delegate?.aitermController(self, didFailWithErrorMessage: reason)
+                delegate?.aitermController(self, didFailWithError: error)
             }
         }
     }
@@ -873,12 +881,18 @@ class AITermController {
                                         messages: messages,
                                         functions: functions)
         guard llmProvider.urlIsValid else {
-            handle(event: .error(reason: "Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")"),
+            handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")),
                    legacy: false)
             return
         }
-        let request = builder.webRequest
         let legacy = llmProvider.version == .legacy
+        let request: WebRequest
+        do {
+            request = try builder.webRequest()
+        } catch {
+            handle(event: .error(error), legacy: legacy)
+            return
+        }
         cancellation = client.request(webRequest: request, completion: { [weak self] result in
             switch result {
             case .success(let response):
@@ -901,17 +915,18 @@ class AITermController {
                 return
             }
             let choices = response.choiceMessages.compactMap { $0.trimmedString }
-            guard !choices.isEmpty else {
+            guard let choice = choices.first else {
+                delegate?.aitermController(self, didFailWithError: AIError("Empty response from server"))
                 return
             }
             state = .ground
-            delegate?.aitermController(self, offerChoices: choices)
+            delegate?.aitermController(self, offerChoice: choice)
         } catch {
             if let reason = LLMErrorParser.errorReason(data: data) {
-                handle(event: .error(reason: "Could not decode response: " + reason),
+                handle(event: .error(AIError("Could not decode response: " + reason)),
                        legacy: legacy)
             } else {
-                handle(event: .error(reason: "Failed to decode API response: \(error). Data is: \(data.stringOrHex)"),
+                handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(data.stringOrHex)")),
                        legacy: legacy)
             }
         }
@@ -943,7 +958,7 @@ class AITermController {
                         return
                     case .failure(let error):
                         DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
-                        handle(event: .error(reason: error.localizedDescription),
+                        handle(event: .error(error),
                                legacy: false)
                         return
                     }
@@ -1079,23 +1094,48 @@ class AITermRegistrationWindow: NSWindow {
     }
 }
 
-struct AIConversation {
-    public struct AIError: Error, CustomStringConvertible {
-        public internal(set) var message: String
+@objc public class iTermAIError: NSObject {
+    @objc static let domain = "com.iterm2.ai"
+    @objc(iTermAIErrorType) public enum ErrorType: Int {
+        case generic = 0
+        case requestTooLarge = 1
+    }
+}
 
-        public init(_ message: String) {
-            self.message = message
-        }
+public struct AIError: LocalizedError, CustomStringConvertible, CustomNSError {
+    public internal(set) var message: String
+    public internal(set) var type = iTermAIError.ErrorType.generic
 
-        public var description: String {
-            message
-        }
-
-        var localizedDescription: String {
-            message
-        }
+    public init(_ message: String) {
+        self.message = message
     }
 
+    public init(_ message: String, type: iTermAIError.ErrorType) {
+        self.message = message
+        self.type = type
+    }
+
+    public var errorDescription: String? {
+        message
+    }
+
+    public var description: String {
+        message
+    }
+
+    var localizedDescription: String {
+        message
+    }
+
+    static var requestTooLarge: AIError {
+        AIError("Request too large", type: .requestTooLarge)
+    }
+
+    public static var errorDomain: String { iTermAIError.domain }
+    public var errorCode: Int { type.rawValue }
+}
+
+struct AIConversation {
     private class Delegate: AITermControllerDelegate {
         private(set) var busy = false
         var completion: ((Result<String, Error>) -> ())?
@@ -1105,18 +1145,14 @@ struct AIConversation {
             busy = true
         }
         
-        func aitermController(_ sender: AITermController, offerChoices: [String]) {
+        func aitermController(_ sender: AITermController, offerChoice choice: String) {
             busy = false
-            if let choice = offerChoices.first {
-                completion?(Result.success(choice))
-            } else {
-                completion?(Result.failure(AIError("Empty response from OpenAI")))
-            }
+            completion?(Result.success(choice))
         }
         
-        func aitermController(_ sender: AITermController, didFailWithErrorMessage message: String) {
+        func aitermController(_ sender: AITermController, didFailWithError error: Error) {
             busy = false
-            completion?(Result.failure(AIError(message)))
+            completion?(Result.failure(error))
         }
         
         func aitermControllerRequestRegistration(_ sender: AITermController,
@@ -1246,5 +1282,16 @@ extension String {
 extension Data {
     var lossyString: String {
         return String(decoding: self, as: UTF8.self)
+    }
+}
+
+extension Result {
+    func handle(success: (Success) -> (), failure: (Failure) -> ()) {
+        switch self {
+        case .success(let value):
+            success(value)
+        case .failure(let value):
+            failure(value)
+        }
     }
 }

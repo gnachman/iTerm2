@@ -1222,6 +1222,10 @@
 		A61D16FD1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
 		A61D2A4927555CD000E539F3 /* MenuItemPopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61D2A4827555CD000E539F3 /* MenuItemPopupView.swift */; };
 		A61E0C432D54301100D4633A /* NSFileManager+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61E0C422D54300B00D4633A /* NSFileManager+iTerm.swift */; };
+		A61E0C452D592C2700D4633A /* ExplainWithAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61E0C442D592C2200D4633A /* ExplainWithAI.swift */; };
+		A61E0C4B2D5AA78700D4633A /* ChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61E0C4A2D5AA78000D4633A /* ChatViewController.swift */; };
+		A61E0C4E2D5ACBCF00D4633A /* ChatWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61E0C4D2D5ACBCC00D4633A /* ChatWindowController.swift */; };
+		A61E0C502D5ACD4F00D4633A /* PTYSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61E0C4F2D5ACD4C00D4633A /* PTYSession.swift */; };
 		A61ED2A520E99DCD0035BECD /* iTermStatusBarClockComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ED2A320E99DCD0035BECD /* iTermStatusBarClockComponent.h */; };
 		A61ED2A620E99DCD0035BECD /* iTermStatusBarClockComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ED2A420E99DCD0035BECD /* iTermStatusBarClockComponent.m */; };
 		A61ED2A920E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ED2A720E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.h */; };
@@ -5607,6 +5611,16 @@
 		A6110C382526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermModifyOtherKeysMapper1.h; sourceTree = "<group>"; };
 		A6110C392526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermModifyOtherKeysMapper1.m; sourceTree = "<group>"; };
 		A6121D2E2A04875C005D469C /* ImportExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportExport.swift; sourceTree = "<group>"; };
+		A613EEDB2D5B167100E4E480 /* CharacterRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CharacterRule.swift; path = submodules/SwiftyMarkdown/Sources/SwiftyMarkdown/CharacterRule.swift; sourceTree = SOURCE_ROOT; };
+		A613EEDC2D5B167100E4E480 /* PerfomanceLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PerfomanceLog.swift; path = submodules/SwiftyMarkdown/Sources/SwiftyMarkdown/PerfomanceLog.swift; sourceTree = SOURCE_ROOT; };
+		A613EEDD2D5B167100E4E480 /* String+SwiftyMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "String+SwiftyMarkdown.swift"; path = "submodules/SwiftyMarkdown/Sources/SwiftyMarkdown/String+SwiftyMarkdown.swift"; sourceTree = SOURCE_ROOT; };
+		A613EEDE2D5B167100E4E480 /* SwiftyLineProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SwiftyLineProcessor.swift; path = submodules/SwiftyMarkdown/Sources/SwiftyMarkdown/SwiftyLineProcessor.swift; sourceTree = SOURCE_ROOT; };
+		A613EEDF2D5B167100E4E480 /* SwiftyMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SwiftyMarkdown.swift; path = submodules/SwiftyMarkdown/Sources/SwiftyMarkdown/SwiftyMarkdown.swift; sourceTree = SOURCE_ROOT; };
+		A613EEE02D5B167100E4E480 /* SwiftyMarkdown+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "SwiftyMarkdown+iOS.swift"; path = "submodules/SwiftyMarkdown/Sources/SwiftyMarkdown/SwiftyMarkdown+iOS.swift"; sourceTree = SOURCE_ROOT; };
+		A613EEE12D5B167100E4E480 /* SwiftyMarkdown+macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "SwiftyMarkdown+macOS.swift"; path = "submodules/SwiftyMarkdown/Sources/SwiftyMarkdown/SwiftyMarkdown+macOS.swift"; sourceTree = SOURCE_ROOT; };
+		A613EEE22D5B167100E4E480 /* SwiftyScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SwiftyScanner.swift; path = submodules/SwiftyMarkdown/Sources/SwiftyMarkdown/SwiftyScanner.swift; sourceTree = SOURCE_ROOT; };
+		A613EEE32D5B167100E4E480 /* SwiftyTokeniser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SwiftyTokeniser.swift; path = submodules/SwiftyMarkdown/Sources/SwiftyMarkdown/SwiftyTokeniser.swift; sourceTree = SOURCE_ROOT; };
+		A613EEE42D5B167100E4E480 /* Token.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Token.swift; path = submodules/SwiftyMarkdown/Sources/SwiftyMarkdown/Token.swift; sourceTree = SOURCE_ROOT; };
 		A614F2601FE47D8600EEE919 /* iTermCharacterBitmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermCharacterBitmap.h; path = Metal/Infrastructure/iTermCharacterBitmap.h; sourceTree = "<group>"; };
 		A614F2611FE47D8600EEE919 /* iTermCharacterBitmap.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermCharacterBitmap.m; path = Metal/Infrastructure/iTermCharacterBitmap.m; sourceTree = "<group>"; };
 		A614F2641FE4B0A200EEE919 /* iTermCharacterParts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermCharacterParts.h; path = Metal/Infrastructure/iTermCharacterParts.h; sourceTree = "<group>"; };
@@ -5688,6 +5702,10 @@
 		A61D16FB1AAFD5530013FCCA /* iTermBackgroundColorRun.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundColorRun.m; sourceTree = "<group>"; };
 		A61D2A4827555CD000E539F3 /* MenuItemPopupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemPopupView.swift; sourceTree = "<group>"; };
 		A61E0C422D54300B00D4633A /* NSFileManager+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSFileManager+iTerm.swift"; sourceTree = "<group>"; };
+		A61E0C442D592C2200D4633A /* ExplainWithAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplainWithAI.swift; sourceTree = "<group>"; };
+		A61E0C4A2D5AA78000D4633A /* ChatViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewController.swift; sourceTree = "<group>"; };
+		A61E0C4D2D5ACBCC00D4633A /* ChatWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatWindowController.swift; sourceTree = "<group>"; };
+		A61E0C4F2D5ACD4C00D4633A /* PTYSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PTYSession.swift; sourceTree = "<group>"; };
 		A61ED2A320E99DCD0035BECD /* iTermStatusBarClockComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarClockComponent.h; sourceTree = "<group>"; };
 		A61ED2A420E99DCD0035BECD /* iTermStatusBarClockComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarClockComponent.m; sourceTree = "<group>"; };
 		A61ED2A720E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarVariableBaseComponent.h; sourceTree = "<group>"; };
@@ -6531,16 +6549,6 @@
 		A682274528078434005DF0B4 /* PTYTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PTYTextView.swift; sourceTree = "<group>"; };
 		A6822747280786A5005DF0B4 /* Porthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Porthole.swift; sourceTree = "<group>"; };
 		A6822779280E26CD005DF0B4 /* SwiftyMarkdown.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftyMarkdown.h; sourceTree = "<group>"; };
-		A6822785280E26F3005DF0B4 /* PerfomanceLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PerfomanceLog.swift; sourceTree = "<group>"; };
-		A6822786280E26F3005DF0B4 /* SwiftyLineProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyLineProcessor.swift; sourceTree = "<group>"; };
-		A6822787280E26F3005DF0B4 /* SwiftyScanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyScanner.swift; sourceTree = "<group>"; };
-		A6822788280E26F3005DF0B4 /* SwiftyMarkdown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyMarkdown.swift; sourceTree = "<group>"; };
-		A6822789280E26F3005DF0B4 /* SwiftyMarkdown+macOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdown+macOS.swift"; sourceTree = "<group>"; };
-		A682278A280E26F3005DF0B4 /* SwiftyTokeniser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyTokeniser.swift; sourceTree = "<group>"; };
-		A682278B280E26F3005DF0B4 /* CharacterRule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CharacterRule.swift; sourceTree = "<group>"; };
-		A682278C280E26F3005DF0B4 /* Token.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
-		A682278D280E26F3005DF0B4 /* SwiftyMarkdown+iOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdown+iOS.swift"; sourceTree = "<group>"; };
-		A682278E280E26F3005DF0B4 /* String+SwiftyMarkdown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+SwiftyMarkdown.swift"; sourceTree = "<group>"; };
 		A682CCC12A0EBD110099E762 /* SuggestionRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestionRequest.swift; sourceTree = "<group>"; };
 		A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermProgressIndicator.h; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProgressIndicator.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -9530,6 +9538,9 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A61E0C4D2D5ACBCC00D4633A /* ChatWindowController.swift */,
+				A61E0C4A2D5AA78000D4633A /* ChatViewController.swift */,
+				A61E0C442D592C2200D4633A /* ExplainWithAI.swift */,
 				A66C818B294E755C00452A11 /* AITerm.swift */,
 				A66C8187294E751800452A11 /* AITerm.xib */,
 				A6DCE3FB2C064932005586F5 /* iTermProcess.h */,
@@ -9842,6 +9853,7 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A61E0C4F2D5ACD4C00D4633A /* PTYSession.swift */,
 				A6F3EB4E2D32EC5500612173 /* TailFindController.swift */,
 				A65B1BD42D1E3CC500F5A740 /* iTermMTKView.swift */,
 				A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */,
@@ -10387,16 +10399,16 @@
 		A6822784280E26F3005DF0B4 /* SwiftyMarkdown */ = {
 			isa = PBXGroup;
 			children = (
-				A6822785280E26F3005DF0B4 /* PerfomanceLog.swift */,
-				A6822786280E26F3005DF0B4 /* SwiftyLineProcessor.swift */,
-				A6822787280E26F3005DF0B4 /* SwiftyScanner.swift */,
-				A6822788280E26F3005DF0B4 /* SwiftyMarkdown.swift */,
-				A6822789280E26F3005DF0B4 /* SwiftyMarkdown+macOS.swift */,
-				A682278A280E26F3005DF0B4 /* SwiftyTokeniser.swift */,
-				A682278B280E26F3005DF0B4 /* CharacterRule.swift */,
-				A682278C280E26F3005DF0B4 /* Token.swift */,
-				A682278D280E26F3005DF0B4 /* SwiftyMarkdown+iOS.swift */,
-				A682278E280E26F3005DF0B4 /* String+SwiftyMarkdown.swift */,
+				A613EEDB2D5B167100E4E480 /* CharacterRule.swift */,
+				A613EEDC2D5B167100E4E480 /* PerfomanceLog.swift */,
+				A613EEDD2D5B167100E4E480 /* String+SwiftyMarkdown.swift */,
+				A613EEDE2D5B167100E4E480 /* SwiftyLineProcessor.swift */,
+				A613EEDF2D5B167100E4E480 /* SwiftyMarkdown.swift */,
+				A613EEE02D5B167100E4E480 /* SwiftyMarkdown+iOS.swift */,
+				A613EEE12D5B167100E4E480 /* SwiftyMarkdown+macOS.swift */,
+				A613EEE22D5B167100E4E480 /* SwiftyScanner.swift */,
+				A613EEE32D5B167100E4E480 /* SwiftyTokeniser.swift */,
+				A613EEE42D5B167100E4E480 /* Token.swift */,
 			);
 			name = SwiftyMarkdown;
 			path = ThirdParty/SwiftyMarkdown;
@@ -16046,6 +16058,7 @@
 				A667C26F277B8F1F006B4DEF /* VT100ScreenMutableState.m in Sources */,
 				A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */,
 				A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */,
+				A61E0C502D5ACD4F00D4633A /* PTYSession.swift in Sources */,
 				A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */,
 				A6BCAADA21F6F53E0000CD29 /* iTermTextPopoverViewController.m in Sources */,
 				A677EC6E2A787A94000D7B5A /* TmuxGateway.m in Sources */,
@@ -16188,6 +16201,7 @@
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
 				A6A73D6527CCA408002E4CCA /* DonateViewController.swift in Sources */,
 				A65003ED29FDE6950028BC9E /* FocusBuiltInFunction.swift in Sources */,
+				A61E0C4E2D5ACBCF00D4633A /* ChatWindowController.swift in Sources */,
 				A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */,
 				A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */,
 				53E9DFE5220D530E0070C9C0 /* SetDirectoryTrigger.m in Sources */,
@@ -16414,6 +16428,7 @@
 				5337A316203E065300024BEA /* iTermPowerManager.m in Sources */,
 				A6A4867320B67ADB00493302 /* PointerPrefsController.m in Sources */,
 				A61A85B624F23D0700B03880 /* iTermGlobalSearchEngine.m in Sources */,
+				A61E0C4B2D5AA78700D4633A /* ChatViewController.swift in Sources */,
 				A638D2A2222230A3001CD688 /* iTermDirectedGraph.m in Sources */,
 				A6E20AF921FF9E1600D7CB3E /* iTermInstantReplayWindowController.m in Sources */,
 				A6A3D1972816676700C0C9E0 /* FileExtensionDB.swift in Sources */,
@@ -16428,6 +16443,7 @@
 				A68ADA0B29D397400008E092 /* Progress.swift in Sources */,
 				A6644BE325CDCCD600419355 /* iTermLegacyView.m in Sources */,
 				535B3BBA2228DC5500D6D410 /* iTermAlertBuiltInFunction.m in Sources */,
+				A61E0C452D592C2700D4633A /* ExplainWithAI.swift in Sources */,
 				530AB8A420B12B9500D2AA08 /* iTermFunctionCallTextFieldDelegate.m in Sources */,
 				A6E2A6412B91413700EC6070 /* LineBlock+SwiftInterop.m in Sources */,
 				A6A4B2B82426BCD900184EAC /* iTermKeyMappings.m in Sources */,
