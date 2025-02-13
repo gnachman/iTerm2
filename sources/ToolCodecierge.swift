@@ -90,6 +90,8 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                                   messages: initialMessages)
                     if ghostRiding {
                         do {
+                            // This struct defines inputs to the function call. The LLM will populate
+                            // all the fields of the struct. Reflection is used to make this possible.
                             struct ExecuteCommand: Codable {
                                 var command: String = ""
                             }
@@ -102,7 +104,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                             conversation?.define(
                                 function: decl,
                                 arguments: ExecuteCommand.self,
-                                implementation: { [weak self] command, controller, completion in
+                                implementation: { [weak self] command, completion in
                                     guard let self,
                                           let session = iTermController.sharedInstance().session(withGUID: guid) else {
                                         completion(.failure(AIError("The session no longer exists")))
@@ -129,7 +131,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                             conversation?.define(
                                 function: decl,
                                 arguments: WriteCommand.self,
-                                implementation: { [weak self] command, controller, completion in
+                                implementation: { [weak self] command, completion in
                                     guard let self,
                                           let session = iTermController.sharedInstance().session(withGUID: guid) else {
                                         completion(.failure(AIError("The session no longer exists")))

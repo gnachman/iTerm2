@@ -146,6 +146,10 @@ extension PTYSession {
                                     baseOffset: screen.totalScrollbackOverflow(),
                                     scope: genericScope)
     }
+
+    func execute(_ command: RemoteCommand, completion: @escaping (String) -> ()) {
+        #warning("TODO")
+    }
 }
 
 struct SubSelectionSerializationInfo {

@@ -3958,6 +3958,8 @@
 		A6EB64382D5D2E9400481D33 /* ChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EB64372D5D2E9200481D33 /* ChatService.swift */; };
 		A6EB643A2D5D800F00481D33 /* NSDictionaryCodableBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EB64392D5D800900481D33 /* NSDictionaryCodableBox.swift */; };
 		A6EB643C2D5D805500481D33 /* AIExplanationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EB643B2D5D804F00481D33 /* AIExplanationResponse.swift */; };
+		A6EB647E2D5E8EE400481D33 /* MessageCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EB647D2D5E8EE200481D33 /* MessageCellView.swift */; };
+		A6EB64802D5E906800481D33 /* RemoteCommandExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EB647F2D5E906500481D33 /* RemoteCommandExecutor.swift */; };
 		A6EC0B062C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6EC0B042C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf */; };
 		A6EC0B072C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6EC0B042C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf */; };
 		A6EC0B082C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6EC0B042C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf */; };
@@ -7486,6 +7488,8 @@
 		A6EB64372D5D2E9200481D33 /* ChatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatService.swift; sourceTree = "<group>"; };
 		A6EB64392D5D800900481D33 /* NSDictionaryCodableBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSDictionaryCodableBox.swift; sourceTree = "<group>"; };
 		A6EB643B2D5D804F00481D33 /* AIExplanationResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIExplanationResponse.swift; sourceTree = "<group>"; };
+		A6EB647D2D5E8EE200481D33 /* MessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageCellView.swift; sourceTree = "<group>"; };
+		A6EB647F2D5E906500481D33 /* RemoteCommandExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteCommandExecutor.swift; sourceTree = "<group>"; };
 		A6EC0B042C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = "uniE0D7_Powerline_normal-left-inverse-cutout.pdf"; path = "ThirdParty/PowerlineExtraSymbols/uniE0D7_Powerline_normal-left-inverse-cutout.pdf"; sourceTree = "<group>"; };
 		A6EC0B052C87DF5E00598D20 /* uniE0D6_Powerline_normal-right-inverse-cutout.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = "uniE0D6_Powerline_normal-right-inverse-cutout.pdf"; path = "ThirdParty/PowerlineExtraSymbols/uniE0D6_Powerline_normal-right-inverse-cutout.pdf"; sourceTree = "<group>"; };
 		A6EC0B0E2C9C9AA800598D20 /* FoldMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldMark.swift; sourceTree = "<group>"; };
@@ -9561,6 +9565,8 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A6EB647F2D5E906500481D33 /* RemoteCommandExecutor.swift */,
+				A6EB647D2D5E8EE200481D33 /* MessageCellView.swift */,
 				A6EB643B2D5D804F00481D33 /* AIExplanationResponse.swift */,
 				A6EB64372D5D2E9200481D33 /* ChatService.swift */,
 				A6EB64352D5D2E8100481D33 /* ChatClient.swift */,
@@ -15958,6 +15964,7 @@
 				A682273C2801F355005DF0B4 /* SavePanelBuiltInFunction.swift in Sources */,
 				A60E045D26DED32A00DD162B /* StatusBarFilterComponent.swift in Sources */,
 				A619DC3D2CD43534004B8996 /* iTermAttributedStringBuilder.m in Sources */,
+				A6EB647E2D5E8EE400481D33 /* MessageCellView.swift in Sources */,
 				A6EC47C121EC623D000E1321 /* iTermOnboardingWindowController.m in Sources */,
 				A6E7352B20EBF3270034FCFD /* iTermSetCurrentTerminalHelper.m in Sources */,
 				A63F0A5B2BF435200096633F /* iTermSSHHelpers.m in Sources */,
@@ -16104,6 +16111,7 @@
 				A6BBBFCB2CC87203000A697C /* ConditionVariable.swift in Sources */,
 				A6121D2F2A04875C005D469C /* ImportExport.swift in Sources */,
 				A6667E91277BC5A900152678 /* iTermIntervalTreeObserver.m in Sources */,
+				A6EB64802D5E906800481D33 /* RemoteCommandExecutor.swift in Sources */,
 				A68ADA0D29D4B2560008E092 /* GridCoordArray.swift in Sources */,
 				A6E5D2101FA3C57900EDD002 /* iTermMetalFrameData.m in Sources */,
 				530AB7BA20A638A600D2AA08 /* iTermDisclosableView.m in Sources */,

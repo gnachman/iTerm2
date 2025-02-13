@@ -110,3 +110,47 @@ class ChatBroker {
         return subscription
     }
 }
+
+enum RemoteCommand: Codable {
+    struct IsAtPrompt: Codable {}
+    struct ExecuteCommand: Codable { var command: String = "" }
+    struct GetLastExitStatus: Codable {}
+
+    struct GetCommandHistory: Codable { var limit: Int = 100 }
+    struct GetLastCommand: Codable {}
+    struct GetCommandBeforeCursor: Codable {}
+    struct SearchCommandHistory: Codable { var query: String = "" }
+    struct GetCommandOutput: Codable { var id: String = "" }
+
+    struct GetTerminalSize: Codable {}
+    struct GetShellType: Codable {}
+    struct DetectSSHSession: Codable {}
+    struct GetRemoteHostname: Codable {}
+    struct GetUserIdentity: Codable {}
+    struct GetCurrentDirectory: Codable {}
+
+    struct SetClipboard: Codable { var text: String = "" }
+    struct InsertTextAtCursor: Codable { var text: String = "" }
+    struct DeleteCurrentLine: Codable {}
+
+    struct GetManPage: Codable { var cmd: String = "" }
+
+    case isAtPrompt(IsAtPrompt)
+    case executeCommand(ExecuteCommand)
+    case getLastExitStatus(GetLastExitStatus)
+    case getCommandHistory(GetCommandHistory)
+    case getLastCommand(GetLastCommand)
+    case getCommandBeforeCursor(GetCommandBeforeCursor)
+    case searchCommandHistory(SearchCommandHistory)
+    case getCommandOutput(GetCommandOutput)
+    case getTerminalSize(GetTerminalSize)
+    case getShellType(GetShellType)
+    case detectSSHSession(DetectSSHSession)
+    case getRemoteHostname(GetRemoteHostname)
+    case getUserIdentity(GetUserIdentity)
+    case getCurrentDirectory(GetCurrentDirectory)
+    case setClipboard(SetClipboard)
+    case insertTextAtCursor(InsertTextAtCursor)
+    case deleteCurrentLine(DeleteCurrentLine)
+    case getManPage(GetManPage)
+}

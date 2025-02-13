@@ -26,7 +26,9 @@ class ChatClient {
             return message
         }
         switch message.content {
-        case .plainText, .markdown, .explanationRequest:
+        case .remoteCommandRequest(let request):
+            return processRemoteCommandRequest(chatID: chatID, message: message, request: request)
+        case .plainText, .markdown, .explanationRequest, .remoteCommandResponse:
             return message
         case .explanationResponse(let aIAnnotationCollection):
             guard let markdown = processExplanationResponse(annotations: aIAnnotationCollection,
@@ -52,6 +54,60 @@ class ChatClient {
 
     func publish(message: Message, toChatID chatID: String) {
         broker.publish(message: message, toChatID: chatID)
+    }
+
+    private func processRemoteCommandRequest(chatID: String,
+                                             message: Message,
+                                             request: RemoteCommand) -> Message? {
+        guard let guid = ChatListModel.instance.chat(id: chatID)?.sessionGuid,
+              let session = iTermController.sharedInstance().session(withGUID: guid) else {
+            rejectRemoteCommandRequest(
+                inChat: chatID,
+                requestUUID: message.uniqueID,
+                message: "The terminal session no longer exists so commands cannot be run in it.")
+            return nil
+        }
+        switch RemoteCommandExecutor.init().permission(inSessionGuid: guid) {
+        case .never:
+            rejectRemoteCommandRequest(
+                inChat: chatID,
+                requestUUID: message.uniqueID,
+                message: "The user denied permission to use function calling in this terminal session. Do not try again.")
+            return nil
+        case .always:
+            session.execute(request) { [weak self] response in
+                self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
+                                                                requestUUID: message.uniqueID,
+                                                                message: response)
+            }
+            return nil
+        case .ask:
+            return message
+        }
+    }
+
+    private func rejectRemoteCommandRequest(inChat chatID: String,
+                                            requestUUID: UUID,
+                                            message: String) {
+        broker.publish(message: Message(participant: .user,
+                                        content: .remoteCommandResponse(
+                                            .failure(AIError(message)),
+                                            requestUUID),
+                                        date: Date(),
+                                        uniqueID: UUID()),
+                       toChatID: chatID)
+    }
+
+    private func respondSuccessfullyToRemoteCommandRequest(inChat chatID: String,
+                                                           requestUUID: UUID,
+                                                           message: String) {
+        broker.publish(message: Message(participant: .user,
+                                        content: .remoteCommandResponse(
+                                            .success(message),
+                                            requestUUID),
+                                        date: Date(),
+                                        uniqueID: UUID()),
+                       toChatID: chatID)
     }
 
     private enum ExplainUserInfoKeys: String {

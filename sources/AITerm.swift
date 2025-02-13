@@ -958,7 +958,7 @@ class AITermController {
             amended.append(message)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
                 DLog("Invoke function with arguments \(functionCall.arguments)")
-                impl.invoke(json: functionCall.arguments.data(using: .utf8)!, llm: self) { [weak self] result in
+                impl.invoke(json: functionCall.arguments.data(using: .utf8)!) { [weak self] result in
                     guard let self else { return }
                     switch result {
                     case .success(let response):
@@ -1112,13 +1112,13 @@ class AITermRegistrationWindow: NSWindow {
 
 @objc public class iTermAIError: NSObject {
     @objc static let domain = "com.iterm2.ai"
-    @objc(iTermAIErrorType) public enum ErrorType: Int {
+    @objc(iTermAIErrorType) public enum ErrorType: Int, Codable {
         case generic = 0
         case requestTooLarge = 1
     }
 }
 
-public struct AIError: LocalizedError, CustomStringConvertible, CustomNSError {
+public struct AIError: LocalizedError, CustomStringConvertible, CustomNSError, Codable {
     public internal(set) var message: String
     public internal(set) var type = iTermAIError.ErrorType.generic
 

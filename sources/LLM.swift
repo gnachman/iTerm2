@@ -72,21 +72,21 @@ enum LLM {
     protocol AnyFunction {
         var typeErasedParameterType: Any.Type { get }
         var decl: ChatGPTFunctionDeclaration { get }
-        func invoke(json: Data, llm: AITermController, completion: @escaping (Result<String, Error>) -> ())
+        func invoke(json: Data, completion: @escaping (Result<String, Error>) -> ())
     }
 
     struct Function<T: Codable>: AnyFunction {
-        typealias Impl = (T, AITermController, @escaping (Result<String, Error>) -> ()) -> ()
+        typealias Impl = (T, @escaping (Result<String, Error>) -> ()) -> ()
 
         var decl: ChatGPTFunctionDeclaration
         var call: Impl
         var parameterType: T.Type
 
         var typeErasedParameterType: Any.Type { parameterType }
-        func invoke(json: Data, llm: AITermController, completion: @escaping (Result<String, Error>) -> ()) {
+        func invoke(json: Data, completion: @escaping (Result<String, Error>) -> ()) {
             do {
                 let value = try JSONDecoder().decode(parameterType, from: json)
-                call(value, llm, completion)
+                call(value, completion)
             } catch {
                 DLog("\(error.localizedDescription)")
                 completion(.failure(error))

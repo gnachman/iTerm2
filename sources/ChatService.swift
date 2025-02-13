@@ -33,23 +33,20 @@ class ChatService {
     }
 
     private func handleUserMessage(_ message: Message, inChat chatID: String) {
-        ChatBroker.instance.publish(typingStatus: true,
-                                    of: .agent,
-                                    toChatID: chatID)
-        let agent = if let existing = agents[chatID] {
-            existing
-        } else {
-            // Exclude the last message because it's added to the model before the broker publishes
-            // it.
-            newAgent(forChatID: chatID,
-                     messages: Array(ChatListModel.instance.chat(id: chatID)?.messages.dropLast() ?? []))
-        }
-        agent.fetchCompletion(userMessage: message) { replyMessage in
-            ChatBroker.instance.publish(typingStatus: false,
-                                        of: .agent,
-                                        toChatID: chatID)
-            if let replyMessage {
-                ChatBroker.instance.publish(message: replyMessage, toChatID: chatID)
+        agentWorking(chatID: chatID) { stopTyping in
+            let agent = if let existing = agents[chatID] {
+                existing
+            } else {
+                // Exclude the last message because it's added to the model before the broker publishes
+                // it.
+                newAgent(forChatID: chatID,
+                         messages: Array(ChatListModel.instance.chat(id: chatID)?.messages.dropLast() ?? []))
+            }
+            agent.fetchCompletion(userMessage: message) { replyMessage in
+                stopTyping()
+                if let replyMessage {
+                    ChatBroker.instance.publish(message: replyMessage, toChatID: chatID)
+                }
             }
         }
     }
@@ -76,6 +73,13 @@ class ChatService {
         }
         func registrationProviderRequestRegistration(_ completion: @escaping (AITermController.Registration?) -> ()) {
             ChatBroker.instance.requestRegistration(chatID: chatID, completion: completion)
+        }
+    }
+
+    func agentWorking(chatID: String, closure: (@escaping () -> ()) -> ()) {
+        ChatBroker.instance.publish(typingStatus: true, of: .agent, toChatID: chatID)
+        closure() {
+            ChatBroker.instance.publish(typingStatus: false, of: .agent, toChatID: chatID)
         }
     }
 }
