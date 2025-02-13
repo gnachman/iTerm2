@@ -1060,6 +1060,12 @@ DQ
                                     <action selector="openPasteHistory:" target="-1" id="1143"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Open AI Chat…" keyEquivalent="Y" identifier="Open AI Chat" id="tkq-fN-kF5">
+                                <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                <connections>
+                                    <action selector="openAIChat:" target="-1" id="e9b-aj-NLF"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="908">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -1769,7 +1775,12 @@ DQ
                             <menuItem title="Password Manager" keyEquivalent="f" identifier="Password Manager" id="5">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
-                                    <action selector="openPasswordManager:" target="201" id="wbL-5o-kEN"/>
+                                    <action selector="openPasswordManager:" target="-1" id="tkA-Pd-uSe"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="AI Chats" keyEquivalent="Y" identifier="AI Chats" id="okQ-cw-xCt">
+                                <connections>
+                                    <action selector="openAIChats:" target="201" id="Xdw-Tb-nB2"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="zl8-Q7-4RO">

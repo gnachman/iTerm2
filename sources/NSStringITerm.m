@@ -2855,6 +2855,12 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     return [self isEqualToString:@""];
 }
 
+- (NSString *)stringEnclosedInMarkdownInlineCode {
+    // SwiftyMarkdown doesn't support escaped backslashes.
+    NSString *escaped = [self stringByReplacingOccurrencesOfString:@"`" withString:@"\\`"];
+    return [NSString stringWithFormat:@"`%@`", escaped];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

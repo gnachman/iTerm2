@@ -3444,7 +3444,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
     [self withRelativeCoordRange:_selection.lastAbsRange.coordRange block:^(VT100GridCoordRange range) {
         PTYAnnotation *annotation = [[[PTYAnnotation alloc] init] autorelease];
-        [_dataSource addNote:annotation inRange:range focus:YES];
+        [_dataSource addNote:annotation inRange:range focus:YES visible:YES];
     }];
 }
 
@@ -4850,6 +4850,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             [[iTermFindPasteboard sharedInstance] updateObservers:_delegate internallyGenerated:YES];
         }
     }
+    [self.delegate textViewLiveSelectionDidEnd];
 }
 
 - (VT100GridRange)selectionRangeOfTerminalNullsOnAbsoluteLine:(long long)absLineNumber {

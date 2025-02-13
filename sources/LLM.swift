@@ -609,6 +609,7 @@ fileprivate func sanitizeMarkdown(_ input: String) -> String {
 }
 
 func AttributedStringForGPTMarkdown(_ unsafeString: String,
+                                    linkColor: NSColor? = nil,
                                     didCopy: @escaping () -> ()) -> NSAttributedString {
     let massagedValue = unsafeString.components(separatedBy: "\n").map { sanitizeMarkdown($0) }.joined(separator: "\n")
 
@@ -627,6 +628,12 @@ func AttributedStringForGPTMarkdown(_ unsafeString: String,
     md.h6.fontSize = max(4, round(pointSize * 0.7))
 
     md.setFontColorForAllStyles(with: NSColor.textColor)
+
+    if let linkColor {
+        md.link.color = linkColor
+        md.link.underlineColor = linkColor
+    }
+    md.underlineLinks = true
 
     let attributedString = md.attributedString()
     if #available(macOS 11.0, *) {

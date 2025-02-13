@@ -8,40 +8,20 @@
 import AppKit
 import SwiftyMarkdown
 
-enum Participant: String, Codable {
-    case user
-    case agent
-}
-
-struct Message: Codable {
-    let participant: Participant
-    enum Content: Codable {
-        case plainText(String)
-        case markdown(String)
-    }
-    let content: Content
-    let date: Date
-
-    var stringValue: String {
-        switch content {
-        case .plainText(let value), .markdown(let value):
-            value
-        }
-    }
-}
-
 @objc(iTermChatViewControllerDelegate)
 protocol ChatViewControllerDelegate: AnyObject {
-    func chatViewController(_ controller: ChatViewController, didSendMessage text: String)
+    func chatViewController(_ controller: ChatViewController, revealSessionWithGuid guid: String) -> Bool
 }
 
 @objc
 class ChatViewController: NSViewController {
     private(set) var messages: [Message] = []
     @objc weak var delegate: ChatViewControllerDelegate?
-    private var conversation: AIConversation?
+    private(set) var chatID = UUID().uuidString
 
     private var tableView: NSTableView!
+    private var titleLabel = NSTextField()
+    private var sessionButton: NSButton!
     private var inputTextField: NSTextField!
     private var sendButton: NSButton!
     private var showTypingIndicator = false {
@@ -57,9 +37,43 @@ class ChatViewController: NSViewController {
             scrollToBottom(animated: true)
         }
     }
+    private var eligibleForAutoPaste = true
+    private var brokerSubscription: ChatBroker.Subscription?
+
+    deinit {
+        brokerSubscription?.unsubscribe()
+    }
 
     override func loadView() {
         let view = NSView(frame: NSRect(x: 0, y: 0, width: 400, height: 600))
+
+        // Title Label
+        titleLabel.font = NSFont.systemFont(ofSize: 20, weight: .bold)
+        titleLabel.isBordered = false
+        titleLabel.isBezeled = false
+        titleLabel.drawsBackground = false
+        titleLabel.alignment = .natural
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.isEditable = false
+
+        // Session button
+        if #available(macOS 11.0, *) {
+            if let image = NSImage(systemSymbolName: "arrow.up.right.square", accessibilityDescription: "Send") {
+                sessionButton = NSButton(image: image, target: self, action: #selector(sessionButtonClicked))
+                sessionButton.imageScaling = .scaleProportionallyDown
+                sessionButton.imagePosition = .imageOnly
+                sessionButton.bezelStyle = .regularSquare
+                sessionButton.isBordered = false
+                sessionButton.setButtonType(.momentaryPushIn)
+            } else {
+                sessionButton = NSButton(title: "Reveal Session", target: self, action: #selector(sessionButtonClicked))
+            }
+        } else {
+            sessionButton = NSButton(title: "Reveal Session", target: self, action: #selector(sessionButtonClicked))
+        }
+        sessionButton.translatesAutoresizingMaskIntoConstraints = false
+        sessionButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         // Configure Table View
         tableView = NSTableView()
@@ -85,14 +99,13 @@ class ChatViewController: NSViewController {
         inputTextField.delegate = self
 
         if #available(macOS 11.0, *) {
-            let symbolConfig = NSImage.SymbolConfiguration(pointSize: 16, weight: .regular)
             if let image = NSImage(systemSymbolName: "paperplane.fill", accessibilityDescription: "Send") {
                 sendButton = NSButton(image: image, target: self, action: #selector(sendButtonClicked))
                 sendButton.imageScaling = .scaleProportionallyDown
                 sendButton.imagePosition = .imageOnly
                 sendButton.bezelStyle = .regularSquare
                 sendButton.isBordered = false
-                sendButton.setButtonType(.momentaryChange)
+                sendButton.setButtonType(.momentaryPushIn)
             } else {
                 sendButton = NSButton(title: "Send", target: self, action: #selector(sendButtonClicked))
             }
@@ -109,8 +122,14 @@ class ChatViewController: NSViewController {
         inputStack.spacing = 8
         inputStack.translatesAutoresizingMaskIntoConstraints = false
 
-        // Main Layout
-        let mainStack = NSStackView(views: [scrollView, inputStack])
+        // Header stack
+        let headerStack = NSStackView(views: [titleLabel, sessionButton])
+        headerStack.orientation = .horizontal
+        headerStack.spacing = 8
+        headerStack.translatesAutoresizingMaskIntoConstraints = false
+
+        // Main Layout including Title
+        let mainStack = NSStackView(views: [headerStack, scrollView, inputStack])
         mainStack.orientation = .vertical
         mainStack.spacing = 8
         mainStack.translatesAutoresizingMaskIntoConstraints = false
@@ -124,38 +143,64 @@ class ChatViewController: NSViewController {
             inputStack.heightAnchor.constraint(equalToConstant: 25),
             sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 24)
         ])
+        view.alphaValue = 0
         self.view = view
     }
+}
 
-    @objc(appendAgentMessage:)
-    public func appendAgentMessage(text: String) {
-        let message = Message(participant: .agent, content: .markdown(text), date: Date())
-        append(message: message)
-    }
-
-    private func append(message: Message) {
-        messages.append(message)
-        tableView.insertRows(at: IndexSet(integer: messages.count - 1))
-        scrollToBottom(animated: true)
-    }
-
-    @objc(appendUserMessage:)
-    public func appendUserMessage(text: String) {
-        let message = Message(participant: .user, content: .plainText(text), date: Date())
-        append(message: message)
-    }
-
-    @objc
-    public func commit() {
-        if let window = view.window {
-            let messages = messages.map { message in
-                let role = switch message.participant {
-                case .user: "user"
-                case .agent: "assistant"
-                }
-                return AITermController.Message(role: role, content: message.stringValue)
+extension ChatViewController {
+    func load(chatID: String) {
+        guard let window = view.window else {
+            return
+        }
+        guard let chat = ChatListModel.instance.chat(id: chatID) else {
+            it_fatalError("Loading a nonexistent chat")
+        }
+        titleLabel.stringValue = chat.title
+        self.chatID = chat.id
+        self.messages = chat.messages
+        tableView.reloadData()
+        brokerSubscription?.unsubscribe()
+        brokerSubscription = ChatClient.instance.subscribe(chatID: chat.id, registrationProvider: window) { [weak self] update in
+            guard let self else {
+                return
             }
-            conversation = AIConversation(window: window, messages: messages)
+            switch update {
+            case let .delivery(message, _):
+                self.messages.append(message)
+                self.tableView.insertRows(at: IndexSet(integer: self.messages.count - 1))
+            case let .typingStatus(typing, participant):
+                switch participant {
+                case .user:
+                    break
+                case .agent:
+                    self.showTypingIndicator = typing
+                }
+                self.scrollToBottom(animated: true)
+            }
+        }
+        view.alphaValue = 1.0
+        sessionButton.isHidden = chat.sessionGuid == nil
+        showTypingIndicator = TypingStatusModel.instance.isTyping(participant: .agent,
+                                                                  chatID: chatID)
+        scrollToBottom(animated: false)
+        view.window?.makeFirstResponder(inputTextField)
+    }
+
+    func offerSelectedText(_ text: String) {
+        if eligibleForAutoPaste {
+            inputTextField.stringValue = text
+        }
+    }
+
+    @objc private func sessionButtonClicked() {
+        guard let chat = ChatListModel.instance.chat(id: self.chatID),
+              let guid = chat.sessionGuid,
+              let delegate else {
+            return
+        }
+        if !delegate.chatViewController(self, revealSessionWithGuid: guid) {
+            sessionButton.it_showWarning(withMarkdown: "The session that is the subject of this chat is now defunct.")
         }
     }
 
@@ -164,26 +209,14 @@ class ChatViewController: NSViewController {
         guard !text.isEmpty else {
             return
         }
-        let message = Message(participant: .user, content: .plainText(text), date: Date())
-        messages.append(message)
-        inputTextField.stringValue = ""
-        tableView.reloadData()
-        scrollToBottom(animated: true)
-        delegate?.chatViewController(self, didSendMessage: text)
-        conversation?.add(text: text, role: "user")
-        showTypingIndicator = true
-        conversation?.complete { [weak self] result in
-            self?.showTypingIndicator = false
-            result.handle { updated in
-                self?.conversation = updated
-                if let text = updated.messages.last?.content {
-                    self?.appendAgentMessage(text: text)
-                }
-            } failure: { error in
-                self?.appendAgentMessage(text: "I ran into a problem: \(error.localizedDescription)")
-            }
+        let message = Message(participant: .user,
+                              content: .plainText(text),
+                              date: Date(),
+                              uniqueID: UUID())
+        ChatBroker.instance.publish(message: message, toChatID: chatID)
 
-        }
+        inputTextField.stringValue = ""
+        eligibleForAutoPaste = true
     }
 
     private func scrollToBottom(animated: Bool) {
@@ -242,34 +275,17 @@ extension ChatViewController: NSTextFieldDelegate {
         }
         return false
     }
-}
 
-// MARK: - Serialization
-
-extension ChatViewController {
-    private enum CodingKeys: String {
-        case messages
-    }
-
-    @objc var dictionaryValue: NSDictionary {
-        return [CodingKeys.messages.rawValue: try! JSONEncoder().encode(messages)]
-    }
-
-    @objc
-    func loadChat(from dictionary: NSDictionary) {
-        guard let data = dictionary[CodingKeys.messages.rawValue] as? Data else {
-            return
-        }
-        guard let messages = try? JSONDecoder().decode([Message].self, from: data) else {
-            return
-        }
-        self.messages = messages
-        tableView.reloadData()
-        scrollToBottom(animated: false)
+    func controlTextDidChange(_ obj: Notification) {
+        eligibleForAutoPaste = inputTextField.stringValue.isEmpty
     }
 }
 
 extension Message {
+    var linkColor: NSColor {
+        return NSColor.white
+    }
+
     var attributedStringValue: NSAttributedString {
         switch content {
         case .plainText(let string):
@@ -285,10 +301,21 @@ extension Message {
                 attributes: attributes
             )
         case .markdown(let string):
-            return AttributedStringForGPTMarkdown(string) { }
+            return AttributedStringForGPTMarkdown(string, linkColor: linkColor) { }
+        case .explanationRequest(request: let request):
+            let string =
+            if let url = request.url {
+                "Explain the output of \(request.subjectMatter) based on [attached terminal content](\(url))."
+            } else {
+                "Explain the output of \(request.subjectMatter) based on some no-longer-available content."
+            }
+            return AttributedStringForGPTMarkdown(string, linkColor: linkColor) { }
+        case .explanationResponse(let collection):
+            it_fatalError("You should never render an explanation response")
         }
     }
 }
+
 // MARK: - Custom Cell View
 
 class AutoSizingTextView: ClickableTextView {
@@ -388,6 +415,9 @@ fileprivate class MessageCellView: NSView {
     private static let bottomInset = 4.0
 
     func configure(with message: Message, tableViewWidth: CGFloat) {
+        textLabel.linkTextAttributes = [
+            .foregroundColor: message.linkColor,
+            .underlineColor: message.linkColor ]
         textLabel.textStorage?.setAttributedString(message.attributedStringValue)
 
         // Configure Bubble
@@ -460,11 +490,6 @@ fileprivate class MessageCellView: NSView {
         layoutManager.addTextContainer(textContainer)
         textStorage.addLayoutManager(layoutManager)
 
-//        layoutManager.glyphRange(for: textContainer) // Force layout
-//        let rect = layoutManager.usedRect(for: textContainer)
-//
-//        return rect.height + vpadding
-
         layoutManager.ensureLayout(for: textContainer)
 
         let rect = layoutManager.usedRect(for: textContainer)
@@ -473,7 +498,7 @@ fileprivate class MessageCellView: NSView {
                                                   in: textContainer)
         let size = NSSize(width: ceil(rect.maxX), height: ceil(bounding.maxY))
 
-        print("Measured height for \(attributedString.string) is \(size.height) with \(vpadding) vertical padding")
+        DLog("Measured height for \(attributedString.string) is \(size.height) with \(vpadding) vertical padding")
         return size.height + vpadding
     }
 }

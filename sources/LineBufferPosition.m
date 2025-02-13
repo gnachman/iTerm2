@@ -13,7 +13,7 @@
 @synthesize extendsToEndOfLine = extendsToEndOfLine_;
 
 + (LineBufferPosition *)position {
-    return [[[self alloc] init] autorelease];
+    return [[self alloc] init];
 }
 
 - (NSString *)description {
@@ -67,23 +67,45 @@
 }
 
 - (LineBufferPosition *)advancedBy:(int)cells {
-    LineBufferPosition *pos = [[[LineBufferPosition alloc] init] autorelease];
+    LineBufferPosition *pos = [[LineBufferPosition alloc] init];
     pos.absolutePosition = self.absolutePosition + cells;
     return pos;
 }
 
+- (NSString *)compactStringValue {
+    return [NSString stringWithFormat:@"%lld:%d%@", self.absolutePosition,
+            self.yOffset,
+            self.extendsToEndOfLine ? @"E" : @""];
+}
+
++ (instancetype)fromCompactStringValue:(NSString *)value {
+    NSArray *components = [value componentsSeparatedByString:@":"];
+    if (components.count != 2) {
+        return nil;
+    }
+
+    NSString *absPositionStr = components[0];
+    NSString *yOffsetStr = components[1];
+
+    BOOL extends = NO;
+    if ([yOffsetStr hasSuffix:@"E"]) {
+        extends = YES;
+        yOffsetStr = [yOffsetStr substringToIndex:yOffsetStr.length - 1];
+    }
+
+    LineBufferPosition *position = [[self alloc] init];
+    position.absolutePosition = [absPositionStr longLongValue];
+    position.yOffset = [yOffsetStr intValue];
+    position.extendsToEndOfLine = extends;
+
+    return position;
+}
 @end
 
 @implementation LineBufferPositionRange : NSObject
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p start=%@ end=%@>", [self class], self, _start, _end];
-}
-
-- (void)dealloc {
-    [_start release];
-    [_end release];
-    [super dealloc];
 }
 
 @end

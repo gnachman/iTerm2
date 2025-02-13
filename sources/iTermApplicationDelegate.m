@@ -1245,11 +1245,6 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    iTermChatWindowController *w = [[iTermChatWindowController alloc] initWithTitle:@"Test"];
-    [w showChatWindow];
-    [w.chatViewController appendAgentMessage:@"To commit your code, you can follow these steps:\n\n1. First, ensure that all the changes you want to commit are staged. You can stage the modified files by using the command:\n   ```\n   git add <file>\n   ```\n   Replace `<file>` with the name of the file you want to stage. If you want to stage all modified files, you can use:\n   ```\n   git add .\n   ```\n\n2. Once your changes are staged, you can commit them with a message describing the changes. Use the following command:\n   ```\n   git commit -m \"Your commit message here\"\n   ```\n"];
-    [w.chatViewController commit];
-
     DLog(@"didFinishLaunching");
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
@@ -1548,12 +1543,71 @@ void TurnOnDebugLoggingAutomatically(void) {
         [TriggerController importTriggersFromURL:url];
         return YES;
     }
+    if ([components.path isEqualToString:@"/compound-location"]) {
+        [self revealLocationFromURL:url];
+    }
+    if ([components.path isEqualToString:@"annotation"]) {
+        [self revealAnnotationFromURL:url];
+    }
     return NO;
 }
 
 - (void)disableCommandSelection {
     [iTermPreferences setBool:NO forKey:kPreferenceKeyClickToSelectCommand];
     [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyClickToSelectCommand];
+}
+
+- (void)revealAnnotationFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *ann = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"ann"] && !ann) {
+            ann = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    if (!session) {
+        return;
+    }
+    [session revealAnnotation:ann];
+    [session reveal];
+}
+
+- (void)revealLocationFromURL:(NSURL *)url {
+    NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+    iTermSelection *selection = [[[iTermSelection alloc] init] autorelease];
+    NSString *guid = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"session"]) {
+            guid = item.value;
+            break;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    selection.delegate = session.textview;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"sub"]) {
+            iTermSubSelection *sub = [[[iTermSubSelection alloc] initWithCompactString:item.value
+                                                                                screen:session.screen] autorelease];
+            if (sub) {
+                [selection addSubSelection:sub];
+            }
+        }
+    }
+    if (selection.allSubSelections.count == 0) {
+        return;
+    }
+    [session reveal];
+    [session revealSelection:selection];
 }
 
 - (void)runCommandFromURL:(NSURLComponents *)components internal:(BOOL)internal {
@@ -2065,6 +2119,10 @@ void TurnOnDebugLoggingAutomatically(void) {
 - (IBAction)openPasswordManager:(id)sender {
     DLog(@"Menu item selected");
     [self openPasswordManagerToAccountName:nil inSession:nil];
+}
+
+- (IBAction)openAIChats:(id)sender {
+    [iTermChatWindowController.instance showChatWindow];
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem {

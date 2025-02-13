@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) iTermGridCoordArray *gridCoords;
 @property (nonatomic, readonly) NSInteger length;
 
+- (instancetype)initWithString:(NSString *)string gridCoords:(iTermGridCoordArray *)gridCoords;
+
 - (void)prependString:(NSString *)string at:(VT100GridCoord)coord;
 - (void)appendString:(NSString *)string at:(VT100GridCoord)coord;
 - (void)appendLocatedString:(iTermLocatedString *)string;

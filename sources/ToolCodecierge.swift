@@ -86,7 +86,8 @@ class ToolCodecierge: NSView, ToolbeltTool {
                         .replacingOccurrences(of: "$GOAL", with: goal)
                         .replacingOccurrences(of: "$CONTEXT", with: contextualInfo)
                     initialMessages.append(AITermController.Message(role: "system", content: content))
-                    conversation = AIConversation(window: window, messages: initialMessages)
+                    conversation = AIConversation(registrationProvider: window,
+                                                  messages: initialMessages)
                     if ghostRiding {
                         do {
                             struct ExecuteCommand: Codable {
@@ -1159,11 +1160,39 @@ class ClickableTextView: NSTextView, NSTextStorageDelegate {
         it_fatalError("init(coder:) has not been implemented")
     }
 
+    override func mouseMoved(with event: NSEvent) {
+        if overClickable(event: event) != nil || linkURLAt(event: event) != nil {
+            NSCursor.pointingHand.set()
+        } else {
+            NSCursor.iBeam.set()
+        }
+    }
+
+    private var trackingArea: NSTrackingArea?
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea {
+            removeTrackingArea(trackingArea)
+            self.trackingArea = nil
+        }
+        guard let superview else {
+            return
+        }
+        trackingArea = NSTrackingArea(rect: frame,
+                                      options: [.mouseEnteredAndExited, .activeAlways],
+                                      owner: superview,
+                                      userInfo: nil)
+        if let trackingArea {
+            superview.addTrackingArea(trackingArea)
+        }
+    }
+
     override func mouseDown(with event: NSEvent) {
         let point = self.convert(event.locationInWindow, from: nil)
         let index = self.characterIndexForInsertion(at: point)
 
-        if overClickable(event: event) != nil {
+        if overClickable(event: event) != nil || linkURLAt(event: event) != nil {
             clickedRange = NSRange(location: index, length: 1)
         } else {
             clickedRange = nil
@@ -1186,9 +1215,29 @@ class ClickableTextView: NSTextView, NSTextStorageDelegate {
            let window,
            clickedRange.contains(index) {
             action(window.convertPoint(toScreen: event.locationInWindow))
+        } else if let url = linkURLAt(event: event) {
+            NSWorkspace.shared.it_open(url)
         }
         self.clickedRange = nil
         super.mouseUp(with: event)
+    }
+
+    private func linkURLAt(event: NSEvent) -> URL? {
+        guard let window = self.window else {
+            return nil
+        }
+        let point = window.convertPoint(toScreen: event.locationInWindow)
+        let index = characterIndex(for: point)
+
+        if let textStorage = self.textStorage,
+           index != NSNotFound,
+           index >= 0,
+           index < textStorage.string.count,
+           let string = textStorage.attributes(at: index, effectiveRange: nil)[.link] as? String {
+            return URL(string: string)
+        }
+        return nil
+
     }
 
     private func overClickable(event: NSEvent) -> ((NSPoint) -> ())? {

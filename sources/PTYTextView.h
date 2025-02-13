@@ -317,6 +317,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
                              to:(NSRect)to
                           color:(NSColor *)color;
 - (CGFloat)textViewRightExtra;
+- (void)textViewLiveSelectionDidEnd;
 
 @end
 

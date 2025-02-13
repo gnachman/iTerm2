@@ -8299,16 +8299,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX,
                                                        _screen.cursorY - 1)];
         if (VT100GridCoordRangeLength(rangeAtCursor, _screen.width) > 0) {
-            [_screen addNote:note inRange:rangeAtCursor focus:YES];
+            [_screen addNote:note inRange:rangeAtCursor focus:YES visible:YES];
         } else if (VT100GridCoordRangeLength(rangeAfterCursor, _screen.width) > 0) {
-            [_screen addNote:note inRange:rangeAfterCursor focus:YES];
+            [_screen addNote:note inRange:rangeAfterCursor focus:YES visible:YES];
         } else if (VT100GridCoordRangeLength(rangeBeforeCursor, _screen.width) > 0) {
-            [_screen addNote:note inRange:rangeBeforeCursor focus:YES];
+            [_screen addNote:note inRange:rangeBeforeCursor focus:YES visible:YES];
         } else {
             int y = _screen.cursorY - 1 + [_screen numberOfScrollbackLines];
             [_screen addNote:note
                      inRange:VT100GridCoordRangeMake(0, y, _screen.width, y)
-                       focus:YES];
+                       focus:YES
+                     visible:YES];
         }
     }];
 }
@@ -11912,6 +11913,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return self.view.actualRightExtra;
 }
 
+- (void)textViewLiveSelectionDidEnd {
+    if (_textview._haveShortSelection) {
+        [iTermChatWindowController.instance setSelectionText:_textview.selectedText forSession:self.guid];
+    }
+}
+
 - (void)textviewToggleTimestampsMode {
     const BOOL alreadyVisible = [self desiredTimestampMode] != iTermTimestampsModeOff;
     const BOOL shouldBeVisible = !alreadyVisible;
@@ -13162,6 +13169,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
     DLog(@"Make this session active in delegate %@", _delegate);
     [_delegate setActiveSessionPreservingMaximization:self];
+}
+
+- (void)revealSelection:(iTermSelection *)selection {
+    [_textview setSelection:selection];
+    [_textview scrollToSelection];
 }
 
 - (void)makeActive {
@@ -16476,14 +16488,39 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return mark.command;
 }
 
-- (NSString *)subjectMatterToExplainWithAI {
+- (NSString *)titleForExplainWithAI {
     if (_textview.selection.hasSelection) {
-        return @"the selected text";
+        return [[_textview selectedText] ellipsizedDescriptionNoLongerThan:16];
     }
     if (_selectedCommandMark) {
+        if (_selectedCommandMark.command.length) {
+            return _selectedCommandMark.command;
+        }
+        return @"Command output";
+    }
+    if (_screen.lastCommandMark) {
+        if (_screen.lastCommandMark.command.length) {
+            return _screen.lastCommandMark.command;
+        }
+        return @"Command output";
+    }
+    return nil;
+}
+
+- (NSString *)subjectMatterToExplainWithAI {
+    if (_textview.selection.hasSelection) {
+        return [[_textview selectedText] ellipsizedDescriptionNoLongerThan:16].stringEnclosedInMarkdownInlineCode ?: @"some selected text";
+    }
+    if (_selectedCommandMark) {
+        if (_selectedCommandMark.command.length) {
+            return _selectedCommandMark.command.stringEnclosedInMarkdownInlineCode;
+        }
         return @"the selected command";
     }
     if (_screen.lastCommandMark) {
+        if (_screen.lastCommandMark.command.length) {
+            return _screen.lastCommandMark.command.stringEnclosedInMarkdownInlineCode;
+        }
         return @"the last command";
     }
     return nil;
@@ -16495,7 +16532,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [self explainSelectionWithAI:selection
                             snapshot:self.screen.snapshotDataSource
                              command:[self commandForOutputToExplainWithAI]
-                       subjectMatter:[self subjectMatterToExplainWithAI]];
+                       subjectMatter:[self subjectMatterToExplainWithAI]
+                               title:[self titleForExplainWithAI]];
     }
 }
 
@@ -19271,7 +19309,7 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
     [_view.marksMinimap removeAllObjects];
     const NSInteger count = (NSInteger)iTermIntervalTreeObjectTypeUnknown;
     NSMutableDictionary<NSNumber *, NSMutableIndexSet *> *sets = [NSMutableDictionary dictionary];
-    [_screen enumerateObservableMarks:^(iTermIntervalTreeObjectType type, NSInteger line) {
+    [_screen enumerateObservableMarks:^(iTermIntervalTreeObjectType type, NSInteger line, id<IntervalTreeObject> obj) {
         NSMutableIndexSet *set = sets[@(type)];
         if (!set) {
             set = [NSMutableIndexSet indexSet];

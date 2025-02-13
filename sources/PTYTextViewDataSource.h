@@ -90,7 +90,7 @@
 // Returns the last modified date for a given line.
 - (NSDate *)timestampForLine:(int)y;
 
-- (void)addNote:(PTYAnnotation *)note inRange:(VT100GridCoordRange)range focus:(BOOL)focus;
+- (void)addNote:(PTYAnnotation *)note inRange:(VT100GridCoordRange)range focus:(BOOL)focus visible:(BOOL)visible;
 
 // Returns all notes in a range of cells.
 - (NSArray<id<PTYAnnotationReading>> *)annotationsInRange:(VT100GridCoordRange)range;

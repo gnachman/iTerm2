@@ -23,6 +23,16 @@
     return self;
 }
 
+- (instancetype)initWithString:(NSString *)string gridCoords:(iTermGridCoordArray *)gridCoords {
+    self = [super init];
+    if (self) {
+        _string = [string mutableCopy];
+        _gridCoords = [gridCoords mutableCopy];
+    }
+    return self;
+}
+
+
 - (void)appendLocatedString:(iTermLocatedString *)locatedString {
     [_string appendString:locatedString.string];
     [_gridCoords appendContentsOfArray:locatedString.gridCoords];

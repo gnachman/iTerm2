@@ -267,20 +267,28 @@ class iTermAIClient {
                 do {
                     let response = try plugin.load(webRequest: webRequest)
                     DispatchQueue.main.async {
-                        completion(.success(response))
+                        if !cancellation.canceled {
+                            completion(.success(response))
+                        }
                     }
                 } catch let error as PluginError {
                     DispatchQueue.main.async {
-                        completion(.failure(error))
+                        if !cancellation.canceled {
+                            completion(.failure(error))
+                        }
                     }
                 } catch {
                     DispatchQueue.main.async {
-                        completion(.failure(PluginError(reason: "Unexpected exception: \(error.localizedDescription)")))
+                        if !cancellation.canceled {
+                            completion(.failure(PluginError(reason: "Unexpected exception: \(error.localizedDescription)")))
+                        }
                     }
                 }
             case .failure(let error):
                 DispatchQueue.main.async {
-                    completion(.failure(error))
+                    if !cancellation.canceled {
+                        completion(.failure(error))
+                    }
                 }
             }
         }
@@ -414,6 +422,13 @@ class AITermControllerRegistrationHelper {
                 completion(nil)
             }
         }
+    }
+}
+
+extension NSWindow: AIRegistrationProvider {
+    func registrationProviderRequestRegistration(_ completion: @escaping (AITermController.Registration?) -> ()) {
+        AITermControllerRegistrationHelper.instance.requestRegistration(in: self,
+                                                                        completion: completion)
     }
 }
 
@@ -743,6 +758,7 @@ class AITermController {
     func cancel() {
         cancellation?.cancel()
         cancellation = nil
+        state = .ground
     }
 
     private func handle(event: Event, legacy: Bool) {
@@ -1135,6 +1151,11 @@ public struct AIError: LocalizedError, CustomStringConvertible, CustomNSError {
     public var errorCode: Int { type.rawValue }
 }
 
+protocol AIRegistrationProvider: AnyObject {
+    func registrationProviderRequestRegistration(
+        _ completion: @escaping (AITermController.Registration?) -> ())
+}
+
 struct AIConversation {
     private class Delegate: AITermControllerDelegate {
         private(set) var busy = false
@@ -1164,15 +1185,15 @@ struct AIConversation {
     var messages: [AITermController.Message]
     private var controller: AITermController
     private var delegate = Delegate()
-    private weak var window: NSWindow?
+    private weak var registrationProvider: AIRegistrationProvider?
     var maxTokens: Int {
         return Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit) - iTermAdvancedSettingsModel.aiResponseMaxTokens())
     }
     var busy: Bool { delegate.busy }
 
-    init(window: NSWindow,
+    init(registrationProvider: AIRegistrationProvider?,
          messages: [AITermController.Message] = []) {
-        self.window = window
+        self.registrationProvider = registrationProvider
         self.messages = messages
         controller = AITermController(registration: AITermControllerRegistrationHelper.instance.registration)
         controller.delegate = delegate
@@ -1186,22 +1207,32 @@ struct AIConversation {
         controller.define(function: decl, arguments: arguments, implementation: implementation)
     }
 
+    mutating func add(_ aiMessage: AITermController.Message) {
+        messages.append(aiMessage)
+    }
+    
     mutating func add(text: String, role: String = "user") {
-        messages.append(AITermController.Message(role: role, content: text))
+        add(AITermController.Message(role: role, content: text))
     }
 
     mutating func complete(_ completion: @escaping (Result<AIConversation, Error>) -> ()) {
         precondition(!messages.isEmpty)
-        precondition(!delegate.busy)
+
+        if delegate.busy {
+            controller.cancel()
+            delegate.completion = { _ in }
+            delegate.registrationNeeded = { _ in }
+        }
+
         let prior = messages
-        guard let window = self.window else {
+        guard registrationProvider != nil else {
             completion(.failure(AIError("No window")))
             return
         }
         let controller = self.controller
         let messages = self.truncatedMessages
-        delegate.registrationNeeded = { regCompletion in
-            AITermControllerRegistrationHelper.instance.requestRegistration(in: window) { registration in
+        delegate.registrationNeeded = { [weak registrationProvider] regCompletion in
+            registrationProvider?.registrationProviderRequestRegistration() { registration in
                 if let registration {
                     regCompletion(registration)
                     controller.request(messages: messages)
@@ -1209,11 +1240,12 @@ struct AIConversation {
             }
         }
 
-        delegate.completion = { result in
+        delegate.completion = { [weak registrationProvider] result in
             switch result {
             case .success(let text):
                 let message = AITermController.Message(role: "assistant", content: text)
-                let amended = AIConversation(window: window, messages: prior + [message])
+                let amended = AIConversation(registrationProvider: registrationProvider,
+                                             messages: prior + [message])
                 amended.controller.define(functions: controller.functions)
                 completion(.success(amended))
             break
@@ -1286,12 +1318,19 @@ extension Data {
 }
 
 extension Result {
-    func handle(success: (Success) -> (), failure: (Failure) -> ()) {
+    func handle<T>(success: (Success) throws -> (T), failure: (Failure) throws -> (T)) rethrows -> T {
         switch self {
         case .success(let value):
-            success(value)
+            try success(value)
         case .failure(let value):
-            failure(value)
+            try failure(value)
+        }
+    }
+
+    var successValue: Success? {
+        switch self {
+        case .success(let value): value
+        case .failure(_): nil
         }
     }
 }
