@@ -6,7 +6,7 @@
 //
 
 class RemoteCommandExecutor {
-    private let instance = RemoteCommandExecutor()
+    static let instance = RemoteCommandExecutor()
     private var storage = [String: Permission]()
 
     enum Permission {
@@ -17,5 +17,15 @@ class RemoteCommandExecutor {
 
     func permission(inSessionGuid guid: String) -> Permission {
         return storage[guid] ?? .ask
+    }
+
+    func setPermission(allowed: Bool, remember: Bool, guid: String) {
+        if remember {
+            storage[guid] = allowed ? .always : .never
+        }
+    }
+
+    func erasePermissions(guid: String) {
+        storage.removeValue(forKey: guid)
     }
 }

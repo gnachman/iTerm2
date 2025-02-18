@@ -129,6 +129,9 @@
         case SplitSelectionViewModeInspect:
             [self drawInspectWithMessage:@"Click to inspect" rect:dirtyRect];
             return;
+        case SplitSelectionViewModeSelect:
+            [self drawInspectWithMessage:@"Click to select" rect:dirtyRect];
+            return;
     }
 }
 
@@ -223,6 +226,7 @@
         case SplitSelectionViewModeTargetSwap:
         case SplitSelectionViewModeSourceSwap:
         case SplitSelectionViewModeInspect:
+        case SplitSelectionViewModeSelect:
             half_ = kFullPane;
             [self setNeedsDisplay:YES];
             return;

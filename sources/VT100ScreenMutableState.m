@@ -5355,6 +5355,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return self.config.enableTriggersInInteractiveApps;
 }
 
+- (void)triggerEvaluatorScheduleSideEffect:(PTYTriggerEvaluator *)evaluator
+                                     block:(void (^)(void))block {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        block();
+        [unpauser unpause];
+    }];
+}
+
 - (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator {
     // Use unmanaged concurrency because this will be rare and it can't run as a regular side-
     // effect since it modifies the profile.

@@ -557,7 +557,6 @@ async def get_env_var(var_name):
         log(f'get_env_var({var_name}) threw: {traceback.format_exc()}')
 
 # Run the async function
-asyncio.run(get_env_var('FOO'))
 async def save_and_exec(identifier, code):
     log("begin save_and_exec")
     try:

@@ -22,6 +22,7 @@ class ChatBroker {
     }
 
     func publish(message: Message, toChatID chatID: String) {
+        NSLog("Publish \(message.shortDescription)")
         // Ensure the service is running
         _ = ChatService.instance
 
@@ -34,7 +35,9 @@ class ChatBroker {
                 return
             }
         }
-        ChatListModel.instance.append(messages: [processed], toChatID: chatID)
+        if !message.isTransient {
+            ChatListModel.instance.append(message: processed, toChatID: chatID)
+        }
         for sub in subs {
             if sub.chatID == chatID || sub.chatID == nil {
                 sub.closure?(.delivery(processed, chatID))
@@ -153,4 +156,86 @@ enum RemoteCommand: Codable {
     case insertTextAtCursor(InsertTextAtCursor)
     case deleteCurrentLine(DeleteCurrentLine)
     case getManPage(GetManPage)
+
+    var markdownDescription: String {
+        switch self {
+        case .isAtPrompt:
+            "Checking if you're at a shell prompt"
+        case let .executeCommand(args):
+            "Executing `\(args.command.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`"
+        case .getLastExitStatus:
+            "Checking the exit status of the last command"
+        case .getCommandHistory:
+            "Reviewing the history of commands you have run in this session"
+        case .getLastCommand:
+            "Viewing the last command you ran in this session"
+        case .getCommandBeforeCursor:
+            "Reading your current command prompt"
+        case .searchCommandHistory:
+            "Searching the history of commands you have run in this session"
+        case .getCommandOutput:
+            "Fetching the output of a previously run command"
+        case .getTerminalSize:
+            "Querying the size of your terminal window"
+        case .getShellType:
+            "Determining which shell you use"
+        case .detectSSHSession:
+            "Checking if you are using SSH"
+        case .getRemoteHostname:
+            "Getting the current host name of this terminal session"
+        case .getUserIdentity:
+            "Checking your username"
+        case .getCurrentDirectory:
+            "Discovering your current directory"
+        case .setClipboard:
+            "Pasting to the clipboard"
+        case let .insertTextAtCursor(args):
+            "Typing `\(args.text.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))` into the current session"
+        case .deleteCurrentLine:
+            "Erasing the current command line"
+        case let .getManPage(args):
+            "Checking the manpage for `\(args.cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`"
+        }
+    }
+
+    var permissionDescription: String {
+        switch self {
+        case .isAtPrompt:
+            "The AI Agent would like to check if you're at a shell prompt"
+        case let .executeCommand(args):
+            "The AI Agent would like to execute `\(args.command.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`"
+        case .getLastExitStatus:
+            "The AI Agent would like to check the exit status of the last command"
+        case .getCommandHistory:
+            "The AI Agent would like to review the history of commands you have run in this session"
+        case .getLastCommand:
+            "The AI Agent would like to view the last command you ran in this session"
+        case .getCommandBeforeCursor:
+            "The AI Agent would like to read your current command prompt"
+        case .searchCommandHistory:
+            "The AI Agent would like to search the history of commands you have run in this session"
+        case .getCommandOutput:
+            "The AI Agent would like to fetch the output of a previously run command"
+        case .getTerminalSize:
+            "The AI Agent would like to query the size of your terminal window"
+        case .getShellType:
+            "The AI Agent would like to determine which shell you use"
+        case .detectSSHSession:
+            "The AI Agent would like to check if you are using SSH"
+        case .getRemoteHostname:
+            "The AI Agent would like to get the current host name of this terminal session"
+        case .getUserIdentity:
+            "The AI Agent would like to check your username"
+        case .getCurrentDirectory:
+            "The AI Agent would like to know your current directory"
+        case .setClipboard:
+            "The AI Agent would like to paste to the clipboard"
+        case let .insertTextAtCursor(args):
+            "The AI Agent would like to type `\(args.text.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))` into the current session"
+        case .deleteCurrentLine:
+            "The AI Agent would like to erase the current command line"
+        case let .getManPage(args):
+            "The AI Agent would like to check the manpage for `\(args.cmd.escapedForMarkdownCode)`"
+        }
+    }
 }

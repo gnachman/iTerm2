@@ -105,6 +105,10 @@ class ChatListViewController: NSViewController {
         newChatButton.action = #selector(createNewChat)
     }
 
+    func selectMostRecent() {
+        tableView.selectRowIndexes(IndexSet(integer: 0), byExtendingSelection: false)
+    }
+
     @objc private func createNewChat() {
         delegate?.chatListViewControllerDidTapNewChat(self)
     }

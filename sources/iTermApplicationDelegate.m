@@ -2123,6 +2123,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (IBAction)openAIChats:(id)sender {
     [iTermChatWindowController.instance showChatWindow];
+    [iTermChatWindowController.instance createNewChatIfNeeded];
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem {

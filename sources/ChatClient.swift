@@ -28,7 +28,7 @@ class ChatClient {
         switch message.content {
         case .remoteCommandRequest(let request):
             return processRemoteCommandRequest(chatID: chatID, message: message, request: request)
-        case .plainText, .markdown, .explanationRequest, .remoteCommandResponse:
+        case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
             return message
         case .explanationResponse(let aIAnnotationCollection):
             guard let markdown = processExplanationResponse(annotations: aIAnnotationCollection,
@@ -61,28 +61,46 @@ class ChatClient {
                                              request: RemoteCommand) -> Message? {
         guard let guid = ChatListModel.instance.chat(id: chatID)?.sessionGuid,
               let session = iTermController.sharedInstance().session(withGUID: guid) else {
-            rejectRemoteCommandRequest(
-                inChat: chatID,
-                requestUUID: message.uniqueID,
-                message: "The terminal session no longer exists so commands cannot be run in it.")
-            return nil
+            return Message(participant: .agent,
+                           content: .selectSessionRequest(message),
+                           date: Date(),
+                           uniqueID: UUID())
         }
-        switch RemoteCommandExecutor.init().permission(inSessionGuid: guid) {
+        switch RemoteCommandExecutor.instance.permission(inSessionGuid: guid) {
         case .never:
-            rejectRemoteCommandRequest(
+            respondSuccessfullyToRemoteCommandRequest(
                 inChat: chatID,
                 requestUUID: message.uniqueID,
                 message: "The user denied permission to use function calling in this terminal session. Do not try again.")
             return nil
         case .always:
-            session.execute(request) { [weak self] response in
-                self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
-                                                                requestUUID: message.uniqueID,
-                                                                message: response)
-            }
+            performRemoteCommand(request,
+                                 in: session,
+                                 chatID: chatID,
+                                 messageUniqueID: message.uniqueID)
             return nil
         case .ask:
             return message
+        }
+    }
+
+    func performRemoteCommand(_ request: RemoteCommand,
+                              in session: PTYSession,
+                              chatID: String,
+                              messageUniqueID: UUID) {
+        var done = false
+        session.execute(request) { [weak self] response in
+            done = true
+            self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
+                                                            requestUUID: messageUniqueID,
+                                                            message: response)
+        }
+        if !done {
+            publish(message: Message(participant: .agent,
+                                     content: .clientLocal(ClientLocal(action: .executingCommand(request))),
+                                     date: Date(),
+                                     uniqueID: UUID()),
+                    toChatID: chatID)
         }
     }
 
@@ -98,9 +116,9 @@ class ChatClient {
                        toChatID: chatID)
     }
 
-    private func respondSuccessfullyToRemoteCommandRequest(inChat chatID: String,
-                                                           requestUUID: UUID,
-                                                           message: String) {
+    func respondSuccessfullyToRemoteCommandRequest(inChat chatID: String,
+                                                   requestUUID: UUID,
+                                                   message: String) {
         broker.publish(message: Message(participant: .user,
                                         content: .remoteCommandResponse(
                                             .success(message),
@@ -161,7 +179,7 @@ class ChatClient {
             bullets.append("I [annotated](\(url.absoluteString)) “\(annotation.annotatedText)”: \(annotation.note)")
         }
         if !bullets.isEmpty {
-            let epilogue = "\nYou can click on a link in this message or on a yellow underline in the terminal to reveal an annotation"
+            let epilogue = "\nYou can click on a link in this message or on a yellow underline in the terminal to reveal an annotation."
             if bullets.count  == 1 {
                 return bullets.first! + epilogue
             } else {

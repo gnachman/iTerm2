@@ -24,11 +24,11 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Expect
 
 - (void)watchForPasteBracketingOopsieWithPrefix:(NSString *)prefix;
-- (void)addExpectation:(NSString *)regex
-                 after:(nullable iTermExpectation *)predecessor
-              deadline:(nullable NSDate *)deadline
-            willExpect:(void (^ _Nullable)(void))willExpect
-            completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion;
+- (iTermExpectation *)addExpectation:(NSString *)regex
+                               after:(nullable iTermExpectation *)predecessor
+                            deadline:(nullable NSDate *)deadline
+                          willExpect:(void (^ _Nullable)(void))willExpect
+                          completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion;
 
 #pragma mark - Private
 

@@ -32,6 +32,8 @@ extern NSString *const PTYSessionSlownessEventExecute;
 - (BOOL)triggerEvaluatorShouldUseTriggers:(PTYTriggerEvaluator *)evaluator;
 // Call naggingController.offerToDisableTriggersInInteractiveApps()
 - (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator;
+- (void)triggerEvaluatorScheduleSideEffect:(PTYTriggerEvaluator *)evaluator
+                                     block:(void (^)(void))block;
 @end
 
 @interface PTYTriggerEvaluator : NSObject

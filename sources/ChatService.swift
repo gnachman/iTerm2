@@ -33,14 +33,16 @@ class ChatService {
     }
 
     private func handleUserMessage(_ message: Message, inChat chatID: String) {
+        if message.isClientLocal {
+            return
+        }
         agentWorking(chatID: chatID) { stopTyping in
             let agent = if let existing = agents[chatID] {
                 existing
             } else {
                 // Exclude the last message because it's added to the model before the broker publishes
                 // it.
-                newAgent(forChatID: chatID,
-                         messages: Array(ChatListModel.instance.chat(id: chatID)?.messages.dropLast() ?? []))
+                newAgent(forChatID: chatID, messages: messages(chatID: chatID).dropLast())
             }
             agent.fetchCompletion(userMessage: message) { replyMessage in
                 stopTyping()
@@ -51,8 +53,16 @@ class ChatService {
         }
     }
 
+    // Exclude client-local messages because the agent only knows about them because  it shares a
+    // model with the client, which it probably shouldn't.
+    private func messages(chatID: String) -> [Message] {
+        Array(ChatListModel.instance.chat(id: chatID)?
+            .messages
+            .filter { !$0.isClientLocal } ?? [])
+    }
+
     private func newAgent(forChatID chatID: String,
-                          messages: [Message]) -> ChatAgent {
+                          messages: ArraySlice<Message>) -> ChatAgent {
         it_assert(agents[chatID] == nil)
 
         let reg = RegistrationContext(chatID: chatID)
@@ -60,7 +70,7 @@ class ChatService {
         let agent = ChatAgent(
             chatID,
             registrationProvider: reg,
-            messages: messages)
+            messages: Array(messages))
         self.agents[chatID] = agent
         return agent
     }

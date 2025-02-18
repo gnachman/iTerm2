@@ -38,7 +38,7 @@ fileprivate struct MessageToPromptStateMachine {
             annotations.rawResponse
         case .explanationRequest:
             it_fatalError()
-        case .remoteCommandRequest, .remoteCommandResponse:
+        case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
             it_fatalError()
         }
     }
@@ -54,7 +54,7 @@ fileprivate struct MessageToPromptStateMachine {
                 return request.prompt()
             case .explanationResponse:
                 it_fatalError()
-            case .remoteCommandRequest, .remoteCommandResponse:
+            case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
                 it_fatalError()
             }
         case .initialExplanation:
@@ -64,7 +64,7 @@ fileprivate struct MessageToPromptStateMachine {
                 return AIExplanationRequest.conversationalPrompt(userPrompt: value)
             case .explanationResponse, .explanationRequest:
                 it_fatalError()
-            case .remoteCommandRequest, .remoteCommandResponse:
+            case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
                 it_fatalError()
             }
         }
@@ -99,6 +99,19 @@ class ChatAgent {
     // TODO: I think we need to handle cancellations to keep the conversation correct.
     func fetchCompletion(userMessage: Message,
                          completion: @escaping (Message?) -> ()) {
+        switch userMessage.content {
+        case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                .remoteCommandRequest, .selectSessionRequest, .clientLocal:
+            break
+        case .remoteCommandResponse(let result, let messageID):
+            if let pending = pendingRemoteCommands[messageID] {
+                NSLog("Agent handling remote command response to message \(messageID)")
+                pendingRemoteCommands.removeValue(forKey: messageID)
+                pending(Result(result))
+                return
+            }
+        }
+
         conversation.add(aiMessage(from: userMessage))
         conversation.complete { result in
             if let updated = result.successValue {
@@ -130,7 +143,7 @@ class ChatAgent {
                         AIAnnotationCollection(text, request: explanationRequest)),
                     date: Date(),
                     uniqueID: UUID())
-            case .remoteCommandRequest, .remoteCommandResponse:
+            case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
                 it_fatalError()
             }
         } failure: { error in
@@ -488,6 +501,7 @@ extension ChatAgent {
             function: declGetManPage,
             arguments: RemoteCommand.GetManPage.self,
             implementation: { [weak self] command, completion in
+                NSLog("Completion block running for \(command)")
                 self?.willExecuteCommand()
                 self?.runRemoteCommand(RemoteCommand.getManPage(command)) { result in
                     self?.didExecuteCommand()
@@ -499,12 +513,9 @@ extension ChatAgent {
     // MARK: - Function Calling Ingra
 
     private func willExecuteCommand() {
-        ChatBroker.instance.publish(typingStatus: true, of: .agent, toChatID: chatID)
     }
 
     private func didExecuteCommand() {
-        #warning("TODO: This will probably do the wrong thing if you interrupt the agent")
-        ChatBroker.instance.publish(typingStatus: false, of: .agent, toChatID: chatID)
     }
 
     private func runRemoteCommand(_ remoteCommand: RemoteCommand, completion: @escaping (Result<String, Error>) -> ()) {
@@ -516,5 +527,12 @@ extension ChatAgent {
                                                    date: Date(),
                                                    uniqueID: requestID),
                                     toChatID: chatID)
+    }
+}
+
+extension Result where Failure == Error {
+    // Upcast Result<Success,SpecificFailure> to Result<Success,Error>.
+    init<SpecificFailure: Error>(_ result: Result<Success, SpecificFailure>) {
+        self = result.mapError { $0 }
     }
 }

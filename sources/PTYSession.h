@@ -47,10 +47,13 @@ extern NSString *const PTYCommandDidExitNotification;
 @class FakeWindow;
 @class iTermAction;
 @class iTermAnnouncementViewController;
+@class iTermConductor;
 @protocol iTermContentSubscriber;
 @class iTermEchoProbe;
+@class iTermExpect;
 @class iTermImageWrapper;
 @class iTermKeyBindingAction;
+@class iTermRunningRemoteCommand;
 @class iTermSSHReconnectionInfo;
 @class iTermScriptHistoryEntry;
 @class iTermStatusBarViewController;
@@ -84,7 +87,8 @@ typedef NS_ENUM(NSInteger, SplitSelectionMode) {
     kSplitSelectionModeOn,
     kSplitSelectionModeOff,
     kSplitSelectionModeCancel,
-    kSplitSelectionModeInspect
+    kSplitSelectionModeInspect,
+    kSplitSelectionModeSelect
 };
 
 typedef enum {
@@ -589,6 +593,9 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) BOOL shouldShowAutoComposer;
 @property(nonatomic, readonly) NSString *regularExpressonForNonLowPrecisionSmartSelectionRulesCombined;
 @property(nonatomic, strong) NSCursor *defaultPointer;
+@property(nonatomic, readonly) iTermConductor *conductor;
+@property(nonatomic, readonly) iTermExpect *expect;
+@property(nonatomic, strong) iTermRunningRemoteCommand *runningRemoteCommand;
 
 #pragma mark - methods
 

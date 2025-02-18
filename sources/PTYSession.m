@@ -604,7 +604,6 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     BOOL _profileDidChange;
     NSInteger _estimatedThroughput;
     iTermPasteboardReporter *_pasteboardReporter;
-    iTermConductor *_conductor;
     iTermSSHState _sshState;
     // (unique ID, hostname)
     NSMutableData *_sshWriteQueue;
@@ -809,6 +808,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         _hostStack = [[NSMutableArray alloc] init];
         [iTermCPUUtilization instanceForSessionID:_guid];
         _canChangeProfileInArrangementGeneration = -1;
+        _runningRemoteCommand = [[iTermRunningRemoteCommand alloc] init];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -1086,6 +1086,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_originatingArrangement release];
     [_originatingArrangementName release];
     [_userTmuxOptionMonitors release];
+    [_runningRemoteCommand release];
 
     [super dealloc];
 }

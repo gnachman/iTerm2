@@ -125,6 +125,15 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         window.makeKeyAndOrderFront(nil)
     }
 
+    @objc
+    func createNewChatIfNeeded() {
+        if ChatListModel.instance.count == 0 {
+            createNewChat()
+        } else {
+            chatListViewController.selectMostRecent()
+        }
+    }
+
     private func initialize() -> NSWindow {
         chatListViewController.dataSource = ChatListModel.instance
         splitViewController = ChatSplitViewController(chatListViewController: chatListViewController,
@@ -166,6 +175,12 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         chatViewController.delegate = self
 
         return window
+    }
+
+    private func createNewChat() {
+        let chatID = ChatBroker.instance.create(chatWithTitle: "New Chat", sessionGuid: nil)
+        chatViewController.load(chatID: chatID)
+        chatListViewController.select(chatID: chatID)
     }
 
     @objc func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
@@ -254,9 +269,7 @@ extension ChatWindowController: NSToolbarDelegate {
 
 extension ChatWindowController: ChatListViewControllerDelegate {
     func chatListViewControllerDidTapNewChat(_ viewController: ChatListViewController) {
-        let chatID = ChatBroker.instance.create(chatWithTitle: "New Chat", sessionGuid: nil)
-        chatViewController.load(chatID: chatID)
-        chatListViewController.select(chatID: chatID)
+        createNewChat()
     }
 
     func chatListViewController(_ chatListViewController: ChatListViewController,

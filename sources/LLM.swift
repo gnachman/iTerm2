@@ -610,7 +610,7 @@ fileprivate func sanitizeMarkdown(_ input: String) -> String {
 
 func AttributedStringForGPTMarkdown(_ unsafeString: String,
                                     linkColor: NSColor? = nil,
-                                    didCopy: @escaping () -> ()) -> NSAttributedString {
+                                    didCopy: (() -> ())?) -> NSAttributedString {
     let massagedValue = unsafeString.components(separatedBy: "\n").map { sanitizeMarkdown($0) }.joined(separator: "\n")
 
     let md = SwiftyMarkdown(string: massagedValue)
@@ -662,20 +662,22 @@ func AttributedStringForGPTMarkdown(_ unsafeString: String,
             }
             ranges.append(range)
         }
-        for range in ranges.reversed() {
-            modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { point in
-                NSPasteboard.general.declareTypes([.string], owner: NSApp)
-                NSPasteboard.general.setString(attributedString.string.substring(nsrange: range), forType: .string)
-                ToastWindowController.showToast(withMessage: "Copied", duration: 1, screenCoordinate: point, pointSize: 12)
-                didCopy()
+        if let didCopy {
+            for range in ranges.reversed() {
+                modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { point in
+                    NSPasteboard.general.declareTypes([.string], owner: NSApp)
+                    NSPasteboard.general.setString(attributedString.string.substring(nsrange: range), forType: .string)
+                    ToastWindowController.showToast(withMessage: "Copied", duration: 1, screenCoordinate: point, pointSize: 12)
+                    didCopy()
+                }
+                modified.insert(
+                    NSAttributedString(
+                        string: " ",
+                        attributes: modified.attributes(
+                            at: range.location + 1,
+                            effectiveRange: nil)),
+                    at: range.location + 1)
             }
-            modified.insert(
-                NSAttributedString(
-                    string: " ",
-                    attributes: modified.attributes(
-                        at: range.location + 1,
-                        effectiveRange: nil)),
-                at: range.location + 1)
         }
         return modified
     } else {

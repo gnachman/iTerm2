@@ -23,6 +23,14 @@
     NSPopover *_popover;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _selectionMode = NO;
+    }
+    return self;
+}
+
 - (PTYSession *)pickSession {
     NSWindow *window = [[[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels] firstObject];
     if (!window) {
@@ -122,9 +130,13 @@
         if (_sessionView == view) {
             return;
         }
+        NSLog(@"Unhighlight %@", _sessionView);
         [_sessionView setSplitSelectionMode:kSplitSelectionModeOff move:NO session:nil];
         _sessionView = (SessionView *)view;
-        [_sessionView setSplitSelectionMode:kSplitSelectionModeInspect move:NO session:nil];
+        NSLog(@"Highlight %@", _sessionView);
+        [_sessionView setSplitSelectionMode:_selectionMode ? kSplitSelectionModeSelect : kSplitSelectionModeInspect
+                                       move:NO
+                                    session:nil];
     }
 }
 

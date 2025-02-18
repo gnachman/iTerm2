@@ -37,6 +37,7 @@
 
 @class PTYSessionPublishRequest;
 @class iTermComposerManager;
+@class iTermConductor;
 @class AITermControllerObjC;
 
 @interface PTYSession () <

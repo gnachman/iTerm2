@@ -275,3 +275,29 @@ extension String {
     }
 }
 
+extension String {
+    func ranges(of searchString: String) -> [Range<String.Index>] {
+        guard !searchString.isEmpty else { return [] }
+        var ranges: [Range<String.Index>] = []
+        var searchStartIndex = self.startIndex
+
+        while searchStartIndex < self.endIndex,
+              let range = self.range(of: searchString, range: searchStartIndex..<self.endIndex) {
+            ranges.append(range)
+            searchStartIndex = range.upperBound
+        }
+        return ranges
+    }
+}
+
+extension String {
+    mutating func removePrefix(_ prefix: String) {
+        guard self.hasPrefix(prefix) else { return }
+        self.removeFirst(prefix.count)
+    }
+
+    mutating func removeSuffix(_ suffix: String) {
+        guard self.hasSuffix(suffix) else { return }
+        self.removeLast(suffix.count)
+    }
+}
