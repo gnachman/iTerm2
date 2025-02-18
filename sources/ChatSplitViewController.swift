@@ -45,11 +45,14 @@ class ChatSplitViewController: NSViewController {
             splitView.topAnchor.constraint(equalTo: view.topAnchor, constant: 40), // leave space for button
             splitView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-
-        // Set an initial width for the chat list pane.
-        chatListViewController.view.widthAnchor.constraint(equalToConstant: 200).isActive = true
+        chatListViewController.view.widthAnchor.constraint(greaterThanOrEqualToConstant: 120.0).isActive = true
     }
 
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        splitView.setPosition(200, ofDividerAt: 0)
+    }
+    
     func toggleChatList() {
         // Toggle collapse/expand by hiding/unhiding the chat list view.
         chatListViewController.view.isHidden.toggle()

@@ -227,25 +227,27 @@ class ChatCellView: NSTableCellView {
 
     private func setupViews() {
         titleLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .bold)
+        // Enable ellipsis truncation for the title label.
+        if let cell = titleLabel.cell as? NSTextFieldCell {
+            cell.lineBreakMode = .byTruncatingTail
+            cell.truncatesLastVisibleLine = true
+        }
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.isEditable = false
-        titleLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         addSubview(titleLabel)
 
         dateLabel.translatesAutoresizingMaskIntoConstraints = false
         dateLabel.textColor = NSColor.textColor.withAlphaComponent(0.75)
         dateLabel.isEditable = false
-        dateLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        dateLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
         addSubview(dateLabel)
 
-        // Layout: titleLabel left, dateLabel right, both vertically centered.
         NSLayoutConstraint.activate([
             titleLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5),
             titleLabel.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-
             dateLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -5),
             dateLabel.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-
             titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: dateLabel.leadingAnchor, constant: -8)
         ])
 

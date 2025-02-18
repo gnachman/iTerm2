@@ -180,7 +180,7 @@ extension ChatViewController {
             }
             switch update {
             case let .delivery(message, _):
-                if !message.isTransient {
+                if !message.visibleInClient {
                     let originalCount = model.items.count
                     self.model.appendMessage(message)
                     if originalCount > 0 {
@@ -188,6 +188,9 @@ extension ChatViewController {
                         tableView.reloadData(forRowIndexes: IndexSet(integer: self.model.items.count - 2),
                                              columnIndexes: IndexSet(integer: 0))
                     }
+                }
+                if case .renameChat(let newName) = message.content {
+                    titleLabel.stringValue = newName
                 }
             case let .typingStatus(typing, participant):
                 switch participant {
@@ -559,7 +562,7 @@ extension Message {
 
     var buttons: [MessageRendition.Button] {
         switch content {
-        case .plainText, .markdown, .explanationRequest, .explanationResponse, .remoteCommandResponse:
+        case .plainText, .markdown, .explanationRequest, .explanationResponse, .remoteCommandResponse, .renameChat:
             []
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
@@ -579,6 +582,8 @@ extension Message {
 
     var attributedStringValue: NSAttributedString {
         switch content {
+        case .renameChat:
+            it_fatalError()
         case .plainText(let string):
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineBreakMode = .byWordWrapping
@@ -789,7 +794,7 @@ class ChatViewControllerModel {
         var lastDate: DateComponents?
         if let messages = listModel.messages(forChat: chatID, createIfNeeded: false) {
             for message in messages {
-                if message.isTransient {
+                if message.visibleInClient {
                     continue
                 }
                 let date = message.dateErasingTime

@@ -142,6 +142,15 @@ class ChatListModel: ChatListDataSource {
         }
     }
 
+    private func rename(chatID: String, newName: String) {
+        if let i = chatStorage.firstIndex(where: { $0.id == chatID }) {
+            var temp = chatStorage[i]
+            temp.title = newName
+            chatStorage[i] = temp
+            NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
+        }
+    }
+
     func messages(forChat chatID: String,
                   createIfNeeded: Bool) -> DatabaseBackedArray<Message>? {
         if let array = messageStorage[chatID] {
@@ -185,7 +194,13 @@ class ChatListModel: ChatListDataSource {
 
     func append(message: Message, toChatID chatID: String) {
         messages(forChat: chatID, createIfNeeded: true)?.append(message)
-        bump(chatID: chatID)
+        switch message.content {
+        case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
+            bump(chatID: chatID)
+        case .renameChat(let string):
+            rename(chatID: chatID, newName: string)
+        }
     }
 
     func lastChat(guid: String) -> Chat? {

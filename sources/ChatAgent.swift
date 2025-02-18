@@ -61,7 +61,7 @@ fileprivate struct MessageToPromptStateMachine {
             it_fatalError()
         case .remoteCommandRequest:
             return nil
-        case .remoteCommandResponse, .selectSessionRequest, .clientLocal:
+        case .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat:
             it_fatalError()
         }
     }
@@ -84,7 +84,7 @@ fileprivate struct MessageToPromptStateMachine {
                     "I was unable to complete the function call: " + error.localizedDescription
                 }
 
-            case .remoteCommandRequest, .selectSessionRequest, .clientLocal:
+            case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat:
                 it_fatalError()
             }
         case .initialExplanation:
@@ -94,7 +94,7 @@ fileprivate struct MessageToPromptStateMachine {
                 return AIExplanationRequest.conversationalPrompt(userPrompt: value)
             case .explanationResponse, .explanationRequest:
                 it_fatalError()
-            case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
+            case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat:
                 it_fatalError()
             }
         }
@@ -108,6 +108,7 @@ class ChatAgent {
     private var messageToPrompt = MessageToPromptStateMachine()
     private var pendingRemoteCommands = [UUID: (Result<String, Error>) -> ()]()
     private let broker: ChatBroker
+    private var renameConversation: AIConversation?
 
     init(_ chatID: String,
          broker: ChatBroker,
@@ -124,7 +125,7 @@ class ChatAgent {
                 conversation.add(aiMessage(from: message))
                 break
 
-            case .selectSessionRequest, .clientLocal:
+            case .selectSessionRequest, .clientLocal, .renameChat:
                 break
             }
         }
@@ -148,7 +149,9 @@ class ChatAgent {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .selectSessionRequest, .clientLocal:
             break
-        case .remoteCommandResponse(let result, let messageID, let functionCallName):
+        case .renameChat:
+            return
+        case .remoteCommandResponse(let result, let messageID, _):
             if let pending = pendingRemoteCommands[messageID] {
                 NSLog("Agent handling remote command response to message \(messageID)")
                 pendingRemoteCommands.removeValue(forKey: messageID)
@@ -158,14 +161,33 @@ class ChatAgent {
         }
 
         conversation.add(aiMessage(from: userMessage))
-        conversation.complete { result in
+        conversation.complete { [weak self] result in
+            guard let self else {
+                return
+            }
             if let updated = result.successValue {
                 self.conversation = updated
+                if updated.messages.count == 2 {
+                    requestRenaming()
+                }
             } else {
                 self.conversation.messages.removeLast()
             }
             let message = Self.message(forResult: result, userMessage: userMessage)
             completion(message)
+        }
+    }
+
+    private func requestRenaming() {
+        let prompt = "Please assign a short name to this chat, less than 30 characters in length, but descriptive. It will be shown in a chat list UI. Respond with only the name of the chat."
+        renameConversation = AIConversation(
+            registrationProvider: conversation.registrationProvider,
+            messages: conversation.messages + [AITermController.Message(role: "user", content: prompt)])
+        renameConversation?.complete { [weak self] (result: Result<AIConversation, Error>) in
+            if let newName = result.successValue?.messages.last?.content {
+                self?.renameChat(newName)
+            }
+            self?.renameConversation = nil
         }
     }
 
@@ -197,7 +219,7 @@ class ChatAgent {
                                content: .markdown(text),
                                sentDate: Date(),
                                uniqueID: UUID())
-            case .remoteCommandRequest, .selectSessionRequest, .clientLocal:
+            case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat:
                 it_fatalError()
             }
         } failure: { error in
@@ -581,6 +603,15 @@ extension ChatAgent {
         )
     }
     // MARK: - Function Calling Ingra
+
+    private func renameChat(_ newName: String) {
+        broker.publish(message: .init(chatID: chatID,
+                                      author: .agent,
+                                      content: .renameChat(newName),
+                                      sentDate: Date(),
+                                      uniqueID: UUID()),
+                       toChatID: chatID)
+    }
 
     private func willExecuteCommand() {
     }

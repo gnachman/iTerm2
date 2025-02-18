@@ -1186,7 +1186,7 @@ struct AIConversation {
     var messages: [AITermController.Message]
     private var controller: AITermController
     private var delegate = Delegate()
-    private weak var registrationProvider: AIRegistrationProvider?
+    private(set) weak var registrationProvider: AIRegistrationProvider?
     var maxTokens: Int {
         return Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit) - iTermAdvancedSettingsModel.aiResponseMaxTokens())
     }

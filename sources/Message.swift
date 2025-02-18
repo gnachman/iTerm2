@@ -30,6 +30,7 @@ struct Message: Codable {
         case remoteCommandResponse(Result<String, AIError>, UUID, String)
         case selectSessionRequest(Message)  // carries the original message that needs a session
         case clientLocal(ClientLocal)
+        case renameChat(String)
 
         var shortDescription: String {
             switch self {
@@ -53,6 +54,8 @@ struct Message: Codable {
                 case .pickingSession:
                     return "Client-local: picking session"
                 }
+            case .renameChat(let name):
+                return "Rename chat to \(name)"
             }
         }
     }
@@ -63,10 +66,10 @@ struct Message: Codable {
     var shortDescription: String {
         return "<Message from \(author.rawValue), id \(uniqueID.uuidString): \(content.shortDescription)>"
     }
-    // Transient messages are not saved in the chatlist model on the client.
-    var isTransient: Bool {
+
+    var visibleInClient: Bool {
         switch content {
-        case .remoteCommandResponse: true
+        case .remoteCommandResponse, .renameChat: true
         case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal: false
         }
     }
@@ -77,7 +80,7 @@ struct Message: Codable {
         case .clientLocal:
             true
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
-                .markdown, .explanationResponse, .explanationRequest:
+                .markdown, .explanationResponse, .explanationRequest, .renameChat:
             false
         }
     }
