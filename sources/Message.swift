@@ -178,6 +178,11 @@ extension Message: iTermDatabaseElement {
         )
     }
 
+    func removeQuery() -> (String, [Any]) {
+        ("remove from Message where \(Columns.uniqueID.rawValue) = ?",
+         [uniqueID.uuidString])
+    }
+
     func updateQuery() -> (String, [Any]) {
         let jsonData = try! JSONEncoder().encode(content)
         let jsonString = String(data: jsonData, encoding: .utf8)!

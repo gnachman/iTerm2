@@ -20,7 +20,7 @@ class ChatListViewController: NSViewController {
 
     private let tableView = NSTableView()
     private let scrollView = NSScrollView()
-
+    
     // Header UI
     private let headerView = NSView()
     private let titleLabel: NSTextField = {
@@ -82,9 +82,21 @@ class ChatListViewController: NSViewController {
         NotificationCenter.default.addObserver(forName: ChatListModel.metadataDidChange,
                                                object: nil,
                                                queue: nil) { [weak self] notification in
-            self?.tableView.reloadData()
+            guard let self else {
+                return
+            }
+            ignoreSelectionChange = true
+            let chatID = self.selectedChatID
+            self.tableView.reloadData()
+            if let chatID, let i = dataSource?.chatListViewController(self, indexOfChatID: chatID) {
+                tableView.selectRowIndexes(IndexSet(integer: i),
+                                           byExtendingSelection: false)
+            }
+            ignoreSelectionChange = false
         }
     }
+    private var ignoreSelectionChange = false
+    var selectedChatID: String?
 
     private func setupTableView() {
         scrollView.documentView = tableView
@@ -107,6 +119,7 @@ class ChatListViewController: NSViewController {
 
     func selectMostRecent() {
         tableView.selectRowIndexes(IndexSet(integer: 0), byExtendingSelection: false)
+        selectedChatID = findSelectedChatID()
     }
 
     @objc private func createNewChat() {
@@ -127,6 +140,7 @@ class ChatListViewController: NSViewController {
         guard let i else {
             return
         }
+        selectedChatID = chatID
         tableView.selectRowIndexes(IndexSet(integer: i), byExtendingSelection: false)
     }
 }
@@ -141,31 +155,37 @@ extension ChatListViewController: NSTableViewDelegate {
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         let identifier = NSUserInterfaceItemIdentifier("ChatCell")
         var cell = tableView.makeView(withIdentifier: identifier, owner: self) as? ChatCellView
-        if cell == nil {
-            cell = ChatCellView(frame: NSRect(x: 0, y: 0, width: tableView.bounds.width, height: 44))
-            cell?.identifier = identifier
-        }
 
         let chat = dataSource?.chatListViewController(self, chatAt: row)
 
-        cell?.titleLabel.stringValue = chat?.title ?? ""
-
-        if let date = chat?.lastModifiedDate {
-            cell?.dateLabel.stringValue = DateFormatter.compactDateDifferenceString(from: date)
+        if cell == nil {
+            let rect = NSRect(x: 0, y: 0, width: tableView.bounds.width, height: 44)
+            cell = ChatCellView(frame: rect, date: chat?.lastModifiedDate)
+            cell?.identifier = identifier
         } else {
-            cell?.dateLabel.stringValue = ""
+            cell?.date = chat?.lastModifiedDate
         }
+
+        cell?.titleLabel.stringValue = chat?.title ?? ""
 
         return cell
     }
 
-    func tableViewSelectionDidChange(_ notification: Notification) {
+    func findSelectedChatID() -> String? {
         let selectedRow = tableView.selectedRow
         guard selectedRow >= 0 else {
+            return nil
+        }
+        return dataSource?.chatListViewController(self, chatAt: selectedRow).id
+    }
+
+    func tableViewSelectionDidChange(_ notification: Notification) {
+        if ignoreSelectionChange {
             return
         }
-        if let chat = dataSource?.chatListViewController(self, chatAt: selectedRow) {
-            delegate?.chatListViewController(self, didSelectChat: chat.id)
+        if let chatID = findSelectedChatID() {
+            selectedChatID = chatID
+            delegate?.chatListViewController(self, didSelectChat: chatID)
         }
     }
 }
@@ -173,15 +193,36 @@ extension ChatListViewController: NSTableViewDelegate {
 class ChatCellView: NSTableCellView {
     let titleLabel = NSTextField(labelWithString: "")
     let dateLabel = NSTextField(labelWithString: "")
+    var date: Date? {
+        didSet {
+            updateDateLabel()
+        }
+    }
+    private var timer: Timer?
 
-    override init(frame frameRect: NSRect) {
+    init(frame frameRect: NSRect, date: Date?) {
+        self.date = date
         super.init(frame: frameRect)
         setupViews()
+        timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true, block: { [weak self] _ in
+            self?.updateDateLabel()
+        })
     }
 
     required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setupViews()
+        it_fatalError()
+    }
+
+    deinit {
+        timer?.invalidate()
+    }
+
+    private func updateDateLabel(){
+        if let date {
+            dateLabel.stringValue = DateFormatter.compactDateDifferenceString(from: date)
+        } else {
+            dateLabel.stringValue = ""
+        }
     }
 
     private func setupViews() {
@@ -207,5 +248,7 @@ class ChatCellView: NSTableCellView {
 
             titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: dateLabel.leadingAnchor, constant: -8)
         ])
+
+        updateDateLabel()
     }
 }

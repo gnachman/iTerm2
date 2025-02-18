@@ -33,8 +33,13 @@ extension Chat: iTermDatabaseElement {
     }
 
     static func fetchAllQuery() -> String {
-        "select * from Chat"
+        "select * from Chat order by \(Columns.lastModifiedDate) DESC"
     }
+
+    func removeQuery() -> (String, [Any]) {
+        ("delete from Chat where \(Columns.uuid.rawValue) = ?", [id])
+    }
+
     func appendQuery() -> (String, [Any]) {
         ("""
         insert into Chat 
@@ -102,7 +107,8 @@ class ChatListModel: ChatListDataSource {
     var count: Int { chatStorage.count }
 
     init?() {
-        guard let chatDb = ChatDatabase.instance, let chats = chatDb.chats() else {
+        guard let chatDb = ChatDatabase.instance,
+              let chats = chatDb.chats() else {
             return nil
         }
         chatStorage = chats
@@ -115,10 +121,25 @@ class ChatListModel: ChatListDataSource {
     func chatListViewController(_ chatListViewController: ChatListViewController, chatAt index: Int) -> Chat {
         return chatStorage[index]
     }
-    
+
+    func chatListViewController(_ viewController: ChatListViewController,
+                                indexOfChatID chatID: String) -> Int? {
+        return index(of: chatID)
+    }
+
     func add(chat: Chat) {
-        chatStorage.append(chat)
+        chatStorage.prepend(chat)
         NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
+    }
+
+    private func bump(chatID: String) {
+        if let i = chatStorage.firstIndex(where: { $0.id == chatID }) {
+            var temp = chatStorage[i]
+            chatStorage.remove(at: i)
+            temp.lastModifiedDate = Date()
+            chatStorage.prepend(temp)
+            NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
+        }
     }
 
     func messages(forChat chatID: String,
@@ -146,7 +167,7 @@ class ChatListModel: ChatListDataSource {
                         createIfNeeded: false)?.firstIndex { $0.uniqueID == messageID }
     }
 
-    private func index(of chatID: String) -> Int? {
+    func index(of chatID: String) -> Int? {
         return chatStorage.firstIndex {
             $0.id == chatID
         }
@@ -164,6 +185,7 @@ class ChatListModel: ChatListDataSource {
 
     func append(message: Message, toChatID chatID: String) {
         messages(forChat: chatID, createIfNeeded: true)?.append(message)
+        bump(chatID: chatID)
     }
 
     func lastChat(guid: String) -> Chat? {

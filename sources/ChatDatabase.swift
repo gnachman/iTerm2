@@ -68,6 +68,7 @@ protocol iTermDatabaseElement {
     init?(dbResultSet: iTermDatabaseResultSet)
     func appendQuery() -> (String, [Any])
     func updateQuery() -> (String, [Any])
+    func removeQuery() -> (String, [Any])
 }
 
 class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
@@ -105,9 +106,24 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
     }
 
     func append(_ element: Element) {
+        insert(element, atIndex: elements.count)
+    }
+
+    func prepend(_ element: Element) {
+        insert(element, atIndex: 0)
+    }
+
+    func remove(at i: Int) {
+        let element = elements[i]
+        let (query, args) = element.removeQuery()
+        db.executeUpdate(query, withArguments: args)
+        elements.remove(at: i)
+    }
+
+    func insert(_ element: Element, atIndex i: Int) {
         let (query, args) = element.appendQuery()
         db.executeUpdate(query, withArguments: args)
-        elements.append(element)
+        elements.insert(element, at: i)
     }
 
     func firstIndex(where test: (Element) -> Bool) -> Int? {
@@ -122,9 +138,10 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
     }
 }
 
-
 extension DatabaseBackedArray: Sequence {
     func makeIterator() -> IndexingIterator<[Element]> {
         return elements.makeIterator()
     }
 }
+
+

@@ -10,4 +10,5 @@ import AppKit
 protocol ChatListDataSource: AnyObject {
     func numberOfChats(in chatListViewController: ChatListViewController) -> Int
     func chatListViewController(_ chatListViewController: ChatListViewController, chatAt index: Int) -> Chat
+    func chatListViewController(_ viewController: ChatListViewController, indexOfChatID: String) -> Int?
 }
