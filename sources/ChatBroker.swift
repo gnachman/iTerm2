@@ -108,7 +108,13 @@ class ChatBroker {
         }
     }
 
-    enum Update {
+    enum Update: CustomDebugStringConvertible {
+        var debugDescription: String {
+            switch self {
+            case let .typingStatus(typing, participant): "\(participant) typing=\(typing)"
+            case let .delivery(message, chat): "Message in \(chat) - \(message.snippetText ?? "[empty]")"
+            }
+        }
         case typingStatus(Bool, Participant)
         case delivery(Message, String)
     }

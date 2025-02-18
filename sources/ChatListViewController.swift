@@ -17,7 +17,10 @@ protocol ChatListViewControllerDelegate: AnyObject {
 class ChatListViewController: NSViewController {
     weak var dataSource: ChatListDataSource?
     weak var delegate: ChatListViewControllerDelegate?
-
+    private let prototypeCell = ChatCellView(frame: .zero,
+                                             chat: nil,
+                                             dataSource: nil,
+                                             autoupdateDate: false)
     private let tableView = NSTableView()
     private let scrollView = NSScrollView()
     
@@ -152,7 +155,7 @@ extension ChatListViewController: NSTableViewDataSource {
 }
 
 extension ChatListViewController: NSTableViewDelegate {
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    private func view(forRow row: Int) -> NSView {
         let identifier = NSUserInterfaceItemIdentifier("ChatCell")
         var cell = tableView.makeView(withIdentifier: identifier, owner: self) as? ChatCellView
 
@@ -160,15 +163,30 @@ extension ChatListViewController: NSTableViewDelegate {
 
         if cell == nil {
             let rect = NSRect(x: 0, y: 0, width: tableView.bounds.width, height: 44)
-            cell = ChatCellView(frame: rect, date: chat?.lastModifiedDate)
+            cell = ChatCellView(frame: rect, chat: chat, dataSource: dataSource, autoupdateDate: true)
             cell?.identifier = identifier
-        } else {
-            cell?.date = chat?.lastModifiedDate
+        } else if let dataSource, let chat {
+            cell?.load(chat: chat, dataSource: dataSource)
         }
+        print("qqq row \(row) has title \(chat?.title) (label=\(cell!.titleLabel.stringValue)) and id \(chat?.id)")
+        return cell!
+    }
 
-        cell?.titleLabel.stringValue = chat?.title ?? ""
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+        return view(forRow: row)
+    }
 
-        return cell
+    func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
+        guard let chat = dataSource?.chatListViewController(self, chatAt: row), let dataSource else {
+            return 0
+        }
+        prototypeCell.load(chat: chat, dataSource: dataSource)
+
+        prototypeCell.frame = NSRect(x: 0, y: 0, width: tableView.bounds.width, height: 0)
+        prototypeCell.layoutSubtreeIfNeeded()
+
+        let height = prototypeCell.fittingSize.height
+        return height
     }
 
     func findSelectedChatID() -> String? {
@@ -193,20 +211,34 @@ extension ChatListViewController: NSTableViewDelegate {
 class ChatCellView: NSTableCellView {
     let titleLabel = NSTextField(labelWithString: "")
     let dateLabel = NSTextField(labelWithString: "")
-    var date: Date? {
+    let snippetLabel = NSTextField(labelWithString: "")
+    private var typing = false
+
+    var snippet: String? {
+        didSet {
+            snippetLabel.stringValue = snippet?.replacingOccurrences(of: "\n", with: " ") ?? ""
+        }
+    }
+
+    private var date: Date? {
         didSet {
             updateDateLabel()
         }
     }
     private var timer: Timer?
+    private var subscription: ChatBroker.Subscription?
 
-    init(frame frameRect: NSRect, date: Date?) {
-        self.date = date
+    init(frame frameRect: NSRect, chat: Chat?, dataSource: ChatListDataSource?, autoupdateDate: Bool) {
         super.init(frame: frameRect)
         setupViews()
-        timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true, block: { [weak self] _ in
-            self?.updateDateLabel()
-        })
+        if autoupdateDate {
+            timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+                self?.updateDateLabel()
+            }
+        }
+        if let chat, let dataSource {
+            load(chat: chat, dataSource: dataSource)
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -215,9 +247,54 @@ class ChatCellView: NSTableCellView {
 
     deinit {
         timer?.invalidate()
+        subscription?.unsubscribe()
     }
 
-    private func updateDateLabel(){
+    func load(chat: Chat, dataSource: ChatListDataSource) {
+        if TypingStatusModel.instance.isTyping(participant: .agent, chatID: chat.id) {
+            snippet = "Agent is thinking…"
+        } else {
+            self.snippet = dataSource.snippet(forChatID: chat.id)
+        }
+        self.date = chat.lastModifiedDate
+        titleLabel.stringValue = chat.title
+        typing = false
+
+        let chatID = chat.id
+        subscription?.unsubscribe()
+        subscription = ChatBroker.instance?.subscribe(
+            chatID: chatID,
+            registrationProvider: nil,
+            closure: { [weak self, weak dataSource] update in
+                self?.apply(update: update, chatID: chatID, dataSource: dataSource)
+        })
+    }
+
+    private func apply(update: ChatBroker.Update,
+                       chatID: String,
+                       dataSource: ChatListDataSource?) {
+        print("qqq Update for \(chatID) with typing=\(typing): \(update)")
+        switch update {
+        case let .typingStatus(typing, participant):
+            if participant == .agent {
+                if typing {
+                    self.typing = true
+                    print("qqq set typing=true in \(chatID)")
+                    snippet = "Agent is thinking…"
+                } else {
+                    self.typing = false
+                    print("qqq set typing=true in \(false)")
+                    snippet = dataSource?.snippet(forChatID: chatID) ?? ""
+                }
+            }
+        case let .delivery(message, _):
+            if !typing, let snippet = message.snippetText {
+                self.snippet = snippet
+            }
+        }
+    }
+
+    private func updateDateLabel() {
         if let date {
             dateLabel.stringValue = DateFormatter.compactDateDifferenceString(from: date)
         } else {
@@ -226,8 +303,8 @@ class ChatCellView: NSTableCellView {
     }
 
     private func setupViews() {
+        // Configure title label
         titleLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .bold)
-        // Enable ellipsis truncation for the title label.
         if let cell = titleLabel.cell as? NSTextFieldCell {
             cell.lineBreakMode = .byTruncatingTail
             cell.truncatesLastVisibleLine = true
@@ -237,18 +314,41 @@ class ChatCellView: NSTableCellView {
         titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         addSubview(titleLabel)
 
+        // Configure date label
         dateLabel.translatesAutoresizingMaskIntoConstraints = false
         dateLabel.textColor = NSColor.textColor.withAlphaComponent(0.75)
         dateLabel.isEditable = false
         dateLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
         addSubview(dateLabel)
 
+        // Configure snippet label
+        snippetLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        if let cell = snippetLabel.cell as? NSTextFieldCell {
+            cell.lineBreakMode = .byTruncatingTail
+            cell.truncatesLastVisibleLine = true
+        }
+        snippetLabel.translatesAutoresizingMaskIntoConstraints = false
+        snippetLabel.isEditable = false
+        snippetLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        snippetLabel.alphaValue = 0.75
+        snippetLabel.maximumNumberOfLines = 1
+        snippetLabel.lineBreakMode = .byTruncatingTail
+        snippetLabel.usesSingleLineMode = true
+        addSubview(snippetLabel)
+
         NSLayoutConstraint.activate([
+            // Top row: title and date
             titleLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5),
-            titleLabel.centerYAnchor.constraint(equalTo: self.centerYAnchor),
+            titleLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 5),
             dateLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -5),
-            dateLabel.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: dateLabel.leadingAnchor, constant: -8)
+            dateLabel.topAnchor.constraint(equalTo: titleLabel.topAnchor),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: dateLabel.leadingAnchor, constant: -8),
+
+            // Snippet below title/date, spanning full width with same insets
+            snippetLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5),
+            snippetLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -5),
+            snippetLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
+            snippetLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -5)
         ])
 
         updateDateLabel()

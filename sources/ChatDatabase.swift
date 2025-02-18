@@ -60,6 +60,32 @@ class ChatDatabase {
                                    query: query,
                                    args: args)
     }
+
+    struct MessageIterator: Sequence, IteratorProtocol {
+        fileprivate var resultSet: iTermDatabaseResultSet?
+        mutating func next() -> Message? {
+            guard let resultSet else {
+                return nil
+            }
+            if resultSet.next() {
+                return Message(dbResultSet: resultSet)
+            }
+            resultSet.close()
+            self.resultSet = nil
+            return nil
+        }
+        func makeIterator() -> ChatDatabase.MessageIterator {
+            return self
+        }
+    }
+
+    func messageReverseIterator(inChat chatID: String) -> MessageIterator {
+        let query = "SELECT * FROM Message WHERE chatID=? ORDER BY sentDate DESC"
+        guard let resultSet = db.executeQuery(query, withArguments: [chatID]) else {
+            return MessageIterator(resultSet: nil)
+        }
+        return MessageIterator(resultSet: resultSet)
+    }
 }
 
 protocol iTermDatabaseElement {
@@ -91,6 +117,7 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
                     elements.append(element)
                 }
             }
+            resultSet.close()
         }
     }
 

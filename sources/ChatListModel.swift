@@ -171,6 +171,22 @@ class ChatListModel: ChatListDataSource {
         return nil
     }
 
+    func snippet(forChatID chatID: String) -> String? {
+        if let array = messageStorage[chatID] {
+            let message = array.last { $0.snippetText != nil }
+            return message?.snippetText
+        }
+        guard let db = ChatDatabase.instance else {
+            return nil
+        }
+        for message in db.messageReverseIterator(inChat: chatID) {
+            if let snippet = message.snippetText {
+                return snippet
+            }
+        }
+        return nil
+    }
+
     func index(ofMessageID messageID: UUID, inChat chatID: String) -> Int? {
         return messages(forChat: chatID,
                         createIfNeeded: false)?.firstIndex { $0.uniqueID == messageID }

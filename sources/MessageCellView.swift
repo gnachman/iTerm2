@@ -124,7 +124,7 @@ class MessageCellView: NSView {
         let maxBubbleWidth = tableViewWidth * 0.7
         textLabel.textContainer?.widthTracksTextView = false
         textLabel.textContainer?.size = NSSize(width: maxBubbleWidth - 16, height: .greatestFiniteMagnitude)
-
+        textLabel.linkTextAttributes = [.foregroundColor: NSColor.textColor]
         let container = TextLabelContainer()
         container.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(textLabel)

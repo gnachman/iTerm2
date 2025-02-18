@@ -44,7 +44,7 @@ struct Message: Codable {
                 return "Run remote command: \(rc.markdownDescription)"
             case .remoteCommandResponse(let result, _, let name):
                 return "Response to remote command \(name): " + result.map(success: { $0.truncatedWithTrailingEllipsis(to: 16)},
-                                                                   failure: { $0.localizedDescription.truncatedWithTrailingEllipsis(to: 16)})
+                                                                           failure: { $0.localizedDescription.truncatedWithTrailingEllipsis(to: 16)})
             case .selectSessionRequest(let message):
                 return "Select session: \(message)"
             case .clientLocal(let cl):
@@ -82,6 +82,35 @@ struct Message: Codable {
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
                 .markdown, .explanationResponse, .explanationRequest, .renameChat:
             false
+        }
+    }
+
+    var snippetText: String? {
+        let maxLength = 40
+        switch content {
+        case .plainText(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
+        case .markdown(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
+        case .explanationRequest(request: let request): return request.snippetText
+        case .explanationResponse(let response):
+            if let main = response.mainResponse {
+                return main
+            }
+            if response.annotations.count > 1 {
+                return "Added \(response.annotations.count) annotations"
+            } else if response.annotations.count == 1{
+                return "Added annotation"
+            }
+            return nil
+        case .remoteCommandRequest(let command): return command.markdownDescription
+        case .selectSessionRequest: return "Selecting session…"
+        case .clientLocal(let cl):
+            switch cl.action {
+            case .executingCommand(let command): return command.markdownDescription
+            case .pickingSession: return "Selecting session…"
+            }
+        case .renameChat: return nil
+        case .remoteCommandResponse:
+            return "Finished executing command"
         }
     }
 }

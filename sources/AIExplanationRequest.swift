@@ -18,7 +18,16 @@ struct AIExplanationRequest: Codable {
         get { _boxedUserInfo?.dictionary }
         set { _boxedUserInfo = newValue.map { NSDictionaryCodableBox(dictionary: $0) } }
     }
-
+    var snippetText: String {
+        if let command {
+            return "Explain \(command)"
+        }
+        if !question.isEmpty {
+            return question
+        }
+        return "Explain \(subjectMatter)"
+    }
+    
     private static func content(snapshot: TerminalContentSnapshot,
                                 selection: iTermSelection) -> iTermLocatedString {
         let extractor = LocatedStringSelectionExtractor(selection: selection,
