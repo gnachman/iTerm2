@@ -958,7 +958,8 @@ class AITermController {
             amended.append(message)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
                 DLog("Invoke function with arguments \(functionCall.arguments)")
-                impl.invoke(json: functionCall.arguments.data(using: .utf8)!) { [weak self] result in
+                impl.invoke(message: message,
+                            json: functionCall.arguments.data(using: .utf8)!) { [weak self] result in
                     guard let self else { return }
                     switch result {
                     case .success(let response):

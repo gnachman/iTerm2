@@ -7,13 +7,34 @@
 
 fileprivate extension AITermController.Message {
     static func role(from message: Message) -> String {
-        switch message.participant {
+        switch message.author {
         case .user: "user"
         case .agent: "assistant"
         }
     }
 }
 
+extension Message {
+    var functionCallName: String? {
+        switch content {
+        case .remoteCommandRequest(let request):
+            return request.llmMessage.function_call?.name
+        case .remoteCommandResponse(_, _, let name):
+            return name
+        default:
+            return nil
+        }
+    }
+
+    var functionCall: LLM.Message.FunctionCall? {
+        switch content {
+        case .remoteCommandRequest(let request):
+            return request.llmMessage.function_call
+        default:
+            return nil
+        }
+    }
+}
 fileprivate struct MessageToPromptStateMachine {
     private enum Mode {
         case regular
@@ -21,8 +42,8 @@ fileprivate struct MessageToPromptStateMachine {
     }
     private var mode = Mode.regular
 
-    mutating func prompt(message: Message) -> String {
-        switch message.participant {
+    mutating func prompt(message: Message) -> String? {
+        switch message.author {
         case .agent:
             prompt(agentMessage: message)
         case .user:
@@ -30,15 +51,17 @@ fileprivate struct MessageToPromptStateMachine {
         }
     }
 
-    private mutating func prompt(agentMessage: Message) -> String {
+    private mutating func prompt(agentMessage: Message) -> String? {
         switch agentMessage.content {
         case .plainText(let value), .markdown(let value):
-            value
+            return value
         case .explanationResponse(let annotations):
-            annotations.rawResponse
+            return annotations.rawResponse
         case .explanationRequest:
             it_fatalError()
-        case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
+        case .remoteCommandRequest:
+            return nil
+        case .remoteCommandResponse, .selectSessionRequest, .clientLocal:
             it_fatalError()
         }
     }
@@ -54,7 +77,14 @@ fileprivate struct MessageToPromptStateMachine {
                 return request.prompt()
             case .explanationResponse:
                 it_fatalError()
-            case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
+            case .remoteCommandResponse(let result, _, _):
+                return result.map { value in
+                    value
+                } failure: { error in
+                    "I was unable to complete the function call: " + error.localizedDescription
+                }
+
+            case .remoteCommandRequest, .selectSessionRequest, .clientLocal:
                 it_fatalError()
             }
         case .initialExplanation:
@@ -77,13 +107,26 @@ class ChatAgent {
     private var brokerSubscription: ChatBroker.Subscription?
     private var messageToPrompt = MessageToPromptStateMachine()
     private var pendingRemoteCommands = [UUID: (Result<String, Error>) -> ()]()
+    private let broker: ChatBroker
 
-    init(_ chatID: String, registrationProvider: AIRegistrationProvider, messages: [Message]) {
+    init(_ chatID: String,
+         broker: ChatBroker,
+         registrationProvider: AIRegistrationProvider,
+         messages: [Message]) {
         self.chatID = chatID
+        self.broker = broker
         conversation = AIConversation(registrationProvider: registrationProvider)
         defineFunctions(&conversation)
         for message in messages {
-            conversation.add(aiMessage(from: message))
+            switch message.content {
+            case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                    .remoteCommandRequest, .remoteCommandResponse:
+                conversation.add(aiMessage(from: message))
+                break
+
+            case .selectSessionRequest, .clientLocal:
+                break
+            }
         }
     }
 
@@ -93,7 +136,9 @@ class ChatAgent {
 
     private func aiMessage(from message: Message) -> AITermController.Message {
         AITermController.Message(role: AITermController.Message.role(from: message),
-                                                 content: messageToPrompt.prompt(message: message))
+                                 content: messageToPrompt.prompt(message: message),
+                                 name: message.functionCallName,
+                                 function_call: message.functionCall)
     }
 
     // TODO: I think we need to handle cancellations to keep the conversation correct.
@@ -103,7 +148,7 @@ class ChatAgent {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .selectSessionRequest, .clientLocal:
             break
-        case .remoteCommandResponse(let result, let messageID):
+        case .remoteCommandResponse(let result, let messageID, let functionCallName):
             if let pending = pendingRemoteCommands[messageID] {
                 NSLog("Agent handling remote command response to message \(messageID)")
                 pendingRemoteCommands.removeValue(forKey: messageID)
@@ -124,6 +169,7 @@ class ChatAgent {
         }
     }
 
+    // Return a new message from the agent containing the content of the last message in result.
     private static func message(forResult result: Result<AIConversation, any Error>,
                                 userMessage: Message) -> Message? {
         return result.handle { updated -> Message? in
@@ -132,18 +178,26 @@ class ChatAgent {
             }
             switch userMessage.content {
             case .plainText, .markdown, .explanationResponse:
-                return Message(participant: .agent,
+                return Message(chatID: userMessage.chatID,
+                               author: .agent,
                                content: .markdown(text),
-                               date: Date(),
+                               sentDate: Date(),
                                uniqueID: UUID())
             case .explanationRequest(let explanationRequest):
                 return Message(
-                    participant: .agent,
+                    chatID: userMessage.chatID,
+                    author: .agent,
                     content: .explanationResponse(
                         AIAnnotationCollection(text, request: explanationRequest)),
-                    date: Date(),
+                    sentDate: Date(),
                     uniqueID: UUID())
-            case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
+            case .remoteCommandResponse:
+                return Message(chatID: userMessage.chatID,
+                               author: .agent,
+                               content: .markdown(text),
+                               sentDate: Date(),
+                               uniqueID: UUID())
+            case .remoteCommandRequest, .selectSessionRequest, .clientLocal:
                 it_fatalError()
             }
         } failure: { error in
@@ -152,15 +206,17 @@ class ChatAgent {
             if userMessage.isExplanationRequest &&
                 nserror.domain == iTermAIError.domain &&
                 nserror.code == iTermAIError.ErrorType.requestTooLarge.rawValue {
-                return Message(participant: .agent,
+                return Message(chatID: userMessage.chatID,
+                               author: .agent,
                                content: .plainText("🛑 The text to analyze was too long. Select a portion of it and try again."),
-                               date: Date(),
+                               sentDate: Date(),
                                uniqueID: UUID())
             }
 
-            return Message(participant: .agent,
+            return Message(chatID: userMessage.chatID,
+                           author: .agent,
                            content: .plainText("🛑 I ran into a problem: \(error.localizedDescription)"),
-                           date: Date(),
+                           sentDate: Date(),
                            uniqueID: UUID())
         }
     }
@@ -190,9 +246,10 @@ extension ChatAgent {
         conversation.define(
             function: declIsAtPrompt,
             arguments: RemoteCommand.IsAtPrompt.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.isAtPrompt(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .isAtPrompt(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -208,9 +265,10 @@ extension ChatAgent {
         conversation.define(
             function: declExecuteCommand,
             arguments: RemoteCommand.ExecuteCommand.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.executeCommand(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .executeCommand(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -226,16 +284,16 @@ extension ChatAgent {
         conversation.define(
             function: declGetLastExitStatus,
             arguments: RemoteCommand.GetLastExitStatus.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getLastExitStatus(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getLastExitStatus(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
             }
         )
 
-        // Command History & Context Awareness
         let schemaGetCommandHistory = JSONSchema(for: RemoteCommand.GetCommandHistory(), descriptions: ["limit": "Maximum number of history items to return."])
         let declGetCommandHistory = ChatGPTFunctionDeclaration(
             name: "get_command_history",
@@ -245,9 +303,10 @@ extension ChatAgent {
         conversation.define(
             function: declGetCommandHistory,
             arguments: RemoteCommand.GetCommandHistory.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getCommandHistory(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getCommandHistory(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -263,9 +322,10 @@ extension ChatAgent {
         conversation.define(
             function: declGetLastCommand,
             arguments: RemoteCommand.GetLastCommand.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getLastCommand(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getLastCommand(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -281,9 +341,10 @@ extension ChatAgent {
         conversation.define(
             function: declGetCommandBeforeCursor,
             arguments: RemoteCommand.GetCommandBeforeCursor.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getCommandBeforeCursor(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getCommandBeforeCursor(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -299,9 +360,10 @@ extension ChatAgent {
         conversation.define(
             function: declSearchCommandHistory,
             arguments: RemoteCommand.SearchCommandHistory.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.searchCommandHistory(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .searchCommandHistory(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -317,16 +379,16 @@ extension ChatAgent {
         conversation.define(
             function: declGetCommandOutput,
             arguments: RemoteCommand.GetCommandOutput.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getCommandOutput(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getCommandOutput(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
             }
         )
 
-        // Session & Environment Awareness
         let schemaGetTerminalSize = JSONSchema(for: RemoteCommand.GetTerminalSize(), descriptions: [:])
         let declGetTerminalSize = ChatGPTFunctionDeclaration(
             name: "get_terminal_size",
@@ -336,9 +398,10 @@ extension ChatAgent {
         conversation.define(
             function: declGetTerminalSize,
             arguments: RemoteCommand.GetTerminalSize.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getTerminalSize(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getTerminalSize(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -354,9 +417,10 @@ extension ChatAgent {
         conversation.define(
             function: declGetShellType,
             arguments: RemoteCommand.GetShellType.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getShellType(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getShellType(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -372,9 +436,10 @@ extension ChatAgent {
         conversation.define(
             function: declDetectSSHSession,
             arguments: RemoteCommand.DetectSSHSession.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.detectSSHSession(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .detectSSHSession(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -390,9 +455,10 @@ extension ChatAgent {
         conversation.define(
             function: declGetRemoteHostname,
             arguments: RemoteCommand.GetRemoteHostname.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getRemoteHostname(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getRemoteHostname(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -408,9 +474,10 @@ extension ChatAgent {
         conversation.define(
             function: declGetUserIdentity,
             arguments: RemoteCommand.GetUserIdentity.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getUserIdentity(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getUserIdentity(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -426,16 +493,16 @@ extension ChatAgent {
         conversation.define(
             function: declGetCurrentDirectory,
             arguments: RemoteCommand.GetCurrentDirectory.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getCurrentDirectory(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getCurrentDirectory(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
             }
         )
 
-        // Clipboard & Text Interaction
         let schemaSetClipboard = JSONSchema(for: RemoteCommand.SetClipboard(), descriptions: ["text": "The text to copy to the clipboard."])
         let declSetClipboard = ChatGPTFunctionDeclaration(
             name: "set_clipboard",
@@ -445,9 +512,10 @@ extension ChatAgent {
         conversation.define(
             function: declSetClipboard,
             arguments: RemoteCommand.SetClipboard.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.setClipboard(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .setClipboard(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -463,9 +531,10 @@ extension ChatAgent {
         conversation.define(
             function: declInsertTextAtCursor,
             arguments: RemoteCommand.InsertTextAtCursor.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.insertTextAtCursor(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .insertTextAtCursor(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -481,16 +550,16 @@ extension ChatAgent {
         conversation.define(
             function: declDeleteCurrentLine,
             arguments: RemoteCommand.DeleteCurrentLine.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.deleteCurrentLine(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .deleteCurrentLine(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
             }
         )
 
-        // Autocompletion & Suggestions
         let schemaGetManPage = JSONSchema(for: RemoteCommand.GetManPage(), descriptions: ["cmd": "The command whose man page content is requested."])
         let declGetManPage = ChatGPTFunctionDeclaration(
             name: "get_man_page",
@@ -500,10 +569,11 @@ extension ChatAgent {
         conversation.define(
             function: declGetManPage,
             arguments: RemoteCommand.GetManPage.self,
-            implementation: { [weak self] command, completion in
+            implementation: { [weak self] llmMessage, command, completion in
                 NSLog("Completion block running for \(command)")
                 self?.willExecuteCommand()
-                self?.runRemoteCommand(RemoteCommand.getManPage(command)) { result in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage, content: .getManPage(command))
+                self?.runRemoteCommand(remoteCommand) { result in
                     self?.didExecuteCommand()
                     completion(result)
                 }
@@ -522,11 +592,12 @@ extension ChatAgent {
         let requestID = UUID()
         pendingRemoteCommands[requestID] = completion
         #warning("TODO: It would be nice if AIConversation serialized half-completed function calls so it could be continued after a restart")
-        ChatBroker.instance.publish(message: .init(participant: .agent,
-                                                   content: .remoteCommandRequest(remoteCommand),
-                                                   date: Date(),
-                                                   uniqueID: requestID),
-                                    toChatID: chatID)
+        broker.publish(message: .init(chatID: chatID,
+                                      author: .agent,
+                                      content: .remoteCommandRequest(remoteCommand),
+                                      sentDate: Date(),
+                                      uniqueID: requestID),
+                       toChatID: chatID)
     }
 }
 

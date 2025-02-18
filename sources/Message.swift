@@ -19,14 +19,15 @@ struct ClientLocal: Codable {
 }
 
 struct Message: Codable {
-    let participant: Participant
+    let chatID: String
+    let author: Participant
     indirect enum Content: Codable {
         case plainText(String)
         case markdown(String)
         case explanationRequest(request: AIExplanationRequest)
         case explanationResponse(AIAnnotationCollection)
         case remoteCommandRequest(RemoteCommand)
-        case remoteCommandResponse(Result<String, AIError>, UUID)
+        case remoteCommandResponse(Result<String, AIError>, UUID, String)
         case selectSessionRequest(Message)  // carries the original message that needs a session
         case clientLocal(ClientLocal)
 
@@ -40,8 +41,8 @@ struct Message: Codable {
                 return "Explanation: \(response.annotations.count) annotations: \(response.mainResponse?.truncatedWithTrailingEllipsis(to: 16) ?? "No main response")"
             case .remoteCommandRequest(let rc):
                 return "Run remote command: \(rc.markdownDescription)"
-            case .remoteCommandResponse(let result, _):
-                return "Response to remote command: " + result.map(success: { $0.truncatedWithTrailingEllipsis(to: 16)},
+            case .remoteCommandResponse(let result, _, let name):
+                return "Response to remote command \(name): " + result.map(success: { $0.truncatedWithTrailingEllipsis(to: 16)},
                                                                    failure: { $0.localizedDescription.truncatedWithTrailingEllipsis(to: 16)})
             case .selectSessionRequest(let message):
                 return "Select session: \(message)"
@@ -56,11 +57,11 @@ struct Message: Codable {
         }
     }
     let content: Content
-    let date: Date
+    let sentDate: Date
     let uniqueID: UUID
 
     var shortDescription: String {
-        return "<Message from \(participant.rawValue), id \(uniqueID.uuidString): \(content.shortDescription)>"
+        return "<Message from \(author.rawValue), id \(uniqueID.uuidString): \(content.shortDescription)>"
     }
     // Transient messages are not saved in the chatlist model on the client.
     var isTransient: Bool {
@@ -123,5 +124,98 @@ extension Result {
         case .failure(let f):
             return failure(f)
         }
+    }
+}
+
+extension Message: iTermDatabaseElement {
+    private enum Columns: String {
+        case author
+        case content
+        case sentDate
+        case uniqueID
+        case chatID
+    }
+
+    static func schema() -> String {
+        """
+        create table if not exists Message
+            (\(Columns.uniqueID.rawValue) text,
+             \(Columns.author.rawValue) text not null,
+             \(Columns.chatID.rawValue) text not null,
+             \(Columns.content.rawValue) text not null,
+             \(Columns.sentDate.rawValue) integer not null)
+        """
+    }
+
+    static func fetchAllQuery() -> String {
+        "select * from Message"
+    }
+
+    static func query(forChatID chatID: String) -> (String, [Any]) {
+        ("select * from Message where chatID=?", [chatID])
+    }
+
+    func appendQuery() -> (String, [Any]) {
+        let jsonData = try! JSONEncoder().encode(content)
+        let jsonString = String(data: jsonData, encoding: .utf8)!
+        return (
+            """
+            insert into Message (
+                \(Columns.uniqueID.rawValue),
+                \(Columns.author.rawValue), 
+                \(Columns.chatID.rawValue),
+                \(Columns.content.rawValue), 
+                \(Columns.sentDate.rawValue))
+            values (?, ?, ?, ?, ?)
+            """,
+            [
+                uniqueID.uuidString,
+                author.rawValue,
+                chatID,
+                jsonString,
+                sentDate.timeIntervalSince1970
+            ]
+        )
+    }
+
+    func updateQuery() -> (String, [Any]) {
+        let jsonData = try! JSONEncoder().encode(content)
+        let jsonString = String(data: jsonData, encoding: .utf8)!
+        return (
+            """
+            update Message set \(Columns.author.rawValue) = ?,
+                                \(Columns.chatID.rawValue) = ?,
+                                \(Columns.content.rawValue) = ?,
+                                \(Columns.sentDate.rawValue) = ?
+            where \(Columns.uniqueID.rawValue) = ?
+            """,
+            [
+                author.rawValue,
+                chatID,
+                jsonString,
+                sentDate.timeIntervalSince1970,
+                uniqueID.uuidString
+            ]
+        )
+    }
+
+    init?(dbResultSet result: iTermDatabaseResultSet) {
+        guard let uniqueIDStr = result.string(forColumn: Columns.uniqueID.rawValue),
+              let uniqueID = UUID(uuidString: uniqueIDStr),
+              let authorStr = result.string(forColumn: Columns.author.rawValue),
+              let chatID = result.string(forColumn: Columns.chatID.rawValue),
+              let author = Participant(rawValue: authorStr),
+              let contentJSON = result.string(forColumn: Columns.content.rawValue),
+              let contentData = contentJSON.data(using: .utf8),
+              let content = try? JSONDecoder().decode(Content.self, from: contentData),
+              let sentDate = result.date(forColumn: Columns.sentDate.rawValue)
+        else {
+            return nil
+        }
+        self.uniqueID = uniqueID
+        self.author = author
+        self.chatID = chatID
+        self.content = content
+        self.sentDate = sentDate
     }
 }

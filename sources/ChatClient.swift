@@ -7,10 +7,23 @@
 
 // High level interface for AI chat clients.
 class ChatClient {
-    static let instance = ChatClient()
-    private let broker = ChatBroker.instance
+    private static var _instance: ChatClient?
+    static var instance: ChatClient? {
+        if _instance == nil {
+            _instance = ChatClient()
+        }
+        return _instance
+    }
+    private let broker: ChatBroker
+    let model: ChatListModel
 
-    init() {
+    init?() {
+        guard let model = ChatListModel.instance,
+        let broker = ChatBroker.instance else {
+            return nil
+        }
+        self.model = model
+        self.broker = broker
         broker.processors.append { [weak self] message, chatID in
             guard let self else {
                 return message
@@ -22,7 +35,7 @@ class ChatClient {
     // Transform Agent messages so they are useful to the client.
     private func processMessage(_ message: Message,
                                 chatID: String) -> Message? {
-        if message.participant == .user {
+        if message.author == .user {
             return message
         }
         switch message.content {
@@ -35,9 +48,10 @@ class ChatClient {
                                                             chatID: chatID) else {
                 return nil
             }
-            return Message(participant: message.participant,
+            return Message(chatID: chatID,
+                           author: message.author,
                            content: .markdown(markdown),
-                           date: message.date,
+                           sentDate: message.sentDate,
                            uniqueID: message.uniqueID)
         }
     }
@@ -59,11 +73,12 @@ class ChatClient {
     private func processRemoteCommandRequest(chatID: String,
                                              message: Message,
                                              request: RemoteCommand) -> Message? {
-        guard let guid = ChatListModel.instance.chat(id: chatID)?.sessionGuid,
+        guard let guid = model.chat(id: chatID)?.sessionGuid,
               let session = iTermController.sharedInstance().session(withGUID: guid) else {
-            return Message(participant: .agent,
+            return Message(chatID: chatID,
+                           author: .agent,
                            content: .selectSessionRequest(message),
-                           date: Date(),
+                           sentDate: Date(),
                            uniqueID: UUID())
         }
         switch RemoteCommandExecutor.instance.permission(inSessionGuid: guid) {
@@ -71,7 +86,8 @@ class ChatClient {
             respondSuccessfullyToRemoteCommandRequest(
                 inChat: chatID,
                 requestUUID: message.uniqueID,
-                message: "The user denied permission to use function calling in this terminal session. Do not try again.")
+                message: "The user denied permission to use function calling in this terminal session. Do not try again.",
+                functionCallName: message.functionCallName ?? "Unknown function call name")
             return nil
         case .always:
             performRemoteCommand(request,
@@ -93,12 +109,14 @@ class ChatClient {
             done = true
             self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
                                                             requestUUID: messageUniqueID,
-                                                            message: response)
+                                                            message: response,
+                                                            functionCallName: request.llmMessage.function_call?.name ?? "Unknown function call name")
         }
         if !done {
-            publish(message: Message(participant: .agent,
+            publish(message: Message(chatID: chatID,
+                                     author: .agent,
                                      content: .clientLocal(ClientLocal(action: .executingCommand(request))),
-                                     date: Date(),
+                                     sentDate: Date(),
                                      uniqueID: UUID()),
                     toChatID: chatID)
         }
@@ -106,24 +124,30 @@ class ChatClient {
 
     private func rejectRemoteCommandRequest(inChat chatID: String,
                                             requestUUID: UUID,
-                                            message: String) {
-        broker.publish(message: Message(participant: .user,
+                                            message: String,
+                                            functionCallName: String) {
+        broker.publish(message: Message(chatID: chatID,
+                                        author: .user,
                                         content: .remoteCommandResponse(
                                             .failure(AIError(message)),
-                                            requestUUID),
-                                        date: Date(),
+                                            requestUUID,
+                                            functionCallName),
+                                        sentDate: Date(),
                                         uniqueID: UUID()),
                        toChatID: chatID)
     }
 
     func respondSuccessfullyToRemoteCommandRequest(inChat chatID: String,
                                                    requestUUID: UUID,
-                                                   message: String) {
-        broker.publish(message: Message(participant: .user,
+                                                   message: String,
+                                                   functionCallName: String) {
+        broker.publish(message: Message(chatID: chatID,
+                                        author: .user,
                                         content: .remoteCommandResponse(
                                             .success(message),
-                                            requestUUID),
-                                        date: Date(),
+                                            requestUUID,
+                                            functionCallName),
+                                        sentDate: Date(),
                                         uniqueID: UUID()),
                        toChatID: chatID)
     }
@@ -138,18 +162,22 @@ class ChatClient {
                  guid: String,
                  baseOffset: Int64,
                  scope: iTermVariableScope) {
-        let chatWindowController = ChatWindowController.instance
+        guard let chatWindowController = ChatWindowController.instance else {
+            #warning("TODO: Error handling")
+            return
+        }
 
         var amended = request
         let context = ExplanationUserInfo(baseOffset: baseOffset,
                                           guid: guid,
                                           locatedString: request.originalString)
         amended.userInfo = [ExplainUserInfoKeys.context.rawValue: try! JSONEncoder().encode(context)]
-        let initialMessage = Message(participant: .user,
-                                     content: .explanationRequest(request: amended),
-                                     date: Date(),
-                                     uniqueID: UUID())
         let chatID = broker.create(chatWithTitle: title, sessionGuid: guid)
+        let initialMessage = Message(chatID: chatID,
+                                     author: .user,
+                                     content: .explanationRequest(request: amended),
+                                     sentDate: Date(),
+                                     uniqueID: UUID())
         broker.publish(message: initialMessage, toChatID: chatID)
 
         chatWindowController.showChatWindow()

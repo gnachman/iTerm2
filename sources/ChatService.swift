@@ -7,12 +7,25 @@
 
 // Imaginary server
 class ChatService {
-    static let instance = ChatService()
+    private static var _instance: ChatService?
+    static var instance: ChatService? {
+        if _instance == nil {
+            _instance = ChatService()
+        }
+        return _instance
+    }
     private var agents = [String: ChatAgent]()
     private var registrationContexts = [RegistrationContext]()
+    private let listModel: ChatListModel
+    private let broker: ChatBroker
 
-    init() {
-        _ = ChatBroker.instance.subscribe(chatID: nil, registrationProvider: nil) { [weak self] update in
+    init?() {
+        guard let listModel = ChatListModel.instance, let broker = ChatBroker.instance else {
+            return nil
+        }
+        self.listModel = listModel
+        self.broker = broker
+        _ = broker.subscribe(chatID: nil, registrationProvider: nil) { [weak self] update in
             self?.handle(update)
         }
     }
@@ -22,7 +35,7 @@ class ChatService {
         case .typingStatus:
             break
         case let .delivery(message, chatID):
-            switch message.participant {
+            switch message.author {
             case .agent:
                 // Ignore messages from myself
                 break
@@ -44,10 +57,10 @@ class ChatService {
                 // it.
                 newAgent(forChatID: chatID, messages: messages(chatID: chatID).dropLast())
             }
-            agent.fetchCompletion(userMessage: message) { replyMessage in
+            agent.fetchCompletion(userMessage: message) { [weak self] replyMessage in
                 stopTyping()
                 if let replyMessage {
-                    ChatBroker.instance.publish(message: replyMessage, toChatID: chatID)
+                    self?.broker.publish(message: replyMessage, toChatID: chatID)
                 }
             }
         }
@@ -56,19 +69,21 @@ class ChatService {
     // Exclude client-local messages because the agent only knows about them because  it shares a
     // model with the client, which it probably shouldn't.
     private func messages(chatID: String) -> [Message] {
-        Array(ChatListModel.instance.chat(id: chatID)?
-            .messages
-            .filter { !$0.isClientLocal } ?? [])
+        guard let dbArray = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return []
+        }
+        return Array(dbArray.filter { !$0.isClientLocal })
     }
 
     private func newAgent(forChatID chatID: String,
                           messages: ArraySlice<Message>) -> ChatAgent {
         it_assert(agents[chatID] == nil)
 
-        let reg = RegistrationContext(chatID: chatID)
+        let reg = RegistrationContext(chatID: chatID, broker: broker)
         registrationContexts.append(reg)
         let agent = ChatAgent(
             chatID,
+            broker: broker,
             registrationProvider: reg,
             messages: Array(messages))
         self.agents[chatID] = agent
@@ -77,19 +92,21 @@ class ChatService {
 
     private class RegistrationContext: AIRegistrationProvider {
         private let chatID: String
+        private let broker: ChatBroker
 
-        init(chatID: String) {
+        init(chatID: String, broker: ChatBroker) {
             self.chatID = chatID
+            self.broker = broker
         }
         func registrationProviderRequestRegistration(_ completion: @escaping (AITermController.Registration?) -> ()) {
-            ChatBroker.instance.requestRegistration(chatID: chatID, completion: completion)
+            broker.requestRegistration(chatID: chatID, completion: completion)
         }
     }
 
     func agentWorking(chatID: String, closure: (@escaping () -> ()) -> ()) {
-        ChatBroker.instance.publish(typingStatus: true, of: .agent, toChatID: chatID)
+        broker.publish(typingStatus: true, of: .agent, toChatID: chatID)
         closure() {
-            ChatBroker.instance.publish(typingStatus: false, of: .agent, toChatID: chatID)
+            self.broker.publish(typingStatus: false, of: .agent, toChatID: chatID)
         }
     }
 }

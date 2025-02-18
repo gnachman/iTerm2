@@ -1715,6 +1715,7 @@
 		A655E6962066C78700DC21B9 /* iTermScrollAccumulator.m in Sources */ = {isa = PBXBuildFile; fileRef = A655E6942066C78700DC21B9 /* iTermScrollAccumulator.m */; };
 		A655E699207153CB00DC21B9 /* NSSavePanel+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A655E697207153CB00DC21B9 /* NSSavePanel+iTerm.h */; };
 		A655E69A207153CB00DC21B9 /* NSSavePanel+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A655E698207153CB00DC21B9 /* NSSavePanel+iTerm.m */; };
+		A65618562D6439BC0059CD35 /* ChatDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65618552D6439BA0059CD35 /* ChatDatabase.swift */; };
 		A65660D42372A4A600DC6744 /* iTermCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A65660D22372A4A600DC6744 /* iTermCache.h */; };
 		A65660D52372A4A600DC6744 /* iTermCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A65660D32372A4A600DC6744 /* iTermCache.m */; };
 		A65660D82372A69A00DC6744 /* iTermDoublyLinkedList.h in Headers */ = {isa = PBXBuildFile; fileRef = A65660D62372A69A00DC6744 /* iTermDoublyLinkedList.h */; };
@@ -6158,6 +6159,7 @@
 		A655E6942066C78700DC21B9 /* iTermScrollAccumulator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScrollAccumulator.m; sourceTree = "<group>"; };
 		A655E697207153CB00DC21B9 /* NSSavePanel+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSSavePanel+iTerm.h"; sourceTree = "<group>"; };
 		A655E698207153CB00DC21B9 /* NSSavePanel+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSSavePanel+iTerm.m"; sourceTree = "<group>"; };
+		A65618552D6439BA0059CD35 /* ChatDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDatabase.swift; sourceTree = "<group>"; };
 		A65660D22372A4A600DC6744 /* iTermCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCache.h; sourceTree = "<group>"; };
 		A65660D32372A4A600DC6744 /* iTermCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCache.m; sourceTree = "<group>"; };
 		A65660D62372A69A00DC6744 /* iTermDoublyLinkedList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermDoublyLinkedList.h; sourceTree = "<group>"; };
@@ -9567,6 +9569,7 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A65618552D6439BA0059CD35 /* ChatDatabase.swift */,
 				A6EB647F2D5E906500481D33 /* RemoteCommandExecutor.swift */,
 				A6EB647D2D5E8EE200481D33 /* MessageCellView.swift */,
 				A6EB643B2D5D804F00481D33 /* AIExplanationResponse.swift */,
@@ -16558,6 +16561,7 @@
 				A621F11026F8E9E6001DD3A6 /* iTermTLVCodec.m in Sources */,
 				A6F66B8F2C2E2B7600DC3569 /* BTreeIndex.swift in Sources */,
 				A6F66B902C2E2B7600DC3569 /* BTreeIterator.swift in Sources */,
+				A65618562D6439BC0059CD35 /* ChatDatabase.swift in Sources */,
 				A6F66B912C2E2B7600DC3569 /* BTreeBuilder.swift in Sources */,
 				A6F66B922C2E2B7600DC3569 /* BTree.swift in Sources */,
 				A6F66B932C2E2B7600DC3569 /* BTreeCursor.swift in Sources */,

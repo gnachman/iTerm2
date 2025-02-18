@@ -35,9 +35,16 @@ class ChatViewController: NSViewController {
     private var eligibleForAutoPaste = true
     private var brokerSubscription: ChatBroker.Subscription?
     private var pickSessionPromise: iTermPromise<PTYSession>?
-    private var model = ChatViewControllerModel()
+    private var model: ChatViewControllerModel
+    private let listModel: ChatListModel
+    private let client: ChatClient
+    private let broker: ChatBroker
 
-    init() {
+    init(listModel: ChatListModel, client: ChatClient, broker: ChatBroker) {
+        self.listModel = listModel
+        self.client = client
+        self.broker = broker
+        model = ChatViewControllerModel(listModel: listModel)
         super.init(nibName: nil, bundle: nil)
         model.delegate = self
     }
@@ -158,16 +165,16 @@ extension ChatViewController {
         guard let window = view.window else {
             return
         }
-        guard let chat = ChatListModel.instance.chat(id: chatID) else {
+        guard let chat = listModel.chat(id: chatID) else {
             it_fatalError("Loading a nonexistent chat")
         }
-        model = ChatViewControllerModel(chat)
+        model = ChatViewControllerModel(chat: chat, listModel: listModel)
         model.delegate = self
         titleLabel.stringValue = chat.title
         self.chatID = chat.id
         tableView.reloadData()
         brokerSubscription?.unsubscribe()
-        brokerSubscription = ChatClient.instance.subscribe(chatID: chat.id, registrationProvider: window) { [weak self] update in
+        brokerSubscription = client.subscribe(chatID: chat.id, registrationProvider: window) { [weak self] update in
             guard let self else {
                 return
             }
@@ -265,9 +272,10 @@ extension ChatViewController {
         }
         let chatID = self.chatID
         pickSessionPromise = SessionSelector.select()
-        let waitingMessage = Message(participant: .agent,
+        let waitingMessage = Message(chatID: chatID,
+                                     author: .agent,
                                      content: .clientLocal(ClientLocal(action: .pickingSession)),
-                                     date: Date(),
+                                     sentDate: Date(),
                                      uniqueID: UUID())
         if let pickSessionPromise {
             pickSessionPromise.then {  [weak self] session in
@@ -283,8 +291,8 @@ extension ChatViewController {
                 self?.reloadCell(forMessageID: waitingMessage.uniqueID)
             }
         }
-        ChatBroker.instance.publish(message: waitingMessage,
-                                    toChatID: chatID)
+        broker.publish(message: waitingMessage,
+                       toChatID: chatID)
     }
 
     @objc private func showLinkedSessionHelp(_ sender: Any) {
@@ -298,7 +306,7 @@ extension ChatViewController {
     }
 
     @objc private func unlinkSession(_ sender: Any) {
-        ChatListModel.instance.setGuid(for: chatID, to: nil)
+        listModel.setGuid(for: chatID, to: nil)
     }
 
     @objc private func sendButtonClicked() {
@@ -306,18 +314,19 @@ extension ChatViewController {
         guard !text.isEmpty else {
             return
         }
-        let message = Message(participant: .user,
+        let message = Message(chatID: chatID,
+                              author: .user,
                               content: .plainText(text),
-                              date: Date(),
+                              sentDate: Date(),
                               uniqueID: UUID())
-        ChatBroker.instance.publish(message: message, toChatID: chatID)
+        broker.publish(message: message, toChatID: chatID)
 
         inputTextField.stringValue = ""
         eligibleForAutoPaste = true
     }
 
     private func scrollToBottom(animated: Bool) {
-        let row = model.items.count - 1 + (showTypingIndicator ? 1 : 0)
+        let row = model.items.count - 1
         guard row >= 0 else { return }
 
         if !animated {
@@ -419,11 +428,13 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
                 linkSession { session in
                     if session != nil {
-                        ChatClient.instance.publish(message: originalMessage, toChatID: chatID)
+                        self.client.publish(message: originalMessage, toChatID: chatID)
                     } else {
-                        ChatClient.instance.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
-                                                                                      requestUUID: originalMessage.uniqueID,
-                                                                                      message: "The user declined to allow this function call to execute.")
+                        self.client.respondSuccessfullyToRemoteCommandRequest(
+                            inChat: chatID,
+                            requestUUID: originalMessage.uniqueID,
+                            message: "The user declined to allow this function call to execute.",
+                            functionCallName: originalMessage.functionCallName ?? "Unknown function call name")
                     }
                 }
             }
@@ -432,7 +443,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 guard messageID == originalMessageID else {
                     return
                 }
-                guard let guid = ChatListModel.instance.chat(id: chatID)?.sessionGuid,
+                guard let guid = self.listModel.chat(id: chatID)?.sessionGuid,
                       let session = iTermController.sharedInstance().session(withGUID: guid) else {
                     return
                 }
@@ -452,14 +463,16 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     return
                 }
                 if allowed {
-                    ChatClient.instance.performRemoteCommand(remoteCommand,
-                                                             in: session,
-                                                             chatID: chatID,
-                                                             messageUniqueID: messageID)
+                    self.client.performRemoteCommand(remoteCommand,
+                                                     in: session,
+                                                     chatID: chatID,
+                                                     messageUniqueID: messageID)
                 } else {
-                    ChatClient.instance.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
-                                                                                  requestUUID: messageID,
-                                                                                  message: "The user declined to allow function calling. Try to find another way to assist.")
+                    self.client.respondSuccessfullyToRemoteCommandRequest(
+                        inChat: chatID,
+                        requestUUID: messageID,
+                        message: "The user declined to allow function calling. Try to find another way to assist.",
+                        functionCallName: remoteCommand.llmMessage.function_call?.name ?? "Unknown function call name")
                 }
             }
         default:
@@ -502,12 +515,12 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         let timestamp = {
             let formatter = DateFormatter()
             formatter.timeStyle = .short
-            return formatter.string(from: message.date)
+            return formatter.string(from: message.sentDate)
         }()
         return MessageRendition(attributedString: message.attributedStringValue,
                                 buttons: message.buttons,
                                 messageUniqueID: message.uniqueID,
-                                isUser: message.participant == .user,
+                                isUser: message.author == .user,
                                 enableButtons: enableButtons,
                                 timestamp: timestamp)
     }
@@ -594,7 +607,7 @@ extension Message {
         case .remoteCommandRequest(let request):
             return AttributedStringForGPTMarkdown(request.permissionDescription,
                                                   linkColor: linkColor) {}
-        case .remoteCommandResponse(let response, _):
+        case .remoteCommandResponse(let response, _, _):
             switch response {
             case .success(let object):
                 it_fatalError("\(object)")
@@ -729,6 +742,7 @@ class NotifyingArray<Element> {
 
 class ChatViewControllerModel {
     weak var delegate: ChatViewControllerModelDelegate?
+    private let listModel: ChatListModel
 
     enum Item {
         case message(Message)
@@ -741,6 +755,9 @@ class ChatViewControllerModel {
 
     var showTypingIndicator = false {
         didSet {
+            if showTypingIndicator == oldValue {
+                return
+            }
             if showTypingIndicator {
                 items.append(.agentTyping)
             } else if case .agentTyping = items.last {
@@ -751,30 +768,37 @@ class ChatViewControllerModel {
 
     var sessionGuid: String? {
         get {
-            ChatListModel.instance.chat(id: chatID)?.sessionGuid
+            listModel.chat(id: chatID)?.sessionGuid
         }
         set {
-            ChatListModel.instance.setGuid(for: chatID, to: newValue)
+            listModel.setGuid(for: chatID, to: newValue)
         }
     }
 
-    init() {
+    init(listModel: ChatListModel) {
+        self.listModel = listModel
         chatID = ""
         initializeItemsDelegate()
     }
 
-    private let alwaysAppendDate = true
+    private let alwaysAppendDate = false
 
-    init(_ chat: Chat) {
+    init(chat: Chat, listModel: ChatListModel) {
+        self.listModel = listModel
         chatID = chat.id
         var lastDate: DateComponents?
-        for message in chat.messages {
-            let date = message.dateErasingTime
-            if alwaysAppendDate || lastDate != date {
-                items.append(.date(date))
+        if let messages = listModel.messages(forChat: chatID, createIfNeeded: false) {
+            for message in messages {
+                if message.isTransient {
+                    continue
+                }
+                let date = message.dateErasingTime
+                if alwaysAppendDate || lastDate != date {
+                    items.append(.date(date))
+                }
+                items.append(.message(message))
+                lastDate = Calendar.current.dateComponents([.year, .month, .day], from: message.sentDate)
             }
-            items.append(.message(message))
-            lastDate = Calendar.current.dateComponents([.year, .month, .day], from: message.date)
         }
         initializeItemsDelegate()
     }
@@ -829,6 +853,6 @@ class ChatViewControllerModel {
 
 extension Message {
     var dateErasingTime: DateComponents {
-        Calendar.current.dateComponents([.year, .month, .day], from: date)
+        Calendar.current.dateComponents([.year, .month, .day], from: sentDate)
     }
 }

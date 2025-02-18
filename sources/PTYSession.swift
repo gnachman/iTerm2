@@ -140,17 +140,21 @@ extension PTYSession {
                                            question: "",
                                            subjectMatter: subjectMatter,
                                            url: url(selection, in: snapshot))
-        ChatClient.instance.explain(request,
-                                    title: title,
-                                    guid: guid,
-                                    baseOffset: screen.totalScrollbackOverflow(),
-                                    scope: genericScope)
+        guard let client = ChatClient.instance else {
+            #warning("TODO: Error handling")
+            return
+        }
+        client.explain(request,
+                       title: title,
+                       guid: guid,
+                       baseOffset: screen.totalScrollbackOverflow(),
+                       scope: genericScope)
     }
 
     func execute(_ command: RemoteCommand, completion: @escaping (String) -> ()) {
         DLog("\(command)")
         cancelRemoteCommand()
-        switch command {
+        switch command.content {
         case .isAtPrompt(let isAtPrompt):
             isAtPromptRemoteCommand(isAtPrompt: isAtPrompt,
                                     completion: completion)

@@ -80,28 +80,50 @@ extension NSToolbarItem.Identifier {
 
 @objc(iTermChatWindowController)
 final class ChatWindowController: NSWindowController, DictionaryCodable {
-    @objc static let instance = {
-        let controller = ChatWindowController()
-        controller.chatListViewController.dataSource = ChatListModel.instance
-        return controller
-    }()
-    private let chatViewController = ChatViewController()
+    private static var _instance: ChatWindowController?
+    @objc static var instance: ChatWindowController? {
+        if _instance == nil,
+           let model = ChatListModel.instance,
+           let client = ChatClient.instance,
+           let broker = ChatBroker.instance {
+            _instance = ChatWindowController(model: model,
+                                             client: client,
+                                             broker: broker)
+        }
+        return _instance
+    }
+    private let chatViewController: ChatViewController
     private let chatListViewController = ChatListViewController()
     private var splitViewController: ChatSplitViewController!
+    private let model: ChatListModel
+    private let client: ChatClient
+    private let broker: ChatBroker
 
     private enum CodingKeys: String, CodingKey {
         case chatID
     }
 
-    override init(window: NSWindow?) {
-        super.init(window: window)
+    init(model: ChatListModel, client: ChatClient, broker: ChatBroker) {
+        chatViewController = ChatViewController(listModel: model,
+                                                client: client,
+                                                broker: broker)
+        self.model = model
+        self.client = client
+        self.broker = broker
+        super.init(window: nil)
+        chatListViewController.dataSource = model
     }
 
     convenience init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let chatID = try container.decode(String.self, forKey: .chatID)
-
-        self.init(window: nil)
+        guard let model = ChatListModel.instance,
+              let client = ChatClient.instance,
+              let broker = ChatBroker.instance else {
+            #warning("TODO: Test thi")
+            throw AIError("There was a problem initializing the database")
+        }
+        self.init(model: model, client: client, broker: broker)
 
         select(chatID: chatID)
     }
@@ -127,7 +149,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
 
     @objc
     func createNewChatIfNeeded() {
-        if ChatListModel.instance.count == 0 {
+        if model.count == 0 {
             createNewChat()
         } else {
             chatListViewController.selectMostRecent()
@@ -135,7 +157,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
     }
 
     private func initialize() -> NSWindow {
-        chatListViewController.dataSource = ChatListModel.instance
+        chatListViewController.dataSource = model
         splitViewController = ChatSplitViewController(chatListViewController: chatListViewController,
                                                       chatViewController: chatViewController)
 
@@ -146,7 +168,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
             backing: .buffered,
             defer: false
         )
-        window.title = ChatListModel.instance.chat(id: chatViewController.chatID)?.title ?? "AI Chat"
+        window.title = model.chat(id: chatViewController.chatID)?.title ?? "AI Chat"
 
         window.titlebarAppearsTransparent = false
         window.isMovableByWindowBackground = true
@@ -178,7 +200,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
     }
 
     private func createNewChat() {
-        let chatID = ChatBroker.instance.create(chatWithTitle: "New Chat", sessionGuid: nil)
+        let chatID = broker.create(chatWithTitle: "New Chat", sessionGuid: nil)
         chatViewController.load(chatID: chatID)
         chatListViewController.select(chatID: chatID)
     }
@@ -197,7 +219,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
 
     @objc(selectChatWithID:)
     func select(chatID: String) {
-        guard ChatListModel.instance.chat(id: chatID) != nil else {
+        guard model.chat(id: chatID) != nil else {
             return
         }
         chatListViewController.select(chatID: chatID)
@@ -238,7 +260,7 @@ extension ChatWindowController: NSToolbarDelegate {
     }
 
     private var currentChat: Chat? {
-        return ChatListModel.instance.chat(id: chatViewController.chatID)
+        return model.chat(id: chatViewController.chatID)
     }
 
     @objc(setSelectionText:forSession:)
@@ -250,11 +272,11 @@ extension ChatWindowController: NSToolbarDelegate {
 
     @objc(revealOrCreateChatAboutSessionGuid:name:)
     func revealOrCreateChat(aboutGuid guid: String, name: String) {
-        if let chat = ChatListModel.instance.lastChat(guid: guid) {
+        if let chat = model.lastChat(guid: guid) {
             chatListViewController.select(chatID: chat.id)
         } else {
-            let chatID = ChatClient.instance.create(chatWithTitle: "Chat about \(name)",
-                                                  sessionGuid: guid)
+            let chatID = client.create(chatWithTitle: "Chat about \(name)",
+                                       sessionGuid: guid)
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
         }

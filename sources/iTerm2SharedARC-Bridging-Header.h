@@ -3,6 +3,7 @@
 //
 
 #import "DebugLogging.h"
+#import "FMDatabase.h"
 #import "NSSavePanel+iTerm.h"
 #import "ObjCExceptions.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -18,6 +19,7 @@
 #import "iTermCPUUtilization.h"
 #import "iTermController.h"
 #import "iTermCoreTextLineRenderingHelper.h"
+#import "iTermDatabase.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermFindPasteboard.h"
 #import "iTermGCD.h"

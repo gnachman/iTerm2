@@ -8,16 +8,30 @@
 // The ChatBroker bridges the imaginary line between client and server.
 // It also ensure the model is up to date.
 class ChatBroker {
-    static let instance = ChatBroker()
+    private static var _instance: ChatBroker?
+    static var instance: ChatBroker? {
+        if _instance == nil {
+            _instance = ChatBroker()
+        }
+        return _instance
+    }
     private var subs = [Subscription]()
     var processors = [(Message, String) -> (Message?)]()
+    private let listModel: ChatListModel
+
+    init?() {
+        guard let listModel = ChatListModel.instance else {
+            return nil
+        }
+        self.listModel = listModel
+    }
 
     func create(chatWithTitle title: String, sessionGuid: String?) -> String {
         // Ensure the service is running
         _ = ChatService.instance
 
-        let chat = Chat(title: title, messages: [], sessionGuid: sessionGuid)
-        ChatListModel.instance.add(chat: chat)
+        let chat = Chat(title: title, sessionGuid: sessionGuid)
+        listModel.add(chat: chat)
         return chat.id
     }
 
@@ -35,9 +49,7 @@ class ChatBroker {
                 return
             }
         }
-        if !message.isTransient {
-            ChatListModel.instance.append(message: processed, toChatID: chatID)
-        }
+        listModel.append(message: processed, toChatID: chatID)
         for sub in subs {
             if sub.chatID == chatID || sub.chatID == nil {
                 sub.closure?(.delivery(processed, chatID))
@@ -114,7 +126,7 @@ class ChatBroker {
     }
 }
 
-enum RemoteCommand: Codable {
+struct RemoteCommand: Codable {
     struct IsAtPrompt: Codable {}
     struct ExecuteCommand: Codable { var command: String = "" }
     struct GetLastExitStatus: Codable {}
@@ -138,27 +150,32 @@ enum RemoteCommand: Codable {
 
     struct GetManPage: Codable { var cmd: String = "" }
 
-    case isAtPrompt(IsAtPrompt)
-    case executeCommand(ExecuteCommand)
-    case getLastExitStatus(GetLastExitStatus)
-    case getCommandHistory(GetCommandHistory)
-    case getLastCommand(GetLastCommand)
-    case getCommandBeforeCursor(GetCommandBeforeCursor)
-    case searchCommandHistory(SearchCommandHistory)
-    case getCommandOutput(GetCommandOutput)
-    case getTerminalSize(GetTerminalSize)
-    case getShellType(GetShellType)
-    case detectSSHSession(DetectSSHSession)
-    case getRemoteHostname(GetRemoteHostname)
-    case getUserIdentity(GetUserIdentity)
-    case getCurrentDirectory(GetCurrentDirectory)
-    case setClipboard(SetClipboard)
-    case insertTextAtCursor(InsertTextAtCursor)
-    case deleteCurrentLine(DeleteCurrentLine)
-    case getManPage(GetManPage)
+    enum Content: Codable {
+        case isAtPrompt(IsAtPrompt)
+        case executeCommand(ExecuteCommand)
+        case getLastExitStatus(GetLastExitStatus)
+        case getCommandHistory(GetCommandHistory)
+        case getLastCommand(GetLastCommand)
+        case getCommandBeforeCursor(GetCommandBeforeCursor)
+        case searchCommandHistory(SearchCommandHistory)
+        case getCommandOutput(GetCommandOutput)
+        case getTerminalSize(GetTerminalSize)
+        case getShellType(GetShellType)
+        case detectSSHSession(DetectSSHSession)
+        case getRemoteHostname(GetRemoteHostname)
+        case getUserIdentity(GetUserIdentity)
+        case getCurrentDirectory(GetCurrentDirectory)
+        case setClipboard(SetClipboard)
+        case insertTextAtCursor(InsertTextAtCursor)
+        case deleteCurrentLine(DeleteCurrentLine)
+        case getManPage(GetManPage)
+    }
+
+    var llmMessage: LLM.Message
+    var content: Content
 
     var markdownDescription: String {
-        switch self {
+        switch content {
         case .isAtPrompt:
             "Checking if you're at a shell prompt"
         case let .executeCommand(args):
@@ -199,7 +216,7 @@ enum RemoteCommand: Codable {
     }
 
     var permissionDescription: String {
-        switch self {
+        switch content {
         case .isAtPrompt:
             "The AI Agent would like to check if you're at a shell prompt"
         case let .executeCommand(args):

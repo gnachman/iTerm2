@@ -104,7 +104,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                             conversation?.define(
                                 function: decl,
                                 arguments: ExecuteCommand.self,
-                                implementation: { [weak self] command, completion in
+                                implementation: { [weak self] _, command, completion in
                                     guard let self,
                                           let session = iTermController.sharedInstance().session(withGUID: guid) else {
                                         completion(.failure(AIError("The session no longer exists")))
@@ -131,7 +131,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                             conversation?.define(
                                 function: decl,
                                 arguments: WriteCommand.self,
-                                implementation: { [weak self] command, completion in
+                                implementation: { [weak self] _, command, completion in
                                     guard let self,
                                           let session = iTermController.sharedInstance().session(withGUID: guid) else {
                                         completion(.failure(AIError("The session no longer exists")))

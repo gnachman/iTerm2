@@ -92,6 +92,15 @@
     return result;
 }
 
+- (BOOL)executeUpdate:(NSString *)sql withArguments:(NSArray *)arguments {
+    BOOL result = [_db executeUpdate:sql withArgumentsInArray:arguments];
+
+    if (gDebugLogging) {
+        [self logStatement:sql arguments:arguments];
+    }
+    return result;
+}
+
 - (NSNumber *)lastInsertRowId {
     const int64_t rowid = _db.lastInsertRowId;
     if (!rowid) {
@@ -105,6 +114,39 @@
     return [[NSString alloc] initWithFormat:fmt arguments:args];
 }
 
+- (NSString *)formatSQL:(NSString *)sql arguments:(NSArray *)arguments {
+    NSMutableString *formattedSQL = [sql mutableCopy];
+    NSUInteger count = arguments.count;
+    NSUInteger index = 0;
+
+    NSRange searchRange = NSMakeRange(0, formattedSQL.length);
+    while (index < count) {
+        NSRange range = [formattedSQL rangeOfString:@"?" options:0 range:searchRange];
+        if (range.location == NSNotFound) {
+            break;
+        }
+
+        id argument = arguments[index++];
+        NSString *replacement;
+
+        if ([argument isKindOfClass:[NSString class]]) {
+            replacement = [NSString stringWithFormat:@"“%@”", argument];
+        } else if ([argument isKindOfClass:[NSNumber class]]) {
+            replacement = [argument stringValue];
+        } else if ([argument isKindOfClass:[NSNull class]]) {
+            replacement = @"NULL";
+        } else {
+            replacement = [NSString stringWithFormat:@"“%@”", argument];
+        }
+
+        [formattedSQL replaceCharactersInRange:range withString:replacement];
+        searchRange.location = range.location + replacement.length;
+        searchRange.length = formattedSQL.length - searchRange.location;
+    }
+
+    return formattedSQL;
+}
+
 - (void)logStatement:(NSString *)sql vaList:(va_list)args {
     if (!gDebugLogging) {
         return;
@@ -116,6 +158,19 @@
                  statement);
 }
 
+- (void)logStatement:(NSString *)sql arguments:(NSArray *)arguments {
+    if (!gDebugLogging) {
+        return;
+    }
+
+    // Format the SQL statement with arguments
+    NSString *statement = [self formatSQL:sql arguments:arguments];
+
+    DebugLogImpl(__FILE__,
+                 __LINE__,
+                 __FUNCTION__,
+                 statement);
+}
 - (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql, ... {
     va_list args;
     va_start(args, sql);
@@ -126,6 +181,16 @@
         va_start(args, sql);
         [self logStatement:sql vaList:args];
         va_end(args);
+    }
+
+    return result;
+}
+
+- (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql withArguments:(NSArray *)arguments {
+    FMResultSet * _Nullable result = [_db executeQuery:sql withArgumentsInArray:arguments];
+
+    if (gDebugLogging) {
+        [self logStatement:sql arguments:arguments];
     }
 
     return result;

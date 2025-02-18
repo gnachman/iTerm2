@@ -10,58 +10,164 @@ struct Chat {
     var title: String
     var creationDate = Date()
     var lastModifiedDate = Date()
-    var messages: [Message]
     var sessionGuid: String?
+}
+
+extension Chat: iTermDatabaseElement {
+    private enum Columns: String {
+        case uuid
+        case title
+        case creationDate
+        case lastModifiedDate
+        case sessionGuid
+    }
+    static func schema() -> String {
+        """
+        create table if not exists Chat
+            (\(Columns.uuid.rawValue) text,
+             \(Columns.title.rawValue) text not null,
+             \(Columns.creationDate.rawValue) integer not null,
+             \(Columns.lastModifiedDate.rawValue) integer not null,
+             \(Columns.sessionGuid.rawValue) text)
+        """
+    }
+
+    static func fetchAllQuery() -> String {
+        "select * from Chat"
+    }
+    func appendQuery() -> (String, [Any]) {
+        ("""
+        insert into Chat 
+            (\(Columns.uuid.rawValue),
+             \(Columns.title.rawValue), 
+             \(Columns.creationDate.rawValue), 
+             \(Columns.lastModifiedDate.rawValue), 
+             \(Columns.sessionGuid.rawValue))
+        values (?, ?, ?, ?, ?)
+        """,
+         [
+            id,
+            title,
+            creationDate.timeIntervalSince1970,
+            lastModifiedDate.timeIntervalSince1970,
+            sessionGuid ?? NSNull()
+         ])
+    }
+
+    func updateQuery() -> (String, [Any]) {
+        ("""
+        update Chat set \(Columns.title.rawValue) = ?,
+                        \(Columns.creationDate.rawValue) = ?,
+                        \(Columns.lastModifiedDate.rawValue) = ?,
+                        \(Columns.sessionGuid.rawValue) = ?
+        where \(Columns.uuid.rawValue) = ?
+        """,
+        [
+            title,
+            creationDate.timeIntervalSince1970,
+            lastModifiedDate.timeIntervalSince1970,
+            sessionGuid ?? NSNull(),
+            id
+        ])
+    }
+
+    init?(dbResultSet result: iTermDatabaseResultSet) {
+        guard let id = result.string(forColumn: Columns.uuid.rawValue),
+              let title = result.string(forColumn: Columns.title.rawValue),
+              let creationDate = result.date(forColumn: Columns.creationDate.rawValue),
+              let lastModifiedDate = result.date(forColumn: Columns.lastModifiedDate.rawValue)
+        else {
+            return nil
+        }
+        self.id = id
+        self.title = title
+        self.creationDate = creationDate
+        self.lastModifiedDate = lastModifiedDate
+        self.sessionGuid = result.string(forColumn: Columns.sessionGuid.rawValue)
+    }
 }
 
 class ChatListModel: ChatListDataSource {
     static let metadataDidChange = Notification.Name("ChatListModelMetadataDidChange")
-    static let instance = ChatListModel()
-    private var storage = [Chat]()
-    var count: Int { storage.count }
+    private static var _instance: ChatListModel?
+    static var instance: ChatListModel? {
+        if _instance == nil {
+            _instance =  ChatListModel()
+        }
+        return _instance
+    }
+    private var chatStorage: DatabaseBackedArray<Chat>
+    private var messageStorage = [String: DatabaseBackedArray<Message>]()
+
+    var count: Int { chatStorage.count }
+
+    init?() {
+        guard let chatDb = ChatDatabase.instance, let chats = chatDb.chats() else {
+            return nil
+        }
+        chatStorage = chats
+    }
 
     func numberOfChats(in chatListViewController: ChatListViewController) -> Int {
-        return storage.count
+        return chatStorage.count
     }
     
     func chatListViewController(_ chatListViewController: ChatListViewController, chatAt index: Int) -> Chat {
-        return storage[index]
+        return chatStorage[index]
     }
     
     func add(chat: Chat) {
-        storage.append(chat)
+        chatStorage.append(chat)
         NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
     }
 
+    func messages(forChat chatID: String,
+                  createIfNeeded: Bool) -> DatabaseBackedArray<Message>? {
+        if let array = messageStorage[chatID] {
+            return array
+        }
+        guard let db = ChatDatabase.instance else {
+            return nil
+        }
+        if let array = db.messages(inChat: chatID) {
+            messageStorage[chatID] = array
+            return array
+        }
+        if createIfNeeded {
+            let array = ChatDatabase.instance?.messages(inChat: chatID)
+            messageStorage[chatID] = array
+            return array
+        }
+        return nil
+    }
+
     func index(ofMessageID messageID: UUID, inChat chatID: String) -> Int? {
-        return chat(id: chatID)?.messages.firstIndex { $0.uniqueID == messageID }
+        return messages(forChat: chatID,
+                        createIfNeeded: false)?.firstIndex { $0.uniqueID == messageID }
     }
 
     private func index(of chatID: String) -> Int? {
-        return storage.firstIndex {
+        return chatStorage.firstIndex {
             $0.id == chatID
         }
     }
 
     func setGuid(for chatID: String, to guid: String?) {
         if let i = index(of: chatID) {
-            storage[i].sessionGuid = guid
+            chatStorage[i].sessionGuid = guid
         }
     }
 
     func chat(id: String) -> Chat? {
-        return storage.first { $0.id == id }
+        return chatStorage.first { $0.id == id }
     }
 
     func append(message: Message, toChatID chatID: String) {
-        guard let i = storage.firstIndex(where: { $0.id == chatID }) else {
-            return
-        }
-        storage[i].messages.append(message)
+        messages(forChat: chatID, createIfNeeded: true)?.append(message)
     }
 
     func lastChat(guid: String) -> Chat? {
-        return storage.last { chat in
+        return chatStorage.last { chat in
             chat.sessionGuid == guid
         }
     }
