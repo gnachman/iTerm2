@@ -125,23 +125,24 @@ class ChatDatabase {
                                    args: args)
     }
 
-    struct MessageIterator: Sequence, IteratorProtocol {
+    struct QueryIterator<T>: Sequence, IteratorProtocol where T: iTermDatabaseInitializable {
         fileprivate var resultSet: iTermDatabaseResultSet?
-        mutating func next() -> Message? {
+        mutating func next() -> T? {
             guard let resultSet else {
                 return nil
             }
             if resultSet.next() {
-                return Message(dbResultSet: resultSet)
+                return T(dbResultSet: resultSet)
             }
             resultSet.close()
             self.resultSet = nil
             return nil
         }
-        func makeIterator() -> ChatDatabase.MessageIterator {
+        func makeIterator() -> any IteratorProtocol {
             return self
         }
     }
+    typealias MessageIterator = QueryIterator<Message>
 
     func messageReverseIterator(inChat chatID: String) -> MessageIterator {
         let query = "SELECT * FROM Message WHERE chatID=? ORDER BY sentDate DESC"
@@ -149,6 +150,30 @@ class ChatDatabase {
             return MessageIterator(resultSet: nil)
         }
         return MessageIterator(resultSet: resultSet)
+    }
+
+    func searchResultSequence(forQuery query: String) -> AnySequence<ChatSearchResult> {
+        return AnySequence {
+            let tokens = query
+                .components(separatedBy: .whitespacesAndNewlines)
+                .filter { !$0.isEmpty }
+
+            let conditions = tokens.map { "content LIKE '%\($0)%'" }
+            let whereClause = "WHERE " + conditions.joined(separator: " AND ")
+            let resultSet = self.db.executeQuery("SELECT * from MESSAGE \(whereClause)", withArguments: tokens)
+            return QueryIterator<ChatSearchResult>(resultSet: resultSet)
+        }
+    }
+}
+
+extension ChatSearchResult: iTermDatabaseInitializable {
+    init?(dbResultSet resultSet: any iTermDatabaseResultSet) {
+        guard let chatID = resultSet.string(forColumn: Message.Columns.chatID.rawValue),
+              let message = Message(dbResultSet: resultSet) else {
+            return nil
+        }
+        self.chatID = chatID
+        self.message = message
     }
 }
 
@@ -179,10 +204,13 @@ extension ChatDatabase: DatabaseBackedArrayDelegate {
     }
 }
 
-protocol iTermDatabaseElement {
+protocol iTermDatabaseInitializable {
+    init?(dbResultSet: iTermDatabaseResultSet)
+}
+
+protocol iTermDatabaseElement: iTermDatabaseInitializable {
     static func schema() -> String
     static func fetchAllQuery() -> String
-    init?(dbResultSet: iTermDatabaseResultSet)
     func appendQuery() -> (String, [Any])
     func updateQuery() -> (String, [Any])
     func removeQuery() -> (String, [Any])

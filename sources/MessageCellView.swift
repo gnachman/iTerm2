@@ -18,6 +18,9 @@ class BubbleView: NSView {}
 @objc(iTermTextLabelContainer)
 class TextLabelContainer: NSView {}
 
+class MessageTextView: NSTextView {}
+class MessageTimestamp: NSTextField {}
+
 @objc
 class MessageCellView: NSView {
     // The bubble
@@ -33,7 +36,7 @@ class MessageCellView: NSView {
     }()
 
     // The text label
-    private let textLabel: NSTextView = {
+    private let textLabel: AutoSizingTextView = {
         let tv = AutoSizingTextView()
         tv.isEditable = false
         tv.isSelectable = true
@@ -47,9 +50,14 @@ class MessageCellView: NSView {
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
     }()
+    private let container: TextLabelContainer = {
+        let container = TextLabelContainer()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        return container
+    }()
 
-    private let timestamp: NSTextField = {
-        let textField = NSTextField()
+    private let timestamp: MessageTimestamp = {
+        let textField = MessageTimestamp()
         textField.isEditable = false
         textField.isSelectable = false
         textField.drawsBackground = false
@@ -90,10 +98,6 @@ class MessageCellView: NSView {
         bubbleView.wantsLayer = true
         bubbleView.layer?.cornerRadius = 8
         bubbleView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(bubbleView)
-
-        // Add the vertical stack inside the bubble
-        bubbleView.addSubview(contentStack)
     }
 
     // Update the bubble’s color if dark vs. light mode changes
@@ -110,8 +114,52 @@ class MessageCellView: NSView {
     /// Configure the cell with your `MessageRendition`.
     /// `maxBubbleWidth` is how wide you allow the bubble to grow.
     func configure(with rendition: MessageRendition,
-                   tableViewWidth: CGFloat)
-    {
+                   tableViewWidth: CGFloat) {
+        configure(with: rendition, maxBubbleWidth: tableViewWidth * 0.7)
+    }
+
+    private var customConstraints = [NSLayoutConstraint]()
+
+    private func add(constraint: NSLayoutConstraint) {
+        customConstraints.append(constraint)
+        constraint.isActive = true
+    }
+
+    var textSelectable = true {
+        didSet {
+            textLabel.isSelectable = textSelectable
+        }
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        if textSelectable {
+            return super.hitTest(point)
+        }
+        return self
+    }
+
+    func configure(with rendition: MessageRendition,
+                   maxBubbleWidth: CGFloat) {
+        NSLayoutConstraint.deactivate(customConstraints)
+        customConstraints = []
+
+        // Ensure constraints are really and truly gone by removing everything
+        // from the view hierarchy.
+        bubbleView.removeFromSuperview()
+        contentStack.removeFromSuperview()
+        textLabel.removeFromSuperview()
+        container.removeFromSuperview()
+        timestamp.removeFromSuperview()
+        for subview in contentStack.arrangedSubviews {
+            contentStack.removeArrangedSubview(subview)
+            subview.removeFromSuperview()
+        }
+
+        // Set up subviews aside from content stack, which is dynamic.
+        addSubview(bubbleView)
+        bubbleView.addSubview(contentStack)
+        container.addSubview(textLabel)
+
         // Decide bubble color pair based on isUser
         backgroundColorPair = rendition.isUser
             ? (NSColor(fromHexString: "p3#448bf7")!, NSColor(fromHexString: "p3#4a93f5")!)
@@ -120,39 +168,33 @@ class MessageCellView: NSView {
 
         // Set text
         textLabel.textStorage?.setAttributedString(rendition.attributedString)
+
         // Let text wrap if it's wider than the bubble
-        let maxBubbleWidth = tableViewWidth * 0.7
         textLabel.textContainer?.widthTracksTextView = false
         textLabel.textContainer?.size = NSSize(width: maxBubbleWidth - 16, height: .greatestFiniteMagnitude)
         textLabel.linkTextAttributes = [.foregroundColor: NSColor.textColor]
-        let container = TextLabelContainer()
-        container.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(textLabel)
 
-        NSLayoutConstraint.activate([
-            container.leadingAnchor.constraint(equalTo: textLabel.leadingAnchor, constant: -8.0),
-            container.trailingAnchor.constraint(equalTo: textLabel.trailingAnchor, constant: 8.0),
-            container.topAnchor.constraint(equalTo: textLabel.topAnchor, constant: -Self.topInset),
-            container.bottomAnchor.constraint(equalTo: textLabel.bottomAnchor, constant: Self.bottomInset),
-        ])
+        add(constraint: container.leadingAnchor.constraint(equalTo: textLabel.leadingAnchor, constant: -8.0))
+        add(constraint: container.trailingAnchor.constraint(equalTo: textLabel.trailingAnchor, constant: 8.0))
+        add(constraint: container.topAnchor.constraint(equalTo: textLabel.topAnchor, constant: -Self.topInset))
+        add(constraint: container.bottomAnchor.constraint(equalTo: textLabel.bottomAnchor, constant: Self.bottomInset))
+        container.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
 
-        // Clear any old buttons
-        for subview in contentStack.arrangedSubviews {
-            contentStack.removeArrangedSubview(subview)
-            subview.removeFromSuperview()
-        }
-
+        contentStack.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
         contentStack.addArrangedSubview(container)
-
 
         // Timestamp
         timestamp.stringValue = rendition.timestamp
-        addSubview(timestamp)
-        NSLayoutConstraint.activate([
-            timestamp.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor),
-            rendition.isUser ? timestamp.rightAnchor.constraint(equalTo: bubbleView.leftAnchor, constant: -8) : timestamp.leftAnchor.constraint(equalTo: bubbleView.rightAnchor, constant: 8)
-        ])
+        if !rendition.timestamp.isEmpty {
+            addSubview(timestamp)
+            add(constraint: timestamp.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor))
 
+            if rendition.isUser {
+                add(constraint: timestamp.rightAnchor.constraint(equalTo: bubbleView.leftAnchor, constant: -8))
+            } else {
+                add(constraint: timestamp.leftAnchor.constraint(equalTo: bubbleView.rightAnchor, constant: 8))
+            }
+        }
 
         buttonIdentifiers.removeAll()
 
@@ -163,8 +205,8 @@ class MessageCellView: NSView {
             view.wantsLayer = true
             view.layer?.backgroundColor = NSColor.gray.cgColor
             contentStack.addArrangedSubview(view)
-            view.heightAnchor.constraint(equalToConstant: 1).isActive = true
-            view.widthAnchor.constraint(equalTo: contentStack.widthAnchor, multiplier: 1.0).isActive = true
+            add(constraint: view.heightAnchor.constraint(equalToConstant: 1))
+            add(constraint: view.widthAnchor.constraint(equalTo: contentStack.widthAnchor, multiplier: 1.0))
 
             let button = NSButton(title: buttonRendition.title, target: self, action: #selector(buttonTapped(_:)))
             button.translatesAutoresizingMaskIntoConstraints = false
@@ -192,7 +234,7 @@ class MessageCellView: NSView {
             buttonIdentifiers[button] = (buttonRendition.identifier, rendition.messageUniqueID)
 
             // Force a single-line height (30)
-            button.heightAnchor.constraint(equalToConstant: 30).isActive = true
+            add(constraint: button.heightAnchor.constraint(equalToConstant: 30))
             // Let the button expand horizontally, up to the bubble’s max
             // (If it’s bigger than the text, the stack—and thus bubble—will match the button’s width)
             button.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -200,7 +242,7 @@ class MessageCellView: NSView {
 
             // Add it under the text label
             contentStack.addArrangedSubview(button)
-            button.widthAnchor.constraint(equalTo: contentStack.widthAnchor, multiplier: 1.0).isActive = true
+            add(constraint: button.widthAnchor.constraint(equalTo: contentStack.widthAnchor, multiplier: 1.0))
 
             if !rendition.enableButtons {
                 button.isEnabled = false
@@ -211,43 +253,28 @@ class MessageCellView: NSView {
             // Add bottom spacer
             let view = NSView()
             contentStack.addArrangedSubview(view)
-            view.heightAnchor.constraint(equalToConstant: 1).isActive = true
+            add(constraint: view.heightAnchor.constraint(equalToConstant: 1))
         }
-
-        // Now set the bubble’s alignment constraints
-        // If user => right aligned, else => left aligned
-        // *Important:* Pin both sides so it can expand up to `maxBubbleWidth`
-        NSLayoutConstraint.deactivate(bubbleView.constraints) // remove old constraints if reusing the cell
 
         if rendition.isUser {
-            NSLayoutConstraint.activate([
-                bubbleView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
-                bubbleView.topAnchor.constraint(equalTo: topAnchor, constant: Self.topInset),
-                bubbleView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8),
-                bubbleView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.bottomInset),
-                bubbleView.widthAnchor.constraint(lessThanOrEqualToConstant: maxBubbleWidth)
-            ])
+            add(constraint: bubbleView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8))
+            add(constraint: bubbleView.topAnchor.constraint(equalTo: topAnchor, constant: Self.topInset))
+            add(constraint: bubbleView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8))
+            add(constraint: bubbleView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.bottomInset))
         } else {
-            NSLayoutConstraint.activate([
-                bubbleView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
-                bubbleView.topAnchor.constraint(equalTo: topAnchor, constant: Self.topInset),
-                bubbleView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8),
-                bubbleView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.bottomInset),
-                bubbleView.widthAnchor.constraint(lessThanOrEqualToConstant: maxBubbleWidth)
-            ])
+            add(constraint: bubbleView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8))
+            add(constraint: bubbleView.topAnchor.constraint(equalTo: topAnchor, constant: Self.topInset))
+            add(constraint: bubbleView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8))
+            add(constraint: bubbleView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.bottomInset))
         }
         // Inset contentStack in bubbleView
-        NSLayoutConstraint.activate([
-            contentStack.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 0),
-            contentStack.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 0),
-            contentStack.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor, constant: 0),
-            contentStack.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: 0),
-        ])
+        add(constraint: contentStack.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 0))
+        add(constraint: contentStack.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 0))
+        add(constraint: contentStack.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor, constant: 0))
+        add(constraint: contentStack.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: 0))
 
         // Finally cap the total width
-        bubbleView.widthAnchor.constraint(lessThanOrEqualToConstant: maxBubbleWidth).isActive = true
-
-        // If you also need a bottom anchor or flexible row height, set that outside or in your tableView
+        add(constraint: bubbleView.widthAnchor.constraint(lessThanOrEqualToConstant: maxBubbleWidth))
     }
 
     @objc private func buttonTapped(_ sender: NSButton) {
@@ -298,13 +325,15 @@ class MessageCellView: NSView {
  */
 }
 
+class DateTextField: NSTextField {}
+
 @objc
 class DateCellView: NSView {
     private static let topInset: CGFloat = 8
     private static let bottomInset: CGFloat = 8
     private let bubbleView = BubbleView()
     private let textField = {
-        let tf = NSTextField()
+        let tf = DateTextField()
         tf.isEditable = false
         tf.isSelectable = false
         tf.drawsBackground = false

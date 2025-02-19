@@ -114,6 +114,10 @@ class ChatListModel: ChatListDataSource {
         chatStorage = chats
     }
 
+    func chatSearchResultsIterator(query: String) -> AnySequence<ChatSearchResult> {
+        return ChatDatabase.instance?.searchResultSequence(forQuery: query) ?? AnySequence([])
+    }
+
     func numberOfChats(in chatListViewController: ChatListViewController) -> Int {
         return chatStorage.count
     }

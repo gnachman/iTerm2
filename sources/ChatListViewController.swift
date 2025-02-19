@@ -7,7 +7,7 @@
 
 import AppKit
 
-protocol ChatListViewControllerDelegate: AnyObject {
+protocol ChatListViewControllerDelegate: AnyObject, ChatSearchResultsViewControllerDelegate {
     func chatListViewControllerDidTapNewChat(_ viewController: ChatListViewController)
     func chatListViewController(_ chatListViewController: ChatListViewController,
                                 didSelectChat chatID: String)
@@ -23,7 +23,12 @@ class ChatListViewController: NSViewController {
                                              autoupdateDate: false)
     private let tableView = NSTableView()
     private let scrollView = NSScrollView()
-    
+    private let searchField = {
+        let field = NSSearchField()
+        field.translatesAutoresizingMaskIntoConstraints = false
+        return field
+    }()
+
     // Header UI
     private let headerView = NSView()
     private let titleLabel: NSTextField = {
@@ -46,8 +51,25 @@ class ChatListViewController: NSViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
+    private var searchMode = false {
+        didSet {
+            if searchMode == oldValue {
+                return
+            }
+            searchResultsViewController.view.isHidden = !searchMode
+        }
+    }
+
+    private let searchResultsViewController: ChatSearchResultsViewController = {
+        let vc = ChatSearchResultsViewController()
+        vc.view.translatesAutoresizingMaskIntoConstraints = false
+        vc.view.isHidden = true
+        return vc
+    }()
 
     override func loadView() {
+        searchField.delegate = self
+        
         view = NSView()
         view.translatesAutoresizingMaskIntoConstraints = false
 
@@ -56,23 +78,34 @@ class ChatListViewController: NSViewController {
         view.addSubview(headerView)
         headerView.addSubview(titleLabel)
         headerView.addSubview(newChatButton)
+        headerView.addSubview(searchField)
 
         NSLayoutConstraint.activate([
             headerView.topAnchor.constraint(equalTo: view.topAnchor),
             headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            headerView.heightAnchor.constraint(equalToConstant: 40),
 
             titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 10),
-            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 4),
 
             newChatButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -10),
-            newChatButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor)
+            newChatButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+
+            searchField.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            searchField.trailingAnchor.constraint(equalTo: newChatButton.trailingAnchor),
+            searchField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            
+            headerView.bottomAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 4),
         ])
+        headerView.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
 
         // Setup table view
         setupTableView()
         view.addSubview(scrollView)
+        searchResultsViewController.dataSource = self
+        searchResultsViewController.delegate = self
+        let srp = searchResultsViewController.view
+        view.addSubview(srp)
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
@@ -80,6 +113,13 @@ class ChatListViewController: NSViewController {
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+
+        NSLayoutConstraint.activate([
+            srp.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            srp.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            srp.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            srp.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
 
         NotificationCenter.default.addObserver(forName: ChatListModel.metadataDidChange,
@@ -208,149 +248,21 @@ extension ChatListViewController: NSTableViewDelegate {
     }
 }
 
-class ChatCellView: NSTableCellView {
-    let titleLabel = NSTextField(labelWithString: "")
-    let dateLabel = NSTextField(labelWithString: "")
-    let snippetLabel = NSTextField(labelWithString: "")
-    private var typing = false
-
-    var snippet: String? {
-        didSet {
-            snippetLabel.stringValue = snippet?.replacingOccurrences(of: "\n", with: " ") ?? ""
-        }
+extension ChatListViewController: NSSearchFieldDelegate {
+    func controlTextDidChange(_ obj: Notification) {
+        searchMode = !searchField.stringValue.isEmpty
+        searchResultsViewController.query = searchField.stringValue
     }
+}
 
-    private var date: Date? {
-        didSet {
-            updateDateLabel()
-        }
+extension ChatListViewController: ChatSearchResultsDataSource {
+    func chatSearchResultsIterator(query: String) -> AnySequence<ChatSearchResult> {
+        return dataSource?.chatSearchResultsIterator(query: query) ?? AnySequence([])
     }
-    private var timer: Timer?
-    private var subscription: ChatBroker.Subscription?
+}
 
-    init(frame frameRect: NSRect, chat: Chat?, dataSource: ChatListDataSource?, autoupdateDate: Bool) {
-        super.init(frame: frameRect)
-        setupViews()
-        if autoupdateDate {
-            timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-                self?.updateDateLabel()
-            }
-        }
-        if let chat, let dataSource {
-            load(chat: chat, dataSource: dataSource)
-        }
-    }
-
-    required init?(coder: NSCoder) {
-        it_fatalError()
-    }
-
-    deinit {
-        timer?.invalidate()
-        subscription?.unsubscribe()
-    }
-
-    func load(chat: Chat, dataSource: ChatListDataSource) {
-        if TypingStatusModel.instance.isTyping(participant: .agent, chatID: chat.id) {
-            snippet = "Agent is thinking…"
-        } else {
-            self.snippet = dataSource.snippet(forChatID: chat.id)
-        }
-        self.date = chat.lastModifiedDate
-        titleLabel.stringValue = chat.title
-        typing = false
-
-        let chatID = chat.id
-        subscription?.unsubscribe()
-        subscription = ChatBroker.instance?.subscribe(
-            chatID: chatID,
-            registrationProvider: nil,
-            closure: { [weak self, weak dataSource] update in
-                self?.apply(update: update, chatID: chatID, dataSource: dataSource)
-        })
-    }
-
-    private func apply(update: ChatBroker.Update,
-                       chatID: String,
-                       dataSource: ChatListDataSource?) {
-        print("qqq Update for \(chatID) with typing=\(typing): \(update)")
-        switch update {
-        case let .typingStatus(typing, participant):
-            if participant == .agent {
-                if typing {
-                    self.typing = true
-                    print("qqq set typing=true in \(chatID)")
-                    snippet = "Agent is thinking…"
-                } else {
-                    self.typing = false
-                    print("qqq set typing=true in \(false)")
-                    snippet = dataSource?.snippet(forChatID: chatID) ?? ""
-                }
-            }
-        case let .delivery(message, _):
-            if !typing, let snippet = message.snippetText {
-                self.snippet = snippet
-            }
-        }
-    }
-
-    private func updateDateLabel() {
-        if let date {
-            dateLabel.stringValue = DateFormatter.compactDateDifferenceString(from: date)
-        } else {
-            dateLabel.stringValue = ""
-        }
-    }
-
-    private func setupViews() {
-        // Configure title label
-        titleLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .bold)
-        if let cell = titleLabel.cell as? NSTextFieldCell {
-            cell.lineBreakMode = .byTruncatingTail
-            cell.truncatesLastVisibleLine = true
-        }
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.isEditable = false
-        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        addSubview(titleLabel)
-
-        // Configure date label
-        dateLabel.translatesAutoresizingMaskIntoConstraints = false
-        dateLabel.textColor = NSColor.textColor.withAlphaComponent(0.75)
-        dateLabel.isEditable = false
-        dateLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        addSubview(dateLabel)
-
-        // Configure snippet label
-        snippetLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-        if let cell = snippetLabel.cell as? NSTextFieldCell {
-            cell.lineBreakMode = .byTruncatingTail
-            cell.truncatesLastVisibleLine = true
-        }
-        snippetLabel.translatesAutoresizingMaskIntoConstraints = false
-        snippetLabel.isEditable = false
-        snippetLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        snippetLabel.alphaValue = 0.75
-        snippetLabel.maximumNumberOfLines = 1
-        snippetLabel.lineBreakMode = .byTruncatingTail
-        snippetLabel.usesSingleLineMode = true
-        addSubview(snippetLabel)
-
-        NSLayoutConstraint.activate([
-            // Top row: title and date
-            titleLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5),
-            titleLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 5),
-            dateLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -5),
-            dateLabel.topAnchor.constraint(equalTo: titleLabel.topAnchor),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: dateLabel.leadingAnchor, constant: -8),
-
-            // Snippet below title/date, spanning full width with same insets
-            snippetLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5),
-            snippetLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -5),
-            snippetLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
-            snippetLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -5)
-        ])
-
-        updateDateLabel()
+extension ChatListViewController: ChatSearchResultsViewControllerDelegate {
+    func chatSearchResultsDidSelect(_ result: ChatSearchResult) {
+        delegate?.chatSearchResultsDidSelect(result)
     }
 }

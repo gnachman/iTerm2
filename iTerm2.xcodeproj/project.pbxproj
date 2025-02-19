@@ -1716,6 +1716,8 @@
 		A655E699207153CB00DC21B9 /* NSSavePanel+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A655E697207153CB00DC21B9 /* NSSavePanel+iTerm.h */; };
 		A655E69A207153CB00DC21B9 /* NSSavePanel+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A655E698207153CB00DC21B9 /* NSSavePanel+iTerm.m */; };
 		A65618562D6439BC0059CD35 /* ChatDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65618552D6439BA0059CD35 /* ChatDatabase.swift */; };
+		A65618582D659F090059CD35 /* ChatCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65618572D659F070059CD35 /* ChatCellView.swift */; };
+		A656185A2D65A2780059CD35 /* ChatSearchResultsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65618592D65A2740059CD35 /* ChatSearchResultsViewController.swift */; };
 		A65660D42372A4A600DC6744 /* iTermCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A65660D22372A4A600DC6744 /* iTermCache.h */; };
 		A65660D52372A4A600DC6744 /* iTermCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A65660D32372A4A600DC6744 /* iTermCache.m */; };
 		A65660D82372A69A00DC6744 /* iTermDoublyLinkedList.h in Headers */ = {isa = PBXBuildFile; fileRef = A65660D62372A69A00DC6744 /* iTermDoublyLinkedList.h */; };
@@ -6160,6 +6162,8 @@
 		A655E697207153CB00DC21B9 /* NSSavePanel+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSSavePanel+iTerm.h"; sourceTree = "<group>"; };
 		A655E698207153CB00DC21B9 /* NSSavePanel+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSSavePanel+iTerm.m"; sourceTree = "<group>"; };
 		A65618552D6439BA0059CD35 /* ChatDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDatabase.swift; sourceTree = "<group>"; };
+		A65618572D659F070059CD35 /* ChatCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatCellView.swift; sourceTree = "<group>"; };
+		A65618592D65A2740059CD35 /* ChatSearchResultsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSearchResultsViewController.swift; sourceTree = "<group>"; };
 		A65660D22372A4A600DC6744 /* iTermCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCache.h; sourceTree = "<group>"; };
 		A65660D32372A4A600DC6744 /* iTermCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCache.m; sourceTree = "<group>"; };
 		A65660D62372A69A00DC6744 /* iTermDoublyLinkedList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermDoublyLinkedList.h; sourceTree = "<group>"; };
@@ -9569,6 +9573,8 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A65618592D65A2740059CD35 /* ChatSearchResultsViewController.swift */,
+				A65618572D659F070059CD35 /* ChatCellView.swift */,
 				A65618552D6439BA0059CD35 /* ChatDatabase.swift */,
 				A6EB647F2D5E906500481D33 /* RemoteCommandExecutor.swift */,
 				A6EB647D2D5E8EE200481D33 /* MessageCellView.swift */,
@@ -16284,6 +16290,7 @@
 				A6AB55E52173E18900142244 /* iTermCumulativeSumCache.mm in Sources */,
 				A603EA01283EEAE60028B648 /* ObjCExceptions.swift in Sources */,
 				A6BC8ACC21C6EC5000796BF3 /* iTermBoxDrawingBezierCurveFactory.m in Sources */,
+				A65618582D659F090059CD35 /* ChatCellView.swift in Sources */,
 				A6FF3F2E2435BA35003CCB03 /* PasteView.m in Sources */,
 				A6A39EBC24B99AC000A64433 /* iTermGraphicsUtilities.m in Sources */,
 				A65B1B5C2D1252E300F5A740 /* iTermShortcutInputView.m in Sources */,
@@ -16297,6 +16304,7 @@
 				A6D1A3EB2C7E99E100FECDF2 /* NSSize+iTerm.swift in Sources */,
 				A6024B89254D367E0036D6CF /* iTermColorSuggester.m in Sources */,
 				A6253D6929F89814007AEDE9 /* iTermDragHandleView.m in Sources */,
+				A656185A2D65A2780059CD35 /* ChatSearchResultsViewController.swift in Sources */,
 				A60C034F20881E5F00FE2F1F /* iTermAPIHelper.m in Sources */,
 				5300984D2259365B00A69348 /* iTermHapticActuator.m in Sources */,
 				A630117220E60DBF008114B7 /* iTermStatusBarView.m in Sources */,

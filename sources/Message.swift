@@ -160,7 +160,7 @@ extension Result {
 }
 
 extension Message: iTermDatabaseElement {
-    private enum Columns: String {
+    enum Columns: String {
         case author
         case content
         case sentDate

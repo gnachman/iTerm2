@@ -303,6 +303,13 @@ extension ChatWindowController: ChatListViewControllerDelegate {
     }
 }
 
+extension ChatWindowController: ChatSearchResultsViewControllerDelegate {
+    func chatSearchResultsDidSelect(_ result: ChatSearchResult) {
+        select(chatID: result.chatID)
+        chatViewController.reveal(messageID: result.message.uniqueID)
+    }
+}
+
 extension ChatWindowController: ChatViewControllerDelegate {
     func chatViewController(_ controller: ChatViewController, revealSessionWithGuid guid: String) -> Bool {
         if let session = iTermController.sharedInstance().session(withGUID: guid) {

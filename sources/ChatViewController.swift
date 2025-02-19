@@ -18,6 +18,7 @@ class ChatViewController: NSViewController {
     @objc weak var delegate: ChatViewControllerDelegate?
     private(set) var chatID = UUID().uuidString
 
+    private var scrollView: NSScrollView!
     private var tableView: NSTableView!
     private var titleLabel = NSTextField()
     private var sessionButton: NSButton!
@@ -93,7 +94,7 @@ class ChatViewController: NSViewController {
         tableView.backgroundColor = .clear
 
         // Scroll View for Table
-        let scrollView = NSScrollView()
+        scrollView = NSScrollView()
         scrollView.documentView = tableView
         scrollView.hasVerticalScroller = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -213,6 +214,38 @@ extension ChatViewController {
         if eligibleForAutoPaste {
             inputTextField.stringValue = text
         }
+    }
+
+    func reveal(messageID: UUID) {
+        if let i = model.index(ofMessageID: messageID) {
+            scrollRowToCenter(i)
+        }
+    }
+
+    private func scrollRowToCenter(_ row: Int) {
+        let clipView = scrollView.contentView
+
+        guard row >= 0, row < tableView.numberOfRows else {
+            return
+        }
+
+        let rowRect = tableView.rect(ofRow: row)
+
+        // Convert row rect to clipView's coordinate space
+        let rowRectInClipView = tableView.convert(rowRect, to: clipView)
+
+        // Calculate the new origin to center the row
+        let newY = rowRectInClipView.midY - (clipView.bounds.height / 2)
+
+        // Ensure we stay within the scrollable area
+        let maxY = tableView.bounds.height - clipView.bounds.height
+        let constrainedY = max(0, min(newY, maxY))
+
+        // Animate the scroll
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.25
+            clipView.animator().setBoundsOrigin(NSPoint(x: 0, y: constrainedY))
+        })
     }
 
     @objc private func showSessionButtonMenu(_ sender: NSButton) {
@@ -490,8 +523,6 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         prototypeCell.layoutSubtreeIfNeeded()
 
         let height = prototypeCell.fittingSize.height
-        print("Row \(row) given height \(height)")
-        print(prototypeCell.iterm_recursiveDescription()!)
         return height
     }
 
