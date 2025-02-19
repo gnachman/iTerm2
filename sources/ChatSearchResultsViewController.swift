@@ -181,7 +181,8 @@ extension ChatSearchResultsViewController: NSTableViewDelegate {
               messageUniqueID: UUID(),
               isUser: fromUser,
               enableButtons: false,
-              timestamp: "")
+              timestamp: "",
+              isEditable: false)
     }
 }
 

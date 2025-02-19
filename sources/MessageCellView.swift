@@ -1,3 +1,7 @@
+import Cocoa
+
+// MARK: - MessageRendition
+
 struct MessageRendition {
     struct Button {
         var title: String
@@ -10,7 +14,10 @@ struct MessageRendition {
     var isUser: Bool
     var enableButtons: Bool
     var timestamp: String
+    var isEditable: Bool
 }
+
+// MARK: - BubbleView and Other Views
 
 @objc(iTermBubbleView)
 class BubbleView: NSView {}
@@ -20,6 +27,8 @@ class TextLabelContainer: NSView {}
 
 class MessageTextView: NSTextView {}
 class MessageTimestamp: NSTextField {}
+
+// MARK: - MessageCellView
 
 @objc
 class MessageCellView: NSView {
@@ -50,6 +59,7 @@ class MessageCellView: NSView {
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
     }()
+
     private let container: TextLabelContainer = {
         let container = TextLabelContainer()
         container.translatesAutoresizingMaskIntoConstraints = false
@@ -70,14 +80,23 @@ class MessageCellView: NSView {
         return textField
     }()
 
+    private var editable: Bool = false
+    private var rightClickMonitor: Any?
+
     // We store the button ID + message ID so we can fire a callback
     private var buttonIdentifiers: [NSButton: (identifier: String, messageUniqueID: UUID)] = [:]
 
     // Called when any button is clicked
     var buttonClicked: ((String, UUID) -> Void)?
 
+    // Callback for the edit button.
+    var editButtonClicked: ((UUID) -> Void)?
+
     // Bubble background colors
     private var backgroundColorPair: (NSColor, NSColor)?
+
+    // store the messageUniqueID so that the edit button can pass it along.
+    private var messageUniqueID: UUID?
 
     private static let topInset: CGFloat = 8
     private static let bottomInset: CGFloat = 8
@@ -89,6 +108,12 @@ class MessageCellView: NSView {
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) not implemented")
+    }
+
+    deinit {
+        if let monitor = rightClickMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
     }
 
     private static let stackViewSpacing = 1.0
@@ -143,7 +168,7 @@ class MessageCellView: NSView {
         NSLayoutConstraint.deactivate(customConstraints)
         customConstraints = []
 
-        // Ensure constraints are really and truly gone by removing everything
+        // Ensure constraints are really gone by removing everything
         // from the view hierarchy.
         bubbleView.removeFromSuperview()
         contentStack.removeFromSuperview()
@@ -162,8 +187,8 @@ class MessageCellView: NSView {
 
         // Decide bubble color pair based on isUser
         backgroundColorPair = rendition.isUser
-            ? (NSColor(fromHexString: "p3#448bf7")!, NSColor(fromHexString: "p3#4a93f5")!)
-            : (NSColor(fromHexString: "p3#e9e9eb")!, NSColor(fromHexString: "p3#3b3b3d")!)
+        ? (NSColor(fromHexString: "p3#448bf7")!, NSColor(fromHexString: "p3#4a93f5")!)
+        : (NSColor(fromHexString: "p3#e9e9eb")!, NSColor(fromHexString: "p3#3b3b3d")!)
         updateBubbleColor()
 
         // Set text
@@ -213,7 +238,6 @@ class MessageCellView: NSView {
             button.isBordered = false
             button.wantsLayer = true
 
-
             // Single-line truncation if too wide
             if let cell = button.cell as? NSButtonCell {
                 cell.usesSingleLineMode = true
@@ -236,7 +260,6 @@ class MessageCellView: NSView {
             // Force a single-line height (30)
             add(constraint: button.heightAnchor.constraint(equalToConstant: 30))
             // Let the button expand horizontally, up to the bubble’s max
-            // (If it’s bigger than the text, the stack—and thus bubble—will match the button’s width)
             button.setContentHuggingPriority(.defaultLow, for: .horizontal)
             button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
@@ -275,6 +298,9 @@ class MessageCellView: NSView {
 
         // Finally cap the total width
         add(constraint: bubbleView.widthAnchor.constraint(lessThanOrEqualToConstant: maxBubbleWidth))
+
+        messageUniqueID = rendition.messageUniqueID
+        editable = rendition.isEditable
     }
 
     @objc private func buttonTapped(_ sender: NSButton) {
@@ -287,43 +313,52 @@ class MessageCellView: NSView {
             b.isEnabled = false
         }
     }
-/*
-    static func height(for rendition: MessageRendition, tableViewWidth: CGFloat) -> CGFloat {
-        // measure text
-        let hPadding: CGFloat = 16
-        let maxBubbleWidth = tableViewWidth * 0.7 - hPadding
-        let textHeight = measuredTextHeight(for: rendition.attributedString, maxWidth: maxBubbleWidth)
 
-        // base bubble vertical insets
-        let baseHeight = topInset + textHeight + bottomInset
-
-        // add buttons
-        let spacingBetweenLabelAndButtons: CGFloat = rendition.buttons.isEmpty ? 0 : 8
-        let buttonHeight: CGFloat = 30
-        let totalButtonHeights = buttonHeight * CGFloat(rendition.buttons.count)
-        // some spacing between each button
-        let buttonSpacing = 8 * CGFloat(max(0, rendition.buttons.count - 1))
-
-        return baseHeight + spacingBetweenLabelAndButtons + totalButtonHeights + buttonSpacing
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window != nil {
+            // Add a local monitor for right mouse down events.
+            rightClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+                guard let self = self, let win = self.window else { return event }
+                let pointInSelf = self.convert(event.locationInWindow, from: nil)
+                if self.bounds.contains(pointInSelf) {
+                    self.handleRightClick(event)
+                    return nil
+                }
+                return event
+            }
+        } else if let monitor = rightClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            rightClickMonitor = nil
+        }
     }
 
-    private static func measuredTextHeight(for attributedString: NSAttributedString,
-                                           maxWidth: CGFloat) -> CGFloat
-    {
-        let textStorage = NSTextStorage(attributedString: attributedString)
-        let layoutManager = NSLayoutManager()
-        let textContainer = NSTextContainer(size: CGSize(width: maxWidth, height: .greatestFiniteMagnitude))
-        textContainer.lineBreakMode = .byWordWrapping
-        textContainer.lineFragmentPadding = 0
-        layoutManager.addTextContainer(textContainer)
-        textStorage.addLayoutManager(layoutManager)
+    @objc private func handleRightClick(_ event: NSEvent) {
+        guard editable else { return }
+        let menu = NSMenu(title: "Context Menu")
+        let editItem = NSMenuItem(title: "Edit", action: #selector(editMenuItemClicked(_:)), keyEquivalent: "")
+        editItem.target = self
+        menu.addItem(editItem)
 
-        layoutManager.ensureLayout(for: textContainer)
-        let usedRect = layoutManager.usedRect(for: textContainer)
-        return ceil(usedRect.height)
+        let copyItem = NSMenuItem(title: "Copy", action: #selector(copyMenuItemClicked(_:)), keyEquivalent: "")
+        copyItem.target = self
+        menu.addItem(copyItem)
+        NSMenu.popUpContextMenu(menu, with: event, for: self)
     }
- */
+
+    @objc private func copyMenuItemClicked(_ sender: Any) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(textLabel.string, forType: .string)
+    }
+    @objc private func editMenuItemClicked(_ sender: Any) {
+        if let id = messageUniqueID {
+            editButtonClicked?(id)
+        }
+    }
 }
+
+// MARK: - DateCellView
 
 class DateTextField: NSTextField {}
 
@@ -352,6 +387,9 @@ class DateCellView: NSView {
     }
 
     private func setupViews() {
+        wantsLayer = true
+        layer?.masksToBounds = false  // Allow subviews to be drawn outside the cell’s bounds.
+
         // Setup bubble
         bubbleView.wantsLayer = true
         bubbleView.layer?.cornerRadius = 8
@@ -396,7 +434,7 @@ class DateCellView: NSView {
     private func humanReadableDate(from components: DateComponents) -> String {
         let calendar = Calendar.current
         guard let date = calendar.date(from: components) else {
-            return "Inalid date"
+            return "Invalid date"
         }
 
         let now = Date()
@@ -421,5 +459,5 @@ class DateCellView: NSView {
         }
 
         return formatter.string(from: date)
-    }}
-
+    }
+}

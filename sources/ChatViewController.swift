@@ -41,6 +41,7 @@ class ChatViewController: NSViewController {
     private let listModel: ChatListModel
     private let client: ChatClient
     private let broker: ChatBroker
+    private var estimatedCount = 0
 
     init(listModel: ChatListModel, client: ChatClient, broker: ChatBroker) {
         self.listModel = listModel
@@ -73,7 +74,7 @@ class ChatViewController: NSViewController {
         titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         titleLabel.maximumNumberOfLines = 1
         titleLabel.lineBreakMode = .byTruncatingTail
-        
+
         // Session button
         if #available(macOS 11.0, *),
            let image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil) {
@@ -431,9 +432,11 @@ extension ChatViewController {
 extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     func numberOfRows(in tableView: NSTableView) -> Int {
         guard let model else {
+            estimatedCount = 0
             return 0
         }
         DLog("report \(model.items.count) items in table view")
+        estimatedCount = model.items.count
         return model.items.count
     }
 
@@ -471,9 +474,23 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         }
     }
 
+    private func edit(_ messageID: UUID) {
+        guard let model,
+              let i = model.index(ofMessageID: messageID),
+              case .message(let message) = model.items[i],
+               case .plainText(let text) = message.content else {
+            return
+        }
+        model.deleteFrom(index: i)
+        inputTextField.stringValue = text
+    }
+
     private func configure(cell: MessageCellView, for message: Message, isLast: Bool) {
         cell.configure(with: rendition(for: message, isLast: isLast),
                        tableViewWidth: tableView.bounds.width)
+        cell.editButtonClicked = { [weak self] messageID in
+            self?.edit(messageID)
+        }
         let originalMessageID = message.uniqueID
         let chatID = self.chatID
         switch message.content {
@@ -586,7 +603,10 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
 
     private func rendition(for message: Message, isLast: Bool) -> MessageRendition {
         var enableButtons = isLast
+        var editable = false
         switch message.content {
+        case .plainText:
+            editable = message.author == .user
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession:
@@ -615,7 +635,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 messageUniqueID: message.uniqueID,
                                 isUser: message.author == .user,
                                 enableButtons: enableButtons,
-                                timestamp: timestamp)
+                                timestamp: timestamp,
+                                isEditable: editable)
     }
 }
 
@@ -778,12 +799,16 @@ fileprivate class TypingIndicatorCellView: NSView {
 extension ChatViewController: ChatViewControllerModelDelegate {
     func chatViewControllerModel(didInsertItemAtIndex i: Int) {
         DLog("Insert tableview row at \(i)")
+        estimatedCount += 1
+        it_assert(i <= estimatedCount)
         tableView.insertRows(at: IndexSet(integer: i))
     }
     
-    func chatViewControllerModel(didRemoveItemAtIndex i: Int) {
-        DLog("Remove tableview row at \(i)")
-        tableView.removeRows(at: IndexSet(integer: i))
+    func chatViewControllerModel(didRemoveItemsInRange range: Range<Int>) {
+        DLog("Remove tableview row at \(range)")
+        it_assert(range.upperBound <= estimatedCount)
+        estimatedCount -= range.count
+        tableView.removeRows(at: IndexSet(ranges: [range]))
     }
 }
 
@@ -797,14 +822,14 @@ extension NSMenu {
 
 protocol ChatViewControllerModelDelegate: AnyObject {
     func chatViewControllerModel(didInsertItemAtIndex: Int)
-    func chatViewControllerModel(didRemoveItemAtIndex: Int)
+    func chatViewControllerModel(didRemoveItemsInRange range: Range<Int>)
 }
 
 class NotifyingArray<Element> {
     private var storage = [Element]()
 
     var didInsert: ((Int) -> ())?
-    var didRemove: ((Int) -> ())?
+    var didRemove: ((Range<Int>) -> ())?
 
     func append(_ element: Element) {
         storage.append(element)
@@ -812,10 +837,11 @@ class NotifyingArray<Element> {
         didInsert?(storage.count - 1)
     }
 
-    func removeLast() {
+    func removeLast(_ n: Int = 1) {
         DLog("Remove \(String(describing: storage.last))")
-        storage.removeLast()
-        didRemove?(storage.count)
+        let count = storage.count
+        storage.removeLast(n)
+        didRemove?((count - n)..<count)
     }
 
     var last: Element? {
@@ -902,8 +928,8 @@ class ChatViewControllerModel {
         items.didInsert = { [weak self] i in
             self?.delegate?.chatViewControllerModel(didInsertItemAtIndex: i)
         }
-        items.didRemove = { [weak self] i in
-            self?.delegate?.chatViewControllerModel(didRemoveItemAtIndex: i)
+        items.didRemove = { [weak self] range in
+            self?.delegate?.chatViewControllerModel(didRemoveItemsInRange: range)
         }
     }
 
@@ -943,6 +969,10 @@ class ChatViewControllerModel {
                 return false
             }
         }
+    }
+
+    func deleteFrom(index i: Int) {
+        items.removeLast(items.count - i)
     }
 }
 
