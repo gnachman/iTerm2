@@ -31,6 +31,7 @@ NSString *const kiTermIndicatorDebugLogging = @"kiTermIndicatorDebugLogging";
 NSString *const kiTermIndicatorSecureKeyboardEntry_Forced = @"kiTermIndicatorSecureKeyboardEntry_Forced";
 NSString *const kiTermIndicatorSecureKeyboardEntry_User = @"kiTermIndicatorSecureKeyboardEntry_User";
 NSString *const kiTermIndicatorPinned = @"kiTermIndicatorPinned";
+NSString *const kiTermIndicatorAIWatching = @"kiTermIndicatorAIWatching";
 
 static const NSTimeInterval kFullScreenFlashDuration = 0.3;
 static const NSTimeInterval kFlashDuration = 0.3;
@@ -116,6 +117,9 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             kiTermIndicatorPinned: [self imagePairWithLegacyName:@"PinnedIndicator"
                                                    modernOutline:@"pin"
                                                            large:NO],
+            kiTermIndicatorAIWatching: [self imagePairWithLegacyName:@"AIWatching"
+                                                       modernOutline:@"brain"
+                                                               large:NO]
         };
     });
 
@@ -234,7 +238,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorDebugLogging,
               kiTermIndicatorSecureKeyboardEntry_Forced,
               kiTermIndicatorSecureKeyboardEntry_User,
-              kiTermIndicatorPinned];
+              kiTermIndicatorPinned,
+              kiTermIndicatorAIWatching];
 }
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block {
@@ -267,7 +272,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     }
 }
 
-- (NSString *)helpTextForIndicatorWithName:(NSString *)name {
+- (NSString *)helpTextForIndicatorWithName:(NSString *)name sessionID:(NSString *)sessionID {
     // NOTE: These messages are interpreted as markdown.
     NSDictionary<NSString *, NSString *> *messages = @{
         kItermIndicatorBroadcastInput: @"Keyboard input gets broadcast to other sessions.",
@@ -281,16 +286,17 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorDebugLogging: @"Debug logging is enabled.",
         kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
         kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
-        kiTermIndicatorPinned: @"This Hotkey Window is pinned."
+        kiTermIndicatorPinned: @"This Hotkey Window is pinned.",
+        kiTermIndicatorAIWatching: [NSString stringWithFormat:@"AI Chats can view or control this session.\n * [Stop all](iterm2:unlink-session-chat?s=%@&t=%@)\n * [Reveal](iterm2:reveal-chat-for-session?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken], sessionID, [[NSWorkspace sharedWorkspace] it_newToken]]
     };
     return messages[name];
 }
 
-- (NSString *)helpTextForIndicatorAt:(NSPoint)point {
+- (NSString *)helpTextForIndicatorAt:(NSPoint)point sessionID:(NSString *)sessionID {
     __block NSString *result = nil;
     [self enumerateTopRightIndicatorsInFrame:_lastFrame andDraw:NO block:^(NSString *name, NSImage *image, NSRect frame, BOOL dark) {
         if (NSPointInRect(point, frame)) {
-            result = [self helpTextForIndicatorWithName:name];
+            result = [self helpTextForIndicatorWithName:name sessionID:sessionID];
         }
     }];
     return result;

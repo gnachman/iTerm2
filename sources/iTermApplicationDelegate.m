@@ -1549,12 +1549,64 @@ void TurnOnDebugLoggingAutomatically(void) {
     if ([components.path isEqualToString:@"annotation"]) {
         [self revealAnnotationFromURL:url];
     }
+    if ([components.path isEqualToString:@"unlink-session-chat"]) {
+        [self unlinkSessionChatFromURL:url];
+    }
+    if ([components.path isEqualToString:@"reveal-chat-for-session"]) {
+        [self revealChatForSessionFromURL:url];
+    }
     return NO;
 }
 
 - (void)disableCommandSelection {
     [iTermPreferences setBool:NO forKey:kPreferenceKeyClickToSelectCommand];
     [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyClickToSelectCommand];
+}
+
+- (void)revealChatForSessionFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *token = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"t"]) {
+            token = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    if (![[NSWorkspace sharedWorkspace] it_checkToken:token]) {
+        return;
+    }
+    NSString *chatID = [iTermChatDatabase firstChatIDForSessionGuid:guid];
+    if (!chatID) {
+        return;
+    }
+    [iTermChatWindowController.instance showChatWindow];
+    [iTermChatWindowController.instance selectChatWithID:chatID];
+
+}
+
+- (void)unlinkSessionChatFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *token = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"t"]) {
+            token = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    if (![[NSWorkspace sharedWorkspace] it_checkToken:token]) {
+        return;
+    }
+    [iTermChatDatabase unlinkSessionGuid:guid];
 }
 
 - (void)revealAnnotationFromURL:(NSURL *)url {

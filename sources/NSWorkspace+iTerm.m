@@ -72,4 +72,24 @@
     return YES;
 }
 
+static NSMutableSet<NSString * > *urlTokens;
+
+- (NSString *)it_newToken {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        urlTokens = [NSMutableSet set];
+    });
+    NSString *token = [[NSUUID UUID] UUIDString];
+    [urlTokens addObject:token];
+    return token;
+}
+
+- (BOOL)it_checkToken:(NSString *)token {
+    if (![urlTokens containsObject:token]) {
+        return NO;
+    }
+    [urlTokens removeObject:token];
+    return YES;
+}
+
 @end

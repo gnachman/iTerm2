@@ -14,7 +14,7 @@ struct Chat {
 }
 
 extension Chat: iTermDatabaseElement {
-    private enum Columns: String {
+    enum Columns: String {
         case uuid
         case title
         case creationDate
@@ -108,7 +108,7 @@ class ChatListModel: ChatListDataSource {
 
     init?() {
         guard let chatDb = ChatDatabase.instance,
-              let chats = chatDb.chats() else {
+              let chats = chatDb.chats else {
             return nil
         }
         chatStorage = chats

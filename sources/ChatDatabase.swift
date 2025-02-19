@@ -5,6 +5,40 @@
 //  Created by George Nachman on 2/17/25.
 //
 
+@objc(iTermChatDatabase)
+class ObjCChatDatabase: NSObject {
+    @objc static let redrawTerminalsNotification = Notification.Name("iTermChatDatabaseRedrawTerminals")
+
+    @objc(chatIDsForSession:)
+    static func chatIDsForSession(withGUID guid: String) -> Set<String> {
+        guard let instance = ChatDatabase.instance else {
+            return []
+        }
+        return instance.sessionToChatMap[guid] ?? Set()
+    }
+
+    @objc(unlinkSessionGuid:)
+    static func unlink(sessionGuid: String) {
+        guard let instance = ChatDatabase.instance,
+        let chats = instance.chats else {
+            return
+        }
+        for i in 0..<chats.count {
+            let chat = chats[i]
+            if chat.sessionGuid == sessionGuid {
+                var temp = chats[i]
+                temp.sessionGuid = nil
+                chats[i] = temp
+            }
+        }
+    }
+
+    @objc(firstChatIDForSessionGuid:)
+    static func firstChatID(forSessionGuid sessionGuid: String) -> String? {
+        return ChatDatabase.instance?.chats?.first { $0.sessionGuid == sessionGuid }?.id
+    }
+}
+
 class ChatDatabase {
     private static var _instance: ChatDatabase?
     static var instance: ChatDatabase? {
@@ -22,6 +56,7 @@ class ChatDatabase {
     }
 
     let db: iTermDatabase
+    fileprivate var sessionToChatMap = [String: Set<String>]()
 
     init?(url: URL){
         db = iTermSqliteDatabaseImpl(url: url)
@@ -37,6 +72,7 @@ class ChatDatabase {
             db.close()
             return
         }
+        popuplateSessionToChatMap()
     }
 
     private func createTables() -> Bool {
@@ -50,8 +86,36 @@ class ChatDatabase {
         return true
     }
 
-    func chats() -> DatabaseBackedArray<Chat>? {
-        return DatabaseBackedArray(db: db)
+    private func popuplateSessionToChatMap() {
+        let sql =
+        """
+        SELECT
+            \(Chat.Columns.sessionGuid),
+            \(Chat.Columns.uuid.rawValue)
+        FROM Chat
+        WHERE
+            \(Chat.Columns.sessionGuid.rawValue) IS NOT NULL
+        """
+        guard let resultSet = db.executeQuery(sql, withArguments: []) else {
+            return
+        }
+        while resultSet.next() {
+            guard let guid = resultSet.string(forColumn: Chat.Columns.sessionGuid.rawValue),
+                  let chatID = resultSet.string(forColumn: Chat.Columns.uuid.rawValue) else {
+                continue
+            }
+            sessionToChatMap[guid, default: Set()].insert(chatID)
+        }
+    }
+
+    private var _chats: DatabaseBackedArray<Chat>?
+    var chats: DatabaseBackedArray<Chat>? {
+        if _chats == nil {
+            let dba = DatabaseBackedArray<Chat>(db: db)
+            dba.delegate = self
+            _chats = dba
+        }
+        return _chats
     }
 
     func messages(inChat chatID: String) -> DatabaseBackedArray<Message>? {
@@ -88,6 +152,33 @@ class ChatDatabase {
     }
 }
 
+extension ChatDatabase: DatabaseBackedArrayDelegate {
+    func databaseBackedArray(didInsertElement chat: Chat) {
+        if let guid = chat.sessionGuid {
+            sessionToChatMap[guid, default: Set()].insert(chat.id)
+            NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
+        }
+    }
+    
+    func databaseBackedArray(didRemoveElement chat: Chat) {
+        if let guid = chat.sessionGuid {
+            sessionToChatMap[guid]?.remove(chat.id)
+            NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
+        }
+    }
+    
+    func databaseBackedArray(didModifyElement newValue: Chat, oldValue: Chat) {
+        if let guid = oldValue.sessionGuid {
+            sessionToChatMap[guid]?.remove(oldValue.id)
+            NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
+        }
+        if let guid = newValue.sessionGuid {
+            sessionToChatMap[guid, default: Set()].insert(newValue.id)
+            NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
+        }
+    }
+}
+
 protocol iTermDatabaseElement {
     static func schema() -> String
     static func fetchAllQuery() -> String
@@ -97,19 +188,27 @@ protocol iTermDatabaseElement {
     func removeQuery() -> (String, [Any])
 }
 
+protocol DatabaseBackedArrayDelegate<Element>: AnyObject where Element: iTermDatabaseElement {
+    associatedtype Element: iTermDatabaseElement
+    func databaseBackedArray(didModifyElement: Element, oldValue: Element)
+    func databaseBackedArray(didInsertElement: Element)
+    func databaseBackedArray(didRemoveElement: Element)
+}
+
 class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
     private var elements = [Element]()
     private let db: iTermDatabase
+    weak var delegate: (any DatabaseBackedArrayDelegate<Element>)?
 
     var count: Int {
         elements.count
     }
 
-    convenience init(db: iTermDatabase) {
+    fileprivate convenience init(db: iTermDatabase) {
         self.init(db: db, query: Element.fetchAllQuery(), args: [])
     }
 
-    init(db: iTermDatabase, query: String, args: [Any]) {
+    fileprivate init(db: iTermDatabase, query: String, args: [Any]) {
         self.db = db
         if let resultSet = db.executeQuery(query, withArguments: args) {
             while resultSet.next() {
@@ -126,9 +225,11 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
             elements[i]
         }
         set {
+            let oldValue = elements[i]
             elements[i] = newValue
             let (query, args) = newValue.updateQuery()
             db.executeUpdate(query, withArguments: args)
+            delegate?.databaseBackedArray(didModifyElement: newValue, oldValue: oldValue)
         }
     }
 
@@ -145,12 +246,14 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
         let (query, args) = element.removeQuery()
         db.executeUpdate(query, withArguments: args)
         elements.remove(at: i)
+        delegate?.databaseBackedArray(didRemoveElement: element)
     }
 
     func insert(_ element: Element, atIndex i: Int) {
         let (query, args) = element.appendQuery()
         db.executeUpdate(query, withArguments: args)
         elements.insert(element, at: i)
+        delegate?.databaseBackedArray(didInsertElement: element)
     }
 
     func firstIndex(where test: (Element) -> Bool) -> Int? {

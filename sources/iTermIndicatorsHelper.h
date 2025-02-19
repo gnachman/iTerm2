@@ -24,6 +24,7 @@ extern NSString *const kiTermIndicatorFilter;
 extern NSString *const kiTermIndicatorSecureKeyboardEntry_Forced;
 extern NSString *const kiTermIndicatorSecureKeyboardEntry_User;
 extern NSString *const kiTermIndicatorPinned;
+extern NSString *const kiTermIndicatorAIWatching;
 
 extern CGFloat kiTermIndicatorStandardHeight;
 
@@ -55,6 +56,6 @@ extern CGFloat kiTermIndicatorStandardHeight;
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block;
 - (void)enumerateCenterIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect, CGFloat, BOOL))block;
 
-- (NSString *)helpTextForIndicatorAt:(NSPoint)point;
+- (NSString *)helpTextForIndicatorAt:(NSPoint)point sessionID:(NSString *)sessionID;
 
 @end

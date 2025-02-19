@@ -15,5 +15,7 @@
 
 - (BOOL)it_securityAgentIsActive;
 - (BOOL)it_openURL:(NSURL *)url;
+- (NSString *)it_newToken;
+- (BOOL)it_checkToken:(NSString *)token;
 
 @end

@@ -11337,6 +11337,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _liveSession && _filter;
 }
 
+- (BOOL)textViewSessionIsWatchedByAI {
+    return [iTermChatDatabase chatIDsForSession:_guid].count > 0;
+}
+
 - (BOOL)textViewInPinnedHotkeyWindow {
     if (![iTermAdvancedSettingsModel showPinnedIndicator]) {
         return NO;

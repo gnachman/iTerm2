@@ -92,6 +92,9 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         }
         return _instance
     }
+    @objc static var instanceIfExists: ChatWindowController? {
+        _instance
+    }
     private let chatViewController: ChatViewController
     private let chatListViewController = ChatListViewController()
     private var splitViewController: ChatSplitViewController!

@@ -292,6 +292,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                                  selector:@selector(applicationDidResignActive:)
                                                      name:NSApplicationDidResignActiveNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(redrawTerminalsNotification:)
+                                                     name:iTermChatDatabase.redrawTerminalsNotification
+                                                   object:nil];
 
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
         _semanticHistoryController.delegate = self;
@@ -1852,7 +1856,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_indicatorsHelper setIndicator:kiTermIndicatorPinned
                             visible:[_delegate textViewInPinnedHotkeyWindow]
                      darkBackground:isDark];
-
+    [_indicatorsHelper setIndicator:kiTermIndicatorAIWatching
+                            visible:[_delegate textViewSessionIsWatchedByAI]
+                     darkBackground:isDark];
     const BOOL secureByUser = [[iTermSecureKeyboardEntryController sharedInstance] enabledByUserDefault];
     const BOOL secure = [[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
     const BOOL allowSecureKeyboardEntryIndicator = [iTermAdvancedSettingsModel showSecureKeyboardEntryIndicator];
@@ -4815,6 +4821,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [self refuseFirstResponderAtCurrentMouseLocation];
 }
 
+- (void)redrawTerminalsNotification:(NSNotification *)notification {
+    [self requestDelegateRedraw];
+}
+
 - (void)refreshTerminal:(NSNotification *)notification {
     [self requestDelegateRedraw];
 }
@@ -6172,7 +6182,8 @@ static NSString *iTermStringFromRange(NSRange range) {
     if (event.type == NSEventTypeLeftMouseUp && event.clickCount == 1) {
         const NSPoint windowPoint = [event locationInWindow];
         const NSPoint enclosingViewPoint = [self.enclosingScrollView convertPoint:windowPoint fromView:nil];
-        NSString *message = [_indicatorsHelper helpTextForIndicatorAt:enclosingViewPoint];
+        NSString *message = [_indicatorsHelper helpTextForIndicatorAt:enclosingViewPoint
+                                                            sessionID:[_delegate.textViewVariablesScope valueForVariableName:iTermVariableKeySessionID]];
         if (message) {
             [self showIndicatorMessage:message at:enclosingViewPoint];
             return VT100GridCoordMake(-1, -1);
