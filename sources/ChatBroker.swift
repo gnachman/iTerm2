@@ -26,6 +26,10 @@ class ChatBroker {
         self.listModel = listModel
     }
 
+    func delete(chatID: String) {
+        listModel.delete(chatID: chatID)
+    }
+
     func create(chatWithTitle title: String, sessionGuid: String?) -> String {
         // Ensure the service is running
         _ = ChatService.instance

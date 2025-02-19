@@ -11,12 +11,13 @@ import SwiftyMarkdown
 @objc(iTermChatViewControllerDelegate)
 protocol ChatViewControllerDelegate: AnyObject {
     func chatViewController(_ controller: ChatViewController, revealSessionWithGuid guid: String) -> Bool
+    func chatViewControllerDeleteSession(_ controller: ChatViewController)
 }
 
 @objc
 class ChatViewController: NSViewController {
     @objc weak var delegate: ChatViewControllerDelegate?
-    private(set) var chatID = UUID().uuidString
+    private(set) var chatID: String? = UUID().uuidString
 
     private var scrollView: NSScrollView!
     private var tableView: NSTableView!
@@ -26,17 +27,17 @@ class ChatViewController: NSViewController {
     private var sendButton: NSButton!
     private var showTypingIndicator: Bool {
         get {
-            model.showTypingIndicator
+            model?.showTypingIndicator ?? false
         }
         set {
-            model.showTypingIndicator = newValue
+            model?.showTypingIndicator = newValue
             scrollToBottom(animated: true)
         }
     }
     private var eligibleForAutoPaste = true
     private var brokerSubscription: ChatBroker.Subscription?
     private var pickSessionPromise: iTermPromise<PTYSession>?
-    private var model: ChatViewControllerModel
+    private var model: ChatViewControllerModel?
     private let listModel: ChatListModel
     private let client: ChatClient
     private let broker: ChatBroker
@@ -47,7 +48,7 @@ class ChatViewController: NSViewController {
         self.broker = broker
         model = ChatViewControllerModel(listModel: listModel)
         super.init(nibName: nil, bundle: nil)
-        model.delegate = self
+        model?.delegate = self
     }
     
     required init?(coder: NSCoder) {
@@ -69,14 +70,27 @@ class ChatViewController: NSViewController {
         titleLabel.alignment = .natural
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.isEditable = false
-
+        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        titleLabel.maximumNumberOfLines = 1
+        titleLabel.lineBreakMode = .byTruncatingTail
+        
         // Session button
-        sessionButton = NSButton(title: "Linked Session…", target: nil, action: nil)
+        if #available(macOS 11.0, *),
+           let image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil) {
+            sessionButton = NSButton(image: image, target: nil, action: nil)
+            sessionButton.controlSize = .large
+            sessionButton.isBordered = false
+        } else {
+            sessionButton = NSButton(title: "Chat Info", target: nil, action: nil)
+        }
+
+
         sessionButton.bezelStyle = .badge
         sessionButton.isBordered = false
         sessionButton.target = self
         sessionButton.action = #selector(showSessionButtonMenu(_:))
         sessionButton.sizeToFit()
+        sessionButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
         sessionButton.translatesAutoresizingMaskIntoConstraints = false
         sessionButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
@@ -104,6 +118,7 @@ class ChatViewController: NSViewController {
         inputTextField.placeholderString = "Type a message…"
         inputTextField.translatesAutoresizingMaskIntoConstraints = false
         inputTextField.delegate = self
+        inputTextField.isEnabled = false
 
         if #available(macOS 11.0, *) {
             if let image = NSImage(systemSymbolName: "paperplane.fill", accessibilityDescription: "Send") {
@@ -132,7 +147,7 @@ class ChatViewController: NSViewController {
         // Header stack
         let headerStack = NSStackView(views: [titleLabel, sessionButton])
         headerStack.orientation = .horizontal
-        headerStack.spacing = 16
+        headerStack.spacing = 4
         headerStack.translatesAutoresizingMaskIntoConstraints = false
         headerStack.setContentHuggingPriority(.defaultLow, for: .horizontal)
         headerStack.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
@@ -147,11 +162,15 @@ class ChatViewController: NSViewController {
         NSLayoutConstraint.activate([
             headerStack.leadingAnchor.constraint(equalTo: mainStack.leadingAnchor),
             headerStack.trailingAnchor.constraint(equalTo: mainStack.trailingAnchor),
-            titleLabel.firstBaselineAnchor.constraint(equalTo: sessionButton.firstBaselineAnchor),
+
             sessionButton.trailingAnchor.constraint(equalTo: headerStack.trailingAnchor),
+            sessionButton.widthAnchor.constraint(equalToConstant: 18),
+            sessionButton.topAnchor.constraint(equalTo: titleLabel.topAnchor),
+            sessionButton.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
+
             mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
             mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
-            mainStack.topAnchor.constraint(equalTo: view.topAnchor, constant: 8),
+            mainStack.topAnchor.constraint(equalTo: view.topAnchor, constant: 4),
             mainStack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -8),
             inputStack.heightAnchor.constraint(equalToConstant: 25),
             sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 24)
@@ -162,50 +181,63 @@ class ChatViewController: NSViewController {
 }
 
 extension ChatViewController {
-    func load(chatID: String) {
+    func load(chatID: String?) {
         guard let window = view.window else {
             return
         }
-        guard let chat = listModel.chat(id: chatID) else {
-            it_fatalError("Loading a nonexistent chat")
+        let chat: Chat? = if let chatID {
+            listModel.chat(id: chatID)
+        } else {
+            nil
         }
-        model = ChatViewControllerModel(chat: chat, listModel: listModel)
-        model.delegate = self
-        titleLabel.stringValue = chat.title
-        self.chatID = chat.id
+        if let chat {
+            model = ChatViewControllerModel(chat: chat, listModel: listModel)
+        } else {
+            model = nil
+        }
+        inputTextField.isEnabled = chatID != nil
+        model?.delegate = self
+        titleLabel.stringValue = chat?.title ?? ""
+        self.chatID = chat?.id
         tableView.reloadData()
         brokerSubscription?.unsubscribe()
-        brokerSubscription = client.subscribe(chatID: chat.id, registrationProvider: window) { [weak self] update in
-            guard let self else {
-                return
-            }
-            switch update {
-            case let .delivery(message, _):
-                if !message.visibleInClient {
-                    let originalCount = model.items.count
-                    self.model.appendMessage(message)
-                    if originalCount > 0 {
-                        // Might need to disable buttons in the last message.
-                        tableView.reloadData(forRowIndexes: IndexSet(integer: self.model.items.count - 2),
-                                             columnIndexes: IndexSet(integer: 0))
+        if let chat {
+            brokerSubscription = client.subscribe(chatID: chat.id, registrationProvider: window) { [weak self] update in
+                guard let self, let model else {
+                    return
+                }
+                switch update {
+                case let .delivery(message, _):
+                    if !message.visibleInClient {
+                        let originalCount = model.items.count
+                        model.appendMessage(message)
+                        if originalCount > 0 {
+                            // Might need to disable buttons in the last message.
+                            tableView.reloadData(forRowIndexes: IndexSet(integer: model.items.count - 2),
+                                                 columnIndexes: IndexSet(integer: 0))
+                        }
+                    }
+                    if case .renameChat(let newName) = message.content {
+                        titleLabel.stringValue = newName
+                    }
+                case let .typingStatus(typing, participant):
+                    switch participant {
+                    case .user:
+                        break
+                    case .agent:
+                        self.showTypingIndicator = typing
                     }
                 }
-                if case .renameChat(let newName) = message.content {
-                    titleLabel.stringValue = newName
-                }
-            case let .typingStatus(typing, participant):
-                switch participant {
-                case .user:
-                    break
-                case .agent:
-                    self.showTypingIndicator = typing
-                }
+                self.scrollToBottom(animated: true)
             }
-            self.scrollToBottom(animated: true)
         }
         view.alphaValue = 1.0
-        showTypingIndicator = TypingStatusModel.instance.isTyping(participant: .agent,
-                                                                  chatID: chatID)
+        if let chatID {
+            showTypingIndicator = TypingStatusModel.instance.isTyping(participant: .agent,
+                                                                      chatID: chatID)
+        } else {
+            showTypingIndicator = false
+        }
         scrollToBottom(animated: false)
         view.window?.makeFirstResponder(inputTextField)
     }
@@ -217,7 +249,7 @@ extension ChatViewController {
     }
 
     func reveal(messageID: UUID) {
-        if let i = model.index(ofMessageID: messageID) {
+        if let i = model?.index(ofMessageID: messageID) {
             scrollRowToCenter(i)
         }
     }
@@ -249,9 +281,11 @@ extension ChatViewController {
     }
 
     @objc private func showSessionButtonMenu(_ sender: NSButton) {
-        if let guid = model.sessionGuid,
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), keyEquivalent: "")
+        menu.addItem(NSMenuItem.separator())
+        if let guid = model?.sessionGuid,
            iTermController.sharedInstance().session(withGUID: guid) != nil {
-            let menu = NSMenu()
 
             menu.addItem(withTitle: "Reveal Linked Session", action: #selector(revealLinkedSession(_:)), keyEquivalent: "")
             menu.addItem(withTitle: "Unlink Session", action: #selector(unlinkSession(_:)), keyEquivalent: "")
@@ -269,7 +303,6 @@ extension ChatViewController {
             let location = NSPoint(x: 0, y: sender.bounds.height)
             menu.popUp(positioning: nil, at: location, in: sender)
         } else {
-            let menu = NSMenu()
             menu.addItem(withTitle: "Link Session", action: #selector(objcLinkSession(_:)), keyEquivalent: "")
             menu.addItem(NSMenuItem.separator())
             menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), keyEquivalent: "")
@@ -281,19 +314,19 @@ extension ChatViewController {
     }
 
     @objc private func setAlwaysAllow(_ sender: Any) {
-        if let guid = model.sessionGuid {
+        if let guid = model?.sessionGuid {
             RemoteCommandExecutor.instance.setPermission(allowed: true, remember: true, guid: guid)
         }
     }
 
     @objc private func setNeverAllow(_ sender: Any) {
-        if let guid = model.sessionGuid {
+        if let guid = model?.sessionGuid {
             RemoteCommandExecutor.instance.setPermission(allowed: false, remember: true, guid: guid)
         }
     }
 
     @objc private func setAsk(_ sender: Any) {
-        if let guid = model.sessionGuid {
+        if let guid = model?.sessionGuid {
             RemoteCommandExecutor.instance.erasePermissions(guid: guid)
         }
     }
@@ -306,7 +339,10 @@ extension ChatViewController {
         if let pickSessionPromise {
             SessionSelector.cancel(pickSessionPromise)
         }
-        let chatID = self.chatID
+        guard let chatID = self.chatID else {
+            completion(nil)
+            return
+        }
         pickSessionPromise = SessionSelector.select()
         let waitingMessage = Message(chatID: chatID,
                                      author: .agent,
@@ -315,10 +351,12 @@ extension ChatViewController {
                                      uniqueID: UUID())
         if let pickSessionPromise {
             pickSessionPromise.then {  [weak self] session in
-                self?.model.sessionGuid = session.guid
-                completion(session)
-                self?.pickSessionPromise = nil
-                self?.reloadCell(forMessageID: waitingMessage.uniqueID)
+                if let self, let model = self.model {
+                    model.sessionGuid = session.guid
+                    completion(session)
+                    self.pickSessionPromise = nil
+                    reloadCell(forMessageID: waitingMessage.uniqueID)
+                }
             }
 
             pickSessionPromise.catchError { [weak self] error in
@@ -335,19 +373,24 @@ extension ChatViewController {
         sessionButton.it_showWarning(withMarkdown: "When a terminal session is linked to this chat, the AI may view terminal contents and run commands in that session. You will be prompted to grant permission before it is able to view, type to, or modify a terminal session.")
     }
 
+    @objc private func deleteChat(_ sender: Any) {
+        delegate?.chatViewControllerDeleteSession(self)
+    }
     @objc private func revealLinkedSession(_ sender: Any) {
-        if let guid = model.sessionGuid {
+        if let guid = model?.sessionGuid {
             _ = delegate?.chatViewController(self, revealSessionWithGuid: guid)
         }
     }
 
     @objc private func unlinkSession(_ sender: Any) {
-        listModel.setGuid(for: chatID, to: nil)
+        if let chatID {
+            listModel.setGuid(for: chatID, to: nil)
+        }
     }
 
     @objc private func sendButtonClicked() {
         let text = inputTextField.stringValue
-        guard !text.isEmpty else {
+        guard !text.isEmpty, let chatID else {
             return
         }
         let message = Message(chatID: chatID,
@@ -362,6 +405,9 @@ extension ChatViewController {
     }
 
     private func scrollToBottom(animated: Bool) {
+        guard let model else {
+            return
+        }
         let row = model.items.count - 1
         guard row >= 0 else { return }
 
@@ -384,11 +430,17 @@ extension ChatViewController {
 
 extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     func numberOfRows(in tableView: NSTableView) -> Int {
+        guard let model else {
+            return 0
+        }
         DLog("report \(model.items.count) items in table view")
         return model.items.count
     }
 
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+        guard let model else {
+            return nil
+        }
         let view = view(forItem: model.items[row], isLastMessage: model.indexIsLastMessage(row))
         DLog("Return view of class \(type(of: view)) for row \(row))")
         return view
@@ -414,7 +466,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     }
 
     private func reloadCell(forMessageID messageID: UUID) {
-        if let i = model.index(ofMessageID: messageID) {
+        if let model, let i = model.index(ofMessageID: messageID) {
             tableView.reloadData(forRowIndexes: IndexSet(integer: i), columnIndexes: IndexSet(integer: 0))
         }
     }
@@ -442,7 +494,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
             case .executingCommand:
                 cell.buttonClicked = { [weak self] identifier, messageID in
-                    if let guid = self?.model.sessionGuid,
+                    if let model = self?.model, let guid = model.sessionGuid,
                        let session = iTermController.sharedInstance().session(withGUID: guid) {
                         session.cancelRemoteCommand()
                     }
@@ -463,14 +515,16 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     break
                 }
                 linkSession { session in
-                    if session != nil {
-                        self.client.publish(message: originalMessage, toChatID: chatID)
-                    } else {
-                        self.client.respondSuccessfullyToRemoteCommandRequest(
-                            inChat: chatID,
-                            requestUUID: originalMessage.uniqueID,
-                            message: "The user declined to allow this function call to execute.",
-                            functionCallName: originalMessage.functionCallName ?? "Unknown function call name")
+                    if let chatID {
+                        if session != nil {
+                            self.client.publish(message: originalMessage, toChatID: chatID)
+                        } else {
+                            self.client.respondSuccessfullyToRemoteCommandRequest(
+                                inChat: chatID,
+                                requestUUID: originalMessage.uniqueID,
+                                message: "The user declined to allow this function call to execute.",
+                                functionCallName: originalMessage.functionCallName ?? "Unknown function call name")
+                        }
                     }
                 }
             }
@@ -479,7 +533,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 guard messageID == originalMessageID else {
                     return
                 }
-                guard let guid = self.listModel.chat(id: chatID)?.sessionGuid,
+                guard let chatID,
+                      let guid = self.listModel.chat(id: chatID)?.sessionGuid,
                       let session = iTermController.sharedInstance().session(withGUID: guid) else {
                     return
                 }
@@ -517,6 +572,9 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     }
 
     func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
+        guard let model else {
+            return 0
+        }
         let item = model.items[row]
         let prototypeCell = view(forItem: item, isLastMessage: model.indexIsLastMessage(row))
         prototypeCell.frame = NSRect(x: 0, y: 0, width: tableView.bounds.width, height: 0)
@@ -536,7 +594,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     enableButtons = false
                 }
             case .executingCommand:
-                if let guid = model.sessionGuid,
+                if let model,
+                   let guid = model.sessionGuid,
                    let session = iTermController.sharedInstance().session(withGUID: guid) {
                     if !session.isExecutingRemoteCommand {
                         enableButtons = false
@@ -754,7 +813,7 @@ class NotifyingArray<Element> {
     }
 
     func removeLast() {
-        DLog("Remove \(storage.last)")
+        DLog("Remove \(String(describing: storage.last))")
         storage.removeLast()
         didRemove?(storage.count)
     }

@@ -171,7 +171,12 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
             backing: .buffered,
             defer: false
         )
-        window.title = model.chat(id: chatViewController.chatID)?.title ?? "AI Chat"
+        if let chatID = chatViewController.chatID,
+           let model = model.chat(id: chatID) {
+            window.title = model.title
+        } else {
+            window.title = "AI Chat"
+        }
 
         window.titlebarAppearsTransparent = false
         window.isMovableByWindowBackground = true
@@ -263,7 +268,10 @@ extension ChatWindowController: NSToolbarDelegate {
     }
 
     private var currentChat: Chat? {
-        return model.chat(id: chatViewController.chatID)
+        guard let chatID = chatViewController.chatID else {
+            return nil
+        }
+        return model.chat(id: chatID)
     }
 
     @objc(setSelectionText:forSession:)
@@ -298,7 +306,7 @@ extension ChatWindowController: ChatListViewControllerDelegate {
     }
 
     func chatListViewController(_ chatListViewController: ChatListViewController,
-                                didSelectChat chatID: String) {
+                                didSelectChat chatID: String?) {
         chatViewController.load(chatID: chatID)
     }
 }
@@ -317,6 +325,27 @@ extension ChatWindowController: ChatViewControllerDelegate {
             return true
         }
         return false
+    }
+
+    func chatViewControllerDeleteSession(_ controller: ChatViewController) {
+        guard let chatID = controller.chatID else {
+            return
+        }
+        let warning = iTermWarning()
+        warning.title = "Are you sure you want to delete this chat? This action cannot be undone."
+        warning.heading = "Delete Chat?"
+
+        let action = iTermWarningAction(label: "Delete") { [weak self] _ in
+            guard let self else {
+                return
+            }
+            broker.delete(chatID: chatID)
+            chatViewController.load(chatID: nil)
+        }
+        action.destructive = true
+        warning.warningActions = [ iTermWarningAction(label: "Cancel"), action ]
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.runModal()
     }
 }
 

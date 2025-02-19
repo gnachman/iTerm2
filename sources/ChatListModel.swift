@@ -131,6 +131,17 @@ class ChatListModel: ChatListDataSource {
         return index(of: chatID)
     }
 
+    func delete(chatID: String) {
+        let i = chatStorage.firstIndex(where: {
+            $0.id == chatID
+        })
+        guard let i else {
+            return
+        }
+        chatStorage.remove(at: i)
+        NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
+    }
+
     func add(chat: Chat) {
         chatStorage.prepend(chat)
         NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)

@@ -10,7 +10,7 @@ import AppKit
 protocol ChatListViewControllerDelegate: AnyObject, ChatSearchResultsViewControllerDelegate {
     func chatListViewControllerDidTapNewChat(_ viewController: ChatListViewController)
     func chatListViewController(_ chatListViewController: ChatListViewController,
-                                didSelectChat chatID: String)
+                                didSelectChat chatID: String?)
 
 }
 
@@ -40,7 +40,7 @@ class ChatListViewController: NSViewController {
     private let newChatButton: NSButton = {
         let button: NSButton
         if #available(macOS 11.0, *),
-           let image = NSImage(systemSymbolName: "doc.badge.plus", accessibilityDescription: nil) {
+           let image = NSImage(systemSymbolName: "plus", accessibilityDescription: nil) {
             button = NSButton(image: image, target: nil, action: nil)
             button.isBordered = false
         } else {
@@ -90,6 +90,7 @@ class ChatListViewController: NSViewController {
 
             newChatButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -10),
             newChatButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            newChatButton.heightAnchor.constraint(equalTo: titleLabel.heightAnchor),
 
             searchField.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             searchField.trailingAnchor.constraint(equalTo: newChatButton.trailingAnchor),
@@ -98,6 +99,7 @@ class ChatListViewController: NSViewController {
             headerView.bottomAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 4),
         ])
         headerView.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
+        newChatButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
         // Setup table view
         setupTableView()
@@ -134,6 +136,8 @@ class ChatListViewController: NSViewController {
             if let chatID, let i = dataSource?.chatListViewController(self, indexOfChatID: chatID) {
                 tableView.selectRowIndexes(IndexSet(integer: i),
                                            byExtendingSelection: false)
+            } else {
+                tableView.selectRowIndexes(IndexSet(), byExtendingSelection: false)
             }
             ignoreSelectionChange = false
         }
@@ -212,7 +216,7 @@ extension ChatListViewController: NSTableViewDelegate {
         } else if let dataSource, let chat {
             cell?.load(chat: chat, dataSource: dataSource)
         }
-        DLog("row \(row) has title \(chat?.title) (label=\(cell!.titleLabel.stringValue)) and id \(chat?.id)")
+        DLog("row \(row) has title \(String(describing: chat?.title)) (label=\(cell!.titleLabel.stringValue)) and id \(String(describing: chat?.id))")
         return cell!
     }
 
@@ -245,10 +249,9 @@ extension ChatListViewController: NSTableViewDelegate {
         if ignoreSelectionChange {
             return
         }
-        if let chatID = findSelectedChatID() {
-            selectedChatID = chatID
-            delegate?.chatListViewController(self, didSelectChat: chatID)
-        }
+        let chatID = findSelectedChatID()
+        selectedChatID = chatID
+        delegate?.chatListViewController(self, didSelectChat: chatID)
     }
 }
 
