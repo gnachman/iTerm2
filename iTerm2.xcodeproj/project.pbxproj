@@ -1718,6 +1718,9 @@
 		A65618562D6439BC0059CD35 /* ChatDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65618552D6439BA0059CD35 /* ChatDatabase.swift */; };
 		A65618582D659F090059CD35 /* ChatCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65618572D659F070059CD35 /* ChatCellView.swift */; };
 		A656185A2D65A2780059CD35 /* ChatSearchResultsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65618592D65A2740059CD35 /* ChatSearchResultsViewController.swift */; };
+		A65618642D6647510059CD35 /* AIWatching@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65618632D6647510059CD35 /* AIWatching@2x.png */; };
+		A65618652D6647510059CD35 /* AIWatching@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65618632D6647510059CD35 /* AIWatching@2x.png */; };
+		A65618662D6647510059CD35 /* AIWatching@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65618632D6647510059CD35 /* AIWatching@2x.png */; };
 		A65660D42372A4A600DC6744 /* iTermCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A65660D22372A4A600DC6744 /* iTermCache.h */; };
 		A65660D52372A4A600DC6744 /* iTermCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A65660D32372A4A600DC6744 /* iTermCache.m */; };
 		A65660D82372A69A00DC6744 /* iTermDoublyLinkedList.h in Headers */ = {isa = PBXBuildFile; fileRef = A65660D62372A69A00DC6744 /* iTermDoublyLinkedList.h */; };
@@ -6164,6 +6167,7 @@
 		A65618552D6439BA0059CD35 /* ChatDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDatabase.swift; sourceTree = "<group>"; };
 		A65618572D659F070059CD35 /* ChatCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatCellView.swift; sourceTree = "<group>"; };
 		A65618592D65A2740059CD35 /* ChatSearchResultsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSearchResultsViewController.swift; sourceTree = "<group>"; };
+		A65618632D6647510059CD35 /* AIWatching@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AIWatching@2x.png"; sourceTree = "<group>"; };
 		A65660D22372A4A600DC6744 /* iTermCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCache.h; sourceTree = "<group>"; };
 		A65660D32372A4A600DC6744 /* iTermCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCache.m; sourceTree = "<group>"; };
 		A65660D62372A69A00DC6744 /* iTermDoublyLinkedList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermDoublyLinkedList.h; sourceTree = "<group>"; };
@@ -8517,6 +8521,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A65618632D6647510059CD35 /* AIWatching@2x.png */,
 				A6643F102CA6218F004B757B /* coderabbitai.png */,
 				A60A80E02C4F66B3002C3AA2 /* LatchBio.png */,
 				A6384F282BE7B9B4008C6984 /* Onboarding-SelectedCommand.png */,
@@ -13879,6 +13884,7 @@
 				A6B4833529D73DA10055E24A /* paperplane.fill.png in Resources */,
 				A6E7AE6F214394CA00DE9F3B /* graphic_bower@2x.png in Resources */,
 				A67F6143214395870093940A /* graphic_http@2x.png in Resources */,
+				A65618662D6647510059CD35 /* AIWatching@2x.png in Resources */,
 				1D6ED98719AEA20D005A7799 /* Maximized.png in Resources */,
 				A6E7AE7F214394DD00DE9F3B /* graphic_compile@2x.png in Resources */,
 				1D6ED98A19AEA20D005A7799 /* LogoFrame.png in Resources */,
@@ -14602,6 +14608,7 @@
 				A686A1181C86A6DD0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
 				A6B3A7361AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
+				A65618642D6647510059CD35 /* AIWatching@2x.png in Resources */,
 				A60C0352208964FE00FE2F1F /* it2_api_wrapper.sh in Resources */,
 				A630119020E6B722008114B7 /* iTermStatusBarSetupCollectionViewItem.xib in Resources */,
 				A67F6171214395990093940A /* graphic_mysql.png in Resources */,
@@ -15107,6 +15114,7 @@
 				A67F6170214395990093940A /* graphic_mysql.png in Resources */,
 				A6A30ED12950EA540050F01A /* aiterm@2x.png in Resources */,
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
+				A65618652D6647510059CD35 /* AIWatching@2x.png in Resources */,
 				A6E7AEB8214394F600DE9F3B /* graphic_ethereum.png in Resources */,
 				A6A1BCC729CB700400646E9F /* square.and.arrow.up.png in Resources */,
 				A6F18B382AE2F39C006C08EE /* uniE0B5_right-half-circle-thin.pdf in Resources */,

@@ -384,13 +384,13 @@ extension ChatViewController {
 
 extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     func numberOfRows(in tableView: NSTableView) -> Int {
-        print("xxx report \(model.items.count) items in table view")
+        DLog("report \(model.items.count) items in table view")
         return model.items.count
     }
 
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         let view = view(forItem: model.items[row], isLastMessage: model.indexIsLastMessage(row))
-        print("xxx Return view of class \(type(of: view)) for row \(row))")
+        DLog("Return view of class \(type(of: view)) for row \(row))")
         return view
     }
 
@@ -718,12 +718,12 @@ fileprivate class TypingIndicatorCellView: NSView {
 
 extension ChatViewController: ChatViewControllerModelDelegate {
     func chatViewControllerModel(didInsertItemAtIndex i: Int) {
-        print("xxx Insert tableview row at \(i)")
+        DLog("Insert tableview row at \(i)")
         tableView.insertRows(at: IndexSet(integer: i))
     }
     
     func chatViewControllerModel(didRemoveItemAtIndex i: Int) {
-        print("xxx Remove tableview row at \(i)")
+        DLog("Remove tableview row at \(i)")
         tableView.removeRows(at: IndexSet(integer: i))
     }
 }
@@ -749,12 +749,12 @@ class NotifyingArray<Element> {
 
     func append(_ element: Element) {
         storage.append(element)
-        print("xxx Insert \(element)")
+        DLog("Insert \(element)")
         didInsert?(storage.count - 1)
     }
 
     func removeLast() {
-        print("xxx Remove \(storage.last)")
+        DLog("Remove \(storage.last)")
         storage.removeLast()
         didRemove?(storage.count)
     }

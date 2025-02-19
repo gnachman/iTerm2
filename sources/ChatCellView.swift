@@ -70,17 +70,17 @@ class ChatCellView: NSTableCellView {
     private func apply(update: ChatBroker.Update,
                        chatID: String,
                        dataSource: ChatListDataSource?) {
-        print("qqq Update for \(chatID) with typing=\(typing): \(update)")
+        DLog("Update for \(chatID) with typing=\(typing): \(update)")
         switch update {
         case let .typingStatus(typing, participant):
             if participant == .agent {
                 if typing {
                     self.typing = true
-                    print("qqq set typing=true in \(chatID)")
+                    DLog("set typing=true in \(chatID)")
                     snippet = "Agent is thinking…"
                 } else {
                     self.typing = false
-                    print("qqq set typing=true in \(false)")
+                    DLog("set typing=true in \(false)")
                     snippet = dataSource?.snippet(forChatID: chatID) ?? ""
                 }
             }

@@ -1209,6 +1209,9 @@ struct AIConversation {
     }
 
     mutating func add(_ aiMessage: AITermController.Message) {
+        while messages.last?.role == aiMessage.role {
+            messages.removeLast()
+        }
         messages.append(aiMessage)
     }
     

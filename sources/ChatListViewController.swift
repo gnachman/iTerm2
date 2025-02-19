@@ -40,7 +40,7 @@ class ChatListViewController: NSViewController {
     private let newChatButton: NSButton = {
         let button: NSButton
         if #available(macOS 11.0, *),
-           let image = NSImage(systemSymbolName: "plus.circle", accessibilityDescription: nil) {
+           let image = NSImage(systemSymbolName: "doc.badge.plus", accessibilityDescription: nil) {
             button = NSButton(image: image, target: nil, action: nil)
             button.isBordered = false
         } else {
@@ -183,6 +183,10 @@ class ChatListViewController: NSViewController {
         guard let i else {
             return
         }
+        searchField.stringValue = ""
+        searchMode = false
+        searchResultsViewController.query = ""
+
         selectedChatID = chatID
         tableView.selectRowIndexes(IndexSet(integer: i), byExtendingSelection: false)
     }
@@ -208,7 +212,7 @@ extension ChatListViewController: NSTableViewDelegate {
         } else if let dataSource, let chat {
             cell?.load(chat: chat, dataSource: dataSource)
         }
-        print("qqq row \(row) has title \(chat?.title) (label=\(cell!.titleLabel.stringValue)) and id \(chat?.id)")
+        DLog("row \(row) has title \(chat?.title) (label=\(cell!.titleLabel.stringValue)) and id \(chat?.id)")
         return cell!
     }
 
