@@ -191,7 +191,7 @@ class ChatSearchResultCell: MessageCellView {}
 extension Message {
     var indexableString: String? {
         switch content {
-        case let .plainText(value): value
+        case let .plainText(value), let .append(string: value, _): value
         case let .markdown(value): AttributedStringForGPTMarkdown(value, didCopy: {}).string
         case let .explanationRequest(request): request.subjectMatter + " " + request.question
         case let .explanationResponse(response):

@@ -42,7 +42,7 @@ class ChatClient {
         case .remoteCommandRequest(let request):
             return processRemoteCommandRequest(chatID: chatID, message: message, request: request)
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse,
-                .selectSessionRequest, .clientLocal, .renameChat:
+                .selectSessionRequest, .clientLocal, .renameChat, .append:
             return message
         case .explanationResponse(let aIAnnotationCollection):
             guard let markdown = processExplanationResponse(annotations: aIAnnotationCollection,

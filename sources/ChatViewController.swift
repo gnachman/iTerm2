@@ -47,9 +47,7 @@ class ChatViewController: NSViewController {
         self.listModel = listModel
         self.client = client
         self.broker = broker
-        model = ChatViewControllerModel(listModel: listModel)
         super.init(nibName: nil, bundle: nil)
-        model?.delegate = self
     }
     
     required init?(coder: NSCoder) {
@@ -181,6 +179,16 @@ class ChatViewController: NSViewController {
     }
 }
 
+extension Message {
+    var shouldCauseScrollToBottom: Bool {
+        switch content {
+        case .append:
+            false
+        default:
+            true
+        }
+    }
+}
 extension ChatViewController {
     func load(chatID: String?) {
         guard let window = view.window else {
@@ -207,8 +215,10 @@ extension ChatViewController {
                 guard let self, let model else {
                     return
                 }
+                var shouldScroll = true
                 switch update {
                 case let .delivery(message, _):
+                    shouldScroll = message.shouldCauseScrollToBottom
                     if !message.visibleInClient {
                         let originalCount = model.items.count
                         model.appendMessage(message)
@@ -216,6 +226,11 @@ extension ChatViewController {
                             // Might need to disable buttons in the last message.
                             tableView.reloadData(forRowIndexes: IndexSet(integer: model.items.count - 2),
                                                  columnIndexes: IndexSet(integer: 0))
+                            if case .append = message.content, let i = model.index(ofMessageID: message.uniqueID) {
+                                // Appended to an existing message
+                                tableView.reloadData(forRowIndexes: IndexSet(integer: i),
+                                                     columnIndexes: IndexSet(integer: 0))
+                            }
                         }
                     }
                     if case .renameChat(let newName) = message.content {
@@ -229,7 +244,9 @@ extension ChatViewController {
                         self.showTypingIndicator = typing
                     }
                 }
-                self.scrollToBottom(animated: true)
+                if shouldScroll {
+                    self.scrollToBottom(animated: true)
+                }
             }
         }
         view.alphaValue = 1.0
@@ -590,6 +607,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
 
     func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
         guard let model else {
+            DLog("no model, can't calculate height")
             return 0
         }
         let item = model.items[row]
@@ -598,6 +616,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         prototypeCell.layoutSubtreeIfNeeded()
 
         let height = prototypeCell.fittingSize.height
+        DLog("Calculated height of \(item) on row \(row) is \(height)")
         return height
     }
 
@@ -673,7 +692,7 @@ extension Message {
 
     var buttons: [MessageRendition.Button] {
         switch content {
-        case .plainText, .markdown, .explanationRequest, .explanationResponse, .remoteCommandResponse, .renameChat:
+        case .plainText, .markdown, .explanationRequest, .explanationResponse, .remoteCommandResponse, .renameChat, .append:
             []
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
@@ -693,7 +712,7 @@ extension Message {
 
     var attributedStringValue: NSAttributedString {
         switch content {
-        case .renameChat:
+        case .renameChat, .append:
             it_fatalError()
         case .plainText(let string):
             let paragraphStyle = NSMutableParagraphStyle()
@@ -810,6 +829,14 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         estimatedCount -= range.count
         tableView.removeRows(at: IndexSet(ranges: [range]))
     }
+
+    func chatViewControllerModel(didModifyItemAtIndex i: Int) {
+        DLog("Reload row at \(i)")
+        it_assert(i >= 0 && i < estimatedCount)
+        tableView.noteHeightOfRows(withIndexesChanged: IndexSet(integer: i))
+        tableView.reloadData(forRowIndexes: IndexSet(integer: i),
+                             columnIndexes: IndexSet(integer: 0))
+    }
 }
 
 extension NSMenu {
@@ -823,6 +850,7 @@ extension NSMenu {
 protocol ChatViewControllerModelDelegate: AnyObject {
     func chatViewControllerModel(didInsertItemAtIndex: Int)
     func chatViewControllerModel(didRemoveItemsInRange range: Range<Int>)
+    func chatViewControllerModel(didModifyItemAtIndex: Int)
 }
 
 class NotifyingArray<Element> {
@@ -830,6 +858,7 @@ class NotifyingArray<Element> {
 
     var didInsert: ((Int) -> ())?
     var didRemove: ((Range<Int>) -> ())?
+    var didModify: ((Int) -> ())?
 
     func append(_ element: Element) {
         storage.append(element)
@@ -853,7 +882,14 @@ class NotifyingArray<Element> {
     }
 
     subscript(_ index: Int) -> Element {
-        storage[index]
+        get {
+            storage[index]
+        }
+        set {
+            storage[index] = newValue
+            DLog("didModify \(newValue)")
+            didModify?(index)
+        }
     }
 
     var count: Int {
@@ -865,7 +901,14 @@ class ChatViewControllerModel {
     weak var delegate: ChatViewControllerModelDelegate?
     private let listModel: ChatListModel
 
-    enum Item {
+    enum Item: CustomDebugStringConvertible {
+        var debugDescription: String {
+            switch self {
+            case .message(let message): "<Message: \(message.content.shortDescription)>"
+            case .date(let date): "<Date: \(date)>"
+            case .agentTyping: "<AgentTyping>"
+            }
+        }
         case message(Message)
         case date(DateComponents)
         case agentTyping
@@ -894,12 +937,6 @@ class ChatViewControllerModel {
         set {
             listModel.setGuid(for: chatID, to: newValue)
         }
-    }
-
-    init(listModel: ChatListModel) {
-        self.listModel = listModel
-        chatID = ""
-        initializeItemsDelegate()
     }
 
     private let alwaysAppendDate = false
@@ -931,9 +968,20 @@ class ChatViewControllerModel {
         items.didRemove = { [weak self] range in
             self?.delegate?.chatViewControllerModel(didRemoveItemsInRange: range)
         }
+        items.didModify = { [weak self] i in
+            self?.delegate?.chatViewControllerModel(didModifyItemAtIndex: i)
+        }
     }
 
     func appendMessage(_ message: Message) {
+        if case .append(_, let uuid) = message.content {
+            if let i = index(ofMessageID: uuid),
+               let canonicalMessages = listModel.messages(forChat: chatID, createIfNeeded: false),
+               let updated = canonicalMessages.firstIndex(where: { $0.uniqueID == uuid }) {
+                items[i] = .message(canonicalMessages[updated])
+            }
+            return
+        }
         let saved = showTypingIndicator
         showTypingIndicator = false
         defer {
@@ -947,10 +995,11 @@ class ChatViewControllerModel {
         items.append(.message(message))
     }
 
-    func indexIsLastMessage(_ i: Int) -> Bool {
+    // Returns true for all messages message[j] for j>i, test(message[j]) is false. Returns true if there are no messages after i.
+    private func indexIsLastMessage(_ i: Int, passingTest test: (Message) -> Bool) -> Bool {
         if case .message = items[i] {
             for j in (i + 1)..<items.count {
-                if case .message = items[j] {
+                if case .message(let message) = items[j], test(message) {
                     return false
                 }
             }
@@ -958,6 +1007,10 @@ class ChatViewControllerModel {
         } else {
             return false
         }
+    }
+
+    func indexIsLastMessage(_ i: Int) -> Bool {
+        return indexIsLastMessage(i, passingTest: { _ in true })
     }
 
     func index(ofMessageID messageID: UUID) -> Int? {

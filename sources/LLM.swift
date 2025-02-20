@@ -11,6 +11,7 @@ import SwiftyMarkdown
 enum LLM {
     protocol AnyResponse {
         var choiceMessages: [Message] { get }
+        var isStreamingResponse: Bool { get }
     }
 
     struct Message: Codable, Equatable {
@@ -158,6 +159,7 @@ fileprivate struct ModernBodyRequestBuilder {
     var messages: [LLM.Message]
     var provider: LLMProvider
     var functions = [LLM.AnyFunction]()
+    var stream: Bool
 
     private struct Body: Codable {
         var model: String?
@@ -166,6 +168,7 @@ fileprivate struct ModernBodyRequestBuilder {
         var temperature: Int? = 0
         var functions: [ChatGPTFunctionDeclaration]? = nil
         var function_call: String? = nil  // "none" and "auto" also allowed
+        var stream: Bool
     }
 
     func body() throws -> Data {
@@ -177,7 +180,8 @@ fileprivate struct ModernBodyRequestBuilder {
                         max_tokens: provider.maxTokens(functions: functions, messages: messages),
                         temperature: provider.temperatureSupported ? 0 : nil,
                         functions: maybeDecls,
-                        function_call: functions.isEmpty ? nil : "auto")
+                        function_call: functions.isEmpty ? nil : "auto",
+                        stream: stream)
         DLog("REQUEST:\n\(body)")
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge
@@ -234,6 +238,7 @@ struct LLMRequestBuilder {
     var apiKey: String
     var messages: [LLM.Message]
     var functions = [LLM.AnyFunction]()
+    var stream = false
 
     var headers: [String: String] {
         switch provider.platform {
@@ -254,14 +259,15 @@ struct LLMRequestBuilder {
         switch provider.version {
         case .legacy:
             try LegacyBodyRequestBuilder(messages: messages,
-                                     provider: provider).body()
+                                         provider: provider).body()
         case .completions:
             try ModernBodyRequestBuilder(messages: messages,
-                                     provider: provider,
-                                     functions: functions).body()
+                                         provider: provider,
+                                         functions: functions,
+                                         stream: true).body()
         case .o1:
             try O1BodyRequestBuilder(messages: messages,
-                                 provider: provider).body()
+                                     provider: provider).body()
 
         case .gemini:
             try GeminiRequestBuilder(messages: messages).body()
@@ -434,10 +440,14 @@ struct LLMProvider {
         return OpenAIMetadata.instance.tokens(in: body) >= Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit))
     }
 
-    func responseParser() -> LLMResponseParser {
+    func responseParser(stream: Bool) -> LLMResponseParser {
         switch version {
         case .completions, .o1:
-            return LLMModernResponseParser()
+            if stream {
+                return LLMModernStreamingResponseParser()
+            } else {
+                return LLMModernResponseParser()
+            }
         case .legacy:
             return LLMLegacyResponseParser()
         case .gemini:
@@ -452,6 +462,7 @@ protocol LLMResponseParser {
 
 struct LLMModernResponseParser: LLMResponseParser {
     struct ModernResponse: Codable, LLM.AnyResponse {
+        var isStreamingResponse: Bool { false }
         var id: String
         var object: String
         var created: Int
@@ -475,6 +486,7 @@ struct LLMModernResponseParser: LLMResponseParser {
             return choices.map { $0.message }
         }
     }
+
     var parsedResponse: ModernResponse?
 
     mutating func parse(data: Data) throws -> LLM.AnyResponse {
@@ -486,8 +498,49 @@ struct LLMModernResponseParser: LLMResponseParser {
     }
 }
 
+struct LLMModernStreamingResponseParser: LLMResponseParser {
+    struct ModernStreamingResponse: Codable, LLM.AnyResponse {
+        var isStreamingResponse: Bool { true }
+
+        let id: String?
+        let object: String?
+        let created: TimeInterval?
+        let model: String?
+        let choices: [UpdateChoice]
+
+        struct UpdateChoice: Codable {
+            // The delta holds the incremental text update.
+            let delta: UpdateDelta
+            let index: Int
+            // For update chunks, finish_reason is nil.
+            let finish_reason: String?
+        }
+
+        struct UpdateDelta: Codable {
+            let content: String?
+        }
+
+        var choiceMessages: [LLM.Message] {
+            return choices.map {
+                LLM.Message(role: "assistant",
+                            content: $0.delta.content ?? "")
+            }
+        }
+    }
+    var parsedResponse: ModernStreamingResponse?
+
+    mutating func parse(data: Data) throws -> LLM.AnyResponse {
+        let decoder = JSONDecoder()
+        let response =  try decoder.decode(ModernStreamingResponse.self, from: data)
+        DLog("RESPONSE:\n\(response)")
+        parsedResponse = response
+        return response
+    }
+}
+
 struct LLMLegacyResponseParser: LLMResponseParser {
     struct LegacyResponse: Codable, LLM.AnyResponse {
+        var isStreamingResponse: Bool { false }
         var id: String
         var object: String
         var created: Int
@@ -527,6 +580,7 @@ struct LLMLegacyResponseParser: LLMResponseParser {
 
 struct LLMGeminiResponseParser: LLMResponseParser {
     struct GeminiResponse: Codable, LLM.AnyResponse {
+        var isStreamingResponse: Bool { false }
         var choiceMessages: [LLM.Message] {
             candidates.map {
                 let role = if let content = $0.content {

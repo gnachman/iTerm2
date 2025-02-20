@@ -224,10 +224,25 @@ class ChatListModel: ChatListDataSource {
     }
 
     func append(message: Message, toChatID chatID: String) {
+        switch message.content {
+        case let .append(string: chunk, uuid: uuid):
+            if let i = index(ofMessageID: uuid, inChat: chatID),
+               let messages =  messages(forChat: chatID, createIfNeeded: false) {
+                var existing = messages[i]
+                existing.append(chunk)
+                messages[i] = existing
+            } else {
+                DLog("Drop append “\(chunk)” of nonexistent message \(uuid)")
+            }
+            return
+        default:
+            break
+        }
         messages(forChat: chatID, createIfNeeded: true)?.append(message)
         switch message.content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal:
+                .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal,
+                .append:
             bump(chatID: chatID)
         case .renameChat(let string):
             rename(chatID: chatID, newName: string)

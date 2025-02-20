@@ -31,20 +31,22 @@ struct Message: Codable {
         case selectSessionRequest(Message)  // carries the original message that needs a session
         case clientLocal(ClientLocal)
         case renameChat(String)
+        case append(string: String, uuid: UUID)  // for streaming responses
 
         var shortDescription: String {
+            let maxLength = 256
             switch self {
             case .plainText(let string), .markdown(let string):
-                return string.truncatedWithTrailingEllipsis(to: 16)
+                return string.truncatedWithTrailingEllipsis(to: maxLength)
             case .explanationRequest(request: let request):
-                return "Explain \(request.originalString.string.truncatedWithTrailingEllipsis(to: 16))"
+                return "Explain \(request.originalString.string.truncatedWithTrailingEllipsis(to: maxLength))"
             case .explanationResponse(let response):
-                return "Explanation: \(response.annotations.count) annotations: \(response.mainResponse?.truncatedWithTrailingEllipsis(to: 16) ?? "No main response")"
+                return "Explanation: \(response.annotations.count) annotations: \(response.mainResponse?.truncatedWithTrailingEllipsis(to: maxLength) ?? "No main response")"
             case .remoteCommandRequest(let rc):
                 return "Run remote command: \(rc.markdownDescription)"
             case .remoteCommandResponse(let result, _, let name):
-                return "Response to remote command \(name): " + result.map(success: { $0.truncatedWithTrailingEllipsis(to: 16)},
-                                                                           failure: { $0.localizedDescription.truncatedWithTrailingEllipsis(to: 16)})
+                return "Response to remote command \(name): " + result.map(success: { $0.truncatedWithTrailingEllipsis(to: maxLength)},
+                                                                           failure: { $0.localizedDescription.truncatedWithTrailingEllipsis(to: maxLength)})
             case .selectSessionRequest(let message):
                 return "Select session: \(message)"
             case .clientLocal(let cl):
@@ -56,10 +58,12 @@ struct Message: Codable {
                 }
             case .renameChat(let name):
                 return "Rename chat to \(name)"
+            case let .append(string: chunk, uuid: uuid):
+                return "Append \(chunk) to \(uuid.uuidString)"
             }
         }
     }
-    let content: Content
+    var content: Content
     let sentDate: Date
     let uniqueID: UUID
 
@@ -67,10 +71,11 @@ struct Message: Codable {
         return "<Message from \(author.rawValue), id \(uniqueID.uuidString): \(content.shortDescription)>"
     }
 
+    // Not shown as separate messages in chat
     var visibleInClient: Bool {
         switch content {
         case .remoteCommandResponse, .renameChat: true
-        case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal: false
+        case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal, .append: false
         }
     }
 
@@ -80,7 +85,7 @@ struct Message: Codable {
         case .clientLocal:
             true
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
-                .markdown, .explanationResponse, .explanationRequest, .renameChat:
+                .markdown, .explanationResponse, .explanationRequest, .renameChat, .append:
             false
         }
     }
@@ -108,9 +113,21 @@ struct Message: Codable {
             case .executingCommand(let command): return command.markdownDescription
             case .pickingSession: return "Selecting session…"
             }
-        case .renameChat: return nil
+        case .renameChat, .append: return nil
         case .remoteCommandResponse:
             return "Finished executing command"
+        }
+    }
+
+    mutating func append(_ chunk: String) {
+        switch content {
+        case .plainText(let string):
+            content = .plainText(string + chunk)
+        case .markdown(let string):
+            content = .markdown(string + chunk)
+        case .explanationRequest, .explanationResponse, .remoteCommandRequest,
+                .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append:
+            it_fatalError()
         }
     }
 }

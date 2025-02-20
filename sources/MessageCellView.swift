@@ -319,7 +319,9 @@ class MessageCellView: NSView {
         if window != nil {
             // Add a local monitor for right mouse down events.
             rightClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
-                guard let self = self, let win = self.window else { return event }
+                guard let self = self else {
+                    return event
+                }
                 let pointInSelf = self.convert(event.locationInWindow, from: nil)
                 if self.bounds.contains(pointInSelf) {
                     self.handleRightClick(event)
