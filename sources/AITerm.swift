@@ -24,7 +24,7 @@ struct WebRequest: Codable, CustomDebugStringConvertible {
 
 struct WebResponse: Codable {
     var data: String
-    var error: String
+    var error: String?
 }
 
 struct PluginError: Error, CustomDebugStringConvertible {
@@ -852,8 +852,7 @@ class AITermController {
             case .begin:
                 it_fatalError()
             case .webResponse(let response):
-                if !response.error.isEmpty {
-                    let error = response.error
+                if let error = response.error, !error.isEmpty {
                     let provider = llmProvider.displayName
                     var message = "Error from \(provider): \(error)"
                     if let reason = LLMErrorParser.errorReason(data: response.data.lossyData), !reason.isEmpty {

@@ -140,7 +140,7 @@ class MessageCellView: NSView {
     /// `maxBubbleWidth` is how wide you allow the bubble to grow.
     func configure(with rendition: MessageRendition,
                    tableViewWidth: CGFloat) {
-        configure(with: rendition, maxBubbleWidth: tableViewWidth * 0.7)
+        configure(with: rendition, maxBubbleWidth: max(16, tableViewWidth * 0.7))
     }
 
     private var customConstraints = [NSLayoutConstraint]()

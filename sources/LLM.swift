@@ -264,7 +264,7 @@ struct LLMRequestBuilder {
             try ModernBodyRequestBuilder(messages: messages,
                                          provider: provider,
                                          functions: functions,
-                                         stream: true).body()
+                                         stream: stream).body()
         case .o1:
             try O1BodyRequestBuilder(messages: messages,
                                      provider: provider).body()

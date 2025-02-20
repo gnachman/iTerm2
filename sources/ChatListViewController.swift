@@ -42,6 +42,7 @@ class ChatListViewController: NSViewController {
         if #available(macOS 11.0, *),
            let image = NSImage(systemSymbolName: "plus", accessibilityDescription: nil) {
             button = NSButton(image: image, target: nil, action: nil)
+            button.imageScaling = .scaleProportionallyUpOrDown
             button.isBordered = false
         } else {
             button = NSButton(title: "New Chat", target: nil, action: nil)
@@ -91,7 +92,7 @@ class ChatListViewController: NSViewController {
             newChatButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -10),
             newChatButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
             newChatButton.heightAnchor.constraint(equalTo: titleLabel.heightAnchor),
-
+            newChatButton.widthAnchor.constraint(equalToConstant: 18),
             searchField.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             searchField.trailingAnchor.constraint(equalTo: newChatButton.trailingAnchor),
             searchField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
@@ -111,7 +112,7 @@ class ChatListViewController: NSViewController {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.drawsBackground = false
         tableView.backgroundColor = .clear
-        
+
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),

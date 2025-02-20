@@ -8,6 +8,60 @@
 import AppKit
 import SwiftyMarkdown
 
+extension IndexSet {
+    var enumeratedDescription: String {
+        map { String($0) }.joined(separator: ", ")
+    }
+}
+class WTFTableView: NSTableView {
+    override func layout() {
+        super.layout()
+        if let lowest = subviews.max(by: { $0.frame.maxY < $1.frame.maxY }) {
+            NSLog("qqq after layout NSTableView height is \(bounds.height). Its subview with greatest maxY (\(lowest.frame.maxY)) is: \(lowest)")
+        } else {
+            NSLog("qqq after layout NSTableView height is \(bounds.height). It has no subviews")
+        }
+    }
+
+    override func reloadData(forRowIndexes rowIndexes: IndexSet, columnIndexes: IndexSet) {
+        NSLog("qqq reload indexes: \(rowIndexes.enumeratedDescription)")
+        super.reloadData(forRowIndexes: rowIndexes, columnIndexes: columnIndexes)
+    }
+
+    override func insertRows(at indexes: IndexSet, withAnimation animationOptions: NSTableView.AnimationOptions = []) {
+        NSLog("qqq insert rows at \(indexes.enumeratedDescription)")
+        super.insertRows(at: indexes, withAnimation: animationOptions)
+    }
+
+    override func removeRows(at indexes: IndexSet, withAnimation animationOptions: NSTableView.AnimationOptions = []) {
+        NSLog("qqq remove rows at \(indexes.enumeratedDescription)")
+        super.removeRows(at: indexes, withAnimation: animationOptions)
+    }
+
+    override func reloadData() {
+        NSLog("qqq reloadData")
+        super.reloadData()
+    }
+
+    override func beginUpdates() {
+        NSLog("qqq beginUpdates")
+        super.beginUpdates()
+    }
+
+    override func endUpdates() {
+        NSLog("qqq endUpdates")
+        super.endUpdates()
+        NSLog("qqq - invalidate intrinsic size constraints -")
+        // I am shaking with rage that this is necessary, but it appears to be.
+        invalidateIntrinsicContentSize()
+    }
+
+    override func noteHeightOfRows(withIndexesChanged indexSet: IndexSet) {
+        NSLog("qqq noteHeightOfRows(withIndexesChanged: \(indexSet.enumeratedDescription)")
+        super.noteHeightOfRows(withIndexesChanged: indexSet)
+    }
+}
+
 @objc(iTermChatViewControllerDelegate)
 protocol ChatViewControllerDelegate: AnyObject {
     func chatViewController(_ controller: ChatViewController, revealSessionWithGuid guid: String) -> Bool
@@ -20,10 +74,10 @@ class ChatViewController: NSViewController {
     private(set) var chatID: String? = UUID().uuidString
 
     private var scrollView: NSScrollView!
-    private var tableView: NSTableView!
+    private var tableView: WTFTableView!
     private var titleLabel = NSTextField()
     private var sessionButton: NSButton!
-    private var inputTextField: NSTextField!
+    private var inputTextFieldContainer: ChatInputTextFieldContainer!
     private var sendButton: NSButton!
     private var showTypingIndicator: Bool {
         get {
@@ -77,6 +131,7 @@ class ChatViewController: NSViewController {
         if #available(macOS 11.0, *),
            let image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil) {
             sessionButton = NSButton(image: image, target: nil, action: nil)
+            sessionButton.imageScaling = .scaleProportionallyUpOrDown
             sessionButton.controlSize = .large
             sessionButton.isBordered = false
         } else {
@@ -96,7 +151,7 @@ class ChatViewController: NSViewController {
         sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         // Configure Table View
-        tableView = NSTableView()
+        tableView = WTFTableView()
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("MessageColumn"))
         column.resizingMask = .autoresizingMask
         tableView.addTableColumn(column)
@@ -105,24 +160,38 @@ class ChatViewController: NSViewController {
         tableView.delegate = self
         tableView.rowHeight = 40
         tableView.backgroundColor = .clear
+        tableView.focusRingType = .none
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+
+        class ChatViewControllerDocumentView: NSView {}
+        let documentView = ChatViewControllerDocumentView()
+        documentView.translatesAutoresizingMaskIntoConstraints = false
+        documentView.addSubview(tableView)
+
+        class ChatViewControllerSpacerView: NSView {}
+        let spacer = ChatViewControllerSpacerView()
+        spacer.translatesAutoresizingMaskIntoConstraints = false
+        documentView.addSubview(spacer)
 
         // Scroll View for Table
         scrollView = NSScrollView()
-        scrollView.documentView = tableView
+        scrollView.documentView = documentView
         scrollView.hasVerticalScroller = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         // Input Components
-        inputTextField = RoundedTextField()
-        inputTextField.placeholderString = "Type a message…"
-        inputTextField.translatesAutoresizingMaskIntoConstraints = false
-        inputTextField.delegate = self
-        inputTextField.isEnabled = false
+        inputTextFieldContainer = ChatInputTextFieldContainer()
+        inputTextFieldContainer.translatesAutoresizingMaskIntoConstraints = false
+        inputTextFieldContainer.placeholder = "Type a message…"
+        inputTextFieldContainer.textView.delegate = self
+        inputTextFieldContainer.isEnabled = false
+        inputTextFieldContainer.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+        inputTextFieldContainer.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
         if #available(macOS 11.0, *) {
             if let image = NSImage(systemSymbolName: "paperplane.fill", accessibilityDescription: "Send") {
                 sendButton = NSButton(image: image, target: self, action: #selector(sendButtonClicked))
-                sendButton.imageScaling = .scaleProportionallyDown
+                sendButton.imageScaling = .scaleProportionallyUpOrDown
                 sendButton.imagePosition = .imageOnly
                 sendButton.bezelStyle = .regularSquare
                 sendButton.isBordered = false
@@ -138,41 +207,117 @@ class ChatViewController: NSViewController {
         sendButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         // Input Stack
-        let inputStack = NSStackView(views: [inputTextField, sendButton])
+        class ChatViewControllerInputStackView: NSStackView {}
+        let inputStack = ChatViewControllerInputStackView(views: [inputTextFieldContainer, sendButton])
         inputStack.orientation = .horizontal
         inputStack.spacing = 8
         inputStack.translatesAutoresizingMaskIntoConstraints = false
+        inputStack.setContentHuggingPriority(.defaultHigh, for: .vertical)
 
         // Header stack
-        let headerStack = NSStackView(views: [titleLabel, sessionButton])
+        class ChatViewControllerHeaderStackView: NSStackView {}
+        let headerStack = ChatViewControllerHeaderStackView(views: [titleLabel, sessionButton])
         headerStack.orientation = .horizontal
         headerStack.spacing = 4
         headerStack.translatesAutoresizingMaskIntoConstraints = false
         headerStack.setContentHuggingPriority(.defaultLow, for: .horizontal)
         headerStack.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
+        let vev = NSVisualEffectView()
+        vev.translatesAutoresizingMaskIntoConstraints = false
+        vev.wantsLayer = true
+        vev.blendingMode = .withinWindow
+        vev.material = .underWindowBackground
+        vev.state = .active
+
+        class ChatViewControllerInnerContainer: NSView {}
+        let innerContainer = ChatViewControllerInnerContainer()
+        innerContainer.addSubview(scrollView)
+        innerContainer.addSubview(vev)
+        innerContainer.addSubview(inputStack)
+        innerContainer.translatesAutoresizingMaskIntoConstraints = false
+
         // Main Layout including Title
-        let mainStack = NSStackView(views: [headerStack, scrollView, inputStack])
+        class ChatViewControllerMainStackView: NSStackView {}
+        let mainStack = ChatViewControllerMainStackView(views: [headerStack, innerContainer])
         mainStack.orientation = .vertical
         mainStack.spacing = 8
         mainStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(mainStack)
 
+        let mainStackInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)  // NSEdgeInsets(top: 4, left: 8, bottom: 8, right: 8)
+        let inputStackVerticalInset = CGFloat(12)
+
+        class ChatViewControllerDividerView: GradientView {}
+        let divider = ChatViewControllerDividerView(
+            gradient: .init(
+                stops: [
+                    .init(
+                        color: .it_dynamicColor(
+                            forLightMode: .init(fromHexString: "#f2f2f2")!,
+                            darkMode: .init(fromHexString: "#161616")!), location: 0.25),
+                    .init(
+                        color: .it_dynamicColor(
+                            forLightMode: .init(fromHexString: "#e3e3e3")!,
+                            darkMode: .init(fromHexString: "#0b0b0b")!), location: 0.75)]))
+        divider.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(divider)
+
         NSLayoutConstraint.activate([
-            headerStack.leadingAnchor.constraint(equalTo: mainStack.leadingAnchor),
-            headerStack.trailingAnchor.constraint(equalTo: mainStack.trailingAnchor),
+            headerStack.leadingAnchor.constraint(equalTo: mainStack.leadingAnchor, constant: 8),
+            headerStack.trailingAnchor.constraint(equalTo: mainStack.trailingAnchor, constant: -8),
+
+            divider.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            divider.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            divider.bottomAnchor.constraint(equalTo: scrollView.topAnchor),
+            divider.heightAnchor.constraint(equalToConstant: 1),
 
             sessionButton.trailingAnchor.constraint(equalTo: headerStack.trailingAnchor),
             sessionButton.widthAnchor.constraint(equalToConstant: 18),
             sessionButton.topAnchor.constraint(equalTo: titleLabel.topAnchor),
             sessionButton.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
 
-            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
-            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
-            mainStack.topAnchor.constraint(equalTo: view.topAnchor, constant: 4),
-            mainStack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -8),
-            inputStack.heightAnchor.constraint(equalToConstant: 25),
-            sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 24)
+            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: mainStackInsets.left),
+            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -mainStackInsets.right),
+            mainStack.topAnchor.constraint(equalTo: view.topAnchor, constant: mainStackInsets.top),
+            mainStack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -mainStackInsets.bottom),
+
+            inputStack.heightAnchor.constraint(equalTo: inputTextFieldContainer.heightAnchor, constant: inputStackVerticalInset * 2),
+            inputStack.leadingAnchor.constraint(equalTo: innerContainer.leadingAnchor, constant: 16),
+            inputStack.trailingAnchor.constraint(equalTo: innerContainer.trailingAnchor, constant: -16),
+
+            sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 18),
+
+            innerContainer.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            innerContainer.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            innerContainer.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            innerContainer.topAnchor.constraint(equalTo: scrollView.topAnchor),
+
+            innerContainer.leadingAnchor.constraint(equalTo: mainStack.leadingAnchor),
+            innerContainer.trailingAnchor.constraint(equalTo: mainStack.trailingAnchor),
+            innerContainer.bottomAnchor.constraint(equalTo: inputStack.bottomAnchor),
+
+            documentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            documentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+
+            tableView.topAnchor.constraint(equalTo: documentView.topAnchor),
+            tableView.leftAnchor.constraint(equalTo: documentView.leftAnchor),
+            tableView.rightAnchor.constraint(equalTo: documentView.rightAnchor),
+
+            tableView.bottomAnchor.constraint(equalTo: spacer.topAnchor),
+
+            spacer.leftAnchor.constraint(equalTo: documentView.leftAnchor),
+            spacer.rightAnchor.constraint(equalTo: documentView.rightAnchor),
+            spacer.bottomAnchor.constraint(equalTo: documentView.bottomAnchor),
+            spacer.heightAnchor.constraint(equalTo: inputStack.heightAnchor),
+
+            vev.leftAnchor.constraint(equalTo: documentView.leftAnchor),
+            vev.rightAnchor.constraint(equalTo: documentView.rightAnchor),
+            vev.bottomAnchor.constraint(equalTo: innerContainer.bottomAnchor),
+            vev.heightAnchor.constraint(equalTo: spacer.heightAnchor),
+
+            inputTextFieldContainer.leadingAnchor.constraint(equalTo: inputStack.leadingAnchor),
+            sendButton.trailingAnchor.constraint(equalTo: inputStack.trailingAnchor),
         ])
         view.alphaValue = 0
         self.view = view
@@ -204,7 +349,7 @@ extension ChatViewController {
         } else {
             model = nil
         }
-        inputTextField.isEnabled = chatID != nil
+        inputTextFieldContainer.isEnabled = chatID != nil
         model?.delegate = self
         titleLabel.stringValue = chat?.title ?? ""
         self.chatID = chat?.id
@@ -222,15 +367,13 @@ extension ChatViewController {
                     if !message.visibleInClient {
                         let originalCount = model.items.count
                         model.appendMessage(message)
-                        if originalCount > 0 {
-                            // Might need to disable buttons in the last message.
+                        if originalCount > 0 && model.items[model.items.count - 2].hasButtons {
+                            // Disable buttons in the last message.
+                            tableView.beginUpdates()
+                            tableView.noteHeightOfRows(withIndexesChanged: IndexSet(integer: model.items.count - 2))
                             tableView.reloadData(forRowIndexes: IndexSet(integer: model.items.count - 2),
                                                  columnIndexes: IndexSet(integer: 0))
-                            if case .append = message.content, let i = model.index(ofMessageID: message.uniqueID) {
-                                // Appended to an existing message
-                                tableView.reloadData(forRowIndexes: IndexSet(integer: i),
-                                                     columnIndexes: IndexSet(integer: 0))
-                            }
+                            tableView.endUpdates()
                         }
                     }
                     if case .renameChat(let newName) = message.content {
@@ -257,12 +400,12 @@ extension ChatViewController {
             showTypingIndicator = false
         }
         scrollToBottom(animated: false)
-        view.window?.makeFirstResponder(inputTextField)
+        view.window?.makeFirstResponder(inputTextFieldContainer.textView)
     }
 
     func offerSelectedText(_ text: String) {
         if eligibleForAutoPaste {
-            inputTextField.stringValue = text
+            inputTextFieldContainer.stringValue = text
         }
     }
 
@@ -407,7 +550,7 @@ extension ChatViewController {
     }
 
     @objc private func sendButtonClicked() {
-        let text = inputTextField.stringValue
+        let text = inputTextFieldContainer.stringValue
         guard !text.isEmpty, let chatID else {
             return
         }
@@ -418,7 +561,7 @@ extension ChatViewController {
                               uniqueID: UUID())
         broker.publish(message: message, toChatID: chatID)
 
-        inputTextField.stringValue = ""
+        inputTextFieldContainer.stringValue = ""
         eligibleForAutoPaste = true
     }
 
@@ -431,17 +574,11 @@ extension ChatViewController {
 
         if !animated {
             tableView.scrollRowToVisible(row)
-        } else if let scrollView = tableView.enclosingScrollView {
-            let clipView = scrollView.contentView
-            let rowRect = tableView.rect(ofRow: row)
-            let insetTop = scrollView.contentInsets.top
-            let visibleHeight = clipView.bounds.height
-
-            // Ensure we don't scroll too far
-            let maxY = tableView.bounds.height - visibleHeight
-            let targetY = min(max(rowRect.origin.y - insetTop, 0), maxY)
-
-            clipView.animator().setBoundsOrigin(NSPoint(x: clipView.bounds.origin.x, y: targetY))
+        } else {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.1
+                scrollView.contentView.animator().setBoundsOrigin(.zero)
+            }
         }
     }
 }
@@ -476,7 +613,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             return view
         case .message(let message):
             let cell = MessageCellView()
-            configure(cell: cell, for: message, isLast: isLastMessage)
+            configure(cell: cell, for: message.message, isLast: isLastMessage)
             return cell
         }
     }
@@ -495,11 +632,11 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         guard let model,
               let i = model.index(ofMessageID: messageID),
               case .message(let message) = model.items[i],
-               case .plainText(let text) = message.content else {
+              case .plainText(let text) = message.message.content else {
             return
         }
         model.deleteFrom(index: i)
-        inputTextField.stringValue = text
+        inputTextFieldContainer.stringValue = text
     }
 
     private func configure(cell: MessageCellView, for message: Message, isLast: Bool) {
@@ -616,7 +753,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         prototypeCell.layoutSubtreeIfNeeded()
 
         let height = prototypeCell.fittingSize.height
-        DLog("Calculated height of \(item) on row \(row) is \(height)")
+        NSLog("qqq tableView(_, heightOfRow: \(row)) returns \(height)")
         return height
     }
 
@@ -659,8 +796,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     }
 }
 
-extension ChatViewController: NSTextFieldDelegate {
-    func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+extension ChatViewController: NSTextViewDelegate {
+    func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
         if commandSelector == #selector(NSResponder.insertNewline(_:)) {
             sendButtonClicked()
             return true
@@ -668,8 +805,8 @@ extension ChatViewController: NSTextFieldDelegate {
         return false
     }
 
-    func controlTextDidChange(_ obj: Notification) {
-        eligibleForAutoPaste = inputTextField.stringValue.isEmpty
+    func textDidChange(_ notification: Notification) {
+        eligibleForAutoPaste = inputTextFieldContainer.stringValue.isEmpty
     }
 }
 
@@ -822,7 +959,7 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         it_assert(i <= estimatedCount)
         tableView.insertRows(at: IndexSet(integer: i))
     }
-    
+
     func chatViewControllerModel(didRemoveItemsInRange range: Range<Int>) {
         DLog("Remove tableview row at \(range)")
         it_assert(range.upperBound <= estimatedCount)
@@ -830,12 +967,13 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         tableView.removeRows(at: IndexSet(ranges: [range]))
     }
 
-    func chatViewControllerModel(didModifyItemAtIndex i: Int) {
-        DLog("Reload row at \(i)")
-        it_assert(i >= 0 && i < estimatedCount)
-        tableView.noteHeightOfRows(withIndexesChanged: IndexSet(integer: i))
-        tableView.reloadData(forRowIndexes: IndexSet(integer: i),
+    func chatViewControllerModel(didModifyItemsAtIndexes indexSet: IndexSet) {
+        DLog("Reload row at \(indexSet.map { String($0) }.joined(separator: ", "))")
+        tableView.beginUpdates()
+        tableView.noteHeightOfRows(withIndexesChanged: indexSet)
+        tableView.reloadData(forRowIndexes: indexSet,
                              columnIndexes: IndexSet(integer: 0))
+        tableView.endUpdates()
     }
 }
 
@@ -850,7 +988,7 @@ extension NSMenu {
 protocol ChatViewControllerModelDelegate: AnyObject {
     func chatViewControllerModel(didInsertItemAtIndex: Int)
     func chatViewControllerModel(didRemoveItemsInRange range: Range<Int>)
-    func chatViewControllerModel(didModifyItemAtIndex: Int)
+    func chatViewControllerModel(didModifyItemsAtIndexes indexSet: IndexSet)
 }
 
 class NotifyingArray<Element> {
@@ -900,18 +1038,63 @@ class NotifyingArray<Element> {
 class ChatViewControllerModel {
     weak var delegate: ChatViewControllerModelDelegate?
     private let listModel: ChatListModel
+    // Avoid streaming so quickly that we bog down recalculating textview geometry and parsing markdown.
+    private let rateLimit = iTermRateLimitedUpdate(name: "reloadCell", minimumInterval: 1)
+    private var pendingItemIdentities = Set<ChatViewControllerModel.Item.Identity>()
 
     enum Item: CustomDebugStringConvertible {
         var debugDescription: String {
             switch self {
-            case .message(let message): "<Message: \(message.content.shortDescription)>"
+            case .message(let message): "<Message: \(message.message.content.shortDescription), pending: \(message.pending?.content.shortDescription ?? "(nil)")>"
             case .date(let date): "<Date: \(date)>"
             case .agentTyping: "<AgentTyping>"
             }
         }
-        case message(Message)
+
+        class UpdatableMessage {
+            private(set) var message: Message
+            var pending: Message?
+
+            init(_ message: Message) {
+                self.message = message
+            }
+            func commit() {
+                if let pending {
+                    message = pending
+                }
+            }
+        }
+        case message(UpdatableMessage)
         case date(DateComponents)
         case agentTyping
+
+        enum Identity: Hashable {
+            case message(UUID)
+            case date(DateComponents)
+            case agentTyping
+        }
+
+        var identity: Identity {
+            switch self {
+            case .message(let message): .message(message.message.uniqueID)
+            case .date(let date): .date(date)
+            case .agentTyping: .agentTyping
+            }
+        }
+
+        var hasButtons: Bool {
+            guard case .message(let message) = self else {
+                return false
+            }
+            return !message.message.buttons.isEmpty
+        }
+
+        var existingMessage: UpdatableMessage? {
+            switch self {
+            case .message(let existing): existing
+            default: nil
+            }
+        }
     }
 
     private(set) var items = NotifyingArray<Item>()
@@ -954,7 +1137,7 @@ class ChatViewControllerModel {
                 if alwaysAppendDate || lastDate != date {
                     items.append(.date(date))
                 }
-                items.append(.message(message))
+                items.append(.message(Item.UpdatableMessage(message)))
                 lastDate = Calendar.current.dateComponents([.year, .month, .day], from: message.sentDate)
             }
         }
@@ -969,16 +1152,45 @@ class ChatViewControllerModel {
             self?.delegate?.chatViewControllerModel(didRemoveItemsInRange: range)
         }
         items.didModify = { [weak self] i in
-            self?.delegate?.chatViewControllerModel(didModifyItemAtIndex: i)
+            self?.delegate?.chatViewControllerModel(didModifyItemsAtIndexes: IndexSet(integer: i))
+        }
+    }
+
+    private func scheduleCommit(_ item: Item) {
+        if pendingItemIdentities.contains(item.identity) {
+            return
+        }
+        pendingItemIdentities.insert(item.identity)
+        rateLimit.performRateLimitedBlock { [weak self] in
+            guard let self else {
+                return
+            }
+            let indexes = pendingItemIdentities.compactMap {
+                self.index(of: $0)
+            }
+            pendingItemIdentities.removeAll()
+            guard !indexes.isEmpty else {
+                return
+            }
+            for i in indexes {
+                if case .message(let message) = self.items[i] {
+                    message.commit()
+                }
+            }
+            delegate?.chatViewControllerModel(didModifyItemsAtIndexes: IndexSet(indexes))
         }
     }
 
     func appendMessage(_ message: Message) {
         if case .append(_, let uuid) = message.content {
             if let i = index(ofMessageID: uuid),
+               let existing = items[i].existingMessage,
                let canonicalMessages = listModel.messages(forChat: chatID, createIfNeeded: false),
                let updated = canonicalMessages.firstIndex(where: { $0.uniqueID == uuid }) {
-                items[i] = .message(canonicalMessages[updated])
+                // Streaming update. Place modified message in second position so rate limited
+                // updates can be applied atomically.
+                existing.pending = canonicalMessages[updated]
+                scheduleCommit(items[i])
             }
             return
         }
@@ -989,17 +1201,23 @@ class ChatViewControllerModel {
         }
         if let last = items.last,
            case .message(let lastMessage) = last,
-           (alwaysAppendDate || message.dateErasingTime != lastMessage.dateErasingTime) {
+           (alwaysAppendDate || message.dateErasingTime != lastMessage.message.dateErasingTime) {
             items.append(.date(message.dateErasingTime))
         }
-        items.append(.message(message))
+        items.append(.message(Item.UpdatableMessage(message)))
+    }
+
+    func index(of identity: Item.Identity) -> Int? {
+        return items.firstIndex {
+            $0.identity == identity
+        }
     }
 
     // Returns true for all messages message[j] for j>i, test(message[j]) is false. Returns true if there are no messages after i.
     private func indexIsLastMessage(_ i: Int, passingTest test: (Message) -> Bool) -> Bool {
         if case .message = items[i] {
             for j in (i + 1)..<items.count {
-                if case .message(let message) = items[j], test(message) {
+                if case .message(let message) = items[j], test(message.message) {
                     return false
                 }
             }
@@ -1017,7 +1235,7 @@ class ChatViewControllerModel {
         return items.firstIndex {
             switch $0 {
             case .message(let candidate):
-                return candidate.uniqueID == messageID
+                return candidate.message.uniqueID == messageID
             default:
                 return false
             }

@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermPreferencesTabStyle)it_tabStyle:(iTermPreferencesTabStyle)tabStyle;
 + (instancetype)it_appearanceForCurrentTheme;
 + (void)it_performBlockWithCurrentAppearanceSetToAppearanceForCurrentTheme:(void (^)(void))block;
+- (void)it_performAsCurrentDrawingAppearance:(void (^NS_NOESCAPE)(void))block;
 
 typedef NS_OPTIONS(NSUInteger, iTermAppearanceOptions) {
     iTermAppearanceOptionsDark = 1 << 0,

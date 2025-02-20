@@ -7,10 +7,19 @@
 
 import AppKit
 
+class NoDividerSplitView: NSSplitView {
+    override var dividerThickness: CGFloat {
+        return 0
+    }
+
+    override func drawDivider(in rect: NSRect) {
+    }
+}
+
 class ChatSplitViewController: NSViewController {
     let chatListViewController: ChatListViewController
     let chatViewController: ChatViewController
-    private var splitView = NSSplitView()
+    private let splitView = NoDividerSplitView()
 
     init(chatListViewController: ChatListViewController, chatViewController: ChatViewController) {
         self.chatListViewController = chatListViewController
@@ -24,14 +33,12 @@ class ChatSplitViewController: NSViewController {
 
     override func loadView() {
         view = NSView()
-        splitView = NSSplitView()
         setupSplitView()
     }
 
     private func setupSplitView() {
         splitView.isVertical = true
         splitView.translatesAutoresizingMaskIntoConstraints = false
-        splitView.dividerStyle = .thin
         view.addSubview(splitView)
 
         addChild(chatListViewController)
@@ -42,7 +49,7 @@ class ChatSplitViewController: NSViewController {
         NSLayoutConstraint.activate([
             splitView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             splitView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            splitView.topAnchor.constraint(equalTo: view.topAnchor, constant: 40), // leave space for button
+            splitView.topAnchor.constraint(equalTo: view.topAnchor, constant: 40),
             splitView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         chatListViewController.view.widthAnchor.constraint(greaterThanOrEqualToConstant: 120.0).isActive = true

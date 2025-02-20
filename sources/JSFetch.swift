@@ -14,7 +14,7 @@ class PluginClient {
 
     private class HTTPStreamDelegate: NSObject, URLSessionDataDelegate {
         var receivedData = Data()
-        let callback: (String?, String?) -> Void
+        let callback: (String, String?) -> Void
 
         init(callback: @escaping (String?, String?) -> Void) {
             self.callback = callback
