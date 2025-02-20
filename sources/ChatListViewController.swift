@@ -109,7 +109,9 @@ class ChatListViewController: NSViewController {
         let srp = searchResultsViewController.view
         view.addSubview(srp)
         scrollView.translatesAutoresizingMaskIntoConstraints = false
-
+        scrollView.drawsBackground = false
+        tableView.backgroundColor = .clear
+        
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),

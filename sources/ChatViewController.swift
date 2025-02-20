@@ -113,7 +113,7 @@ class ChatViewController: NSViewController {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         // Input Components
-        inputTextField = NSTextField()
+        inputTextField = RoundedTextField()
         inputTextField.placeholderString = "Type a message…"
         inputTextField.translatesAutoresizingMaskIntoConstraints = false
         inputTextField.delegate = self

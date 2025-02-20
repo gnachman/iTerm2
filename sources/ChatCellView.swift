@@ -113,7 +113,8 @@ class ChatCellView: NSTableCellView {
 
         // Configure date label
         dateLabel.translatesAutoresizingMaskIntoConstraints = false
-        dateLabel.textColor = NSColor.textColor.withAlphaComponent(0.75)
+        dateLabel.textColor = NSColor.textColor
+        dateLabel.alphaValue = 0.75
         dateLabel.isEditable = false
         dateLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
         addSubview(dateLabel)

@@ -1721,6 +1721,7 @@
 		A65618642D6647510059CD35 /* AIWatching@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65618632D6647510059CD35 /* AIWatching@2x.png */; };
 		A65618652D6647510059CD35 /* AIWatching@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65618632D6647510059CD35 /* AIWatching@2x.png */; };
 		A65618662D6647510059CD35 /* AIWatching@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65618632D6647510059CD35 /* AIWatching@2x.png */; };
+		A65618682D670D300059CD35 /* RoundedTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65618672D670D2E0059CD35 /* RoundedTextField.swift */; };
 		A65660D42372A4A600DC6744 /* iTermCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A65660D22372A4A600DC6744 /* iTermCache.h */; };
 		A65660D52372A4A600DC6744 /* iTermCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A65660D32372A4A600DC6744 /* iTermCache.m */; };
 		A65660D82372A69A00DC6744 /* iTermDoublyLinkedList.h in Headers */ = {isa = PBXBuildFile; fileRef = A65660D62372A69A00DC6744 /* iTermDoublyLinkedList.h */; };
@@ -6168,6 +6169,7 @@
 		A65618572D659F070059CD35 /* ChatCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatCellView.swift; sourceTree = "<group>"; };
 		A65618592D65A2740059CD35 /* ChatSearchResultsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSearchResultsViewController.swift; sourceTree = "<group>"; };
 		A65618632D6647510059CD35 /* AIWatching@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AIWatching@2x.png"; sourceTree = "<group>"; };
+		A65618672D670D2E0059CD35 /* RoundedTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundedTextField.swift; sourceTree = "<group>"; };
 		A65660D22372A4A600DC6744 /* iTermCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCache.h; sourceTree = "<group>"; };
 		A65660D32372A4A600DC6744 /* iTermCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCache.m; sourceTree = "<group>"; };
 		A65660D62372A69A00DC6744 /* iTermDoublyLinkedList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermDoublyLinkedList.h; sourceTree = "<group>"; };
@@ -9578,6 +9580,7 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A65618672D670D2E0059CD35 /* RoundedTextField.swift */,
 				A65618592D65A2740059CD35 /* ChatSearchResultsViewController.swift */,
 				A65618572D659F070059CD35 /* ChatCellView.swift */,
 				A65618552D6439BA0059CD35 /* ChatDatabase.swift */,
@@ -15981,6 +15984,7 @@
 				A63493F923F2685A0047C31B /* iTermPromise.m in Sources */,
 				A6FF3F332435C8E5003CCB03 /* iTermSplitViewAnimation.m in Sources */,
 				A6D1784021BC599900FE499C /* iTermSavePanel.m in Sources */,
+				A65618682D670D300059CD35 /* RoundedTextField.swift in Sources */,
 				A6A4867820B67C9500493302 /* ProfilesColorsPreferencesViewController.m in Sources */,
 				A682273C2801F355005DF0B4 /* SavePanelBuiltInFunction.swift in Sources */,
 				A60E045D26DED32A00DD162B /* StatusBarFilterComponent.swift in Sources */,
