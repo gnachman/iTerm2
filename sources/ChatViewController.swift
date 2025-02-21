@@ -17,47 +17,47 @@ class WTFTableView: NSTableView {
     override func layout() {
         super.layout()
         if let lowest = subviews.max(by: { $0.frame.maxY < $1.frame.maxY }) {
-            NSLog("qqq after layout NSTableView height is \(bounds.height). Its subview with greatest maxY (\(lowest.frame.maxY)) is: \(lowest)")
+            DLog("after layout NSTableView height is \(bounds.height). Its subview with greatest maxY (\(lowest.frame.maxY)) is: \(lowest)")
         } else {
-            NSLog("qqq after layout NSTableView height is \(bounds.height). It has no subviews")
+            DLog("after layout NSTableView height is \(bounds.height). It has no subviews")
         }
     }
 
     override func reloadData(forRowIndexes rowIndexes: IndexSet, columnIndexes: IndexSet) {
-        NSLog("qqq reload indexes: \(rowIndexes.enumeratedDescription)")
+        DLog("reload indexes: \(rowIndexes.enumeratedDescription)")
         super.reloadData(forRowIndexes: rowIndexes, columnIndexes: columnIndexes)
     }
 
     override func insertRows(at indexes: IndexSet, withAnimation animationOptions: NSTableView.AnimationOptions = []) {
-        NSLog("qqq insert rows at \(indexes.enumeratedDescription)")
+        DLog("insert rows at \(indexes.enumeratedDescription)")
         super.insertRows(at: indexes, withAnimation: animationOptions)
     }
 
     override func removeRows(at indexes: IndexSet, withAnimation animationOptions: NSTableView.AnimationOptions = []) {
-        NSLog("qqq remove rows at \(indexes.enumeratedDescription)")
+        DLog("remove rows at \(indexes.enumeratedDescription)")
         super.removeRows(at: indexes, withAnimation: animationOptions)
     }
 
     override func reloadData() {
-        NSLog("qqq reloadData")
+        DLog("reloadData")
         super.reloadData()
     }
 
     override func beginUpdates() {
-        NSLog("qqq beginUpdates")
+        DLog("beginUpdates")
         super.beginUpdates()
     }
 
     override func endUpdates() {
-        NSLog("qqq endUpdates")
+        DLog("endUpdates")
         super.endUpdates()
-        NSLog("qqq - invalidate intrinsic size constraints -")
+        DLog("- invalidate intrinsic size constraints -")
         // I am shaking with rage that this is necessary, but it appears to be.
         invalidateIntrinsicContentSize()
     }
 
     override func noteHeightOfRows(withIndexesChanged indexSet: IndexSet) {
-        NSLog("qqq noteHeightOfRows(withIndexesChanged: \(indexSet.enumeratedDescription)")
+        DLog("noteHeightOfRows(withIndexesChanged: \(indexSet.enumeratedDescription)")
         super.noteHeightOfRows(withIndexesChanged: indexSet)
     }
 }
@@ -329,6 +329,8 @@ extension Message {
         switch content {
         case .append:
             false
+        case .explanationResponse(_, let update, markdown: _):
+            update == nil
         default:
             true
         }
@@ -364,17 +366,8 @@ extension ChatViewController {
                 switch update {
                 case let .delivery(message, _):
                     shouldScroll = message.shouldCauseScrollToBottom
-                    if !message.visibleInClient {
-                        let originalCount = model.items.count
+                    if !message.hiddenFromClient {
                         model.appendMessage(message)
-                        if originalCount > 0 && model.items[model.items.count - 2].hasButtons {
-                            // Disable buttons in the last message.
-                            tableView.beginUpdates()
-                            tableView.noteHeightOfRows(withIndexesChanged: IndexSet(integer: model.items.count - 2))
-                            tableView.reloadData(forRowIndexes: IndexSet(integer: model.items.count - 2),
-                                                 columnIndexes: IndexSet(integer: 0))
-                            tableView.endUpdates()
-                        }
                     }
                     if case .renameChat(let newName) = message.content {
                         titleLabel.stringValue = newName
@@ -527,7 +520,8 @@ extension ChatViewController {
             }
         }
         broker.publish(message: waitingMessage,
-                       toChatID: chatID)
+                       toChatID: chatID,
+                       partial: false)
     }
 
     @objc private func showLinkedSessionHelp(_ sender: Any) {
@@ -559,7 +553,7 @@ extension ChatViewController {
                               content: .plainText(text),
                               sentDate: Date(),
                               uniqueID: UUID())
-        broker.publish(message: message, toChatID: chatID)
+        broker.publish(message: message, toChatID: chatID, partial: false)
 
         inputTextFieldContainer.stringValue = ""
         eligibleForAutoPaste = true
@@ -688,7 +682,9 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 linkSession { session in
                     if let chatID {
                         if session != nil {
-                            self.client.publish(message: originalMessage, toChatID: chatID)
+                            self.client.publish(message: originalMessage,
+                                                toChatID: chatID,
+                                                partial: false)
                         } else {
                             self.client.respondSuccessfullyToRemoteCommandRequest(
                                 inChat: chatID,
@@ -737,7 +733,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         functionCallName: remoteCommand.llmMessage.function_call?.name ?? "Unknown function call name")
                 }
             }
-        default:
+        case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                .remoteCommandResponse, .renameChat, .append, .commit:
             cell.buttonClicked = nil
         }
     }
@@ -753,7 +750,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         prototypeCell.layoutSubtreeIfNeeded()
 
         let height = prototypeCell.fittingSize.height
-        NSLog("qqq tableView(_, heightOfRow: \(row)) returns \(height)")
+        DLog("tableView(_, heightOfRow: \(row)) returns \(height)")
         return height
     }
 
@@ -829,7 +826,8 @@ extension Message {
 
     var buttons: [MessageRendition.Button] {
         switch content {
-        case .plainText, .markdown, .explanationRequest, .explanationResponse, .remoteCommandResponse, .renameChat, .append:
+        case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                .remoteCommandResponse, .renameChat, .append, .commit:
             []
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
@@ -849,7 +847,7 @@ extension Message {
 
     var attributedStringValue: NSAttributedString {
         switch content {
-        case .renameChat, .append:
+        case .renameChat, .append, .commit:
             it_fatalError()
         case .plainText(let string):
             let paragraphStyle = NSMutableParagraphStyle()
@@ -863,7 +861,7 @@ extension Message {
                 string: string,
                 attributes: attributes
             )
-        case .markdown(let string):
+        case .markdown(let string), .explanationResponse(_, _, let string):
             #warning("TODO: Show the copied toast")
             return AttributedStringForGPTMarkdown(string, linkColor: linkColor) { }
         case .explanationRequest(request: let request):
@@ -874,8 +872,6 @@ extension Message {
                 "Explain the output of \(request.subjectMatter) based on some no-longer-available content."
             }
             return AttributedStringForGPTMarkdown(string, linkColor: linkColor) { }
-        case .explanationResponse:
-            it_fatalError("You should never render an explanation response")
         case .remoteCommandRequest(let request):
             return AttributedStringForGPTMarkdown(request.permissionDescription,
                                                   linkColor: linkColor) {}
@@ -958,7 +954,20 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         estimatedCount += 1
         it_assert(i <= estimatedCount)
         tableView.insertRows(at: IndexSet(integer: i))
+
+        // Disable buttons in message that just becamse second-to-last
+        if let model,
+           model.items.count > 1,
+           model.items[model.items.count - 2].hasButtons {
+            let rows = IndexSet(integer: model.items.count - 2)
+            tableView.beginUpdates()
+            tableView.reloadData(forRowIndexes: rows,
+                                 columnIndexes: IndexSet(integer: 0))
+            tableView.noteHeightOfRows(withIndexesChanged: rows)
+            tableView.endUpdates()
+        }
     }
+
 
     func chatViewControllerModel(didRemoveItemsInRange range: Range<Int>) {
         DLog("Remove tableview row at \(range)")
@@ -1130,7 +1139,7 @@ class ChatViewControllerModel {
         var lastDate: DateComponents?
         if let messages = listModel.messages(forChat: chatID, createIfNeeded: false) {
             for message in messages {
-                if message.visibleInClient {
+                if message.hiddenFromClient {
                     continue
                 }
                 let date = message.dateErasingTime
@@ -1181,18 +1190,30 @@ class ChatViewControllerModel {
         }
     }
 
+    private func didAppend(toMessageID messageID: UUID) {
+        if let i = index(ofMessageID: messageID),
+           let existing = items[i].existingMessage,
+           let canonicalMessages = listModel.messages(forChat: chatID, createIfNeeded: false),
+           let updated = canonicalMessages.firstIndex(where: { $0.uniqueID == messageID }) {
+            // Streaming update. Place modified message in second position so rate limited
+            // updates can be applied atomically.
+            existing.pending = canonicalMessages[updated]
+            scheduleCommit(items[i])
+        }
+    }
+
     func appendMessage(_ message: Message) {
-        if case .append(_, let uuid) = message.content {
-            if let i = index(ofMessageID: uuid),
-               let existing = items[i].existingMessage,
-               let canonicalMessages = listModel.messages(forChat: chatID, createIfNeeded: false),
-               let updated = canonicalMessages.firstIndex(where: { $0.uniqueID == uuid }) {
-                // Streaming update. Place modified message in second position so rate limited
-                // updates can be applied atomically.
-                existing.pending = canonicalMessages[updated]
-                scheduleCommit(items[i])
-            }
+        switch message.content {
+        case .append(string: _, uuid: let uuid):
+            didAppend(toMessageID: uuid)
             return
+        case .explanationResponse(_, let update, markdown: _):
+            if let messageID = update?.messageID {
+                didAppend(toMessageID: messageID)
+                return
+            }
+        default:
+            break
         }
         let saved = showTypingIndicator
         showTypingIndicator = false

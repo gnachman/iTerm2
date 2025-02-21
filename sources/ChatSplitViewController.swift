@@ -59,9 +59,23 @@ class ChatSplitViewController: NSViewController {
         super.viewDidAppear()
         splitView.setPosition(200, ofDividerAt: 0)
     }
-    
+
     func toggleChatList() {
-        // Toggle collapse/expand by hiding/unhiding the chat list view.
-        chatListViewController.view.isHidden.toggle()
+        if chatListViewController.view.isHidden {
+            // Expanding: unhide first, then animate divider to 200.
+            chatListViewController.view.isHidden = false
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 0.25
+                self.splitView.animator().setPosition(200, ofDividerAt: 0)
+            })
+        } else {
+            // Collapsing: animate divider to 0 then hide.
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 0.25
+                self.splitView.animator().setPosition(0, ofDividerAt: 0)
+            }, completionHandler: {
+                self.chatListViewController.view.isHidden = true
+            })
+        }
     }
 }

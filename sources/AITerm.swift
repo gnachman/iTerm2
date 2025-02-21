@@ -710,8 +710,8 @@ class AITermController {
         case ground
         case initialized(query: String, stream: Bool)
         case initializedMessages(messages: [Message], stream: Bool)
-        // partialResponse is nil if streaming is unsupported, otherwise it will be nonnil but perhaps empty
-        case querySent(messages: [Message], partialResponse: String?)
+        // streamParserState is nil if streaming is unsupported, otherwise it will be nonnil but perhaps empty
+        case querySent(messages: [Message], streamParserState: StreamParserState?)
     }
 
     enum Event: CustomDebugStringConvertible {
@@ -847,7 +847,7 @@ class AITermController {
                 break
             }
 
-        case .querySent(messages: let messages, partialResponse: let partialResponse):
+        case .querySent(messages: let messages, streamParserState: let streamParserState):
             switch event {
             case .begin:
                 it_fatalError()
@@ -859,11 +859,14 @@ class AITermController {
                         message += " " + reason
                     }
                     handle(event: .error(AIError(message)), legacy: false)
+                } else if let streamParserState {
+                    _ = parseStreamingResponse(data: response.data.data(using: .utf8)!,
+                                               legacy: legacy,
+                                               final: true,
+                                               parserState: streamParserState)
                 } else {
-                    _ = parseResponse(data: response.data.data(using: .utf8)!,
-                                      legacy: legacy,
-                                      stream: partialResponse != nil,
-                                      final: true)
+                    parseNonStreamingResponse(data: response.data.data(using: .utf8)!,
+                                              legacy: legacy)
                 }
             case .pluginError(let error):
                 handle(event: .error(error), legacy: false)
@@ -875,11 +878,15 @@ class AITermController {
                 delegate?.aitermController(self, didFailWithError: error)
             case .word(let word):
                 DLog("stream \(word)")
-                let remainder = parseResponse(data: ((partialResponse ?? "") + word).data(using: .utf8)!,
-                                              legacy: legacy,
-                                              stream: true,
-                                              final: false)
-                state = .querySent(messages: messages, partialResponse: remainder)
+                let updated = parseStreamingResponse(
+                    data: word.data(using: .utf8)!,
+                    legacy: legacy,
+                    final: false,
+                    parserState: streamParserState ?? StreamParserState(message: LLM.Message(role: nil),
+                                                                        buffer: Data()))
+                if let updated {
+                    state = .querySent(messages: messages, streamParserState: updated)
+                }
             }
         }
     }
@@ -957,7 +964,9 @@ class AITermController {
                              legacy: legacy)
             }
         }
-        state = .querySent(messages: messages, partialResponse: stream == nil ? nil : "")
+        state = .querySent(messages: messages,
+                           streamParserState: stream == nil ? nil : StreamParserState(message: LLM.Message(role: nil),
+                                                                                      buffer: Data()))
     }
 
     private func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
@@ -984,30 +993,31 @@ class AITermController {
         return (String(jsonPart.removing(prefix: "data:")), String(remainder))
     }
 
-    private func parseResponse(data: Data, legacy: Bool, stream: Bool, final: Bool) -> String? {
-        if !stream {
-            parseNonStreamingResponse(data: data, legacy: legacy)
-            return  nil
-        }
-        return parseStreamingResponse(data: data, legacy: legacy, final: final)
+    struct StreamParserState: Equatable {
+        var message: LLM.Message
+        var buffer: Data
     }
 
-    private func parseStreamingResponse(data: Data, legacy: Bool, final: Bool) -> String? {
+    private func parseStreamingResponse(data: Data, legacy: Bool, final: Bool, parserState: StreamParserState) -> StreamParserState? {
+        var accumulatingMessage = parserState.message
         if final {
-            delegate?.aitermController(self, didStreamUpdate: nil)
+            if let functionCall = accumulatingMessage.function_call {
+                doFunctionCall(accumulatingMessage, call: functionCall)
+            } else {
+                delegate?.aitermController(self, didStreamUpdate: nil)
+            }
             state = .ground
             return nil
         }
         DLog("------- parse new stream response of length \(data.count) -------------")
-        let string = String(data: data, encoding: .utf8) ?? ""
+        let string = String(data: parserState.buffer + data, encoding: .utf8) ?? ""
         var (first, rest) = splitFirstJSONEvent(from: string)
 
-        var content = ""
         let drain = {
-            if !content.isEmpty {
-                DLog("drain with content: \(content)")
-                self.delegate?.aitermController(self, didStreamUpdate: content)
-                content = ""
+            if let string = accumulatingMessage.content, !string.isEmpty {
+                DLog("drain with content: \(accumulatingMessage)")
+                self.delegate?.aitermController(self, didStreamUpdate: string)
+                accumulatingMessage.content = nil
             }
         }
         do {
@@ -1020,26 +1030,39 @@ class AITermController {
                     do {
                         var parser = llmProvider.responseParser(stream: true)
                         let response = try parser.parse(data: firstData)
-                        if let topChoice = response.choiceMessages.first, let functionCall = topChoice.function_call {
-                            drain()
-                            doFunctionCall(topChoice, call: functionCall)
+                        guard let choice = response.choiceMessages.first else {
+#if DEBUG
+                            it_fatalError("Unexpected choiceless message \(firstData.stringOrHex)")
+#endif
                             continue
                         }
-                        let choices = response.choiceMessages.compactMap { $0.content }
-                        guard let choice = choices.first else {
-                            drain()
-                            delegate?.aitermController(self, didFailWithError: AIError("Empty response from server"))
-                            continue
+                        if let role = choice.role {
+                            accumulatingMessage.role = role
                         }
-                        content.append(choice)
+                        if let functionCall = choice.function_call {
+                            drain()
+                            if accumulatingMessage.function_call == nil {
+                                accumulatingMessage.function_call = .init(name: "", arguments: "")
+                            }
+                            accumulatingMessage.function_call!.name! += (functionCall.name ?? "")
+                            accumulatingMessage.function_call!.arguments! += (functionCall.arguments ?? "")
+                        }
+                        if let additionalContent = choice.content {
+                            if accumulatingMessage.content == nil {
+                                accumulatingMessage.content = ""
+                            }
+                            accumulatingMessage.content! += additionalContent
+                        }
                     } catch {
                         drain()
                         if let reason = LLMErrorParser.errorReason(data: firstData) {
                             handle(event: .error(AIError("Could not decode response: " + reason)),
                                    legacy: legacy)
+                            return nil
                         } else {
                             handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(first)")),
                                    legacy: legacy)
+                            return nil
                         }
                     }
                 }
@@ -1047,7 +1070,7 @@ class AITermController {
             }
         }
 
-        return rest
+        return StreamParserState(message: accumulatingMessage, buffer: rest.data(using: .utf8)!)
     }
 
     private func parseNonStreamingResponse(data: Data, legacy: Bool) {
@@ -1085,13 +1108,13 @@ class AITermController {
             var amended = messages
             amended.append(message)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
-                DLog("Invoke function with arguments \(functionCall.arguments)")
+                DLog("Invoke function with arguments \(functionCall.arguments ?? "")")
                 impl.invoke(message: message,
-                            json: functionCall.arguments.data(using: .utf8)!) { [weak self] result in
+                            json: (functionCall.arguments ?? "").data(using: .utf8)!) { [weak self] result in
                     guard let self else { return }
                     switch result {
                     case .success(let response):
-                        DLog("Response to function call with arguments \(functionCall.arguments): \(response)")
+                        DLog("Response to function call with arguments \(functionCall.arguments ?? ""): \(response)")
                         amended.append(Message(role: "function",
                                                content: response,
                                                name: functionCall.name))
@@ -1387,6 +1410,7 @@ struct AIConversation {
             }
         }
 
+        #warning("I don't think this would handle function calls correctly?")
         var accumulator = ""
         if let streaming {
             delegate.streaming = { update in

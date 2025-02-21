@@ -16,7 +16,7 @@ class ChatBroker {
         return _instance
     }
     private var subs = [Subscription]()
-    var processors = [(Message, String) -> (Message?)]()
+    var processors = [(message: Message, chatID: String, partial: Bool) -> (Message?)]()
     private let listModel: ChatListModel
 
     init?() {
@@ -39,14 +39,14 @@ class ChatBroker {
         return chat.id
     }
 
-    func publish(message: Message, toChatID chatID: String) {
+    func publish(message: Message, toChatID chatID: String, partial: Bool) {
         NSLog("Publish \(message.shortDescription)")
         // Ensure the service is running
         _ = ChatService.instance
 
         var processed = message
         for processor in processors {
-            if let temp = processor(processed, chatID) {
+            if let temp = processor(processed, chatID, partial) {
                 processed = temp
             } else {
                 DLog("Message processing squelched \(message)")
@@ -230,7 +230,7 @@ struct RemoteCommand: Codable {
         case .isAtPrompt:
             "The AI Agent would like to check if you're at a shell prompt"
         case let .executeCommand(args):
-            "The AI Agent would like to execute `\(args.command.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`"
+            "The AI Agent would like to execute `\(args.command.escapedForMarkdownCode)`"
         case .getLastExitStatus:
             "The AI Agent would like to check the exit status of the last command"
         case .getCommandHistory:

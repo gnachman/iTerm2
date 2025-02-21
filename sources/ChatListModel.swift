@@ -235,6 +235,22 @@ class ChatListModel: ChatListDataSource {
                 DLog("Drop append “\(chunk)” of nonexistent message \(uuid)")
             }
             return
+        case let .explanationResponse(_, update, _):
+            guard let update else {
+                break
+            }
+            if let messageID = update.messageID,
+               let i = index(ofMessageID: messageID, inChat: chatID),
+               let messages =  messages(forChat: chatID, createIfNeeded: false) {
+                var existing = messages[i]
+                existing.content = message.content
+                messages[i] = existing
+                return
+            } else {
+                DLog("Drop explanation response update \(update)")
+                return
+            }
+
         default:
             break
         }
@@ -242,7 +258,7 @@ class ChatListModel: ChatListDataSource {
         switch message.content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal,
-                .append:
+                .append, .commit:
             bump(chatID: chatID)
         case .renameChat(let string):
             rename(chatID: chatID, newName: string)

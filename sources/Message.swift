@@ -25,13 +25,19 @@ struct Message: Codable {
         case plainText(String)
         case markdown(String)
         case explanationRequest(request: AIExplanationRequest)
-        case explanationResponse(AIAnnotationCollection)
+        // The first value is empty for streaming responses and contains the entire value for
+        // non-streaming responses.
+        // For streaming resposnes, the update will be nonnull and gives the delta.
+        // markdown is empty on the agent side. The client modifies the message to set markdown
+        // as it sees fit.
+        case explanationResponse(ExplanationResponse, ExplanationResponse.Update?, markdown: String)
         case remoteCommandRequest(RemoteCommand)
         case remoteCommandResponse(Result<String, AIError>, UUID, String)
         case selectSessionRequest(Message)  // carries the original message that needs a session
         case clientLocal(ClientLocal)
         case renameChat(String)
         case append(string: String, uuid: UUID)  // for streaming responses
+        case commit(UUID)  // end of streaming response
 
         var shortDescription: String {
             let maxLength = 256
@@ -40,8 +46,12 @@ struct Message: Codable {
                 return string.truncatedWithTrailingEllipsis(to: maxLength)
             case .explanationRequest(request: let request):
                 return "Explain \(request.originalString.string.truncatedWithTrailingEllipsis(to: maxLength))"
-            case .explanationResponse(let response):
-                return "Explanation: \(response.annotations.count) annotations: \(response.mainResponse?.truncatedWithTrailingEllipsis(to: maxLength) ?? "No main response")"
+            case .explanationResponse(let response, let update, _):
+                if let update {
+                    return "Explanation (streaming): \(update.annotations.count) annotations: \(update.mainResponse?.truncatedWithTrailingEllipsis(to: maxLength) ?? "No main response")"
+                } else {
+                    return "Explanation: \(response.annotations.count) annotations: \(response.mainResponse?.truncatedWithTrailingEllipsis(to: maxLength) ?? "No main response")"
+                }
             case .remoteCommandRequest(let rc):
                 return "Run remote command: \(rc.markdownDescription)"
             case .remoteCommandResponse(let result, _, let name):
@@ -60,6 +70,8 @@ struct Message: Codable {
                 return "Rename chat to \(name)"
             case let .append(string: chunk, uuid: uuid):
                 return "Append \(chunk) to \(uuid.uuidString)"
+            case .commit(let uuid):
+                return "Commit \(uuid.uuidString)"
             }
         }
     }
@@ -72,9 +84,9 @@ struct Message: Codable {
     }
 
     // Not shown as separate messages in chat
-    var visibleInClient: Bool {
+    var hiddenFromClient: Bool {
         switch content {
-        case .remoteCommandResponse, .renameChat: true
+        case .remoteCommandResponse, .renameChat, .commit: true
         case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal, .append: false
         }
     }
@@ -85,27 +97,21 @@ struct Message: Codable {
         case .clientLocal:
             true
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
-                .markdown, .explanationResponse, .explanationRequest, .renameChat, .append:
+                .markdown, .explanationResponse, .explanationRequest, .renameChat, .append,
+                .commit:
             false
         }
     }
 
+    // This is the snippet shown in the chat list.
     var snippetText: String? {
         let maxLength = 40
         switch content {
         case .plainText(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
         case .markdown(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
         case .explanationRequest(request: let request): return request.snippetText
-        case .explanationResponse(let response):
-            if let main = response.mainResponse {
-                return main
-            }
-            if response.annotations.count > 1 {
-                return "Added \(response.annotations.count) annotations"
-            } else if response.annotations.count == 1{
-                return "Added annotation"
-            }
-            return nil
+        case .explanationResponse(_, _, let markdown):
+            return markdown.truncatedWithTrailingEllipsis(to: maxLength)
         case .remoteCommandRequest(let command): return command.markdownDescription
         case .selectSessionRequest: return "Selecting session…"
         case .clientLocal(let cl):
@@ -113,7 +119,7 @@ struct Message: Codable {
             case .executingCommand(let command): return command.markdownDescription
             case .pickingSession: return "Selecting session…"
             }
-        case .renameChat, .append: return nil
+        case .renameChat, .append, .commit: return nil
         case .remoteCommandResponse:
             return "Finished executing command"
         }
@@ -126,7 +132,8 @@ struct Message: Codable {
         case .markdown(let string):
             content = .markdown(string + chunk)
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
-                .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append:
+                .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
+                .commit:
             it_fatalError()
         }
     }

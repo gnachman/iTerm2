@@ -194,12 +194,10 @@ extension Message {
         case let .plainText(value), let .append(string: value, _): value
         case let .markdown(value): AttributedStringForGPTMarkdown(value, didCopy: {}).string
         case let .explanationRequest(request): request.subjectMatter + " " + request.question
-        case let .explanationResponse(response):
-            ([response.mainResponse] + response.annotations.map { $0.note })
-                .compactMap { $0 }
-                .joined(separator: " ")
+        case let .explanationResponse(_, _, markdown): markdown
         case let .remoteCommandResponse(result, _, _): result.successValue
-        case  .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat: nil
+        case  .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat,
+                .commit: nil
         }
     }
 }

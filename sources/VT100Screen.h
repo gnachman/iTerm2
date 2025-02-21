@@ -262,6 +262,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (NSArray<id<VT100ScreenMarkReading>> *)namedMarks;
 - (long long)startAbsLineForBlock:(NSString *)blockID;
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
+- (void)pauseAtNextPrompt:(void (^)(void))paused;
 - (long long)absLineNumberOfLastLineInLineBuffer;
 - (iTermTerminalContentSnapshot *)snapshotForcingPrimaryGrid:(BOOL)forcePrimary;
 - (LineBufferPosition *)positionForTailSearchOfScreen;

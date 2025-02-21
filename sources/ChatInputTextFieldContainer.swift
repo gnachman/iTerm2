@@ -23,6 +23,7 @@ class ChatInputTextFieldContainer: NSView {
         sv.hasHorizontalScroller = false
         sv.autohidesScrollers = true
         sv.borderType = .noBorder
+        sv.drawsBackground = false
         return sv
     }()
 

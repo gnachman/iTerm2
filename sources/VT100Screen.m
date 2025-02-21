@@ -929,6 +929,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state markOnLine:line];
 }
 
+- (void)pauseAtNextPrompt:(void (^)(void))paused {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState pauseAtNextPrompt:paused];
+    }];
+}
+
 // TODO: This is mighty similar to -[VT100ScreenState rangeOfOutputForCommandMark:] and is implemented quite differently!
 - (VT100GridAbsCoordRange)rangeOfCommandAndOutputForMark:(id<VT100ScreenMarkReading>)mark
                                   includeSucessorDivider:(BOOL)includeSucessorDivider {

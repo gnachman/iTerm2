@@ -24,36 +24,44 @@ class ChatClient {
         }
         self.model = model
         self.broker = broker
-        broker.processors.append { [weak self] message, chatID in
+        broker.processors.append { [weak self] message, chatID, partial in
             guard let self else {
                 return message
             }
-            return processMessage(message, chatID: chatID)
+            return processMessage(message, chatID: chatID, partial: partial)
         }
     }
 
     // Transform Agent messages so they are useful to the client.
     private func processMessage(_ message: Message,
-                                chatID: String) -> Message? {
+                                chatID: String,
+                                partial: Bool) -> Message? {
         if message.author == .user {
             return message
         }
         switch message.content {
         case .remoteCommandRequest(let request):
+            it_assert(!partial)
             return processRemoteCommandRequest(chatID: chatID, message: message, request: request)
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse,
-                .selectSessionRequest, .clientLocal, .renameChat, .append:
+                .selectSessionRequest, .clientLocal, .renameChat:
             return message
-        case .explanationResponse(let aIAnnotationCollection):
-            guard let markdown = processExplanationResponse(annotations: aIAnnotationCollection,
-                                                            chatID: chatID) else {
+        case let .append(string: string, uuid: uuid):
+            it_assert(partial)
+            return processAppend(appendMessage: message, string: string, uuid: uuid, chatID: chatID)
+        case .commit(let uuid):
+            return processCommit(finalMessage: message, messageID: uuid, chatID: chatID)
+        case .explanationResponse(let response, let update, let markdown):
+            // This is either the entire message or the initial in a streaming rsponse.
+            guard let newMarkdown = markdownForExplanationResponse(response: response,
+                                                                   update: update,
+                                                                   chatID: chatID,
+                                                                   messageID: message.uniqueID) else {
                 return nil
             }
-            return Message(chatID: chatID,
-                           author: message.author,
-                           content: .markdown(markdown),
-                           sentDate: message.sentDate,
-                           uniqueID: message.uniqueID)
+            var temp = message
+            temp.content = .explanationResponse(response, nil, markdown: markdown + newMarkdown)
+            return temp
         }
     }
 
@@ -67,8 +75,8 @@ class ChatClient {
         broker.subscribe(chatID: chatID, registrationProvider: registrationProvider, closure: closure)
     }
 
-    func publish(message: Message, toChatID chatID: String) {
-        broker.publish(message: message, toChatID: chatID)
+    func publish(message: Message, toChatID chatID: String, partial: Bool) {
+        broker.publish(message: message, toChatID: chatID, partial: partial)
     }
 
     private func processRemoteCommandRequest(chatID: String,
@@ -119,7 +127,8 @@ class ChatClient {
                                      content: .clientLocal(ClientLocal(action: .executingCommand(request))),
                                      sentDate: Date(),
                                      uniqueID: UUID()),
-                    toChatID: chatID)
+                    toChatID: chatID,
+                    partial: false)
         }
     }
 
@@ -135,7 +144,8 @@ class ChatClient {
                                             functionCallName),
                                         sentDate: Date(),
                                         uniqueID: UUID()),
-                       toChatID: chatID)
+                       toChatID: chatID,
+                       partial: false)
     }
 
     func respondSuccessfullyToRemoteCommandRequest(inChat chatID: String,
@@ -150,7 +160,8 @@ class ChatClient {
                                             functionCallName),
                                         sentDate: Date(),
                                         uniqueID: UUID()),
-                       toChatID: chatID)
+                       toChatID: chatID,
+                       partial: false)
     }
 
     private enum ExplainUserInfoKeys: String {
@@ -160,46 +171,115 @@ class ChatClient {
     // Request an AI explanation, create a chat, and reveal the chat window.
     func explain(_ request: AIExplanationRequest,
                  title: String,
-                 guid: String,
-                 baseOffset: Int64,
                  scope: iTermVariableScope) {
         guard let chatWindowController = ChatWindowController.instance else {
             #warning("TODO: Error handling")
             return
         }
 
-        var amended = request
-        let context = ExplanationUserInfo(baseOffset: baseOffset,
-                                          guid: guid,
-                                          locatedString: request.originalString)
-        amended.userInfo = [ExplainUserInfoKeys.context.rawValue: try! JSONEncoder().encode(context)]
-        let chatID = broker.create(chatWithTitle: title, sessionGuid: guid)
+        let chatID = broker.create(chatWithTitle: title,
+                                   sessionGuid: request.context.sessionID)
         let initialMessage = Message(chatID: chatID,
                                      author: .user,
-                                     content: .explanationRequest(request: amended),
+                                     content: .explanationRequest(request: request),
                                      sentDate: Date(),
                                      uniqueID: UUID())
-        broker.publish(message: initialMessage, toChatID: chatID)
+        broker.publish(message: initialMessage, toChatID: chatID, partial: false)
 
         chatWindowController.showChatWindow()
         chatWindowController.select(chatID: chatID)
     }
 
+    private func processAppend(appendMessage: Message,
+                               string: String,
+                               uuid: UUID,
+                               chatID: String) -> Message? {
+        guard let messages = model.messages(forChat: chatID, createIfNeeded: false),
+              let i = model.index(ofMessageID: uuid, inChat: chatID) else {
+            return appendMessage
+        }
+        let original = messages[i]
+        switch original.content {
+        case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
+                .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest:
+            // These are impossible or just normal streaming messages.
+            return appendMessage
+
+        case .explanationResponse(var response, _, let accumulatedMarkdown):
+            // The case has no second value because this is where second values *come* from.
+            // The initial is always empty.
+
+            // append() will modify response in place so it is always complete.
+            var update = response.append(string, final: false)
+            update.messageID = uuid
+
+            guard let newMarkdown = markdownForExplanationResponse(response: response,
+                                                                   update: update,
+                                                                   chatID: chatID,
+                                                                   messageID: original.uniqueID) else {
+                return nil
+            }
+            return Message(chatID: chatID,
+                           author: original.author,
+                           content: .explanationResponse(response,
+                                                         update,
+                                                         markdown: accumulatedMarkdown + newMarkdown),
+                           sentDate: appendMessage.sentDate,
+                           uniqueID: UUID())
+        }
+    }
+
+    private func processCommit(finalMessage: Message, messageID: UUID, chatID: String) -> Message? {
+        guard let messages = model.messages(forChat: chatID, createIfNeeded: false),
+              let i = model.index(ofMessageID: messageID, inChat: chatID) else {
+            return finalMessage
+        }
+        let original = messages[i]
+        switch original.content {
+        case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
+                .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest:
+            // These are impossible or just normal streaming messages.
+            return finalMessage
+
+        case .explanationResponse(let response, _, let accumulatedMarkdown):
+            // The case has no second value because the initial, which is still in the original message,
+            // is always empty.
+            let marginal = markdownForExplanationResponse(
+                response: response,
+                update: ExplanationResponse.Update(final: true, messageID: messageID),
+                chatID: chatID,
+                messageID: messageID)
+            if let marginal {
+                return Message(
+                    chatID: chatID,
+                    author: original.author,
+                    content: .explanationResponse(response,
+                                                  .init(final: true, messageID: messageID),
+                                                  markdown: accumulatedMarkdown + marginal),
+                    sentDate: finalMessage.sentDate,
+                    uniqueID: UUID())
+            } else {
+                return nil
+            }
+        }
+    }
+
     // Performs side-effects upon receiving an explanation and returns a transformed message
-    // suitable for display.
-    private func processExplanationResponse(annotations: AIAnnotationCollection,
-                                            chatID: String) -> String? {
-        guard let data = annotations.userInfo?[ExplainUserInfoKeys.context.rawValue] as? Data,
-              let context = try? JSONDecoder().decode(ExplanationUserInfo.self, from: data),
-              let session = iTermController.sharedInstance().session(withGUID: context.guid) else {
+    // suitable for display. Returns the marginal markdown to append.
+    private func markdownForExplanationResponse(response: ExplanationResponse,
+                                                update: ExplanationResponse.Update?,
+                                                chatID: String,
+                                                messageID: UUID) -> String? {
+        let value = update ?? ExplanationResponse.Update(response)
+        guard let session = iTermController.sharedInstance().session(withGUID: response.request.context.sessionID) else {
             return nil
         }
-        let aiAnnotations = annotations.annotations.compactMap {
-            AITermAnnotation(annotation: $0, locatedString: context.locatedString)
+        let aiAnnotations = value.annotations.compactMap {
+            AITermAnnotation(annotation: $0, locatedString: response.request.originalString)
         }
         let urls = session.add(aiAnnotations: aiAnnotations,
-                               baseOffset: context.baseOffset,
-                               locatedString: context.locatedString)
+                               baseOffset: response.request.context.baseOffset,
+                               locatedString: response.request.originalString)
         var bullets = [String]()
         for (annotation, url) in zip(aiAnnotations, urls) {
             guard let url else {
@@ -207,23 +287,21 @@ class ChatClient {
             }
             bullets.append("I [annotated](\(url.absoluteString)) “\(annotation.annotatedText)”: \(annotation.note)")
         }
+        var result = ""
+        result += bullets.map { "  * " + $0 }.joined(separator: "\n")
         if !bullets.isEmpty {
-            let epilogue = "\nYou can click on a link in this message or on a yellow underline in the terminal to reveal an annotation."
-            if bullets.count  == 1 {
-                return bullets.first! + epilogue
-            } else {
-                return "I added these annotations:\n" + bullets.map { "  * " + $0 }.joined(separator: "\n") + epilogue
+            result += "\n"
+        }
+        if value.final && !response.annotations.isEmpty {
+            result += "\nYou can click on a link in this message or on a yellow underline in the terminal to reveal an annotation."
+        }
+        if let mainResponse = value.mainResponse {
+            if !result.isEmpty {
+                result += "\n"
             }
+            result += mainResponse
         }
-        if let mainResponse = annotations.mainResponse {
-            return mainResponse
-        }
-        return nil
+        return result
     }
 }
 
-fileprivate struct ExplanationUserInfo: Codable {
-    var baseOffset: Int64
-    var guid: String
-    var locatedString: iTermCodableLocatedString
-}

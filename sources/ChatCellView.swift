@@ -49,7 +49,7 @@ class ChatCellView: NSTableCellView {
 
     func load(chat: Chat, dataSource: ChatListDataSource) {
         if TypingStatusModel.instance.isTyping(participant: .agent, chatID: chat.id) {
-            snippet = "Agent is thinking…"
+            snippet = "AI is typing…"
         } else {
             self.snippet = dataSource.snippet(forChatID: chat.id)
         }
@@ -77,7 +77,7 @@ class ChatCellView: NSTableCellView {
                 if typing {
                     self.typing = true
                     DLog("set typing=true in \(chatID)")
-                    snippet = "Agent is thinking…"
+                    snippet = "AI is typing…"
                 } else {
                     self.typing = false
                     DLog("set typing=true in \(false)")

@@ -8,11 +8,16 @@
 
 
 struct AIExplanationRequest: Codable {
+    struct Context: Codable {
+        var sessionID: String
+        var baseOffset: Int64
+    }
     var command: String?
     var originalString: iTermCodableLocatedString
     var question: String
     var subjectMatter: String
     var url: URL?
+    var context: Context
     private var _boxedUserInfo: NSDictionaryCodableBox?
     var userInfo: NSDictionary? {
         get { _boxedUserInfo?.dictionary }
@@ -108,11 +113,13 @@ struct AIExplanationRequest: Codable {
          selection: iTermSelection,
          question: String,
          subjectMatter: String,
-         url: URL?) {
+         url: URL?,
+         context: Context) {
         self.command = command
         self.question = question
         self.subjectMatter = subjectMatter
         self.url = url
+        self.context = context
         originalString = iTermCodableLocatedString(Self.content(snapshot: snapshot, selection: selection))
     }
 }

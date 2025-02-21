@@ -69,6 +69,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     BOOL _alertOnNextMark;
     BOOL _runSideEffectAfterTopJoinFinishes;
     NSMutableArray<void (^)(void)> *_postTriggerActions;
+    void (^_nextPromptBlock)(void);
 }
 
 static _Atomic int gPerformingJoinedBlock;
@@ -2824,6 +2825,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
         [self.terminal resetGraphicRendition];
     }
+    if (_nextPromptBlock) {
+        __weak __typeof(self) weakSelf = self;
+        [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (strongSelf && strongSelf->_nextPromptBlock) {
+                void (^block)(void) = strongSelf->_nextPromptBlock;
+                strongSelf->_nextPromptBlock = nil;
+                block();
+            }
+            [unpauser unpause];
+        }];
+    }
     return mark;
 }
 
@@ -3619,6 +3632,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         VT100ScreenMark *mark = (VT100ScreenMark *)obj;
         [mark incrementClearCount];
     }];
+}
+
+- (void)pauseAtNextPrompt:(void (^)(void))paused {
+    _nextPromptBlock = [paused copy];
 }
 
 #pragma mark - Annotations

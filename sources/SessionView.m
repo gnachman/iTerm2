@@ -152,7 +152,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermStatusBarFilterComponent *_temporaryFilterComponent;
     iTermCursorSmearView *_smearView;
     NSInteger _contentViewIndex;  // for metal or legacy view - whatever draws terminal content goes at this index.
-    NSButton *_sessionSelectorButton;
+    iTermSelectSessionButton *_sessionSelectorButton;
 }
 
 + (double)titleHeight {
@@ -906,10 +906,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)addSessionSelectorButton {
-    _sessionSelectorButton = [[NSButton alloc] init];
-    _sessionSelectorButton.title = @"Select This Session";
-    _sessionSelectorButton.target = self;
-    _sessionSelectorButton.action = @selector(didSelectThisSession:);
+    _sessionSelectorButton = [[iTermSelectSessionButton alloc] init];
+    __weak __typeof(self) weakSelf = self;
+    _sessionSelectorButton.onButtonClicked = ^{
+        [weakSelf didSelectThisSession:nil];
+    };
     [self addSubview:_sessionSelectorButton];
     [self updateSessionSelectorButtonFrame];
 }

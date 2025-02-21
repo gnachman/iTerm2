@@ -139,15 +139,16 @@ extension PTYSession {
                                            selection: selection,
                                            question: "",
                                            subjectMatter: subjectMatter,
-                                           url: url(selection, in: snapshot))
+                                           url: url(selection, in: snapshot),
+                                           context: AIExplanationRequest.Context(
+                                            sessionID: guid,
+                                            baseOffset: screen.totalScrollbackOverflow()))
         guard let client = ChatClient.instance else {
             #warning("TODO: Error handling")
             return
         }
         client.explain(request,
                        title: title,
-                       guid: guid,
-                       baseOffset: screen.totalScrollbackOverflow(),
                        scope: genericScope)
     }
 
@@ -235,6 +236,7 @@ class RunningRemoteCommand: NSObject {
     enum State {
         case expectation(iTermExpectation, (String) -> ())
         case futureString(OneTimeStringClosure)
+        case waitingForMark(UUID)
         case none
     }
     var state = State.none
@@ -250,6 +252,8 @@ extension PTYSession {
             completion("The function call was canceled by user request.")
         case .futureString(let otsc):
             otsc.call("The function call was canceled by user request.")
+        case .waitingForMark(_):
+            screen.pause(atNextPrompt: nil)
         case .none:
             break
         }
@@ -274,6 +278,33 @@ extension PTYSession {
     }
 
     func executeCommandRemoteCommand(executeCommand: RemoteCommand.ExecuteCommand,
+                                     completion: @escaping (String) -> ()) {
+        if !iTermShellHistoryController.sharedInstance().commandHistoryHasEverBeenUsed() || currentCommand == nil {
+            jankyExecuteCommand(executeCommand, completion: completion)
+        } else {
+            goodExecuteCommand(executeCommand, completion: completion)
+        }
+    }
+
+    private func goodExecuteCommand(_ executeCommand: RemoteCommand.ExecuteCommand,
+                                    completion: @escaping (String) -> ()) {
+        let start = Int64(screen.numberOfScrollbackLines() + screen.cursorY() - 1) + screen.totalScrollbackOverflow()
+        let uuid = UUID()
+        runningRemoteCommand.state = .waitingForMark(uuid)
+        writeTaskNoBroadcast(executeCommand.command + "\r")
+        screen.pause { [weak self] in
+            if let self,
+               case .waitingForMark(let current) = self.runningRemoteCommand.state,
+               current == uuid {
+                self.runningRemoteCommand.state = .none
+                if let content = contentAfter(start) {
+                    completion(content)
+                }
+            }
+        }
+    }
+
+    private func jankyExecuteCommand(_ executeCommand: RemoteCommand.ExecuteCommand,
                                      completion: @escaping (String) -> ()) {
         let uuid = UUID().uuidString
         let start = Int64(screen.numberOfScrollbackLines() + screen.cursorY() - 1) + screen.totalScrollbackOverflow()

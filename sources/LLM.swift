@@ -15,7 +15,7 @@ enum LLM {
     }
 
     struct Message: Codable, Equatable {
-        var role = "user"
+        var role: String? = "user"
         var content: String?
 
         // For function calling
@@ -23,8 +23,9 @@ enum LLM {
         var function_call: FunctionCall?
 
         struct FunctionCall: Codable, Equatable {
-            var name: String
-            var arguments: String
+            // These are optional because they can be omitted when streaming. Otherwise they are always present.
+            var name: String?
+            var arguments: String?
         }
 
         enum CodingKeys: String, CodingKey {
@@ -141,7 +142,7 @@ fileprivate struct GeminiRequestBuilder: Codable {
     init(messages: [LLM.Message]) {
         self.contents = messages.map { message in
             let role = if message.role == "user" {
-                message.role
+                "user"
             } else {
                 "model"
             }
@@ -510,20 +511,17 @@ struct LLMModernStreamingResponseParser: LLMResponseParser {
 
         struct UpdateChoice: Codable {
             // The delta holds the incremental text update.
-            let delta: UpdateDelta
+            let delta: LLM.Message
             let index: Int
             // For update chunks, finish_reason is nil.
             let finish_reason: String?
         }
 
-        struct UpdateDelta: Codable {
-            let content: String?
-        }
-
         var choiceMessages: [LLM.Message] {
             return choices.map {
                 LLM.Message(role: "assistant",
-                            content: $0.delta.content ?? "")
+                            content: $0.delta.content ?? "",
+                            function_call: $0.delta.function_call)
             }
         }
     }

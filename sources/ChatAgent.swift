@@ -55,13 +55,14 @@ fileprivate struct MessageToPromptStateMachine {
         switch agentMessage.content {
         case .plainText(let value), .markdown(let value):
             return value
-        case .explanationResponse(let annotations):
+        case .explanationResponse(let annotations, _, _):
             return annotations.rawResponse
         case .explanationRequest:
             it_fatalError()
         case .remoteCommandRequest:
             return nil
-        case .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append:
+        case .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
+                .commit:
             it_fatalError()
         }
     }
@@ -84,7 +85,7 @@ fileprivate struct MessageToPromptStateMachine {
                     "I was unable to complete the function call: " + error.localizedDescription
                 }
 
-            case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat:
+            case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .commit:
                 it_fatalError()
             }
         case .initialExplanation:
@@ -94,7 +95,8 @@ fileprivate struct MessageToPromptStateMachine {
                 return AIExplanationRequest.conversationalPrompt(userPrompt: value)
             case .explanationResponse, .explanationRequest, .append:
                 it_fatalError()
-            case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat:
+            case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
+                    .clientLocal, .renameChat, .commit:
                 it_fatalError()
             }
         }
@@ -127,7 +129,7 @@ class ChatAgent {
 
             case .selectSessionRequest, .clientLocal, .renameChat:
                 break
-            case .append:
+            case .append, .commit:
                 it_fatalError()
             }
         }
@@ -154,7 +156,7 @@ class ChatAgent {
                          completion: @escaping (Message?) -> ()) {
         switch userMessage.content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                .remoteCommandRequest, .selectSessionRequest, .clientLocal:
+                .remoteCommandRequest, .selectSessionRequest, .clientLocal, .commit:
             break
         case .renameChat, .append:
             return
@@ -174,7 +176,8 @@ class ChatAgent {
             streamingCallback = { chunk in
                 if uuid == nil,
                     let initialMessage = Self.message(completionText: chunk,
-                                                      userMessage: userMessage) {
+                                                      userMessage: userMessage,
+                                                      streaming: true) {
                     streaming(.begin(initialMessage))
                     uuid = initialMessage.uniqueID
                 } else if let uuid {
@@ -196,7 +199,9 @@ class ChatAgent {
             } else {
                 self.conversation.messages.removeLast()
             }
-            let message = Self.message(forResult: result, userMessage: userMessage)
+            let message = Self.committedMessage(forResult: result,
+                                                userMessage: userMessage,
+                                                streamID: uuid)
             completion(message)
         }
     }
@@ -214,19 +219,28 @@ class ChatAgent {
         }
     }
 
-    private static func message(respondingTo userMessage: Message?,
-                                fromLastMessageIn conversation: AIConversation) -> Message? {
-        guard let text = conversation.messages.last!.content, let userMessage else {
+    private static func committedMessage(respondingTo userMessage: Message,
+                                         fromLastMessageIn conversation: AIConversation) -> Message? {
+        guard let text = conversation.messages.last!.content else {
             return nil
         }
-        return self.message(completionText: text, userMessage: userMessage)
+        return self.message(completionText: text, userMessage: userMessage, streaming: false)
     }
 
     // Return a new message from the agent containing the content of the last message in result.
-    private static func message(forResult result: Result<AIConversation, any Error>,
-                                userMessage: Message) -> Message? {
+    private static func committedMessage(forResult result: Result<AIConversation, any Error>,
+                                         userMessage: Message,
+                                         streamID: UUID?) -> Message? {
+        if let streamID {
+            return Message(chatID: userMessage.chatID,
+                           author: .agent,
+                           content: .commit(streamID),
+                           sentDate: Date(),
+                           uniqueID: UUID())
+        }
         return result.handle { (updated: AIConversation) -> Message? in
-            return message(respondingTo: userMessage, fromLastMessageIn: updated)
+            return committedMessage(respondingTo: userMessage,
+                                    fromLastMessageIn: updated)
         } failure: { error in
             #warning("TODO: This code path will leave things in a broken state if it happens in the first two messages of an explanation")
             let nserror = error as NSError
@@ -248,7 +262,10 @@ class ChatAgent {
         }
     }
 
-    private static func message(completionText text: String, userMessage: Message) -> Message? {
+    // This is for a committed message or an initial message in a stream.
+    private static func message(completionText text: String,
+                                userMessage: Message,
+                                streaming: Bool) -> Message? {
         switch userMessage.content {
         case .plainText, .markdown, .explanationResponse:
             return Message(chatID: userMessage.chatID,
@@ -257,20 +274,26 @@ class ChatAgent {
                            sentDate: Date(),
                            uniqueID: UUID())
         case .explanationRequest(let explanationRequest):
+            let messageID = UUID()
             return Message(
                 chatID: userMessage.chatID,
                 author: .agent,
                 content: .explanationResponse(
-                    AIAnnotationCollection(text, request: explanationRequest)),
+                    ExplanationResponse(text: text,
+                                        request: explanationRequest,
+                                        final: streaming == false),
+                    streaming ? ExplanationResponse.Update(final: false, messageID: messageID) : nil,
+                    markdown: ""),  // markdown is added by the client.
                 sentDate: Date(),
-                uniqueID: UUID())
+                uniqueID: messageID)
         case .remoteCommandResponse:
             return Message(chatID: userMessage.chatID,
                            author: .agent,
                            content: .markdown(text),
                            sentDate: Date(),
                            uniqueID: UUID())
-        case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append:
+        case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
+                .commit:
             it_fatalError()
         }
     }
@@ -642,7 +665,8 @@ extension ChatAgent {
                                       content: .renameChat(newName),
                                       sentDate: Date(),
                                       uniqueID: UUID()),
-                       toChatID: chatID)
+                       toChatID: chatID,
+                       partial: false)
     }
 
     private func willExecuteCommand() {
@@ -654,13 +678,13 @@ extension ChatAgent {
     private func runRemoteCommand(_ remoteCommand: RemoteCommand, completion: @escaping (Result<String, Error>) -> ()) {
         let requestID = UUID()
         pendingRemoteCommands[requestID] = completion
-        #warning("TODO: It would be nice if AIConversation serialized half-completed function calls so it could be continued after a restart")
         broker.publish(message: .init(chatID: chatID,
                                       author: .agent,
                                       content: .remoteCommandRequest(remoteCommand),
                                       sentDate: Date(),
                                       uniqueID: requestID),
-                       toChatID: chatID)
+                       toChatID: chatID,
+                       partial: false)
     }
 }
 

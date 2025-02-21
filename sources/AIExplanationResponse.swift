@@ -13,59 +13,25 @@ struct Annotation: Codable {
     var annotatedText: String
 }
 
-class AIAnnotationCollection: Codable {
-    let rawResponse: String
-    let annotations: [Annotation]
-    let mainResponse: String?
-    private var _boxedUserInfo: NSDictionaryCodableBox?
-    var userInfo: NSDictionary? {
-        get { _boxedUserInfo?.dictionary }
-        set { _boxedUserInfo = newValue.map { NSDictionaryCodableBox(dictionary: $0) } }
+struct ExplanationResponse: Codable {
+    var rawResponse = ""
+    private var unparsed = ""
+    var annotations = [Annotation]()
+    var mainResponse: String?
+    var request: AIExplanationRequest
+    private lazy var inputLines: [String] = {
+        request.originalString.string.components(separatedBy: "\n")
+    }()
+
+    init(text: String, request: AIExplanationRequest, final: Bool) {
+        self.request = request
+        _ = append(text, final: final)
     }
 
-    init(_ response: String, request: AIExplanationRequest) {
-        rawResponse = response
-        let inputLines = request.originalString.string.components(separatedBy: "\n")
-        let ambiguousAnnotations: [AmbiguousAnnotation] = Self.parseAmbiguous(response)
-        annotations = ambiguousAnnotations.compactMap { annotation -> Annotation? in
-            guard let line = inputLines[safe: annotation.line] else {
-                return nil
-            }
-            guard let range = line.range(of: annotation.substring) else {
-                return nil
-            }
-            return Annotation(line: annotation.line,
-                              utf16OffsetInLine: line.utf16.distance(from: line.startIndex,
-                                                                     to: range.lowerBound),
-                              utf16Length: annotation.substring.utf16.count,
-                              note: annotation.text,
-                              annotatedText: annotation.substring)
-        }
-        mainResponse = Self.parseMainResponse(response)
-        self.userInfo = request.userInfo
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case annotations
-        case mainResponse
-        case userInfo
-        case rawResponse
-    }
-
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        mainResponse = try container.decodeIfPresent(String.self, forKey: .mainResponse)
-        annotations = try container.decode([Annotation].self, forKey: .annotations)
-        _boxedUserInfo = try container.decode(NSDictionaryCodableBox.self, forKey: .userInfo)
-        rawResponse = try container.decode(String.self, forKey: .rawResponse)
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(mainResponse, forKey: .mainResponse)
-        try container.encode(annotations, forKey: .annotations)
-        try container.encode(_boxedUserInfo, forKey: .userInfo)
-        try container.encode(rawResponse, forKey: .rawResponse)
+    mutating func append(_ string: String, final: Bool) -> Update {
+        rawResponse += string
+        unparsed += string
+        return parse(final: final)
     }
 
     private struct AmbiguousAnnotation {
@@ -74,53 +40,86 @@ class AIAnnotationCollection: Codable {
         var substring: String
     }
 
-    private static func parseAmbiguous(_ response: String) -> [AmbiguousAnnotation] {
+    mutating func append(_ other: ExplanationResponse) {
+        annotations += other.annotations
+        if let main = other.mainResponse {
+            mainResponse = (mainResponse ?? "") + main
+        }
+    }
+
+    struct Update: Codable {
+        var annotations = [Annotation]()
+        var mainResponse: String?
+        var messageID: UUID?
+        var final: Bool
+
+        init(final: Bool, messageID: UUID?) {
+            self.final = final
+            self.messageID = messageID
+        }
+
+        init(_ full: ExplanationResponse) {
+            self.annotations = full.annotations
+            self.mainResponse = full.mainResponse
+            final = true
+        }
+    }
+
+    private mutating func parse(final: Bool) -> Update {
+        var result = Update(final: final, messageID: nil)
+        result.annotations = disambiguate(parseAmbiguous())
+        annotations += result.annotations
+        if let mainResponse = parseMainResponse() {
+            result.mainResponse = mainResponse
+            self.mainResponse = (self.mainResponse ?? "") + mainResponse
+        }
+        return result
+    }
+
+    private mutating func parseAmbiguous() -> [AmbiguousAnnotation] {
+        var result = [AmbiguousAnnotation]()
         let pattern = #"<annotation line="(\d+)" text="(.*?)" substring="(.*?)" */>"#
 
         guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-            return []
+            return result
         }
 
-        let nsResponse = response as NSString
-        let matches = regex.matches(in: response,
+        let nsResponse = NSMutableString(string: unparsed)
+        let matches = regex.matches(in: unparsed,
                                     options: [],
                                     range: NSRange(location: 0, length: nsResponse.length))
-
-        return matches.compactMap { match in
+        var ranges = [NSRange]()
+        for match in matches {
             guard match.numberOfRanges == 4 else {
-                return nil
+                continue
             }
 
             let lineStr = nsResponse.substring(with: match.range(at: 1))
             let text = unescapeHTML(nsResponse.substring(with: match.range(at: 2)))
             let substring = unescapeHTML(nsResponse.substring(with: match.range(at: 3)))
 
-            guard let line = Int(lineStr) else { return nil }
+            guard let line = Int(lineStr) else {
+                continue
+            }
 
-            return AmbiguousAnnotation(line: line, text: text, substring: substring)
+            result.append(AmbiguousAnnotation(line: line,
+                                              text: text,
+                                              substring: substring))
+            ranges.append(match.range)
         }
+        for range in ranges.reversed() {
+            nsResponse.replaceCharacters(in: range, with: "")
+        }
+        unparsed = nsResponse as String
+        return result
     }
 
-    private static func parseMainResponse(_ response: String) -> String? {
-        guard let start = response.range(of: "<response>")?.upperBound,
-              let end = response.range(of: "</response>")?.lowerBound else {
-            return nil
-        }
-        let escaped = String(response[start..<end])
-        return unescapeHTML(escaped)
-    }
-
-    private static func unescapeHTML(_ string: String) -> String {
+    private func unescapeHTML(_ string: String) -> String {
         return CFXMLCreateStringByUnescapingEntities(nil, string as CFString, nil) as String? ?? string
     }
 
-    static func parse(_ response: String?, request: AIExplanationRequest) -> ([Annotation], String?) {
-        guard let response else {
-            return ([], nil)
-        }
-        let inputLines = request.originalString.string.components(separatedBy: "\n")
-        let ambiguousAnnotations: [AmbiguousAnnotation] = parseAmbiguous(response)
-        let annotations = ambiguousAnnotations.compactMap { annotation -> Annotation? in
+    private mutating func disambiguate(_ ambiguousAnnotations: [AmbiguousAnnotation]) -> [Annotation] {
+        return ambiguousAnnotations.compactMap { annotation in
             guard let line = inputLines[safe: annotation.line] else {
                 return nil
             }
@@ -134,8 +133,20 @@ class AIAnnotationCollection: Codable {
                               note: annotation.text,
                               annotatedText: annotation.substring)
         }
-        let mainResponse = parseMainResponse(response)
-        return (annotations, mainResponse)
+    }
+
+    private mutating func parseMainResponse() -> String? {
+        guard let startRange = unparsed.range(of: "<response>"),
+              let endRange = unparsed.range(of: "</response>") else {
+            return nil
+        }
+        let start = startRange.upperBound
+        let end = endRange.lowerBound
+        unparsed = unparsed
+            .replacingCharacters(in: startRange.lowerBound..<endRange.upperBound,
+                                 with: "")
+        let escaped = String(unparsed[start..<end])
+        return unescapeHTML(escaped)
     }
 }
 

@@ -57,27 +57,24 @@ class ChatService {
                 // it.
                 newAgent(forChatID: chatID, messages: messages(chatID: chatID).dropLast())
             }
-            var gotStreamingResponses = false
             agent.fetchCompletion(userMessage: message,
                                   streaming: { [weak self] update in
-                gotStreamingResponses = true
                 switch update {
                 case .begin(let message):
-                    self?.broker.publish(message: message, toChatID: chatID)
+                    self?.broker.publish(message: message, toChatID: chatID, partial: true)
                 case .append(let chunk, let uuid):
                     self?.broker.publish(message: Message(chatID: chatID,
                                                           author: .agent,
                                                           content: .append(string: chunk, uuid: uuid),
                                                           sentDate: Date(),
                                                           uniqueID: UUID()),
-                                         toChatID: chatID)
+                                         toChatID: chatID,
+                                         partial: true)
                 }
             }, completion: { [weak self] replyMessage in
                 stopTyping()
-                if !gotStreamingResponses {
-                    if let replyMessage {
-                        self?.broker.publish(message: replyMessage, toChatID: chatID)
-                    }
+                if let replyMessage {
+                    self?.broker.publish(message: replyMessage, toChatID: chatID, partial: false)
                 }
             })
         }
