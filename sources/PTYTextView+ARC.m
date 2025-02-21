@@ -919,6 +919,7 @@ iTermCommandInfoViewControllerDelegate>
     frame.size.height = [_indicatorMessagePopoverViewController.textView.attributedString heightForWidth:frame.size.width - horizontalInsets] + verticalInsets;
     
     _indicatorMessagePopoverViewController.view.frame = frame;
+    _indicatorMessagePopoverViewController.closeOnLinkClick = YES;
     [_indicatorMessagePopoverViewController.popover showRelativeToRect:NSMakeRect(point.x, point.y, 1, 1)
                                                                 ofView:self.enclosingScrollView
                                                          preferredEdge:NSRectEdgeMaxY];

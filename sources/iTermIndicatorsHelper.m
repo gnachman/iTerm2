@@ -287,7 +287,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
         kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
         kiTermIndicatorPinned: @"This Hotkey Window is pinned.",
-        kiTermIndicatorAIWatching: [NSString stringWithFormat:@"AI Chats can view or control this session.\n * [Stop all](iterm2:unlink-session-chat?s=%@&t=%@)\n * [Reveal](iterm2:reveal-chat-for-session?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken], sessionID, [[NSWorkspace sharedWorkspace] it_newToken]]
+        kiTermIndicatorAIWatching: [NSString stringWithFormat:@"AI Chats can view or control this session.\n * [Unlink from AI Chat](iterm2:unlink-session-chat?s=%@&t=%@)\n * [Reveal](iterm2:reveal-chat-for-session?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken], sessionID, [[NSWorkspace sharedWorkspace] it_newToken]]
     };
     return messages[name];
 }

@@ -236,7 +236,7 @@ class RunningRemoteCommand: NSObject {
     enum State {
         case expectation(iTermExpectation, (String) -> ())
         case futureString(OneTimeStringClosure)
-        case waitingForMark(UUID)
+        case waitingForMark(UUID, OneTimeStringClosure)
         case none
     }
     var state = State.none
@@ -252,8 +252,9 @@ extension PTYSession {
             completion("The function call was canceled by user request.")
         case .futureString(let otsc):
             otsc.call("The function call was canceled by user request.")
-        case .waitingForMark(_):
+        case .waitingForMark(_, let otsc):
             screen.pause(atNextPrompt: nil)
+            otsc.call("The function call was canceled by user request.")
         case .none:
             break
         }
@@ -290,15 +291,18 @@ extension PTYSession {
                                     completion: @escaping (String) -> ()) {
         let start = Int64(screen.numberOfScrollbackLines() + screen.cursorY() - 1) + screen.totalScrollbackOverflow()
         let uuid = UUID()
-        runningRemoteCommand.state = .waitingForMark(uuid)
+        let otsc = OneTimeStringClosure { message in
+            completion(message)
+        }
+        runningRemoteCommand.state = .waitingForMark(uuid, otsc)
         writeTaskNoBroadcast(executeCommand.command + "\r")
         screen.pause { [weak self] in
             if let self,
-               case .waitingForMark(let current) = self.runningRemoteCommand.state,
+               case .waitingForMark(let current, _) = self.runningRemoteCommand.state,
                current == uuid {
                 self.runningRemoteCommand.state = .none
                 if let content = contentAfter(start) {
-                    completion(content)
+                    otsc.call(content)
                 }
             }
         }

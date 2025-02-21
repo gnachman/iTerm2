@@ -910,7 +910,7 @@ class AITermController {
     }
 
     private func makeAPICall(query: String, registration: Registration, stream: ((String) -> ())?) {
-        makeAPICall(messages: [Message(role: "user", content: query)],
+        makeAPICall(messages: [Message(role: .user, content: query)],
                     registration: registration,
                     stream: stream)
     }
@@ -1115,7 +1115,7 @@ class AITermController {
                     switch result {
                     case .success(let response):
                         DLog("Response to function call with arguments \(functionCall.arguments ?? ""): \(response)")
-                        amended.append(Message(role: "function",
+                        amended.append(Message(role: .function,
                                                content: response,
                                                name: functionCall.name))
                         state = .ground
@@ -1133,7 +1133,7 @@ class AITermController {
                 }
                 return
             }
-            amended.append(Message(role: "user",
+            amended.append(Message(role: .user,
                                    content: "There is no registered function by that name. Try again."))
             request(messages: amended)
         }
@@ -1368,6 +1368,18 @@ struct AIConversation {
         controller.define(function: decl, arguments: arguments, implementation: implementation)
     }
 
+    var systemMessage: String? {
+        didSet {
+            if messages.first?.role == .system {
+                messages.removeFirst()
+            }
+            if let systemMessage {
+                messages.insert(LLM.Message(role: .system,
+                                            content: systemMessage),
+                                at: 0)
+            }
+        }
+    }
     mutating func add(_ aiMessage: AITermController.Message) {
         while messages.last?.role == aiMessage.role {
             messages.removeLast()
@@ -1375,7 +1387,7 @@ struct AIConversation {
         messages.append(aiMessage)
     }
     
-    mutating func add(text: String, role: String = "user") {
+    mutating func add(text: String, role: LLM.Message.Role = .user) {
         add(AITermController.Message(role: role, content: text))
     }
 
@@ -1422,7 +1434,8 @@ struct AIConversation {
         delegate.completion = { [weak registrationProvider] result in
             switch result {
             case .success(let text):
-                let message = AITermController.Message(role: "assistant", content: accumulator + text)
+                let message = AITermController.Message(role: .assistant,
+                                                       content: accumulator + text)
                 let amended = AIConversation(registrationProvider: registrationProvider,
                                              messages: prior + [message])
                 amended.controller.define(functions: controller.functions)
@@ -1453,7 +1466,7 @@ func truncate(messages: [AITermController.Message], maxTokens: Int) -> [AITermCo
         if tokens < maxTokens {
             break
         }
-        if messages[i].role == "system" {
+        if messages[i].role == .system {
             continue
         }
         if i == messages.count - 1 {

@@ -231,7 +231,8 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
     var count: Int {
         elements.count
     }
-
+    var isEmpty: Bool { count == 0 }
+    
     fileprivate convenience init(db: iTermDatabase) {
         self.init(db: db, query: Element.fetchAllQuery(), args: [])
     }

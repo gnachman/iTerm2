@@ -434,32 +434,33 @@ extension ChatViewController {
         })
     }
 
+
     @objc private func showSessionButtonMenu(_ sender: NSButton) {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), keyEquivalent: "")
+        menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), target: self)
         menu.addItem(NSMenuItem.separator())
         if let guid = model?.sessionGuid,
            iTermController.sharedInstance().session(withGUID: guid) != nil {
 
-            menu.addItem(withTitle: "Reveal Linked Session", action: #selector(revealLinkedSession(_:)), keyEquivalent: "")
-            menu.addItem(withTitle: "Unlink Session", action: #selector(unlinkSession(_:)), keyEquivalent: "")
+            menu.addItem(withTitle: "Reveal Linked Session", action: #selector(revealLinkedSession(_:)), target: self)
+            menu.addItem(withTitle: "Unlink Session", action: #selector(unlinkSession(_:)), target: self)
             menu.addItem(NSMenuItem.separator())
 
             let rce = RemoteCommandExecutor.instance
-            menu.addItem(withTitle: "Agent can view and modify linked session", action: #selector(setAlwaysAllow(_:)), state: rce.permission(inSessionGuid: guid) == .always ? .on : .off)
-            menu.addItem(withTitle: "Keep linked session private from agent", action: #selector(setNeverAllow(_:)), state: rce.permission(inSessionGuid: guid) == .never ? .on : .off)
-            menu.addItem(withTitle: "Ask before allowing agent to access linked session", action: #selector(setAsk(_:)), state: rce.permission(inSessionGuid: guid) == .ask ? .on : .off)
+            menu.addItem(withTitle: "Agent can view and modify linked session", action: #selector(setAlwaysAllow(_:)), target: self, state: rce.permission(inSessionGuid: guid) == .always ? .on : .off)
+            menu.addItem(withTitle: "Keep linked session private from agent", action: #selector(setNeverAllow(_:)),target: self,  state: rce.permission(inSessionGuid: guid) == .never ? .on : .off)
+            menu.addItem(withTitle: "Ask before allowing agent to access linked session", action: #selector(setAsk(_:)), target: self, state: rce.permission(inSessionGuid: guid) == .ask ? .on : .off)
 
             menu.addItem(NSMenuItem.separator())
-            menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), keyEquivalent: "")
+            menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
 
             // Position the menu just below the button
             let location = NSPoint(x: 0, y: sender.bounds.height)
             menu.popUp(positioning: nil, at: location, in: sender)
         } else {
-            menu.addItem(withTitle: "Link Session", action: #selector(objcLinkSession(_:)), keyEquivalent: "")
+            menu.addItem(withTitle: "Link Session", action: #selector(objcLinkSession(_:)), target: self)
             menu.addItem(NSMenuItem.separator())
-            menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), keyEquivalent: "")
+            menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
 
             // Position the menu just below the button
             let location = NSPoint(x: 0, y: sender.bounds.height)
@@ -497,7 +498,7 @@ extension ChatViewController {
             completion(nil)
             return
         }
-        pickSessionPromise = SessionSelector.select()
+        pickSessionPromise = SessionSelector.select(reason: "Link this session to AI chat?")
         let waitingMessage = Message(chatID: chatID,
                                      author: .agent,
                                      content: .clientLocal(ClientLocal(action: .pickingSession)),
@@ -664,6 +665,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         session.cancelRemoteCommand()
                     }
                 }
+            case .notice:
+                break
             }
         case .selectSessionRequest(let originalMessage):
             cell.buttonClicked = { [weak self] identifier, messageID in
@@ -696,13 +699,31 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
             }
         case .remoteCommandRequest(let remoteCommand):
-            cell.buttonClicked = { identifier, messageID in
+            let functionCallName = remoteCommand.llmMessage.function_call?.name ?? "Unknown function call name"
+            cell.buttonClicked = { [broker, client] identifier, messageID in
                 guard messageID == originalMessageID else {
                     return
                 }
-                guard let chatID,
-                      let guid = self.listModel.chat(id: chatID)?.sessionGuid,
+                guard let chatID else {
+                    return
+                }
+                guard let guid = self.listModel.chat(id: chatID)?.sessionGuid,
                       let session = iTermController.sharedInstance().session(withGUID: guid) else {
+                    broker.publish(
+                        message: Message(
+                            chatID: chatID,
+                            author: .agent,
+                            content: .clientLocal(.init(action: .notice(
+                                "This chat is not linked to any terminal session."))),
+                            sentDate: Date(),
+                            uniqueID: UUID()),
+                        toChatID: chatID,
+                        partial: false)
+                    client.respondSuccessfullyToRemoteCommandRequest(
+                        inChat: chatID,
+                        requestUUID: messageID,
+                        message: "The user did not link a terminal session to chat, so the function could not be run.",
+                        functionCallName: functionCallName)
                     return
                 }
                 var allowed = false
@@ -730,7 +751,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         inChat: chatID,
                         requestUUID: messageID,
                         message: "The user declined to allow function calling. Try to find another way to assist.",
-                        functionCallName: remoteCommand.llmMessage.function_call?.name ?? "Unknown function call name")
+                        functionCallName: functionCallName)
                 }
             }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
@@ -774,6 +795,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         enableButtons = false
                     }
                 }
+            case .notice:
+                break
             }
         default:
             break
@@ -833,9 +856,10 @@ extension Message {
             switch clientLocal.action {
             case .pickingSession, .executingCommand:
                 [.init(title: "Cancel", color: .red, identifier: "")]
+            case .notice: []
             }
         case .selectSessionRequest:
-            [.init(title: "Pick Session", color: .white, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
+            [.init(title: "Select a Session", color: .white, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
              .init(title: "Cancel", color: .red, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
         case .remoteCommandRequest:
             [.init(title: "Allow Once", color: .white, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
@@ -889,6 +913,8 @@ extension Message {
                 return AttributedStringForGPTMarkdown("Waiting for a session to be selected…") { }
             case .executingCommand(let command):
                 return AttributedStringForGPTMarkdown(command.markdownDescription) { }
+            case .notice(let message):
+                return AttributedStringForGPTMarkdown(message) { }
 
             }
         case .selectSessionRequest:
@@ -987,9 +1013,15 @@ extension ChatViewController: ChatViewControllerModelDelegate {
 }
 
 extension NSMenu {
-    func addItem(withTitle title: String, action: Selector, state: NSControl.StateValue) {
+    func addItem(withTitle title: String, action: Selector, target: AnyObject, state: NSControl.StateValue) {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
         item.state = state
+        item.target = target
+        addItem(item)
+    }
+    func addItem(withTitle title: String, action: Selector, target: AnyObject) {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.target = target
         addItem(item)
     }
 }

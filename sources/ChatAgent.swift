@@ -6,10 +6,10 @@
 //
 
 fileprivate extension AITermController.Message {
-    static func role(from message: Message) -> String {
+    static func role(from message: Message) -> LLM.Message.Role {
         switch message.author {
-        case .user: "user"
-        case .agent: "assistant"
+        case .user: .user
+        case .agent: .assistant
         }
     }
 }
@@ -119,6 +119,7 @@ class ChatAgent {
         self.chatID = chatID
         self.broker = broker
         conversation = AIConversation(registrationProvider: registrationProvider)
+        conversation.systemMessage = "You help the user in a terminal emulator. You have the ability to run commands on their behalf and perform various other operations in terminal sessions. Don't be shy about using them, especially if they are safe to do, because the user must always grant permission for these functions to run."
         defineFunctions(&conversation)
         for message in messages {
             switch message.content {
@@ -169,7 +170,11 @@ class ChatAgent {
             }
         }
 
+        let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
         conversation.add(aiMessage(from: userMessage))
+        if needsRenaming {
+            requestRenaming()
+        }
         var uuid: UUID?
         let streamingCallback: ((String) -> ())?
         if let streaming {
@@ -193,9 +198,6 @@ class ChatAgent {
             }
             if let updated = result.successValue {
                 self.conversation = updated
-                if updated.messages.count == 2 {
-                    requestRenaming()
-                }
             } else {
                 self.conversation.messages.removeLast()
             }
@@ -207,10 +209,10 @@ class ChatAgent {
     }
 
     private func requestRenaming() {
-        let prompt = "Please assign a short name to this chat, less than 30 characters in length, but descriptive. It will be shown in a chat list UI. Respond with only the name of the chat."
+        let prompt = "Please assign a short, specific name to this chat, less than 30 characters in length, but descriptive. It will be shown in a chat list UI. Respond with only the name of the chat."
         renameConversation = AIConversation(
             registrationProvider: conversation.registrationProvider,
-            messages: conversation.messages + [AITermController.Message(role: "user", content: prompt)])
+            messages: conversation.messages + [AITermController.Message(role: .user, content: prompt)])
         renameConversation?.complete { [weak self] (result: Result<AIConversation, Error>) in
             if let newName = result.successValue?.messages.last?.content {
                 self?.renameChat(newName)
@@ -599,7 +601,7 @@ extension ChatAgent {
             }
         )
 
-        let schemaInsertTextAtCursor = JSONSchema(for: RemoteCommand.InsertTextAtCursor(), descriptions: ["text": "The text to insert at the cursor position."])
+        let schemaInsertTextAtCursor = JSONSchema(for: RemoteCommand.InsertTextAtCursor(), descriptions: ["text": "The text to insert at the cursor position. Consider whether execute_command would be a better choice, especially when running a command at the shell prompt since insert_text_at_cursor does not return the output to you."])
         let declInsertTextAtCursor = ChatGPTFunctionDeclaration(
             name: "insert_text_at_cursor",
             description: "Inserts text into the terminal input at the cursor position.",

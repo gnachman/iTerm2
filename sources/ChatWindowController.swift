@@ -150,12 +150,35 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         window.makeKeyAndOrderFront(nil)
     }
 
+    private var ageOfMostRecentChat: TimeInterval? {
+        guard let chat = chatListViewController.mostRecentChat else {
+            return nil
+        }
+        return -chat.lastModifiedDate.timeIntervalSinceNow
+    }
+
+
+    private var mostRecentChatIsEmpty: Bool {
+        guard let chatID = chatListViewController.selectedChatID else {
+            return false
+        }
+        guard let messages = model.messages(forChat: chatID, createIfNeeded: false) else {
+            return false
+        }
+
+        return messages.isEmpty
+    }
+
     @objc
     func createNewChatIfNeeded() {
         if model.count == 0 {
             createNewChat()
-        } else {
+        } else if mostRecentChatIsEmpty {
             chatListViewController.selectMostRecent()
+        } else if let ageOfMostRecentChat, ageOfMostRecentChat < 60 * 5 {
+            chatListViewController.selectMostRecent()
+        } else {
+            createNewChat()
         }
     }
 

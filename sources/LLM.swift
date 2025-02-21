@@ -15,7 +15,13 @@ enum LLM {
     }
 
     struct Message: Codable, Equatable {
-        var role: String? = "user"
+        enum Role: String, Codable {
+            case user
+            case assistant
+            case system
+            case function
+        }
+        var role: Role? = .user
         var content: String?
 
         // For function calling
@@ -127,6 +133,7 @@ fileprivate struct LegacyBodyRequestBuilder {
     }
 }
 
+#warning("TODO: Test gemini, it's an oddball wrt role")
 fileprivate struct GeminiRequestBuilder: Codable {
     let contents: [Content]
 
@@ -140,11 +147,14 @@ fileprivate struct GeminiRequestBuilder: Codable {
     }
 
     init(messages: [LLM.Message]) {
-        self.contents = messages.map { message in
-            let role = if message.role == "user" {
-                "user"
-            } else {
-                "model"
+        self.contents = messages.compactMap { message in
+            let role: String? = switch message.role {
+            case .user: "user"
+            case .assistant: "model"
+            case .function, .system, .none: nil
+            }
+            guard let role else {
+                return nil
             }
             return Content(role: role,
                            parts: [Content.Part(text: message.content ?? "")])
@@ -210,11 +220,11 @@ fileprivate struct O1BodyRequestBuilder {
         let modifiedMessages = switch provider.version {
         case .o1:
             messages.map { message in
-                if message.role != "system" {
+                if message.role != .system {
                     return message
                 }
                 var temp = message
-                temp.role = "user"
+                temp.role = .user
                 return temp
             }
         case .completions, .gemini, .legacy:
@@ -519,7 +529,7 @@ struct LLMModernStreamingResponseParser: LLMResponseParser {
 
         var choiceMessages: [LLM.Message] {
             return choices.map {
-                LLM.Message(role: "assistant",
+                LLM.Message(role: .assistant,
                             content: $0.delta.content ?? "",
                             function_call: $0.delta.function_call)
             }
@@ -561,7 +571,8 @@ struct LLMLegacyResponseParser: LLMResponseParser {
 
         var choiceMessages: [LLM.Message] {
             return choices.map {
-                LLM.Message(role: "model", content: $0.text)
+                #warning("TODO: This used to use 'model', not sure why. I changed it to an enum that combines .assistant and .model")
+                return LLM.Message(role: .assistant, content: $0.text)
             }
         }
     }
@@ -582,9 +593,9 @@ struct LLMGeminiResponseParser: LLMResponseParser {
         var choiceMessages: [LLM.Message] {
             candidates.map {
                 let role = if let content = $0.content {
-                    content.role == "model" ? "assistant" : "user"
+                    content.role == "model" ? LLM.Message.Role.assistant : LLM.Message.Role.user
                 } else {
-                    "assistant"  // failed, probably because of safety
+                    LLM.Message.Role.assistant  // failed, probably because of safety
                 }
                 return if let text = $0.content?.parts.first?.text {
                     LLM.Message(role: role, content: text)

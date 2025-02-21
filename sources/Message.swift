@@ -14,6 +14,7 @@ struct ClientLocal: Codable {
     enum Action: Codable {
         case pickingSession
         case executingCommand(RemoteCommand)
+        case notice(String)
     }
     var action: Action
 }
@@ -65,6 +66,8 @@ struct Message: Codable {
                     return "Client-local: executing \(rc.markdownDescription)"
                 case .pickingSession:
                     return "Client-local: picking session"
+                case .notice(let string):
+                    return "Client-local: notice=\(string)"
                 }
             case .renameChat(let name):
                 return "Rename chat to \(name)"
@@ -118,6 +121,7 @@ struct Message: Codable {
             switch cl.action {
             case .executingCommand(let command): return command.markdownDescription
             case .pickingSession: return "Selecting session…"
+            case .notice(let message): return message
             }
         case .renameChat, .append, .commit: return nil
         case .remoteCommandResponse:

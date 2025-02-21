@@ -40,7 +40,7 @@ class ChatBroker {
     }
 
     func publish(message: Message, toChatID chatID: String, partial: Bool) {
-        NSLog("Publish \(message.shortDescription)")
+        NSLog("%@", "Publish \(message.shortDescription)")
         // Ensure the service is running
         _ = ChatService.instance
 

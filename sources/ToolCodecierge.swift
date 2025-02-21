@@ -85,7 +85,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     let content = format
                         .replacingOccurrences(of: "$GOAL", with: goal)
                         .replacingOccurrences(of: "$CONTEXT", with: contextualInfo)
-                    initialMessages.append(AITermController.Message(role: "system", content: content))
+                    initialMessages.append(AITermController.Message(role: .system, content: content))
                     conversation = AIConversation(registrationProvider: window,
                                                   messages: initialMessages)
                     if ghostRiding {

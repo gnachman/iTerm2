@@ -897,16 +897,17 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)updateSessionSelectorButton {
-    if (iTermSessionSelector.isActive && _sessionSelectorButton.superview == nil) {
-        [self addSessionSelectorButton];
+    NSString *reason = iTermSessionSelector.currentReason;
+    if (reason != nil && _sessionSelectorButton.superview == nil) {
+        [self addSessionSelectorButtonWithReason:reason];
     } else if (!iTermSessionSelector.isActive && _sessionSelectorButton.superview != nil) {
         [_sessionSelectorButton removeFromSuperview];
         _sessionSelectorButton = nil;
     }
 }
 
-- (void)addSessionSelectorButton {
-    _sessionSelectorButton = [[iTermSelectSessionButton alloc] init];
+- (void)addSessionSelectorButtonWithReason:(NSString *)reason {
+    _sessionSelectorButton = [[iTermSelectSessionButton alloc] initWithTitle:reason];
     __weak __typeof(self) weakSelf = self;
     _sessionSelectorButton.onButtonClicked = ^{
         [weakSelf didSelectThisSession:nil];
