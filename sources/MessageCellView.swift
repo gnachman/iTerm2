@@ -136,11 +136,15 @@ class MessageCellView: NSView {
         bubbleView.layer?.backgroundColor = (effectiveAppearance.it_isDark ? darkColor : lightColor).cgColor
     }
 
+    private func maxBubbleWidth(tableViewWidth: CGFloat) -> CGFloat {
+        return max(16, tableViewWidth * 0.7)
+    }
+
     /// Configure the cell with your `MessageRendition`.
     /// `maxBubbleWidth` is how wide you allow the bubble to grow.
     func configure(with rendition: MessageRendition,
                    tableViewWidth: CGFloat) {
-        configure(with: rendition, maxBubbleWidth: max(16, tableViewWidth * 0.7))
+        configure(with: rendition, maxBubbleWidth: maxBubbleWidth(tableViewWidth: tableViewWidth))
     }
 
     private var customConstraints = [NSLayoutConstraint]()
@@ -297,11 +301,15 @@ class MessageCellView: NSView {
         add(constraint: contentStack.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: 0))
 
         // Finally cap the total width
-        add(constraint: bubbleView.widthAnchor.constraint(lessThanOrEqualToConstant: maxBubbleWidth))
+        let widthConstraint = bubbleView.widthAnchor.constraint(lessThanOrEqualToConstant: maxBubbleWidth)
+        maxWidthConstraint = widthConstraint
+        add(constraint: widthConstraint)
 
         messageUniqueID = rendition.messageUniqueID
         editable = rendition.isEditable
     }
+
+    private var maxWidthConstraint: NSLayoutConstraint?
 
     @objc private func buttonTapped(_ sender: NSButton) {
         // Fire your callback with the button ID and the message ID

@@ -112,6 +112,21 @@ class ChatViewController: NSViewController {
         brokerSubscription?.unsubscribe()
     }
 
+    private var lastTableViewWidth: CGFloat?
+    override func viewWillLayout() {
+        super.viewWillLayout()
+        let tableViewWidth = tableView.bounds.width
+        if tableViewWidth != lastTableViewWidth {
+            lastTableViewWidth = tableViewWidth
+            // I tried updating constraints but of course it does crazy stuff. Some day when I have
+            // more ability to suffer abuse from auto layout I should revisit this. On the other
+            // hand, I have to recalculate height for every row so it might not make much of a
+            // difference anyway.
+            tableView.reloadData()
+            tableView.invalidateIntrinsicContentSize()
+        }
+    }
+
     override func loadView() {
         let view = NSView(frame: NSRect(x: 0, y: 0, width: 400, height: 600))
 

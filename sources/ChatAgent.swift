@@ -128,10 +128,8 @@ class ChatAgent {
                 conversation.add(aiMessage(from: message))
                 break
 
-            case .selectSessionRequest, .clientLocal, .renameChat:
+            case .selectSessionRequest, .clientLocal, .renameChat, .append, .commit:
                 break
-            case .append, .commit:
-                it_fatalError()
             }
         }
     }

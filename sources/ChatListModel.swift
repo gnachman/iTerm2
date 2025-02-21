@@ -250,7 +250,8 @@ class ChatListModel: ChatListDataSource {
                 DLog("Drop explanation response update \(update)")
                 return
             }
-
+        case .commit:
+            return
         default:
             break
         }
