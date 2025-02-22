@@ -145,6 +145,9 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
 
     @objc
     func showChatWindow() {
+        if !iTermAITermGatekeeper.check() {
+            return
+        }
         let window = self.window ?? initialize()
         showWindow(nil)
         window.makeKeyAndOrderFront(nil)

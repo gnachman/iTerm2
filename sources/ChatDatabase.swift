@@ -29,6 +29,9 @@ class ObjCChatDatabase: NSObject {
                 var temp = chats[i]
                 temp.sessionGuid = nil
                 chats[i] = temp
+                ChatBroker.instance?.publishNotice(
+                    chatID: temp.id,
+                    notice: "This chat is no longer linked to a terminal session.")
             }
         }
     }

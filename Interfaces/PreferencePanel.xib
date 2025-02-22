@@ -749,7 +749,7 @@ Gw
                             </subviews>
                         </clipView>
                         <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5846">
-                            <rect key="frame" x="1" y="249" width="763" height="15"/>
+                            <rect key="frame" x="1" y="248" width="763" height="16"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5847">
@@ -1084,6 +1084,8 @@ DQ
                 <outlet property="_autoHideTmuxClientSession" destination="6366" id="V9B-um-JRL"/>
                 <outlet property="_browseCustomFolder" destination="5618" id="0Ty-gp-K5Q"/>
                 <outlet property="_browseCustomScriptsFolder" destination="dQq-rp-4ax" id="Bhz-HC-MBu"/>
+                <outlet property="_checkTerminalStateButton" destination="EAH-By-68j" id="34X-Ul-UAW"/>
+                <outlet property="_checkTerminalStateLabel" destination="Hna-JT-vqw" id="mFB-9P-7mU"/>
                 <outlet property="_checkTestRelease" destination="5049" id="mCk-NA-PO2"/>
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_clickToSelectCommand" destination="2Pt-rH-WYj" id="kzN-to-jNw"/>
@@ -1125,6 +1127,8 @@ DQ
                 <outlet property="_quitWhenAllWindowsClosed" destination="1950" id="g5I-3X-QQe"/>
                 <outlet property="_resetAIPrompt" destination="qEC-1B-FMn" id="fue-x8-aGi"/>
                 <outlet property="_restoreWindowsToSameSpaces" destination="bEQ-f0-BMG" id="ch0-Ng-2wL"/>
+                <outlet property="_runCommandsButton" destination="1jy-4b-gDX" id="OgI-KV-QLv"/>
+                <outlet property="_runCommandsLabel" destination="xvn-3C-LkW" id="eQ1-JZ-bik"/>
                 <outlet property="_saveChanges" destination="WKm-Jb-RMO" id="NZp-xg-An8"/>
                 <outlet property="_saveChangesLabel" destination="YYR-pl-zPM" id="DRc-0e-of0"/>
                 <outlet property="_savePasteHistory" destination="5056" id="BPO-mF-vKm"/>
@@ -1136,14 +1140,22 @@ DQ
                 <outlet property="_tmuxPauseModeAgeLimit" destination="hXw-El-HMF" id="mRQ-0c-gkM"/>
                 <outlet property="_tmuxWarnBeforePausing" destination="QSK-Li-EpK" id="R4e-84-nAB"/>
                 <outlet property="_tripleClickSelectsFullLines" destination="GD3-XJ-mYL" id="3nb-ii-SgM"/>
+                <outlet property="_typeForYouButton" destination="03z-Hc-UG1" id="mnk-OA-cCl"/>
+                <outlet property="_typeForYouLabel" destination="MLB-vf-Zmf" id="liH-lp-qqH"/>
                 <outlet property="_unpauseTmuxAutomatically" destination="Xpa-up-i7z" id="P3K-mQ-k3Y"/>
                 <outlet property="_useCustomScriptsFolder" destination="dDY-rB-g7q" id="ywW-pn-co0"/>
                 <outlet property="_useLegacyCompletionsAPI" destination="Ngq-JV-eAe" id="k8r-WI-O7a"/>
                 <outlet property="_useTmuxProfile" destination="gLU-0J-chc" id="IzY-fx-eIB"/>
                 <outlet property="_useTmuxStatusBar" destination="oHn-bB-rYM" id="GMi-WL-nVq"/>
+                <outlet property="_viewHistoryButton" destination="oDJ-O6-VO6" id="b2M-90-Ihq"/>
+                <outlet property="_viewHistoryLabel" destination="sao-mV-D4Y" id="WFB-Dg-lyG"/>
+                <outlet property="_viewManpagesButton" destination="ag6-Ya-IHX" id="97S-95-Bn7"/>
+                <outlet property="_viewManpagesLabel" destination="Lnu-aL-QHE" id="0Fx-BI-jR5"/>
                 <outlet property="_warningButton" destination="d3j-d3-YO1" id="jOB-06-3Ri"/>
                 <outlet property="_wordChars" destination="2096" id="hwf-SH-vM1"/>
                 <outlet property="_wordCharsLabel" destination="2095" id="skH-XY-s6r"/>
+                <outlet property="_writeToClipboardButton" destination="m9I-Ko-pge" id="ghY-V9-Zce"/>
+                <outlet property="_writeToClipboardLabel" destination="hXN-ZR-LAh" id="iIq-Ju-qFC"/>
                 <outlet property="view" destination="zBG-6Q-502" id="Pic-en-AMU"/>
             </connections>
         </customObject>
@@ -4184,7 +4196,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="450" height="95"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="450" height="95"/>
@@ -4586,12 +4598,12 @@ DQ
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QhQ-qK-ObI">
                     <rect key="frame" x="153" y="138" width="350" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Over contents" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="wMW-cd-tme" id="D96-nq-rVU">
+                    <popUpButtonCell key="cell" type="push" title="Over contents" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="wMW-cd-tme" id="D96-nq-rVU">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="message"/>
                         <menu key="menu" id="2Av-os-Wya">
                             <items>
-                                <menuItem title="Over contents" tag="1" id="wMW-cd-tme"/>
+                                <menuItem title="Over contents" state="on" tag="1" id="wMW-cd-tme"/>
                                 <menuItem title="Over contents when mouse hovers over scrollbar" tag="2" id="UqD-aO-v92"/>
                                 <menuItem title="Next to contents" tag="3" id="Sfc-f4-G7H"/>
                             </items>
@@ -5423,21 +5435,21 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
             <point key="canvasLocation" x="1429" y="1162"/>
         </customView>
         <customView id="zBG-6Q-502" userLabel="Prefs - General" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="788" height="590"/>
+            <rect key="frame" x="0.0" y="0.0" width="788" height="736"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <tabView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CuK-St-ACL" userLabel="Tab View">
-                    <rect key="frame" x="0.0" y="10" width="775" height="586"/>
+                    <rect key="frame" x="0.0" y="3" width="775" height="739"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
                         <tabViewItem label="Startup" identifier="1" id="ZsM-GD-jXe">
                             <view key="view" id="PuF-5n-KLY">
-                                <rect key="frame" x="10" y="33" width="755" height="540"/>
+                                <rect key="frame" x="10" y="33" width="755" height="674"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="La3-md-S0L" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="93" y="404" width="569" height="143"/>
+                                        <rect key="frame" x="93" y="538" width="569" height="143"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cZL-gb-ECo">
@@ -5529,11 +5541,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Closing" identifier="2" id="brO-Cv-Mur">
                             <view key="view" id="OoT-kA-sCh">
-                                <rect key="frame" x="10" y="33" width="755" height="478"/>
+                                <rect key="frame" x="10" y="33" width="755" height="674"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8ns-Nz-VFk" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="88" y="348" width="581" height="137"/>
+                                        <rect key="frame" x="88" y="544" width="581" height="137"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1950">
@@ -5602,11 +5614,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Magic" identifier="" id="a3F-w8-ggT">
                             <view key="view" id="h6U-Bn-0HU">
-                                <rect key="frame" x="10" y="33" width="755" height="540"/>
+                                <rect key="frame" x="10" y="33" width="755" height="674"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hVu-mt-KS9">
-                                        <rect key="frame" x="110" y="234" width="527" height="313"/>
+                                        <rect key="frame" x="110" y="368" width="527" height="313"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Pzu-H5-A6L">
@@ -5840,15 +5852,15 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="AI" identifier="" id="Dfb-0Q-dGX">
                             <view key="view" id="kLu-7J-g3F">
-                                <rect key="frame" x="10" y="33" width="755" height="540"/>
+                                <rect key="frame" x="10" y="33" width="755" height="693"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KAL-YY-pcD">
-                                        <rect key="frame" x="39" y="37" width="668" height="511"/>
+                                        <rect key="frame" x="39" y="-3" width="668" height="704"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xrd-YE-9w7" customClass="iTermSettingsSecureTextField">
-                                                <rect key="frame" x="175" y="303" width="369" height="21"/>
+                                                <rect key="frame" x="175" y="496" width="369" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">Go register for an account with openai and create an API key. Place the secret here. It probably will cost you money to use AI features.</string>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="••••••••" drawsBackground="YES" id="euY-7d-vSJ">
@@ -5863,7 +5875,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uwy-pf-9Wz" userLabel="AI Prompt text field">
-                                                <rect key="frame" x="175" y="166" width="369" height="106"/>
+                                                <rect key="frame" x="175" y="359" width="369" height="106"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">When you query the AI service, the prompt iTerm2 sends it is built by replacing \(ai.prompt) in this value with the text you entered. It is an interpolated string in the session context.</string>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Interpolated string" drawsBackground="YES" id="2G3-pu-wrn">
@@ -5878,7 +5890,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RYR-Tl-aPi">
-                                                <rect key="frame" x="18" y="306" width="144" height="16"/>
+                                                <rect key="frame" x="18" y="499" width="144" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="API Key:" id="b2B-Hj-edT">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5887,7 +5899,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EDh-lZ-wQE">
-                                                <rect key="frame" x="18" y="254" width="147" height="16"/>
+                                                <rect key="frame" x="18" y="447" width="147" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Prompt template:" id="Q2U-W0-BJ7">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5896,13 +5908,13 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LsQ-19-iaj">
-                                                <rect key="frame" x="450" y="142" width="16" height="16"/>
+                                                <rect key="frame" x="450" y="335" width="16" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">The prompt must contain the substring \(ai.prompt). The query you enter will replace it when speaking to the AI. For example: “Write a unix command to \(ai.prompt).</string>
                                                 <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="E8m-Gx-WjK"/>
                                             </imageView>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qEC-1B-FMn">
-                                                <rect key="frame" x="468" y="134" width="58" height="27"/>
+                                                <rect key="frame" x="468" y="327" width="58" height="27"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3bd-rH-r3u">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5913,7 +5925,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lIb-Jy-R1v">
-                                                <rect key="frame" x="527" y="139" width="18" height="19"/>
+                                                <rect key="frame" x="527" y="332" width="18" height="19"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="fWO-HA-eH0">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5924,7 +5936,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="P9E-Ju-OfU">
-                                                <rect key="frame" x="18" y="105" width="147" height="16"/>
+                                                <rect key="frame" x="18" y="298" width="147" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Model:" id="jNc-ho-tDq">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5933,7 +5945,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <comboBox focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mTj-eb-v1b">
-                                                <rect key="frame" x="174" y="101" width="373" height="23"/>
+                                                <rect key="frame" x="174" y="294" width="373" height="23"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="AWG-OL-PtP">
                                                     <font key="font" metaFont="system"/>
@@ -5946,7 +5958,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </comboBox>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fmU-E4-OGJ">
-                                                <rect key="frame" x="18" y="76" width="147" height="16"/>
+                                                <rect key="frame" x="18" y="269" width="147" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Token Limit:" id="pss-P2-pda">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5955,7 +5967,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6Tv-Yf-ULK">
-                                                <rect key="frame" x="18" y="47" width="144" height="16"/>
+                                                <rect key="frame" x="18" y="240" width="144" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="URL:" id="qE5-4Z-I6F">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5964,7 +5976,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oxM-Uz-8LP">
-                                                <rect key="frame" x="18" y="20" width="144" height="16"/>
+                                                <rect key="frame" x="18" y="213" width="144" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="API:" id="L3h-V8-SK3">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5972,8 +5984,17 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="key-qL-uSQ">
+                                                <rect key="frame" x="21" y="188" width="144" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Chat Permissons:" id="K5H-4i-ekj">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LoW-Oy-QZ4">
-                                                <rect key="frame" x="175" y="73" width="96" height="21"/>
+                                                <rect key="frame" x="175" y="266" width="96" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="0io-pq-fwm">
                                                     <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="ogi-t7-LVi"/>
@@ -5986,7 +6007,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1ex-YA-kns">
-                                                <rect key="frame" x="175" y="44" width="369" height="21"/>
+                                                <rect key="frame" x="175" y="237" width="369" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="URL of OpenAI API-compatible server" drawsBackground="YES" id="la8-b2-QoV">
                                                     <font key="font" metaFont="system"/>
@@ -5998,7 +6019,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Q5B-ar-uN1">
-                                                <rect key="frame" x="173" y="286" width="231" height="14"/>
+                                                <rect key="frame" x="173" y="479" width="231" height="14"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Your key is securely stored in the Keychain." id="LEZ-sd-Ucb">
                                                     <font key="font" metaFont="smallSystem"/>
@@ -6007,7 +6028,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VE4-PX-sWF">
-                                                <rect key="frame" x="173" y="390" width="204" height="18"/>
+                                                <rect key="frame" x="173" y="583" width="204" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Enable generative AI features" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Hbk-Br-E9I">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6018,7 +6039,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Kcp-2R-DJB">
-                                                <rect key="frame" x="173" y="358" width="387" height="16"/>
+                                                <rect key="frame" x="173" y="551" width="387" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="No data is sent to third parties without your explicit permission." id="gXM-xm-pfL">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -6027,7 +6048,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DIY-or-LGR">
-                                                <rect key="frame" x="173" y="340" width="311" height="16"/>
+                                                <rect key="frame" x="173" y="533" width="311" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="You will always be prompted before data is shared." id="SsU-mJ-KFc">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -6036,7 +6057,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jc2-ao-oIw">
-                                                <rect key="frame" x="173" y="476" width="478" height="16"/>
+                                                <rect key="frame" x="173" y="669" width="478" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="To ensure privacy, the AI features in iTerm2 require the installation of a plugin." id="Heb-gk-qk8">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -6045,7 +6066,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ngq-JV-eAe">
-                                                <rect key="frame" x="173" y="19" width="206" height="18"/>
+                                                <rect key="frame" x="173" y="212" width="206" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Use legacy “completions” API" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="RyE-Ou-CRo">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6056,7 +6077,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dWT-P6-fr4">
-                                                <rect key="frame" x="175" y="451" width="20" height="23"/>
+                                                <rect key="frame" x="175" y="644" width="20" height="23"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="bevel" title="↻" bezelStyle="rounded" alignment="center" imageScaling="proportionallyDown" inset="2" id="qJO-qz-VoT">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -6067,7 +6088,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rqF-qe-e3L">
-                                                <rect key="frame" x="168" y="420" width="81" height="32"/>
+                                                <rect key="frame" x="168" y="613" width="81" height="32"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Install…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="r1I-I1-Z6i">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -6078,7 +6099,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FXy-Cw-1Lm">
-                                                <rect key="frame" x="173" y="142" width="263" height="14"/>
+                                                <rect key="frame" x="173" y="335" width="263" height="14"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Your AI provider may charge for each token used." id="hvf-jg-Y9k">
                                                     <font key="font" metaFont="smallSystem"/>
@@ -6087,7 +6108,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Eoe-Xt-Ldi">
-                                                <rect key="frame" x="18" y="476" width="144" height="16"/>
+                                                <rect key="frame" x="18" y="669" width="144" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Plugin:" id="YM0-z8-xS5">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -6096,7 +6117,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MzL-1O-bWZ">
-                                                <rect key="frame" x="18" y="391" width="144" height="16"/>
+                                                <rect key="frame" x="18" y="584" width="144" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Consent:" id="hTD-Zl-uNo">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -6105,10 +6126,181 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FoB-iB-XDp">
-                                                <rect key="frame" x="201" y="455" width="359" height="16"/>
+                                                <rect key="frame" x="201" y="648" width="359" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Plugin not detected" id="0BQ-Y1-sdD">
                                                     <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Hna-JT-vqw">
+                                                <rect key="frame" x="174" y="163" width="133" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Check Terminal State" id="cDc-uC-w54">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EAH-By-68j">
+                                                <rect key="frame" x="309" y="156" width="206" height="25"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="Ask Each Time" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="e0a-lK-BYn" id="fyi-Xh-NWA">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" id="Agi-O3-ajg">
+                                                        <items>
+                                                            <menuItem title="Ask Each Time" state="on" id="e0a-lK-BYn"/>
+                                                            <menuItem title="Allow Without Asking" tag="1" id="0C2-Du-i4e"/>
+                                                            <menuItem title="Never Allow" tag="2" id="7Nv-nE-wPH"/>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="tHZ-p3-WFH"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xvn-3C-LkW">
+                                                <rect key="frame" x="173" y="135" width="100" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Run Commands" id="neH-ds-871">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1jy-4b-gDX">
+                                                <rect key="frame" x="309" y="128" width="206" height="25"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="Ask Each Time" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="XkE-Bm-v8F" id="wPq-oH-POc">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" id="z2C-l2-hSV">
+                                                        <items>
+                                                            <menuItem title="Ask Each Time" state="on" id="XkE-Bm-v8F"/>
+                                                            <menuItem title="Allow Without Asking" tag="1" id="4On-7u-dfy"/>
+                                                            <menuItem title="Never Allow" tag="2" id="0df-Dk-Naw"/>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="v91-NH-hkk"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sao-mV-D4Y">
+                                                <rect key="frame" x="174" y="107" width="81" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="View History" id="sd1-n2-A2O">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oDJ-O6-VO6">
+                                                <rect key="frame" x="309" y="100" width="206" height="25"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="Ask Each Time" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="kcW-k6-mbq" id="21G-gx-4EB">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" id="lfa-yA-g8z">
+                                                        <items>
+                                                            <menuItem title="Ask Each Time" state="on" id="kcW-k6-mbq"/>
+                                                            <menuItem title="Allow Without Asking" tag="1" id="vAf-1d-Q8A"/>
+                                                            <menuItem title="Never Allow" tag="2" id="ouG-qF-5tB"/>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="jg9-Ki-I4V"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hXN-ZR-LAh">
+                                                <rect key="frame" x="173" y="79" width="114" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Write to Clipboard" id="hPs-QF-O4D">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="m9I-Ko-pge">
+                                                <rect key="frame" x="309" y="72" width="206" height="25"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="Ask Each Time" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Edq-mO-rTr" id="7oK-0f-Ke1">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" id="wHk-hl-YJx">
+                                                        <items>
+                                                            <menuItem title="Ask Each Time" state="on" id="Edq-mO-rTr"/>
+                                                            <menuItem title="Allow Without Asking" tag="1" id="Boe-IO-Kgi"/>
+                                                            <menuItem title="Never Allow" tag="2" id="mLJ-2p-cRL"/>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="2Bj-tr-hC6"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MLB-vf-Zmf">
+                                                <rect key="frame" x="174" y="51" width="80" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Type for You" id="iQz-CE-sUw">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="03z-Hc-UG1">
+                                                <rect key="frame" x="309" y="44" width="206" height="25"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="Ask Each Time" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="JPc-yy-nKe" id="pba-O2-Heh">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" id="Iil-lq-nV9">
+                                                        <items>
+                                                            <menuItem title="Ask Each Time" state="on" id="JPc-yy-nKe"/>
+                                                            <menuItem title="Allow Without Asking" tag="1" id="LF7-3M-od4"/>
+                                                            <menuItem title="Never Allow" tag="2" id="09v-t5-8ij"/>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="CtH-Qz-EGh"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Lnu-aL-QHE">
+                                                <rect key="frame" x="173" y="23" width="100" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="View Manpages" id="jBZ-iu-RRM">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ag6-Ya-IHX">
+                                                <rect key="frame" x="309" y="16" width="206" height="25"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="Ask Each Time" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="7pS-fI-OXd" id="iIB-wI-6SQ">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" id="Skt-zA-0BV">
+                                                        <items>
+                                                            <menuItem title="Ask Each Time" state="on" id="7pS-fI-OXd"/>
+                                                            <menuItem title="Allow Without Asking" tag="1" id="5tm-ag-RMD"/>
+                                                            <menuItem title="Never Allow" tag="2" id="d98-mM-tnC"/>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="ciw-RJ-KyT"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9eA-B9-N1E">
+                                                <rect key="frame" x="173" y="188" width="395" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="These settings define the default permissions for new chats." id="xtn-fq-1gQ">
+                                                    <font key="font" metaFont="systemBold"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
@@ -6120,11 +6312,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Software Update" identifier="" id="hxz-xY-wbF">
                             <view key="view" id="QRB-QZ-Yoo">
-                                <rect key="frame" x="10" y="33" width="755" height="540"/>
+                                <rect key="frame" x="10" y="33" width="755" height="674"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="agx-XH-Dlv" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="165" y="426" width="497" height="123"/>
+                                        <rect key="frame" x="165" y="560" width="497" height="123"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button toolTip="Selects whether to install the beta or release build when updating." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5049">
@@ -6196,11 +6388,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Selection" identifier="" id="3Jf-X1-Drt">
                             <view key="view" id="aNs-OQ-hfy">
-                                <rect key="frame" x="10" y="33" width="755" height="478"/>
+                                <rect key="frame" x="10" y="33" width="755" height="674"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rkL-re-0L0" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="89" y="154" width="599" height="331"/>
+                                        <rect key="frame" x="89" y="350" width="599" height="331"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2095">
@@ -6385,11 +6577,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Window" identifier="" id="cmW-ac-GOQ">
                             <view key="view" id="5UT-I8-OHp">
-                                <rect key="frame" x="10" y="33" width="755" height="478"/>
+                                <rect key="frame" x="10" y="33" width="755" height="674"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aL9-Uk-rzg" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="103" y="319" width="482" height="166"/>
+                                        <rect key="frame" x="103" y="515" width="482" height="166"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button toolTip="Smart window placement puts new windows where the most free space is available." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4570">
@@ -6496,11 +6688,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Settings" identifier="" id="A3y-3j-WQF">
                             <view key="view" id="NGW-1C-GwI">
-                                <rect key="frame" x="10" y="33" width="755" height="478"/>
+                                <rect key="frame" x="10" y="33" width="755" height="674"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pnz-ME-DBf" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="27" y="309" width="701" height="176"/>
+                                        <rect key="frame" x="27" y="505" width="701" height="176"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5616">
@@ -6627,11 +6819,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="tmux" identifier="" id="dpe-So-Ym8">
                             <view key="view" id="pZ9-bL-Bag">
-                                <rect key="frame" x="10" y="33" width="755" height="478"/>
+                                <rect key="frame" x="10" y="33" width="755" height="674"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="keM-ww-m44" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="80" y="217" width="592" height="268"/>
+                                        <rect key="frame" x="80" y="413" width="592" height="268"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rci-Sr-fks">
@@ -6834,7 +7026,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                 </tabView>
             </subviews>
             <accessibility identifier="prefsGeneral"/>
-            <point key="canvasLocation" x="2057" y="17"/>
+            <point key="canvasLocation" x="2057" y="90"/>
         </customView>
         <customView id="yCt-fi-XI9" userLabel="Prefs - Appearance" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="623" height="317"/>

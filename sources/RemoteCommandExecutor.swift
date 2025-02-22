@@ -19,9 +19,21 @@ class RemoteCommandExecutor {
         case ask
     }
 
+    private func defaultPermission(for category: RemoteCommand.Content.PermissionCategory) -> Permission {
+        switch iTermAIPermission(rawValue: iTermPreferences.unsignedInteger(forKey: category.userDefaultsKey)) {
+        case .allow:
+                .always
+        case .ask:
+                .ask
+        case .never:
+                .never
+        case .none, .some:
+                .ask
+        }
+    }
     func permission(inSessionGuid guid: String,
                     category: RemoteCommand.Content.PermissionCategory) -> Permission {
-        return storage[Key(guid: guid, category: category)] ?? .ask
+        return storage[Key(guid: guid, category: category)] ?? defaultPermission(for: category)
     }
 
     func setPermission(permission: Permission,
@@ -43,9 +55,8 @@ class RemoteCommandExecutor {
     func allowedCategories(for guid: String) -> Set<RemoteCommand.Content.PermissionCategory> {
         var result = Set<RemoteCommand.Content.PermissionCategory>()
         for category in RemoteCommand.Content.PermissionCategory.allCases {
-            let key = Key(guid: guid, category: category)
-            switch storage[key] {
-            case .none, .always, .ask:
+            switch permission(inSessionGuid: guid, category: category) {
+            case .always, .ask:
                 result.insert(category)
             case .never:
                 break
@@ -57,7 +68,7 @@ class RemoteCommandExecutor {
 
 extension RemoteCommandExecutor {
     func controlState(guid: String, category: RemoteCommand.Content.PermissionCategory) -> NSControl.StateValue {
-        switch storage[Key(guid: guid, category: category), default: .ask] {
+        switch permission(inSessionGuid: guid, category: category) {
         case .always:
                 .on
         case .never:

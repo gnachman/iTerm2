@@ -204,6 +204,13 @@ NSString *const kPreferenceKeyAITermURL = @"AitermURL";
 NSString *const kPreferenceKeyAITermUseLegacyAPI = @"AitermUseLegacyAPI";
 NSString *const kPreferenceKeyIndicateNonDefaultValues  = @"NoSyncHideDefaultValuedSettings";
 
+NSString *const kPreferenceKeyAIPermissionCheckTerminalState = @"AIPermissionCheckTerminalState";
+NSString *const kPreferenceKeyAIPermissionRunCommands = @"AIPermissionRunCommands";
+NSString *const kPreferenceKeyAIPermissionViewHistory = @"AIPermissionViewHistory";
+NSString *const kPreferenceKeyAIPermissionWriteToClipboard = @"AIPermissionWriteToClipboard";
+NSString *const kPreferenceKeyAIPermissionTypeForYou = @"AIPermissionTypeForYou";
+NSString *const kPreferenceKeyAIPermissionViewManpages = @"AIPermissionViewManpages";
+
 NSString *const iTermDefaultAIPrompt = @"Return commands suitable for copy/pasting into \\(shell) on \\(uname). Do NOT include commentary NOR Markdown triple-backtick code blocks as your whole response will be copied into my terminal automatically.\n"
 @"\n"
 @"The script should do this: \\(ai.prompt)";
@@ -456,6 +463,13 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAITermURL: @"https://api.openai.com/v1/completions",
                   kPreferenceKeyAITermUseLegacyAPI: @NO,
                   kPreferenceKeyIndicateNonDefaultValues: @NO,
+
+                  kPreferenceKeyAIPermissionCheckTerminalState: @(iTermAIPermissionAsk),
+                  kPreferenceKeyAIPermissionRunCommands: @(iTermAIPermissionAsk),
+                  kPreferenceKeyAIPermissionViewHistory: @(iTermAIPermissionAsk),
+                  kPreferenceKeyAIPermissionWriteToClipboard: @(iTermAIPermissionAsk),
+                  kPreferenceKeyAIPermissionTypeForYou: @(iTermAIPermissionAsk),
+                  kPreferenceKeyAIPermissionViewManpages: @(iTermAIPermissionAsk),
 
                   kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),

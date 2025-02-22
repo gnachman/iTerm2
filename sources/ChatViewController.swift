@@ -537,6 +537,8 @@ extension ChatViewController {
                     completion(session)
                     self.pickSessionPromise = nil
                     reloadCell(forMessageID: waitingMessage.uniqueID)
+                    broker.publishNotice(chatID: chatID,
+                                         notice: "This chat has been linked to terminal session `\(session.name?.escapedForMarkdownCode ?? "(Unnamed session)")`")
                 }
             }
 
@@ -567,6 +569,8 @@ extension ChatViewController {
     @objc private func unlinkSession(_ sender: Any) {
         if let chatID {
             listModel.setGuid(for: chatID, to: nil)
+            broker.publishNotice(chatID: chatID,
+                                 notice: "This chat is no longer linked to a terminal session.")
         }
     }
 
@@ -735,16 +739,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
                 guard let guid = self.listModel.chat(id: chatID)?.sessionGuid,
                       let session = iTermController.sharedInstance().session(withGUID: guid) else {
-                    broker.publish(
-                        message: Message(
-                            chatID: chatID,
-                            author: .agent,
-                            content: .clientLocal(.init(action: .notice(
-                                "This chat is not linked to any terminal session."))),
-                            sentDate: Date(),
-                            uniqueID: UUID()),
-                        toChatID: chatID,
-                        partial: false)
+                    broker.publishNotice(chatID: chatID, notice: "This chat is not linked to any terminal session.")
                     client.respondSuccessfullyToRemoteCommandRequest(
                         inChat: chatID,
                         requestUUID: messageID,

@@ -31,7 +31,13 @@ class ChatBroker {
     }
 
     private var defaultPermissions: Set<RemoteCommand.Content.PermissionCategory> {
-        Set(RemoteCommand.Content.PermissionCategory.allCases)
+        return Set(RemoteCommand.Content.PermissionCategory.allCases.filter { category in
+            let rawValue = iTermPreferences.unsignedInteger(forKey: category.userDefaultsKey)
+            guard let setting = iTermAIPermission(rawValue: rawValue) else {
+                return false
+            }
+            return setting != .never
+        })
     }
 
     func create(chatWithTitle title: String, sessionGuid: String?) -> String {
@@ -350,5 +356,40 @@ struct RemoteCommand: Codable {
         case let .getManPage(args):
             "The AI Agent would like to check the manpage for `\(args.cmd.escapedForMarkdownCode)`"
         }
+    }
+}
+
+extension RemoteCommand.Content.PermissionCategory {
+    var userDefaultsKey: String {
+        switch self {
+        case .checkTerminalState: kPreferenceKeyAIPermissionCheckTerminalState
+        case .runCommands: kPreferenceKeyAIPermissionRunCommands
+        case .viewHistory: kPreferenceKeyAIPermissionViewHistory
+        case .writeToClipboard: kPreferenceKeyAIPermissionWriteToClipboard
+        case .typeForYou: kPreferenceKeyAIPermissionTypeForYou
+        case .viewManpages: kPreferenceKeyAIPermissionViewManpages
+        }
+    }
+}
+
+extension ChatBroker {
+    func publishMessageFromUser(chatID: String, content: Message.Content) {
+        publish(message: Message(chatID: chatID,
+                                 author: .user,
+                                 content: content,
+                                 sentDate: Date(),
+                                 uniqueID: UUID()),
+                toChatID: chatID,
+                partial: false)
+    }
+
+    func publishNotice(chatID: String, notice: String) {
+        publish(message: Message(chatID: chatID,
+                                 author: .agent,
+                                 content: .clientLocal(.init(action: .notice(notice))),
+                                 sentDate: Date(),
+                                 uniqueID: UUID()),
+                toChatID: chatID,
+                partial: false)
     }
 }
