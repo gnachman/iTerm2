@@ -30,12 +30,23 @@ class ChatBroker {
         listModel.delete(chatID: chatID)
     }
 
+    private var defaultPermissions: Set<RemoteCommand.Content.PermissionCategory> {
+        Set(RemoteCommand.Content.PermissionCategory.allCases)
+    }
+
     func create(chatWithTitle title: String, sessionGuid: String?) -> String {
         // Ensure the service is running
         _ = ChatService.instance
 
         let chat = Chat(title: title, sessionGuid: sessionGuid)
         listModel.add(chat: chat)
+        publish(message: Message(chatID: chat.id,
+                                 author: .user,
+                                 content: .setPermissions(defaultPermissions),
+                                 sentDate: Date(),
+                                 uniqueID: UUID()),
+                toChatID: chat.id,
+                partial: false)
         return chat.id
     }
 
@@ -160,7 +171,28 @@ struct RemoteCommand: Codable {
 
     struct GetManPage: Codable { var cmd: String = "" }
 
-    enum Content: Codable {
+    enum Content: Codable, CaseIterable {
+        static var allCases: [RemoteCommand.Content] {
+            return [.isAtPrompt(IsAtPrompt()),
+                    .executeCommand(ExecuteCommand()),
+                    .getLastExitStatus(GetLastExitStatus()),
+                    .getCommandHistory(GetCommandHistory()),
+                    .getLastCommand(GetLastCommand()),
+                    .getCommandBeforeCursor(GetCommandBeforeCursor()),
+                    .searchCommandHistory(SearchCommandHistory()),
+                    .getCommandOutput(GetCommandOutput()),
+                    .getTerminalSize(GetTerminalSize()),
+                    .getShellType(GetShellType()),
+                    .detectSSHSession(DetectSSHSession()),
+                    .getRemoteHostname(GetRemoteHostname()),
+                    .getUserIdentity(GetUserIdentity()),
+                    .getCurrentDirectory(GetCurrentDirectory()),
+                    .setClipboard(SetClipboard()),
+                    .insertTextAtCursor(InsertTextAtCursor()),
+                    .deleteCurrentLine(DeleteCurrentLine()),
+                    .getManPage(GetManPage())]
+        }
+
         case isAtPrompt(IsAtPrompt)
         case executeCommand(ExecuteCommand)
         case getLastExitStatus(GetLastExitStatus)
@@ -179,7 +211,61 @@ struct RemoteCommand: Codable {
         case insertTextAtCursor(InsertTextAtCursor)
         case deleteCurrentLine(DeleteCurrentLine)
         case getManPage(GetManPage)
+        // When adding a new command be sure to update allCases.
+
+        enum PermissionCategory: String, Codable, CaseIterable {
+            case checkTerminalState = "Check Terminal State"
+            case runCommands = "Run Commands"
+            case viewHistory = "View History"
+            case writeToClipboard = "Write to the Clipboard"
+            case typeForYou = "Type for You"
+            case viewManpages = "View Manpages"
+        }
+
+        var permissionCategory: PermissionCategory {
+            switch self {
+            case .isAtPrompt, .getLastExitStatus, .getTerminalSize, .getShellType,
+                    .detectSSHSession, .getRemoteHostname, .getUserIdentity, .getCurrentDirectory:
+                    .checkTerminalState
+            case .executeCommand:
+                    .runCommands
+            case .getCommandHistory, .getLastCommand, .getCommandBeforeCursor,
+                    .searchCommandHistory, .getCommandOutput:
+                    .viewHistory
+            case .setClipboard:
+                    .writeToClipboard
+            case .insertTextAtCursor, .deleteCurrentLine:
+                    .typeForYou
+            case .getManPage:
+                    .viewManpages
+
+            }
+        }
+
+        var args: Any {
+            switch self {
+            case .isAtPrompt(let args): args
+            case .executeCommand(let args): args
+            case .getLastExitStatus(let args): args
+            case .getCommandHistory(let args): args
+            case .getLastCommand(let args): args
+            case .getCommandBeforeCursor(let args): args
+            case .searchCommandHistory(let args): args
+            case .getCommandOutput(let args): args
+            case .getTerminalSize(let args): args
+            case .getShellType(let args): args
+            case .detectSSHSession(let args): args
+            case .getRemoteHostname(let args): args
+            case .getUserIdentity(let args): args
+            case .getCurrentDirectory(let args): args
+            case .setClipboard(let args): args
+            case .insertTextAtCursor(let args): args
+            case .deleteCurrentLine(let args): args
+            case .getManPage(let args): args
+            }
+        }
     }
+
 
     var llmMessage: LLM.Message
     var content: Content

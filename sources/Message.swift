@@ -39,6 +39,7 @@ struct Message: Codable {
         case renameChat(String)
         case append(string: String, uuid: UUID)  // for streaming responses
         case commit(UUID)  // end of streaming response
+        case setPermissions(Set<RemoteCommand.Content.PermissionCategory>)
 
         var shortDescription: String {
             let maxLength = 256
@@ -75,6 +76,8 @@ struct Message: Codable {
                 return "Append \(chunk) to \(uuid.uuidString)"
             case .commit(let uuid):
                 return "Commit \(uuid.uuidString)"
+            case .setPermissions(let categories):
+                return "Allow \(Array(categories).map { $0.rawValue }.joined(separator: " + "))"
             }
         }
     }
@@ -89,7 +92,7 @@ struct Message: Codable {
     // Not shown as separate messages in chat
     var hiddenFromClient: Bool {
         switch content {
-        case .remoteCommandResponse, .renameChat, .commit: true
+        case .remoteCommandResponse, .renameChat, .commit, .setPermissions: true
         case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal, .append: false
         }
     }
@@ -101,7 +104,7 @@ struct Message: Codable {
             true
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
                 .markdown, .explanationResponse, .explanationRequest, .renameChat, .append,
-                .commit:
+                .commit, .setPermissions:
             false
         }
     }
@@ -123,7 +126,7 @@ struct Message: Codable {
             case .pickingSession: return "Selecting session…"
             case .notice(let message): return message
             }
-        case .renameChat, .append, .commit: return nil
+        case .renameChat, .append, .commit, .setPermissions: return nil
         case .remoteCommandResponse:
             return "Finished executing command"
         }
@@ -137,7 +140,7 @@ struct Message: Codable {
             content = .markdown(string + chunk)
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit:
+                .commit, .setPermissions:
             it_fatalError()
         }
     }

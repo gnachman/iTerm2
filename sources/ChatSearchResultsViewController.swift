@@ -197,7 +197,7 @@ extension Message {
         case let .explanationResponse(_, _, markdown): markdown
         case let .remoteCommandResponse(result, _, _): result.successValue
         case  .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat,
-                .commit: nil
+                .commit, .setPermissions: nil
         }
     }
 }

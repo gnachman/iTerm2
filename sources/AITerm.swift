@@ -759,6 +759,10 @@ class AITermController {
         handle(event: .begin, legacy: false)
     }
 
+    func removeAllFunctions() {
+        functions.removeAll()
+    }
+
     func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, arguments: T.Type, implementation: @escaping LLM.Function<T>.Impl) {
         functions.append(LLM.Function(decl: decl, call: implementation, parameterType: arguments))
     }
@@ -1362,7 +1366,11 @@ struct AIConversation {
         controller.truncate = { truncate(messages: $0, maxTokens: maxTokens) }
     }
 
-    func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, 
+    func removeAllFunctions() {
+        controller.removeAllFunctions()
+    }
+
+    func define<T: Codable>(function decl: ChatGPTFunctionDeclaration,
                             arguments: T.Type,
                             implementation: @escaping LLM.Function<T>.Impl) {
         controller.define(function: decl, arguments: arguments, implementation: implementation)

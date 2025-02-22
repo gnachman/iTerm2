@@ -44,7 +44,7 @@ class ChatClient {
             it_assert(!partial)
             return processRemoteCommandRequest(chatID: chatID, message: message, request: request)
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse,
-                .selectSessionRequest, .clientLocal, .renameChat:
+                .selectSessionRequest, .clientLocal, .renameChat, .setPermissions:
             return message
         case let .append(string: string, uuid: uuid):
             it_assert(partial)
@@ -90,7 +90,8 @@ class ChatClient {
                            sentDate: Date(),
                            uniqueID: UUID())
         }
-        switch RemoteCommandExecutor.instance.permission(inSessionGuid: guid) {
+        switch RemoteCommandExecutor.instance.permission(inSessionGuid: guid,
+                                                         category: request.content.permissionCategory) {
         case .never:
             respondSuccessfullyToRemoteCommandRequest(
                 inChat: chatID,
@@ -201,7 +202,8 @@ class ChatClient {
         let original = messages[i]
         switch original.content {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
-                .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest:
+                .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
+                .setPermissions:
             // These are impossible or just normal streaming messages.
             return appendMessage
 
@@ -237,7 +239,8 @@ class ChatClient {
         let original = messages[i]
         switch original.content {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
-                .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest:
+                .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
+                .setPermissions:
             // These are impossible or just normal streaming messages.
             return finalMessage
 

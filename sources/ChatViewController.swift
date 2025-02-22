@@ -462,10 +462,14 @@ extension ChatViewController {
             menu.addItem(NSMenuItem.separator())
 
             let rce = RemoteCommandExecutor.instance
-            menu.addItem(withTitle: "Agent can view and modify linked session", action: #selector(setAlwaysAllow(_:)), target: self, state: rce.permission(inSessionGuid: guid) == .always ? .on : .off)
-            menu.addItem(withTitle: "Keep linked session private from agent", action: #selector(setNeverAllow(_:)),target: self,  state: rce.permission(inSessionGuid: guid) == .never ? .on : .off)
-            menu.addItem(withTitle: "Ask before allowing agent to access linked session", action: #selector(setAsk(_:)), target: self, state: rce.permission(inSessionGuid: guid) == .ask ? .on : .off)
+            for category in RemoteCommand.Content.PermissionCategory.allCases {
+                menu.addItem(withTitle: "AI can \(category.rawValue)",
+                             action: #selector(toggleAlwaysAllow(_:)),
+                             target: self,
+                             state: rce.controlState(guid: guid, category: category),
+                             object: category)
 
+            }
             menu.addItem(NSMenuItem.separator())
             menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
 
@@ -483,21 +487,28 @@ extension ChatViewController {
         }
     }
 
-    @objc private func setAlwaysAllow(_ sender: Any) {
-        if let guid = model?.sessionGuid {
-            RemoteCommandExecutor.instance.setPermission(allowed: true, remember: true, guid: guid)
-        }
-    }
-
-    @objc private func setNeverAllow(_ sender: Any) {
-        if let guid = model?.sessionGuid {
-            RemoteCommandExecutor.instance.setPermission(allowed: false, remember: true, guid: guid)
-        }
-    }
-
-    @objc private func setAsk(_ sender: Any) {
-        if let guid = model?.sessionGuid {
-            RemoteCommandExecutor.instance.erasePermissions(guid: guid)
+    @objc private func toggleAlwaysAllow(_ sender: Any) {
+        if let chatID, let guid = model?.sessionGuid,
+            let menuItem = sender as? NSMenuItem,
+            let category = menuItem.representedObject as? RemoteCommand.Content.PermissionCategory {
+            let existing = RemoteCommandExecutor.instance.permission(inSessionGuid: guid,
+                                                                     category: category)
+            let newPermission: RemoteCommandExecutor.Permission = switch existing {
+            case .always: .never
+            case .never: .ask
+            case .ask: .always
+            }
+            let rce = RemoteCommandExecutor.instance
+            rce.setPermission(permission: newPermission,
+                              guid: guid,
+                              category: category)
+            broker.publish(message: .init(chatID: chatID,
+                                          author: .user,
+                                          content: .setPermissions(rce.allowedCategories(for: guid)),
+                                          sentDate: Date(),
+                                          uniqueID: UUID()),
+                           toChatID: chatID,
+                           partial: false)
         }
     }
 
@@ -741,18 +752,24 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         functionCallName: functionCallName)
                     return
                 }
-                var allowed = false
+                let allowed: Bool
                 switch RemoteCommandButtonIdentifier(rawValue: identifier) {
                 case .allowOnce:
-                    RemoteCommandExecutor.instance.setPermission(allowed: true, remember: false, guid: guid)
                     allowed = true
                 case .allowAlways:
-                    RemoteCommandExecutor.instance.setPermission(allowed: true, remember: true, guid: guid)
+                    RemoteCommandExecutor.instance.setPermission(
+                        permission: .always,
+                        guid: guid,
+                        category: remoteCommand.content.permissionCategory)
                     allowed = true
                 case .denyOnce:
-                    RemoteCommandExecutor.instance.setPermission(allowed: false, remember: false, guid: guid)
+                    allowed = false
                 case .denyAlways:
-                    RemoteCommandExecutor.instance.setPermission(allowed: false, remember: true, guid: guid)
+                    RemoteCommandExecutor.instance.setPermission(
+                        permission: .never,
+                        guid: guid,
+                        category: remoteCommand.content.permissionCategory)
+                    allowed = false
                 case .none:
                     return
                 }
@@ -770,7 +787,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
             }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                .remoteCommandResponse, .renameChat, .append, .commit:
+                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions:
             cell.buttonClicked = nil
         }
     }
@@ -865,7 +882,7 @@ extension Message {
     var buttons: [MessageRendition.Button] {
         switch content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                .remoteCommandResponse, .renameChat, .append, .commit:
+                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions:
             []
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
@@ -886,7 +903,7 @@ extension Message {
 
     var attributedStringValue: NSAttributedString {
         switch content {
-        case .renameChat, .append, .commit:
+        case .renameChat, .append, .commit, .setPermissions:
             it_fatalError()
         case .plainText(let string):
             let paragraphStyle = NSMutableParagraphStyle()
@@ -901,7 +918,6 @@ extension Message {
                 attributes: attributes
             )
         case .markdown(let string), .explanationResponse(_, _, let string):
-            #warning("TODO: Show the copied toast")
             return AttributedStringForGPTMarkdown(string, linkColor: linkColor) { }
         case .explanationRequest(request: let request):
             let string =
@@ -912,7 +928,10 @@ extension Message {
             }
             return AttributedStringForGPTMarkdown(string, linkColor: linkColor) { }
         case .remoteCommandRequest(let request):
-            return AttributedStringForGPTMarkdown(request.permissionDescription,
+            let specific = request.permissionDescription + "."
+            let general = "Would you like to grant AI **\(request.content.permissionCategory.rawValue)** permission?"
+            let info = "*If you grant or deny permission, it affects only this chat conversation while linked to this particular terminal session. You can change permissions in the chat Info menu.*"
+            return AttributedStringForGPTMarkdown(specific + " " + general + "\n\n" + info,
                                                   linkColor: linkColor) {}
         case .remoteCommandResponse(let response, _, _):
             switch response {
@@ -1028,10 +1047,11 @@ extension ChatViewController: ChatViewControllerModelDelegate {
 }
 
 extension NSMenu {
-    func addItem(withTitle title: String, action: Selector, target: AnyObject, state: NSControl.StateValue) {
+    func addItem(withTitle title: String, action: Selector, target: AnyObject, state: NSControl.StateValue, object: Any?) {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
         item.state = state
         item.target = target
+        item.representedObject = object
         addItem(item)
     }
     func addItem(withTitle title: String, action: Selector, target: AnyObject) {
