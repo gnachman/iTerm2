@@ -1558,6 +1558,9 @@ void TurnOnDebugLoggingAutomatically(void) {
     if ([components.path isEqualToString:@"reveal-mark"]) {
         [self revealMarkFromURL:url];
     }
+    if ([components.path isEqualToString:@"disable-streaming-session-chat"]) {
+        [self stopStreamingSessionChatFromURL:url];
+    }
     return NO;
 }
 
@@ -1590,6 +1593,26 @@ void TurnOnDebugLoggingAutomatically(void) {
     [iTermChatWindowController.instance showChatWindow];
     [iTermChatWindowController.instance selectChatWithID:chatID];
 
+}
+
+- (void)stopStreamingSessionChatFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *token = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"t"]) {
+            token = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    if (![[NSWorkspace sharedWorkspace] it_checkToken:token]) {
+        return;
+    }
+    [[iTermChatWindowController instanceIfExists] stopStreamingSession:guid];
 }
 
 - (void)unlinkSessionChatFromURL:(NSURL *)url {

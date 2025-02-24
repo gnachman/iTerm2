@@ -69,6 +69,7 @@ fileprivate struct MessageToPromptStateMachine {
 
     private func prompt(terminalCommand: TerminalCommand) -> String {
         var lines = [String]()
+        lines.append("iTerm2 is sending you this message automatically because the user enabled sending terminal commands to AI for assistance. If you can provide useful non-obvious insights, respond with those. Do not restate information that is obvious from the output. If there is nothing important to say, just respond with \"Got it.\"")
         lines.append("I executed the following command line:")
         lines.append(terminalCommand.command)
         if let directory = terminalCommand.directory {

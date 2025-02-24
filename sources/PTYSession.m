@@ -8510,9 +8510,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     id<VT100ScreenMarkReading> mark = [_screen promptMarkWithGUID:guid];
     if (mark) {
         [self scrollToMark:mark];
+        VT100GridRange range = [_screen lineNumberRangeOfInterval:mark.entry.interval];
+        [_textview highlightMarkOnLine:range.location hasErrorCode:mark.code != 0];
+        const NSPoint locationInTextView = [_textview pointForCoord:VT100GridCoordMake(0, range.location)];
+        const NSPoint locationInWindow = [_textview convertPoint:locationInTextView toView:nil];
+        [_textview showCommandInfoForMark:mark at:locationInWindow];
     }
-    VT100GridRange range = [_screen lineNumberRangeOfInterval:mark.entry.interval];
-    [_textview highlightMarkOnLine:range.location hasErrorCode:mark.code != 0];
 }
 
 - (void)scrollToMarkWithGUID:(NSString *)guid {
@@ -11355,8 +11358,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _liveSession && _filter;
 }
 
-- (BOOL)textViewSessionIsWatchedByAI {
+- (BOOL)textViewSessionIsLinkedToAIChat {
     return [iTermChatDatabase chatIDsForSession:_guid].count > 0;
+}
+
+- (BOOL)textViewSessionIsStreamingToAIChat {
+    return [[iTermChatWindowController instanceIfExists] isStreamingToGuid:self.guid];
 }
 
 - (BOOL)textViewInPinnedHotkeyWindow {

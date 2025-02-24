@@ -1856,8 +1856,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_indicatorsHelper setIndicator:kiTermIndicatorPinned
                             visible:[_delegate textViewInPinnedHotkeyWindow]
                      darkBackground:isDark];
-    [_indicatorsHelper setIndicator:kiTermIndicatorAIWatching
-                            visible:[_delegate textViewSessionIsWatchedByAI]
+    [_indicatorsHelper setIndicator:kiTermIndicatorAIChatLinked
+                            visible:[_delegate textViewSessionIsLinkedToAIChat]
+                     darkBackground:isDark];
+    [_indicatorsHelper setIndicator:kiTermIndicatorAIChatStreaming
+                            visible:[_delegate textViewSessionIsStreamingToAIChat]
                      darkBackground:isDark];
     const BOOL secureByUser = [[iTermSecureKeyboardEntryController sharedInstance] enabledByUserDefault];
     const BOOL secure = [[iTermSecureKeyboardEntryController sharedInstance] isEnabled];

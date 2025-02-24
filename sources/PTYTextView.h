@@ -187,7 +187,8 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewShouldShowMarkIndicators;
 - (BOOL)textViewIsFiltered;
 - (BOOL)textViewInPinnedHotkeyWindow;
-- (BOOL)textViewSessionIsWatchedByAI;
+- (BOOL)textViewSessionIsLinkedToAIChat;
+- (BOOL)textViewSessionIsStreamingToAIChat;
 
 // Is it possible to restart this session?
 - (BOOL)isRestartable;

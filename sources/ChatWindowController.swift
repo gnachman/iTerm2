@@ -153,6 +153,18 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         window.makeKeyAndOrderFront(nil)
     }
 
+    @objc(isStreamingToGuid:)
+    func isStreaming(to guid: String) -> Bool {
+        return chatViewController.streaming && chatViewController.sessionGuid == guid
+    }
+
+    @objc(stopStreamingSession:)
+    func stopStreaming(guid: String) {
+        if chatViewController.sessionGuid == guid && chatViewController.streaming {
+            chatViewController.stopStreaming()
+        }
+    }
+
     private var ageOfMostRecentChat: TimeInterval? {
         guard let chat = chatListViewController.mostRecentChat else {
             return nil
@@ -229,6 +241,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
 
         chatListViewController.delegate = self
         chatViewController.delegate = self
+        window.delegate = self
 
         return window
     }
@@ -248,6 +261,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
 
     @objc(closeCurrentSession:)
     func closeCurrentSession(_ sender: Any) {
+        chatViewController.stopStreaming()
         window?.performClose(sender)
     }
 
@@ -258,6 +272,12 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         }
         chatListViewController.select(chatID: chatID)
         chatViewController.load(chatID: chatID)
+    }
+}
+
+extension ChatWindowController: NSWindowDelegate {
+    func windowWillClose(_ notification: Notification) {
+        chatViewController.stopStreaming()
     }
 }
 

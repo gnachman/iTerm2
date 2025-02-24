@@ -98,8 +98,10 @@ class TerminalCommandMessageCellView: MessageCellView {
                 .foregroundColor: NSColor.white
             ])
         textLabel.textStorage?.setAttributedString(attributedString)
+        textLabel.textContainer?.widthTracksTextView = false
         textLabel.textContainer?.size = NSSize(width: maxBubbleWidth - 16,
                                                height: .greatestFiniteMagnitude)
+        textLabel.linkTextAttributes = [.foregroundColor: NSColor.textColor]
 
         add(constraint: icon.widthAnchor.constraint(equalToConstant: 40))
         add(constraint: icon.heightAnchor.constraint(equalToConstant: 40))

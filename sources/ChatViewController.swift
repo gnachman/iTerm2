@@ -51,7 +51,7 @@ class ChatViewController: NSViewController {
     private let broker: ChatBroker
     private var estimatedCount = 0
     private var _commandDidExitObserver: (any NSObjectProtocol)?
-    private var streaming = false {
+    private(set) var streaming = false {
         didSet {
             if let _commandDidExitObserver {
                 NotificationCenter.default.removeObserver(_commandDidExitObserver)
@@ -73,6 +73,7 @@ class ChatViewController: NSViewController {
             }
         }
     }
+    var sessionGuid: String? { model?.sessionGuid }
 
     init(listModel: ChatListModel, client: ChatClient, broker: ChatBroker) {
         self.listModel = listModel
@@ -330,6 +331,9 @@ extension Message {
 }
 extension ChatViewController {
     func load(chatID: String?) {
+        if streaming {
+            stopStreaming()
+        }
         guard let window = view.window else {
             return
         }
@@ -456,7 +460,7 @@ extension ChatViewController {
             menu.addItem(NSMenuItem.separator())
 
             if haveLinkedSession {
-                menu.addItem(withTitle: "Send Commands to AI Automaticallky",
+                menu.addItem(withTitle: "Send Commands & Output to AI Automatically",
                              action: #selector(toggleStream(_:)),
                              target: self,
                              state: streaming ? .on : .off,
@@ -555,13 +559,14 @@ extension ChatViewController {
         return true
     }
 
-    private func stopStreaming() {
+    func stopStreaming() {
         if let chatID {
             broker.publishMessageFromAgent(
                 chatID: chatID,
                 content: .clientLocal(.init(action: .streamingChanged(.stopped))))
         }
         streaming = false
+        tableView.reloadData()
     }
 
     @objc private func toggleStream(_ sender: Any) {
@@ -581,6 +586,7 @@ extension ChatViewController {
                                           window: nil)
         if selection == .kiTermWarningSelection0 {
             streaming = true
+            tableView.reloadData()
             broker.publishMessageFromAgent(
                 chatID: chatID,
                 content: .clientLocal(.init(action: .streamingChanged(.active))))
@@ -675,7 +681,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 let cell = TerminalCommandMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
-            case .clientLocal(let cl):
+            case .clientLocal:
                 let cell = SystemMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
@@ -694,6 +700,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     private func reloadCell(forMessageID messageID: UUID) {
         if let model, let i = model.index(ofMessageID: messageID) {
             tableView.reloadData(forRowIndexes: IndexSet(integer: i), columnIndexes: IndexSet(integer: 0))
+            tableView.invalidateIntrinsicContentSize()
         }
     }
 
@@ -893,9 +900,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             case .notice:
                 break
             case .streamingChanged(let state):
-                if state == .active {
-                    enableButtons = streaming
-                }
+                enableButtons = streaming
             }
         default:
             break
@@ -1086,7 +1091,7 @@ extension Message {
                 case .active:
                     AttributedStringForSystemMessageMarkdown("All terminal commands in the linked session will be sent to AI automatically.") {}
                 case .stoppedAutomatically:
-                    AttributedStringForSystemMessageMarkdown("Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts.") {}
+                    AttributedStringForSystemMessageMarkdown("Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts or the current chat changes.") {}
                 }
             }
         case .selectSessionRequest:
@@ -1162,6 +1167,7 @@ extension ChatViewController: ChatViewControllerModelDelegate {
             tableView.reloadData(forRowIndexes: rows,
                                  columnIndexes: IndexSet(integer: 0))
             tableView.noteHeightOfRows(withIndexesChanged: rows)
+            tableView.invalidateIntrinsicContentSize()
             tableView.endUpdates()
         }
     }
@@ -1175,24 +1181,48 @@ extension ChatViewController: ChatViewControllerModelDelegate {
     }
 
     func chatViewControllerModel(didModifyItemsAtIndexes indexSet: IndexSet) {
-        guard let scrollView = tableView.enclosingScrollView else { return }
+        guard let scrollView = tableView.enclosingScrollView,
+        let documentView = scrollView.documentView else {
+            return
+        }
 
-        let clipView = scrollView.contentView
-
-        // Record the document view's (tableView's) old height and the visible area's maxY.
-        let originalRect = scrollView.documentVisibleRect
-        let distanceFromTop = tableView.bounds.height - originalRect.maxY
+        let originalDistanceToTop = scrollView.distanceToTop
 
         tableView.beginUpdates()
         tableView.noteHeightOfRows(withIndexesChanged: indexSet)
         tableView.reloadData(forRowIndexes: indexSet, columnIndexes: IndexSet(integer: 0))
+        tableView.invalidateIntrinsicContentSize()
         tableView.endUpdates()
 
-        var bounds = clipView.bounds
-        let desiredDistanceToBottom = tableView.bounds.height - distanceFromTop - clipView.bounds.height
-        bounds.origin.y = desiredDistanceToBottom
-        clipView.bounds = bounds
-        scrollView.reflectScrolledClipView(clipView)
+        tableView.needsLayout = true
+        tableView.layoutSubtreeIfNeeded()
+
+        scrollView.distanceToTop = originalDistanceToTop
+
+        // Sometimes autolayout is lazy so we have to try a second time :(
+        DispatchQueue.main.async {
+            scrollView.distanceToTop = originalDistanceToTop
+        }
+    }
+}
+
+extension NSScrollView {
+    var distanceToTop: CGFloat {
+        get {
+            guard let documentView else {
+                return 0
+            }
+            return documentView.bounds.height - contentView.bounds.maxY
+        }
+        set {
+            guard let documentView else {
+                return
+            }
+            var bounds = contentView.bounds
+            let newOrigin = documentView.bounds.height - newValue - contentView.bounds.height
+            bounds.origin.y = newOrigin
+            contentView.bounds = bounds
+        }
     }
 }
 

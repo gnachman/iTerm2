@@ -24,7 +24,8 @@ extern NSString *const kiTermIndicatorFilter;
 extern NSString *const kiTermIndicatorSecureKeyboardEntry_Forced;
 extern NSString *const kiTermIndicatorSecureKeyboardEntry_User;
 extern NSString *const kiTermIndicatorPinned;
-extern NSString *const kiTermIndicatorAIWatching;
+extern NSString *const kiTermIndicatorAIChatLinked;
+extern NSString *const kiTermIndicatorAIChatStreaming;
 
 extern CGFloat kiTermIndicatorStandardHeight;
 

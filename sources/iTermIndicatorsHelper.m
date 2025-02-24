@@ -31,7 +31,8 @@ NSString *const kiTermIndicatorDebugLogging = @"kiTermIndicatorDebugLogging";
 NSString *const kiTermIndicatorSecureKeyboardEntry_Forced = @"kiTermIndicatorSecureKeyboardEntry_Forced";
 NSString *const kiTermIndicatorSecureKeyboardEntry_User = @"kiTermIndicatorSecureKeyboardEntry_User";
 NSString *const kiTermIndicatorPinned = @"kiTermIndicatorPinned";
-NSString *const kiTermIndicatorAIWatching = @"kiTermIndicatorAIWatching";
+NSString *const kiTermIndicatorAIChatLinked = @"kiTermIndicatorAIChatLinked";
+NSString *const kiTermIndicatorAIChatStreaming = @"kiTermIndicatorAIChatStreaming";
 
 static const NSTimeInterval kFullScreenFlashDuration = 0.3;
 static const NSTimeInterval kFlashDuration = 0.3;
@@ -117,9 +118,12 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             kiTermIndicatorPinned: [self imagePairWithLegacyName:@"PinnedIndicator"
                                                    modernOutline:@"pin"
                                                            large:NO],
-            kiTermIndicatorAIWatching: [self imagePairWithLegacyName:@"AIWatching"
+            kiTermIndicatorAIChatLinked: [self imagePairWithLegacyName:@"AIWatching"
                                                        modernOutline:@"brain"
-                                                               large:NO]
+                                                               large:NO],
+            kiTermIndicatorAIChatStreaming: [self imagePairWithLegacyName:@"AIStreaming"
+                                                            modernOutline:@"dot.radiowaves.right"
+                                                                    large:NO],
         };
     });
 
@@ -211,6 +215,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         iTermIndicator *indicator = [[iTermIndicator alloc] init];
         iTermTuple<NSImage *, NSImage *> *tuple = [[self class] indicatorImagePairs][identifier];
         indicator.image = darkBackground ? tuple.firstObject : tuple.secondObject;
+        assert(indicator.image);
         indicator.dark = darkBackground;
         _visibleIndicators[identifier] = indicator;
         [_delegate indicatorNeedsDisplay];
@@ -239,7 +244,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorSecureKeyboardEntry_Forced,
               kiTermIndicatorSecureKeyboardEntry_User,
               kiTermIndicatorPinned,
-              kiTermIndicatorAIWatching];
+              kiTermIndicatorAIChatLinked,
+              kiTermIndicatorAIChatStreaming];
 }
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block {
@@ -287,7 +293,9 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
         kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
         kiTermIndicatorPinned: @"This Hotkey Window is pinned.",
-        kiTermIndicatorAIWatching: [NSString stringWithFormat:@"AI Chats can view or control this session.\n * [Unlink from AI Chat](iterm2:unlink-session-chat?s=%@&t=%@)\n * [Reveal](iterm2:reveal-chat-for-session?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken], sessionID, [[NSWorkspace sharedWorkspace] it_newToken]]
+        kiTermIndicatorAIChatLinked: [NSString stringWithFormat:@"AI Chats can view or control this session.\n * [Unlink from AI Chat](iterm2:unlink-session-chat?s=%@&t=%@)\n * [Reveal AI Chat](iterm2:reveal-chat-for-session?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken], sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
+        kiTermIndicatorAIChatStreaming: [NSString stringWithFormat:@"Commands run in this session are automatically sent to an AI chat, along with their output. [Stop sending](iterm2:disable-streaming-session-chat?s=%@&t=%@)",
+                                         sessionID, [[NSWorkspace sharedWorkspace] it_newToken]]
     };
     return messages[name];
 }
