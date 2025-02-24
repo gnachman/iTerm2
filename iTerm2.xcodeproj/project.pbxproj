@@ -3387,6 +3387,9 @@
 		A6DB145B2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145C2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145E2D6CEDF200266394 /* SystemMessageCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */; };
+		A6DB14642D6D09C800266394 /* AIStreaming.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14632D6D09C800266394 /* AIStreaming.png */; };
+		A6DB14652D6D09C800266394 /* AIStreaming.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14632D6D09C800266394 /* AIStreaming.png */; };
+		A6DB14662D6D09C800266394 /* AIStreaming.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14632D6D09C800266394 /* AIStreaming.png */; };
 		A6DB7BAC2CE52BB000EB7973 /* iTermPasteSpecialWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */; };
 		A6DBC0381FF9B30000F1466D /* iTermTexturePool.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC0361FF9B30000F1466D /* iTermTexturePool.h */; };
 		A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC0371FF9B30000F1466D /* iTermTexturePool.m */; };
@@ -7302,6 +7305,7 @@
 		A6D8973922154A8800325F6A /* AnnotateTrigger.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AnnotateTrigger.m; sourceTree = "<group>"; };
 		A6DB14592D6CE22400266394 /* CommandIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = CommandIcon.png; sourceTree = "<group>"; };
 		A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMessageCellView.swift; sourceTree = "<group>"; };
+		A6DB14632D6D09C800266394 /* AIStreaming.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AIStreaming.png; sourceTree = "<group>"; };
 		A6DBC0361FF9B30000F1466D /* iTermTexturePool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTexturePool.h; path = Metal/Infrastructure/iTermTexturePool.h; sourceTree = "<group>"; };
 		A6DBC0371FF9B30000F1466D /* iTermTexturePool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermTexturePool.m; path = Metal/Infrastructure/iTermTexturePool.m; sourceTree = "<group>"; };
 		A6DBC03A2003479400F1466D /* iTermImageRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermImageRenderer.h; path = Metal/Renderers/iTermImageRenderer.h; sourceTree = "<group>"; };
@@ -8537,6 +8541,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6DB14632D6D09C800266394 /* AIStreaming.png */,
 				A6DB14592D6CE22400266394 /* CommandIcon.png */,
 				A65618632D6647510059CD35 /* AIWatching@2x.png */,
 				A6643F102CA6218F004B757B /* coderabbitai.png */,
@@ -14107,6 +14112,7 @@
 				A67D0D521A2EE12A003A8B35 /* FindView.xib in Resources */,
 				A65DF4AB2849F2AA00AA29AB /* iterm2-shell-integration-loader.fish in Resources */,
 				A6A3D192281663EE00C0C9E0 /* extensions.json in Resources */,
+				A6DB14662D6D09C800266394 /* AIStreaming.png in Resources */,
 				A6FEA28A1CF4DD2700376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
 				1D6ED9BF19AEA20D005A7799 /* closebutton@2x.png in Resources */,
 				A65D7CB521E1EBCE00E3D81C /* StopStatusIcon@2x.png in Resources */,
@@ -14505,6 +14511,7 @@
 				A6E7AEB3214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
 				A67F6182214395A70093940A /* graphic_nginx.png in Resources */,
 				A67F618E214395A70093940A /* graphic_nodejs@2x.png in Resources */,
+				A6DB14652D6D09C800266394 /* AIStreaming.png in Resources */,
 				A67F61E2214395D50093940A /* graphic_zip.png in Resources */,
 				A6EC8047281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
 				A6F7A74D213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
@@ -14746,6 +14753,7 @@
 				1D5FDD811208E91100C46BA3 /* newwin.png in Resources */,
 				A6F18B562AE2F39C006C08EE /* uniE0B4_right-half-circle-thick.pdf in Resources */,
 				1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */,
+				A6DB14642D6D09C800266394 /* AIStreaming.png in Resources */,
 				1DBBA5DE1B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
 				A67D0D471A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A6F2F218250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
