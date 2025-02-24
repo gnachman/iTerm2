@@ -176,13 +176,15 @@ extension ChatSearchResultsViewController: NSTableViewDelegate {
     }
 
     func messageRendition(snippet: String, fromUser: Bool) -> MessageRendition {
-        .init(attributedString: AttributedStringForGPTMarkdown(snippet, linkColor: .white) { },
-              buttons: [],
-              messageUniqueID: UUID(),
-              isUser: fromUser,
-              enableButtons: false,
-              timestamp: "",
-              isEditable: false)
+        let attributedString = AttributedStringForGPTMarkdown(snippet, linkColor: .white) {}
+        return MessageRendition(
+            isUser: fromUser,
+            messageUniqueID: UUID(),
+            flavor: .regular(.init(attributedString: attributedString,
+                                   buttons: [],
+                                   enableButtons: false)),
+            timestamp: "",
+            isEditable: false)
     }
 }
 
@@ -196,6 +198,7 @@ extension Message {
         case let .explanationRequest(request): request.subjectMatter + " " + request.question
         case let .explanationResponse(_, _, markdown): markdown
         case let .remoteCommandResponse(result, _, _): result.successValue
+        case let .terminalCommand(cmd): cmd.command
         case  .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat,
                 .commit, .setPermissions: nil
         }

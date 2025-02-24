@@ -17,6 +17,16 @@ fileprivate protocol ToolCodeciergeSessionDelegate: AnyObject {
     var sessionWindow: NSWindow? { get }
 }
 
+struct TerminalCommand: Codable {
+    var username: String?
+    var hostname: String?
+    var directory: String?
+    var command: String
+    var output: String
+    var exitCode: Int32
+    var url: URL
+}
+
 @objc(iTermToolCodecierge)
 class ToolCodecierge: NSView, ToolbeltTool {
     private var onboardingView: CodeciergeOnboardingView!
@@ -24,6 +34,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
     private var suggestionView: CodeciergeSuggestionView!
     override var isFlipped: Bool { true }
     private var notificationObserver: (any NSObjectProtocol)?
+    typealias Command = TerminalCommand
 
     private class SessionRegistry {
         static var instance = SessionRegistry()
@@ -49,15 +60,6 @@ class ToolCodecierge: NSView, ToolbeltTool {
         case onboarding
         case goalSetting
         case running
-    }
-
-    fileprivate struct Command {
-        var username: String?
-        var hostname: String?
-        var directory: String?
-        var command: String
-        var output: String
-        var exitCode: Int32
     }
 
     fileprivate struct History {
@@ -186,21 +188,22 @@ class ToolCodecierge: NSView, ToolbeltTool {
 
         init(_ guid: String) {
             self.guid = guid
-            observer = NotificationCenter.default.addObserver(forName: Notification.Name("PTYCommandDidExitNotification"),
+            observer = NotificationCenter.default.addObserver(forName: Notification.Name.PTYCommandDidExit,
                                                    object: guid,
                                                    queue: nil) { [weak self] notif in
                 guard let self, let delegate, delegate.sessionEnabled(self) else { return }
                 guard let userInfo = notif.userInfo,
-                      let command = userInfo["command"] as? String else {
+                      let command = userInfo[PTYCommandDidExitUserInfoKeyCommand] as? String else {
                     return
                 }
 
-                let exitCode = (userInfo["exitCode"] as? Int32) ?? 0
-                let directory = userInfo["directory"] as? String
-                let remoteHost = userInfo["remoteHost"] as? VT100RemoteHostReading
-                let startLine = userInfo["startLine"] as! Int32
-                let lineCount = userInfo["lineCount"] as! Int32
-                let snapshot = userInfo["snapshot"] as! TerminalContentSnapshot
+                let exitCode = (userInfo[PTYCommandDidExitUserInfoKeyExitCode] as? Int32) ?? 0
+                let directory = userInfo[PTYCommandDidExitUserInfoKeyDirectory] as? String
+                let remoteHost = userInfo[PTYCommandDidExitUserInfoKeyRemoteHost] as? VT100RemoteHostReading
+                let startLine = userInfo[PTYCommandDidExitUserInfoKeyStartLine] as! Int32
+                let lineCount = userInfo[PTYCommandDidExitUserInfoKeyLineCount] as! Int32
+                let snapshot = userInfo[PTYCommandDidExitUserInfoKeySnapshot] as! TerminalContentSnapshot
+                let url = userInfo[PTYCommandDidExitUserInfoKeyURL] as! URL
                 let extractor = iTermTextExtractor(dataSource: snapshot)
                 let content = extractor.content(
                     in: VT100GridWindowedRange(
@@ -221,7 +224,8 @@ class ToolCodecierge: NSView, ToolbeltTool {
                               exitCode: exitCode,
                               directory: directory,
                               output: content,
-                              remoteHost: remoteHost)
+                              remoteHost: remoteHost,
+                              url: url)
                 delegate.sessionDidReceiveCommand(session: self, command: command)
             }
         }
@@ -236,13 +240,15 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                    exitCode: Int32,
                                    directory: String?,
                                    output: String,
-                                   remoteHost: VT100RemoteHostReading?) {
+                                   remoteHost: VT100RemoteHostReading?,
+                                   url: URL) {
             let command = Command(username: remoteHost?.username,
                                   hostname: remoteHost?.hostname,
                                   directory: directory,
                                   command: command,
                                   output: output,
-                                  exitCode: exitCode)
+                                  exitCode: exitCode,
+                                  url: url)
             updateHistory(command: command)
             if running {
                 commandCount += 1

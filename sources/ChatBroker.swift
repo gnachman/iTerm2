@@ -373,6 +373,16 @@ extension RemoteCommand.Content.PermissionCategory {
 }
 
 extension ChatBroker {
+    func publishMessageFromAgent(chatID: String, content: Message.Content) {
+        publish(message: Message(chatID: chatID,
+                                 author: .agent,
+                                 content: content,
+                                 sentDate: Date(),
+                                 uniqueID: UUID()),
+                toChatID: chatID,
+                partial: false)
+    }
+
     func publishMessageFromUser(chatID: String, content: Message.Content) {
         publish(message: Message(chatID: chatID,
                                  author: .user,

@@ -96,6 +96,29 @@ class ChatViewController: NSViewController {
     private let client: ChatClient
     private let broker: ChatBroker
     private var estimatedCount = 0
+    private var _commandDidExitObserver: (any NSObjectProtocol)?
+    private var streaming = false {
+        didSet {
+            if let _commandDidExitObserver {
+                NotificationCenter.default.removeObserver(_commandDidExitObserver)
+                self._commandDidExitObserver = nil
+            }
+            if streaming, let model, model.sessionGuid != nil {
+                _commandDidExitObserver = NotificationCenter.default.addObserver(
+                    forName: Notification.Name.PTYCommandDidExit,
+                    object: nil,
+                    queue: nil) { [weak self] notif in
+                        if let self,
+                           self.streaming,
+                           let userInfo = notif.userInfo,
+                           let guid = self.model?.sessionGuid,
+                           notif.object as? String == guid {
+                            self.streamLastCommand(userInfo)
+                    }
+                }
+            }
+        }
+    }
 
     init(listModel: ChatListModel, client: ChatClient, broker: ChatBroker) {
         self.listModel = listModel
@@ -407,6 +430,11 @@ extension ChatViewController {
         } else {
             showTypingIndicator = false
         }
+        if let chatID, let model, model.lastStreamingState == .active {
+            broker.publishMessageFromAgent(chatID: chatID,
+                                           content: .clientLocal(.init(action: .streamingChanged(.stoppedAutomatically))))
+            model.lastStreamingState = .stoppedAutomatically
+        }
         scrollToBottom(animated: false)
         view.window?.makeFirstResponder(inputTextFieldContainer.textView)
     }
@@ -471,6 +499,16 @@ extension ChatViewController {
 
             }
             menu.addItem(NSMenuItem.separator())
+
+            if haveLinkedSession {
+                menu.addItem(withTitle: "Send Commands to AI Automaticallky",
+                             action: #selector(toggleStream(_:)),
+                             target: self,
+                             state: streaming ? .on : .off,
+                             object: nil)
+                menu.addItem(NSMenuItem.separator())
+            }
+
             menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
 
             // Position the menu just below the button
@@ -551,6 +589,47 @@ extension ChatViewController {
         broker.publish(message: waitingMessage,
                        toChatID: chatID,
                        partial: false)
+    }
+
+    private var haveLinkedSession: Bool {
+        guard let model,
+              let guid = model.sessionGuid,
+              iTermController.sharedInstance().session(withGUID: guid) != nil else {
+            return false
+        }
+        return true
+    }
+
+    private func stopStreaming() {
+        if let chatID {
+            broker.publishMessageFromAgent(
+                chatID: chatID,
+                content: .clientLocal(.init(action: .streamingChanged(.stopped))))
+        }
+        streaming = false
+    }
+
+    @objc private func toggleStream(_ sender: Any) {
+        guard haveLinkedSession, let chatID else {
+            return
+        }
+        if streaming {
+            stopStreaming()
+            return
+        }
+        let selection = iTermWarning.show(withTitle: "All terminal content will be sent to AI, which may go to a third party. Ensure this is safe to do before proceeding.",
+                                          actions: ["OK", "Cancel"],
+                                          accessory: nil,
+                                          identifier: nil,
+                                          silenceable: .kiTermWarningTypePersistent,
+                                          heading: "Privacy Warning",
+                                          window: nil)
+        if selection == .kiTermWarningSelection0 {
+            streaming = true
+            broker.publishMessageFromAgent(
+                chatID: chatID,
+                content: .clientLocal(.init(action: .streamingChanged(.active))))
+        }
     }
 
     @objc private func showLinkedSessionHelp(_ sender: Any) {
@@ -637,9 +716,16 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             view.set(dateComponents: date)
             return view
         case .message(let message):
-            let cell = MessageCellView()
-            configure(cell: cell, for: message.message, isLast: isLastMessage)
-            return cell
+            switch message.message.content {
+            case .terminalCommand:
+                let cell = TerminalCommandMessageCellView()
+                configure(cell: cell, for: message.message, isLast: isLastMessage)
+                return cell
+            default:
+                let cell = RegularMessageCellView()
+                configure(cell: cell, for: message.message, isLast: isLastMessage)
+                return cell
+            }
         }
     }
 
@@ -664,7 +750,16 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         inputTextFieldContainer.stringValue = text
     }
 
-    private func configure(cell: MessageCellView, for message: Message, isLast: Bool) {
+    private func configure(cell: TerminalCommandMessageCellView,
+                           for message: Message,
+                           isLast: Bool) {
+        cell.configure(with: rendition(for: message, isLast: isLast),
+                       tableViewWidth: tableView.bounds.width)
+    }
+
+    private func configure(cell: RegularMessageCellView,
+                           for message: Message,
+                           isLast: Bool) {
         cell.configure(with: rendition(for: message, isLast: isLast),
                        tableViewWidth: tableView.bounds.width)
         cell.editButtonClicked = { [weak self] messageID in
@@ -697,6 +792,18 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
             case .notice:
                 break
+            case .streamingChanged(let state):
+                if state == .active {
+                    cell.buttonClicked = { [weak self] identifier, messageID in
+                        guard let self else {
+                            return
+                        }
+                        guard messageID == originalMessageID else {
+                            return
+                        }
+                        stopStreaming()
+                    }
+                }
             }
         case .selectSessionRequest(let originalMessage):
             cell.buttonClicked = { [weak self] identifier, messageID in
@@ -784,6 +891,9 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions:
             cell.buttonClicked = nil
+
+        case .terminalCommand:
+            it_fatalError()
         }
     }
 
@@ -824,6 +934,10 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
             case .notice:
                 break
+            case .streamingChanged(let state):
+                if state == .active {
+                    enableButtons = streaming
+                }
             }
         default:
             break
@@ -833,11 +947,18 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             formatter.timeStyle = .short
             return formatter.string(from: message.sentDate)
         }()
-        return MessageRendition(attributedString: message.attributedStringValue,
-                                buttons: message.buttons,
+        let flavor: MessageRendition.Flavor = switch message.content {
+        case .terminalCommand(let cmd):
+                .command(.init(command: cmd.command,
+                               url: cmd.url))
+        default:
+                .regular(.init(attributedString: message.attributedStringValue,
+                               buttons: message.buttons,
+                               enableButtons: enableButtons))
+        }
+        return MessageRendition(isUser: message.author == .user,
                                 messageUniqueID: message.uniqueID,
-                                isUser: message.author == .user,
-                                enableButtons: enableButtons,
+                                flavor: flavor,
                                 timestamp: timestamp,
                                 isEditable: editable)
     }
@@ -854,6 +975,54 @@ extension ChatViewController: NSTextViewDelegate {
 
     func textDidChange(_ notification: Notification) {
         eligibleForAutoPaste = inputTextFieldContainer.stringValue.isEmpty
+    }
+}
+
+extension ChatViewController {
+    func streamLastCommand(_ userInfo: [AnyHashable: Any]) {
+        it_assert(streaming)
+        guard haveLinkedSession else {
+            return
+        }
+        guard let command = userInfo[PTYCommandDidExitUserInfoKeyCommand] as? String else {
+            return
+        }
+        guard let chatID else {
+            return
+        }
+
+        let exitCode = (userInfo[PTYCommandDidExitUserInfoKeyExitCode] as? Int32) ?? 0
+        let directory = userInfo[PTYCommandDidExitUserInfoKeyDirectory] as? String
+        let remoteHost = userInfo[PTYCommandDidExitUserInfoKeyRemoteHost] as? VT100RemoteHostReading
+        let startLine = userInfo[PTYCommandDidExitUserInfoKeyStartLine] as! Int32
+        let lineCount = userInfo[PTYCommandDidExitUserInfoKeyLineCount] as! Int32
+        let snapshot = userInfo[PTYCommandDidExitUserInfoKeySnapshot] as! TerminalContentSnapshot
+        let extractor = iTermTextExtractor(dataSource: snapshot)
+        let url = userInfo[PTYCommandDidExitUserInfoKeyURL] as! URL
+        let content = extractor.content(
+            in: VT100GridWindowedRange(
+                coordRange: VT100GridCoordRange(
+                    start: VT100GridCoord(x: 0, y: startLine),
+                    end: VT100GridCoord(x: 0, y: startLine + lineCount)),
+                columnWindow: VT100GridRange(location: 0, length: 0)),
+            attributeProvider: nil,
+            nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+            pad: false,
+            includeLastNewline: false,
+            trimTrailingWhitespace: true,
+            cappedAtSize: -1,
+            truncateTail: false,
+            continuationChars: nil,
+            coords: nil) as! String
+        let cmd = TerminalCommand(username: remoteHost?.username,
+                                  hostname: remoteHost?.hostname,
+                                  directory: directory,
+                                  command: command,
+                                  output: content,
+                                  exitCode: exitCode,
+                                  url: url)
+        broker.publishMessageFromUser(chatID: chatID,
+                                      content: .terminalCommand(cmd))
     }
 }
 
@@ -874,16 +1043,24 @@ extension Message {
         return NSColor.white
     }
 
-    var buttons: [MessageRendition.Button] {
+    var buttons: [MessageRendition.Regular.Button] {
         switch content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions:
+                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
+                .terminalCommand:
             []
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession, .executingCommand:
                 [.init(title: "Cancel", color: .red, identifier: "")]
             case .notice: []
+            case .streamingChanged(let state):
+                switch state {
+                case .active:
+                    [.init(title: "Stop", color: .red, identifier: "")]
+                case .stopped, .stoppedAutomatically:
+                    []
+                }
             }
         case .selectSessionRequest:
             [.init(title: "Select a Session", color: .white, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
@@ -898,7 +1075,7 @@ extension Message {
 
     var attributedStringValue: NSAttributedString {
         switch content {
-        case .renameChat, .append, .commit, .setPermissions:
+        case .renameChat, .append, .commit, .setPermissions, .terminalCommand:
             it_fatalError()
         case .plainText(let string):
             let paragraphStyle = NSMutableParagraphStyle()
@@ -944,7 +1121,15 @@ extension Message {
                 return AttributedStringForGPTMarkdown(command.markdownDescription) { }
             case .notice(let message):
                 return AttributedStringForGPTMarkdown(message) { }
-
+            case .streamingChanged(let state):
+                return switch state {
+                case .stopped:
+                    AttributedStringForGPTMarkdown("Terminal commands will no longer be sent to AI automatically.") {}
+                case .active:
+                    AttributedStringForGPTMarkdown("All terminal commands in the linked session will be sent to AI automatically.") {}
+                case .stoppedAutomatically:
+                    AttributedStringForGPTMarkdown("Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts.") {}
+                }
             }
         case .selectSessionRequest:
             return AttributedStringForGPTMarkdown("The AI agent needs to run commands in a live terminal session, but none is attached to this chat.", didCopy: {})
@@ -1112,6 +1297,7 @@ class ChatViewControllerModel {
     // Avoid streaming so quickly that we bog down recalculating textview geometry and parsing markdown.
     private let rateLimit = iTermRateLimitedUpdate(name: "reloadCell", minimumInterval: 1)
     private var pendingItemIdentities = Set<ChatViewControllerModel.Item.Identity>()
+    var lastStreamingState = ClientLocal.Action.StreamingState.stopped
 
     enum Item: CustomDebugStringConvertible {
         var debugDescription: String {
@@ -1210,6 +1396,10 @@ class ChatViewControllerModel {
                 }
                 items.append(.message(Item.UpdatableMessage(message)))
                 lastDate = Calendar.current.dateComponents([.year, .month, .day], from: message.sentDate)
+                if case .clientLocal(let cl) = message.content,
+                   case .streamingChanged(let state) = cl.action {
+                    lastStreamingState = state
+                }
             }
         }
         initializeItemsDelegate()

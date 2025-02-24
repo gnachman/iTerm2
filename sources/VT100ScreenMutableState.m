@@ -3425,7 +3425,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenCommandDidAbortOnLine:line
                                       outputRange:outputRange
-                                          command:command];
+                                          command:command
+                                             mark:screenMark];
         }];
     }
 }

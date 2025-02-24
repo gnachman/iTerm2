@@ -62,9 +62,30 @@ fileprivate struct MessageToPromptStateMachine {
         case .remoteCommandRequest:
             return nil
         case .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions:
+                .commit, .setPermissions, .terminalCommand:
             it_fatalError()
         }
+    }
+
+    private func prompt(terminalCommand: TerminalCommand) -> String {
+        var lines = [String]()
+        lines.append("I executed the following command line:")
+        lines.append(terminalCommand.command)
+        if let directory = terminalCommand.directory {
+            lines.append("My current directory was:")
+            lines.append(directory)
+        }
+        if let hostname = terminalCommand.hostname {
+            if let username = terminalCommand.username {
+                lines.append("I am logged in as \(username)@\(hostname)")
+            } else {
+                lines.append("The current hostname is \(hostname)")
+            }
+        }
+        lines.append("The exit status of the command was \(terminalCommand.exitCode)")
+        lines.append("It produced this output:")
+        lines.append(terminalCommand.output)
+        return lines.joined(separator: "\n")
     }
 
     private mutating func prompt(userMessage: Message) -> String {
@@ -84,7 +105,8 @@ fileprivate struct MessageToPromptStateMachine {
                 } failure: { error in
                     "I was unable to complete the function call: " + error.localizedDescription
                 }
-
+            case .terminalCommand(let cmd):
+                return prompt(terminalCommand: cmd)
             case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .commit,
                     .setPermissions:
                 it_fatalError()
@@ -94,11 +116,12 @@ fileprivate struct MessageToPromptStateMachine {
             case .plainText(let value), .markdown(let value):
                 mode = .regular
                 return AIExplanationRequest.conversationalPrompt(userPrompt: value)
-            case .explanationResponse, .explanationRequest, .append:
+            case .explanationResponse, .explanationRequest, .append, .remoteCommandRequest,
+                    .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
+                    .commit, .setPermissions:
                 it_fatalError()
-            case .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
-                    .clientLocal, .renameChat, .commit, .setPermissions:
-                it_fatalError()
+            case .terminalCommand(let cmd):
+                return prompt(terminalCommand: cmd)
             }
         }
     }
@@ -124,7 +147,7 @@ class ChatAgent {
         for message in messages {
             switch message.content {
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                    .remoteCommandRequest, .remoteCommandResponse:
+                    .remoteCommandRequest, .remoteCommandResponse, .terminalCommand:
                 conversation.add(aiMessage(from: message))
                 break
 
@@ -171,7 +194,8 @@ class ChatAgent {
                          completion: @escaping (Message?) -> ()) {
         switch userMessage.content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                .remoteCommandRequest, .selectSessionRequest, .clientLocal, .commit:
+                .remoteCommandRequest, .selectSessionRequest, .clientLocal, .commit,
+                .terminalCommand:
             break
         case .renameChat, .append:
             return
@@ -289,7 +313,7 @@ class ChatAgent {
                                 userMessage: Message,
                                 streaming: Bool) -> Message? {
         switch userMessage.content {
-        case .plainText, .markdown, .explanationResponse:
+        case .plainText, .markdown, .explanationResponse, .terminalCommand:
             return Message(chatID: userMessage.chatID,
                            author: .agent,
                            content: .markdown(text),

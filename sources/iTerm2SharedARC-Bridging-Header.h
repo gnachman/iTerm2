@@ -24,6 +24,7 @@
 #import "iTermFindPasteboard.h"
 #import "iTermGCD.h"
 #import "iTermImageInfo.h"
+#import "iTermLogoGenerator.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalCellRenderer.h"
 #import "iTermProcess.h"

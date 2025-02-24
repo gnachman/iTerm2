@@ -93,6 +93,18 @@ extension PTYSession {
         return components.url
     }
 
+    @objc(urlForPromptMark:)
+    func promptMarkURL(mark: VT100ScreenMarkReading) -> URL {
+        var components = URLComponents()
+        components.scheme = "iterm2"
+        components.path = "reveal-mark"
+        var items = [URLQueryItem]()
+        items.append(URLQueryItem(name: "s", value: guid))
+        items.append(URLQueryItem(name: "m", value: mark.guid))
+        components.queryItems = items
+        return components.url!
+    }
+
     private func url(_ selection: iTermSelection, in snapshot: TerminalContentSnapshot) -> URL? {
         var components = URLComponents()
         components.scheme = "iterm2"

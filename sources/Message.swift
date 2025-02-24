@@ -15,6 +15,13 @@ struct ClientLocal: Codable {
         case pickingSession
         case executingCommand(RemoteCommand)
         case notice(String)
+        case streamingChanged(StreamingState)
+
+        enum StreamingState: String, Codable {
+            case stopped
+            case active
+            case stoppedAutomatically
+        }
     }
     var action: Action
 }
@@ -40,6 +47,7 @@ struct Message: Codable {
         case append(string: String, uuid: UUID)  // for streaming responses
         case commit(UUID)  // end of streaming response
         case setPermissions(Set<RemoteCommand.Content.PermissionCategory>)
+        case terminalCommand(TerminalCommand)
 
         var shortDescription: String {
             let maxLength = 256
@@ -69,6 +77,8 @@ struct Message: Codable {
                     return "Client-local: picking session"
                 case .notice(let string):
                     return "Client-local: notice=\(string)"
+                case .streamingChanged(let state):
+                    return "Client-local: streaming=\(state.rawValue)"
                 }
             case .renameChat(let name):
                 return "Rename chat to \(name)"
@@ -78,6 +88,8 @@ struct Message: Codable {
                 return "Commit \(uuid.uuidString)"
             case .setPermissions(let categories):
                 return "Allow \(Array(categories).map { $0.rawValue }.joined(separator: " + "))"
+            case .terminalCommand(let command):
+                return "Terminal command \(command.command)"
             }
         }
     }
@@ -93,7 +105,8 @@ struct Message: Codable {
     var hiddenFromClient: Bool {
         switch content {
         case .remoteCommandResponse, .renameChat, .commit, .setPermissions: true
-        case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal, .append: false
+        case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal, .append,
+                .terminalCommand: false
         }
     }
 
@@ -104,7 +117,7 @@ struct Message: Codable {
             true
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
                 .markdown, .explanationResponse, .explanationRequest, .renameChat, .append,
-                .commit, .setPermissions:
+                .commit, .setPermissions, .terminalCommand:
             false
         }
     }
@@ -125,10 +138,19 @@ struct Message: Codable {
             case .executingCommand(let command): return command.markdownDescription
             case .pickingSession: return "Selecting session…"
             case .notice(let message): return message
+            case .streamingChanged(let state):
+                return switch state {
+                case .stopped, .stoppedAutomatically:
+                    "Stopped sending commands to AI"
+                case .active:
+                    "Sending commands to AI automatically"
+                }
             }
         case .renameChat, .append, .commit, .setPermissions: return nil
         case .remoteCommandResponse:
             return "Finished executing command"
+        case .terminalCommand(let cmd):
+            return "Ran `\(cmd.command.truncatedWithTrailingEllipsis(to: maxLength - 4))`"
         }
     }
 
@@ -140,7 +162,7 @@ struct Message: Codable {
             content = .markdown(string + chunk)
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions:
+                .commit, .setPermissions, .terminalCommand:
             it_fatalError()
         }
     }

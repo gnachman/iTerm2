@@ -44,7 +44,8 @@ class ChatClient {
             it_assert(!partial)
             return processRemoteCommandRequest(chatID: chatID, message: message, request: request)
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse,
-                .selectSessionRequest, .clientLocal, .renameChat, .setPermissions:
+                .selectSessionRequest, .clientLocal, .renameChat, .setPermissions,
+                .terminalCommand:
             return message
         case let .append(string: string, uuid: uuid):
             it_assert(partial)
@@ -203,7 +204,7 @@ class ChatClient {
         switch original.content {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
-                .setPermissions:
+                .setPermissions, .terminalCommand:
             // These are impossible or just normal streaming messages.
             return appendMessage
 
@@ -240,7 +241,7 @@ class ChatClient {
         switch original.content {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
-                .setPermissions:
+                .setPermissions, .terminalCommand:
             // These are impossible or just normal streaming messages.
             return finalMessage
 

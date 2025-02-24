@@ -40,7 +40,16 @@ extern NSString *const PTYSessionRevivedNotification;
 extern NSString *const iTermSessionWillTerminateNotification;
 extern NSString *const PTYSessionDidResizeNotification;
 extern NSString *const PTYSessionDidDealloc;
-extern NSString *const PTYCommandDidExitNotification;
+extern NSNotificationName const PTYCommandDidExitNotification;
+
+extern NSString *const PTYCommandDidExitUserInfoKeyCommand;
+extern NSString *const PTYCommandDidExitUserInfoKeyExitCode;
+extern NSString *const PTYCommandDidExitUserInfoKeyRemoteHost;
+extern NSString *const PTYCommandDidExitUserInfoKeyDirectory;
+extern NSString *const PTYCommandDidExitUserInfoKeySnapshot;
+extern NSString *const PTYCommandDidExitUserInfoKeyStartLine;
+extern NSString *const PTYCommandDidExitUserInfoKeyLineCount;
+extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;
@@ -864,6 +873,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)nextAnnotation;
 - (void)scrollToMark:(id<iTermMark>)mark;
 - (void)scrollToMarkWithGUID:(NSString *)guid;
+- (void)revealPromptMarkWithID:(NSString *)guid;
 - (void)saveScrollPositionWithName:(NSString *)name;
 - (void)renameMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName;
 

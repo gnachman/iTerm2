@@ -213,7 +213,16 @@ NSString *const PTYSessionRevivedNotification = @"PTYSessionRevivedNotification"
 NSString *const iTermSessionWillTerminateNotification = @"iTermSessionDidTerminate";
 NSString *const PTYSessionDidResizeNotification = @"PTYSessionDidResizeNotification";
 NSString *const PTYSessionDidDealloc = @"PTYSessionDidDealloc";
-NSString *const PTYCommandDidExitNotification = @"PTYCommandDidExitNotification";
+NSNotificationName const PTYCommandDidExitNotification = @"PTYCommandDidExitNotification";
+
+NSString *const PTYCommandDidExitUserInfoKeyCommand = @"Command";
+NSString *const PTYCommandDidExitUserInfoKeyExitCode = @"Code";
+NSString *const PTYCommandDidExitUserInfoKeyRemoteHost = @"Host";
+NSString *const PTYCommandDidExitUserInfoKeyDirectory = @"Directory";
+NSString *const PTYCommandDidExitUserInfoKeySnapshot = @"Snapshot";
+NSString *const PTYCommandDidExitUserInfoKeyStartLine = @"Line";
+NSString *const PTYCommandDidExitUserInfoKeyLineCount = @"Count";
+NSString *const PTYCommandDidExitUserInfoKeyURL = @"URL";
 
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
@@ -8497,6 +8506,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (void)revealPromptMarkWithID:(NSString *)guid {
+    id<VT100ScreenMarkReading> mark = [_screen promptMarkWithGUID:guid];
+    if (mark) {
+        [self scrollToMark:mark];
+    }
+    VT100GridRange range = [_screen lineNumberRangeOfInterval:mark.entry.interval];
+    [_textview highlightMarkOnLine:range.location hasErrorCode:mark.code != 0];
+}
+
 - (void)scrollToMarkWithGUID:(NSString *)guid {
     id<VT100ScreenMarkReading> mark = [_screen namedMarkWithGUID:guid];
     if (mark) {
@@ -14374,18 +14392,21 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenCommandDidAbortOnLine:(int)line
                         outputRange:(VT100GridCoordRange)outputRange
-                            command:(NSString *)command {
+                            command:(NSString *)command
+                               mark:(id<VT100ScreenMarkReading>)mark {
     [_appSwitchingPreventionDetector commandDidFinishWithStatus:-1];
-    NSDictionary *userInfo = @{ @"remoteHost": (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
-                                @"directory": (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
-                                @"snapshot": [self contentSnapshot],
-                                @"startLine": @(outputRange.start.y),
-                                @"lineCount": @(outputRange.end.y - outputRange.start.y + 1),
-                                @"command": (id)command ?: (id)[NSNull null]};
+    NSDictionary *userInfo = @{
+        PTYCommandDidExitUserInfoKeyRemoteHost: (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
+        PTYCommandDidExitUserInfoKeyDirectory: (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
+        PTYCommandDidExitUserInfoKeySnapshot: [self contentSnapshot],
+        PTYCommandDidExitUserInfoKeyStartLine: @(outputRange.start.y),
+        PTYCommandDidExitUserInfoKeyLineCount: @(outputRange.end.y - outputRange.start.y + 1),
+        PTYCommandDidExitUserInfoKeyCommand: (id)command ?: (id)[NSNull null],
+        PTYCommandDidExitUserInfoKeyURL: [self urlForPromptMark:mark]};
     userInfo = [userInfo dictionaryByRemovingNullValues];
     // This runs in a side-effect and notification observers might want a modal runloop.
     dispatch_async(dispatch_get_main_queue(), ^{
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"PTYCommandDidExitNotification"
+        [[NSNotificationCenter defaultCenter] postNotificationName:PTYCommandDidExitNotification
                                                             object:_guid
                                                           userInfo:userInfo];
     });
@@ -14411,17 +14432,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         const VT100GridRange lineRange = [_screen lineNumberRangeOfInterval:maybeMark.entry.interval];
         const int line = lineRange.location;
         const VT100GridCoordRange outputRange = [_screen rangeOfOutputForCommandMark:maybeMark];
-        NSDictionary *userInfo = @{ @"command": maybeMark.command ?: (id)[NSNull null],
-                                    @"exitCode": @(maybeMark.code),
-                                    @"remoteHost": (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
-                                    @"directory": (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
-                                    @"snapshot": [self contentSnapshot],
-                                    @"startLine": @(outputRange.start.y),
-                                    @"lineCount": @(outputRange.end.y - outputRange.start.y + 1) };
+        NSDictionary *userInfo = @{
+            PTYCommandDidExitUserInfoKeyCommand: maybeMark.command ?: (id)[NSNull null],
+            PTYCommandDidExitUserInfoKeyExitCode: @(maybeMark.code),
+            PTYCommandDidExitUserInfoKeyRemoteHost: (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
+            PTYCommandDidExitUserInfoKeyDirectory: (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
+            PTYCommandDidExitUserInfoKeySnapshot: [self contentSnapshot],
+            PTYCommandDidExitUserInfoKeyStartLine: @(outputRange.start.y),
+            PTYCommandDidExitUserInfoKeyLineCount: @(outputRange.end.y - outputRange.start.y + 1),
+            PTYCommandDidExitUserInfoKeyURL: [self urlForPromptMark:maybeMark] };
         userInfo = [userInfo dictionaryByRemovingNullValues];
         // This runs in a side-effect and notification observers might want a modal runloop.
         dispatch_async(dispatch_get_main_queue(), ^{
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"PTYCommandDidExitNotification"
+            [[NSNotificationCenter defaultCenter] postNotificationName:PTYCommandDidExitNotification
                                                                 object:_guid
                                                               userInfo:userInfo];
         });

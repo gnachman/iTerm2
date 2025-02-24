@@ -259,7 +259,7 @@ class ChatListModel: ChatListDataSource {
         switch message.content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal,
-                .append, .commit, .setPermissions:
+                .append, .commit, .setPermissions, .terminalCommand:
             bump(chatID: chatID)
         case .renameChat(let string):
             rename(chatID: chatID, newName: string)

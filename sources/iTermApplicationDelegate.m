@@ -1555,6 +1555,9 @@ void TurnOnDebugLoggingAutomatically(void) {
     if ([components.path isEqualToString:@"reveal-chat-for-session"]) {
         [self revealChatForSessionFromURL:url];
     }
+    if ([components.path isEqualToString:@"reveal-mark"]) {
+        [self revealMarkFromURL:url];
+    }
     return NO;
 }
 
@@ -1607,6 +1610,28 @@ void TurnOnDebugLoggingAutomatically(void) {
         return;
     }
     [iTermChatDatabase unlinkSessionGuid:guid];
+}
+
+- (void)revealMarkFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *markID = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"m"] && !markID) {
+            markID = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    if (!session) {
+        return;
+    }
+    [session revealPromptMarkWithID:markID];
+    [session reveal];
 }
 
 - (void)revealAnnotationFromURL:(NSURL *)url {

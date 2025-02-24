@@ -323,7 +323,8 @@
 // Failed to run the command (e.g., syntax error)
 - (void)screenCommandDidAbortOnLine:(int)line
                         outputRange:(VT100GridCoordRange)outputRange
-                            command:(NSString *_Nonnull)command;
+                            command:(NSString *_Nonnull)command
+                               mark:(id<VT100ScreenMarkReading> _Nonnull)mark;
 
 typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
     // We polled for the working directory for a really sketchy reason, such as the user pressing enter.
