@@ -3386,6 +3386,7 @@
 		A6DB145A2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145B2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145C2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
+		A6DB145E2D6CEDF200266394 /* SystemMessageCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */; };
 		A6DB7BAC2CE52BB000EB7973 /* iTermPasteSpecialWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */; };
 		A6DBC0381FF9B30000F1466D /* iTermTexturePool.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC0361FF9B30000F1466D /* iTermTexturePool.h */; };
 		A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC0371FF9B30000F1466D /* iTermTexturePool.m */; };
@@ -7300,6 +7301,7 @@
 		A6D8973822154A8800325F6A /* AnnotateTrigger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnnotateTrigger.h; sourceTree = "<group>"; };
 		A6D8973922154A8800325F6A /* AnnotateTrigger.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AnnotateTrigger.m; sourceTree = "<group>"; };
 		A6DB14592D6CE22400266394 /* CommandIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = CommandIcon.png; sourceTree = "<group>"; };
+		A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMessageCellView.swift; sourceTree = "<group>"; };
 		A6DBC0361FF9B30000F1466D /* iTermTexturePool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTexturePool.h; path = Metal/Infrastructure/iTermTexturePool.h; sourceTree = "<group>"; };
 		A6DBC0371FF9B30000F1466D /* iTermTexturePool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermTexturePool.m; path = Metal/Infrastructure/iTermTexturePool.m; sourceTree = "<group>"; };
 		A6DBC03A2003479400F1466D /* iTermImageRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermImageRenderer.h; path = Metal/Renderers/iTermImageRenderer.h; sourceTree = "<group>"; };
@@ -9594,6 +9596,7 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */,
 				A65618712D6BDFEF0059CD35 /* TerminalCommandMessageCellView.swift */,
 				A656186F2D6BA5EA0059CD35 /* RegularMessageCellView.swift */,
 				A656186B2D67AE220059CD35 /* GradientView.swift */,
@@ -16099,6 +16102,7 @@
 				53A96EE822A48A1A001C2C6F /* iTermTmuxOptionMonitor.m in Sources */,
 				A645DD4827D5E2CD003947CE /* NSData+iTerm.m in Sources */,
 				A6F718CB2266DB380053488E /* iTermURLActionHelper.m in Sources */,
+				A6DB145E2D6CEDF200266394 /* SystemMessageCellView.swift in Sources */,
 				A6BC8AD021C7608B00796BF3 /* iTermImageCache.m in Sources */,
 				A671AC6026D95C0400B23C95 /* HTMLEncoding.swift in Sources */,
 				A60E045B26DD556900DD162B /* NSDate+iTerm.m in Sources */,

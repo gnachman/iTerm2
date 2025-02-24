@@ -14,7 +14,7 @@ class MessageTimestamp: NSTextField {}
 @objc
 class RegularMessageCellView: MessageCellView {
     // The bubble
-    private let bubbleView = BubbleView()
+    let bubbleView = BubbleView()
 
     // A vertical stack that holds the textLabel on top and any buttons beneath
     private let contentStack: NSStackView = {
@@ -121,9 +121,7 @@ class RegularMessageCellView: MessageCellView {
         container.addSubview(textLabel)
 
         // Decide bubble color pair based on isUser
-        backgroundColorPair = rendition.isUser
-        ? (NSColor(fromHexString: "p3#448bf7")!, NSColor(fromHexString: "p3#4a93f5")!)
-        : (NSColor(fromHexString: "p3#e9e9eb")!, NSColor(fromHexString: "p3#3b3b3d")!)
+        backgroundColorPair = backgroundColorPair(rendition)
         updateBubbleColor()
 
         // Set text
@@ -214,17 +212,10 @@ class RegularMessageCellView: MessageCellView {
             add(constraint: view.heightAnchor.constraint(equalToConstant: 1))
         }
 
-        if rendition.isUser {
-            add(constraint: bubbleView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8))
-            add(constraint: bubbleView.topAnchor.constraint(equalTo: topAnchor, constant: Self.topInset))
-            add(constraint: bubbleView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8))
-            add(constraint: bubbleView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.bottomInset))
-        } else {
-            add(constraint: bubbleView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8))
-            add(constraint: bubbleView.topAnchor.constraint(equalTo: topAnchor, constant: Self.topInset))
-            add(constraint: bubbleView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8))
-            add(constraint: bubbleView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.bottomInset))
-        }
+        addHorizontalAlignmentConstraints(rendition)
+        add(constraint: bubbleView.topAnchor.constraint(equalTo: topAnchor, constant: Self.topInset))
+        add(constraint: bubbleView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.bottomInset))
+
         // Inset contentStack in bubbleView
         add(constraint: contentStack.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 0))
         add(constraint: contentStack.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 0))
@@ -238,6 +229,22 @@ class RegularMessageCellView: MessageCellView {
 
         messageUniqueID = rendition.messageUniqueID
         editable = rendition.isEditable
+    }
+
+    func addHorizontalAlignmentConstraints(_ rendition: MessageRendition) {
+        if rendition.isUser {
+            add(constraint: bubbleView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8))
+            add(constraint: bubbleView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8))
+        } else {
+            add(constraint: bubbleView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8))
+            add(constraint: bubbleView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8))
+        }
+    }
+
+    func backgroundColorPair(_ rendition: MessageRendition) -> (NSColor, NSColor) {
+        rendition.isUser
+        ? (NSColor(fromHexString: "p3#448bf7")!, NSColor(fromHexString: "p3#4a93f5")!)
+        : (NSColor(fromHexString: "p3#e9e9eb")!, NSColor(fromHexString: "p3#3b3b3d")!)
     }
 
     @objc private func buttonTapped(_ sender: NSButton) {

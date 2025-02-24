@@ -13,54 +13,6 @@ extension IndexSet {
         map { String($0) }.joined(separator: ", ")
     }
 }
-class WTFTableView: NSTableView {
-    override func layout() {
-        super.layout()
-        if let lowest = subviews.max(by: { $0.frame.maxY < $1.frame.maxY }) {
-            DLog("after layout NSTableView height is \(bounds.height). Its subview with greatest maxY (\(lowest.frame.maxY)) is: \(lowest)")
-        } else {
-            DLog("after layout NSTableView height is \(bounds.height). It has no subviews")
-        }
-    }
-
-    override func reloadData(forRowIndexes rowIndexes: IndexSet, columnIndexes: IndexSet) {
-        DLog("reload indexes: \(rowIndexes.enumeratedDescription)")
-        super.reloadData(forRowIndexes: rowIndexes, columnIndexes: columnIndexes)
-    }
-
-    override func insertRows(at indexes: IndexSet, withAnimation animationOptions: NSTableView.AnimationOptions = []) {
-        DLog("insert rows at \(indexes.enumeratedDescription)")
-        super.insertRows(at: indexes, withAnimation: animationOptions)
-    }
-
-    override func removeRows(at indexes: IndexSet, withAnimation animationOptions: NSTableView.AnimationOptions = []) {
-        DLog("remove rows at \(indexes.enumeratedDescription)")
-        super.removeRows(at: indexes, withAnimation: animationOptions)
-    }
-
-    override func reloadData() {
-        DLog("reloadData")
-        super.reloadData()
-    }
-
-    override func beginUpdates() {
-        DLog("beginUpdates")
-        super.beginUpdates()
-    }
-
-    override func endUpdates() {
-        DLog("endUpdates")
-        super.endUpdates()
-        DLog("- invalidate intrinsic size constraints -")
-        // I am shaking with rage that this is necessary, but it appears to be.
-        invalidateIntrinsicContentSize()
-    }
-
-    override func noteHeightOfRows(withIndexesChanged indexSet: IndexSet) {
-        DLog("noteHeightOfRows(withIndexesChanged: \(indexSet.enumeratedDescription)")
-        super.noteHeightOfRows(withIndexesChanged: indexSet)
-    }
-}
 
 @objc(iTermChatViewControllerDelegate)
 protocol ChatViewControllerDelegate: AnyObject {
@@ -74,7 +26,7 @@ class ChatViewController: NSViewController {
     private(set) var chatID: String? = UUID().uuidString
 
     private var scrollView: NSScrollView!
-    private var tableView: WTFTableView!
+    private var tableView: NSTableView!
     private var titleLabel = NSTextField()
     private var sessionButton: NSButton!
     private var inputTextFieldContainer: ChatInputTextFieldContainer!
@@ -85,7 +37,9 @@ class ChatViewController: NSViewController {
         }
         set {
             model?.showTypingIndicator = newValue
-            scrollToBottom(animated: true)
+            if showTypingIndicator {
+                scrollToBottom(animated: true)
+            }
         }
     }
     private var eligibleForAutoPaste = true
@@ -189,7 +143,7 @@ class ChatViewController: NSViewController {
         sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         // Configure Table View
-        tableView = WTFTableView()
+        tableView = NSTableView()
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("MessageColumn"))
         column.resizingMask = .autoresizingMask
         tableView.addTableColumn(column)
@@ -365,7 +319,7 @@ class ChatViewController: NSViewController {
 extension Message {
     var shouldCauseScrollToBottom: Bool {
         switch content {
-        case .append:
+        case .append, .commit:
             false
         case .explanationResponse(_, let update, markdown: _):
             update == nil
@@ -416,6 +370,7 @@ extension ChatViewController {
                         break
                     case .agent:
                         self.showTypingIndicator = typing
+                        shouldScroll = typing
                     }
                 }
                 if shouldScroll {
@@ -675,7 +630,6 @@ extension ChatViewController {
         }
         let row = model.items.count - 1
         guard row >= 0 else { return }
-
         if !animated {
             tableView.scrollRowToVisible(row)
         } else {
@@ -719,6 +673,10 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             switch message.message.content {
             case .terminalCommand:
                 let cell = TerminalCommandMessageCellView()
+                configure(cell: cell, for: message.message, isLast: isLastMessage)
+                return cell
+            case .clientLocal(let cl):
+                let cell = SystemMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
             default:
@@ -1116,19 +1074,19 @@ extension Message {
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession:
-                return AttributedStringForGPTMarkdown("Waiting for a session to be selected…") { }
+                return AttributedStringForSystemMessageMarkdown("Waiting for a session to be selected…") { }
             case .executingCommand(let command):
-                return AttributedStringForGPTMarkdown(command.markdownDescription) { }
+                return AttributedStringForSystemMessageMarkdown(command.markdownDescription) { }
             case .notice(let message):
-                return AttributedStringForGPTMarkdown(message) { }
+                return AttributedStringForSystemMessageMarkdown(message) { }
             case .streamingChanged(let state):
                 return switch state {
                 case .stopped:
-                    AttributedStringForGPTMarkdown("Terminal commands will no longer be sent to AI automatically.") {}
+                    AttributedStringForSystemMessageMarkdown("Terminal commands will no longer be sent to AI automatically.") {}
                 case .active:
-                    AttributedStringForGPTMarkdown("All terminal commands in the linked session will be sent to AI automatically.") {}
+                    AttributedStringForSystemMessageMarkdown("All terminal commands in the linked session will be sent to AI automatically.") {}
                 case .stoppedAutomatically:
-                    AttributedStringForGPTMarkdown("Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts.") {}
+                    AttributedStringForSystemMessageMarkdown("Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts.") {}
                 }
             }
         case .selectSessionRequest:
@@ -1217,12 +1175,24 @@ extension ChatViewController: ChatViewControllerModelDelegate {
     }
 
     func chatViewControllerModel(didModifyItemsAtIndexes indexSet: IndexSet) {
-        DLog("Reload row at \(indexSet.map { String($0) }.joined(separator: ", "))")
+        guard let scrollView = tableView.enclosingScrollView else { return }
+
+        let clipView = scrollView.contentView
+
+        // Record the document view's (tableView's) old height and the visible area's maxY.
+        let originalRect = scrollView.documentVisibleRect
+        let distanceFromTop = tableView.bounds.height - originalRect.maxY
+
         tableView.beginUpdates()
         tableView.noteHeightOfRows(withIndexesChanged: indexSet)
-        tableView.reloadData(forRowIndexes: indexSet,
-                             columnIndexes: IndexSet(integer: 0))
+        tableView.reloadData(forRowIndexes: indexSet, columnIndexes: IndexSet(integer: 0))
         tableView.endUpdates()
+
+        var bounds = clipView.bounds
+        let desiredDistanceToBottom = tableView.bounds.height - distanceFromTop - clipView.bounds.height
+        bounds.origin.y = desiredDistanceToBottom
+        clipView.bounds = bounds
+        scrollView.reflectScrolledClipView(clipView)
     }
 }
 

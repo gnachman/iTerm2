@@ -675,9 +675,9 @@ fileprivate func sanitizeMarkdown(_ input: String) -> String {
     return input
 }
 
-func AttributedStringForGPTMarkdown(_ unsafeString: String,
-                                    linkColor: NSColor? = nil,
-                                    didCopy: (() -> ())?) -> NSAttributedString {
+private func SwiftyMarkdownForMessage(string unsafeString: String,
+                                      linkColor: NSColor?,
+                                      textColor: NSColor?) -> SwiftyMarkdown {
     let massagedValue = unsafeString.components(separatedBy: "\n").map { sanitizeMarkdown($0) }.joined(separator: "\n")
 
     let md = SwiftyMarkdown(string: massagedValue)
@@ -694,14 +694,36 @@ func AttributedStringForGPTMarkdown(_ unsafeString: String,
     md.h5.fontSize = max(4, round(pointSize * 0.8))
     md.h6.fontSize = max(4, round(pointSize * 0.7))
 
-    md.setFontColorForAllStyles(with: NSColor.textColor)
+    if let textColor {
+        md.setFontColorForAllStyles(with: textColor)
+    } else {
+        md.setFontColorForAllStyles(with: NSColor.textColor)
+    }
 
     if let linkColor {
         md.link.color = linkColor
         md.link.underlineColor = linkColor
     }
     md.underlineLinks = true
+    return md
+}
 
+func AttributedStringForSystemMessageMarkdown(_ unsafeString: String,
+                                              linkColor: NSColor? = nil,
+                                              didCopy: (() -> ())?) -> NSAttributedString {
+    let md = SwiftyMarkdownForMessage(string: unsafeString, linkColor: linkColor, textColor: .yellow)
+    return AttributedStringForMessage(md, didCopy: didCopy)
+}
+
+func AttributedStringForGPTMarkdown(_ unsafeString: String,
+                                    linkColor: NSColor? = nil,
+                                    didCopy: (() -> ())?) -> NSAttributedString {
+    let md = SwiftyMarkdownForMessage(string: unsafeString, linkColor: linkColor, textColor: nil)
+    return AttributedStringForMessage(md, didCopy: didCopy)
+}
+
+private func AttributedStringForMessage(_ md: SwiftyMarkdown,
+                                        didCopy: (() -> ())?) -> NSAttributedString {
     let attributedString = md.attributedString()
     if #available(macOS 11.0, *) {
         let image = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy")!
