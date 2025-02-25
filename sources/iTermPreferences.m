@@ -211,9 +211,10 @@ NSString *const kPreferenceKeyAIPermissionWriteToClipboard = @"AIPermissionWrite
 NSString *const kPreferenceKeyAIPermissionTypeForYou = @"AIPermissionTypeForYou";
 NSString *const kPreferenceKeyAIPermissionViewManpages = @"AIPermissionViewManpages";
 
-NSString *const iTermDefaultAIPrompt = @"Return commands suitable for copy/pasting into \\(shell) on \\(uname). Do NOT include commentary NOR Markdown triple-backtick code blocks as your whole response will be copied into my terminal automatically.\n"
+NSString *const iTermDefaultAIPrompt = @"Return a command suitable for copy/pasting into \\(shell) on \\(uname). Do NOT include commentary NOR Markdown triple-backtick code blocks as your whole response will be copied into my terminal automatically.\n"
 @"\n"
-@"The script should do this: \\(ai.prompt)";
+@"It must do this: \\(ai.prompt)";
+
 
 // NOTE: If you update this list, also update preferences.py.
 
