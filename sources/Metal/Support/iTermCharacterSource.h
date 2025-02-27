@@ -87,3 +87,4 @@
 - (iTermCharacterBitmap *)bitmapForPart:(int)part;
 
 @end
+
