@@ -9933,10 +9933,20 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
         case KEY_ACTION_COPY_INTERPOLATED_STRING: {
             NSString *parameter = [[action.parameter copy] autorelease];
+            __weak typeof(self) weakSelf = self;
             [[[[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:parameter
                                                                            scope:[self variablesScope]] autorelease] evaluateWithTimeout:0
              completion:^(iTermExpressionEvaluator *evaluator) {
                 if (evaluator.error) {
+                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The key-binding action Copy Interpolated String “%@” failed:\n\n%@",
+                                                        parameter, evaluator.error.localizedDescription]
+                                               actions:@[ @"OK" ]
+                                             accessory:nil
+                                            identifier:nil
+                                           silenceable:kiTermWarningTypePersistent
+                                               heading:@"Error Evaluating Interpolated String"
+                                                window:weakSelf.view.window];
+
                     iTermScriptHistoryEntry *entry =
                     [[[iTermScriptHistoryEntry alloc] initWithName:@"Copy Interpolated String"
                                                           fullPath:parameter
