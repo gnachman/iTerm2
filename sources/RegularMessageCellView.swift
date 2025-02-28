@@ -130,7 +130,7 @@ class RegularMessageCellView: MessageCellView {
         // Let text wrap if it's wider than the bubble
         textLabel.textContainer?.widthTracksTextView = false
         textLabel.textContainer?.size = NSSize(width: maxBubbleWidth - 16, height: .greatestFiniteMagnitude)
-        textLabel.linkTextAttributes = [.foregroundColor: NSColor.textColor]
+        textLabel.linkTextAttributes = [.foregroundColor: rendition.linkColor]
 
         add(constraint: container.leadingAnchor.constraint(equalTo: textLabel.leadingAnchor, constant: -8.0))
         add(constraint: container.trailingAnchor.constraint(equalTo: textLabel.trailingAnchor, constant: 8.0))

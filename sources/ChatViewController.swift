@@ -926,7 +926,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 messageUniqueID: message.uniqueID,
                                 flavor: flavor,
                                 timestamp: timestamp,
-                                isEditable: editable)
+                                isEditable: editable,
+                                linkColor: message.linkColor)
     }
 }
 
@@ -1061,7 +1062,10 @@ fileprivate enum PickSessionButtonIdentifier: String {
 
 extension Message {
     var linkColor: NSColor {
-        return NSColor.white
+        return author == .user ? .white : .linkColor
+    }
+    var textColor: NSColor {
+        return author == .user ? .white : .textColor
     }
 
     var buttons: [MessageRendition.Regular.Button] {
@@ -1111,7 +1115,9 @@ extension Message {
                 attributes: attributes
             )
         case .markdown(let string), .explanationResponse(_, _, let string):
-            return AttributedStringForGPTMarkdown(string, linkColor: linkColor) { }
+            return AttributedStringForGPTMarkdown(string,
+                                                  linkColor: linkColor,
+                                                  textColor: textColor) { }
         case .explanationRequest(request: let request):
             let string =
             if let url = request.url {
@@ -1124,20 +1130,24 @@ extension Message {
             } else {
                 ""
             }
-            return AttributedStringForGPTMarkdown(string + epilogue, linkColor: linkColor) { }
+            return AttributedStringForGPTMarkdown(string + epilogue,
+                                                  linkColor: linkColor,
+                                                  textColor: textColor) { }
         case .remoteCommandRequest(let request):
             let specific = request.permissionDescription + "."
             let general = "Would you like to grant AI **\(request.content.permissionCategory.rawValue)** permission?"
             let info = "*If you grant or deny permission, it affects only this chat conversation while linked to this particular terminal session. You can change permissions in the chat Info menu.*"
             return AttributedStringForGPTMarkdown(specific + " " + general + "\n\n" + info,
-                                                  linkColor: linkColor) {}
+                                                  linkColor: linkColor,
+                                                  textColor: textColor) {}
         case .remoteCommandResponse(let response, _, _):
             switch response {
             case .success(let object):
                 it_fatalError("\(object)")
             case .failure(let error):
                 return AttributedStringForGPTMarkdown(error.localizedDescription,
-                                                      linkColor: linkColor) {}
+                                                      linkColor: linkColor,
+                                                      textColor: textColor) {}
             }
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
@@ -1158,7 +1168,11 @@ extension Message {
                 }
             }
         case .selectSessionRequest:
-            return AttributedStringForGPTMarkdown("The AI agent needs to run commands in a live terminal session, but none is attached to this chat.", didCopy: {})
+            return AttributedStringForGPTMarkdown(
+                "The AI agent needs to run commands in a live terminal session, but none is attached to this chat.",
+                linkColor: linkColor,
+                textColor: textColor,
+                didCopy: {})
         }
     }
 }

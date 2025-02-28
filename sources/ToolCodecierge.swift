@@ -952,7 +952,7 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
             textView.string
         }
         set {
-            let attributedString = AttributedStringForGPTMarkdown(newValue) { [weak self] in
+            let attributedString = AttributedStringForGPTMarkdown(newValue, linkColor: .linkColor, textColor: .textColor) { [weak self] in
                 self?.didCopyCallback()
             }
             textView.textStorage?.setAttributedString(attributedString)

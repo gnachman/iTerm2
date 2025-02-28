@@ -176,7 +176,9 @@ extension ChatSearchResultsViewController: NSTableViewDelegate {
     }
 
     func messageRendition(snippet: String, fromUser: Bool) -> MessageRendition {
-        let attributedString = AttributedStringForGPTMarkdown(snippet, linkColor: .white) {}
+        let attributedString = AttributedStringForGPTMarkdown(snippet,
+                                                              linkColor: fromUser ? .white : .linkColor,
+                                                              textColor: fromUser ? .white : .textColor) {}
         return MessageRendition(
             isUser: fromUser,
             messageUniqueID: UUID(),
@@ -184,7 +186,8 @@ extension ChatSearchResultsViewController: NSTableViewDelegate {
                                    buttons: [],
                                    enableButtons: false)),
             timestamp: "",
-            isEditable: false)
+            isEditable: false,
+            linkColor: fromUser ? .white : .linkColor)
     }
 }
 
@@ -194,7 +197,10 @@ extension Message {
     var indexableString: String? {
         switch content {
         case let .plainText(value), let .append(string: value, _): value
-        case let .markdown(value): AttributedStringForGPTMarkdown(value, didCopy: {}).string
+        case let .markdown(value): AttributedStringForGPTMarkdown(value,
+                                                                  linkColor: linkColor,
+                                                                  textColor: textColor,
+                                                                  didCopy: nil).string
         case let .explanationRequest(request): request.subjectMatter + " " + request.question
         case let .explanationResponse(_, _, markdown): markdown
         case let .remoteCommandResponse(result, _, _): result.successValue

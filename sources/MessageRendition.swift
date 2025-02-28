@@ -33,5 +33,6 @@ struct MessageRendition {
     var flavor: Flavor
     var timestamp: String
     var isEditable: Bool
+    var linkColor: NSColor
 }
 

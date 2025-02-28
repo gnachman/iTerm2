@@ -217,6 +217,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
             window.title = "AI Chat"
         }
 
+        window.minSize = .init(width: 500, height: 500)
         window.titlebarAppearsTransparent = false
         window.isMovableByWindowBackground = true
 

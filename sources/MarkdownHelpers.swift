@@ -75,9 +75,12 @@ func AttributedStringForSystemMessageMarkdown(_ unsafeString: String,
 }
 
 func AttributedStringForGPTMarkdown(_ unsafeString: String,
-                                    linkColor: NSColor? = nil,
+                                    linkColor: NSColor,
+                                    textColor: NSColor,
                                     didCopy: (() -> ())?) -> NSAttributedString {
-    let md = SwiftyMarkdownForMessage(string: unsafeString, linkColor: linkColor, textColor: nil)
+    let md = SwiftyMarkdownForMessage(string: unsafeString,
+                                      linkColor: linkColor,
+                                      textColor: textColor)
     return AttributedStringForMessage(md, didCopy: didCopy)
 }
 
