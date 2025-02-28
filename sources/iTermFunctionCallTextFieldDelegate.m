@@ -38,6 +38,7 @@
                 functionsOnly:(BOOL)functionsOnly {
     self = [super init];
     if (self) {
+        _functionsOnly = functionsOnly;
         NSDictionary<NSString *,NSArray<NSString *> *> *registeredSignatures =
             [iTermAPIHelper registeredFunctionSignatureDictionary];
         NSDictionary<NSString *,NSArray<NSString *> *> *bifSignatures =

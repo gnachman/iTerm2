@@ -58,7 +58,8 @@ const CGFloat sideMarginWidth = 40;
 @implementation iTermEditKeyActionWindowConfiguration
 
 - (instancetype)initWithTag:(int)tag
-       functionCallDelegate:(iTermFunctionCallTextFieldDelegate *)parameterDelegate
+       functionCallDelegate:(iTermFunctionCallTextFieldDelegate *)functionCallDelegate
+ interpolatedStringDelegate:(iTermFunctionCallTextFieldDelegate *)interpolatedStringDelegate
                     context:(iTermVariablesSuggestionContext)context {
     self = [super init];
     if (self) {
@@ -174,8 +175,8 @@ const CGFloat sideMarginWidth = 40;
             case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"Function Call";
-                if (parameterDelegate) {
-                    _parameterDelegate = parameterDelegate;
+                if (functionCallDelegate) {
+                    _parameterDelegate = functionCallDelegate;
                 } else {
                     _parameterDelegate =
                     [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:context]
@@ -221,8 +222,18 @@ const CGFloat sideMarginWidth = 40;
             case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
             case KEY_ACTION_PASTE_OR_SEND:
             case KEY_ACTION_ALERT_ON_NEXT_MARK:
-                _applyHidden = NO;
-                _parameterValue = @"";
+            case KEY_ACTION_COPY_INTERPOLATED_STRING:
+                _parameterHidden = NO;
+                _parameterPlaceholder = @"Enter interpolated string (evaluated in session context)";
+                if (interpolatedStringDelegate) {
+                    _parameterDelegate = interpolatedStringDelegate;
+                } else {
+                    _parameterDelegate =
+                    [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:context]
+                                                                       passthrough:nil
+                                                                     functionsOnly:NO];
+                }
+                _helpString = @"You can use this to copy information about the current session to the clipboard. [Learn more about interpolated strings](https://iterm2.com/documentation-scripting-fundamentals.html)";
                 break;
 
             case KEY_ACTION_COPY_OR_SEND:
@@ -280,6 +291,7 @@ const CGFloat sideMarginWidth = 40;
 
     iTermPasteSpecialViewController *_pasteSpecialViewController;
     iTermFunctionCallTextFieldDelegate *_functionCallDelegate;
+    iTermFunctionCallTextFieldDelegate *_interpolatedStringDelegate;
     iTermFunctionCallTextFieldDelegate *_labelDelegate;
 }
 
@@ -410,6 +422,7 @@ const CGFloat sideMarginWidth = 40;
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste from Selection…" tag:KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy or Send ^C" tag:KEY_ACTION_COPY_OR_SEND],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste or Send ^V" tag:KEY_ACTION_PASTE_OR_SEND],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy Interpolated String" tag:KEY_ACTION_COPY_INTERPOLATED_STRING],
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Toggles" items:@[
@@ -647,6 +660,7 @@ const CGFloat sideMarginWidth = 40;
     const int tag = secondary ? _secondaryComboView.selectedTag : _comboView.selectedTag;
     iTermEditKeyActionWindowConfiguration *config = [[iTermEditKeyActionWindowConfiguration alloc] initWithTag:tag
                                                                                           functionCallDelegate:_functionCallDelegate
+                                                                                    interpolatedStringDelegate:_interpolatedStringDelegate
                                                                                                        context:_suggestContext];
     _config = config;
     if (config.parameterPlaceholder) {
@@ -658,13 +672,19 @@ const CGFloat sideMarginWidth = 40;
     if (config.parameterValue) {
         _parameter.stringValue = config.parameterValue;
     }
-    _functionCallDelegate = config.parameterDelegate;
-    _functionCallDelegate.passthrough = self;
-    if (!_functionCallDelegate && config.parameterDelegate) {
+    if (config.parameterDelegate.functionsOnly) {
         _functionCallDelegate = config.parameterDelegate;
+        _functionCallDelegate.passthrough = self;
+    } else {
+        _functionCallDelegate = nil;
+    }
+    if (config.parameterDelegate && !config.parameterDelegate.functionsOnly) {
+        _interpolatedStringDelegate = config.parameterDelegate;
+        _interpolatedStringDelegate.passthrough = self;
+    } else {
+        _interpolatedStringDelegate = nil;
     }
     _parameter.delegate = config.parameterDelegate ?: self;
-
     [_parameter setHidden:config.parameterHidden];
     _helpButton.hidden = config.helpString == nil;
     [_parameterLabel setHidden:config.parameterLabelHidden];

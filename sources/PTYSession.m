@@ -9494,6 +9494,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_PASTE_OR_SEND:
             return [[NSApp mainMenu] performActionForItemWithSelector:@selector(paste:)];
 
+        case KEY_ACTION_COPY_INTERPOLATED_STRING:
+            return NO;
+
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
             [iTermScriptFunctionCall callFunction:action.parameter
                                           timeout:[[NSDate distantFuture] timeIntervalSinceNow]
@@ -9927,6 +9930,29 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             }
             [self regularKeyDown:[NSApp currentEvent]];
             break;
+
+        case KEY_ACTION_COPY_INTERPOLATED_STRING: {
+            NSString *parameter = [[action.parameter copy] autorelease];
+            [[[[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:parameter
+                                                                           scope:[self variablesScope]] autorelease] evaluateWithTimeout:0
+             completion:^(iTermExpressionEvaluator *evaluator) {
+                if (evaluator.error) {
+                    iTermScriptHistoryEntry *entry =
+                    [[[iTermScriptHistoryEntry alloc] initWithName:@"Copy Interpolated String"
+                                                          fullPath:parameter
+                                                        identifier:[[NSUUID UUID] UUIDString]
+                                                          relaunch:nil] autorelease];
+                    [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+                    [entry addOutput:[NSString stringWithFormat:@"Error evaluating interpolated string “%@”:\n%@", parameter, evaluator.error]
+                          completion:^{}];
+
+                    return;
+                }
+                [[NSPasteboard generalPasteboard] clearContents];
+                [[NSPasteboard generalPasteboard] setString:evaluator.value forType:NSPasteboardTypeString];
+            }];
+            break;
+        }
 
         case KEY_ACTION_ALERT_ON_NEXT_MARK:
             self.alertOnNextMark = YES;
