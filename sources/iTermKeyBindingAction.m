@@ -459,6 +459,9 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_ALERT_ON_NEXT_MARK:
             actionString = @"Alert on Next Mark";
             break;
+        case KEY_ACTION_COPY_INTERPOLATED_STRING:
+            actionString = [NSString stringWithFormat:@"Copy Interpolated String “%@”", _parameter];
+            break;
     }
 
     switch (self.applyMode) {
@@ -554,6 +557,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_SWAP_WITH_NEXT_PANE:
         case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
         case KEY_ACTION_ALERT_ON_NEXT_MARK:
+        case KEY_ACTION_COPY_INTERPOLATED_STRING:
             break;
 
         case KEY_ACTION_SEQUENCE:
@@ -640,6 +644,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_COPY_OR_SEND:
         case KEY_ACTION_PASTE_OR_SEND:
         case KEY_ACTION_ALERT_ON_NEXT_MARK:
+        case KEY_ACTION_COPY_INTERPOLATED_STRING:
             break;
 
         case KEY_ACTION_SEQUENCE:

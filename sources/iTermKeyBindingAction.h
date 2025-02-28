@@ -109,6 +109,7 @@ typedef NS_ENUM(int, KEY_ACTION) {
     KEY_ACTION_COPY_OR_SEND = 69,
     KEY_ACTION_PASTE_OR_SEND = 70,
     KEY_ACTION_ALERT_ON_NEXT_MARK = 71,
+    KEY_ACTION_COPY_INTERPOLATED_STRING = 72
 };
 
 @interface iTermKeyBindingAction : NSObject

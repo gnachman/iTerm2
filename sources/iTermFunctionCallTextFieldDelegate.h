@@ -15,6 +15,7 @@
 
 @property (nonatomic) BOOL canWarnAboutContextMistake;
 @property (nonatomic, copy) NSString *contextMistakeText;
+@property (nonatomic, readonly) BOOL functionsOnly;
 
 // If passthrough is nonnil then controlTextDidBeginEditing and controlTextDidEndEditing get called
 // on it.
