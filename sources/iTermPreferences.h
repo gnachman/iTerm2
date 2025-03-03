@@ -136,6 +136,7 @@ extern NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents;
 extern NSString *const kPreferenceKeyAITermURL;
 extern NSString *const kPreferenceKeyAITermUseLegacyAPI;
 extern NSString *const kPreferenceKeyIndicateNonDefaultValues;
+extern NSString *const kPreferenceKeyAICompletion;
 
 extern NSString *const kPreferenceKeyAIPermissionCheckTerminalState;
 extern NSString *const kPreferenceKeyAIPermissionRunCommands;

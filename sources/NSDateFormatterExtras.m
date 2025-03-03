@@ -18,13 +18,22 @@
     return [NSString stringWithFormat:@"%d:%02d", hours, remainderMinutes];
 }
 
++ (NSString *)dateDifferenceStringFromDate:(NSDate *)date {
+    return [self dateDifferenceStringFromDate:date options:0];
+}
+
 + (NSString *)dateDifferenceStringFromDate:(NSDate *)date
-{
+                                   options:(iTermDateDifferenceOptions)options {
+    const BOOL lowerCase = (options & iTermDateDifferenceOptionsLowercase) != 0;
     NSDate *now = [NSDate date];
     double theTime = [date timeIntervalSinceDate:now];
     theTime *= -1;
     if (theTime < 60) {
-        return @"Moments ago";
+        if (lowerCase) {
+            return @"moments ago";
+        } else {
+            return @"Moments ago";
+        }
     } else if (theTime < 3600) {
         int diff = round(theTime / 60);
         if (diff == 1) {
@@ -40,16 +49,28 @@
     } else if (theTime < 604800) {
         int diff = round(theTime / 60 / 60 / 24);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"Yesterday"];
+            if (lowerCase) {
+                return @"yesterday";
+            } else {
+                return @"Yesterday";
+            }
         }
         if (diff == 7) {
-            return [NSString stringWithFormat:@"Last week"];
+            if (lowerCase) {
+                return @"one week ago";
+            } else {
+                return @"One week ago";
+            }
         }
         return[NSString stringWithFormat:@"%d days ago", diff];
     } else {
         int diff = round(theTime / 60 / 60 / 24 / 7);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"Last week"];
+            if (lowerCase) {
+                return @"last week";
+            } else {
+                return @"Last week";
+            }
 
         }
         return [NSString stringWithFormat:@"%d weeks ago", diff];

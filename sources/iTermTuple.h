@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)fromPlistValue:(id)plistValue;
 + (NSArray<iTermTuple<T1, T2> *> *)cartesianProductOfArray:(NSArray<T1> *)a1
                                                       with:(NSArray<T2> *)a2;
+- (iTermTuple<id, T2> *)mapFirst:(id (^)(T1 object))block;
+- (iTermTuple<T1, id> *)mapSecond:(id (^)(T1 object))block;
 
 @end
 

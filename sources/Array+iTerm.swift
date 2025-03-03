@@ -145,3 +145,18 @@ extension Array {
         return self[i]
     }
 }
+
+extension Array {
+    func withoutDuplicates<T: Hashable>(by: (Element) -> T) -> [Element] {
+        var existing = Set<T>()
+        var result = [Element]()
+        for element in self {
+            let key = by(element)
+            if !existing.contains(key) {
+                result.append(element)
+                existing.insert(key)
+            }
+        }
+        return result
+    }
+}

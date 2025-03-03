@@ -607,7 +607,31 @@ extension String {
         return dropFirst(prefix.count)
     }
 
+    func removing(suffix: String) -> Substring {
+        guard hasSuffix(suffix) else {
+            return Substring(self)
+        }
+        return dropLast(suffix.count)
+    }
+
     fileprivate static let VT100CC_ST = "\u{1b}\\"
+
+    func removingPrefixThatIsLongestSuffix(of phrase: String) -> Substring {
+        return removing(prefix: longestPrefixThatIsSuffix(of: phrase))
+    }
+}
+
+extension String {
+    func longestPrefixThatIsSuffix(of phrase: String) -> String {
+        let phraseCount = phrase.count
+        for length in stride(from: phraseCount, through: 0, by: -1) {
+            let candidate = String(phrase.suffix(length))
+            if self.hasPrefix(candidate) {
+                return candidate
+            }
+        }
+        return ""
+    }
 }
 
 extension Substring {

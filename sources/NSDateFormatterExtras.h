@@ -4,10 +4,19 @@
 
 #import <Cocoa/Cocoa.h>
 
+typedef NS_OPTIONS(NSUInteger, iTermDateDifferenceOptions) {
+    iTermDateDifferenceOptionsLowercase = (1 << 0)
+};
+
+NS_ASSUME_NONNULL_BEGIN
+
 @interface NSDateFormatter (Extras)
-+ (NSString *)dateDifferenceStringFromDate:(NSDate *)date;
-+ (NSString *)compactDateDifferenceStringFromDate:(NSDate *)date;
++ (NSString *)dateDifferenceStringFromDate:(NSDate * _Nonnull)date;
++ (NSString *)compactDateDifferenceStringFromDate:(NSDate * _Nonnull)date;
 + (NSString *)durationString:(NSTimeInterval)duration;
++ (NSString *)dateDifferenceStringFromDate:(NSDate *)date
+                                   options:(iTermDateDifferenceOptions)options;
 
 @end
 
+NS_ASSUME_NONNULL_END

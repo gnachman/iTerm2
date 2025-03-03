@@ -56,11 +56,166 @@ class ComposerTextView: MultiCursorTextView {
 
         set {
             precondition(!isSettingSuggestion)
+
+            let atEnd = cursorAtEndExcludingSuggestionNonReentrant
+
             isSettingSuggestion = true
-            reallySetSuggestion(newValue)
+            reallySetSuggestion(newValue, truncate: !atEnd)
             isSettingSuggestion = false
         }
     }
+    private enum CompletionState {
+        case none
+        case thinking(CompletionsWindow)
+        case visible(CompletionsWindow)
+    }
+    private var completionState = CompletionState.none
+    private var _completions: [CompletionItem] = []
+    private var completions: [CompletionItem] { _completions }
+    private var completionsWindowIfVisible: CompletionsWindow? {
+        switch completionState {
+        case .none, .thinking:
+            return nil
+        case .visible(let completionsWindow):
+            return completionsWindow
+        }
+    }
+
+    @objc(setCompletions:prefix:)
+    func setCompletions(completions: [CompletionItem], prefix: String) {
+        DLog("setCompletions(\(completions.count), prefix=\(prefix)) in state \(completionState)")
+        var existingWindow: CompletionsWindow?
+        switch completionState {
+        case .none:
+            break
+        case .thinking(let thinkingWindow):
+            if completions.isEmpty {
+                DLog("Hide existing thinking window")
+                thinkingWindow.parent?.removeChildWindow(thinkingWindow)
+                thinkingWindow.orderOut(nil)
+                completionState = .none
+            } else {
+                DLog("Keep existing thinking window")
+                existingWindow = thinkingWindow
+            }
+
+        case .visible(let completionsWindow):
+            DLog("Hide existing regular window")
+            // Even 25-year-old stuff in AppKit is broken. If you call close(), it overreleases it.
+            // orderOut appears to dealloc the window without crashing. <3 u macOS
+            completionsWindow.parent?.removeChildWindow(completionsWindow)
+            completionsWindow.orderOut(nil)
+            completionState = .none
+        }
+
+        let deduped = completions.withoutDuplicates(by: { item in
+            item.value.trimmingCharacters(in: .whitespacesAndNewlines)
+        })
+        _completions = deduped
+        if !deduped.isEmpty {
+            showCompletionsWindow(completions: deduped, prefix: prefix, existingWindow: existingWindow)
+        }
+    }
+
+    @objc
+    func startActivityIndicator() {
+        switch completionState {
+        case .none:
+            showCompletionsWindow(completions: nil, prefix: nil, existingWindow: nil)
+        case .thinking:
+            return
+        case .visible(let completionsWindow):
+            DLog("Already have a regular mode window")
+            showCompletionsWindow(completions: nil, prefix: nil, existingWindow: completionsWindow)
+        }
+    }
+
+    private func showCompletionsWindow(completions: [CompletionItem]?,
+                                       prefix: String?,
+                                       existingWindow: CompletionsWindow?) {
+        guard let window,
+              window.firstResponder == self,
+              let selectedRange = multiCursorSelectedRanges.first,
+              let layoutManager,
+              let textContainer else {
+            return
+        }
+
+        let glyphRange = layoutManager.glyphRange(
+            forCharacterRange: NSRange(location: selectedRange.location, length: 1),
+            actualCharacterRange: nil)
+        let rectInTextView = layoutManager.boundingRect(forGlyphRange: glyphRange,
+                                                in: textContainer)
+        let rectInWindow = convert(rectInTextView, to: nil)
+        let rectInScreen = window.convertToScreen(rectInWindow)
+
+        if let completions, let prefix {
+            let boldFont = NSFontManager.shared.convert(font!, toHaveTrait: .boldFontMask)
+            let regularFont = NSFontManager.shared.convert(font!, toNotHaveTrait: .boldFontMask)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.lineBreakMode = .byTruncatingHead
+            let regular: [NSAttributedString.Key: Any] = [.font: regularFont,
+                                                          .foregroundColor: NSColor.textColor,
+                                                          .paragraphStyle: paragraphStyle]
+            let bold: [NSAttributedString.Key: Any] = [.font: boldFont,
+                                                       .foregroundColor: NSColor.textColor,
+                                                       .paragraphStyle: paragraphStyle]
+
+
+            let attributedPrefix = NSAttributedString(string: prefix, attributes: bold)
+
+            let items = completions.map { item in
+                let string = item.value
+                let attributedString: NSMutableAttributedString = attributedPrefix.mutableCopy() as! NSMutableAttributedString
+                attributedString.append(NSAttributedString(string: string, attributes: regular))
+                let detail = NSAttributedString(string: (item.detail ?? item.value),
+                                                attributes: regular)
+                return CompletionsWindow.Item(suggestion: string,
+                                              attributedString: attributedString,
+                                              detail: detail,
+                                              kind: item.kind)
+            }
+            let completionsWindow = {
+                if let existingWindow {
+                    DLog("Switch existing completions window to regular mode")
+                    existingWindow.switchMode(to: .completions(items: items))
+                    return existingWindow
+                } else {
+                    DLog("Create a new completions window in regular mode")
+                    return CompletionsWindow(parent: window,
+                                             location: rectInScreen,
+                                             mode: .completions(items: items))
+                }
+            }()
+            completionsWindow.selectionDidChange = { [weak self] window, suggestion in
+                if case .visible(let current) = self?.completionState, current == window {
+                    self?.suggestion = suggestion
+                }
+            }
+            completionState = .visible(completionsWindow)
+        } else {
+            if let existingWindow {
+                DLog("Switch existing window to thinking mode")
+                existingWindow.switchMode(to: .indicator)
+                completionState = .thinking(existingWindow)
+            } else {
+                DLog("Create a new completions window in thinking mode")
+                let thinkingWindow = CompletionsWindow(parent: window,
+                                                       location: rectInScreen,
+                                                       mode: .indicator)
+                completionState = .thinking(thinkingWindow)
+            }
+        }
+        switch completionState {
+        case .none:
+            break
+        case .thinking(let window):
+            window.orderFront(nil)
+        case .visible(let window):
+            window.orderFront(nil)
+        }
+    }
+
     private var suggestionRange = NSRange(location: 0, length: 0)
 
     required init?(coder: NSCoder) {
@@ -74,6 +229,17 @@ class ComposerTextView: MultiCursorTextView {
         isAutomaticTextReplacementEnabled = false
         smartInsertDeleteEnabled = false
         usesFindBar = true
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(it_selectionDidChange),
+                                               name: NSTextView.didChangeSelectionNotification,
+                                               object: self)
+    }
+
+    @objc
+    private func it_selectionDidChange(_ notification: Notification) {
+        if !completions.isEmpty && !isSettingSuggestion {
+            setCompletions(completions: [], prefix: "")
+        }
     }
 
     @objc
@@ -131,6 +297,10 @@ class ComposerTextView: MultiCursorTextView {
         return String(string.substring(utf16Range: rangeExcludingPrefixAndSuggestion))
     }
 
+    var stringExcludingSuggestion: String {
+        return String(string.substring(utf16Range: rangeExcludingSuggestion))
+    }
+
     @objc
     var stringExcludingPrefix: String {
         get {
@@ -167,6 +337,14 @@ class ComposerTextView: MultiCursorTextView {
             return range
         }
         return range.shiftedDown(by: prefixLength)
+    }
+
+    var rangeExcludingSuggestion: Range<Int> {
+        if suggestionRange.length > 0 {
+            return 0..<suggestionRange.lowerBound
+        } else {
+            return 0..<string.count
+        }
     }
 
     var rangeExcludingPrefixAndSuggestion: Range<Int> {
@@ -328,6 +506,41 @@ class ComposerTextView: MultiCursorTextView {
         var closure: (ComposerTextView, NSEvent) -> (Bool)
     }
 
+    private var completionsActions: [Action] {
+        switch completionState {
+        case .none, .thinking:
+            return []
+        case .visible:
+            break
+        }
+        return [
+            Action(modifiers: [],
+                   characters: String(Unicode.Scalar(NSUpArrowFunctionKey)!),
+                   closure: { [weak self] _, _ in
+                       self?.completionsWindowIfVisible?.up()
+                       return true
+                   }),
+            Action(modifiers: [],
+                   characters: String(Unicode.Scalar(NSDownArrowFunctionKey)!),
+                   closure: { [weak self] _, _ in
+                       self?.completionsWindowIfVisible?.down()
+                       return true
+                   }),
+            Action(modifiers: [],
+                   characters: "\r",
+                   closure: { [weak self] textView, _ in
+                       if self?.completionsWindowIfVisible != nil {
+                           if textView.hasSuggestion && textView.suggestionRange.length > 0 {
+                               textView.setCompletions(completions: [], prefix: "")
+                               textView.acceptSuggestion()
+                               return true
+                           }
+                       }
+                       return false
+                   })
+        ]
+    }
+
     private let standardActions = [
         Action(modifiers: [.shift], characters: "\r", closure: { textView, _ in
             textView.sendAction()
@@ -344,12 +557,13 @@ class ComposerTextView: MultiCursorTextView {
         // Tab
         Action(modifiers: [], characters: "\t", closure: { textView, _ in
             if textView.hasSuggestion && textView.suggestionRange.length > 0 {
+                textView.setCompletions(completions: [], prefix: "")
                 textView.acceptSuggestion()
             } else {
                 textView.composerDelegate?.composerTextViewShowCompletions()
             }
             return true
-        })
+        }),
     ]
 
     private var isEmpty: Bool {
@@ -415,11 +629,11 @@ class ComposerTextView: MultiCursorTextView {
                 textView.composerDelegate?.composerTextViewShowCompletions()
             }
             return true
-        })
+        }),
     ]
 
     private var actionsForCurrentMode: [Action] {
-        return autoMode ? autoModeActions : standardActions
+        return (autoMode ? autoModeActions : standardActions) + completionsActions
     }
 
     private func sendAction() {
@@ -470,8 +684,17 @@ class ComposerTextView: MultiCursorTextView {
     override func keyDown(with event: NSEvent) {
         let pressedEsc = event.characters == "\u{1b}"
         if pressedEsc {
-            suggestion = nil
-            composerDelegate?.composerTextViewDidFinish(cancel: true)
+            if suggestion != nil {
+                suggestion = nil
+                if completions.isEmpty {
+                    return
+                }
+            }
+            if completions.isEmpty {
+                composerDelegate?.composerTextViewDidFinish(cancel: true)
+            } else {
+                setCompletions(completions: [], prefix: "")
+            }
             return
         }
 
@@ -584,6 +807,7 @@ class ComposerTextView: MultiCursorTextView {
 
     override func resignFirstResponder() -> Bool {
         composerDelegate?.composerTextViewDidResignFirstResponder?()
+        setCompletions(completions: [], prefix: "")
         return super.resignFirstResponder()
     }
 
@@ -792,6 +1016,19 @@ class ComposerTextView: MultiCursorTextView {
         }
     }
 
+    private var cursorAtEndExcludingSuggestionNonReentrant: Bool {
+        guard let textStorage else {
+            return false
+        }
+        guard let _suggestion else {
+            return cursorAtEnd
+        }
+        let endLocation = textStorage.string.count - (_suggestion as NSString).length
+        return multiCursorSelectedRanges.anySatisfies { range in
+            range.location >= endLocation
+        }
+    }
+
     private var cursorAtEndExcludingSuggestion: Bool {
         guard let saved = suggestion else {
             return cursorAtEnd
@@ -803,16 +1040,16 @@ class ComposerTextView: MultiCursorTextView {
         return cursorAtEnd
     }
 
-    private func reallySetSuggestion(_ suggestion: String?) {
+    private func reallySetSuggestion(_ suggestion: String?, truncate: Bool) {
         guard let textStorage else {
             return
         }
-        if !cursorAtEnd, let suggestion, suggestion.contains(" ") {
+        if truncate, let suggestion, suggestion.contains(" ") {
             let truncated = suggestion.substringUpToFirstSpace
             if truncated.isEmpty {
-                reallySetSuggestion(nil)
+                reallySetSuggestion(nil, truncate: true)
             } else {
-                reallySetSuggestion(String(truncated))
+                reallySetSuggestion(String(truncated), truncate: true)
             }
             return
         }

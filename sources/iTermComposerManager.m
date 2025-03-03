@@ -452,8 +452,9 @@
 }
 
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
-       fetchSuggestions:(iTermSuggestionRequest *)request {
-    [self.delegate composerManager:self fetchSuggestions:request];
+       fetchSuggestions:(iTermSuggestionRequest *)request
+          byUserRequest:(BOOL)byUserRequest {
+    [self.delegate composerManager:self fetchSuggestions:request byUserRequest:byUserRequest];
 }
 
 - (NSString * _Nullable)minimalComposer:(iTermMinimalComposerViewController *)composer

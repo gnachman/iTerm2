@@ -66,7 +66,8 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
                                       forHost:(id<VT100RemoteHostReading>)remoteHost
                                tmuxController:(TmuxController *)tmuxController;
 - (void)composerManager:(iTermComposerManager *)composerManager
-       fetchSuggestions:(iTermSuggestionRequest *)request;
+       fetchSuggestions:(iTermSuggestionRequest *)request
+          byUserRequest:(BOOL)byUserRequest;
 - (NSString * _Nullable)composerManager:(iTermComposerManager *)composerManager
              valueOfEnvironmentVariable:(NSString *)name;
 - (BOOL)composerManagerHandleKeyDown:(NSEvent *)event;

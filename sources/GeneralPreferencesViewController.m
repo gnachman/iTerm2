@@ -201,6 +201,8 @@ enum {
     IBOutlet NSPopUpButton *_typeForYouButton;
     IBOutlet NSTextField *_viewManpagesLabel; // View Manpages
     IBOutlet NSPopUpButton *_viewManpagesButton;
+
+    IBOutlet NSButton *_aiCompletions;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -778,6 +780,23 @@ enum {
     info.shouldBeEnabled = ^BOOL{
         return ![weakSelf valueOfKeyEqualsDefaultValue:kPreferenceKeyAITermURL] && [[weakSelf stringForKey:kPreferenceKeyAITermURL] length] > 0;
     };
+
+    info = [self defineControl:_aiCompletions
+                           key:kPreferenceKeyAICompletion
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.syntheticGetter = ^id {
+        return @(iTermSecureUserDefaults.instance.aiCompletionsEnabled);
+    };
+    info.syntheticSetter = ^(id newValue) {
+        const BOOL setting = [newValue boolValue];
+        if (setting == iTermSecureUserDefaults.instance.defaultValue_aiCompletionsEnabled) {
+            [iTermSecureUserDefaults.instance resetAICompletionsEnabled];
+        } else {
+            iTermSecureUserDefaults.instance.aiCompletionsEnabled = [newValue boolValue];
+        }
+    };
+
     [self validatePlugin];
     [self updateEnabledState];
     [self commitControls];

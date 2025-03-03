@@ -16442,7 +16442,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (NSString *)requestNaturalLanguageQuery:(NSString *)defaultString
                                    reason:(NSString *)reason
                                bypassable:(BOOL)bypassable {
-    if (![iTermAITermGatekeeper check]) {
+    if (![iTermAITermGatekeeper checkSilently:NO]) {
         return nil;
     }
     NSString *const bypassKey = @"NoSyncBypassConfirmAIPrompt";
@@ -19197,11 +19197,26 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
 }
 
 - (void)composerManager:(iTermComposerManager *)composerManager
-       fetchSuggestions:(iTermSuggestionRequest *)request {
-
+       fetchSuggestions:(iTermSuggestionRequest *)request
+          byUserRequest:(BOOL)byUserRequest {
+    const BOOL aiSuggest = iTermSecureUserDefaults.instance.aiCompletionsEnabled;
     if (@available(macOS 11, *)) {
         if ([_conductor framing]) {
-            [_conductor fetchSuggestions:[request requestWithReducedLimitBy:8]];
+            iTermSuggestionRequest *limited = [request requestWithReducedLimitBy:8];
+            if (aiSuggest) {
+                request.startActivityIndicator();
+                [_conductor fetchSuggestions:[limited requestWrappingCompletion:^(BOOL _suggestionOnly,
+                                                                                  NSArray<iTermCompletionItem *> *dumb,
+                                                                                  void (^ignore)(BOOL, NSArray<iTermCompletionItem *> *)) {
+
+                    request.startActivityIndicator();
+                    iTermCompletionItem *firstResult = request.earlyResult(dumb);
+                    [self suggestWithAI:request fileCompletions:dumb firstResult:firstResult];
+                }]
+                              suggestionOnly:NO];
+            } else {
+                [_conductor fetchSuggestions:limited suggestionOnly:byUserRequest];
+            }
             return;
         }
     }
@@ -19212,7 +19227,18 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
                                                                executable:request.executable
                                                                completion:^(NSArray<NSString *> * _Nonnull completions) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            request.completion(completions);
+            NSArray<iTermCompletionItem *> *fileItems = [completions mapWithBlock:^id _Nullable(NSString *filename) {
+                return [[[iTermCompletionItem alloc] initWithValue:filename
+                                                            detail:[request.prefix stringByAppendingString:filename]
+                                                              kind:iTermCompletionItemKindFile] autorelease];
+            }];
+            if (aiSuggest) {
+                request.startActivityIndicator();
+                iTermCompletionItem *firstResult = request.earlyResult(fileItems);
+                [self suggestWithAI:request fileCompletions:fileItems firstResult:firstResult];
+            } else {
+                request.completion(!byUserRequest, fileItems);
+            }
         });
     }];
 }

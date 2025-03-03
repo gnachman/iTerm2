@@ -821,11 +821,17 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             continue;
         }
         NSString *key = info.key;
+        BOOL needsUpdate = NO;
         if (info.syntheticGetter) {
             [_keysWithSyntheticGetters addObject:key];
+            needsUpdate = YES;
         }
         if (info.syntheticSetter) {
             [_keysWithSyntheticSetters addObject:key];
+            needsUpdate = YES;
+        }
+        if (needsUpdate) {
+            [self updateValueForInfo:info];
         }
     }
 }

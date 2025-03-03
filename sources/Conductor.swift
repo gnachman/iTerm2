@@ -229,64 +229,68 @@ class Conductor: NSObject, Codable {
                 case .byName:
                     sortString = "n"
                 }
-                return "ls\n\(path.base64EncodedString())\n\(sortString)"
+                return "ls\n\(path.nonEmptyBase64EncodedString())\n\(sortString)"
 
             case .fetch(let path, let chunk):
                 if let chunk {
-                    return "fetch\n\(path.base64EncodedString())\n\(chunk.offset)\n\(chunk.size)"
+                    return "fetch\n\(path.nonEmptyBase64EncodedString())\n\(chunk.offset)\n\(chunk.size)"
                 } else {
-                    return "fetch\n\(path.base64EncodedString())"
+                    return "fetch\n\(path.nonEmptyBase64EncodedString())"
                 }
 
             case .zip(let path):
-                return "zip\n\(path.base64EncodedString())"
+                return "zip\n\(path.nonEmptyBase64EncodedString())"
 
             case .stat(let path):
-                return "stat\n\(path.base64EncodedString())"
+                return "stat\n\(path.nonEmptyBase64EncodedString())"
 
             case .fetchSuggestions(let request):
+                var dirs = request.directories.map { $0.base64Encoded }.joined(separator: " ")
+                if dirs.isEmpty {
+                    dirs = " "
+                }
                 return ["suggest",
-                        request.prefix.base64Encoded,
-                        request.directories.map { $0.base64Encoded }.joined(separator: " "),
-                        (request.workingDirectory ?? "//").base64Encoded,
+                        request.prefix.nonEmptyBase64Encoded,
+                        dirs,
+                        (request.workingDirectory ?? "//").nonEmptyBase64Encoded,
                         request.executable ? "rx" : "r",
                         "\(request.limit)"
                 ].joined(separator: "\n")
 
             case .rm(let path, let recursive):
-                let args = ["rm"] + (recursive ? ["-r"] : []) + [path.base64EncodedString()]
+                let args = ["rm"] + (recursive ? ["-r"] : []) + [path.nonEmptyBase64EncodedString()]
                 return args.joined(separator: "\n")
 
             case .ln(let source, let symlink):
                 return ["ln",
-                        source.base64EncodedString(),
-                        symlink.base64EncodedString()].joined(separator: "\n")
+                        source.nonEmptyBase64EncodedString(),
+                        symlink.nonEmptyBase64EncodedString()].joined(separator: "\n")
             case .mv(let source, let dest):
                 return ["mv",
-                        source.base64EncodedString(),
-                        dest.base64EncodedString()].joined(separator: "\n")
+                        source.nonEmptyBase64EncodedString(),
+                        dest.nonEmptyBase64EncodedString()].joined(separator: "\n")
             case .mkdir(let path):
-                return "mkdir\n\(path.base64EncodedString())"
+                return "mkdir\n\(path.nonEmptyBase64EncodedString())"
             case .create(path: let path, content: let content):
                 return [
                     "create",
-                    path.base64EncodedString(),
-                    content.base64EncodedString()].joined(separator: "\n")
+                    path.nonEmptyBase64EncodedString(),
+                    content.nonEmptyBase64EncodedString()].joined(separator: "\n")
             case .append(path: let path, content: let content):
                 return [
                     "append",
-                    path.base64EncodedString(),
-                    content.base64EncodedString()].joined(separator: "\n")
+                    path.nonEmptyBase64EncodedString(),
+                    content.nonEmptyBase64EncodedString()].joined(separator: "\n")
             case .utime(path: let path, date: let date):
                 return [
                     "utime",
-                    path.base64EncodedString(),
+                    path.nonEmptyBase64EncodedString(),
                     String(date.timeIntervalSince1970)
                 ].joined(separator: "\n")
             case .chmod(path: let path, r: let r, w: let w, x: let x):
                 return [
                     "chmod-u",
-                    path.base64EncodedString(),
+                    path.nonEmptyBase64EncodedString(),
                     (r ? "r" : "-") + (w ? "w" : "-") + (x ? "x" : "-")
                 ].joined(separator: "\n")
             }
@@ -1128,18 +1132,18 @@ class Conductor: NSObject, Codable {
 
     @available(macOS 11, *)
     @objc
-    func fetchSuggestions(_ request: SuggestionRequest) {
+    func fetchSuggestions(_ request: SuggestionRequest, suggestionOnly: Bool) {
         // Always run the completion block after a spin of the mainloop because
         // iTermStatusBarLargeComposerViewController will erase the suggestion asynchronously :(
         guard framing else {
             DispatchQueue.main.async {
-                request.completion([])
+                request.completion(suggestionOnly, [])
             }
             return
         }
         if let cached = suggestionCache.get(request.inputs) {
             DispatchQueue.main.async {
-                request.completion(cached)
+                request.completion(suggestionOnly, cached)
             }
             return
         }
@@ -1148,13 +1152,18 @@ class Conductor: NSObject, Codable {
                 DLog("Request suggestions \(request)")
                 let suggestions = try await self.suggestions(request.inputs)
                 DispatchQueue.main.async { [weak self] in
-                    self?.suggestionCache.insert(inputs: request.inputs, suggestions: suggestions)
-                    request.completion(suggestions)
+                    let items = suggestions.map {
+                        CompletionItem(value: $0, detail: $0, kind: .file)
+                    }
+                    self?.suggestionCache.insert(
+                        inputs: request.inputs,
+                        suggestions: items)
+                    request.completion(suggestionOnly, items)
                 }
             } catch {
                 DispatchQueue.main.async { [weak self] in
                     self?.suggestionCache.insert(inputs: request.inputs, suggestions: [])
-                    request.completion([])
+                    request.completion(suggestionOnly, [])
                 }
             }
         }
@@ -1271,7 +1280,14 @@ class Conductor: NSObject, Codable {
     }
 
     private func execFramer() {
-        let path = Bundle(for: Self.self).url(forResource: "framer", withExtension: "py")!
+        var path = Bundle(for: Self.self).url(forResource: "framer", withExtension: "py")!
+#if DEBUG
+        let alt = iTermAdvancedSettingsModel.alternateSSHIntegrationScript()!
+        if !alt.isEmpty {
+            NSLog("Using \(alt) rather than \(path)")
+            path = URL(fileURLWithPath: alt)
+        }
+#endif
         var customCode = """
         DEPTH=\(depth)
         """
@@ -2106,6 +2122,15 @@ extension String {
             index = end
         }
         return parts
+    }
+}
+
+extension Data {
+    func nonEmptyBase64EncodedString() -> String {
+        if isEmpty {
+            return "="
+        }
+        return base64EncodedString()
     }
 }
 

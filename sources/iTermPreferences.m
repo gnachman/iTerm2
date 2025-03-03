@@ -203,6 +203,7 @@ NSString *const kPreferenceKeyAITokenLimit = @"AiMaxTokens";
 NSString *const kPreferenceKeyAITermURL = @"AitermURL";
 NSString *const kPreferenceKeyAITermUseLegacyAPI = @"AitermUseLegacyAPI";
 NSString *const kPreferenceKeyIndicateNonDefaultValues  = @"NoSyncHideDefaultValuedSettings";
+NSString *const kPreferenceKeyAICompletion = @"AICompletion";
 
 NSString *const kPreferenceKeyAIPermissionCheckTerminalState = @"AIPermissionCheckTerminalState";
 NSString *const kPreferenceKeyAIPermissionRunCommands = @"AIPermissionRunCommands";
@@ -464,6 +465,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAITermURL: @"https://api.openai.com/v1/completions",
                   kPreferenceKeyAITermUseLegacyAPI: @NO,
                   kPreferenceKeyIndicateNonDefaultValues: @NO,
+                  kPreferenceKeyAICompletion: @NO,  // ignored - synthetic value
 
                   kPreferenceKeyAIPermissionCheckTerminalState: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionRunCommands: @(iTermAIPermissionAsk),

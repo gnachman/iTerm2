@@ -11,6 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermCompletionItem;
 @class iTermStatusBarLargeComposerViewController;
 @class TmuxController;
 @protocol VT100RemoteHostReading;
@@ -21,7 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
                                                   forHost:(id<VT100RemoteHostReading>)remoteHost
                                            tmuxController:(TmuxController *)tmuxController;
 - (void)largeComposerViewController:(iTermStatusBarLargeComposerViewController *)controller
-                   fetchSuggestions:(iTermSuggestionRequest *)request;
+                   fetchSuggestions:(iTermSuggestionRequest *)request
+                      byUserRequest:(BOOL)byUserRequest;
 - (NSString * _Nullable)largeComposerViewController:(iTermStatusBarLargeComposerViewController *)controller
                          valueOfEnvironmentVariable:(NSString *)name;
 @end
@@ -35,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL hideAccessories;
 @property (nonatomic, weak) IBOutlet id<iTermStatusBarLargeComposerViewControllerDelegate> delegate;
 
-- (void)fetchCompletions:(void (^)(NSString *, NSArray<NSString *> *))completionBlock;
+- (void)fetchCompletions;
 
 @end
 

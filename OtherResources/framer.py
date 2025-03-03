@@ -682,11 +682,13 @@ def make_path(b64path):
 async def handle_file(identifier, args):
     log(f'handle_file {identifier} {args}')
     if len(args) < 2:
+        log(f'Not enough args {args}')
         q = begin(identifier)
         end(q, identifier, 1)
         return
     q = begin(identifier)
     sub = args[0]
+    log(f'sub is {sub}')
     if sub == "ls":
         await handle_file_ls(q, identifier, make_path(args[1]), args[2])
         return
@@ -864,16 +866,21 @@ async def handle_file_suggest(q, identifier, prefix, directories, pwd, permissio
     combined = []
     for relative_directory in decode_base64_directories(directories):
         if relative_directory.startswith('/'):
+            log(f'relative directory is absolute {relative_directory}')
             directory = relative_directory
         else:
+            log(f'relative directory is relative {relative_directory}')
             if not pwd:
+                log(f'no pwd {pwd}')
                 continue
             directory = os.path.join(pwd, relative_directory)
+            log(f'joined directory is {directory}')
         temp = await really_find_completions_with_prefix(prefix, directory, max_count, 'x' in permissions)
         temp.sort()
         combined.extend([entry.removeprefix(prefix) for entry in temp])
         if len(combined) > max_count:
             break
+    log(f'Return suggestions: {combined}')
     send_esc(q, json.dumps(combined))
     end(q, identifier, 0)
 

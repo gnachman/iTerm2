@@ -565,6 +565,9 @@ DEFINE_BOOL(logDrawingPerformance, NO, SECTION_DEBUGGING @"Log stats about text 
 DEFINE_BOOL(logRestorableStateSize, NO, SECTION_DEBUGGING @"Log restorable state size info to /tmp/statesize.*.txt.");
 DEFINE_BOOL(showBlockBoundaries, NO, SECTION_DEBUGGING @"Show line buffer block boundaries (issue 6207)");
 DEFINE_BOOL(logToSyslog, NO, SECTION_DEBUGGING @"Debug logs also write to the system log.");
+#if DEBUG
+DEFINE_STRING(alternateSSHIntegrationScript, @"", SECTION_DEBUGGING @"Alternate SSH integration python script");
+#endif
 
 #pragma mark - Session
 

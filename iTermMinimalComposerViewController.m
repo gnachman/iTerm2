@@ -7,10 +7,10 @@
 
 #import "iTermMinimalComposerViewController.h"
 
-#import "CommandHistoryPopup.h"
 #import "iTermDragHandleView.h"
 #import "iTermStatusBarLargeComposerViewController.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "NSArray+iTerm.h"
 
 static float kAnimationDuration = 0.25;
 static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"ComposerHeight";
@@ -111,7 +111,7 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 
 @end
 
-@interface iTermMinimalComposerViewController ()<PopupDelegate, iTermComposerTextViewDelegate, iTermDragHandleViewDelegate, iTermPopupWindowPresenter, iTermStatusBarLargeComposerViewControllerDelegate, iTermMinimalComposerViewDelegate>
+@interface iTermMinimalComposerViewController ()<iTermComposerTextViewDelegate, iTermDragHandleViewDelegate, iTermStatusBarLargeComposerViewControllerDelegate, iTermMinimalComposerViewDelegate>
 @end
 
 @implementation iTermMinimalComposerViewController {
@@ -123,10 +123,9 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     IBOutlet NSButton *_closeButton;
     IBOutlet NSView *_wrapper;
     IBOutlet NSView *_separator;
-    CommandHistoryPopupWindowController *_historyWindowController;
+    iTermCompletionsWindow *_completionsWindow;
     CGFloat _manualHeight;
     CGFloat _desiredHeight;
-    NSInteger _fetches;
 }
 
 - (instancetype)init {
@@ -422,26 +421,7 @@ workingDirectory:(NSString *)pwd
 }
 
 - (void)composerTextViewShowCompletions {
-    _fetches += 1;
-    __weak __typeof(self) weakSelf = self;
-    [_largeComposerViewController fetchCompletions:^(NSString *prefix, NSArray<NSString *> *completions) {
-        [weakSelf didFetchCompletions:completions forPrefix:prefix];
-    }];
-}
-
-- (void)didFetchCompletions:(NSArray<NSString *> *)completions forPrefix:(NSString *)prefix {
-    _fetches -= 1;
-    if (_fetches > 0 || completions.count == 0) {
-        return;
-    }
-    if (!_historyWindowController) {
-        _historyWindowController = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:NO];
-        _historyWindowController.forwardKeyDown = YES;
-    }
-    [_historyWindowController popWithDelegate:self inWindow:self.view.window];
-    [_historyWindowController loadCommands:completions
-                            partialCommand:prefix
-                       sortChronologically:NO];
+    [_largeComposerViewController fetchCompletions];
 }
 
 - (BOOL)composerTextViewWantsKeyEquivalent:(NSEvent *)event {
@@ -518,87 +498,16 @@ workingDirectory:(NSString *)pwd
 }
 
 - (void)largeComposerViewController:(iTermStatusBarLargeComposerViewController *)controller
-                   fetchSuggestions:(iTermSuggestionRequest *)request {
-    [self.delegate minimalComposer:self fetchSuggestions:request];
+                   fetchSuggestions:(iTermSuggestionRequest *)request
+                      byUserRequest:(BOOL)byUserRequest {
+    [self.delegate minimalComposer:self
+                  fetchSuggestions:request
+                     byUserRequest:byUserRequest];
 }
 
 - (NSString *)largeComposerViewController:(iTermStatusBarLargeComposerViewController *)controller
                valueOfEnvironmentVariable:(NSString *)name {
     return [self.delegate minimalComposer:self valueOfEnvironmentVariable:name];
-}
-
-#pragma mark - PopupDelegate
-
-- (BOOL)popupWindowShouldAvoidChangingWindowOrderOnClose {
-    return NO;
-}
-
-- (NSRect)popupScreenVisibleFrame {
-    return self.view.window.screen.visibleFrame;
-}
-
-- (VT100Screen *)popupVT100Screen {
-    return nil;
-}
-
-- (id<iTermPopupWindowPresenter>)popupPresenter {
-    return self;
-}
-
-- (void)popupInsertText:(NSString *)text popup:(iTermPopupWindowController *)popupWindowController {
-    NSString *string = text;
-    if ([popupWindowController shouldEscapeShellCharacters]) {
-        string = [text stringWithEscapedShellCharactersIncludingNewlines:YES];
-    }
-    [_largeComposerViewController.textView insertText:string
-                                     replacementRange:_largeComposerViewController.textView.selectedRange];
-}
-
-- (void)popupPreview:(NSString *)text {
-}
-
-- (void)popupKeyDown:(NSEvent *)event {
-    [_largeComposerViewController.textView keyDown:event];
-}
-
-- (BOOL)popupHandleSelector:(SEL)selector string:(NSString *)string currentValue:(NSString *)currentValue {
-    return NO;
-}
-
-- (void)popupWillClose:(iTermPopupWindowController *)popup {
-    _historyWindowController = nil;
-}
-
-- (BOOL)popupWindowIsInFloatingHotkeyWindow {
-    id<iTermWindowController> windowController = (id<iTermWindowController>)self.view.window.delegate;
-    if ([windowController conformsToProtocol:@protocol(iTermWindowController)]) {
-        return [windowController isFloatingHotKeyWindow];
-    }
-    return NO;
-}
-
-- (void)popupIsSearching:(BOOL)searching {
-}
-
-- (BOOL)popupShouldTakePrefixFromScreen {
-    return NO;
-}
-
-// This is only called by Autocomplete
-- (NSArray<NSString *> *)popupWordsBeforeInsertionPoint:(int)count {
-    assert(NO);
-    return @[];
-}
-
-#pragma mark - iTermPopupWindowPresenter
-
-- (void)popupWindowWillPresent:(iTermPopupWindowController *)popupWindowController {
-}
-
-- (NSRect)popupWindowOriginRectInScreenCoords {
-    NSRange range = [_largeComposerViewController.textView selectedRange];
-    range.length = 0;
-    return [_largeComposerViewController.textView firstRectForCharacterRange:range actualRange:NULL];
 }
 
 #pragma mark - iTermMinimalComposerViewDelegate

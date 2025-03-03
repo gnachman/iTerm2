@@ -89,13 +89,14 @@ struct SecureUserDefaults {
     lazy var enableSecureKeyboardEntryAutomatically = { SecureUserDefault<Bool>("EnableSecureKeyboardEntryAutomatically", defaultValue: true) }()
     lazy var enableAI = { SecureUserDefault<Bool>("EnableAI", defaultValue: false) }()
     lazy var browserBundleID = { SecureUserDefault<String>("BrowserBundleID", defaultValue: "") }()
-
+    lazy var aiCompletionsEnabled = { SecureUserDefault<Bool>("AICompletions", defaultValue: false) }()
     private mutating func serializables() -> [any SerializableUserDefault] {
         [allowPaste,
          requireAuthToOpenPasswordmanager,
          enableSecureKeyboardEntryAutomatically,
          enableAI,
-         browserBundleID]
+         browserBundleID,
+         aiCompletionsEnabled]
     }
 }
 
@@ -144,6 +145,20 @@ class iTermSecureUserDefaults: NSObject {
             try? SecureUserDefaults.instance.browserBundleID.set(newValue)
         }
     }
+    @objc var defaultValue_aiCompletionsEnabled: Bool {
+        return SecureUserDefaults.instance.aiCompletionsEnabled.defaultValue
+    }
+    @objc var aiCompletionsEnabled: Bool {
+        get {
+            return SecureUserDefaults.instance.aiCompletionsEnabled.value
+        }
+        set {
+            try? SecureUserDefaults.instance.aiCompletionsEnabled.set(newValue)
+        }
+    }
+    @objc(resetAICompletionsEnabled) func resetAICompletionsEnabled() {
+        try? SecureUserDefaults.instance.aiCompletionsEnabled.reset()
+    }
 }
 
 // Secure user defaults are a way of saving user preferences that are hard to tamper with.
@@ -160,6 +175,7 @@ class iTermSecureUserDefaults: NSObject {
 class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equatable> {
     let key: String
     let defaultValue: T
+    private var cached: T?
 
     enum SecureUserDefaultError: Error {
         case noAppSupportDirectory
@@ -173,9 +189,14 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     var value: T {
+        if let cached {
+            return cached
+        }
         if let value = try? get() {
+            cached = value
             return value
         }
+        cached = defaultValue
         return defaultValue
     }
 
@@ -183,16 +204,22 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         return try? Self.path(key)
     }
 
-    func get() throws -> T {
+    private func get() throws -> T {
         return try Self.load(key) ?? defaultValue
     }
 
     func set(_ newValue: T?) throws {
+        cached = nil
         if let value = newValue {
             try Self.store(key, value: value)
         } else {
             try Self.delete(key)
         }
+    }
+
+    func reset() throws {
+        cached = nil
+        try Self.delete(key)
     }
 
     private static func path(_ key: String) throws -> URL {
@@ -204,12 +231,12 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         return appSupport.appendingPathComponent(key).appendingPathExtension("secureSetting")
     }
 
-    static func magic(_ key: String) throws -> String {
+    private static func magic(_ key: String) throws -> String {
         let filePath = try Self.path(key)
         return magic(key, filePath: filePath)
     }
 
-    static func magic(_ key: String, filePath: URL) -> String {
+    private static func magic(_ key: String, filePath: URL) -> String {
         let pathData = filePath.path.data(using: .utf8)! as NSData
         let keyData = key.data(using: .utf8)! as NSData
         let sha = keyData.it_sha256() as NSData
@@ -217,7 +244,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
 
     }
 
-    static func load<U: SecureUserDefaultStringTranscodable>(_ key: String) throws -> U? {
+    private static func load<U: SecureUserDefaultStringTranscodable>(_ key: String) throws -> U? {
         let fileURL = try Self.path(key)
         // Check if the file exists before gettings its attributes to avoid an annoying exception
         // while debugging.
@@ -244,12 +271,12 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         return try SecureUserDefaultValue<U>(sudString: String(payload))?.value
     }
 
-    static func delete(_ key: String) throws {
+    private static func delete(_ key: String) throws {
         let filename = try path(key)
         try FileManager.default.removeItem(at: filename)
     }
 
-    static func store<U: SecureUserDefaultStringTranscodable>(_ key: String, value: U) throws {
+    private static func store<U: SecureUserDefaultStringTranscodable>(_ key: String, value: U) throws {
         // Write to a temp file and then move it. If the destination is a link then it's not safe
         // to write to it.
         let unsafeURL = try self.path(key)

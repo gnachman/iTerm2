@@ -34,6 +34,12 @@ extension NSRect {
     var center: NSPoint {
         return NSPoint(x: midX, y: midY)
     }
+    var minXminY: NSPoint {
+        return NSPoint(x: minX, y: minY)
+    }
+    var minXmaxY: NSPoint {
+        return  NSPoint(x: minX, y: maxY)
+    }
 }
 
 extension NSRect {

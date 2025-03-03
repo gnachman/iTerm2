@@ -52,7 +52,8 @@ NS_ASSUME_NONNULL_BEGIN
                                       forHost:(id<VT100RemoteHostReading>)remoteHost
                                tmuxController:(TmuxController *)tmuxController;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
-       fetchSuggestions:(iTermSuggestionRequest *)request;
+       fetchSuggestions:(iTermSuggestionRequest *)request
+          byUserRequest:(BOOL)byUserRequest;
 - (BOOL)minimalComposerHandleKeyDown:(NSEvent *)event;
 - (NSResponder *)minimalComposerNextResponder;
 - (BOOL)minimalComposerShouldForwardCopy:(iTermMinimalComposerViewController *)composer;

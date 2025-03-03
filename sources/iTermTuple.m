@@ -112,6 +112,15 @@ static NSString *const iTermTupleValueKey = @"value";
     return [iTermTuple tupleWithObject:dict[@"first"] andObject:dict[@"second"]];
 }
 
+- (iTermTuple *)mapFirst:(id (^)(id object))block {
+    return [iTermTuple tupleWithObject:block(self.firstObject)
+                             andObject:self.secondObject];
+}
+
+- (iTermTuple *)mapSecond:(id (^)(id object))block {
+    return [iTermTuple tupleWithObject:self.firstObject
+                             andObject:block(self.secondObject)];
+}
 
 @end
 

@@ -5,6 +5,7 @@
 //  Created by George Nachman on 2/10/25.
 //
 
+// MARK: - AI Chat
 extension PTYSession {
     func add(aiAnnotations annotations: [AITermAnnotation],
              baseOffset: Int64,
@@ -637,5 +638,49 @@ extension iTermSubSelection {
         self.init(absRange: absRange,
                   mode: mode,
                   width: screen.width())
+    }
+}
+
+// MARK: - AI Suggestions
+extension PTYSession {
+    private func previouslyRunCommands(_ n: Int) -> ArraySlice<AICompletion.PreviouslyRunCommand> {
+        guard let remoteHost = screen.lastRemoteHost() else {
+            return ArraySlice([])
+        }
+        return iTermShellHistoryController
+            .sharedInstance()
+            .commandUses(forHost: remoteHost)
+            .compactMap { use -> AICompletion.PreviouslyRunCommand? in
+                guard let command = use.command,
+                      let time = use.time else {
+                    return nil
+                }
+                return AICompletion.PreviouslyRunCommand(
+                    command: command,
+                    workingDirectory: use.directory,
+                    date: Date(timeIntervalSinceReferenceDate: time.doubleValue))
+            }.sorted(by: { lhs, rhs in
+                lhs.date < rhs.date
+            })
+            .suffix(10)
+    }
+
+    @objc(suggestWithAI:fileCompletions:firstResult:)
+    func suggestWithAI(request: SuggestionRequest, files: [CompletionItem], firstResult: CompletionItem?) {
+        let history = previouslyRunCommands(20)
+        AICompletion.suggestionCompletions(
+            request,
+            history: history,
+            files: files) { cs in
+                let modified: [CompletionItem] =
+                if cs.isEmpty {
+                    []
+                } else if let firstResult {
+                    [firstResult] + cs.filter { $0.value != firstResult.value }
+                } else {
+                    cs
+                }
+                request.completion(false, modified)
+            }
     }
 }

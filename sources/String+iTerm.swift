@@ -122,6 +122,10 @@ extension String {
     var base64Encoded: String {
         return Data(self.utf8).base64EncodedString()
     }
+
+    var nonEmptyBase64Encoded: String {
+        return Data(self.utf8).nonEmptyBase64EncodedString()
+    }
 }
 
 @objc
