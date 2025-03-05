@@ -1575,7 +1575,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
 
     // Update the tab style.
-    [self.tabBarControl setDisableTabClose:YES];
+    [self.tabBarControl setDisableTabClose:!iTermAdvancedSettingsModel.tabCloseButtonsAlwaysVisible];
     if ([iTermPreferences boolForKey:kPreferenceKeyHideTabNumber]) {
         [self.tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minCompactTabWidth]];
     } else {
