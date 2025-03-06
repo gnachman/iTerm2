@@ -144,6 +144,7 @@ extern NSString *const kPreferenceKeyAIPermissionViewHistory;
 extern NSString *const kPreferenceKeyAIPermissionWriteToClipboard;
 extern NSString *const kPreferenceKeyAIPermissionTypeForYou;
 extern NSString *const kPreferenceKeyAIPermissionViewManpages;
+extern NSString *const kPreferenceKeyAIPermissionWriteToFilesystem;
 
 // Appearance
 extern NSString *const kPreferenceKeyTabStyle_Deprecated;

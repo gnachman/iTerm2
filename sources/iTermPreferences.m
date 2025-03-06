@@ -211,6 +211,7 @@ NSString *const kPreferenceKeyAIPermissionViewHistory = @"AIPermissionViewHistor
 NSString *const kPreferenceKeyAIPermissionWriteToClipboard = @"AIPermissionWriteToClipboard";
 NSString *const kPreferenceKeyAIPermissionTypeForYou = @"AIPermissionTypeForYou";
 NSString *const kPreferenceKeyAIPermissionViewManpages = @"AIPermissionViewManpages";
+NSString *const kPreferenceKeyAIPermissionWriteToFilesystem = @"AIPermissionWriteToFilesystem";
 
 NSString *const iTermDefaultAIPrompt = @"Return a command suitable for copy/pasting into \\(shell) on \\(uname). Do NOT include commentary NOR Markdown triple-backtick code blocks as your whole response will be copied into my terminal automatically.\n"
 @"\n"
@@ -461,7 +462,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIPrompt: iTermDefaultAIPrompt,
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
                   kPreferenceKeyAIModel: @"gpt-4o-mini",
-                  kPreferenceKeyAITokenLimit: @4000,
+                  kPreferenceKeyAITokenLimit: @128000,
                   kPreferenceKeyAITermURL: @"https://api.openai.com/v1/completions",
                   kPreferenceKeyAITermUseLegacyAPI: @NO,
                   kPreferenceKeyIndicateNonDefaultValues: @NO,
@@ -473,6 +474,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIPermissionWriteToClipboard: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionTypeForYou: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionViewManpages: @(iTermAIPermissionAsk),
+                  kPreferenceKeyAIPermissionWriteToFilesystem: @(iTermAIPermissionAsk),
 
                   kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),

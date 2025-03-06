@@ -1305,7 +1305,7 @@ public struct AIError: LocalizedError, CustomStringConvertible, CustomNSError, C
     }
 
     static var requestTooLarge: AIError {
-        AIError("Request too large", type: .requestTooLarge)
+        AIError("AI token limit exceeded because the conversation reached its maximum length", type: .requestTooLarge)
     }
 
     public static var errorDomain: String { iTermAIError.domain }

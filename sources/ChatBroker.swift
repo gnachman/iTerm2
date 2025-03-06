@@ -209,7 +209,10 @@ struct RemoteCommand: Codable {
     struct DeleteCurrentLine: Codable {}
 
     struct GetManPage: Codable { var cmd: String = "" }
-
+    struct CreateFile: Codable {
+        var filename: String=""
+        var content: String=""
+    }
     enum Content: Codable, CaseIterable {
         static var allCases: [RemoteCommand.Content] {
             return [.isAtPrompt(IsAtPrompt()),
@@ -229,7 +232,9 @@ struct RemoteCommand: Codable {
                     .setClipboard(SetClipboard()),
                     .insertTextAtCursor(InsertTextAtCursor()),
                     .deleteCurrentLine(DeleteCurrentLine()),
-                    .getManPage(GetManPage())]
+                    .getManPage(GetManPage()),
+                    .createFile(CreateFile())
+            ]
         }
 
         case isAtPrompt(IsAtPrompt)
@@ -250,6 +255,7 @@ struct RemoteCommand: Codable {
         case insertTextAtCursor(InsertTextAtCursor)
         case deleteCurrentLine(DeleteCurrentLine)
         case getManPage(GetManPage)
+        case createFile(CreateFile)
         // When adding a new command be sure to update allCases.
 
         enum PermissionCategory: String, Codable, CaseIterable {
@@ -259,6 +265,7 @@ struct RemoteCommand: Codable {
             case writeToClipboard = "Write to the Clipboard"
             case typeForYou = "Type for You"
             case viewManpages = "View Manpages"
+            case writeToFilesystem = "Write to the File System"
         }
 
         var permissionCategory: PermissionCategory {
@@ -277,7 +284,8 @@ struct RemoteCommand: Codable {
                     .typeForYou
             case .getManPage:
                     .viewManpages
-
+            case .createFile:
+                    .writeToFilesystem
             }
         }
 
@@ -301,6 +309,7 @@ struct RemoteCommand: Codable {
             case .insertTextAtCursor(let args): args
             case .deleteCurrentLine(let args): args
             case .getManPage(let args): args
+            case .createFile(let args): args
             }
         }
     }
@@ -347,6 +356,8 @@ struct RemoteCommand: Codable {
             "Erasing the current command line"
         case let .getManPage(args):
             "Checking the manpage for `\(args.cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`"
+        case let .createFile(args):
+            "Creating \(args.filename)"
         }
     }
 
@@ -388,6 +399,8 @@ struct RemoteCommand: Codable {
             "The AI Agent would like to erase the current command line"
         case let .getManPage(args):
             "The AI Agent would like to check the manpage for `\(args.cmd.escapedForMarkdownCode)`"
+        case let .createFile(args):
+            "The AI Agent would like to create a file named `\(args.filename)`"
         }
     }
 }
@@ -401,6 +414,7 @@ extension RemoteCommand.Content.PermissionCategory {
         case .writeToClipboard: kPreferenceKeyAIPermissionWriteToClipboard
         case .typeForYou: kPreferenceKeyAIPermissionTypeForYou
         case .viewManpages: kPreferenceKeyAIPermissionViewManpages
+        case .writeToFilesystem: kPreferenceKeyAIPermissionWriteToFilesystem
         }
     }
 }

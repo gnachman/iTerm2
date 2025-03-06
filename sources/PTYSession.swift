@@ -196,6 +196,9 @@ extension PTYSession {
         case .getManPage(let getManPage):
             getManPageRemoteCommand(getManPage: getManPage,
                                     completion: completion)
+        case .createFile(let createFile):
+            createFileCommand(createFile: createFile,
+                              completion: completion)
         }
     }
 }
@@ -497,6 +500,23 @@ extension PTYSession {
             return
         }
         fetchLocalManpage(command: getManPage.cmd) { otsc.call($0) }
+    }
+
+    func createFileCommand(createFile: RemoteCommand.CreateFile,
+                           completion: @escaping (String) -> ()) {
+        do {
+            let abs = if createFile.filename.hasPrefix("/") {
+                createFile.filename
+            } else {
+                (currentLocalWorkingDirectory ?? "/").appending(pathComponent: createFile.filename)
+            }
+            try createFile.content.write(to: URL(fileURLWithPath: abs),
+                                         atomically: false,
+                                         encoding: .utf8)
+            completion("Ok")
+        } catch {
+            completion("Error: \(error.localizedDescription)")
+        }
     }
 
     private func fetchLocalManpage(command: String, completion: @escaping (String) -> ()) {

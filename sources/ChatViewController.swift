@@ -148,7 +148,14 @@ class ChatViewController: NSViewController {
         tableView.focusRingType = .none
         tableView.translatesAutoresizingMaskIntoConstraints = false
 
-        class ChatViewControllerDocumentView: NSView {}
+        class ChatViewControllerDocumentView: NSView {
+            override func setFrameSize(_ newSize: NSSize) {
+                DLog("About to change document view frame size from \(frame.size) to \(newSize). Will adjust clip view's bounds accordingly")
+                enclosingScrollView?.performWithoutScrolling {
+                    super.setFrameSize(newSize)
+                }
+            }
+        }
         let documentView = ChatViewControllerDocumentView()
         documentView.translatesAutoresizingMaskIntoConstraints = false
         documentView.addSubview(tableView)
@@ -160,6 +167,7 @@ class ChatViewController: NSViewController {
 
         // Scroll View for Table
         scrollView = NSScrollView()
+        scrollView.contentView = NSClipView()
         scrollView.documentView = documentView
         scrollView.hasVerticalScroller = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -372,7 +380,11 @@ extension ChatViewController {
                     }
                 }
                 if shouldScroll {
-                    self.scrollToBottom(animated: true)
+                    DLog("Schedule scroll to bottom")
+                    DispatchQueue.main.async { [weak self] in
+                        DLog("Scroll to bottom")
+                        self?.scrollToBottom(animated: true)
+                    }
                 }
             }
         }
@@ -1028,23 +1040,11 @@ extension ChatViewController: ChatViewControllerModelDelegate {
             return
         }
 
-        let originalDistanceToTop = scrollView.distanceToTop
-
         tableView.beginUpdates()
         tableView.noteHeightOfRows(withIndexesChanged: indexSet)
         tableView.reloadData(forRowIndexes: indexSet, columnIndexes: IndexSet(integer: 0))
         tableView.invalidateIntrinsicContentSize()
         tableView.endUpdates()
-
-        tableView.needsLayout = true
-        tableView.layoutSubtreeIfNeeded()
-
-        scrollView.distanceToTop = originalDistanceToTop
-
-        // Sometimes autolayout is lazy so we have to try a second time :(
-        DispatchQueue.main.async {
-            scrollView.distanceToTop = originalDistanceToTop
-        }
     }
 }
 
@@ -1106,7 +1106,7 @@ extension Message {
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineBreakMode = .byWordWrapping
             let attributes: [NSAttributedString.Key: Any] = [
-                .foregroundColor: NSColor.white,
+                .foregroundColor: textColor,
                 .paragraphStyle: paragraphStyle,
                 .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)
             ]

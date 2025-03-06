@@ -400,6 +400,8 @@ extension RemoteCommand.Content {
             "delete_current_line"
         case .getManPage:
             "get_man_page"
+        case .createFile:
+            "create_file"
         }
     }
 
@@ -441,6 +443,9 @@ extension RemoteCommand.Content {
             [:]
         case .getManPage(_):
             ["cmd": "The command whose man page content is requested."]
+        case .createFile:
+            ["filename": "The name of the file you wish to create. It will be replaced if it already exists.",
+             "content": "The content that will be written to the file."]
         }
     }
 
@@ -482,6 +487,8 @@ extension RemoteCommand.Content {
             "Clears the current command line input (only at the prompt)."
         case .getManPage(_):
             "Returns the content of a command's man page."
+        case .createFile:
+            "Creates a file containing a specified string."
         }
     }
 }
@@ -729,7 +736,19 @@ extension ChatAgent {
                                                           content: .getManPage(command))
                         self?.runRemoteCommand(remoteCommand, completion: completion)
                     })
-
+            case .createFile(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .createFile(command))
+                        self?.runRemoteCommand(remoteCommand, completion: completion)
+                    })
             }
         }
     }

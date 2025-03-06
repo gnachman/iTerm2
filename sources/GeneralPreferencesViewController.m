@@ -201,6 +201,8 @@ enum {
     IBOutlet NSPopUpButton *_typeForYouButton;
     IBOutlet NSTextField *_viewManpagesLabel; // View Manpages
     IBOutlet NSPopUpButton *_viewManpagesButton;
+    IBOutlet NSTextField *_writeToFilesystemLabel; // View Manpages
+    IBOutlet NSPopUpButton *_writeToFilesystemButton;
 
     IBOutlet NSButton *_aiCompletions;
 }
@@ -744,6 +746,11 @@ enum {
     info = [self defineControl:_viewManpagesButton
                            key:kPreferenceKeyAIPermissionViewManpages
                    relatedView:_viewManpagesLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_writeToFilesystemButton
+                           key:kPreferenceKeyAIPermissionWriteToFilesystem
+                   relatedView:_writeToFilesystemLabel
                           type:kPreferenceInfoTypeUnsignedIntegerPopup];
 
 
