@@ -3311,13 +3311,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
             
         case SSH_END: {
+            DLog(@"Executing SSH_END: %@", token);
             NSString *s = token.string;
             NSArray<NSString *> *parts = [s componentsSeparatedByString:@" "];
             if (parts.count < 3) {
+                DLog(@"Not enough parts");
                 break;
             }
             NSUInteger status = [parts[1] iterm_unsignedIntegerValue];
             if (status > 255) {
+                DLog(@"Status too big");
                 break;
             }
             NSString *type = parts[2];

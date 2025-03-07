@@ -6056,11 +6056,20 @@ launchCoprocessWithCommand:(NSString *)command
     }
     if (!highPriority && !_isTmuxGateway && _hasMuteCoprocess) {
         DLog(@"%@ (is ssh output=%@, csi.p[0]=%@, csi.p[1]=%@)", token, @(token.type == SSH_OUTPUT), @(token.csi->p[0]), @(token.csi->p[1]));
-        if (token.type == SSH_OUTPUT && token.csi->p[0] > 0) {
-            DLog(@"not discarding token!");
-            return NO;
+        switch (token.type) {
+            case SSH_INIT:
+            case SSH_LINE:
+            case SSH_UNHOOK:
+            case SSH_BEGIN:
+            case SSH_END:
+            case SSH_OUTPUT:
+            case SSH_TERMINATE:
+            case SSH_RECOVERY_BOUNDARY:
+                DLog(@"not discarding token!");
+                return NO;
+            default:
+                return YES;
         }
-        return YES;
     }
     if (_suppressAllOutput) {
         return YES;
