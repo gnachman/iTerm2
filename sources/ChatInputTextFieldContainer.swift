@@ -177,6 +177,7 @@ class ChatInputTextFieldContainer: NSView {
     @objc private func textDidChange(_ notification: Notification) {
         // Invalidate intrinsic content size when text changes.
         self.invalidateIntrinsicContentSize()
+        needsLayout = true
     }
 
     override func viewDidChangeEffectiveAppearance() {

@@ -955,6 +955,15 @@ extension ChatViewController: NSTextViewDelegate {
     func textDidChange(_ notification: Notification) {
         eligibleForAutoPaste = inputTextFieldContainer.stringValue.isEmpty
     }
+
+    func textViewDidChangeSelection(_ notification: Notification) {
+        DispatchQueue.main.async { [inputTextFieldContainer] in
+            guard let inputTextFieldContainer else {
+                return
+            }
+            inputTextFieldContainer.textView.scrollRangeToVisible(inputTextFieldContainer.textView.selectedRange())
+        }
+    }
 }
 
 extension ChatViewController {
