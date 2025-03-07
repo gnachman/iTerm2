@@ -11,7 +11,6 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "NSApplication+iTerm.h"
 
-
 @implementation iTermUntitledWindowStateMachine {
     NSMutableSet<NSString *> *_contingencies;
     BOOL _windowRestorationComplete;
@@ -31,6 +30,10 @@
     if (_disableInitialWindow && !_initializationComplete) {
         // This is the initial window.
         DLog(@"untitled: do nothing because this is the initial window.");
+        return;
+    }
+    if (_disableInitialWindow && !_windowRestorationComplete) {
+        DLog(@"untitled: do nothing because window restoration is still in progress");
         return;
     }
     _wantsWindow = YES;
