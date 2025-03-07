@@ -90,7 +90,8 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
             switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
                 case TAB_STYLE_COMPACT:
                 case TAB_STYLE_MINIMAL:
-                    return WINDOW_TYPE_COMPACT_MAXIMIZED;
+                    // disable compact-maximized to narrow down root cause in issue 12147
+//                    return WINDOW_TYPE_COMPACT_MAXIMIZED;
 
                 case TAB_STYLE_AUTOMATIC:
                 case TAB_STYLE_LIGHT:
