@@ -2066,13 +2066,15 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         [_delegate terminalDidTransitionOutOfTmuxMode];
         // Nil out last token so we don't take this code path a second time.
         _lastToken = nil;
+        DLog(@"Rollback because transitioning out of tmux");
         return;
     }
     if (token.sshInfo.valid &&
         token.sshInfo.channel >= 0) {
+        DLog(@"Token is from an ssh side-channel");
         // A side-channel produced output. Ignore anything that isn't plaintext to make parsing easy.
         VT100Token *wrapped = [[VT100Token alloc] init];
-        wrapped.type = SSH_OUTPUT;
+        wrapped.type = SSH_SIDE_CHANNEL;
         wrapped.sshInfo = token.sshInfo;
         switch (token.type) {
             case VT100_ASCIISTRING:
@@ -2113,9 +2115,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
     if (token->type == DCS_TMUX_HOOK) {
         [_delegate terminalStartTmuxModeWithDCSIdentifier:token.string];
+        DLog(@"starting tmux mode, do not execute token");
         return;
     } else if (token->type == TMUX_EXIT || token->type == TMUX_LINE) {
         [_delegate terminalHandleTmuxInput:token];
+        DLog(@"exiting tmux mode, do not execute token");
         return;
     }
 
@@ -2125,6 +2129,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
     // Handle file downloads, which come as a series of MULTITOKEN_BODY tokens.
     if (receivingFile_) {
+        DLog(@"receiving file, might not execute token");
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
             [_delegate terminalDidReceiveBase64FileData:token.string ?: @""];
             return;
@@ -2137,7 +2142,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             return;
         } else if (_receivingMultipartFile) {
             DLog(@"Receiving multipart file so allow %@ to proceed as usual", token);
-        } else if (token->type != SSH_OUTPUT &&
+        } else if (token->type != SSH_SIDE_CHANNEL &&
                    token->type != SSH_BEGIN &&
                    token->type != SSH_END &&
                    token->type != SSH_LINE) {
@@ -2146,6 +2151,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             receivingFile_ = NO;
         }
     } else if (_copyMode != VT100TerminalCopyModeNone) {
+        DLog(@"copy mode, might not execute token");
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
             [_delegate terminalDidReceiveBase64PasteboardString:token.string ?: @""];
             return;
@@ -3323,6 +3329,13 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         }
 
         case SSH_OUTPUT:
+            DLog(@"executing an ssh output token");
+            [self.delegate terminalDidReadRawSSHData:token.savedData
+                                                 pid:token.csi->p[0]
+                                             channel:token.csi->p[1]];
+            break;
+
+        case SSH_SIDE_CHANNEL:
             [self.delegate terminalHandleSSHSideChannelOutput:token.string
                                                           pid:token.sshInfo.pid
                                                       channel:token.sshInfo.channel

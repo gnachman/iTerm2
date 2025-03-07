@@ -307,6 +307,27 @@
     return [self it_sha256];
 }
 
+- (NSString *)shortDebugString {
+    const NSInteger maxLength = 400;
+    if (self.length > maxLength) {
+        return [[[self subdataWithRange:NSMakeRange(0, maxLength)] shortDebugString] stringByAppendingString:@"…"];
+    }
+    NSString *s = [[NSString alloc] initWithData:self encoding:NSUTF8StringEncoding];
+    if (s) {
+        return s;
+    }
+    NSMutableString *result = [NSMutableString string];
+    for (int j = 0; j < self.length; j++) {
+        int i = ((unsigned char *)self.bytes)[j];
+        if (i >= 32 && i < 127) {
+            [result appendCharacter:i];
+        } else {
+            [result appendFormat:@"\\x%02d", i];
+        }
+    }
+    return result;
+}
+
 - (NSString *)it_hexEncoded {
     NSMutableString *result = [NSMutableString string];
     const unsigned char *bytes = self.bytes;

@@ -321,7 +321,8 @@
         }
         // Don't append the outer wrapper to the output. Earlier, it was unwrapped and the inner
         // tokens were already added.
-        if (token->type != DCS_TMUX_CODE_WRAP && token->type != SSH_OUTPUT) {
+        if (token->type != DCS_TMUX_CODE_WRAP &&
+            (token->type != SSH_OUTPUT || self.depth == 0)) {
             [token retain];
             CVectorAppend(vector, token);
         }

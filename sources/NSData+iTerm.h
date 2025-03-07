@@ -53,6 +53,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSData *)it_sha256;
 - (NSString *)it_hexEncoded;
 - (NSData * _Nullable)it_compressedData;
+- (NSString * _Nullable)shortDebugString;
 
 - (NSData * _Nullable)aesCBCEncryptedDataWithPCKS7PaddingAndKey:(NSData *)key
                                                              iv:(NSData *)iv;

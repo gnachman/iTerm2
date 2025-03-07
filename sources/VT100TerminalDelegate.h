@@ -525,6 +525,10 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
                                        pid:(int32_t)pid
                                    channel:(uint8_t)channel
                                      depth:(int)depth;
+- (void)terminalDidReadRawSSHData:(NSData *)data
+                              pid:(int)pid
+                          channel:(int)channel;
+
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth;
 - (void)terminalUpdateEnv:(NSString *)value;
 - (void)terminalBeginSSHIntegeration:(NSString *)args;

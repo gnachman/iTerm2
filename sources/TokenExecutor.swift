@@ -20,8 +20,9 @@ protocol TokenExecutorDelegate: AnyObject {
     func tokenExecutorShouldQueueTokens() -> Bool
 
     // Should tokens be freed without use? Do this during a mute coprocess, for example.
-    @objc(tokenExecutorShouldDiscardTokensWithHighPriority:)
-    func tokenExecutorShouldDiscardTokens(highPriority: Bool) -> Bool
+    @objc(tokenExecutorShouldDiscardToken:withHighPriority:)
+    func tokenExecutorShouldDiscard(token: VT100Token,
+                                    highPriority: Bool) -> Bool
 
     // Called only when tokens are actually executed. `length` gives the number of bytes of input
     // that were executed.
@@ -89,7 +90,16 @@ func CVectorReleaseObjectsAndDestroy(_ vector: CVector) {
     CVectorDestroy(&temp)
 }
 
-private class TokenArray: IteratorProtocol {
+private class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
+    var debugDescription: String {
+        var descr = [String]()
+        for i in 0..<cvector.count {
+            let token = CVectorGetObject(&cvector, i) as! VT100Token
+            descr.append(token.description)
+        }
+        return descr.joined(separator: "\n")
+    }
+
     typealias Element = VT100Token
     let length: Int
     private var cvector: CVector
@@ -179,7 +189,12 @@ private class TokenArray: IteratorProtocol {
 }
 
 private class TwoTierTokenQueue {
-    class Queue {
+    class Queue: CustomDebugStringConvertible {
+        var debugDescription: String {
+            return arrays.map {
+                "--BEGIN ARRAY--\n" + $0.debugDescription + "\n--END ARRAY--"
+            }.joined(separator: "\n\n")
+        }
         private var arrays = [TokenArray]()
         var first: TokenArray? {
             return arrays.first
@@ -735,11 +750,12 @@ private class TokenExecutorImpl {
                          priority: Int,
                          accumulatedLength: inout Int,
                          delegate: TokenExecutorDelegate) -> Bool {
-        if delegate.tokenExecutorShouldDiscardTokens(highPriority: priority == 0) {
-            vector.skipToEnd()
-            return true
-        }
         if gDebugLogging.boolValue { DLog("Execute token \(token) cursor=\(delegate.tokenExecutorCursorCoordString())") }
+
+        if delegate.tokenExecutorShouldDiscard(token: token, highPriority: priority == 0) {
+            DLog("Discarding token")
+            return false
+        }
 
         isExecutingToken = true
         terminal.execute(token)

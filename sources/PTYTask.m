@@ -204,6 +204,7 @@ static void HandleSigChld(int n) {
 
 // This runs on the task notifier thread
 - (void)setCoprocess:(Coprocess *)coprocess {
+    DLog(@"Set coprocess of %@ to %@", self, coprocess);
     @synchronized (self) {
         coprocess_ = coprocess;
         self.hasMuteCoprocess = coprocess_.mute;
@@ -322,12 +323,26 @@ static void HandleSigChld(int n) {
     return _jobManager.fd;
 }
 
+// Send keyboard input, coprocess output, tmux commands, etc.
 - (void)writeTask:(NSData *)data {
+    [self writeTask:data coprocess:NO];
+}
+
+- (void)writeTask:(NSData *)data coprocess:(BOOL)fromCoprocessOutput {
     if (_isTmuxTask) {
         // Send keypresses to tmux.
         NSData *copyOfData = [data copy];
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.delegate tmuxClientWrite:copyOfData];
+        });
+        return;
+    }
+    if (self.sshIntegrationActive && fromCoprocessOutput) {
+        NSData *copyOfData = [data copy];
+        DLog(@"Direct data from coprocess to session to route to conductor: %@", data);
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf.delegate taskDidReadFromCoprocessWhileSSHIntegrationInUse:copyOfData];
         });
         return;
     }
@@ -837,6 +852,12 @@ static void HandleSigChld(int n) {
     return hasOutput;
 }
 
+- (void)writeToCoprocess:(NSData *)data {
+    @synchronized (self) {
+        [coprocess_.outputBuffer appendData:data];
+    }
+}
+
 // The bytes in data were just read from the fd.
 - (void)readTask:(char *)buffer length:(int)length {
     if (self.loggingHelper) {
@@ -849,8 +870,8 @@ static void HandleSigChld(int n) {
     [self.delegate threadedReadTask:buffer length:length];
 
     @synchronized (self) {
-        if (coprocess_) {
-            [coprocess_.outputBuffer appendData:[NSData dataWithBytes:buffer length:length]];
+        if (coprocess_ && !self.sshIntegrationActive) {
+            [self writeToCoprocess:[NSData dataWithBytes:buffer length:length]];
         }
     }
 }

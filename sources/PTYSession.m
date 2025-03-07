@@ -1847,6 +1847,7 @@ ITERM_WEAKLY_REFERENCEABLE
             NSString *conductor = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_CONDUCTOR]];
             if (conductor) {
                 aSession->_conductor = [iTermConductor newConductorWithJSON:conductor delegate:aSession];
+                aSession->_shell.sshIntegrationActive = YES;
             }
             if (aSession->_conductor) {
                 [aSession updateVariablesFromConductor];
@@ -1909,6 +1910,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     aSession->_conductor.delegate = nil;
                     [aSession->_conductor release];
                     aSession->_conductor = nil;
+                    aSession->_shell.sshIntegrationActive = NO;
                 }
             }
 
@@ -3167,6 +3169,12 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Restart session %@", self);
     assert(self.isRestartable);
     [_naggingController willRecycleSession];
+
+    _conductor.delegate = nil;
+    [_conductor release];
+    _conductor = nil;
+    _shell.sshIntegrationActive = NO;
+
     if (_exited) {
         [self replaceTerminatedShellWithNewInstance];
     } else {
@@ -3780,6 +3788,11 @@ ITERM_WEAKLY_REFERENCEABLE
     dispatch_async(dispatch_get_main_queue(), ^{
         [self brokenPipe];
     });
+}
+
+- (void)taskDidReadFromCoprocessWhileSSHIntegrationInUse:(NSData *)data {
+    DLog(@"coprocess -> tty: %@ (%@)", data.it_hexEncoded, data.shortDebugString);
+    [_conductor sendKeys:data];
 }
 
 - (void)taskDidChangePaused:(PTYTask *)task paused:(BOOL)paused {
@@ -15860,6 +15873,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                              initialDirectory:directory
                  shouldInjectShellIntegration:shouldInjectShellIntegration
                                        parent:previousConductor];
+    _shell.sshIntegrationActive = YES;
     _conductor.terminalConfiguration = savedState;
     if (localOrigin) {
         for (iTermTuple<NSString *, NSString *> *tuple in config.filesToCopy) {
@@ -15903,6 +15917,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _conductor = [_conductor.parent retain];
     _conductor.delegate = self;
     [self updateVariablesFromConductor];
+    _shell.sshIntegrationActive = _conductor != nil;
 }
 
 - (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier
@@ -15925,6 +15940,20 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                  channel:(uint8_t)channel
                                    depth:(int)depth {
     [_conductor handleSideChannelOutput:string pid:pid channel:channel depth:depth];
+}
+
+- (void)screenDidReadRawSSHData:(NSData *)data {
+    if (!_conductor) {
+        DLog(@"Read raw ssh data but there is no conductor");
+        return;
+    }
+    if (_shell.coprocess) {
+        DLog(@"Read raw SSH data, passing it on to the coprocess: %@", data);
+        DLog(@"tty -> coprocess: %@ (%@)", data.it_hexEncoded, data.shortDebugString);
+        [_shell writeToCoprocess:data];
+    } else {
+        DLog(@"Read raw ssh data but the shell has no coprocess");
+    }
 }
 
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth {
@@ -16004,6 +16033,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self updateVariablesFromConductor];
     _conductor.delegate = self;
     [_conductor startRecovery];
+    _shell.sshIntegrationActive = _conductor != nil;
 }
 
 - (iTermConductorRecovery *)screenHandleFramerRecoveryString:(NSString * _Nonnull)string {
@@ -16015,6 +16045,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_conductor autorelease];
     _conductor = [[iTermConductor alloc] initWithRecovery:recovery];
     _conductor.delegate = self;
+    _shell.sshIntegrationActive = _conductor != nil;
     [self updateVariablesFromConductor];
     return recovery;
 }
@@ -20145,6 +20176,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)updateVariablesFromConductor {
+    _shell.sshIntegrationActive = _conductor != nil;
     if (!_conductor) {
         self.variablesScope.homeDirectory = NSHomeDirectory();
         self.variablesScope.sshIntegrationLevel = 0;

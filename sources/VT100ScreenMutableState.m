@@ -6046,7 +6046,8 @@ launchCoprocessWithCommand:(NSString *)command
     return NO;
 }
 
-- (BOOL)tokenExecutorShouldDiscardTokensWithHighPriority:(BOOL)highPriority {
+- (BOOL)tokenExecutorShouldDiscardToken:(VT100Token *)token
+                       withHighPriority:(BOOL)highPriority {
     if (_exited) {
         return YES;
     }
@@ -6054,6 +6055,11 @@ launchCoprocessWithCommand:(NSString *)command
         return YES;
     }
     if (!highPriority && !_isTmuxGateway && _hasMuteCoprocess) {
+        DLog(@"%@ (is ssh output=%@, csi.p[0]=%@, csi.p[1]=%@)", token, @(token.type == SSH_OUTPUT), @(token.csi->p[0]), @(token.csi->p[1]));
+        if (token.type == SSH_OUTPUT && token.csi->p[0] > 0) {
+            DLog(@"not discarding token!");
+            return NO;
+        }
         return YES;
     }
     if (_suppressAllOutput) {

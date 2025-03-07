@@ -21,12 +21,13 @@ extern NSString *const kCoprocessStatusChangeNotification;
 @property (nonatomic, readonly) BOOL wantsWrite;
 @property (nonatomic, readonly) BOOL writeBufferHasRoom;
 @property (nonatomic, readonly) BOOL hasBrokenPipe;
+@property (atomic, readonly) BOOL sshIntegrationActive;
 
 - (void)processRead;
 - (void)processWrite;
 // Called on any thread
 - (void)brokenPipe;
-- (void)writeTask:(NSData *)data;
+- (void)writeTask:(NSData *)data coprocess:(BOOL)coprocess;
 - (void)didRegister;
 
 @end

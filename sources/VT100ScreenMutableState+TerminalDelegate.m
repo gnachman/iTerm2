@@ -2631,6 +2631,20 @@
     }];
 }
 
+- (void)terminalDidReadRawSSHData:(NSData *)data
+                              pid:(int)pid
+                          channel:(int)channel {
+    if (channel != -1) {
+        // Don't are about side-channel stuff
+        DLog(@"Ignore side channel (channel=%d)", channel);
+        return;
+    }
+    DLog(@"Add side effect to handle raw ssh data %@", data.shortDebugString);
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidReadRawSSHData:data];
+    }];
+}
+
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth {
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDidTerminateSSHProcess:pid code:code depth:depth];

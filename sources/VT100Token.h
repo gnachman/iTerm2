@@ -279,6 +279,7 @@ typedef enum {
     SSH_OUTPUT,  // %output
     SSH_TERMINATE,  // %terminate
     SSH_RECOVERY_BOUNDARY,
+    SSH_SIDE_CHANNEL,  // Synthetic - produced internally in VT100Terminal
 
     VT100_LITERAL
 } VT100TerminalTokenType;

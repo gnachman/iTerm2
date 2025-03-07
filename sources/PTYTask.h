@@ -38,6 +38,7 @@
 - (void)taskDidChangePaused:(PTYTask *)task paused:(BOOL)paused;
 - (void)taskMuteCoprocessDidChange:(PTYTask *)task hasMuteCoprocess:(BOOL)hasMuteCoprocess;
 - (void)taskDidResizeToGridSize:(VT100GridSize)gridSize pixelSize:(NSSize)pixelSize;
+- (void)taskDidReadFromCoprocessWhileSSHIntegrationInUse:(NSData *)data;
 
 @end
 
@@ -177,6 +178,10 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 @property(nonatomic) BOOL ttySizeInitialized;
 @property (nonatomic, readonly) iTermWinSizeController *winSizeController;
 
+// When ssh integration is active coprocess IO must be done after parsing ssh
+// integraton framing so PTYTask needs to know about it.
+@property(atomic) BOOL sshIntegrationActive;
+
 + (NSMutableDictionary *)mutableEnvironmentDictionary;
 
 - (instancetype)init;
@@ -206,6 +211,7 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 - (void)processWrite;
 
 - (void)stopCoprocess;
+- (void)writeToCoprocess:(NSData *)data;
 
 // Monoserver:
 // If [iTermAdvancedSettingsModel runJobsInServers] is on, then try for up to
