@@ -2617,7 +2617,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 - (NSString *)sanitizedUsername {
     DLog(@"validate %@", self);
     NSMutableCharacterSet *legalCharacters = [NSMutableCharacterSet alphanumericCharacterSet];
-    [legalCharacters addCharactersInString:@"_-+."];
+    [legalCharacters addCharactersInString:[iTermAdvancedSettingsModel validCharactersInSSHUserNames]];
     NSCharacterSet *illegalCharacters = [legalCharacters invertedSet];
     NSRange range = [self rangeOfCharacterFromSet:illegalCharacters];
     if (range.location != NSNotFound) {

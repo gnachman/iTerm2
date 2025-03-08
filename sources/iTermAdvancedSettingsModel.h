@@ -463,6 +463,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useUnevenTabs;
 + (double)userNotificationTriggerRateLimit;
 + (BOOL)openProfilesInNewWindow;
++ (NSString *)validCharactersInSSHUserNames;
 + (BOOL)vs16Supported;
 + (BOOL)vs16SupportedInPrimaryScreen;
 

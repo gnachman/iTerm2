@@ -648,6 +648,7 @@ DEFINE_BOOL(rememberTmuxWindowSizes, YES, SECTION_TMUX @"Remember window sizes i
 #define SECTION_SSH @"SSH Integration: "
 
 DEFINE_STRING(unameCommand, @"uname -s", SECTION_SSH @"Command used to set the `uname` variable.\nThe main use of this is to use in the AI prompt so the langauge model knows the operating system.");
+DEFINE_STRING(validCharactersInSSHUserNames, @"_-+.", SECTION_SSH @"Valid characters in SSH user names\nAlphanumerics are always valid. This specifies other valid characters.");
 
 #pragma mark Warnings
 
