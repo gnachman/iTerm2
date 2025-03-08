@@ -161,6 +161,10 @@ class iTermSecureUserDefaults: NSObject {
     }
 }
 
+// Save secure user defaults here if the home directory is on a network mount.
+// Secure user defaults must be writable only by root and network mounts obviously can't do that.
+fileprivate let FallbackFolder = "/usr/local/iTerm2-secure-settings"
+
 // Secure user defaults are a way of saving user preferences that are hard to tamper with.
 // Like UserDefaults, it is a database of key-value pairs.
 // Unlike UserDefaults, the user must authenticate to set a value.
@@ -177,10 +181,27 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     let defaultValue: T
     private var cached: T?
 
-    enum SecureUserDefaultError: Error {
-        case noAppSupportDirectory
+    enum SecureUserDefaultError: LocalizedError {
+        case usrLocalIsFile
+        case failedToCreateUsrLocal
         case badMagic
         case scriptError(String?)
+        case directoryDoesNotExist
+
+        var errorDescription: String? {
+            switch self {
+            case .usrLocalIsFile:
+                "\(FallbackFolder) is a file, not a directory. Please remove it and try again."
+            case .failedToCreateUsrLocal:
+                "Failed to create \(FallbackFolder). Please manually create this folder."
+            case .badMagic:
+                "The secure user default is corrupted."
+            case .scriptError(let message):
+                message
+            case .directoryDoesNotExist:
+                "The containing directory for secure user defaults does not exist"
+            }
+        }
     }
 
     init(_ key: String, defaultValue: T) {
@@ -201,7 +222,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     var url: URL? {
-        return try? Self.path(key)
+        return try? Self.path(key, create: false)
     }
 
     private func get() throws -> T {
@@ -210,10 +231,21 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
 
     func set(_ newValue: T?) throws {
         cached = nil
-        if let value = newValue {
-            try Self.store(key, value: value)
-        } else {
-            try Self.delete(key)
+        do {
+            if let value = newValue {
+                try Self.store(key, value: value)
+            } else {
+                try Self.delete(key)
+            }
+        } catch {
+            iTermWarning.show(withTitle: error.localizedDescription,
+                              actions: ["OK"],
+                              accessory: nil,
+                              identifier: "NoSyncSecureUserDefaultsSetFailed",
+                              silenceable: .kiTermWarningTypeTemporarilySilenceable,
+                              heading: "Failed to Save Secure Setting",
+                              window: nil)
+            throw error
         }
     }
 
@@ -222,18 +254,70 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         try Self.delete(key)
     }
 
-    private static func path(_ key: String) throws -> URL {
-        precondition(key.rangeOfCharacter(from: CharacterSet.alphanumerics.inverted) == nil)
-        guard let appSupportString = FileManager.default.applicationSupportDirectory() else {
-            throw SecureUserDefaultError.noAppSupportDirectory
+    private static func fallbackBaseDirectory(create: Bool) throws -> String {
+        // When the user's home directory is not local, we use FallbackFolder
+        let path = FallbackFolder
+
+        var isDirectory = ObjCBool(false)
+        if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) {
+            if isDirectory.boolValue {
+                // If it already exists and is a directory, just use it.
+                return path
+            }
+            if !create {
+                throw SecureUserDefaultError.directoryDoesNotExist
+            }
+            // wtf, it exists but is not a directory.
+            throw SecureUserDefaultError.usrLocalIsFile
         }
-        let appSupport = URL(fileURLWithPath: appSupportString)
-        return appSupport.appendingPathComponent(key).appendingPathExtension("secureSetting")
+        if !create {
+            throw SecureUserDefaultError.directoryDoesNotExist
+        }
+        // Create it since it does not exist.
+        // Folder is owned by root without sticky bit so user can delete files without permission (that enables the delete() method).
+        // If the user rewrites a file the ownership changes, which we can check for.
+        // I'm not worried about TOCTOU because the threat model is concerned with accidental changes rather than an active attacker.
+        let code =
+        """
+        do shell script "
+            umask 000
+            /bin/mkdir -m 777 -p \(path)
+        " with prompt "iTerm2 needs to create \(path) to store secure settings because your home directory is on a network file system." with administrator privileges
+        """
+        let script = NSAppleScript(source: code)
+        var error: NSDictionary? = nil
+        script?.executeAndReturnError(&error)
+        guard error == nil else {
+            throw SecureUserDefaultError.failedToCreateUsrLocal
+        }
+        return path
     }
 
-    private static func magic(_ key: String) throws -> String {
-        let filePath = try Self.path(key)
-        return magic(key, filePath: filePath)
+    private static func baseDirectory(create: Bool) throws -> String {
+        guard let appSupportString = FileManager.default.applicationSupportDirectory() else {
+            return try fallbackBaseDirectory(create: create)
+        }
+        // I have to go directly to user defaults rather than through
+        // iTermAdvancedSettingsModel because this is called during
+        // iTermAdvancedSettingsModel.initialize, so its values may not be
+        // loaded yet.
+        let pathsToIgnore = UserDefaults.standard.string(forKey: "PathsToIgnore")?.components(
+            separatedBy: ",") ?? []
+        let isLocal = FileManager.default.fileIsLocal(
+            appSupportString,
+            additionalNetworkPaths: pathsToIgnore,
+            allowNetworkMounts: false)
+        if !isLocal {
+            return try fallbackBaseDirectory(create: create)
+        }
+        return appSupportString
+    }
+
+    private static func path(_ key: String,
+                             create: Bool) throws -> URL {
+        precondition(key.rangeOfCharacter(from: CharacterSet.alphanumerics.inverted) == nil)
+        let baseURL = URL(fileURLWithPath: try baseDirectory(create: create))
+        return baseURL.appendingPathComponent(key).appendingPathExtension("secureSetting")
     }
 
     private static func magic(_ key: String, filePath: URL) -> String {
@@ -245,7 +329,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     private static func load<U: SecureUserDefaultStringTranscodable>(_ key: String) throws -> U? {
-        let fileURL = try Self.path(key)
+        let fileURL = try Self.path(key, create: false)
         // Check if the file exists before gettings its attributes to avoid an annoying exception
         // while debugging.
         guard FileManager.default.fileExists(atPath: fileURL.path),
@@ -272,14 +356,14 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     private static func delete(_ key: String) throws {
-        let filename = try path(key)
+        let filename = try path(key, create: false)
         try FileManager.default.removeItem(at: filename)
     }
 
     private static func store<U: SecureUserDefaultStringTranscodable>(_ key: String, value: U) throws {
         // Write to a temp file and then move it. If the destination is a link then it's not safe
         // to write to it.
-        let unsafeURL = try self.path(key)
+        let unsafeURL = try self.path(key, create: true)
         let path = unsafeURL.path.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\\\\\"")
         let magic = Self.magic(key, filePath: URL(fileURLWithPath: path))
         let encodedValue = SecureUserDefaultValue<U>(value: value).encodedString
