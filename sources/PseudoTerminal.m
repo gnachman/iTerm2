@@ -3474,9 +3474,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
     {
         NSRect frame = rect;
+        BOOL setFrame = YES;
         switch (windowType) {
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             case WINDOW_TYPE_LION_FULL_SCREEN:
+                DLog(@"We shouldn't set the frame");
+                setFrame = NO;
+                break;
             case WINDOW_TYPE_TOP:
             case WINDOW_TYPE_BOTTOM:
             case WINDOW_TYPE_MAXIMIZED:
@@ -3506,12 +3510,21 @@ ITERM_WEAKLY_REFERENCEABLE
                 frame = [self rectByAdjustingWidth:rect];
                 break;
         }
-        if (!NSEqualRects(frame, rect)) {
+        if (setFrame) {
+            // As seen in issue 12167, orderWindow:relativeTo: (called by makeKeyAndOrderFront:), can cause the window's frame to change.
+            // The logic in -[NSWindow _reallyDoOrderWindowAboveOrBelow:] is
+            // a mess. It seems to happen when the window wouldn't fit ont he screen or it would be on a secondary screen with separate spaces, plus other bits and bobs.
+            // If you're using window restoration this code path is basically a
+            // no-op and otherwise we should respect the saved frames even if they're silly since an arrangement reflects the user's true intent, regardless of AppKit's opinion about secondary displays.
+            // I will follow that up by canonicalizing the window frame in case it is something like a X-of-screen or maximized frame that is configuration dependent. At least it should be on the intended display now.
+            //
             // Note: this has no effect when using system window restoration because the window's size
             // is set from the completion block passed to PseudoTerminalRestorer, which is controlled
             // by the system. However, it is still effective when restoring a saved arrangement.
             DLog(@"Set frame with adjustments %@ in %@", NSStringFromRect(frame), self);
             [[self window] setFrame:frame display:YES];
+            DLog(@"Now canonicalize the frame %@", self);
+            [self canonicalizeWindowFrame];
         } else {
             DLog(@"No change needed");
         }
