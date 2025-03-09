@@ -581,6 +581,29 @@ static void SwapInt(int *a, int *b) {
     return newSubSelections;
 }
 
+- (VT100GridAbsCoord)absCoordFromAbsCoord:(VT100GridAbsCoord)oldCoord
+                                 newWidth:(int)newWidth {
+    VT100GridAbsCoordRange absRange =
+        VT100GridAbsCoordRangeMake(oldCoord.x,
+                                   oldCoord.y,
+                                   oldCoord.x + 1,
+                                   oldCoord.y);
+    const long long overflow = self.cumulativeScrollbackOverflow;
+    __block VT100GridAbsCoord result = VT100GridAbsCoordMake(-1, -1);
+    VT100GridAbsCoordRangeTryMakeRelative(absRange, overflow, ^(VT100GridCoordRange range) {
+        VT100GridCoordRange updatedRange;
+        const BOOL ok = [self convertRange:range
+                                   toWidth:newWidth
+                                        to:&updatedRange
+                              inLineBuffer:self.linebuffer
+                             tolerateEmpty:NO];
+        if (ok) {
+            result = VT100GridAbsCoordRangeFromCoordRange(updatedRange, overflow).start;
+        }
+    });
+    return result;
+}
+
 - (void)updateIntervalTreeWithWidth:(int)newWidth {
     NSArray<id<IntervalTreeObject>> *objects = [self.mutableIntervalTree mutableObjects];
     NSArray<id<IntervalTreeImmutableEntry>> *entries = [objects mapWithBlock:^id(id<IntervalTreeImmutableObject> anObject) {
@@ -1098,6 +1121,9 @@ static void SwapInt(int *a, int *b) {
                             previouslyVisibleLineRange.location,
                             0,
                             previouslyVisibleLineRange.location + 1);
+    VT100GridCoord savedCursorPosition = [self.terminal savedCursorPosition];
+    savedCursorPosition.y += self.numberOfScrollbackLines;
+    const VT100GridAbsCoord absSavedCursorPosition = VT100GridAbsCoordFromCoord(savedCursorPosition, self.totalScrollbackOverflow);
 
     [self sanityCheckIntervalsFrom:self.currentGrid.size note:@"pre-hoc"];
     [self.temporaryDoubleBuffer resetExplicitly];
@@ -1159,6 +1185,8 @@ static void SwapInt(int *a, int *b) {
         newSubSelections = [self subSelectionsWithConvertedRangesFromSelection:selection
                                                                               newWidth:newSize.width];
     }
+    const VT100GridAbsCoord updatedSavedCursorPosition = [self absCoordFromAbsCoord:absSavedCursorPosition
+                                                                           newWidth:newSize.width];
 
     [self fixUpPrimaryGridIntervalTreeForNewSize:newSize
                                      wasShowingAltScreen:wasShowingAltScreen];
@@ -1194,6 +1222,16 @@ static void SwapInt(int *a, int *b) {
     } else {
         // Was showing primary grid. Fix up notes in the alt screen.
         [self updateAlternateScreenIntervalTreeForNewSize:newSize];
+    }
+    if (updatedSavedCursorPosition.x >= 0) {
+        BOOL ok;
+        VT100GridCoord coord = VT100GridCoordFromAbsCoord(updatedSavedCursorPosition,
+                                                          self.totalScrollbackOverflow,
+                                                          &ok);
+        if (ok) {
+            coord.y = MAX(0, coord.y - self.numberOfScrollbackLines);
+            self.terminal.savedCursorPosition = coord;
+        }
     }
 
     const int newTop = rangeOfVisibleLinesConvertedCorrectly ? convertedRangeOfVisibleLines.start.y : -1;
