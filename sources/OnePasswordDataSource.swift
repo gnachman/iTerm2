@@ -38,7 +38,43 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
     private var available = Availability.uncached
 
     private var requester: OnePasswordTokenRequester?
+    private static var haveCheckedAccounts = false
     private func asyncGetToken(_ completion: @escaping (Result<OnePasswordTokenRequester.Auth, Error>) -> ()) {
+        if Self.haveCheckedAccounts {
+            asyncReallyGetToken(completion)
+            return
+        }
+        DLog("Checking account list")
+        OnePasswordAccountPicker.asyncGetAccountList { [weak self] result in
+            DLog("result=\(result)")
+            guard let self else {
+                DLog("I got dealloced")
+                return
+            }
+            Self.haveCheckedAccounts = true
+
+            switch result {
+            case .success(let allAccounts):
+                DLog("\(allAccounts)")
+                let accounts = allAccounts.filter {
+                    $0.email != nil && $0.account_uuid != nil
+                }
+                DLog("\(accounts)")
+                if accounts.count > 1 {
+                    let name = iTermAdvancedSettingsModel.onePasswordAccount()!
+                    DLog("name=\(name)")
+                    if !accounts.anySatisfies({ $0.email == name || $0.account_uuid == name || $0.user_uuid == name }) {
+                        OnePasswordAccountPicker.askUserToSelect(from: accounts)
+                    }
+                }
+                asyncReallyGetToken(completion)
+            case .failure:
+                asyncReallyGetToken(completion)
+            }
+        }
+    }
+
+    private func asyncReallyGetToken(_ completion: @escaping (Result<OnePasswordTokenRequester.Auth, Error>) -> ()) {
         switch auth {
         case .biometric, .token(_):
             completion(.success(auth!))

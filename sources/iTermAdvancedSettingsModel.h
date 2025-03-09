@@ -288,6 +288,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)notificationOcclusionThreshold;
 + (int)numberOfLinesForAccessibility;
 + (NSString *)onePasswordAccount;
++ (void)setOnePasswordAccount:(NSString *)value;
 + (BOOL)openFileInNewWindows;
 + (BOOL)openFileOverridesSendText;
 + (BOOL)openNewWindowAtStartup;

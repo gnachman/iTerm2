@@ -132,6 +132,9 @@ class OnePasswordUtils {
         case .token(let token):
             result["OP_SESSION_my"] = token
         }
+        if !iTermAdvancedSettingsModel.onePasswordAccount().isEmpty {
+            result["OP_ACCOUNT"] = iTermAdvancedSettingsModel.onePasswordAccount()
+        }
         return result
     }
 
@@ -161,6 +164,80 @@ class OnePasswordUtils {
         }
         DLog("Didn't get a version number")
         return nil
+    }
+}
+
+class OnePasswordAccountPicker {
+    struct Account: Codable {
+        var url: String?
+        var email: String?
+        var user_uuid: String?
+        var account_uuid: String?
+    }
+
+    static func askUserToSelect(from accounts: [Account]) {
+        DLog("begin")
+        let alert = NSAlert()
+        alert.messageText = "Select an Account"
+        alert.informativeText = "Please choose an account:"
+        alert.alertStyle = .informational
+
+        var ids = [String]()
+        for account in accounts {
+            if let email = account.email, let uuid = account.account_uuid {
+                alert.addButton(withTitle: email)
+                ids.append(uuid)
+            }
+        }
+        if ids.count == 1 {
+            iTermAdvancedSettingsModel.setOnePasswordAccount(ids[0])
+            return
+        }
+        it_assert(ids.count > 1)
+
+        // Can't present a sheet modal within a sheet modal so go app modal instead.
+        let response = alert.runModal()
+
+        let selectedIndex = response.rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+
+        let uuid = ids[selectedIndex]
+        iTermAdvancedSettingsModel.setOnePasswordAccount(uuid)
+    }
+
+    static func asyncGetAccountList(_ completion: @escaping (Result<[Account], Error>) -> ()) {
+        DLog("Read account list")
+        let command = CommandLinePasswordDataSource.CommandRequestWithInput(
+            command: OnePasswordUtils.pathToCLI,
+            args: ["account", "list", "--format=json"],
+            env: OnePasswordUtils.basicEnvironment,
+            input: Data())
+        DLog("Will execute account list")
+        command.execAsync { (output: Output?, error: (any Error)?) in
+            handle(output: output, error: error, completion: completion)
+        }
+    }
+
+    private static func handle(output: Output?,
+                               error: (any Error)?,
+                               completion: (Result<[Account], Error>) -> ()) {
+        DLog("account list finished")
+        guard let output = output else {
+            DLog("But there is no output")
+            completion(.failure(error!))
+            return
+        }
+        guard output.returnCode == 0 else {
+            DLog("But the return code is nonzero")
+            completion(.failure(OnePasswordDataSource.OPError.unexpectedError))
+            return
+        }
+        let decoder = JSONDecoder()
+        guard let accounts = try? decoder.decode([Account].self, from: output.stdout) else {
+            DLog("Failed to parse \(output)")
+            completion(.failure(OnePasswordDataSource.OPError.unexpectedError))
+            return
+        }
+        completion(.success(accounts))
     }
 }
 

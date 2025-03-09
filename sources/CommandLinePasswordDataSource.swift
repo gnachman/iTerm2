@@ -68,7 +68,10 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
     }
 }
 
-struct Output {
+struct Output: CustomDebugStringConvertible {
+    var debugDescription: String {
+        "stderr=\(stderr.stringOrHex)\nstdout=\(stdout.stringOrHex)\nreturnCode=\(returnCode)"
+    }
     let stderr: Data
     let stdout: Data
     let returnCode: Int32
