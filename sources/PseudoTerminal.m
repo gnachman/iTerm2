@@ -11720,6 +11720,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)broadcastPassword:(NSString *)password {
+    ITCriticalError(NO, @"Broadcasting the password! This is probably your problem");
+
     [iTermBroadcastPasswordHelper tryToSendPassword:password
                                          toSessions:self.broadcastSessions
                                          completion:
@@ -11763,6 +11765,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast {
+    if ([iTermAdvancedSettingsModel debugPhase] == 1) {
+        [self.currentSession writeTaskNoBroadcast:[password stringByAppendingString:@"\n"]];
+        return;
+    }
     if (broadcast) {
         [self broadcastPassword:password];
     } else {

@@ -51,7 +51,10 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
     _password = [password copy];
     [_timer invalidate];
     _timer = nil;
-
+    if ([iTermAdvancedSettingsModel debugPhase] == 3) {
+        [self enterPassword];
+        return;
+    }
     if (![iTermUserDefaults probeForPassword] || [iTermAdvancedSettingsModel echoProbeDuration] == 0) {
         [self enterPassword];
         return;
@@ -161,6 +164,15 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
 }
 
 - (void)enterPassword {
+    if ([iTermAdvancedSettingsModel debugPhase] == 4) {
+        [self.delegate echoProbe:self writeString:[_password stringByAppendingString:@"\n"]];
+        return;
+    }
+    if ([iTermAdvancedSettingsModel debugPhase] == 5) {
+        [self.delegate echoProbe:self writeString:_password];
+        [self.delegate echoProbe:self writeString:@"\n"];
+        return;
+    }
     const BOOL shouldSend = [self.delegate echoProbeShouldSendPassword:self];
     if (shouldSend) {
         [self.delegate echoProbe:self writeString:_password];

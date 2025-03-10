@@ -495,6 +495,8 @@ DEFINE_BOOL(enableZoomMenu, YES, SECTION_GENERAL @"Allow the standard system men
 DEFINE_SECURE_STRING(browserBundleID, BrowserBundleID, SECTION_GENERAL @"Bundle ID of browser to open URLs with.\nLeave empty to use system default.");
 #endif  // ITERM2_SHARED_ARC
 
+DEFINE_INT(debugPhase, 0, SECTION_GENERAL @"Debugging mode for issue 11443");
+
 #pragma mark - Drawing
 
 #define SECTION_DRAWING @"Drawing: "

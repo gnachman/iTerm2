@@ -7705,6 +7705,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (void)enterPassword:(NSString *)password {
+    if ([iTermAdvancedSettingsModel debugPhase] == 2) {
+        [self writeTaskNoBroadcast:password];
+        return;
+    }
     [self incrementDisableFocusReporting:1];
     [_screen beginEchoProbeWithBackspace:[self backspaceData] password:password delegate:self];
 }

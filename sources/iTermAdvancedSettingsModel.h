@@ -481,7 +481,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)wrapFocus;
 + (BOOL)zeroWidthSpaceAdvancesCursor;
 + (BOOL)zippyTextDrawing;
-
++ (int)debugPhase;
 
 
 @end
