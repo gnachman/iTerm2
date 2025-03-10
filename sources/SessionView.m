@@ -37,6 +37,7 @@
 #import "PTYTab.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
+#import "ProfilesColorsPreferencesViewController.h"
 #import "SessionTitleView.h"
 #import "SplitSelectionView.h"
 
@@ -153,6 +154,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermCursorSmearView *_smearView;
     NSInteger _contentViewIndex;  // for metal or legacy view - whatever draws terminal content goes at this index.
     iTermSelectSessionButton *_sessionSelectorButton;
+
+    // Don't dim while color settings is open.
+    int _colorsSettingsVisible;
 }
 
 + (double)titleHeight {
@@ -286,6 +290,15 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                  selector:@selector(sessionSelectorStatusDidChange:)
                                                      name:iTermSessionSelector.statusDidChange
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(colorPreferencesDidDisappear:)
+                                                     name:iTermColorPreferencesDidDisappear
+                                                   object:nil];
+         [[NSNotificationCenter defaultCenter] addObserver:self
+                                                  selector:@selector(colorPreferencesDidAppear:)
+                                                      name:iTermColorPreferencesDidAppear
+                                                    object:nil];
+
     }
     return self;
 }
@@ -892,6 +905,18 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                               toView:self];
 }
 
+- (void)colorPreferencesDidDisappear:(NSNotification *)notification {
+    _colorsSettingsVisible -= 1;
+    DLog(@"_colorsSettingsVisible <- %@", @(_colorsSettingsVisible));
+    [self updateDim];
+}
+
+- (void)colorPreferencesDidAppear:(NSNotification *)notification {
+    _colorsSettingsVisible += 1;
+    DLog(@"_colorsSettingsVisible <- %@", @(_colorsSettingsVisible));
+    [self updateDim];
+}
+
 - (void)sessionSelectorStatusDidChange:(NSNotification *)notification {
     [self updateSessionSelectorButton];
 }
@@ -1094,6 +1119,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (double)adjustedDimmingAmount {
+    DLog(@"_colorsSettingsVisible=%d", _colorsSettingsVisible);
+    if (_colorsSettingsVisible > 0) {
+        return 0;
+    }
     int x = 0;
     if (_dim) {
         x++;

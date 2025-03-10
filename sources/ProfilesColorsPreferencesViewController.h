@@ -8,6 +8,8 @@
 
 #import "iTermProfilePreferencesBaseViewController.h"
 
+extern NSString *const iTermColorPreferencesDidDisappear;
+extern NSString *const iTermColorPreferencesDidAppear;
 
 @interface ProfilesColorsPreferencesViewController : iTermProfilePreferencesBaseViewController
 + (NSString *)nameOfPresetUsedByProfile:(Profile *)profile;

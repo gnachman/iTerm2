@@ -29,6 +29,9 @@
 
 #import <ColorPicker/ColorPicker.h>
 
+NSString *const iTermColorPreferencesDidDisappear = @"iTermColorPreferencesDidDisappear";
+NSString *const iTermColorPreferencesDidAppear = @"iTermColorPreferencesDidAppear";
+
 static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery";
 
 @interface ProfilesColorsPreferencesViewController()<iTermHueVisualizationViewDelegate, iTermSizeRememberingViewDelegate, NSMenuDelegate>
@@ -304,6 +307,19 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     _hueVisualization.delegate = self;
 }
 
+- (void)viewWillAppear {
+    DLog(@"Colors will appear");
+    [super viewWillAppear];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermColorPreferencesDidAppear
+                                                        object:nil];
+}
+
+- (void)viewWillDisappear {
+    DLog(@"Colors will disappear");
+    [super viewWillDisappear];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermColorPreferencesDidDisappear
+                                                        object:nil];
+}
 - (void)reloadProfile {
     [super reloadProfile];
     [self updateModeEnabled:[self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]];
