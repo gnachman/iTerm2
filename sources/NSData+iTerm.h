@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 
   // Base-64 decodes string and returns data or nil.
 + (NSData * _Nullable)dataWithBase64EncodedString:(NSString *)string;
++ (NSData * _Nullable)dataWithURLSafeBase64EncodedString:(NSString *)string;
 
 // Returns termination status.
 + (int)untarFromArchive:(NSURL *)tarfile to:(NSURL *)destinationFolder;
@@ -54,6 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)it_hexEncoded;
 - (NSData * _Nullable)it_compressedData;
 - (NSString * _Nullable)shortDebugString;
+- (NSString * _Nullable)humanFriendlyStringRepresentation;
 
 - (NSData * _Nullable)aesCBCEncryptedDataWithPCKS7PaddingAndKey:(NSData *)key
                                                              iv:(NSData *)iv;

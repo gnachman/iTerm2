@@ -44,6 +44,8 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 
 - (NSString *)contextMenuSelectedText:(iTermTextViewContextMenuHelper *)contextMenu
                                capped:(int)maxBytes;
+- (NSString *)contextMenuUnstrippedSelectedText:(iTermTextViewContextMenuHelper *)contextMenu
+                                         capped:(int)maxBytes;
 
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                                markOnLine:(int)line;
@@ -119,8 +121,9 @@ toggleTerminalStateForMenuItem:(NSMenuItem *)item;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
 copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range;
 
+// obj is NSString or NSData
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-               copy:(NSString *)string;
+               copy:(id)obj;
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
  runCommandInWindow:(NSString *)command;

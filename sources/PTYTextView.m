@@ -3036,6 +3036,17 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return YES;
 }
 
+- (BOOL)copyData:(NSData *)data {
+    NSString *maybeString = [data stringWithEncoding:NSUTF8StringEncoding];
+    if (maybeString) {
+        return [self copyString:maybeString];
+    }
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    [pasteboard clearContents];
+    [pasteboard setData:data forType:@"public.data"];
+    return YES;
+}
+
 - (IBAction)copyWithStyles:(id)sender {
     if ([self anyPortholeHasSelection]) {
         [self copyFromPortholeAsAttributedString];

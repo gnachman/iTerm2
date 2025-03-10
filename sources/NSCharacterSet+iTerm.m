@@ -3793,4 +3793,36 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
     return unwantedCharacters;
 }
 
++ (NSCharacterSet *)it_base64Characters {
+    static NSCharacterSet *cached;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *charset = [[NSMutableCharacterSet alloc] init];
+        [charset addCharactersInRange:NSMakeRange('A', 26)];
+        [charset addCharactersInRange:NSMakeRange('a', 26)];
+        [charset addCharactersInRange:NSMakeRange('0', 10)];
+        [charset addCharactersInString:@"+/="];
+        [charset formUnionWithCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        cached = charset;
+
+    });
+    return cached;
+}
+
++ (NSCharacterSet *)it_urlSafeBse64Characters {
+    static NSCharacterSet *cached;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *charset = [[NSMutableCharacterSet alloc] init];
+        [charset addCharactersInRange:NSMakeRange('A', 26)];
+        [charset addCharactersInRange:NSMakeRange('z', 26)];
+        [charset addCharactersInRange:NSMakeRange('0', 10)];
+        [charset addCharactersInString:@"-_="];
+        [charset formUnionWithCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        cached = charset;
+
+    });
+    return cached;
+}
+
 @end

@@ -1458,6 +1458,20 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     return [self selectedTextCappedAtSize:maxBytes];
 }
 
+- (NSString *)contextMenuUnstrippedSelectedText:(iTermTextViewContextMenuHelper *)contextMenu
+                                         capped:(int)maxBytes {
+    iTermStringSelectionExtractor *extractor =
+    [[iTermStringSelectionExtractor alloc] initWithSelection:self.selection
+                                                    snapshot:[self.dataSource snapshotDataSource]
+                                                     options:iTermSelectionExtractorOptionsCopyLastNewline
+                                                    maxBytes:maxBytes
+                                           minimumLineNumber:0];
+    iTermRenegablePromise<NSString *> *promise = [iTermSelectionPromise string:extractor
+                                                                    allowEmpty:![iTermAdvancedSettingsModel disallowCopyEmptyString]];
+    [promise wait];
+    return [promise maybeValue] ?: @"";
+}
+
 - (iTermOffscreenCommandLine *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
             offscreenCommandLineForClickAt:(NSPoint)windowPoint {
     return [self offscreenCommandLineForClickAt:windowPoint];
@@ -1711,8 +1725,17 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-               copy:(NSString *)string {
-    const BOOL copied = [self copyString:string];
+               copy:(id)obj {
+    NSString *string = [NSString castFrom:obj];
+    BOOL copied = NO;
+    if (string) {
+        copied = [self copyString:string];
+    } else {
+        NSData *data = [NSData castFrom:obj];
+        if (data) {
+            copied = [self copyData:data];
+        }
+    }
     if (copied) {
         [ToastWindowController showToastWithMessage:@"Copied"
                                            duration:1.5

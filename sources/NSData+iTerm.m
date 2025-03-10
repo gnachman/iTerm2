@@ -40,6 +40,12 @@
     return data;
 }
 
++ (NSData * _Nullable)dataWithURLSafeBase64EncodedString:(NSString *)string {
+    NSString *hacked = [string stringByReplacingOccurrencesOfString:@"-" withString:@"+"];
+    hacked = [hacked stringByReplacingOccurrencesOfString:@"_" withString:@"/"];
+    return [NSData dataWithBase64EncodedString:hacked];
+}
+
 - (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak {
     // Subtract because the result includes the trailing null. Take MAX in case it returns 0 for
     // some reason.
@@ -326,6 +332,45 @@
         }
     }
     return result;
+}
+
+- (NSString * _Nullable)humanFriendlyStringRepresentation {
+    const uint8_t *bytes = self.bytes;
+    NSUInteger length = self.length;
+
+    // Try to decode as UTF-8. If it's all whitespace, that sucks for humans so hex encode that.
+    NSString *utf8String = [self stringWithEncoding:NSUTF8StringEncoding];
+    const BOOL containsNonWhitespace = [utf8String rangeOfCharacterFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet].invertedSet].location != NSNotFound;
+    if (utf8String && containsNonWhitespace) {
+        NSMutableString *sanitizedString = [NSMutableString string];
+        // Replace control characters
+        for (NSUInteger i = 0; i < utf8String.length; i++) {
+            unichar ch = [utf8String characterAtIndex:i];
+            if (ch == '\r') {
+                [sanitizedString appendString:@"\\r"];
+            } else if (ch == '\n') {
+                [sanitizedString appendString:@"\\n"];
+            } else if (ch == '\t') {
+                [sanitizedString appendString:@"\\t"];
+            } else if (ch < 0x20 || ch == 0x7F) {
+                [sanitizedString appendFormat:@"\\x%02X", ch];
+            } else {
+                [sanitizedString appendFormat:@"%C", ch];
+            }
+        }
+        return sanitizedString;
+    }
+
+    // If not valid UTF-8, return space-delimited hex values
+    NSMutableString *hexString = [NSMutableString string];
+    for (NSUInteger i = 0; i < length; i++) {
+        if (i > 0) {
+            [hexString appendString:@" "];
+        }
+        [hexString appendFormat:@"%02X", bytes[i]];
+    }
+
+    return hexString;
 }
 
 - (NSString *)it_hexEncoded {

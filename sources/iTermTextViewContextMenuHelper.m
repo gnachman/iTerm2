@@ -28,6 +28,7 @@
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
 #import "NSColor+iTerm.h"
+#import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "URLAction.h"
 #import "WindowControllerInterface.h"
@@ -234,6 +235,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(apiMenuItem:) ||
         [item action] == @selector(copyLinkAddress:) ||
         [item action] == @selector(copyString:) ||
+        [item action] == @selector(copyData:) ||
         [item action] == @selector(revealCommandInfo:) ||
         [item action] == @selector(removeNamedMark:)) {
         return YES;
@@ -422,6 +424,21 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                     needSeparator = YES;
                 }
             }
+            if (shortSelectedText.mayBeBase64Encoded && shortSelectedText.length > 3) {
+                NSData *decoded = [NSData dataWithBase64EncodedString:shortSelectedText];
+                if (!decoded) {
+                    decoded = [NSData dataWithURLSafeBase64EncodedString:shortSelectedText];
+                }
+                if (decoded) {
+                    NSMenuItem *item = [[NSMenuItem alloc] init];
+                    item.title = [NSString stringWithFormat:@"Base64: %@", [decoded humanFriendlyStringRepresentation]];
+                    item.action = @selector(copyData:);
+                    item.representedObject = decoded;
+                    [theMenu addItem:item];
+                    needSeparator = YES;
+                }
+            }
+
         }
         if ([self.delegate contextMenuSelectionIsReasonable:self]) {
             NSString *text = [self.delegate contextMenuSelectedText:self capped:0];
@@ -484,6 +501,32 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                         needSeparator = YES;
                     }
                 }
+            }
+            {
+                NSString *text = [self.delegate contextMenuUnstrippedSelectedText:self capped:0];
+                if (text.mayBeBase64Encoded) {
+                    NSData *decoded = [NSData dataWithBase64EncodedString:text];
+                    if (!decoded) {
+                        decoded = [NSData dataWithURLSafeBase64EncodedString:text];
+                    }
+                    if (decoded) {
+                        NSMenuItem *item = [[NSMenuItem alloc] init];
+                        item.title = @"Copy Base64-Decoded";
+                        item.target = self;
+                        item.action = @selector(copyData:);
+                        item.representedObject = decoded;
+                        [theMenu addItem:item];
+                        needSeparator = YES;
+                    }
+                }
+                NSString *encoded = [[text dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:NSDataBase64Encoding76CharacterLineLength];
+                NSMenuItem *item = [[NSMenuItem alloc] init];
+                item.title = @"Copy Base64-Encoded";
+                item.target = self;
+                item.action = @selector(copyString:);
+                item.representedObject = encoded;
+                [theMenu addItem:item];
+                needSeparator = YES;
             }
         }
         if (needSeparator) {
@@ -1105,6 +1148,12 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     NSMenuItem *item = sender;
     [self.delegate contextMenu:self copy:item.representedObject];
 }
+
+- (void)copyData:(id)sender {
+    NSMenuItem *item = sender;
+    [self.delegate contextMenu:self copy:item.representedObject];
+}
+
 - (void)swapSessions:(id)sender {
     [self.delegate contextMenuSwapSessions:self];
 }

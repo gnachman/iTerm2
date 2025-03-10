@@ -901,6 +901,16 @@ int decode_utf8_char(const unsigned char *datap,
     return [data base64EncodedStringWithOptions:0];
 }
 
+- (BOOL)mayBeBase64Encoded {
+    if ([self rangeOfCharacterFromSet:[NSCharacterSet it_base64Characters].invertedSet].location == NSNotFound) {
+        return YES;
+    }
+    if ([self rangeOfCharacterFromSet:[NSCharacterSet it_urlSafeBse64Characters].invertedSet].location == NSNotFound) {
+        return YES;
+    }
+    return NO;
+}
+
 - (NSString *)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding {
     return [[NSString alloc] initWithData:[NSData dataWithBase64EncodedString:self]
                                  encoding:encoding];
