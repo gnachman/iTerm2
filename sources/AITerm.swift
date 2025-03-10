@@ -757,12 +757,12 @@ class AITermController {
 
     func request(query: String, stream: Bool = false) {
         state = .initialized(query: query, stream: stream)
-        handle(event: .begin, legacy: false)
+        handle(event: .begin)
     }
 
     func request(messages: [Message], stream: Bool = false) {
         state = .initializedMessages(messages: messages, stream: stream)
-        handle(event: .begin, legacy: false)
+        handle(event: .begin)
     }
 
     func removeAllFunctions() {
@@ -783,7 +783,7 @@ class AITermController {
         state = .ground
     }
 
-    private func handle(event: Event, legacy: Bool) {
+    private func handle(event: Event) {
         DLog("handle(\(event)) in state \(state)")
         switch state {
         case .ground:
@@ -801,7 +801,7 @@ class AITermController {
                     makeAPICall(query: query,
                                 registration: registration,
                                 stream: stream ? { [weak self] word in
-                        self?.handle(event: .word(word), legacy: legacy)
+                        self?.handle(event: .word(word))
                     } : nil)
                 }
                 delegate?.aitermControllerWillSendRequest(self)
@@ -834,7 +834,7 @@ class AITermController {
                     makeAPICall(messages: messages,
                                 registration: registration,
                                 stream: stream ? { [weak self] word in
-                        self?.handle(event: .word(word), legacy: legacy)
+                        self?.handle(event: .word(word))
                     } : nil)
                 }
                 delegate?.aitermControllerWillSendRequest(self)
@@ -868,18 +868,16 @@ class AITermController {
                     if let reason = LLMErrorParser.errorReason(data: response.data.lossyData), !reason.isEmpty {
                         message += " " + reason
                     }
-                    handle(event: .error(AIError(message)), legacy: false)
+                    handle(event: .error(AIError(message)))
                 } else if let streamParserState {
                     _ = parseStreamingResponse(data: response.data.data(using: .utf8)!,
-                                               legacy: legacy,
                                                final: true,
                                                parserState: streamParserState)
                 } else {
-                    parseNonStreamingResponse(data: response.data.data(using: .utf8)!,
-                                              legacy: legacy)
+                    parseNonStreamingResponse(data: response.data.data(using: .utf8)!)
                 }
             case .pluginError(let error):
-                handle(event: .error(error), legacy: false)
+                handle(event: .error(error))
             case .cancel:
                 state = .ground
             case .error(let error):
@@ -890,7 +888,6 @@ class AITermController {
                 DLog("stream \(word)")
                 let updated = parseStreamingResponse(
                     data: word.data(using: .utf8)!,
-                    legacy: legacy,
                     final: false,
                     parserState: streamParserState ?? StreamParserState(message: LLM.Message(role: nil),
                                                                         buffer: Data()))
@@ -906,7 +903,7 @@ class AITermController {
         delegate?.aitermControllerRequestRegistration(self) { [weak self] registration in
             self?.registration = registration
             self?.state = continuation
-            self?.handle(event: .begin, legacy: false)
+            self?.handle(event: .begin)
         }
     }
 
@@ -951,26 +948,22 @@ class AITermController {
                                         functions: functions)
         builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
-            handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")),
-                   legacy: false)
+            handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")))
             return
         }
-        let legacy = llmProvider.version == .legacy
         let request: WebRequest
         do {
             request = try builder.webRequest()
         } catch {
-            handle(event: .error(error), legacy: legacy)
+            handle(event: .error(error))
             return
         }
         cancellation = client.request(webRequest: request, stream: stream) { [weak self] result in
             switch result {
             case .success(let response):
-                self?.handle(event: .webResponse(response),
-                             legacy: legacy)
+                self?.handle(event: .webResponse(response))
             case .failure(let error):
-                self?.handle(event: .pluginError(error),
-                             legacy: legacy)
+                self?.handle(event: .pluginError(error))
             }
         }
         state = .querySent(messages: messages,
@@ -1007,7 +1000,7 @@ class AITermController {
         var buffer: Data
     }
 
-    private func parseStreamingResponse(data: Data, legacy: Bool, final: Bool, parserState: StreamParserState) -> StreamParserState? {
+    private func parseStreamingResponse(data: Data, final: Bool, parserState: StreamParserState) -> StreamParserState? {
         var accumulatingMessage = parserState.message
         if final {
             if let functionCall = accumulatingMessage.function_call {
@@ -1065,12 +1058,10 @@ class AITermController {
                     } catch {
                         drain()
                         if let reason = LLMErrorParser.errorReason(data: firstData) {
-                            handle(event: .error(AIError("Could not decode response: " + reason)),
-                                   legacy: legacy)
+                            handle(event: .error(AIError("Could not decode response: " + reason)))
                             return nil
                         } else {
-                            handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(first)")),
-                                   legacy: legacy)
+                            handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(first)")))
                             return nil
                         }
                     }
@@ -1082,7 +1073,7 @@ class AITermController {
         return StreamParserState(message: accumulatingMessage, buffer: rest.data(using: .utf8)!)
     }
 
-    private func parseNonStreamingResponse(data: Data, legacy: Bool) {
+    private func parseNonStreamingResponse(data: Data) {
         do {
             var parser = llmProvider.responseParser(stream: false)
             let response = try parser.parse(data: data)
@@ -1099,11 +1090,9 @@ class AITermController {
             delegate?.aitermController(self, offerChoice: choice)
         } catch {
             if let reason = LLMErrorParser.errorReason(data: data) {
-                handle(event: .error(AIError("Could not decode response: " + reason)),
-                       legacy: legacy)
+                handle(event: .error(AIError("Could not decode response: " + reason)))
             } else {
-                handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(data.stringOrHex)")),
-                       legacy: legacy)
+                handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(data.stringOrHex)")))
             }
         }
     }
@@ -1135,8 +1124,7 @@ class AITermController {
                         return
                     case .failure(let error):
                         DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
-                        handle(event: .error(error),
-                               legacy: false)
+                        handle(event: .error(error))
                         return
                     }
                 }
