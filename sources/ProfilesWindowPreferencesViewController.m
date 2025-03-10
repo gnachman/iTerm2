@@ -42,6 +42,9 @@ CGFloat iTermMaxBlurRadius(void) {
     IBOutlet NSButton *_initialUseTransparency;
     IBOutlet NSSlider *_blurRadius;
     IBOutlet NSButton *_useBackgroundImage;
+    IBOutlet NSTextField *_backgroundImageTextField;
+    iTermFunctionCallTextFieldDelegate *_backgroundImageTextFieldDelegate;
+
     IBOutlet iTermImageWell *_backgroundImagePreview;
     IBOutlet NSButton *_backgroundImageMode;
     IBOutlet NSSlider *_blendAmount;
@@ -85,6 +88,20 @@ CGFloat iTermMaxBlurRadius(void) {
 
     __weak __typeof(self) weakSelf = self;
     PreferenceInfo *info;
+    info = [self defineControl:_backgroundImageTextField
+                           key:KEY_BACKGROUND_IMAGE_LOCATION
+                   relatedView:nil
+                          type:kPreferenceInfoTypeStringTextField];
+    info.observer = ^{
+        [weakSelf backgroundImageTextFieldDidChange];
+    };
+    _backgroundImageTextFieldDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                                                    passthrough:self
+                                                                                  functionsOnly:NO];
+    _backgroundImageTextField.delegate = _backgroundImageTextFieldDelegate;
+    _useBackgroundImage.state = [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION] != nil ? NSControlStateValueOn : NSControlStateValueOff;
+    _backgroundImageTextField.enabled = _useBackgroundImage.state == NSControlStateValueOn;
+
     info = [self defineControl:_transparency
                            key:KEY_TRANSPARENCY
                    relatedView:_transparencyLabel
@@ -150,7 +167,7 @@ CGFloat iTermMaxBlurRadius(void) {
                 break;
             case iTermBackgroundImageModeScaleAspectFill: {
                 self->_backgroundImagePreview.imageScaling = NSImageScaleNone;
-                NSString *filename = self.backgroundImageFilename;
+                NSString *filename = [self.backgroundImageFilename stringByExpandingTildeInPath];
                 if (filename) {
                     NSImage *anImage = [[NSImage alloc] initWithContentsOfFile:filename];
                     strongSelf->_backgroundImagePreview.image = [anImage it_imageFillingSize:strongSelf->_backgroundImagePreview.frame.size];
@@ -277,6 +294,11 @@ CGFloat iTermMaxBlurRadius(void) {
                            key:nil];
 }
 
+- (void)backgroundImageTextFieldDidChange {
+    [self loadBackgroundImageWithFilename:[self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
+    _useBackgroundImage.state = [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION] != nil ? NSControlStateValueOn : NSControlStateValueOff;
+}
+
 - (void)updateBlurRadiusWarning {
     if (@available(macOS 10.15, *)) {
         // It seems to get slow around this point on some machines circa 2017.
@@ -302,11 +324,6 @@ CGFloat iTermMaxBlurRadius(void) {
     CGSize size = sizeRememberingView.originalSize;
     size.height -= NSHeight(_settingsForNewWindows.frame);
     sizeRememberingView.originalSize = size;
-}
-
-- (NSArray *)keysForBulkCopy {
-    NSArray *keys = @[ KEY_BACKGROUND_IMAGE_LOCATION ];
-    return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
 #pragma mark - Notifications
@@ -336,6 +353,7 @@ CGFloat iTermMaxBlurRadius(void) {
         [self loadBackgroundImageWithFilename:nil];
         [self setString:nil forKey:KEY_BACKGROUND_IMAGE_LOCATION];
     }
+    _backgroundImageTextField.enabled = _useBackgroundImage.state == NSControlStateValueOn;
 }
 
 - (void)openFilePicker {
@@ -376,14 +394,12 @@ CGFloat iTermMaxBlurRadius(void) {
 
 // Sets _backgroundImagePreview and _useBackgroundImage.
 - (void)loadBackgroundImageWithFilename:(NSString *)filename {
-    NSImage *anImage = filename.length > 0 ? [[NSImage alloc] initWithContentsOfFile:filename] : nil;
+    NSImage *anImage = filename.length > 0 ? [[NSImage alloc] initWithContentsOfFile:[filename stringByExpandingTildeInPath]] : nil;
     if (anImage) {
         [_backgroundImagePreview setImage:anImage];
-        [_useBackgroundImage setState:NSControlStateValueOn];
         self.backgroundImageFilename = filename;
     } else {
         [_backgroundImagePreview setImage:nil];
-        [_useBackgroundImage setState:NSControlStateValueOff];
         self.backgroundImageFilename = nil;
     }
     [self updatePrivateNonDefaultInicators];

@@ -546,6 +546,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     iTermSwiftyString *_badgeSwiftyString;
     iTermSwiftyString *_autoNameSwiftyString;
     iTermSwiftyString *_subtitleSwiftyString;
+    iTermSwiftyString *_backgroundImageSwiftyString;
 
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     iTermMetaFrustrationDetector *_metaFrustrationDetector;
@@ -964,7 +965,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_overriddenFields release];
     _pasteHelper.delegate = nil;
     [_pasteHelper release];
-    [_backgroundImagePath release];
     [_backgroundImage release];
     [_antiIdleTimer invalidate];
     [_cadenceController release];
@@ -1012,6 +1012,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_modeHandler release];
     [_metalDisabledTokens release];
     [_badgeSwiftyString release];
+    [_backgroundImageSwiftyString release];
     [_subtitleSwiftyString release];
     [_autoNameSwiftyString release];
     [_statusBarViewController release];
@@ -5414,38 +5415,57 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setBackgroundImageMode:(iTermBackgroundImageMode)mode {
     _backgroundImageMode = mode;
     [_backgroundDrawingHelper invalidate];
-    [self setBackgroundImagePath:_backgroundImagePath];
+    [self setBackgroundImagePath:_backgroundImageSwiftyString.swiftyString];
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         self.view.imageMode = mode;
     }
 }
 
-- (void)setBackgroundImagePath:(NSString *)imageFilePath {
-    DLog(@"setBackgroundImagePath:%@", imageFilePath);
+- (NSString *)backgroundImagePath {
+    return _backgroundImageSwiftyString.swiftyString;
+}
+
+// This intentionally does all the work when the path gets set to the same value because that's how
+// we reload when the image mode changes.
+- (void)setBackgroundImagePath:(NSString *)interpolatedString {
+    DLog(@"setBackgroundImagePath:%@", interpolatedString);
+    [_backgroundImageSwiftyString invalidate];
+    [_backgroundImageSwiftyString autorelease];
+    _backgroundImageSwiftyString = nil;
+    __weak __typeof(self) weakSelf = self;
+    if (!interpolatedString) {
+        [self reallySetBackgroundImagePath:nil];
+        return;
+    }
+    _backgroundImageSwiftyString = [[iTermSwiftyString alloc] initWithString:interpolatedString
+                                                                       scope:self.variablesScope
+                                                                    observer:^NSString * _Nonnull(NSString * _Nullable newValue, NSError * _Nullable error) {
+        if (!error) {
+            [weakSelf reallySetBackgroundImagePath:newValue];
+        }
+        return newValue;
+    }];
+}
+
+- (void)reallySetBackgroundImagePath:(NSString *)imageFilePath {
+    DLog(@"reallySetBackgroundImagePath:%@", imageFilePath);
     if ([imageFilePath length]) {
         if ([imageFilePath isAbsolutePath] == NO) {
             NSBundle *myBundle = [NSBundle bundleForClass:[self class]];
             imageFilePath = [myBundle pathForResource:imageFilePath ofType:@""];
             DLog(@"Not an absolute path. Use bundle-relative path of %@", imageFilePath);
         }
-        if ([imageFilePath isEqualToString:_backgroundImagePath]) {
-            DLog(@"New image path equals existing path, so do nothing.");
-            return;
-        }
-        [_backgroundImagePath autorelease];
-        _backgroundImagePath = [imageFilePath copy];
-        self.backgroundImage = [[iTermSharedImageStore sharedInstance] imageWithContentsOfFile:_backgroundImagePath];
+        self.backgroundImage = [[iTermSharedImageStore sharedInstance] imageWithContentsOfFile:[imageFilePath stringByExpandingTildeInPath]];
     } else {
         DLog(@"Clearing abackground image");
         self.backgroundImage = nil;
-        [_backgroundImagePath release];
-        _backgroundImagePath = nil;
     }
 
     [_patternedImage release];
     _patternedImage = nil;
 
     [_textview requestDelegateRedraw];
+    [self invalidateBlend];
 }
 
 - (CGFloat)effectiveBlend {

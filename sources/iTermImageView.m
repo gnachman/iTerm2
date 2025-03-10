@@ -130,6 +130,10 @@
     _lowerView.transparency = transparency;
 }
 
+- (void)setAlphaValue:(CGFloat)alpha {
+    [super setAlphaValue:alpha];
+}
+
 @end
 
 @implementation iTermInternalImageView {

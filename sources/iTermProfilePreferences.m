@@ -136,8 +136,10 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
             return [defaultValue isKindOfClass:[NSNumber class]];
         case kPreferenceInfoTypeStringPopup:
         case kPreferenceInfoTypePasswordTextField:
-        case kPreferenceInfoTypeStringTextField:
             return [defaultValue isKindOfClass:[NSString class]];
+        case kPreferenceInfoTypeStringTextField:
+            return ([defaultValue isKindOfClass:[NSString class]] ||
+                    [defaultValue isKindOfClass:[NSNull class]]);
         case kPreferenceInfoTypeTokenField:
             return ([defaultValue isKindOfClass:[NSNull class]] ||
                     [defaultValue isKindOfClass:[NSArray class]]);
@@ -157,7 +159,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     return @[ KEY_GUID, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES, KEY_SEMANTIC_HISTORY, KEY_BOUND_HOSTS,
               KEY_ORIGINAL_GUID, KEY_AWDS_WIN_OPTION, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
               KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
-              KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_FONT_CONFIG, KEY_BACKGROUND_IMAGE_LOCATION, KEY_KEYBOARD_MAP,
+              KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_FONT_CONFIG, KEY_KEYBOARD_MAP,
               KEY_TOUCHBAR_MAP, KEY_DYNAMIC_PROFILE_PARENT_NAME, KEY_DYNAMIC_PROFILE_PARENT_GUID,
               KEY_DYNAMIC_PROFILE_FILENAME, KEY_DYNAMIC_PROFILE_REWRITABLE ];
 }
@@ -545,6 +547,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BLUR: @NO,
                   KEY_BLUR_RADIUS: @2.0,
                   KEY_BACKGROUND_IMAGE_MODE: @(iTermBackgroundImageModeStretch),
+                  KEY_BACKGROUND_IMAGE_LOCATION: [NSNull null],
                   KEY_BLEND: @0.5,
                   KEY_COLUMNS: @80,
                   KEY_ROWS: @25,

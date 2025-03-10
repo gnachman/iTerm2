@@ -1591,6 +1591,7 @@
 		A640487229BFCBCB0063C34A /* SpecialExceptionsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A640487129BFCBCB0063C34A /* SpecialExceptionsWindowController.swift */; };
 		A640487329C0F8AA0063C34A /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
 		A640487529C147A10063C34A /* CRUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = A640487429C147A10063C34A /* CRUD.swift */; };
+		A6405C092D7E4771007A6A39 /* iTermImageWell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0318271A42563A00932107 /* iTermImageWell.m */; };
 		A6435116233B195D00828AF6 /* iTermApplescriptPythonCommands.h in Headers */ = {isa = PBXBuildFile; fileRef = A6435114233B195D00828AF6 /* iTermApplescriptPythonCommands.h */; };
 		A6435117233B195D00828AF6 /* iTermApplescriptPythonCommands.m in Sources */ = {isa = PBXBuildFile; fileRef = A6435115233B195D00828AF6 /* iTermApplescriptPythonCommands.m */; };
 		A64511C32380673300EB6ADF /* iTermMonoServerJobManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A64511C12380673300EB6ADF /* iTermMonoServerJobManager.h */; };
@@ -3128,7 +3129,6 @@
 		A6C7633E1B45C52B00E3C992 /* iTermAboutWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A663010F19CFE41A004AF81C /* iTermAboutWindow.m */; };
 		A6C763411B45C52B00E3C992 /* iTermFindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */; };
 		A6C763421B45C52B00E3C992 /* iTermFontPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */; };
-		A6C763431B45C52B00E3C992 /* iTermImageWell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0318271A42563A00932107 /* iTermImageWell.m */; };
 		A6C763441B45C52B00E3C992 /* iTermKeyboardNavigatableTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BB81B0543E300226083 /* iTermKeyboardNavigatableTableView.m */; };
 		A6C763451B45C52B00E3C992 /* iTermNoColorAccessoryButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB40AA01B221028005B83C7 /* iTermNoColorAccessoryButton.m */; };
 		A6C763461B45C52B00E3C992 /* iTermProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */; };
@@ -16233,6 +16233,7 @@
 				A65FF3C220F18547008BD0AE /* iTermMiniSearchFieldViewController.m in Sources */,
 				A64D6A042495608500FC0CDE /* iTermAboutWindowController.m in Sources */,
 				A6A73D4C27C80517002E4CCA /* NSString+CommonAdditions.m in Sources */,
+				A6405C092D7E4771007A6A39 /* iTermImageWell.m in Sources */,
 				A65B1C482D2478B800F5A740 /* NSString+iTerm.swift in Sources */,
 				53E9DFE2220D52730070C9C0 /* PasswordTrigger.m in Sources */,
 				5370678721C9D2780088D0F3 /* SIGPartialInputStream.m in Sources */,
@@ -17016,7 +17017,6 @@
 				A6C763421B45C52B00E3C992 /* iTermFontPanel.m in Sources */,
 				A6C762D81B45C52B00E3C992 /* PseudoTerminal.m in Sources */,
 				A6CEC1081DCE8146009F4FD2 /* GPBCodedInputStream.m in Sources */,
-				A6C763431B45C52B00E3C992 /* iTermImageWell.m in Sources */,
 				A6C763BA1B45C52B00E3C992 /* iTermTipCardViewController.m in Sources */,
 				A6C763621B45C52B00E3C992 /* PopupWindow.m in Sources */,
 				A6C763141B45C52B00E3C992 /* iTermIntegerNumberFormatter.m in Sources */,
