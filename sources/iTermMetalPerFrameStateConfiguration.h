@@ -35,6 +35,8 @@ NS_ASSUME_NONNULL_BEGIN
     vector_float4 _fullScreenFlashColor;
     NSColor *_processedDefaultBackgroundColor;  // dimmed, etc.
     NSColor *_processedDefaultTextColor;
+    NSColor *_blockHoverColor;
+    NSColor *_defaultTextColor;
     vector_float4 _selectionColor;
     iTermLineStyleMarkColors _lineStyleMarkColors;
     vector_float4 _unfocusedSelectionColor;

@@ -14,7 +14,11 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
         var debugDescription: String {
             "rect=\(rect) color=\(color)"
         }
-        var rect: VT100GridRect
+        struct MixedRect {
+            var yRange: Range<Int32>  // In cells
+            var xRange: Range<CGFloat>  // In pixels
+        }
+        var rect: MixedRect
         var insets: NSEdgeInsets
         var color: vector_float4
     }
@@ -24,9 +28,15 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
     var count: Int { rectangles.count }
     var clipRect: NSRect?
 
-    @objc(addRectangleWithRect:insets:color:)
-    func add(rectangle rect: VT100GridRect, insets: NSEdgeInsets, color: vector_float4) {
-        rectangles.append(Rectangle(rect: rect,
+    @objc(addRectangleWithMinXPixels:minYCells:widthPixels:heightCells:insets:color:)
+    func add(minX: CGFloat,
+             minY: Int32,
+             width: CGFloat,
+             height: Int32,
+             insets: NSEdgeInsets,
+             color: vector_float4) {
+        rectangles.append(Rectangle(rect: Rectangle.MixedRect(yRange: minY..<(minY + height),
+                                                              xRange: (minX..<(minX + width))),
                                     insets: insets,
                                     color: color))
     }
@@ -36,27 +46,30 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
         clipRect = rect;
     }
 
-    @objc(addFrameRectangleWithRect:thickness:insets:color:)
-    func add(frameRectangle rect: VT100GridRect, 
-             thickness: CGFloat,
-             insets: NSEdgeInsets,
-             color: vector_float4) {
+    @objc(addFrameRectangleWithMinXPixels:minYCells:widthPixels:heightCells:thickness:insets:color:)
+    func addFrameRectangle(minX: CGFloat,
+                           minY: Int32,
+                           width: CGFloat,
+                           height: Int32,
+                           thickness: CGFloat,
+                           insets: NSEdgeInsets,
+                           color: vector_float4) {
         // Top
-        add(rectangle: VT100GridRect(origin: VT100GridCoord(x: rect.origin.x,
-                                                            y: rect.origin.y),
-                                     size: VT100GridSize(width: rect.size.width,
-                                                         height: 0)),
-            insets: NSEdgeInsets(top: insets.top, 
+        add(minX: minX,
+            minY: minY,
+            width: width,
+            height: 0,
+            insets: NSEdgeInsets(top: insets.top,
                                  left: insets.left,
                                  bottom: -insets.top - thickness,
                                  right: insets.right),
             color: color)
 
         // Left
-        add(rectangle: VT100GridRect(origin: VT100GridCoord(x: rect.origin.x,
-                                                            y: rect.origin.y),
-                                     size: VT100GridSize(width: 0,
-                                                         height: rect.size.height)),
+        add(minX: minX,
+            minY: minY,
+            width: 0,
+            height: height,
             insets: NSEdgeInsets(top: insets.top + thickness,
                                  left: insets.left,
                                  bottom: insets.bottom,
@@ -64,10 +77,10 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
             color: color)
 
         // Bottom
-        add(rectangle: VT100GridRect(origin: VT100GridCoord(x: rect.origin.x,
-                                                            y: rect.origin.y + rect.size.height),
-                                     size: VT100GridSize(width: rect.size.width,
-                                                         height: 0)),
+        add(minX: minX,
+            minY: minY + height,
+            width: width,
+            height: 0,
             insets: NSEdgeInsets(top: -insets.bottom,
                                  left: insets.left,
                                  bottom: insets.bottom - thickness,
@@ -76,10 +89,10 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
 
 
         // Right
-        add(rectangle: VT100GridRect(origin: VT100GridCoord(x: rect.origin.x + rect.size.width,
-                                                            y: rect.origin.y),
-                                     size: VT100GridSize(width: 0,
-                                                         height: rect.size.height)),
+        add(minX: minX + width,
+            minY: minY,
+            width: 0,
+            height: height,
             insets: NSEdgeInsets(top: insets.top,
                                  left: -insets.right,
                                  bottom: insets.bottom - thickness,
@@ -133,10 +146,10 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
         scaledInsets.bottom *= scale
         scaledInsets.right *= scale
 
-        let left = margins.left + CGFloat(rectangle.rect.origin.x) * cellWidth + scaledInsets.left
-        let right = margins.left + CGFloat(rectangle.rect.origin.x + rectangle.rect.size.width) * cellWidth - scaledInsets.right
-        let top = margins.bottom + CGFloat(rectangle.rect.origin.y) * cellHeight + scaledInsets.top
-        let bottom = margins.bottom + CGFloat(rectangle.rect.origin.y + rectangle.rect.size.height) * cellHeight - scaledInsets.bottom
+        let left = rectangle.rect.xRange.lowerBound + scaledInsets.left
+        let right = rectangle.rect.xRange.upperBound - scaledInsets.right
+        let top = margins.bottom + CGFloat(rectangle.rect.yRange.lowerBound) * cellHeight + scaledInsets.top
+        let bottom = margins.bottom + CGFloat(rectangle.rect.yRange.upperBound) * cellHeight - scaledInsets.bottom
 
         let topLeftFrame = NSRect(x: left,
                                   y: top,

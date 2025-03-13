@@ -384,15 +384,16 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
 }
 
 - (id<MTLBuffer>)newQuadOfSize:(CGSize)size origin:(CGPoint)origin poolContext:(iTermMetalBufferPoolContext *)poolContext {
+    NSRect rect = NSMakeRect(origin.x, origin.y, size.width, size.height);
     const iTermVertex vertices[] = {
         // Pixel Positions             Texture Coordinates
-        { { size.width,    origin.y }, { 1.f, 0.f } },
-        { {   origin.x,    origin.y }, { 0.f, 0.f } },
-        { {   origin.x, size.height }, { 0.f, 1.f } },
+        { { NSMaxX(rect), NSMinY(rect) }, { 1.f, 0.f } },
+        { { NSMinX(rect), NSMinY(rect) }, { 0.f, 0.f } },
+        { { NSMinX(rect), NSMaxY(rect) }, { 0.f, 1.f } },
 
-        { { size.width,    origin.y }, { 1.f, 0.f } },
-        { {   origin.x, size.height }, { 0.f, 1.f } },
-        { { size.width, size.height }, { 1.f, 1.f } },
+        { { NSMaxX(rect), NSMinY(rect) }, { 1.f, 0.f } },
+        { { NSMinX(rect), NSMaxY(rect) }, { 0.f, 1.f } },
+        { { NSMaxX(rect), NSMaxY(rect) }, { 1.f, 1.f } },
     };
     return [_verticesPool requestBufferFromContext:poolContext
                                          withBytes:vertices

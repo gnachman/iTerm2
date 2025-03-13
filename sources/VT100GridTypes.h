@@ -201,6 +201,10 @@ NS_INLINE BOOL VT100GridRunEquals(VT100GridRun a, VT100GridRun b) {
             VT100GridCoordEquals(a.origin, b.origin));
 }
 
+NS_INLINE BOOL VT100GridCoordIsValid(VT100GridCoord coord) {
+    return coord.x >= 0 && coord.y >= 0;
+}
+
 NS_INLINE BOOL VT100GridAbsCoordEquals(VT100GridAbsCoord a, VT100GridAbsCoord b) {
     return a.x == b.x && a.y == b.y;
 }

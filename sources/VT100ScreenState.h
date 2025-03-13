@@ -327,6 +327,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
                                      width:(int)width;
 
 - (__kindof id<IntervalTreeImmutableObject> _Nullable)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
+- (NSArray<id<IntervalTreeImmutableObject>> *)objectsOnLine:(int)line ofClass:(Class)cls;
 - (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range;
 - (VT100GridCoordRange)rangeOfBlockWithID:(NSString *)blockID;
 - (id<iTermBlockMarkReading> _Nullable)blockMarkWithID:(NSString *)blockID;
@@ -352,7 +353,9 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 
-- (id<VT100ScreenMarkReading> _Nullable)markOnLine:(int)line;
+// This is normally a id<VT100ScreenMarkReading>.
+- (id<iTermMark> _Nullable)drawableMarkOnLine:(int)line;
+- (id<VT100ScreenMarkReading> _Nullable)screenMarkOnLine:(int)line;
 - (id<VT100ScreenMarkReading> _Nullable)commandMarkAt:(VT100GridCoord)coord
                                       mustHaveCommand:(BOOL)mustHaveCommand
                                                 range:(out VT100GridWindowedRange * _Nullable)rangeOut;

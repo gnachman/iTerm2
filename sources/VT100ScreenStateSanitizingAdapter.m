@@ -59,8 +59,12 @@
     return [[_source lastPromptMark] doppelganger];
 }
 
-- (id<VT100ScreenMarkReading> _Nullable)markOnLine:(int)line {
-    return [[_source markOnLine:line] doppelganger];
+- (id<VT100ScreenMarkReading> _Nullable)screenMarkOnLine:(int)line {
+    return [[_source screenMarkOnLine:line] doppelganger];
+}
+
+- (id<iTermMark> _Nullable)drawableMarkOnLine:(int)line {
+    return [[_source drawableMarkOnLine:line] doppelganger];
 }
 
 - (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord

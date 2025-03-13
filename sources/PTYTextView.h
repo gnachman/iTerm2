@@ -305,6 +305,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewRemoveSelectedCommand;
 - (void)textViewSelectCommandRegionAtCoord:(VT100GridCoord)coord;
 - (id<VT100ScreenMarkReading>)textViewMarkForCommandAt:(VT100GridCoord)coord;
+- (void)textViewReloadSelectedCommand;
 - (id<VT100ScreenMarkReading>)textViewSelectedCommandMark;
 - (NSCursor *)textViewDefaultPointer;
 - (BOOL)textViewOrComposerIsFirstResponder;
@@ -755,6 +756,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (iTermSelection *)selectionForCommandAndOutputOfMark:(id<VT100ScreenMarkReading>)mark;
 - (void)smearCursorIfNeededWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper;
+- (void)didFoldOrUnfold;
 
 #pragma mark - Testing only
 

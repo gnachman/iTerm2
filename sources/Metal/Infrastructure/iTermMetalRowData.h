@@ -39,6 +39,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) int numberOfDrawableGlyphs;
 
 @property (nonatomic) iTermMarkStyle markStyle;
+@property (nonatomic) BOOL hoverState;  // Is the mouse over a row that has a block?
 @property (nonatomic) BOOL lineStyleMark;
 @property (nonatomic) int lineStyleMarkRightInset;
 

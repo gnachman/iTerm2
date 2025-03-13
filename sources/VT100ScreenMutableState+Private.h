@@ -49,7 +49,7 @@ iTermTriggerScopeProvider> {
     _Atomic int _pendingReportCount;
     BOOL _compressionScheduled;
     iTermPromptStateMachine *_promptStateMachine;
-    NSString *_currentBlockID;;
+    NSString *_currentBlockIDList;
     BOOL _triggerDidDetectPrompt;
     BOOL _autoComposerEnabled;
     iTermKittyImageController *_kittyImageController;

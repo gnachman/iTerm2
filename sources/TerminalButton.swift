@@ -145,6 +145,7 @@ class TerminalButton: NSObject {
 
     @objc
     func mouseDownInside() -> Bool {
+        DLog("Mouse down inside on \(description)")
         let wasHighlighted = highlighted
         state = .pressedInside
         return highlighted != wasHighlighted
@@ -152,6 +153,7 @@ class TerminalButton: NSObject {
 
     @objc
     func mouseDownOutside() -> Bool {
+        DLog("Mouse down outside on \(description)")
         let wasHighlighted = highlighted
         state = .pressedOutside
         return highlighted != wasHighlighted
@@ -160,9 +162,11 @@ class TerminalButton: NSObject {
     @objc
     @discardableResult
     func mouseUp(locationInWindow: NSPoint) -> Bool {
+        DLog("mouseUp: TerminalButton.mouseUp initial state is \(state)");
         let wasHighlighted = highlighted
         switch state {
         case .pressedInside:
+            DLog("mouseUp: TerminalButton.mouseUp DO ACTION");
             action?(locationInWindow)
             state = .normal
         case .pressedOutside:
@@ -185,8 +189,8 @@ class TerminalButton: NSObject {
 }
 
 @available(macOS 11, *)
-@objc(iTermTerminalCopyButton)
-class TerminalCopyButton: TerminalButton {
+@objc
+class GenericBlockButton: TerminalButton {
     @objc let blockID: String
     @objc var absY: NSNumber?
     override var transientAbsY: Int {
@@ -197,11 +201,10 @@ class TerminalCopyButton: TerminalButton {
     }
     @objc var isFloating = false
     override var floating: Bool { isFloating }
-    @objc(initWithID:blockID:mark:absY:)
-    init?(id: Int, blockID: String, mark: iTermMarkProtocol?, absY: NSNumber?) {
+    init?(id: Int, blockID: String, mark: iTermMarkProtocol?, absY: NSNumber?, fgName: String, bgName: String) {
         self.blockID = blockID
-        guard let bg = NSImage(systemSymbolName: "doc.on.doc.fill", accessibilityDescription: nil),
-              let fg = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: nil) else {
+        guard let bg = NSImage(systemSymbolName: bgName, accessibilityDescription: nil),
+              let fg = NSImage(systemSymbolName: fgName, accessibilityDescription: nil) else {
             return nil
         }
         self.absY = absY
@@ -210,19 +213,69 @@ class TerminalCopyButton: TerminalButton {
                    foregroundImage: fg,
                    mark: mark)
     }
-    
+
     required init?(_ original: TerminalButton) {
-        let downcast = original as! TerminalCopyButton
+        let downcast = original as! GenericBlockButton
         self.blockID = downcast.blockID
         self.absY = downcast.absY
         isFloating = downcast.isFloating
         super.init(original)
     }
-    
+
     override func clone() -> Self {
         return Self(self)!
     }
 }
+
+@available(macOS 11, *)
+@objc(iTermTerminalCopyButton)
+class TerminalCopyButton: GenericBlockButton {
+    @objc(initWithID:blockID:mark:absY:)
+    init?(id: Int, blockID: String, mark: iTermMarkProtocol?, absY: NSNumber?) {
+        super.init(id: id,
+                   blockID: blockID,
+                   mark: mark,
+                   absY: absY,
+                   fgName: "doc.on.doc",
+                   bgName: "doc.on.doc.fill")
+    }
+
+    required init?(_ original: TerminalButton) {
+        super.init(original)
+    }
+}
+    
+@available(macOS 11, *)
+@objc(iTermTerminalFoldBlockButton)
+class TerminalFoldBlockButton: GenericBlockButton {
+    @objc let absLineRange: NSRange
+    @objc let folded: Bool
+
+    @objc(initWithID:blockID:mark:absY:currentlyFolded:absLineRange:)
+    init?(id: Int,
+          blockID: String,
+          mark: iTermMarkProtocol?,
+          absY: NSNumber?,
+          currentlyFolded: Bool,
+          absLineRange: NSRange) {
+        self.absLineRange = absLineRange
+        self.folded = currentlyFolded
+        let symbolName = currentlyFolded ? "rectangle.expand.vertical" : "rectangle.compress.vertical"
+        super.init(id: id,
+                   blockID: blockID,
+                   mark: mark,
+                   absY: absY,
+                   fgName: symbolName,
+                   bgName: symbolName)
+    }
+
+    required init?(_ original: TerminalButton) {
+        absLineRange = (original as! TerminalFoldBlockButton).absLineRange
+        folded = (original as! TerminalFoldBlockButton).folded
+        super.init(original)
+    }
+}
+
 
 @available(macOS 11, *)
 @objc(iTermTerminalMarkButton)

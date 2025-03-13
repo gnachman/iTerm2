@@ -860,6 +860,14 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     }
 }
 
+- (void)mutateExtendedAttributesOnLine:(int)y
+                        createIfNeeded:(BOOL)createIfNeeded
+                                 block:(void (^)(iTermExternalAttributeIndex *))block {
+    iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y
+                                                           createIfNeeded:createIfNeeded];
+    block(eaIndex);
+}
+
 - (void)setCharsFrom:(VT100GridCoord)unsafeFrom
                   to:(VT100GridCoord)unsafeTo
               toChar:(screen_char_t)c
@@ -971,7 +979,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
                                                           underlineColor:old.underlineColor
                                                                      url:url
-                                                                 blockID:old.blockID
+                                                             blockIDList:old.blockIDList
                                                              controlCode:old.controlCodeNumber];
         }];
         [self markCharsDirty:YES
@@ -980,16 +988,16 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     }
 }
 
-- (void)setBlockID:(NSString *)blockID onLine:(int)line {
+- (void)setBlockIDList:(NSString *)blockIDList onLine:(int)line {
     VT100LineInfo *info = [self lineInfoAtLineNumber:line];
-    iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:blockID != nil];
+    iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:blockIDList != nil];
     [eaIndex mutateAttributesFrom:0
                                to:self.size.width - 1
                             block:^iTermExternalAttribute * _Nullable(iTermExternalAttribute * _Nullable old) {
         return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
                                                       underlineColor:old.underlineColor
                                                                  url:old.url
-                                                             blockID:blockID
+                                                         blockIDList:blockIDList
                                                          controlCode:old.controlCodeNumber];
     }];
     [self markCharsDirty:YES

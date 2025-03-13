@@ -64,6 +64,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) vector_float4 defaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultTextColor;
+@property (nonatomic, readonly) vector_float4 defaultTextColor;
+@property (nonatomic, readonly) vector_float4 blockHoverColor;
 @property (nonatomic, readonly) vector_float4 selectedBackgroundColor;
 @property (nonatomic, readonly) iTermLineStyleMarkColors lineStyleMarkColors;
 @property (nonatomic, readonly) NSImage *badgeImage;
@@ -114,6 +116,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                    background:(iTermMetalBackgroundColorRLE *)backgrounds
                      rleCount:(int *)rleCount
                     markStyle:(out iTermMarkStyle *)markStylePtr
+                   hoverState:(out BOOL *)hoverStatePtr
                 lineStyleMark:(out BOOL *)lineStyleMarkPtr
       lineStyleMarkRightInset:(out int *)lineStyleMarkRightInset
                           row:(int)row

@@ -302,6 +302,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             withLine:(ScreenCharArray *)line
         promptLength:(NSInteger)promptLength;
 
+// Use negative prompt length to just replace without creating a fold.
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+           withLines:(NSArray<ScreenCharArray *> *)lines
+        promptLength:(NSInteger)promptLength
+          blockMarks:(NSDictionary<NSString *, iTermRange *> * _Nullable)blockMarks;
+
 #pragma mark - Portholes
 
 - (void)replaceRange:(VT100GridAbsCoordRange)range

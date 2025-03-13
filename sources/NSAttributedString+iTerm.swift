@@ -120,7 +120,7 @@ class AttributeToControlSequenceConverter {
         let ea = iTermExternalAttribute(havingUnderlineColor: underlineColor != nil,
                                         underlineColor: underlineColor ?? VT100TerminalColorValue(),
                                         url: url,
-                                        blockID: nil,
+                                        blockIDList: nil,
                                         controlCode: nil)
         return VT100Terminal.sgrCodes(forCharacter: c, externalAttributes: ea).array as! [String]
     }

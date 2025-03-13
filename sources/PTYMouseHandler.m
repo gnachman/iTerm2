@@ -1050,6 +1050,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // If this changes also update wantsMouseMovementEvents
 - (void)mouseMoved:(NSEvent *)event {
+    DLog(@"mouseMoved");
     [self checkIfHoveringOverBlock:event];
     [self reportMouseEvent:event];
 }

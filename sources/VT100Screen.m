@@ -250,11 +250,30 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (NSMaxRange(range) < overflow) {
         return;
     }
-    const int start = range.location - overflow;
+    const int start = range.location < overflow ? range.location - overflow : 0;
     ScreenCharArray *sca = [self screenCharArrayForLine:start];
     [self replaceRange:VT100GridAbsCoordRangeMake(0, range.location, self.width, NSMaxRange(range))
               withLine:sca
-          promptLength:0];
+          promptLength:0
+            blockMarks:[self blockMarkDictionaryOnLine:start + overflow]];
+}
+
+- (NSDictionary<NSString *, iTermRange *> *)blockMarkDictionaryOnLine:(long long)y {
+    const long long overflow = _state.cumulativeScrollbackOverflow;
+    if (y < overflow) {
+        return nil;
+    }
+    const int start = y < overflow ? 0 : y - overflow;
+
+    NSMutableDictionary<NSString *, iTermRange *> *blockMarks = nil;
+    for (iTermBlockMark *blockMark in [_state objectsOnLine:start ofClass:[iTermBlockMark class]]) {
+        if (!blockMarks) {
+            blockMarks = [NSMutableDictionary dictionary];
+        }
+        const VT100GridAbsCoordRange absCoordRange = [self absCoordRangeForInterval:blockMark.entry.interval];
+        blockMarks[blockMark.blockID] = [iTermRange rangeWithLocation:0 length:1];
+    }
+    return blockMarks;
 }
 
 - (void)replaceRange:(VT100GridAbsCoordRange)range
@@ -263,6 +282,32 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [self.delegate screenEnsureDefaultMode];
     [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState replaceRange:range withLine:line promptLength:promptLength];
+    }];
+}
+
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+            withLine:(ScreenCharArray *)line
+        promptLength:(NSInteger)promptLength
+          blockMarks:(NSDictionary<NSString *, iTermRange *> *)blockMarks {
+    [self.delegate screenEnsureDefaultMode];
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState replaceRange:range
+                         withLines:@[line]
+                      promptLength:promptLength
+                        blockMarks:blockMarks];
+    }];
+}
+
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+            withLines:(NSArray<ScreenCharArray *> *)lines
+        promptLength:(NSInteger)promptLength
+          blockMarks:(NSDictionary<NSString *, iTermRange *> *)blockMarks {
+    [self.delegate screenEnsureDefaultMode];
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState replaceRange:range
+                         withLines:lines
+                      promptLength:promptLength
+                        blockMarks:blockMarks];
     }];
 }
 
@@ -925,8 +970,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return nil;
 }
 
-- (id<VT100ScreenMarkReading>)markOnLine:(int)line {
-    return [_state markOnLine:line];
+- (id<iTermMark>)drawableMarkOnLine:(int)line {
+    return [_state drawableMarkOnLine:line];
+}
+
+- (id<VT100ScreenMarkReading>)screenMarkOnLine:(int)line {
+    return [_state screenMarkOnLine:line];
 }
 
 - (void)pauseAtNextPrompt:(void (^)(void))paused {

@@ -28,6 +28,7 @@
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
 #import "NSColor+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "URLAction.h"
@@ -236,6 +237,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(copyLinkAddress:) ||
         [item action] == @selector(copyString:) ||
         [item action] == @selector(copyData:) ||
+        [item action] == @selector(replaceWithPrettyJSON:) ||
         [item action] == @selector(revealCommandInfo:) ||
         [item action] == @selector(removeNamedMark:)) {
         return YES;
@@ -527,6 +529,19 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                 item.representedObject = encoded;
                 [theMenu addItem:item];
                 needSeparator = YES;
+            }
+            {
+                NSError *error = nil;
+                id obj = [NSJSONSerialization it_objectForJsonString:text error:&error];
+                if (obj != nil && error == nil) {
+                    NSMenuItem *item = [[NSMenuItem alloc] init];
+                    item.title = @"Replace with Pretty-Printed JSON";
+                    item.target = self;
+                    item.action = @selector(replaceWithPrettyJSON:);
+                    item.representedObject = obj;
+                    [theMenu addItem:item];
+                    needSeparator = YES;
+                }
             }
         }
         if (needSeparator) {
@@ -1152,6 +1167,11 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 - (void)copyData:(id)sender {
     NSMenuItem *item = sender;
     [self.delegate contextMenu:self copy:item.representedObject];
+}
+
+- (void)replaceWithPrettyJSON:(id)sender {
+    NSMenuItem *item = sender;
+    [self.delegate contextMenu:self replaceSelectionWithPrettyPrintedJSONObject:item.representedObject];
 }
 
 - (void)swapSessions:(id)sender {

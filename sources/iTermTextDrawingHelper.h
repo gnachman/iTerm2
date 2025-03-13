@@ -314,6 +314,7 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 
 @property(nonatomic, readonly) NSColor *defaultBackgroundColor;
 @property(nonatomic, readonly) NSColor *defaultTextColor;
+@property(nonatomic, readonly) NSColor *blockHoverColor;
 
 // Does the current ascii font have ligatures? Used to determine if ASCII
 // symbols (non-alphanumerics) get to use the fastpath.
@@ -349,6 +350,7 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 @property (nonatomic, copy) NSIndexSet *folds;
 @property (nonatomic, readonly) iTermAttributedStringBuilder *attributedStringBuilder;
 @property (nonatomic) CGFloat rightExtra;
+@property (nonatomic) NSRange highlightedBlockLineRange;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;

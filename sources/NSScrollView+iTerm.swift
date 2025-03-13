@@ -66,7 +66,7 @@ extension NSScrollView {
         newBounds.origin.y = max(0, (newDocumentHeight - oldTopVisibleY - newBounds.height))
 
         // Apply the change and update scrollbars
-        NSLog("performWithoutScrolling will set clipview's bounds to \(newBounds)")
+        DLog("performWithoutScrolling will set clipview's bounds to \(newBounds)")
         contentView.bounds = newBounds
         self.reflectScrolledClipView(contentView)
     }

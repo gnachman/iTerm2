@@ -8,6 +8,7 @@
 #import "iTermMetalPerFrameStateRow.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermColorMap.h"
 #import "iTermData.h"
@@ -32,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
         _screenCharLine = [ScreenCharArray emptyLineOfLength:source->_screenCharLine.length];
         _selectedIndexSet = [NSIndexSet indexSet];
         _markStyle = @(iTermMarkStyleNone);
+        _hoverState = NO;
         _lineStyleMark = NO;
         _lineStyleMarkRightInset = 0;
     }
@@ -68,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
             _matches = findMatches;
         }
         _eaIndex = [[screen externalAttributeIndexForLine:i] copy];
-        _belongsToBlock = _eaIndex.attributes[@0].blockID != nil;
+        _belongsToBlock = _eaIndex.attributes[@0].blockIDList != nil;
 
         const long long absoluteLine = totalScrollbackOverflow + i;
         _underlinedRange = [drawingHelper underlinedRangeOnLine:absoluteLine];
@@ -80,6 +82,7 @@ NS_ASSUME_NONNULL_BEGIN
                                       hasFold:[drawingHelper.folds containsIndex:i]
                                 lineStyleMark:&_lineStyleMark
                       lineStyleMarkRightInset:&_lineStyleMarkRightInset]);
+        _hoverState = NSLocationInRange(i, drawingHelper.highlightedBlockLineRange);
     }
     return self;
 }
@@ -91,7 +94,8 @@ NS_ASSUME_NONNULL_BEGIN
                            hasFold:(BOOL)folded
                      lineStyleMark:(out BOOL *)lineStyleMark
            lineStyleMarkRightInset:(out int *)lineStyleMarkRightInset {
-    id<VT100ScreenMarkReading> mark = [textView.dataSource markOnLine:i];
+    id<iTermMark> genericMark = [textView.dataSource drawableMarkOnLine:i];
+    id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)genericMark;
     *lineStyleMarkRightInset = 0;
     *lineStyleMark = NO;
     if (mark != nil && enabled) {

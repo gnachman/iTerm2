@@ -1487,7 +1487,7 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
 }
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                                markOnLine:(int)line {
-    return [self.dataSource markOnLine:line];
+    return [self.dataSource screenMarkOnLine:line];
 }
 
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
@@ -1742,6 +1742,24 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
                                    screenCoordinate:[NSEvent mouseLocation]
                                           pointSize:12];
     }
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+replaceSelectionWithPrettyPrintedJSONObject:(id)obj {
+    iTermJSONPrettyPrinter *printer = [[iTermJSONPrettyPrinter alloc] initWithObject:obj];
+    if (!printer) {
+        DLog(@"Failed to create JSON pretty printer for %@", obj);
+        return;
+    }
+    const int width = self.dataSource.width;
+    NSArray<ScreenCharArray *> *lines = [printer screenCharArraysWithMaxWidth:width];
+    for (iTermSubSelection *sub in self.selection.allSubSelections.reverseObjectEnumerator) {
+        [self.dataSource replaceRange:sub.absRange.coordRange
+                            withLines:lines
+                         promptLength:-1
+                           blockMarks:[printer blockMarksWithMaxWidth:width]];
+    }
+    [self didFoldOrUnfold];
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

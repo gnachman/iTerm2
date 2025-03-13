@@ -332,7 +332,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
     inRectFrom:(VT100GridCoord)from
             to:(VT100GridCoord)to;
 
-- (void)setBlockID:(NSString *)blockID onLine:(int)line;
+- (void)setBlockIDList:(NSString *)blockIDList onLine:(int)line;
 
 // Pop lines out of the line buffer and on to the screen. Up to maxLines will be restored. Before
 // popping, lines to be modified will first be filled with defaultChar.
@@ -382,6 +382,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                                           iTermExternalAttribute **eaOut,
                                           VT100GridCoord coord,
                                           BOOL *stop))block;
+- (void)mutateExtendedAttributesOnLine:(int)line
+                        createIfNeeded:(BOOL)createIfNeeded
+                                 block:(void (^)(iTermExternalAttributeIndex *))block;
 
 - (void)enumerateParagraphs:(void (^)(int startLine, NSArray<MutableScreenCharArray *> *scas))closure;
 - (void)performBlockWithoutScrollRegions:(void (^NS_NOESCAPE)(void))block;

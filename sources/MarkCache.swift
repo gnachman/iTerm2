@@ -48,6 +48,12 @@ class MarkCache: NSObject, MarkCacheReading {
 
     @objc
     func dump() {
+        for i in dict.keys.sorted() {
+            if let object = dict[i] {
+                NSLog("Line \(i): \(object.description)")
+            }
+        }
+        NSLog("Enumerating sorted array:")
         for mark in enumerate(from: 0) {
             let object = mark as! NSObject
             let ito = mark as! IntervalTreeObject

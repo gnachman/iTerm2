@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermExternalAttributeIndex;
 @class iTermURL;
 
+extern NSString *const iTermExternalAttributeBlockIDDelimiter;
+
 typedef struct {
     BOOL valid;
     int code;
@@ -25,7 +27,7 @@ typedef struct {
 @interface iTermExternalAttribute: NSObject<NSCopying>
 @property (atomic, readonly) BOOL hasUnderlineColor;
 @property (atomic, readonly) VT100TerminalColorValue underlineColor;
-@property (atomic, copy, readonly) NSString *blockID;
+@property (atomic, copy, readonly) NSString *blockIDList;  // comma delimited
 @property (nonatomic, readonly) NSString *humanReadableDescription;
 @property (atomic, readonly) iTermControlCodeAttribute controlCode;
 @property (atomic, readonly, nullable) NSNumber *controlCodeNumber;
@@ -36,14 +38,14 @@ typedef struct {
 + (iTermExternalAttribute * _Nullable)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
                                                      underlineColor:(VT100TerminalColorValue)underlineColor
                                                                 url:(iTermURL * _Nullable)url
-                                                            blockID:(NSString * _Nullable)blockID
+                                                        blockIDList:(NSString * _Nullable)blockIDList
                                                         controlCode:(NSNumber * _Nullable)code;
 
 + (instancetype _Nullable)fromData:(NSData *)data;
 - (instancetype)init;
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
                                    url:(iTermURL * _Nullable)url
-                               blockID:(NSString * _Nullable)blocokID
+                           blockIDList:(NSString * _Nullable)blocokIDList
                            controlCode:(NSNumber * _Nullable)code;
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
@@ -55,6 +57,7 @@ typedef struct {
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 - (NSData *)data;
 - (NSString *)shortDescriptionWithLength:(int)length;
+- (iTermExternalAttributeIndex *)subAttributesInRange:(NSRange)range;
 - (iTermExternalAttributeIndex *)subAttributesToIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;

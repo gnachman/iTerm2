@@ -220,8 +220,20 @@ static const NSInteger kUnicodeVersion = 9;
         [_lineBlocks numberOfWrappedLinesForWidth:width];
          ITAssertWithMessage(count == num_wrapped_lines_cache, @"Cached number of wrapped lines is incorrect");
     }
+    [self assertUniqueBlockIDs];
 #endif
 }
+
+#if DEBUG
+- (void)assertUniqueBlockIDs {
+    NSMutableSet<NSString *> *uniqueIDs = [NSMutableSet set];
+    for (LineBlock *block in _lineBlocks.blocks) {
+        BOOL dup = [uniqueIDs containsObject:block.stringUniqueIdentifier];
+        assert(!dup);
+        [uniqueIDs addObject:block.stringUniqueIdentifier];
+    }
+}
+#endif
 
 - (void)setMayHaveDoubleWidthCharacter:(BOOL)mayHaveDoubleWidthCharacter {
     if (!_mayHaveDoubleWidthCharacter) {
@@ -290,6 +302,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int nl = RawNumLines(self, width);
     int totalDropped = 0;
     int totalRawLinesDropped = 0;
+#if DEBUG
+    [self assertUniqueBlockIDs];
+#endif
     if (max_lines != -1 && nl > max_lines) {
         LineBlock *block = _lineBlocks[0];
         int total_lines = nl;
@@ -307,6 +322,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             int charsDropped;
             const int numRawLinesBefore = block.numRawLines;
             int dropped = [block dropLines:toDrop withWidth:width chars:&charsDropped];
+#if DEBUG
+            [self assertUniqueBlockIDs];
+#endif
             totalDropped += dropped;
             const int numRawLinesAfter = block.numRawLines;
             assert(numRawLinesAfter <= numRawLinesBefore);
@@ -318,13 +336,22 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                 if (_lineBlocks.count > 0) {
                     block = _lineBlocks[0];
                 }
+#if DEBUG
+                [self assertUniqueBlockIDs];
+#endif
             }
             total_lines -= dropped;
         }
         num_wrapped_lines_cache = total_lines;
     }
+#if DEBUG
+    [self assertUniqueBlockIDs];
+#endif
     cursor_rawline -= totalRawLinesDropped;
     [_delegate lineBufferDidDropLines:self];
+#if DEBUG
+    [self assertUniqueBlockIDs];
+#endif
     assert(totalRawLinesDropped >= 0);
     return totalDropped;
 }
@@ -708,6 +735,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (int)appendContentsOfLineBuffer:(LineBuffer *)other width:(int)width includingCursor:(BOOL)cursor {
+#if DEBUG
+    [self assertUniqueBlockIDs];
+#endif
     _deferSanityCheck += 1;
     self.dirty = YES;
     int offset = 0;

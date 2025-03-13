@@ -16952,6 +16952,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _selectedCommandMark;
 }
 
+- (void)textViewReloadSelectedCommand {
+    [self updateSearchRange];
+}
+
 - (id<VT100ScreenMarkReading>)textViewMarkForCommandAt:(VT100GridCoord)coord {
     return [_screen commandMarkAtOrBeforeLine:coord.y];
 }
@@ -17511,8 +17515,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         rgb.blue = ea.underlineColor.blue;
         style.underlineColor = rgb;
     }
-    if (ea.blockID) {
-        style.blockId = ea.blockID;
+    if (ea.blockIDList) {
+        style.blockId = [[ea.blockIDList componentsSeparatedByString:iTermExternalAttributeBlockIDDelimiter] firstObject];
     }
     if (ea.url) {
         ITMURL *url = [[[ITMURL alloc] init] autorelease];

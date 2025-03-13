@@ -305,3 +305,11 @@ extension String {
         self.removeLast(suffix.count)
     }
 }
+
+extension String {
+    var mayContainRTL: Bool {
+        let rtlSmellingCodePoints = iTermAdvancedSettingsModel.bidi() ? NSCharacterSet.rtlSmellingCodePoints()! : CharacterSet()
+        let rtlFound = rangeOfCharacter(from: rtlSmellingCodePoints) != nil
+        return rtlFound
+    }
+}

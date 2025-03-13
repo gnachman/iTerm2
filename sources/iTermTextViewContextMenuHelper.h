@@ -124,6 +124,8 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range;
 // obj is NSString or NSData
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                copy:(id)obj;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+replaceSelectionWithPrettyPrintedJSONObject:(id)obj;
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
  runCommandInWindow:(NSString *)command;

@@ -137,7 +137,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 // Values are string, number, or NSNull
 @property(nonatomic, copy) NSDictionary<NSString *, id> *terminfoValues;
 @property(nonatomic) BOOL wantsDidExecuteCallback;
-@property(nonatomic, copy) NSString *currentBlockID;
+@property(nonatomic, copy) NSString *currentBlockIDList;
 @property(nonatomic, readonly) screen_char_t defaultChar;
 @property(nonatomic, readonly) screen_char_t processedDefaultChar;
 

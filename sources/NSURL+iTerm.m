@@ -260,7 +260,11 @@ NS_ASSUME_NONNULL_BEGIN
     };
     if (components.scheme) {
         @try {
-            components.scheme = glue(components.scheme);
+            NSString *replacement = glue(components.scheme);
+            if (!replacement) {
+                return nil;
+            }
+            components.scheme = replacement;
         } @catch (NSException *exception) {
             return nil;
         }

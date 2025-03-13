@@ -285,7 +285,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
             .map { $0.attributedString.size().width }
             .max() ?? requiredWidth
 
-        if let column = completionsTableView.tableColumns.first, let tableView {
+        if let column = completionsTableView.tableColumns.first, tableView != nil {
             let columnPadding: CGFloat = 28
             let iconWidth = CompletionCell.imageWidth + CGFloat(CompletionCell.imageToTextMargin)
             requiredWidth = min(maxWidth, max(requiredWidth, textWidth + columnPadding + iconWidth))

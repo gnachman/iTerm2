@@ -184,6 +184,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     NSTimer *_selectCommandTimer;
 
     iTermTerminalCopyButton *_hoverBlockCopyButton NS_AVAILABLE_MAC(11);
+    iTermTerminalFoldBlockButton *_hoverBlockFoldButton NS_AVAILABLE_MAC(11);
     NSMutableArray<iTermTerminalButton *> *_buttons NS_AVAILABLE_MAC(11);
 
     NSRect _previousCursorFrame;
@@ -410,6 +411,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [_portholesNeedUpdatesJoiner release];
     [_trackingChildWindows release];
     [_hoverBlockCopyButton release];
+    [_hoverBlockFoldButton release];
     [_buttons release];
     [_selectCommandTimer invalidate];
     [_selectCommandTimer release];
@@ -1105,7 +1107,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (BOOL)hasTerminalButtons {
     if (@available(macOS 11, *)) {
-        return _buttons.count > 0 || _hoverBlockCopyButton != nil;
+        return _buttons.count > 0 || _hoverBlockCopyButton != nil || _hoverBlockFoldButton != nil;
     }
     return NO;
 }
@@ -1115,6 +1117,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         const NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
         DLog(@"%@", NSStringFromPoint(point));
         NSArray<iTermTerminalButton *> *buttons = _buttons;
+        if (_hoverBlockFoldButton) {
+            buttons = [buttons arrayByAddingObject:_hoverBlockFoldButton];
+        }
         if (_hoverBlockCopyButton) {
             buttons = [buttons arrayByAddingObject:_hoverBlockCopyButton];
         }
@@ -1227,6 +1232,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     [_hoverBlockCopyButton autorelease];
     _hoverBlockCopyButton = nil;
+    [_hoverBlockFoldButton autorelease];
+    _hoverBlockFoldButton = nil;
     [_delegate textViewShowHoverURL:nil
                              anchor:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1)];
 }
@@ -1659,6 +1666,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     const VT100GridRange range = [self rangeOfVisibleLines];
     _drawingHelper.folds = [self.dataSource foldsInRange:range];
     _drawingHelper.rightExtra = self.delegate.textViewRightExtra;
+    _drawingHelper.highlightedBlockLineRange = _hoverBlockFoldButton ? [self relativeRangeFromAbsLineRange:_hoverBlockFoldButton.absLineRange] : NSMakeRange(NSNotFound, 0);
 
     [_drawingHelper updateCachedMetrics];
     if (@available(macOS 11, *)) {
@@ -2307,6 +2315,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _oldSelection = [_selection copy];
 
     // Redraw lines with dirty characters
+    // IMPORTANT NOTE: This only checks the mutable section of the grid, not the visible area!
     const int numberOfLines = _dataSource.numberOfLines;
     int lineStart = numberOfLines - [_dataSource height];
     int lineEnd = [_dataSource numberOfLines];
@@ -2366,17 +2375,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         }
     }
 
-    BOOL hadVisibleBlock = _haveVisibleBlock;
-    _haveVisibleBlock = NO;
-    for (int y = lineStart; y < lineEnd; y++) {
-        NSDictionary<NSNumber *, iTermExternalAttribute *> *attrs = [[self.dataSource externalAttributeIndexForLine:y] attributes];
-        if (attrs[@0].blockID != nil) {
-            _haveVisibleBlock = YES;
-        }
-    }
-    if (hadVisibleBlock != _haveVisibleBlock) {
-        [self.delegate textViewHaveVisibleBlocksDidChange];
-    }
     // Always mark the IME as needing to be drawn to keep things simple.
     if ([self hasMarkedText]) {
         [self invalidateInputMethodEditorRect];
@@ -2418,6 +2416,22 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         *foundDirtyPtr = foundDirty;
     }
     return _blinkAllowed && anythingIsBlinking;
+}
+
+- (void)searchForVisibleBlocks {
+    BOOL hadVisibleBlock = _haveVisibleBlock;
+    _haveVisibleBlock = NO;
+    const NSRange visibleLines = [self visibleRelativeRange];
+    for (NSInteger i = 0; i < visibleLines.length; i++) {
+        NSDictionary<NSNumber *, iTermExternalAttribute *> *attrs = [[self.dataSource externalAttributeIndexForLine:visibleLines.location + i] attributes];
+        if (attrs[@0].blockIDList != nil) {
+            _haveVisibleBlock = YES;
+        }
+    }
+    if (hadVisibleBlock != _haveVisibleBlock) {
+        DLog(@"Have visible blocks did change");
+        [self.delegate textViewHaveVisibleBlocksDidChange];
+    }
 }
 
 // NOTE: May return a negative Y origin.
@@ -2561,6 +2575,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         if (foundDirty) {
             [self refreshAccessibility];
         }
+        [self searchForVisibleBlocks];
     }];
     if (scrollbackOverflow > 0 || frameDidChange) {
         // Need to redraw locations of search results.
@@ -2570,7 +2585,142 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     if (_needsUpdateSubviewFrames) {
         [self updateSubviewFrames];
     }
+    [self reloadHoverButtons];
     return foundBlink;
+}
+
+- (void)reloadHoverButtons {
+    const NSPoint screenPoint = [NSEvent mouseLocation];
+    const VT100GridCoord coord = [self coordForMouseLocation:screenPoint];
+    if (VT100GridCoordIsValid(coord)) {
+        BOOL changed = NO;
+        [self updateHoverButtonsForLine:coord.y changed:&changed];
+    } else {
+        _hoverBlockFoldButton = nil;
+    }
+}
+
+- (NSString *)updateHoverButtonsForLine:(int)line changed:(out BOOL *)changedPtr {
+    NSDictionary<NSNumber *, iTermExternalAttribute *> *attrs = [[self.dataSource externalAttributeIndexForLine:line] attributes];
+    NSString *block = [[attrs[@0].blockIDList componentsSeparatedByString:iTermExternalAttributeBlockIDDelimiter] firstObject];
+    const VT100GridCoordRange coordRange = [_dataSource rangeOfBlockWithID:block];;
+    NSRange absLineRange;
+    if (VT100GridCoordIsValid(coordRange.start) && VT100GridCoordIsValid(coordRange.end)) {
+        const VT100GridAbsCoordRange absCoordRange = VT100GridAbsCoordRangeFromCoordRange(coordRange, _dataSource.totalScrollbackOverflow);
+        absLineRange = NSMakeRange(absCoordRange.start.y,
+                                   absCoordRange.end.y - absCoordRange.start.y + 1);
+    } else {
+        absLineRange = NSMakeRange(NSNotFound, 0);
+    }
+    // As a side effect update the current blockCopyButton.
+    [self updateHoverButtonsForBlockID:block
+                                onLine:line
+                          absLineRange:absLineRange
+                               changed:changedPtr];
+    return block;
+}
+
+- (void)updateHoverButtonsForBlockID:(NSString *)block
+                              onLine:(int)line
+                        absLineRange:(NSRange)absLineRange
+                             changed:(out BOOL *)changedPtr {
+    *changedPtr = NO;
+    if (@available(macOS 11, *)) {
+        if (!block) {
+            if (_hoverBlockCopyButton != nil || _hoverBlockFoldButton != nil) {
+                *changedPtr = YES;
+            }
+            _hoverBlockCopyButton = nil;
+            _hoverBlockFoldButton = nil;
+        } else {
+            if (![_hoverBlockCopyButton.blockID isEqualToString:block]) {
+                *changedPtr = YES;
+                [self makeBlockCopyButtonForLine:line block:block];
+            }
+            [self makeOrUpdateBlockFoldButtonForLine:line
+                                               block:block
+                                        absLineRange:absLineRange
+                                             changed:changedPtr];
+        }
+    }
+}
+
+- (void)makeBlockCopyButtonForLine:(int)line block:(NSString *)block NS_AVAILABLE_MAC(11) {
+    int i = line;
+    while (i > 0 && [[self blockIDsOnLine:i - 1] containsObject:block]) {
+        i -= 1;
+    }
+    _hoverBlockCopyButton = [[iTermTerminalCopyButton alloc] initWithID:-1
+                                                                blockID:block
+                                                                   mark:nil
+                                                                   absY:@(i + _dataSource.totalScrollbackOverflow)];
+    _hoverBlockCopyButton.isFloating = YES;
+    __weak __typeof(self) weakSelf = self;
+    const long long offset = _dataSource.totalScrollbackOverflow;
+    _hoverBlockCopyButton.action = ^(NSPoint locationInWindow) {
+        [weakSelf copyBlock:block absLine:line+offset screenCoordinate:[NSEvent mouseLocation]];
+    };
+}
+
+- (void)makeOrUpdateBlockFoldButtonForLine:(int)line
+                                     block:(NSString *)block
+                              absLineRange:(NSRange)absLineRange
+                                   changed:(out BOOL *)changedPtr NS_AVAILABLE_MAC(11) {
+    id<iTermFoldMarkReading> foldMark = [[self.dataSource foldMarksInRange:VT100GridRangeMake(line, 1)] firstObject];
+    const BOOL wasFolded = foldMark != nil;
+    int i = line;
+    while (i > 0 && [[self blockIDsOnLine:i - 1] containsObject:block]) {
+        i -= 1;
+    }
+    if (absLineRange.length < 3 && !wasFolded) {
+        if (!_hoverBlockFoldButton) {
+            return;
+        }
+        _hoverBlockFoldButton = nil;
+        *changedPtr = YES;
+        return;
+    }
+    if (_hoverBlockFoldButton) {
+        const BOOL remake = [self updateHoverBlockFoldButtonWithBlock:block
+                                                                absY:i + _dataSource.totalScrollbackOverflow
+                                                              folded:wasFolded
+                                                        absLineRange:absLineRange
+                                                             changed:changedPtr];
+        if (!remake) {
+            return;
+        }
+    }
+    *changedPtr = YES;
+    _hoverBlockFoldButton = [[iTermTerminalFoldBlockButton alloc] initWithID:-1
+                                                                     blockID:block
+                                                                        mark:nil
+                                                                        absY:@(i + _dataSource.totalScrollbackOverflow)
+                                                             currentlyFolded:wasFolded
+                                                                absLineRange:absLineRange];
+    _hoverBlockFoldButton.isFloating = YES;
+    __weak __typeof(self) weakSelf = self;
+    _hoverBlockFoldButton.action = ^(NSPoint locationInWindow) {
+        if (wasFolded) {
+            [weakSelf unfoldBlock:block];
+        } else {
+            [weakSelf foldBlock:block];
+        }
+        [weakSelf refresh];
+    };
+}
+
+- (BOOL)updateHoverBlockFoldButtonWithBlock:(NSString *)block
+                                       absY:(long long)absY
+                                     folded:(BOOL)folded
+                               absLineRange:(NSRange)absLineRange
+                                    changed:(out BOOL *)changedPtr {
+    if (![_hoverBlockCopyButton.blockID isEqualToString:block] ||
+        _hoverBlockFoldButton.folded != folded ||
+        !NSEqualRanges(_hoverBlockFoldButton.absLineRange, absLineRange)) {
+        return YES;
+    }
+    _hoverBlockFoldButton.absY = @(absY);
+    return NO;
 }
 
 - (void)updateSubviewFrames {
@@ -5155,8 +5305,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                    virtualOffset:virtualOffset];
 }
 
-- (id<VT100ScreenMarkReading>)drawingHelperMarkOnLine:(int)line {
-    return [_dataSource markOnLine:line];
+- (id<iTermMark>)drawingHelperMarkOnLine:(int)line {
+    return [_dataSource drawableMarkOnLine:line];
 }
 
 - (const screen_char_t *)drawingHelperLineAtIndex:(int)line {
@@ -5283,6 +5433,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 // Does not include hover buttons.
 - (NSArray<iTermTerminalButton *> *)terminalButtons NS_AVAILABLE_MAC(11) {
     NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
+    if (_hoverBlockFoldButton) {
+        [updated addObject:_hoverBlockFoldButton];
+    }
     if (_hoverBlockCopyButton) {
         [updated addObject:_hoverBlockCopyButton];
     }
@@ -5295,7 +5448,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             if (intersectionRange.length > 0) {
                 [updated addObjectsFromArray:[self commandButtonsForMark:mark
                                                                     line:intersectionRange.location - _dataSource.totalScrollbackOverflow + 1
-                                                             shouldFloat:YES]];
+                                                             shouldFloat:YES
+                                                                offByOne:NO]];
             }
         }
     }
@@ -5330,14 +5484,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     const int firstLine = self.rangeOfVisibleLines.location;
     for (int i = firstLine; i < firstLine + height - 1; i++) {
         const int markLine = i + 1;
-        id<VT100ScreenMarkReading> mark = [self.dataSource markOnLine:markLine];
+        id<VT100ScreenMarkReading> mark = [self.dataSource screenMarkOnLine:markLine];
         if (!mark.lineStyle) {
             continue;
         }
         if (!mark.command.length) {
             continue;
         }
-        [updated addObjectsFromArray:[self commandButtonsForMark:mark line:markLine shouldFloat:NO]];
+        [updated addObjectsFromArray:[self commandButtonsForMark:mark line:markLine shouldFloat:NO offByOne:YES]];
     }
 
     [_buttons autorelease];
@@ -5347,7 +5501,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (NSArray<iTermTerminalButton *> *)commandButtonsForMark:(id<VT100ScreenMarkReading>)mark
                                                      line:(int)markLine
-                                              shouldFloat:(BOOL)shouldFloat NS_AVAILABLE_MAC(11) {
+                                              shouldFloat:(BOOL)shouldFloat
+                                                 offByOne:(BOOL)offByOne NS_AVAILABLE_MAC(11) {
     const int width = [self.dataSource width];
     const long long offset = self.dataSource.totalScrollbackOverflow;
     __weak __typeof(self) weakSelf = self;
@@ -5423,7 +5578,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         [updated addObject:button];
     }
     x -= 3;
-    id<iTermFoldMarkReading> fold = [[self.dataSource foldMarksInRange:VT100GridRangeMake(markLine - 1, 1)] firstObject];
+    id<iTermFoldMarkReading> fold = [[self.dataSource foldMarksInRange:VT100GridRangeMake(markLine - (offByOne ? 0 : 1), 1)] firstObject];
     if (fold) {
         existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalUnfoldButton class]];
         if (existing) {
@@ -5571,6 +5726,35 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                             topLeftScreenCoordinate:screenCoordinate
                                           pointSize:12];
     }
+}
+
+- (void)unfoldBlock:(NSString *)blockID {
+    const VT100GridCoordRange range = [self.dataSource rangeOfBlockWithID:blockID];
+    if (range.start.x < 0){
+        DLog(@"Failed to find block %@", blockID);
+        return;
+    }
+    const long long offset = [self.dataSource totalScrollbackOverflow];
+    [self unfoldAbsoluteLineRange:NSMakeRange(range.start.y + offset,
+                                              range.end.y - range.start.y + 1)];
+    [self didFoldOrUnfold];
+}
+
+- (void)foldBlock:(NSString *)blockID {
+    const VT100GridCoordRange range = [self.dataSource rangeOfBlockWithID:blockID];
+    if (range.start.x < 0 || range.start.y == range.end.y) {
+        DLog(@"Failed to fold block %@. range=%@", blockID, VT100GridCoordRangeDescription(range));
+        return;
+    }
+    const long long offset = [self.dataSource totalScrollbackOverflow];
+    [self foldRange:NSMakeRange(range.start.y + offset,
+                                range.end.y - range.start.y + 1)];
+    [self didFoldOrUnfold];
+}
+
+- (void)didFoldOrUnfold {
+    [self.delegate textViewReloadSelectedCommand];
+    [self.selection clearSelection];
 }
 
 - (void)updateButtonHover:(NSPoint)locationInWindow pressed:(BOOL)pressed {
@@ -6092,7 +6276,7 @@ static NSString *iTermStringFromRange(NSRange range) {
     const long long offset = self.dataSource.totalScrollbackOverflow;
     if (absLine < offset) {
         start = 0;
-        if (![[self blockIDForLine:start] isEqualToString:block]) {
+        if (![[self blockIDsOnLine:start] containsObject:block]) {
             DLog(@"Start line is not the same block");
             return VT100GridCoordRangeMake(-1, -1, -1, -1);
         }
@@ -6100,12 +6284,12 @@ static NSString *iTermStringFromRange(NSRange range) {
         start = absLine - offset;
     }
     
-    while (start - 1 >= 0 && [[self blockIDForLine:start - 1] isEqualToString:block]) {
+    while (start - 1 >= 0 && [[self blockIDsOnLine:start - 1] containsObject:block]) {
         start -= 1;
     }
     int end = start;
     const int count = [self.dataSource numberOfLines];
-    while (end + 1 < count && [[self blockIDForLine:end + 1] isEqualToString:block]) {
+    while (end + 1 < count && [[self blockIDsOnLine:end + 1] containsObject:block]) {
         end += 1;
     }
     
@@ -6153,13 +6337,17 @@ static NSString *iTermStringFromRange(NSRange range) {
     return NO;
 }
 
-- (NSString *)blockIDForLine:(int)line {
+- (NSArray<NSString *> *)blockIDsOnLine:(int)line {
+    return [[self blockIDListForLine:line] componentsSeparatedByString:iTermExternalAttributeBlockIDDelimiter];
+}
+
+- (NSString *)blockIDListForLine:(int)line {
     id<iTermExternalAttributeIndexReading> eaIndex = [_dataSource externalAttributeIndexForLine:line];
     if (!eaIndex) {
         return nil;
     }
-    NSString *block = eaIndex.attributes[@0].blockID;
-    return block;
+    NSString *blockIDList = eaIndex.attributes[@0].blockIDList;
+    return blockIDList;
 }
 
 @end
@@ -6194,15 +6382,18 @@ static NSString *iTermStringFromRange(NSRange range) {
                  allowOverflow:(BOOL)allowRightMarginOverflow
                     firstMouse:(BOOL)firstMouse {
     if (event.type == NSEventTypeLeftMouseUp && event.clickCount == 1) {
+        DLog(@"mouseUp: textview handling single click");
         const NSPoint windowPoint = [event locationInWindow];
         const NSPoint enclosingViewPoint = [self.enclosingScrollView convertPoint:windowPoint fromView:nil];
         NSString *message = [_indicatorsHelper helpTextForIndicatorAt:enclosingViewPoint
                                                             sessionID:[_delegate.textViewVariablesScope valueForVariableName:iTermVariableKeySessionID]];
         if (message) {
+            DLog(@"mouseUp: show indicator message");
             [self showIndicatorMessage:message at:enclosingViewPoint];
             return VT100GridCoordMake(-1, -1);
         }
         if (_drawingHelper.offscreenCommandLine) {
+            DLog(@"mouseUp: reveal command line");
             NSRect rect = [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:[self adjustedDocumentVisibleRect]
                                                                                  cellSize:NSMakeSize(_charWidth, _lineHeight)
                                                                                  gridSize:VT100GridSizeMake(_dataSource.width, _dataSource.height)];
@@ -6218,13 +6409,16 @@ static NSString *iTermStringFromRange(NSRange range) {
         id<iTermFoldMarkReading> foldMark = [self foldMarkAtWindowCoord:event.locationInWindow];
         id<VT100ScreenMarkReading> commandMark = [self commandMarkAtWindowCoord:event.locationInWindow];
         if (foldMark) {
+            DLog(@"mouseUp: fold mark");
             [self unfoldMark:foldMark];
             return VT100GridCoordMake(-1, -1);
         } else if (commandMark) {
+            DLog(@"mouseUp: command mark");
             [self foldCommandMark:commandMark];
             return VT100GridCoordMake(-1, -1);
         } else if (!firstMouse) {
             if ([self revealAnnotationsAt:[self coordForEvent:event] toggle:YES]) {
+                DLog(@"mouseUp: reveal annotation");
                 return VT100GridCoordMake(-1, -1);
             }
             const NSPoint temp =
@@ -6237,6 +6431,7 @@ static NSString *iTermStringFromRange(NSRange range) {
 
             if ([iTermAdvancedSettingsModel useDoubleClickDelayForCommandSelection] &&
                 [_delegate textViewMarkForCommandAt:selectAtCoord] != [_delegate textViewSelectedCommandMark]) {
+                DLog(@"mouseUp: start timer for command selection");
                 __weak __typeof(self) weakSelf = self;
                 _selectCommandTimer = [[NSTimer scheduledTimerWithTimeInterval:[NSEvent doubleClickInterval]
                                                                        repeats:NO
@@ -6244,6 +6439,7 @@ static NSString *iTermStringFromRange(NSRange range) {
                     [weakSelf selectCommandAt:selectAtCoord];
                 }] retain];
             } else {
+                DLog(@"mouseUp: select a command");
                 [self selectCommandAt:selectAtCoord];
             }
         }
@@ -6674,45 +6870,29 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     [self requestDelegateRedraw];
 }
 
-- (void)makeBlockCopyButtonForLine:(int)line block:(NSString *)block NS_AVAILABLE_MAC(11) {
-    int i = line;
-    while (i > 0 && [[self blockIDForLine:i - 1] isEqualToString:block]) {
-        i -= 1;
-    }
-    _hoverBlockCopyButton = [[iTermTerminalCopyButton alloc] initWithID:-1
-                                                                blockID:block
-                                                                   mark:nil
-                                                                   absY:@(i + _dataSource.totalScrollbackOverflow)];
-    _hoverBlockCopyButton.isFloating = YES;
-    __weak __typeof(self) weakSelf = self;
-    const long long offset = _dataSource.totalScrollbackOverflow;
-    _hoverBlockCopyButton.action = ^(NSPoint locationInWindow) {
-        [weakSelf copyBlock:block absLine:line+offset screenCoordinate:[NSEvent mouseLocation]];
-    };
-}
-
-- (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler blockIDOnLine:(int)line {
+- (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler
+             blockIDOnLine:(int)line {
     if (line < 0) {
         return nil;
     }
-    NSDictionary<NSNumber *, iTermExternalAttribute *> *attrs = [[self.dataSource externalAttributeIndexForLine:line] attributes];
-    NSString *block = attrs[@0].blockID;
-
-    // As a side effect update the current blockCopyButton.
-    if (@available(macOS 11, *)) {
-        if (!block) {
-            _hoverBlockCopyButton = nil;
-        } else if (![_hoverBlockCopyButton.blockID isEqualToString:block]) {
-            [self makeBlockCopyButtonForLine:line block:block];
-        }
+    BOOL changed = NO;
+    NSString *blockID = [self updateHoverButtonsForLine:line changed:&changed];
+    if (changed) {
+        DLog(@"request delegate redraw");
+        [self.delegate textViewUpdateTrackingAreas];
+        [self requestDelegateRedraw];
+    } else {
+        DLog(@"no change");
     }
-    return block;
+    return blockID;
 }
 
 // Return yes to short-circuit
 - (BOOL)mouseHandlerMouseDownAt:(NSPoint)locationInWindow {
     NSPoint point = [self convertPoint:locationInWindow fromView:nil];
+    DLog(@"TextView handling mouseDown at %@", NSStringFromPoint(point));
     if (!NSPointInRect(point, self.bounds)) {
+        DLog(@"TextView handling mouseDown: not in bounds");
         return NO;
     }
     if (@available(macOS 11, *)) {
@@ -6723,19 +6903,24 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
                 }
                 return YES;
             }
+            DLog(@"TextView handling mouseDown: not in %@ with frame %@", button.description, NSStringFromRect(button.desiredFrame));
         }
     }
+    DLog(@"TextView handling mouseDown: not in anything");
     return NO;
 }
 
 - (BOOL)mouseHandlerMouseUp:(NSEvent *)event {
+    DLog(@"mouseUp: mouseHandlerMouseUp");
     if (event.clickCount != 1) {
+        DLog(@"mouseUp: not a single click");
         [self.delegate textViewRemoveSelectedCommand];
         return NO;
     }
     const NSPoint locationInWindow = event.locationInWindow;
     NSPoint point = [self convertPoint:locationInWindow fromView:nil];
     if (!NSPointInRect(point, self.bounds)) {
+        DLog(@"mouseUp: not in bounds");
         return NO;
 
     }
@@ -6744,6 +6929,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
         [self updateButtonHover:locationInWindow pressed:NO];
         for (iTermTerminalButton *button in self.terminalButtons) {
             if (!button.pressed) {
+                DLog(@"mouseUp: %@ not pressed", button.description);
                 continue;
             }
             clicked = clicked || button.pressed;

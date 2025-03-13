@@ -387,7 +387,9 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
 }
 
 - (instancetype)copyWithAbsoluteBlockNumber:(long long)absoluteBlockNumber {
-    return [self copyDeep:YES absoluteBlockNumber:absoluteBlockNumber];
+    LineBlock *theCopy = [self copyDeep:YES absoluteBlockNumber:absoluteBlockNumber];
+    theCopy->_guid = [[NSUUID UUID] UUIDString];
+    return theCopy;
 }
 
 - (void)copyMetadataTo:(LineBlock *)theCopy {

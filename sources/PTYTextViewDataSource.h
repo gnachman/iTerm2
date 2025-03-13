@@ -16,6 +16,8 @@
 @class iTermKittyImageDraw;
 @protocol iTermMark;
 @class iTermOffscreenCommandLine;
+@class iTermRange;
+@class iTermRangeArray;
 @class iTermSavedIntervalTreeObject;
 @class iTermSearchEngine;
 @class iTermTerminalButtonPlace;
@@ -97,7 +99,8 @@
 
 - (VT100GridCoordRange)coordRangeOfAnnotation:(id<IntervalTreeImmutableObject>)note;
 - (NSArray *)charactersWithNotesOnLine:(int)line;
-- (id<VT100ScreenMarkReading>)markOnLine:(int)line;
+- (id<VT100ScreenMarkReading>)screenMarkOnLine:(int)line;
+- (id<iTermMark>)drawableMarkOnLine:(int)line;
 - (void)removeNamedMark:(id<VT100ScreenMarkReading>)mark;
 - (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
                             mustHaveCommand:(BOOL)mustHaveCommand
@@ -144,6 +147,11 @@
 - (void)replaceRange:(VT100GridAbsCoordRange)range
             withLine:(ScreenCharArray *)line
         promptLength:(NSInteger)promptLength;
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+            withLines:(NSArray<ScreenCharArray *> *)lines
+        promptLength:(NSInteger)promptLength
+          blockMarks:(NSDictionary<NSString *, iTermRange *> *)blockMarks;
+- (NSDictionary<NSString *, iTermRange *> *)blockMarkDictionaryOnLine:(long long)y;
 - (BOOL)removeFoldsInRange:(NSRange)absRange;
 - (NSIndexSet *)foldsInRange:(VT100GridRange)range;
 - (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range;

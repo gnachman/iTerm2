@@ -784,6 +784,21 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                             (float)_configuration->_processedDefaultTextColor.blueComponent,
                             1.0);
 }
+
+- (vector_float4)blockHoverColor {
+    return simd_make_float4((float)_configuration->_blockHoverColor.redComponent,
+                            (float)_configuration->_blockHoverColor.greenComponent,
+                            (float)_configuration->_blockHoverColor.blueComponent,
+                            1.0);
+}
+
+- (vector_float4)defaultTextColor {
+    return simd_make_float4((float)_configuration->_defaultTextColor.redComponent,
+                            (float)_configuration->_defaultTextColor.greenComponent,
+                            (float)_configuration->_defaultTextColor.blueComponent,
+                            1.0);
+}
+
 - (iTermLineStyleMarkColors)lineStyleMarkColors {
     return _configuration->_lineStyleMarkColors;
 }
@@ -1546,6 +1561,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                    background:(iTermMetalBackgroundColorRLE *)backgroundRLE
                      rleCount:(int *)rleCount
                     markStyle:(out iTermMarkStyle *)markStylePtr
+                   hoverState:(out BOOL *)hoverStatePtr
                 lineStyleMark:(out nonnull BOOL *)lineStyleMarkPtr
       lineStyleMarkRightInset:(out nonnull int *)lineStyleMarkRightInsetPtr
                           row:(int)row
@@ -1575,6 +1591,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     const screen_char_t *const line = (const screen_char_t *const)lineData.line;
     iTermExternalAttributeIndex *eaIndex = _rows[row]->_eaIndex;
 
+    *hoverStatePtr =_rows[row]->_hoverState;
     *markStylePtr = [_rows[row]->_markStyle intValue];
     *lineStyleMarkPtr = _rows[row]->_lineStyleMark;
     *lineStyleMarkRightInsetPtr = _rows[row]->_lineStyleMarkRightInset;

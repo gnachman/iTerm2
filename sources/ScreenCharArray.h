@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *stringValueIncludingNewline;
 @property (nonatomic, readonly) NSString *debugStringValue;
 @property (nonatomic, readonly, nullable) iTermBidiDisplayInfo *bidiInfo;
+@property (nonatomic, readonly, nullable) iTermExternalAttributeIndex *eaIndex;
 
 @property (nonatomic, readonly) NSInteger lengthExcludingTrailingWhitespaceAndNulls;
 
@@ -65,6 +66,15 @@ NS_ASSUME_NONNULL_BEGIN
                 continuation:(screen_char_t)continuation
                freeOnRelease:(BOOL)freeOnRelease;
 
+// This is intended for swift so we can avoid the void* hijynx of iTermImmutableMetadata.
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
+                continuation:(screen_char_t)continuation
+                        date:(NSDate *)date
+          externalAttributes:(iTermExternalAttributeIndex * _Nullable)eaIndex
+                    rtlFound:(BOOL)rtlFound
+                    bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
+
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 
 // It only makes sense to use this when freeOnRelease=YES.
@@ -100,6 +110,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (ScreenCharArray *)screenCharArrayByRemovingFirst:(int)n;
 - (ScreenCharArray *)screenCharArrayByRemovingLast:(int)n;
 
+- (ScreenCharArray *)subArrayToIndex:(int)i;
+- (ScreenCharArray *)subArrayFromIndex:(int)i;
+
 - (NSMutableData *)mutableLineData;
 - (ScreenCharArray *)screenCharArrayBySettingCharacterAtIndex:(int)i
                                                            to:(screen_char_t)c;
@@ -111,14 +124,22 @@ NS_ASSUME_NONNULL_BEGIN
 // Wraps copy for Swift's benefit
 - (instancetype)clone;
 - (int)numberOfTrailingEmptyCells;
+- (int)numberOfTrailingEmptyCellsWhereSpaceIsEmpty:(BOOL)spaceIsEmpty;
+- (int)numberOfLeadingEmptyCellsWhereSpaceIsEmpty:(BOOL)spaceIsEmpty;
 
 @end
 
 @interface MutableScreenCharArray: ScreenCharArray
 
 @property (nonatomic, readonly) screen_char_t *mutableLine;
+@property (nonatomic, readwrite) screen_char_t continuation;
 
 - (void)appendScreenCharArray:(ScreenCharArray *)sca;
+- (void)appendString:(NSString *)string style:(screen_char_t)c continuation:(screen_char_t)continuation;
+- (void)setExternalAttributesIndex:(iTermExternalAttributeIndex * _Nullable)eaIndex;
+- (void)setBackground:(screen_char_t)bg inRange:(NSRange)range;
+- (void)setForeground:(screen_char_t)gg inRange:(NSRange)range;
+- (void)appendString:(NSString *)string fg:(screen_char_t)fg bg:(screen_char_t)bg;
 
 @end
 

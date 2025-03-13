@@ -109,7 +109,7 @@ NSString *const kTerminalStateAlternateScrollMode = @"Alternate Scroll Mode";
 NSString *const kTerminalStateSGRStack = @"SGR Stack";
 NSString *const kTerminalStateDECSACE = @"DECSACE";
 NSString *const kTerminalStateProtectedMode = @"Protected Mode";
-NSString *const kTerminalStateBlockID = @"Block ID";
+NSString *const kTerminalStateBlockIDList = @"Block ID";
 NSString *const kTerminalStateLiteralMode = @"Literal Mode";
 NSString *const kTerminalStateVTLevel = @"VT Level";
 
@@ -716,18 +716,18 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)updateExternalAttributes {
-    if (!graphicRendition_.hasUnderlineColor && _currentURL == nil && self.currentBlockID == nil && _currentLiteral == nil) {
+    if (!graphicRendition_.hasUnderlineColor && _currentURL == nil && self.currentBlockIDList == nil && _currentLiteral == nil) {
         _externalAttributes = nil;
         return;
     }
     _externalAttributes = [[iTermExternalAttribute alloc] initWithUnderlineColor:graphicRendition_.underlineColor
                                                                              url:_currentURL
-                                                                         blockID:self.currentBlockID
+                                                                     blockIDList:self.currentBlockIDList
                                                                      controlCode:_currentLiteral];
 }
 
-- (void)setCurrentBlockID:(NSString *)currentBlockID {
-    _currentBlockID = [currentBlockID copy];
+- (void)setCurrentBlockIDList:(NSString *)currentBlockIDList {
+    _currentBlockIDList = [currentBlockIDList copy];
     [self updateExternalAttributes];
 }
 
@@ -2027,7 +2027,7 @@ static const int kMaxScreenRows = 4096;
     self.url = nil;
     self.urlParams = nil;
     _currentURL = nil;
-    self.currentBlockID = nil;
+    self.currentBlockIDList = nil;
 
     // (Not supported: Reset INVISIBLE)
 
@@ -5659,7 +5659,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStatePreserveScreenOnDECCOLM: @(self.preserveScreenOnDECCOLM),
            kTerminalStateSavedColors: _savedColors.plist,
            kTerminalStateProtectedMode: @(_protectedMode),
-           kTerminalStateBlockID: self.currentBlockID ?: [NSNull null],
+           kTerminalStateBlockIDList: self.currentBlockIDList ?: [NSNull null],
            kTerminalStateLiteralMode: @(self.literalMode),
            kTerminalStateVTLevel: @(_vtLevel),
         };
@@ -5707,7 +5707,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     self.preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];
     self.protectedMode = [dict[kTerminalStateProtectedMode] unsignedIntegerValue];
-    self.currentBlockID = [NSString castFrom:dict[kTerminalStateBlockID]];
+    self.currentBlockIDList = [NSString castFrom:dict[kTerminalStateBlockIDList]];
     self.literalMode = [dict[kTerminalStateLiteralMode] boolValue];
     _vtLevel = [dict[kTerminalStateVTLevel] integerValue] ?: iTermEmulationLevel500;
 

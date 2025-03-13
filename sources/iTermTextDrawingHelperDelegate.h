@@ -16,6 +16,7 @@
 @class iTermExternalAttributeIndex;
 @protocol iTermExternalAttributeIndexReading;
 @class iTermFindOnPageHelper;
+@protocol iTermMark;
 @class iTermSelection;
 @class iTermTerminalButton;
 @class iTermTextExtractor;

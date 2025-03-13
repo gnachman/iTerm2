@@ -87,19 +87,10 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
         }
         let tState = transientState as! TerminalButtonRendererTransientState
         for button in tState.buttons {
-            if button.terminalButton.floating {
-                let rightSide = CGFloat(tState.configuration.viewportSizeExcludingLegacyScrollbars.x) - tState.margins.left - tState.cellConfiguration.cellSize.width * tState.configuration.scale
-                drawButton(button,
-                           x: rightSide,
-                           renderEncoder: renderEncoder,
-                           tState:tState)
-            } else {
-                let x = CGFloat(button.column) * transientState.cellConfiguration.cellSize.width + transientState.margins.left
-                drawButton(button,
-                           x: x,
-                           renderEncoder: renderEncoder,
-                           tState:tState)
-            }
+            drawButton(button,
+                       x: button.terminalButton.desiredFrame.minX * frameData.cellConfiguration.scale,
+                       renderEncoder: renderEncoder,
+                       tState:tState)
         }
     }
     

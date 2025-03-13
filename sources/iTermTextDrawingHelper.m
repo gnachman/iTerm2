@@ -512,6 +512,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     [self drawKittyImagesInRange:iTermSignedRangeWithBounds(1, NSIntegerMax)
                    virtualOffset:virtualOffset];
+    [self drawMarksWithBackgroundRunArrays:backgroundRunArrays
+                             virtualOffset:virtualOffset];
 
     // If the IME is in use, draw its contents over top of the "real" screen
     // contents.
@@ -606,9 +608,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                       virtualOffset:virtualOffset];
 
         for (NSInteger j = i; j < i + rows; j++) {
-            [self drawMarginsAndMarkForLine:backgroundRunArrays[j].line
-                                          y:backgroundRunArrays[j].y
-                              virtualOffset:virtualOffset];
+            [self drawMarginsForLine:backgroundRunArrays[j].line
+                                   y:backgroundRunArrays[j].y
+                       virtualOffset:virtualOffset];
         }
         i += rows;
     }
@@ -878,10 +880,14 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return color;
 }
 
-- (void)drawMarginsAndMarkForLine:(int)line
-                                y:(CGFloat)y
-                    virtualOffset:(CGFloat)virtualOffset {
-    NSRect leftMargin = NSMakeRect(0, y, MAX(0, [iTermPreferences intForKey:kPreferenceKeySideMargins]), _cellSize.height);
+- (NSRect)leftMarginRectAt:(CGFloat)y {
+    return NSMakeRect(0, y, MAX(0, [iTermPreferences intForKey:kPreferenceKeySideMargins]), _cellSize.height);
+}
+
+- (void)drawMarginsForLine:(int)line
+                         y:(CGFloat)y
+             virtualOffset:(CGFloat)virtualOffset {
+    NSRect leftMargin = [self leftMarginRectAt:y];
     NSRect rightMargin;
     NSRect visibleRect = _visibleRectExcludingTopMargin;
     rightMargin.origin.x = _cellSize.width * _gridSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
@@ -895,27 +901,44 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     [self drawBackgroundColor:color inRect:leftMargin enableBlending:enableBlending virtualOffset:virtualOffset];
     [self drawBackgroundColor:color inRect:rightMargin enableBlending:enableBlending virtualOffset:virtualOffset];
+}
 
-    [self drawMarkIfNeededOnLine:line
-                  leftMarginRect:leftMargin
-                   virtualOffset:virtualOffset];
+- (void)drawMarkForLine:(int)line
+                      y:(CGFloat)y
+          virtualOffset:(CGFloat)virtualOffset {
+    NSRect leftMargin = [self leftMarginRectAt:y];
 
     id<iTermExternalAttributeIndexReading> eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:line];
 
-    // Draw block indicator
-    if (eaIndex.attributes[@0].blockID) {
-        [[self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT
-                                            green:0
-                                             blue:0
-                                        colorMode:ColorModeAlternate
-                                             bold:NO
-                                            faint:NO
-                                     isBackground:NO] set];
-        const NSRect rect = NSMakeRect(0,
-                                       y,
-                                       leftMargin.size.width - 2,
-                                       _cellSize.height);
-        iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
+    if (eaIndex.attributes[@0].blockIDList) {
+        if ([self canDrawLine:line]) {
+            // Draw block indicator. This takes precedence over other marks because we don't want a
+            // fold mark drawn over a folded block.
+            if (NSLocationInRange(line, _highlightedBlockLineRange)) {
+                [self.blockHoverColor set];
+            } else {
+                [[self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT
+                                                    green:0
+                                                     blue:0
+                                                colorMode:ColorModeAlternate
+                                                     bold:NO
+                                                    faint:NO
+                                             isBackground:NO] set];
+            }
+            const NSRect rect = NSMakeRect(1,
+                                           y,
+                                           MAX(1, leftMargin.size.width - 2),
+                                           _cellSize.height);
+            if ([_folds containsIndex:line]) {
+                iTermFrameRect(rect, virtualOffset);
+            } else {
+                iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
+            }
+        }
+    } else {
+        [self drawMarkIfNeededOnLine:line
+                      leftMarginRect:leftMargin
+                       virtualOffset:virtualOffset];
     }
 }
 
@@ -1195,8 +1218,9 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     return img;
 }
 
-+ (iTermMarkIndicatorType)markIndicatorTypeForMark:(id<VT100ScreenMarkReading>)mark
++ (iTermMarkIndicatorType)markIndicatorTypeForMark:(id<iTermMark>)genericMark
                                             folded:(BOOL)folded {
+    id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)genericMark;
     if (mark.code == 0) {
         return folded ? iTermMarkIndicatorTypeFoldedSuccess : iTermMarkIndicatorTypeSuccess;
     }
@@ -1208,7 +1232,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     return folded ? iTermMarkIndicatorTypeFoldedError : iTermMarkIndicatorTypeError;
 }
 
-+ (NSColor *)colorForMark:(id<VT100ScreenMarkReading>)mark {
++ (NSColor *)colorForMark:(id<iTermMark>)mark {
     return [self colorForMarkType:[iTermTextDrawingHelper markIndicatorTypeForMark:mark folded:NO]];
 }
 
@@ -1229,6 +1253,15 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 - (BOOL)canDrawLine:(int)line {
     return (line < _linesToSuppress.location ||
             line >= _linesToSuppress.location + _linesToSuppress.length);
+}
+
+- (void)drawMarksWithBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
+                           virtualOffset:(CGFloat)virtualOffset {
+    for (NSInteger i = 0; i < backgroundRunArrays.count; i += 1) {
+        [self drawMarkForLine:backgroundRunArrays[i].line
+                            y:backgroundRunArrays[i].y
+                virtualOffset:virtualOffset];
+    }
 }
 
 - (void)drawMarkIfNeededOnLine:(int)line
@@ -1271,6 +1304,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             shouldDrawRegularMark = YES;
         }
     }
+
     if (shouldDrawRegularMark) {
         NSRect insetLeftMargin = leftMargin;
         insetLeftMargin.origin.x += 1;
@@ -1433,23 +1467,48 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 }
 
 - (void)updateButtonFrames NS_AVAILABLE_MAC(11) {
-    VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRectExcludingTopMargin];
+    const VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRectExcludingTopMargin];
+    const long long minAbsY = drawableCoordRange.start.y + _totalScrollbackOverflow;
     const CGFloat margin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    int floatingCount = 0;
+    NSMutableDictionary<NSNumber *, NSMutableIndexSet *> *usedDict = [NSMutableDictionary dictionary];
     for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
         CGFloat x;
         button.enclosingSessionWidth = _gridSize.width;
         VT100GridAbsCoord absCoord = [_delegate absCoordForButton:button];
+        int proposedX;
+        int widthInCells = ceil([button sizeWithCellSize:_cellSize].width / self.cellSize.width) + 1;
         if (absCoord.x < 0) {
-            x = _scrollViewDocumentVisibleRect.size.width - margin - [button sizeWithCellSize:_cellSize].width;
+            // Floating button
+            proposedX = self.gridSize.width - 2 - floatingCount * widthInCells;
+            floatingCount += 1;
         } else {
-            x = margin + absCoord.x * self.cellSize.width;
+            // Absolutely positioned button
+            proposedX = absCoord.x;
         }
-        const long long minAbsY = drawableCoordRange.start.y + _totalScrollbackOverflow;
+        long long effectiveAbsY = MAX(absCoord.y, minAbsY);
+        NSMutableIndexSet *used = usedDict[@(effectiveAbsY)];
+        if (!used) {
+            used = [NSMutableIndexSet indexSet];
+            usedDict[@(effectiveAbsY)] = used;
+        }
+        while (proposedX > 0 && [used intersectsIndexesInRange:NSMakeRange(proposedX, widthInCells)]) {
+            proposedX -= 1;
+        }
+        if (proposedX >= 0) {
+            x = margin + proposedX * self.cellSize.width;
+            [used addIndexesInRange:NSMakeRange(proposedX, widthInCells)];
+        } else {
+            DLog(@"Out of space for %@", button);
+            button.desiredFrame = NSZeroRect;
+            continue;
+        }
         button.desiredFrame = [button frameWithX:x
                                             absY:absCoord.y
                                       minAbsLine:minAbsY
                                 cumulativeOffset:_totalScrollbackOverflow
                                         cellSize:_cellSize];
+        DLog(@"Set desired frame of %@ to %@", button, NSStringFromRect(button.desiredFrame));
         if (_selectedCommandRegion.length > 0 && absCoord.y - self.totalScrollbackOverflow == NSMaxRange(_selectedCommandRegion)) {
             NSRect frame = button.desiredFrame;
             button.shift = 2;
@@ -1458,10 +1517,8 @@ const CGFloat commandRegionOutlineThickness = 2.0;
         } else {
             button.shift = 0;
         }
-        if (absCoord.x < 0) {
-            absCoord.x = self.gridSize.width - 1;
-        }
-        absCoord.y = MAX(absCoord.y, minAbsY);
+        absCoord.x = proposedX;
+        absCoord.y = effectiveAbsY;
         button.absCoordForDesiredFrame = absCoord;
         DLog(@"Set desired frame of %@ to %@ from minAbsLine:%@ = (%@ + %@) visibleRect:%@ cumulativeOffset:%@ cellSize.height:%@",
              button,
@@ -3855,6 +3912,16 @@ typedef struct {
     return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapForeground]
                                  overBackgroundColor:[self defaultBackgroundColor]
                               disableMinimumContrast:NO];
+}
+
+- (NSColor *)blockHoverColor {
+    return [self.delegate drawingHelperColorForCode:1  // red, equivalent to SGR 31
+                                              green:0
+                                               blue:0
+                                          colorMode:ColorModeNormal
+                                               bold:NO
+                                              faint:NO
+                                       isBackground:NO];
 }
 
 - (NSColor *)selectionColorForCurrentFocus {

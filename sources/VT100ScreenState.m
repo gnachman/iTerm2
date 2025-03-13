@@ -532,6 +532,20 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     }
 }
 
+- (NSArray<id<IntervalTreeImmutableObject>> *)objectsOnLine:(int)line ofClass:(Class)cls {
+    Interval *queryInterval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                                      line,
+                                                                                      self.width + 1,
+                                                                                      line)];
+    if (!queryInterval) {
+        return @[];
+    }
+    NSArray<id<IntervalTreeImmutableObject>> *objects = [self.intervalTree objectsInInterval:queryInterval];
+    return [objects filteredArrayUsingBlock:^BOOL(id<IntervalTreeImmutableObject> anObject) {
+        return [anObject isKindOfClass:cls];
+    }];
+}
+
 - (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line {
     return (id<VT100RemoteHostReading>)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
 }
@@ -600,8 +614,14 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 }
 
 - (NSArray<iTermFoldMark *> *)foldMarksInRange:(NSRange)absLineRange max:(NSUInteger)maxCount {
-    NSMutableArray<iTermFoldMark *> *results = [NSMutableArray array];
-    Interval *interval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, 
+    return [self marksInRange:absLineRange max:maxCount ofClass:[iTermFoldMark class]];
+}
+
+- (NSArray *)marksInRange:(NSRange)absLineRange
+                      max:(NSUInteger)maxCount
+                  ofClass:(Class)theClass {
+    NSMutableArray *results = [NSMutableArray array];
+    Interval *interval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0,
                                                                                        absLineRange.location,
                                                                                        0,
                                                                                        NSMaxRange(absLineRange))];
@@ -611,7 +631,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
             return results;
         }
         for (id<IntervalTreeObject> obj in objects) {
-            iTermFoldMark *candidate = [iTermFoldMark castFrom:obj];
+            id candidate = [theClass castFrom:obj];
             if (candidate) {
                 [results addObject:candidate];
                 if (results.count == maxCount) {
@@ -910,8 +930,11 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
     NSEnumerator *enumerator = [self.markCache enumerateFrom:mark.entry.interval.limit];
-    for (id<VT100ScreenMarkReading> nextMark in enumerator) {
-        if (nextMark.isPrompt) {
+    for (id<iTermMark> nextMark in enumerator) {
+        if (![nextMark conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+            continue;
+        }
+        if (((id<VT100ScreenMarkReading>)nextMark).isPrompt) {
             VT100GridCoordRange range;
             range.start = [self coordRangeForInterval:mark.entry.interval].end;
             range.start.x = 0;
@@ -950,9 +973,19 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
                               max:NSUIntegerMax];
 }
 
-
-- (id<VT100ScreenMarkReading>)markOnLine:(int)line {
+- (id<VT100ScreenMarkReading> _Nullable)screenMarkOnLine:(int)line {
     return [VT100ScreenMark castFrom:self.markCache[self.cumulativeScrollbackOverflow + line]];
+}
+
+- (id<iTermMark>)drawableMarkOnLine:(int)line {
+    id obj = self.markCache[self.cumulativeScrollbackOverflow + line];
+    if (!obj) {
+        return nil;
+    }
+    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+        return obj;
+    }
+    return nil;
 }
 
 - (id<VT100ScreenMarkReading>)penultimateCommandMark {
@@ -1025,7 +1058,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 - (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
                             mustHaveCommand:(BOOL)mustHaveCommand
                                       range:(out VT100GridWindowedRange *)rangeOut {
-    id<VT100ScreenMarkReading> mark = [self markOnLine:coord.y];
+    id<VT100ScreenMarkReading> mark = [self screenMarkOnLine:coord.y];
     const VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
     if (mustHaveCommand && mark.command == nil) {
         return nil;

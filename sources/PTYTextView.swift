@@ -510,6 +510,30 @@ extension PTYTextView: ExternalSearchResultsController {
         fold(range: range, promptLength: Int(promptLength))
     }
 
+    @objc(unfoldAbsoluteLineRange:)
+    func unfold(nsrange: NSRange) {
+        guard let range = Range<Int64>(nsrange) else {
+            return
+        }
+        guard let dataSource else {
+            return
+        }
+        // If we can remove folds in this range, do so and don't continue.
+        if dataSource.removeFolds(in: nsrange) {
+            requestDelegateRedraw()
+            return
+        }
+    }
+
+    @objc(foldRange:)
+    func fold(nsrange: NSRange) {
+        guard let range = Range<Int64>(nsrange) else {
+            return
+        }
+        let promptLength = self.promptLength(at: range.lowerBound)
+        fold(range: range, promptLength: Int(promptLength))
+    }
+
     private func promptLength(at absY: Int64) -> Int32 {
         var result: Int32 = 0
         withRelativeCoord(VT100GridAbsCoord(x: 0, y: absY)) { coord in
@@ -532,9 +556,87 @@ extension PTYTextView: ExternalSearchResultsController {
                                                                        y: range.lowerBound),
                                               end: VT100GridAbsCoord(x: dataSource.width(),
                                                                      y: range.upperBound - 1))
-        let line = dataSource.screenCharArray(forLine: Int32(max(0, range.lowerBound - overflow)))
-        dataSource.replace(absRange, withLine: line.clone(), promptLength: promptLength)
+        let firstLine = dataSource.screenCharArray(forLine: Int32(max(0, range.lowerBound - overflow)))
+        let lastLine = dataSource.screenCharArray(forLine: Int32(max(0, range.upperBound - 1 - overflow)))
+        let line = firstEllipsisLast(firstLine, lastLine, length: dataSource.width(), count: Int(absRange.end.y - absRange.start.y) - 1)
+
+        let blockMarks = dataSource.blockMarkDictionary(onLine: absRange.start.y)
+        dataSource.replace(absRange,
+                           withLines: [line.clone()],
+                           promptLength: promptLength,
+                           blockMarks: blockMarks)
         requestDelegateRedraw()
+        didFoldOrUnfold()
+    }
+
+    // Make a display line that summarizes a folded region as [first line prefix] [ellipsis] [last line prefix].
+    private func firstEllipsisLast(_ first: ScreenCharArray,
+                                   _ untrimmedLast: ScreenCharArray,
+                                   length: Int32,
+                                   count: Int) -> ScreenCharArray {
+        if length <= 0 {
+            return ScreenCharArray.emptyLine(ofLength: 0)
+        }
+        let n = untrimmedLast.number(ofLeadingEmptyCellsWhereSpaceIsEmpty: true)
+        let last = untrimmedLast.subArray(from: n)
+        let firstMaxLength = first.length - first.number(ofTrailingEmptyCellsWhereSpaceIsEmpty: true)
+        let lastMaxLength = last.length - last.number(ofTrailingEmptyCellsWhereSpaceIsEmpty: true)
+
+        var mid = " …\(count) line\(count > 1 ? "s" : "")… "
+        if mid.utf16.count + 10 > length {
+            mid = "…"
+        }
+        let midLength = Int32(mid.utf16.count)
+
+        var firstLength = firstMaxLength
+        var lastLength = lastMaxLength
+        var overage = (firstLength + midLength + lastLength) - length
+        while overage > 0 {
+            if firstLength == lastLength {
+                firstLength -= overage / 2
+                lastLength -= (overage + 1) / 2  // round up if overage is odd so the total equals overage
+            } else if firstLength > lastLength {
+                firstLength -= min(firstLength - lastLength, overage)
+            } else {
+                lastLength -= (min(lastLength - firstLength, overage))
+            }
+            overage = length - (firstLength + midLength + lastLength)
+        }
+        let result = MutableScreenCharArray()
+
+        // first
+        result.append(first.paddedOrTruncated(toLength: UInt(firstLength)))
+
+        // ellipsis
+        result.append(mid, fg: screen_char_t(), bg: screen_char_t())
+
+        // last
+        result.append(last.paddedOrTruncated(toLength: UInt(lastLength)))
+
+        // padding
+        if overage < 0 {
+            result.append(ScreenCharArray.emptyLine(ofLength: -overage))
+        }
+
+        var bg = screen_char_t()
+        bg.backgroundColorMode = ColorModeAlternate.rawValue
+        bg.backgroundColor = UInt32(ALTSEM_DEFAULT)
+        result.setBackground(bg, in: NSRange(location: 0, length: Int(length)))
+
+        var fg = screen_char_t()
+        fg.foregroundColorMode = ColorModeAlternate.rawValue
+        fg.foregroundColor = UInt32(ALTSEM_DEFAULT)
+        fg.fgBlue = 0
+        fg.fgGreen = 0
+        fg.faint = 1
+        fg.italic = 1
+        result.setForeground(fg, in: NSRange(location: 0, length: Int(length)))
+        result.setExternalAttributesIndex(first.eaIndex)
+
+        var continuation = bg
+        continuation.code = UInt16(EOL_HARD)
+        result.continuation = continuation
+        return result
     }
 
     @objc(unfoldMark:)
@@ -546,6 +648,7 @@ extension PTYTextView: ExternalSearchResultsController {
         let coord = dataSource.absCoordRange(for: interval)
         dataSource.removeFolds(in: NSRange(location: Int(coord.start.y), length: 1))
         requestDelegateRedraw()
+        didFoldOrUnfold()
     }
 
     @objc(foldCommandMark:)

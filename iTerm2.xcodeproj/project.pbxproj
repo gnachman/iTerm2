@@ -1592,6 +1592,7 @@
 		A640487329C0F8AA0063C34A /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
 		A640487529C147A10063C34A /* CRUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = A640487429C147A10063C34A /* CRUD.swift */; };
 		A6405C092D7E4771007A6A39 /* iTermImageWell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0318271A42563A00932107 /* iTermImageWell.m */; };
+		A6405C0B2D7F64D0007A6A39 /* JSONPrettyPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6405C0A2D7F64CA007A6A39 /* JSONPrettyPrinter.swift */; };
 		A6435116233B195D00828AF6 /* iTermApplescriptPythonCommands.h in Headers */ = {isa = PBXBuildFile; fileRef = A6435114233B195D00828AF6 /* iTermApplescriptPythonCommands.h */; };
 		A6435117233B195D00828AF6 /* iTermApplescriptPythonCommands.m in Sources */ = {isa = PBXBuildFile; fileRef = A6435115233B195D00828AF6 /* iTermApplescriptPythonCommands.m */; };
 		A64511C32380673300EB6ADF /* iTermMonoServerJobManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A64511C12380673300EB6ADF /* iTermMonoServerJobManager.h */; };
@@ -6094,6 +6095,7 @@
 		A640486D29BFCB640063C34A /* SpecialExceptionsWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SpecialExceptionsWindowController.xib; sourceTree = "<group>"; };
 		A640487129BFCBCB0063C34A /* SpecialExceptionsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpecialExceptionsWindowController.swift; sourceTree = "<group>"; };
 		A640487429C147A10063C34A /* CRUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRUD.swift; sourceTree = "<group>"; };
+		A6405C0A2D7F64CA007A6A39 /* JSONPrettyPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONPrettyPrinter.swift; sourceTree = "<group>"; };
 		A64203171DCF7DEE0074DC6C /* api.proto */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = api.proto; path = proto/api.proto; sourceTree = SOURCE_ROOT; };
 		A6435114233B195D00828AF6 /* iTermApplescriptPythonCommands.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermApplescriptPythonCommands.h; sourceTree = "<group>"; };
 		A6435115233B195D00828AF6 /* iTermApplescriptPythonCommands.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermApplescriptPythonCommands.m; sourceTree = "<group>"; };
@@ -10903,6 +10905,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A6405C0A2D7F64CA007A6A39 /* JSONPrettyPrinter.swift */,
 				A6350C632D63024C00186B5B /* iTermSessionSelector.swift */,
 				A6FFAE702CF123CC0031FB21 /* CoreTextLineRenderingHelper.swift */,
 				A619DC4D2CD5A1CF004B8996 /* iTermCoreTextLineRenderingHelper.m */,
@@ -16479,6 +16482,7 @@
 				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,
 				A6CC498E2C08E567003484B2 /* CommandShareMenuProvider.swift in Sources */,
 				A629F5A623AFF5BA00C2F16B /* iTermShellIntegrationSecondPageViewController.m in Sources */,
+				A6405C0B2D7F64D0007A6A39 /* JSONPrettyPrinter.swift in Sources */,
 				5379C59823DBE9F100314F23 /* iTermFocusFollowsMouseController.m in Sources */,
 				A678C507279A3DE200C59927 /* ImageRegistry.swift in Sources */,
 				A6A9838F27E5C3DA003319D1 /* KeychainPasswordDataSource.swift in Sources */,

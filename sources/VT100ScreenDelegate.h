@@ -422,7 +422,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                                      pid:(int32_t)pid
                                  channel:(uint8_t)channel
                                    depth:(int)depth;
-- (void)screenDidReadRawSSHData:(NSData *)data;
+- (void)screenDidReadRawSSHData:(NSData * _Nonnull)data;
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth;
 - (void)screenWillBeginSSHIntegration;
 - (void)screenBeginSSHIntegrationWithToken:(NSString * _Nonnull)token

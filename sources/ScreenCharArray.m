@@ -38,9 +38,9 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 + (instancetype)emptyLineOfLength:(int)length {
     NSMutableData *data = [NSMutableData data];
     data.length = length * sizeof(screen_char_t);
-    return [[ScreenCharArray alloc] initWithData:data
-                                        metadata:iTermImmutableMetadataDefault()
-                                    continuation:(screen_char_t){.code = EOL_HARD}];
+    return [[self alloc] initWithData:data
+                             metadata:iTermImmutableMetadataDefault()
+                         continuation:(screen_char_t){.code = EOL_HARD}];
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
@@ -133,6 +133,23 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 
 - (instancetype)initWithCopyOfLine:(const screen_char_t *)line
                             length:(int)length
+                          metadata:(iTermImmutableMetadata)metadata
+                      continuation:(screen_char_t)continuation
+                          bidiInfo:(iTermBidiDisplayInfo *)bidiInfo {
+    screen_char_t *copy = malloc(sizeof(*line) * length);
+    memmove(copy, line, sizeof(*line) * length);
+    self = [self initWithLine:copy length:length continuation:continuation];
+    if (self) {
+        _shouldFreeOnRelease = YES;
+        _bidiInfo = bidiInfo;
+        _metadata = metadata;
+        iTermImmutableMetadataRetain(metadata);
+    }
+    return self;
+}
+
+- (instancetype)initWithCopyOfLine:(const screen_char_t *)line
+                            length:(int)length
                       continuation:(screen_char_t)continuation {
     return [self initWithCopyOfLine:line length:length continuation:continuation bidiInfo:nil];
 }
@@ -177,6 +194,26 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
+                continuation:(screen_char_t)continuation
+                        date:(NSDate *)date
+          externalAttributes:(iTermExternalAttributeIndex *)eaIndex
+                    rtlFound:(BOOL)rtlFound
+                    bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo {
+    iTermMetadata metadata = {
+        .timestamp = [date timeIntervalSinceReferenceDate],
+        .externalAttributes = nil,
+        .rtlFound = rtlFound
+    };
+    iTermMetadataSetExternalAttributes(&metadata, eaIndex);
+    return [self initWithLine:line
+                       length:length
+                     metadata:iTermMetadataMakeImmutable(metadata)
+                 continuation:continuation
+                     bidiInfo:bidiInfo];
+}
+
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
                     metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation
                freeOnRelease:(BOOL)freeOnRelease {
@@ -213,8 +250,17 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p value=\"%@\" eol=%@>",
-            NSStringFromClass([self class]), self, ScreenCharArrayToStringDebug(_line, _length), @(self.eol)];
+    if (_metadata.externalAttributes) {
+        return [NSString stringWithFormat:@"<%@: %p value=\"%@\" eol=%@ ea=%@>",
+                NSStringFromClass([self class]), self, ScreenCharArrayToStringDebug(_line, _length), @(self.eol), iTermImmutableMetadataGetExternalAttributesIndex(_metadata)];
+    } else {
+        return [NSString stringWithFormat:@"<%@: %p value=\"%@\" eol=%@>",
+                NSStringFromClass([self class]), self, ScreenCharArrayToStringDebug(_line, _length), @(self.eol)];
+    }
+}
+
+- (iTermExternalAttributeIndex *)eaIndex {
+    return iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
 }
 
 - (NSString *)stringValue {
@@ -341,12 +387,31 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 }
 
 - (int)numberOfTrailingEmptyCells {
+    return [self numberOfTrailingEmptyCellsWhereSpaceIsEmpty:NO];
+}
+
+- (int)numberOfTrailingEmptyCellsWhereSpaceIsEmpty:(BOOL)spaceIsEmpty {
     int count = 0;
-    for (int i = 0; i < _length; i++) {
-        const int j = _length - i - i;
-        if (_line[j].code == 0 && !_line[j].complexChar && !_line[j].image)
+    for (int j = _length - 1; j >= 0; j--) {
+        if (_line[j].code == 0 && !_line[j].complexChar && !_line[j].image) {
             count += 1;
-        else {
+        } else if (spaceIsEmpty && _line[j].code == ' ' && !_line[j].complexChar && !_line[j].image) {
+            count += 1;
+        } else {
+            break;
+        }
+    }
+    return count;
+}
+
+- (int)numberOfLeadingEmptyCellsWhereSpaceIsEmpty:(BOOL)spaceIsEmpty {
+    int count = 0;
+    for (int j = 0; j < _length; j++) {
+        if (_line[j].code == 0 && !_line[j].complexChar && !_line[j].image) {
+            count += 1;
+        } else if (spaceIsEmpty && _line[j].code == ' ' && !_line[j].complexChar && !_line[j].image) {
+            count += 1;
+        } else {
             break;
         }
     }
@@ -372,12 +437,21 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     } dictionaryByRemovingNullValues];
 }
 
+- (ScreenCharArray *)subArrayToIndex:(int)i {
+    return [self screenCharArrayByRemovingLast:self.length - i];
+}
+
+- (ScreenCharArray *)subArrayFromIndex:(int)i {
+    return [self screenCharArrayByRemovingFirst:i];
+}
+
 - (ScreenCharArray *)screenCharArrayByRemovingFirst:(int)n {
     if (n >= self.length) {
         return [ScreenCharArray emptyLineOfLength:0];
     }
     return [[ScreenCharArray alloc] initWithCopyOfLine:self.line + n
                                                 length:self.length - n
+                                              metadata:[self subMetadataInRange:NSMakeRange(n, self.length - n)]
                                           continuation:self.continuation
                                               bidiInfo:[_bidiInfo subInfoInRange:NSMakeRange(n, self.length - n)]];
 }
@@ -386,10 +460,27 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     if (n >= self.length) {
         return [ScreenCharArray emptyLineOfLength:0];
     }
+    const NSRange range = NSMakeRange(0, self.length - n);
     return [[ScreenCharArray alloc] initWithCopyOfLine:self.line
                                                 length:self.length - n
+                                              metadata:[self subMetadataInRange:range]
                                           continuation:self.continuation
-                                              bidiInfo:[_bidiInfo subInfoInRange:NSMakeRange(0, self.length - n)]];
+                                              bidiInfo:[_bidiInfo subInfoInRange:range]];
+}
+
+- (iTermImmutableMetadata)subMetadataInRange:(NSRange)range {
+    id<iTermExternalAttributeIndexReading> original = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
+    if (!original) {
+        return _metadata;
+    }
+    iTermMetadata result = {
+        .timestamp = _metadata.timestamp,
+        .externalAttributes = nil,
+        .rtlFound = _metadata.rtlFound,
+    };
+    iTermExternalAttributeIndex *modified = [original subAttributesInRange:range];
+    iTermMetadataSetExternalAttributes(&result, modified);
+    return iTermMetadataMakeImmutable(result);
 }
 
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other {
@@ -604,8 +695,21 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
 
 @implementation MutableScreenCharArray
 
+- (void)setContinuation:(screen_char_t)continuation {
+    _continuation = continuation;
+    _eol = continuation.code;
+}
+
 - (screen_char_t *)mutableLine {
     return (screen_char_t *)_line;
+}
+
+- (void)setExternalAttributesIndex:(iTermExternalAttributeIndex *)eaIndex {
+    iTermMetadata temp = iTermImmutableMetadataMutableCopy(_metadata);
+    iTermMetadataSetExternalAttributes(&temp, eaIndex);
+#warning TODO: I have no idea if this is right
+    iTermImmutableMetadataRelease(_metadata);
+    _metadata = iTermMetadataMakeImmutable(temp);
 }
 
 - (void)appendScreenCharArray:(ScreenCharArray *)sca {
@@ -621,6 +725,51 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
     _length += sca.length;
     _continuation = sca.continuation;
     _eol = sca.continuation.code;
+}
+
+- (void)appendString:(NSString *)string style:(screen_char_t)c continuation:(screen_char_t)continuation {
+    // Allocate double the space because they could all be double-width characters.
+    NSMutableData *storage = [NSMutableData dataWithLength:string.length * 2 * sizeof(screen_char_t)];
+    int length = string.length;
+    StringToScreenChars(string,
+                        (screen_char_t *)storage.mutableBytes,
+                        c,
+                        c,
+                        &length,
+                        NO,
+                        NULL,
+                        NULL,
+                        iTermUnicodeNormalizationNone,
+                        9,
+                        NO,
+                        NULL);
+    ScreenCharArray *temp = [[ScreenCharArray alloc] initWithLine:(screen_char_t *)storage.mutableBytes
+                                                          length:length
+                                                    continuation:continuation];
+    [self appendScreenCharArray:temp];
+}
+
+- (void)setBackground:(screen_char_t)bg inRange:(NSRange)range {
+    screen_char_t *line = self.mutableLine;
+    for (NSInteger i = range.location; i < range.location + range.length; i++) {
+        CopyBackgroundColor(line + i, bg);
+    }
+}
+
+- (void)setForeground:(screen_char_t)bg inRange:(NSRange)range {
+    screen_char_t *line = self.mutableLine;
+    for (NSInteger i = range.location; i < range.location + range.length; i++) {
+        CopyForegroundColor(line + i, bg);
+    }
+}
+
+- (void)appendString:(NSString *)string fg:(screen_char_t)fg bg:(screen_char_t)bg {
+    NSMutableData *storage = [NSMutableData dataWithLength:sizeof(screen_char_t) * string.length * 3];
+    int len = 0;
+    StringToScreenChars(string, (screen_char_t *)storage.mutableBytes, fg, bg, &len, NO, NULL, NULL, iTermUnicodeNormalizationNone, 9, NO, NULL);
+    ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:(screen_char_t *)storage.mutableBytes
+    length:len continuation:_continuation];
+    [self appendScreenCharArray:array];
 }
 
 @end

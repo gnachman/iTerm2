@@ -592,8 +592,8 @@ static _Atomic int gPerformingJoinedBlock;
         // In alt grid but saving to scrollback in alt-screen is off, so pass in a nil linebuffer.
         lineBufferToUse = nil;
     }
-    if (_currentBlockID) {
-        [self.currentGrid setBlockID:_currentBlockID onLine:self.currentGrid.cursor.y];
+    if (_currentBlockIDList) {
+        [self.currentGrid setBlockIDList:_currentBlockIDList onLine:self.currentGrid.cursor.y];
     }
     const BOOL haveScrollRegion = self.currentGrid.haveScrollRegion;
     const BOOL shouldMoveSelectionIfUnsent = haveScrollRegion && self.currentGrid.cursor.y == VT100GridRangeMax(self.currentGrid.scrollRegionRows);
@@ -1348,7 +1348,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         *eaOut = [iTermExternalAttribute attributeHavingUnderlineColor:(*eaOut).hasUnderlineColor
                                                         underlineColor:(*eaOut).underlineColor
                                                                    url:nil
-                                                               blockID:nil
+                                                           blockIDList:nil
                                                            controlCode:nil];
     }
 }
@@ -2601,7 +2601,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
-            mark = [self markOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
+            mark = [self screenMarkOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
             if (mark && !mark.command) {
                 // This code path should not be taken with auto-composer because mark.command gets
                 // set prior to sending the command.
@@ -2852,7 +2852,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     const BOOL atPrompt = current.start.x >= 0;
 
     if (haveCommand) {
-        id<VT100ScreenMarkReading> mark = [self markOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
+        id<VT100ScreenMarkReading> mark = [self screenMarkOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
         const VT100GridAbsCoordRange commandRange = VT100GridAbsCoordRangeFromCoordRange(current, self.cumulativeScrollbackOverflow);
         const BOOL hadCommand = self.hadCommand;
         const VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(0,
@@ -3343,11 +3343,21 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"Reload mark cache");
     long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
     [self.markCache removeAll];
+    [self.blockStartAbsLine removeAllObjects];
+    self.blocksGeneration += 1;
     for (id<IntervalTreeObject> obj in [self.intervalTree allObjects]) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
             VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
-            id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
+            id<iTermMark> mark = (id<iTermMark>)obj;
             self.markCache[totalScrollbackOverflow + range.end.y] = mark;
+            continue;
+        }
+        if ([obj isKindOfClass:[iTermBlockMark class]]) {
+            iTermBlockMark *blockMark = (iTermBlockMark *)obj;
+            VT100GridAbsCoordRange blockAbsRange = [self absCoordRangeForInterval:obj.entry.interval];
+            DLog(@"Record block %@ as starting at line %@", blockMark.blockID, @(blockAbsRange.start.y));
+            self.blockStartAbsLine[blockMark.blockID] = @(blockAbsRange.start.y);
+            continue;
         }
     }
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
@@ -3548,7 +3558,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return NO;
 }
 
-- (void)composerWillSendCommand:(NSString *)command 
+- (void)composerWillSendCommand:(NSString *)command
                      startingAt:(VT100GridAbsCoord)startAbsCoord {
     [_promptStateMachine willSendCommand];
     id<VT100ScreenMarkReading> mark = self.lastPromptMark;
@@ -3714,7 +3724,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)replaceMark:(iTermMark *)mark
           withLines:(NSArray<ScreenCharArray *> *)lines
           savedITOs:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs {
-    const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:mark.entry.interval];
+    VT100GridAbsCoordRange range = [self absCoordRangeForInterval:mark.entry.interval];
     if (range.end.y < self.totalScrollbackOverflow) {
         // Nothing to do - it has already scrolled off to the great beyond.
         return;
@@ -3724,8 +3734,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
     NSArray<ScreenCharArray *> *trimmed = lines;
     if (range.start.y <= self.totalScrollbackOverflow) {
-        VT100GridCoordRange relativeRange = VT100GridCoordRangeFromAbsCoordRange(range, self.totalScrollbackOverflow);
-        trimmed = [self linesByTruncatingLines:lines toWrappedHeight:relativeRange.end.y - relativeRange.start.y + 1];
+        range.start.y = self.totalScrollbackOverflow;
     }
 
     LineBuffer *lb = [[LineBuffer alloc] init];
@@ -3745,29 +3754,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self.mutableIntervalTree removeObject:mark];
     }
     [self addSavedIntervalTreeObjects:savedITOs baseLine:range.start.y];
+    [self.linebuffer dropExcessLinesWithWidth:self.width];
     DLog(@"After unfold:");
     DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
-}
-
-- (NSArray<ScreenCharArray *> *)linesByTruncatingLines:(NSArray<ScreenCharArray *> *)originalLines
-                                       toWrappedHeight:(int)desiredHeight {
-    LineBuffer *temp = [[LineBuffer alloc] init];
-    const int width = self.width;
-    for (ScreenCharArray *sca in originalLines) {
-        [temp appendScreenCharArray:sca width:width];
-    }
-    [temp setMaxLines:desiredHeight];
-    [temp dropExcessLinesWithWidth:width];
-
-    NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
-    [temp enumerateLinesInRange:NSMakeRange(0, [temp numLinesWithWidth:width])
-                          width:width block:^(int i,
-                                              ScreenCharArray * _Nonnull sca,
-                                              iTermImmutableMetadata metadata,
-                                              BOOL * _Nonnull stop) {
-        [result addObject:[sca copy]];
-    }];
-    return result;
 }
 
 - (BOOL)removeFoldsInRange:(NSRange)foldRange {
@@ -3791,21 +3780,51 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)replaceRange:(VT100GridAbsCoordRange)absRange
             withLine:(ScreenCharArray *)line
         promptLength:(NSInteger)promptLength {
+    [self replaceRange:absRange
+             withLines:@[line]
+          promptLength:promptLength
+            blockMarks:nil];
+}
+
+- (void)replaceRange:(VT100GridAbsCoordRange)absRange
+           withLines:(NSArray<ScreenCharArray *> *)lines
+        promptLength:(NSInteger)promptLength
+          blockMarks:(NSDictionary<NSString *, iTermRange *> *)blockMarks {
     DLog(@"replaceRange:withLine: (fold)");
     NSArray<iTermSavedIntervalTreeObject *> *savedITOs = nil;
     NSArray<ScreenCharArray *> *savedLines = nil;
     const VT100GridAbsCoordRange markRange = [self replaceRange:absRange
-                                                      withLines:@[ line ]
+                                                      withLines:lines
                                      removedIntervalTreeObjects:&savedITOs
                                                    removedLines:&savedLines];
     if (!VT100GridAbsCoordRangeIsValid(markRange)) {
         return;
     }
-    Interval *interval = [self intervalForGridAbsCoordRange:markRange];
-    iTermFoldMark *mark = [[iTermFoldMark alloc] initWithLines:savedLines
-                                                     savedITOs:savedITOs
-                                                  promptLength:promptLength];
-    [self.mutableIntervalTree addObject:mark withInterval:interval];
+
+    [blockMarks enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermRange *range, BOOL * _Nonnull stop) {
+        iTermBlockMark *blockMark = (iTermBlockMark *)[self blockMarkWithID:key];
+        if (blockMark) {
+            return;
+        } else {
+            blockMark = [[iTermBlockMark alloc] init];
+            blockMark.blockID = key;
+        }
+        const VT100GridAbsCoordRange absCoordRange =
+        VT100GridAbsCoordRangeMake(0,
+                                   range.location + absRange.start.y,
+                                   self.width - 1,
+                                   range.max - 1 + absRange.start.y);
+        Interval *interval = [self intervalForGridAbsCoordRange:absCoordRange];
+        [self.mutableIntervalTree addObject:blockMark withInterval:interval];
+        self.blockStartAbsLine[key] = @(absCoordRange.start.y);
+    }];
+    if (promptLength >= 0) {
+        Interval *interval = [self intervalForGridAbsCoordRange:markRange];
+        iTermFoldMark *mark = [[iTermFoldMark alloc] initWithLines:savedLines
+                                                         savedITOs:savedITOs
+                                                      promptLength:promptLength];
+        [self.mutableIntervalTree addObject:mark withInterval:interval];
+    }
     [self setNeedsRedraw];
 }
 
@@ -4021,9 +4040,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     // Add replacement lines.
     VT100GridCoordRange replacementRange = VT100GridCoordRangeMake(0,
-                                                            range.start.y,
-                                                            gridSize.width - 1,
-                                                            range.start.y + numLines - 1);
+                                                                   range.start.y,
+                                                                   gridSize.width - 1,
+                                                                   range.start.y + numLines - 1);
     const VT100GridAbsCoordRange resultingRange =
     VT100GridAbsCoordRangeFromCoordRange(replacementRange, self.totalScrollbackOverflow);
 
@@ -4099,7 +4118,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"After replacing a range with lines:");
     DLog(@"Removed %@", objectsToRemove);
     DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
-
+    [self.linebuffer sanityCheck];
     return resultingRange;
 }
 
@@ -4325,7 +4344,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
-    if (!_triggerEvaluator.haveTriggersOrExpectations && 
+    if (!_triggerEvaluator.haveTriggersOrExpectations &&
         !self.config.loggingEnabled &&
         _postTriggerActions.count == 0) {
         return YES;
@@ -4864,7 +4883,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [self.terminal updateDefaultChar];
         self.currentGrid.defaultChar = self.terminal.defaultChar;
     }
-    
+
     [self appendCarriageReturnLineFeed];
 }
 

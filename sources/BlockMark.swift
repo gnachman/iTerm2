@@ -16,6 +16,18 @@ class BlockMark: iTermMark, BlockMarkReading {
     @objc var blockID = UUID().uuidString
     @objc var type: String?
 
+    override var description: String {
+        var parts = ["id=\(blockID)"]
+        if let type {
+            parts.append("type=\(type)")
+        }
+        return "<BlockMark \(parts.joined(separator: " "))>"
+    }
+
+    override var shortDebugDescription: String {
+        return description
+    }
+
     @objc
     override init() {
         super.init()

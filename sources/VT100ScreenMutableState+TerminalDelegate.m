@@ -2814,7 +2814,7 @@ willExecuteToken:(VT100Token *)token
     }
     iTermBlockMark *mark;
     VT100GridAbsCoordRange range;
-    if (!start && [_currentBlockID isEqualToString:blockID]) {
+    if (!start && [[_currentBlockIDList componentsSeparatedByString:iTermExternalAttributeBlockIDDelimiter] containsObject:blockID]) {
         mark = [self mutableBlockMarkWithID:blockID];
         if (!mark) {
             return;
@@ -2836,9 +2836,30 @@ willExecuteToken:(VT100Token *)token
     range.end = VT100GridAbsCoordMake(self.width, absY);
     [self.mutableIntervalTree addObject:mark withInterval:[self intervalForGridAbsCoordRange:range]];
     if (!render) {
-        self.terminal.currentBlockID = start ? blockID : nil;
+        NSString *updated = self.terminal.currentBlockIDList ?: @"";
+        if (start) {
+            updated = [updated prependingString:blockID toListDelimitedBy:iTermExternalAttributeBlockIDDelimiter];
+        } else {
+            updated = [updated removingString:blockID fromListDelimitedBy:iTermExternalAttributeBlockIDDelimiter];
+        }
+        if (updated.length == 0) {
+            updated = nil;
+        }
+        self.terminal.currentBlockIDList = updated;
     }
-    _currentBlockID = (!render && start) ? blockID : nil;
+
+    NSString *updated = _currentBlockIDList ?: @"";
+    if (!render && start) {
+        updated = [updated prependingString:blockID toListDelimitedBy:iTermExternalAttributeBlockIDDelimiter];
+        _currentBlockIDList = updated;
+    } else {
+        updated = [updated removingString:blockID fromListDelimitedBy:iTermExternalAttributeBlockIDDelimiter];
+        if (updated.length > 0) {
+            _currentBlockIDList = updated;
+        } else {
+            _currentBlockIDList = nil;
+        }
+    }
     if (start) {
         self.blockStartAbsLine[blockID] = @(absY);
         self.blocksGeneration += 1;
