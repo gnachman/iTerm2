@@ -512,7 +512,7 @@ extension PTYTextView: ExternalSearchResultsController {
 
     @objc(unfoldAbsoluteLineRange:)
     func unfold(nsrange: NSRange) {
-        guard let range = Range<Int64>(nsrange) else {
+        guard Range<Int64>(nsrange) != nil else {
             return
         }
         guard let dataSource else {

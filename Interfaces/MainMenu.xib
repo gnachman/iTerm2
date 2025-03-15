@@ -519,6 +519,18 @@ DQ
                                                 <action selector="replaceSelectionWithPrettyPrintedJSON:" target="-1" id="9Ho-k9-mP3"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Replace with Base 64-Encoded Value" id="ZaV-ga-7GF">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="replaceSelectionWithBase64Encoded:" target="-1" id="42k-hZ-25i"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Replace with Base 64-Decoded Value" id="3Es-XB-YYS">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="replaceSelectionWithBase64Decoded:" target="-1" id="tSe-ze-5zO"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>
@@ -1891,5 +1903,11 @@ DQ
                 <outlet property="_menu" destination="8Ja-GB-Waf" id="a0G-8e-2dj"/>
             </connections>
         </customObject>
+        <menuItem title="Replace with Pretty-Printed JSON" id="vvf-qA-Pf7">
+            <modifierMask key="keyEquivalentModifierMask"/>
+            <connections>
+                <action selector="replaceSelectionWithPrettyPrintedJSON:" target="-1" id="WCB-eW-ma7"/>
+            </connections>
+        </menuItem>
     </objects>
 </document>

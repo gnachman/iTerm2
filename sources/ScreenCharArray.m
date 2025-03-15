@@ -772,6 +772,10 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
     [self appendScreenCharArray:array];
 }
 
+- (void)setEol:(int)eol {
+    _continuation.code = eol;
+    _eol = eol;
+}
 @end
 
 @implementation ScreenCharRope

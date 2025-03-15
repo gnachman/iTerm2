@@ -123,15 +123,31 @@ iTermCommandInfoViewControllerDelegate>
         }
         return YES;
     }
-    if (item.action == @selector(replaceSelectionWithPrettyPrintedJSON:)) {
-        if ([self haveReasonableSelection] && self.selection.approximateNumberOfLines > 1) {
-            id obj = [self selectionAsJSONObject];
-            if (([obj isKindOfClass:[NSArray class]] ||
-                 [obj isKindOfClass:[NSDictionary class]]))
-                item.representedObject = obj;
-            return obj != nil;
+    if ([self haveReasonableSelection] &&
+        self.selection.allSubSelections.count == 1) {
+        iTermSelectionReplacementKind kind = -1;
+        if (item.action == @selector(replaceSelectionWithPrettyPrintedJSON:) &&
+            self.selection.approximateNumberOfLines > 1) {
+            kind = iTermSelectionReplacementKindJson;
         }
-        return NO;
+        if (item.action == @selector(replaceSelectionWithBase64Encoded:)) {
+            kind = iTermSelectionReplacementKindBase64Encode;
+        }
+        if (item.action == @selector(replaceSelectionWithBase64Decoded:)) {
+            kind = iTermSelectionReplacementKindBase64Decode;
+        }
+        if (kind != -1 && [self selectionIsEligibleForReplacement:self.selection]) {
+            iTermSubSelection *sub = self.selection.allSubSelections.firstObject;
+            iTermSelectionReplacementPayload *replacement =
+            [iTermSelectionReplacement payloadFromString:self.selectedText
+                                                   range:sub.absRange.coordRange
+                                                  ofKind:kind];
+            if (!replacement) {
+                return NO;
+            }
+            item.representedObject = replacement;
+            return YES;
+        }
     }
     if (item.action == @selector(toggleLockSplitPaneWidth:)) {
         BOOL allow = NO;
@@ -1755,36 +1771,70 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
     }
 }
 
-- (id)selectionAsJSONObject {
-    NSError *error = nil;
-    return [NSJSONSerialization it_objectForJsonString:self.selectedText
-                                                 error:&error];
+- (NSArray<iTermSelectionReplacementPayload *> *)replacementPayloadsForSelection {
+    const VT100GridAbsCoordRange absRange = self.selection.allSubSelections.firstObject.absRange.coordRange;
+    if (![self selectionIsEligibleForReplacement:self.selection]) {
+        return @[];
+    }
+    return [iTermSelectionReplacement payloadsFromString:self.selectedText
+                                                   range:absRange];
+}
+
+- (BOOL)selectionIsEligibleForReplacement:(iTermSelection *)selection {
+    if (selection.live) {
+        return NO;
+    }
+    if (selection.allSubSelections.count != 1) {
+        return NO;
+    }
+    const VT100GridAbsCoordRange absRange = self.selection.allSubSelections.firstObject.absRange.coordRange;
+    if (absRange.start.x > 0) {
+        return NO;
+    }
+    // Only offer replacement if entire lines are selected because we don't
+    // currently have the ability to keep the stuff before and after the
+    // selection.
+    // That's because replacement stomps on interval tree objects in the
+    // to-be-replaced range and the logic to truncate them would suck to write.
+    __block BOOL ok = NO;
+    [self withRelativeCoordRange:absRange block:^(VT100GridCoordRange range) {
+        ScreenCharArray *sca = [self.dataSource screenCharArrayForLine:range.end.y];
+        ok = range.end.x >= sca.length - [sca numberOfTrailingEmptyCellsWhereSpaceIsEmpty:YES];
+    }];
+    return ok;
 }
 
 - (IBAction)replaceSelectionWithPrettyPrintedJSON:(id)sender {
-    [self replaceSelectionWithPrettyPrintedJSONForObject:[sender representedObject]];
+    [self replaceSelectionWith:(iTermSelectionReplacementPayload *)[sender representedObject]];
 }
 
-- (void)replaceSelectionWithPrettyPrintedJSONForObject:(id)obj {
-    iTermJSONPrettyPrinter *printer = [[iTermJSONPrettyPrinter alloc] initWithObject:obj];
-    if (!printer) {
-        DLog(@"Failed to create JSON pretty printer for %@", obj);
-        return;
-    }
-    const int width = self.dataSource.width;
-    NSArray<ScreenCharArray *> *lines = [printer screenCharArraysWithMaxWidth:width];
-    for (iTermSubSelection *sub in self.selection.allSubSelections.reverseObjectEnumerator) {
-        [self.dataSource replaceRange:sub.absRange.coordRange
+- (IBAction)replaceSelectionWithBase64Encoded:(id)sender {
+    [self replaceSelectionWith:(iTermSelectionReplacementPayload *)[sender representedObject]];
+}
+- (IBAction)replaceSelectionWithBase64Decoded:(id)sender {
+    [self replaceSelectionWith:(iTermSelectionReplacementPayload *)[sender representedObject]];
+}
+
+- (void)replaceSelectionWith:(iTermSelectionReplacementPayload *)replacement {
+    [replacement executeWithWidth:self.dataSource.width
+                       completion:^(VT100GridAbsCoordRange range,
+                                    NSArray<ScreenCharArray *> *lines,
+                                    NSDictionary<NSString *,iTermRange *> *blockMarks) {
+        [self.dataSource replaceRange:range
                             withLines:lines
                          promptLength:-1
-                           blockMarks:[printer blockMarksWithMaxWidth:width]];
-    }
-    [self didFoldOrUnfold];
+                           blockMarks:blockMarks];
+        [self didFoldOrUnfold];
+    }];
+}
+
+- (NSArray<iTermSelectionReplacementPayload *> *)contextMenuSelectionReplacements:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self replacementPayloadsForSelection];
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-replaceSelectionWithPrettyPrintedJSONObject:(id)obj {
-    [self replaceSelectionWithPrettyPrintedJSONForObject:obj];
+replaceSelectionWith:(iTermSelectionReplacementPayload *)replacement {
+    [self replaceSelectionWith:replacement];
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

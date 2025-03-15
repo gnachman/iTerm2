@@ -241,6 +241,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(copyString:) ||
         [item action] == @selector(copyData:) ||
         [item action] == @selector(replaceWithPrettyJSON:) ||
+        [item action] == @selector(replaceWithBase64Decoded:) ||
+        [item action] == @selector(replaceWithBase64Encoded:) ||
         [item action] == @selector(revealCommandInfo:) ||
         [item action] == @selector(removeNamedMark:)) {
         return YES;
@@ -533,20 +535,32 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                 [theMenu addItem:item];
                 needSeparator = YES;
             }
-            {
-                NSError *error = nil;
-                id obj = [NSJSONSerialization it_objectForJsonString:text error:&error];
-                if (obj != nil &&
-                    error == nil &&
-                    ([obj isKindOfClass:[NSArray class]] ||
-                     [obj isKindOfClass:[NSDictionary class]])) {
-                    NSMenuItem *item = [[NSMenuItem alloc] init];
-                    item.title = @"Replace with Pretty-Printed JSON";
-                    item.target = self;
-                    item.action = @selector(replaceWithPrettyJSON:);
-                    item.representedObject = obj;
-                    [theMenu addItem:item];
-                    needSeparator = YES;
+            NSArray<iTermSelectionReplacementPayload *> *replacements = [self.delegate contextMenuSelectionReplacements:self];
+            if (replacements.count > 0){
+                [theMenu addItem:[NSMenuItem separatorItem]];
+            }
+            for (iTermSelectionReplacementPayload *replacement in replacements) {
+                NSMenuItem *item = [[NSMenuItem alloc] init];
+                item.target = self;
+                item.representedObject = replacement;
+                [theMenu addItem:item];
+                needSeparator = YES;
+
+                switch (replacement.kind) {
+                    case iTermSelectionReplacementKindJson:
+                        item.title = @"Replace with Pretty-Printed JSON";
+                        item.action = @selector(replaceWithPrettyJSON:);
+                        break;
+
+                    case iTermSelectionReplacementKindBase64Decode:
+                        item.title = @"Replace with Base64-Decoded Value";
+                        item.action = @selector(replaceWithBase64Decoded:);
+                        break;
+
+                    case iTermSelectionReplacementKindBase64Encode:
+                        item.title = @"Replace with Base64-Encoded Value";
+                        item.action = @selector(replaceWithBase64Encoded:);
+                        break;
                 }
             }
         }
@@ -1177,7 +1191,17 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
 - (void)replaceWithPrettyJSON:(id)sender {
     NSMenuItem *item = sender;
-    [self.delegate contextMenu:self replaceSelectionWithPrettyPrintedJSONObject:item.representedObject];
+    [self.delegate contextMenu:self replaceSelectionWith:item.representedObject];
+}
+
+- (void)replaceWithBase64Decoded:(id)sender {
+    NSMenuItem *item = sender;
+    [self.delegate contextMenu:self replaceSelectionWith:item.representedObject];
+}
+
+- (void)replaceWithBase64Encoded:(id)sender {
+    NSMenuItem *item = sender;
+    [self.delegate contextMenu:self replaceSelectionWith:item.representedObject];
 }
 
 - (void)swapSessions:(id)sender {

@@ -183,8 +183,8 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 
 #pragma mark - Selection Replacement
 
-- (id _Nullable)selectionAsJSONObject;
-- (void)replaceSelectionWithPrettyPrintedJSONForObject:(id)obj;
+- (NSArray<iTermSelectionReplacementPayload *> *)replacementPayloadsForSelection;
+- (void)replaceSelectionWith:(iTermSelectionReplacementPayload *)replacement;
 
 @end
 

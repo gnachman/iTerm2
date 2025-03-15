@@ -138,7 +138,6 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
                       scale: CGFloat,
                       viewportSize: vector_uint2) -> CGRect {
         let cellHeight: CGFloat = cellConfiguration.cellSize.height
-        let cellWidth = cellConfiguration.cellSize.width
 
         var scaledInsets = rectangle.insets
         scaledInsets.top *= scale

@@ -86,7 +86,7 @@ class BlockRenderer: NSObject, iTermMetalCellRendererProtocol {
         guard !tState.isEmpty, let renderEncoder = frameData.renderEncoder else {
             return
         }
-        var colors = [tState.regularColor, tState.hoverColor]
+        let colors = [tState.regularColor, tState.hoverColor]
         let piuData = tState.newPIUs()
         let piuBuffer = piuPool.requestBuffer(from: tState.poolContext, size: piuData.count)
         tState.pius = piuBuffer

@@ -12019,7 +12019,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)textViewShowJSONPromotion {
-    if (self.textview.selectionAsJSONObject != nil) {
+    if ([self.textview.replacementPayloadsForSelection anyWithBlock:^BOOL(iTermSelectionReplacementPayload *replacement) {
+        return replacement.kind == iTermSelectionReplacementKindJson;
+    }]) {
         [self.naggingController showJSONPromotion];
     }
 }
@@ -18842,9 +18844,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)naggingControllerPrettyPrintJSON {
-    id obj = [self.textview selectionAsJSONObject];
-    if (obj) {
-        [self.textview replaceSelectionWithPrettyPrintedJSONForObject:obj];
+    iTermSelectionReplacement *replacement = [self.textview.replacementPayloadsForSelection objectPassingTest:^BOOL(iTermSelectionReplacementPayload *candidate, NSUInteger index, BOOL *stop) {
+        return candidate.kind == iTermSelectionReplacementKindJson;
+    }];
+    if (replacement) {
+        [self.textview replaceSelectionWith:replacement];
         [iTermWarning showWarningWithTitle:@"You can find this feature under Edit > Replace Selection > Replace with Pretty-Printed JSON if you want to use it again."
                                    actions:@[ @"OK" ]
                                  accessory:nil

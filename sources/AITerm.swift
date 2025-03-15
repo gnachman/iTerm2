@@ -883,7 +883,7 @@ class AITermController {
             case .error(let error):
                 DLog("error: \(error)")
                 state = .ground
-                if let streamParserState {
+                if streamParserState != nil {
                     delegate?.aitermController(self, didStreamUpdate: "An error ocurred: \(error.localizedDescription)")
                 }
                 delegate?.aitermController(self, didFailWithError: error)
