@@ -8456,6 +8456,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)previousMarkOrNote:(BOOL)annotationsOnly {
     NSArray *objects = nil;
+    if (_selectedCommandMark && !annotationsOnly) {
+        [self selectPreviousCommandMark];
+        return;
+    }
     if (self.currentMarkOrNotePosition == nil) {
         if (annotationsOnly) {
             objects = [_screen lastAnnotations];
@@ -8480,13 +8484,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }
     }
     if (objects.count) {
-        id<IntervalTreeObject> obj = objects[0];
-        self.currentMarkOrNotePosition = obj.entry.interval;
-        VT100GridRange range = [_screen lineNumberRangeOfInterval:self.currentMarkOrNotePosition];
-        [_textview scrollLineNumberRangeIntoView:range];
-        for (obj in objects) {
-            [self highlightMarkOrNote:obj];
-        }
+        id<IntervalTreeImmutableObject> obj = objects[0];
+        [self setCurrentMarkOrNote:obj];
     }
 }
 
@@ -8495,7 +8494,27 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             [mark isKindOfClass:[PTYAnnotation class]]);
 }
 
+- (void)selectPreviousCommandMark {
+    id<VT100ScreenMarkReading> mark = [_screen promptMarkBeforePromptMark:_selectedCommandMark] ?: [_screen lastPromptMark];
+    if (mark) {
+        [self selectCommandWithMark:mark];
+        [self setCurrentMarkOrNote:mark];
+    }
+}
+
+- (void)selectNextCommandMark {
+    id<VT100ScreenMarkReading> mark = [_screen promptMarkAfterPromptMark:_selectedCommandMark] ?: [_screen firstPromptMark];
+    if (mark) {
+        [self selectCommandWithMark:mark];
+        [self setCurrentMarkOrNote:mark];
+    }
+}
+
 - (void)nextMarkOrNote:(BOOL)annotationsOnly {
+    if (_selectedCommandMark && !annotationsOnly) {
+        [self selectNextCommandMark];
+        return;
+    }
     NSArray<id<IntervalTreeImmutableObject>> *objects = nil;
     if (self.currentMarkOrNotePosition == nil) {
         if (annotationsOnly) {
@@ -8522,13 +8541,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
     if (objects.count) {
         id<IntervalTreeImmutableObject> obj = objects[0];
-        self.currentMarkOrNotePosition = obj.entry.interval;
-        VT100GridRange range = [_screen lineNumberRangeOfInterval:self.currentMarkOrNotePosition];
-        [_textview scrollLineNumberRangeIntoView:range];
-        for (obj in objects) {
-            [self highlightMarkOrNote:obj];
-        }
+        [self setCurrentMarkOrNote:obj];
     }
+}
+
+- (void)setCurrentMarkOrNote:(id<IntervalTreeImmutableObject>)obj {
+    self.currentMarkOrNotePosition = obj.entry.interval;
+    VT100GridRange range = [_screen lineNumberRangeOfInterval:self.currentMarkOrNotePosition];
+    [_textview scrollLineNumberRangeIntoView:range];
+    [self highlightMarkOrNote:obj];
 }
 
 - (void)scrollToMark:(id<iTermMark>)mark {

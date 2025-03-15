@@ -152,6 +152,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (id<VT100ScreenMarkReading>)lastMark;
 - (id<VT100ScreenMarkReading>)lastPromptMark;
+- (id<VT100ScreenMarkReading>)firstPromptMark;
 - (id<VT100RemoteHostReading>)lastRemoteHost;
 - (id<VT100ScreenMarkReading>)promptMarkWithGUID:(NSString *)guid;
 - (id<VT100ScreenMarkReading>)namedMarkWithGUID:(NSString *)guid;

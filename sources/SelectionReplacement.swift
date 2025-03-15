@@ -5,6 +5,25 @@
 //  Created by George Nachman on 3/14/25.
 //
 
+/*
+ Some ideas for future features:
+
+ • YAML
+ • XML
+ • Hex
+ • URL encode/decode
+ • HTML entity encode/decode
+ • Quoted-printable encode/decode
+ • Unicode normalization
+ • Character encoding conversion
+ • Base85 encode/decode
+ • Convert to/from hex dump
+ • CSV ⇄ JSON
+ • Decode JWT tokens
+ • Generate QR codes
+ 
+ */
+
 @objc(iTermSelectionReplacement)
 class SelectionReplacement: NSObject {
     @objc(iTermSelectionReplacementKind)

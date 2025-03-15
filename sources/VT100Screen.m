@@ -821,6 +821,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state lastPromptMark];
 }
 
+- (id<VT100ScreenMarkReading>)firstPromptMark {
+    return [_state firstPromptMark];
+}
+
 - (id<VT100ScreenMarkReading>)promptMarkWithGUID:(NSString *)guid {
     NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
@@ -1016,6 +1020,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor {
     return [_state promptMarkAfterPromptMark:predecessor];
+}
+
+- (id<VT100ScreenMarkReading>)promptMarkBeforePromptMark:(id<VT100ScreenMarkReading>)predecessor {
+    return [_state promptMarkBeforePromptMark:predecessor];
 }
 
 - (void)removeNamedMark:(id<VT100ScreenMarkReading>)mark {

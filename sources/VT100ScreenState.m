@@ -1054,6 +1054,27 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return nil;
 }
 
+- (id<VT100ScreenMarkReading> _Nullable)promptMarkBeforePromptMark:(id<VT100ScreenMarkReading>)successor {
+    if (!successor) {
+        return nil;
+    }
+    const long long pos = MAX(0, successor.entry.interval.location) - 1;
+
+    for (NSArray *objects in [self.intervalTree reverseEnumeratorAt:pos]) {
+        id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+            if (![element conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+                return NO;
+            }
+            id<VT100ScreenMarkReading> temp = element;
+            return temp.isPrompt;
+        }];
+        if (mark) {
+            return mark;
+        }
+    }
+    return nil;
+}
+
 // If mustHaveCommand is NO then a prompt with a not-yet-run command is sufficient.
 - (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
                             mustHaveCommand:(BOOL)mustHaveCommand
@@ -1121,6 +1142,24 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return nil;
 }
 
+- (id<IntervalTreeImmutableObject>)firstMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
+    NSEnumerator *enumerator = [self.intervalTree forwardLocationEnumeratorAt:0];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id obj in objects) {
+            if ([obj isKindOfClass:theClass]) {
+                if (wantPrompt && [obj isPrompt]) {
+                    return obj;
+                } else if (!wantPrompt) {
+                    return obj;
+                }
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return nil;
+}
+
 - (NSString *)workingDirectoryOnLine:(int)line {
     id<VT100WorkingDirectoryReading> workingDirectory =
         [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];
@@ -1133,6 +1172,10 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
 - (id<VT100ScreenMarkReading>)lastPromptMark {
     return (id<VT100ScreenMarkReading>)[self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
+}
+
+- (id<VT100ScreenMarkReading>)firstPromptMark {
+    return (id<VT100ScreenMarkReading>)[self firstMarkMustBePrompt:YES class:[VT100ScreenMark class]];
 }
 
 #pragma mark - Colors

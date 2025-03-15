@@ -106,6 +106,7 @@
                             mustHaveCommand:(BOOL)mustHaveCommand
                                       range:(out VT100GridWindowedRange *)range;
 - (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor;
+- (id<VT100ScreenMarkReading>)promptMarkBeforePromptMark:(id<VT100ScreenMarkReading>)predecessor;
 
 - (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval;
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;

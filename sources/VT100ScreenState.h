@@ -343,6 +343,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 
 @property (nonatomic, readonly) id<VT100RemoteHostReading> lastRemoteHost;
 @property (nonatomic, readonly) id<VT100ScreenMarkReading> lastPromptMark;
+@property (nonatomic, readonly) id<VT100ScreenMarkReading> firstPromptMark;
 
 // If at a shell prompt, this gives the range of the command being edited not past the cursor.
 // If not at a prompt (no shell integration or command is running) this is -1,-1,-1,-1.
@@ -361,6 +362,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
                                                 range:(out VT100GridWindowedRange * _Nullable)rangeOut;
 - (id<VT100ScreenMarkReading> _Nullable)commandMarkAtOrBeforeLine:(int)line;
 - (id<VT100ScreenMarkReading> _Nullable)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor;
+- (id<VT100ScreenMarkReading> _Nullable)promptMarkBeforePromptMark:(id<VT100ScreenMarkReading>)successor;
 
 - (NSString * _Nullable)commandInRange:(VT100GridCoordRange)range;
 
