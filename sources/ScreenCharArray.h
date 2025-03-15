@@ -14,7 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Typically used to store a single screen line.
-@interface ScreenCharArray : NSObject<NSCopying>
+@interface ScreenCharArray : NSObject<NSMutableCopying>
 
 @property (nonatomic, readonly) const screen_char_t *line;
 @property (nonatomic) int length;

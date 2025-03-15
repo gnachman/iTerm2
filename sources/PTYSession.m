@@ -12019,7 +12019,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)textViewShowJSONPromotion {
-    if ([self.textview.replacementPayloadsForSelection anyWithBlock:^BOOL(iTermSelectionReplacementPayload *replacement) {
+    if ([self.textview.replacementPayloadsForSelection anyWithBlock:^BOOL(iTermSelectionReplacement *replacement) {
         return replacement.kind == iTermSelectionReplacementKindJson;
     }]) {
         [self.naggingController showJSONPromotion];
@@ -18844,7 +18844,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)naggingControllerPrettyPrintJSON {
-    iTermSelectionReplacement *replacement = [self.textview.replacementPayloadsForSelection objectPassingTest:^BOOL(iTermSelectionReplacementPayload *candidate, NSUInteger index, BOOL *stop) {
+    iTermSelectionReplacement *replacement = [self.textview.replacementPayloadsForSelection objectPassingTest:^BOOL(iTermSelectionReplacement *candidate, NSUInteger index, BOOL *stop) {
         return candidate.kind == iTermSelectionReplacementKindJson;
     }];
     if (replacement) {

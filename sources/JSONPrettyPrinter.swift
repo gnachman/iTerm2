@@ -204,8 +204,8 @@ extension ScreenCharArray {
             let subsca = sca.subArray(to: Int32(i))
             let tuple = (subsca, ci)
             parts.append(tuple)
-            sca = sca.subArray(from: Int32(i))
-            ci += i
+            sca = sca.subArray(from: subsca.length)
+            ci += Int(subsca.length)
         }
         return parts
     }

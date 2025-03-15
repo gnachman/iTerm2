@@ -183,8 +183,8 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 
 #pragma mark - Selection Replacement
 
-- (NSArray<iTermSelectionReplacementPayload *> *)replacementPayloadsForSelection;
-- (void)replaceSelectionWith:(iTermSelectionReplacementPayload *)replacement;
+- (NSArray<iTermSelectionReplacement *> *)replacementPayloadsForSelection;
+- (void)replaceSelectionWith:(iTermSelectionReplacement *)replacement;
 
 @end
 

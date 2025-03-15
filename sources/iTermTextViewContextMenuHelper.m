@@ -535,11 +535,11 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                 [theMenu addItem:item];
                 needSeparator = YES;
             }
-            NSArray<iTermSelectionReplacementPayload *> *replacements = [self.delegate contextMenuSelectionReplacements:self];
+            NSArray<iTermSelectionReplacement *> *replacements = [self.delegate contextMenuSelectionReplacements:self];
             if (replacements.count > 0){
                 [theMenu addItem:[NSMenuItem separatorItem]];
             }
-            for (iTermSelectionReplacementPayload *replacement in replacements) {
+            for (iTermSelectionReplacement *replacement in replacements) {
                 NSMenuItem *item = [[NSMenuItem alloc] init];
                 item.target = self;
                 item.representedObject = replacement;

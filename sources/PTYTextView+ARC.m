@@ -138,8 +138,8 @@ iTermCommandInfoViewControllerDelegate>
         }
         if (kind != -1 && [self selectionIsEligibleForReplacement:self.selection]) {
             iTermSubSelection *sub = self.selection.allSubSelections.firstObject;
-            iTermSelectionReplacementPayload *replacement =
-            [iTermSelectionReplacement payloadFromString:self.selectedText
+            iTermSelectionReplacement *replacement =
+            [iTermSelectionReplacement replacementFromString:self.selectedText
                                                    range:sub.absRange.coordRange
                                                   ofKind:kind];
             if (!replacement) {
@@ -1771,12 +1771,12 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
     }
 }
 
-- (NSArray<iTermSelectionReplacementPayload *> *)replacementPayloadsForSelection {
+- (NSArray<iTermSelectionReplacement *> *)replacementPayloadsForSelection {
     const VT100GridAbsCoordRange absRange = self.selection.allSubSelections.firstObject.absRange.coordRange;
     if (![self selectionIsEligibleForReplacement:self.selection]) {
         return @[];
     }
-    return [iTermSelectionReplacement payloadsFromString:self.selectedText
+    return [iTermSelectionReplacement replacementsFromString:self.selectedText
                                                    range:absRange];
 }
 
@@ -1805,17 +1805,17 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
 }
 
 - (IBAction)replaceSelectionWithPrettyPrintedJSON:(id)sender {
-    [self replaceSelectionWith:(iTermSelectionReplacementPayload *)[sender representedObject]];
+    [self replaceSelectionWith:(iTermSelectionReplacement *)[sender representedObject]];
 }
 
 - (IBAction)replaceSelectionWithBase64Encoded:(id)sender {
-    [self replaceSelectionWith:(iTermSelectionReplacementPayload *)[sender representedObject]];
+    [self replaceSelectionWith:(iTermSelectionReplacement *)[sender representedObject]];
 }
 - (IBAction)replaceSelectionWithBase64Decoded:(id)sender {
-    [self replaceSelectionWith:(iTermSelectionReplacementPayload *)[sender representedObject]];
+    [self replaceSelectionWith:(iTermSelectionReplacement *)[sender representedObject]];
 }
 
-- (void)replaceSelectionWith:(iTermSelectionReplacementPayload *)replacement {
+- (void)replaceSelectionWith:(iTermSelectionReplacement *)replacement {
     [replacement executeWithWidth:self.dataSource.width
                        completion:^(VT100GridAbsCoordRange range,
                                     NSArray<ScreenCharArray *> *lines,
@@ -1828,12 +1828,12 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
     }];
 }
 
-- (NSArray<iTermSelectionReplacementPayload *> *)contextMenuSelectionReplacements:(iTermTextViewContextMenuHelper *)contextMenu {
+- (NSArray<iTermSelectionReplacement *> *)contextMenuSelectionReplacements:(iTermTextViewContextMenuHelper *)contextMenu {
     return [self replacementPayloadsForSelection];
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-replaceSelectionWith:(iTermSelectionReplacementPayload *)replacement {
+replaceSelectionWith:(iTermSelectionReplacement *)replacement {
     [self replaceSelectionWith:replacement];
 }
 

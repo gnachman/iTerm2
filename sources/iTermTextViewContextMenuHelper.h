@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermImageInfoReading;
 @class iTermOffscreenCommandLine;
 @class iTermSelection;
-@class iTermSelectionReplacementPayload;
+@class iTermSelectionReplacement;
 @class iTermTextExtractor;
 @class iTermTextViewContextMenuHelper;
 @class iTermURLActionHelper;
@@ -126,8 +126,8 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                copy:(id)obj;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-replaceSelectionWith:(iTermSelectionReplacementPayload *)replacement;
-- (NSArray<iTermSelectionReplacementPayload *> *)contextMenuSelectionReplacements:(iTermTextViewContextMenuHelper *)contextMenu;
+replaceSelectionWith:(iTermSelectionReplacement *)replacement;
+- (NSArray<iTermSelectionReplacement *> *)contextMenuSelectionReplacements:(iTermTextViewContextMenuHelper *)contextMenu;
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
  runCommandInWindow:(NSString *)command;

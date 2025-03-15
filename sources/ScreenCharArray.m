@@ -418,6 +418,14 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return count;
 }
 
+- (id)mutableCopy {
+    return [[MutableScreenCharArray alloc] initWithCopyOfLine:self.line
+                                                       length:self.length
+                                                     metadata:self.metadata
+                                                 continuation:self.continuation
+                                                     bidiInfo:self.bidiInfo];
+}
+
 - (id)copyWithZone:(NSZone *)zone {
     ScreenCharArray *theCopy = [[ScreenCharArray alloc] initWithCopyOfLine:_line
                                                                     length:_length
@@ -438,7 +446,24 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 }
 
 - (ScreenCharArray *)subArrayToIndex:(int)i {
-    return [self screenCharArrayByRemovingLast:self.length - i];
+    if (i <= 0) {
+        return [ScreenCharArray emptyLineOfLength:0];
+    }
+    if (self.length <= i) {
+        return self;
+    }
+    int numberToRemove = self.length - i;
+    BOOL split = self.line[i].code == DWC_RIGHT;
+    if (split) {
+        numberToRemove += 1;
+    }
+    MutableScreenCharArray *result = [[self screenCharArrayByRemovingLast:numberToRemove] mutableCopy];
+    if (split) {
+        result.eol = EOL_DWC;
+    } else {
+        result.eol = EOL_SOFT;
+    }
+    return result;
 }
 
 - (ScreenCharArray *)subArrayFromIndex:(int)i {
