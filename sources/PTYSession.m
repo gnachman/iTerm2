@@ -12018,6 +12018,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (void)textViewShowJSONPromotion {
+    if (self.textview.selectionAsJSONObject != nil) {
+        [self.naggingController showJSONPromotion];
+    }
+}
+
 - (void)textviewToggleTimestampsMode {
     const BOOL alreadyVisible = [self desiredTimestampMode] != iTermTimestampsModeOff;
     const BOOL shouldBeVisible = !alreadyVisible;
@@ -18833,6 +18839,26 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)naggingControllerRemoveMessageWithIdentifier:(NSString *)identifier {
     [self dismissAnnouncementWithIdentifier:identifier];
     [self removeAnnouncementWithIdentifier:identifier];
+}
+
+- (void)naggingControllerPrettyPrintJSON {
+    id obj = [self.textview selectionAsJSONObject];
+    if (obj) {
+        [self.textview replaceSelectionWithPrettyPrintedJSONForObject:obj];
+        [iTermWarning showWarningWithTitle:@"You can find this feature under Edit > Replace Selection > Replace with Pretty-Printed JSON if you want to use it again."
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Done!"
+                                    window:self.view.window];
+    } else {
+        [iTermWarning showWarningWithTitle:@"Looks like the selection changed and is no longer a valid JSON object.\nYou can find this feature under Edit > Replace Selection > Replace with Pretty-Printed JSON if you want to try again."
+                                   actions:@[ @"OK" ]
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                    window:self.view.window];
+    }
 }
 
 - (void)naggingControllerRestart {

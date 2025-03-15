@@ -38,6 +38,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSSavePanel+iTerm.h"
@@ -121,6 +122,16 @@ iTermCommandInfoViewControllerDelegate>
             item.title = @"Fold Selected Lines";
         }
         return YES;
+    }
+    if (item.action == @selector(replaceSelectionWithPrettyPrintedJSON:)) {
+        if ([self haveReasonableSelection] && self.selection.approximateNumberOfLines > 1) {
+            id obj = [self selectionAsJSONObject];
+            if (([obj isKindOfClass:[NSArray class]] ||
+                 [obj isKindOfClass:[NSDictionary class]]))
+                item.representedObject = obj;
+            return obj != nil;
+        }
+        return NO;
     }
     if (item.action == @selector(toggleLockSplitPaneWidth:)) {
         BOOL allow = NO;
@@ -1744,8 +1755,17 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
     }
 }
 
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-replaceSelectionWithPrettyPrintedJSONObject:(id)obj {
+- (id)selectionAsJSONObject {
+    NSError *error = nil;
+    return [NSJSONSerialization it_objectForJsonString:self.selectedText
+                                                 error:&error];
+}
+
+- (IBAction)replaceSelectionWithPrettyPrintedJSON:(id)sender {
+    [self replaceSelectionWithPrettyPrintedJSONForObject:[sender representedObject]];
+}
+
+- (void)replaceSelectionWithPrettyPrintedJSONForObject:(id)obj {
     iTermJSONPrettyPrinter *printer = [[iTermJSONPrettyPrinter alloc] initWithObject:obj];
     if (!printer) {
         DLog(@"Failed to create JSON pretty printer for %@", obj);
@@ -1760,6 +1780,11 @@ replaceSelectionWithPrettyPrintedJSONObject:(id)obj {
                            blockMarks:[printer blockMarksWithMaxWidth:width]];
     }
     [self didFoldOrUnfold];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+replaceSelectionWithPrettyPrintedJSONObject:(id)obj {
+    [self replaceSelectionWithPrettyPrintedJSONForObject:obj];
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

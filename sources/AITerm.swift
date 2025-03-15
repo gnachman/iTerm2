@@ -883,6 +883,9 @@ class AITermController {
             case .error(let error):
                 DLog("error: \(error)")
                 state = .ground
+                if let streamParserState {
+                    delegate?.aitermController(self, didStreamUpdate: "An error ocurred: \(error.localizedDescription)")
+                }
                 delegate?.aitermController(self, didFailWithError: error)
             case .word(let word):
                 DLog("stream \(word)")
@@ -1296,6 +1299,10 @@ public struct AIError: LocalizedError, CustomStringConvertible, CustomNSError, C
         AIError("AI token limit exceeded because the conversation reached its maximum length", type: .requestTooLarge)
     }
 
+    static func wrapping(error: Error, context: String) -> AIError {
+        return AIError(context + ": " + error.localizedDescription)
+    }
+
     public static var errorDomain: String { iTermAIError.domain }
     public var errorCode: Int { type.rawValue }
 }
@@ -1526,6 +1533,12 @@ extension Result {
         switch self {
         case .success(let value): value
         case .failure(_): nil
+        }
+    }
+    var failureValue: Failure? {
+        switch self {
+        case .success: nil
+        case .failure(let failure): failure
         }
     }
 }

@@ -204,6 +204,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
     if ([item action] == @selector(downloadWithSCP:)) {
+        if (![self.delegate contextMenuSelectionIsReasonable:self])  {
+            return NO;
+        }
         __block BOOL result = NO;
         iTermSelection *selection = [self.delegate contextMenuSelection:self];
         const BOOL valid =
@@ -533,7 +536,10 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             {
                 NSError *error = nil;
                 id obj = [NSJSONSerialization it_objectForJsonString:text error:&error];
-                if (obj != nil && error == nil) {
+                if (obj != nil &&
+                    error == nil &&
+                    ([obj isKindOfClass:[NSArray class]] ||
+                     [obj isKindOfClass:[NSDictionary class]])) {
                     NSMenuItem *item = [[NSMenuItem alloc] init];
                     item.title = @"Replace with Pretty-Printed JSON";
                     item.target = self;

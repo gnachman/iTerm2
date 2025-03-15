@@ -39,6 +39,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)naggingControllerDisableTriggersInInteractiveApps;
 - (void)naggingControllerAssignProfileToSession:(NSString *)arrangementName
                                            guid:(NSString *)guid;
+- (void)naggingControllerPrettyPrintJSON;
 
 @end
 
@@ -87,6 +88,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)openCommandDidFailWithSecureInputEnabled;
 - (void)offerToFixSessionWithBrokenArrangementProfileIn:(NSString *)arrangementName
                                                    guid:(NSString *)guid;
+- (void)showJSONPromotion;
 
 @end
 

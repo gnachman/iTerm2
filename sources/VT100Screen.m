@@ -270,7 +270,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         if (!blockMarks) {
             blockMarks = [NSMutableDictionary dictionary];
         }
-        const VT100GridAbsCoordRange absCoordRange = [self absCoordRangeForInterval:blockMark.entry.interval];
         blockMarks[blockMark.blockID] = [iTermRange rangeWithLocation:0 length:1];
     }
     return blockMarks;

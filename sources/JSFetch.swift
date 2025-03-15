@@ -102,7 +102,12 @@ class PluginClient {
             request.setValue("\(data.count)", forHTTPHeaderField: "Content-Length")
         }
 
-        session = URLSession(configuration: .default, delegate: HTTPStreamDelegate(callback: callback), delegateQueue: nil)
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60 * 5
+        session = URLSession(configuration: config,
+                             delegate: HTTPStreamDelegate(callback: callback),
+                             delegateQueue: nil)
         let task = session?.dataTask(with: request)
         DLog("resume session")
         task?.resume()

@@ -97,6 +97,7 @@ NSTimeInterval PTYTextViewHighlightLineAnimationDuration = 0.75;
 
 NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChangeFontNotification";
+const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
 @interface iTermHighlightRowView: NSView<iTermMetalDisabling>
 @end
@@ -2600,9 +2601,14 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
 }
 
-- (NSString *)updateHoverButtonsForLine:(int)line changed:(out BOOL *)changedPtr {
+- (NSString *)foldableBlockIDOnLine:(int)line {
     NSDictionary<NSNumber *, iTermExternalAttribute *> *attrs = [[self.dataSource externalAttributeIndexForLine:line] attributes];
     NSString *block = [[attrs[@0].blockIDList componentsSeparatedByString:iTermExternalAttributeBlockIDDelimiter] firstObject];
+    return block;
+}
+
+- (NSString *)updateHoverButtonsForLine:(int)line changed:(out BOOL *)changedPtr {
+    NSString *block = [self foldableBlockIDOnLine:line];
     const VT100GridCoordRange coordRange = [_dataSource rangeOfBlockWithID:block];;
     NSRange absLineRange;
     if (VT100GridCoordIsValid(coordRange.start) && VT100GridCoordIsValid(coordRange.end)) {
@@ -3168,6 +3174,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     NSString *copyString = [self selectedTextInSelection:selection];
     [self copyString:copyString];
+
+    __weak __typeof(self) weakSelf = self;
+    [iTermJSONPrettyPrinter promoteIfJSONWithString:copyString
+                                           callback:^{
+        [weakSelf.delegate textViewShowJSONPromotion];
+    }];
 }
 
 - (BOOL)copyString:(NSString *)copyString {
@@ -6385,6 +6397,7 @@ static NSString *iTermStringFromRange(NSRange range) {
         DLog(@"mouseUp: textview handling single click");
         const NSPoint windowPoint = [event locationInWindow];
         const NSPoint enclosingViewPoint = [self.enclosingScrollView convertPoint:windowPoint fromView:nil];
+        const NSPoint pointInSelf = [self.enclosingScrollView convertPoint:enclosingViewPoint toView:self];
         NSString *message = [_indicatorsHelper helpTextForIndicatorAt:enclosingViewPoint
                                                             sessionID:[_delegate.textViewVariablesScope valueForVariableName:iTermVariableKeySessionID]];
         if (message) {
@@ -6408,10 +6421,17 @@ static NSString *iTermStringFromRange(NSRange range) {
         }
         id<iTermFoldMarkReading> foldMark = [self foldMarkAtWindowCoord:event.locationInWindow];
         id<VT100ScreenMarkReading> commandMark = [self commandMarkAtWindowCoord:event.locationInWindow];
+        const VT100GridCoord coord = [self coordForPoint:pointInSelf allowRightMarginOverflow:NO];
+        NSString *blockID = [self foldableBlockIDOnLine:coord.y];
         if (foldMark) {
             DLog(@"mouseUp: fold mark");
             [self unfoldMark:foldMark];
             return VT100GridCoordMake(-1, -1);
+        } else if (pointInSelf.x < [iTermPreferences intForKey:kPreferenceKeySideMargins] + PTYTextViewMarginClickGraceWidth &&
+                   pointInSelf.x >= 0 &&
+                   blockID != nil) {
+            DLog(@"Clicked on unfolded block indicator");
+            [self foldBlock:blockID];
         } else if (commandMark) {
             DLog(@"mouseUp: command mark");
             [self foldCommandMark:commandMark];

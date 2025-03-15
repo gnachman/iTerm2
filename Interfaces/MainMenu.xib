@@ -503,11 +503,24 @@ DQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="EC1-3K-Gyr"/>
-                            <menuItem title="Render Selection" keyEquivalent="e" identifier="Render Selection Natively" id="SEy-mc-25m">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="renderSelection:" target="-1" id="CYd-u9-J4s"/>
-                                </connections>
+                            <menuItem title="Replace Selection" id="5uf-4h-Tfe">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Replace Selection" id="p0c-xV-Sfk">
+                                    <items>
+                                        <menuItem title="Render Selection Natively" keyEquivalent="e" identifier="Render Selection Natively" id="SEy-mc-25m">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="renderSelection:" target="-1" id="CYd-u9-J4s"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Replace with Pretty-Printed JSON" id="Fsl-eD-Noh">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="replaceSelectionWithPrettyPrintedJSON:" target="-1" id="9Ho-k9-mP3"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="b0A-74-lFS"/>
                             <menuItem title="Engage Artificial Intelligence" keyEquivalent="y" identifier="Engage Artificial Intelligence" id="zgu-Gv-WUr">

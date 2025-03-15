@@ -181,6 +181,11 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 - (BOOL)revealAnnotationsAt:(VT100GridCoord)coord toggle:(BOOL)toggle;
 - (void)hideAllAnnotations;
 
+#pragma mark - Selection Replacement
+
+- (id _Nullable)selectionAsJSONObject;
+- (void)replaceSelectionWithPrettyPrintedJSONForObject:(id)obj;
+
 @end
 
 NS_ASSUME_NONNULL_END

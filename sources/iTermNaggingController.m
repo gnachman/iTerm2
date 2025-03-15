@@ -601,6 +601,31 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
     }
 }
 
+- (void)showJSONPromotion {
+    [_delegate naggingControllerShowMessage:@"That's a gnarly JSON blob you've got there! iTerm2 can replace this hard-to-read selection with a pretty-printed value."
+                                 isQuestion:NO
+                                  important:NO
+                                 identifier:@"JSONPromotion"
+                                    options:@[ @"Try it Now", @"Dismiss" ]
+                                 completion:^(int selection) {
+        switch (selection) {
+            case -2:  // Dismiss programmatically
+                break;
+
+            case -1: // Closed
+                break;
+
+            case 0: // try
+                [self.delegate naggingControllerPrettyPrintJSON];
+                break;
+
+            case 1:  // Dismiss
+                // The caller is responsible for not showing the promotion more than once.
+                break;
+        }
+    }];
+}
+
 - (void)openURL:(NSURL *)url {
     NSString *allowHostKey = [NSString stringWithFormat:@"NoSyncAllowOpenURL_host:%@", url.host];
 

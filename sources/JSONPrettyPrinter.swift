@@ -11,6 +11,53 @@ class JSONPrettyPrinter: NSObject {
     private lazy var lineToBlockIDList: [Int: String] = {
         computeLineToBlockIDList()
     }()
+
+    private static let userDefaultsKey = "NoSyncHavePromotedJSONPrettyPrint"
+    private static var busy = false
+
+    // Tell the user about the JSON pretty printing feature when they've
+    // selected one that we're pretty sure is hard to read, but avoid wasting a
+    // bunch of CPU on giant selections.
+    @objc
+    static func promoteIfJSON(string: String, callback: @escaping ()->()) {
+        if string.count < 200 || string.count > 100_000 {
+            return
+        }
+        if UserDefaults.standard.bool(forKey: userDefaultsKey) {
+            return
+        }
+        if string.prefix(20).range(of: "^ *[\\[{]", options: [.regularExpression]) == nil {
+            return
+        }
+        if busy {
+            return
+        }
+        busy = true
+        DispatchQueue.global().async {
+            guard let data = string.data(using: .utf8) else {
+                return
+            }
+            let maybeObject = try? JSONSerialization.jsonObject(
+                with: data,
+                options: [.allowFragments])
+            if let maybeObject,
+               let desiredNumberOfLines = JSONPrettyPrinter(maybeObject as AnyObject)?.result.attributedStrings.count {
+                let actualNumberOfLines = string.ranges(of: "\n").count
+                DispatchQueue.main.async {
+                    busy = false
+                    if desiredNumberOfLines < 10 {
+                        return
+                    }
+                    if actualNumberOfLines > desiredNumberOfLines / 4 {
+                        return
+                    }
+                    UserDefaults.standard.set(true, forKey: userDefaultsKey)
+                    callback()
+                }
+            }
+        }
+    }
+
     @objc(initWithObject:)
     init?(_ obj: AnyObject) {
         let builder = JSONAttributedStringBuilder()
@@ -26,8 +73,10 @@ class JSONPrettyPrinter: NSObject {
             var blockID: String
         }
         var mapping = [Int: Entry]()
+        var counts = [Int: Int]()
         func update(folds: [JSONAttributedStringBuilder.FoldTreeNode], depth: Int) {
             for fold in folds {
+                counts[depth, default: 0] += fold.lineRange.count
                 for i in fold.lineRange {
                     if var existing = mapping[i] {
                         if existing.depth < depth {
@@ -42,8 +91,8 @@ class JSONPrettyPrinter: NSObject {
                     } else {
                         mapping[i] = Entry(depth: depth, blockID: fold.blockID)
                     }
-                    update(folds: fold.children, depth: depth + 1)
                 }
+                update(folds: fold.children, depth: depth + 1)
             }
         }
         update(folds: result.folds, depth: 0)

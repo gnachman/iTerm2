@@ -67,6 +67,7 @@ extern NSTimeInterval PTYTextViewHighlightLineAnimationDuration;
 
 extern NSNotificationName iTermPortholesDidChange;
 extern NSNotificationName PTYTextViewWillChangeFontNotification;
+extern const CGFloat PTYTextViewMarginClickGraceWidth;
 
 @protocol PTYTextViewDelegate <NSObject, iTermBadgeLabelDelegate, iTermObject>
 
@@ -321,6 +322,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
                           color:(NSColor *)color;
 - (CGFloat)textViewRightExtra;
 - (void)textViewLiveSelectionDidEnd;
+- (void)textViewShowJSONPromotion;
 
 @end
 

@@ -465,7 +465,7 @@ extension PTYTextView: ExternalSearchResultsController {
     @objc(foldMarkAtWindowCoord:)
     func foldMark(at windowCoord: NSPoint) -> FoldMarkReading? {
         let locationInTextView = convert(windowCoord, from: nil)
-        if Int(clamping: locationInTextView.x) >= iTermPreferences.int(forKey: kPreferenceKeySideMargins) {
+        if Int(clamping: locationInTextView.x) >= iTermPreferences.int(forKey: kPreferenceKeySideMargins) + Int32(PTYTextViewMarginClickGraceWidth) {
             return nil
         }
         let coord = self.coord(for: locationInTextView, allowRightMarginOverflow: true)

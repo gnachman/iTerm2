@@ -96,11 +96,13 @@ enum LLM {
                     json: Data,
                     completion: @escaping (Result<String, Error>) -> ()) {
             do {
-                let value = try JSONDecoder().decode(parameterType, from: json)
+                let value = try JSONSerialization.parseTruncatedJSON(json.lossyString, as: parameterType)
                 call(message, value, completion)
             } catch {
                 DLog("\(error.localizedDescription)")
-                completion(.failure(error))
+                completion(.failure(AIError.wrapping(
+                    error: error,
+                    context: "While parsing a function call request")))
             }
         }
     }
