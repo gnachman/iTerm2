@@ -1074,6 +1074,7 @@ fileprivate struct KeyReport {
                 return pre + cleanParams.map { $0.encoded }.joined(separator: ";") + post
             }
         }
+        let alt = event.modifiers.cooked.contains(.alt)
 
         // Number (unicode-key-code:alternate-key-codes)
         let numberComponents = { () -> [UInt32?]? in
@@ -1090,6 +1091,8 @@ fileprivate struct KeyReport {
                         (event.shiftedKeyCode == nil ||
                          event.csiUNumber == event.shiftedKeyCode)) {
                         return [event.csiUNumber]
+                    } else if event.csiUNumber == event.baseLayoutKeyCode {
+                        return [event.csiUNumber, event.shiftedKeyCode]
                     } else {
                         return [event.csiUNumber, event.shiftedKeyCode, event.baseLayoutKeyCode]
                     }
@@ -1164,10 +1167,16 @@ fileprivate struct KeyReport {
         controlSequence.parameters.append(.init(values: modifierSubparams))
 
         // Associated values (text-as-codepoints)
+        // This progressive enhancement (0b10000) additionally causes key events that generate text
+        // to be reported as CSI u escape codes with the text embedded in the escape code. See Text
+        // as code points above for details on the mechanism. Note that this flag is an enhancement
+        // to Report all keys as escape codes and is undefined if used without it.
         if enhancementFlags.contains(.reportAssociatedText) &&
-            !event.textAsCodepoints.isEmpty &&
-            event.textAsCodepoints != [event.unicodeKeyCode] {
-            DLog("Add textAsCodepoints")
+            enhancementFlags.contains(.reportAllKeysAsEscapeCodes) &&  // reportAssociatedText is an enhacment to reportAllKeys
+            !event.textAsCodepoints.isEmpty &&  // key would not generate text
+            !alt &&  // When option sends esc+, the character wouldn't send text, so there is no associated text (matches Kitty's behavior)
+            event.eventType == .keyDown {  // only key-down generaets text
+            DLog("Add textAsCodepoints: \(event.textAsCodepoints)")
             controlSequence.parameters.append(.init(values: event.textAsCodepoints))
         }
 
@@ -1483,6 +1492,9 @@ extension NSEvent {
 
     func it_textAsCodePoints(useNativeOptionBehavior: Bool) -> [UInt32] {
         if it_functionalKeyCode != nil {
+            return []
+        }
+        if modifierFlags.contains(.control) {
             return []
         }
         let string =
