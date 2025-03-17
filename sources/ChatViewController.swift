@@ -810,7 +810,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 inChat: chatID,
                                 requestUUID: originalMessage.uniqueID,
                                 message: "The user declined to allow this function call to execute.",
-                                functionCallName: originalMessage.functionCallName ?? "Unknown function call name")
+                                functionCallName: originalMessage.functionCallName ?? "Unknown function call name",
+                                userNotice: nil)
                         }
                     }
                 }
@@ -831,7 +832,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         inChat: chatID,
                         requestUUID: messageID,
                         message: "The user did not link a terminal session to chat, so the function could not be run.",
-                        functionCallName: functionCallName)
+                        functionCallName: functionCallName,
+                        userNotice: "AI attempted to perform an action, but no session is linked to this chat so it failed.")
                     return
                 }
                 let allowed: Bool
@@ -865,7 +867,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         inChat: chatID,
                         requestUUID: messageID,
                         message: "The user declined to allow function calling. Try to find another way to assist.",
-                        functionCallName: functionCallName)
+                        functionCallName: functionCallName,
+                        userNotice: nil)
                 }
             }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,

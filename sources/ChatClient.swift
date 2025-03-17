@@ -111,7 +111,8 @@ class ChatClient {
                 inChat: chatID,
                 requestUUID: message.uniqueID,
                 message: "The user denied permission to use function calling in this terminal session. Do not try again.",
-                functionCallName: message.functionCallName ?? "Unknown function call name")
+                functionCallName: message.functionCallName ?? "Unknown function call name",
+                userNotice: "AI will not execute this command.")
             return nil
         case .always:
             performRemoteCommand(request,
@@ -150,12 +151,14 @@ class ChatClient {
                               chatID: String,
                               messageUniqueID: UUID) {
         var done = false
-        session.execute(request) { [weak self] response in
+        broker.publishNotice(chatID: chatID, notice: "\(request.markdownDescription)…")
+        session.execute(request) { [weak self] response, userNotice in
             done = true
             self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
                                                             requestUUID: messageUniqueID,
                                                             message: response,
-                                                            functionCallName: request.llmMessage.function_call?.name ?? "Unknown function call name")
+                                                            functionCallName: request.llmMessage.function_call?.name ?? "Unknown function call name",
+                                                            userNotice: userNotice)
         }
         if !done {
             publish(message: Message(chatID: chatID,
@@ -168,26 +171,14 @@ class ChatClient {
         }
     }
 
-    private func rejectRemoteCommandRequest(inChat chatID: String,
-                                            requestUUID: UUID,
-                                            message: String,
-                                            functionCallName: String) {
-        broker.publish(message: Message(chatID: chatID,
-                                        author: .user,
-                                        content: .remoteCommandResponse(
-                                            .failure(AIError(message)),
-                                            requestUUID,
-                                            functionCallName),
-                                        sentDate: Date(),
-                                        uniqueID: UUID()),
-                       toChatID: chatID,
-                       partial: false)
-    }
-
     func respondSuccessfullyToRemoteCommandRequest(inChat chatID: String,
                                                    requestUUID: UUID,
                                                    message: String,
-                                                   functionCallName: String) {
+                                                   functionCallName: String,
+                                                   userNotice: String?) {
+        if let userNotice {
+            broker.publishNotice(chatID: chatID, notice: userNotice)
+        }
         broker.publish(message: Message(chatID: chatID,
                                         author: .user,
                                         content: .remoteCommandResponse(

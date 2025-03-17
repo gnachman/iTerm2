@@ -15,7 +15,7 @@ struct MessageRendition {
             var title: String
             var destructive: Bool
             var color: NSColor {
-                destructive ? .red : .controlTextColor
+                destructive ? .red : .textColor
             }
             var identifier: String
         }

@@ -2600,6 +2600,21 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    
+    func create(file: String, content: Data, completion: @escaping (Error?) -> ()) {
+        Task {
+            do {
+                try await create(file, content: content)
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(error)
+                }
+            }
+        }
+    }
     @MainActor
     func create(_ file: String, content: Data) async throws {
         try await logging("create \(file) length=\(content.count) bytes") {
