@@ -11,7 +11,6 @@ import Foundation
 @objc(iTermTerminalButton)
 class TerminalButton: NSObject {
     @objc var action: ((NSPoint) -> ())?
-    private let tintedBackgroundImage: TintedImage
     private let tintedForegroundImage: TintedImage
     private let aspectRatio: CGFloat
     @objc weak var mark: iTermMarkProtocol?
@@ -42,7 +41,6 @@ class TerminalButton: NSObject {
 
     init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, mark: iTermMarkProtocol?) {
         self.id = id
-        tintedBackgroundImage = TintedImage(original: backgroundImage)
         tintedForegroundImage = TintedImage(original: foregroundImage)
         self.mark = mark
         aspectRatio = foregroundImage.size.height / foregroundImage.size.width;
@@ -50,7 +48,6 @@ class TerminalButton: NSObject {
 
     required init?(_ original: TerminalButton) {
         self.id = original.id
-        tintedBackgroundImage = original.tintedBackgroundImage.clone()
         tintedForegroundImage = original.tintedForegroundImage.clone()
         self.mark = original.mark
         aspectRatio = original.tintedForegroundImage.original.size.height / original.tintedForegroundImage.original.size.width;
@@ -68,8 +65,11 @@ class TerminalButton: NSObject {
     private func images(backgroundColor: NSColor,
                         foregroundColor: NSColor,
                         size: NSSize) -> (NSImage, NSImage) {
-        return (tintedForegroundImage.tintedImage(color: foregroundColor, size: size),
-                tintedBackgroundImage.tintedImage(color: backgroundColor, size: size))
+        return (tintedForegroundImage.tintedImage(color: foregroundColor,
+                                                  size: size),
+                NSImage.roundedRect(size: size,
+                                    radius: 2,
+                                    color: backgroundColor))
     }
 
     @objc func size(cellSize: NSSize) -> NSSize {
@@ -388,5 +388,16 @@ class TerminalUnfoldButton: TerminalMarkButton {
     }
     required init?(_ original: TerminalButton) {
         super.init(original)
+    }
+}
+
+extension NSImage {
+    static func roundedRect(size: NSSize, radius: CGFloat, color: NSColor) -> NSImage {
+        return NSImage(size: size, flipped: false) { rect in
+            color.setFill()
+            let path = NSBezierPath(roundedRect: NSRect(x: 0, y: 0, width: size.width, height: size.height), xRadius: radius, yRadius: radius)
+            path.fill()
+            return true
+        }
     }
 }
