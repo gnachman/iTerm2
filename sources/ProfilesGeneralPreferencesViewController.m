@@ -998,9 +998,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)updateCustomCommandRightInset {
-    const CGFloat inset = _commandWarningImageView.isHidden ? 0 : _commandWarningImageView.bounds.size.width;
-    _commandCell.rightInset = inset + 23;
-    _customCommand.rightInset = inset;
+    _commandCell.rightInset = 23;
+    _customCommand.rightInset = 0;
     [_customCommand setNeedsDisplay:YES];
 }
 
