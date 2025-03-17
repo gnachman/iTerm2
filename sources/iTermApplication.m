@@ -637,6 +637,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     switch (event.type) {
         case NSEventTypeFlagsChanged: {
             DLog(@"begin flags-changed");
+#if DEBUG
+            [iTermKeyEventRecorder.instance record:event];
+#endif
             if (_leader) {
                 [self makeCursorSparkles];
             }
@@ -655,6 +658,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         }
         case NSEventTypeKeyDown:
             DLog(@"begin key-down");
+#if DEBUG
+            [iTermKeyEventRecorder.instance record:event];
+#endif
             event.it_functionModifierPressed = _functionPressed;
             event = [self eventByRemappingForSecureInput:event];
             if (!event) {
@@ -669,6 +675,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             break;
         case NSEventTypeKeyUp:
             DLog(@"begin key-up");
+#if DEBUG
+            [iTermKeyEventRecorder.instance record:event];
+#endif
             DLog(@"Key up: %@", event);
             event.it_functionModifierPressed = _functionPressed;
             event = [self eventByRemappingForSecureInput:event];

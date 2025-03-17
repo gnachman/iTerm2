@@ -75,7 +75,7 @@ def run_test_harness(csv_file, output_file):
         rows = list(reader)
 
         for index, row in enumerate(rows):
-            if len(sys.argv) > 1 and index < int(sys.argv[1]):
+            if len(sys.argv) > 1 and not sys.argv[1].startswith("--") and index < int(sys.argv[1]):
                 continue
             step_number = index
             key = row['Key']
@@ -154,10 +154,13 @@ def run_test_harness(csv_file, output_file):
                     print("Actual:")
                     print(replace_control_chars(input_received))
                     print("")
-                    print("Retry? [yn]")
-                    yn = sys.stdin.read(1)
+                    if len(sys.argv) < 2 or sys.argv[1] != "--no-retry":
+                        print("Retry? [yn]")
+                        yn = sys.stdin.read(1)
+                        time.sleep(0.1)
+                    else:
+                        yn = "n"
                     retrying = yn != "n"
-                    time.sleep(0.1)
 
             result = {
                 'step_number': step_number,

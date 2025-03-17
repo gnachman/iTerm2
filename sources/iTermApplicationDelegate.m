@@ -475,6 +475,13 @@ static BOOL hasBecomeActive = NO;
             return NO;
         }
         return YES;
+#if DEBUG
+    } else if (menuItem.action == @selector(toggleKeyRecording:)) {
+        menuItem.state = iTermKeyEventRecorder.instance != nil ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
+    } else if (menuItem.action == @selector(replayRecordedKeys:)) {
+        return iTermController.sharedInstance.currentTerminal != nil && [self pidForReplay] != 0;
+#endif
     } else {
         return YES;
     }
@@ -1371,7 +1378,55 @@ void TurnOnDebugLoggingAutomatically(void) {
                                             hostname:nil
                                             username:nil];
     }
+
+#if DEBUG
+    NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
+    [appMenu addItem:[NSMenuItem separatorItem]];
+
+    NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@"Toggle Key Recording" action:@selector(toggleKeyRecording:) keyEquivalent:@""] autorelease];
+    [appMenu addItem:item];
+
+    item = [[[NSMenuItem alloc] initWithTitle:@"Replay Recorded Keys" action:@selector(replayRecordedKeys:) keyEquivalent:@""] autorelease];
+    [appMenu addItem:item];
+#endif
 }
+
+#if DEBUG
+- (IBAction)toggleKeyRecording:(id)sender {
+    [iTermKeyEventRecorder toggle];
+}
+
+static iTermKeyEventReplayer *gReplayer;
+
+- (IBAction)replayRecordedKeys:(id)sender {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.title = @"Choose a JSON File";
+    panel.allowedFileTypes = @[@"json"];
+    panel.canChooseFiles = YES;
+    panel.canChooseDirectories = NO;
+    panel.allowsMultipleSelection = NO;
+    NSURL *defaultDirectoryURL = [NSURL fileURLWithPath:@"/tmp" isDirectory:YES];
+    [panel setDirectoryURL:defaultDirectoryURL];
+    panel.nameFieldStringValue = @"recorded-keys.json";
+
+    if ([panel runModal] == NSModalResponseOK) {
+        NSURL *selectedFileURL = panel.URL;
+        const pid_t pid = [self pidForReplay];
+        if (!pid) {
+            return;
+        }
+        [gReplayer stop];
+        gReplayer = [[iTermKeyEventReplayer alloc] initWithPath:selectedFileURL.path windowNumber:NSApp.keyWindow.windowNumber pid:pid];
+        [gReplayer start];
+    }
+}
+
+- (pid_t)pidForReplay {
+    iTermVariableScope *scope = iTermController.sharedInstance.currentTerminal.currentSession.variablesScope;
+    const pid_t pid = [[scope valueForVariableName:iTermVariableKeySessionJobPid] intValue];
+    return pid;
+}
+#endif
 
 - (NSMenu *)statusBarMenu {
     NSMenu *menu = [[[NSMenu alloc] init] autorelease];

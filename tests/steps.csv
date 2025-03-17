@@ -28,10 +28,10 @@ Tab,"Press and repeat once",Shift,NA,US English,2,\e[9;2u\e[9;2:2u\e[9;2:3u,
 Page Down,"Press and repeat once",None,NA,US English,2,\e[6~\e[6;1:2~\e[6;1:3~,
 ,,,,,,,
 /,"Hit",None,NA,US English,4,/,
-/,"Hit",Control Shift,NA,US English,4,\e[47:63:47;6u,Kitty omits the base code but this is allowed by the spec
+/,"Hit",Control Shift,NA,US English,4,\e[47:63;6u,Kitty omits the base code but this is allowed by the spec
 /,"Hit",Control Option,TRUE,US English,4,\e\u{1f},Kitty just sends /. Who knows.
 1,"Hit",Shift,NA,US English,4,!,
-A,"Hit",Shift Option,TRUE,US English,4,\e[97:65:97;4u,Kitty omits base
+A,"Hit",Shift Option,TRUE,US English,4,\e[97:65;4u,Kitty omits base
 Enter,"Hit",None,NA,US English,4,\n,
 Tab,"Hit",None,NA,US English,4,\t,
 Backspace,"Hit",None,NA,US English,4,\u{7f},
@@ -53,36 +53,36 @@ Enter,"Hit",None,NA,US English,16,\n,
 Tab,"Hit",None,NA,US English,16,\t,
 Backspace,"Hit",None,NA,US English,16,\u{7f},
 ,,,,,,,
-a,"Hit",None,NA,US English,24,\e[97u,
+a,"Hit",None,NA,US English,24,\e[97;;97u,
 a,"Hit",Option,TRUE,US English,24,\e[57443;3u\e[97;3u,
 ,,,,,,,
-a,"Hit",None,NA,US English,31,\e[97u\e[97;1:3u,
+a,"Hit",None,NA,US English,31,\e[97;;97u\e[97;1:3u,Issue 12177
 Shift,"Hit",None,NA,US English,31,\e[57441;2u\e[57441;1:3u,
-a,"Hit",Shift Option,TRUE,US English,31,\e[57441;2u\e[57443;4u\e[97:65:97;4;65u\e[97:65:97;4:3;65u\e[57443;2:3u\e[57441;1:3u,
+a,"Hit",Shift Option,TRUE,US English,31,\e[57441;2u\e[57443;4u\e[97:65;4u\e[97:65;4:3u\e[57443;2:3u\e[57441;1:3u,
 ,,,,,,,
 Shift,"Hit",None,NA,US English,10,\e[57441;2u\e[57441;1:3u,
 Enter,"Press and repeat once",None,NA,US English,2,\n\n,
 Tab,"Press and repeat once",None,NA,US English,2,\t\t,
 Backspace,"Press and repeat once",None,NA,US English,2,\u{7f}\u{7f},
 ,,,,,,,
-5,"Hit",Shift Option,TRUE,AZERTY,8,\e[57441;2u\e[57443;4u\e[40;4u,
+5,"Hit",Shift Option,TRUE,AZERTY,8,\e[57441;2u\e[57443;4u\e[53;4u,
 ,,,,,,,
 b,"Hit",Option,FALSE,US English,1,∫,
 a,"Hit",Shift Option,FALSE,US English,1,Å,
 Option,"Hit",None,FALSE,US English,24,\e[57443;3u,
-a,"Hit",None,FALSE,US English,24,\e[97u,
+a,"Hit",None,FALSE,US English,24,\e[97;;97u,
 a,"Hit",Shift,FALSE,US English,24,\e[57441;2u\e[97;2;65u,
 a,"Hit",Option,FALSE,US English,24,\e[57443;3u\e[97;3;229u,
-/,"Hit",Control Shift,FALSE,US English,24,\e[57442;5u\e[57441;6u\e[47;6u,
+2,"Hit",Control Shift,FALSE,US English,24,\e[57448;5u\e[57441;6u\e[47;6u,
 ,,,,,,,
-5,"Hit",Shift Option,FALSE,AZERTY,8,\e[57441;2u\e[57443;4u\e[40;4u,
+5,"Hit",Shift Option,FALSE,AZERTY,8,\e[57441;2u\e[57443;4u\e[53;4u,
 ,,,,,,,
-x,"Hit",Super,NA,US English,1,\e[120;9u
-x,"Hit",Hyper,NA,US English,1,\e[120;17u
-x,"Hit",Meta,NA,US English,1,\e[120;33u
+x,"Hit",Super,NA,US English,1,\e[120;9u,"Test this manually"
+x,"Hit",Hyper,NA,US English,1,\e[120;17u,"Test this manually"
+x,"Hit",Meta,NA,US English,1,\e[120;33u,"Test this manually"
 ,,,,,,,
-None,"Type option-e, then o",None,FALSE,US English,8,\e[57443;3u\e[111u
-None,"Type option-e, then shift-o",None,FALSE,US English,8,\e[57443;3u\e[57441;2u\e[111;2u
+None,"Type option-e, then o",None,FALSE,US English,8,\e[57443;3u\e[111u,"Test this manually"
+None,"Type option-e, then shift-o",None,FALSE,US English,8,\e[57443;3u\e[57441;2u\e[111;2u,"Test this manually"
 ,,,
 c,"Hit",Control Option,FALSE,US English,8,\e[57448;5u\e[57443;7u\e[99;7u
-e,"Press apostrophe and then hit",None,NA,US International PC,9,\e[101u
+e,"Press apostrophe and then hit",None,NA,US International PC,9,\e[101u,"Test this manually"

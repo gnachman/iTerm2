@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+import csv
+import json
+
+def format_sequences(seq_str):
+    # Split on literal "\e", ignore empty splits, then prepend "\e" back.
+    return ["\\e" + s for s in seq_str.split('\\e') if s]
+
+def compare_lines(exp_lines, got_lines):
+    max_lines = max(len(exp_lines), len(got_lines))
+    exp_out = []
+    got_out = []
+    for i in range(max_lines):
+        exp_seq = exp_lines[i] if i < len(exp_lines) else ""
+        got_seq = got_lines[i] if i < len(got_lines) else ""
+        if exp_seq != got_seq:
+            exp_out.append(exp_seq + "  **")
+            got_out.append(got_seq + "  **")
+        else:
+            exp_out.append(exp_seq)
+            got_out.append(got_seq)
+    return exp_out, got_out
+
+def main():
+    # Read the CSV file.
+    with open('steps.csv', 'r', newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        steps = list(reader)
+
+    # Read the JSON file.
+    with open('harness.json', 'r') as jsonfile:
+        harness = json.load(jsonfile)
+
+    # Process entries where matched_expected is False.
+    for entry in harness:
+        if not entry.get("matched_expected"):
+            step_number = entry.get("step_number")
+            # Replace ESC characters with literal "\e"
+            input_received = entry.get("input_received").replace('\x1b', '\\e')
+            if 0 <= step_number < len(steps):
+                expected_output = steps[step_number]["Expected output"]
+            else:
+                expected_output = "Unknown"
+            
+            # Format the control sequences.
+            expected_lines = format_sequences(expected_output)
+            input_lines = format_sequences(input_received)
+            expected_lines, input_lines = compare_lines(expected_lines, input_lines)
+            
+            print(f"For step {step_number}:")
+            print("Expected:")
+            for line in expected_lines:
+                print(line)
+            print("\nBut got:")
+            for line in input_lines:
+                print(line)
+            note = steps[step_number]["Notes"]
+            if note:
+                print()
+                print("NOTE: " + note)
+            print()  # Blank line between steps
+
+if __name__ == "__main__":
+    main()

@@ -347,6 +347,11 @@ static int gSignalsToList[] = {
             [self.processInfoProvider sendSignal:signal_.intValue
                                            toPID:pid];
             kill(pid, [signal_ intValue]);
+#if DEBUG
+            if (signal_.intValue == SIGINT) {
+                [iTermKeyEventRecorder.instance recordIntr];
+            }
+#endif
         }
     }];
     [self update];
