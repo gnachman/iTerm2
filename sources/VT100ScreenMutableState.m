@@ -3921,7 +3921,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                 removedLines:(out NSArray<ScreenCharArray *> **)removedLines {
     DLog(@"reallyReplaceRange:%@ withLines:%@", VT100GridAbsCoordRangeDescription(absRange), replacementLines);
 
-    const NSInteger numLinesBeforeFolding = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.height;
+    const long long overflow = self.cumulativeScrollbackOverflow;
+    const long long numLinesBeforeFolding = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.height + overflow;
     DLog(@"Buffer size is %@", @(numLinesBeforeFolding));
     if (numLinesBeforeFolding <= 0 || numLinesBeforeFolding <= absRange.start.y) {
         DLog(@"Range not in buffer");
