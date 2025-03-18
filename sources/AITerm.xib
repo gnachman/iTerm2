@@ -96,7 +96,7 @@ Gw
                                     <size key="maxSize" width="440" height="10000000"/>
                                     <attributedString key="textStorage">
                                         <fragment>
-                                            <string key="content">iTerm2 integrates with OpenAI to convert natural language text into Unix commands. &lt;a href="$3"&gt;Learn more here&lt;/a&gt;.
+                                            <string key="content">iTerm2 integrates with OpenAI (or other providers, if you wish) to convert natural language text into Unix commands. &lt;a href="$3"&gt;Learn more here&lt;/a&gt;.
 
 Before you can use this feature, you’ll need an API key from OpenAI. </string>
                                             <attributes>
