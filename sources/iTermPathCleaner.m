@@ -102,6 +102,41 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
     return [self getFullPath:pathWithoutNearbyGunk workingDirectory:_workingDirectory];
 }
 
+// /Users/gnachman/git/iterm2 + git/iterm2/iTerm2.xcodeproj -> /Users/gnachman/git/iterm2/iTerm2.xcodeproj
+// This is useful when the path is relative to an ancestor of the working directory.
+// This is the Kevin C bug discussed in whatsapp on 5/18/25.
+- (NSString *)pathByDeduplicatingComponentsInPrefix:(NSString *)prefix suffix:(NSString *)suffix {
+    // Return nil if suffix is absolute.
+    if ([suffix hasPrefix:@"/"]) {
+        return nil;
+    }
+
+    NSArray<NSString *> *prefixComponents = [prefix pathComponents];
+    NSArray<NSString *> *suffixComponents = [suffix pathComponents];
+
+    NSUInteger minCount = MIN(prefixComponents.count, suffixComponents.count);
+    NSUInteger overlap = 0;
+
+    // Find the maximum overlap.
+    for (NSUInteger i = minCount; i > 0; i--) {
+        NSArray *prefixOverlap = [prefixComponents subarrayWithRange:NSMakeRange(prefixComponents.count - i, i)];
+        NSArray *suffixOverlap = [suffixComponents subarrayWithRange:NSMakeRange(0, i)];
+        if ([prefixOverlap isEqualToArray:suffixOverlap]) {
+            overlap = i;
+            break;
+        }
+    }
+
+    // If there's no overlapping portion or suffix is fully overlapped, return nil.
+    if (overlap == 0 || overlap == suffixComponents.count) {
+        return nil;
+    }
+
+    NSArray *remainingSuffix = [suffixComponents subarrayWithRange:NSMakeRange(overlap, suffixComponents.count - overlap)];
+    NSString *dedupedPath = [prefix stringByAppendingPathComponent:[remainingSuffix componentsJoinedByString:@"/"]];
+    return dedupedPath;
+}
+
 - (NSString *)getFullPath:(NSString *)pathExLineNumberAndColumn
          workingDirectory:(NSString *)workingDirectory {
     DLog(@"[%d] Check if %@ is a valid path in %@", _reqid, pathExLineNumberAndColumn, workingDirectory);
@@ -111,14 +146,17 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
         return nil;
     }
 
-    NSString *path = [pathExLineNumberAndColumn stringByExpandingTildeInPath];
+    NSString *partialPath = [pathExLineNumberAndColumn stringByExpandingTildeInPath];
+    NSString *path = partialPath;
     DLog(@"[%d]  Strip line number suffix leaving %@", _reqid, path);
     if ([path length] == 0) {
         // Everything was stripped out, meaning we'd try to open the working directory.
         return nil;
     }
+    NSString *fallbackPath = nil;
     if (![path hasPrefix:@"/"]) {
         path = [workingDirectory stringByAppendingPathComponent:path];
+        fallbackPath = [self pathByDeduplicatingComponentsInPrefix:workingDirectory suffix:partialPath];
         DLog(@"[%d]  Prepend working directory, giving %@", _reqid, path);
     }
 
@@ -136,6 +174,14 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
     if ([self fileExistsAtPathLocally:path]) {
         DLog(@"[%d]    YES: A file exists at %@", _reqid, path);
         NSURL *url = [NSURL fileURLWithPath:path];
+
+        // Resolve path by removing ./ and ../ etc
+        path = [[url standardizedURL] path];
+
+        return path;
+    } else if (fallbackPath && [self fileExistsAtPathLocally:fallbackPath]) {
+        DLog(@"[%d]    YES: A file exists at FALLBACK PATH %@", _reqid, fallbackPath);
+        NSURL *url = [NSURL fileURLWithPath:fallbackPath];
 
         // Resolve path by removing ./ and ../ etc
         path = [[url standardizedURL] path];

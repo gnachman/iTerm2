@@ -36,6 +36,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSFileManager *fileManager;
 @property (nonatomic) int reqid;
 
+// Dedup suffix of workingDirectory with prefix of path
+@property (nonatomic) BOOL tryFallback;
+
 - (instancetype)initWithPath:(NSString *)path
                       suffix:(nullable NSString *)suffix
             workingDirectory:(NSString *)workingDirectory

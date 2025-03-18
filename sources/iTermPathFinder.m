@@ -144,6 +144,7 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
                                                                     allowNetworkMounts:_allowNetworkMounts];
                     cleaner.reqid = self.reqid;
                     cleaner.fileManager = self.fileManager;
+                    cleaner.tryFallback = ![modifiedPossiblePath hasPrefix:@"/"];
                     [cleaner cleanSynchronously];
                     exists = (cleaner.cleanPath != nil);
                 }
