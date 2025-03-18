@@ -35,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong, readonly) iTermExpectation *successor;
 @property (nonatomic, readonly) iTermExpectation *lastExpectation;  // self or successor
 @property (nullable, nonatomic, readonly) NSDate *deadline;
+@property (nonatomic, copy) id userData;
 
 // This is to be called on the mutation thread.
 - (void)didMatchWithCaptureGroups:(NSArray<NSString *> *)captureGroups

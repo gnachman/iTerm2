@@ -42,6 +42,16 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     return self;
 }
 
+- (void)setExpect:(iTermExpect *)expect {
+    const BOOL mayNeedReset = !_triggers.count && !_expect.maybeHasExpectations;
+    _expect = expect;
+    if (!mayNeedReset && _expect.maybeHasExpectations) {
+        DLog(@"Reset");
+        _triggerLineNumber = -1;
+        [self resetRateLimit];
+    }
+}
+
 - (void)clearTriggerLine {
     if (self.disableExecution) {
         return;
@@ -126,6 +136,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         for (iTermExpectation *expectation in [_expect.expectations copy]) {
             NSArray<NSString *> *capture = [stringLine.stringValue captureComponentsMatchedByRegex:expectation.regex];
             if (capture.count) {
+                DLog(@"Expectation %@ matched %@", expectation, stringLine.stringValue);
                 [expectation didMatchWithCaptureGroups:capture
                                             dispatcher:^(void (^closure)(void)) {
                     [self.delegate triggerEvaluatorScheduleSideEffect:self block:closure];
@@ -201,6 +212,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
 
 - (void)loadFromProfileArray:(NSArray *)array {
     DLog(@"%@", [NSThread callStackSymbols]);
+    const BOOL mayNeedReset = !_triggers.count && !_expect.maybeHasExpectations;
     NSMutableDictionary<NSDictionary *, NSArray<Trigger *> *> *table = [[_triggers classifyWithBlock:^id(Trigger *trigger) {
         return [trigger dictionaryValue];
     }] mutableCopy];
@@ -216,6 +228,11 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         table[dict] = [triggers arrayByRemovingFirstObject];
         return triggers[0];
     }];
+    if (mayNeedReset && _triggers.count > 0) {
+        DLog(@"Reset");
+        _triggerLineNumber = -1;
+        [self resetRateLimit];
+    }
 }
 
 - (void)checkIdempotentTriggersIfAllowed {

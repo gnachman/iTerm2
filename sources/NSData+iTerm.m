@@ -63,7 +63,7 @@
     while (remaining > 0) {
         @autoreleasepool {
             NSString *chunk = [[NSString alloc] initWithBytes:bytes + offset
-                                                        length:MIN(77, remaining)
+                                                       length:MIN(77, remaining)
                                                      encoding:NSUTF8StringEncoding];
             [string appendString:chunk];
             [string appendString:lineBreak];
@@ -82,7 +82,7 @@
         destinationFolder.path,
         @"-f",
         tarfile.path ];
-    
+
     NSTask *task = [[NSTask alloc] init];
     NSMutableDictionary<NSString *, NSString *> *environment = [[[NSProcessInfo processInfo] environment] mutableCopy];
     environment[@"COPYFILE_DISABLE"] = @"1";
@@ -453,9 +453,9 @@
                                                    iv:(NSData *)iv {
     assert(iv.length == 16);
     assert(key.length == 16);
-    
+
     NSMutableData *ciphertext = [NSMutableData dataWithLength:self.length + kCCBlockSizeAES128];
-    
+
     size_t length;
     const CCCryptorStatus result = CCCrypt(kCCEncrypt,
                                            kCCAlgorithmAES,
@@ -468,13 +468,13 @@
                                            ciphertext.mutableBytes,
                                            ciphertext.length,
                                            &length);
-    
+
     if (result == kCCSuccess) {
         ciphertext.length = length;
     } else {
         return nil;
     }
-    
+
     return ciphertext;
 }
 
@@ -482,9 +482,9 @@
                                                    iv:(NSData *)iv {
     assert(iv.length == 16);
     assert(key.length == 16);
-    
+
     NSMutableData *plaintext = [NSMutableData dataWithLength:self.length];
-    
+
     size_t length;
     const CCCryptorStatus result = CCCrypt(kCCDecrypt,
                                            kCCAlgorithmAES,
@@ -497,13 +497,13 @@
                                            plaintext.mutableBytes,
                                            plaintext.length,
                                            &length);
-    
+
     if (result == kCCSuccess) {
         plaintext.length = length;
     } else {
         return nil;
     }
-    
+
     return plaintext;
 
 }
@@ -511,12 +511,12 @@
 + (NSData *)randomAESKey {
     const NSUInteger length = 16;
     NSMutableData *data = [NSMutableData dataWithLength:length];
-    
+
     const int result = SecRandomCopyBytes(kSecRandomDefault,
                                           length,
                                           data.mutableBytes);
     assert(result == 0);
-    
+
     return data;
 }
 
@@ -525,7 +525,7 @@
 
     // Unlink file if it already exists.
     unlink(url.path.UTF8String);
-    
+
     // Create it exclusively. If another instance of iTerm2 is trying to create it, back off.
     int fd = -1;
     do {
@@ -534,7 +534,7 @@
     if (fd == -1) {
         return;
     }
-    
+
     // Append the data.
     NSUInteger written = 0;
     while (written < self.length) {
@@ -575,6 +575,18 @@
     NSMutableData *temp = [self mutableCopy];
     [temp appendData:other];
     return temp;
+}
+
+- (NSData *)it_repeated:(NSInteger)repeats {
+    if (repeats <= 0) {
+        return [NSData data];
+    }
+
+    NSMutableData *result = [NSMutableData dataWithCapacity:self.length * repeats];
+    for (NSInteger i = 0; i < repeats; i++) {
+        [result appendData:self];
+    }
+    return result;
 }
 
 @end

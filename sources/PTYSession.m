@@ -232,7 +232,8 @@ static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyi
 static NSString *const kTurnOffMouseReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffMouseReportingOnHostChange";
 static NSString *const kTurnOffFocusReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffFocusReportingOnHostChange";
 
-static NSString *const kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier = @"TurnOffMouseReportingOnHostChange";
+// This used to be only for host change but now it also runs off an expectation
+static NSString *const kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier = @"TurnOffMouseReportingOnHostChange";
 static NSString *const kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier = @"TurnOffFocusReportingOnHostChange";
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
@@ -648,6 +649,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     BOOL _canChangeProfileInArrangement;
     BOOL _xtermMouseReportingEverAllowed;
     NSMutableArray<iTermTmuxOptionMonitor *> *_userTmuxOptionMonitors;
+    iTermExpectation *_mouseReportingOopsieExpectation;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1097,6 +1099,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_originatingArrangementName release];
     [_userTmuxOptionMonitors release];
     [_runningRemoteCommand release];
+    [_mouseReportingOopsieExpectation release];
 
     [super dealloc];
 }
@@ -11130,12 +11133,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                         DLog(@"_lastReportedCoord <- %@, _lastReportedPoint <- %@",
                              VT100GridCoordDescription(_lastReportedCoord),
                              NSStringFromPoint(point));
-                        [self writeLatin1EncodedData:[_screen.terminalOutput mousePress:button
+                        [self writeMouseReport:[_screen.terminalOutput mousePress:button
                                                                           withModifiers:modifiers
                                                                                      at:coord
-                                                                                  point:point]
-                                    broadcastAllowed:NO
-                                           reporting:NO];
+                                                                            point:point]];
                     }
                     return YES;
 
@@ -11182,12 +11183,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                         DLog(@"_lastReportedCoord <- %@, _lastReportedPoint <- %@",
                              VT100GridCoordDescription(_lastReportedCoord),
                              NSStringFromPoint(point));
-                        [self writeLatin1EncodedData:[_screen.terminalOutput mouseRelease:button
+                        [self writeMouseReport:[_screen.terminalOutput mouseRelease:button
                                                                             withModifiers:modifiers
                                                                                        at:coord
-                                                                                    point:point]
-                                    broadcastAllowed:NO
-                                           reporting:NO];
+                                                                                    point:point]];
                         return YES;
 
                     case MOUSE_REPORTING_NONE:
@@ -11217,12 +11216,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 DLog(@"_lastReportedCoord <- %@, _lastReportedPoint <- %@",
                      VT100GridCoordDescription(_lastReportedCoord),
                      NSStringFromPoint(point));
-                [self writeLatin1EncodedData:[_screen.terminalOutput mouseMotion:MOUSE_BUTTON_NONE
+                [self writeMouseReport:[_screen.terminalOutput mouseMotion:MOUSE_BUTTON_NONE
                                                                    withModifiers:modifiers
                                                                               at:coord
-                                                                           point:point]
-                            broadcastAllowed:NO
-                                   reporting:NO];
+                                                                           point:point]];
                 return YES;
             }
             break;
@@ -11259,12 +11256,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
                         DLog(@"motion/all-motion - will report drag");
-                        [self writeLatin1EncodedData:[_screen.terminalOutput mouseMotion:button
+                        [self writeMouseReport:[_screen.terminalOutput mouseMotion:button
                                                                            withModifiers:modifiers
                                                                                       at:coord
-                                                                                   point:point]
-                                    broadcastAllowed:NO
-                                           reporting:NO];
+                                                                             point:point]];
                         // Fall through
                     case MOUSE_REPORTING_NORMAL:
                         DLog(@"normal - do not report drag");
@@ -11312,14 +11307,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                         [self showHorizontalScrollInfo];
                     }
                     DLog(@"steps=%d", steps);
-                    for (int i = 0; i < steps; i++) {
-                        [self writeLatin1EncodedData:[_screen.terminalOutput mousePress:button
-                                                                          withModifiers:modifiers
-                                                                                     at:coord
-                                                                                  point:point]
-                                    broadcastAllowed:NO
-                                           reporting:NO];
-                    }
+                    NSData *data = [_screen.terminalOutput mousePress:button
+                                                        withModifiers:modifiers
+                                                                   at:coord
+                                                                point:point];
+                    [self writeMouseReport:[data it_repeated:steps]];
                     return YES;
 
                 case MOUSE_REPORTING_NONE:
@@ -11334,6 +11326,94 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             break;
     }
     return NO;
+}
+
+- (void)writeMouseReport:(NSData *)data {
+    if ([iTermAdvancedSettingsModel autodetectMouseReportingStuck] &&
+        ![iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration] &&
+        ![self hasAnnouncementWithIdentifier:kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier]) {
+        [self updateMouseReportingAutodetectionExpectationWithReportData:data];
+    }
+    [self writeLatin1EncodedData:data
+                broadcastAllowed:NO
+                       reporting:NO];
+
+}
+
+- (void)updateMouseReportingAutodetectionExpectationWithReportData:(NSData *)data {
+    DLog(@"Will report %@ (%@)", [data stringWithEncoding:NSUTF8StringEncoding], [[data stringWithEncoding:NSUTF8StringEncoding] hexEncodedString]);
+    NSMutableData *modified = nil;
+    if (_mouseReportingOopsieExpectation.deadline.timeIntervalSinceNow > 0) {
+        modified = [[_mouseReportingOopsieExpectation.userData mutableCopy] autorelease];
+    }
+    if (!modified) {
+        modified = [NSMutableData data];
+    }
+    DLog(@"Modified is initially %@ (%@)", [modified stringWithEncoding:NSUTF8StringEncoding], [[modified stringWithEncoding:NSUTF8StringEncoding] hexEncodedString]);
+    if (_mouseReportingOopsieExpectation) {
+        [_expect cancelExpectation:_mouseReportingOopsieExpectation];
+        [_mouseReportingOopsieExpectation autorelase];
+        _mouseReportingOopsieExpectation = nil;
+    }
+    const unsigned char *bytes = data.bytes;
+    NSInteger ignoreCount = 0;
+    for (NSInteger i = 0; i < data.length; i++) {
+        const unsigned char c = bytes[i];
+        if (c == 27) {
+            // Shells generally swallow esc and two characters after it, then echo the rest.
+            ignoreCount = 3;
+        }
+        if (ignoreCount > 0) {
+            ignoreCount -= 1;
+            continue;
+        }
+        if (c < 32) {
+            continue;
+        }
+        DLog(@"Append %x", ((int)c) & 0xff);
+        [modified appendBytes:&c length:1];
+    }
+    const NSInteger maxLength = 32;
+    if (modified.length > maxLength) {
+        DLog(@"Remove first %@ bytes", @(modified.length - maxLength));
+        [modified replaceBytesInRange:NSMakeRange(0, modified.length - maxLength)
+                            withBytes:""
+                               length:0];
+    }
+    NSString *string = [modified stringWithEncoding:NSUTF8StringEncoding];
+    // We don't want a really short expectation because it'll fire when it oughtn't.
+    if (string.length > 6) {
+        __weak __typeof(self) weakSelf = self;
+        DLog(@"Expect %@ (%@), regex %@", string, string.hexEncodedString, string.it_escapedForRegex);
+        _mouseReportingOopsieExpectation = [_expect expectRegularExpression:[string it_escapedForRegex]
+                                                                      after:nil
+                                                                   deadline:[NSDate dateWithTimeIntervalSinceNow:0.1]
+                                                                 willExpect:nil
+                                                                 completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
+            DLog(@"Matched %@", string);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf didDetectErrantMouseReportingTurds];
+            });
+        }];
+        _mouseReportingOopsieExpectation.userData = modified;
+        [_mouseReportingOopsieExpectation retain];
+    }
+    DLog(@"Sync");
+    [self sync];
+}
+
+- (void)didDetectErrantMouseReportingTurds {
+    DLog(@"begin");
+    if ([iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration]) {
+        return;
+    }
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        if (_xtermMouseReportingEverAllowed && terminal.mouseMode != MOUSE_REPORTING_NONE) {
+            [self turnOffMouseReportingOrOffer:terminal];
+        }
+    }];
 }
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput {
@@ -14016,18 +14096,24 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [self.hostnameToShell[name] isEqualToString:@"fish"];
 }
 
+- (void)turnOffMouseReportingOrOffer:(VT100Terminal *)terminal {
+    DLog(@"begin");
+    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+    if ([number boolValue]) {
+        DLog(@"Turn off mouse reporting automatically");
+        terminal.mouseMode = MOUSE_REPORTING_NONE;
+    } else if (!number) {
+        [self offerToTurnOffMouseReportingAutomatically];
+    }
+}
+
 - (void)maybeResetTerminalStateOnHostChange:(id<VT100RemoteHostReading>)newRemoteHost {
     _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                              VT100ScreenMutableState *mutableState,
                                              id<VT100ScreenDelegate> delegate) {
         if (_xtermMouseReportingEverAllowed && terminal.mouseMode != MOUSE_REPORTING_NONE) {
-            NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
-            if ([number boolValue]) {
-                terminal.mouseMode = MOUSE_REPORTING_NONE;
-            } else if (!number) {
-                [self offerToTurnOffMouseReportingOnHostChange];
-            }
+            [self turnOffMouseReportingOrOffer:terminal];
         }
         if (terminal.reportFocus) {
             [self offerToTurnOffFocusReportingRespectingSavedPreference:terminal];
@@ -14078,8 +14164,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self queueAnnouncement:announcement identifier:identifier];
 }
 
-- (void)offerToTurnOffMouseReportingOnHostChange {
-    if ([self hasAnnouncementWithIdentifier:kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier]) {
+- (void)offerToTurnOffMouseReportingAutomatically {
+    DLog(@"begin");
+    if ([self hasAnnouncementWithIdentifier:kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier]) {
         return;
     }
     NSString *title =
@@ -14119,7 +14206,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                                         forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
         }
     }];
-    [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier];
+    [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier];
 }
 
 - (void)offerToTurnOffFocusReportingRespectingSavedPreference:(VT100Terminal *)terminal {

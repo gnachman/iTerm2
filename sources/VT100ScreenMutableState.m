@@ -4327,6 +4327,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)performPeriodicTriggerCheck {
     DLog(@"begin");
     [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        DLog(@"Perform periodic trigger check");
         [triggerEvaluator checkPartialLineTriggers];
         [triggerEvaluator checkIdempotentTriggersIfAllowed];
     }];
@@ -4348,6 +4349,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (!_triggerEvaluator.haveTriggersOrExpectations &&
         !self.config.loggingEnabled &&
         _postTriggerActions.count == 0) {
+        DLog(@"No expectations or triggers so bail");
         return YES;
     }
     __block BOOL result = NO;
@@ -4556,6 +4558,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)updateExpectFrom:(iTermExpect *)source {
     _triggerEvaluator.expect = [source copy];
+    DLog(@"Mutation thread expectations are now %@", _triggerEvaluator.expect);
 }
 
 - (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block {

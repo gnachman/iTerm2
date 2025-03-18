@@ -71,6 +71,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)appendToExistingDebugLog;
 + (BOOL)autoLockSessionNameOnEdit;
 + (int)autocompleteMaxOptions;
++ (BOOL)autodetectMouseReportingStuck;
 #ifdef ENABLE_DEPRECATED_ADVANCED_SETTINGS
 + (NSString *)autoLogFormat;  // Use the per-profile setting instead. This is only around for migrating the default.
 #endif

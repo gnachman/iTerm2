@@ -326,6 +326,7 @@ DEFINE_SETTABLE_BOOL(alternateMouseScroll, AlternateMouseScroll, NO, SECTION_MOU
 DEFINE_BOOL(pinchToChangeFontSizeDisabled, NO, SECTION_MOUSE @"Disable changing font size in response to a pinch gesture.");
 DEFINE_BOOL(useSystemCursorWhenPossible, UseSystemCursorWhenPossibleDefault(), SECTION_MOUSE @"Use system cursor icons when possible.");
 DEFINE_BOOL(alwaysAcceptFirstMouse, YES, SECTION_MOUSE @"Always accept first mouse event on terminal windows.\nThis means clicks will work the same when iTerm2 is active as when it’s inactive. Note that there is a separate setting for mouse reporting on first mouse.");
+DEFINE_BOOL(autodetectMouseReportingStuck, YES, SECTION_MOUSE @"Automatically detect when mouse reporting got stuck on?\nThis watches for parts of mouse reporting control sequences being printed to the screen");
 DEFINE_BOOL(reportOnFirstMouse, NO, SECTION_MOUSE @"Send mouse reports when you click in a window that isn't already frontmouse?");
 DEFINE_BOOL(doubleReportScrollWheel, NO, SECTION_MOUSE @"Double-report scroll wheel events to work around tmux scrolling bug.");
 DEFINE_BOOL(stealKeyFocus, NO, SECTION_MOUSE @"When Focus Follows Mouse is enabled, steal key focus even when inactive.");

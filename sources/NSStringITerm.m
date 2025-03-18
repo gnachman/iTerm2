@@ -352,7 +352,13 @@
 - (NSString *)it_escapedForRegex {
     NSMutableString *result = [NSMutableString string];
     [self enumerateLongCharacters:^(UTF32Char c, BOOL *stop) {
-        [result appendFormat:@"\\U%08x", c];
+        if ((c >= '0' && c <= '9') ||
+            (c >= 'A' && c <= 'Z') ||
+            (c >= 'a' && c <= 'z')) {
+            [result appendCharacter:c];
+        } else {
+            [result appendFormat:@"\\U%08x", c];
+        }
     }];
     return result;
 }

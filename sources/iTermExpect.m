@@ -7,7 +7,9 @@
 
 #import "iTermExpect.h"
 
+#import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
 
 // The concurrency model is based on multi-version concurrency. The API is designed so that merge conflicts cannot happen.
 // Clients on the main thread can add or cancel expectations.
@@ -245,6 +247,7 @@
 #pragma mark - NSCopying
 
 - (iTermExpectation *)copyOfExpectation:(iTermExpectation *)original copiedExpect:(iTermExpect *)copiedExpect {
+    DLog(@"Copy over expectation %@", [((NSData *)original.userData) stringWithEncoding:NSUTF8StringEncoding]);
     if (original.matchPending) {
         if (!original.successor) {
             return nil;
@@ -266,6 +269,7 @@
                                                                 willExpect:willExpect
                                                             userWillExpect:original.userWillExpectCallback
                                                                 completion:completion];
+    theCopy.userData = original.userData;
     if (original.successor) {
         theCopy.successor = [self copyOfExpectation:original.successor copiedExpect:copiedExpect];
     }
