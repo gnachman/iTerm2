@@ -1607,7 +1607,7 @@ class Conductor: NSObject, Codable {
 
     // type can be "f" for framer or "r" for regular (non-framer)
     @objc func handleCommandEnd(identifier: String, type: String, status: UInt8, depth: Int32) {
-        DLog("[\(framedPID.map { String($0) } ?? "unframed")] end \(identifier) depth=\(depth)")
+        DLog("[\(framedPID.map { String($0) } ?? "unframed")] end \(identifier) depth=\(depth) state=\(state)")
         let expectFraming: Bool
         if framing {
             expectFraming = true
