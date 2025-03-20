@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTermEncoderAdapter.h"
+#import "iTermExternalAttributeIndex.h"
 #import "iTermMetadata.h"
 #import "LineBuffer.h"
 #import "NSArray+iTerm.h"
@@ -961,6 +962,78 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             }
             if (bg.backgroundColorMode != ColorModeInvalid) {
                 CopyBackgroundColor(&line[x], bg);
+            }
+        }
+        [self markCharsDirty:YES
+                  inRectFrom:VT100GridCoordMake(from.x, y)
+                          to:VT100GridCoordMake(to.x, y)];
+    }
+}
+
+- (iTermExternalAttribute *)applySGR:(CSIParam)csi to:(screen_char_t *)cPtr externalAttribute:(iTermExternalAttribute *)attr {
+    __block iTermExternalAttribute *updatedAttr = attr;
+    VT100GraphicRendition rendition = VT100GraphicRenditionFromCharacter(cPtr, attr);
+    for (int i = 0; i < csi.count; i++) {
+        switch (VT100GraphicRenditionExecuteSGR(&rendition, &csi, i)) {
+            case VT100GraphicRenditionSideEffectNone:
+                break;
+            case VT100GraphicRenditionSideEffectReset:
+                updatedAttr = nil;
+                memset(&rendition, 0, sizeof(rendition));
+                break;
+            case VT100GraphicRenditionSideEffectUpdateExternalAttributes:
+                updatedAttr = [iTermExternalAttribute attributeHavingUnderlineColor:rendition.hasUnderlineColor
+                                                                     underlineColor:rendition.underlineColor
+                                                                                url:updatedAttr.url
+                                                                        blockIDList:updatedAttr.blockIDList
+                                                                        controlCode:updatedAttr.controlCodeNumber];
+                break;
+            case VT100GraphicRenditionSideEffectSkip2AndUpdateExternalAttributes:
+                updatedAttr = [iTermExternalAttribute attributeHavingUnderlineColor:rendition.hasUnderlineColor
+                                                                     underlineColor:rendition.underlineColor
+                                                                                url:updatedAttr.url
+                                                                        blockIDList:updatedAttr.blockIDList
+                                                                        controlCode:updatedAttr.controlCodeNumber];
+                i += 2;
+                break;
+            case VT100GraphicRenditionSideEffectSkip4AndUpdateExternalAttributes:
+                updatedAttr = [iTermExternalAttribute attributeHavingUnderlineColor:rendition.hasUnderlineColor
+                                                                     underlineColor:rendition.underlineColor
+                                                                                url:updatedAttr.url
+                                                                        blockIDList:updatedAttr.blockIDList
+                                                                        controlCode:updatedAttr.controlCodeNumber];
+                i += 4;
+                break;
+            case VT100GraphicRenditionSideEffectSkip2:
+                i += 2;
+                break;
+            case VT100GraphicRenditionSideEffectSkip4:
+                i += 4;
+                break;
+        }
+    }
+    VT100GraphicRenditionUpdateForeground(&rendition, YES, cPtr->guarded, cPtr);
+    VT100GraphicRenditionUpdateBackground(&rendition, YES, cPtr);
+    return updatedAttr;
+}
+
+- (void)setSGR:(CSIParam)csi
+    inRectFrom:(VT100GridCoord)from
+            to:(VT100GridCoord)to {
+    for (int y = from.y; y <= to.y; y++) {
+        VT100LineInfo *info = [self lineInfoAtLineNumber:y];
+        iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:NO];
+        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        for (int x = from.x; x <= to.x; x++) {
+            screen_char_t c = line[x];
+            iTermExternalAttribute *attr = eaIndex[x];
+            iTermExternalAttribute *updatedAttr = [self applySGR:csi to:&c externalAttribute:attr];
+            line[x] = c;
+            if (updatedAttr != attr) {
+                if (!eaIndex) {
+                    eaIndex = [info externalAttributesCreatingIfNeeded:YES];
+                }
+                eaIndex[x] = updatedAttr;
             }
         }
         [self markCharsDirty:YES

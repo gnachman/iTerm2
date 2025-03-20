@@ -12,6 +12,7 @@
 #import "ScreenCharArray.h"
 #import "VT100GridTypes.h"
 #import "iTermMetadata.h"
+#import "iTermParser.h"
 
 @class LineBuffer;
 @class VT100LineInfo;
@@ -326,6 +327,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
            foregroundColor:(screen_char_t)fg
                 inRectFrom:(VT100GridCoord)from
                         to:(VT100GridCoord)to;
+- (void)setSGR:(CSIParam)csi
+    inRectFrom:(VT100GridCoord)from
+            to:(VT100GridCoord)to;
 
 // Set URLCode in a range.
 - (void)setURL:(iTermURL *)url

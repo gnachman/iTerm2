@@ -11,6 +11,7 @@
 #import "iTermObject.h"
 #import "iTermPromise.h"
 #import "VT100GridTypes.h"
+#import "iTermParser.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -100,6 +101,11 @@ extern NSString * const kTriggerDisabledKey;
   addNamedMarkWithName:(NSString *)identifier
         atAbsoluteLine:(long long)absLine;
 - (void)triggerSession:(Trigger *)trigger foldFromNamedMark:(NSString *)identifier toAbsoluteLine:(long long)absLine;
+- (void)triggerSession:(Trigger *)trigger
+              setRange:(NSRange)rangeInScreenChars
+          absoluteLine:(long long)lineNumber
+                   sgr:(CSIParam)csi;
+
 @end
 
 @interface Trigger : NSObject<iTermObject>
@@ -119,6 +125,8 @@ extern NSString * const kTriggerDisabledKey;
 @property (class, nonatomic, readonly) NSString *title;
 @property (nonatomic, weak) id<iTermTriggerDelegate> delegate;
 @property (nonatomic, readonly) BOOL detectsPrompt;
+@property (nullable, nonatomic, readonly) NSString *helpText;
+
 + (nullable NSSet<NSString *> *)synonyms;
 + (nullable Trigger *)triggerFromDict:(NSDictionary *)dict;
 + (nullable Trigger *)triggerFromUntrustedDict:(NSDictionary *)dict;

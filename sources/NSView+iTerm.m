@@ -235,6 +235,7 @@ static NSInteger gTakingSnapshot;
 - (void)it_showWarningWithAttributedString:(NSAttributedString *)text rect:(NSRect)rect {
     iTermTextPopoverViewController *popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
                                                                   bundle:[NSBundle bundleForClass:self.class]];
+    popoverVC.maxHeight = 500;
     popoverVC.popover.behavior = NSPopoverBehaviorTransient;
     [popoverVC view];
     popoverVC.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];

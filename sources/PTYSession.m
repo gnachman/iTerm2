@@ -11352,7 +11352,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     DLog(@"Modified is initially %@ (%@)", [modified stringWithEncoding:NSUTF8StringEncoding], [[modified stringWithEncoding:NSUTF8StringEncoding] hexEncodedString]);
     if (_mouseReportingOopsieExpectation) {
         [_expect cancelExpectation:_mouseReportingOopsieExpectation];
-        [_mouseReportingOopsieExpectation autorelase];
+        [_mouseReportingOopsieExpectation autorelease];
         _mouseReportingOopsieExpectation = nil;
     }
     const unsigned char *bytes = data.bytes;

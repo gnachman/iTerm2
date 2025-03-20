@@ -4219,6 +4219,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+- (void)setSGR:(CSIParam)csi inRun:(VT100GridRun)run {
+    DLog(@"Really set SGR of run %@ to %@", VT100GridRunDescription(run), CSIParamDescription(csi));
+
+    for (NSValue *value in [self.currentGrid rectsForRun:run]) {
+        VT100GridRect rect = [value gridRectValue];
+        [self.currentGrid setSGR:csi
+                      inRectFrom:rect.origin
+                              to:VT100GridRectMax(rect)];
+    }
+}
+
 // Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
 - (void)highlightRun:(VT100GridRun)run
  withForegroundColor:(NSColor *)fgColor
@@ -5566,6 +5577,24 @@ launchCoprocessWithCommand:(NSString *)command
     [self highlightTextInRange:rangeInScreenChars
      basedAtAbsoluteLineNumber:lineNumber
                         colors:colors];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+              setRange:(NSRange)range
+          absoluteLine:(long long)absoluteLineNumber
+                   sgr:(CSIParam)csi {
+    long long lineNumber = absoluteLineNumber - self.cumulativeScrollbackOverflow - self.numberOfScrollbackLines;
+
+    VT100GridRun gridRun = [self.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
+    DLog(@"Set SGR in range %@ with codes %@ at lineNumber %@ giving grid run %@",
+         NSStringFromRange(range),
+         CSIParamDescription(csi),
+         @(lineNumber),
+         VT100GridRunDescription(gridRun));
+
+    if (gridRun.length > 0) {
+        [self setSGR:csi inRun:gridRun];
+    }
 }
 
 - (void)triggerSession:(Trigger *)trigger saveCursorLineAndStopScrolling:(BOOL)stopScrolling {

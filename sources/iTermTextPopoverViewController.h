@@ -17,6 +17,7 @@ extern const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth;
 @property (nonatomic, strong) IBOutlet NSTextView *textView;
 @property (nonatomic, readonly) NSDictionary *defaultAttributes;
 @property (nonatomic) BOOL closeOnLinkClick;
+@property (nonatomic) CGFloat maxHeight;
 
 - (void)appendString:(NSString *)string;
 - (void)appendAttributedString:(NSAttributedString *)string;

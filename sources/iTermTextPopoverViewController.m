@@ -78,6 +78,9 @@ const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
     NSSize margins = [self marginSize];
     size.width += margins.width;
     size.height += margins.height;
+    if (_maxHeight > 0) {
+        size.height = MIN(_maxHeight, size.height);
+    }
     NSRect frame = self.view.frame;
     frame.size = size;
     self.view.frame = frame;

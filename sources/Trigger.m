@@ -143,6 +143,10 @@ NSString * const kTriggerDisabledKey = @"disabled";
     return NO;
 }
 
+- (NSString *)helpText {
+    return nil;
+}
+
 - (NSArray *)groupedMenuItemsForPopupButton
 {
     NSDictionary *menuItems = [self menuItemsForPoupupButton];

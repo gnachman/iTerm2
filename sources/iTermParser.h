@@ -174,6 +174,59 @@ typedef struct {
     int num_subparameters;
 } CSIParam;
 
+static inline NSString *CSIParamDescription(CSIParam csi) {
+    NSMutableArray *parameterStrings = [NSMutableArray array];
+
+    for (int i = 0; i < csi.count; i++) {
+        // For an unset parameter, add an empty string.
+        if (csi.p[i] == -1) {
+            [parameterStrings addObject:@""];
+            continue;
+        }
+
+        NSMutableArray<NSString *> *subs = [NSMutableArray array];
+        [subs addObject:[@(csi.p[i]) stringValue]];
+
+        // Make a dictionary from subparameter index to value.
+        NSMutableDictionary<NSNumber *, NSNumber *> *subDict = [NSMutableDictionary dictionary];
+        int maxSubIndex = -1;
+        for (int j = 0; j < csi.num_subparameters; j++) {
+            if (csi.subparameters[j].parameter_index == i) {
+                int subIdx = csi.subparameters[j].subparameter_index;
+                subDict[@(subIdx)] = @(csi.subparameters[j].value);
+                if (subIdx > maxSubIndex) {
+                    maxSubIndex = subIdx;
+                }
+            }
+        }
+
+        // Add subparameters in order to subs
+        if (maxSubIndex >= 0) {
+            for (int subIndex = 0; subIndex <= maxSubIndex; subIndex++) {
+                NSNumber *subValue = subDict[@(subIndex)];
+                if (subValue) {
+                    [subs addObject:[subValue stringValue]];
+                } else {
+                    [subs addObject:@""];
+                }
+            }
+        }
+
+        [parameterStrings addObject:[subs componentsJoinedByString:@":"]];
+    }
+
+    // Join all parameter strings with semicolons.
+    return [parameterStrings componentsJoinedByString:@";"];
+}
+
+static inline void iTermParserAddCSIParameter(CSIParam *csi, int value) {
+    if (csi->count + 1 >= VT100CSIPARAM_MAX) {
+        // Avoid exceeding bounds; possibly discard or clamp this value.
+        return;
+    }
+    csi->p[csi->count++] = value;
+}
+
 // Returns the number of subparameters for a particular parameter.
 static inline int iTermParserGetNumberOfCSISubparameters(const CSIParam *csi, int parameter_index) {
     int count = 0;

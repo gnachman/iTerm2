@@ -63,6 +63,7 @@ def decode_trigger(encoded: dict) -> 'Trigger':
         UserNotificationTrigger._name(): UserNotificationTrigger,
         SetNamedMarkTrigger._name(): SetNamedMarkTrigger,
         FoldTrigger._name(): FoldTrigger,
+        SGRTrigger._name(): SGRTrigger,
     }
 
     name = encoded["action"]
@@ -325,6 +326,32 @@ class SetNamedMarkTrigger(Trigger):
     @property
     def _param(self):
         return self.__markname
+
+class SGRTrigger(Trigger):
+    def __init__(self, regex: str, sgr: str, instant: bool, enabled: bool):
+        self.__sgr = sgr
+        super().__init__(regex, self._param, instant, enabled)
+
+    @staticmethod
+    def _name():
+        return "iTermSGRTrigger"
+
+    @staticmethod
+    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+        return _futureproof(param, SGRTrigger(regex, param, instant, enabled))
+
+    @property
+    def sgr(self) -> str:
+        return self.__sgr
+
+    @sgr.setter
+    def sgr(self, value: str):
+        self.__sgr = value
+        self.param = self._param
+
+    @property
+    def _param(self):
+        return self.__sgr
 
 class FoldTrigger(Trigger):
     def __init__(self, regex: str, markname: str, instant: bool, enabled: bool):

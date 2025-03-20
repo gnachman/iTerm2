@@ -5,6 +5,7 @@
 #import "iTermCursor.h"
 #import "ScreenChar.h"
 #import "VT100CSIParser.h"
+#import "VT100GraphicRendition.h"
 #import "VT100Grid.h"
 #import "VT100Output.h"
 #import "VT100TerminalDelegate.h"
@@ -12,31 +13,6 @@
 
 #define NUM_CHARSETS 4  // G0...G3. Values returned from -charset go from 0 to this.
 #define NUM_MODIFIABLE_RESOURCES 5
-
-typedef struct {
-    BOOL bold;
-    BOOL blink;
-    BOOL invisible;
-    BOOL underline;
-    VT100UnderlineStyle underlineStyle;
-    BOOL strikethrough;
-    BOOL reversed;
-    BOOL faint;
-    BOOL italic;
-
-    int fgColorCode;
-    int fgGreen;
-    int fgBlue;
-    ColorMode fgColorMode;
-
-    int bgColorCode;
-    int bgGreen;
-    int bgBlue;
-    ColorMode bgColorMode;
-
-    BOOL hasUnderlineColor;
-    VT100TerminalColorValue underlineColor;
-} VT100GraphicRendition;
 
 // https://sw.kovidgoyal.net/kitty/keyboard-protocol/
 typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {

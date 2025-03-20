@@ -211,69 +211,6 @@ typedef struct {
 
 #define DEL  0x7f
 
-// character attributes
-#define VT100CHARATTR_ALLOFF           0
-#define VT100CHARATTR_BOLD             1
-#define VT100CHARATTR_FAINT            2
-#define VT100CHARATTR_ITALIC           3
-#define VT100CHARATTR_UNDERLINE        4
-#define VT100CHARATTR_BLINK            5
-#define VT100CHARATTR_REVERSE          7
-#define VT100CHARATTR_INVISIBLE        8
-#define VT100CHARATTR_STRIKETHROUGH    9
-
-// xterm additions
-#define VT100CHARATTR_DOUBLE_UNDERLINE  21
-#define VT100CHARATTR_NORMAL            22
-#define VT100CHARATTR_NOT_ITALIC        23
-#define VT100CHARATTR_NOT_UNDERLINE     24
-#define VT100CHARATTR_STEADY            25
-#define VT100CHARATTR_POSITIVE          27
-#define VT100CHARATTR_VISIBLE           28
-#define VT100CHARATTR_NOT_STRIKETHROUGH 29
-
-typedef enum {
-    COLORCODE_BLACK = 0,
-    COLORCODE_RED = 1,
-    COLORCODE_GREEN = 2,
-    COLORCODE_YELLOW = 3,
-    COLORCODE_BLUE = 4,
-    COLORCODE_MAGENTA = 5,
-    COLORCODE_WATER = 6,
-    COLORCODE_WHITE = 7,
-    COLORCODE_256 = 8,
-} colorCode;
-
-// Color constants
-// Color codes for 8-color mode. Black and white are the limits; other codes can be constructed
-// similarly.
-#define VT100CHARATTR_FG_BASE  30
-#define VT100CHARATTR_BG_BASE  40
-
-#define VT100CHARATTR_FG_BLACK     (VT100CHARATTR_FG_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_FG_WHITE     (VT100CHARATTR_FG_BASE + COLORCODE_WHITE)
-#define VT100CHARATTR_FG_256       (VT100CHARATTR_FG_BASE + COLORCODE_256)
-#define VT100CHARATTR_FG_DEFAULT   (VT100CHARATTR_FG_BASE + 9)
-
-#define VT100CHARATTR_BG_BLACK     (VT100CHARATTR_BG_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_BG_WHITE     (VT100CHARATTR_BG_BASE + COLORCODE_WHITE)
-#define VT100CHARATTR_BG_256       (VT100CHARATTR_BG_BASE + COLORCODE_256)
-#define VT100CHARATTR_BG_DEFAULT   (VT100CHARATTR_BG_BASE + 9)
-
-#define VT100CHARATTR_UNDERLINE_COLOR 58
-#define VT100CHARATTR_UNDERLINE_COLOR_DEFAULT 59
-
-// Color codes for 16-color mode. Black and white are the limits; other codes can be constructed
-// similarly.
-#define VT100CHARATTR_FG_HI_BASE  90
-#define VT100CHARATTR_BG_HI_BASE  100
-
-#define VT100CHARATTR_FG_HI_BLACK     (VT100CHARATTR_FG_HI_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_FG_HI_WHITE     (VT100CHARATTR_FG_HI_BASE + COLORCODE_WHITE)
-
-#define VT100CHARATTR_BG_HI_BLACK     (VT100CHARATTR_BG_HI_BASE + COLORCODE_BLACK)
-#define VT100CHARATTR_BG_HI_WHITE     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WHITE)
-
 // Prevents runaway memory usage
 static const int kMaxScreenColumns = 4096;
 static const int kMaxScreenRows = 4096;
@@ -291,10 +228,7 @@ static const int kMaxScreenRows = 4096;
         _wraparoundMode = YES;
         _reverseWraparoundMode = NO;
         _autorepeatMode = YES;
-        graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
-        graphicRendition_.fgColorMode = ColorModeAlternate;
-        graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
-        graphicRendition_.bgColorMode = ColorModeAlternate;
+        VT100GraphicRenditionInitialize(&graphicRendition_);
         _mouseMode = MOUSE_REPORTING_NONE;
         _previousMouseMode = MOUSE_REPORTING_NORMAL;
         _mouseFormat = MOUSE_FORMAT_XTERM;
@@ -733,87 +667,25 @@ static const int kMaxScreenRows = 4096;
 
 - (screen_char_t)foregroundColorCode {
     screen_char_t result = { 0 };
-    if (graphicRendition_.reversed) {
-        if (graphicRendition_.bgColorMode == ColorModeAlternate &&
-            graphicRendition_.bgColorCode == ALTSEM_DEFAULT) {
-            result.foregroundColor = ALTSEM_REVERSED_DEFAULT;
-        } else {
-            result.foregroundColor = graphicRendition_.bgColorCode;
-        }
-        result.fgGreen = graphicRendition_.bgGreen;
-        result.fgBlue = graphicRendition_.bgBlue;
-        result.foregroundColorMode = graphicRendition_.bgColorMode;
-    } else {
-        result.foregroundColor = graphicRendition_.fgColorCode;
-        result.fgGreen = graphicRendition_.fgGreen;
-        result.fgBlue = graphicRendition_.fgBlue;
-        result.foregroundColorMode = graphicRendition_.fgColorMode;
-    }
-    result.bold = graphicRendition_.bold;
-    result.faint = graphicRendition_.faint;
-    result.italic = graphicRendition_.italic;
-    result.underline = graphicRendition_.underline;
-    result.strikethrough = graphicRendition_.strikethrough;
-    result.underlineStyle = graphicRendition_.underlineStyle;
-    result.blink = graphicRendition_.blink;
-    result.invisible = graphicRendition_.invisible;
-    result.image = NO;
-    result.virtualPlaceholder = NO;
-    result.inverse = graphicRendition_.reversed;
-    result.guarded = _protectedMode != VT100TerminalProtectedModeNone;
-    result.rtlStatus = RTLStatusUnknown;
-    result.unused = 0;
+    VT100GraphicRenditionUpdateForeground(&graphicRendition_, YES, _protectedMode != VT100TerminalProtectedModeNone, &result);
     return result;
 }
 
 - (screen_char_t)backgroundColorCode {
     screen_char_t result = { 0 };
-    if (graphicRendition_.reversed) {
-        if (graphicRendition_.fgColorMode == ColorModeAlternate &&
-            graphicRendition_.fgColorCode == ALTSEM_DEFAULT) {
-            result.backgroundColor = ALTSEM_REVERSED_DEFAULT;
-        } else {
-            result.backgroundColor = graphicRendition_.fgColorCode;
-        }
-        result.bgGreen = graphicRendition_.fgGreen;
-        result.bgBlue = graphicRendition_.fgBlue;
-        result.backgroundColorMode = graphicRendition_.fgColorMode;
-    } else {
-        result.backgroundColor = graphicRendition_.bgColorCode;
-        result.bgGreen = graphicRendition_.bgGreen;
-        result.bgBlue = graphicRendition_.bgBlue;
-        result.backgroundColorMode = graphicRendition_.bgColorMode;
-    }
+    VT100GraphicRenditionUpdateBackground(&graphicRendition_, YES, &result);
     return result;
 }
 
 - (screen_char_t)foregroundColorCodeReal {
     screen_char_t result = { 0 };
-    result.foregroundColor = graphicRendition_.fgColorCode;
-    result.fgGreen = graphicRendition_.fgGreen;
-    result.fgBlue = graphicRendition_.fgBlue;
-    result.foregroundColorMode = graphicRendition_.fgColorMode;
-    result.bold = graphicRendition_.bold;
-    result.faint = graphicRendition_.faint;
-    result.italic = graphicRendition_.italic;
-    result.underline = graphicRendition_.underline;
-    result.strikethrough = graphicRendition_.strikethrough;
-    result.underlineStyle = graphicRendition_.underlineStyle;
-    result.blink = graphicRendition_.blink;
-    result.invisible = graphicRendition_.invisible;
-    result.inverse = graphicRendition_.reversed;
-    result.guarded = _protectedMode != VT100TerminalProtectedModeNone;
-    result.rtlStatus = RTLStatusUnknown;
-    result.unused = 0;
+    VT100GraphicRenditionUpdateForeground(&graphicRendition_, NO, _protectedMode != VT100TerminalProtectedModeNone, &result);
     return result;
 }
 
 - (screen_char_t)backgroundColorCodeReal {
     screen_char_t result = { 0 };
-    result.backgroundColor = graphicRendition_.bgColorCode;
-    result.bgGreen = graphicRendition_.bgGreen;
-    result.bgBlue = graphicRendition_.bgBlue;
-    result.backgroundColorMode = graphicRendition_.bgColorMode;
+    VT100GraphicRenditionUpdateBackground(&graphicRendition_, NO, &result);
     return result;
 }
 
@@ -1127,120 +999,6 @@ static const int kMaxScreenRows = 4096;
     [self updateDefaultChar];
 }
 
-// The actual spec for this is called ITU T.416-199303
-// You can download it for free! If you prefer to spend money, ISO/IEC 8613-6
-// is supposedly the same thing.
-//
-// Here's a sad story about CSI 38:2, which is used to do 24-bit color.
-//
-// Lots of terminal emulators, iTerm2 included, misunderstood the spec. That's
-// easy to understand if you read it, which I can't recommend doing unless
-// you're looking for inspiration for your next Bulwer-Lytton Fiction Contest
-// entry.
-//
-// See issue 6377 for more context.
-//
-// Ignoring color types we don't support like CMYK, the spec says to do this:
-// CSI 38:2:[color space]:[red]:[green]:[blue]:[unused]:[tolerance]:[tolerance colorspace]
-//
-// Everything after [blue] is optional. Values are decimal numbers in 0...255.
-//
-// Unfortunately, what was implemented for a long time was this:
-// CSI 38:2:[red]:[green]:[blue]:[unused]:[tolerance]:[tolerance colorspace]
-//
-// And for xterm compatibility, the following was also accepted:
-// CSI 38;2;[red];[green];[blue]
-//
-// The New Order
-// -------------
-// Tolerance never did anything, so we'll accept this non-standards compliant
-// code, which people use:
-// CSI 38:2:[red]:[green]:[blue]
-//
-// As well as the following forms:
-// CSI 38:2:[colorspace]:[red]:[green]:[blue]
-// CSI 38:2:[colorspace]:[red]:[green]:[blue]:<one or more additional colon-delimited arguments, all ignored>
-// CSI 38;2;[red];[green];[blue]   // Notice semicolons in place of colons here
-//
-// NOTE: If you change this you must also update -sgrCodesForGraphicRendition:
-- (VT100TerminalColorValue)colorValueFromSGRToken:(VT100Token *)token fromParameter:(inout int *)index {
-    const int i = *index;
-    int subs[VT100CSISUBPARAM_MAX];
-    const int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, i, subs);
-    if (numberOfSubparameters > 0) {
-        // Preferred syntax using colons to delimit subparameters
-        if (numberOfSubparameters >= 2 && subs[0] == 5) {
-            // CSI 38:5:P m
-            return (VT100TerminalColorValue){
-                .red = subs[1],
-                .green = 0,
-                .blue = 0,
-                .mode = ColorModeNormal
-            };
-        }
-        if (numberOfSubparameters >= 4 && subs[0] == 2) {
-            // 24-bit color
-            if (numberOfSubparameters >= 5) {
-                // Spec-compliant. Likely rarely used in 2017.
-                // CSI 38:2:colorspace:R:G:B m
-                // TODO: Respect the color space argument. See ITU-T Rec. T.414,
-                // but good luck actually finding the colour space IDs.
-                return (VT100TerminalColorValue){
-                    .red = subs[2],
-                    .green = subs[3],
-                    .blue = subs[4],
-                    .mode = ColorMode24bit
-                };
-            }
-            // Misinterpretation compliant.
-            // CSI 38:2:R:G:B m  <- misinterpretation compliant
-            return (VT100TerminalColorValue) {
-                .red = subs[1],
-                .green = subs[2],
-                .blue = subs[3],
-                .mode = ColorMode24bit
-            };
-        }
-        return (VT100TerminalColorValue) {
-            .red = -1,
-            .green = -1,
-            .blue = -1,
-            .mode = ColorMode24bit
-        };
-    }
-    if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
-        // For 256-color mode (indexed) use this for the foreground:
-        // CSI 38;5;N m
-        // where N is a value between 0 and 255. See the colors described in screen_char_t
-        // in the comments for fgColorCode.
-        *index += 2;
-        return (VT100TerminalColorValue) {
-            .red = token.csi->p[i + 2],
-            .green = 0,
-            .blue = 0,
-            .mode = ColorModeNormal
-        };
-    }
-    if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
-        // CSI 38;2;R;G;B m
-        // Hack for xterm compatibility
-        // 24-bit color support
-        *index += 4;
-        return (VT100TerminalColorValue) {
-            .red = token.csi->p[i + 2],
-            .green = token.csi->p[i + 3],
-            .blue = token.csi->p[i + 4],
-            .mode = ColorMode24bit
-        };
-    }
-    return (VT100TerminalColorValue) {
-        .red = -1,
-        .green = -1,
-        .blue = -1,
-        .mode = ColorMode24bit
-    };
-}
-
 // TODO: Respect DECSACE
 - (void)executeDECCARA:(VT100Token *)token {
     if (token.csi->count < 5) {
@@ -1371,158 +1129,32 @@ static const int kMaxScreenRows = 4096;
     } else {
         int i;
         for (i = 0; i < token.csi->count; ++i) {
-            int n = token.csi->p[i];
-            switch (n) {
-                case VT100CHARATTR_ALLOFF:
+            const VT100GraphicRenditionSideEffect sideEffect = VT100GraphicRenditionExecuteSGR(&graphicRendition_,
+                                                                                               token.csi,
+                                                                                               i);
+            switch (sideEffect) {
+                case VT100GraphicRenditionSideEffectReset:
                     [self resetGraphicRendition];
                     break;
-                case VT100CHARATTR_BOLD:
-                    graphicRendition_.bold = YES;
-                    break;
-                case VT100CHARATTR_FAINT:
-                    graphicRendition_.faint = YES;
-                    break;
-                case VT100CHARATTR_ITALIC:
-                    graphicRendition_.italic = YES;
-                    break;
-                case VT100CHARATTR_UNDERLINE: {
-                    graphicRendition_.underline = YES;
-                    int subs[VT100CSISUBPARAM_MAX];
-                    const int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, i, subs);
-                    if (numberOfSubparameters > 0) {
-                        switch (subs[0]) {
-                            case 0:
-                                graphicRendition_.underline = NO;
-                                break;
-                            case 1:
-                                graphicRendition_.underlineStyle = VT100UnderlineStyleSingle;
-                                break;
-                            case 3:
-                                graphicRendition_.underlineStyle = VT100UnderlineStyleCurly;
-                                break;
-                        }
-                    } else {
-                        graphicRendition_.underlineStyle = VT100UnderlineStyleSingle;
-                    }
-                    break;
-                }
-                case VT100CHARATTR_BLINK:
-                    graphicRendition_.blink = YES;
-                    break;
-                case VT100CHARATTR_REVERSE:
-                    graphicRendition_.reversed = YES;
-                    break;
-                case VT100CHARATTR_INVISIBLE:
-                    graphicRendition_.invisible = YES;
-                    break;
-                case VT100CHARATTR_STRIKETHROUGH:
-                    graphicRendition_.strikethrough = YES;
-                    break;
-
-                case VT100CHARATTR_DOUBLE_UNDERLINE:
-                    graphicRendition_.underline = YES;
-                    graphicRendition_.underlineStyle = VT100UnderlineStyleDouble;
-                    break;
-
-                case VT100CHARATTR_NORMAL:
-                    graphicRendition_.faint = graphicRendition_.bold = NO;
-                    break;
-                case VT100CHARATTR_NOT_ITALIC:
-                    graphicRendition_.italic = NO;
-                    break;
-                case VT100CHARATTR_NOT_UNDERLINE:
-                    graphicRendition_.underline = NO;
-                    break;
-                case VT100CHARATTR_STEADY:
-                    graphicRendition_.blink = NO;
-                    break;
-                case VT100CHARATTR_POSITIVE:
-                    graphicRendition_.reversed = NO;
-                    break;
-                case VT100CHARATTR_VISIBLE:
-                    graphicRendition_.invisible = NO;
-                    break;
-                case VT100CHARATTR_NOT_STRIKETHROUGH:
-                    graphicRendition_.strikethrough = NO;
-                    break;
-
-                case VT100CHARATTR_FG_DEFAULT:
-                    graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
-                    graphicRendition_.fgGreen = 0;
-                    graphicRendition_.fgBlue = 0;
-                    graphicRendition_.fgColorMode = ColorModeAlternate;
-                    break;
-                case VT100CHARATTR_BG_DEFAULT:
-                    graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
-                    graphicRendition_.bgGreen = 0;
-                    graphicRendition_.bgBlue = 0;
-                    graphicRendition_.bgColorMode = ColorModeAlternate;
-                    break;
-                case VT100CHARATTR_UNDERLINE_COLOR_DEFAULT:
-                    graphicRendition_.hasUnderlineColor = NO;
+                case VT100GraphicRenditionSideEffectUpdateExternalAttributes:
                     [self updateExternalAttributes];
                     break;
-                case VT100CHARATTR_UNDERLINE_COLOR: {
-                    const VT100TerminalColorValue value = [self colorValueFromSGRToken:token fromParameter:&i];
-                    if (value.red < 0) {
-                        break;
-                    }
-                    graphicRendition_.hasUnderlineColor = YES;
-                    graphicRendition_.underlineColor = value;
+                case VT100GraphicRenditionSideEffectNone:
+                    break;
+                case VT100GraphicRenditionSideEffectSkip2:
+                    i += 2;
+                    break;
+                case VT100GraphicRenditionSideEffectSkip4:
+                    i += 4;
+                    break;
+                case VT100GraphicRenditionSideEffectSkip2AndUpdateExternalAttributes:
+                    i += 2;
                     [self updateExternalAttributes];
                     break;
-                }
-                case VT100CHARATTR_FG_256: {
-                    const VT100TerminalColorValue value = [self colorValueFromSGRToken:token fromParameter:&i];
-                    if (value.red < 0) {
-                        break;
-                    }
-                    graphicRendition_.fgColorCode = value.red;
-                    graphicRendition_.fgGreen = value.green;
-                    graphicRendition_.fgBlue = value.blue;
-                    graphicRendition_.fgColorMode = value.mode;
+                case VT100GraphicRenditionSideEffectSkip4AndUpdateExternalAttributes:
+                    i += 4;
+                    [self updateExternalAttributes];
                     break;
-                }
-                case VT100CHARATTR_BG_256: {
-                    const VT100TerminalColorValue value = [self colorValueFromSGRToken:token fromParameter:&i];
-                    if (value.red < 0) {
-                        break;
-                    }
-                    graphicRendition_.bgColorCode = value.red;
-                    graphicRendition_.bgGreen = value.green;
-                    graphicRendition_.bgBlue = value.blue;
-                    graphicRendition_.bgColorMode = value.mode;
-                    break;
-                }
-                default:
-                    // 8 color support
-                    if (n >= VT100CHARATTR_FG_BLACK &&
-                        n <= VT100CHARATTR_FG_WHITE) {
-                        graphicRendition_.fgColorCode = n - VT100CHARATTR_FG_BASE - COLORCODE_BLACK;
-                        graphicRendition_.fgGreen = 0;
-                        graphicRendition_.fgBlue = 0;
-                        graphicRendition_.fgColorMode = ColorModeNormal;
-                    } else if (n >= VT100CHARATTR_BG_BLACK &&
-                               n <= VT100CHARATTR_BG_WHITE) {
-                        graphicRendition_.bgColorCode = n - VT100CHARATTR_BG_BASE - COLORCODE_BLACK;
-                        graphicRendition_.bgGreen = 0;
-                        graphicRendition_.bgBlue = 0;
-                        graphicRendition_.bgColorMode = ColorModeNormal;
-                    }
-                    // 16 color support
-                    if (n >= VT100CHARATTR_FG_HI_BLACK &&
-                        n <= VT100CHARATTR_FG_HI_WHITE) {
-                        graphicRendition_.fgColorCode = n - VT100CHARATTR_FG_HI_BASE - COLORCODE_BLACK + 8;
-                        graphicRendition_.fgGreen = 0;
-                        graphicRendition_.fgBlue = 0;
-                        graphicRendition_.fgColorMode = ColorModeNormal;
-                    } else if (n >= VT100CHARATTR_BG_HI_BLACK &&
-                               n <= VT100CHARATTR_BG_HI_WHITE) {
-                        graphicRendition_.bgColorCode = n - VT100CHARATTR_BG_HI_BASE - COLORCODE_BLACK + 8;
-                        graphicRendition_.bgGreen = 0;
-                        graphicRendition_.bgBlue = 0;
-                        graphicRendition_.bgColorMode = ColorModeNormal;
-                    }
             }
         }
     }

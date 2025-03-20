@@ -190,6 +190,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
                              [iTermShellPromptTrigger class],
                              [iTermSetTitleTrigger class],
                              [iTermSetNamedMarkTrigger class],
+                             [iTermSGRTrigger class],
                              [SendTextTrigger class],
                              [ScriptTrigger class],
                              [CoprocessTrigger class],
@@ -678,6 +679,41 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     *delegateOut = [trigger newParameterDelegateWithPassthrough:receiver];
     textField.delegate = delegate;
     textField.identifier = kParameterColumnIdentifier;
+
+    if (trigger.helpText) {
+        NSRect wrapperFrame = NSMakeRect(0, 0, 300, 30);
+        NSView *wrapper = [[NSView alloc] initWithFrame:wrapperFrame];
+        wrapper.autoresizesSubviews = YES;
+
+        textField.autoresizingMask = NSViewWidthSizable | NSViewMaxXMargin;
+        [textField sizeToFit];
+        [wrapper addSubview:textField];
+        wrapper.frame = NSMakeRect(0, 0, 300, textField.frame.size.height);
+
+        CGFloat helpButtonWidth = 24;
+        iTermPopoverHelpButton *helpButton = [[iTermPopoverHelpButton alloc] initWithFrame:NSMakeRect(NSMaxX(wrapperFrame) - helpButtonWidth,
+                                                                                                      NSMinY(wrapperFrame),
+                                                                                                      helpButtonWidth,
+                                                                                                      wrapperFrame.size.height)];
+        helpButton.bezelStyle = NSBezelStyleHelpButton;
+        helpButton.buttonType = NSButtonTypeMomentaryPushIn;
+        helpButton.bordered = YES;
+        helpButton.controlSize = NSControlSizeMini;
+        helpButton.helpText = trigger.helpText;
+        [helpButton sizeToFit];
+        NSRect rect = helpButton.frame;
+        rect.origin.y = (wrapper.bounds.size.height - rect.size.height) / 2;
+        rect.origin.x = (wrapper.bounds.size.width - rect.size.width);
+        helpButton.frame = rect;
+        helpButton.autoresizingMask = NSViewMinXMargin | NSViewMinYMargin | NSViewMaxYMargin;
+        [wrapper addSubview:helpButton];
+
+        // Adjust textField's frame to occupy the remaining space.
+        NSRect textFieldFrame = textField.frame;
+        textFieldFrame.size.width = wrapperFrame.size.width - helpButtonWidth;
+        textField.frame = textFieldFrame;
+        return wrapper;
+    }
     return textField;
 }
 

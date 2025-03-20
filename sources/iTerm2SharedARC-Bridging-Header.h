@@ -42,6 +42,7 @@
 #import "iTermNotificationCenter.h"
 #import "iTermObject.h"
 #import "iTermOrderEnforcer.h"
+#import "iTermParser.h"
 #import "iTermPreferences.h"
 #import "iTermPreferencesBaseViewController.h"
 #import "iTermProfilePreferences.h"
