@@ -779,11 +779,11 @@ NS_ASSUME_NONNULL_BEGIN
         [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
                                                                      dependencies:dependencies
                                                                     pythonVersion:pythonVersion
-                                                                       completion:^(BOOL ok) {
-            if (!ok) {
+                                                                       completion:^(NSError *errorStatus) {
+            if (errorStatus != nil) {
                  NSAlert *alert = [[NSAlert alloc] init];
                  alert.messageText = @"Installation Failed";
-                 alert.informativeText = @"Remove ~/Library/Application Support/iTerm2/iterm2env and try again.";
+                 alert.informativeText = [NSString stringWithFormat:@"An error ocurred while installing the Python runtime. Remove ~/Library/Application Support/iTerm2/iterm2env and try again. The error was: %@", errorStatus.localizedDescription];
                  [alert runModal];
                  return;
              }

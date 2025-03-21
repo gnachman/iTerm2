@@ -411,11 +411,11 @@
     [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
                                                                  dependencies:@[]
                                                                 pythonVersion:pythonVersion
-                                                                   completion:^(BOOL ok) {
-        if (!ok) {
+                                                                   completion:^(NSError *errorStatus) {
+        if (errorStatus != nil) {
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Installation Failed";
-            alert.informativeText = @"Please file a bug report at https://iterm2.com/bugs.";
+            alert.informativeText = [NSString stringWithFormat:@"Please file a bug report at https://iterm2.com/bugs. The following error occurred while upgrading a dependency: %@", errorStatus.localizedDescription];
             [alert runModal];
             return;
         }

@@ -139,8 +139,8 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:url
                                                                  dependencies:configParser.dependencies
                                                                 pythonVersion:configParser.pythonVersion
-                                                                   completion:^(BOOL ok) {
-        if (ok) {
+                                                                   completion:^(NSError *errorStatus) {
+        if (!errorStatus) {
             NSError *error = nil;
             [[NSFileManager defaultManager] removeItemAtURL:savedEnv error:&error];
             DLog(@"remove saved - %@: %@", savedEnv.path, error);
@@ -156,6 +156,16 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         error = nil;
         [[NSFileManager defaultManager] moveItemAtURL:savedEnv toURL:existingEnv error:&error];
         DLog(@"restore saved - move '%@' to '%@': %@", savedEnv.path, existingEnv.path, error);
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [iTermWarning showWarningWithTitle:errorStatus.localizedDescription
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Error Upgrading Script"
+                                        window:nil];
+        });
     }];
 }
 

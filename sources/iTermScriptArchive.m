@@ -325,12 +325,12 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                                                                environmentVersion:setupParser.minimumEnvironmentVersion
                                                                      dependencies:dependencies
                                                                    createSetupCfg:NO
-                                                                       completion:^(iTermInstallPythonStatus status) {
-            DLog(@"Install python environment done with status %@", @(status));
-            [self didInstallPythonRuntime:status
-                                     from:from
-                                       to:to
-                               completion:
+                                                                       completion:^(NSError *errorStatus) {
+            DLog(@"Install python environment done with status %@", errorStatus);
+            [self didInstallPythonRuntimeWithError:errorStatus
+                                              from:from
+                                                to:to
+                                        completion:
              ^(NSError *runtimeInstallError) {
                 DLog(@"didInstallPythonRuntime done with error %@", runtimeInstallError);
                 completion(runtimeInstallError,
@@ -357,26 +357,26 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     }
 }
 
-- (void)didInstallPythonRuntime:(iTermInstallPythonStatus)status
-                           from:(NSString *)from
-                             to:(NSString *)to
-                     completion:(void (^)(NSError *))completion {
-    DLog(@"status=%@ from=%@ to=%@", @(status), from, to);
+- (void)didInstallPythonRuntimeWithError:(NSError *)errorStatus
+                                    from:(NSString *)from
+                                      to:(NSString *)to
+                              completion:(void (^)(NSError *))completion {
+    DLog(@"status=%@ from=%@ to=%@", errorStatus, from, to);
     [[NSFileManager defaultManager] removeItemAtPath:to error:nil];
-    switch (status) {
+    switch ((iTermInstallPythonStatus)errorStatus.code) {
         case iTermInstallPythonStatusOK:
             DLog(@"ok");
             break;
         case iTermInstallPythonStatusGeneralFailure: {
             DLog(@"general failure");
-            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Failed to install Python Runtime" };
+            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Failed to install Python Runtime: %@", errorStatus.localizedDescription] };
             NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
             completion(error);
             return;
         }
         case iTermInstallPythonStatusDependencyFailed: {
             DLog(@"Dep failed");
-            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Failed to install Python package" };
+            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Failed to install Python package: %@", errorStatus.localizedDescription] };
             NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:2 userInfo:userInfo];
             completion(error);
             return;

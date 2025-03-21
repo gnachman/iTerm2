@@ -829,7 +829,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
 - (void)installPythonEnvironmentTo:(NSURL *)folder
                       dependencies:(NSArray<NSString *> *)dependencies
                      pythonVersion:(nullable NSString *)pythonVersion
-                        completion:(void (^)(BOOL ok))completion {
+                        completion:(void (^)(NSError *))completion {
     DLog(@"Begin folder=%@ dependencies=%@ pythonVersion=%@", folder, dependencies, pythonVersion);
     iTermBuildingScriptWindowController *pleaseWait = [iTermBuildingScriptWindowController newPleaseWaitWindowController];
     id token = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
@@ -846,13 +846,19 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                                                                  dependencies:dependencies
                                                                createSetupCfg:YES
                                                                    completion:
-     ^(iTermInstallPythonStatus status) {
+     ^(NSError *errorStatus) {
          [[NSNotificationCenter defaultCenter] removeObserver:token];
          [pleaseWait.window close];
         self->_busy--;
-        DLog(@"status=%@", @(status));
-        completion(status == iTermInstallPythonStatusOK);
+        DLog(@"status=%@", errorStatus);
+        completion(errorStatus);
     }];
+}
+
++ (NSError *)errorWithCode:(iTermInstallPythonStatus)code reason:(NSString *)reason {
+    return [NSError errorWithDomain:@"com.iterm2.python-runtime-downloader"
+                               code:code
+                           userInfo:@{ NSLocalizedDescriptionKey: reason }];
 }
 
 - (void)installPythonEnvironmentTo:(NSURL *)container
@@ -861,7 +867,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                 environmentVersion:(NSInteger)environmentVersion
                       dependencies:(NSArray<NSString *> *)dependencies
                     createSetupCfg:(BOOL)createSetupCfg
-                        completion:(void (^)(iTermInstallPythonStatus))completion {
+                        completion:(void (^)(NSError *))completion {
     DLog(@"Begin. container=%@ eventualLocation=%@ pythonVersion=%@ environmentVersion=%@ dependencies=%@ createSetupCfg=%@",
          container, eventualLocation, pythonVersion, @(environmentVersion), dependencies, @(createSetupCfg));
     NSString *source = [self pathToStandardPyenvWithVersion:pythonVersion
@@ -888,7 +894,8 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
         dispatch_async(dispatch_get_main_queue(), ^{
             if (!ok) {
                 XLog(@"Failed to link %@ to %@: %@", source, destination, error);
-                completion(iTermInstallPythonStatusGeneralFailure);
+                completion([iTermPythonRuntimeDownloader errorWithCode:iTermInstallPythonStatusGeneralFailure
+                                                                reason:[NSString stringWithFormat:@"Failed to link from %@ to %@: %@", source, destination, error.localizedDescription]]);
                 return;
             }
 
@@ -937,19 +944,16 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                     alert.accessoryView = unfucker;
 
                     [alert runModal];
-                    completion(iTermInstallPythonStatusDependencyFailed);
+                    completion([iTermPythonRuntimeDownloader errorWithCode:iTermInstallPythonStatusDependencyFailed
+                                                                    reason:@"Dependency installation failed"]);
                     return;
                 }
 
                 NSString *pythonVersionToUse = pythonVersion ?: [self.class latestPythonVersion];
                 if (!pythonVersionToUse) {
                     DLog(@"Could not determine Python version");
-                    NSAlert *alert = [[NSAlert alloc] init];
-                    alert.messageText = @"Could not determine Python version";
-                    alert.informativeText = @"Please file an issue report.";
-                    [alert runModal];
-                    DLog(@"Could not determine Python version");
-                    completion(iTermInstallPythonStatusGeneralFailure);
+                    completion([iTermPythonRuntimeDownloader errorWithCode:iTermInstallPythonStatusGeneralFailure
+                                                                    reason:@"Dependency installation failed: could not determine Python version. Please file a bug report at https://iterm2.com/bugs"]);
                     return;
                 }
                 if (createSetupCfg) {
@@ -960,7 +964,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                                                pythonVersion:pythonVersionToUse
                                           environmentVersion:environmentVersion];
                 }
-                completion(iTermInstallPythonStatusOK);
+                completion(nil);
             }];
         });
     });

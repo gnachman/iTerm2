@@ -70,16 +70,16 @@ typedef NS_ENUM(NSUInteger, iTermPythonRuntimeDownloaderStatus) {
 - (NSString * _Nullable)pip3At:(NSString *)root pythonVersion:(NSString * _Nullable)pythonVersion;
 
 typedef NS_ENUM(NSUInteger, iTermInstallPythonStatus) {
-    iTermInstallPythonStatusOK,
-    iTermInstallPythonStatusDependencyFailed,
-    iTermInstallPythonStatusGeneralFailure
+    iTermInstallPythonStatusOK = 0,
+    iTermInstallPythonStatusDependencyFailed = 1,
+    iTermInstallPythonStatusGeneralFailure = 2
 };
 
 // Installs the environment somewhere and shows a please wait window. Higher level API.
 - (void)installPythonEnvironmentTo:(NSURL *)folder
                       dependencies:(NSArray<NSString *> *)dependencies
                      pythonVersion:(NSString * _Nullable)pythonVersion
-                        completion:(void (^)(BOOL ok))completion;
+                        completion:(void (^)(NSError * _Nullable))completion;
 
 // Install a copy of the current environment somewhere. Lower level API. No UI.
 - (void)installPythonEnvironmentTo:(NSURL *)container
@@ -88,7 +88,7 @@ typedef NS_ENUM(NSUInteger, iTermInstallPythonStatus) {
                 environmentVersion:(NSInteger)environmentVersion
                       dependencies:(NSArray<NSString *> * _Nullable)dependencies
                     createSetupCfg:(BOOL)createSetupCfg
-                        completion:(void (^)(iTermInstallPythonStatus))completion;
+                        completion:(void (^)(NSError * _Nullable))completion;
 
 - (void)runPip3InContainer:(NSURL *)container
              pythonVersion:(NSString * _Nullable)pythonVersion
