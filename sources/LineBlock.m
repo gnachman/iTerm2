@@ -301,7 +301,8 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
     if (mayHaveDoubleWidthCharacter) {
         // TODO: Use memoization here
         int fullLines = 0;
-        for (int i = width; i < length; i += width) {
+        int maxLines = length * width;
+        for (int i = width; i < length && fullLines < maxLines; i += width) {
             if (buffer[i].code == DWC_RIGHT) {
                 --i;
             }

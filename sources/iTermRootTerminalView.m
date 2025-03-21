@@ -273,7 +273,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [self constrainToolbeltWidth];
     _tabViewFrameReduced = NO;
     if (![self tabBarShouldBeVisible]) {
-	    fprintf (stderr, "TAB BAR IS NOT VISIBLE HERE\n");
+	    // fprintf (stderr, "TAB BAR IS NOT VISIBLE HERE\n");
         // The tabBarControl should not be visible.
         [self removeLeftTabBarDragHandle];
         self.tabBarControl.hidden = YES;
@@ -289,7 +289,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 heightAdjustment = 40; // on fullscreen this can fix the notch issue
             }
 	}
-	fprintf (stderr, "HEIGHT ADJUSTMENT %d\n", heightAdjustment);
+	// fprintf (stderr, "HEIGHT ADJUSTMENT %d\n", heightAdjustment);
         NSRect tabViewFrame =
             NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
                        yOrigin,
@@ -340,7 +340,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 [self.tabView setFrame:tabViewFrame];
 
                 heightAdjustment = self.tabBarControl.flashing ? kHorizontalTabBarHeight : 0;
-	    fprintf (stderr, "HEIGHT ADJUSTNMENT %d\n", heightAdjustment);
+	    // fprintf (stderr, "HEIGHT ADJUSTNMENT %d\n", heightAdjustment);
 /*
 		if (minitabs) {
 			heightAdjustment = -18;
