@@ -53,9 +53,9 @@ To build it from source you just need to run `make run` or `open Therm.xcodeproj
 
 Plan is to continue removing features and optimizing the code to make Therm even faster and cleaner.
 
-* [ ] Keep removing features
+* [ ] Keep purging unnecessary features
 * [ ] Remove all deprecated APIs uses
-* [ ] Improve emoji support
+* [ ] Update and improve emoji support
 * [ ] Support PowerPC and x86-32 macOS
 
 ## Settings
