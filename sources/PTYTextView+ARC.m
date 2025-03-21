@@ -2053,6 +2053,9 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     if (!snippet) {
         return;
     }
+    DLog(@"it_modifierFlags=%x, NSApp.currentEvent.modifierFlags=%x",
+         (int)[[iTermApplication sharedApplication] it_modifierFlags],
+         (int)NSApp.currentEvent.modifierFlags);
     const BOOL option = !!([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagOption);
     if (option) {
         // Multiple call sites depend on this (open quickly, menu item, and possibly other stuff added later).

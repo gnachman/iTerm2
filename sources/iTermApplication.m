@@ -92,6 +92,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     NSTimeInterval _activationStartTime;
     NSEventModifierFlags _previousFlags;
     BOOL _functionPressed;
+#if DEBUG
+    NSEventModifierFlags _it_modifierFlags;
+#endif
 }
 
 - (void)dealloc {
@@ -632,6 +635,25 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     }
 }
 
+- (NSEventModifierFlags)it_modifierFlags {
+    NSEvent *event = self.currentEvent;
+#if DEBUG
+    if (iTermKeyEventReplayer.isReplaying) {
+        // I don't trust NSEvent.currentEvent for replay. This is an almost-never-taken code path
+        // that's used when testing the key mapper.
+        return _it_modifierFlags;
+    }
+#endif
+    if (!event) {
+        return 0;
+    }
+    // This method is meant to be a replacement for NSEvent.currentEvent.modifierFlags.
+    // Amazingly, the event it reports is not affected by my own event tap! You can verify this by
+    // adding logging to iTermEventTapCallback(). Therefore, we always perform remapping here,
+    // not only when secure keyboard entry is on.
+    return [self eventByRemappingEvent:event].it_modifierFlags;
+}
+
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent *)event {
     switch (event.type) {
@@ -646,11 +668,15 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             const NSEventModifierFlags originalFlags = event.modifierFlags;
             event = [self eventByRemappingForSecureInput:event];
             if (!event) {
+#if DEBUG
                 _it_modifierFlags = originalFlags;
+#endif
                 DLog(@"Disard event");
                 return;
             }
+#if DEBUG
             _it_modifierFlags = event.modifierFlags;
+#endif
             if ([self handleFlagsChangedEvent:event]) {
                 return;
             }
@@ -670,7 +696,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             if ([self handleKeyDownEvent:event]) {
                 return;
             }
+#if DEBUG
             _it_modifierFlags = event.it_modifierFlags;
+#endif
             DLog(@"NSKeyDown event taking the regular path");
             break;
         case NSEventTypeKeyUp:
@@ -684,7 +712,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             if (_leader) {
                 [self makeCursorSparkles];
             }
+#if DEBUG
             _it_modifierFlags = event.it_modifierFlags;
+#endif
             if ([[self sessionOfFirstResponder] handleKeyUpWithBuckyBits:event]) {
                 return;
             }

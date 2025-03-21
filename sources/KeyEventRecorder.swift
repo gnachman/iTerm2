@@ -167,6 +167,11 @@ class KeyEventReplayer: NSObject {
     private var nextIndex = 0
     private var timer: Timer?
     private let pid: pid_t
+    private static var activeCount = 0
+
+    @objc static var isReplaying: Bool {
+        return activeCount > 0
+    }
 
     @objc init?(path: String, windowNumber: Int, pid: pid_t) {
         self.windowNumber = windowNumber
@@ -181,6 +186,7 @@ class KeyEventReplayer: NSObject {
 
     @objc
     func start() {
+        Self.activeCount += 1
         NSLog("Start replay using pid \(pid) and window \(windowNumber)")
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -196,6 +202,7 @@ class KeyEventReplayer: NSObject {
     @objc
     func stop() {
         NSLog("Stop replay")
+        Self.activeCount -= 1
         timer?.invalidate()
         timer = nil
         nextIndex = 0

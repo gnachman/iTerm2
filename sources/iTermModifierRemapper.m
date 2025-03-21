@@ -440,7 +440,9 @@
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
         // OS's remap feature.
         const BOOL hadRemapped = _remapped;
+        const NSEventModifierFlags before = [NSEvent eventWithCGEvent:event].modifierFlags;
         CGEventRef remappedEvent = [self eventByRemappingEvent:event eventTap:eventTap];
+        DLog(@"Remapped modifiers from %x to %x in event tap", (int)before, (int)[NSEvent eventWithCGEvent:remappedEvent].modifierFlags);
         if (remappedEvent) {
             if ([iTermAdvancedSettingsModel postFakeFlagsChangedEvents]) {
                 if (hadRemapped != _remapped &&
