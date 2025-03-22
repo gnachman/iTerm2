@@ -806,6 +806,7 @@ DEFINE_BOOL(generativeAIAllowed, YES, SECTION_GENERAL @"Allow the use of large l
 DEFINE_STRING(llmPlatform, @"OpenAI", SECTION_GENERAL @"LLM Platform.\nLegal values are: OpenAI, Azure, Gemini. This determines the format of requests and responses.");
 DEFINE_BOOL(bidi, NO, SECTION_EXPERIMENTAL @"Support right-to-left text?\nThis also enables ligature support in the GPU renderer.");
 DEFINE_BOOL(alternateScreenBidi, YES, SECTION_EXPERIMENTAL @"When right-to-left text support is enabled, also support it in alternate screen mode?");
+DEFINE_BOOL(aquaSKKBugfixEnabled, NO, SECTION_EXPERIMENTAL @"Enable AquaSKK bugfix?")
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

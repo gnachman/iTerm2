@@ -69,6 +69,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)alwaysWarnBeforePastingOverSize;
 + (BOOL)anonymousTmuxWindowsOpenInCurrentWindow;
 + (BOOL)appendToExistingDebugLog;
++ (BOOL)aquaSKKBugfixEnabled;
 + (BOOL)autoLockSessionNameOnEdit;
 + (int)autocompleteMaxOptions;
 + (BOOL)autodetectMouseReportingStuck;

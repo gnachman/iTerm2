@@ -226,6 +226,25 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     return [_keyMapper keyMapperShouldBypassPreCocoaForEvent:event];
 }
 
+- (NSString *)currentKeyboardSourceID {
+    TISInputSourceRef source = NULL;
+    source = TISCopyCurrentKeyboardInputSource();
+    NSString *keyboardID = [(__bridge NSString *)TISGetInputSourceProperty(source, kTISPropertyInputSourceID) copy];
+    CFRelease(source);
+    return keyboardID;
+}
+
+- (BOOL)performCheckingIfKeyboardChanges:(void (^)(void))block {
+    NSString *keyboardBefore = [self currentKeyboardSourceID];
+    block();
+    // If our keyboard changed from this we just assume an input method
+    // grabbed it and do nothing.
+    if (keyboardBefore && ![keyboardBefore isEqualToString:self.currentKeyboardSourceID]) {
+        return YES;
+    }
+    return NO;
+}
+
 - (void)sendEventToCocoa:(NSEvent *)event inputContext:(NSTextInputContext *)inputContext {
     _eventBeingHandled = event;
     // TODO: Consider going straight to interpretKeyEvents: for repeats. See issue 6052.
@@ -342,9 +361,16 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 - (void)handleEventWithCocoa:(NSEvent *)event
                     inputContext:(NSTextInputContext *)inputContext {
     sCurrentKeyboardHandler = self;
-    [self sendEventToCocoa:event inputContext:inputContext];
+    const BOOL keyboardChanged = [self performCheckingIfKeyboardChanges:^{
+        [self sendEventToCocoa:event inputContext:inputContext];
+    }];
     sCurrentKeyboardHandler = nil;
 
+    if (keyboardChanged && [iTermAdvancedSettingsModel aquaSKKBugfixEnabled]) {
+        // See https://github.com/ghostty-org/ghostty/commit/7a27af8bfce9007e31be10aeafe7a968a66aa0b5#diff-a2fa888dc78c338c8f0e1d250487f2fae439debb3fcf7ff2d1a3ad70616a9fb1
+        DLog(@"This event (%@) caused the keyboard to change, so don't process it any more", event);
+        return;
+    }
     if (event.isARepeat && [iTermAdvancedSettingsModel enableCharacterAccentMenu]) {
         DLog(@"Squelch repeated keypress event %@", event);
         return;
