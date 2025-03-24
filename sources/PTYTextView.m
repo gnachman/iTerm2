@@ -3701,7 +3701,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return cursor;
 }
 
-- (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event verticalOk:(BOOL)verticalOk {
+- (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
+                               verticalOk:(BOOL)verticalOk {
     DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
 
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];

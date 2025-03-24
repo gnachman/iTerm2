@@ -90,7 +90,8 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 
         _scrollView = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer: self
                                                                              insets:NSEdgeInsetsMake(0, 0, 0, kButtonHeight + kMargin)
-                                                                          rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]];
+                                                                          rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]
+                                                                  keyboardNavigable:NO];
         _tableView = _scrollView.documentView;
         _tableView.doubleAction = @selector(doubleClickOnTableView:);
         _tableView.allowsMultipleSelection = YES;

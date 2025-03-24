@@ -52,7 +52,7 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
 
         scrollView = NSScrollView.scrollViewWithTableViewForToolbelt(container: self,
                                                                      insets: NSEdgeInsets(),
-                                                                     rowHeight: NSTableView.heightForTextCell(using: .it_toolbelt()))
+                                                                     rowHeight: NSTableView.heightForTextCell(using: .it_toolbelt()), keyboardNavigable: false)
 
         _tableView = scrollView!.documentView! as? NSTableView
         _tableView!.allowsMultipleSelection = true

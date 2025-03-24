@@ -30,6 +30,27 @@
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
 static NSString *const iTermToolSnippetsPasteboardType = @"com.googlecode.iterm2.iTermToolSnippetsPasteboardType";
+static NSString *const iTermToolSnippetsUseOutlineViewModeUserDefaultsKey = @"NoSyncSnippetsToolUsesOutlineView";
+
+@interface iTermSnippetFolderItem: NSObject
+@property (nonatomic, copy) NSArray *children;
+@property (nonatomic, copy) NSString *title;
+@end
+
+@implementation iTermSnippetFolderItem
+@end
+
+@interface iTermSnippetItem : NSObject
+@property (nonatomic, strong) iTermSnippet *snippet;
+@end
+
+@implementation iTermSnippetItem
++ (instancetype)itemWithSnippet:(iTermSnippet *)snippet {
+    iTermSnippetItem *item = [[self alloc] init];
+    item.snippet = snippet;
+    return item;
+}
+@end
 
 typedef NS_ENUM(NSUInteger, iTermToolSnippetsAction) {
     iTermToolSnippetsActionSend,
@@ -37,25 +58,39 @@ typedef NS_ENUM(NSUInteger, iTermToolSnippetsAction) {
     iTermToolSnippetsActionComposer
 };
 
-@interface iTermToolSnippets() <NSDraggingDestination, NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate>
+@interface iTermToolSnippets() <
+    NSDraggingDestination,
+    NSOutlineViewDataSource,
+    NSOutlineViewDelegate,
+    NSTableViewDataSource,
+    NSTableViewDelegate,
+    NSSearchFieldDelegate>
 @end
 
 @implementation iTermToolSnippets {
-    NSScrollView *_scrollView;
+    NSScrollView *_tableViewScrollView;
     NSTableView *_tableView;
+
+    NSScrollView *_outlineViewScrollView;
+    NSOutlineView *_outlineView;
 
     NSButton *_applyButton;
     NSButton *_advancedPasteButton;
     NSButton *_addButton;
     NSButton *_removeButton;
     NSButton *_editButton;
+    NSButton *_modeButton;
     iTermSearchField *_searchField;
     NSButton *_help;
 
     NSArray<iTermSnippet *> *_unfilteredSnippets;
     NSArray<iTermSnippet *> *_filteredSnippets;
+    NSArray *_tree;
     iTermEditSnippetWindowController *_windowController;
     BOOL _haveTags;
+    CGFloat _standardRowHeight;
+    NSImage *_icon;
+    NSImage *_folderIcon;
 }
 
 static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title, id target, SEL selector, NSRect frame) {
@@ -89,34 +124,54 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        if (@available(macOS 11.0, *)) {
+            _icon = [NSImage imageWithSystemSymbolName:@"text.document.fill" accessibilityDescription:@"Snippet icon"];
+            _folderIcon = [NSImage imageWithSystemSymbolName:@"folder.fill" accessibilityDescription:@"Folder icon"];
+        }
         if (@available(macOS 10.16, *)) {
             _applyButton = iTermToolSnippetsNewButton(@"play", @"Send", self, @selector(apply:), frame);
             _addButton = iTermToolSnippetsNewButton(@"plus", @"Add", self, @selector(add:), frame);
             _removeButton = iTermToolSnippetsNewButton(@"minus", @"Remove", self, @selector(remove:), frame);
-            _editButton = iTermToolSnippetsNewButton(@"pencil", @"Edit", self, @selector(edit:), frame);
+            _editButton = iTermToolSnippetsNewButton(@"square.and.pencil", @"Edit", self, @selector(edit:), frame);
             _advancedPasteButton = iTermToolSnippetsNewButton(@"rectangle.and.pencil.and.ellipsis", @"Open in Advanced Paste", self, @selector(openInAdvancedPaste:), frame);
+            _modeButton = iTermToolSnippetsNewButton(@"list.bullet.indent", @"Treeview", self, @selector(toggleTreeView:), frame);
             [self addSubview:_advancedPasteButton];
         } else {
             _applyButton = iTermToolSnippetsNewButton(nil, @"Send", self, @selector(apply:), frame);
             _addButton = iTermToolSnippetsNewButton(NSImageNameAddTemplate, nil, self, @selector(add:), frame);
             _removeButton = iTermToolSnippetsNewButton(NSImageNameRemoveTemplate, nil, self, @selector(remove:), frame);
             _editButton = iTermToolSnippetsNewButton(nil, @"✐", self, @selector(edit:), frame);
+            _modeButton = iTermToolSnippetsNewButton(nil, @"≡", self, @selector(toggleTreeView:), frame);
         }
         [self addSubview:_applyButton];
         [self addSubview:_addButton];
         [self addSubview:_removeButton];
         [self addSubview:_editButton];
+        [self addSubview:_modeButton];
 
-        _scrollView = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer: self
-                                                                             insets:NSEdgeInsetsMake(0, 0, 0, kButtonHeight + kMargin)
-                                                                          rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]];
-        _tableView = _scrollView.documentView;
+        _standardRowHeight = [NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]];
+        _tableViewScrollView = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer: self
+                                                                                      insets:NSEdgeInsetsMake(0, 0, 0, kButtonHeight + kMargin)
+                                                                                   rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]
+                                                                           keyboardNavigable:YES];
+        _unfilteredSnippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
+        _filteredSnippets = [_unfilteredSnippets copy];
+        [self buildTree];
+        _tableView = _tableViewScrollView.documentView;
         _tableView.allowsMultipleSelection = YES;
         [_tableView registerForDraggedTypes:@[ iTermToolSnippetsPasteboardType ]];
         _tableView.doubleAction = @selector(doubleClickOnTableView:);
-        _unfilteredSnippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
-        _filteredSnippets = [_unfilteredSnippets copy];
         [_tableView reloadData];
+
+        _outlineViewScrollView = [NSScrollView scrollViewWithOutlineViewForToolbeltWithContainer: self
+                                                                                          insets:NSEdgeInsetsMake(0, 0, 0, kButtonHeight + kMargin)
+                                                                                       rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]];
+        _outlineView = _outlineViewScrollView.documentView;
+        _outlineView.allowsMultipleSelection = YES;
+        [_outlineView registerForDraggedTypes:@[ iTermToolSnippetsPasteboardType ]];
+        _outlineView.doubleAction = @selector(doubleClickOnOutlineView:);
+        [_outlineView reloadData];
+
         __weak __typeof(self) weakSelf = self;
         [iTermSnippetsDidChangeNotification subscribe:self
                                                 block:^(iTermSnippetsDidChangeNotification * _Nonnull notification) {
@@ -149,8 +204,115 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
         [self relayout];
         [self updateEnabled];
         [self registerForDraggedTypes:@[ NSPasteboardTypeString ]];
+
+        [self setOutlineViewMode:[[NSUserDefaults standardUserDefaults] boolForKey:iTermToolSnippetsUseOutlineViewModeUserDefaultsKey]];
     }
     return self;
+}
+
+- (void)buildTree {
+    _tree = [self makeTree];
+}
+
+- (NSArray *)makeTree {
+    NSMutableArray *tagTree = [NSMutableArray array];
+    [tagTree addObjectsFromArray:[_filteredSnippets mapWithBlock:^id _Nullable(iTermSnippet *snippet) {
+        return [iTermSnippetItem itemWithSnippet:snippet];
+    }]];
+
+    [_filteredSnippets enumerateObjectsUsingBlock:
+     ^(iTermSnippet * _Nonnull snippet, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (snippet.tags) {
+            [self addTags:snippet.tags snippet:snippet toTree:tagTree];
+        }
+    }];
+    return [self arrayByRemovingEmptyFoldersFromArray:tagTree];
+}
+
+- (NSArray *)arrayByRemovingEmptyFoldersFromArray:(NSArray *)children {
+    return [children mapWithBlock:^id _Nullable(id obj) {
+        if ([obj isKindOfClass:[iTermSnippetItem class]]) {
+            return obj;
+        }
+        if ([obj isKindOfClass:[iTermSnippetFolderItem class]]) {
+            iTermSnippetFolderItem *item = obj;
+            NSArray *recursivelyFilteredChildren = [self arrayByRemovingEmptyFoldersFromArray:item.children];
+            if (recursivelyFilteredChildren.count == 0) {
+                return nil;
+            }
+            iTermSnippetFolderItem *modified = [[iTermSnippetFolderItem alloc] init];
+            modified.title = item.title;
+            modified.children = recursivelyFilteredChildren;
+            return modified;
+        }
+        assert(NO);
+    }];
+}
+
+- (void)addTags:(NSArray<NSString *> *)tags snippet:(iTermSnippet *)snippet toTree:(NSMutableArray *)tree {
+    [tags enumerateObjectsUsingBlock:^(NSString * _Nonnull tag, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self addTagComponents:[tag componentsSeparatedByString:@"/"]
+                       snippet:snippet
+                        toTree:tree];
+    }];
+}
+
+- (void)addTagComponents:(NSArray<NSString *> *)components
+                 snippet:(iTermSnippet *)snippet
+                  toTree:(NSMutableArray *)tree {
+    if (components.count == 0) {
+        [tree addObject:[iTermSnippetItem itemWithSnippet:snippet]];
+        return;
+    }
+    NSString *folderName = components[0];
+    iTermSnippetFolderItem *child = [tree objectPassingTest:^BOOL(id obj, NSUInteger index, BOOL *stop) {
+        return [[iTermSnippetFolderItem castFrom:obj].title isEqual:folderName];
+    }];
+    NSMutableArray *container;
+    if (child) {
+        iTermSnippetFolderItem *item = child;
+        container = item.children.mutableCopy;
+    } else {
+        container = [NSMutableArray array];
+    }
+    [self addTagComponents:[components subarrayFromIndex:1]
+                   snippet:snippet
+                    toTree:container];
+
+    id node = [self nodeForFolderNamed:folderName];
+    if (!child) {
+        [tree addObject:node];
+        iTermSnippetFolderItem *item = node;
+        item.children = container;
+    } else {
+        iTermSnippetFolderItem *item = child;
+        item.children = container;
+    }
+}
+
+- (id)nodeForFolderNamed:(NSString *)name {
+    iTermSnippetFolderItem *item = [[iTermSnippetFolderItem alloc] init];
+    item.title = name;
+    item.children = @[];
+    return item;
+}
+
+- (void)toggleTreeView:(id)sender {
+    [self setOutlineViewMode:_outlineViewScrollView.hidden];
+    [[NSUserDefaults standardUserDefaults] setBool:!_outlineViewScrollView.hidden
+                                            forKey:iTermToolSnippetsUseOutlineViewModeUserDefaultsKey];
+}
+
+- (void)setOutlineViewMode:(BOOL)outlineViewMode {
+    _outlineViewScrollView.hidden = !outlineViewMode;
+    _tableViewScrollView.hidden = outlineViewMode;
+    [_searchField setArrowHandler:outlineViewMode ? _outlineView : _tableView];
+
+
+    if (@available(macOS 10.16, *)) {
+        NSString *imageName = outlineViewMode ? @"list.bullet" : @"list.bullet.indent";
+        _modeButton.image = [NSImage it_imageForSymbolName:imageName accessibilityDescription:@"Treeview/list view toggle"];
+    }
 }
 
 #pragma mark - ToolbeltTool
@@ -170,11 +332,15 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     // Search field
     NSRect searchFieldFrame = NSMakeRect(0,
                                          0,
-                                         frame.size.width - 3 * kMargin - _help.frame.size.width,
+                                         frame.size.width - kMargin - _help.frame.size.width,
                                          _searchField.frame.size.height);
     _searchField.frame = searchFieldFrame;
 
-    _help.frame = NSMakeRect(NSMaxX(searchFieldFrame) + kMargin, NSMinY(searchFieldFrame), NSWidth(_help.frame), NSHeight(_help.frame));
+    CGFloat fudgeFactor = 1;
+    if (@available(macOS 10.16, *)) {
+        fudgeFactor = 2;
+    }
+    _help.frame = NSMakeRect(NSMaxX(searchFieldFrame) + kMargin, NSMinY(searchFieldFrame) + fudgeFactor, NSWidth(_help.frame), NSHeight(_help.frame));
 
     [_applyButton sizeToFit];
     [_applyButton setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, _applyButton.frame.size.width, kButtonHeight)];
@@ -190,7 +356,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
                                             kButtonHeight);
 
     CGFloat x = frame.size.width;
-    for (NSButton *button in @[ _addButton, _removeButton, _editButton]) {
+    for (NSButton *button in @[ _addButton, _removeButton, _editButton, _modeButton]) {
         [button sizeToFit];
         CGFloat width;
         if (@available(macOS 10.16, *)) {
@@ -206,9 +372,11 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     }
 
     const CGFloat searchFieldY = searchFieldFrame.size.height + kMargin;
-    [_scrollView setFrame:NSMakeRect(0, searchFieldY, frame.size.width, frame.size.height - kButtonHeight - kMargin - searchFieldY)];
+    [_tableViewScrollView setFrame:NSMakeRect(0, searchFieldY, frame.size.width, frame.size.height - kButtonHeight - kMargin - searchFieldY)];
+    [_outlineViewScrollView setFrame:NSMakeRect(0, searchFieldY, frame.size.width, frame.size.height - kButtonHeight - kMargin - searchFieldY)];
     NSSize contentSize = [self contentSize];
     [_tableView setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+    [_outlineView setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 }
 
 - (CGFloat)minimumHeight {
@@ -246,6 +414,10 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (void)doubleClickOnTableView:(id)sender {
+    [self applySelectedSnippets:[self preferredAction]];
+}
+
+- (void)doubleClickOnOutlineView:(id)sender {
     [self applySelectedSnippets:[self preferredAction]];
 }
 
@@ -289,9 +461,16 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (BOOL)performKeyEquivalent:(NSEvent *)event {
-    if (_tableView.window.firstResponder == _tableView && event.keyCode == kVK_Delete) {
-        [self remove:nil];
-        return YES;
+    if (_outlineViewScrollView.hidden) {
+        if (_tableView.window.firstResponder == _tableView && event.keyCode == kVK_Delete) {
+            [self remove:nil];
+            return YES;
+        }
+    } else {
+        if (_outlineView.window.firstResponder == _outlineView && event.keyCode == kVK_Delete) {
+            [self remove:nil];
+            return YES;
+        }
     }
     return [super performKeyEquivalent:event];
 }
@@ -299,6 +478,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (void)currentSessionDidChange {
     [self updateModel];
     [_tableView reloadData];
+    [_outlineView reloadData];
 }
 
 #pragma mark - Private
@@ -308,6 +488,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     _filteredSnippets = [[iTermSnippetsModel sharedInstance] snippetsMatchingSearchQuery:_searchField.stringValue
                                                                           additionalTags:[self.toolWrapper.delegate.delegate toolbeltSnippetTags]
                                                                                tagsFound:&_haveTags];
+    [self buildTree];
 }
 
 - (NSArray<iTermProfileSearchToken *> *)parseFilter:(NSString*)filter {
@@ -388,117 +569,197 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 - (void)snippetsDidChange:(iTermSnippetsDidChangeNotification *)notif {
     const BOOL hadTags = _haveTags;
-    [self updateModel];
     if (_haveTags || hadTags) {
+        [self updateModel];
         [_tableView reloadData];
+        [_outlineView reloadData];
         return;
     }
     switch (notif.mutationType) {
         case iTermSnippetsDidChangeMutationTypeEdit: {
-            [_tableView it_performUpdateBlock:^{
-                [_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:notif.index]
-                                      columnIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 1)]];
-            }];
-            break;
+            // Remove at notif.index
+            const NSInteger removeIndex = [self filteredIndex:notif.index];
+            [self updateModel];
+            NSInteger insertionIndex = NSNotFound;
+            if ([_filteredSnippets containsObject:_unfilteredSnippets[notif.index]]) {
+                // Add at notif.index
+                insertionIndex = [self filteredIndex:notif.index];
+            }
+            if (removeIndex != NSNotFound || insertionIndex != NSNotFound) {
+                [_tableView it_performUpdateBlock:^{
+                    if (removeIndex != NSNotFound) {
+                        [_tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:removeIndex]
+                                          withAnimation:YES];
+                    }
+                    if (insertionIndex != NSNotFound) {
+                        [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:insertionIndex]
+                                          withAnimation:NO];
+                    }
+                }];
+            }
         }
         case iTermSnippetsDidChangeMutationTypeDeletion: {
+            NSIndexSet *indexes = [self filteredIndexSet:notif.indexSet];
+            [self updateModel];
             [_tableView it_performUpdateBlock:^{
-                [_tableView removeRowsAtIndexes:notif.indexSet
+                [_tableView removeRowsAtIndexes:indexes
                                   withAnimation:YES];
             }];
+            [self updateOutlineView];
             break;
         }
         case iTermSnippetsDidChangeMutationTypeInsertion: {
-            [_tableView it_performUpdateBlock:^{
-                [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:notif.index]
-                                  withAnimation:YES];
-            }];
+            [self updateModel];
+            NSInteger i = [self filteredIndex:notif.index];
+            if (i == NSNotFound) {
+                i = _filteredSnippets.count;
+            }
+            if ([_filteredSnippets containsObject:_unfilteredSnippets[notif.index]]) {
+                [_tableView it_performUpdateBlock:^{
+                    [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:i]
+                                      withAnimation:YES];
+                }];
+                [self updateOutlineView];
+            }
             break;
         }
         case iTermSnippetsDidChangeMutationTypeMove: {
-            [_tableView it_performUpdateBlock:^{
-                [_tableView removeRowsAtIndexes:notif.indexSet
-                                  withAnimation:YES];
-                NSMutableIndexSet *insertionIndexes = [NSMutableIndexSet indexSet];
-                for (NSInteger i = 0; i < notif.indexSet.count; i++) {
-                    [insertionIndexes addIndex:notif.index + i];
+            NSIndexSet *removeIndexes = [self filteredIndexSet:notif.indexSet];
+            NSMutableArray<iTermSnippet *> *movingSnippets = [NSMutableArray array];
+            [removeIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
+                if ([_filteredSnippets containsObject:_unfilteredSnippets[idx]]) {
+                    [movingSnippets addObject:_unfilteredSnippets[idx]];
                 }
-                [_tableView insertRowsAtIndexes:insertionIndexes
-                                  withAnimation:YES];
             }];
+            NSArray<NSNumber *> *sourceIndexes = [movingSnippets mapWithBlock:^id _Nullable(iTermSnippet *snippet) {
+                return @([_unfilteredSnippets indexOfObject:snippet]);
+            }];
+            [self updateModel];
+            [_tableView it_performUpdateBlock:^{
+                for (NSInteger i = 0; i < sourceIndexes.count; i++) {
+                    [_tableView moveRowAtIndex:sourceIndexes[i].integerValue
+                                       toIndex:[_filteredSnippets indexOfObject:movingSnippets[i]]];
+                }
+            }];
+            [self updateOutlineView];
             break;
         }
         case iTermSnippetsDidChangeMutationTypeFullReplacement:
+            [self updateModel];
             [_tableView reloadData];
+            [_outlineView reloadData];
             break;
     }
+}
+
+- (NSInteger)filteredIndex:(NSInteger)unfilteredIndex {
+    if (unfilteredIndex >= _unfilteredSnippets.count) {
+        return NSNotFound;
+    }
+    iTermSnippet *snippet = _unfilteredSnippets[unfilteredIndex];
+    return [_filteredSnippets indexOfObject:snippet];
+}
+
+- (void)updateOutlineView {
+    // It would be nice to do something fancy like diff the before-and-after trees and update only
+    // the necessary rows but the complexity is too great for me to do that tonight.
+    [_outlineView reloadData];
 }
 
 - (void)applySelectedSnippets:(iTermToolSnippetsAction)action {
     DLog(@"%@", [NSThread callStackSymbols]);
     for (iTermSnippet *snippet in [self selectedSnippets]) {
-        DLog(@"Create action to send snippet %@", snippet);
-        iTermToolWrapper *wrapper = self.toolWrapper;
-        switch (action) {
-            case iTermToolSnippetsActionSend: {
-                iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
-                                                                  action:KEY_ACTION_SEND_SNIPPET
-                                                               parameter:snippet.actionKey
-                                                                escaping:snippet.escaping
-                                                               applyMode:iTermActionApplyModeCurrentSession
-                                                                 version:snippet.version];
-                [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
-                break;
-            }
-            case iTermToolSnippetsActionAdvancedPaste:
-                [wrapper.delegate.delegate toolbeltOpenAdvancedPasteWithString:snippet.value
-                                                                      escaping:snippet.escaping];
-                break;
-            case iTermToolSnippetsActionComposer:
-                [wrapper.delegate.delegate toolbeltOpenComposerWithString:snippet.value
-                                                                 escaping:snippet.escaping];
-                break;
+        [self applyAction:action toSnippet:snippet];
+    }
+}
+
+- (void)applyAction:(iTermToolSnippetsAction)action toSnippet:(iTermSnippet *)snippet {
+    DLog(@"Create action to send snippet %@", snippet);
+    iTermToolWrapper *wrapper = self.toolWrapper;
+    switch (action) {
+        case iTermToolSnippetsActionSend: {
+            iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
+                                                              action:KEY_ACTION_SEND_SNIPPET
+                                                           parameter:snippet.actionKey
+                                                            escaping:snippet.escaping
+                                                           applyMode:iTermActionApplyModeCurrentSession
+                                                             version:snippet.version];
+            [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
+            break;
         }
+        case iTermToolSnippetsActionAdvancedPaste:
+            [wrapper.delegate.delegate toolbeltOpenAdvancedPasteWithString:snippet.value
+                                                                  escaping:snippet.escaping];
+            break;
+        case iTermToolSnippetsActionComposer:
+            [wrapper.delegate.delegate toolbeltOpenComposerWithString:snippet.value
+                                                             escaping:snippet.escaping];
+            break;
     }
 }
 
 - (NSArray<iTermSnippet *> *)selectedSnippets {
-    DLog(@"selected row indexes are %@", _tableView.selectedRowIndexes);
+    if (_outlineViewScrollView.hidden) {
+        DLog(@"selected row indexes are %@", _tableView.selectedRowIndexes);
+        NSArray<iTermSnippet *> *snippets = _filteredSnippets;
+        DLog(@"Snippets are:\n%@", snippets);
+        return [[_tableView.selectedRowIndexes it_array] mapWithBlock:^id(NSNumber *indexNumber) {
+            DLog(@"Add snippet at %@", indexNumber);
+            return snippets[indexNumber.integerValue];
+        }];
+    }
+    DLog(@"selected row indexes are %@", _outlineView.selectedRowIndexes);
     NSArray<iTermSnippet *> *snippets = _filteredSnippets;
     DLog(@"Snippets are:\n%@", snippets);
-    return [[_tableView.selectedRowIndexes it_array] mapWithBlock:^id(NSNumber *indexNumber) {
+    return [[_outlineView.selectedRowIndexes it_array] mapWithBlock:^id(NSNumber *indexNumber) {
         DLog(@"Add snippet at %@", indexNumber);
-        return snippets[indexNumber.integerValue];
+        return [[iTermSnippetItem castFrom:[_outlineView itemAtRow:indexNumber.integerValue]] snippet];
     }];
 }
 
 - (NSSize)contentSize {
-    NSSize size = [_scrollView contentSize];
+    NSSize size = [_tableViewScrollView contentSize];
     size.height = _tableView.intrinsicContentSize.height;
     return size;
 }
 
 - (NSString *)combinedStringForRow:(NSInteger)rowIndex {
     iTermSnippet *snippet = _filteredSnippets[rowIndex];
+    return [self combinedStringForSnippet:snippet];
+}
+
+- (NSString *)combinedStringForSnippet:(iTermSnippet *)snippet {
     NSString *title = [snippet trimmedTitle:256];
     if (!title.length) {
-        return [self valueStringForRow:rowIndex];
+        return [self valueStringForSnippet:snippet];
     }
     return [NSString stringWithFormat:@"%@ — %@", title, [snippet trimmedValue:256]];
 }
 
 - (NSString *)valueStringForRow:(NSInteger)rowIndex {
-    return [_filteredSnippets[rowIndex] trimmedValue:40];
+    return [self valueStringForSnippet:_filteredSnippets[rowIndex]];
+}
+
+- (NSString *)valueStringForSnippet:(iTermSnippet *)snippet {
+    return [snippet trimmedValue:40];
 }
 
 - (void)update {
     [_tableView reloadData];
+    [_outlineView reloadData];
     // Updating the table data causes the cursor to change into an arrow!
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
 
-    NSResponder *firstResponder = [[_tableView window] firstResponder];
-    if (firstResponder != _tableView) {
-        [_tableView scrollToEndOfDocument:nil];
+    if (_outlineViewScrollView.hidden) {
+        NSResponder *firstResponder = [[_tableView window] firstResponder];
+        if (firstResponder != _tableView) {
+            [_tableView scrollToEndOfDocument:nil];
+        }
+    } else {
+        NSResponder *firstResponder = [[_outlineView window] firstResponder];
+        if (firstResponder != _outlineView) {
+            [_outlineView scrollToEndOfDocument:nil];
+        }
     }
 }
 
@@ -516,26 +777,224 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 #pragma mark - NSTableViewDelegate
 
+- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    if (@available(macOS 10.16, *)) {
+        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
+    }
+    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
+}
+
 - (NSString *)stringForRow:(NSInteger)row {
     iTermSnippet *snippet = _filteredSnippets[row];
+    return [self stringForSnippet:snippet];
+}
+
+- (NSString *)stringForSnippet:(iTermSnippet *)snippet {
     if ([snippet titleEqualsValueUpToLength:40]) {
-        return [self valueStringForRow:row];
+        return [self valueStringForSnippet:snippet];
     }
-    return [self combinedStringForRow:row];
+    return [self combinedStringForSnippet:snippet];
+}
+
+- (NSAttributedString *)attributedStringForRow:(NSInteger)row {
+    iTermSnippet *snippet = _filteredSnippets[row];
+    return [self attributedStringForSnippet:snippet tags:NO];
+}
+
+- (NSAttributedString *)attributedStringForSnippet:(iTermSnippet *)snippet
+                                              tags:(BOOL)tags {
+    NSFont *font = [NSFont it_toolbeltFont];
+    NSDictionary *attributes = @{ NSFontNameAttribute: font,
+                                  NSForegroundColorAttributeName: [NSColor textColor] };
+
+    if (tags) {
+        NSDictionary *attributes = @{
+            NSForegroundColorAttributeName: NSColor.whiteColor,
+            NSBackgroundColorAttributeName: [NSColor colorWithSRGBRed:0.97 green:0.47 blue:0.10 alpha:1.0],
+            NSFontAttributeName: [font fontWithSize:round(font.pointSize * 0.8)]
+        };
+        if (snippet.tags.count) {
+            NSArray *tagAttributedStrings = [snippet.tags flatMapWithBlock:^id _Nullable(NSString * _Nonnull tag) {
+                NSAttributedString *tagString = [NSAttributedString attributedStringWithString:tag
+                                                                                    attributes:attributes];
+                tagString = [tagString highlightMatchesForQuery:_searchField.stringValue
+                                               phraseIdentifier:[@"tag:" stringByAppendingString:tag]];
+                NSAttributedString *colorSpace = [NSAttributedString attributedStringWithString:@" "
+                                                                                     attributes:attributes];
+                NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
+                                                                                attributes:@{ NSFontAttributeName: font }];
+                return @[colorSpace, tagString, colorSpace, space];
+            }];
+            return [NSAttributedString attributedStringWithAttributedStrings:tagAttributedStrings];
+        } else {
+            return [NSAttributedString attributedStringWithString:@"" attributes:attributes];
+        }
+    }
+
+    if (!snippet.searchMatches) {
+        NSString *string = [self stringForSnippet:snippet];
+        return [NSAttributedString attributedStringWithString:string attributes:attributes];
+    }
+
+    NSString *trimmedValue = [self valueStringForSnippet:snippet];
+    NSAttributedString *unhighlightedAttributedString = [NSAttributedString attributedStringWithString:trimmedValue
+                                                                                            attributes:attributes];
+    NSAttributedString *highlightedValueAttributedString = [unhighlightedAttributedString highlightMatchesForQuery:_searchField.stringValue
+                                                                                                  phraseIdentifier:@"text:"];
+    NSString *title = [snippet trimmedTitle:256];
+    if ([snippet titleEqualsValueUpToLength:40] || !title.length) {
+        return highlightedValueAttributedString;
+    }
+    NSAttributedString *emDashAttributedString = [NSAttributedString attributedStringWithString:@" — "
+                                                                                     attributes:attributes];
+
+    NSAttributedString *titleAttributedString = [NSAttributedString attributedStringWithString:title
+                                                                                    attributes:attributes];
+    titleAttributedString = [titleAttributedString highlightMatchesForQuery:_searchField.stringValue
+                                                           phraseIdentifier:@"title:"];
+
+    return [NSAttributedString attributedStringWithAttributedStrings:@[titleAttributedString,
+                                                                       emDashAttributedString,
+                                                                       highlightedValueAttributedString]];
+}
+
+- (NSAttributedString *)attributedStringForFolder:(iTermSnippetFolderItem *)folder {
+    NSFont *font = [NSFont it_toolbeltFont];
+    NSDictionary *attributes = @{ NSFontNameAttribute: font,
+                                  NSForegroundColorAttributeName: [NSColor textColor] };
+    return [NSAttributedString attributedStringWithString:folder.title attributes:attributes];
+}
+
+- (iTermTableCellView *)cellViewWithIdentifier:(NSString *)identifier centerVertically:(BOOL)centerVertically folder:(BOOL)folder {
+    iTermTableCellView *cellView = [_tableView makeViewWithIdentifier:identifier owner:self];
+    NSTextField *textField;
+    NSColor *iconColor =
+        folder ? [NSColor colorWithSRGBRed:0.97 green:0.47 blue:0.10 alpha:1.0] : [NSColor colorWithDisplayP3Red: 94.0 / 255.0
+                                                                                                           green: 159.0 / 255.0
+                                                                                                            blue: 208.0 / 255.0
+                                                                                                           alpha: 1];
+
+    if (cellView == nil) {
+        if (centerVertically) {
+            cellView = [[iTermTwoTextFieldCell alloc] initWithIdentifier:identifier
+                                                                    font:[NSFont it_toolbeltFont]
+                                                                    icon:_icon
+                                                                   color:iconColor];
+        } else {
+            if (_icon && _folderIcon) {
+                cellView = [[iTermIconTableCellView alloc] initWithIcon:folder ? _folderIcon : _icon
+                                                                  color:iconColor];
+            } else {
+                cellView = [[iTermTableCellView alloc] init];
+            }
+            textField = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+            cellView.strongTextField = textField;
+            textField.font = [NSFont it_toolbeltFont];
+            textField.lineBreakMode = NSLineBreakByTruncatingTail;
+            textField.usesSingleLineMode = NO;
+            textField.maximumNumberOfLines = 1;
+            textField.cell.truncatesLastVisibleLine = YES;
+            [cellView addSubview:textField];
+            textField.translatesAutoresizingMaskIntoConstraints = NO;
+            if (!_icon) {
+                [NSLayoutConstraint activateConstraints:@[
+                    [textField.leadingAnchor constraintEqualToAnchor:cellView.leadingAnchor],
+                    [textField.trailingAnchor constraintEqualToAnchor:cellView.trailingAnchor],
+                    [textField.centerYAnchor constraintEqualToAnchor:cellView.centerYAnchor],
+                ]];
+            }
+        }
+    }
+    return cellView;
+}
+
+- (NSTableRowView *)outlineView:(NSOutlineView *)outlineView rowViewForItem:(id)item {
+    if (@available(macOS 10.16, *)) {
+        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
+    }
+    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
+}
+
+- (NSView *)outlineView:(NSOutlineView *)outlineView viewForTableColumn:(NSTableColumn *)tableColumn item:(id)item {
+    iTermSnippet *snippet = [[iTermSnippetItem castFrom:item] snippet];
+    const BOOL hasTags = snippet.tags.count > 0;
+    if (hasTags) {
+        return [self cellViewForSnippetWithTags:snippet];
+    }
+    return [self regularCellViewForItem:item];
+}
+
+- (NSView *)regularCellViewForItem:(id)item {
+    static NSString *const identifier = @"iTermToolSnippetsOutlineNoTags";
+    iTermSnippet *snippet = [[iTermSnippetItem castFrom:item] snippet];
+    iTermTableCellView *cellView = [self cellViewWithIdentifier:identifier centerVertically:NO folder:snippet == nil];
+    NSTextField *textField = cellView.textField;
+
+    if (snippet) {
+        textField.attributedStringValue = [self attributedStringForSnippet:snippet tags:NO];
+    } else {
+        iTermSnippetFolderItem *folder = [iTermSnippetFolderItem castFrom:item];
+        assert(folder);
+        textField.attributedStringValue = [self attributedStringForFolder:folder];
+    }
+    return cellView;
+}
+
+- (NSView *)cellViewForSnippetWithTags:(iTermSnippet *)snippet {
+    static NSString *const identifier = @"iTermToolSnippetsOutlineWithTags";
+    iTermTableCellView *cellView = [self cellViewWithIdentifier:identifier centerVertically:YES folder:NO];
+    iTermTwoTextFieldCell *cell = [iTermTwoTextFieldCell castFrom:cellView];
+    cell.topTextField.attributedStringValue = [self attributedStringForSnippet:snippet tags:NO];
+    cell.bottomTextField.attributedStringValue = [self attributedStringForSnippet:snippet tags:YES];
+    return cellView;
 }
 
 - (NSView *)tableView:(NSTableView *)tableView
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
-    NSTableCellView *cell = [tableView newTableCellViewWithTextFieldUsingIdentifier:@"iTermToolSnippets"
-                                                                               font:[NSFont it_toolbeltFont]
-                                                                             string:[self stringForRow:row]];
-    cell.textField.stringValue = [self stringForRow:row];
-    return cell;
+    static NSString *const identifier = @"iTermToolSnippets";
+    iTermTableCellView *cellView = [self cellViewWithIdentifier:identifier centerVertically:NO folder:NO];
+    NSTextField *textField = cellView.textField;
+
+    textField.attributedStringValue = [self attributedStringForRow:row];
+    return cellView;
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
     [self updateEnabled];
+}
+
+#pragma mark - NSOutlineViewDataSource
+
+- (CGFloat)outlineView:(NSOutlineView *)outlineView heightOfRowByItem:(id)item {
+    iTermSnippetItem *snippetItem = [iTermSnippetItem castFrom:item];
+    if (!snippetItem.snippet.tags.count) {
+        return _standardRowHeight;
+    }
+    return _standardRowHeight * 1.8;
+}
+
+- (NSInteger)outlineView:(NSOutlineView *)outlineView numberOfChildrenOfItem:(nullable id)item {
+    if (!item) {
+        return _tree.count;
+    }
+    if ([item isKindOfClass:[iTermSnippetItem class]]) {
+        return 0;
+    }
+    iTermSnippetFolderItem *folder = [iTermSnippetFolderItem castFrom:item];
+    return folder.children.count;
+}
+
+- (id)outlineView:(NSOutlineView *)outlineView child:(NSInteger)index ofItem:(nullable id)item {
+    if (!item) {
+        return _tree[index];
+    }
+    iTermSnippetFolderItem *folder = [iTermSnippetFolderItem castFrom:item];
+    return folder.children[index];
+}
+
+- (BOOL)outlineView:(NSOutlineView *)outlineView isItemExpandable:(id)item {
+    return [item isKindOfClass:[iTermSnippetFolderItem class]];
 }
 
 #pragma mark - NSTableViewDataSource
@@ -546,11 +1005,36 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 #pragma mark Drag-Drop
 
+- (id<NSPasteboardWriting>)outlineView:(NSOutlineView *)outlineView pasteboardWriterForItem:(id)item {
+    if ([item isKindOfClass:[iTermSnippetItem class]]) {
+        iTermSnippet *snippet = [item snippet];
+        NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+        [pbItem setPropertyList:snippet.guid forType:iTermToolSnippetsPasteboardType];
+        [pbItem setString:snippet.value forType:NSPasteboardTypeString];
+        return pbItem;
+    } else {
+        return nil;
+    }
+}
+
 - (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
     NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
     [pbItem setPropertyList:_filteredSnippets[row].guid forType:iTermToolSnippetsPasteboardType];
     [pbItem setString:_filteredSnippets[row].value forType:NSPasteboardTypeString];
     return pbItem;
+}
+
+- (NSDragOperation)outlineView:(NSOutlineView *)outlineView
+                  validateDrop:(id<NSDraggingInfo>)info
+                  proposedItem:(id)item
+            proposedChildIndex:(NSInteger)index {
+    if ([info draggingSource] != outlineView) {
+        return NSDragOperationNone;
+    }
+    if ([item isKindOfClass:[iTermSnippetItem class]]) {
+        return NSDragOperationNone;
+    }
+    return NSDragOperationMove;
 }
 
 - (NSDragOperation)tableView:(NSTableView *)aTableView
@@ -572,6 +1056,31 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
         default:
             return NSDragOperationNone;
     }
+}
+
+- (BOOL)outlineView:(NSOutlineView *)outlineView
+         acceptDrop:(id<NSDraggingInfo>)info
+               item:(id)item
+         childIndex:(NSInteger)index {
+    if (item) {
+        return NO;
+    }
+    if (index < 0 || index > _filteredSnippets.count) {
+        return NO;
+    }
+    NSMutableArray<NSString *> *guids = [NSMutableArray array];
+    [info enumerateDraggingItemsWithOptions:0
+                                    forView:outlineView
+                                    classes:@[ [NSPasteboardItem class]]
+                              searchOptions:@{}
+                                 usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
+        NSPasteboardItem *item = draggingItem.item;
+        [guids addObject:[item propertyListForType:iTermToolSnippetsPasteboardType]];
+    }];
+
+    [[iTermSnippetsModel sharedInstance] moveSnippetsWithGUIDs:guids
+                                                       toIndex:index];
+    return YES;
 }
 
 - (BOOL)tableView:(NSTableView *)aTableView
@@ -656,6 +1165,20 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     [self updateModel];
     [_tableView reloadData];
+    [_outlineView reloadData];
+}
+
+- (void)controlTextDidEndEditing:(NSNotification *)obj {
+    const NSTextMovement movement = (NSTextMovement)[obj.userInfo[NSTextMovementUserInfoKey] integerValue];
+    if (movement != NSReturnTextMovement) {
+        return;
+    }
+    NSArray *selected = [self selectedSnippets];
+    if (selected.count > 0) {
+        [self applySelectedSnippets:[self preferredAction]];
+    } else if (_filteredSnippets.count == 1) {
+        [self applyAction:[self preferredAction] toSnippet:_filteredSnippets[0]];
+    }
 }
 
 - (NSArray *)control:(NSControl *)control

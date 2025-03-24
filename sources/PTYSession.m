@@ -10853,19 +10853,25 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)textViewShouldPlaceCursorAt:(VT100GridCoord)coord verticalOk:(BOOL *)verticalOk {
+    DLog(@"coord=%@, _screen.numberOfLines=%@, _screen.height=%@, _screen.width=%@",
+         VT100GridCoordDescription(coord), @(_screen.numberOfLines), @(_screen.height), @(_screen.width));
     if (coord.y < _screen.numberOfLines - _screen.height ||
         coord.x < 0 ||
         coord.x >= _screen.width ||
         coord.y >= _screen.numberOfLines) {
         // Click must be in the live area and not in a margin.
+        DLog(@"Not in live area or in margin");
         return NO;
     }
+    DLog(@"commandRange=%@", VT100GridCoordRangeDescription(_screen.commandRange));
     if (_screen.commandRange.start.x < 0) {
         if (_screen.terminalSoftAlternateScreenMode) {
             // In an interactive app. No restrictions.
+            DLog(@"In interactive app");
             *verticalOk = YES;
             return YES;
         } else {
+            DLog(@"Not in interactive app");
             // Possibly at a command prompt without shell integration or in some other command line
             // app that may be using readline. No vertical movement.
             *verticalOk = NO;
@@ -10876,6 +10882,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         // arrows please.
         NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(_screen.commandRange),
                                                        coord);
+        DLog(@"At command prompt, order=%@", @(order));
         *verticalOk = NO;
         return (order != NSOrderedDescending);
     }

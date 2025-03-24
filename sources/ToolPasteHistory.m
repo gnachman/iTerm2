@@ -74,7 +74,8 @@ static const CGFloat kMargin = 4;
 
         _scrollView = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer:self
                                                                              insets:NSEdgeInsetsMake(0, 0, 0, kButtonHeight + kMargin)
-                                                                          rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]];
+                                                                          rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]
+                                                                  keyboardNavigable:NO];
         _tableView = _scrollView.documentView;
         [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
         [self relayout];

@@ -253,30 +253,88 @@ class iTermTableCellView: NSTableCellView {
         }
     }
 
+    func updateForegroundColor(textField: NSTextField) {
+        switch backgroundStyle {
+        case .normal:
+            textField.attributedStringValue = textField.attributedStringValue.mapAttributes({ attrs in
+                var result = attrs
+                if result[.foregroundColor] as? NSColor == NSColor.selectedMenuItemTextColor {
+                    result[.foregroundColor] = NSColor.textColor
+                }
+                return result
+            })
+        case .emphasized:
+            textField.attributedStringValue = textField.attributedStringValue.mapAttributes({ attrs in
+                var result = attrs
+                if result[.foregroundColor] as? NSColor == NSColor.textColor {
+                    result[.foregroundColor] = NSColor.selectedMenuItemTextColor
+                }
+                return result
+            })
+        default:
+            break
+        }
+    }
+
     override var backgroundStyle: NSView.BackgroundStyle {
         didSet {
             if let textField = self.textField {
-                switch backgroundStyle {
-                case .normal:
-                    textField.attributedStringValue = textField.attributedStringValue.mapAttributes({ attrs in
-                        var result = attrs
-                        if result[.foregroundColor] as? NSColor == NSColor.selectedMenuItemTextColor {
-                            result[.foregroundColor] = NSColor.textColor
-                        }
-                        return result
-                    })
-                case .emphasized:
-                    textField.attributedStringValue = textField.attributedStringValue.mapAttributes({ attrs in
-                        var result = attrs
-                        if result[.foregroundColor] as? NSColor == NSColor.textColor {
-                            result[.foregroundColor] = NSColor.selectedMenuItemTextColor
-                        }
-                        return result
-                    })
-                default:
-                    break
-                }
+                updateForegroundColor(textField: textField)
             }
         }
+    }
+}
+
+// A table cell with an optional icon and a text field next to it.
+@objc(iTermIconTableCellView)
+class IconTableCellView: iTermTableCellView {
+    @objc var iconView = NSImageView()
+    @objc var icon: NSImage? {
+        get { iconView.image }
+        set { iconView.image = newValue }
+    }
+
+    private var didSetupConstraints = false
+
+    @objc(initWithIcon:color:)
+    init(icon: NSImage, iconColor: NSColor) {
+        super.init(frame: .zero)
+        icon.isTemplate = true
+        iconView.contentTintColor = iconColor
+        self.icon = icon
+        commonInit()
+    }
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        commonInit()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    private func commonInit() {
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(iconView)
+    }
+
+    override func updateConstraints() {
+        if !didSetupConstraints, let textField = self.textField {
+            didSetupConstraints = true
+            NSLayoutConstraint.activate([
+                // Icon view constraints
+                iconView.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 0),
+                iconView.centerYAnchor.constraint(equalTo: self.centerYAnchor, constant: -1),
+                iconView.heightAnchor.constraint(equalToConstant: 10),
+                iconView.widthAnchor.constraint(equalToConstant: 10),
+
+                // Text field constraints
+                textField.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 2),
+                textField.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: 0),
+                textField.centerYAnchor.constraint(equalTo: self.centerYAnchor)
+            ])
+        }
+        super.updateConstraints()
     }
 }

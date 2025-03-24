@@ -23,6 +23,7 @@ extern NSString *iTermSnippetHelpMarkdown;
 @property (nonatomic, readonly) iTermSendTextEscaping escaping;
 @property (nonatomic, readonly) int version;
 @property (nonatomic, readonly) NSArray<NSString *> *tags;
+@property (nonatomic, readonly) NSDictionary<NSString *, NSIndexSet *> *searchMatches;
 
 // Title suitable for display. Works nicely if the title is empty by using a prefix of the value.
 @property (nonatomic, readonly) NSString *displayTitle;
@@ -51,7 +52,12 @@ extern NSString *iTermSnippetHelpMarkdown;
 - (BOOL)matchesActionKey:(id)actionKey;
 - (BOOL)hasTags:(NSArray<NSString *> *)tags;
 - (NSComparisonResult)compareTitle:(iTermSnippet *)other;
+
+// NOTE: The clone will have a different GUID.
 - (iTermSnippet *)clone;
+
+// The copy will have the same GUID.
+- (iTermSnippet *)copyWithSearchMatches:(NSDictionary<NSString *, NSIndexSet *> *)searchMatches;
 
 @end
 
@@ -60,6 +66,10 @@ extern NSString *iTermSnippetHelpMarkdown;
 + (instancetype)sharedInstance;
 
 @property (nonatomic, readonly) NSArray<iTermSnippet *> *snippets;
+
++ (BOOL)snippet:(iTermSnippet *)snippet
+   matchesQuery:(NSString *)queryString
+ additionalTags:(NSArray<NSString *> *)additionalTags;
 
 - (void)addSnippet:(iTermSnippet *)snippet;
 - (void)removeSnippets:(NSArray<iTermSnippet *> *)snippets;

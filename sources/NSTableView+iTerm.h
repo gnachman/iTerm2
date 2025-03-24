@@ -34,4 +34,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+@interface NSOutlineView(iTerm)
++ (instancetype)toolbeltOutlineViewInScrollview:(NSScrollView *)scrollView
+                                 fixedRowHeight:(CGFloat)fixedRowHeight
+                                          owner:(NSView<NSOutlineViewDelegate, NSOutlineViewDataSource> *)owner;
+@end
+
 NS_ASSUME_NONNULL_END

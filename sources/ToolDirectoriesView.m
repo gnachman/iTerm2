@@ -93,7 +93,8 @@ static const CGFloat kHelpMargin = 5;
 
         _scrollView = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer:self
                                                                              insets:NSEdgeInsetsZero
-                                                                          rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]];
+                                                                          rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]
+                                                                  keyboardNavigable:NO];
         _tableView = _scrollView.documentView;
         NSCell *dataCell = _tableView.tableColumns[0].dataCell;
         dataCell.font = [NSFont it_toolbeltFont];

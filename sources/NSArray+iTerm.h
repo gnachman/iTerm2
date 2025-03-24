@@ -24,7 +24,7 @@
 - (NSAttributedString *)attributedComponentsJoinedByAttributedString:(NSAttributedString *)joiner;
 
 - (NSArray *)mapEnumeratedWithBlock:(id (^NS_NOESCAPE)(NSUInteger i, id object, BOOL *stop))block;
-- (NSArray *)flatMapWithBlock:(NSArray *(^)(ObjectType anObject))block;
+- (NSArray *)flatMapWithBlock:(NSArray *(^NS_NOESCAPE)(ObjectType anObject))block;
 
 - (NSArray<ObjectType> *)flattenedArray;
 

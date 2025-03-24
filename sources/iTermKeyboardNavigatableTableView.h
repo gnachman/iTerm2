@@ -10,5 +10,10 @@
 
 // A table view that calls interpretKeyEvents: on keyDown:.
 @interface iTermKeyboardNavigatableTableView : NSTableView
+@end
 
+@interface iTermAutomaticKeyboardNavigatableTableView : NSTableView
+@end
+
+@interface iTermAutomaticKeyboardNavigatableOutlineView : NSOutlineView
 @end

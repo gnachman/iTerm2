@@ -8,7 +8,11 @@
 #import "NSTableView+iTerm.h"
 
 #import <AppKit/AppKit.h>
+#import "iTermKeyboardNavigatableTableView.h"
+#import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSView+RecursiveDescription.h"
 
 @interface iTermTableCellViewWithTextField: NSTableCellView
 @end
@@ -89,13 +93,111 @@
 }
 
 @end
+
+@interface iTermToolbeltOutlineView: iTermAutomaticKeyboardNavigatableOutlineView
+@end
+
+// This just declares the selector so I can use @selector without it complaining. There is no implementation.
+@interface iTermPlaceholderForNSButtonCellSelectors
+- (NSRect)original_imageRectForBounds:(NSRect)rect;
+@end
+
+// Custom implementation for imageRectForBounds:
+static NSRect iTermOutlineViewDisclosureButtonImageRectForBounds(id self, SEL _cmd, NSRect bounds) {
+    NSRect (*originalFunc)(id, SEL, NSRect) = (void *)[self methodForSelector:@selector(original_imageRectForBounds:)];
+
+    NSRect imageRect = originalFunc(self, _cmd, bounds);
+    CGFloat verticalOffset = (NSHeight(bounds) - NSHeight(imageRect)) / 2.0;
+    imageRect.origin.y = NSMinY(bounds) + verticalOffset;
+    return imageRect;
+}
+
+@implementation iTermToolbeltOutlineView
+
+// There has to be a better way to do outline views with attributed strings, but I can't find it.
+// They don't draw the disclosure button vertically centered in the cell. You can't change the button's
+// cell without breaking basic functionality (it uses a private subclass of NSButtonCell).
+// All this silliness is just replacing NSOutlineButtonCell.imageRectForBounds(:_) with a replacement
+// implementation that vertically centers the image using iTermOutlineViewDisclosureButtonImageRectForBounds.
+- (__kindof NSView *)makeViewWithIdentifier:(NSUserInterfaceItemIdentifier)identifier owner:(id)owner {
+    NSView *view = [super makeViewWithIdentifier:identifier owner:owner];
+    if ([identifier isEqualToString:NSOutlineViewDisclosureButtonKey]) {
+        NSButton *button = [NSButton castFrom:view];
+        NSButtonCell *cell = button.cell;
+        if (cell && ![cell respondsToSelector:@selector(original_imageRectForBounds:)]) {
+            // Create a unique subclass name for this cell instance.
+            NSString *subclassName = @"NSOutlineButtonCell_iTermCustomImageRect";
+            Class subclass = NSClassFromString(subclassName);
+            if (!subclass) {
+                subclass = objc_allocateClassPair([cell class], [subclassName UTF8String], 0);
+                SEL sel = @selector(imageRectForBounds:);
+                Method method = class_getInstanceMethod([cell class], sel);
+                const char *types = method_getTypeEncoding(method);
+                IMP originalIMP = method_getImplementation(method);
+
+                // Save the original IMP under a new selector.
+                class_addMethod(subclass, @selector(original_imageRectForBounds:), originalIMP, types);
+                // Add our custom implementation for imageRectForBounds:
+                class_addMethod(subclass, sel, (IMP)iTermOutlineViewDisclosureButtonImageRectForBounds, types);
+                objc_registerClassPair(subclass);
+            }
+            // Change only this cell's class.
+            object_setClass(cell, subclass);
+        }
+    }
+    return view;
+}
+
+@end
+
+
+@implementation NSOutlineView(iTerm)
+
++ (instancetype)toolbeltOutlineViewInScrollview:(NSScrollView *)scrollView
+                                 fixedRowHeight:(CGFloat)fixedRowHeight
+                                          owner:(NSView<NSOutlineViewDelegate, NSOutlineViewDataSource> *)owner {
+    NSSize contentSize = [scrollView contentSize];
+    NSOutlineView *outlineView = [[iTermToolbeltOutlineView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+    if (@available(macOS 10.16, *)) {
+        outlineView.style = NSTableViewStyleInset;
+    }
+    NSTableColumn *valueColumn = [[NSTableColumn alloc] initWithIdentifier:@"value"];
+    [valueColumn setEditable:NO];
+    [outlineView addTableColumn:valueColumn];
+
+    outlineView.columnAutoresizingStyle = NSTableViewSequentialColumnAutoresizingStyle;
+
+    outlineView.headerView = nil;
+    outlineView.dataSource = owner;
+    outlineView.delegate = owner;
+    outlineView.intercellSpacing = NSMakeSize(outlineView.intercellSpacing.width, 0);
+    // I would like to use automatic row heights but it confuses autolayout and I am done with fighting with autolayout.
+    if (fixedRowHeight) {
+        outlineView.rowHeight = fixedRowHeight;
+    }
+
+    [outlineView setAutoresizingMask:NSViewWidthSizable];
+
+    [scrollView setDocumentView:outlineView];
+    [owner addSubview:scrollView];
+
+    [outlineView sizeToFit];
+    [outlineView sizeLastColumnToFit];
+
+    [outlineView performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
+    outlineView.backgroundColor = [NSColor clearColor];
+    return outlineView;
+}
+
+@end
+
 @implementation NSTableView (iTerm)
 
 + (instancetype)toolbeltTableViewInScrollview:(NSScrollView *)scrollView
                                fixedRowHeight:(CGFloat)fixedRowHeight
                                         owner:(NSView<NSTableViewDelegate,NSTableViewDataSource> *)owner {
     NSSize contentSize = [scrollView contentSize];
-    NSTableView *tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+    NSTableView *tableView = [[self alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
     if (@available(macOS 10.16, *)) {
         tableView.style = NSTableViewStyleInset;
     }

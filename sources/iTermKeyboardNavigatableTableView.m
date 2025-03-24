@@ -7,6 +7,7 @@
 //
 
 #import "iTermKeyboardNavigatableTableView.h"
+#import "NSObject+iTerm.h"
 
 @implementation iTermKeyboardNavigatableTableView
 
@@ -23,6 +24,76 @@
     } else {
         return [super respondsToSelector:aSelector];
     }
+}
+
+@end
+
+@implementation iTermAutomaticKeyboardNavigatableTableView
+
+- (void)keyDown:(NSEvent *)theEvent {
+  [self interpretKeyEvents:[NSArray arrayWithObject:theEvent]];
+}
+
+- (void)moveDown:(id)sender {
+    NSInteger row = self.selectedRow;
+    if (row == -1) {
+        return;
+    }
+    if (row + 1 == self.numberOfRows) {
+        return;
+    }
+    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:row + 1] byExtendingSelection:NO];
+}
+
+- (void)moveUp:(id)sender {
+    NSInteger row = self.selectedRow;
+    if (row <= 0) {
+        return;
+    }
+    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:row - 1] byExtendingSelection:NO];
+}
+
+- (void)insertNewline:(id)sender {
+    SEL doubleSel = [self doubleAction];
+    if (!doubleSel) {
+        return;
+    }
+    [self sendAction:doubleSel to:[self target]];
+}
+
+@end
+
+@implementation iTermAutomaticKeyboardNavigatableOutlineView
+
+- (void)keyDown:(NSEvent *)theEvent {
+  [self interpretKeyEvents:[NSArray arrayWithObject:theEvent]];
+}
+
+- (void)moveDown:(id)sender {
+    NSInteger row = self.selectedRow;
+    if (row == -1) {
+        return;
+    }
+    if (row + 1 == self.numberOfRows) {
+        return;
+    }
+    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:row + 1] byExtendingSelection:NO];
+}
+
+- (void)moveUp:(id)sender {
+    NSInteger row = self.selectedRow;
+    if (row <= 0) {
+        return;
+    }
+    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:row - 1] byExtendingSelection:NO];
+}
+
+- (void)insertNewline:(id)sender {
+    SEL doubleSel = [self doubleAction];
+    if (!doubleSel) {
+        return;
+    }
+    [self sendAction:doubleSel to:[self target]];
 }
 
 @end

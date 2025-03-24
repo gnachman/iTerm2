@@ -525,9 +525,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     VT100GridCoord findOnPageCursor = {0};
     if (isUnshiftedSingleClick) {
         // Just a click in the window.
-        DLog(@"is a click in the window");
 
         BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
+        DLog(@"is a click in the window. altPressed=%@", @(altPressed));
         if (altPressed &&
             [iTermPreferences boolForKey:kPreferenceKeyOptionClickMovesCursor] &&
             !_mouseDownWasFirstMouse) {
@@ -539,12 +539,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
                     // Reporting mouse clicks. The remote app gets preference.
+                    DLog(@"Not moving the cursor because reporting is on");
                     break;
 
                 default: {
                     // Not reporting mouse clicks, so we'll move the cursor since the remote app
                     // can't.
                     VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInWindow:[event locationInWindow]];
+                    DLog(@"coord=%@, cmdPressed=%@", VT100GridCoordDescription(coord), @(cmdPressed));
                     if (!cmdPressed) {
                         [self.mouseDelegate mouseHandlerMoveCursorToCoord:coord
                                                                  forEvent:event];

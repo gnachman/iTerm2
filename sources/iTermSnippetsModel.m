@@ -188,6 +188,18 @@ NSString *iTermSnippetHelpMarkdown = @"Terms in the search query are used to pre
     return [self.title compare:other.title];
 }
 
+- (iTermSnippet *)copyWithSearchMatches:(NSDictionary<NSString *, NSIndexSet *> *)searchMatches {
+    iTermSnippet *copy = [[iTermSnippet alloc] initWithTitle:self.title
+                                                       value:self.value
+                                                        guid:self.guid
+                                                        tags:self.tags
+                                                    escaping:self.escaping
+                                                     version:[iTermSnippet currentVersion]];
+    copy->_searchMatches = [searchMatches copy];
+    return copy;
+
+}
+
 - (iTermSnippet *)clone {
     return [[iTermSnippet alloc] initWithTitle:self.title
                                          value:self.value
@@ -334,11 +346,30 @@ NSString *iTermSnippetHelpMarkdown = @"Terms in the search query are used to pre
     return result != nil;
 }
 
++ (BOOL)snippet:(iTermSnippet *)snippet
+   matchesQuery:(NSString *)queryString
+ additionalTags:(NSArray<NSString *> *)additionalTags {
+    return [self snippetsMatchingSearchQuery:queryString
+                              additionalTags:additionalTags
+                                   tagsFound:nil
+                                    snippets:@[ snippet ]].count > 0;
+}
+
 - (NSArray<iTermSnippet *> *)snippetsMatchingSearchQuery:(NSString *)queryString
                                           additionalTags:(NSArray<NSString *> *)additionalTags
                                                tagsFound:(out BOOL *)tagsFoundPtr {
+    return [iTermSnippetsModel snippetsMatchingSearchQuery:queryString
+                                            additionalTags:additionalTags
+                                                 tagsFound:tagsFoundPtr
+                                                  snippets:self.snippets];
+}
+
++ (NSArray<iTermSnippet *> *)snippetsMatchingSearchQuery:(NSString *)queryString
+                                          additionalTags:(NSArray<NSString *> *)additionalTags
+                                               tagsFound:(out BOOL *)tagsFoundPtr
+                                                snippets:(NSArray<iTermSnippet *> *)snippets {
     if (queryString.length == 0 && additionalTags.count == 0) {
-        return [self.snippets copy];
+        return [snippets copy];
     }
     NSArray<NSString *> *operators = @[ @"tag:", @"title:", @"text:" ];
     iTermProfileStyleSearchEngineQuery *query =
@@ -350,14 +381,17 @@ NSString *iTermSnippetHelpMarkdown = @"Terms in the search query are used to pre
     iTermProfileStyleSearchEngine *engine = [[iTermProfileStyleSearchEngine alloc] initWithQuery:query];
 
     NSArray<iTermSnippet *> *filteredSnippets =
-    [self.snippets filteredArrayUsingBlock:^BOOL(iTermSnippet *snippet) {
+    [snippets mapWithBlock:^iTermSnippet *(iTermSnippet *snippet) {
         NSDictionary<NSString *, NSString *> *phrases = @{ @"title:": snippet.title ?: @"",
                                                            @"text:": snippet.value ?: @"" };
         iTermProfileStyleSearchEngineDocument *doc =
         [[iTermProfileStyleSearchEngineDocument alloc] initWithPhrases:phrases
                                                                   tags:snippet.tags];
         iTermProfileStyleSearchEngineResult *result = [engine searchWithDocument:doc sloppy:NO];
-        return result != nil;
+        if (!result) {
+            return nil;
+        }
+        return [snippet copyWithSearchMatches:result.phraseIndexes];
     }];
     if (tagsFoundPtr) {
         *tagsFoundPtr = [additionalTags count] > 0 || query.hasTags;

@@ -95,7 +95,8 @@ static const CGFloat kHelpMargin = 5;
                                                                                                      0,
                                                                                                      kButtonHeight + 2 * kMargin + searchField_.frame.size.height,
                                                                                                      0)
-                                                                          rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]];
+                                                                          rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]
+                                                                  keyboardNavigable:NO];
         _tableView = _scrollView.documentView;
         [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
         [searchField_ setArrowHandler:_tableView];

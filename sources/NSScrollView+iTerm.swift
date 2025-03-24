@@ -10,12 +10,13 @@ import Foundation
 extension NSScrollView {
     @objc static func scrollViewWithTableViewForToolbelt(container: NSView & NSTableViewDelegate & NSTableViewDataSource,
                                                          insets: NSEdgeInsets) -> NSScrollView {
-        return scrollViewWithTableViewForToolbelt(container: container, insets: insets, rowHeight: 0)
+        return scrollViewWithTableViewForToolbelt(container: container, insets: insets, rowHeight: 0, keyboardNavigable: false)
     }
 
     @objc static func scrollViewWithTableViewForToolbelt(container: NSView & NSTableViewDelegate & NSTableViewDataSource,
                                                          insets: NSEdgeInsets,
-                                                         rowHeight: CGFloat) -> NSScrollView {
+                                                         rowHeight: CGFloat,
+                                                         keyboardNavigable: Bool) -> NSScrollView {
         let frame = container.bounds.insetByEdgeInsets(insets)
         let scrollView = NSScrollView(frame: frame)
         scrollView.hasVerticalScroller = true
@@ -29,9 +30,37 @@ extension NSScrollView {
         scrollView.autoresizingMask = [.width, .height]
         scrollView.drawsBackground = false
 
-        _ = NSTableView.toolbeltTableView(inScrollview: scrollView,
-                                          fixedRowHeight: rowHeight,
-                                          owner: container)
+        if keyboardNavigable {
+            _ = iTermAutomaticKeyboardNavigatableTableView.toolbeltTableView(inScrollview: scrollView,
+                                              fixedRowHeight: rowHeight,
+                                              owner: container)
+        } else {
+            _ = NSTableView.toolbeltTableView(inScrollview: scrollView,
+                                              fixedRowHeight: rowHeight,
+                                              owner: container)
+        }
+        return scrollView
+    }
+
+    @objc static func scrollViewWithOutlineViewForToolbelt(container: NSView & NSOutlineViewDelegate & NSOutlineViewDataSource,
+                                                           insets: NSEdgeInsets,
+                                                           rowHeight: CGFloat) -> NSScrollView {
+        let frame = container.bounds.insetByEdgeInsets(insets)
+        let scrollView = NSScrollView(frame: frame)
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        if #available(macOS 10.16, *) {
+            scrollView.borderType = .lineBorder
+            scrollView.scrollerStyle = .overlay
+        } else {
+            scrollView.borderType = .bezelBorder
+        }
+        scrollView.autoresizingMask = [.width, .height]
+        scrollView.drawsBackground = false
+
+        _ = NSOutlineView.toolbeltOutlineView(inScrollview: scrollView,
+                                              fixedRowHeight: rowHeight,
+                                              owner: container)
         return scrollView
     }
 }

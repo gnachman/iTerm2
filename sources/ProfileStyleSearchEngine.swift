@@ -60,7 +60,7 @@ class ProfileStyleSearchEngineResult: NSObject {
     // Maps a phrase identifier to an indexset of matches in the corresponding phrase.
     // For tags, the phrase identifier is "tag:"+tagname.
     // For other parts, the phrase identifier equals the operator name (e.g., "text:").
-    fileprivate(set) var phraseIndexes = [String: IndexSet]()
+    @objc fileprivate(set) var phraseIndexes = [String: IndexSet]()
 
     @objc func highlight(attributedString: NSAttributedString,
                          operator op: String) -> NSAttributedString {
