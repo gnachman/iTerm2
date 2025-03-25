@@ -264,6 +264,10 @@ NS_ASSUME_NONNULL_BEGIN
             if (!replacement) {
                 return nil;
             }
+            if ([replacement rangeOfCharacterFromSet:[[NSCharacterSet characterSetWithCharactersInString:@"0123456789"] invertedSet]].location == NSNotFound) {
+                // All numbers - not valid. This avoids an annoying exception which keeps tripping me up when debugging.
+                return nil;
+            }
             components.scheme = replacement;
         } @catch (NSException *exception) {
             return nil;
