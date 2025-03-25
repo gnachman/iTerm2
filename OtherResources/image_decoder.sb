@@ -1,6 +1,14 @@
+; This is a good place for inspiration:
+; https://searchfox.org/mozilla-central/source/security/sandbox/mac/SandboxPolicyContent.h
 (version 1)
 (deny default)
+
+(allow iokit-open
+  (iokit-user-client-class "IOSurfaceRootUserClient")
+)
+
 (allow file-read-data file-read-metadata
+  (regex "^/System/Library/Video/Plug-Ins")
   (regex "^/System/Library/ColorSync/Profiles")
   (regex "^/System/Library/Frameworks")
   (regex "^/System/Library/PrivateFrameworks")
