@@ -203,7 +203,7 @@ enum {
     IBOutlet NSPopUpButton *_viewManpagesButton;
     IBOutlet NSTextField *_writeToFilesystemLabel; // View Manpages
     IBOutlet NSPopUpButton *_writeToFilesystemButton;
-
+    IBOutlet NSButton *_apiWarningButton;
     IBOutlet NSButton *_aiCompletions;
 }
 
@@ -760,6 +760,7 @@ enum {
                           type:kPreferenceInfoTypeStringTextField];
     info.onChange = ^{
         [weakSelf aiModelDidChange:tokenLimitInfo urlInfo:urlInfo];
+        [weakSelf updateAIEnabled];
     };
 
     [self addViewToSearchIndex:_aiPluginLabel
@@ -786,6 +787,9 @@ enum {
                           type:kPreferenceInfoTypeCheckbox];
     info.shouldBeEnabled = ^BOOL{
         return ![weakSelf valueOfKeyEqualsDefaultValue:kPreferenceKeyAITermURL] && [[weakSelf stringForKey:kPreferenceKeyAITermURL] length] > 0;
+    };
+    info.observer = ^{
+        [weakSelf updateAIEnabled];
     };
 
     info = [self defineControl:_aiCompletions
@@ -879,9 +883,33 @@ enum {
     _aiTokenLimit.enabled = allowed;
     _resetAIPrompt.enabled = allowed;
     _customAIEndpoint.enabled = allowed;
-    _useLegacyCompletionsAPI.enabled = allowed;
+    switch ([iTermLLMMetadata platform]) {
+        case iTermLLMPlatformOpenAI:
+            _useLegacyCompletionsAPI.enabled = allowed;
+            break;
+        case iTermLLMPlatformAzure:
+        case iTermLLMPlatformGemini:
+            _useLegacyCompletionsAPI.enabled = NO;
+            break;
+    }
     _enableAI.enabled = [iTermAdvancedSettingsModel generativeAIAllowed];
 
+    const BOOL usingLegacyAPI = [self boolForKey:kPreferenceKeyAITermUseLegacyAPI];
+    _apiWarningButton.hidden = !_useLegacyCompletionsAPI.enabled || !([self modelSupportsModernAPI] && usingLegacyAPI);
+
+}
+
+- (IBAction)legacyAPIButtonClicked:(id)sender {
+    [_apiWarningButton it_showWarningWithMarkdown:
+     @"This setting appears to be a mismatch for the currently selected model.\n\n"
+     @"The legacy API was used by OpenAI with models whose names began with `gpt-` (for example, `gpt-3.5-turbo` and `gpt-4`).\n\n"
+     @"In March of 2024, a new API was introduced that added support for tool use.\n\n"
+     @"You should generally leave this off these days unless you're using a service that only supports the old API."];
+}
+
+- (BOOL)modelSupportsModernAPI {
+    NSURL *url = [NSURL URLWithString:[self stringForKey:kPreferenceKeyAITermURL]];
+    return [iTermLLMMetadata hostIsOpenAIAPIForURL:url];
 }
 
 - (void)customScriptsFolderDidChange {

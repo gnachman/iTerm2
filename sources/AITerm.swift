@@ -928,15 +928,8 @@ class AITermController {
     private var cancellation: iTermAIClient.Cancellation?
 
     static var provider: LLMProvider {
-        let model = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-4o-mini"
-        let urlString = iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? ""
-        let platform = if URL(string: urlString)?.host == "generativelanguage.googleapis.com" {
-            LLMProvider.Platform.gemini
-        } else if let platform = LLMProvider.Platform(rawValue: iTermAdvancedSettingsModel.llmPlatform()) {
-            platform
-        } else {
-            LLMProvider.Platform.openAI
-        }
+        let model = LLMMetadata.model()
+        let platform = LLMMetadata.platform()
         return LLMProvider(platform: platform, model: model)
     }
 

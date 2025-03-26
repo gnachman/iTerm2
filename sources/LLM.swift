@@ -295,6 +295,63 @@ struct LLMRequestBuilder {
     }
 }
 
+@objc(iTermLLMMetadata)
+class LLMMetadata: NSObject {
+    @objc(openAIModelIsLegacy:)
+    static func openAIModelIsLegacy(model: String) -> Bool {
+        for prefix in iTermAdvancedSettingsModel.aiModernModelPrefixes().components(separatedBy: " ") {
+            if model.hasPrefix(prefix) {
+                return false
+            }
+        }
+        return true
+    }
+
+    @objc(hostIsOpenAIAPIForURL:)
+    static func hostIsOpenAIAPI(url: URL?) -> Bool {
+        return url?.host == "api.openai.com"
+    }
+
+    @objc(iTermLLMPlatform)
+    enum LLMPlatform: UInt {
+        case openAI
+        case azure
+        case gemini
+
+        init(_ platform: LLMProvider.Platform) {
+            switch platform {
+            case .openAI:
+                self = .openAI
+            case .azure:
+                self = .azure
+            case .gemini:
+                self = .gemini
+            }
+        }
+    }
+
+    @objc(platform)
+    static func objcPlatform() -> LLMPlatform {
+        LLMPlatform(platform())
+    }
+
+    static func platform() -> LLMProvider.Platform {
+        let model = self.model()
+        let urlString = iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? ""
+        if URL(string: urlString)?.host == "generativelanguage.googleapis.com" {
+            return .gemini
+        } else if let platform = LLMProvider.Platform(rawValue: iTermAdvancedSettingsModel.llmPlatform()) {
+            return platform
+        } else {
+            return .openAI
+        }
+    }
+
+    static func model() -> String {
+        return iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-4o-mini"
+    }
+}
+
 struct LLMProvider {
     // If you add new platforms update the advanced setting to give their names.
     enum Platform: String {
@@ -327,12 +384,7 @@ struct LLMProvider {
     }
 
     private func openAIModelIsLegacy(model: String) -> Bool {
-        for prefix in iTermAdvancedSettingsModel.aiModernModelPrefixes().components(separatedBy: " ") {
-            if model.hasPrefix(prefix) {
-                return false
-            }
-        }
-        return true
+        return LLMMetadata.openAIModelIsLegacy(model: model)
     }
 
     var usingOpenAI: Bool {
@@ -371,7 +423,7 @@ struct LLMProvider {
     }
 
     private func hostIsOpenAIAPI(url: URL?) -> Bool {
-        return url?.host == "api.openai.com"
+        return LLMMetadata.hostIsOpenAIAPI(url: url)
     }
 
     var urlIsValid: Bool {

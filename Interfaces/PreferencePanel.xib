@@ -1082,6 +1082,7 @@ DQ
                 <outlet property="_alwaysOpenLegend" destination="iD8-Rh-JRW" id="91q-Tv-AAQ"/>
                 <outlet property="_alwaysOpenWindowAtStartup" destination="OWt-qh-bb4" id="Vgm-z3-6Qq"/>
                 <outlet property="_apiPermission" destination="kIb-n8-d33" id="uni-VJ-Bxf"/>
+                <outlet property="_apiWarningButton" destination="xW1-ei-K05" id="3cq-c2-uaa"/>
                 <outlet property="_autoHideTmuxClientSession" destination="6366" id="V9B-um-JRL"/>
                 <outlet property="_browseCustomFolder" destination="5618" id="0Ty-gp-K5Q"/>
                 <outlet property="_browseCustomScriptsFolder" destination="dQq-rp-4ax" id="Bhz-HC-MBu"/>
@@ -5200,7 +5201,7 @@ Refer to the manuals for individual applications to see if they support these mo
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="551" height="76"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="551" height="76"/>
@@ -5926,6 +5927,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ngq-JV-eAe">
                                                                             <rect key="frame" x="153" y="-1" width="206" height="18"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                            <string key="toolTip">The legacy API was used by OpenAI with models whose names began with gpt- (for example, gpt-3.5-turbo and gpt-4). In March of 2024, a new API was introduced that added support for tool use. You should generally leave this off these days unless you're using a self-hosted service that only supports the old API.</string>
                                                                             <buttonCell key="cell" type="check" title="Use legacy “completions” API" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="RyE-Ou-CRo">
                                                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                                                 <font key="font" metaFont="system"/>
@@ -5974,6 +5976,17 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                             </textFieldCell>
                                                                         </textField>
+                                                                        <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xW1-ei-K05">
+                                                                            <rect key="frame" x="367" y="0.0" width="28" height="17"/>
+                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                            <buttonCell key="cell" type="bevel" title="⚠️" bezelStyle="rounded" alignment="center" imageScaling="proportionallyDown" inset="2" id="oHd-0k-tpB">
+                                                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                                                <font key="font" metaFont="system"/>
+                                                                            </buttonCell>
+                                                                            <connections>
+                                                                                <action selector="legacyAPIButtonClicked:" target="9Se-ld-UJa" id="j5A-5o-EIK"/>
+                                                                            </connections>
+                                                                        </button>
                                                                     </subviews>
                                                                 </customView>
                                                                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tcb-fi-jC2">
