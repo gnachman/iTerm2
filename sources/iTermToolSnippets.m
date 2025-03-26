@@ -624,22 +624,17 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
             break;
         }
         case iTermSnippetsDidChangeMutationTypeMove: {
-            NSIndexSet *removeIndexes = [self filteredIndexSet:notif.indexSet];
-            NSMutableArray<iTermSnippet *> *movingSnippets = [NSMutableArray array];
-            [removeIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
-                if ([_filteredSnippets containsObject:_unfilteredSnippets[idx]]) {
-                    [movingSnippets addObject:_unfilteredSnippets[idx]];
-                }
-            }];
-            NSArray<NSNumber *> *sourceIndexes = [movingSnippets mapWithBlock:^id _Nullable(iTermSnippet *snippet) {
-                return @([_unfilteredSnippets indexOfObject:snippet]);
-            }];
+            NSIndexSet *sourceIndexes = [self filteredIndexSet:notif.indexSet];
+            if (sourceIndexes.count == 0) {
+                break;
+            }
+            iTermSnippet *firstSnippet = _filteredSnippets[sourceIndexes.firstIndex];
+
             [self updateModel];
+
             [_tableView it_performUpdateBlock:^{
-                for (NSInteger i = 0; i < sourceIndexes.count; i++) {
-                    [_tableView moveRowAtIndex:sourceIndexes[i].integerValue
-                                       toIndex:[_filteredSnippets indexOfObject:movingSnippets[i]]];
-                }
+                const NSInteger destinationIndex = [_filteredSnippets indexOfObject:firstSnippet];
+                [_tableView it_moveRowsFromSourceIndexes:sourceIndexes toRowsBeginningAtIndex:destinationIndex];
             }];
             [self updateOutlineView];
             break;

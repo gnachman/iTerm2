@@ -1853,6 +1853,7 @@
 		A6614C79210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6614C76210AE5FD0001EAA3 /* MiniPasteView.xib */; };
 		A6614C7C210AE7350001EAA3 /* iTermPasteViewManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A6614C7A210AE7350001EAA3 /* iTermPasteViewManager.h */; };
 		A6614C7D210AE7350001EAA3 /* iTermPasteViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A6614C7B210AE7350001EAA3 /* iTermPasteViewManager.m */; };
+		A662B2472D937C6D00C3D79A /* NSTableView+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A662B2462D937C6900C3D79A /* NSTableView+iTerm.swift */; };
 		A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
@@ -6302,6 +6303,7 @@
 		A6614C76210AE5FD0001EAA3 /* MiniPasteView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = MiniPasteView.xib; path = Interfaces/MiniPasteView.xib; sourceTree = "<group>"; };
 		A6614C7A210AE7350001EAA3 /* iTermPasteViewManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPasteViewManager.h; sourceTree = "<group>"; };
 		A6614C7B210AE7350001EAA3 /* iTermPasteViewManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPasteViewManager.m; sourceTree = "<group>"; };
+		A662B2462D937C6900C3D79A /* NSTableView+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTableView+iTerm.swift"; sourceTree = "<group>"; };
 		A663010619CFCE74004AF81C /* SuppressAllOutput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SuppressAllOutput.png; path = images/SuppressAllOutput.png; sourceTree = "<group>"; };
 		A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "SuppressAllOutput@2x.png"; path = "images/SuppressAllOutput@2x.png"; sourceTree = "<group>"; };
 		A663010E19CFE41A004AF81C /* iTermAboutWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAboutWindow.h; sourceTree = "<group>"; };
@@ -9187,6 +9189,7 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				A662B2462D937C6900C3D79A /* NSTableView+iTerm.swift */,
 				A6EC47A52D84BD680079845B /* JSONSerialization+iTerm.swift */,
 				A6631A1E2D6E4E3E006C603B /* Result+iTerm.swift */,
 				A6EB64392D5D800900481D33 /* NSDictionaryCodableBox.swift */,
@@ -16154,6 +16157,7 @@
 				A667C23B276BD931006B4DEF /* VT100StateTransition.m in Sources */,
 				A61A85AA24F23C9B00B03880 /* iTermGlobalSearchOutlineView.m in Sources */,
 				A6B836132D38802400B5993C /* NonDefaultIndicator.swift in Sources */,
+				A662B2472D937C6D00C3D79A /* NSTableView+iTerm.swift in Sources */,
 				A6A4B2A32418977300184EAC /* iTermDynamicProfileManager.m in Sources */,
 				A667C26227799447006B4DEF /* PTYNoteViewController.m in Sources */,
 				A619DC442CD595FD004B8996 /* iTermBijection.m in Sources */,

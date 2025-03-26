@@ -205,6 +205,14 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     return [iTermSnippetsModel snippet:snippet matchesQuery:self.query];
 }
 
+- (NSInteger)unfilteredIndex:(NSInteger)filteredIndex {
+    if (filteredIndex >= _filteredSnippets.count) {
+        return _allSnippets.count;
+    }
+    iTermSnippet *snippet = _filteredSnippets[filteredIndex];
+    return [_allSnippets indexOfObject:snippet];
+}
+
 - (NSInteger)filteredIndex:(NSInteger)unfilteredIndex {
     if (unfilteredIndex >= _allSnippets.count) {
         return _filteredSnippets.count;
@@ -213,15 +221,22 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     return [_filteredSnippets indexOfObject:snippet];
 }
 
-- (NSIndexSet *)filteredIndexSet:(NSIndexSet *)unfilteredIndexSet {
-    NSMutableIndexSet *result = [NSMutableIndexSet indexSet];
-    [unfilteredIndexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
-        const NSInteger i = [self filteredIndex:idx];
-        if (i != NSNotFound) {
-            [result addIndex:i];
+- (NSIndexSet *)filteredIndexSet:(NSIndexSet *)input {
+    // Convert set of unfiltered indexes to a set of GUIDs.
+    NSMutableSet<NSString *> *guids = [NSMutableSet set];
+    [input enumerateIndexesUsingBlock:^(NSUInteger i, BOOL * _Nonnull stop) {
+        iTermSnippet *snippet = _allSnippets[i];
+        [guids addObject:snippet.guid];
+    }];
+
+    // Generate a set of filtered indexes from the set of GUIDs belonging to filtered snippets.
+    NSMutableIndexSet *output = [NSMutableIndexSet indexSet];
+    [_filteredSnippets enumerateObjectsUsingBlock:^(iTermSnippet * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([guids containsObject:obj.guid]) {
+            [output addIndex:idx];
         }
     }];
-    return result;
+    return output;
 }
 
 - (NSInteger)insertionFilteredIndex:(NSInteger)unfilteredIndex {
@@ -256,67 +271,72 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 }
 
 - (void)snippetsDidChange:(iTermSnippetsDidChangeNotification *)notif {
-    [_tableView it_performUpdateBlock:^{
-        switch (notif.mutationType) {
-            case iTermSnippetsDidChangeMutationTypeEdit: {
-                const NSInteger i = [self filteredIndex:notif.index];
-                if (i != NSNotFound) {
-                    // Row is currently visible.
-                    if ([self snippetMatchesQuery:[[iTermSnippetsModel sharedInstance] snippets][notif.index]]) {
-                        // Row will remain visible so just reload it.
-                        [self->_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:i]
-                                                    columnIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 2)]];
-                    } else {
-                        // Row will cease to be visible.
-                        [self->_tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:notif.index]
-                                                withAnimation:YES];
+    switch (notif.mutationType) {
+        case iTermSnippetsDidChangeMutationTypeEdit: {
+            // Remove at notif.index
+            const NSInteger removeIndex = [self filteredIndex:notif.index];
+            [self load];
+            NSInteger insertionIndex = NSNotFound;
+            if ([_filteredSnippets containsObject:_allSnippets[notif.index]]) {
+                // Add at notif.index
+                insertionIndex = [self filteredIndex:notif.index];
+            }
+            if (removeIndex != NSNotFound || insertionIndex != NSNotFound) {
+                [_tableView it_performUpdateBlock:^{
+                    if (removeIndex != NSNotFound) {
+                        [_tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:removeIndex]
+                                          withAnimation:YES];
                     }
-                } else if ([self snippetMatchesQuery:[[iTermSnippetsModel sharedInstance] snippets][notif.index]]) {
-                    // Row is not currently visible but will become visible.
-                    NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:[self insertionFilteredIndex:notif.index]];
-                    [self->_tableView insertRowsAtIndexes:indexSet
-                                            withAnimation:YES];
-                }
-                break;
+                    if (insertionIndex != NSNotFound) {
+                        [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:insertionIndex]
+                                          withAnimation:NO];
+                    }
+                }];
             }
-            case iTermSnippetsDidChangeMutationTypeDeletion: {
-                NSIndexSet *indexSet = [self filteredIndexSet:notif.indexSet];
-                if (indexSet.count) {
-                    [_tableView removeRowsAtIndexes:indexSet
-                                      withAnimation:YES];
-                }
-                break;
+        }
+        case iTermSnippetsDidChangeMutationTypeDeletion: {
+            NSIndexSet *indexes = [self filteredIndexSet:notif.indexSet];
+            [self load];
+            [_tableView it_performUpdateBlock:^{
+                [_tableView removeRowsAtIndexes:indexes
+                                  withAnimation:YES];
+            }];
+            break;
+        }
+        case iTermSnippetsDidChangeMutationTypeInsertion: {
+            [self load];
+            NSInteger i = [self filteredIndex:notif.index];
+            if (i == NSNotFound) {
+                i = _filteredSnippets.count;
             }
-            case iTermSnippetsDidChangeMutationTypeInsertion: {
-                iTermSnippet *snippet = [[iTermSnippetsModel sharedInstance] snippets][notif.index];
-                if ([self snippetMatchesQuery:snippet]) {
-                    const NSInteger i = [self insertionFilteredIndex:notif.index];
+            if ([_filteredSnippets containsObject:_allSnippets[notif.index]]) {
+                [_tableView it_performUpdateBlock:^{
                     [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:i]
                                       withAnimation:YES];
-                }
-                break;
+                }];
             }
-            case iTermSnippetsDidChangeMutationTypeMove: {
-                NSIndexSet *indexSet = [self filteredIndexSet:notif.indexSet];
-                [_tableView removeRowsAtIndexes:indexSet
-                                  withAnimation:YES];
-                NSMutableIndexSet *insertionIndexes = [NSMutableIndexSet indexSet];
-                const NSInteger unshiftedInsertionIndex = [self insertionFilteredIndex:notif.index];
-                const NSInteger shift = [indexSet countOfIndexesInRange:NSMakeRange(0, unshiftedInsertionIndex)];
-                const NSInteger insertionIndex = unshiftedInsertionIndex - shift;
-                for (NSInteger i = 0; i < indexSet.count; i++) {
-                    [insertionIndexes addIndex:insertionIndex + i];
-                }
-                [_tableView insertRowsAtIndexes:insertionIndexes
-                                  withAnimation:YES];
-                break;
-            }
-            case iTermSnippetsDidChangeMutationTypeFullReplacement:
-                [_tableView reloadData];
-                break;
+            break;
         }
-        [self load];
-    }];
+        case iTermSnippetsDidChangeMutationTypeMove: {
+            NSIndexSet *sourceIndexes = [self filteredIndexSet:notif.indexSet];
+            if (sourceIndexes.count == 0) {
+                break;
+            }
+            iTermSnippet *firstSnippet = _filteredSnippets[sourceIndexes.firstIndex];
+
+            [self load];
+
+            [_tableView it_performUpdateBlock:^{
+                const NSInteger destinationIndex = [_filteredSnippets indexOfObject:firstSnippet];
+                [_tableView it_moveRowsFromSourceIndexes:sourceIndexes toRowsBeginningAtIndex:destinationIndex];
+            }];
+            break;
+        }
+        case iTermSnippetsDidChangeMutationTypeFullReplacement:
+            [self load];
+            [_tableView reloadData];
+            break;
+    }
 }
 
 - (void)updateEnabled {
@@ -664,7 +684,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
         [allGuids addObjectsFromArray:guids];
     }];
     [[iTermSnippetsModel sharedInstance] moveSnippetsWithGUIDs:allGuids
-                                                       toIndex:row];
+                                                       toIndex:[self unfilteredIndex:row]];
     return YES;
 }
 
