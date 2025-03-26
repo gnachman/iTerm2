@@ -42,3 +42,61 @@ extension NSTableView {
         endUpdates()
     }
 }
+
+extension NSOutlineView {
+    @objc
+    func reloadPreservingExpansionAndScroll() {
+        // Record expanded items by uniqueID
+        var expandedIDs = Set<String>()
+        for row in 0..<numberOfRows {
+            if let item = self.item(atRow: row) as? iTermUniquelyIdentifiable,
+               isItemExpanded(item) {
+                expandedIDs.insert(item.stringUniqueIdentifier())
+            }
+        }
+
+        // Record selected items by uniqueID
+        var selectedIDs = Set<String>()
+        for row in selectedRowIndexes {
+            if let item = self.item(atRow: row) as? iTermUniquelyIdentifiable {
+                selectedIDs.insert(item.stringUniqueIdentifier())
+            }
+        }
+
+        // Record scroll position
+        let scrollOrigin = enclosingScrollView?.contentView.bounds.origin ?? .zero
+
+        // Reload data
+        reloadData()
+
+        // Recursively re-expand items whose stringUniqueIdentifier() is in the saved set.
+        func expandItems(for item: Any?) {
+            let count = dataSource?.outlineView?(self, numberOfChildrenOfItem: item) ?? 0
+            for index in 0..<count {
+                if let child = dataSource?.outlineView?(self, child: index, ofItem: item) as? iTermUniquelyIdentifiable {
+                    if expandedIDs.contains(child.stringUniqueIdentifier()) {
+                        expandItem(child)
+                        expandItems(for: child)
+                    }
+                }
+            }
+        }
+        expandItems(for: nil)
+
+        // Restore scroll position
+        if let clipView = enclosingScrollView?.contentView {
+            clipView.setBoundsOrigin(scrollOrigin)
+            enclosingScrollView?.reflectScrolledClipView(clipView)
+        }
+
+        // Restore selection by mapping stringUniqueIdentifier()s back to row indexes
+        var newSelection = IndexSet()
+        for row in 0..<numberOfRows {
+            if let item = self.item(atRow: row) as? iTermUniquelyIdentifiable,
+               selectedIDs.contains(item.stringUniqueIdentifier()) {
+                newSelection.insert(row)
+            }
+        }
+        selectRowIndexes(newSelection, byExtendingSelection: false)
+    }
+}

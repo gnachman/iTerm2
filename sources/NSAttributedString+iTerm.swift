@@ -325,7 +325,7 @@ class IconTableCellView: iTermTableCellView {
             NSLayoutConstraint.activate([
                 // Icon view constraints
                 iconView.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 0),
-                iconView.centerYAnchor.constraint(equalTo: self.centerYAnchor, constant: -1),
+                iconView.centerYAnchor.constraint(equalTo: self.centerYAnchor, constant: 0),
                 iconView.heightAnchor.constraint(equalToConstant: 10),
                 iconView.widthAnchor.constraint(equalToConstant: 10),
 

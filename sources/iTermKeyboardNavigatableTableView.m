@@ -42,7 +42,9 @@
     if (row + 1 == self.numberOfRows) {
         return;
     }
-    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:row + 1] byExtendingSelection:NO];
+    NSInteger newRow = row + 1;
+    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:newRow] byExtendingSelection:NO];
+    [self scrollRowToVisible:newRow];
 }
 
 - (void)moveUp:(id)sender {
@@ -50,7 +52,9 @@
     if (row <= 0) {
         return;
     }
-    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:row - 1] byExtendingSelection:NO];
+    NSInteger newRow = row - 1;
+    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:newRow] byExtendingSelection:NO];
+    [self scrollRowToVisible:newRow];
 }
 
 - (void)insertNewline:(id)sender {
@@ -77,7 +81,9 @@
     if (row + 1 == self.numberOfRows) {
         return;
     }
-    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:row + 1] byExtendingSelection:NO];
+    NSInteger newRow = row + 1;
+    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:newRow] byExtendingSelection:NO];
+    [self scrollRowToVisible:newRow];
 }
 
 - (void)moveUp:(id)sender {
@@ -85,7 +91,49 @@
     if (row <= 0) {
         return;
     }
-    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:row - 1] byExtendingSelection:NO];
+    NSInteger newRow = row - 1;
+    [self selectRowIndexes:[NSIndexSet indexSetWithIndex:newRow] byExtendingSelection:NO];
+    [self scrollRowToVisible:newRow];
+}
+
+- (void)moveLeft:(id)sender {
+    NSInteger row = self.selectedRow;
+    if (row == -1) return;
+    id item = [self itemAtRow:row];
+    if ([self isExpandable:item] && [self isItemExpanded:item]) {
+        [self collapseItem:item];
+        [self scrollRowToVisible:row];
+    }
+}
+
+- (void)moveRight:(id)sender {
+    NSInteger row = self.selectedRow;
+    if (row == -1) return;
+    id item = [self itemAtRow:row];
+    if ([self isExpandable:item] && ![self isItemExpanded:item]) {
+        [self expandItem:item];
+        [self scrollRowToVisible:row];
+    }
+}
+
+- (void)moveWordRight:(id)sender {
+    NSInteger row = self.selectedRow;
+    if (row == -1) return;
+    id item = [self itemAtRow:row];
+    if ([self isExpandable:item] && ![self isItemExpanded:item]) {
+        [self expandItem:item expandChildren:YES];
+        [self scrollRowToVisible:row];
+    }
+}
+
+- (void)moveWordLeft:(id)sender {
+    NSInteger row = self.selectedRow;
+    if (row == -1) return;
+    id item = [self itemAtRow:row];
+    if ([self isExpandable:item] && [self isItemExpanded:item]) {
+        [self collapseItem:item collapseChildren:YES];
+        [self scrollRowToVisible:row];
+    }
 }
 
 - (void)insertNewline:(id)sender {
