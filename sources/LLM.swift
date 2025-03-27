@@ -514,7 +514,7 @@ struct LLMProvider {
                 return LLMModernResponseParser()
             }
         case .legacy:
-            return LLMLegacyResponseParser()
+            return stream ? LLMLegacyStreamingResponseParser() : LLMLegacyResponseParser()
         case .gemini:
             return LLMGeminiResponseParser()
         }
@@ -522,7 +522,9 @@ struct LLMProvider {
 }
 
 protocol LLMResponseParser {
-    mutating func parse(data: Data) throws -> LLM.AnyResponse
+    // Throw on error, return nil on EOF (used by streaming parsers where EOF is in the message, not in the metadata like OpenAI's modern API)
+    mutating func parse(data: Data) throws -> LLM.AnyResponse?
+    func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String)
 }
 
 struct LLMModernResponseParser: LLMResponseParser {
@@ -554,12 +556,16 @@ struct LLMModernResponseParser: LLMResponseParser {
 
     var parsedResponse: ModernResponse?
 
-    mutating func parse(data: Data) throws -> LLM.AnyResponse {
+    mutating func parse(data: Data) throws -> LLM.AnyResponse? {
         let decoder = JSONDecoder()
         let response =  try decoder.decode(ModernResponse.self, from: data)
         DLog("RESPONSE:\n\(response)")
         parsedResponse = response
         return response
+    }
+
+    func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
+        return (nil, "")
     }
 }
 
@@ -591,13 +597,37 @@ struct LLMModernStreamingResponseParser: LLMResponseParser {
     }
     var parsedResponse: ModernStreamingResponse?
 
-    mutating func parse(data: Data) throws -> LLM.AnyResponse {
+    mutating func parse(data: Data) throws -> LLM.AnyResponse? {
         let decoder = JSONDecoder()
         let response =  try decoder.decode(ModernStreamingResponse.self, from: data)
         DLog("RESPONSE:\n\(response)")
         parsedResponse = response
         return response
     }
+    func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
+        let input = rawInput.trimmingLeadingCharacters(in: .whitespacesAndNewlines)
+        guard let newlineRange = input.range(of: "\n") else {
+            return (nil, String(input))
+        }
+
+        // Extract the first line (up to, but not including, the newline)
+        let firstLine = input[..<newlineRange.lowerBound]
+        // Everything after the newline is the remainder.
+        let remainder = input[newlineRange.upperBound...]
+
+        // Ensure the line starts with "data:".
+        let prefix = "data:"
+        guard firstLine.hasPrefix(prefix) else {
+            // If not, we can't extract a valid JSON object.
+            return (nil, String(input))
+        }
+
+        // Remove the prefix and trim whitespace to get the JSON object.
+        let jsonPart = firstLine.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
+
+        return (String(jsonPart.removing(prefix: "data:")), String(remainder))
+    }
+
 }
 
 struct LLMLegacyResponseParser: LLMResponseParser {
@@ -633,11 +663,66 @@ struct LLMLegacyResponseParser: LLMResponseParser {
 
     private(set) var parsedResponse: LegacyResponse?
 
-    mutating func parse(data: Data) throws -> LLM.AnyResponse {
+    mutating func parse(data: Data) throws -> LLM.AnyResponse? {
         let decoder = JSONDecoder()
         let response = try decoder.decode(LegacyResponse.self, from: data)
         parsedResponse = response
         return response
+    }
+    func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
+        return (nil, "")
+    }
+}
+
+struct LLMLegacyStreamingResponseParser: LLMResponseParser {
+    struct LegacyStreamingResponse: Codable, LLM.AnyResponse {
+        var isStreamingResponse: Bool { true }
+        var model: String
+        var created_at: String
+        var response: String
+        var done: Bool
+
+        var choiceMessages: [LLM.Message] {
+            return [LLM.Message(role: .assistant, content: response)]
+        }
+    }
+
+    private(set) var parsedResponse: LegacyStreamingResponse?
+
+    mutating func parse(data: Data) throws -> LLM.AnyResponse? {
+        let decoder = JSONDecoder()
+        let response = try decoder.decode(LegacyStreamingResponse.self, from: data)
+        if response.done {
+            return nil
+        }
+        parsedResponse = response
+        return response
+    }
+    func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
+        let input = rawInput.trimmingLeadingCharacters(in: .whitespacesAndNewlines)
+        guard let newlineRange = input.range(of: "\n") else {
+            return (nil, String(input))
+        }
+
+        // Extract the first line (up to, but not including, the newline)
+        let firstLine = input[..<newlineRange.lowerBound]
+        // Everything after the newline is the remainder.
+        let remainder = input[newlineRange.upperBound...]
+
+        // The line can optionally start with data:
+        let prefixCandidates = ["data:", ""]
+        var prefix = ""
+        for candidate in prefixCandidates {
+            if firstLine.hasPrefix(candidate) {
+                prefix = candidate
+                break
+            }
+        }
+
+        // Remove the prefix and trim whitespace to get the JSON object.
+        let jsonPart = firstLine.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
+
+        return (String(jsonPart.removing(prefix: prefix)), String(remainder))
     }
 }
 
@@ -683,11 +768,15 @@ struct LLMGeminiResponseParser: LLMResponseParser {
     }
     private(set) var parsedResponse: GeminiResponse?
 
-    mutating func parse(data: Data) throws -> LLM.AnyResponse {
+    mutating func parse(data: Data) throws -> LLM.AnyResponse? {
         let decoder = JSONDecoder()
         let response = try decoder.decode(GeminiResponse.self, from: data)
         parsedResponse = response
         return response
+    }
+    func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
+        // Streaming not implemented
+        return (nil, "")
     }
 }
 

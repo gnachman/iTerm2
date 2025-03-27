@@ -967,30 +967,6 @@ class AITermController {
                                                                                       buffer: Data()))
     }
 
-    private func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
-        let input = rawInput.trimmingLeadingCharacters(in: .whitespacesAndNewlines)
-        guard let newlineRange = input.range(of: "\n") else {
-            return (nil, String(input))
-        }
-
-        // Extract the first line (up to, but not including, the newline)
-        let firstLine = input[..<newlineRange.lowerBound]
-        // Everything after the newline is the remainder.
-        let remainder = input[newlineRange.upperBound...]
-
-        // Ensure the line starts with "data:".
-        let prefix = "data:"
-        guard firstLine.hasPrefix(prefix) else {
-            // If not, we can't extract a valid JSON object.
-            return (nil, String(input))
-        }
-
-        // Remove the prefix and trim whitespace to get the JSON object.
-        let jsonPart = firstLine.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
-
-        return (String(jsonPart.removing(prefix: "data:")), String(remainder))
-    }
-
     struct StreamParserState: Equatable {
         var message: LLM.Message
         var buffer: Data
@@ -1009,7 +985,7 @@ class AITermController {
         }
         DLog("------- parse new stream response of length \(data.count) -------------")
         let string = String(data: parserState.buffer + data, encoding: .utf8) ?? ""
-        var (first, rest) = splitFirstJSONEvent(from: string)
+        var (first, rest) = llmProvider.responseParser(stream: true).splitFirstJSONEvent(from: string)
 
         let drain = {
             if let string = accumulatingMessage.content, !string.isEmpty {
@@ -1028,6 +1004,10 @@ class AITermController {
                     do {
                         var parser = llmProvider.responseParser(stream: true)
                         let response = try parser.parse(data: firstData)
+                        guard let response else {
+                            DLog("Stream finished")
+                            break
+                        }
                         guard let choice = response.choiceMessages.first else {
 #if DEBUG
                             it_fatalError("Unexpected choiceless message \(firstData.stringOrHex)")
@@ -1062,7 +1042,7 @@ class AITermController {
                         }
                     }
                 }
-                (first, rest) = splitFirstJSONEvent(from: rest)
+                (first, rest) = llmProvider.responseParser(stream: true).splitFirstJSONEvent(from: rest)
             }
         }
 
@@ -1072,7 +1052,10 @@ class AITermController {
     private func parseNonStreamingResponse(data: Data) {
         do {
             var parser = llmProvider.responseParser(stream: false)
-            let response = try parser.parse(data: data)
+            guard let response = try parser.parse(data: data) else {
+                delegate?.aitermController(self, didFailWithError: AIError("Unexpected end of file from server"))
+                return
+            }
             if let topChoice = response.choiceMessages.first, let functionCall = topChoice.function_call {
                 doFunctionCall(topChoice, call: functionCall)
                 return
