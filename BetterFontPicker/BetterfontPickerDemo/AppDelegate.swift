@@ -36,6 +36,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         stripped.removeSizePicker()
         stripped.frame = NSRect(x: 0, y: 50, width: 200, height: 27)
         window.contentView?.addSubview(stripped)
+
+        let button = NSButton()
+        button.title = "Toggle options button"
+        button.setButtonType(.momentaryPushIn)
+        button.target = self
+        button.action = #selector(toggleOptionsButton(_:))
+        button.sizeToFit()
+        var frame = button.frame
+        frame.origin.x = 600
+        button.frame = frame
+        window.contentView?.addSubview(button)
+    }
+    @objc func toggleOptionsButton(_ sender: Any) {
+        if compositeView.hasOptionsButton {
+            compositeView.removeOptionsButton()
+        } else {
+            compositeView.addOptionsButton()
+        }
     }
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application

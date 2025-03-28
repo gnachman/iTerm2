@@ -59,6 +59,13 @@ class MenuButton: NSButton, MenuButtonProtocol {
 
 @objc
 class AccessoryWrapper: NSView {
+    override var description: String {
+        debugDescription
+    }
+    override var debugDescription: String {
+        let address = Unmanaged.passUnretained(self).toOpaque()
+        return "<\(type(of: self)): 0x\(String(format: "%016lx", Int(bitPattern: address))) child=\(child.description) superview=\(superview?.description ?? "(nil)")>"
+    }
     let child: NSView
 
     init(_ child: NSView, height: CGFloat) {
@@ -77,7 +84,6 @@ class AccessoryWrapper: NSView {
     }
 
     func layoutSubviews(containerHeight height: CGFloat) {
-        NSLog("\(height)")
         child.frame = NSRect(x: 0, y: 0, width: child.bounds.width, height: height)
     }
 }

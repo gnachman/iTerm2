@@ -1,6 +1,6 @@
 // swift-interface-format-version: 1.0
 // swift-compiler-version: Apple Swift version 6.0.2 effective-5.10 (swiftlang-6.0.2.1.2 clang-1600.0.26.4)
-// swift-module-flags: -target arm64-apple-macos10.15 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -enable-bare-slash-regex -module-name BetterFontPicker
+// swift-module-flags: -target arm64-apple-macos10.15 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -Onone -enable-bare-slash-regex -module-name BetterFontPicker
 // swift-module-flags-ignorable: -no-verify-emitted-module-interface
 @_exported import BetterFontPicker
 import Cocoa
@@ -120,7 +120,11 @@ import _SwiftConcurrencyShims
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public func resizeSubviews(withOldSize oldSize: Foundation.NSSize)
   @objc @_Concurrency.MainActor @preconcurrency public func removeSizePicker()
   @objc @_Concurrency.MainActor @preconcurrency public func removeMemberPicker()
+  @objc @_Concurrency.MainActor @preconcurrency public var hasOptionsButton: Swift.Bool {
+    @objc get
+  }
   @objc @_Concurrency.MainActor @preconcurrency public func removeOptionsButton()
+  @objc @_Concurrency.MainActor @preconcurrency public func addOptionsButton()
   @objc(addHorizontalSpacingAccessoryWithInitialValue:) @_Concurrency.MainActor @preconcurrency public func addHorizontalSpacingAccessory(_ initialValue: Swift.Double) -> BetterFontPicker.SizePickerView
   @objc(addVerticalSpacingAccessoryWithInitialValue:) @_Concurrency.MainActor @preconcurrency public func addVerticalSpacingAccessory(_ initialValue: Swift.Double) -> BetterFontPicker.SizePickerView
   @_Concurrency.MainActor @preconcurrency public func add(accessory view: AppKit.NSView)

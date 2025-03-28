@@ -297,6 +297,24 @@
 
 - (void)updateLigatureWarning {
     _ligatureWarning.hidden = ![self shouldShowLigaturesWarning];
+
+    // Show the options button only when ligatures are enabled. I didn't want to do this but the
+    // only way to prevent ligatures from being drawn is to use the "fast path" drawing code.
+    // In the fast path, we also do not support stylistic alternatives or contextual alternates.
+    if (_asciiLigatures.state == NSControlStateValueOn) {
+        if (!_asciiFontPicker.hasOptionsButton) {
+            [_asciiFontPicker addOptionsButton];
+        }
+    } else {
+        [_asciiFontPicker removeOptionsButton];
+    }
+    if (_nonAsciiLigatures.state == NSControlStateValueOn) {
+        if (![_nonASCIIFontPicker hasOptionsButton]) {
+            [_nonASCIIFontPicker addOptionsButton];
+        }
+    } else {
+        [_nonASCIIFontPicker removeOptionsButton];
+    }
 }
 
 - (BOOL)shouldShowLigaturesWarning {

@@ -397,7 +397,9 @@ SWIFT_CLASS_NAMED("FontPickerCompositeView")
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize;
 - (void)removeSizePicker;
 - (void)removeMemberPicker;
+@property (nonatomic, readonly) BOOL hasOptionsButton;
 - (void)removeOptionsButton;
+- (void)addOptionsButton;
 - (BFPSizePickerView * _Nonnull)addHorizontalSpacingAccessoryWithInitialValue:(double)initialValue SWIFT_WARN_UNUSED_RESULT;
 - (BFPSizePickerView * _Nonnull)addVerticalSpacingAccessoryWithInitialValue:(double)initialValue SWIFT_WARN_UNUSED_RESULT;
 - (void)affordance:(BFPAffordance * _Nonnull)affordance didSelectFontFamily:(NSString * _Nonnull)fontFamily;
@@ -886,7 +888,9 @@ SWIFT_CLASS_NAMED("FontPickerCompositeView")
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize;
 - (void)removeSizePicker;
 - (void)removeMemberPicker;
+@property (nonatomic, readonly) BOOL hasOptionsButton;
 - (void)removeOptionsButton;
+- (void)addOptionsButton;
 - (BFPSizePickerView * _Nonnull)addHorizontalSpacingAccessoryWithInitialValue:(double)initialValue SWIFT_WARN_UNUSED_RESULT;
 - (BFPSizePickerView * _Nonnull)addVerticalSpacingAccessoryWithInitialValue:(double)initialValue SWIFT_WARN_UNUSED_RESULT;
 - (void)affordance:(BFPAffordance * _Nonnull)affordance didSelectFontFamily:(NSString * _Nonnull)fontFamily;

@@ -192,6 +192,12 @@ paranoiddeps: force
 paranoidlibssh2: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibssh2
 
+paranoidbetterfontpicker: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BetterFontPicker
+
+paranoidbetterfontpicker-dev: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BetterFontPicker-Dev
+
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
 deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle
 
@@ -201,8 +207,13 @@ DepsIfNeeded: force
 powerline-extra-symbols: force
 	cp submodules/powerline-extra-symbols/src/*eps ThirdParty/PowerlineExtraSymbols/
 
-bindeps: SwiftyMarkdown Highlightr
+BetterFontPicker: force
 	cd BetterFontPicker && $(MAKE)
+
+BetterFontPicker-Dev: force
+	cd BetterFontPicker && $(MAKE) dev
+
+bindeps: SwiftyMarkdown Highlightr BetterFontPicker
 	cd ColorPicker && $(MAKE)
 	cd SearchableComboListView && $(MAKE)
 

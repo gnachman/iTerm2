@@ -321,6 +321,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     NSCharacterSet *emojiWithDefaultEmojiPresentationCharacterSet = [NSCharacterSet emojiWithDefaultEmojiPresentation];
     const int *bidiLUT = [bidiInfo lut];
     const int bidiLUTLength = bidiInfo.numberOfCells;
+    const BOOL asciiLigatures = _asciiLigaturesAvailable && _asciiLigatures;
+    const BOOL nonAsciiLigatures = _nonAsciiLigatures;
 
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
         iTermPreciseTimerStatsStartTimer(_stats.attrsForChar);
@@ -500,7 +502,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             builder.hasBidi = bidiInfo != nil;
             builder.startColumn = i;
             builder.zippy = self.zippy;
-            builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
+            builder.asciiLigaturesAvailable = asciiLigatures;
         }
         ++segmentLength;
         previousCharacterAttributes = characterAttributes;
@@ -514,10 +516,17 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 combinedAttributes = [combinedAttributes dictionaryByMergingDictionary:imageAttributes];
             }
             [builder setAttributes:combinedAttributes];
-            if ([[NSFont castFrom:combinedAttributes[NSFontAttributeName]] it_hasStylisticAlternatives] ||
-                [[NSFont castFrom:combinedAttributes[NSFontAttributeName]] it_hasContextualAlternates]) {
-                // CG APIs don't support these so we must use slow core text.
-                [builder disableFastPath];
+            const BOOL isAscii = (!isComplex && c.code < 127);
+            const BOOL ligatures = isAscii ? asciiLigatures : nonAsciiLigatures;
+            if (ligatures) {
+                // Force the slow path so we always have a chance of using stylistic alternatives or contextual alternates.
+                // The fast path can't do it and there's no way to tell if a particular character will benefit from it.
+                // These features are close enough to ligatures in my mental model that it makes sense, at least to me.
+                // The settings UI reflects this by revealing the options button only when ligatures are enabled.
+                if ([[NSFont castFrom:combinedAttributes[NSFontAttributeName]] it_hasStylisticAlternatives] ||
+                    [[NSFont castFrom:combinedAttributes[NSFontAttributeName]] it_hasContextualAlternates]) {
+                    [builder disableFastPath];
+                }
             }
         }
         iTermPreciseTimerStatsMeasureAndAccumulate(_stats.combineAttributes);

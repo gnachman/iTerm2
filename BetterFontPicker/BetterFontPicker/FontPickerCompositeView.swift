@@ -137,8 +137,33 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         }
     }
 
+    @objc public var hasOptionsButton: Bool {
+        return optionsButtonController != nil
+    }
+
     @objc public func removeOptionsButton() {
+        let i = accessories.firstIndex { view -> Bool in
+            guard let wrapper = view as? AccessoryWrapper,
+                  let optionsButton = optionsButtonController?.optionsButton else {
+                return false
+            }
+            return wrapper.child == optionsButton
+        }
+        if let i {
+            accessories[i].removeFromSuperview()
+            accessories.remove(at: i)
+        }
         optionsButtonController = nil
+        updateOptionsMenu()
+    }
+
+    @objc public func addOptionsButton() {
+        guard let font else {
+            return
+        }
+        optionsButtonController = OptionsButtonController()
+        optionsButtonController?.set(font: font)
+        updateOptionsMenu()
     }
 
     private func temporarilyRemoveOptionsButton() {
