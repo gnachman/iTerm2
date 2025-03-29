@@ -92,9 +92,9 @@
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zKb-pM-oRl">
-                            <rect key="frame" x="66" y="7" width="238" height="14"/>
+                            <rect key="frame" x="66" y="7" width="225" height="14"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                            <textFieldCell key="cell" lineBreakMode="clipping" title="AI Completion Enabled — All text sent to AI" id="d6h-kf-O57">
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="AI completion enabled: all text sent to AI" id="d6h-kf-O57">
                                 <font key="font" metaFont="systemSemibold" size="11"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
