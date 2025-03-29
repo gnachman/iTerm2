@@ -16,6 +16,7 @@
 #import "WindowControllerInterface.h"
 #import "PseudoTerminal.h"
 #import "AtomicHelpers.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermCPUUtilization.h"
 #import "iTermController.h"
 #import "iTermCoreTextLineRenderingHelper.h"

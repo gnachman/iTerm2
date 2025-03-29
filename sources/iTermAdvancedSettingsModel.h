@@ -231,6 +231,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)maximumBytesToProvideToPythonAPI;
 + (int)maximumNumberOfTriggerCommands;
 + (int)maxSemanticHistoryPrefixOrSuffix;
++ (double)menuTipDelay;
 + (double)metalRedrawPeriod;
 + (double)metalSlowFrameRate;
 + (BOOL)middleClickClosesTab;

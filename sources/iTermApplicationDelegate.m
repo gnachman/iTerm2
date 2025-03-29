@@ -210,7 +210,7 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenu *_iterm2Menu;
     IBOutlet NSMenuItem *_captureGPUFrameMenuItem;
     IBOutlet NSMenuItem *_namedMarksMenuItem;
-
+    IBOutlet NSMenuItem *_toolbeltMenuItem;
     // If set, skip performing launch actions.
     BOOL quiet_;
     NSDate* launchTime_;
@@ -1379,6 +1379,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                                             username:nil];
     }
 
+    [self registerMenuTips];
 #if DEBUG
     NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
     [appMenu addItem:[NSMenuItem separatorItem]];

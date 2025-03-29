@@ -184,6 +184,7 @@ static NSString *const kDynamicToolURL = @"URL";
                                                     action:@selector(toggleToolbeltTool:)
                                              keyEquivalent:@""] autorelease];
         [i setState:[iTermToolbeltView shouldShowTool:theName] ? NSControlStateValueOn : NSControlStateValueOff];
+        i.identifier = [@"Toolbelt." stringByAppendingString:theName];
         [menu addItem:i];
     }
 }

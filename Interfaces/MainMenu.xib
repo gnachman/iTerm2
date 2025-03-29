@@ -481,18 +481,20 @@ DQ
                                                 <action selector="toggleMultiLinePasteWarning:" target="201" id="BeA-rG-dNT"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Prompt to Convert Tabs to Spaces when Pasting" identifier="Paste Special.Prompt to Convert Tabs to Spaces when Pasting" id="GqP-hQ-yD1">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="promptToConvertTabsToSpacesWhenPasting:" target="201" id="1YE-bw-C1K"/>
-                                            </connections>
-                                        </menuItem>
                                         <menuItem title="Limit Multi-Line Paste Warning to Shell Prompt" tag="1" identifier="Paste Special.Limit Multi-Line Paste Warning to Shell Prompt" id="L16-T3-OVz">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="toggleMultiLinePasteWarning:" target="201" id="hP8-62-8Sv"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="QxI-p8-oyN"/>
+                                        <menuItem title="Prompt to Convert Tabs to Spaces when Pasting" identifier="Paste Special.Prompt to Convert Tabs to Spaces when Pasting" id="GqP-hQ-yD1">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="promptToConvertTabsToSpacesWhenPasting:" target="201" id="1YE-bw-C1K"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="dhb-3U-t9r"/>
                                         <menuItem title="Warn Before Pasting One Line Ending in a Newline at Shell Prompt" tag="2" identifier="Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt" id="YHP-Qx-eCZ">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
@@ -547,11 +549,11 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="jHq-aL-J2z"/>
-                            <menuItem title="Snippets" id="s0f-jP-7Pk" userLabel="Snippets">
+                            <menuItem title="Snippets" identifier="Edit.Snippets" id="s0f-jP-7Pk" userLabel="Snippets">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Snippets" id="sOq-3j-vtq" userLabel="Snippets"/>
                             </menuItem>
-                            <menuItem title="Actions" id="8Ja-GB-Waf" userLabel="Snippets">
+                            <menuItem title="Actions" identifier="Edit.Actions" id="8Ja-GB-Waf">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Actions" id="w4F-uL-QPB" userLabel="Snippets"/>
                             </menuItem>
@@ -862,7 +864,7 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="bWM-We-TVH"/>
-                            <menuItem title="Toolbelt" id="1295">
+                            <menuItem title="Toolbelt" identifier="Toolbelt" id="1295">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Toolbelt" id="1296">
                                     <items>
@@ -1094,7 +1096,7 @@ DQ
                             <menuItem isSeparatorItem="YES" id="908">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Triggers" id="DB9-tf-hPg">
+                            <menuItem title="Triggers" identifier="Triggers" id="DB9-tf-hPg">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Triggers" id="Ixq-yO-JO6">
                                     <items>
@@ -1484,7 +1486,7 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="24F-Ft-dce"/>
-                            <menuItem title="Arrangements" id="OBk-Hd-j3M">
+                            <menuItem title="Arrangements" identifier="Arrangements" id="OBk-Hd-j3M">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Arrangements" id="7ay-jv-hQe">
                                     <items>
@@ -1878,6 +1880,7 @@ DQ
                 <outlet property="_splitHorizontallyWithCurrentProfile" destination="1201" id="FLl-hN-paX"/>
                 <outlet property="_splitVertically" destination="1291" id="HKF-80-dqT"/>
                 <outlet property="_splitVerticallyWithCurrentProfile" destination="1200" id="TXu-qW-aIJ"/>
+                <outlet property="_toolbeltMenuItem" destination="1297" id="QkM-ZJ-lT3"/>
                 <outlet property="_triggers" destination="DB9-tf-hPg" id="gAA-pF-wPx"/>
                 <outlet property="bookmarkMenu" destination="592" id="874"/>
                 <outlet property="irPrev" destination="976" id="980"/>

@@ -171,8 +171,39 @@ extension NSAttributedString {
 
         md.code.fontName = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .bold).fontName
 
-        return md.attributedString()
+        let attributedString = md.attributedString()
+        return attributedString.postprocessedSwiftyMarkdownAttributedString()
     }
+
+    // Ensures that code spans don't wordwrap by inserting zero-width nonbreaking spaces between
+    // every character in a code span. They will character wrap if needed. In the future this method
+    // can do more cool stuff.
+    func postprocessedSwiftyMarkdownAttributedString() -> NSAttributedString {
+        let result = NSMutableAttributedString(attributedString: self)
+        let fullRange = NSRange(location: 0, length: length)
+
+        enumerateAttribute(.swiftyMarkdownCharacterStyles, in: fullRange, options: []) { value, range, _ in
+            guard let styles = value as? [String],
+                  styles.contains(CharacterStyle.code.rawValue) else {
+                return
+            }
+
+            let originalSubstring = result.attributedSubstring(from: range)
+            let newSubstring = NSMutableAttributedString()
+
+            for i in 0..<originalSubstring.length {
+                let attributes = originalSubstring.attributes(at: i, effectiveRange: nil)
+                let charRange = NSRange(location: i, length: 1)
+                let char = originalSubstring.attributedSubstring(from: charRange).string
+                newSubstring.append(NSAttributedString(string: char + "\u{feff}", attributes: attributes))
+            }
+
+            result.replaceCharacters(in: range, with: newSubstring)
+        }
+
+        return result
+    }
+
 
     // The HTML parser built in to NSAttributedString is unusable because it sets an sRGB color for
     // the default text color, breaking light/dark mode. I <3 AppKit
