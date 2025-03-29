@@ -95,6 +95,7 @@
     IBOutlet NSScrollView *_scrollView;
     IBOutlet NSView *_engageAI;
     IBOutlet NSTextField *_aiCompletionWarning;
+    IBOutlet NSTextField *_sendTip;
 
     CommandHistoryPopupWindowController *_historyWindowController;
     NSInteger _completionGeneration;
@@ -136,6 +137,15 @@
         return;
     }
     [self.textView.composerDelegate composerTextViewSendToAdvancedPaste:content];
+}
+
+- (void)viewDidLayout {
+    // Avoid overlapping text
+    if ((!_aiCompletionWarning.isHidden && self.view.bounds.size.width < 418) || self.view.bounds.size.width < 180) {
+        _sendTip.hidden = YES;
+    } else {
+        _sendTip.hidden = NO;
+    }
 }
 
 - (void)setScope:(iTermVariableScope *)scope {

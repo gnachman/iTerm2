@@ -13,6 +13,7 @@
                 <outlet property="_engageAI" destination="dkw-XI-f0G" id="Nnr-hr-MPh"/>
                 <outlet property="_help" destination="Due-Dn-30r" id="Uar-qV-wfj"/>
                 <outlet property="_scrollView" destination="INC-zV-2nU" id="WF8-pw-89c"/>
+                <outlet property="_sendTip" destination="q4z-gz-Utj" id="BXD-Ad-Egi"/>
                 <outlet property="textView" destination="Gmj-Uu-ZiB" id="6iA-Qn-S8s"/>
                 <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
             </connections>
@@ -92,9 +93,9 @@
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zKb-pM-oRl">
-                            <rect key="frame" x="66" y="7" width="225" height="14"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                            <textFieldCell key="cell" lineBreakMode="clipping" title="AI completion enabled: all text sent to AI" id="d6h-kf-O57">
+                            <rect key="frame" x="66" y="6" width="541" height="14"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <textFieldCell key="cell" lineBreakMode="truncatingTail" title="AI completion enabled: all text sent to AI" id="d6h-kf-O57">
                                 <font key="font" metaFont="systemSemibold" size="11"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
