@@ -153,7 +153,7 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
         windowOrigin.y += inset
         tipWindow.setFrameOrigin(windowOrigin)
 
-        NSLog("Show tip window at \(windowOrigin) of size \(tipWindow.frame.size)")
+        DLog("Show tip window at \(windowOrigin) of size \(tipWindow.frame.size)")
 
         self.tipWindow = tipWindow
         tipWindow.makeKeyAndOrderFront(nil)
@@ -197,9 +197,9 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
     }
 
     @objc private func timerDidFire(_ generation: Int, menuItem: NSMenuItem) {
-        NSLog("Timer fired")
+        DLog("Timer fired")
         if generation != timerGeneration {
-            NSLog("Ignoring, was superceded")
+            DLog("Ignoring, was superceded")
             return
         }
         guard let (image, text) = tipRegistry[menuItem] else {
@@ -213,7 +213,8 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
     func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
         let delay = tipWindow == nil
         hideTip()
-        NSLog("Will highlight \(item?.title ?? "nil")")
+        timerGeneration += 1
+        DLog("Will highlight \(item?.title ?? "nil")")
         guard let menuItem = item, tipRegistry[menuItem] != nil else {
             hideTip()
             return
@@ -282,7 +283,7 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
         var mainMenu: CFTypeRef?
         guard AXUIElementCopyAttributeValue(axApp, "AXMenuBar" as CFString, &mainMenu) == .success,
               let mainMenu else {
-            NSLog("No menu")
+            DLog("No menu")
             return nil
         }
         // Recursively search for the menu item
@@ -312,38 +313,38 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
         var childrenValue: CFTypeRef?
         let result = AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &childrenValue)
         guard result == .success, let children = childrenValue as? [AXUIElement] else {
-            NSLog("Failed to get children of \(element)")
+            DLog("Failed to get children of \(element)")
             return nil
         }
 
         let remainingPath = Array(path.dropFirst())
-        NSLog("Searching \(children.count) children of \(element) for \(path.first!)")
+        DLog("Searching \(children.count) children of \(element) for \(path.first!)")
         for child in children {
             var titleValue: CFTypeRef?
             guard AXUIElementCopyAttributeValue(child, kAXTitleAttribute as CFString, &titleValue) == .success else {
-                NSLog("Failed to get title of item \(child)")
-                NSLog("Recursing anyway")
+                DLog("Failed to get title of item \(child)")
+                DLog("Recursing anyway")
                 if let result = findAXElement(in: child, withPath: path) {
-                    NSLog("Who knew, it worked. Result is \(result)")
+                    DLog("Who knew, it worked. Result is \(result)")
                     return result
                 }
-                NSLog("No luck with wild hair in \(child), keep going from where I was")
+                DLog("No luck with wild hair in \(child), keep going from where I was")
                 continue
             }
             guard let title = titleValue as? String else {
-                NSLog("Nil title for \(child).")
+                DLog("Nil title for \(child).")
                 continue
             }
             guard title == path.first else {
-                NSLog("Title of \(child) is \(title) but I wanted \(path.first)")
+                DLog("Title of \(child) is \(title) but I wanted \(path.first)")
                 continue
             }
             // If it's the target item, return it
             if remainingPath.isEmpty {
-                NSLog("Success")
+                DLog("Success")
                 return child
             }
-            NSLog("Found \(path.first!)! Recursing for the rest of \(Array(path.dropFirst()).joined(separator: ", "))…")
+            DLog("Found \(path.first!)! Recursing for the rest of \(Array(path.dropFirst()).joined(separator: ", "))…")
             // Recur for the next level in the path
             return findAXElement(in: child, withPath: remainingPath)
         }
