@@ -105,6 +105,7 @@ fileprivate let secureUserDefaultDidChange = NSNotification.Name("iTermSecureUse
 @objc
 class iTermSecureUserDefaults: NSObject {
     static let didChange = secureUserDefaultDidChange
+    @objc static let secureUserDefaultsDidChangeNotificationName = secureUserDefaultDidChange
 
     @objc static let instance = iTermSecureUserDefaults()
     @objc var requireAuthToOpenPasswordManager: Bool {
@@ -155,6 +156,9 @@ class iTermSecureUserDefaults: NSObject {
         set {
             try? SecureUserDefaults.instance.aiCompletionsEnabled.set(newValue)
         }
+    }
+    @objc static var aiCompletionsKey: String {
+        SecureUserDefaults.instance.aiCompletionsEnabled.key
     }
     @objc(resetAICompletionsEnabled) func resetAICompletionsEnabled() {
         try? SecureUserDefaults.instance.aiCompletionsEnabled.reset()
@@ -358,6 +362,8 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     private static func delete(_ key: String) throws {
         let filename = try path(key, create: false)
         try FileManager.default.removeItem(at: filename)
+
+        NotificationCenter.default.post(name: secureUserDefaultDidChange, object: key)
     }
 
     private static func store<U: SecureUserDefaultStringTranscodable>(_ key: String, value: U) throws {

@@ -94,6 +94,8 @@
     IBOutlet NSView *_accessories;
     IBOutlet NSScrollView *_scrollView;
     IBOutlet NSView *_engageAI;
+    IBOutlet NSTextField *_aiCompletionWarning;
+
     CommandHistoryPopupWindowController *_historyWindowController;
     NSInteger _completionGeneration;
     iTermTextPopoverViewController *_popoverVC;
@@ -105,10 +107,18 @@
     self.textView.textColor = [NSColor textColor];
     self.textView.insertionPointColor = [NSColor textColor];
     self.textView.font = [NSFont fontWithName:@"Menlo" size:11];
-
+    _aiCompletionWarning.hidden = ![[iTermSecureUserDefaults instance] aiCompletionsEnabled] || ![iTermAdvancedSettingsModel generativeAIAllowed];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(secureUserDefaultDidChange:)
+                                                 name:iTermSecureUserDefaults.secureUserDefaultsDidChangeNotificationName
+                                               object:nil];
     if (![iTermAdvancedSettingsModel generativeAIAllowed]) {
         _engageAI.hidden = YES;
     }
+}
+
+- (void)secureUserDefaultDidChange:(NSNotification *)notification {
+    _aiCompletionWarning.hidden = ![[iTermSecureUserDefaults instance] aiCompletionsEnabled] || ![iTermAdvancedSettingsModel generativeAIAllowed];
 }
 
 - (NSMutableDictionary<NSString *, iTermSearchPathsCacheEntry *> *)cache {
