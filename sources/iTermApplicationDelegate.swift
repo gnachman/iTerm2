@@ -65,6 +65,8 @@ extension iTermApplicationDelegate {
             Tip(identifier: "Edit.Actions",
                 imageName: "ActionsMenuTip",
                 text: "Actions are saved instructions for iTerm2. For example, you could create an action that opens a new window and then creates a split pane."),
+            Tip(identifier: "Set Default Width",
+                text: "Records the current width of the toolbelt for use in newly created windows."),
             Tip(identifier: "Toolbelt.Actions",
                 imageName: "ActionsMenuTip",
                 text: "Actions are saved instructions for iTerm2. For example, you could create an action that opens a new window and then creates a split pane."),
