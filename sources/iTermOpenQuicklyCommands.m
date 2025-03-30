@@ -73,6 +73,10 @@
     return NO;
 }
 
+- (BOOL)supportsMenuItems {
+    return NO;
+}
+
 @end
 
 @implementation iTermOpenQuicklyWindowArrangementCommand
@@ -229,6 +233,9 @@
     return YES;
 }
 
+- (BOOL)supportsMenuItems {
+    return YES;
+}
 @end
 
 @implementation iTermOpenQuicklyActionCommand

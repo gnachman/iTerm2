@@ -2868,6 +2868,9 @@
 		A697CEBF2D98C3560031583F /* SparklesSquareFilledOnSquare.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */; };
 		A697CEC02D98C3560031583F /* SparklesSquareFilledOnSquare.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */; };
 		A697CEC12D98C3560031583F /* SparklesSquareFilledOnSquare.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */; };
+		A697CEC72D98CEB00031583F /* OpenQuicklyMenuItem.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEC62D98CEB00031583F /* OpenQuicklyMenuItem.png */; };
+		A697CEC82D98CEB00031583F /* OpenQuicklyMenuItem.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEC62D98CEB00031583F /* OpenQuicklyMenuItem.png */; };
+		A697CEC92D98CEB00031583F /* OpenQuicklyMenuItem.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEC62D98CEB00031583F /* OpenQuicklyMenuItem.png */; };
 		A697E27B1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A698BF492A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */; };
@@ -7143,6 +7146,7 @@
 		A697CEB62D987C5A0031583F /* OpenQuicklyNamedMark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = OpenQuicklyNamedMark.png; path = images/icons/OpenQuicklyNamedMark.png; sourceTree = "<group>"; };
 		A697CEB72D987C5A0031583F /* OpenQuicklyNamedMark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "OpenQuicklyNamedMark@2x.png"; path = "images/icons/OpenQuicklyNamedMark@2x.png"; sourceTree = "<group>"; };
 		A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SparklesSquareFilledOnSquare.png; path = images/SparklesSquareFilledOnSquare.png; sourceTree = "<group>"; };
+		A697CEC62D98CEB00031583F /* OpenQuicklyMenuItem.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = OpenQuicklyMenuItem.png; path = images/icons/OpenQuicklyMenuItem.png; sourceTree = "<group>"; };
 		A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
 		A697E27A1B42501000E175DA /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; };
 		A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveSessionBuiltInFunction.swift; sourceTree = "<group>"; };
@@ -8855,6 +8859,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A697CEC62D98CEB00031583F /* OpenQuicklyMenuItem.png */,
 				A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */,
 				A697CEB62D987C5A0031583F /* OpenQuicklyNamedMark.png */,
 				A697CEB72D987C5A0031583F /* OpenQuicklyNamedMark@2x.png */,
@@ -14476,6 +14481,7 @@
 				53AA7648237E35A50094D75A /* OpenQuicklyActionIcon@2x.png in Resources */,
 				A623D9501F8984710011F8C3 /* key@2x.png in Resources */,
 				1D6ED9AF19AEA20D005A7799 /* UKCrashReporter.strings in Resources */,
+				A697CEC82D98CEB00031583F /* OpenQuicklyMenuItem.png in Resources */,
 				A6EC0B0B2C87DF5E00598D20 /* uniE0D6_Powerline_normal-right-inverse-cutout.pdf in Resources */,
 				A67F61F2214395D50093940A /* graphic_zip@2x.png in Resources */,
 				A67D0D671A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
@@ -14842,6 +14848,7 @@
 				A60BB38A1EB54BD800D76C09 /* CopyMode@2x.png in Resources */,
 				A6384F2A2BE7B9B4008C6984 /* Onboarding-SelectedCommand.png in Resources */,
 				A6E7AEB6214394F600DE9F3B /* graphic_database@2x.png in Resources */,
+				A697CEC92D98CEB00031583F /* OpenQuicklyMenuItem.png in Resources */,
 				A635F1E425076201008C3038 /* iTermActionsEditingViewController.xib in Resources */,
 				A66A882324DFCCC30043728B /* graphic_elixir.png in Resources */,
 				A6F7A70E213CB143004DE961 /* StatusBarIconJobs.png in Resources */,
@@ -15631,6 +15638,7 @@
 				A6E7AE5E214394CA00DE9F3B /* graphic_clojure.png in Resources */,
 				1DA34E05165F268F00AA91C4 /* IBarCursorXMR@2x.png in Resources */,
 				1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */,
+				A697CEC72D98CEB00031583F /* OpenQuicklyMenuItem.png in Resources */,
 				A6FE8D0A209382C000B5C648 /* download.png in Resources */,
 				A67D0D4D1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
 				A63011BB20E83081008114B7 /* iTermStatusBarKnobTextViewController.xib in Resources */,

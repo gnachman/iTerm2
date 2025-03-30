@@ -5,6 +5,7 @@
 @class iTermVariableScope;
 @protocol VT100ScreenMarkReading;
 @class PTYSession;
+@class NSMenuItem;
 
 // Represents and item in the Open Quickly table.
 @interface iTermOpenQuicklyItem : NSObject
@@ -82,5 +83,10 @@ NS_AVAILABLE_MAC(11_0)
 @interface iTermOpenQuicklyNamedMarkItem: iTermOpenQuicklyItem
 @property(nonatomic, strong) id<VT100ScreenMarkReading> namedMark;
 @property(nonatomic, weak) PTYSession *session;
+@end
+
+@interface iTermOpenQuicklyMenuItem: iTermOpenQuicklyItem
+@property(nonatomic, strong) NSMenuItem *menuItem;
+@property(nonatomic, readonly) BOOL valid;
 @end
 

@@ -56,6 +56,9 @@ static const double kSnippetMultiplier = 0.3;
 // Named Marks
 static const double kNamedMarkMultiplier = 0.5;
 
+// Menu items
+static const double kMenuItemMultiplier = 0.2;
+
 // Multipliers for arrangement items. Arrangements rank just above profiles
 static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
@@ -275,6 +278,41 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             [items addObject:item];
         }
     }
+}
+
+- (iTermOpenQuicklyMenuItem *)itemForMenuItem:(NSMenuItem *)menuItem
+                                      matcher:(iTermMinimumSubsequenceMatcher *)matcher
+                                         path:(NSArray<NSString *> *)path {
+    if (!menuItem.isEnabled || menuItem.isHidden || menuItem.isSeparatorItem) {
+        return nil;
+    }
+    iTermOpenQuicklyMenuItem *item = [[iTermOpenQuicklyMenuItem alloc] init];
+    NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+    item.score = [self scoreForMenuItem:menuItem
+                                matcher:matcher
+                         attributedName:attributedName];
+    if (item.score <= 0) {
+        return nil;
+    }
+    item.title = attributedName;
+    item.identifier = menuItem.identifier ?: [[NSUUID UUID] UUIDString];
+    item.menuItem = menuItem;
+
+    NSDictionary *regularAttributes = @{ NSParagraphStyleAttributeName: NSParagraphStyle.defaultParagraphStyle };
+    NSDictionary *boldAttributes = @{
+        NSParagraphStyleAttributeName: NSParagraphStyle.defaultParagraphStyle,
+        NSFontAttributeName: [NSFont boldSystemFontOfSize:[NSFont systemFontSize]]
+    };
+    NSMutableAttributedString *detail =
+        [[NSMutableAttributedString alloc] initWithString:@"Menu item under "
+                                               attributes:regularAttributes];
+    NSString *combinedPath = [path componentsJoinedByString:@" > "];
+    NSAttributedString *breadcrumbs = [[NSAttributedString alloc] initWithString:combinedPath
+                                                                      attributes:boldAttributes];
+    [detail appendAttributedString:breadcrumbs];
+    item.detail = detail;
+
+    return item;
 }
 
 - (iTermOpenQuicklyNamedMarkItem *)itemForNamedMark:(id<VT100ScreenMarkReading>)namedMark
@@ -507,6 +545,31 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     }
 }
 
+- (void)addMenuItemsToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+                withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    [self addMenuItemsInMenu:[NSApp mainMenu] toItems:items withMatcher:matcher path:@[]];
+}
+
+- (void)addMenuItemsInMenu:(NSMenu *)menu
+                   toItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+               withMatcher:(iTermMinimumSubsequenceMatcher *)matcher
+                      path:(NSArray<NSString *> *)path {
+    [menu update];
+    for (NSMenuItem *menuItem in menu.itemArray) {
+        if (menuItem.title.length > 0 && menuItem.action != nil && !menuItem.submenu) {
+            iTermOpenQuicklyMenuItem *item = [self itemForMenuItem:menuItem
+                                                           matcher:matcher
+                                                              path:path];
+            if (item) {
+                [items addObject:item];
+            }
+        }
+        if (menuItem.submenu) {
+            [self addMenuItemsInMenu:menuItem.submenu toItems:items withMatcher:matcher path:[path arrayByAddingObject:menuItem.title]];
+        }
+    }
+}
+
 - (void)addSnippetsToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     NSArray<NSString *> *tags = [[iTermController sharedInstance] currentSnippetsFilter];
@@ -658,6 +721,9 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     if ([command supportsNamedMarks]) {
         [self addNamedMarksToItems:items withMatcher:matcher];
     }
+    if ([command supportsMenuItems]) {
+        [self addMenuItemsToItems:items withMatcher:matcher];
+    }
     if (@available(macOS 11, *)) {
         iTermVariableScope *scope = [self scopeForValidInvocation:queryString];
         if (scope) {
@@ -766,6 +832,8 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         return item;
     } else if ([item isKindOfClass:[iTermOpenQuicklyNamedMarkItem class]]) {
         return item;
+    } else if ([item isKindOfClass:[iTermOpenQuicklyMenuItem class]]) {
+        return item;
     }
     if (@available(macOS 11, *)) {
         if ([item isKindOfClass:[iTermOpenQuicklyInvocationItem class]]) {
@@ -856,6 +924,23 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                                       name:nil
                                   features:nameFeature
                                      limit:2 * kActionMultiplier];
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForMenuItem:(NSMenuItem *)menuItem
+                   matcher:(iTermMinimumSubsequenceMatcher *)matcher
+            attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+
+    const double score = [self scoreUsingMatcher:matcher
+                                       documents:@[ menuItem.title, menuItem.toolTip ?: @"" ]
+                                      multiplier:kMenuItemMultiplier
+                                            name:nil
+                                        features:nameFeature
+                                           limit:kMenuItemMultiplier];
     if (nameFeature.count) {
         [attributedName appendAttributedString:nameFeature[0][0]];
     }

@@ -24,6 +24,7 @@
 - (BOOL)supportsAction;
 - (BOOL)supportsSnippet;
 - (BOOL)supportsNamedMarks;
+- (BOOL)supportsMenuItems;
 @end
 
 @interface iTermOpenQuicklyCommand : NSObject<iTermOpenQuicklyCommand>

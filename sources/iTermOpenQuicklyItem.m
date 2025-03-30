@@ -122,3 +122,15 @@
 }
 
 @end
+
+@implementation iTermOpenQuicklyMenuItem
+
+- (NSImage *)icon {
+    return [NSImage it_imageNamed:@"OpenQuicklyMenuItem" forClass:self.class];
+}
+
+- (BOOL)valid {
+    return self.menuItem.isEnabled && !self.menuItem.isHidden;
+}
+
+@end

@@ -313,6 +313,16 @@
                 [item.session reveal];
                 [item.session scrollToMark:item.namedMark];
             }
+        } else if ([object isKindOfClass:[iTermOpenQuicklyMenuItem class]]) {
+            iTermOpenQuicklyMenuItem *item = [iTermOpenQuicklyMenuItem castFrom:object];
+            if (item.valid) {
+                // Do it after this window is no longer around.
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [NSApp sendAction:item.menuItem.action
+                                   to:item.menuItem.target
+                                 from:item.menuItem];
+                });
+            }
         } else {
             if (@available(macOS 11, *)) {
                 if ([object isKindOfClass:[iTermOpenQuicklyInvocationItem class]]) {
