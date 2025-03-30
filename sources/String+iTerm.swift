@@ -313,3 +313,4 @@ extension String {
         return rtlFound
     }
 }
+

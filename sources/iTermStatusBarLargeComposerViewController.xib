@@ -75,7 +75,7 @@
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dkw-XI-f0G">
                             <rect key="frame" x="21" y="0.0" width="32" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES"/>
-                            <buttonCell key="cell" type="bevel" title="AI" bezelStyle="rounded" image="sparkles.square.filled.on.square" catalog="system" imagePosition="left" alignment="right" imageScaling="proportionallyDown" inset="2" id="zb3-gB-4Zi">
+                            <buttonCell key="cell" type="bevel" title="AI" bezelStyle="rounded" image="sparkles.square.filled.on.square" catalog="system" imagePosition="left" alignment="right" alternateImage="SparklesSquareFilledOnSquare" imageScaling="proportionallyDown" inset="2" id="zb3-gB-4Zi">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                 <font key="font" metaFont="smallSystem"/>
                             </buttonCell>
@@ -111,6 +111,7 @@
         </customView>
     </objects>
     <resources>
+        <image name="SparklesSquareFilledOnSquare" width="103.5" height="102.5"/>
         <image name="sparkles.square.filled.on.square" catalog="system" width="17" height="16"/>
     </resources>
 </document>

@@ -51,3 +51,37 @@ public extension Optional where Wrapped == Data {
     }
 }
 
+// Enables easy logging of optional strings: DLog("\(maybeString.d)")
+extension Optional where Wrapped: StringProtocol {
+    var d: String {
+        switch self {
+        case .none:
+            return "(nil)"
+        case .some(let value):
+            return String(value)
+        }
+    }
+}
+/*
+extension Optional where Wrapped: NSObject {
+    var d: String {
+        switch self {
+        case .none:
+            return "(nil)"
+        case .some(let value):
+            return value.description
+        }
+    }
+}
+
+extension Optional where Wrapped: CustomDebugStringConvertible {
+    var d: String {
+        switch self {
+        case .none:
+            return "(nil)"
+        case .some(let value):
+            return value.debugDescription
+        }
+    }
+}
+*/

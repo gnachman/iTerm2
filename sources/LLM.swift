@@ -336,7 +336,6 @@ class LLMMetadata: NSObject {
     }
 
     static func platform() -> LLMProvider.Platform {
-        let model = self.model()
         let urlString = iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? ""
         if URL(string: urlString)?.host == "generativelanguage.googleapis.com" {
             return .gemini

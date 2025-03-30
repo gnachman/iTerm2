@@ -270,7 +270,9 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
     }
 
     private func getAXUIElement(for menuItem: NSMenuItem) -> AXUIElement? {
-        guard let parentMenu = menuItem.parent?.submenu else { return nil }
+        guard menuItem.parent?.submenu != nil else {
+            return nil
+        }
 
         // Get the process ID of the current process
         let pid = getpid()
@@ -336,7 +338,7 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
                 continue
             }
             guard title == path.first else {
-                DLog("Title of \(child) is \(title) but I wanted \(path.first)")
+                DLog("Title of \(child) is \(title) but I wanted \(path.first.d)")
                 continue
             }
             // If it's the target item, return it

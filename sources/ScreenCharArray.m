@@ -418,12 +418,16 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return count;
 }
 
-- (id)mutableCopy {
+- (nonnull id)mutableCopyWithZone:(nullable NSZone *)zone {
     return [[MutableScreenCharArray alloc] initWithCopyOfLine:self.line
                                                        length:self.length
                                                      metadata:self.metadata
                                                  continuation:self.continuation
                                                      bidiInfo:self.bidiInfo];
+}
+
+- (id)mutableCopy {
+    return [self mutableCopyWithZone:nil];
 }
 
 - (id)copyWithZone:(NSZone *)zone {
@@ -716,6 +720,7 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
     }
     return length;
 }
+
 @end
 
 @implementation MutableScreenCharArray
