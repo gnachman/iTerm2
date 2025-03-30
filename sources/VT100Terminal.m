@@ -3500,35 +3500,27 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
 + (NSOrderedSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
                                 externalAttributes:(iTermExternalAttribute *)ea {
-    VT100GraphicRendition g = {
-        .bold = c.bold,
-        .blink = c.blink,
-        .invisible = c.invisible,
-        .underline = c.underline,
-        .underlineStyle = c.underlineStyle,
-        .strikethrough = c.strikethrough,
-        .reversed = c.inverse,
-        .faint = c.faint,
-        .italic = c.italic,
-        .fgColorCode = c.foregroundColor,
-        .fgGreen = c.fgGreen,
-        .fgBlue = c.fgBlue,
-        .fgColorMode = c.foregroundColorMode,
-
-        .bgColorCode = c.backgroundColor,
-        .bgGreen = c.bgGreen,
-        .bgBlue = c.bgBlue,
-        .bgColorMode = c.backgroundColorMode,
-
-        .hasUnderlineColor = ea.hasUnderlineColor,
-        .underlineColor = ea.underlineColor,
-    };
+    VT100GraphicRendition g = VT100GraphicRenditionFromCharacter(&c, ea);
     return [self sgrCodesForGraphicRendition:g];
 }
 
-+ (NSOrderedSet<NSString *> *)sgrCodesForGraphicRendition:(VT100GraphicRendition)graphicRendition {
++ (NSOrderedSet<NSString *> *)sgrCodesForGraphicRendition:(VT100GraphicRendition)original {
     NSMutableOrderedSet<NSString *> *result = [NSMutableOrderedSet orderedSet];
     [result addObject:@"0"];  // for xterm compatibility. Also makes esctest happy.
+
+    // This has fg and bg swapped if needed, otherwise it's just a copy.
+    VT100GraphicRendition graphicRendition = original;
+    if (graphicRendition.reversed) {
+        graphicRendition.fgColorCode = original.bgColorCode;
+        graphicRendition.fgGreen = original.bgGreen;
+        graphicRendition.fgBlue = original.bgBlue;
+        graphicRendition.fgColorMode = original.bgColorMode;
+
+        graphicRendition.bgColorCode = original.fgColorCode;
+        graphicRendition.bgGreen = original.fgGreen;
+        graphicRendition.bgBlue = original.fgBlue;
+        graphicRendition.bgColorMode = original.fgColorMode;
+    }
     switch (graphicRendition.fgColorMode) {
         case ColorModeNormal:
             if (graphicRendition.fgColorCode < 8) {

@@ -355,7 +355,6 @@ VT100GraphicRendition VT100GraphicRenditionFromCharacter(const screen_char_t *c,
         .hasUnderlineColor = attr.hasUnderlineColor,
         .underlineColor = attr.underlineColor,
     };
-
 }
 
 void VT100GraphicRenditionUpdateForeground(const VT100GraphicRendition *rendition,
