@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermSwipeState: NSObject
 @property (nonatomic, readonly) id userInfo;
-@property (nonatomic, strong, readonly) id<iTermSwipeHandler> swipeHandler;
+@property (nullable, nonatomic, weak, readonly) id<iTermSwipeHandler> swipeHandler;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithSwipeHandler:(id<iTermSwipeHandler>)handler NS_DESIGNATED_INITIALIZER;
