@@ -71,7 +71,8 @@ static vector_float4 VectorForColor(NSColor *color) {
     _selectedCommandOutlineColors[1] = scoc[1].vector;
     _shadeColor = drawingHelper.shadeColor.vector;
     _shadeColor.xyz *= _shadeColor.w;
-    
+    _buttonsBackgroundRects = [drawingHelper.buttonsBackgroundRects shiftedBy:NSMakePoint(0, -textView.visibleRect.origin.y)];
+
     _lineStyleMarkColors = (iTermLineStyleMarkColors) {
         .success = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper successMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
         .other = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper otherMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,

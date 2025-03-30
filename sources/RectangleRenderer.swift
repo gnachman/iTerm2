@@ -18,7 +18,11 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
             var yRange: Range<Int32>  // In cells
             var xRange: Range<CGFloat>  // In pixels
         }
-        var rect: MixedRect
+        enum Rect {
+            case mixed(MixedRect)
+            case points(NSRect)
+        }
+        var rect: Rect
         var insets: NSEdgeInsets
         var color: vector_float4
     }
@@ -28,6 +32,23 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
     var count: Int { rectangles.count }
     var clipRect: NSRect?
 
+    @objc(addPointsRect:color:)
+    func addPoints(rect: NSRect, color: vector_float4) {
+        rectangles.append(.init(rect: .points(rect), insets: NSEdgeInsets(), color: color))
+    }
+
+    @objc(addPointsFrameRect:color:thickness:)
+    func addPointsFrame(rect: NSRect, color: vector_float4, thickness: CGFloat) {
+        // Bottom
+        addPoints(rect: NSRect(x: rect.minX, y: rect.minY, width: rect.width, height: thickness), color: color)
+        // Top
+        addPoints(rect: NSRect(x: rect.minX, y: rect.maxY - thickness, width: rect.width, height: thickness), color: color)
+        // Right
+        addPoints(rect: NSRect(x: rect.maxX - thickness, y: rect.minY + thickness, width: thickness, height: rect.height - thickness * 2), color: color)
+        // Left
+        addPoints(rect: NSRect(x: rect.minX, y: rect.minY + thickness, width: thickness, height: rect.height - thickness * 2), color: color)
+    }
+
     @objc(addRectangleWithMinXPixels:minYCells:widthPixels:heightCells:insets:color:)
     func add(minX: CGFloat,
              minY: Int32,
@@ -35,10 +56,10 @@ class RectangleRendererTransientState: iTermMetalCellRendererTransientState {
              height: Int32,
              insets: NSEdgeInsets,
              color: vector_float4) {
-        rectangles.append(Rectangle(rect: Rectangle.MixedRect(yRange: minY..<(minY + height),
-                                                              xRange: (minX..<(minX + width))),
-                                    insets: insets,
-                                    color: color))
+        rectangles.append(.init(rect: .mixed(.init(yRange: minY..<(minY + height),
+                                                   xRange: (minX..<(minX + width)))),
+                                insets: insets,
+                                color: color))
     }
 
     @objc
@@ -145,25 +166,32 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
         scaledInsets.bottom *= scale
         scaledInsets.right *= scale
 
-        let left = rectangle.rect.xRange.lowerBound + scaledInsets.left
-        let right = rectangle.rect.xRange.upperBound - scaledInsets.right
-        let top = margins.bottom + CGFloat(rectangle.rect.yRange.lowerBound) * cellHeight + scaledInsets.top
-        let bottom = margins.bottom + CGFloat(rectangle.rect.yRange.upperBound) * cellHeight - scaledInsets.bottom
+        switch rectangle.rect {
+        case .mixed(let rect):
+            let left = rect.xRange.lowerBound + scaledInsets.left
+            let right = rect.xRange.upperBound - scaledInsets.right
+            let top = margins.bottom + CGFloat(rect.yRange.lowerBound) * cellHeight + scaledInsets.top
+            let bottom = margins.bottom + CGFloat(rect.yRange.upperBound) * cellHeight - scaledInsets.bottom
 
-        let topLeftFrame = NSRect(x: left,
-                                  y: top,
-                                  width: right - left,
-                                  height: bottom - top)
+            let topLeftFrame = NSRect(x: left,
+                                      y: top,
+                                      width: right - left,
+                                      height: bottom - top)
 
-        let frame = NSRect(x: topLeftFrame.minX,
-                           y: CGFloat(viewportSize.y) - topLeftFrame.maxY,
-                           width: topLeftFrame.width,
-                           height: topLeftFrame.height)
+            let frame = NSRect(x: topLeftFrame.minX,
+                               y: CGFloat(viewportSize.y) - topLeftFrame.maxY,
+                               width: topLeftFrame.width,
+                               height: topLeftFrame.height)
 
-        return CGRect(x: frame.minX,
-                      y: frame.minY,
-                      width: frame.width,
-                      height: frame.height)
+            return CGRect(x: frame.minX,
+                          y: frame.minY,
+                          width: frame.width,
+                          height: frame.height)
+        case .points(let rect):
+            var scaled = rect * scale
+            scaled.origin.y = CGFloat(cellConfiguration.viewportSize.y) - scaled.maxY
+            return scaled
+        }
     }
 
     private func vertices(quad: CGRect, textureFrame: CGRect) -> [iTermVertex] {

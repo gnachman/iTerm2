@@ -1453,6 +1453,15 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     NSColor *selectedColor = [self.delegate drawingHelperColorForCode:ALTSEM_SELECTED green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:YES];
 
     if (@available(macOS 11, *)) {
+        iTermRectArray *rects = [self buttonsBackgroundRects];
+        for (NSInteger i = 0; i < rects.count; i++) {
+            const NSRect rect = [rects rectAtIndex:i];
+            [background set];
+            iTermRectFill(rect, virtualOffset);
+            [foreground set];
+            iTermFrameRect(rect, virtualOffset);
+        }
+
         for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
             if (![self canDrawLine:button.absCoordForDesiredFrame.y - _totalScrollbackOverflow]) {
                 continue;
@@ -1464,6 +1473,29 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                               virtualOffset:virtualOffset];
         }
     }
+}
+
+- (iTermRectArray *)buttonsBackgroundRects NS_AVAILABLE_MAC(11) {
+    NSMutableDictionary<NSNumber *, NSValue *> *dict = [NSMutableDictionary dictionary];
+    NSArray<iTermTerminalButton *> *buttons = [self.delegate drawingHelperTerminalButtons];
+    for (iTermTerminalButton *button in buttons) {
+        VT100GridAbsCoord absCoord = [_delegate absCoordForButton:button];
+        NSValue *value = dict[@(absCoord.y)];
+        if (!value) {
+            value = [NSValue valueWithRect:button.desiredFrame];
+        } else {
+            NSRect rect = value.rectValue;
+            rect = NSUnionRect(rect, button.desiredFrame);
+            value = [NSValue valueWithRect:rect];
+        }
+        dict[@(absCoord.y)] = value;
+    }
+    iTermMutableRectArray *result = [[iTermMutableRectArray alloc] init];
+    [dict enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, NSValue *value, BOOL * _Nonnull stop) {
+        const NSRect rect = value.rectValue;
+        [result append:NSInsetRect(rect, -4, -2)];
+    }];
+    return result;
 }
 
 - (void)updateButtonFrames NS_AVAILABLE_MAC(11) {

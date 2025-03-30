@@ -24,6 +24,7 @@
 @class iTermFindOnPageHelper;
 @class iTermKittyImageDraw;
 @class iTermOffscreenCommandLine;
+@class iTermRectArray;
 @class iTermSelection;
 @class iTermTextExtractor;
 @protocol FontProviderProtocol;
@@ -414,6 +415,7 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 
 - (void)updateCachedMetrics;
 - (void)updateButtonFrames NS_AVAILABLE_MAC(11);
+- (iTermRectArray *)buttonsBackgroundRects;
 - (NSRange)rangeOfVisibleRows;
 - (VT100GridCoord)coordinateByTransformingScreenCoordinateForRTL:(VT100GridCoord)nominal;
 - (void)didFinishSetup;

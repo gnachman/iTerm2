@@ -137,6 +137,7 @@ typedef struct {
     iTermImageRenderer *_imageRenderer;
     iTermCopyToDrawableRenderer *_copyToDrawableRenderer;
     iTermBlockRenderer *_blockRenderer;
+    iTermButtonsBackgroundRenderer *_buttonsBackgroundRenderer NS_AVAILABLE_MAC(11);
     iTermTerminalButtonRenderer *_terminalButtonRenderer NS_AVAILABLE_MAC(11);
     iTermRectangleRenderer *_rectangleRenderer;
     iTermKittyImageRenderer *_kittyImageRenderer;
@@ -227,6 +228,7 @@ typedef struct {
         }
         _blockRenderer = [[iTermBlockRenderer alloc] initWithDevice:device];
         if (@available(macOS 11, *)) {
+            _buttonsBackgroundRenderer = [[iTermButtonsBackgroundRenderer alloc] initWithDevice:device];
             _terminalButtonRenderer = [[iTermTerminalButtonRenderer alloc] initWithDevice:device];
         }
         _rectangleRenderer = [[iTermRectangleRenderer alloc] initWithDevice:device];
@@ -992,6 +994,9 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     [self drawCursorAfterTextWithFrameData:frameData];
 
     if (_terminalButtonRenderer) {
+        [self drawCellRenderer:_buttonsBackgroundRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawButtons];
         [self drawCellRenderer:_terminalButtonRenderer
                      frameData:frameData
                           stat:iTermMetalFrameDataStatPqEnqueueDrawButtons];
@@ -1702,7 +1707,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
 }
 
 - (void)populateTerminalButtonRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData NS_AVAILABLE_MAC(11) {
-    if (!_terminalButtonRenderer) {
+    if (!_terminalButtonRenderer || !_buttonsBackgroundRenderer) {
         return;
     }
     iTermTerminalButtonRendererTransientState *tState = [frameData transientStateForRenderer:_terminalButtonRenderer];
@@ -1724,6 +1729,13 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
           backgroundColor:frameData.perFrameState.defaultBackgroundColor
             selectedColor:frameData.perFrameState.selectedBackgroundColor
                     shift:button.shift * frameData.scale];
+    }
+    if (frameData.perFrameState.buttonsBackgroundRects.count > 0) {
+        iTermRectangleRendererTransientState *bgTState = [frameData transientStateForRenderer:_buttonsBackgroundRenderer];
+        [frameData.perFrameState.buttonsBackgroundRects enumerateWithBlock:^(NSRect rect) {
+            [bgTState addPointsRect:rect color:frameData.perFrameState.defaultBackgroundColor];
+            [bgTState addPointsFrameRect:rect color:frameData.perFrameState.defaultTextColor thickness:1];
+        }];
     }
 }
 
@@ -2322,6 +2334,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                _keyCursorRenderer,
                _timestampsRenderer,
                _blockRenderer,
+               _buttonsBackgroundRenderer ?: [NSNull null],
                _terminalButtonRenderer ?: [NSNull null],
                _rectangleRenderer,
                _kittyImageRenderer] arrayByRemovingNulls];

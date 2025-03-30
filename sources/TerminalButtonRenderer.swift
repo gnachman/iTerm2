@@ -49,9 +49,13 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
 }
 
 @available(macOS 11, *)
+@objc(iTermButtonsBackgroundRenderer)
+class ButtonsBackgroundRenderer: RectangleRenderer {}
+
+@available(macOS 11, *)
 @objc(iTermTerminalButtonRenderer)
 class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
-    private let metalRenderer: iTermMetalCellRenderer
+    private let buttonRenderer: iTermMetalCellRenderer
     private struct TextureKey: Hashable, Equatable {
         var foregroundColor: vector_float4
         var backgroundColor: vector_float4
@@ -65,7 +69,7 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
 
     @objc(initWithDevice:)
     init(device: MTLDevice) {
-        metalRenderer = iTermMetalCellRenderer(
+        buttonRenderer = iTermMetalCellRenderer(
             device: device,
             vertexFunctionName: "iTermTerminalButtonVertexShader",
             fragmentFunctionName: "iTermTerminalButtonFragmentShader",
@@ -136,7 +140,7 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
         ]
         return vertices.withUnsafeBytes { pointer in
             let byteArray = Array(pointer.bindMemory(to: UInt8.self))
-            return metalRenderer.verticesPool.requestBuffer(from: context,
+            return buttonRenderer.verticesPool.requestBuffer(from: context,
                                                             withBytes: byteArray,
                                                             checkIfChanged: true)
         }
@@ -160,13 +164,14 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
             DLog("Failed ot create texture")
             return
         }
-        metalRenderer.draw(with: tState,
+        buttonRenderer.draw(with: tState,
                            renderEncoder: renderEncoder,
                            numberOfVertices: 6,
                            numberOfPIUs: 0,
                            vertexBuffers: [ NSNumber(value: iTermVertexInputIndexVertices.rawValue): vertexBuffer ],
                            fragmentBuffers: [:],
                            textures: [ NSNumber(value: iTermTextureIndexPrimary.rawValue): texture])
+
     }
 
     private func texture(for button: TerminalButtonRendererTransientState.Button,
@@ -193,7 +198,7 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
                 colorSpace: tState.configuration.colorSpace),
             cellSize: NSSize(width: button.terminalButton.desiredFrame.size.width * tState.configuration.scale / defaultScale,
                              height: button.terminalButton.desiredFrame.size.height * tState.configuration.scale / defaultScale))
-        let texture = metalRenderer.texture(
+        let texture = buttonRenderer.texture(
             fromImage: iTermImageWrapper(image: image),
             context: tState.poolContext,
             pool: texturePool,
@@ -203,7 +208,7 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
     }
 
     func createTransientState(forCellConfiguration configuration: iTermCellRenderConfiguration, commandBuffer: MTLCommandBuffer) -> iTermMetalRendererTransientState? {
-        let tState = metalRenderer.createTransientState(forCellConfiguration: configuration,
+        let tState = buttonRenderer.createTransientState(forCellConfiguration: configuration,
                                                   commandBuffer: commandBuffer)
         return tState
     }

@@ -770,6 +770,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_selectedCommandOutlineColors;
 }
 
+- (iTermRectArray *)buttonsBackgroundRects {
+    return _configuration->_buttonsBackgroundRects;
+}
+
 - (vector_float4)shadeColor {
     return _configuration->_shadeColor;
 }

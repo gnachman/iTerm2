@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermColorMap;
 @class iTermFontTable;
 @protocol iTermMetalPerFrameStateDelegate;
+@class iTermRectArray;
 @class iTermTerminalButton;
 @class iTermTextDrawingHelper;
 @class NSColor;
@@ -95,6 +96,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSFont *_timestampFont;
     NSArray<iTermTerminalButton *> *_terminalButtons NS_AVAILABLE_MAC(11);
     long long _totalScrollbackOverflow;
+    iTermRectArray *_buttonsBackgroundRects;
 
     // Offscreen command line
     NSColor *_offscreenCommandLineBackgroundColor;
