@@ -600,7 +600,7 @@ extension PTYTextView: ExternalSearchResultsController {
             } else {
                 lastLength -= (min(lastLength - firstLength, overage))
             }
-            overage = length - (firstLength + midLength + lastLength)
+            overage = (firstLength + midLength + lastLength) - length
         }
         let result = MutableScreenCharArray()
 
