@@ -21,6 +21,10 @@ static NSString *const PTYAnnotationDictionaryKeyUniqueID = @"UniqueID";
 @synthesize delegate = _delegate;
 @synthesize uniqueID = _uniqueID;
 
++ (NSString *)textForAnnotationForNamedMarkWithName:(NSString *)name {
+    return [@"Named Mark " stringByAppendingString:name];
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {

@@ -13530,7 +13530,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     DLog(@"saveScrollPositionWithName:%@", name);
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [_textview refresh];  // Handle scrollback overflow so we have the most recent scroll position
-        id<iTermMark> mark = [mutableState addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
+        const long long absLine = [_textview absoluteScrollPosition];
+        id<iTermMark> mark = [mutableState addMarkStartingAtAbsoluteLine:absLine
                                                                  oneLine:NO
                                                                  ofClass:[VT100ScreenMark class]
                                                                 modifier:^(id<iTermMark> mark) {
@@ -13538,6 +13539,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             screenMark.name = name;
         }];
         self.currentMarkOrNotePosition = mark.doppelganger.entry.interval;
+
+        const long long actualLine = [mutableState absCoordRangeForInterval:mark.entry.interval].end.y;
+        [mutableState addNoteWithText:[PTYAnnotation textForAnnotationForNamedMarkWithName:name]
+                      inAbsoluteRange:VT100GridAbsCoordRangeMake(0, actualLine, mutableState.width, actualLine)];
     }];
 }
 
@@ -13556,8 +13561,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
             screenMark.name = newName;
         }];
+        const long long actualLine = range.end.y;
+        [mutableState addNoteWithText:[PTYAnnotation textForAnnotationForNamedMarkWithName:newName]
+                      inAbsoluteRange:VT100GridAbsCoordRangeMake(0, actualLine, mutableState.width, actualLine)];
     }];
 }
+
 - (void)screenStealFocus {
     // Dispatch because you can't have a runloop in a side-effect.
     dispatch_async(dispatch_get_main_queue(), ^{

@@ -307,6 +307,12 @@
             PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
             PTYSession *session = term.currentSession;
             [session.textview sendSnippet:item];
+        } else if ([object isKindOfClass:[iTermOpenQuicklyNamedMarkItem class]]) {
+            iTermOpenQuicklyNamedMarkItem *item = [iTermOpenQuicklyNamedMarkItem castFrom:object];
+            if (item.session) {
+                [item.session reveal];
+                [item.session scrollToMark:item.namedMark];
+            }
         } else {
             if (@available(macOS 11, *)) {
                 if ([object isKindOfClass:[iTermOpenQuicklyInvocationItem class]]) {

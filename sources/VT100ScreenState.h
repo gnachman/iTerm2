@@ -363,6 +363,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 - (id<VT100ScreenMarkReading> _Nullable)commandMarkAtOrBeforeLine:(int)line;
 - (id<VT100ScreenMarkReading> _Nullable)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor;
 - (id<VT100ScreenMarkReading> _Nullable)promptMarkBeforePromptMark:(id<VT100ScreenMarkReading>)successor;
+- (NSArray<id<PTYAnnotationReading>> *)annotationsOnAbsLine:(long long)absLine;
 
 - (NSString * _Nullable)commandInRange:(VT100GridCoordRange)range;
 

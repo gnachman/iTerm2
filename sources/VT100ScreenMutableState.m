@@ -2723,6 +2723,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (self.markCache[range.end.y] == mark) {
         [self.markCache removeMark:mark onLine:range.end.y];
     }
+
+    NSArray<id<PTYAnnotationReading>> *annotations = [self annotationsOnAbsLine:range.end.y];
+    for (id<PTYAnnotationReading> annotation in annotations) {
+        [self removeAnnotation:annotation];
+    }
 }
 
 - (void)didUpdatePromptLocation {

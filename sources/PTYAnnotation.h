@@ -33,6 +33,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface PTYAnnotation : NSObject<IntervalTreeObject, PTYAnnotationReading>
 @property(nonatomic, copy, readwrite) NSString *stringValue;
 
++ (NSString *)textForAnnotationForNamedMarkWithName:(NSString *)name;
+
 - (void)hide;
 - (void)setStringValueWithoutSideEffects:(NSString *)value;
 - (void)willRemove;

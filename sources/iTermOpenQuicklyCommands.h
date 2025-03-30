@@ -23,6 +23,7 @@
 - (BOOL)supportsColorPreset;
 - (BOOL)supportsAction;
 - (BOOL)supportsSnippet;
+- (BOOL)supportsNamedMarks;
 @end
 
 @interface iTermOpenQuicklyCommand : NSObject<iTermOpenQuicklyCommand>

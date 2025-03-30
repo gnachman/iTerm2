@@ -1033,6 +1033,12 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return nil;
 }
 
+- (NSArray<id<PTYAnnotationReading>> *)annotationsOnAbsLine:(long long)absLine {
+    return [[self.intervalTree objectsInInterval:[self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, absLine, self.width, absLine)]] filteredArrayUsingBlock:^BOOL(id<IntervalTreeImmutableObject> anObject) {
+        return [anObject conformsToProtocol:@protocol(PTYAnnotationReading)];
+    }];
+}
+
 - (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor {
     if (!predecessor) {
         return nil;

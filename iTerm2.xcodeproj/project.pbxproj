@@ -2859,6 +2859,12 @@
 		A697CEB32D9862D70031583F /* VerticalSplit.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB22D9862D70031583F /* VerticalSplit.png */; };
 		A697CEB42D9862D70031583F /* VerticalSplit.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB22D9862D70031583F /* VerticalSplit.png */; };
 		A697CEB52D9862D70031583F /* VerticalSplit.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB22D9862D70031583F /* VerticalSplit.png */; };
+		A697CEB82D987C5A0031583F /* OpenQuicklyNamedMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB62D987C5A0031583F /* OpenQuicklyNamedMark.png */; };
+		A697CEB92D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB72D987C5A0031583F /* OpenQuicklyNamedMark@2x.png */; };
+		A697CEBA2D987C5A0031583F /* OpenQuicklyNamedMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB62D987C5A0031583F /* OpenQuicklyNamedMark.png */; };
+		A697CEBB2D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB72D987C5A0031583F /* OpenQuicklyNamedMark@2x.png */; };
+		A697CEBC2D987C5A0031583F /* OpenQuicklyNamedMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB62D987C5A0031583F /* OpenQuicklyNamedMark.png */; };
+		A697CEBD2D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB72D987C5A0031583F /* OpenQuicklyNamedMark@2x.png */; };
 		A697CEBF2D98C3560031583F /* SparklesSquareFilledOnSquare.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */; };
 		A697CEC02D98C3560031583F /* SparklesSquareFilledOnSquare.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */; };
 		A697CEC12D98C3560031583F /* SparklesSquareFilledOnSquare.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */; };
@@ -7134,6 +7140,8 @@
 		A697CEA72D9861470031583F /* BroadcastStripesMenuTip@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "BroadcastStripesMenuTip@2x.png"; path = "images/Menu Tips/BroadcastStripesMenuTip@2x.png"; sourceTree = "<group>"; };
 		A697CEAE2D9862AF0031583F /* AdvancedPaste.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = AdvancedPaste.png; path = "images/Menu Tips/AdvancedPaste.png"; sourceTree = "<group>"; };
 		A697CEB22D9862D70031583F /* VerticalSplit.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = VerticalSplit.png; path = "images/Menu Tips/VerticalSplit.png"; sourceTree = "<group>"; };
+		A697CEB62D987C5A0031583F /* OpenQuicklyNamedMark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = OpenQuicklyNamedMark.png; path = images/icons/OpenQuicklyNamedMark.png; sourceTree = "<group>"; };
+		A697CEB72D987C5A0031583F /* OpenQuicklyNamedMark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "OpenQuicklyNamedMark@2x.png"; path = "images/icons/OpenQuicklyNamedMark@2x.png"; sourceTree = "<group>"; };
 		A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SparklesSquareFilledOnSquare.png; path = images/SparklesSquareFilledOnSquare.png; sourceTree = "<group>"; };
 		A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
 		A697E27A1B42501000E175DA /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; };
@@ -8848,6 +8856,8 @@
 			isa = PBXGroup;
 			children = (
 				A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */,
+				A697CEB62D987C5A0031583F /* OpenQuicklyNamedMark.png */,
+				A697CEB72D987C5A0031583F /* OpenQuicklyNamedMark@2x.png */,
 				A697CEB22D9862D70031583F /* VerticalSplit.png */,
 				A697CEAE2D9862AF0031583F /* AdvancedPaste.png */,
 				A697CEA62D9861470031583F /* BroadcastStripesMenuTip.png */,
@@ -14428,6 +14438,8 @@
 				1D6ED9A119AEA20D005A7799 /* PresetKeyMappings.plist in Resources */,
 				A66E804D27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */,
 				A67D0D431A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
+				A697CEBC2D987C5A0031583F /* OpenQuicklyNamedMark.png in Resources */,
+				A697CEBD2D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */,
 				A65B72B31B33C07D00F947A7 /* NextTip.png in Resources */,
 				A67F6189214395A70093940A /* graphic_perl@2x.png in Resources */,
 				A697CE782D97C3FA0031583F /* TriggersMenuTip.png in Resources */,
@@ -15176,6 +15188,8 @@
 				A67D0D601A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A697CE7C2D97C3FA0031583F /* TriggersMenuTip.png in Resources */,
 				A697CE7D2D97C3FA0031583F /* TriggersMenuTip@2x.png in Resources */,
+				A697CEB82D987C5A0031583F /* OpenQuicklyNamedMark.png in Resources */,
+				A697CEB92D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */,
 				A6F7A732213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
 				A67F61C8214395C60093940A /* graphic_search.png in Resources */,
 				A6B3A7391AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
@@ -15562,6 +15576,8 @@
 				A690F7011B424C55009F76D8 /* Media.xcassets in Resources */,
 				A6F2F21B250757FE00FC227F /* PrefsShortcuts.png in Resources */,
 				A67F61C1214395C60093940A /* graphic_read.png in Resources */,
+				A697CEBA2D987C5A0031583F /* OpenQuicklyNamedMark.png in Resources */,
+				A697CEBB2D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */,
 				A697CDFC2D9760F00031583F /* FilterMenuTip@2x.jpg in Resources */,
 				A697CDFD2D9760F00031583F /* FilterMenuTip.jpg in Resources */,
 				A6AC04C921F0FDBD00CD2774 /* StatusBarComposerExpand.png in Resources */,

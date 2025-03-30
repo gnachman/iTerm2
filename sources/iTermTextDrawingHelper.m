@@ -1273,7 +1273,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     id<VT100ScreenMarkReading> mark = [self.delegate drawingHelperMarkOnLine:line];
     const BOOL folded = [_folds containsIndex:line];
     BOOL shouldDrawRegularMark = folded;
-    if (mark != nil && self.drawMarkIndicators) {
+    if (mark != nil && (self.drawMarkIndicators || mark.name.length > 0)) {
         if (mark.lineStyle) {
             if (_selectedCommandRegion.length > 0 && NSLocationInRange(line, _selectedCommandRegion)) {
                 // Don't draw line-style mark in selected command region.

@@ -53,6 +53,9 @@ static const double kActionMultiplier = 0.4;
 // Snippet items (as defined in Prefs > Shortcuts > Snippets)
 static const double kSnippetMultiplier = 0.3;
 
+// Named Marks
+static const double kNamedMarkMultiplier = 0.5;
+
 // Multipliers for arrangement items. Arrangements rank just above profiles
 static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
@@ -274,6 +277,29 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     }
 }
 
+- (iTermOpenQuicklyNamedMarkItem *)itemForNamedMark:(id<VT100ScreenMarkReading>)namedMark
+                                          inSession:(PTYSession *)session
+                                            matcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    iTermOpenQuicklyNamedMarkItem *item = [[iTermOpenQuicklyNamedMarkItem alloc] init];
+    item.session = session;
+    item.namedMark = namedMark;
+
+    NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+    item.score = [self scoreForNamedMark:namedMark
+                                 matcher:matcher
+                          attributedName:attributedName
+                         inActiveSession:session == [[iTermController sharedInstance] currentTerminal].currentSession];
+    if (item.score <= 0) {
+        return nil;
+    }
+    item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                    value:[NSString stringWithFormat:@"Named mark “%@”", namedMark.name]
+                                                       highlightedIndexes:nil];
+    item.title = attributedName;
+    item.identifier = namedMark.guid;
+    return item;
+}
+
 - (void)addWindowLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                      withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     const BOOL multipleDisplays = [[NSScreen screens] count] > 1;
@@ -464,6 +490,23 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     [items addObject:item];
 }
 
+- (void)addNamedMarksToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+                 withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    for (PTYSession *session in [[iTermController sharedInstance] allSessions]) {
+        for (id<VT100ScreenMarkReading> namedMark in session.screen.namedMarks) {
+            if (!namedMark.name.length) {
+                continue;
+            }
+            iTermOpenQuicklyNamedMarkItem *item = [self itemForNamedMark:namedMark
+                                                               inSession:session
+                                                                 matcher:matcher];
+            if (item) {
+                [items addObject:item];
+            }
+        }
+    }
+}
+
 - (void)addSnippetsToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     NSArray<NSString *> *tags = [[iTermController sharedInstance] currentSnippetsFilter];
@@ -612,6 +655,9 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     if ([command supportsSnippet] && haveCurrentWindow) {
         [self addSnippetsToItems:items withMatcher:matcher];
     }
+    if ([command supportsNamedMarks]) {
+        [self addNamedMarksToItems:items withMatcher:matcher];
+    }
     if (@available(macOS 11, *)) {
         iTermVariableScope *scope = [self scopeForValidInvocation:queryString];
         if (scope) {
@@ -718,6 +764,8 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         return item;
     } else if ([item isKindOfClass:[iTermOpenQuicklySnippetItem class]]) {
         return item;
+    } else if ([item isKindOfClass:[iTermOpenQuicklyNamedMarkItem class]]) {
+        return item;
     }
     if (@available(macOS 11, *)) {
         if ([item isKindOfClass:[iTermOpenQuicklyInvocationItem class]]) {
@@ -808,6 +856,25 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                                       name:nil
                                   features:nameFeature
                                      limit:2 * kActionMultiplier];
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForNamedMark:(id<VT100ScreenMarkReading>)namedMark
+                    matcher:(iTermMinimumSubsequenceMatcher *)matcher
+             attributedName:(NSMutableAttributedString *)attributedName
+            inActiveSession:(BOOL)inActiveSession {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+
+    const double multiplier = kNamedMarkMultiplier * (inActiveSession ? 1.5 : 1.0);
+    const double score = [self scoreUsingMatcher:matcher
+                                       documents:@[ namedMark.name ?: @"" ]
+                                      multiplier:multiplier
+                                            name:nil
+                                        features:nameFeature
+                                           limit:multiplier];
     if (nameFeature.count) {
         [attributedName appendAttributedString:nameFeature[0][0]];
     }

@@ -69,6 +69,10 @@
     return NO;
 }
 
+- (BOOL)supportsNamedMarks {
+    return NO;
+}
+
 @end
 
 @implementation iTermOpenQuicklyWindowArrangementCommand
@@ -218,6 +222,10 @@
 }
 
 - (BOOL)supportsWindowLocation {
+    return YES;
+}
+
+- (BOOL)supportsNamedMarks {
     return YES;
 }
 

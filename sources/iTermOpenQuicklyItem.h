@@ -3,6 +3,8 @@
 @class iTermLogoGenerator;
 @class iTermOpenQuicklyTableCellView;
 @class iTermVariableScope;
+@protocol VT100ScreenMarkReading;
+@class PTYSession;
 
 // Represents and item in the Open Quickly table.
 @interface iTermOpenQuicklyItem : NSObject
@@ -76,3 +78,9 @@ NS_AVAILABLE_MAC(11_0)
 @interface iTermOpenQuicklyInvocationItem : iTermOpenQuicklyItem
 @property(nonatomic, strong) iTermVariableScope *scope;
 @end
+
+@interface iTermOpenQuicklyNamedMarkItem: iTermOpenQuicklyItem
+@property(nonatomic, strong) id<VT100ScreenMarkReading> namedMark;
+@property(nonatomic, weak) PTYSession *session;
+@end
+

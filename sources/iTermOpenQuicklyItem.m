@@ -115,3 +115,10 @@
 
 @end
 
+@implementation iTermOpenQuicklyNamedMarkItem
+
+- (NSImage *)icon {
+    return [NSImage it_imageNamed:@"OpenQuicklyNamedMark" forClass:self.class];
+}
+
+@end
