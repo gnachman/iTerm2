@@ -5520,8 +5520,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     const long long offset = self.dataSource.totalScrollbackOverflow;
     __weak __typeof(self) weakSelf = self;
     NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
-    iTermTerminalMarkButton *existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalCopyCommandButton class]];
+
+    iTermTerminalMarkButton *existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalSettingsButton class]];
     int x = width - 2;
+    if (existing) {
+        existing.shouldFloat = shouldFloat;
+        [updated addObject:existing];
+    } else {
+        iTermTerminalSettingsButton *button = [[iTermTerminalSettingsButton alloc] initWithMark:mark
+                                                                                             dx:x - width];
+        button.shouldFloat = shouldFloat;
+        __weak __typeof(mark) weakMark = mark;
+        button.action = ^(NSPoint locationInWindow) {
+            [weakSelf popCommandSettingsButtonAt:locationInWindow for:weakMark];
+        };
+        [updated addObject:button];
+    }
+    x -= 3;
+
+    existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalCopyCommandButton class]];
     if (existing) {
         existing.shouldFloat = shouldFloat;
         [updated addObject:existing];
@@ -5536,6 +5553,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         [updated addObject:button];
     }
     x -= 3;
+
     existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalBookmarkButton class]];
     if (existing) {
         existing.shouldFloat = shouldFloat;
@@ -5626,6 +5644,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         }
     }
     return updated;
+}
+
+- (void)popCommandSettingsButtonAt:(NSPoint)locationInWindow for:(id<VT100ScreenMarkReading>)mark {
+    iTermSimpleContextMenu *menu = [[[iTermSimpleContextMenu alloc] init] autorelease];
+    __weak __typeof(self) weakSelf = self;
+    [menu addItemWithTitle:@"Disable Command Selection" action:^{
+        [iTermPreferences setBool:NO forKey:kPreferenceKeyClickToSelectCommand];
+        [weakSelf.delegate textViewReloadSelectedCommand];
+    }];
+
+    [menu showInView:self forEvent:NSApp.currentEvent];
 }
 
 - (void)popCommandCopyMenuAt:(NSPoint)locationInWindow for:(id<VT100ScreenMarkReading>)mark {

@@ -514,13 +514,36 @@
 
     [image addRepresentation:bitmapRep];
     [image it_drawWithBlock:^{
+        const NSSize imageSize = [self size];
+        if (imageSize.height == 0 || size.height == 0) {
+            return;
+        }
+        const CGFloat imageAspect = imageSize.width / imageSize.height;
+        const CGFloat targetAspect = size.width / size.height;
+        NSRect drawRect = NSZeroRect;
+
+        if (targetAspect > imageAspect) {
+            // If the target is wider than the image's aspect, fit by height and center horizontally.
+            CGFloat height = size.height;
+            CGFloat width = height * imageAspect;
+            CGFloat x = (size.width - width) / 2.0;
+            drawRect = NSMakeRect(x, 0, width, height);
+        } else {
+            // Otherwise, fit by width and center vertically.
+            CGFloat width = size.width;
+            CGFloat height = width / imageAspect;
+            CGFloat y = (size.height - height) / 2.0;
+            drawRect = NSMakeRect(0, y, width, height);
+        }
+
         [tintColor set];
-        [self drawInRect:NSMakeRect(0, 0, size.width, size.height)];
+        [self drawInRect:drawRect];
         NSRectFillUsingOperation(NSMakeRect(0, 0, size.width, size.height),
                                  NSCompositingOperationSourceIn);
     }];
     return image;
 }
+
 
 - (NSImage *)it_imageWithTintColor:(NSColor *)tintColor {
     if (!tintColor) {

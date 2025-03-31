@@ -17085,6 +17085,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)textViewReloadSelectedCommand {
+    if ([iTermPreferences boolForKey:kPreferenceKeyClickToSelectCommand] == NO) {
+        _selectedCommandMark = nil;
+    }
     [self updateSearchRange];
 }
 

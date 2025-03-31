@@ -90,7 +90,7 @@ class TerminalButton: NSObject {
                cumulativeOffset: Int64,
                cellSize: NSSize) -> NSRect {
         let size = size(cellSize: cellSize)
-        let height = size.height
+        let height = cellSize.height
         let yoff = max(0, (cellSize.height - height))
         return NSRect(x: x,
                       y: CGFloat(max(minAbsLine, Int64(absY)) - cumulativeOffset) * cellSize.height + yoff,
@@ -386,6 +386,19 @@ class TerminalUnfoldButton: TerminalMarkButton {
     init?(mark: VT100ScreenMarkReading, dx: Int32) {
         super.init(identifier: -7, mark: mark, fgName: "rectangle.expand.vertical", bgName: "rectangle.expand.vertical", dx: dx)
     }
+    required init?(_ original: TerminalButton) {
+        super.init(original)
+    }
+}
+
+@available(macOS 11, *)
+@objc(iTermTerminalSettingsButton)
+class TerminalSettingsButton: TerminalMarkButton {
+    @objc(initWithMark:dx:)
+    init?(mark: VT100ScreenMarkReading, dx: Int32) {
+        super.init(identifier: -2, mark: mark, fgName: "switch.2", bgName: "switch.2", dx: dx)
+    }
+
     required init?(_ original: TerminalButton) {
         super.init(original)
     }
