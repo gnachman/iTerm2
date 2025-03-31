@@ -108,7 +108,7 @@ class TerminalButton: NSObject {
         let (foregroundImage, backgroundImage) = switch state {
         case .normal, .pressedOutside:
             images(backgroundColor: selected ? selectedColor : backgroundColor,
-                   foregroundColor: foregroundColor,
+                   foregroundColor: selected ? backgroundColor : foregroundColor,
                    size: rect.size)
         case .pressedInside:
             images(backgroundColor: foregroundColor, 

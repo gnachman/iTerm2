@@ -13549,21 +13549,23 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)renameMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName {
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         VT100ScreenMark *screenMark = (VT100ScreenMark *)[mark progenitor];
-        if (!screenMark.entry.interval || !screenMark.name) {
+        if (!screenMark.entry.interval) {
+            // Mark has already been rmeoved
             return;
         }
-        const VT100GridAbsCoordRange range = [mutableState absCoordRangeForInterval:screenMark.entry.interval];
-        [mutableState removeNamedMark:screenMark];
-        [mutableState addMarkStartingAtAbsoluteLine:range.start.y
-                                            oneLine:NO
-                                            ofClass:[VT100ScreenMark class]
-                                           modifier:^(id<iTermMark> mark) {
-            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
-            screenMark.name = newName;
-        }];
+        if (!newName && !screenMark.command && !screenMark.isPrompt) {
+            // Remove a non-command named mark
+            [mutableState removeNamedMark:screenMark];
+            return;
+        }
+        [mutableState setName:newName forMark:screenMark];
+        VT100GridAbsCoordRange range = [mutableState absCoordRangeForInterval:mark.entry.interval];
         const long long actualLine = range.end.y;
-        [mutableState addNoteWithText:[PTYAnnotation textForAnnotationForNamedMarkWithName:newName]
-                      inAbsoluteRange:VT100GridAbsCoordRangeMake(0, actualLine, mutableState.width, actualLine)];
+        [mutableState removeAnnotationsOnLine:range.start.y];
+        if (newName) {
+            [mutableState addNoteWithText:[PTYAnnotation textForAnnotationForNamedMarkWithName:newName]
+                          inAbsoluteRange:VT100GridAbsCoordRangeMake(0, actualLine, mutableState.width, actualLine)];
+        }
     }];
 }
 
@@ -17054,15 +17056,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)textViewSaveScrollPositionForMark:(id<VT100ScreenMarkReading>)mark withName:(NSString *)name {
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState setName:name forMark:(VT100ScreenMark *)mark.progenitor];
-    }];
+    [self renameMark:mark to:name];
 }
 
 - (void)textViewRemoveBookmarkForMark:(id<VT100ScreenMarkReading>)mark {
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState setName:nil forMark:(VT100ScreenMark *)mark.progenitor];
-    }];
+    [self renameMark:mark to:nil];
 }
 
 - (BOOL)textViewEnclosingTabHasMultipleSessions {

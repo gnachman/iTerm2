@@ -206,12 +206,13 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p guid=%@ name=%@ command=%@ %@>",
+    return [NSString stringWithFormat:@"<%@: %p guid=%@ name=%@ command=%@ name=%@ %@>",
             NSStringFromClass([self class]),
             self,
             _guid,
             _name,
             _command,
+            _name,
             self.isDoppelganger ? @"IsDop" : @"NotDop"];
 }
 

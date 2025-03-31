@@ -283,7 +283,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 #pragma mark - Annotations
 
-- (void)removeAnnotation:(id<PTYAnnotationReading>)annotation;
+- (void)removeAnnotation:(PTYAnnotation *)annotation;
+- (void)removeAnnotationsOnLine:(long long)line;
 
 - (id<PTYAnnotationReading> _Nullable)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
 

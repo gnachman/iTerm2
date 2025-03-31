@@ -2360,13 +2360,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         VT100ScreenMark *mutableMark = [VT100ScreenMark castFrom:mutableObj];
         mutableMark.name = name;
     }];
+    [self.namedMarks removeObjectsPassingTest:^BOOL(id _Nullable obj) {
+        id<VT100ScreenMarkReading> anObject = obj;
+        return [anObject.guid isEqualToString:mark.guid];
+    }];
     if (name) {
         [self.namedMarks addObject:mark];
-    } else {
-        [self.namedMarks removeObjectsPassingTest:^BOOL(id _Nullable obj) {
-            id<VT100ScreenMarkReading> anObject = obj;
-            return [anObject.guid isEqualToString:mark.guid];
-        }];
     }
     self.namedMarksDirty = YES;
 }
@@ -2464,10 +2463,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (BOOL)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
     DLog(@"Remove %@", obj);
+    Interval *interval = obj.entry.interval;
     [self willRemoveObjectsFromIntervalTree:@[ obj ]];
     DLog(@"removeObjectFromIntervalTree: %@", obj);
     const BOOL removed = [self.mutableIntervalTree removeObject:obj];
-    [self didRemoveObjectFromIntervalTree:obj];
+    [self didRemoveObjectFromIntervalTree:obj formerInterval:interval];
     return removed;
 }
 
@@ -2480,8 +2480,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }]];
 }
 
-- (void)didRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
-    const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:obj.entry.interval];
+- (void)didRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj formerInterval:(Interval *)interval {
+    const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:interval];
     iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(obj);
     if (type != iTermIntervalTreeObjectTypeUnknown) {
         const long long line = range.start.y;
@@ -2525,9 +2525,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)removeObjectsFromIntervalTree:(NSArray<id<IntervalTreeObject>> *)objects {
     [self willRemoveObjectsFromIntervalTree:objects];
     [objects enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        Interval *interval = obj.entry.interval;
         const BOOL removed = [self.mutableIntervalTree removeObject:obj];
         assert(removed);
-        [self didRemoveObjectFromIntervalTree:obj];
+        [self didRemoveObjectFromIntervalTree:obj formerInterval:interval];
     }];
 }
 
@@ -2723,10 +2724,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (self.markCache[range.end.y] == mark) {
         [self.markCache removeMark:mark onLine:range.end.y];
     }
+    [self removeAnnotationsOnLine:range.end.y];
+}
 
-    NSArray<id<PTYAnnotationReading>> *annotations = [self annotationsOnAbsLine:range.end.y];
+- (void)removeAnnotationsOnLine:(long long)line {
+    NSArray<id<PTYAnnotationReading>> *annotations = [self annotationsOnAbsLine:line];
     for (id<PTYAnnotationReading> annotation in annotations) {
-        [self removeAnnotation:annotation];
+        [self removeAnnotation:(PTYAnnotation *)annotation];
     }
 }
 
@@ -3669,18 +3673,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 
-- (void)removeAnnotation:(id<PTYAnnotationReading>)annotation {
+- (void)removeAnnotation:(PTYAnnotation *)annotation {
     if ([self.intervalTree containsObject:annotation]) {
         self.lastCommandMark = nil;
         const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(annotation);
         const long long absLine = [self coordRangeForInterval:annotation.entry.interval].start.y + self.cumulativeScrollbackOverflow;
         DLog(@"removeannotation %@", annotation);
-        const BOOL removed = [self.mutableIntervalTree removeObject:(PTYAnnotation *)annotation];
+        const BOOL removed = [self removeObjectFromIntervalTree:annotation];
         assert(removed);
-        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
-            [observer intervalTreeDidRemoveObjectOfType:type
-                                                 onLine:absLine];
-        }];
     } else if ([self.savedIntervalTree containsObject:annotation]) {
         self.lastCommandMark = nil;
         const BOOL removed = [self.mutableSavedIntervalTree removeObject:(PTYAnnotation *)annotation];

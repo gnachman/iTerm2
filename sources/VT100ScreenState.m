@@ -1064,7 +1064,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     if (!successor) {
         return nil;
     }
-    const long long pos = MAX(0, successor.entry.interval.location) - 1;
+    const long long pos = MAX(1, successor.entry.interval.location) - 1;
 
     for (NSArray *objects in [self.intervalTree reverseEnumeratorAt:pos]) {
         id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
