@@ -871,7 +871,7 @@ enum {
 }
 
 - (void)viewDidAppear {
-    NSLog(@"viewDidAppear");
+    DLog(@"viewDidAppear");
 }
 - (void)updateAIEnabled {
     _enableAI.enabled = _pluginOK;

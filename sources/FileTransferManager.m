@@ -319,7 +319,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (void)transferrableFileDidStartTransfer:(TransferrableFile *)transferrableFile {
-    XLog(@"Transfer started");
+    DLog(@"Transfer started");
     [[self menuForFile:transferrableFile] addItem:[self menuItemForTransferrableFile:transferrableFile]];
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
     [controller update];
@@ -339,21 +339,21 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     } else {
         transferrableFile.status = kTransferrableFileStatusFinishedSuccessfully;
     }
-    XLog(@"Transfer finished. error=%@", error);
+    DLog(@"Transfer finished. error=%@", error);
 
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
     [controller update];
 }
 
 - (void)transferrableFileWillStop:(TransferrableFile *)transferrableFile {
-    XLog(@"file transfer stop requested");
+    DLog(@"file transfer stop requested");
     transferrableFile.status = kTransferrableFileStatusCancelling;
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
     [controller update];
 }
 
 - (void)transferrableFileDidStopTransfer:(TransferrableFile *)transferrableFile {
-    XLog(@"file transfer stopped");
+    DLog(@"file transfer stopped");
     transferrableFile.status = kTransferrableFileStatusCancelled;
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
     [controller update];
