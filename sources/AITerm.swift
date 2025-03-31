@@ -102,7 +102,7 @@ struct Plugin {
     private static func checkSignature(message: Data, signature: Data) throws {
         let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: Data(base64Encoded: publicKeyB64)!)
         guard publicKey.isValidSignature(signature, for: message) else {
-            throw PluginError(reason: "The plugin's signature was incorrect. Reinstall the plugin or upgrade iTerm2.")
+            throw PluginError(reason: "The plugin's signature is invalid. Reinstall the plugin or upgrade iTerm2.")
         }
         DLog("Signature is good")
     }
@@ -223,7 +223,7 @@ class iTermAIClient {
             }
 
             guard pluginVersion == Decimal(string: requiredVersion) else {
-                throw PluginError(reason: "Incorrect version of AI plugin found. It has version \(pluginVersion) but this version of iTerm2 expects \(requiredVersion). Upgrade the plugin and iTerm2 if possible.")
+                throw PluginError(reason: "Plugin has version \(pluginVersion) but iTerm2 expects \(requiredVersion). Upgrade one or both.")
             }
             return
         case .failure(let error):

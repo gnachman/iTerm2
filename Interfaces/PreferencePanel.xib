@@ -5994,7 +5994,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                                     <subviews>
                                                                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FoB-iB-XDp">
-                                                                            <rect key="frame" x="181" y="169" width="359" height="16"/>
+                                                                            <rect key="frame" x="173" y="169" width="458" height="16"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Plugin not detected" id="0BQ-Y1-sdD">
                                                                                 <font key="font" usesAppearanceFont="YES"/>
