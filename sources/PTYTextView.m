@@ -5515,134 +5515,85 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (NSArray<iTermTerminalButton *> *)commandButtonsForMark:(id<VT100ScreenMarkReading>)mark
                                                      line:(int)markLine
                                               shouldFloat:(BOOL)shouldFloat
-                                                 offByOne:(BOOL)offByOne NS_AVAILABLE_MAC(11) {
+                                                 offByOne:(BOOL)offByOne NS_AVAILABLE_MAC(11)
+{
     const int width = [self.dataSource width];
     const long long offset = self.dataSource.totalScrollbackOverflow;
     __weak __typeof(self) weakSelf = self;
     NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
+    __block int x = width - 2;
 
-    iTermTerminalMarkButton *existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalSettingsButton class]];
-    int x = width - 2;
-    if (existing) {
-        existing.shouldFloat = shouldFloat;
-        [updated addObject:existing];
-    } else {
-        iTermTerminalSettingsButton *button = [[iTermTerminalSettingsButton alloc] initWithMark:mark
-                                                                                             dx:x - width];
-        button.shouldFloat = shouldFloat;
-        __weak __typeof(mark) weakMark = mark;
-        button.action = ^(NSPoint locationInWindow) {
-            [weakSelf popCommandSettingsButtonAt:locationInWindow for:weakMark];
-        };
-        [updated addObject:button];
-    }
-    x -= 3;
+    // Helper block to add a button, reusing cached instance if available.
+    void (^addButtonForClass)(Class, void(^)(NSPoint, id)) = ^(Class buttonClass, void(^actionBlock)(NSPoint, id)){
+        iTermTerminalMarkButton *existing = [self cachedTerminalButtonForMark:mark ofClass:buttonClass];
+        if (existing) {
+            existing.shouldFloat = shouldFloat;
+            [updated addObject:existing];
+        } else {
+            iTermTerminalMarkButton *button = [[buttonClass alloc] initWithMark:mark dx:(x - width)];
+            button.shouldFloat = shouldFloat;
+            __weak __typeof(mark) weakMark = mark;
+            button.action = ^(NSPoint locationInWindow) {
+                actionBlock(locationInWindow, weakMark);
+            };
+            [updated addObject:button];
+        }
+        x -= 3;
+    };
 
-    existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalCopyCommandButton class]];
-    if (existing) {
-        existing.shouldFloat = shouldFloat;
-        [updated addObject:existing];
-    } else {
-        iTermTerminalCopyCommandButton *button = [[iTermTerminalCopyCommandButton alloc] initWithMark:mark
-                                                                                                   dx:x - width];
-        button.shouldFloat = shouldFloat;
-        __weak __typeof(mark) weakMark = mark;
-        button.action = ^(NSPoint locationInWindow) {
-            [weakSelf popCommandCopyMenuAt:locationInWindow for:weakMark];
-        };
-        [updated addObject:button];
-    }
-    x -= 3;
+    // Settings button.
+    addButtonForClass([iTermTerminalSettingsButton class], ^(NSPoint locationInWindow, id weakMark) {
+        [weakSelf popCommandSettingsButtonAt:locationInWindow for:weakMark];
+    });
 
-    existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalBookmarkButton class]];
-    if (existing) {
-        existing.shouldFloat = shouldFloat;
-        [updated addObject:existing];
-    } else {
-        iTermTerminalBookmarkButton *button = [[iTermTerminalBookmarkButton alloc] initWithMark:mark
-                                                                                             dx:x - width];
-        button.shouldFloat = shouldFloat;
-        __weak __typeof(mark) weakMark = mark;
-        button.action = ^(NSPoint locationInWindow) {
-            NSString *command = weakMark.command;
-            if (command.length) {
-                [weakSelf toggleBookmarkForMark:weakMark];
-            }
-        };
-        [updated addObject:button];
-    }
-    x -= 3;
-    existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalShareButton class]];
-    if (existing) {
-        existing.shouldFloat = shouldFloat;
-        [updated addObject:existing];
-    } else {
-        iTermTerminalShareButton *button = [[iTermTerminalShareButton alloc] initWithMark:mark
-                                                                                       dx:x - width];
-        button.shouldFloat = shouldFloat;
-        __weak __typeof(mark) weakMark = mark;
-        button.action = ^(NSPoint locationInWindow) {
-            [weakSelf popShareMenuAt:locationInWindow absLine:markLine + offset forMark:weakMark];
-        };
-        [updated addObject:button];
-    }
-    x -= 3;
-    existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermCommandInfoButton class]];
-    if (existing) {
-        existing.shouldFloat = shouldFloat;
-        [updated addObject:existing];
-    } else {
-        iTermCommandInfoButton *button = [[iTermCommandInfoButton alloc] initWithMark:mark
-                                                                                     dx:x - width];
-        button.shouldFloat = shouldFloat;
-        const long long absLine = markLine + _dataSource.totalScrollbackOverflow;
-        __weak __typeof(mark) weakMark = mark;
-        button.action = ^(NSPoint locationInWindow) {
-            if (weakMark) {
-                [weakSelf presentCommandInfoForMark:weakMark
-                                 absoluteLineNumber:absLine
-                                               date:mark.startDate
-                                              point:locationInWindow
-                           fromOffscreenCommandLine:NO];
-            }
-        };
-        [updated addObject:button];
-    }
-    x -= 3;
+    // Copy command button.
+    addButtonForClass([iTermTerminalCopyCommandButton class], ^(NSPoint locationInWindow, id weakMark) {
+        [weakSelf popCommandCopyMenuAt:locationInWindow for:weakMark];
+    });
+
+    // Bookmark button.
+    addButtonForClass([iTermTerminalBookmarkButton class], ^(NSPoint locationInWindow, id weakMark) {
+        NSString *command = [weakMark command];
+        if (command.length) {
+            [weakSelf toggleBookmarkForMark:weakMark];
+        }
+    });
+
+    // Share button.
+    addButtonForClass([iTermTerminalShareButton class], ^(NSPoint locationInWindow, id weakMark) {
+        [weakSelf popShareMenuAt:locationInWindow
+                         absLine:(markLine + offset)
+                         forMark:weakMark];
+    });
+
+    // Command info button.
+    const long long absLine = markLine + offset;
+    addButtonForClass([iTermCommandInfoButton class], ^(NSPoint locationInWindow, id weakMark) {
+        if (weakMark) {
+            [weakSelf presentCommandInfoForMark:weakMark
+                             absoluteLineNumber:absLine
+                                           date:[weakMark startDate]
+                                          point:locationInWindow
+                       fromOffscreenCommandLine:NO];
+        }
+    });
+
+    // Fold / Unfold button.
     id<iTermFoldMarkReading> fold = [[self.dataSource foldMarksInRange:VT100GridRangeMake(markLine - (offByOne ? 0 : 1), 1)] firstObject];
     if (fold) {
-        existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalUnfoldButton class]];
-        if (existing) {
-            existing.shouldFloat = shouldFloat;
-            [updated addObject:existing];
-        } else {
-            iTermTerminalUnfoldButton *button = [[iTermTerminalUnfoldButton alloc] initWithMark:mark dx:x - width];
-            button.shouldFloat = shouldFloat;
-            __weak __typeof(mark) weakMark = mark;
-            button.action = ^(NSPoint locationInWindow) {
-                if (weakMark) {
-                    [weakSelf unfoldMark:fold];
-                }
-            };
-            [updated addObject:button];
-        }
+        addButtonForClass([iTermTerminalUnfoldButton class], ^(NSPoint locationInWindow, id weakMark) {
+            if (weakMark) {
+                [weakSelf unfoldMark:fold];
+            }
+        });
     } else {
-        existing = [self cachedTerminalButtonForMark:mark ofClass:[iTermTerminalFoldButton class]];
-        if (existing) {
-            existing.shouldFloat = shouldFloat;
-            [updated addObject:existing];
-        } else {
-            iTermTerminalFoldButton *button = [[iTermTerminalFoldButton alloc] initWithMark:mark dx:x - width];
-            button.shouldFloat = shouldFloat;
-            __weak __typeof(mark) weakMark = mark;
-            button.action = ^(NSPoint locationInWindow) {
-                if (weakMark) {
-                    [weakSelf foldCommandMark:weakMark];
-                }
-            };
-            [updated addObject:button];
-        }
+        addButtonForClass([iTermTerminalFoldButton class], ^(NSPoint locationInWindow, id weakMark) {
+            if (weakMark) {
+                [weakSelf foldCommandMark:weakMark];
+            }
+        });
     }
+
     return updated;
 }
 
@@ -5652,6 +5603,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [menu addItemWithTitle:@"Disable Command Selection" action:^{
         [iTermPreferences setBool:NO forKey:kPreferenceKeyClickToSelectCommand];
         [weakSelf.delegate textViewReloadSelectedCommand];
+    }];
+    [menu addItemWithTitle:@"Help" action:^{
+        if (!weakSelf) {
+            return;
+        }
+        NSString *filePath = [[NSBundle bundleForClass:[weakSelf class]] pathForResource:@"CommandSelectionHelp" ofType:@"md"];
+        NSError *error = nil;
+        NSString *content = [NSString stringWithContentsOfFile:filePath
+                                                      encoding:NSUTF8StringEncoding
+                                                         error:&error];
+        if (content) {
+            [weakSelf it_showWarningWithMarkdown:content];
+        }
     }];
 
     [menu showInView:self forEvent:NSApp.currentEvent];

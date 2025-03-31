@@ -2872,6 +2872,9 @@
 		A697CEC82D98CEB00031583F /* OpenQuicklyMenuItem.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEC62D98CEB00031583F /* OpenQuicklyMenuItem.png */; };
 		A697CEC92D98CEB00031583F /* OpenQuicklyMenuItem.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEC62D98CEB00031583F /* OpenQuicklyMenuItem.png */; };
 		A697CECB2D99B4940031583F /* iTermRectArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A697CECA2D99B4900031583F /* iTermRectArray.swift */; };
+		A697CECF2D9B0FB60031583F /* CommandSelectionHelp.md in Resources */ = {isa = PBXBuildFile; fileRef = A697CECD2D9B0FB60031583F /* CommandSelectionHelp.md */; };
+		A697CED02D9B0FB60031583F /* CommandSelectionHelp.md in Resources */ = {isa = PBXBuildFile; fileRef = A697CECD2D9B0FB60031583F /* CommandSelectionHelp.md */; };
+		A697CED12D9B0FB60031583F /* CommandSelectionHelp.md in Resources */ = {isa = PBXBuildFile; fileRef = A697CECD2D9B0FB60031583F /* CommandSelectionHelp.md */; };
 		A697E27B1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A698BF492A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */; };
@@ -7149,6 +7152,7 @@
 		A697CEBE2D98C3560031583F /* SparklesSquareFilledOnSquare.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SparklesSquareFilledOnSquare.png; path = images/SparklesSquareFilledOnSquare.png; sourceTree = "<group>"; };
 		A697CEC62D98CEB00031583F /* OpenQuicklyMenuItem.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = OpenQuicklyMenuItem.png; path = images/icons/OpenQuicklyMenuItem.png; sourceTree = "<group>"; };
 		A697CECA2D99B4900031583F /* iTermRectArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermRectArray.swift; sourceTree = "<group>"; };
+		A697CECD2D9B0FB60031583F /* CommandSelectionHelp.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CommandSelectionHelp.md; sourceTree = "<group>"; };
 		A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
 		A697E27A1B42501000E175DA /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; };
 		A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveSessionBuiltInFunction.swift; sourceTree = "<group>"; };
@@ -10085,6 +10089,7 @@
 		A629F57123AF2DD900C2F16B /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				A697CECE2D9B0FB60031583F /* Help */,
 				A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */,
 				A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */,
 				A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */,
@@ -11655,6 +11660,14 @@
 				A63F0A5C2BF436850096633F /* iTermHostnameFinder.swift */,
 			);
 			name = "File Transfer";
+			sourceTree = "<group>";
+		};
+		A697CECE2D9B0FB60031583F /* Help */ = {
+			isa = PBXGroup;
+			children = (
+				A697CECD2D9B0FB60031583F /* CommandSelectionHelp.md */,
+			);
+			path = Help;
 			sourceTree = "<group>";
 		};
 		A69B458D1973191200F5444D /* Open Quickly */ = {
@@ -14539,6 +14552,7 @@
 				A697CE952D97C88B0031583F /* PasswordManagerMenuTip@2x.png in Resources */,
 				53FF980D20918D23008688D7 /* template_basic_simple.py in Resources */,
 				A62DBBA120F47CFA008B63D1 /* GoForward@2x.png in Resources */,
+				A697CED02D9B0FB60031583F /* CommandSelectionHelp.md in Resources */,
 				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				A67F614F214395870093940A /* graphic_java@2x.png in Resources */,
 				1D6ED9BC19AEA20D005A7799 /* closebutton.png in Resources */,
@@ -15097,6 +15111,7 @@
 				A67D0D391A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				A67D0D721A2EE12A003A8B35 /* MainMenu.xib in Resources */,
 				A67F6151214395870093940A /* graphic_less.png in Resources */,
+				A697CECF2D9B0FB60031583F /* CommandSelectionHelp.md in Resources */,
 				A697CE302D976AFE0031583F /* AnnotationsMenuTip.png in Resources */,
 				A697CE312D976AFE0031583F /* AnnotationsMenuTip@2x.png in Resources */,
 				A602AAE72B0BCDB100E6C965 /* whitebox_logo.png in Resources */,
@@ -15526,6 +15541,7 @@
 				A697CE9B2D97C8E90031583F /* AIChatMenuTip@2x.png in Resources */,
 				A67D0D771A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				A6CB24A52C68149100005824 /* it2copy in Resources */,
+				A697CED12D9B0FB60031583F /* CommandSelectionHelp.md in Resources */,
 				A6CB24AD2C68149100005824 /* it2profile in Resources */,
 				A66A882224DFCCC30043728B /* graphic_elixir.png in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,

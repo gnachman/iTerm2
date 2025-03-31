@@ -247,6 +247,7 @@ static NSInteger gTakingSnapshot;
                                     ofView:self
                              preferredEdge:NSRectEdgeMaxY];
     [self it_setAssociatedObject:popoverVC forKey:@"PopoverWarning"];
+    [popoverVC.textView scrollRangeToVisible:NSMakeRange(0, 0)];
 }
 
 - (void)it_removeWarning {
