@@ -122,8 +122,7 @@ class TerminalButton: NSObject {
     func image(backgroundColor: NSColor,
                foregroundColor: NSColor,
                selectedColor: NSColor,
-               cellSize: CGSize) -> NSImage {
-        let size = self.size(cellSize: cellSize)
+               size: CGSize) -> NSImage {
         return NSImage(size: size,
                        flipped: false) { [weak self] _ in
             self?.draw(backgroundColor: backgroundColor,

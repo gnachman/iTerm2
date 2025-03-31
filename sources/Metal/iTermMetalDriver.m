@@ -1728,7 +1728,8 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
           foregroundColor:frameData.perFrameState.defaultTextColor
           backgroundColor:frameData.perFrameState.defaultBackgroundColor
             selectedColor:frameData.perFrameState.selectedBackgroundColor
-                    shift:button.shift * frameData.scale];
+                    shift:button.shift * frameData.scale
+             sizeInPoints:button.desiredFrame.size];
     }
     if (frameData.perFrameState.buttonsBackgroundRects.count > 0) {
         iTermRectangleRendererTransientState *bgTState = [frameData transientStateForRenderer:_buttonsBackgroundRenderer];

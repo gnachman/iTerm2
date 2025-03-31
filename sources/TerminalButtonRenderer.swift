@@ -21,24 +21,27 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
         var backgroundColor: vector_float4
         var selectedColor: vector_float4
         var shift: CGFloat
+        var sizeInPoints: NSSize
     }
     fileprivate var buttons = [Button]()
 
-    @objc(addButton:onScreenLine:column:foregroundColor:backgroundColor:selectedColor:shift:)
+    @objc(addButton:onScreenLine:column:foregroundColor:backgroundColor:selectedColor:shift:sizeInPoints:)
     func add(terminalButton: TerminalButton,
              line: Int,
              column: Int,
              foregroundColor: vector_float4,
              backgroundColor: vector_float4,
              selectedColor: vector_float4,
-             shift: CGFloat) {
+             shift: CGFloat,
+             sizeInPoints: NSSize) {
         buttons.append(Button(terminalButton: terminalButton,
                               line: line,
                               column: column,
                               foregroundColor:foregroundColor,
                               backgroundColor:backgroundColor,
                               selectedColor: selectedColor,
-                              shift: shift))
+                              shift: shift,
+                              sizeInPoints: sizeInPoints))
     }
 
     override func writeDebugInfo(toFolder folder: URL) {
@@ -161,7 +164,7 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
             context: tState.poolContext)
         let texture = texture(for: button, tState: tState)
         guard let texture else {
-            DLog("Failed ot create texture")
+            DLog("Failed to create texture")
             return
         }
         buttonRenderer.draw(with: tState,
@@ -196,8 +199,7 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
             selectedColor: NSColor(
                 vector: button.selectedColor,
                 colorSpace: tState.configuration.colorSpace),
-            cellSize: NSSize(width: button.terminalButton.desiredFrame.size.width * tState.configuration.scale / defaultScale,
-                             height: button.terminalButton.desiredFrame.size.height * tState.configuration.scale / defaultScale))
+            size: button.sizeInPoints * tState.configuration.scale / defaultScale)
         let texture = buttonRenderer.texture(
             fromImage: iTermImageWrapper(image: image),
             context: tState.poolContext,
