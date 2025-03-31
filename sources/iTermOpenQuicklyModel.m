@@ -725,10 +725,14 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         [self addMenuItemsToItems:items withMatcher:matcher];
     }
     if (@available(macOS 11, *)) {
+#if DEBUG
+        NSLog(@"Not attempting invocation for open quickly because it throws exceptions");
+#else
         iTermVariableScope *scope = [self scopeForValidInvocation:queryString];
         if (scope) {
             [self addInvocation:queryString scope:scope toItems:items withMatcher:matcher];
         }
+#endif
     }
     // Sort from highest to lowest score.
     [items sortUsingComparator:^NSComparisonResult(iTermOpenQuicklyItem *obj1,
