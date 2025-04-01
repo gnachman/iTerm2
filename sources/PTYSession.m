@@ -12951,11 +12951,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:key]) {
         return;
     }
-    iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcementWithTitle:@"A program has tried to resize the window. Allow it?"
-                                                     style:kiTermAnnouncementViewStyleWarning
-                                               withActions:@[ @"_Allow Once", @"_Open Settings", @"Don’t Show This Again" ]
-                                                completion:^(int selection) {
+    NSString *identifier = @"Resize Window Announcement";
+    void (^completion)(int) = ^(int selection) {
         switch (selection) {
             case 0:
                 allowOnce();
@@ -12973,8 +12970,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 // Cancel
                 break;
         }
-    }];
-    [self queueAnnouncement:announcement identifier:[[NSUUID UUID] UUIDString]];
+    };
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:@"A program has tried to resize the window. Allow it?"
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"_Allow Once", @"_Open Settings", @"Don’t Show This Again" ]
+                                                completion:completion];
+    iTermAnnouncementViewController *existing = _announcements[identifier];
+    if (existing) {
+        [self setCompletion:completion inAnnouncement:existing identifier:identifier];
+    } else {
+        [self queueAnnouncement:announcement identifier:identifier];
+    }
 }
 
 // TODO: Only allow this if there is a single session in the tab.
@@ -15693,16 +15700,22 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
     void (^originalCompletion)(int) = [announcement.completion copy];
     NSString *identifierCopy = [identifier copy];
+    [self setCompletion:originalCompletion inAnnouncement:announcement identifier:identifierCopy];
+    [_view addAnnouncement:announcement];
+}
+
+- (void)setCompletion:(void (^)(int))completion
+       inAnnouncement:(iTermAnnouncementViewController *)announcement
+           identifier:(NSString *)identifier {
     __weak __typeof(self) weakSelf = self;
     announcement.completion = ^(int selection) {
-        originalCompletion(selection);
+        completion(selection);
         if (selection == -2) {
-            [weakSelf removeAnnouncementWithIdentifier:identifierCopy];
-            [identifierCopy release];
-            [originalCompletion release];
+            [weakSelf removeAnnouncementWithIdentifier:identifier];
+            [identifier release];
+            [completion release];
         }
     };
-    [_view addAnnouncement:announcement];
 }
 
 - (void)removeAnnouncementWithIdentifier:(NSString *)identifier {
