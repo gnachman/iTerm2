@@ -12,7 +12,7 @@
 	url = https://github.com/gnachman/libsixel-1
 [submodule "submodules/openssl"]
 	path = submodules/openssl
-	url = https://github.com/openssl/openssl
+	url = https://github.com/gnachman/openssl
 [submodule "submodules/libssh2"]
 	path = submodules/libssh2
 	url = https://github.com/libssh2/libssh2
