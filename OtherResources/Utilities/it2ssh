@@ -40,7 +40,7 @@ fi
 
 eval_cmd=\''eval "$(echo "$0")"'\'
 
-SSH=/usr/bin/ssh
+SSH=${SSH:-/usr/bin/ssh}
 if [[ "$OSTYPE" == "darwin"* ]]; then
   TOKEN=""
   for SOCKET in ~/.config/iterm2/sockets/secrets ~/.iterm2/sockets/secrets ~/.iterm2-1/sockets/secrets
@@ -70,7 +70,7 @@ HOSTNAME=""
 COMMAND=()
 ARGS_ALLOWED=1
 EXPECT_VALUE=0
-BOOLEAN_ARGS=$(ssh 2>&1 | tr -d '\n' | sed -e 's/^[^[]*\[-*\([a-z0-9A-Z]*\).*/\1/' || true)
+BOOLEAN_ARGS=$("$SSH" 2>&1 | tr -d '\n' | sed -e 's/^[^[]*\[-*\([a-z0-9A-Z]*\).*/\1/' || true)
 HAS_T=0
 
 while [[ $# -gt 0 ]]; do

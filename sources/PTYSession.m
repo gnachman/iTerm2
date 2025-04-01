@@ -2683,10 +2683,17 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSDictionary *)environmentForNewJobFromEnvironment:(NSDictionary *)environment
                                         substitutions:(NSDictionary *)substitutions
                                           arrangement:(NSString *)arrangementName
-                                      fromArrangement:(BOOL)fromArrangement {
+                                      fromArrangement:(BOOL)fromArrangement
+                                     sshConfiguration:(NSDictionary *)sshConfiguration {
     DLog(@"environmentForNewJobFromEnvironment:%@ substitutions:%@",
          environment, substitutions);
     NSMutableDictionary *env = environment ? [[environment mutableCopy] autorelease] : [NSMutableDictionary dictionary];
+    if (sshConfiguration) {
+        iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:sshConfiguration] autorelease];
+        if (config.pathToSSH) {
+            env[@"SSH"] = config.pathToSSH;
+        }
+    }
     if (env[TERM_ENVNAME] == nil) {
         env[TERM_ENVNAME] = _termVariable;
     }
@@ -2938,7 +2945,8 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *env = [self environmentForNewJobFromEnvironment:environment ?: @{}
                                                         substitutions:substitutions
                                                           arrangement:arrangementName
-                                                      fromArrangement:fromArrangement];
+                                                      fromArrangement:fromArrangement
+                                                     sshConfiguration:[NSDictionary castFrom:self.profile[KEY_SSH_CONFIG]]];
         [self fetchAutoLogFilenameWithCompletion:^(NSString * _Nonnull autoLogFilename) {
             [_logging stop];
             [_logging autorelease];
@@ -7764,7 +7772,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     NSDictionary *env = [self environmentForNewJobFromEnvironment:self.environment
                                                     substitutions:self.substitutions
                                                       arrangement:nil
-                                                  fromArrangement:NO];
+                                                  fromArrangement:NO
+                                                 sshConfiguration:nil];
 
     Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command
                                                        environment:env];

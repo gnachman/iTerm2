@@ -11,20 +11,25 @@ fileprivate struct Config {
     var sshIntegration: Bool = true
     var environmentVariablesToCopy: [String] = []
     var filesToCopy: [(String, String)] = []
+    var pathToSSH: String?
 
     private enum Keys: String {
         case sshIntegration
         case environmentVariablesToCopy
         case filesToCopy
+        case pathToSSH
     }
 
     var dictionaryValue: [String: AnyObject] {
         let filesArrays = filesToCopy.map { [$0.0, $0.1] }
-        let dict: [String : AnyObject] = [
+        var dict: [String : AnyObject] = [
             Keys.sshIntegration.rawValue: NSNumber(value: sshIntegration) as AnyObject,
             Keys.environmentVariablesToCopy.rawValue: environmentVariablesToCopy as AnyObject,
-            Keys.filesToCopy.rawValue: filesArrays as AnyObject
+            Keys.filesToCopy.rawValue: filesArrays as AnyObject,
         ]
+        if let pathToSSH {
+            dict[Keys.pathToSSH.rawValue] = pathToSSH as AnyObject
+        }
         return dict.mapValues { $0 as AnyObject }
     }
 
@@ -32,14 +37,17 @@ fileprivate struct Config {
         sshIntegration = dictionary[Keys.sshIntegration.rawValue] as? Bool ?? true
         environmentVariablesToCopy = dictionary[Keys.environmentVariablesToCopy.rawValue] as? [String] ?? []
         filesToCopy = (dictionary[Keys.filesToCopy.rawValue] as? [[String]] ?? []).map { ($0[0], $0[1]) }
+        pathToSSH = dictionary[Keys.pathToSSH.rawValue].compactMap { $0 as? String }
     }
 
     init(sshIntegration: Bool,
          environmentVariablesToCopy: [String],
-         filesToCopy: [(String, String)]) {
+         filesToCopy: [(String, String)],
+         pathToSSH: String?) {
         self.sshIntegration = sshIntegration
         self.environmentVariablesToCopy = environmentVariablesToCopy
         self.filesToCopy = filesToCopy
+        self.pathToSSH = pathToSSH
     }
 
     init() {
@@ -53,6 +61,7 @@ class SSHConfiguration: NSObject {
     private let config: Config
     @objc var sshIntegration: Bool { config.sshIntegration }
     @objc var environmentVariablesToCopy: [String] { config.environmentVariablesToCopy }
+    @objc var pathToSSH: String? { config.pathToSSH }
     @objc var filesToCopy: [iTermTuple<NSString, NSString>] {
         config.filesToCopy.map { tuple -> iTermTuple<NSString, NSString> in
             return iTermTuple(object: tuple.0 as NSString,
@@ -60,7 +69,7 @@ class SSHConfiguration: NSObject {
         }
     }
     @objc override init() {
-        config = Config(sshIntegration: true, environmentVariablesToCopy: [], filesToCopy: [])
+        config = Config(sshIntegration: true, environmentVariablesToCopy: [], filesToCopy: [], pathToSSH: nil)
     }
 
     @objc init(dictionary: NSDictionary?) {
@@ -79,6 +88,8 @@ class SSHConfigurationWindowController: NSWindowController {
     @IBOutlet var sourceColumn: NSTableColumn!
     @IBOutlet var destinationColumn: NSTableColumn!
     @IBOutlet var segmentedControl: NSSegmentedControl!
+    @IBOutlet var pathToSSH: NSTextField!
+    
     var ok = false
 
     private var config = Config()
@@ -92,6 +103,7 @@ class SSHConfigurationWindowController: NSWindowController {
         sshIntegrationButton.state = config.sshIntegration ? .on : .off
         environmentVariablesToCopy.stringValue = config.environmentVariablesToCopy.joined(separator: "\t")
         filesToCopyTable.reloadData()
+        pathToSSH.stringValue = config.pathToSSH ?? ""
         updateEnabled()
     }
 
@@ -168,9 +180,87 @@ class SSHConfigurationWindowController: NSWindowController {
 
     // MARK: - Actions
 
+    class SSHBinaryPanelDelegate: NSObject, NSOpenSavePanelDelegate {
+        func panel(_ sender: Any, shouldEnable url: URL) -> Bool {
+            var isDir: ObjCBool = false
+            // Always enable directories so the user can navigate.
+            if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue {
+                return true
+            }
+            // Enable only files that are executable.
+            return FileManager.default.isExecutableFile(atPath: url.path)
+        }
+
+        func panel(_ sender: Any, validate url: URL) throws {
+            var isDir: ObjCBool = false
+            // If the file exists...
+            if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) {
+                // ...and it's either a directory or not executable, throw an error.
+                if isDir.boolValue || !FileManager.default.isExecutableFile(atPath: url.path) {
+                    let errorInfo = [NSLocalizedDescriptionKey: "Selected file must be an executable."]
+                    throw NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError, userInfo: errorInfo)
+                }
+            }
+        }
+    }
+
+    class SSHBinaryPicker {
+        // Keep a strong reference to the delegate during the panel's lifecycle.
+        private var panelDelegate: SSHBinaryPanelDelegate?
+        var completion: ((String?) -> ())?
+
+        func pickSSHBinary() {
+            let openPanel = NSOpenPanel()
+            panelDelegate = SSHBinaryPanelDelegate()
+            openPanel.delegate = panelDelegate
+
+            openPanel.title = "Select SSH Binary"
+            openPanel.canChooseFiles = true
+            openPanel.canChooseDirectories = false
+            openPanel.allowsMultipleSelection = false
+
+            // Use the last directory if available; default to /usr/bin.
+            let key = "NoSyncLastSSHDirectory"
+            let lastDirectory = UserDefaults.standard.string(forKey: key) ?? "/usr/bin"
+            openPanel.directoryURL = URL(fileURLWithPath: lastDirectory)
+            openPanel.nameFieldStringValue = "ssh"
+
+            openPanel.begin { [weak self] result in
+                guard result == .OK,
+                      let selectedURL = openPanel.url else {
+                    return
+                }
+
+                // Save the directory for subsequent openings.
+                let directory = selectedURL.deletingLastPathComponent()
+                UserDefaults.standard.set(directory.path, forKey: key)
+
+                // Since the delegate validated the selection, the file is a valid executable.
+                self?.completion?(selectedURL.path)
+            }
+        }
+    }
+
+    private var picker: SSHBinaryPicker?
+
+    @IBAction func browse(_ sender: Any) {
+        picker = SSHBinaryPicker()
+        picker?.completion = { [weak self] path in
+            if let path {
+                self?.pathToSSH.stringValue = path
+            }
+        }
+        picker?.pickSSHBinary()
+    }
+
     @IBAction func ok(_ sender: Any) {
         guard let window = window else {
             return
+        }
+        if pathToSSH.stringValue.isEmpty {
+            config.pathToSSH = nil
+        } else {
+            config.pathToSSH = pathToSSH.stringValue
         }
         window.sheetParent?.endSheet(window, returnCode: .OK)
     }
