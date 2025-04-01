@@ -301,17 +301,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         guard let appSupportString = FileManager.default.applicationSupportDirectory() else {
             return try fallbackBaseDirectory(create: create)
         }
-        // I have to go directly to user defaults rather than through
-        // iTermAdvancedSettingsModel because this is called during
-        // iTermAdvancedSettingsModel.initialize, so its values may not be
-        // loaded yet.
-        let pathsToIgnore = UserDefaults.standard.string(forKey: "PathsToIgnore")?.components(
-            separatedBy: ",") ?? []
-        let isLocal = FileManager.default.fileIsLocal(
-            appSupportString,
-            additionalNetworkPaths: pathsToIgnore,
-            allowNetworkMounts: false)
-        if !isLocal {
+        if !FileManager.default.isWritableByRoot(path: appSupportString) {
             return try fallbackBaseDirectory(create: create)
         }
         return appSupportString
