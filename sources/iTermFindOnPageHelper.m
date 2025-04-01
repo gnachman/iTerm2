@@ -112,7 +112,9 @@ typedef struct {
 }
 
 - (void)setAbsLineRange:(NSRange)absLineRange {
+    DLog(@"Set absLineRange to %@\n%@", NSStringFromRange(absLineRange), [NSThread callStackSymbols]);
     if (NSEqualRanges(absLineRange, _absLineRange)) {
+        DLog(@"It remains unchanged");
         return;
     }
     _absLineRange = absLineRange;

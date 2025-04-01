@@ -206,10 +206,11 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p guid=%@ name=%@ command=%@ name=%@ %@>",
+    return [NSString stringWithFormat:@"<%@: %p guid=%@ lineStyle=%@ name=%@ command=%@ name=%@ %@>",
             NSStringFromClass([self class]),
             self,
             _guid,
+            @(_lineStyle),
             _name,
             _command,
             _name,

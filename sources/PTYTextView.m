@@ -5455,6 +5455,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
     {
         id<VT100ScreenMarkReading> mark = [_delegate textViewSelectedCommandMark];
+        DLog(@"mark=%@", mark);
         if (!mark.lineStyle && mark.command.length > 0 && [iTermAdvancedSettingsModel showButtonsForSelectedCommand]) {
             const NSRange intersectionRange = NSIntersectionRange(self.findOnPageHelper.absLineRange,
                                                                   [self visibleAbsoluteRangeIncludingOffscreenCommandLineIfVisible:NO]);
@@ -5463,6 +5464,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                                                     line:intersectionRange.location - _dataSource.totalScrollbackOverflow + 1
                                                              shouldFloat:YES
                                                                 offByOne:NO]];
+            } else {
+                DLog(@"No intersection between find on page helper's lineRange %@ and the visible absolute range %@",
+                     NSStringFromRange(self.findOnPageHelper.absLineRange),
+                     NSStringFromRange([self visibleAbsoluteRangeIncludingOffscreenCommandLineIfVisible:NO]));
             }
         }
     }
