@@ -764,7 +764,10 @@ static BOOL hasBecomeActive = NO;
 // User clicked on the dock icon.
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication
                     hasVisibleWindows:(BOOL)flag {
-    return ![[iTermHotKeyController sharedInstance] dockIconClicked];
+    DLog(@"Dock icon clicked");
+    const BOOL result = ![[iTermHotKeyController sharedInstance] dockIconClicked];
+    DLog(@"Return %@", @(result));
+    return result;
 }
 
 - (void)applicationDidChangeScreenParameters:(NSNotification *)aNotification
