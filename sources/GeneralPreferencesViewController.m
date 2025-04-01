@@ -773,9 +773,12 @@ enum {
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.syntheticGetter = ^id{
-        return @(iTermSecureUserDefaults.instance.enableAI);
+        NSNumber *result = @(iTermSecureUserDefaults.instance.enableAI);
+        DLog(@"enableAI=%@\n%@", result, [NSThread callStackSymbols]);
+        return result;
     };
     info.syntheticSetter = ^(id newValue) {
+        DLog(@"set enableAI<-%@\n%@", newValue, [NSThread callStackSymbols]);
         iTermSecureUserDefaults.instance.enableAI = [newValue boolValue];
         [weakSelf updateAIEnabled];
     };

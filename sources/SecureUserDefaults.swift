@@ -214,14 +214,19 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     var value: T {
+        DLog("Get for \(key)")
         if let cached {
+            DLog("Return cached value \(cached)")
             return cached
         }
+        DLog("Will get")
         if let value = try? get() {
+            DLog("Return value \(value)")
             cached = value
             return value
         }
         cached = defaultValue
+        DLog("Return default \(defaultValue)")
         return defaultValue
     }
 
@@ -234,14 +239,18 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     func set(_ newValue: T?) throws {
+        DLog("Set \(key) to \((newValue?.sudString).d)")
         cached = nil
         do {
             if let value = newValue {
+                DLog("Will store")
                 try Self.store(key, value: value)
             } else {
+                DLog("Will delete")
                 try Self.delete(key)
             }
         } catch {
+            DLog("Fail: \(error)")
             iTermWarning.show(withTitle: error.localizedDescription,
                               actions: ["OK"],
                               accessory: nil,
@@ -254,27 +263,35 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     func reset() throws {
+        DLog("Reset \(key)")
         cached = nil
         try Self.delete(key)
     }
 
     private static func fallbackBaseDirectory(create: Bool) throws -> String {
+        DLog("create=\(create)")
         // When the user's home directory is not local, we use FallbackFolder
         let path = FallbackFolder
 
         var isDirectory = ObjCBool(false)
         if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) {
+            DLog("File exists at \(path)")
             if isDirectory.boolValue {
                 // If it already exists and is a directory, just use it.
+                DLog("Use it")
                 return path
             }
+            DLog("Not a directory")
             if !create {
+                DLog("Fail, doesn't exist and can't create it")
                 throw SecureUserDefaultError.directoryDoesNotExist
             }
             // wtf, it exists but is not a directory.
+            DLog("Fail, exists but is not directory")
             throw SecureUserDefaultError.usrLocalIsFile
         }
         if !create {
+            DLog("Fail, file doesn't exist and we don't want to create it")
             throw SecureUserDefaultError.directoryDoesNotExist
         }
         // Create it since it does not exist.
@@ -288,32 +305,42 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
             /bin/mkdir -m 777 -p \(path)
         " with prompt "iTerm2 needs to create \(path) to store secure settings because your home directory is on a network file system." with administrator privileges
         """
+        DLog("Will execute:\n\(code)")
         let script = NSAppleScript(source: code)
         var error: NSDictionary? = nil
         script?.executeAndReturnError(&error)
-        guard error == nil else {
+        DLog("Execution complete")
+        if let error {
+            DLog("Error \(error)")
             throw SecureUserDefaultError.failedToCreateUsrLocal
         }
+        DLog("Success, return \(path)")
         return path
     }
 
     private static func baseDirectory(create: Bool) throws -> String {
+        DLog("create=\(create)")
         guard let appSupportString = FileManager.default.applicationSupportDirectory() else {
+            DLog("Failed to get regular app support directory. Use fallback")
             return try fallbackBaseDirectory(create: create)
         }
+        DLog("appSupportString=\(appSupportString)")
         // I have to go directly to user defaults rather than through
         // iTermAdvancedSettingsModel because this is called during
         // iTermAdvancedSettingsModel.initialize, so its values may not be
         // loaded yet.
         let pathsToIgnore = UserDefaults.standard.string(forKey: "PathsToIgnore")?.components(
             separatedBy: ",") ?? []
+        DLog("pathsToIgnore=\(pathsToIgnore)")
         let isLocal = FileManager.default.fileIsLocal(
             appSupportString,
             additionalNetworkPaths: pathsToIgnore,
             allowNetworkMounts: false)
         if !isLocal {
+            DLog("Not local. Use fallback")
             return try fallbackBaseDirectory(create: create)
         }
+        DLog("Use \(appSupportString)")
         return appSupportString
     }
 
@@ -333,40 +360,51 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     private static func load<U: SecureUserDefaultStringTranscodable>(_ key: String) throws -> U? {
+        DLog("load \(key)")
         let fileURL = try Self.path(key, create: false)
         // Check if the file exists before gettings its attributes to avoid an annoying exception
         // while debugging.
         guard FileManager.default.fileExists(atPath: fileURL.path),
               let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path) else {
+            DLog("Either no file at \(fileURL.path)or failed to get its attributes. exists=\(FileManager.default.fileExists(atPath: fileURL.path)), attrs=\(String(describing: try? FileManager.default.attributesOfItem(atPath: fileURL.path))))")
             return nil
         }
         guard let owner = attributes[.ownerAccountID] as? Int, owner == 0 else {
             // Not owned by root
+            DLog("Not owned by root. attributes=\(attributes)")
             return nil
         }
         guard let content = try? String(contentsOf: fileURL) else {
+            DLog("Cannot read contents of \(fileURL)")
             return nil
         }
+        DLog("content=\(content)")
         guard let newline = content.range(of: "\n") else {
+            DLog("No newline found in \(fileURL.path)")
             return nil
         }
         let expectedMagic = magic(key, filePath: fileURL)
         let actualMagic = content.prefix(upTo: newline.lowerBound)
         guard actualMagic == expectedMagic else {
+            DLog("In \(fileURL) magic is \(actualMagic) but expected \(expectedMagic)")
             throw SecureUserDefaultError.badMagic
         }
         let payload = content.suffix(from: newline.upperBound)
+        DLog("payload=\(payload)")
         return try SecureUserDefaultValue<U>(sudString: String(payload))?.value
     }
 
     private static func delete(_ key: String) throws {
+        DLog("delete \(key)")
         let filename = try path(key, create: false)
+        DLog("Remove \(filename)")
         try FileManager.default.removeItem(at: filename)
 
         NotificationCenter.default.post(name: secureUserDefaultDidChange, object: key)
     }
 
     private static func store<U: SecureUserDefaultStringTranscodable>(_ key: String, value: U) throws {
+        DLog("Store \(value) to \(key)")
         // Write to a temp file and then move it. If the destination is a link then it's not safe
         // to write to it.
         let unsafeURL = try self.path(key, create: true)
@@ -386,24 +424,32 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         """
         let script = NSAppleScript(source: code)
         var error: NSDictionary? = nil
+        DLog("Will execute \(code)")
         script?.executeAndReturnError(&error)
+        DLog("Execution complete. Error is \(error.d)")
         guard error == nil else {
             let maybeReason = error?[NSAppleScript.errorBriefMessage] as? String
+            DLog("reason=\(maybeReason.d)")
             throw SecureUserDefaultError.scriptError(maybeReason)
         }
+        DLog("Success. Post notif for \(key)")
         NotificationCenter.default.post(name: secureUserDefaultDidChange, object: key)
     }
 }
 
 extension SecureUserDefault: SerializableUserDefault {
     func setFromSerialized(value: String) {
+        DLog("Set from \(value)")
         let decoder = JSONDecoder()
         guard let savedValue = try? decoder.decode(T.self, from: value.data(using: .utf8) ?? Data()) else {
             DLog("Failed to decode \(value)")
             return
         }
         if savedValue != self.value {
+            DLog("Value is changed")
             try? set(savedValue)
+        } else {
+            DLog("Value is unchanged")
         }
     }
 
@@ -413,8 +459,12 @@ extension SecureUserDefault: SerializableUserDefault {
             DLog("Failed to encode \(value) as JSON")
             return
         }
+        DLog("data=\(data.stringOrHex)")
         if let jsonString = String(data: data, encoding: .utf8) {
+            DLog("json=\(jsonString)")
             dictionary[key] = jsonString
+        } else {
+            DLog("Failed to stringify")
         }
     }
 }

@@ -62,7 +62,7 @@ extension Optional where Wrapped: StringProtocol {
         }
     }
 }
-/*
+
 extension Optional where Wrapped: NSObject {
     var d: String {
         switch self {
@@ -73,15 +73,3 @@ extension Optional where Wrapped: NSObject {
         }
     }
 }
-
-extension Optional where Wrapped: CustomDebugStringConvertible {
-    var d: String {
-        switch self {
-        case .none:
-            return "(nil)"
-        case .some(let value):
-            return value.debugDescription
-        }
-    }
-}
-*/
