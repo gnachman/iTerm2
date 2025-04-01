@@ -9347,8 +9347,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     [super setWindow:window];
 }
 
-- (void)scrollerStyleOrRightExtraDidChange {
-    DLog(@"scrollerStyleOrRightExtraDidChange");
+- (void)scrollerStyleDidChange:(NSNotification *)notification {
+    DLog(@"scrollerStyleDidChange");
     [self updateSessionScrollbars];
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
