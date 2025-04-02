@@ -17,8 +17,8 @@
 @property(nonatomic) BOOL it_functionModifierPressed;
 @property(nonatomic) BOOL it_functionModifierPreviouslyPressed;
 
-+ (unichar)unicharForKeyWithKeycode:(CGKeyCode)virtualKeyCode
-                          modifiers:(UInt32)carbonModifiers;
++ (NSString *)stringForKeyWithKeycode:(CGKeyCode)virtualKeyCode
+                            modifiers:(UInt32)carbonModifiers;
 
 // Returns a new event with the mouse button number set to `buttonNumber`, and
 // other values the same as self.

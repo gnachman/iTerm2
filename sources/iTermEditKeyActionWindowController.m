@@ -172,6 +172,13 @@ const CGFloat sideMarginWidth = 40;
                 _applyHidden = NO;
                 break;
 
+            case KEY_ACTION_COPY_MODE:
+                _parameterHidden = NO;
+                _parameterPlaceholder = @"Copy Mode Commands";
+                _applyHidden = NO;
+                _helpString = @"Enter copy mode commands to move cursor, toggle selection, and so on. This key binding enters Copy Mode and then acts as though you had pressed the keys listed here. [See a list of all the commands](https://iterm2.com/documentation-copymode.html). Use vim syntax for control, option, and function keys (e.g., `<C-x>` or `<Up>`.";
+                break;
+
             case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"Function Call";
@@ -287,6 +294,7 @@ const CGFloat sideMarginWidth = 40;
     IBOutlet NSButton *_okButton;
     NSPopUpButton *_applyButton;
     IBOutlet NSButton *_helpButton;
+    IBOutlet NSTextField *_errorLabel;
     iTermEditKeyActionWindowConfiguration *_config;
 
     iTermPasteSpecialViewController *_pasteSpecialViewController;
@@ -423,6 +431,7 @@ const CGFloat sideMarginWidth = 40;
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy or Send ^C" tag:KEY_ACTION_COPY_OR_SEND],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste or Send ^V" tag:KEY_ACTION_PASTE_OR_SEND],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy Interpolated String" tag:KEY_ACTION_COPY_INTERPOLATED_STRING],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy Mode Commands" tag:KEY_ACTION_COPY_MODE],
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Toggles" items:@[
@@ -577,6 +586,7 @@ const CGFloat sideMarginWidth = 40;
     }
     _applyMode = applyMode;
     [_applyButton selectItemWithTag:applyMode];
+    [self updateError];
 }
 
 - (void)setAction:(KEY_ACTION)keyAction parameter:(NSString *)parameter applyMode:(iTermActionApplyMode)applyMode {
@@ -850,7 +860,11 @@ const CGFloat sideMarginWidth = 40;
         return 0;
     }
     if (!_parameter.isHidden) {
-        return NSHeight(_parameter.frame);
+        if (_errorLabel.isHidden) {
+            return NSHeight(_parameter.frame);
+        } else {
+            return NSMaxY(_parameter.frame) - NSMinY(_errorLabel.frame);
+        }
     }
     if (!_pasteSpecialViewContainer.isHidden) {
         return _pasteSpecialViewController.view.frame.size.height;
@@ -892,6 +906,7 @@ const CGFloat sideMarginWidth = 40;
     if (!_secondaryComboViewContainer.isHidden) {
         [_sequenceTableViewController reloadCurrentItem:[self secondaryAction]];
     }
+    [self updateError];
 }
 
 - (IBAction)ok:(id)sender {
@@ -1006,14 +1021,65 @@ const CGFloat sideMarginWidth = 40;
     } else if (view == _menuToSelectPopup.comboView && view != nil) {
         [_sequenceTableViewController reloadCurrentItem:[self secondaryAction]];
     }
+    [self updateError];
 }
 
+- (void)updateSyntaxErrorsForCopyMode {
+    iTermVimKeyParser *parser = [[iTermVimKeyParser alloc] initWithString:_parameter.stringValue];
+    NSError *error = nil;
+    [parser eventsWithError:&error];
+    if (error) {
+        self.error = error.localizedDescription;
+    } else {
+        self.error = nil;
+    }
+}
+
+- (void)setError:(NSString *)errorString {
+    if (!errorString) {
+        _errorLabel.hidden = YES;
+
+        NSRect frame = _parameter.frame;
+        const CGFloat maxY = NSMaxY(_parameter.frame);
+        frame.origin.y = NSMinY(_errorLabel.frame);
+        frame.size.height = maxY - NSMinY(frame);
+        _parameter.frame = frame;
+    } else {
+        _errorLabel.stringValue = errorString;
+        _errorLabel.hidden = NO;
+
+        NSRect frame = _parameter.frame;
+        const CGFloat maxY = NSMaxY(_parameter.frame);
+        frame.origin.y = NSMaxY(_errorLabel.frame) + 4;
+        frame.size.height = maxY - NSMinY(frame);
+        _parameter.frame = frame;
+    }
+}
 #pragma mark - NSTextEditing
 
 - (void)controlTextDidChange:(NSNotification *)notification {
     _okButton.enabled = [self shouldEnableOK];
     if (!_secondaryComboViewContainer.isHidden) {
         [_sequenceTableViewController reloadCurrentItem:[self secondaryAction]];
+    }
+    [self updateError];
+}
+
+- (void)updateError {
+    if (_secondaryComboViewContainer.isHidden) {
+        const KEY_ACTION action = _comboView.selectedTag;
+        if (action == KEY_ACTION_COPY_MODE) {
+            [self updateSyntaxErrorsForCopyMode];
+        } else {
+            self.error = nil;
+        }
+    } else {
+        const KEY_ACTION action = _secondaryComboView.selectedTag;
+        if (action == KEY_ACTION_COPY_MODE) {
+            [self updateSyntaxErrorsForCopyMode];
+        } else {
+            self.error = nil;
+        }
     }
 }
 

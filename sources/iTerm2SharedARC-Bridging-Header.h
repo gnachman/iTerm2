@@ -19,6 +19,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermCPUUtilization.h"
 #import "iTermController.h"
+#import "iTermCopyModeHandler.h"
 #import "iTermCoreTextLineRenderingHelper.h"
 #import "iTermDatabase.h"
 #import "iTermExpressionEvaluator.h"

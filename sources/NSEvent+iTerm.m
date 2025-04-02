@@ -198,10 +198,11 @@
     return fabs(self.scrollingDeltaX) < fabs(self.scrollingDeltaY);
 }
 
-+ (unichar)unicharForKeyWithKeycode:(CGKeyCode)virtualKeyCode
-                          modifiers:(UInt32)carbonModifiers {
+// carbonModifiers should be `shiftKey`, `optionKey`, etc. See HIToolbox/Events.h in an anonymous enum.
++ (NSString *)stringForKeyWithKeycode:(CGKeyCode)virtualKeyCode
+                            modifiers:(UInt32)carbonModifiers {
     TISInputSourceRef inputSource = NULL;
-    unichar result = -1;
+    NSString *result = nil;
 
     inputSource = TISCopyCurrentKeyboardInputSource();
     if (inputSource == NULL) {
@@ -220,13 +221,13 @@
     }
 
     UInt32 deadKeyState = 0;
-    UniChar unicodeString[4];
+    UniChar unicodeString[4 * 10];
     UniCharCount actualStringLength;
 
     OSStatus status = UCKeyTranslate(keyLayoutPtr,
                                      virtualKeyCode,
                                      kUCKeyActionDisplay,
-                                     carbonModifiers,
+                                     (carbonModifiers >> 8) & 0xff,
                                      LMGetKbdType(),
                                      kUCKeyTranslateNoDeadKeysBit,
                                      &deadKeyState,
@@ -241,7 +242,7 @@
         goto exit;
     }
 
-    result = unicodeString[0];
+    result = [NSString stringWithCharacters:unicodeString length:actualStringLength];
 
 exit:
     if (inputSource != NULL) {

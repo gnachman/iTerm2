@@ -65,6 +65,7 @@ extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 @class iTermRunningRemoteCommand;
 @class iTermSSHReconnectionInfo;
 @class iTermScriptHistoryEntry;
+@class iTermSessionModeHandler;
 @class iTermStatusBarViewController;
 @class iTermSwiftyStringGraph;
 @class iTermVariableReference;
@@ -606,6 +607,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) iTermConductor *conductor;
 @property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, strong) iTermRunningRemoteCommand *runningRemoteCommand;
+@property(nonatomic, readonly) iTermSessionModeHandler *modeHandler;
 
 #pragma mark - methods
 

@@ -288,7 +288,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorAllOutputSuppressed: @"All output is currently suppressed.",
         kiTermIndicatorZoomedIn: @"Zoomed in.",
         kiTermIndicatorFilter: @"Filtering.",
-        kiTermIndicatorCopyMode: @"In copy mode.",
+        kiTermIndicatorCopyMode: @"In copy mode. See [documentation](https://iterm2.com/documentation-copymode.html) for details.",
         kiTermIndicatorDebugLogging: @"Debug logging is enabled.",
         kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
         kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",

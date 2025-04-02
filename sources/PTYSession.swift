@@ -752,3 +752,29 @@ extension PTYSession {
             }
     }
 }
+
+extension PTYSession {
+    // Returns an error if one occurs.
+    @objc(performCopyModeCommands:)
+    func performCopyModeCommands(_ commands: String) -> String? {
+        let parser = VimKeyParser(commands)
+        let events: [NSEvent]
+        do {
+            events = try parser.events()
+        } catch {
+            return error.localizedDescription
+        }
+        let wasInCopyMode = copyMode
+        defer {
+            copyMode = wasInCopyMode
+        }
+        copyMode = true
+        for event in events {
+            modeHandler.handle(event)
+            if !copyMode {
+                copyMode = true
+            }
+        }
+        return nil
+    }
+}

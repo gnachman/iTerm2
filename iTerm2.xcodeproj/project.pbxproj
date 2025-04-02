@@ -2875,6 +2875,7 @@
 		A697CECF2D9B0FB60031583F /* CommandSelectionHelp.md in Resources */ = {isa = PBXBuildFile; fileRef = A697CECD2D9B0FB60031583F /* CommandSelectionHelp.md */; };
 		A697CED02D9B0FB60031583F /* CommandSelectionHelp.md in Resources */ = {isa = PBXBuildFile; fileRef = A697CECD2D9B0FB60031583F /* CommandSelectionHelp.md */; };
 		A697CED12D9B0FB60031583F /* CommandSelectionHelp.md in Resources */ = {isa = PBXBuildFile; fileRef = A697CECD2D9B0FB60031583F /* CommandSelectionHelp.md */; };
+		A697CED32D9D8E590031583F /* VimKeyParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A697CED22D9D8E540031583F /* VimKeyParser.swift */; };
 		A697E27B1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A698BF492A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */; };
@@ -7153,6 +7154,7 @@
 		A697CEC62D98CEB00031583F /* OpenQuicklyMenuItem.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = OpenQuicklyMenuItem.png; path = images/icons/OpenQuicklyMenuItem.png; sourceTree = "<group>"; };
 		A697CECA2D99B4900031583F /* iTermRectArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermRectArray.swift; sourceTree = "<group>"; };
 		A697CECD2D9B0FB60031583F /* CommandSelectionHelp.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CommandSelectionHelp.md; sourceTree = "<group>"; };
+		A697CED22D9D8E540031583F /* VimKeyParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VimKeyParser.swift; sourceTree = "<group>"; };
 		A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
 		A697E27A1B42501000E175DA /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; };
 		A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveSessionBuiltInFunction.swift; sourceTree = "<group>"; };
@@ -11248,6 +11250,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A697CED22D9D8E540031583F /* VimKeyParser.swift */,
 				A697CECA2D99B4900031583F /* iTermRectArray.swift */,
 				A6415C772D971D320018FAFE /* MenuItemTipController.swift */,
 				A6AFCDD42D91F468002F36AE /* TwoTextFieldCell.swift */,
@@ -17206,6 +17209,7 @@
 				A6BF8D1921EB188E003CF805 /* iTermDependencyEditorWindowController.m in Sources */,
 				A6DBC04A2005F09100F1466D /* iTermHighlightRowRenderer.mm in Sources */,
 				A6A983BB27E7F79E003319D1 /* LastPassDataSource.swift in Sources */,
+				A697CED32D9D8E590031583F /* VimKeyParser.swift in Sources */,
 				A639E1A12112CA33001696DE /* iTermEchoProbe.m in Sources */,
 				A6D10E3A27F7C2BC0026DB56 /* NSPoint+MultiCursor.swift in Sources */,
 				A67DAF14299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.m in Sources */,

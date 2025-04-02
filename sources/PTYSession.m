@@ -9552,6 +9552,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_SWAP_WITH_NEXT_PANE:
         case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
         case KEY_ACTION_ALERT_ON_NEXT_MARK:
+        case KEY_ACTION_COPY_MODE:
             return NO;
 
         case KEY_ACTION_COPY_OR_SEND:
@@ -10034,9 +10035,37 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             self.alertOnNextMark = YES;
             break;
 
+        case KEY_ACTION_COPY_MODE: {
+            NSString *error = [self performCopyModeCommands:action.parameter];
+            if (error) {
+                [self showError:error
+                 suppressionKey:@"NoSyncSuppressCopyModeErrors"
+                     identifier:@"Copy Mode Error"];
+            }
+            break;
+        }
+
         default:
             XLog(@"Unknown key action %@", action);
             break;
+    }
+}
+
+- (void)showError:(NSString *)message suppressionKey:(NSString *)key identifier:(NSString *)identifier {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:key]) {
+        return;
+    }
+    void (^completion)(int) = ^(int selection) { };
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:message
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"_OK" ]
+                                                completion:completion];
+    iTermAnnouncementViewController *existing = _announcements[identifier];
+    if (existing) {
+        [self setCompletion:completion inAnnouncement:existing identifier:identifier];
+    } else {
+        [self queueAnnouncement:announcement identifier:identifier];
     }
 }
 
