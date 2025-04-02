@@ -3676,8 +3676,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)removeAnnotation:(PTYAnnotation *)annotation {
     if ([self.intervalTree containsObject:annotation]) {
         self.lastCommandMark = nil;
-        const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(annotation);
-        const long long absLine = [self coordRangeForInterval:annotation.entry.interval].start.y + self.cumulativeScrollbackOverflow;
         DLog(@"removeannotation %@", annotation);
         const BOOL removed = [self removeObjectFromIntervalTree:annotation];
         assert(removed);

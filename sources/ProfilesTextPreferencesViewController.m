@@ -160,7 +160,7 @@
         if (!strongSelf) {
             return;
         }
-        BOOL isOn = [sender state] == NSControlStateValueOn;
+        BOOL isOn = [(NSButton *)sender state] == NSControlStateValueOn;
         if (isOn) {
             static NSString *const kWarnAboutAmbiguousWidth = @"NoSyncWarnAboutAmbiguousWidth";
             // This is a feature of dubious value inherited from iTerm 0.1. Some users who work in

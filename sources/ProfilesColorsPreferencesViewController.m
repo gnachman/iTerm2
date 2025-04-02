@@ -231,7 +231,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
-        const BOOL useModes = [sender state] == NSControlStateValueOn;
+        const BOOL useModes = [(NSButton *)sender state] == NSControlStateValueOn;
         [[iTermDynamicProfileManager sharedInstance] performAtomically:^{
             [weakSelf useSeparateColorsDidChange:useModes];
             // This has to be done after copying colors or else default colors might be used.

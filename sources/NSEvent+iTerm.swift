@@ -18,47 +18,6 @@ extension NSEvent.ModifierFlags {
     static let rightControl = NSEvent.ModifierFlags(rawValue: UInt(NX_DEVICERCTLKEYMASK))
 }
 
-extension NSEvent {
-    func it_unicodeForKeyIgnoringShift(ignoreOption: Bool) -> UnicodeScalar? {
-        // Returns the base unicode characters for this KeyDown event as though shift was
-        // NOT pressed, and optionally as though option was also not pressed.
-        //
-        // A few examples:
-        // * If the event is shift+A on a US keyboard, this would would return the
-        //   UnicodeScalar for "a"
-        // * If the event is option-A on a US keyboard and ignoreOption is true, this
-        //   would return the UnicodeScalar for "a"
-        // * If the event is option-A on a US keyboard and ignoreOption is false, this
-        //   would return the UnicodeScalar for "å"Å
-        return it_unicodeForKeyWithHacks(shift: false, ignoreOption: ignoreOption)
-    }
-
-    func it_unicodeForKeyForcingShift(ignoreOption: Bool) -> UnicodeScalar? {
-        // Returns the base unicode character for this KeyDown event as though shift was
-        // pressed and optionally as though option was *not* pressed.
-        //
-        // A few examples:
-        // * If the event is "a" on a US keyboard, return the UnicodeScalar for "A"
-        // * If the event is "A" on a US keyboard, return the UnicodeScalar for "A"
-        // * If the event is option+"a" on a US keyboard and ignoreOption is true, return the UnicodeScalar for "A"
-        // * If the event is option+"a" on a US keyboard and ignoreOption is false, return the UnicodeScalar for "Å"
-        return it_unicodeForKeyWithHacks(shift: true, ignoreOption: ignoreOption)
-    }
-
-    private func it_unicodeForKeyWithHacks(shift shiftPressed: Bool,
-                                           ignoreOption: Bool) -> UnicodeScalar? {
-        let optionPressed = self.modifierFlags.contains(.option)
-        let controlPressed = modifierFlags.contains(.control)
-        let controlState = controlPressed ? (1 << controlKeyBit) : 0
-        let optionState = ignoreOption ? 0 : (optionPressed ? (1 << shiftKeyBit) : 0)
-        let shiftState = shiftPressed ? (1 << shiftKeyBit) : 0
-        let state = UInt32(controlState | optionState | shiftState)
-
-        let unichar = NSEvent.unicharForKey(withKeycode: keyCode, modifiers: state)
-        return UnicodeScalar(unichar)
-    }
-}
-
 @objc
 extension NSEvent {
     private static let previousFlagsKey = { iTermMalloc(1) }()

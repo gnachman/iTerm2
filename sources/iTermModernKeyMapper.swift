@@ -657,38 +657,6 @@ private extension ModernKeyMapperImpl {
                          event: event)
     }
 
-    private func baseLayoutKeyCode(for event: NSEvent) -> UInt32 {
-        if let real = event.it_unicodeForKeyIgnoringShift(ignoreOption: true) {
-            return real.value
-        }
-        if let firstScalar = event.charactersIgnoringModifiers?.first?.unicodeScalars.first {
-            return firstScalar.value
-        }
-        return 0
-    }
-
-    private func unicodeKeyCode(for event: NSEvent) -> UInt32 {
-        let ignoreOption = !shouldUseNativeOptionBehavior(event: event)
-        if let real = event.it_unicodeForKeyIgnoringShift(ignoreOption: ignoreOption) {
-            return real.value
-        }
-        if let firstScalar = event.charactersIgnoringModifiers?.first?.unicodeScalars.first {
-            return firstScalar.value
-        }
-        return 0
-    }
-
-    private func shiftedKeyCode(for event: NSEvent) -> UInt32 {
-        let ignoreOption = !shouldUseNativeOptionBehavior(event: event)
-        if let real = event.it_unicodeForKeyForcingShift(ignoreOption: ignoreOption) {
-            return real.value
-        }
-        if let firstScalar = event.charactersIgnoringModifiers?.first?.unicodeScalars.first {
-            return firstScalar.value
-        }
-        return 0
-    }
-
     private var leftOptionNormal: Bool {
         if flags.contains(.reportAllKeysAsEscapeCodes) {
             return false

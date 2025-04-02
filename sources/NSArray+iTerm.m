@@ -110,7 +110,7 @@
     return temp;
 }
 
-- (NSArray *)flatMapWithBlock:(NSArray *(^)(id anObject))block {
+- (NSArray *)flatMapWithBlock:(NSArray *(^NS_NOESCAPE)(id anObject))block {
     NSMutableArray *temp = [NSMutableArray array];
     for (id anObject in self) {
         NSArray *mappedObjects = block(anObject);
