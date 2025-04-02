@@ -185,7 +185,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     info = [self defineControl:_autoLog
                            key:KEY_AUTOLOG
-                   displayName:@"Directory to automatically log sessions to"
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
