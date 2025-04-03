@@ -17,6 +17,9 @@ protocol MarkCacheReading: AnyObject {
     @objc
     func findAtOrBefore(location desiredLocation: Int64) -> [iTermMarkProtocol]
 
+    @objc
+    func findBefore(location desiredLocation: Int64) -> [iTermMarkProtocol]
+
     @objc(enumerateFrom:)
     func enumerate(from location: Int64) -> NSEnumerator
 }
@@ -158,6 +161,12 @@ class MarkCache: NSObject, MarkCacheReading {
         return sorted.findAtOrBefore(location: desiredLocation)
     }
 
+    @objc
+    func findBefore(location desiredLocation: Int64) -> [iTermMarkProtocol] {
+        rescueDroppedMarks()
+        return sorted.findBefore(location: desiredLocation)
+    }
+
     @objc(eraseUpToLocation:)
     func eraseUpTo(location: Int64) {
         DLog("Erase up to \(location)")
@@ -237,5 +246,10 @@ class ReadOnlyMarkCache: NSObject, MarkCacheReading {
     @objc
     func findAtOrBefore(location desiredLocation: Int64) -> [iTermMarkProtocol] {
         return realized.findAtOrBefore(location: desiredLocation)
+    }
+
+    @objc
+    func findBefore(location desiredLocation: Int64) -> [any iTermMarkProtocol] {
+        return realized.findBefore(location: desiredLocation)
     }
 }

@@ -688,7 +688,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (BOOL)isAtCommandPrompt {
-    id<VT100ScreenMarkReading> mark = [self screenMarkBeforeAbsLine:self.numberOfLines + _state.totalScrollbackOverflow + 1];
+    id<VT100ScreenMarkReading> mark = [self screenMarkAtOrBeforeAbsLine:self.numberOfLines + _state.totalScrollbackOverflow + 1];
     if (!mark) {
         DLog(@"No preceding mark");
         return NO;
@@ -704,7 +704,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (line >= _state.numberOfScrollbackLines && _state.terminalSoftAlternateScreenMode) {
         return nil;
     }
-    id<VT100ScreenMarkReading> mark = [self screenMarkBeforeAbsLine:line + _state.totalScrollbackOverflow];
+    id<VT100ScreenMarkReading> mark = [self screenMarkAtOrBeforeAbsLine:line + _state.totalScrollbackOverflow];
     DLog(@"mark=%@ hasCode=%@", mark, @(mark.hasCode));
     if (!mark) {
         return nil;
@@ -1066,9 +1066,16 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return objects;
 }
 
-- (id<VT100ScreenMarkReading>)screenMarkBeforeAbsLine:(long long)absLine {
+- (id<VT100ScreenMarkReading>)screenMarkAtOrBeforeAbsLine:(long long)absLine {
     Interval *interval = [_state intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, absLine, 0, absLine)];
     return (id<VT100ScreenMarkReading>)[[_state.markCache findAtOrBeforeLocation:interval.location] objectPassingTest:^BOOL(id<iTermMark> element, NSUInteger index, BOOL *stop) {
+        return [element isKindOfClass:[VT100ScreenMark class]];
+    }];
+}
+
+- (id<VT100ScreenMarkReading>)screenMarkBeforeAbsLine:(long long)absLine {
+    Interval *interval = [_state intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, absLine, 0, absLine)];
+    return (id<VT100ScreenMarkReading>)[[_state.markCache findBeforeLocation:interval.location] objectPassingTest:^BOOL(id<iTermMark> element, NSUInteger index, BOOL *stop) {
         return [element isKindOfClass:[VT100ScreenMark class]];
     }];
 }

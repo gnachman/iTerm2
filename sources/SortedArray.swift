@@ -132,6 +132,34 @@ class SortedArray<T>: CustomDebugStringConvertible {
         return index
     }
 
+    private func firstIndexBefore(location desiredLocation: Int64) -> Int? {
+        var start = 0
+        var end = array.count - 1
+        var mid = -1
+        var index = -1
+
+        while start <= end {
+            mid = (start + end) / 2
+            let midLocation = array[mid].location
+            if midLocation >= desiredLocation {
+                end = mid - 1
+            } else {
+                // Found it
+                start = mid + 1
+                index = mid
+            }
+        }
+        if index < 0 {
+            return nil
+        }
+        // Go backward to the first with this location
+        let l = array[index].location
+        while index > 0 && index < array.count && array[index - 1].location == l {
+            index -= 1
+        }
+        return index
+    }
+
     private func firstIndexAtOrAfter(location desiredLocation: Int64) -> Int? {
         var start = 0
         var end = array.count - 1
@@ -194,6 +222,20 @@ class SortedArray<T>: CustomDebugStringConvertible {
             // Add all until we get past the desired location
             var result = [T]()
             while index < array.count && array[index].location <= desiredLocation {
+                result.append(array[index].value)
+                index += 1
+            }
+            return result
+        } else {
+            return []
+        }
+    }
+
+    func findBefore(location desiredLocation: Int64) -> [T] {
+        if var index = firstIndexBefore(location: desiredLocation) {
+            // Add all until we get past the desired location
+            var result = [T]()
+            while index < array.count && array[index].location < desiredLocation {
                 result.append(array[index].value)
                 index += 1
             }

@@ -280,7 +280,7 @@
                 long long previousMark = [self absoluteLineNumberOfMarkBeforeAbsLine:existingRange.coordRange.start.y];
                 if (previousMark != -1) {
                     rangeWithLineBeforeStart.coordRange.start.y = previousMark + 1;
-                    if (rangeWithLineBeforeStart.coordRange.start.y == existingRange.coordRange.start.y) {
+                    if (rangeWithLineBeforeStart.coordRange.start.y >= existingRange.coordRange.start.y) {
                         previousMark = [self absoluteLineNumberOfMarkBeforeAbsLine:existingRange.coordRange.start.y - 1];
                         if (previousMark != -1) {
                             rangeWithLineBeforeStart.coordRange.start.y = previousMark + 1;
