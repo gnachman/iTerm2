@@ -169,6 +169,10 @@ class iTermSecureUserDefaults: NSObject {
 // Secure user defaults must be writable only by root and network mounts obviously can't do that.
 fileprivate let FallbackFolder = "/usr/local/iTerm2-secure-settings"
 
+// (path, is unix filesystem)
+fileprivate var secureUserDefaultsFolderIsOnUnixFilesystem: (String, Bool)?
+
+
 // Secure user defaults are a way of saving user preferences that are hard to tamper with.
 // Like UserDefaults, it is a database of key-value pairs.
 // Unlike UserDefaults, the user must authenticate to set a value.
@@ -318,6 +322,37 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         return path
     }
 
+    private static func isOnNonUnixFilesystem(atPath path: String) -> Bool {
+        if case let .some((path, value)) = secureUserDefaultsFolderIsOnUnixFilesystem {
+            return value
+        }
+        var stat = statfs()
+        guard path.withCString({ statfs($0, &stat) }) == 0 else {
+            DLog("Failed to statfs \(path), assuming filesystem is unix")
+            return false
+        }
+
+        let fsTypeName = withUnsafePointer(to: &stat.f_fstypename) {
+            $0.withMemoryRebound(to: CChar.self, capacity: Int(MFSTYPENAMELEN)) {
+                String(cString: $0)
+            }
+        }
+
+        // Common non-Unix filesystems
+        let nonUnixTypes = [
+            "msdos",
+            "exfat",
+            "ntfs",
+            "cifs",
+            "webdav"
+        ]
+
+        DLog("Filesystem type of \(path) is \(fsTypeName)")
+        let result = nonUnixTypes.contains(fsTypeName)
+        secureUserDefaultsFolderIsOnUnixFilesystem = (path, result)
+        return result
+    }
+
     private static func baseDirectory(create: Bool) throws -> String {
         DLog("create=\(create)")
         guard let appSupportString = FileManager.default.applicationSupportDirectory() else {
@@ -338,6 +373,10 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
             allowNetworkMounts: false)
         if !isLocal {
             DLog("Not local. Use fallback")
+            return try fallbackBaseDirectory(create: create)
+        }
+        if isOnNonUnixFilesystem(atPath: appSupportString) {
+            DLog("Not a unix filesystem. Use fallback")
             return try fallbackBaseDirectory(create: create)
         }
         DLog("Use \(appSupportString)")
