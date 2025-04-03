@@ -174,6 +174,23 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
         return;
     }
     const BOOL shouldSend = [self.delegate echoProbeShouldSendPassword:self];
+    if ([iTermAdvancedSettingsModel debugPhase] == 6) {
+        [self.delegate echoProbe:self writeString:_password];
+        return;
+    }
+    if ([iTermAdvancedSettingsModel debugPhase] == 7) {
+        [self.delegate echoProbe:self writeString:_password];
+        [NSThread sleepForTimeInterval:2];
+        [self.delegate echoProbe:self writeString:@"\n"];
+        return;
+    }
+    if ([iTermAdvancedSettingsModel debugPhase] == 8) {
+        [self.delegate echoProbe:self writeString:_password];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self.delegate echoProbe:self writeString:@"\n"];
+        });
+        return;
+    }
     if (shouldSend) {
         [self.delegate echoProbe:self writeString:_password];
         [self.delegate echoProbe:self writeString:@"\n"];
