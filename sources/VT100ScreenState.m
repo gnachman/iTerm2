@@ -382,11 +382,14 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     //  assert([mine isEqual:theirs]);
 
     [_primaryGrid copyDirtyFromGrid:source.primaryGrid didScroll:source.primaryGrid.haveScrolled];
+    DLog(@"Copy primary grid");
     [source.primaryGrid markAllCharsDirty:NO updateTimestamps:NO];
 
     if (_altGrid && source.altGrid) {
+        DLog(@"Copy alt grid");
         [_altGrid copyDirtyFromGrid:source.altGrid didScroll:source.altGrid.haveScrolled];
     } else {
+        DLog(@"Expensive copy alt grid");
         _altGrid = [source.altGrid copy];
     }
     [source.altGrid markAllCharsDirty:NO updateTimestamps:NO];

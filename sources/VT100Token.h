@@ -300,7 +300,7 @@ typedef struct {
     char *buffer;
     int length;
     char staticBuffer[128];
-    ScreenChars *screenChars;
+    ScreenChars *x_screenChars;
 } AsciiData;
 
 typedef struct {

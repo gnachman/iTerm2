@@ -735,6 +735,7 @@ static _Atomic int gPerformingJoinedBlock;
     // width spaces, and set fg/bg colors and attributes.
     BOOL dwc = NO;
     BOOL rtlFound = NO;
+    DLog(@"Convert agumented string “%@” to screen char array with fg=%@, bg=%@", augmentedString, ScreenCharDescription([self.terminal foregroundColorCode]), ScreenCharDescription([self.terminal backgroundColorCode]));
     StringToScreenChars(augmentedString,
                         buffer,
                         [self.terminal foregroundColorCode],
@@ -747,6 +748,9 @@ static _Atomic int gPerformingJoinedBlock;
                         self.config.unicodeVersion,
                         self.terminal.softAlternateScreenMode,
                         &rtlFound);
+    for (int i = 0; i < len; i++) {
+        DLog(@"sct[%@]=%@", @(i), ScreenCharDescription(buffer[i]));
+    }
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
         if (rtlFound) {
@@ -870,7 +874,7 @@ static _Atomic int gPerformingJoinedBlock;
          self.currentGrid.cursorY + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width]);
 
     screen_char_t *buffer;
-    buffer = asciiData->screenChars->buffer;
+    buffer = asciiData->x_screenChars->buffer;
 
     VT100Terminal *terminal = self.terminal;
     const screen_char_t defaultChar = terminal.processedDefaultChar;
@@ -878,17 +882,24 @@ static _Atomic int gPerformingJoinedBlock;
 
     screen_char_t zero = { 0 };
     if (memcmp(&defaultChar, &zero, sizeof(defaultChar))) {
+        DLog(@"Convert ascii “%.*s” to screen char array with fg&bg=%@", len, asciiData->buffer, ScreenCharDescription(defaultChar));
         STOPWATCH_START(setUpScreenCharArray);
         for (int i = 0; i < len; i++) {
             CopyForegroundColor(&buffer[i], defaultChar);
             CopyBackgroundColor(&buffer[i], defaultChar);
         }
         STOPWATCH_LAP(setUpScreenCharArray);
+    } else {
+        DLog(@"Use default attributes for “%.*s”. Terminal's processedDefaultChar is %@", len, asciiData->buffer, ScreenCharDescription(defaultChar));
+    }
+    for (int i = 0; i < len; i++) {
+        DLog(@"sct[%@]=%@", @(i), ScreenCharDescription(buffer[i]));
     }
 
     // If a graphics character set was selected then translate buffer
     // characters into graphics characters.
     if ([self.charsetUsesLineDrawingMode containsObject:@(terminal.charset)]) {
+        DLog(@"Convert to graphics characters");
         ConvertCharsToGraphicsCharset(buffer, len);
     }
 

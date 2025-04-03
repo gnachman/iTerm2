@@ -37,9 +37,9 @@ void iTermAsciiDataFree(AsciiData *asciiData) {
     if (asciiData->buffer != asciiData->staticBuffer) {
         free(asciiData->buffer);
     }
-    if (asciiData->screenChars &&
-        asciiData->screenChars->buffer != asciiData->screenChars->staticBuffer) {
-        free(asciiData->screenChars->buffer);
+    if (asciiData->x_screenChars &&
+        asciiData->x_screenChars->buffer != asciiData->x_screenChars->staticBuffer) {
+        free(asciiData->x_screenChars->buffer);
     }
 }
 
@@ -64,7 +64,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
         screenChars->buffer[i].code = asciiData->buffer[i];
     }
     screenChars->length = asciiData->length;
-    asciiData->screenChars = screenChars;
+    asciiData->x_screenChars = screenChars;
 }
 
 

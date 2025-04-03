@@ -21,6 +21,8 @@
 #import "VT100LineInfo.h"
 #import "VT100Terminal.h"
 
+#define VERBOSE_STRING
+
 static NSString *const kGridCursorKey = @"Cursor";
 static NSString *const kGridScrollRegionRowsKey = @"Scroll Region Rows";
 static NSString *const kGridScrollRegionColumnsKey = @"Scroll Region Columns";
@@ -1079,6 +1081,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 }
 
 - (void)copyDirtyFromGrid:(VT100Grid *)otherGrid  didScroll:(BOOL)didScroll {
+    DLog(@"Copy dirty from %@ to %@", otherGrid, self);
+    DLog(@"Self=\n%@\n%@", [self compactLineDumpWithColors], [self compactDirtyDump]);
+    DLog(@"Other=\n%@\n%@", [otherGrid compactLineDumpWithColors], [otherGrid compactDirtyDump]);
     if (otherGrid == self) {
         return;
     }
@@ -1104,6 +1109,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     _hasChanged = YES;
     [otherGrid copyMiscellaneousStateTo:self];
     [otherGrid resetBidiDirty];
+    DLog(@"After copying, self is:\n%@\n%@", [self compactLineDumpWithColors], [self compactDirtyDump]);
 }
 
 - (int)scrollLeft {
@@ -1124,6 +1130,21 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                     insert:(BOOL)insert
     externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes
                   rtlFound:(BOOL)rtlFound {
+    unichar *backingStorePtr = nil;
+    int *deltasPtr = nil;
+    DLog(@"Append %@ at %@", ScreenCharArrayToString(buffer, 0, len, &backingStorePtr, &deltasPtr), VT100GridCoordDescription(self.cursor));
+    free(backingStorePtr);
+    free(deltasPtr);
+
+    DLog(@"unlimitedScrollback=%@, useScrollbackWithRegion=%@, wraparound=%@, ansi=%@, insert=%@",
+         @(unlimitedScrollback),
+         @(useScrollbackWithRegion),
+         @(wraparound),
+         @(ansi),
+         @(insert));
+    DLog(@"useScrollRegionCols_=%@, size=%@", @(useScrollRegionCols_), VT100GridSizeDescription(size_));
+    DLog(@"Before:\n%@", [self compactLineDumpWithColors]);
+
     int numDropped = 0;
     assert(buffer);
     int idx;  // Index into buffer
@@ -1139,9 +1160,12 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     // Grab a block of consecutive characters up to the remaining length in the
     // line and append them at once.
     for (idx = 0; idx < len; )  {
+        if (idx != 0) {
+            DLog(@"Current state at idx=%@:\n%@", @(idx), [self compactLineDumpWithColors]);
+        }
         int startIdx = idx;
 #ifdef VERBOSE_STRING
-        NSLog(@"Begin inserting line. cursor_.x=%d, WIDTH=%d", cursor_.x, WIDTH);
+        DLog(@"Begin inserting line. cursor_.x=%d, WIDTH=%d", cursor_.x, size_.width);
 #endif
 
         int widthOffset;
@@ -1151,12 +1175,12 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             // rightmost position.
             widthOffset = 1;
 #ifdef VERBOSE_STRING
-            NSLog(@"The first char we're going to insert is a DWC");
+            DLog(@"The first char we're going to insert is a DWC");
 #endif
         } else {
             widthOffset = 0;
         }
-
+        DLog(@"widthOffset=%@", @(widthOffset));
         if (useScrollRegionCols_ && cursor_.x <= scrollRight + 1) {
             // If the cursor is left of the right margin,
             // the text run stops (or wraps) at right margin.
@@ -1176,9 +1200,13 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             leftMargin = 0;
             rightMargin = size_.width;
         }
+        DLog(@"margins are %@ and %@", @(leftMargin), @(rightMargin));
         if (cursor_.x >= rightMargin - widthOffset) {
+            DLog(@"Cursor is past the right margin");
             if (wraparound) {
+                DLog(@"Do wraparound");
                 if (leftMargin == 0 && rightMargin == size_.width) {
+                    DLog(@"Set continuation marker");
                     // Set the continuation marker
                     screen_char_t* prevLine = VT100GridScreenCharsAtLine(self, cursor_.y);
                     BOOL splitDwc = (cursor_.x == size_.width - 1);
@@ -1197,9 +1225,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                                                                 sentToLineBuffer:nil];
 
 #ifdef VERBOSE_STRING
-                NSLog(@"Advance cursor to next line");
+                DLog(@"Advance cursor to next line");
 #endif
             } else {
+                DLog(@"Wraparound is off");
                 // Wraparound is off.
                 // That means all the characters are effectively inserted at the
                 // rightmost position. Move the cursor to the end of the line
@@ -1210,6 +1239,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 
                 idx = len - 1;
                 if (ScreenCharIsDWC_RIGHT(buffer[idx]) && idx > startIdx) {
+                    DLog(@"Have dwc at %@, back up one", @(idx));
                     // The last character to insert is double width. Back up one
                     // byte in buffer and move the cursor left one position.
                     idx--;
@@ -1222,6 +1252,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                 }
                 screen_char_t *line = VT100GridScreenCharsAtLine(self, cursor_.y);
                 if (rightMargin == size_.width) {
+                    DLog(@"Clear continuation marker");
                     // Clear the continuation marker
                     line[size_.width].code = EOL_HARD;
                 }
@@ -1231,6 +1262,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                 }
                 self.cursorX = newCursorX;
                 if (ScreenCharIsDWC_RIGHT(line[cursor_.x])) {
+                    DLog(@"Convert DWC_RIGHT at %@ to space", @(cursor_.x - 1));
                     // This would cause us to overwrite the second part of a
                     // double-width character. Convert it to a space.
                     line[cursor_.x - 1].code = 0;
@@ -1238,7 +1270,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                 }
 
 #ifdef VERBOSE_STRING
-                NSLog(@"Scribbling on last position");
+                DLog(@"Scribbling on last position");
 #endif
             }
         }
@@ -1250,7 +1282,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 #endif
         BOOL wrapDwc = NO;
 #ifdef VERBOSE_STRING
-        NSLog(@"There is %d space left in the line and we are appending %d chars",
+        DLog(@"There is %d space left in the line and we are appending %d chars",
               spaceRemainingInLine, charsLeftToAppend);
 #endif
         int effective_width;
@@ -1259,9 +1291,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         } else {
             effective_width = scrollRight + 1;
         }
+        DLog(@"effective_width=%@, spaceRemainingInLine=%@, charsLeftToAppend=%@", @(effective_width), @(spaceRemainingInLine), @(charsLeftToAppend));
         if (spaceRemainingInLine <= charsLeftToAppend) {
 #ifdef VERBOSE_STRING
-            NSLog(@"Not enough space in the line for everything we want to append.");
+            DLog(@"Not enough space in the line for everything we want to append.");
 #endif
             // There is enough text to at least fill the line. Place the cursor
             // at the end of the line.
@@ -1271,14 +1304,14 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                 // If we filled the line all the way out to WIDTH a DWC would be
                 // split. Wrap the DWC around to the next line.
 #ifdef VERBOSE_STRING
-                NSLog(@"Dropping a char from the end to avoid splitting a DWC.");
+                DLog(@"Dropping a char from the end to avoid splitting a DWC.");
 #endif
                 wrapDwc = YES;
                 newx = rightMargin - 1;
                 --effective_width;
             } else {
 #ifdef VERBOSE_STRING
-                NSLog(@"Inserting up to the end of the line only.");
+                DLog(@"Inserting up to the end of the line only.");
 #endif
                 newx = rightMargin;
             }
@@ -1288,7 +1321,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             // where it should be after appending is complete.
             newx = cursor_.x + charsLeftToAppend;
 #ifdef VERBOSE_STRING
-            NSLog(@"All remaining chars fit.");
+            DLog(@"All remaining chars fit.");
 #endif
         }
 
@@ -1296,7 +1329,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         // on the current line).
         charsToInsert = newx - cursor_.x;
 #ifdef VERBOSE_STRING
-        NSLog(@"Will insert %d chars", charsToInsert);
+        DLog(@"Will insert %d chars", charsToInsert);
 #endif
         if (charsToInsert <= 0) {
             //NSLog(@"setASCIIString: output length=0?(%d+%d)%d+%d",cursor_.x,charsToInsert,idx2,len);
@@ -1318,17 +1351,20 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             mayStompSplitDwc = (!useScrollRegionCols_ &&
                                 aLine[size_.width].code == EOL_DWC &&
                                 ScreenCharIsDWC_SKIP(aLine[size_.width - 1]));
+            DLog(@"Set mayStompSplitDwc=%@", @(mayStompSplitDwc));
         } else if (!wraparound &&
                    rightMargin < size_.width &&
                    useScrollRegionCols_ &&
                    newx >= rightMargin &&
                    cursor_.x < rightMargin) {
-            // Prevent the cursor from going past the right margin when wraparound is off.
             newx = rightMargin - 1;
+            DLog(@"Prevent the cursor from going past the right margin when wraparound is off. newx=%@", @(newx));
         }
 
         if (insert) {
+            DLog(@"Insert code path");
             if (cursor_.x + charsToInsert < rightMargin) {
+                DLog(@"Will shift line %@ right by %@ starting at %@ up to %@", @(lineNumber), @(charsToInsert), @(cursor_.x), @(rightMargin));
                 [self shiftLine:lineNumber
                         rightBy:charsToInsert
                      startingAt:cursor_.x
@@ -1340,6 +1376,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         // Overwriting the second-half of a double-width character so turn the
         // DWC into a space.
         if (ScreenCharIsDWC_RIGHT(aLine[cursor_.x])) {
+            DLog(@"Erase DWC_RIGHT on line %@, x=%@", @(lineNumber), @(cursor_.x));
             [self eraseDWCRightOnLine:lineNumber x:cursor_.x externalAttributeIndex:eaIndex];
         }
 
@@ -1349,6 +1386,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         if (charsToInsert > 1 ||
             memcmp(aLine + cursor_.x, buffer + idx, charsToInsert * sizeof(screen_char_t))) {
             // copy charsToInsert characters into the line and set them dirty.
+            DLog(@"Copy %@ chars from offset %@ offset %@ of the current line", @(charsToInsert), @(idx), @(cursor_.x));
             memcpy(aLine + cursor_.x,
                    buffer + idx,
                    charsToInsert * sizeof(screen_char_t));
@@ -1356,22 +1394,28 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                       inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
                               to:VT100GridCoordMake(cursor_.x + charsToInsert - 1, lineNumber)];
             [eaIndex copyFrom:attributes source:idx destination:cursor_.x count:charsToInsert];
+            DLog(@"After copying to this line:\n%@", [self compactLineDumpWithColors]);
         }
         if (wrapDwc) {
+            DLog(@"wrapDwc is true, erase last and move it to the next line");
             [eaIndex eraseAt:cursor_.x + charsToInsert];
             if (cursor_.x + charsToInsert == size_.width - 1) {
+                DLog(@"Set DWC skip at %@+%@", @(cursor_.x), @(charsToInsert));
                 ScreenCharSetDWC_SKIP(&aLine[cursor_.x + charsToInsert]);
             } else {
+                DLog(@"Erase at %@+%@", @(cursor_.x), @(charsToInsert));
                 aLine[cursor_.x + charsToInsert].code = 0;
             }
             aLine[cursor_.x + charsToInsert].complexChar = NO;
         }
+        DLog(@"Set cursorX to %@", @(newx));
         self.cursorX = newx;
         idx += charsToInsert;
 
         // Overwrote some stuff that was already on the screen leaving behind the
         // second half of a DWC
         if (cursor_.x < size_.width - 1 && ScreenCharIsDWC_RIGHT(aLine[cursor_.x])) {
+            DLog(@"Clean up right half of split DWC");
             [eaIndex eraseAt:cursor_.x];
             aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
@@ -1380,7 +1424,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         if (mayStompSplitDwc &&
             !ScreenCharIsDWC_SKIP(aLine[size_.width - 1]) &&
             aLine[size_.width].code == EOL_DWC) {
-            // The line no longer ends in a DWC_SKIP, but the continuation mark is still EOL_DWC.
+            DLog(@"The line no longer ends in a DWC_SKIP, but the continuation mark is still EOL_DWC.");
             // Change the continuation mark to EOL_SOFT since there's presumably still a DWC at the
             // start of the next line.
             aLine[size_.width].code = EOL_SOFT;
@@ -1393,7 +1437,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         // ANSI terminals will go to a new line after displaying a character at
         // the rightmost column.
         if (cursor_.x >= effective_width && ansi) {
+            DLog(@"In ANSI code path!");
             if (wraparound) {
+                DLog(@"doing wraparound");
+                DLog(@"Before wraparound:\n%@", [self compactLineDumpWithColors]);
                 //set the wrapping flag
                 aLine[size_.width] = defaultChar;
                 aLine[size_.width].code = ((effective_width == size_.width) ? EOL_SOFT : EOL_DWC);
@@ -1403,19 +1450,26 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                                                          useScrollbackWithRegion:useScrollbackWithRegion
                                                                       willScroll:nil
                                                                 sentToLineBuffer:nil];
+                DLog(@"After wraparound:\n%@", [self compactLineDumpWithColors]);
             } else {
+                DLog(@"Not doing wraparound");
                 self.cursorX = rightMargin - 1;
                 if (idx < len - 1) {
                     // Iterate once more to draw the last character at the end
                     // of the line.
                     idx = len - 1;
+                    DLog(@"Move cursor to last regular column");
                 } else {
                     // Break out of the loop after the last character is drawn.
                     idx = len;
+                    DLog(@"Move cursor into right margin");
                 }
             }
         }
     }
+
+    DLog(@"After:\n%@\nDirty:\n%@", [self compactLineDumpWithColors], [self compactDirtyDump]);
+    DLog(@"Cursor=%@", VT100GridCoordDescription(self.cursor));
 
     assert(numDropped >= 0);
     return numDropped;
@@ -1427,7 +1481,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
              upTo:(int)rightMargin
 externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 #ifdef VERBOSE_STRING
-                NSLog(@"Shifting old contents to the right");
+    DLog(@"Shifting old contents to the right");
 #endif
     screen_char_t *aLine = [self screenCharsAtLineNumber:lineNumber];
 
@@ -1462,7 +1516,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 - (void)eraseDWCRightOnLine:(int)lineNumber x:(int)cursorX
      externalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
 #ifdef VERBOSE_STRING
-    NSLog(@"Wiping out the right-half DWC at the cursor before writing to screen");
+    DLog(@"Wiping out the right-half DWC at the cursor before writing to screen");
     ITAssertWithMessage(cursor_.x > 0, @"DWC split");  // there should never be the second half of a DWC at x=0
 #endif
     screen_char_t *aLine = [self screenCharsAtLineNumber:lineNumber];
@@ -2082,6 +2136,51 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         }
         NSDate* date = [NSDate dateWithTimeIntervalSinceReferenceDate:[[self lineInfoAtLineNumber:y] metadata].timestamp];
         [dump appendFormat:@"  | %@", [fmt stringFromDate:date]];
+        if (y != size_.height - 1) {
+            [dump appendString:@"\n"];
+        }
+    }
+    return dump;
+}
+
+- (NSString *)compactLineDumpWithColors {
+    NSMutableString *dump = [NSMutableString string];
+    for (int y = 0; y < size_.height; y++) {
+        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y createIfNeeded:NO];
+        NSOrderedSet<NSString *> *previousCodes = [NSOrderedSet orderedSetWithObject:@"0"];
+        for (int x = 0; x < size_.width; x++) {
+            NSString *s  = ScreenCharToStr(&line[x]);
+            NSOrderedSet<NSString *> *codes = [VT100Terminal sgrCodesForCharacter:line[x]
+                                                               externalAttributes:eaIndex[x]];
+            if (![NSObject object:codes isEqualToObject:previousCodes]) {
+                [dump appendFormat:@"<SGR %@>", [codes.array componentsJoinedByString:@";"]];
+                previousCodes = codes;
+            }
+            if (line[x].code == 0 && !line[x].image && !line[x].complexChar) {
+                [dump appendFormat:@"."];
+            } else if (ScreenCharIsDWC_RIGHT(line[x])) {
+                [dump appendFormat:@"-"];
+            } else if (ScreenCharIsDWC_SKIP(line[x])) {
+                [dump appendFormat:@">"];
+            } else {
+                [dump appendFormat:@"%@", s];
+            }
+        }
+        switch (line[size_.width].code) {
+            case EOL_HARD:
+                [dump appendString:@"!"];
+                break;
+            case EOL_SOFT:
+                [dump appendString:@"+"];
+                break;
+            case EOL_DWC:
+                [dump appendString:@">"];
+                break;
+            default:
+                [dump appendString:@"?"];
+                break;
+        }
         if (y != size_.height - 1) {
             [dump appendString:@"\n"];
         }
@@ -2744,9 +2843,9 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
 }
 
 #ifdef VERBOSE_STRING
-static void DumpBuf(screen_char_t* p, int n) {
+static void DumpBuf(const screen_char_t* p, int n) {
     for (int i = 0; i < n; ++i) {
-        NSLog(@"%3d: \"%@\" (0x%04x)", i, ScreenCharToStr(&p[i]), (int)p[i].code);
+        DLog(@"%3d: \"%@\" (0x%04x)", i, ScreenCharToStr(&p[i]), (int)p[i].code);
     }
 }
 #endif

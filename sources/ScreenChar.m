@@ -774,6 +774,21 @@ NSString *ScreenCharDescription(screen_char_t c) {
     if (style.length) {
         style = [@"; " stringByAppendingString:style];
     }
+#if DEBUG
+    return [NSString stringWithFormat:@"%@ fg=%@ bg=%@%@",
+            ScreenCharToStr(&c),
+            ScreenCharColorDescription(c.foregroundColor,
+                                       c.fgGreen,
+                                       c.fgBlue,
+                                       c.foregroundColorMode,
+                                       YES),
+            ScreenCharColorDescription(c.backgroundColor,
+                                       c.bgGreen,
+                                       c.bgBlue,
+                                       c.backgroundColorMode,
+                                       NO),
+            style];
+#else
     return [NSString stringWithFormat:@"fg=%@ bg=%@%@",
             ScreenCharColorDescription(c.foregroundColor,
                                        c.fgGreen,
@@ -786,6 +801,7 @@ NSString *ScreenCharDescription(screen_char_t c) {
                                        c.backgroundColorMode,
                                        NO),
             style];
+#endif
 }
 
 void ScreenCharInvert(screen_char_t *c) {
