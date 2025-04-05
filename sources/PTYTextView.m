@@ -654,6 +654,19 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         return NO;
     }
 
+    if ([[NSApp mainMenu] performKeyEquivalent:theEvent]) {
+        // Originally I tried to detect when a key would be handled later by a
+        // key equivalent by checking if Cmd is pressed, but that doesn't work
+        // with the profoundly stupid macOS 15 window tiling shortcuts. They
+        // cannot be detected because they misuse the Fn key (for example,
+        // control-fn-left is a NSEvent with characters of Home while the key
+        // equivalent is Left Arrow). We have to allow them to run, so this is
+        // an attempt to handle menu key equivalents a little earlier than they
+        // would normally be handled to allow them to work. It works in my
+        // testing but only production will tell for sure if it's a bad idea.
+        DLog(@"Main menu handled it");
+        return YES;
+    }
     if ([_keyboardHandler performKeyEquivalent:theEvent inputContext:self.inputContext]) {
         return YES;
     }
