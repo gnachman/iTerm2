@@ -1759,20 +1759,24 @@ DQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1190"/>
-                            <menuItem title="Select Next Tab" keyEquivalent="]" identifier="Select Next Tab" id="845">
-                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
-                                <connections>
-                                    <action selector="nextTab:" target="-1" id="1188"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Select Previous Tab" keyEquivalent="[" identifier="Select Previous Tab" id="843">
-                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
-                                <connections>
-                                    <action selector="previousTab:" target="-1" id="1187"/>
-                                </connections>
-                            </menuItem>
                             <menuItem title="Select Tab" id="847">
-                                <menu key="submenu" title="Select Tab" id="848"/>
+                                <menu key="submenu" title="Select Tab" id="848">
+                                    <items>
+                                        <menuItem title="Select Next Tab" keyEquivalent="]" identifier="Select Next Tab" id="845">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="nextTab:" target="-1" id="1188"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Select Previous Tab" keyEquivalent="[" identifier="Select Previous Tab" id="843">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="previousTab:" target="-1" id="1187"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="XR3-ga-Axh"/>
+                                    </items>
+                                </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="92">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>

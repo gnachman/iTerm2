@@ -2171,13 +2171,20 @@ static iTermKeyEventReplayer *gReplayer;
         return;
     }
 
-    NSMenu *aMenu = [[NSMenu alloc] initWithTitle: @"SessionMenu"];
+    NSMenu *aMenu = selectTab.submenu;
     PTYTabView *aTabView = [currentTerminal tabView];
     NSArray *tabViewItemArray = [aTabView tabViewItems];
     int i=1;
 
-    // clear whatever menu we already have
-    [selectTab setSubmenu:nil];
+    // Remove menu items after the separator
+    const NSInteger separatorIndex = [selectTab.submenu.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [obj isSeparatorItem];
+    }];
+    if (separatorIndex != NSNotFound) {
+        while (selectTab.submenu.numberOfItems > separatorIndex + 1) {
+            [selectTab.submenu removeItemAtIndex:selectTab.submenu.numberOfItems - 1];
+        }
+    }
 
     for (NSTabViewItem *aTabViewItem in tabViewItemArray) {
         PTYTab *aTab = [aTabViewItem identifier];
@@ -2193,10 +2200,6 @@ static iTermKeyEventReplayer *gReplayer;
         }
         i++;
     }
-
-    [selectTab setSubmenu:aMenu];
-
-    [aMenu release];
 }
 
 - (void)_removeItemsFromMenu:(NSMenu*)menu {
