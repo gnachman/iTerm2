@@ -172,4 +172,25 @@ NSAttributedStringKey iTermReplacementBaseCharacterAttributeName = @"iTermReplac
     return result;
 }
 
+- (NSAttributedString *)attributedStringByAppendingAttributedString:(NSAttributedString *)other {
+    NSMutableAttributedString *result = [self mutableCopy];
+    [result appendAttributedString:other];
+    return result;
+}
+
+@end
+
+@implementation NSArray(iTermAttributedString)
+
+- (NSAttributedString *)it_componentsJoinedBySeparator:(NSAttributedString *)separator {
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
+    [self enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (idx > 0) {
+            [result appendAttributedString:separator];
+        }
+        [result appendAttributedString:obj];
+    }];
+    return result;
+}
+
 @end

@@ -10,6 +10,7 @@
 #import "iTermSwiftyString.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
+#import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "ScreenChar.h"
@@ -21,6 +22,7 @@ NSString * const kTriggerActionKey = @"action";
 NSString * const kTriggerParameterKey = @"parameter";
 NSString * const kTriggerPartialLineKey = @"partial";
 NSString * const kTriggerDisabledKey = @"disabled";
+NSString * const kTriggerNameKey = @"name";
 
 @interface Trigger()
 @end
@@ -67,6 +69,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
     trigger.param = dict[kTriggerParameterKey];
     trigger.partialLine = [dict[kTriggerPartialLineKey] boolValue];
     trigger.disabled = [dict[kTriggerDisabledKey] boolValue];
+    trigger->_name = [NSString castFrom:dict[kTriggerNameKey]];
     return trigger;
 }
 
@@ -79,8 +82,8 @@ NSString * const kTriggerDisabledKey = @"disabled";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p regex=%@ param=%@>",
-            NSStringFromClass(self.class), self, self.regex, self.param];
+    return [NSString stringWithFormat:@"<%@: %p name=%@ regex=%@ param=%@>",
+            NSStringFromClass(self.class), self, self.name, self.regex, self.param];
 }
 
 - (NSString *)action {
@@ -409,11 +412,12 @@ NSString * const kTriggerDisabledKey = @"disabled";
 }
 
 - (NSDictionary *)dictionaryValue {
-    return @{ kTriggerActionKey: NSStringFromClass(self.class),
-              kTriggerRegexKey: self.regex ?: @"",
-              kTriggerParameterKey: self.param ?: @"",
-              kTriggerPartialLineKey: @(self.partialLine),
-              kTriggerDisabledKey: @(self.disabled) };
+    return [@{ kTriggerActionKey: NSStringFromClass(self.class),
+               kTriggerRegexKey: self.regex ?: @"",
+               kTriggerParameterKey: self.param ?: @"",
+               kTriggerPartialLineKey: @(self.partialLine),
+               kTriggerDisabledKey: @(self.disabled),
+               kTriggerNameKey: self.name ?: [NSNull null] } dictionaryByRemovingNullValues];
 }
 
 - (NSData *)digest {
@@ -447,6 +451,95 @@ NSString * const kTriggerDisabledKey = @"disabled";
         temp[kTriggerParameterKey] = @"";
     }
     return temp;
+}
+
+- (NSAttributedString *)titleAttributedString {
+    NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    NSDictionary *boldAttributes = @{
+        NSParagraphStyleAttributeName: paragraphStyle,
+        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightSemibold]
+    };
+    return [[NSAttributedString alloc] initWithString:[self.class.title stringByRemovingSuffix:@"…"] attributes:boldAttributes];
+}
+
+- (NSAttributedString *)attributedString {
+    NSAttributedString *newline = [[NSAttributedString alloc] initWithString:@"\n" attributes:self.regularAttributes];
+    id regexAttributedString = self.regex.length > 0 ? [self regexAttributedString] : [NSNull null];
+    NSArray *lines = nil;
+    NSString *instantEmoji = self.partialLine ? @"⚡︎ " : nil;
+    if ([self.name stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0) {
+        NSString *name = self.name;
+        if (instantEmoji) {
+            name = [instantEmoji stringByAppendingString:name];
+        }
+        NSAttributedString *nameAttributedString = [[NSAttributedString alloc] initWithString:name
+                                                                                   attributes:self.nameAttributes];
+        NSAttributedString *functionAttributedString = [self functionAttributedString];
+        lines = @[nameAttributedString, regexAttributedString, functionAttributedString];
+    } else {
+        NSAttributedString *line2;
+        if (instantEmoji) {
+            NSAttributedString *instant = [[NSAttributedString alloc] initWithString:instantEmoji attributes:self.regularAttributes];
+            line2 = [instant attributedStringByAppendingAttributedString:self.functionAttributedString];
+        } else {
+            line2 = self.functionAttributedString;
+        }
+        lines = @[regexAttributedString, line2];
+    }
+    lines = [lines filteredArrayUsingBlock:^BOOL(id anObject) {
+        return [anObject isKindOfClass:[NSAttributedString class]];
+    }];
+    return [lines it_componentsJoinedBySeparator:newline];
+}
+
+- (NSAttributedString *)regexAttributedString {
+    NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    NSDictionary *attributes = @{
+        NSParagraphStyleAttributeName: paragraphStyle,
+        NSFontAttributeName: [NSFont monospacedSystemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightRegular]
+    };
+    return [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"/%@/", self.regex ?: @""]
+                                           attributes:attributes];
+}
+
+- (NSAttributedString *)functionAttributedString {
+    NSAttributedString *paramAttributedString = [self paramAttributedString];
+    if (!paramAttributedString) {
+        return [self titleAttributedString];
+    }
+
+    NSAttributedString *space = [[NSAttributedString alloc] initWithString:@" " attributes:self.regularAttributes];
+
+    return [[self.titleAttributedString attributedStringByAppendingAttributedString:space] attributedStringByAppendingAttributedString:paramAttributedString];
+}
+
+- (NSDictionary *)regularAttributes {
+    NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+    NSDictionary *attributes = @{
+        NSParagraphStyleAttributeName: paragraphStyle,
+        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
+    };
+    return attributes;
+}
+
+- (NSDictionary *)nameAttributes {
+    NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+    NSDictionary *attributes = @{
+        NSParagraphStyleAttributeName: paragraphStyle,
+        NSFontAttributeName: [NSFont boldSystemFontOfSize:[NSFont systemFontSize] + 2]
+    };
+    return attributes;
+}
+
+- (NSAttributedString *)paramAttributedString {
+    NSString *string = [NSString castFrom:self.param];
+    if (!string) {
+        return nil;
+    }
+    return [[NSAttributedString alloc] initWithString:string
+                                           attributes:self.regularAttributes];
 }
 
 #pragma mark - iTermObject

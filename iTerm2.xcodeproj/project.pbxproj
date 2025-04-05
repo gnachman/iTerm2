@@ -3146,6 +3146,7 @@
 		A6B3A7401AC74E02008E8D4E /* FindCursorCell1.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */; };
 		A6B3A7431AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */; };
 		A6B3A7441AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */; };
+		A6B3E85F2DA06F2C0027FC63 /* BounceTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC09142D7F300016228A /* BounceTrigger.m */; };
 		A6B41405211A579300D28207 /* iTermStoplightHotbox.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B41403211A579300D28207 /* iTermStoplightHotbox.h */; };
 		A6B41406211A579300D28207 /* iTermStoplightHotbox.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B41404211A579300D28207 /* iTermStoplightHotbox.m */; };
 		A6B41409211A5AEA00D28207 /* iTermStandardWindowButtonsView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B41407211A5AEA00D28207 /* iTermStandardWindowButtonsView.h */; };
@@ -3371,7 +3372,6 @@
 		A6C763A21B45C52B00E3C992 /* iTermToolbeltView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC881415513A00F83147 /* iTermToolbeltView.m */; };
 		A6C763A71B45C52B00E3C992 /* ToolNotes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67AAA814284BF300D5DA4E /* ToolNotes.m */; };
 		A6C763AC1B45C52B00E3C992 /* BellTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC0D142D7F5F0016228A /* BellTrigger.m */; };
-		A6C763AD1B45C52B00E3C992 /* BounceTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC09142D7F300016228A /* BounceTrigger.m */; };
 		A6C763AE1B45C52B00E3C992 /* CaptureTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83951192E95EB0037E548 /* CaptureTrigger.m */; };
 		A6C763B21B45C52B00E3C992 /* MarkTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D891E42190724DB0053C4BB /* MarkTrigger.m */; };
 		A6C763B61B45C52B00E3C992 /* StopTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468F031B06A79000226083 /* StopTrigger.m */; };
@@ -17172,6 +17172,7 @@
 				A6891DCB2818605500751F40 /* JSONPortholeRenderer.swift in Sources */,
 				A630117720E6971D008114B7 /* iTermStatusBarTextComponent.m in Sources */,
 				A6631A342D723C76006C603B /* CompletionsWindow.swift in Sources */,
+				A6B3E85F2DA06F2C0027FC63 /* BounceTrigger.m in Sources */,
 				A6EB643A2D5D800F00481D33 /* NSDictionaryCodableBox.swift in Sources */,
 				A6D1C420286192F600B68526 /* TextClipDrawing.swift in Sources */,
 				A6631A2D2D6FB68A006C603B /* iTermGlyphCharacterSource.m in Sources */,
@@ -17416,7 +17417,6 @@
 				A6C763601B45C52B00E3C992 /* PopupEntry.m in Sources */,
 				A6C762AB1B45C52B00E3C992 /* FutureMethods.m in Sources */,
 				A6C762ED1B45C52B00E3C992 /* IntervalMap.m in Sources */,
-				A6C763AD1B45C52B00E3C992 /* BounceTrigger.m in Sources */,
 				A6C762AC1B45C52B00E3C992 /* NSArray+iTerm.m in Sources */,
 				A6CEC1091DCE8146009F4FD2 /* GPBCodedOutputStream.m in Sources */,
 				1DDC09401B4DB97500B1A910 /* iTermRoundedCornerScrollView.m in Sources */,

@@ -12,6 +12,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@interface iTermTableCellViewWithTextField: NSTableCellView
+@end
+
 @interface NSTableView (iTerm)
 
 - (void)it_performUpdateBlock:(void (^NS_NOESCAPE)(void))block;
@@ -20,16 +23,16 @@ NS_ASSUME_NONNULL_BEGIN
                                fixedRowHeight:(CGFloat)fixedRowHeight
                                         owner:(NSView<NSTableViewDelegate, NSTableViewDataSource> *)owner;
 
-- (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
-                                                             font:(NSFont *)font
-                                                            string:(NSString *)string;
-- (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
-                                                 attributedString:(NSAttributedString *)attributedString;
+- (iTermTableCellViewWithTextField *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
+                                                                             font:(NSFont *)font
+                                                                           string:(NSString *)string;
+- (iTermTableCellViewWithTextField *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
+                                                                 attributedString:(NSAttributedString *)attributedString;
 
 // value is either NSString or NSAttributedString
-- (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
-                                                             font:(NSFont * _Nullable)font
-                                                            value:(id)value;
+- (iTermTableCellViewWithTextField *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
+                                                                             font:(NSFont * _Nullable)font
+                                                                            value:(id)value;
 + (CGFloat)heightForTextCellUsingFont:(NSFont *)font;
 
 @end

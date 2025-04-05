@@ -180,30 +180,41 @@ extension NSAttributedString {
     // can do more cool stuff.
     func postprocessedSwiftyMarkdownAttributedString() -> NSAttributedString {
         let result = NSMutableAttributedString(attributedString: self)
-        let fullRange = NSRange(location: 0, length: length)
+        let fullRange = NSRange(location: 0, length: result.length)
+        var rangesToProcess = [NSRange]()
 
-        enumerateAttribute(.swiftyMarkdownCharacterStyles, in: fullRange, options: []) { value, range, _ in
-            guard let styles = value as? [String],
-                  styles.contains(CharacterStyle.code.rawValue) else {
-                return
+        result.enumerateAttribute(.swiftyMarkdownCharacterStyles, in: fullRange, options: []) { value, range, _ in
+            if let styles = value as? [String],
+               styles.contains(CharacterStyle.code.rawValue) {
+                rangesToProcess.append(range)
             }
+        }
 
+        // Process ranges in reverse order so earlier replacements don't affect later ones.
+        for range in rangesToProcess.reversed() {
             let originalSubstring = result.attributedSubstring(from: range)
             let newSubstring = NSMutableAttributedString()
 
             for i in 0..<originalSubstring.length {
-                let attributes = originalSubstring.attributes(at: i, effectiveRange: nil)
                 let charRange = NSRange(location: i, length: 1)
                 let char = originalSubstring.attributedSubstring(from: charRange).string
-                newSubstring.append(NSAttributedString(string: char + "\u{feff}", attributes: attributes))
-            }
+                let attributes = originalSubstring.attributes(at: i, effectiveRange: nil)
 
+                // Only insert FEFF if not at start of the line.
+                if i > 0 {
+                    let prevCharRange = NSRange(location: i - 1, length: 1)
+                    let prevChar = originalSubstring.attributedSubstring(from: prevCharRange).string
+                    if prevChar != "\n" {
+                        newSubstring.append(NSAttributedString(string: "\u{feff}", attributes: attributes))
+                    }
+                }
+                newSubstring.append(NSAttributedString(string: char, attributes: attributes))
+            }
             result.replaceCharacters(in: range, with: newSubstring)
         }
 
         return result
     }
-
 
     // The HTML parser built in to NSAttributedString is unusable because it sets an sRGB color for
     // the default text color, breaking light/dark mode. I <3 AppKit

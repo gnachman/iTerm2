@@ -14,9 +14,6 @@
 #import "NSTableColumn+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 
-@interface iTermTableCellViewWithTextField: NSTableCellView
-@end
-
 @implementation iTermTableCellViewWithTextField {
     NSString *_identifier;
 }
@@ -235,17 +232,17 @@ static NSRect iTermOutlineViewDisclosureButtonImageRectForBounds(id self, SEL _c
     [self endUpdates];
 }
 
-- (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier font:(NSFont *)font string:(NSString *)string {
+- (iTermTableCellViewWithTextField *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier font:(NSFont *)font string:(NSString *)string {
     return [self newTableCellViewWithTextFieldUsingIdentifier:identifier font:font value:string];
 }
 
-- (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier attributedString:(NSAttributedString *)attributedString {
+- (iTermTableCellViewWithTextField *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier attributedString:(NSAttributedString *)attributedString {
     return [self newTableCellViewWithTextFieldUsingIdentifier:identifier font:nil value:attributedString];
 }
 
-- (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
-                                                             font:(NSFont *)font
-                                                            value:(id)value {
+- (iTermTableCellViewWithTextField *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
+                                                                             font:(NSFont *)font
+                                                                            value:(id)value {
     iTermTableCellViewWithTextField *cell = [self makeViewWithIdentifier:identifier owner:self];
     if (cell == nil) {
         cell = [[iTermTableCellViewWithTextField alloc] initWithFrame:NSMakeRect(0, 0, 100, 18)

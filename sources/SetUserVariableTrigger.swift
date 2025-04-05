@@ -104,4 +104,12 @@ class SetUserVariableTrigger: Trigger {
     override func paramIsTwoStrings() -> Bool {
         return true
     }
+
+    override func paramAttributedString() -> NSAttributedString? {
+        if let string = param as? String, let (name, value) = variableNameAndValue(string) {
+            return NSAttributedString(string: "\(name) = \(value)", attributes: regularAttributes())
+        } else {
+            return NSAttributedString(string: (param as? String) ?? "", attributes: regularAttributes())
+        }
+    }
 }

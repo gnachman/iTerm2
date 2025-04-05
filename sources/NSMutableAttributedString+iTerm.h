@@ -33,8 +33,11 @@ extern NSAttributedStringKey iTermReplacementBaseCharacterAttributeName;
 - (NSArray *)attributedComponentsSeparatedByString:(NSString *)separator;
 - (CGFloat)heightForWidth:(CGFloat)maxWidth;
 - (NSAttributedString *)attributedStringByRemovingColor;
+- (NSAttributedString *)attributedStringByAppendingAttributedString:(NSAttributedString *)other;
+@end
 
-
+@interface NSArray(iTermAttributedString)
+- (NSAttributedString *)it_componentsJoinedBySeparator:(NSAttributedString *)separator;
 @end
 
 NS_ASSUME_NONNULL_END

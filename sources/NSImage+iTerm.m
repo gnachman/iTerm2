@@ -23,6 +23,40 @@
 
 @implementation NSImage (iTerm)
 
++ (NSImage *)it_imageForColorSwatch:(NSColor *)color size:(NSSize)size {
+    NSImage *image = [[NSImage alloc] initWithSize:size];
+    [image lockFocus];
+
+    // Determine border color: black in light mode, white in dark mode.
+    NSAppearance *appearance = [NSApp effectiveAppearance];
+    NSString *match = [appearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]];
+    NSColor *borderColor = [match isEqualToString:NSAppearanceNameDarkAqua] ? [NSColor whiteColor] : [NSColor blackColor];
+
+    // Use white fill if color is nil.
+    NSColor *fillColor = color ? color : [NSColor whiteColor];
+    NSRect rect = NSMakeRect(0, 0, size.width, size.height);
+
+    // Fill the rectangle.
+    [fillColor setFill];
+    NSRectFill(rect);
+
+    // Draw the border.
+    [borderColor setStroke];
+    NSBezierPath *borderPath = [NSBezierPath bezierPathWithRect:NSInsetRect(rect, 0.5, 0.5)];
+    [borderPath stroke];
+
+    // If color is nil, draw a diagonal slash.
+    if (!color) {
+        NSBezierPath *slashPath = [NSBezierPath bezierPath];
+        [slashPath moveToPoint:NSMakePoint(0, 0)];
+        [slashPath lineToPoint:NSMakePoint(size.width, size.height)];
+        [slashPath stroke];
+    }
+
+    [image unlockFocus];
+    return image;
+}
+
 // When you draw an image into an image context, you get a mystery scale that
 // isn't necessarily the scale of NSScreen.main.
 // That assumption is made elsewhere in this file and I probably need to fix

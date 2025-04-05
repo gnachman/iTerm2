@@ -88,6 +88,7 @@
 - (NSImage *)it_imageFillingSize:(NSSize)size;
 
 - (NSImage *)it_subimageWithRect:(NSRect)rect;
++ (NSImage *)it_imageForColorSwatch:(NSColor *)color size:(NSSize)size;
 
 @end
 

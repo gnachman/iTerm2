@@ -8,7 +8,7 @@
 #import "BounceTrigger.h"
 
 // How to bounce. The parameter takes an integer value equal to one of these. This is the tag.
-enum {
+typedef NS_ENUM(int, BounceTriggerParamTag) {
     kBounceTriggerParamTagBounceUntilFocus,
     kBounceTriggerParamTagBounceOnce,
 };
@@ -66,10 +66,20 @@ enum {
     return nil;
 }
 
++ (NSString *)stringForParameter:(BounceTriggerParamTag)parameter {
+    switch (parameter) {
+        case kBounceTriggerParamTagBounceUntilFocus:
+            return @"Bounce Until Activated";
+        case kBounceTriggerParamTagBounceOnce:
+            return @"Bounce Once";
+    }
+    return @"Bounce Until Activated";
+}
+
 - (NSDictionary *)menuItemsForPoupupButton
 {
-    return @{ @(kBounceTriggerParamTagBounceUntilFocus): @"Bounce Until Activated",
-              @(kBounceTriggerParamTagBounceOnce): @"Bounce Once" };
+    return @{ @(kBounceTriggerParamTagBounceUntilFocus): [BounceTrigger stringForParameter:kBounceTriggerParamTagBounceUntilFocus],
+              @(kBounceTriggerParamTagBounceOnce): [BounceTrigger stringForParameter:kBounceTriggerParamTagBounceOnce] };
 }
 
 - (NSRequestUserAttentionType)bounceType
@@ -102,6 +112,11 @@ enum {
 
 - (int)defaultIndex {
     return [self indexForObject:@(kBounceTriggerParamTagBounceUntilFocus)];
+}
+
+- (NSAttributedString *)paramAttributedString {
+    return [[NSAttributedString alloc] initWithString:[BounceTrigger stringForParameter:[[NSNumber castFrom:self.param] intValue]]
+                                           attributes:self.regularAttributes];
 }
 
 @end

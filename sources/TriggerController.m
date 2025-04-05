@@ -15,6 +15,7 @@
 #import "CoprocessTrigger.h"
 #import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "iTermAddTriggerViewController.h"
 #import "iTermUserNotificationTrigger.h"
 #import "HighlightTrigger.h"
 #import "iTermSetTitleTrigger.h"
@@ -54,6 +55,20 @@ NSString *const kTextColorWellIdentifier = @"kTextColorWellIdentifier";
 NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifier";
 NSString *const kTwoPraramNameColumnIdentifier = @"kTwoPraramNameColumnIdentifier";
 NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentifier";
+
+@protocol iTermTriggersPanelViewDelegate
+- (void)viewDidChangeEffectiveAppearance;
+@end
+
+@interface iTermTriggersPanelView: NSView
+@property (nonatomic, weak) IBOutlet id<iTermTriggersPanelViewDelegate> delegate;
+@end
+
+@implementation iTermTriggersPanelView
+- (void)viewDidChangeEffectiveAppearance {
+    [self.delegate viewDidChangeEffectiveAppearance];
+}
+@end
 
 @interface iTermTwoStringView: NSTableCellView<iTermOptionallyBordered>
 - (instancetype)initWithFirst:(NSView *)first second:(NSView *)second;
@@ -129,7 +144,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 @end
 
-@interface TriggerController() <iTermTriggerParameterController, iTermTriggerDelegate>
+@interface TriggerController() <iTermTriggerParameterController, iTermTriggerDelegate, iTermTriggersPanelViewDelegate>
 // Keeps the color well whose popover is currently open from getting
 // deallocated. It may get removed from the view hierarchy but we need it to
 // continue existing so we can get the color out of it.
@@ -138,8 +153,6 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 @implementation TriggerController {
     NSArray *_triggers;
-    // Gives the index of the row being edited while a textfield cell is editing.
-    NSInteger _textEditingRow;
     id _parameterDelegate;
 
     IBOutlet NSTableView *_tableView;
@@ -152,6 +165,8 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     IBOutlet NSButton *_interpolatedStringParameters;
     IBOutlet NSButton *_updateProfileButton;
     IBOutlet NSButton *_shareButton;
+    IBOutlet iTermAddTriggerViewController *_detailViewController;
+    IBOutlet NSView *_detailViewContainer;
     NSArray *_cached;
 }
 
@@ -166,7 +181,6 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
             trigger.delegate = self;
         }
         _triggers = triggers;
-        _textEditingRow = -1;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadAllProfiles:)
                                                      name:kReloadAllProfiles
@@ -212,6 +226,14 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     [_tableView registerForDraggedTypes:@[ kiTermTriggerControllerPasteboardType ]];
     _tableView.doubleAction = @selector(doubleClick:);
     _tableView.target = self;
+    _tableView.rowHeight = 21;
+    [_detailViewContainer addSubview:_detailViewController.view];
+    _detailViewController.view.frame = _detailViewContainer.bounds;
+    [_detailViewController removeOkCancel];
+    __weak __typeof(self) weakSelf = self;
+    _detailViewController.didChange = ^{
+        [weakSelf detailViewControllerDidChange];
+    };
     [self updateCopyToProfileButtonVisibility];
     [self updateUseInterpolatedStringParametersState];
     [self updateShareButtonEnabled];
@@ -262,6 +284,12 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     for (Trigger *trigger in _triggers) {
         [trigger reloadData];
     }
+    [self updateDetailViewController];
+}
+
+- (void)reloadData {
+    [_tableView reloadData];
+    [self tableViewSelectionDidChange:nil];
 }
 
 - (int)numberOfTriggers {
@@ -323,7 +351,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
                   reloadData:(BOOL)shouldReload {
     if (shouldReload) {
         // Stop editing. A reload while editing crashes.
-        [_tableView reloadData];
+        [self reloadData];
     }
     NSMutableArray *triggerDictionaries = [[self triggerDictionariesForCurrentProfile] mutableCopy];
     if (rowIndex < 0) {
@@ -336,15 +364,27 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
             [triggerDictionaries removeObjectAtIndex:rowIndex];
         }
     }
+    // Update _cached so that a reloadAllProfiles: notification due to this call won't make us reload the whole table.
+    _cached = triggerDictionaries;
     [_delegate triggerChanged:self newValue:triggerDictionaries];
     if (shouldReload) {
-        [_tableView reloadData];
+        [self reloadData];
+    }
+    const NSInteger row = rowIndex >= 0 ? rowIndex : triggerDictionary.count - 1;
+    NSIndexSet *selection = [NSIndexSet indexSetWithIndex:row];
+    if (![[_tableView selectedRowIndexes] isEqual:selection]) {
+        [_tableView selectRowIndexes:selection byExtendingSelection:NO];
+    }
+    if (shouldReload) {
+        [self updateDetailViewController];
+    } else if (rowIndex >= 0) {
+        NSIndexSet *rowIndexes = [NSIndexSet indexSetWithIndex:rowIndex];
+        [_tableView reloadDataForRowIndexes:rowIndexes columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+        [_tableView noteHeightOfRowsWithIndexesChanged:rowIndexes];
     }
 }
 
 - (void)moveTriggerOnRow:(int)sourceRow toRow:(int)destinationRow {
-    // Stop editing. A reload while editing crashes.
-    [_tableView reloadData];
     NSMutableArray *triggerDictionaries = [[self triggerDictionariesForCurrentProfile] mutableCopy];
     if (destinationRow > sourceRow) {
         --destinationRow;
@@ -353,7 +393,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     [triggerDictionaries removeObjectAtIndex:sourceRow];
     [triggerDictionaries insertObject:temp atIndex:destinationRow];
     [_delegate triggerChanged:self newValue:triggerDictionaries];
-    [_tableView reloadData];
+    [self reloadData];
 }
 
 - (BOOL)actionTakesParameter:(NSString *)action {
@@ -369,7 +409,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 - (void)setGuid:(NSString *)guid {
     _guid = [guid copy];
-    [_tableView reloadData];
+    [self reloadData];
     [self updateUseInterpolatedStringParametersState];
 }
 
@@ -394,9 +434,13 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     return textField;
 }
 
+- (void)viewDidChangeEffectiveAppearance {
+    [self reloadData];
+}
+
 - (void)reloadAllProfiles:(NSNotification *)notification {
     if (_cached && ![_cached isEqual:[self triggerDictionariesForCurrentProfile]]) {
-        [_tableView reloadData];
+        [self reloadData];
     }
     [self updateUseInterpolatedStringParametersState];
 }
@@ -436,6 +480,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     [guids enumerateObjectsUsingBlock:^(NSString *guid, NSUInteger idx, BOOL * _Nonnull stop) {
         [self addTriggers:triggers toProfileWithGUID:guid];
     }];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
 }
 
 + (NSString *)importDescriptionForTrigger:(Trigger *)trigger {
@@ -553,20 +598,6 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 #pragma mark NSTableViewDelegate
 
-- (BOOL)tableView:(NSTableView *)aTableView
-    shouldEditTableColumn:(NSTableColumn *)aTableColumn
-                      row:(NSInteger)rowIndex {
-    if (aTableColumn == _regexColumn || aTableColumn == _partialLineColumn | aTableColumn == _enabledColumn) {
-        return YES;
-    }
-    if (aTableColumn == _parametersColumn) {
-        NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][rowIndex];
-        NSString *action = triggerDictionary[kTriggerActionKey];
-        return [self actionTakesParameter:action];
-    }
-    return NO;
-}
-
 + (NSView *)viewForParameterForTrigger:(Trigger *)trigger
                                   size:(CGSize)size
                                  value:(id)value
@@ -668,6 +699,10 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
         popUpButton.target = receiver;
         popUpButton.action = @selector(parameterPopUpButtonDidChange:);
 
+        NSRect frame = popUpButton.frame;
+        frame.size.width = size.width;
+        popUpButton.frame = frame;
+        
         return popUpButton;
     }
 
@@ -698,7 +733,6 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
         helpButton.bezelStyle = NSBezelStyleHelpButton;
         helpButton.buttonType = NSButtonTypeMomentaryPushIn;
         helpButton.bordered = YES;
-        helpButton.controlSize = NSControlSizeMini;
         helpButton.helpText = trigger.helpText;
         [helpButton sizeToFit];
         NSRect rect = helpButton.frame;
@@ -730,8 +764,8 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     textField.stringValue = value ?: @"";
     textField.editable = YES;
     textField.selectable = YES;
-    textField.bordered = NO;
-    textField.drawsBackground = NO;
+    textField.bordered = YES;
+    textField.drawsBackground = YES;
     textField.placeholderString = placeholder;
     textField.identifier = identifier;
     textField.lineBreakMode = NSLineBreakByCharWrapping;
@@ -739,110 +773,46 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     return textField;
 }
 
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row {
+    NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][row];
+    Trigger *trigger = [Trigger triggerFromDict:triggerDictionary];
+    NSAttributedString *attributedString = trigger.attributedString;
+    return [attributedString heightForWidth:tableView.tableColumns[0].width] + 8;
+}
+
 - (NSView *)tableView:(NSTableView *)tableView
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
     NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][row];
-    if (tableColumn == _actionColumn) {
-        NSPopUpButton *popUpButton = [[NSPopUpButton alloc] init];
-        [popUpButton setTitle:[[_triggers[0] class] title]];
-        popUpButton.bordered = NO;
-        for (int i = 0; i < [self numberOfTriggers]; i++) {
-            [popUpButton addItemWithTitle:[[_triggers[i] class] title]];
-        }
-        NSString *action = triggerDictionary[kTriggerActionKey];
-        [popUpButton selectItemAtIndex:[self indexOfAction:action]];
-        popUpButton.target = self;
-        popUpButton.action = @selector(actionDidChange:);
-
-        return popUpButton;
-    } else if (tableColumn == _regexColumn) {
-        NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][row];
-        NSTextField *textField =
-            [[NSTextField alloc] initWithFrame:NSMakeRect(0,
-                                                          0,
-                                                          tableColumn.width,
-                                                          self.tableView.rowHeight)];
-        textField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-        textField.stringValue = triggerDictionary[kTriggerRegexKey] ?: @"";
-        textField.editable = YES;
-        textField.selectable = YES;
-        textField.bordered = NO;
-        textField.drawsBackground = NO;
-        textField.delegate = self;
-        textField.identifier = kRegexColumnIdentifier;
-
-        return textField;
-    } else if (tableColumn == _partialLineColumn) {
-        NSButton *checkbox = [[NSButton alloc] initWithFrame:NSZeroRect];
-        [checkbox sizeToFit];
-        [checkbox setButtonType:NSButtonTypeSwitch];
-        checkbox.title = @"";
-        checkbox.state = [triggerDictionary[kTriggerPartialLineKey] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
-        checkbox.target = self;
-        checkbox.action = @selector(instantDidChange:);
-        return checkbox;
-    } else if (tableColumn == _enabledColumn) {
-        NSButton *checkbox = [[NSButton alloc] initWithFrame:NSZeroRect];
-        [checkbox sizeToFit];
-        [checkbox setButtonType:NSButtonTypeSwitch];
-        checkbox.title = @"";
-        checkbox.state = [triggerDictionary[kTriggerDisabledKey] boolValue] ? NSControlStateValueOff : NSControlStateValueOn;
-        checkbox.target = self;
-        checkbox.action = @selector(enabledDidChange:);
-        return checkbox;
-    } else if (tableColumn == _parametersColumn) {
-        NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
-        Trigger *trigger = [self triggerWithAction:triggerDicts[row][kTriggerActionKey]];
-        trigger.param = triggerDicts[row][kTriggerParameterKey];
-        id delegateToSave;
-        NSView *result = [self.class viewForParameterForTrigger:trigger
-                                                           size:NSMakeSize(tableColumn.width, _tableView.rowHeight)
-                                                          value:triggerDictionary[kTriggerParameterKey]
-                                                       receiver:self
-                                            interpolatedStrings:_interpolatedStringParameters.state == NSControlStateValueOn
-                                                      tableView:tableView
-                                                    delegateOut:&delegateToSave
-                                                    wellFactory:
-                          ^iTermColorWell *(NSRect frame,
-                                            NSColor *color) {
-            iTermColorWell *well = [[iTermColorWell alloc] initWithFrame:frame colorSpace:[NSColorSpace it_defaultColorSpace]];
-            well.noColorAllowed = YES;
-            well.continuous = NO;
-            well.tag = row;
-            well.color = color;
-            well.target = self;
-            well.action = @selector(colorWellDidChange:);
-            __weak __typeof(self) weakSelf = self;
-            __weak __typeof(well) weakWell = well;
-            well.willOpenPopover = ^() {
-                if (weakWell) {
-                    weakSelf.activeWell = weakWell;
-                }
-            };
-            well.willClosePopover = ^() {
-                if (self.activeWell == well) {
-                    self.activeWell = nil;
-                }
-            };
-            return well;
-        }];
-        _parameterDelegate = delegateToSave;
-        return result;
-    }
-    return nil;
+    Trigger *trigger = [Trigger triggerFromDict:triggerDictionary];
+    iTermTableCellViewWithTextField *view = [tableView newTableCellViewWithTextFieldUsingIdentifier:@"Trigger Tableview Entry"
+                                                                                   attributedString:trigger.attributedString];
+    view.alphaValue = trigger.disabled ? 0.5 : 1.0;
+    return view;
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    [self updateDetailViewController];
     self.hasSelection = [_tableView numberOfSelectedRows] > 0;
     _removeTriggerButton.enabled = self.hasSelection;
     [self updateShareButtonEnabled];
 }
 
+- (void)updateDetailViewController {
+    if (_tableView.selectedRowIndexes.count != 1) {
+        _detailViewController.view.hidden = YES;
+        return;
+    } else {
+        _detailViewController.view.hidden = NO;
+    }
+    NSInteger i = _tableView.selectedRow;
+    NSDictionary *dict = [self triggerDictionariesForCurrentProfile][i];
+    [_detailViewController setTrigger:[Trigger triggerFromDict:dict]];
+}
+
 #pragma mark NSWindowDelegate
 
 - (void)windowWillClose:(NSNotification *)notification {
-    [_tableView reloadData];
     if ([[[NSColorPanel sharedColorPanel] accessoryView] isKindOfClass:[iTermNoColorAccessoryButton class]]) {
         [[NSColorPanel sharedColorPanel] setAccessoryView:nil];
         [[NSColorPanel sharedColorPanel] close];
@@ -882,15 +852,14 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
         return;
     }
     NSIndexSet *indexes = [_tableView.selectedRowIndexes copy];
-    // Stop editing
-    [_tableView reloadData];
 
     NSMutableArray *triggerDictionaries = [[self triggerDictionariesForCurrentProfile] mutableCopy];
     [triggerDictionaries removeObjectsAtIndexes:indexes];
     [_delegate triggerChanged:self newValue:triggerDictionaries];
-    [_tableView reloadData];
+    [self reloadData];
     self.hasSelection = [_tableView numberOfSelectedRows] > 0;
     _removeTriggerButton.enabled = self.hasSelection;
+    [self updateDetailViewController];
     [self updateShareButtonEnabled];
 }
 
@@ -898,7 +867,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     const BOOL wasEnabled = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS inProfile:[self bookmark]];
     _interpolatedStringParameters.state = (!wasEnabled) ? NSControlStateValueOn : NSControlStateValueOff;
     [self.delegate triggerSetUseInterpolatedStrings:_interpolatedStringParameters.state == NSControlStateValueOn];
-    [_tableView reloadData];
+    [self reloadData];
 }
 
 - (void)doubleClick:(id)sender {
@@ -951,9 +920,6 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     NSNumber *newValue = checkbox.state == NSControlStateValueOn ? @(YES) : @(NO);
     NSInteger row = [_tableView rowForView:checkbox];
 
-    // If a text field is editing, make it save its contents before we get the trigger dictionary.
-    [_tableView reloadData];
-
     NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
     if (row < 0 || row >= triggerDicts.count) {
         return;
@@ -961,15 +927,12 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     NSMutableDictionary *triggerDictionary =
         [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
     triggerDictionary[kTriggerPartialLineKey] = newValue;
-    [self setTriggerDictionary:triggerDictionary forRow:row reloadData:YES];
+    [self setTriggerDictionary:triggerDictionary forRow:row reloadData:NO];
 }
 
 - (void)enabledDidChange:(NSButton *)checkbox {
     NSNumber *newValue = checkbox.state == NSControlStateValueOff ? @YES : @NO;
     NSInteger row = [_tableView rowForView:checkbox];
-
-    // If a text field is editing, make it save its contents before we get the trigger dictionary.
-    [_tableView reloadData];
 
     NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
     if (row < 0 || row >= triggerDicts.count) {
@@ -978,7 +941,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     NSMutableDictionary *triggerDictionary =
         [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
     triggerDictionary[kTriggerDisabledKey] = newValue;
-    [self setTriggerDictionary:triggerDictionary forRow:row reloadData:YES];
+    [self setTriggerDictionary:triggerDictionary forRow:row reloadData:NO];
 }
 
 - (void)actionDidChange:(NSPopUpButton *)sender {
@@ -987,9 +950,6 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
         return;
     }
     NSInteger indexOfSelectedAction = [sender indexOfSelectedItem];
-
-    // If a text field is being edited, end it and update the trigger dictionary before we fetch it.
-    [_tableView reloadData];
 
     NSMutableDictionary *triggerDictionary =
         [[self triggerDictionariesForCurrentProfile][rowIndex] mutableCopy];
@@ -1002,7 +962,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     } else if ([triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSControlStateValueOn]) {
         triggerDictionary[kTriggerParameterKey] = [triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSControlStateValueOn];
     }
-    [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:YES];
+    [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:NO];
 }
 
 - (void)parameterPopUpButtonDidChange:(NSPopUpButton *)sender {
@@ -1019,7 +979,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     } else {
         [triggerDictionary removeObjectForKey:kTriggerParameterKey];
     }
-    [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:YES];
+    [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:NO];
 }
 
 - (IBAction)closeTriggersSheet:(id)sender {
@@ -1035,57 +995,38 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 #pragma mark - NSTextFieldDelegate
 
-- (void)controlTextDidBeginEditing:(NSNotification *)obj {
-    // We have to save this here because when -reloadData gets called then the text field is no longer
-    // in the table and -rowForView: will return -1.
-    _textEditingRow = [_tableView rowForView:obj.object];
+- (void)profileDidChange {
+    [self reloadData];
 }
 
-- (void)controlTextDidEndEditing:(NSNotification *)obj {
-    NSTextField *textField = obj.object;
-    if (_textEditingRow >= [[self triggerDictionariesForCurrentProfile] count]) {
+- (void)detailViewControllerDidChange {
+    const NSInteger row = [_tableView selectedRow];
+    if (row < 0) {
         return;
     }
     NSMutableDictionary *triggerDictionary =
-        [[self triggerDictionariesForCurrentProfile][_textEditingRow] mutableCopy];
-    if ([textField.identifier isEqual:kRegexColumnIdentifier]) {
-        triggerDictionary[kTriggerRegexKey] = [textField stringValue];
-        [self setTriggerDictionary:triggerDictionary forRow:_textEditingRow reloadData:YES];
-    } else if ([textField.identifier isEqual:kParameterColumnIdentifier]) {
-        triggerDictionary[kTriggerParameterKey] = [textField stringValue];
-        [self setTriggerDictionary:triggerDictionary forRow:_textEditingRow reloadData:YES];
-    } else if ([textField.identifier isEqual:kTwoPraramNameColumnIdentifier]) {
-        iTermTuple<NSString *, NSString *> *pair = [iTermTwoParameterTriggerCodec tupleFromString:[NSString castFrom:triggerDictionary[kTriggerParameterKey]]];
-        pair.firstObject = textField.stringValue;
-        triggerDictionary[kTriggerParameterKey] = [iTermTwoParameterTriggerCodec stringFromTuple:pair];
-        [self setTriggerDictionary:triggerDictionary forRow:_textEditingRow reloadData:YES];
-    } else if ([textField.identifier isEqual:kTwoPraramValueColumnIdentifier]) {
-        iTermTuple<NSString *, NSString *> *pair = [iTermTwoParameterTriggerCodec tupleFromString:[NSString castFrom:triggerDictionary[kTriggerParameterKey]]];
-        pair.secondObject = textField.stringValue;
-        triggerDictionary[kTriggerParameterKey] = [iTermTwoParameterTriggerCodec stringFromTuple:pair];
-        [self setTriggerDictionary:triggerDictionary forRow:_textEditingRow reloadData:YES];
+        [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
+    triggerDictionary[kTriggerRegexKey] = _detailViewController.regex;
+    triggerDictionary[kTriggerParameterKey] = _detailViewController.parameter;
+    triggerDictionary[kTriggerActionKey] = _detailViewController.action;
+    triggerDictionary[kTriggerDisabledKey] = @(!_detailViewController.enabled);
+    triggerDictionary[kTriggerPartialLineKey] = @(_detailViewController.instant);
+    if (_detailViewController.name) {
+        triggerDictionary[kTriggerNameKey] = _detailViewController.name;
     }
-    _textEditingRow = -1;
-}
 
-- (void)profileDidChange {
-    _textEditingRow = -1;
-    [_tableView reloadData];
+    [self setTriggerDictionary:triggerDictionary forRow:row reloadData:NO];
 }
 
 #pragma mark - iTermTriggerDelegate
 
 - (void)triggerDidChangeParameterOptions:(Trigger *)sender {
-    const NSInteger columnIndex = [[_tableView tableColumns] indexOfObject:_parametersColumn];
-    if (columnIndex == NSNotFound) {
-        DLog(@"No param column!");
-        return;
-    }
     NSIndexSet *rowIndexes = [self.triggerDictionariesForCurrentProfile indexesOfObjectsPassingTest:^BOOL(NSDictionary *_Nonnull dict, NSUInteger idx, BOOL * _Nonnull stop) {
         return [NSStringFromClass([sender class]) isEqual:dict[kTriggerActionKey]];
     }];
     [_tableView reloadDataForRowIndexes:rowIndexes
-                          columnIndexes:[NSIndexSet indexSetWithIndex:columnIndex]];
+                          columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+    [_tableView noteHeightOfRowsWithIndexesChanged:rowIndexes];
 }
 
 @end

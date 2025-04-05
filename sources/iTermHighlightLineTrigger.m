@@ -10,6 +10,7 @@
 #import "iTermTextExtractor.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "ScreenChar.h"
 
 @implementation iTermHighlightLineTrigger
@@ -144,6 +145,36 @@
              highlightLineAt:absCoord
                       colors:[self colorsPreservingColorSpace:NO]];
     return YES;
+}
+
+- (NSAttributedString *)paramAttributedString {
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
+
+    [result appendAttributedString:[[NSAttributedString alloc] initWithString:@"Text: "]];
+
+    NSTextAttachment *textColorAttachment = [[NSTextAttachment alloc] init];
+    textColorAttachment.image = [self imageForColor:self.textColor];
+    NSAttributedString *textAttachmentString = [NSAttributedString attributedStringWithAttachment:textColorAttachment];
+    NSMutableAttributedString *mutableTextAttachmentString = [textAttachmentString mutableCopy];
+    // Lower the image by adjusting the baseline offset.
+    [mutableTextAttachmentString addAttribute:NSBaselineOffsetAttributeName value:@(-2) range:NSMakeRange(0, mutableTextAttachmentString.length)];
+    [result appendAttributedString:mutableTextAttachmentString];
+
+    [result appendAttributedString:[[NSAttributedString alloc] initWithString:@" Background: "]];
+
+    NSTextAttachment *backgroundColorAttachment = [[NSTextAttachment alloc] init];
+    backgroundColorAttachment.image = [self imageForColor:self.backgroundColor];
+    NSAttributedString *backgroundAttachmentString = [NSAttributedString attributedStringWithAttachment:backgroundColorAttachment];
+    NSMutableAttributedString *mutableBackgroundAttachmentString = [backgroundAttachmentString mutableCopy];
+    // Lower the image by adjusting the baseline offset.
+    [mutableBackgroundAttachmentString addAttribute:NSBaselineOffsetAttributeName value:@(-2) range:NSMakeRange(0, mutableBackgroundAttachmentString.length)];
+    [result appendAttributedString:mutableBackgroundAttachmentString];
+
+    return result;
+}
+
+- (NSImage *)imageForColor:(NSColor *)color {
+    return [NSImage it_imageForColorSwatch:color size:NSMakeSize(22, 14)];
 }
 
 @end

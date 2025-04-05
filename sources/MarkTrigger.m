@@ -90,4 +90,9 @@ typedef enum {
     return [self indexForObject:@(kMarkTriggerParamTagKeepScrolling)];
 }
 
+- (NSAttributedString *)paramAttributedString {
+    NSString *message = self.shouldStopScrolling ? @"and stop scrolling" : @"";
+    return [[NSAttributedString alloc] initWithString:message attributes:self.regularAttributes];
+}
+
 @end

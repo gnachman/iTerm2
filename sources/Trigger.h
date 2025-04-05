@@ -32,6 +32,7 @@ extern NSString * const kTriggerActionKey;
 extern NSString * const kTriggerParameterKey;
 extern NSString * const kTriggerPartialLineKey;
 extern NSString * const kTriggerDisabledKey;
+extern NSString * const kTriggerNameKey;
 
 @protocol iTermTriggerDelegate<NSObject>
 - (void)triggerDidChangeParameterOptions:(Trigger *)trigger;
@@ -111,6 +112,7 @@ extern NSString * const kTriggerDisabledKey;
 @interface Trigger : NSObject<iTermObject>
 
 @property (nonatomic, copy, readonly) NSString *regex;
+@property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy) NSString *action;
 @property (nullable, nonatomic, copy) id param;
 @property (nonatomic, assign) BOOL partialLine;
@@ -198,6 +200,10 @@ extern NSString * const kTriggerDisabledKey;
 - (NSDictionary *)dictionaryValue;
 
 + (NSDictionary *)sanitizedTriggerDictionary:(NSDictionary *)dict;
+- (NSAttributedString *)attributedString;
+- (NSAttributedString *)titleAttributedString;
+- (NSAttributedString * _Nullable)paramAttributedString;
+- (NSDictionary<NSAttributedStringKey, id> *)regularAttributes;
 
 @end
 
