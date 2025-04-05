@@ -1527,17 +1527,149 @@ DQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="8EB-Jn-Xxs"/>
-                            <menuItem title="Edit Tab Title" identifier="Edit Tab Title" id="o4x-qQ-aC9">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="editTabTitle:" target="-1" id="tXR-UH-8S7"/>
-                                </connections>
-                            </menuItem>
                             <menuItem title="Edit Window Title" identifier="Edit Window Title" id="STe-pB-R3v">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="editWindowTitle:" target="-1" id="AQk-j6-utG"/>
                                 </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="yZw-O4-LQa"/>
+                            <menuItem title="Tab" id="Tel-UC-zi5">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Tab" id="cX5-Da-13x">
+                                    <items>
+                                        <menuItem title="Edit Tab Title" identifier="Edit Tab Title" id="o4x-qQ-aC9">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="editTabTitle:" target="-1" id="tXR-UH-8S7"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Select Tab" id="847">
+                                            <menu key="submenu" title="Select Tab" id="848">
+                                                <items>
+                                                    <menuItem title="Select Next Tab" keyEquivalent="]" identifier="Select Next Tab" id="845">
+                                                        <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="nextTab:" target="-1" id="1188"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Select Previous Tab" keyEquivalent="[" identifier="Select Previous Tab" id="843">
+                                                        <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="previousTab:" target="-1" id="1187"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem isSeparatorItem="YES" id="XR3-ga-Axh"/>
+                                                </items>
+                                            </menu>
+                                        </menuItem>
+                                        <menuItem title="Move Tab" id="1QV-xl-Oun">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <menu key="submenu" title="Move Tab" id="0pG-gd-cTc">
+                                                <items>
+                                                    <menuItem title="Move Tab Left" keyEquivalent="[" identifier="Move Tab Left" id="1406">
+                                                        <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="moveTabLeft:" target="-1" id="1410"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Move Tab Right" keyEquivalent="]" identifier="Move Tab Right" id="1408">
+                                                        <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="moveTabRight:" target="-1" id="1411"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                </items>
+                                            </menu>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
+                            <menuItem title="Split Pane" id="wXP-h9-8lp" userLabel="Split Pane">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Split Pane" id="Oek-Pf-HGt">
+                                    <items>
+                                        <menuItem title="Select Split Pane" id="1209">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <menu key="submenu" title="Select Split Pane" id="1210">
+                                                <items>
+                                                    <menuItem title="Select Pane Above" keyEquivalent="" identifier="Select Split Pane.Select Pane Above" id="1212">
+                                                        <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="selectPaneUp:" target="-1" id="1227"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Select Pane Below" keyEquivalent="" identifier="Select Split Pane.Select Pane Below" id="1213">
+                                                        <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="selectPaneDown:" target="-1" id="1224"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Select Pane Left" keyEquivalent="" identifier="Select Split Pane.Select Pane Left" id="1214">
+                                                        <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="selectPaneLeft:" target="-1" id="1225"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Select Pane Right" keyEquivalent="" identifier="Select Split Pane.Select Pane Right" id="1215">
+                                                        <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="selectPaneRight:" target="-1" id="1226"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem isSeparatorItem="YES" id="1249"/>
+                                                    <menuItem title="Next Pane" keyEquivalent="]" identifier="Select Split Pane.Next Pane" id="1250">
+                                                        <connections>
+                                                            <action selector="nextPane:" target="-1" id="1255"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Previous Pane" keyEquivalent="[" identifier="Select Split Pane.Previous Pane" id="1251">
+                                                        <connections>
+                                                            <action selector="previousPane:" target="-1" id="1254"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                </items>
+                                            </menu>
+                                        </menuItem>
+                                        <menuItem title="Resize Split Pane" id="R0v-Kn-z9m">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <menu key="submenu" title="Resize Split Pane" id="nnc-o3-t2j">
+                                                <items>
+                                                    <menuItem title="Move Divider Up" keyEquivalent="" identifier="Resize Split Pane.Move Divider Up" id="2Jk-GR-zCt">
+                                                        <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="movePaneDividerUp:" target="-1" id="smA-wj-JIK"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Move Divider Down" keyEquivalent="" identifier="Resize Split Pane.Move Divider Down" id="Qpv-Ie-1sh">
+                                                        <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="movePaneDividerDown:" target="-1" id="NVB-Pj-Xdg"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Move Divider Left" keyEquivalent="" identifier="Resize Split Pane.Move Divider Left" id="avG-JI-rjO">
+                                                        <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="movePaneDividerLeft:" target="-1" id="0Jq-7S-KVC"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Move Divider Right" keyEquivalent="" identifier="Resize Split Pane.Move Divider Right" id="t6w-8j-r4m">
+                                                        <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="movePaneDividerRight:" target="-1" id="0Bz-xh-KL2"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                </items>
+                                            </menu>
+                                        </menuItem>
+                                        <menuItem title="Lock Split Pane Width" identifier="Lock Split Pane Width" id="OsT-y6-DSn">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="toggleLockSplitPaneWidth:" target="-1" id="QuG-FK-nTo"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="885">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
@@ -1644,89 +1776,6 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="1204">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Select Split Pane" id="1209">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="Select Split Pane" id="1210">
-                                    <items>
-                                        <menuItem title="Select Pane Above" keyEquivalent="" identifier="Select Split Pane.Select Pane Above" id="1212">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="selectPaneUp:" target="-1" id="1227"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Select Pane Below" keyEquivalent="" identifier="Select Split Pane.Select Pane Below" id="1213">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="selectPaneDown:" target="-1" id="1224"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Select Pane Left" keyEquivalent="" identifier="Select Split Pane.Select Pane Left" id="1214">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="selectPaneLeft:" target="-1" id="1225"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Select Pane Right" keyEquivalent="" identifier="Select Split Pane.Select Pane Right" id="1215">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="selectPaneRight:" target="-1" id="1226"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="1249"/>
-                                        <menuItem title="Next Pane" keyEquivalent="]" identifier="Select Split Pane.Next Pane" id="1250">
-                                            <connections>
-                                                <action selector="nextPane:" target="-1" id="1255"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Previous Pane" keyEquivalent="[" identifier="Select Split Pane.Previous Pane" id="1251">
-                                            <connections>
-                                                <action selector="previousPane:" target="-1" id="1254"/>
-                                            </connections>
-                                        </menuItem>
-                                    </items>
-                                </menu>
-                            </menuItem>
-                            <menuItem title="Resize Split Pane" id="R0v-Kn-z9m">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="Resize Split Pane" id="nnc-o3-t2j">
-                                    <items>
-                                        <menuItem title="Move Divider Up" keyEquivalent="" identifier="Resize Split Pane.Move Divider Up" id="2Jk-GR-zCt">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="movePaneDividerUp:" target="-1" id="smA-wj-JIK"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Move Divider Down" keyEquivalent="" identifier="Resize Split Pane.Move Divider Down" id="Qpv-Ie-1sh">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="movePaneDividerDown:" target="-1" id="NVB-Pj-Xdg"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Move Divider Left" keyEquivalent="" identifier="Resize Split Pane.Move Divider Left" id="avG-JI-rjO">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="movePaneDividerLeft:" target="-1" id="0Jq-7S-KVC"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Move Divider Right" keyEquivalent="" identifier="Resize Split Pane.Move Divider Right" id="t6w-8j-r4m">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="movePaneDividerRight:" target="-1" id="0Bz-xh-KL2"/>
-                                            </connections>
-                                        </menuItem>
-                                    </items>
-                                </menu>
-                            </menuItem>
-                            <menuItem title="Lock Split Pane Width" identifier="Lock Split Pane Width" id="OsT-y6-DSn">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="toggleLockSplitPaneWidth:" target="-1" id="QuG-FK-nTo"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="v5T-Yq-HqS"/>
                             <menuItem title="Resize Window" id="X81-5E-VA5">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Resize Window" id="H9L-Zb-0Lb">
@@ -1759,50 +1808,6 @@ DQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1190"/>
-                            <menuItem title="Select Tab" id="847">
-                                <menu key="submenu" title="Select Tab" id="848">
-                                    <items>
-                                        <menuItem title="Select Next Tab" keyEquivalent="]" identifier="Select Next Tab" id="845">
-                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="nextTab:" target="-1" id="1188"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Select Previous Tab" keyEquivalent="[" identifier="Select Previous Tab" id="843">
-                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="previousTab:" target="-1" id="1187"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="XR3-ga-Axh"/>
-                                    </items>
-                                </menu>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="92">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Move Tab" id="1QV-xl-Oun">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="Move Tab" id="0pG-gd-cTc">
-                                    <items>
-                                        <menuItem title="Move Tab Left" keyEquivalent="[" identifier="Move Tab Left" id="1406">
-                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="moveTabLeft:" target="-1" id="1410"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Move Tab Right" keyEquivalent="]" identifier="Move Tab Right" id="1408">
-                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="moveTabRight:" target="-1" id="1411"/>
-                                            </connections>
-                                        </menuItem>
-                                    </items>
-                                </menu>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="iau-F7-eSE">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
                             <menuItem title="Password Manager" keyEquivalent="f" identifier="Password Manager" id="5">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
