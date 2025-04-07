@@ -46,8 +46,8 @@ static void iTermGlobalSearchEngineCursorInitialize(iTermGlobalSearchEngineCurso
     switch (pass) {
         case iTermGlobalSearchEngineCursorPassMainScreen: {
             const long long lastLineStart = [session.screen absLineNumberOfLastLineInLineBuffer];
-            const long long numberOfLines = session.screen.numberOfLines + session.screen.height;
-            range = NSMakeRange(lastLineStart, numberOfLines - lastLineStart);
+            const long long numberOfLines = session.screen.height;
+            range = NSMakeRange(lastLineStart, numberOfLines);
             break;
         }
         case iTermGlobalSearchEngineCursorPassCurrentScreen:
