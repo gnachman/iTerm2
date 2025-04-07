@@ -693,7 +693,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         [frameData.rows addObject:rowData];
         rowData.y = y;
         rowData.absLine = y + frameData.perFrameState.firstVisibleAbsoluteLineNumber;
-        rowData.keysData = [iTermGlyphKeyData dataOfLength:sizeof(iTermMetalGlyphKey) * columns];
+        rowData.keysData = [iTermGlyphKeyData dataOfLength:sizeof(iTermMetalGlyphKey) * MAX(1, columns)];
         rowData.attributesData = [iTermAttributesData dataOfLength:sizeof(iTermMetalGlyphAttributes) * columns];
         rowData.backgroundColorRLEData = [iTermBackgroundColorRLEsData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * columns];
         rowData.screenCharArray = [frameData.perFrameState screenCharArrayForRow:y];

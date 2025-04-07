@@ -833,11 +833,15 @@ NS_INLINE void iTermGlyphKeySetVisualPosition(iTermMetalGlyphKey *glyphKeys,
     }
 }
 
-NS_INLINE int iTermGlyphKeyEmitPlaceholder(iTermMetalGlyphKey *glyphKeys,
+NS_INLINE int iTermGlyphKeyEmitPlaceholder(iTermGlyphKeyData *glyphKeysData,
                                            int i,
                                            int logicalIndex,
                                            const int *bidiLUT,
                                            int bidiLUTLength) {
+    while (glyphKeysData.count <= i) {
+        glyphKeysData.count *= 2;
+    }
+    iTermMetalGlyphKey *glyphKeys = glyphKeysData.basePointer;
     glyphKeys[i].type = iTermMetalGlyphTypeRegular;
     glyphKeys[i].payload.regular.drawable = NO;
     glyphKeys[i].payload.regular.combiningSuccessor = 0;
@@ -845,7 +849,7 @@ NS_INLINE int iTermGlyphKeyEmitPlaceholder(iTermMetalGlyphKey *glyphKeys,
     return i + 1;
 }
 
-NS_INLINE int iTermGlyphKeyEmitRegular(iTermMetalGlyphKey *glyphKeys,
+NS_INLINE int iTermGlyphKeyEmitRegular(iTermGlyphKeyData *glyphKeysData,
                                        int i,
                                        int logicalIndex,
                                        int width,
@@ -855,6 +859,10 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermMetalGlyphKey *glyphKeys,
                                        BOOL thinStrokes,
                                        const int *bidiLUT,
                                        int bidiLUTLength) {
+    while (glyphKeysData.count <= i) {
+        glyphKeysData.count *= 2;
+    }
+    iTermMetalGlyphKey *glyphKeys = glyphKeysData.basePointer;
     glyphKeys[i].type = iTermMetalGlyphTypeRegular;
     if (characterIsDrawable) {
         glyphKeys[i].payload.regular.code = line[logicalIndex].code;
@@ -936,6 +944,10 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromGlyphs(iTermGlyphKeyData *glyphKeyD
                                                     int bidiLUTLength) {
     if (glyphKeyData.count < gk + length) {
         glyphKeyData.count = (gk + length) * 2;
+    }
+
+    while (glyphKeyData.count <= gk + length) {
+        glyphKeyData.count *= 2;
     }
     iTermMetalGlyphKey *glyphKeys = glyphKeyData.basePointer;
 
@@ -1033,8 +1045,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermGlyphKeyDat
                                                           const CFIndex *glyphIndexToCharacterIndex,
                                                           size_t length,
                                                           BOOL *stop) {
-        if (glyphKeyData.count < o + length) {
-            [glyphKeyData setCount:(o + length) * 2];
+        while (glyphKeyData.count <= o + length) {
+            glyphKeyData.count *= 2;
         }
         const int fontID = [(__bridge NSFont *)font it_metalFontID];
         for (int i = 0; i < length; i++) {
@@ -1351,7 +1363,6 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                            NSMutableArray<iTermMetalImageRun *> *imageRuns,
                                            // out parameters:
                                            iTermGlyphKeyData *glyphKeysData,
-                                           iTermMetalGlyphKey *glyphKeys,
                                            iTermMetalGlyphAttributes *attributes,
                                            int *drawableGlyphsPtr) {
     const int *bidiLUT = [bidiInfo lut];
@@ -1498,7 +1509,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                    &previousImageCode,
                                    &previousImageCoord,
                                    imageRuns);
-            gk = iTermGlyphKeyEmitPlaceholder(glyphKeys, gk, logicalIndex, bidiLUT, bidiLUTLength);
+            gk = iTermGlyphKeyEmitPlaceholder(glyphKeysData, gk, logicalIndex, bidiLUT, bidiLUTLength);
         } else if (attributedString && !isBoxDrawingCharacter) {
             if (!haveEmittedAttributedString) {
                 gk = iTermGlyphKeyEmitDecomposed(glyphKeysData,
@@ -1515,7 +1526,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             }
         } else if (attributes[visualX].underlineStyle != iTermMetalGlyphAttributesUnderlineNone || characterIsDrawable) {
             lastDrawableGlyph = logicalIndex;
-            gk = iTermGlyphKeyEmitRegular(glyphKeys,
+            gk = iTermGlyphKeyEmitRegular(glyphKeysData,
                                           gk,
                                           logicalIndex,
                                           width,
@@ -1526,7 +1537,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                           bidiLUT,
                                           bidiLUTLength);
         } else {
-            iTermGlyphKeyEmitPlaceholder(glyphKeys, gk, logicalIndex, bidiLUT, bidiLUTLength);
+            iTermGlyphKeyEmitPlaceholder(glyphKeysData, gk, logicalIndex, bidiLUT, bidiLUTLength);
         }
         previousVisualX = visualX;
     }
@@ -1552,7 +1563,6 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                drawableGlyphs:(int *)drawableGlyphsPtr
                          date:(out NSDate **)datePtr
                belongsToBlock:(out BOOL *)belongsToBlockPtr {
-    iTermMetalGlyphKey *glyphKeys = glyphKeysData.basePointer;
     if (_configuration->_timestampsEnabled) {
         *datePtr = _rows[row]->_date;
     }
@@ -1651,7 +1661,6 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                         _kittyImageDraws,
                                                         imageRuns,
                                                         glyphKeysData,
-                                                        glyphKeys,
                                                         attributes,
                                                         drawableGlyphsPtr);
 
