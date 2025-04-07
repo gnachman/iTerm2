@@ -21,6 +21,7 @@
 #import "iTermRemotePreferences.h"
 #import "iTermUserDefaultsObserver.h"
 #import "NSArray+iTerm.h"
+#import "NSNumber+iTerm.h"
 #import "PSMTabBarControl.h"
 #import "RegexKitLite.h"
 #import "WindowArrangements.h"
@@ -712,7 +713,7 @@ static NSString *sPreviousVersion;
 }
 
 + (BOOL)boolForKey:(NSString *)key {
-    return [(NSNumber *)[self objectForKey:key] boolValue];
+    return [[NSNumber coerceFrom:[self objectForKey:key]] boolValue];
 }
 
 + (void)setBool:(BOOL)value forKey:(NSString *)key {
@@ -720,7 +721,7 @@ static NSString *sPreviousVersion;
 }
 
 + (int)intForKey:(NSString *)key {
-    return [(NSNumber *)[self objectForKey:key] intValue];
+    return [[NSNumber coerceFrom:[self objectForKey:key]] intValue];
 }
 
 + (void)setInt:(int)value forKey:(NSString *)key {
@@ -728,7 +729,7 @@ static NSString *sPreviousVersion;
 }
 
 + (NSInteger)integerForKey:(NSString *)key {
-    return [(NSNumber *)[self objectForKey:key] integerValue];
+    return [[NSNumber coerceFrom:[self objectForKey:key]] integerValue];
 }
 
 + (void)setInteger:(NSInteger)value forKey:(NSString *)key {
@@ -736,7 +737,7 @@ static NSString *sPreviousVersion;
 }
 
 + (NSUInteger)unsignedIntegerForKey:(NSString *)key {
-    return [(NSNumber *)[self objectForKey:key] unsignedIntegerValue];
+    return [[NSNumber coerceFrom:[self objectForKey:key]] unsignedIntegerValue];
 }
 
 + (void)setUnsignedInteger:(NSUInteger)value forKey:(NSString *)key {
@@ -744,7 +745,7 @@ static NSString *sPreviousVersion;
 }
 
 + (double)floatForKey:(NSString *)key {
-    return [(NSNumber *)[self objectForKey:key] doubleValue];
+    return [[NSNumber coerceFrom:[self objectForKey:key]] doubleValue];
 }
 
 + (void)setFloat:(double)value forKey:(NSString *)key {
@@ -752,7 +753,7 @@ static NSString *sPreviousVersion;
 }
 
 + (double)doubleForKey:(NSString *)key {
-    return [(NSNumber *)[self objectForKey:key] doubleValue];
+    return [[NSNumber coerceFrom:[self objectForKey:key]] doubleValue];
 }
 
 + (void)setDouble:(double)value forKey:(NSString *)key {
@@ -761,8 +762,7 @@ static NSString *sPreviousVersion;
 
 + (NSString *)stringForKey:(NSString *)key {
     id object = [self objectForKey:key];
-    assert(!object || [object isKindOfClass:[NSString class]]);
-    return object;
+    return [NSString castFrom:object];
 }
 
 + (void)setString:(NSString *)value forKey:(NSString *)key {
