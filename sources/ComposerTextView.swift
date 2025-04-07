@@ -766,7 +766,9 @@ class ComposerTextView: MultiCursorTextView {
         // Remove line continuation backslashes.
         let temp = ((textStorage.string as NSString).substring(with: rangeExcludingSuggestion) as NSString).mutableCopy() as! NSMutableString
         for index in characterIndexesToDrop.sorted().reversed() {
-            temp.replaceCharacters(in: NSRange(location: index, length: 1), with: " ")
+            if index >= 0 && index < temp.length {
+                temp.replaceCharacters(in: NSRange(location: index, length: 1), with: " ")
+            }
         }
         return (rangeExcludingSuggestion, temp as String)
     }

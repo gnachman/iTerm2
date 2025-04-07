@@ -48,18 +48,62 @@ struct RangeMap<Value>: Sequence {
 
     var count: Int { entries.count }
 
-    mutating func insert(range: Range<Int>, value: Value) {
-        let newEntry = Entry(range: range, value: value)
-        let insertionIndex = entries.binarySearch { $0.range.lowerBound < range.lowerBound }
-        entries.insert(newEntry, at: insertionIndex)
+    mutating func insert(range newRange: Range<Int>, value newValue: Value) {
+        // Locate the insertion point for newRange.lowerBound.
+        let lowerIdx = entries.binarySearch { $0.range.lowerBound < newRange.lowerBound }
+
+        // If the previous entry overlaps newRange, include it in the overlapping region.
+        var start = lowerIdx
+        if start > entries.startIndex {
+            let prev = entries[entries.index(before: start)]
+            if prev.range.upperBound > newRange.lowerBound {
+                start = entries.index(before: start)
+            }
+        }
+
+        // Locate the end of overlapping region using newRange.upperBound.
+        let end = entries.binarySearch { $0.range.lowerBound < newRange.upperBound }
+
+        var newEntries: [Entry] = []
+        // Add entries before the overlapping region.
+        newEntries.append(contentsOf: entries[..<start])
+
+        if start < end {
+            // There is overlap. Check if we need to keep a left slice from the first overlapping entry.
+            let firstOverlap = entries[start]
+            if firstOverlap.range.lowerBound < newRange.lowerBound {
+                newEntries.append(Entry(range: firstOverlap.range.lowerBound..<newRange.lowerBound,
+                                         value: firstOverlap.value))
+            }
+
+            // Insert the new range.
+            newEntries.append(Entry(range: newRange, value: newValue))
+
+            // Check if we need to keep a right slice from the last overlapping entry.
+            let lastOverlap = entries[end - 1]
+            if lastOverlap.range.upperBound > newRange.upperBound {
+                newEntries.append(Entry(range: newRange.upperBound..<lastOverlap.range.upperBound,
+                                         value: lastOverlap.value))
+            }
+        } else {
+            // No overlapping entries; insert the new range at the binary search insertion point.
+            newEntries.append(Entry(range: newRange, value: newValue))
+        }
+
+        // Append any entries that come after the overlapping region.
+        newEntries.append(contentsOf: entries[end...])
+        entries = newEntries
     }
 
     subscript(_ key: Int) -> Entry? {
-        let foundIndex = entries.binarySearch { $0.range.upperBound <= key }
-        guard foundIndex != entries.endIndex, entries[foundIndex].range.contains(key) else {
-            return nil
-        }
-        return entries[foundIndex]
+        // Find the first index where lowerBound is not <= key.
+        let i = entries.binarySearch { $0.range.lowerBound <= key }
+        // If no element has lowerBound <= key, return nil.
+        guard i != entries.startIndex else { return nil }
+        // The candidate is the last element with lowerBound <= key.
+        let candidateIndex = entries.index(before: i)
+        let candidate = entries[candidateIndex]
+        return candidate.range.contains(key) ? candidate : nil
     }
 
     func makeIterator() -> AnyIterator<Entry> {
@@ -72,14 +116,14 @@ struct RangeMap<Value>: Sequence {
     }
 
     func reverseIterate(from key: Int) -> AnyIterator<Entry> {
-        let start = entries.binarySearch { $0.range.upperBound <= key }
-        var currentIndex = start
+        // Find the first index where lowerBound is not <= key.
+        let i = entries.binarySearch { $0.range.lowerBound <= key }
+        var current = (i == entries.startIndex ? nil : entries.index(before: i))
         return AnyIterator {
-            guard currentIndex >= self.entries.startIndex else {
-                return nil
-            }
-            defer { currentIndex = self.entries.index(before: currentIndex) }
-            return self.entries[currentIndex]
+            guard let currentIndex = current else { return nil }
+            let result = self.entries[currentIndex]
+            current = currentIndex == self.entries.startIndex ? nil : self.entries.index(before: currentIndex)
+            return result
         }
     }
 }

@@ -9343,7 +9343,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (void)setWindow:(NSWindow *)window {
-    DLog(@"self=%@ %@", self, [NSThread callStackSymbols]);
+    DLog(@"self=%p %@", self, [NSThread callStackSymbols]);
     [super setWindow:window];
 }
 

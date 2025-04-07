@@ -717,7 +717,10 @@
 
 - (void)writeModifiedProfile:(Profile *)profile
                       toFile:(NSString *)filename {
-    assert([[NSNumber castFrom:profile[KEY_DYNAMIC_PROFILE_REWRITABLE]] boolValue]);
+    if (![[NSNumber castFrom:profile[KEY_DYNAMIC_PROFILE_REWRITABLE]] boolValue]) {
+        DLog(@"Not writing profile that lacks rewritable flag: %@", profile);
+        return;
+    }
     if (!filename) {
         return;
     }
