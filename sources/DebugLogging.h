@@ -104,6 +104,7 @@ extern BOOL gDebugLogging;
       if (TurnOffDebugLoggingSilently()) { \
         NSRunAlertPanel(@"Critical Error", @"A critical error occurred and a debug log was created. Please send /tmp/debuglog.txt to the developers.", @"OK", nil, nil); \
       } \
+      CrashLog(@"Crashing because %s", #condition); \
       assert(NO, "ITAssert: " #condition); \
     } \
   } while (0)
@@ -197,6 +198,7 @@ extern BOOL gDebugLogging;
         if (!(condition)) { \
             DLog(@"Crashing because %s from:\n%@", #condition, [NSThread callStackSymbols]); \
             ELog(args); \
+            CrashLog(args); \
             __assert_rtn(__func__, __FILE__, __LINE__, [[NSString stringWithFormat:@#condition ": " args] UTF8String]); \
         } \
     } while (0)

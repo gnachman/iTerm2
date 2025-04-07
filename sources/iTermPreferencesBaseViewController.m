@@ -481,14 +481,14 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update
                        searchable:(BOOL)searchable {
-    assert(![_keyMap objectForKey:(id)key]);
-    assert(key);
-    assert(control);
-    assert([self keyHasDefaultValue:key]);
+    ITAssertWithMessage(![_keyMap objectForKey:(id)key], @"No value for %@ in %@", key, self);
+    ITAssertWithMessage(key, @"Nil key in %@ for control %@", self, control);
+    ITAssertWithMessage(control, @"Nil control for key %@", key);
+    ITAssertWithMessage([self keyHasDefaultValue:key], @"No default value for %@", key);
     if (!settingChanged || !update) {
-        assert([self defaultValueForKey:key isCompatibleWithType:type]);
-        assert(type != kPreferenceInfoTypeMatrix);  // Matrix type requires both.
-        assert(type != kPreferenceInfoTypeRadioButton);  // This is just a modernized matrix
+        ITAssertWithMessage([self defaultValueForKey:key isCompatibleWithType:type], @"Default value for %@ is not compatible with %@", key, @(type));
+        ITAssertWithMessage(type != kPreferenceInfoTypeMatrix, @"Matrix not allowed");  // Matrix type requires both.
+        ITAssertWithMessage(type != kPreferenceInfoTypeRadioButton, @"Radio button not allowed");  // This is just a modernized matrix
     }
 
     return [self unsafeDefineControl:control
@@ -786,7 +786,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 
 - (PreferenceInfo *)infoForControl:(NSControl *)control {
     PreferenceInfo *info = [_keyMap objectForKey:control];
-    assert(info);
+    ITAssertWithMessage(info != nil, @"No info for control %@", control);
     return info;
 }
 
