@@ -135,7 +135,8 @@ class iTermSearchRequest: NSObject {
 
     @objc
     func setAbsLineRange(_ absLineRange: NSRange) {
-        self.absLineRange = Range(absLineRange)
+        self.absLineRange = Range(safe: absLineRange)
+        DLog("Set range to \(String(describing: self.absLineRange)) from \(absLineRange)")
     }
 
     @objc
