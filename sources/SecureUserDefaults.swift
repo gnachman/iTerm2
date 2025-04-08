@@ -172,6 +172,8 @@ fileprivate let FallbackFolder = "/usr/local/iTerm2-secure-settings"
 // (path, is unix filesystem)
 fileprivate var secureUserDefaultsFolderIsOnUnixFilesystem: (String, Bool)?
 
+// (path, supports ownserhip)
+fileprivate var secureUserDefaultsFolderIsOnOwnershipSupportingFilesystem: (String, Bool)?
 
 // Secure user defaults are a way of saving user preferences that are hard to tamper with.
 // Like UserDefaults, it is a database of key-value pairs.
@@ -322,6 +324,20 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         return path
     }
 
+    private static func ignoresOwnership(atPath path: String) -> Bool {
+        if case let .some((path, value)) = secureUserDefaultsFolderIsOnOwnershipSupportingFilesystem {
+            return value
+        }
+        var stat = statfs()
+        guard path.withCString({ statfs($0, &stat) }) == 0 else {
+            DLog("Failed to statfs \(path), assuming filesystem is bad")
+            return true
+        }
+        let result = (stat.f_flags & UInt32(MNT_IGNORE_OWNERSHIP)) != 0
+        secureUserDefaultsFolderIsOnOwnershipSupportingFilesystem = (path, result)
+        return result
+    }
+
     private static func isOnNonUnixFilesystem(atPath path: String) -> Bool {
         if case let .some((path, value)) = secureUserDefaultsFolderIsOnUnixFilesystem {
             return value
@@ -377,6 +393,10 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         }
         if isOnNonUnixFilesystem(atPath: appSupportString) {
             DLog("Not a unix filesystem. Use fallback")
+            return try fallbackBaseDirectory(create: create)
+        }
+        if ignoresOwnership(atPath: appSupportString) {
+            DLog("Ownership ignored. Use fallback")
             return try fallbackBaseDirectory(create: create)
         }
         DLog("Use \(appSupportString)")
