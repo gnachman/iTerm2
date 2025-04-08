@@ -690,6 +690,7 @@ DEFINE_SETTABLE_BOOL(noSyncSuppressMissingProfileInArrangementWarning, NoSyncSup
 DEFINE_SETTABLE_BOOL(noSyncSuppressBadPWDInArrangementWarning,
                      NoSyncSuppressBadPWDInArrangementWarning, NO, SECTION_WARNINGS @"Suppress the notification that a saved arrangement has a bad initial working directory.");
 DEFINE_SETTABLE_BOOL(noSyncNeverAskAboutMouseReportingFrustration, NoSyncNeverAskAboutMouseReportingFrustration, NO, SECTION_WARNINGS @"Suppress the notification asking if you want to disable mouse reporting that is shown after a drag followed by Cmd-C when mouse reporting is on?");
+DEFINE_SETTABLE_BOOL(noSyncNeverAskAboutDEC2048Frustration, NoSyncNeverAskAboutDEC2048Frustration, NO, SECTION_WARNINGS @"Suppress the notification asking if you want to disable resize reporting");
 DEFINE_SETTABLE_BOOL(noSyncDontWarnAboutTmuxPause, NoSyncDontWarnAboutTmuxPause, NO, SECTION_WARNINGS @"Suppress announcement that tmux will pause a session.");
 DEFINE_OPTIONAL_BOOL(noSyncClearAllBroadcast, nil, SECTION_WARNINGS @"Send Clear Session to all broadcasted-to sessions?");
 DEFINE_BOOL(noSyncSuppressSendSignal, NO, SECTION_WARNINGS @"Suppress warning about sending a signal to terminate a job.\nThis is used in the process tree, which you can find the toolbelt or by clicking the Jobs status bar component.");

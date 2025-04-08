@@ -231,10 +231,12 @@ static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyi
 
 static NSString *const kTurnOffMouseReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffMouseReportingOnHostChange";
 static NSString *const kTurnOffFocusReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffFocusReportingOnHostChange";
+static NSString *const kTurnOffDEC2048OnHostChangeUserDefaultsKey = @"NoSyncTurnOffDEC2048OnHostChange";
 
 // This used to be only for host change but now it also runs off an expectation
 static NSString *const kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier = @"TurnOffMouseReportingOnHostChange";
 static NSString *const kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier = @"TurnOffFocusReportingOnHostChange";
+static NSString *const kTurnOffDEC2048OnAutodetectAnnouncementIdentifier = @"TurnOffDEC2048OnHostChange";
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
@@ -373,6 +375,11 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     // Waiting for conductor just after creating the session with ssh as the command.
     iTermSSHStateProfile,
+};
+
+typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
+    PTYSessionTurdTypeMouseReporting,
+    PTYSessionTurdTypeDEC2048
 };
 
 @interface PTYSession(AppSwitching)<iTermAppSwitchingPreventionDetectorDelegate>
@@ -649,7 +656,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     BOOL _canChangeProfileInArrangement;
     BOOL _xtermMouseReportingEverAllowed;
     NSMutableArray<iTermTmuxOptionMonitor *> *_userTmuxOptionMonitors;
-    iTermExpectation *_mouseReportingOopsieExpectation;
+    iTermExpectation *_turdDetector;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1099,7 +1106,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_originatingArrangementName release];
     [_userTmuxOptionMonitors release];
     [_runningRemoteCommand release];
-    [_mouseReportingOopsieExpectation release];
+    [_turdDetector release];
 
     [super dealloc];
 }
@@ -3827,6 +3834,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Send inband resize notification
     NSData *data = [_screen.terminalOutput windowResizeNotificationWithGridSize:gridSize
                                                                       pixelSize:pixelSize];
+    [self detectTurdsForReportData:data type:PTYSessionTurdTypeDEC2048];
     [self screenSendReportData:data];
 }
 
@@ -11377,7 +11385,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if ([iTermAdvancedSettingsModel autodetectMouseReportingStuck] &&
         ![iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration] &&
         ![self hasAnnouncementWithIdentifier:kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier]) {
-        [self updateMouseReportingAutodetectionExpectationWithReportData:data];
+        [self detectTurdsForReportData:data type:PTYSessionTurdTypeMouseReporting];
     }
     [self writeLatin1EncodedData:data
                 broadcastAllowed:NO
@@ -11385,20 +11393,20 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 }
 
-- (void)updateMouseReportingAutodetectionExpectationWithReportData:(NSData *)data {
+- (void)detectTurdsForReportData:(NSData *)data type:(PTYSessionTurdType)turdType {
     DLog(@"Will report %@ (%@)", [data stringWithEncoding:NSUTF8StringEncoding], [[data stringWithEncoding:NSUTF8StringEncoding] hexEncodedString]);
     NSMutableData *modified = nil;
-    if (_mouseReportingOopsieExpectation.deadline.timeIntervalSinceNow > 0) {
-        modified = [[_mouseReportingOopsieExpectation.userData mutableCopy] autorelease];
+    if (_turdDetector.deadline.timeIntervalSinceNow > 0) {
+        modified = [[_turdDetector.userData mutableCopy] autorelease];
     }
     if (!modified) {
         modified = [NSMutableData data];
     }
     DLog(@"Modified is initially %@ (%@)", [modified stringWithEncoding:NSUTF8StringEncoding], [[modified stringWithEncoding:NSUTF8StringEncoding] hexEncodedString]);
-    if (_mouseReportingOopsieExpectation) {
-        [_expect cancelExpectation:_mouseReportingOopsieExpectation];
-        [_mouseReportingOopsieExpectation autorelease];
-        _mouseReportingOopsieExpectation = nil;
+    if (_turdDetector) {
+        [_expect cancelExpectation:_turdDetector];
+        [_turdDetector autorelease];
+        _turdDetector = nil;
     }
     const unsigned char *bytes = data.bytes;
     NSInteger ignoreCount = 0;
@@ -11430,35 +11438,52 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (string.length > 6) {
         __weak __typeof(self) weakSelf = self;
         DLog(@"Expect %@ (%@), regex %@", string, string.hexEncodedString, string.it_escapedForRegex);
-        _mouseReportingOopsieExpectation = [_expect expectRegularExpression:[string it_escapedForRegex]
-                                                                      after:nil
-                                                                   deadline:[NSDate dateWithTimeIntervalSinceNow:0.1]
-                                                                 willExpect:nil
-                                                                 completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
+        _turdDetector = [_expect expectRegularExpression:[string it_escapedForRegex]
+                                                   after:nil
+                                                deadline:[NSDate dateWithTimeIntervalSinceNow:0.1]
+                                              willExpect:nil
+                                              completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
             DLog(@"Matched %@", string);
             dispatch_async(dispatch_get_main_queue(), ^{
-                [weakSelf didDetectErrantMouseReportingTurds];
+                [weakSelf didDetectTurdOfType:turdType];
             });
         }];
-        _mouseReportingOopsieExpectation.userData = modified;
-        [_mouseReportingOopsieExpectation retain];
+        _turdDetector.userData = modified;
+        [_turdDetector retain];
     }
     DLog(@"Sync");
     [self sync];
 }
 
-- (void)didDetectErrantMouseReportingTurds {
-    DLog(@"begin");
-    if ([iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration]) {
-        return;
+- (void)didDetectTurdOfType:(PTYSessionTurdType)turdType {
+    switch (turdType) {
+        case PTYSessionTurdTypeMouseReporting:
+            DLog(@"begin");
+            if ([iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration]) {
+                return;
+            }
+            [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                     VT100ScreenMutableState *mutableState,
+                                                     id<VT100ScreenDelegate> delegate) {
+                if (_xtermMouseReportingEverAllowed && terminal.mouseMode != MOUSE_REPORTING_NONE) {
+                    [self turnOffMouseReportingOrOffer:terminal];
+                }
+            }];
+            break;
+        case PTYSessionTurdTypeDEC2048:
+            DLog(@"begin");
+            if ([iTermAdvancedSettingsModel noSyncNeverAskAboutDEC2048Frustration]) {
+                return;
+            }
+            [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                     VT100ScreenMutableState *mutableState,
+                                                     id<VT100ScreenDelegate> delegate) {
+                if (terminal.sendResizeNotifications) {
+                    [self turnOffDEC2048OrOffer:terminal];
+                }
+            }];
+            break;
     }
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
-                                             VT100ScreenMutableState *mutableState,
-                                             id<VT100ScreenDelegate> delegate) {
-        if (_xtermMouseReportingEverAllowed && terminal.mouseMode != MOUSE_REPORTING_NONE) {
-            [self turnOffMouseReportingOrOffer:terminal];
-        }
-    }];
 }
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput {
@@ -14170,6 +14195,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (void)turnOffDEC2048OrOffer:(VT100Terminal *)terminal {
+    DLog(@"begin");
+    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffDEC2048OnHostChangeUserDefaultsKey];
+    if ([number boolValue]) {
+        DLog(@"Turn off DEC 2048 automatically");
+        terminal.sendResizeNotifications = NO;
+    } else if (!number) {
+        [self offerToTurnOffDEC2048Automatically];
+    }
+}
+
 - (void)maybeResetTerminalStateOnHostChange:(id<VT100RemoteHostReading>)newRemoteHost {
     _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
@@ -14232,12 +14268,33 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)offerToTurnOffMouseReportingAutomatically {
+    [self offerToStopMakingTurds:PTYSessionTurdTypeMouseReporting];
+}
+
+- (void)offerToTurnOffDEC2048Automatically {
+    [self offerToStopMakingTurds:PTYSessionTurdTypeDEC2048];
+}
+
+- (void)offerToStopMakingTurds:(PTYSessionTurdType)turdType {
+    NSString *identifier;
+    NSString *title;
+    NSString *userDefaultsKey;
+    switch (turdType) {
+        case PTYSessionTurdTypeDEC2048:
+            identifier = kTurnOffDEC2048OnAutodetectAnnouncementIdentifier;
+            title = @"Looks like resize reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+            userDefaultsKey = kTurnOffDEC2048OnHostChangeUserDefaultsKey;
+            break;
+        case PTYSessionTurdTypeMouseReporting:
+            identifier = kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier;
+            title = @"Looks like mouse reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+            userDefaultsKey = kTurnOffMouseReportingOnHostChangeUserDefaultsKey;
+            break;
+    }
     DLog(@"begin");
-    if ([self hasAnnouncementWithIdentifier:kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier]) {
+    if ([self hasAnnouncementWithIdentifier:identifier]) {
         return;
     }
-    NSString *title =
-    @"Looks like mouse reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleQuestion
@@ -14250,30 +14307,31 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             case -1: // No
                 break;
 
+            case 1: // Always
+                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                        forKey:userDefaultsKey];
+                // FALL THROUGH
             case 0: // Yes
                 [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                          VT100ScreenMutableState *mutableState,
                                                          id<VT100ScreenDelegate> delegate) {
-                    terminal.mouseMode = MOUSE_REPORTING_NONE;
-                }];
-                break;
-
-            case 1: // Always
-                [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                        forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
-                [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
-                                                         VT100ScreenMutableState *mutableState,
-                                                         id<VT100ScreenDelegate> delegate) {
-                    terminal.mouseMode = MOUSE_REPORTING_NONE;
+                    switch (turdType) {
+                        case PTYSessionTurdTypeDEC2048:
+                            terminal.sendResizeNotifications = NO;
+                            break;
+                        case PTYSessionTurdTypeMouseReporting:
+                            terminal.mouseMode = MOUSE_REPORTING_NONE;
+                            break;
+                    }
                 }];
                 break;
 
             case 2: // Never
                 [[NSUserDefaults standardUserDefaults] setBool:NO
-                                                        forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+                                                        forKey:userDefaultsKey];
         }
     }];
-    [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier];
+    [self queueAnnouncement:announcement identifier:identifier];
 }
 
 - (void)offerToTurnOffFocusReportingRespectingSavedPreference:(VT100Terminal *)terminal {
