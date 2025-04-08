@@ -9,50 +9,13 @@
 #import "iTermAnnouncementView.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "DebugLogging.h"
+#import "NSColor+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSImage+iTerm.h"
 #import "NSWindow+iTerm.h"
 
 static const CGFloat kMargin = 8;
-
-@interface iTermAnnouncementInternalView : NSView
-@end
-
-@implementation iTermAnnouncementInternalView
-
-- (void)drawRect:(NSRect)dirtyRect {
-    NSColor *color1 = [NSColor colorWithCalibratedRed:241.0 / 255.0
-                                                green:255.0 / 255.0
-                                                 blue:187.0 / 255.0
-                                                alpha:1];
-    NSColor *color2 = [NSColor colorWithCalibratedRed:245.0 / 255.0
-                                                green:253.0 / 255.0
-                                                 blue:212.0 / 255.0
-                                                alpha:1];
-    NSGradient *gradient =
-        [[NSGradient alloc] initWithStartingColor:color1 endingColor:color2];
-    [gradient drawInRect:self.bounds angle:90];
-
-    NSColor *lightBorderColor = [NSColor colorWithCalibratedRed:250.0 / 255.0
-                                                          green:253.0 / 255.0
-                                                           blue:240.0 / 255.0
-                                                          alpha:1];
-
-    NSColor *darkBorderColor = [NSColor colorWithCalibratedRed:220.0 / 255.0
-                                                         green:233.0 / 255.0
-                                                          blue:171.0 / 255.0
-                                                         alpha:1];
-    [darkBorderColor set];
-    NSRectFill(NSMakeRect(0, 0, self.bounds.size.width, 1));
-
-    [lightBorderColor set];
-    NSRectFill(NSMakeRect(0, self.bounds.size.height - 1, self.bounds.size.width, 1));
-
-    [super drawRect:dirtyRect];
-}
-
-@end
 
 @interface iTermAnnouncementView ()
 @property(nonatomic, assign) iTermAnnouncementViewStyle style;
@@ -64,9 +27,11 @@ static const CGFloat kMargin = 8;
     NSImageView *_icon;
     NSButton *_closeButton;
     NSMutableArray *_actionButtons;
-    iTermAnnouncementInternalView *_internalView;
+    SolidColorView *_internalView;
+    SolidColorView *_lineView;
+    NSVisualEffectView *_visualEffectView;
+    iTermShadowView *_shadowView;
     void (^_block)(int);
-
 }
 
 + (id)announcementViewWithTitle:(NSString *)title
@@ -83,15 +48,37 @@ static const CGFloat kMargin = 8;
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        // This forces the button text to be dark. This view is always light regardless of theme.
-        self.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
-
         frameRect.size.height -= 10;
         frameRect.origin.y = 10;
         frameRect.origin.x = 0;
-        _internalView = [[iTermAnnouncementInternalView alloc] initWithFrame:frameRect];
-        _internalView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+
+        _shadowView = [[iTermShadowView alloc] initWithFrame:frameRect];
+        _shadowView.nsShadow.shadowOffset = CGSizeMake(0, 0);
+        _shadowView.nsShadow.shadowBlurRadius = 4;
+        _shadowView.nsShadow.shadowColor = [[NSColor blackColor] colorWithAlphaComponent:0.1];
+        _shadowView.inset = 0;
+        _shadowView.cornerRadius = 0;
+        [self addSubview:_shadowView];
+
+        _visualEffectView = [[NSVisualEffectView alloc] initWithFrame:frameRect];
+        _visualEffectView.material = NSVisualEffectMaterialMenu;
+        _visualEffectView.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+        _visualEffectView.state = NSVisualEffectStateActive;
+        _visualEffectView.emphasized = NO;
+        _visualEffectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [self addSubview:_visualEffectView];
+
+        _internalView = [[SolidColorView alloc] initWithFrame:frameRect
+                                                        color:[NSColor it_dynamicColorForLightMode:[NSColor colorWithSRGBRed:1 green:1 blue:0.9 alpha:0.6]
+                                                                                          darkMode:[NSColor colorWithSRGBRed:0.25 green:0.25 blue:0.1 alpha:0.15]]];
+        _internalView.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
         [self addSubview:_internalView];
+
+        const NSRect lineFrame = NSMakeRect(0, NSMinY(frameRect), NSWidth(frameRect), 1);
+        _lineView = [[SolidColorView alloc] initWithFrame:lineFrame
+                                                    color:[NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.8 alpha:1.0]
+                                                                                      darkMode:[NSColor colorWithWhite:0.2 alpha:1.0]]];
+        [self addSubview:_lineView];
 
         NSImage *closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
         NSSize closeSize = closeImage.size;
@@ -226,6 +213,22 @@ static const CGFloat kMargin = 8;
 }
 
 - (NSImage *)iconImage {
+    if (@available(macOS 11.0, *)) {
+        NSImage *image;
+        switch (_style) {
+            case kiTermAnnouncementViewStyleWarning:
+                image = [NSImage imageWithSystemSymbolName:@"exclamationmark.triangle" accessibilityDescription:@"Warning icon"];
+                break;
+            case kiTermAnnouncementViewStyleQuestion:
+                image = [NSImage imageWithSystemSymbolName:@"questionmark.circle" accessibilityDescription:@"Question icon"];
+                break;
+        }
+        NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:22.0 weight:NSFontWeightRegular];
+        image = [image imageWithSymbolConfiguration:config];
+        image.template = YES;
+        return image;
+    }
+
     NSString *iconString;
     switch (_style) {
         case kiTermAnnouncementViewStyleWarning:
@@ -271,7 +274,8 @@ static const CGFloat kMargin = 8;
 
         rect.size.width -= _buttonWidth;
         iTermAutoResizingTextView *textView = [[iTermAutoResizingTextView alloc] initWithFrame:rect];
-        NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:12] };
+        NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:12],
+                                      NSForegroundColorAttributeName: [NSColor textColor] };
         NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title
                                                                                attributes:attributes];
         textView.textStorage.attributedString = attributedString;
@@ -372,6 +376,15 @@ static const CGFloat kMargin = 8;
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
 
+    NSRect frameRect = self.bounds;
+    frameRect.size.height -= 10;
+    frameRect.origin.y = 10;
+    frameRect.origin.x = 0;
+    _visualEffectView.frame = frameRect;
+    _internalView.frame = frameRect;
+    _lineView.frame = NSMakeRect(0, NSMinY(frameRect), NSWidth(frameRect), 1);
+    _shadowView.frame = frameRect;
+
     [self updateTextViewFrame];
     NSSize closeSize = [_closeButton frame].size;
     _closeButton.frame = NSMakeRect(self.frame.size.width - closeSize.width - kMargin,
@@ -415,7 +428,7 @@ static const CGFloat kMargin = 8;
 - (void)addDismissOnKeyDownLabel {
     NSMutableAttributedString *string = [_textView.originalAttributedString mutableCopy];
     NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
-                                  NSForegroundColorAttributeName: [NSColor darkGrayColor] };
+                                  NSForegroundColorAttributeName: [NSColor textColor] };
     NSAttributedString *notice = [[NSAttributedString alloc] initWithString:@"\nPress any key to dismiss this message."
                                                                  attributes:attributes];
     [string appendAttributedString:notice];

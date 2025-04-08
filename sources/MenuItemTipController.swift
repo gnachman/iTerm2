@@ -1,7 +1,8 @@
 import AppKit
-import AppKit
 
+@objc(iTermShadowView)
 class ShadowView: NSView {
+    @objc
     var nsShadow: NSShadow = {
         let shadow = NSShadow()
         shadow.shadowColor = NSColor.black.withAlphaComponent(0.2)
@@ -9,7 +10,12 @@ class ShadowView: NSView {
         shadow.shadowBlurRadius = 12
         return shadow
     }()
+
+    @objc
     var inset = 16.0
+
+    @objc
+    var cornerRadius = 8.0
 
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
@@ -22,7 +28,7 @@ class ShadowView: NSView {
 
         // Define a rounded rectangle path.
         let rect = bounds.insetBy(dx: inset, dy: inset)
-        let path = NSBezierPath(roundedRect: rect, xRadius: 8, yRadius: 8)
+        let path = NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius)
 
         // Fill the path; the shadow will be applied.
         NSColor.white.setFill()
