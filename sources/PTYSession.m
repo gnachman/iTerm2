@@ -14184,6 +14184,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         if (terminal.bracketedPasteMode && ![self shellIsFishForHost:newRemoteHost]) {
             [self maybeTurnOffPasteBracketing];
         }
+        if (terminal.sendResizeNotifications) {
+            DLog(@"Turning off DEC 2048 mode");
+            terminal.sendResizeNotifications = NO;
+        }
     }];
 }
 

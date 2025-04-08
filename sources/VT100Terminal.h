@@ -102,7 +102,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic) BOOL literalMode;
 
 @property(nonatomic, readonly) VT100TerminalKeyReportingFlags keyReportingFlags;
-@property(nonatomic, readonly) BOOL sendResizeNotifications;
+@property(nonatomic) BOOL sendResizeNotifications;
 @property(nonatomic, readonly) BOOL synchronizedUpdates;
 @property(nonatomic, readonly) BOOL preserveScreenOnDECCOLM;
 @property(nonatomic, readonly) BOOL alternateScrollMode;
