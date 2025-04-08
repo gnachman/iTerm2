@@ -338,6 +338,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)reportOnFirstMouse;
 + (BOOL)restrictSemanticHistoryPrefixAndSuffixToLogicalWindow;
 + (BOOL)requireCmdForDraggingText;
++ (BOOL)requireOptionToDragSplitPaneTitleBar;
 + (BOOL)requireSlashInURLGuess;
 + (BOOL)resetSGROnPrompt;
 + (BOOL)restoreKeyModeAutomaticallyOnHostChange;

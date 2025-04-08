@@ -293,8 +293,12 @@ static const CGFloat kButtonSize = 17;
     [self setNeedsDisplay:YES];
 }
 
-- (void)mouseDragged:(NSEvent *)theEvent
-{
+- (void)mouseDragged:(NSEvent *)theEvent {
+    if ([iTermAdvancedSettingsModel requireOptionToDragSplitPaneTitleBar]) {
+        if ((NSApp.currentEvent.modifierFlags & NSEventModifierFlagOption) == 0) {
+            return;
+        }
+    }
     [delegate_ beginDrag];
 }
 

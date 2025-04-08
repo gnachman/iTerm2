@@ -352,6 +352,7 @@ DEFINE_FLOAT(fractionOfCharacterSelectingNextNeighbor, 0.35, SECTION_MOUSE @"Fra
 DEFINE_BOOL(naturalScrollingAffectsHorizontalMouseReporting, NO, SECTION_MOUSE @"Horizontal scrolling is reversed when “Natural scrolling” is enabled in System Settings");
 DEFINE_FLOAT(horizontalScrollingSensitivity, 0.1, SECTION_MOUSE @"Sensitivity of mouse wheel for horizontal scrolling.\nUse 0 to disable. Value should be between 0 and 1. Changes to this setting only affect new sessions.");
 DEFINE_BOOL(useDoubleClickDelayForCommandSelection, NO, SECTION_MOUSE @"Wait to be sure it's not a double click before selecting a command");
+DEFINE_BOOL(requireOptionToDragSplitPaneTitleBar, NO, SECTION_MOUSE @"Require Option to be pressed to drag a split pane by its title bar?\nThis helps prevent accidental drags.");
 
 #pragma mark Terminal
 
