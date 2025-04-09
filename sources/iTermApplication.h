@@ -42,6 +42,7 @@ extern NSString *const iTermApplicationInputMethodEditorDidClose;
 
 extern NSString *const iTermApplicationWillShowModalWindow;
 extern NSString *const iTermApplicationDidCloseModalWindow;
+extern NSNotificationName const iTermApplicationCharacterAccentMenuVisibilityDidChange;
 
 @class iTermApplicationDelegate;
 @class iTermScriptingWindow;
@@ -70,6 +71,7 @@ extern NSString *const iTermApplicationDidCloseModalWindow;
 @property(nonatomic, readonly) BOOL it_justBecameActive;
 @property(nonatomic) BOOL it_restorableStateInvalid;
 @property(nonatomic, readonly) NSEventModifierFlags it_modifierFlags;
+@property(nonatomic, readonly) BOOL it_accentMenuOpen;
 
 // In big sur, sheets aren't key windows any more. This finds the current sheet for the key window and returns it.
 @property(nonatomic, readonly) NSWindow *it_keyWindow;

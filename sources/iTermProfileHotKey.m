@@ -21,6 +21,8 @@
 #import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
 
+static char iTermProfileHotkeyObserveAppWindowsKey;
+
 typedef NS_ENUM(NSUInteger, iTermAnimationDirection) {
     kAnimationDirectionDown,
     kAnimationDirectionRight,
@@ -115,6 +117,10 @@ static NSString *const kArrangement = @"Arrangement";
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
                                                                  object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(updateWindowLevel)
+                                                     name:iTermApplicationCharacterAccentMenuVisibilityDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -255,6 +261,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)updateWindowLevel {
+    DLog(@"updateWindowLevel");
     if (self.floats) {
         _windowController.window.level = self.floatingLevel;
     } else {
@@ -263,11 +270,13 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (NSWindowLevel)floatingLevel {
+    DLog(@"calculate floating level");
     iTermApplication *app = [iTermApplication sharedApplication];
-    if (app.it_characterPanelIsOpen || app.it_modalWindowOpen || app.it_imeOpen || [[NSWorkspace sharedWorkspace] it_securityAgentIsActive]) {
-        DLog(@"Use floating window level. characterPanelIsOpen=%@, modalWindowOpen=%@ imeOpen=%@",
+    if (app.it_characterPanelIsOpen || app.it_modalWindowOpen || app.it_imeOpen || [[NSWorkspace sharedWorkspace] it_securityAgentIsActive] || app.it_accentMenuOpen) {
+        DLog(@"Use floating window level. characterPanelIsOpen=%@, modalWindowOpen=%@ imeOpen=%@ accentMenuOpen=%@",
              @(app.it_characterPanelIsOpen), @(app.it_modalWindowOpen),
-             @(app.it_imeOpen));
+             @(app.it_imeOpen),
+             @(app.it_accentMenuOpen));
         return NSFloatingWindowLevel;
     }
     NSWindow *const keyWindow = [NSApp keyWindow];
@@ -296,6 +305,7 @@ static NSString *const kArrangement = @"Arrangement";
     // NSMainMenuWindowLevel (24) -              Menu bar, dock. (maybe notification center on macOS < 12? I should check)
     // 23 -                                      Notification center (macOS 11+)
     // 22 -                                      (macOS 11+) Hotkey windows under a hidden-but-not-auto-hidden menu bar.
+    // 20 -                                      Character accent menu (at least in macOS 15, and hopefully others)
     // 18 -                                      Notification center (macOS 10.x)
     // 17 -                                      (macOS 10.x) Hotkey windows under a hidden-but-not-auto-hidden menu bar.
     //

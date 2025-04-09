@@ -69,6 +69,8 @@ NSString *const iTermApplicationInputMethodEditorDidClose = @"iTermApplicationIn
 NSString *const iTermApplicationWillShowModalWindow = @"iTermApplicationWillShowModalWindow";
 NSString *const iTermApplicationDidCloseModalWindow = @"iTermApplicationDidCloseModalWindow";
 
+NSNotificationName const iTermApplicationCharacterAccentMenuVisibilityDidChange = @"iTermApplicationCharacterAccentMenuVisibilityDidChange";
+
 @interface iTermApplication()
 @property(nonatomic, strong) NSStatusItem *statusBarItem;
 @end
@@ -92,6 +94,8 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     NSTimeInterval _activationStartTime;
     NSEventModifierFlags _previousFlags;
     BOOL _functionPressed;
+    BOOL _characterAccentWindowWasOpen;
+    NSTimeInterval _lastRepeatTime;
 #if DEBUG
     NSEventModifierFlags _it_modifierFlags;
 #endif
@@ -585,7 +589,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     if ((event.modifierFlags & iTermLeaderModifierFlag)) {
         DLog(@"Leader flag set");
     }
-
+    if (event.isARepeat) {
+        _lastRepeatTime = [NSDate it_timeSinceBoot];
+    }
     if ([self handleLeader:event]) {
         return YES;
     }
@@ -888,6 +894,50 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 - (BOOL)it_characterPanelIsOpen {
     return _it_characterPanelShouldOpenSoon || _it_characterPanelIsOpen;
+}
+
+- (BOOL)it_accentMenuOpen {
+    for (NSWindow *window in self.windows) {
+        // This works on macOS 15. Who knows about other versions. I wish there were an API.
+        if (window.level == kCGDockWindowLevel &&
+            [NSStringFromClass(window.class) isEqualToString:@"NSPanel.ViewBridge.rendezvous"] &&
+            window.alphaValue == 1) {
+            DLog(@"%@ loks like a character accent menu to me", window);
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)updateWindows {
+    [super updateWindows];
+    if (![self shouldCheckForAccentWindowVisibilityChange]) {
+        return;
+    }
+    const BOOL accentMenuOpen = [self it_accentMenuOpen];
+    DLog(@"accent menu open=%@, previous value is %@", @(accentMenuOpen), @(_characterAccentWindowWasOpen));
+    if (_characterAccentWindowWasOpen != accentMenuOpen) {
+        DLog(@"post");
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationCharacterAccentMenuVisibilityDidChange
+                                                            object:nil];
+        _characterAccentWindowWasOpen = accentMenuOpen;
+    }
+}
+
+- (BOOL)shouldCheckForAccentWindowVisibilityChange {
+    if (_characterAccentWindowWasOpen) {
+        return YES;
+    }
+    if (_lastRepeatTime > 0) {
+        const NSTimeInterval delta = [NSDate it_timeSinceBoot] - _lastRepeatTime;
+        DLog(@"_lastRepeatTime=%@, timesinceboot=%@, delta=%@", @(_lastRepeatTime), @([NSDate it_timeSinceBoot]), @(delta));
+        if (delta < 5.0) {
+            DLog(@"Repeat was recent");
+            return YES;
+        }
+        _lastRepeatTime = 0;
+    }
+    return NO;
 }
 
 - (void)orderFrontCharacterPalette:(id)sender {
