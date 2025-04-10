@@ -137,13 +137,7 @@ class FontTable: NSObject, FontProviderProtocol {
 
     private class FontBox: NSObject {
         let delta: Int?
-        var font: PTYFontInfo {
-            didSet {
-                font.boldVersion = font.computedBoldVersion()
-                font.italicVersion = font.computedItalicVersion()
-                font.boldItalicVersion = font.computedBoldItalicVersion()
-            }
-        }
+        let font: PTYFontInfo
 
         static var defaultFont: PTYFontInfo {
             return PTYFontInfo(font: NSFont.userFixedPitchFont(ofSize: 0)!)
@@ -156,11 +150,16 @@ class FontTable: NSObject, FontProviderProtocol {
                 delta = nil
                 return
             }
+            let font: PTYFontInfo
             if let nsfont = NSFont(name: name, size: size) {
                 font = PTYFontInfo(font: nsfont)
             } else {
                 font = Self.defaultFont
             }
+            font.boldVersion = font.computedBoldVersion()
+            font.italicVersion = font.computedItalicVersion()
+            font.boldItalicVersion = font.computedBoldItalicVersion()
+            self.font = font
             delta = dict["delta"] as? Int
         }
 
@@ -440,17 +439,19 @@ class FontTable: NSObject, FontProviderProtocol {
         return font(for: UTF32Char(c.unicodeScalars.first!.value), remapped: remapped)
     }
 
-    private var cachedRangeMapEntry: RangeMap<FontBox>.Entry?
+    // This is a departure from the immutability requirement, so it is guarded by a mutex.
+    private let cachedRangeMapEntryAtomic = MutableAtomicObject<RangeMap<FontBox>.Entry?>(nil)
 
     @objc
     func font(for codePoint: UTF32Char,
               remapped: UnsafeMutablePointer<UTF32Char>) -> PTYFontInfo {
         let fontBox: FontBox
-        if let cachedRangeMapEntry, cachedRangeMapEntry.range.contains(Int(codePoint)) {
+        if let cachedRangeMapEntry = cachedRangeMapEntryAtomic.value,
+           cachedRangeMapEntry.range.contains(Int(codePoint)) {
             fontBox = cachedRangeMapEntry.value
         } else {
             let entry = rangeMap[Int(codePoint)]!
-            cachedRangeMapEntry = entry
+            cachedRangeMapEntryAtomic.value = entry
             fontBox = entry.value
         }
         if let delta = fontBox.delta {
