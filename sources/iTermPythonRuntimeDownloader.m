@@ -296,7 +296,6 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     _status = iTermPythonRuntimeDownloaderStatusWorking;
     _downloadGroup = dispatch_group_create();
     __block dispatch_group_t group = _downloadGroup;
-    dispatch_group_enter(_downloadGroup);
     if (_downloadController.isWindowLoaded) {
         [_downloadController.window close];
     }
@@ -332,7 +331,6 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             strongSelf->_status = iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound;
             if (group) {
                 dispatch_group_leave(group);
-                group = nil;
             }
             return nil;
         }
@@ -353,7 +351,6 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 declined = YES;
                 if (group) {
                     dispatch_group_leave(group);
-                    group = nil;
                 }
                 strongSelf->_status = iTermPythonRuntimeDownloaderStatusCanceledByUser;
                 return nil;
@@ -374,7 +371,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             DLog(@"Download phase completed");
             const BOOL shouldContinue = [weakSelf payloadDownloadPhaseDidComplete:(iTermPayloadDownloadPhase *)completedPhase
                                                                  sitePackagesOnly:info.isSitePackagesOnly
-                                                              latestFullComponent:latestFullComponent];
+                                                              latestFullComponent:latestFullComponent
+                                                                            group:group];
             if (!shouldContinue) {
                 return nil;
             }
@@ -389,7 +387,6 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
             if (group) {
                 dispatch_group_leave(group);
-                group = nil;
             }
             return;
         }
@@ -402,6 +399,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     if (!silent) {
         [_downloadController.window makeKeyAndOrderFront:nil];
     }
+    manifestPhase.willBegin = ^{
+        dispatch_group_enter(group);
+    };
     [_downloadController beginPhase:manifestPhase];
 }
 
@@ -456,15 +456,16 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
 - (BOOL)payloadDownloadPhaseDidComplete:(iTermPayloadDownloadPhase *)payloadPhase
                        sitePackagesOnly:(BOOL)sitePackagesOnly
-                    latestFullComponent:(NSNumber *)latestFullComponent {
+                    latestFullComponent:(NSNumber *)latestFullComponent
+                                  group:(dispatch_group_t)group {
     DLog(@"sitePackagesOnly=%@ latestFullComponent=%@", @(sitePackagesOnly), latestFullComponent);
-
+    assert(group != nil);
     if (!payloadPhase || payloadPhase.error) {
         DLog(@"Download failed");
         [_downloadController.window makeKeyAndOrderFront:nil];
         [[iTermNotificationController sharedInstance] notify:@"Download failed ☹️"];
         _status = iTermPythonRuntimeDownloaderStatusError;
-        dispatch_group_leave(self->_downloadGroup);
+        dispatch_group_leave(group);
         return NO;
     }
     NSString *tempfile = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iterm2-pyenv" suffix:@".zip"];
@@ -473,7 +474,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         DLog(@"Failed to write to %@", tempfile);
         [[iTermNotificationController sharedInstance] notify:@"Could not extract archive ☹️"];
         _status = iTermPythonRuntimeDownloaderStatusError;
-        dispatch_group_leave(self->_downloadGroup);
+        dispatch_group_leave(group);
         return NO;
     }
 
@@ -492,7 +493,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         _status = iTermPythonRuntimeDownloaderStatusError;
         [self->_downloadController.window close];
         self->_downloadController = nil;
-        dispatch_group_leave(self->_downloadGroup);
+        dispatch_group_leave(group);
     } else {
         DLog(@"Signature OK");
         void (^completion)(NSError *) = ^(NSError *error){
@@ -502,7 +503,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 [self->_downloadController.window close];
                 self->_downloadController = nil;
                 self->_status = iTermPythonRuntimeDownloaderStatusDownloaded;
-                dispatch_group_leave(self->_downloadGroup);
+                dispatch_group_leave(group);
                 return;
             }
             [self->_downloadController.window close];
@@ -512,7 +513,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             alert.informativeText = error.localizedDescription ?: @"An error occurred while unzipping the downloaded python environment";
             [alert runModal];
             self->_status = iTermPythonRuntimeDownloaderStatusError;
-            dispatch_group_leave(self->_downloadGroup);
+            dispatch_group_leave(group);
         };
         if (sitePackagesOnly) {
             DLog(@"Installing site packages only");

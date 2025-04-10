@@ -415,6 +415,9 @@ didCompleteWithError:(nullable NSError *)error {
 - (void)beginPhase:(iTermOptionalComponentDownloadPhase *)phase {
     DLog(@"begin phase %@ - %@", phase, self);
     const BOOL determinant = phase.progressIsDeterminant;
+    if (phase.willBegin) {
+        phase.willBegin();
+    }
     _progressIndicator.hidden = !determinant;
     _installIndicator.hidden = determinant;
     if (!determinant) {

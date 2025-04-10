@@ -24,6 +24,7 @@ extern const int iTermMinimumPythonEnvironmentVersion;
 @property (nonatomic, readonly) BOOL progressIsDeterminant;
 @property (nonatomic, readonly) NSString *progressString;
 @property (nonatomic, readonly) BOOL buttonEnabled;
+@property (nonatomic, copy) void (^willBegin)(void);
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithURL:(NSURL *)url
