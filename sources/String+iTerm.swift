@@ -74,7 +74,10 @@ extension String {
     }
 
     func appending(pathComponent: String) -> String {
-        return URL(fileURLWithPath: self).appendingPathComponent(pathComponent).path
+        // This used to use URL(fileURLWithPath:) to try to be nice and modern and Swifty but it
+        // FREAKING CHECKS IF THE FILE EXISTS and is SO SLOW. I wonder if anyone at Apple has ever
+        // used a computer before sometimes.
+        return (self as NSString).appendingPathComponent(pathComponent)
     }
 
     var deletingLastPathComponent: String {

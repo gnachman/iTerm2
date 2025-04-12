@@ -325,8 +325,11 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     private static func ignoresOwnership(atPath path: String) -> Bool {
-        if case let .some((path, value)) = secureUserDefaultsFolderIsOnOwnershipSupportingFilesystem {
+        switch secureUserDefaultsFolderIsOnOwnershipSupportingFilesystem {
+        case .some((path, let value)):
             return value
+        default:
+            break
         }
         var stat = statfs()
         guard path.withCString({ statfs($0, &stat) }) == 0 else {
@@ -339,8 +342,11 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     private static func isOnNonUnixFilesystem(atPath path: String) -> Bool {
-        if case let .some((path, value)) = secureUserDefaultsFolderIsOnUnixFilesystem {
+        switch secureUserDefaultsFolderIsOnUnixFilesystem {
+        case .some((path, let value)):
             return value
+        default:
+            break
         }
         var stat = statfs()
         guard path.withCString({ statfs($0, &stat) }) == 0 else {

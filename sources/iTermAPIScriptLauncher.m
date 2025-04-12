@@ -340,7 +340,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         DLog(@"First line does not match expected prefix. It is: %@", line);
         return nil;
     }
-    NSString *candidate = [[line substringFromIndex:expectedPrefix.length] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];;
+    NSString *candidate = [[line substringFromIndex:expectedPrefix.length] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if (candidate.length == 0) {
         DLog(@"Empty candidate");
         return nil;

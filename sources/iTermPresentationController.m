@@ -302,7 +302,7 @@ NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
         DLog(@"  NO: Lion fullscreen");
         return NO;
     }
-    NSWindow *window = [windowController presentationControllerManagedWindowControllerWindow];;
+    NSWindow *window = [windowController presentationControllerManagedWindowControllerWindow];
     if (!window) {
         DLog(@"  NO: No window");
         return NO;

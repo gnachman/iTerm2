@@ -485,7 +485,7 @@ typedef enum {
     NSString* key;
     NSString* value;
     if (eqRange.location != NSNotFound) {
-        key = [argument substringToIndex:eqRange.location];;
+        key = [argument substringToIndex:eqRange.location];
         value = [argument substringFromIndex:eqRange.location+1];
     } else {
         key = argument;

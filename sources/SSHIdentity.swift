@@ -68,7 +68,7 @@ public class SSHIdentity: NSObject, Codable {
         return state.debugDescription
     }
 
-    @objc public  var hostname: String {
+    @objc public var hostname: String {
         return state.hostname
     }
 

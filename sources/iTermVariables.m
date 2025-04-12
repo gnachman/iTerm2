@@ -156,7 +156,7 @@ NSString *const iTermVariableKeyWindowIsHotkeyWindow = @"isHotkeyWindow";
     NSString *unresolvedString = [[_unresolvedLinks.allKeys mapWithBlock:^id(NSString *key) {
         NSString *refs = [[self->_unresolvedLinks[key].allObjects mapWithBlock:^id(id<iTermVariableReference> ref) {
             return [@"    " stringByAppendingString:[ref description]];
-        }] componentsJoinedByString:@"\n"];;
+        }] componentsJoinedByString:@"\n"];
         return [NSString stringWithFormat:@"%@ ->\n%@", key, refs];
     }] componentsJoinedByString:@"\n"];
 
@@ -550,7 +550,7 @@ NSString *const iTermVariableKeyWindowIsHotkeyWindow = @"isHotkeyWindow";
     NSString *parentName = _parentName;
     return [NSSet setWithArray:[names.allObjects mapWithBlock:^id(NSString *anObject) {
         return [NSString stringWithFormat:@"%@.%@", parentName, anObject];
-    }]];;
+    }]];
 }
 
 - (NSDictionary<NSString *,NSString *> *)stringValuedDictionary {

@@ -252,7 +252,7 @@ do { \
     for (NSString *line in lines) {
         screen_char_t *s = [grid screenCharsAtLineNumber:i++];
         for (int j = 0; j < [line length]; j++) {
-            unichar c = [line characterAtIndex:j];;
+            unichar c = [line characterAtIndex:j];
             if (c == '.') c = 0;
             if (c == '-') c = DWC_RIGHT;
             if (j == [line length] - 1) {

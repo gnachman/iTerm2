@@ -10,6 +10,38 @@ import AppKit
 
 @objc(iTermCompletionsWindow)
 class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
+    static func regularAttributes(font maybeFont: NSFont?) -> [NSAttributedString.Key: Any] {
+        let font = maybeFont ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let regularFont = NSFontManager.shared.convert(font, toNotHaveTrait: .boldFontMask)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineBreakMode = .byTruncatingHead
+        return [.font: regularFont,
+                .foregroundColor: NSColor.textColor,
+                .paragraphStyle: paragraphStyle]
+    }
+    static func boldAttributes(font maybeFont: NSFont?) -> [NSAttributedString.Key: Any] {
+        let font = maybeFont ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let boldFont = NSFontManager.shared.convert(font, toHaveTrait: .boldFontMask)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineBreakMode = .byTruncatingHead
+        return [.font: boldFont,
+                .foregroundColor: NSColor.textColor,
+                .paragraphStyle: paragraphStyle]
+    }
+    static func attributedString(font: NSFont,
+                                 prefix: String,
+                                 suffix string: String) -> NSAttributedString {
+        let attributedPrefix = NSAttributedString(string: prefix,
+                                                  attributes: boldAttributes(font: font))
+        let attributedString: NSMutableAttributedString = attributedPrefix.mutableCopy() as! NSMutableAttributedString
+        attributedString.append(NSAttributedString(string: string,
+                                                   attributes: regularAttributes(font: font)))
+        return attributedString
+    }
+    static func attributedDetail(string: String, font: NSFont) -> NSAttributedString {
+        return NSAttributedString(string: string,
+                                  attributes: regularAttributes(font: font))
+    }
 
     enum Mode {
         case indicator
@@ -23,21 +55,49 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         var kind: CompletionItem.Kind
     }
 
+    @objc
+    class iTermCompletionItemBox: NSObject {
+        fileprivate var item: Item
+        init(item: Item) {
+            self.item = item
+        }
+    }
+
     // MARK: - Mode and Subviews
     private var mode: Mode  // changed from let to var
 
     // Subviews for indicator mode.
     private var thinkingTextField: NSTextField?
     private var activityIndicator: NSProgressIndicator?
+    private var closeOnResign = false
 
     // Subviews for completions mode.
-    private var tableView: NSTableView?
+    private var tableView: CompletionsTableView?
+    private var _returnPressed: ((Item?) -> ())?
+    var returnPressed: ((Item?) -> ())? {
+        get {
+            _returnPressed
+        }
+        set {
+            _returnPressed = newValue
+            tableView?.returnPressed = { [weak self] i in
+                if let self {
+                    if i < 0 {
+                        _returnPressed?(nil)
+                    } else {
+                        _returnPressed?(items[i])
+                    }
+                }
+            }
+        }
+    }
     private var scrollView: NSScrollView?
     private var detailView: NSView?
     private var detailContainer: NSView?
     private var detailTextField: NSTextField?
     private var dividerView: NSView?
     private var items: [Item] = []
+    private var allItems: [Item] = []
     private var selectedRow: Int = -1
     private let visualEffectView: NSVisualEffectView = {
         let view = NSVisualEffectView()
@@ -47,13 +107,56 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         view.state = .active
         return view
     }()
+    private let placeholder: String  // What we show while progress indicator is visible
 
-    var selectionDidChange: ((CompletionsWindow, String) -> ())?
+    @objc var selectionDidChange: ((CompletionsWindow, String) -> ())?
     private var topLeftPointForBelow: NSPoint
     private var bottomLeftPointForAbove: NSPoint
+    private var searchField: NSSearchField?
+
+    @objc
+    static func create(parent: NSWindow,
+                       location: NSRect,
+                       items: [iTermCompletionItemBox]) -> CompletionsWindow {
+        return CompletionsWindow(parent: parent,
+                                 location: location,
+                                 mode: .completions(items: items.map { $0.item }))
+    }
+
+    @objc
+    static func makeItem(suggestion: String,
+                         attributedString: NSAttributedString,
+                         detail: NSAttributedString,
+                         kind: CompletionItem.Kind) -> iTermCompletionItemBox {
+        return iTermCompletionItemBox(item: Item(suggestion: suggestion,
+                                                 attributedString: attributedString,
+                                                 detail: detail,
+                                                 kind: kind))
+    }
+
+    private class KeyCatchingContentView: NSView {
+        override var acceptsFirstResponder: Bool { true }
+        var canceled = false
+
+        override func becomeFirstResponder() -> Bool {
+            DLog("Content view became first responder")
+            return true
+        }
+
+        override func keyDown(with event: NSEvent) {
+            DLog("Content view keyDown: \(event.characters.d)")
+            canceled = true
+            window?.parent?.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    var canceled: Bool {
+        (contentView as? KeyCatchingContentView)?.canceled ?? false
+    }
 
     // MARK: - Initializer
-    init(parent: NSWindow, location: NSRect, mode: Mode) {
+    init(parent: NSWindow, location: NSRect, mode: Mode, placeholder: String = "Thinking…") {
+        self.placeholder = placeholder
         self.mode = mode
         let rect = NSRect(x: 0, y: 0, width: 300, height: 200)
         var adjustedLocation = location.minXminY
@@ -74,6 +177,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         parent.addChildWindow(self, ordered: .above)
 
         // Rounded corners.
+        contentView = KeyCatchingContentView()
         contentView?.wantsLayer = true
         contentView?.layer?.cornerRadius = 8
         contentView?.layer?.borderWidth = 1
@@ -82,7 +186,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         // Configure mode-specific UI.
         configure(for: mode, animated: false)
 
-        NSLog("In init, set top left to \(adjustedLocation)")
+        DLog("In init, set top left to \(adjustedLocation)")
         updateFrameOrigin()
     }
 
@@ -130,7 +234,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
             thinkingTextFieldLocal.isEditable = false
             thinkingTextFieldLocal.isBordered = false
             thinkingTextFieldLocal.drawsBackground = false
-            thinkingTextFieldLocal.stringValue = "Thinking…"
+            thinkingTextFieldLocal.stringValue = placeholder
             thinkingTextFieldLocal.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
             thinkingTextFieldLocal.textColor = .controlTextColor
             thinkingTextFieldLocal.alignment = .center
@@ -164,6 +268,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
 
         case .completions(let completionItems):
             it_assert(!completionItems.isEmpty)
+            allItems = completionItems
             items = completionItems
             let detailContainerHeight: CGFloat = 30.0
 
@@ -174,7 +279,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
             contentView?.addSubview(visualEffectView)
 
             // Setup table view.
-            let completionsTableView = NSTableView()
+            let completionsTableView = CompletionsTableView()
             let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("CompletionColumn"))
             column.resizingMask = .autoresizingMask
             completionsTableView.addTableColumn(column)
@@ -185,6 +290,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
             completionsTableView.delegate = self
             completionsTableView.selectionHighlightStyle = .none
             completionsTableView.backgroundColor = .clear
+            completionsTableView.doubleAction = #selector(doubleClick(_:))
 
             let scrollViewLocal = NSScrollView()
             scrollViewLocal.documentView = completionsTableView
@@ -236,8 +342,57 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
     }
 
     func switchMode(to newMode: Mode) {
+        if canceled {
+            return
+        }
         self.mode = newMode
         configure(for: newMode, animated: true)
+    }
+
+    @objc private func doubleClick(_ sender: Any) {
+        tableView?.invokeReturnPressed()
+    }
+
+    func showSearchField(initialText: String) {
+        // Only show the search field in completions mode.
+        guard case .completions = mode else {
+           return 
+        }
+        if searchField == nil {
+            let searchField = NSSearchField(frame: .zero)
+            searchField.focusRingType = .none
+            searchField.placeholderString = "Search"
+            searchField.delegate = self
+            self.searchField = searchField
+            contentView?.addSubview(searchField)
+        }
+        searchField?.stringValue = initialText
+        filterItems(matching: initialText)
+        adjustWindowHeightCompletions(animated: true)
+        makeFirstResponder(searchField)
+
+        // Move the insertion point to the end.
+        if let editor = searchField?.currentEditor() {
+            let endPos = (searchField?.stringValue as NSString?)?.length ?? 0
+            editor.selectedRange = NSRange(location: endPos, length: 0)
+        }
+    }
+
+    private func filterItems(matching paddedText: String) {
+        let text = paddedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if text.isEmpty {
+            items = allItems
+        } else {
+            items = allItems.filter {
+                $0.suggestion.range(of: text,
+                                    options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            }
+        }
+        tableView?.reloadData()
+        if !items.isEmpty {
+            selectRow(0)
+        }
+        adjustWindowHeightCompletions(animated: true)
     }
 
     // MARK: - Common Methods
@@ -258,7 +413,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         frame.size.height = 16 + contentHeight
         let oldMaxY = self.frame.maxY
         frame.origin.y = oldMaxY - frame.size.height
-        NSLog("For indicator set frame to \(frame)")
+        DLog("For indicator set frame to \(frame)")
         setFrame(self.frame(forSize: frame.size), display: true)
 
         if let activityIndicator = activityIndicator {
@@ -269,12 +424,18 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
     }
 
     private func adjustWindowHeightCompletions(animated: Bool) {
-        guard let completionsTableView = tableView, let scrollView = scrollView, let detailView = detailView else { return }
+        guard let completionsTableView = tableView,
+              let scrollView = scrollView,
+              let detailView = detailView else { return }
         completionsTableView.layoutSubtreeIfNeeded()
 
         let maxHeight: CGFloat = 200
         let tableHeight = completionsTableView.fittingSize.height
-        let desiredHeight = detailView.frame.height + tableHeight + scrollView.contentInsets.bottom
+        let detailContainerHeight = detailView.frame.height
+        // Use a fixed height (e.g. 22) if search field is visible.
+        let searchFieldHeight: CGFloat = (searchField != nil) ? 22.0 : 0.0
+
+        let desiredHeight = detailContainerHeight + searchFieldHeight + tableHeight + scrollView.contentInsets.bottom
         let finalHeight = min(maxHeight, desiredHeight)
 
         let maxWidth: CGFloat = 500
@@ -290,7 +451,6 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
             let iconWidth = CompletionCell.imageWidth + CGFloat(CompletionCell.imageToTextMargin)
             requiredWidth = min(maxWidth, max(requiredWidth, textWidth + columnPadding + iconWidth))
             let columnWidth = requiredWidth - 32
-
             if column.width < columnWidth {
                 column.width = columnWidth
             }
@@ -298,20 +458,26 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
 
         var frame = self.frame
         frame.size = NSSize(width: requiredWidth, height: finalHeight)
-
         setFrame(self.frame(forSize: frame.size), display: true, animate: animated)
 
+        // detailView (detail container) remains at the bottom.
+        // Scroll view now sits above it and below the search field.
         scrollView.frame = NSRect(x: 0,
-                                  y: detailView.frame.height,
+                                  y: detailContainerHeight,
                                   width: frame.width,
-                                  height: finalHeight - detailView.frame.height)
+                                  height: finalHeight - detailContainerHeight - searchFieldHeight)
+        // Position the search field above the scroll view.
+        searchField?.frame = NSRect(x: 0,
+                                    y: scrollView.frame.maxY,
+                                    width: frame.width,
+                                    height: searchFieldHeight)
 
         if let tableView {
             var temp = tableView.frame
             temp.size.width = frame.width
             tableView.frame = temp
         }
-        if let detailContainer {
+        if let detailContainer = detailContainer {
             var temp = detailContainer.frame
             temp.size.width = frame.width
             detailContainer.frame = temp
@@ -362,6 +528,11 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
                                     accessibilityDescription: "Command",
                                     fallbackImageName: "command",
                                     for: CompletionsWindow.self)
+        case .folder:
+            return NSImage.it_image(forSymbolName: "folder",
+                                    accessibilityDescription: "Folder",
+                                    fallbackImageName: "folder",
+                                    for: CompletionsWindow.self)
         }
     }
 
@@ -407,10 +578,66 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
     override var canBecomeKey: Bool {
         switch mode {
         case .indicator:
-            return false
+            return closeOnResign
         case .completions:
             return true
         }
+    }
+
+    override var canBecomeMain: Bool { true }
+
+    override func makeKeyAndOrderFront(_ sender: Any?) {
+        if canceled {
+            return
+        }
+        closeOnResign = true
+        super.makeKeyAndOrderFront(sender)
+        if let tableView {
+            makeFirstResponder(tableView)
+        } else {
+            if let contentView {
+                DLog("Make content view first responder")
+                makeFirstResponder(contentView)
+            }
+        }
+    }
+
+    override func resignKey() {
+        if closeOnResign {
+            self.parent?.removeChildWindow(self)
+            orderOut(nil)
+        }
+        super.resignKey()
+    }
+}
+
+extension CompletionsWindow: NSSearchFieldDelegate {
+    func controlTextDidChange(_ obj: Notification) {
+        if let sf = obj.object as? NSSearchField {
+            filterItems(matching: sf.stringValue)
+        }
+    }
+
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        if control == searchField {
+            switch commandSelector {
+            case #selector(NSResponder.moveUp(_:)):
+                up()
+                return true
+            case #selector(NSResponder.moveDown(_:)):
+                down()
+                return true
+            case #selector(NSResponder.insertNewline(_:)):
+                tableView?.invokeReturnPressed()
+                return true
+            case #selector(NSResponder.cancelOperation(_:)):
+                tableView?.invokeEscapePressed()
+                return true
+            default:
+                break
+            }
+        }
+        return false
     }
 }
 
@@ -531,10 +758,52 @@ class CompletionCell: NSTableCellView {
         frame.size.width = bounds.width - x
         cellTextField.frame = frame
 
-        NSLog("cell width=\(bounds.width) textfield frame=\(frame)")
+        DLog("cell width=\(bounds.width) textfield frame=\(frame)")
     }
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
+    }
+}
+
+class CompletionsTableView: NSTableView {
+    override var acceptsFirstResponder: Bool { true }
+    var returnPressed: ((Int) -> ())?
+
+    override func becomeFirstResponder() -> Bool {
+        super.becomeFirstResponder()
+        return true
+    }
+
+    func invokeReturnPressed() {
+        let i = selectedRow
+        if i >= 0 {
+            returnPressed?(i)
+        }
+    }
+
+    func invokeEscapePressed() {
+        returnPressed?(-1)
+    }
+
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == kVK_Escape {
+            invokeEscapePressed()
+        } else if event.keyCode == kVK_Return || event.keyCode == kVK_ANSI_KeypadEnter {
+            invokeReturnPressed()
+        } else if !event.modifierFlags.contains(.function) {
+            // On any other typing key, show the search field.
+            if let window = self.window as? CompletionsWindow,
+               let chars = event.charactersIgnoringModifiers,
+               !chars.isEmpty {
+                window.showSearchField(initialText: chars)
+                return
+            }
+        }
+        super.keyDown(with: event)
+    }
+
+    override func insertNewline(_ sender: Any?) {
+        DLog("Newline")
     }
 }

@@ -37,10 +37,10 @@
 - (void)placeCommandInComposer:(NSString *)command {
     [self setCommand:command];
     if ([self minimalComposerRevealed]) {
-        [_minimalViewController setStringValue:command];
+        [_minimalViewController setString:command includingPrefix:NO];
     } else if ([self usingStatusBar]) {
         if (_dropDownComposerViewIsVisible) {
-            [_minimalViewController setStringValue:command];
+            [_minimalViewController setString:command includingPrefix:YES];
         } else {
             iTermStatusBarComposerComponent *component = [self statusBarComponentIfVisible];
             [component setStringValue:command];
@@ -64,15 +64,15 @@
     [self setCommand:command];
     if ([self minimalComposerRevealed]) {
         // Replace command in minimal composer
-        [_minimalViewController setStringValue:command];
+        [_minimalViewController setString:command includingPrefix:NO];
     } else if ([self usingStatusBar]) {
         if (_dropDownComposerViewIsVisible) {
             // Replace command in minimal composer
-            [_minimalViewController setStringValue:command];
+            [_minimalViewController setString:command includingPrefix:NO];
         } else {
             // Reveal dropdown composer view
             [self revealMinimal];
-            [_minimalViewController setStringValue:command];
+            [_minimalViewController setString:command includingPrefix:NO];
         }
     } else {
         // Reveal minimal composer
@@ -85,8 +85,9 @@
         _saved = [string copy];
         [self toggleMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
     } else {
-        _minimalViewController.stringValue = [NSString stringWithFormat:@"%@\n%@",
-                                              _minimalViewController.stringValue, string];
+        [_minimalViewController setString:[NSString stringWithFormat:@"%@\n%@",
+                                              _minimalViewController.stringValue, string]
+                          includingPrefix:YES];
     }
     [_minimalViewController makeFirstResponder];
 }
@@ -111,7 +112,7 @@
 - (void)setStringValue:(NSString *)command {
     _saved = [command copy];
     if (_dropDownComposerViewIsVisible) {
-        _minimalViewController.stringValue = command;
+        [_minimalViewController setString:command includingPrefix:YES];
     } else {
         iTermStatusBarComposerComponent *component = [self currentComponent];
         component.stringValue = command;
@@ -253,7 +254,7 @@
     }
     DLog(@"Add %@ to view hierarchy", _minimalViewController.view);
     if (_saved.length) {
-        _minimalViewController.stringValue = _saved ?: @"";
+        [_minimalViewController setString:_saved ?: @"" includingPrefix:YES];
         _saved = nil;
     }
     [_minimalViewController updateFrame];
@@ -557,7 +558,7 @@
 - (void)reset {
     DLog(@"Reset composer from\n%@", [NSThread callStackSymbols]);
     [_minimalViewController setPrefix:nil];
-    [_minimalViewController setStringValue:@""];
+    [_minimalViewController setString:@"" includingPrefix:YES];
     _saved = nil;
     _prefixUserData = nil;
 }

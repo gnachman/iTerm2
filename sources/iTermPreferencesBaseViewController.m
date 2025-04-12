@@ -696,7 +696,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
         case kPreferenceInfoTypeTokenField: {
             assert([info.control isKindOfClass:[NSTokenField class]]);
             NSTokenField *field = (NSTokenField *)info.control;
-            NSObject *object = [self objectForKey:info.key];;
+            NSObject *object = [self objectForKey:info.key];
             assert(!object || [object conformsToProtocol:@protocol(NSCopying)]);
             field.objectValue = (id<NSCopying>)object;
             break;

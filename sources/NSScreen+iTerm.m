@@ -113,7 +113,7 @@ static CGFloat iTermAreaOfIntersection(NSRect r1, NSRect r2) {
         @(NSMinX(myFrame)),
         @(NSMaxX(myFrame) - NSWidth(frame)),
         @(NSMinX(frame))
-    ];;
+    ];
     NSArray<NSNumber *> *yOriginCandidates = @[
         @(NSMinY(myFrame)),
         @(NSMaxY(myFrame) - NSHeight(frame)),

@@ -150,26 +150,13 @@ class ComposerTextView: MultiCursorTextView {
         let rectInScreen = window.convertToScreen(rectInWindow)
 
         if let completions, let prefix {
-            let boldFont = NSFontManager.shared.convert(font!, toHaveTrait: .boldFontMask)
-            let regularFont = NSFontManager.shared.convert(font!, toNotHaveTrait: .boldFontMask)
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.lineBreakMode = .byTruncatingHead
-            let regular: [NSAttributedString.Key: Any] = [.font: regularFont,
-                                                          .foregroundColor: NSColor.textColor,
-                                                          .paragraphStyle: paragraphStyle]
-            let bold: [NSAttributedString.Key: Any] = [.font: boldFont,
-                                                       .foregroundColor: NSColor.textColor,
-                                                       .paragraphStyle: paragraphStyle]
-
-
-            let attributedPrefix = NSAttributedString(string: prefix, attributes: bold)
-
             let items = completions.map { item in
                 let string = item.value
-                let attributedString: NSMutableAttributedString = attributedPrefix.mutableCopy() as! NSMutableAttributedString
-                attributedString.append(NSAttributedString(string: string, attributes: regular))
-                let detail = NSAttributedString(string: (item.detail ?? item.value),
-                                                attributes: regular)
+                let attributedString = CompletionsWindow.attributedString(font: font!,
+                                                                          prefix: prefix,
+                                                                          suffix: string)
+                let detail = CompletionsWindow.attributedDetail(string: item.detail ?? item.value,
+                                                                font: font!)
                 return CompletionsWindow.Item(suggestion: string,
                                               attributedString: attributedString,
                                               detail: detail,
@@ -191,6 +178,12 @@ class ComposerTextView: MultiCursorTextView {
                 if case .visible(let current) = self?.completionState, current == window {
                     self?.suggestion = suggestion
                 }
+            }
+            completionsWindow.returnPressed = { [weak self] _ in
+                guard let self else {
+                    return
+                }
+                _ = handleReturnInCompletionsWindow()
             }
             completionState = .visible(completionsWindow)
         } else {
@@ -306,9 +299,20 @@ class ComposerTextView: MultiCursorTextView {
         get {
             return String(string.dropFirst(prefix?.string.count ?? 0))
         }
-        set {
-            string = newValue
-            updatePrefix()
+    }
+
+    @objc
+    func setStringIncludingPrefix(_ newValue: String) {
+        string = newValue
+        updatePrefix()
+    }
+
+    @objc
+    func setStringExcludingPrefix(_ newValue: String) {
+        if let existingPrefix = prefix {
+            string = existingPrefix.string + newValue
+        } else {
+            setStringIncludingPrefix(newValue)
         }
     }
 
@@ -497,6 +501,17 @@ class ComposerTextView: MultiCursorTextView {
         super.performFindPanelAction(sender)
     }
 
+    private func handleReturnInCompletionsWindow() -> Bool {
+        if completionsWindowIfVisible != nil {
+            if hasSuggestion && suggestionRange.length > 0 {
+                setCompletions(completions: [], prefix: "")
+                acceptSuggestion()
+                return true
+            }
+        }
+        return false
+    }
+
     private struct Action {
         var modifiers: NSEvent.ModifierFlags
         var characters: String
@@ -528,15 +543,8 @@ class ComposerTextView: MultiCursorTextView {
                    }),
             Action(modifiers: [],
                    characters: "\r",
-                   closure: { [weak self] textView, _ in
-                       if self?.completionsWindowIfVisible != nil {
-                           if textView.hasSuggestion && textView.suggestionRange.length > 0 {
-                               textView.setCompletions(completions: [], prefix: "")
-                               textView.acceptSuggestion()
-                               return true
-                           }
-                       }
-                       return false
+                   closure: { [weak self] _, _ in
+                       return self?.handleReturnInCompletionsWindow() ?? false
                    })
         ]
     }

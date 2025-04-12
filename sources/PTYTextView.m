@@ -2622,7 +2622,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (NSString *)updateHoverButtonsForLine:(int)line changed:(out BOOL *)changedPtr {
     NSString *block = [self foldableBlockIDOnLine:line];
-    const VT100GridCoordRange coordRange = [_dataSource rangeOfBlockWithID:block];;
+    const VT100GridCoordRange coordRange = [_dataSource rangeOfBlockWithID:block];
     NSRange absLineRange;
     if (VT100GridCoordIsValid(coordRange.start) && VT100GridCoordIsValid(coordRange.end)) {
         const VT100GridAbsCoordRange absCoordRange = VT100GridAbsCoordRangeFromCoordRange(coordRange, _dataSource.totalScrollbackOverflow);
@@ -6433,6 +6433,7 @@ static NSString *iTermStringFromRange(NSRange range) {
         }
         id<iTermFoldMarkReading> foldMark = [self foldMarkAtWindowCoord:event.locationInWindow];
         id<VT100ScreenMarkReading> commandMark = [self commandMarkAtWindowCoord:event.locationInWindow];
+        id<iTermPathMarkReading> pathMark = [self pathMarkAtWindowCoord:event.locationInWindow];
         const VT100GridCoord coord = [self coordForPoint:pointInSelf allowRightMarginOverflow:NO];
         NSString *blockID = [self foldableBlockIDOnLine:coord.y];
         if (foldMark) {
@@ -6448,6 +6449,8 @@ static NSString *iTermStringFromRange(NSRange range) {
             DLog(@"mouseUp: command mark");
             [self foldCommandMark:commandMark];
             return VT100GridCoordMake(-1, -1);
+        } else if (pathMark) {
+            [self.delegate textViewUserDidClickPathMark:pathMark at:event.locationInWindow];
         } else if (!firstMouse) {
             if ([self revealAnnotationsAt:[self coordForEvent:event] toggle:YES]) {
                 DLog(@"mouseUp: reveal annotation");

@@ -547,7 +547,7 @@ const int kColorMapAnsiBrightModifier = 8;
                                 isBackground:isBackground
                           useCustomBoldColor:useCustomBoldColor
                                 brightenBold:brightenBold];
-    NSColor *color  = [self colorForKey:key];;
+    NSColor *color  = [self colorForKey:key];
     if (!isBackground && isFaint) {
         color = [color colorWithAlphaComponent:0.5];
     }

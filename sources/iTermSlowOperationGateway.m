@@ -106,6 +106,10 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     _connectionToService.interruptionHandler = ^{
         [weakSelf didInterrupt];
     };
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[ [NSArray class], [iTermDirectoryEntry class] ]]
+                                               forSelector:@selector(fetchDirectoryListingOfPath:completion:)
+                                             argumentIndex:0
+                                                   ofReply:YES];
 }
 
 - (void)didInterrupt {
@@ -382,6 +386,18 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                                  NSTaskTerminationReason reason) {
         dispatch_async(dispatch_get_main_queue(), ^{
             completion(stdout, stderr, status,reason);
+        });
+    }];
+}
+
+- (void)fetchDirectoryListingOfPath:(NSString *)path
+                         completion:(void (^)(NSArray<iTermDirectoryEntry *> *entries))completion {
+    DLog(@"fetchDirectoryListingOfPath:%@", path);
+    id<pidinfoProtocol> proxy = [_connectionToService remoteObjectProxy];
+    [proxy fetchDirectoryListingOfPath:path
+                            completion:^(NSArray<iTermDirectoryEntry *> *entries) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(entries);
         });
     }];
 }

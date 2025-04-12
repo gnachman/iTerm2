@@ -9,6 +9,7 @@
 #import "iTermCancelable.h"
 
 @class iTermGitState;
+@class iTermDirectoryEntry;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -83,6 +84,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)checkIfExecutableRegularFile:(NSString *)filename
                          searchPaths:(NSArray<NSString *> *)searchPaths  // from $PATH
                           completion:(void (^)(BOOL isExecutableRegularFile))completion;
+
+- (void)fetchDirectoryListingOfPath:(NSString *)path
+                         completion:(void (^)(NSArray<iTermDirectoryEntry *> *entries))completion;
 
 @end
 

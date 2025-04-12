@@ -1014,6 +1014,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                            range:range];
 }
 
+- (id<iTermPathMarkReading>)pathMarkAt:(VT100GridCoord)coord {
+    return [_state pathMarkAt:coord];
+}
+
 - (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line {
     return [_state commandMarkAtOrBeforeLine:line];
 }

@@ -778,3 +778,57 @@ extension PTYSession {
         return nil
     }
 }
+
+@available(macOS 11.0, *)
+extension PTYSession: PathCompletionHelperDelegate {
+    @objc(showCompletionUIForPathMark:)
+    func showCompletionUI(pathMark: PathMarkReading) -> PathCompletionHelper? {
+        guard screen.isAtCommandPrompt else {
+            return nil
+        }
+        let pathCompletionHelper = PathCompletionHelper(remoteHost: screen.lastRemoteHost(),
+                                                        conductor: conductor,
+                                                        pathMark: pathMark)
+        pathCompletionHelper.delegate = self
+        pathCompletionHelper.begin()
+        return pathCompletionHelper
+    }
+
+    func pathCompletionHelper(_ helper: PathCompletionHelper,
+                              rangeForInterval interval: Interval) -> VT100GridCoordRange {
+        return screen.coordRange(for: interval)
+    }
+
+    func pathCompletionHelperWidth(_ helper: PathCompletionHelper) -> Int32 {
+        return screen.width()
+    }
+
+    func pathCompletionHelper(_ helper: PathCompletionHelper,
+                              screenRectForCoordRange coordRange: VT100GridCoordRange) -> NSRect {
+        let startRect = textview.rect(for: coordRange.start)
+        let endRect = textview.rect(for: coordRange.end)
+        let textViewRect = startRect.union(endRect)
+        let windowRect = textview.convert(textViewRect, to: nil)
+        let screenRect = textview.window?.convertToScreen(windowRect) ?? .zero
+        return screenRect
+    }
+
+    func pathCompletionHelperWindow(_ helper: PathCompletionHelper) -> NSWindow? {
+        return textview.window
+    }
+
+    func pathCompletionHelperFont(_ helper: PathCompletionHelper) -> NSFont {
+        return textview.fontTable.asciiFont.font
+    }
+
+    func pathCompletionHelper(_ helper: PathCompletionHelper, didSelect suggestion: String) {
+        let escaped = (suggestion as NSString).withBackslashEscapedShellCharacters(includingNewlines: true)!
+        if screen.isAtCommandPrompt && (currentCommand ?? "").isEmpty {
+            writeTask("cd \(escaped)\r")
+        } else {
+            setOrAppendComposerString((currentCommand ?? "") + escaped)
+        }
+        helper.invalidate()
+        pathCompletionHelper = nil
+    }
+}

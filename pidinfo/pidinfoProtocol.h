@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 
 @class iTermGitState;
+@class iTermDirectoryEntry;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -75,6 +76,9 @@ NS_ASSUME_NONNULL_BEGIN
                                       NSData *stderr,
                                       uint8_t status,
                                       NSTaskTerminationReason reason))reply;
+
+- (void)fetchDirectoryListingOfPath:(NSString *)path
+                         completion:(void (^)(NSArray<iTermDirectoryEntry *> *entries))completion;
 
 @end
 

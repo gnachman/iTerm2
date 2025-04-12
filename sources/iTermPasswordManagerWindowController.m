@@ -375,7 +375,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
     const NSInteger cancelCount = [self incrBusy];
     [self.currentDataSource reload:^{
         [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
-            [weakSelf reloadAccounts:completion];;
+            [weakSelf reloadAccounts:completion];
             [weakSelf decrBusy];
         }];
     }];

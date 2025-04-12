@@ -7,10 +7,12 @@
 
 #import "pidinfo.h"
 
+#import "iTermDirectoryEntry.h"
 #import "iTermFileDescriptorServerShared.h"
 #import "iTermGitClient.h"
 #import "iTermPathFinder.h"
 #import "pidinfo-Swift.h"
+#include <dirent.h>
 #include <libproc.h>
 #include <mach-o/dyld.h>
 #include <stdatomic.h>
@@ -813,6 +815,47 @@ void iTermMutatePathFindersDict(void (^NS_NOESCAPE block)(NSMutableDictionary<NS
         DLog(@"Finished with stdout %@", stdout);
         reply(stdout, stderr, task.terminationStatus, task.terminationReason);
     }];
+}
+
+- (void)fetchDirectoryListingOfPath:(NSString *)path
+                         completion:(void (^)(NSArray<iTermDirectoryEntry *> *entries))reply {
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^completion)(void)) {
+        if (!shouldPerform) {
+            reply(@[]);
+            syslog(LOG_WARNING, "pidinfo wedged in fetchDirectoryListingOfPath. count=%d",
+                   self->_numWedged);
+            return;
+        }
+
+        if (!completion()) {
+            syslog(LOG_INFO, "fetchDirectoryListingOfPath finished after timing out.");
+        }
+        reply([self reallyFetchDirectoryListingOfPath:path]);
+    }];
+}
+
+- (NSArray<iTermDirectoryEntry *> *)reallyFetchDirectoryListingOfPath:(NSString *)path {
+    NSMutableArray<iTermDirectoryEntry *> *entries = [NSMutableArray array];
+    DIR *dir = opendir([path fileSystemRepresentation]);
+    if (!dir) {
+        return entries;
+    }
+    struct dirent *dent;
+    while ((dent = readdir(dir)) != NULL) {
+        NSString *fileName = [NSString stringWithUTF8String:dent->d_name];
+        if ([fileName isEqualToString:@"."] || [fileName isEqualToString:@".."]) {
+            continue;
+        }
+        NSString *fullPath = [path stringByAppendingPathComponent:fileName];
+        struct stat statBuf;
+        if (stat([fullPath fileSystemRepresentation], &statBuf) == 0) {
+            iTermDirectoryEntry *entry = [[iTermDirectoryEntry alloc] initWithName:fileName
+                                                                           statBuf:statBuf];
+            [entries addObject:entry];
+        }
+    }
+    closedir(dir);
+    return entries;
 }
 
 @end

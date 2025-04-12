@@ -1100,6 +1100,22 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return nil;
 }
 
+- (id<iTermPathMarkReading>)pathMarkAt:(VT100GridCoord)coord {
+    NSArray<id<IntervalTreeImmutableObject>> *objects = [self intervalTreeObjectsAtCoord:VT100GridAbsCoordFromCoord(coord, self.cumulativeScrollbackOverflow)];
+    for (id<IntervalTreeImmutableObject> object in objects) {
+        if ([object conformsToProtocol:@protocol(iTermPathMarkReading)]) {
+            return (id<iTermPathMarkReading>)object;
+        }
+    }
+    return nil;
+}
+
+- (NSArray<id<IntervalTreeImmutableObject>> *)intervalTreeObjectsAtCoord:(VT100GridAbsCoord)coord {
+    const VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeMake(coord.x, coord.y, coord.x + 1, coord.y);
+    Interval *interval = [self intervalForGridAbsCoordRange:absRange];
+    return [_intervalTree objectsInInterval:interval];
+}
+
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
     if (range.start.x == -1) {
         return nil;

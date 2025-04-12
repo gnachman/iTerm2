@@ -369,7 +369,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
             button.keyBindingAction = @{ @"presetName": name };
             [documentView addSubview:button];
             button.translatesAutoresizingMaskIntoConstraints = NO;
-            [self addConstraintsToButton:button superView:documentView previous:previous];;
+            [self addConstraintsToButton:button superView:documentView previous:previous];
             previous = button;
         }
     }

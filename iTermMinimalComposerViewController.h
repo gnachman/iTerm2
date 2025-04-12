@@ -65,7 +65,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermMinimalComposerViewController : NSViewController
 @property (nonatomic, weak) id<iTermMinimalComposerViewControllerDelegate> delegate;
-@property (nonatomic, copy) NSString *stringValue;
+@property (nonatomic, readonly) NSString *stringValue;
 @property (nonatomic) BOOL isAutoComposer;
 @property (nonatomic, readonly) CGFloat desiredHeight;
 @property (nonatomic) BOOL isSeparatorVisible;
@@ -87,6 +87,7 @@ workingDirectory:(NSString *)pwd
 - (void)insertText:(NSString *)text;
 - (void)paste:(id)sender;
 - (void)deleteLastCharacter;
+- (void)setString:(NSString *)string includingPrefix:(BOOL)includingPrefix;
 
 @end
 

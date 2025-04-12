@@ -388,6 +388,31 @@ NS_INLINE VT100GridCoordRange VT100GridCoordRangeUnionBoxes(VT100GridCoordRange 
     return result;
 }
 
+NS_INLINE VT100GridCoordRange VT100GridCoordRangeIntersection(VT100GridCoordRange r1,
+                                                              VT100GridCoordRange r2) {
+    VT100GridCoordRange result;
+
+    if (VT100GridCoordOrder(r1.start, r2.start) == NSOrderedDescending) {
+        result.start = r1.start;
+    } else {
+        result.start = r2.start;
+    }
+
+    if (VT100GridCoordOrder(r1.end, r2.end) == NSOrderedAscending) {
+        result.end = r1.end;
+    } else {
+        result.end = r2.end;
+    }
+
+    if (VT100GridCoordOrder(result.start, result.end) != NSOrderedAscending) {
+        result.start.x = result.end.x = INT_MIN;
+        result.start.y = result.end.y = INT_MIN;
+        return result;
+    }
+
+    return result;
+}
+
 NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeIntersection(VT100GridAbsCoordRange r1,
                                                                     VT100GridAbsCoordRange r2,
                                                                     int width) {
@@ -797,6 +822,29 @@ NS_INLINE BOOL VT100GridCoordRangeFromDictionary(NSDictionary * _Nullable dict, 
         return NO;
     }
     return YES;
+}
+
+NS_INLINE VT100GridCoordRange VT100GridCoordRangeSanitize(VT100GridCoordRange unsafeRange) {
+    VT100GridCoordRange range = unsafeRange;
+    if (range.start.x > range.end.x) {
+        const int temp = range.start.x;
+        range.start.x = range.end.x;
+        range.end.x = temp;
+    }
+    if (range.start.y > range.end.y) {
+        const int temp = range.start.y;
+        range.start.y = range.end.y;
+        range.end.y = temp;
+    }
+    return range;
+}
+
+NS_INLINE VT100GridCoordRange VT100GridCoordRangeConvexHull(VT100GridCoordRange unsafeRange, int width) {
+    const VT100GridCoordRange range = VT100GridCoordRangeSanitize(unsafeRange);
+    if (range.start.y == range.end.y) {
+        return range;
+    }
+    return VT100GridCoordRangeMake(0, range.start.y, width, range.end.y);
 }
 
 NS_ASSUME_NONNULL_END

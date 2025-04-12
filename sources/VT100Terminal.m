@@ -1743,7 +1743,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 }
 
 - (void)reallyExecuteToken:(VT100Token *)token {
-    [_delegate terminal:self willExecuteToken:token defaultChar:&_defaultChar encoding:_encoding];;
+    [_delegate terminal:self willExecuteToken:token defaultChar:&_defaultChar encoding:_encoding];
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
     if (token->type == DCS_TMUX_HOOK) {
         [_delegate terminalStartTmuxModeWithDCSIdentifier:token.string];
@@ -3833,7 +3833,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
   NSString* key;
   NSString* value;
   if (eqRange.location != NSNotFound) {
-    key = [argument substringToIndex:eqRange.location];;
+    key = [argument substringToIndex:eqRange.location];
     value = [argument substringFromIndex:eqRange.location+1];
   } else {
     key = argument;

@@ -253,7 +253,7 @@ static NSMutableDictionary *CachedGraphicImages(void) {
     CGFloat brightness = iTermPerceptualBrightnessSRGB(color);
     while (brightness < minBrightness || brightness > maxBrightness) {
         [acc appendFormat:@"%0.2f%0.2f%0.2f", color.r, color.g, color.b];
-        color = [self colorForString:acc];;
+        color = [self colorForString:acc];
         brightness = iTermPerceptualBrightnessSRGB(color);
     }
     return [NSString stringWithFormat:@"#%02x%02x%02x",

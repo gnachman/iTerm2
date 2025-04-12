@@ -34,6 +34,7 @@
 @class iTermFindOnPageHelper;
 @class iTermFontTable;
 @class iTermImageWrapper;
+@protocol iTermPathMarkReading;
 @class iTermQuickLookController;
 @class iTermSelection;
 @protocol iTermSemanticHistoryControllerDelegate;
@@ -323,6 +324,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (CGFloat)textViewRightExtra;
 - (void)textViewLiveSelectionDidEnd;
 - (void)textViewShowJSONPromotion;
+- (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark at:(NSPoint)windowPoint;
 
 @end
 

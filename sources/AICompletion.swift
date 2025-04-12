@@ -172,6 +172,7 @@ class CompletionItem: NSObject {
         case aiSuggestion
         case history
         case command
+        case folder
     }
 
     @objc(initWithValue:detail:kind:)

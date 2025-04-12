@@ -364,6 +364,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 - (id<VT100ScreenMarkReading> _Nullable)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor;
 - (id<VT100ScreenMarkReading> _Nullable)promptMarkBeforePromptMark:(id<VT100ScreenMarkReading>)successor;
 - (NSArray<id<PTYAnnotationReading>> *)annotationsOnAbsLine:(long long)absLine;
+- (id<iTermPathMarkReading>)pathMarkAt:(VT100GridCoord)coord;
 
 - (NSString * _Nullable)commandInRange:(VT100GridCoordRange)range;
 
@@ -371,7 +372,8 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 
 - (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
 
-- (NSString *)workingDirectoryOnLine:(int)line;
+- (NSString * _Nullable)workingDirectoryOnLine:(int)line;
+- (NSString * _Nullable)currentWorkingDirectory;
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter

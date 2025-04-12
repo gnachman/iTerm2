@@ -2294,6 +2294,25 @@ public struct RemoteFile: Codable, Equatable, CustomDebugStringConvertible
     }
 }
 
+extension RemoteFile {
+    var directoryEntry: iTermDirectoryEntry {
+        var mode = mode_t(0)
+        switch kind {
+        case .folder:
+            mode |= S_IFDIR
+        default:
+            break
+        }
+        if permissions?.r ?? true {
+            mode |= S_IRUSR
+        }
+        if permissions?.x ?? false {
+            mode |= S_IXUSR
+        }
+        return iTermDirectoryEntry(name: name, mode: mode)
+    }
+}
+
 public enum iTermFileProviderServiceError: Error, Codable, CustomDebugStringConvertible {
     case notFound(String)
     case unknown(String)
@@ -2422,6 +2441,42 @@ extension Conductor: SSHEndpoint {
         return output
     }
 
+    @objc(fetchDirectoryListingOfPath:queue:completion:)
+    @MainActor
+    func objcListFiles(_ path: String,
+                       queue: DispatchQueue,
+                       completion: @escaping ([iTermDirectoryEntry]) -> ()) {
+        Task {
+            do {
+                let files = try await listFiles(path, sort: .byName)
+                let entries = files.map {
+                    var mode = mode_t(0)
+                    switch $0.kind {
+                    case .folder:
+                        mode |= S_IFDIR
+                    default:
+                        break
+                    }
+                    if $0.permissions?.r ?? true {
+                        mode |= S_IRUSR
+                    }
+                    if $0.permissions?.x ?? false {
+                        mode |= S_IXUSR
+                    }
+                    return iTermDirectoryEntry(name: $0.name, mode: mode)
+                }
+                queue.async {
+                    completion(entries)
+                }
+            } catch {
+                DLog("\(error) for \(path)")
+                queue.async {
+                    completion([])
+                }
+            }
+        }
+    }
+
     @MainActor
     func listFiles(_ path: String, sort: FileSorting) async throws -> [RemoteFile] {
         return try await logging("listFiles")  {
@@ -2477,6 +2532,26 @@ extension Conductor: SSHEndpoint {
         let decoder = JSONDecoder()
         return try iTermFileProviderServiceError.wrap {
             return try decoder.decode(RemoteFile.self, from: jsonData)
+        }
+    }
+
+    @objc
+    @MainActor
+    func stat(_ path: String,
+              queue: DispatchQueue,
+              completion: @escaping (Int32, UnsafePointer<stat>?) -> ()) {
+        Task {
+            do {
+                let rf = try await stat(path)
+                queue.async {
+                    var sb = rf.toStat()
+                    completion(0, &sb)
+                }
+            } catch {
+                queue.async {
+                    completion(1, nil)
+                }
+            }
         }
     }
 
@@ -2910,5 +2985,58 @@ extension Conductor: FileCheckerDataSource {
                 completion(exists)
             }
         }
+    }
+}
+
+// Helper to convert a Date to a timespec structure.
+private func timespecFromDate(_ date: Date) -> timespec {
+    var ts = timespec()
+    // Convert seconds to time_t and extract the fractional part for nanoseconds.
+    let t = date.timeIntervalSince1970
+    ts.tv_sec = time_t(t)
+    ts.tv_nsec = Int((t - TimeInterval(ts.tv_sec)) * 1_000_000_000)
+    return ts
+}
+
+extension RemoteFile {
+    /// Converts a `RemoteFile` instance into a Unix-like `struct stat`.
+    func toStat() -> stat {
+        var fileStat = stat()
+
+        var fileType: mode_t = 0
+        switch self.kind {
+        case .file:
+            fileType = S_IFREG   // Regular file.
+        case .folder:
+            fileType = S_IFDIR   // Directory.
+        case .symlink:
+            fileType = S_IFLNK   // Symlink.
+        case .host:
+            // There is no direct mapping for "host" in POSIX;
+            // here we default to treating it like a regular file.
+            fileType = S_IFREG
+        }
+
+        // Calculate permission bits based on our Permissions type.
+        var permissionBits: mode_t = 0
+        if let perms = self.permissions {
+            if perms.r {
+                permissionBits |= S_IRUSR
+            }
+            if perms.w {
+                permissionBits |= S_IWUSR
+            }
+            if perms.x {
+                permissionBits |= S_IXUSR
+            }
+        }
+        // Combine type and permission bits.
+        fileStat.st_mode = fileType | permissionBits
+
+        // File size: use the wrapped file info for files, or 0 for directories and others.
+        let sizeValue = self.size ?? 0
+        fileStat.st_size = off_t(sizeValue)
+
+        return fileStat
     }
 }

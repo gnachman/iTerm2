@@ -154,7 +154,9 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
         tipWindow.setContentBorderThickness(0, for: .maxY)
         tipWindow.setContentBorderThickness(0, for: .minX)
         tipWindow.setContentBorderThickness(0, for: .minY)
-        var windowOrigin = calculateTipPosition(for: menuItem, tipSize: paddedSize, screen: screen)
+        guard var windowOrigin = calculateTipPosition(for: menuItem, tipSize: paddedSize, screen: screen)else {
+            return
+        }
         windowOrigin.x -= inset
         windowOrigin.y += inset
         tipWindow.setFrameOrigin(windowOrigin)
@@ -179,12 +181,15 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
         }
     }
 
-    private func calculateTipPosition(for menuItem: NSMenuItem, tipSize: NSSize, screen: NSScreen) -> NSPoint {
+    private func calculateTipPosition(for menuItem: NSMenuItem, tipSize: NSSize, screen: NSScreen) -> NSPoint? {
         if let sub = menuItem.submenu?.items.first {
             return calculateTipPosition(for: sub, tipSize: tipSize, screen: screen)
         }
         guard let itemBounds = getMenuItemBounds(menuItem) else {
-            return .zero
+            return nil
+        }
+        if itemBounds.width == 0 || itemBounds.height == 0 {
+            return nil
         }
 
         let x = min(itemBounds.maxX + 8, screen.visibleFrame.maxX - tipSize.width - 8)
@@ -233,6 +238,7 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
     }
 
     func menuDidClose(_ menu: NSMenu) {
+        timerGeneration += 1
         hideTip()
     }
 

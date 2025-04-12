@@ -444,4 +444,8 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenReportWindowTitle;
 - (void)screenSetPointerShape:(NSString * _Nonnull)pointerShape;
 - (void)screenFoldRange:(NSRange)range;
+- (void)screenStatPath:(NSString *)path
+                 queue:(dispatch_queue_t)queue
+            completion:(void (^)(int32_t, const struct stat *))completion;
+
 @end

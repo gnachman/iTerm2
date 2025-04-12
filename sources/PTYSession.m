@@ -1107,6 +1107,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_userTmuxOptionMonitors release];
     [_runningRemoteCommand release];
     [_turdDetector release];
+    [_pathCompletionHelper release];
 
     [super dealloc];
 }
@@ -6916,6 +6917,11 @@ DLog(args); \
     [self.composerManager toggle];
 }
 
+- (void)setOrAppendComposerString:(NSString *)string {
+    [self setComposerString:[(self.composerManager.contents ?: @"") stringByAppendingString:string]
+                 forceLarge:NO];
+}
+
 - (void)setComposerString:(NSString *)string forceLarge:(BOOL)forceLarge {
     [self sendHexCode:[iTermAdvancedSettingsModel composerClearSequence]];
     if (forceLarge) {
@@ -12197,6 +12203,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark at:(NSPoint)windowPoint {
+    if (@available(macOS 11, *)) {
+        [_pathCompletionHelper invalidate];
+        [_pathCompletionHelper autorelease];
+        _pathCompletionHelper = [[self showCompletionUIForPathMark:pathMark] retain];
+    }
+}
+
+
 - (void)textviewToggleTimestampsMode {
     const BOOL alreadyVisible = [self desiredTimestampMode] != iTermTimestampsModeOff;
     const BOOL shouldBeVisible = !alreadyVisible;
@@ -14585,6 +14600,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_screen foldAbsLineRange:range];
 }
 
+- (void)screenStatPath:(NSString *)path
+                 queue:(dispatch_queue_t)queue
+            completion:(void (^)(int32_t, const struct stat *))completion {
+    if (!_conductor) {
+        completion(1, nil);
+    } else {
+        [_conductor stat:path queue:queue completion:completion];
+    }
+}
+
 #pragma mark - FinalTerm
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
@@ -14592,6 +14617,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (NSString *)currentCommand {
+    if (self.haveAutoComposer) {
+        return _composerManager.contents;
+    }
     if (_screen.commandRange.start.x < 0) {
         return nil;
     } else {

@@ -491,6 +491,19 @@ extension PTYTextView: ExternalSearchResultsController {
                                       range: nil)
     }
 
+    @objc(pathMarkAtWindowCoord:)
+    func pathMark(at windowCoord: NSPoint) -> PathMarkReading? {
+        let locationInTextView = convert(windowCoord, from: nil)
+        if Int(clamping: locationInTextView.x) < iTermPreferences.int(forKey: kPreferenceKeySideMargins) {
+            return nil
+        }
+        let coord = self.coord(for: locationInTextView, allowRightMarginOverflow: true)
+        if coord.y < 0 {
+            return nil
+        }
+        return dataSource.pathMark(at: coord)
+    }
+
     // MARK: - Folding
 
     @objc(toggleFoldSelectionAbsoluteLines:)

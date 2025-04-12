@@ -62,6 +62,7 @@ extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 @class iTermExpect;
 @class iTermImageWrapper;
 @class iTermKeyBindingAction;
+@class iTermPathCompletionHelper;
 @class iTermRunningRemoteCommand;
 @class iTermSSHReconnectionInfo;
 @class iTermScriptHistoryEntry;
@@ -608,6 +609,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, strong) iTermRunningRemoteCommand *runningRemoteCommand;
 @property(nonatomic, readonly) iTermSessionModeHandler *modeHandler;
+@property(nonatomic, strong) iTermPathCompletionHelper *pathCompletionHelper;
 
 #pragma mark - methods
 
@@ -1022,6 +1024,7 @@ backgroundColor:(NSColor *)backgroundColor;
                      scope:(iTermVariableScope *)scope
                     origin:(NSString *)origin;
 - (void)setParentScope:(iTermVariableScope *)parentScope;
+- (void)setOrAppendComposerString:(NSString *)string;
 
 @end
 

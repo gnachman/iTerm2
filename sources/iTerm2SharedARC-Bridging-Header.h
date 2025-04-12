@@ -22,6 +22,7 @@
 #import "iTermCopyModeHandler.h"
 #import "iTermCoreTextLineRenderingHelper.h"
 #import "iTermDatabase.h"
+#import "iTermDirectoryEntry.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermFindPasteboard.h"
 #import "iTermGCD.h"

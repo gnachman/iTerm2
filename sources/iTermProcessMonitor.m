@@ -76,7 +76,7 @@
         dispatch_resume(_source);
     }
 
-    NSMutableArray<iTermProcessMonitor *> *childrenToAdd = [NSMutableArray array];;
+    NSMutableArray<iTermProcessMonitor *> *childrenToAdd = [NSMutableArray array];
     NSMutableArray<iTermProcessMonitor *> *childrenToRemove = [_children mutableCopy];
 
     [processInfo.children enumerateObjectsUsingBlock:
@@ -93,7 +93,7 @@
         }
 
         // Create a new one.
-        child = [[iTermProcessMonitor alloc] initWithQueue:_queue callback:_callback];;
+        child = [[iTermProcessMonitor alloc] initWithQueue:_queue callback:_callback];
         [child setProcessInfo:childInfo depth:depth + 1];
         [childrenToAdd addObject:child];
     }];

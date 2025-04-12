@@ -16,6 +16,7 @@
 @class iTermKittyImageDraw;
 @protocol iTermMark;
 @class iTermOffscreenCommandLine;
+@protocol iTermPathMarkReading;
 @class iTermRange;
 @class iTermRangeArray;
 @class iTermSavedIntervalTreeObject;
@@ -105,6 +106,7 @@
 - (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
                             mustHaveCommand:(BOOL)mustHaveCommand
                                       range:(out VT100GridWindowedRange *)range;
+- (id<iTermPathMarkReading>)pathMarkAt:(VT100GridCoord)coord;
 - (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor;
 - (id<VT100ScreenMarkReading>)promptMarkBeforePromptMark:(id<VT100ScreenMarkReading>)predecessor;
 

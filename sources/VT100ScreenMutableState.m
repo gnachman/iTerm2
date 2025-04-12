@@ -3500,9 +3500,28 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     id<VT100ScreenMarkReading> mark = [[self updatePromptMarkRangesForPromptEndingOnLine:line
                                                                               promptText:promptText] doppelganger];
     [_promptStateMachine didCapturePrompt:promptText];
+    [self addMarksForPathsInRange:promptRange];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidEndWithMark:mark];
     }];
+}
+
+- (void)addMarksForPathsInRange:(VT100GridAbsCoordRange)absRange {
+    iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:self];
+    const long long offset = self.totalScrollbackOverflow;
+    const VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, offset);
+    iTermPathSniffer *sniffer = [[iTermPathSniffer alloc] initWithExtractor:extractor
+                                                                      range:range
+                                                                 remoteHost:self.lastRemoteHost
+                                                                     offset:offset
+                                                                        pwd:self.currentWorkingDirectory
+                                                                      width:self.width
+                                                                      queue:[iTermGCD mutationQueue]];
+    sniffer.delegate = self;
+    [sniffer sniff];
+    if (sniffer.hasSideEffects) {
+        [sniffer executeSideEffectsWithStatter:self];
+    }
 }
 
 - (NSArray<ScreenCharArray *> *)contentInRange:(VT100GridAbsCoordRange)range {
@@ -6299,6 +6318,27 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (long long)kittyImageControllerScreenAbsLine {
     return self.numberOfScrollbackLines + self.totalScrollbackOverflow;
+}
+
+#pragma mark - iTermPathSnifferDelegate
+
+- (void)pathSniffer:(iTermPathSniffer *)pathSniffer
+      didDetectPath:(NSString *)path
+            inRange:(VT100GridAbsCoordRange)range {
+    DLog(@"Detected %@ at %@", path, VT100GridAbsCoordRangeDescription(range));
+
+    iTermPathMark *pathMark = [[iTermPathMark alloc] initWithRemoteHost:self.lastRemoteHost
+                                                                   path:path];
+    [self.mutableIntervalTree addObject:pathMark
+                           withInterval:[self intervalForGridAbsCoordRange:range]];
+}
+
+- (void)stat:(NSString *)path
+       queue:(dispatch_queue_t)queue
+  completion:(void (^)(int32_t, const struct stat *))completion {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenStatPath:path queue:queue completion:completion];
+    }];
 }
 
 @end

@@ -338,8 +338,12 @@ workingDirectory:(NSString *)pwd
     return _largeComposerViewController.textView.stringExcludingPrefix;
 }
 
-- (void)setStringValue:(NSString *)stringValue {
-    _largeComposerViewController.textView.stringExcludingPrefix = stringValue;
+- (void)setString:(NSString *)stringValue includingPrefix:(BOOL)includingPrefix {
+    if (includingPrefix) {
+        [_largeComposerViewController.textView setStringIncludingPrefix:stringValue];
+    } else {
+        [_largeComposerViewController.textView setStringExcludingPrefix:stringValue];
+    }
     [_largeComposerViewController.textView it_scrollCursorToVisible];
 }
 
