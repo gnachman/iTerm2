@@ -753,7 +753,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         [self.variablesScope setValue:@NO forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
         [self.variablesScope setValue:NSHomeDirectory() forVariableNamed:iTermVariableKeySessionHomeDirectory];
         [self.variablesScope setValue:@0 forVariableNamed:iTermVariableKeySSHIntegrationLevel];
-        self.variablesScope.shell = [self bestGuessAtUserShell];
+        self.variablesScope.shell = [self bestGuessAtUserShellWithPath:NO];
         self.variablesScope.uname = [self bestGuessAtUName];
 
         _variables.primaryKey = iTermVariableKeySessionID;
@@ -1813,7 +1813,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
     aSession.hostnameToShell = [[arrangement[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] mutableCopy] autorelease];
-    [aSession.variablesScope setValue:[aSession bestGuessAtUserShell] forVariableNamed:iTermVariableKeySSHIntegrationLevel];
+    [aSession.variablesScope setValue:[aSession bestGuessAtUserShellWithPath:NO] forVariableNamed:iTermVariableKeyShell];
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
@@ -15528,8 +15528,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
-- (NSString *)bestGuessAtUserShell {
-    return [[self.variablesScope valueForVariableName:iTermVariableKeyShell] lastPathComponent] ?: [[iTermOpenDirectory userShell] lastPathComponent] ?: @"zsh";
+- (NSString *)bestGuessAtUserShellWithPath:(BOOL)withPath {
+    if (withPath) {
+        return [ITAddressBookMgr customShellForProfile:self.profile] ?: [iTermOpenDirectory userShell] ?: @"/bin/zsh";
+    }
+    NSString *full = [[self.variablesScope valueForVariableName:iTermVariableKeyShell] lastPathComponent] ?: [ITAddressBookMgr customShellForProfile:self.profile] ?: [[iTermOpenDirectory userShell] lastPathComponent] ?: @"zsh";
+    return [full lastPathComponent];
 }
 
 - (NSString *)bestGuessAtUName {
@@ -19577,20 +19581,18 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
                                                                  maxCount:request.limit
                                                                executable:request.executable
                                                                completion:^(NSArray<NSString *> * _Nonnull completions) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSArray<iTermCompletionItem *> *fileItems = [completions mapWithBlock:^id _Nullable(NSString *filename) {
-                return [[[iTermCompletionItem alloc] initWithValue:filename
-                                                            detail:[request.prefix stringByAppendingString:filename]
-                                                              kind:iTermCompletionItemKindFile] autorelease];
-            }];
-            if (aiSuggest) {
-                request.startActivityIndicator();
-                iTermCompletionItem *firstResult = request.earlyResult(fileItems);
-                [self suggestWithAI:request fileCompletions:fileItems firstResult:firstResult];
-            } else {
-                request.completion(!byUserRequest, fileItems);
-            }
-        });
+        NSArray<iTermCompletionItem *> *fileItems = [completions mapWithBlock:^id _Nullable(NSString *filename) {
+            return [[[iTermCompletionItem alloc] initWithValue:filename
+                                                        detail:[request.prefix stringByAppendingString:filename]
+                                                          kind:iTermCompletionItemKindFile] autorelease];
+        }];
+        if (aiSuggest) {
+            request.startActivityIndicator();
+            iTermCompletionItem *firstResult = request.earlyResult(fileItems);
+            [self suggestWithAI:request fileCompletions:fileItems firstResult:firstResult];
+        } else {
+            request.completion(!byUserRequest, fileItems);
+        }
     }];
 }
 
@@ -19601,7 +19603,7 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
         }
     }
     if (!_localFileChecker) {
-        _localFileChecker = [[iTermLocalFileChecker alloc] init];
+        _localFileChecker = [[iTermLocalFileChecker alloc] initWithShell:[self bestGuessAtUserShellWithPath:YES]];
         if (self.lastLocalDirectory) {
             _localFileChecker.workingDirectory = self.lastLocalDirectory;
         }
@@ -19738,7 +19740,7 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
 }
 
 - (NSString *)composerManagerShell:(iTermComposerManager *)composerManager {
-    return [self bestGuessAtUserShell];
+    return [self bestGuessAtUserShellWithPath:NO];
 }
 
 - (NSString *)composerManagerUName:(iTermComposerManager *)composerManager {
@@ -20500,7 +20502,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     if (!_conductor) {
         self.variablesScope.homeDirectory = NSHomeDirectory();
         self.variablesScope.sshIntegrationLevel = 0;
-        self.variablesScope.shell = [self bestGuessAtUserShell];
+        self.variablesScope.shell = [self bestGuessAtUserShellWithPath:NO];
         self.variablesScope.uname = [self bestGuessAtUName];
         return;
     }

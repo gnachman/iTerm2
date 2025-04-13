@@ -35,6 +35,8 @@ class iTermSyntaxHighlighter: NSObject, SyntaxHighlighting {
 
 fileprivate struct Colors {
     var regular: NSColor
+    var invalidCommand: NSColor
+    var unknownValidityCommand: NSColor
     var command: NSColor
     var quoted: NSColor
     var argument: NSColor
@@ -54,6 +56,8 @@ fileprivate struct Colors {
                                       minimumBrightnessDifference: 35)
         }
         regular = contrasting(colorMap.color(forKey: kColorMapForeground))
+        invalidCommand = contrasting(colorMap.color(forKey: kColorMapAnsiRed))
+        unknownValidityCommand = contrasting(colorMap.color(forKey: kColorMapAnsiCyan))
         command = contrasting(colorMap.color(forKey: kColorMapAnsiBlue))
         quoted = contrasting(colorMap.color(forKey: kColorMapAnsiGreen))
         argument = contrasting(colorMap.color(forKey: kColorMapAnsiCyan))
@@ -111,7 +115,7 @@ class SyntaxHighlighter {
             switch role {
             case .command:
                 DLog("Command in \(shiftedRange)")
-                highlightCommand(shiftedRange)
+                highlightCommand(shiftedRange, command: annotated.string.substring(nsrange: nsrange))
             case .whitespace, .placeholder:
                 break
             case .quoted:
@@ -140,9 +144,15 @@ class SyntaxHighlighter {
         setTextColor(range: range, color: colors.regular)
     }
 
-    private func highlightCommand(_ range: Range<Int>) {
-        // TODO: It'd be nice to check if the command is valid but I'm not sure how best to handle builtins, aliases, etc.
-        setTextColor(range: range, color: colors.command)
+    private func highlightCommand(_ range: Range<Int>, command: String) {
+        switch fileChecker.commandIsValid(command.trimmingCharacters(in: .whitespacesAndNewlines)) {
+        case .some(false):
+            setTextColor(range: range, color: colors.invalidCommand)
+        case .some(true):
+            setTextColor(range: range, color: colors.command)
+        case .none:
+            setTextColor(range: range, color: colors.unknownValidityCommand)
+        }
         setBold(range: range)
     }
 

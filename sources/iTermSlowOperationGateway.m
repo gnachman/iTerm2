@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermGitState.h"
 #import "ITAddressBookMgr.h"
 #import "iTermOpenDirectory.h"
 #import "NSStringITerm.h"
@@ -106,11 +107,83 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     _connectionToService.interruptionHandler = ^{
         [weakSelf didInterrupt];
     };
-    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[ [NSArray class], [iTermDirectoryEntry class] ]]
-                                               forSelector:@selector(fetchDirectoryListingOfPath:completion:)
-                                             argumentIndex:0
-                                                   ofReply:YES];
-}
+    // For getProcessInfoForProcessID:flavor:arg:size:reqid:withReply:
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[NSNumber class]]
+                                                   forSelector:@selector(getProcessInfoForProcessID:flavor:arg:size:reqid:withReply:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[NSData class]]
+                                                   forSelector:@selector(getProcessInfoForProcessID:flavor:arg:size:reqid:withReply:)
+                                                 argumentIndex:1
+                                                       ofReply:YES];
+
+    // handshakeWithReply: – No registration needed.
+
+    // For checkIfDirectoryExists:withReply:
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[NSNumber class]]
+                                                   forSelector:@selector(checkIfDirectoryExists:withReply:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+
+    // For checkIfExecutableRegularFile:searchPaths:withReply:
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[NSNumber class]]
+                                                   forSelector:@selector(checkIfExecutableRegularFile:searchPaths:withReply:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+
+    // statFile:withReply: returns a struct and int – no registration needed.
+
+    // For runShellScript:shell:withReply: (reply block: NSData *output, NSData *error, int status)
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSData class], [NSNumber class]]]
+                                                   forSelector:@selector(runShellScript:shell:withReply:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSData class], [NSNumber class]]]
+                                                   forSelector:@selector(runShellScript:shell:withReply:)
+                                                 argumentIndex:1
+                                                       ofReply:YES];
+
+    // For findCompletionsWithPrefix:inDirectories:pwd:maxCount:executable:withReply:
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSArray class], [NSString class]]]
+                                                   forSelector:@selector(findCompletionsWithPrefix:inDirectories:pwd:maxCount:executable:withReply:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+
+    // For requestGitStateForPath:timeout:completion:
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[iTermGitState class]]
+                                                   forSelector:@selector(requestGitStateForPath:timeout:completion:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+
+    // For fetchRecentBranchesAt:count:completion:
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSArray class], [NSString class]]]
+                                                   forSelector:@selector(fetchRecentBranchesAt:count:completion:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+
+    // For findExistingFileWithPrefix:suffix:workingDirectory:trimWhitespace:pathsToIgnore:allowNetworkMounts:reqid:reply:
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[NSString class]]
+                                                   forSelector:@selector(findExistingFileWithPrefix:suffix:workingDirectory:trimWhitespace:pathsToIgnore:allowNetworkMounts:reqid:reply:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+
+    // For cancelFindExistingFileRequest:reply: – void reply (nothing to register).
+
+    // For executeShellCommand:args:dir:env:reply: (reply block: NSData *stdout, NSData *stderr, uint8_t status, NSTaskTerminationReason reason)
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[NSData class]]
+                                                   forSelector:@selector(executeShellCommand:args:dir:env:reply:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[NSData class]]
+                                                   forSelector:@selector(executeShellCommand:args:dir:env:reply:)
+                                                 argumentIndex:1
+                                                       ofReply:YES];
+
+    // For fetchDirectoryListingOfPath:completion:
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSArray class], [iTermDirectoryEntry class]]]
+                                                   forSelector:@selector(fetchDirectoryListingOfPath:completion:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];}
 
 - (void)didInterrupt {
     {
@@ -194,7 +267,9 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                                                    withReply:^(NSData * _Nullable data,
                                                                NSData * _Nullable error,
                                                                int status) {
-        completion(status == 0 ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]] : nil);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(status == 0 ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]] : nil);
+        });
     }];
 }
 
@@ -258,9 +333,11 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                                                                maxCount:maxCount
                                                              executable:executable
                                                               withReply:^(NSArray<NSString *> * completions) {
-        DLog(@"findCompletionsWithPrefix:%@ inDirectories:%@ pwd:%@ maxCount:%@ executable:%@ -> %@",
-             prefix, directories, pwd, @(maxCount), @(executable), completions);
-        completion(completions);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"findCompletionsWithPrefix:%@ inDirectories:%@ pwd:%@ maxCount:%@ executable:%@ -> %@",
+                 prefix, directories, pwd, @(maxCount), @(executable), completions);
+            completion(completions);
+        });
     }];
 }
 
@@ -286,7 +363,9 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
         }
         [_gitStateHandlers removeObject:completion];
     }
-    completion.block(gitState);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        completion.block(gitState);
+    });
 }
 
 - (void)fetchRecentBranchesAt:(NSString *)path
@@ -312,7 +391,9 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
         }
         [_gitRecentBranchFetchCallbacks removeObject:box];
     }
-    box.block(branches);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        box.block(branches);
+    });
 }
 
 - (id<iTermCancelable>)findExistingFileWithPrefix:(NSString *)prefix

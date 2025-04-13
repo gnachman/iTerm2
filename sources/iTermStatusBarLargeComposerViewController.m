@@ -113,6 +113,10 @@
                                              selector:@selector(secureUserDefaultDidChange:)
                                                  name:iTermSecureUserDefaults.secureUserDefaultsDidChangeNotificationName
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(commandValidityDidChange:)
+                                                 name:iTermLocalFileChecker.commandValidityDidChange
+                                               object:nil];
     if (![iTermAdvancedSettingsModel generativeAIAllowed]) {
         _engageAI.hidden = YES;
     }
@@ -120,6 +124,12 @@
 
 - (void)secureUserDefaultDidChange:(NSNotification *)notification {
     _aiCompletionWarning.hidden = ![[iTermSecureUserDefaults instance] aiCompletionsEnabled] || ![iTermAdvancedSettingsModel generativeAIAllowed];
+}
+
+- (void)commandValidityDidChange:(NSNotification *)notification {
+    if ([self.textView.string containsString:notification.object]) {
+        [self.textView doSyntaxHighlighting];
+    }
 }
 
 - (NSMutableDictionary<NSString *, iTermSearchPathsCacheEntry *> *)cache {

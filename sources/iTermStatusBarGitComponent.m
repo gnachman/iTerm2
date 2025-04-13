@@ -543,9 +543,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     [[iTermSlowOperationGateway sharedInstance] fetchRecentBranchesAt:_gitPoller.currentDirectory
                                                                 count:maxCount
                                                            completion:^(NSArray<NSString *> * _Nonnull branches) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion(branches);
-        });
+        completion(branches);
     }];
 }
 

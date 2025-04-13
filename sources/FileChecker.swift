@@ -104,6 +104,9 @@ class FileChecker: NSObject {
         }
     }
 
+    func commandIsValid(_ command: String) -> Bool? {
+        return true
+    }
 }
 
 @objc(iTermLocalFileChecker)
@@ -111,8 +114,19 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
     @objc
     var workingDirectory = "/"
 
-    @objc
-    override init() {
+    private var path: iTermPromise<NSString>?
+    private let shell: String?
+
+    enum CommandValidity {
+        case invalid(TimeInterval)
+        case valid(TimeInterval)
+        case pending(Int, TimeInterval)
+    }
+    private var knownCommands = [String: CommandValidity]()
+
+    @objc(initWithShell:)
+    init(shell: String?) {
+        self.shell = shell
         super.init()
         dataSource = self
     }
@@ -137,4 +151,115 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
         }
         return workingDirectory.appendingPathComponent(path)
     }
+
+    // Max amount of time in seconds a file can be in the pending state without making progress.
+    private let pendingTimeout = TimeInterval(10)
+
+    // Max amount of time in seconds a file can be in the valid or invalid state before rechecking.
+    private let steadyStateTimeout = TimeInterval(60)
+
+    // true: definitely valid
+    // false: definitely invalid
+    // nil: don't know
+    override func commandIsValid(_ command: String) -> Bool? {
+        switch knownCommands[command] {
+        case .none:
+            break
+        case .pending(_, let time):
+            if NSDate.it_timeSinceBoot() - time < pendingTimeout {
+                return nil
+            }
+            // Expired
+            knownCommands.removeValue(forKey: command)
+        case .valid(let time):
+            if NSDate.it_timeSinceBoot() - time < steadyStateTimeout {
+                return true
+            }
+            // Expired
+            knownCommands.removeValue(forKey: command)
+        case .invalid(let time):
+            if NSDate.it_timeSinceBoot() - time < steadyStateTimeout {
+                return false
+            }
+            // Expired
+            knownCommands.removeValue(forKey: command)
+        }
+        guard dataSource?.fileCheckerDataSourceCanPerformFileChecking ?? false else {
+            return nil
+        }
+        guard let shell else {
+            return nil
+        }
+        if command.hasPrefix("/") || command.hasPrefix("~") {
+            knownCommands[command] = .pending(1, NSDate.it_timeSinceBoot())
+            let candidate = command
+            iTermSlowOperationGateway.sharedInstance().statFile(candidate) { [weak self] sb, error in
+                self?.handleStatResult(command: command,
+                                       path: candidate,
+                                       stat: sb,
+                                       error: error)
+            }
+            return nil
+        }
+        if let path {
+            // There is a promised path
+            if let obj = path.maybeValue {
+                let pathsString = obj as String
+                let paths = pathsString.components(separatedBy: ":")
+                // We know the path, so search it
+                knownCommands[command] = .pending(paths.count, NSDate.it_timeSinceBoot())
+                for path in paths {
+                    let candidate = path.appending(pathComponent: command)
+                    iTermSlowOperationGateway.sharedInstance().statFile(candidate) { [weak self] sb, error in
+                        self?.handleStatResult(command: command,
+                                               path: candidate,
+                                               stat: sb,
+                                               error: error)
+                    }
+                }
+            }  // else still waiting on promise
+        } else {
+            // Create a path promise
+            path = iTermPromise({ seal in
+                iTermSlowOperationGateway.sharedInstance().exfiltrateEnvironmentVariableNamed("PATH", shell: shell) { result in
+                    seal.fulfill(result)
+                }
+            })
+        }
+        return nil
+    }
+
+    private func handleStatResult(command: String, path: String, stat sb: stat, error: Int32) {
+        let valid: Bool
+        if error == 0 {
+            let entry = iTermDirectoryEntry(name: command, statBuf: sb)
+            valid = entry.isExecutable && !entry.isDirectory && entry.isReadable
+        } else {
+            valid = false
+        }
+        let disposition: CommandValidity
+        let now = NSDate.it_timeSinceBoot()
+        if valid {
+            disposition = .valid(now)
+        } else {
+            switch knownCommands[command] {
+            case .pending(let n, _):
+                if n - 1 > 0 {
+                    // Allow other pending stat()s to finish. Maybe one of them will find it.
+                    disposition = .pending(n - 1, now)
+                } else {
+                    // All failed to find it.
+                    disposition = .invalid(now)
+                }
+            default:
+                // If the status is valid, then this invalid result is irrelevant.
+                // If the status is invalid or nil, probably this one timed out and a search restarted.
+                return
+            }
+        }
+        knownCommands[command] = disposition
+        NotificationCenter.default.post(name: Self.commandValidityDidChange, object: command)
+    }
+
+    @objc static let commandValidityDidChange = NSNotification.Name("iTermLocalFileCheckerCommandValidityDidChange")
 }

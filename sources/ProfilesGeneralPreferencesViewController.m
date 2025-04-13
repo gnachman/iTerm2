@@ -672,7 +672,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             NSArray<NSString *> *parts = [param componentsInShellCommand];
             if ([parts.firstObject isEqual:@"/bin/bash"]) {
                 // Apple's bash disables sourcing ENV when --posix is set 🤬
-                *reasonOut = @"Shell integration injection requires a more modern version of bash.";
+                *reasonOut = @"Shell integration needs a newer version of bash.";
                 return NO;
             }
             NSString *shell = [parts.firstObject lastPathComponent];
@@ -691,7 +691,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         case iTermGeneralProfilePreferenceCustomCommandTagLoginShell: {
             if ([self.loginShell isEqual:@"/bin/bash"]) {
                 // Apple's bash disables sourcing ENV when --posix is set 🤬
-                *reasonOut = @"Shell integration injection requires a more modern version of bash.";
+                *reasonOut = @"Shell integration needs a newer version of bash.";
                 return NO;
             }
             NSString *shell = [self.loginShell lastPathComponent];

@@ -80,9 +80,7 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable);
     DLog(@"Send through gateway with the following pending requests:\n%@", _pending);
     [[iTermSlowOperationGateway sharedInstance] requestGitStateForPath:path completion:^(iTermGitState * _Nullable state) {
         DLog(@"Got response for %@ with state %@", path, state);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self didFetchState:state path:path];
-        });
+        [self didFetchState:state path:path];
     }];
 }
 
