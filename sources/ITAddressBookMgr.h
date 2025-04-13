@@ -222,7 +222,7 @@
 #define KEY_SHOW_MARK_INDICATORS              @"Show Mark Indicators"
 #define KEY_SHOW_OFFSCREEN_COMMANDLINE        @"Show Offscreen Command line"
 #define KEY_TMUX_NEWLINE                      @"Tmux Newline"
-
+#define KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR @"Prompt Path Click Opens Navigator"
 // Session
 #define KEY_AUTOLOG                           @"Automatically Log"
 #define KEY_UNDO_TIMEOUT                      @"Session Close Undo Timeout"

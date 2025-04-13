@@ -456,9 +456,15 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
             }
         }
 
+        if requiredWidth != frame.width {
+            var frame = self.frame
+            frame.size.width = requiredWidth
+            setFrame(self.frame(forSize: frame.size), display: true, animate: false)
+        }
         var frame = self.frame
         frame.size = NSSize(width: requiredWidth, height: finalHeight)
-        setFrame(self.frame(forSize: frame.size), display: true, animate: animated)
+        let requiredFrame = self.frame(forSize: frame.size)
+        setFrame(requiredFrame, display: true, animate: animated)
 
         // detailView (detail container) remains at the bottom.
         // Scroll view now sits above it and below the search field.
@@ -573,6 +579,10 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
 
     func setDetailAttributedString(_ attrString: NSAttributedString) {
         detailTextField?.attributedStringValue = attrString
+    }
+
+    override func animationResizeTime(_ newFrame: NSRect) -> TimeInterval {
+        return 0.05
     }
 
     override var canBecomeKey: Bool {

@@ -46,6 +46,7 @@
     IBOutlet NSButton *_changeLocale;
     IBOutlet NSButton *_forceCommandPromptToFirstColumn;
     IBOutlet NSButton *_showMarkIndicators;
+    IBOutlet NSButton *_promptPathClickOpensNavigator;
     IBOutlet NSButton *_showOffscreenCommandLine;
     IBOutlet NSButton *_shellIntegrationRequiredButton;
     IBOutlet NSButton *_allowCursorBlinkControlSequence;
@@ -257,6 +258,10 @@
 
     [self defineControl:_showMarkIndicators
                     key:KEY_SHOW_MARK_INDICATORS
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_promptPathClickOpensNavigator
+                    key:KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

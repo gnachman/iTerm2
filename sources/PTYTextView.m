@@ -6450,7 +6450,14 @@ static NSString *iTermStringFromRange(NSRange range) {
             [self foldCommandMark:commandMark];
             return VT100GridCoordMake(-1, -1);
         } else if (pathMark) {
-            [self.delegate textViewUserDidClickPathMark:pathMark at:event.locationInWindow];
+            __weak __typeof(self) weakSelf = self;
+            [_selectCommandTimer release];
+            _selectCommandTimer = nil;
+            _selectCommandTimer = [[NSTimer scheduledTimerWithTimeInterval:[NSEvent doubleClickInterval]
+                                                                   repeats:NO
+                                                                     block:^(NSTimer * _Nonnull timer) {
+                [weakSelf openPathMark:pathMark];
+            }] retain];
         } else if (!firstMouse) {
             if ([self revealAnnotationsAt:[self coordForEvent:event] toggle:YES]) {
                 DLog(@"mouseUp: reveal annotation");
@@ -6482,6 +6489,18 @@ static NSString *iTermStringFromRange(NSRange range) {
     const NSPoint temp =
     [self clickPoint:event allowRightMarginOverflow:allowRightMarginOverflow];
     return VT100GridCoordMake(temp.x, temp.y);
+}
+
+- (void)openPathMark:(id<iTermPathMarkReading>)pathMark {
+    [_selectCommandTimer release];
+    _selectCommandTimer = nil;
+    [self.delegate textViewUserDidClickPathMark:pathMark];
+}
+
+- (void)mouseHandlerCancelSingleClick:(PTYMouseHandler *)sender {
+    [_selectCommandTimer release];
+    _selectCommandTimer = nil;
+    [self.delegate textViewCancelSingleClick];
 }
 
 - (void)selectCommandAt:(VT100GridCoord)coord {

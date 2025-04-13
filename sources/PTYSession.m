@@ -12203,7 +12203,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
-- (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark at:(NSPoint)windowPoint {
+- (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark {
+    if (![iTermProfilePreferences boolForKey:KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR inProfile:self.profile]) {
+        return;
+    }
     if (@available(macOS 11, *)) {
         [_pathCompletionHelper invalidate];
         [_pathCompletionHelper autorelease];
@@ -12211,6 +12214,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (void)textViewCancelSingleClick {
+    if (@available(macOS 11, *)) {
+        [_pathCompletionHelper invalidate];
+        [_pathCompletionHelper autorelease];
+        _pathCompletionHelper = nil;
+    }
+}
 
 - (void)textviewToggleTimestampsMode {
     const BOOL alreadyVisible = [self desiredTimestampMode] != iTermTimestampsModeOff;

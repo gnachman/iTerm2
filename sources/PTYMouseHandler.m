@@ -478,6 +478,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            cmdPressed &&
                            [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]);
 
+    if (event.clickCount > 1) {
+        [self.mouseDelegate mouseHandlerCancelSingleClick:self];
+    }
     // Reset _mouseDragged; it won't be needed again and we don't want it to get stuck like in
     // issue 3766.
     _mouseDragged = NO;
@@ -668,6 +671,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"is three finger click");
         return iTermClickSideEffectsIgnore;
     }
+    [self.mouseDelegate mouseHandlerCancelSingleClick:self];
+
     // Prevent accidental dragging while dragging semantic history item.
     BOOL dragThresholdMet = NO;
     const NSPoint locationInWindow = [event locationInWindow];

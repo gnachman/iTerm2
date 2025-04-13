@@ -324,8 +324,8 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (CGFloat)textViewRightExtra;
 - (void)textViewLiveSelectionDidEnd;
 - (void)textViewShowJSONPromotion;
-- (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark at:(NSPoint)windowPoint;
-
+- (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark;
+- (void)textViewCancelSingleClick;
 @end
 
 @interface iTermHighlightedRow : NSObject
