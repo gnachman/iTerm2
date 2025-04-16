@@ -47,11 +47,21 @@ extension PathExtractor {
                 }
                 let candidateString = currentLine[startIndex..<j].map { $0.char }.joined()
                 let startCoord = currentLine[startIndex].coord
-                let lastCharCoord = currentLine[j - 1].coord
+                let endCoord: VT100GridCoord = {
+                    if j < currentLine.count {
+                        return currentLine[j].coord
+                    }
+                    // To get here, j==currentLine.count. We can prove that currentLine.count>0 because
+                    // otherwise the outermost while loop could not have been entered. Therefore
+                    // it is safe to access j - 1.
+                    var penultimate = currentLine[j - 1].coord
+                    penultimate.x += 1
+                    return penultimate
+                }()
                 let range = VT100GridCoordRangeMake(startCoord.x,
                                                     startCoord.y,
-                                                    lastCharCoord.x + 1,
-                                                    lastCharCoord.y)
+                                                    endCoord.x,
+                                                    endCoord.y)
                 possiblePaths.append(Candidate(string: candidateString,
                                                range: range,
                                                expandedPath: candidateString))
