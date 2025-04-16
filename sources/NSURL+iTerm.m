@@ -15,6 +15,38 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+static BOOL NSStringIsValidURLScheme(NSString *scheme) {
+    if (scheme.length == 0) {
+        return NO;
+    }
+
+    // First character must be a letter
+    unichar firstChar = [scheme characterAtIndex:0];
+    if (![[NSCharacterSet letterCharacterSet] characterIsMember:firstChar]) {
+        return NO;
+    }
+
+    // Build allowed character set: ALPHA / DIGIT / "+" / "-" / "."
+    static NSCharacterSet *validChars = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *set = [NSMutableCharacterSet letterCharacterSet];
+        [set formUnionWithCharacterSet:[NSCharacterSet decimalDigitCharacterSet]];
+        [set addCharactersInString:@"+-."];
+        validChars = [set copy];
+    });
+
+    // Verify remaining characters
+    for (NSUInteger i = 1; i < scheme.length; i++) {
+        unichar c = [scheme characterAtIndex:i];
+        if (![validChars characterIsMember:c]) {
+            return NO;
+        }
+    }
+
+    return YES;
+}
+
 @implementation NSURL(iTerm)
 
 + (nullable NSURL *)urlByReplacingFormatSpecifier:(NSString *)formatSpecifier
@@ -264,8 +296,8 @@ NS_ASSUME_NONNULL_BEGIN
             if (!replacement) {
                 return nil;
             }
-            if ([replacement rangeOfCharacterFromSet:[[NSCharacterSet characterSetWithCharactersInString:@"0123456789"] invertedSet]].location == NSNotFound) {
-                // All numbers - not valid. This avoids an annoying exception which keeps tripping me up when debugging.
+            if (!NSStringIsValidURLScheme(replacement)) {
+                // This avoids an annoying exception which keeps tripping me up when debugging.
                 return nil;
             }
             components.scheme = replacement;
