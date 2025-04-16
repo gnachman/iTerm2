@@ -126,7 +126,9 @@
 @implementation iTermOpenQuicklyMenuItem
 
 - (NSImage *)icon {
-    return [NSImage it_imageNamed:@"OpenQuicklyMenuItem" forClass:self.class];
+    NSImage *image = [NSImage it_imageNamed:@"OpenQuicklyMenuItem" forClass:self.class];
+    image.template = YES;
+    return image;
 }
 
 - (BOOL)valid {

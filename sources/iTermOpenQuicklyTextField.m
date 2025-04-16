@@ -50,6 +50,11 @@
         [textField.arrowHandler keyDown:event];
         return;
     }
+    if (event.keyCode == kVK_Escape) {
+        iTermOpenQuicklyTextField *textField = [iTermOpenQuicklyTextField castFrom:self.delegate];
+        [textField.arrowHandler keyDown:event];
+        return;
+    }
     [super keyDown:event];
 }
 @end

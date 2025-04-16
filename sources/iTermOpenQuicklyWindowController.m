@@ -480,6 +480,10 @@
         [self openSelectedRow];
         return;
     }
+    if (theEvent.keyCode == kVK_Escape) {
+        [self close:nil];
+        return;
+    }
     if (!running) {
         running = YES;
         [_table keyDown:theEvent];
