@@ -93,14 +93,10 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
     const int32_t bidiLUTLength = bidi.numberOfCells;
 
     int lastVisualColumn = -1;
+    int visualColumnForSelection = -1;  // visual column, but for DWC_RIGHT is the preceding cell. Used to make selection extend into DWC_RIGHT.
     int visualColumn = -1;
     for (j = charRange.location; j < charRange.location + charRange.length; j++) {
         lastVisualColumn = visualColumn;
-        if (j < bidiLUTLength) {
-            visualColumn = bidiLUT[j];
-        } else {
-            visualColumn = j;
-        }
         int x = j;
         if (ScreenCharIsDWC_RIGHT(theLine[j])) {
             x = j - 1;
@@ -109,10 +105,20 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
                 continue;
             }
         }
+        if (x < bidiLUTLength) {
+            visualColumnForSelection = bidiLUT[x];
+        } else {
+            visualColumnForSelection = x;
+        }
+        if (j < bidiLUTLength) {
+            visualColumn = bidiLUT[j];
+        } else {
+            visualColumn = j;
+        }
         iTermMakeBackgroundColorRun(&current,
                                     theLine,
                                     VT100GridCoordMake(x, displayLineNumber),
-                                    visualColumn,
+                                    visualColumnForSelection,
                                     selectedIndexes,
                                     matches,
                                     width);
