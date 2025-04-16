@@ -90,13 +90,25 @@ struct SecureUserDefaults {
     lazy var enableAI = { SecureUserDefault<Bool>("EnableAI", defaultValue: false) }()
     lazy var browserBundleID = { SecureUserDefault<String>("BrowserBundleID", defaultValue: "") }()
     lazy var aiCompletionsEnabled = { SecureUserDefault<Bool>("AICompletions", defaultValue: false) }()
+
+    private var hostToOpenURLSUDs = [String: SecureUserDefault<Bool>]()
+    mutating func openURL(host: String) -> SecureUserDefault<Bool> {
+        if let value = hostToOpenURLSUDs[host] {
+            return value
+        }
+        let safeHost = host.lossyData.hexified
+        let sud = SecureUserDefault<Bool>("OpenURL" + safeHost,
+                                          defaultValue: false)
+        hostToOpenURLSUDs[host] = sud
+        return sud
+    }
     private mutating func serializables() -> [any SerializableUserDefault] {
         [allowPaste,
          requireAuthToOpenPasswordmanager,
          enableSecureKeyboardEntryAutomatically,
          enableAI,
          browserBundleID,
-         aiCompletionsEnabled]
+         aiCompletionsEnabled] + Array(hostToOpenURLSUDs.values)
     }
 }
 
@@ -162,6 +174,12 @@ class iTermSecureUserDefaults: NSObject {
     }
     @objc(resetAICompletionsEnabled) func resetAICompletionsEnabled() {
         try? SecureUserDefaults.instance.aiCompletionsEnabled.reset()
+    }
+    @objc static func openURL(host: String) -> Bool {
+        SecureUserDefaults.instance.openURL(host: host).value
+    }
+    @objc static func setOpenURL(host: String, allowed: Bool) {
+        try? SecureUserDefaults.instance.openURL(host: host).set(allowed)
     }
 }
 

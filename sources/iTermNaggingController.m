@@ -633,7 +633,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
         DLog(@"OpenUrl disabled");
         return;
     }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:allowHostKey]) {
+    if ([iTermSecureUserDefaults openURLWithHost:url.host]) {
         DLog(@"Always allow %@", url.host);
         [[NSWorkspace sharedWorkspace] it_openURL:url];
         return;
@@ -657,7 +657,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
                 break;
 
             case 1:  // Allow for this host
-                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:allowHostKey];
+                [iTermSecureUserDefaults setOpenURLWithHost:url.host allowed:YES];
                 [[NSWorkspace sharedWorkspace] it_openURL:url];
                 break;
 
