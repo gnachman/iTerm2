@@ -20,8 +20,14 @@ class PathExtractor {
     // A candidate path is recorded as a tuple of the path string and its coordinate range.
     private(set) var possiblePaths: [Candidate] = []
 
-    // Allowed characters for paths.
-    private let allowedCharacterSet = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_/-.")
+    // Allowed characters for paths, including all Unicode letters & digits plus “/”, “_”, “.” and “-”.
+    private let allowedCharacterSet: CharacterSet = {
+        var set = CharacterSet.alphanumerics
+        set.insert(charactersIn: "/_.-")
+        set.insert(Unicode.Scalar(UInt8(DWC_RIGHT)))
+        set.insert(Unicode.Scalar(UInt8(DWC_SKIP)))
+        return set
+    }()
 }
 
 // Public API
@@ -34,6 +40,7 @@ extension PathExtractor {
 
     // newLine indicates the end of the current prompt line. Scan the line for candidate paths.
     func newLine() {
+        let privateRange = (UInt32(ITERM2_PRIVATE_BEGIN)...UInt32(ITERM2_PRIVATE_END))
         var i = 0
         while i < currentLine.count {
             let currentChar = currentLine[i].char
@@ -45,7 +52,12 @@ extension PathExtractor {
                 while j < currentLine.count, characterIsValidInPath(currentLine[j].char) {
                     j += 1
                 }
-                let candidateString = currentLine[startIndex..<j].map { $0.char }.joined()
+                let candidateString = currentLine[startIndex..<j]
+                    .filter {
+                        !privateRange.contains($0.char.it_firstUnicodeScalarValue ?? 0)
+                    }
+                    .map { $0.char }
+                    .joined()
                 let startCoord = currentLine[startIndex].coord
                 let endCoord: VT100GridCoord = {
                     if j < currentLine.count {
