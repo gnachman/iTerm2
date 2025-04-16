@@ -48,6 +48,21 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
     return self;
 }
 
+- (BOOL)swapSession:(PTYSession *)living withBuriedSession:(PTYSession *)buried {
+    const NSInteger i = [_array indexOfObjectPassingTest:^BOOL(iTermRestorableSession *restorableSession, NSUInteger idx, BOOL * _Nonnull stop) {
+        return restorableSession.sessions.count == 1 && restorableSession.sessions.firstObject == buried;
+    }];
+    if (i == NSNotFound) {
+        return NO;
+    }
+    _array[i].sessions = @[living];
+    _array[i].channelParentGuid = living.channelParentGuid;
+    [self refresh:living];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBuriedStateChangeTabNotification
+                                                        object:buried];
+    return YES;
+}
+
 - (void)addBuriedSession:(PTYSession *)sessionToBury {
     DLog(@"addBuriedSession:%@", sessionToBury);
     id<iTermWindowController> windowController = (PseudoTerminal *)sessionToBury.delegate.parentWindow;
@@ -56,10 +71,20 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
         DLog(@"Failed to create restorable session");
         return;
     }
+    [self addRestorableSession:restorableSession forSession:sessionToBury];
+}
+
+- (void)addRestorableSession:(iTermRestorableSession *)restorableSession
+                  forSession:(PTYSession *)sessionToBury {
     [_array addObject:restorableSession];
+    [self refresh:sessionToBury];
+}
+
+- (void)refresh:(PTYSession *)session {
     [self updateMenus];
     [NSApp invalidateRestorableState];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBuriedStateChangeTabNotification object:sessionToBury];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBuriedStateChangeTabNotification
+                                                        object:session];
 }
 
 - (void)restoreSession:(PTYSession *)session {
@@ -70,9 +95,32 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
             break;
         }
     }
-    if (!restorableSession) {
-        return;
+    if (restorableSession) {
+        [self restoreSession:session withRestorableSession:restorableSession];
     }
+}
+
+- (NSInteger)indexForTabForChannelSessionWithParent:(NSString *)parentGuid {
+    PTYSession *parent = [[iTermController sharedInstance] sessionWithGUID:parentGuid];
+    if (!parent) {
+        return NSNotFound;
+    }
+    PseudoTerminal *term = [[iTermController sharedInstance] terminalWithSession:parent];
+    if (!term) {
+        return NSNotFound;
+    }
+    PTYTab *tab = [term tabForSession:parent];
+    NSInteger i = term.tabs.count;
+    if (tab) {
+        i = [term.tabs indexOfObject:tab];
+        if (i == NSNotFound) {
+            i = term.tabs.count;
+        }
+    }
+    return i;
+}
+
+- (void)restoreSession:(PTYSession *)session withRestorableSession:(iTermRestorableSession *)restorableSession {
     [_array removeObject:restorableSession];
     DLog(@"Restore %@", session);
     [session disinter];
@@ -82,7 +130,15 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
         DLog(@"Found it. Look for tab with unique id %@", @(restorableSession.tabUniqueId));
         // Reuse an existing window
         PTYTab *tab = [term tabWithUniqueId:restorableSession.tabUniqueId];
-        if (tab) {
+        if (restorableSession.group == kiTermRestorableSessionGroupChannel) {
+            const NSInteger i = [self indexForTabForChannelSessionWithParent:restorableSession.channelParentGuid];
+            if (i != NSNotFound) {
+                [term insertSession:session atIndex:[term numberOfTabs]];
+                [[term currentTab] numberOfSessionsDidChange];
+            } else {
+                [term addRevivedSession:restorableSession.sessions[0]];
+            }
+        } else if (tab) {
             DLog(@"Found it. Re-create the tab.");
             // Add to existing tab by destroying and recreating it.
             [term recreateTab:tab
@@ -116,9 +172,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
             }
         }
     }
-    [self updateMenus];
-    [NSApp invalidateRestorableState];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBuriedStateChangeTabNotification object:session];
+    [self refresh:session];
 }
 
 - (NSArray<PTYSession *> *)buriedSessions {

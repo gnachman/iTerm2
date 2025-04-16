@@ -13,7 +13,8 @@
 typedef NS_ENUM(NSInteger, iTermRestorableSessionGroup) {
     kiTermRestorableSessionGroupSession,
     kiTermRestorableSessionGroupTab,
-    kiTermRestorableSessionGroupWindow
+    kiTermRestorableSessionGroupWindow,
+    kiTermRestorableSessionGroupChannel
 };
 
 @class PTYSession;
@@ -29,7 +30,7 @@ typedef NS_ENUM(NSInteger, iTermRestorableSessionGroup) {
 @property(nonatomic) iTermWindowType savedWindowType;
 @property(nonatomic) int screen;
 @property(nonatomic, copy) NSString *windowTitle;
-
+@property(nonatomic, copy) NSString *channelParentGuid;
 // tab unique IDs of tabs that come before this one in the window.
 @property(nonatomic, copy) NSArray *predecessors;
 

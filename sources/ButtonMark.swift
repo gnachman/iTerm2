@@ -10,6 +10,7 @@ import Foundation
 @objc(iTermButtonMarkReading)
 protocol ButtonMarkReading: AnyObject, iTermMarkProtocol {
     @objc var copyBlockID: String? { get }
+    @objc var channelUID: String? { get }
     @objc var buttonID: Int { get }
 }
 
@@ -32,9 +33,13 @@ enum ButtonType {
         case .copy(block: let blockID):
             return ["type": "copy",
                     "block ID": blockID]
+        case .channel(uid: let uid):
+            return ["type": "channel",
+                    "uid": uid]
         }
     }
     case copy(block: String)
+    case channel(uid: String)
 }
 
 @objc(iTermButtonMark)
@@ -47,7 +52,7 @@ class ButtonMark: iTermMark, ButtonMarkReading {
             switch buttonType {
             case .copy(block: let blockID):
                 return blockID
-            case .none:
+            case .none, .channel:
                 break
             }
             return nil
@@ -55,6 +60,25 @@ class ButtonMark: iTermMark, ButtonMarkReading {
         set {
             if let newValue {
                 buttonType = .copy(block: newValue)
+            } else {
+                buttonType = nil
+            }
+        }
+    }
+
+    @objc
+    var channelUID: String? {
+        get {
+            switch buttonType {
+            case .copy, .none:
+                nil
+            case .channel(uid: let uid):
+                uid
+            }
+        }
+        set {
+            if let newValue {
+                buttonType = .channel(uid: newValue)
             } else {
                 buttonType = nil
             }

@@ -191,6 +191,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewInPinnedHotkeyWindow;
 - (BOOL)textViewSessionIsLinkedToAIChat;
 - (BOOL)textViewSessionIsStreamingToAIChat;
+- (BOOL)textViewSessionHasChannelParent;
 
 // Is it possible to restart this session?
 - (BOOL)isRestartable;
@@ -326,6 +327,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewShowJSONPromotion;
 - (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark;
 - (void)textViewCancelSingleClick;
+- (void)textViewRevealChannelWithUID:(NSString *)uid;
 @end
 
 @interface iTermHighlightedRow : NSObject

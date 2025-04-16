@@ -4233,7 +4233,28 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
                 }
             }
         }
+    } else if ([key isEqualToString:@"wrap"]) {
+        if ([_delegate terminalIsTrusted]) {
+            NSDictionary<NSString *, NSString *> *dict = [value it_keyValuePairsSeparatedBy:@";"];
+            NSString *a = dict[@"a"];
+            if ([a isEqualToString:@"start"]) {
+                // OSC 1337;wrap=a=start;cmd=<base64 encoded command>;uid=<hex digits> ST
+                NSString *cmd = [dict[@"cmd"] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+                NSString *uid = dict[@"uid"];
+                if ([self wrapChannelIDIsValid:uid] && cmd.length > 0) {
+                    [_delegate terminalStartWrappedCommand:cmd channel:uid];
+                }
+            }
+        }
     }
+}
+
+- (BOOL)wrapChannelIDIsValid:(NSString *)uid {
+    if (uid.length < 16) {
+        return NO;
+    }
+    NSCharacterSet *illegalCharacters = [NSCharacterSet characterSetWithCharactersInString:@"abcdefABCDEF0123456789"].invertedSet;
+    return [uid rangeOfCharacterFromSet:illegalCharacters].location == NSNotFound;
 }
 
 - (void)executeXtermSetPalette:(VT100Token *)token {

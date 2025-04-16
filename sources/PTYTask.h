@@ -10,6 +10,7 @@
 #import <termios.h>
 
 @class Coprocess;
+@class iTermIOBuffer;
 @class iTermProcessInfo;
 @protocol iTermTask;
 @class iTermWinSizeController;
@@ -181,6 +182,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // When ssh integration is active coprocess IO must be done after parsing ssh
 // integraton framing so PTYTask needs to know about it.
 @property(atomic) BOOL sshIntegrationActive;
+
+// This is used by channels. It takes care of handling IO and this is the one strong reference to the ioBuffer.
+@property(nonatomic, strong) iTermIOBuffer *ioBuffer;
 
 + (NSMutableDictionary *)mutableEnvironmentDictionary;
 

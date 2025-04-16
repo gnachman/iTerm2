@@ -34,6 +34,7 @@
         self.savedWindowType = restorableState[@"savedWindowType"] ? [restorableState[@"savedWindowType"] intValue] : iTermWindowDefaultType();
         self.screen = restorableState[@"screen"] ? [restorableState[@"screen"] intValue] : -1;
         self.windowTitle = [restorableState[@"windowTitle"] nilIfNull];
+        self.channelParentGuid = [restorableState[@"channelParentGuid"] nilIfNull];
     }
     return self;
 }
@@ -56,7 +57,8 @@
               @"windowType": @(_windowType),
               @"savedWindowType": @(_savedWindowType),
               @"screen": @(_screen),
-              @"windowTitle": _windowTitle ?: [NSNull null]
+              @"windowTitle": _windowTitle ?: [NSNull null],
+              @"channelParentGuid": _channelParentGuid ?: [NSNull null]
     };
 }
 

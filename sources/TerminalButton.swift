@@ -10,8 +10,10 @@ import Foundation
 @available(macOS 11, *)
 @objc(iTermTerminalButton)
 class TerminalButton: NSObject {
+    @objc var wantsFrame: Bool { true }
     @objc var action: ((NSPoint) -> ())?
     private let tintedForegroundImage: TintedImage
+    private let tintedBackgroundImage: TintedImage
     private let aspectRatio: CGFloat
     @objc weak var mark: iTermMarkProtocol?
     // Returns -1 if unset
@@ -42,6 +44,7 @@ class TerminalButton: NSObject {
     init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, mark: iTermMarkProtocol?) {
         self.id = id
         tintedForegroundImage = TintedImage(original: foregroundImage)
+        tintedBackgroundImage = TintedImage(original: backgroundImage)
         self.mark = mark
         aspectRatio = foregroundImage.size.height / foregroundImage.size.width;
     }
@@ -49,6 +52,7 @@ class TerminalButton: NSObject {
     required init?(_ original: TerminalButton) {
         self.id = original.id
         tintedForegroundImage = original.tintedForegroundImage.clone()
+        tintedBackgroundImage = original.tintedBackgroundImage.clone()
         self.mark = original.mark
         aspectRatio = original.tintedForegroundImage.original.size.height / original.tintedForegroundImage.original.size.width;
         desiredFrame = original.desiredFrame
@@ -62,14 +66,22 @@ class TerminalButton: NSObject {
         return Self(self)!
     }
 
+    var useRoundedRectForBackground: Bool { true }
+
     private func images(backgroundColor: NSColor,
                         foregroundColor: NSColor,
                         size: NSSize) -> (NSImage, NSImage) {
+        let bg = if useRoundedRectForBackground {
+            NSImage.roundedRect(size: size,
+                                radius: 2,
+                                color: backgroundColor)
+        } else {
+            tintedBackgroundImage.tintedImage(color: backgroundColor,
+                                              size: size)
+        }
         return (tintedForegroundImage.tintedImage(color: foregroundColor,
                                                   size: size),
-                NSImage.roundedRect(size: size,
-                                    radius: 2,
-                                    color: backgroundColor))
+                bg)
     }
 
     @objc func size(cellSize: NSSize) -> NSSize {
@@ -243,7 +255,38 @@ class TerminalCopyButton: GenericBlockButton {
         super.init(original)
     }
 }
-    
+
+@available(macOS 11, *)
+@objc(iTermTerminalRevealChannelButton)
+class TerminalRevealChannelButton: TerminalButton {
+    override var wantsFrame: Bool { false }
+    override var useRoundedRectForBackground: Bool { false }
+    @objc let buttonMark: ButtonMarkReading
+
+    @objc
+    init?(place: TerminalButtonPlace) {
+        guard let bg = NSImage(systemSymbolName: "rectangle.stack.fill", accessibilityDescription: nil),
+              let fg = NSImage(systemSymbolName: "rectangle.stack", accessibilityDescription: nil) else {
+            return nil
+        }
+        self.buttonMark = place.mark as ButtonMarkReading
+        super.init(id: place.id,
+                   backgroundImage: bg,
+                   foregroundImage: fg,
+                   mark: place.mark)
+    }
+
+    required init?(_ original: TerminalButton) {
+        let downcast = original as! TerminalRevealChannelButton
+        self.buttonMark = downcast.buttonMark
+        super.init(original)
+    }
+
+    override func clone() -> Self {
+        return Self(self)!
+    }
+}
+
 @available(macOS 11, *)
 @objc(iTermTerminalFoldBlockButton)
 class TerminalFoldBlockButton: GenericBlockButton {

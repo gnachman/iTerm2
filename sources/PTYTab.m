@@ -5261,6 +5261,35 @@ typedef struct {
     return block != nil;
 }
 
+- (void)swapSession:(PTYSession *)existing withBuriedSession:(PTYSession *)buried {
+    DLog(@"swapSession:%@ withBuriedSession:%@", existing, buried);
+    if (((PTYTab *)existing.delegate)->lockedSession_) {
+        DLog(@"Existing or both is locked");
+        return;
+    }
+    if (existing.isTmuxClient || buried.isTmuxClient) {
+        DLog(@"tmux");
+        return;
+    }
+    PTYSplitView *splitView = (PTYSplitView *)existing.view.superview;
+    const NSUInteger index = [splitView.subviews indexOfObject:existing.view];
+    buried.view.frame = existing.view.frame;
+    [existing.view removeFromSuperview];
+    [splitView insertSubview:buried.view atIndex:index];
+    buried.delegate = self;
+    [self setActiveSession:buried];
+    [splitView adjustSubviews];
+    [self updatePaneTitles];
+    for (PTYSession *session in self.sessions) {
+        [self fitSessionToCurrentViewSize:session];
+    }
+    [self.viewToSessionMap setObject:buried forKey:buried.view];
+    [buried didMoveSession];
+    [self updateSessionOrdinals];
+
+    [[iTermBuriedSessions sharedInstance] swapSession:existing withBuriedSession:buried];
+}
+
 - (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2 {
     DLog(@"swapSession:%@ withSession:%@", session1, session2);
     assert(session1.delegate == self);

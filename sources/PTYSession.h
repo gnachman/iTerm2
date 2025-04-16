@@ -56,6 +56,7 @@ extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 @class FakeWindow;
 @class iTermAction;
 @class iTermAnnouncementViewController;
+@class iTermChannelClient;
 @class iTermConductor;
 @protocol iTermContentSubscriber;
 @class iTermEchoProbe;
@@ -304,6 +305,8 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)sessionProcessInfoProviderDidChange:(PTYSession *)session;
 - (void)sessionSwapWithSessionInDirection:(int)direction;
 - (BOOL)sessionBelongsToHotkeyWindow:(PTYSession *)session;
+- (void)swapSession:(PTYSession *)existing withBuriedSession:(PTYSession *)buried;
+
 @end
 
 @class SessionView;
@@ -610,6 +613,9 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, strong) iTermRunningRemoteCommand *runningRemoteCommand;
 @property(nonatomic, readonly) iTermSessionModeHandler *modeHandler;
 @property(nonatomic, strong) iTermPathCompletionHelper *pathCompletionHelper;
+@property(nonatomic, readonly) NSMutableArray<iTermChannelClient *> *channelClients;
+@property(nonatomic, copy) NSString *channelUID;
+@property(nonatomic, copy) NSString *channelParentGuid;
 
 #pragma mark - methods
 
@@ -682,11 +688,16 @@ backgroundColor:(NSColor *)backgroundColor;
                          withDelegate:(id<PTYSessionDelegate>)delegate
                         forObjectType:(iTermObjectType)objectType
                    partialAttachments:(NSDictionary *)partialAttachments;
+- (PTYSession *)newSessionForChannelID:(NSString *)channelID command:(NSString *)command;
 
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark
                                    tmuxController:(TmuxController *)tmuxController
                                            window:(int)window;
++ (NSDictionary *)arrangementForChannelID:(NSString *)channelID
+                                  profile:(Profile *)profile
+                         workingDirectory:(NSString *)workingDirectory
+                                     size:(VT100GridSize)size;
 + (NSString *)guidInArrangement:(NSDictionary *)arrangement;
 + (NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement;
 

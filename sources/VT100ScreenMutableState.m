@@ -4313,6 +4313,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 // WARNING: This is called on PTYTask's thread.
+// This blocks when the queue of tokens gets too large.
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
     [_echoProbe updateEchoProbeStateWithTokenCVector:&vector];
     [_tokenExecutor addTokens:vector length:length highPriority:highPriority];

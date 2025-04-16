@@ -93,6 +93,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)browserBundleID;
 #endif  // ITERM2_SHARED_ARC
 + (BOOL)chaseAnchoredScreen;
++ (BOOL)channelsEnabled;
 + (BOOL)clearBellIconAggressively;
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
 + (int)codeciergeCommandWarningCount;

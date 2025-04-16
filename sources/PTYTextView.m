@@ -1884,6 +1884,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_indicatorsHelper setIndicator:kiTermIndicatorAIChatStreaming
                             visible:[_delegate textViewSessionIsStreamingToAIChat]
                      darkBackground:isDark];
+    [_indicatorsHelper setIndicator:kiTermIndicatorChannel
+                            visible:[_delegate textViewSessionHasChannelParent]
+                     darkBackground:isDark];
     const BOOL secureByUser = [[iTermSecureKeyboardEntryController sharedInstance] enabledByUserDefault];
     const BOOL secure = [[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
     const BOOL allowSecureKeyboardEntryIndicator = [iTermAdvancedSettingsModel showSecureKeyboardEntryIndicator];
@@ -5505,6 +5508,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                        screenCoordinate:[weakSelf.window convertPointToScreen:locationInWindow]];
                 };
                 [updated addObject:button];
+            } else if (place.mark.channelUID) {
+                iTermTerminalButton *button = [[[iTermTerminalRevealChannelButton alloc] initWithPlace:place] autorelease];
+                NSString *uid = [[place.mark.channelUID copy] autorelease];
+                button.action = ^(NSPoint locationInWindow) {
+                    [weakSelf revealChannelWithUID:uid];
+                };
+                [updated addObject:button];
             }
         } else {
             [updated addObject:_buttons[i]];
@@ -5528,6 +5538,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [_buttons autorelease];
     _buttons = [updated retain];
     return _buttons;
+}
+
+- (void)revealChannelWithUID:(NSString *)uid {
+    [self.delegate textViewRevealChannelWithUID:uid];
 }
 
 - (NSArray<iTermTerminalButton *> *)commandButtonsForMark:(id<VT100ScreenMarkReading>)mark

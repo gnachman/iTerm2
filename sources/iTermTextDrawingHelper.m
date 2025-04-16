@@ -1479,6 +1479,9 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     NSMutableDictionary<NSNumber *, NSValue *> *dict = [NSMutableDictionary dictionary];
     NSArray<iTermTerminalButton *> *buttons = [self.delegate drawingHelperTerminalButtons];
     for (iTermTerminalButton *button in buttons) {
+        if (!button.wantsFrame) {
+            continue;
+        }
         VT100GridAbsCoord absCoord = [_delegate absCoordForButton:button];
         NSValue *value = dict[@(absCoord.y)];
         if (!value) {

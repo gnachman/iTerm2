@@ -2892,5 +2892,24 @@ willExecuteToken:(VT100Token *)token
     [_kittyImageController executeCommand:kittyImageCommand];
 }
 
+- (void)terminalStartWrappedCommand:(NSString *)command channel:(NSString *)uid {
+    if (![iTermAdvancedSettingsModel channelsEnabled]) {
+        return;
+    }
+    if (self.currentGrid.cursor.x != 0) {
+        [self appendCarriageReturnLineFeed];
+    }
+    iTermButtonMark *mark = (iTermButtonMark *)[self addMarkOnLine:self.numberOfScrollbackLines + self.currentGrid.cursor.y ofClass:[iTermButtonMark class]];
+    [self.mutableIntervalTree mutateObject:mark block:^(id obj) {
+        iTermButtonMark *mark = obj;
+        mark.channelUID = uid;
+    }];
+    [self appendBannerMessage:[NSString stringWithFormat:@"   Started %@", command]];
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenStartWrappedCommand:command channel:uid];
+        [unpauser unpause];
+    }];
+}
+
 @end
 

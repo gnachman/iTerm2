@@ -832,3 +832,62 @@ extension PTYSession: PathCompletionHelperDelegate {
         pathCompletionHelper = nil
     }
 }
+
+extension PTYSession {
+    // NOTE: The channels branch of iTerm2-Shell-Integration has the `it2run` server process you need to test this.
+    @objc(addChannelClient:command:)
+    func add(channelClient: ChannelClient, command: String) {
+        it_assert(!isTmuxClient)
+
+        channelClients.add(channelClient)
+        let session = newSession(forChannelID: channelClient.uid, command: command)!
+        let iobuffer = IOBuffer(fileDescriptor: channelClient.fd,
+                                operationQueue: FileDescriptorMonitor.queue) { [weak session] in
+            // receive returns nil if only part of a segmented message is received.
+            if var data = channelClient.mux.receive() {
+                data.withUnsafeMutableBytes { (ptr: UnsafeMutableRawBufferPointer) in
+                    session?.threadedReadTask(ptr.baseAddress!, length: Int32(ptr.count))
+                }
+            }
+        } writeClosure: { data in
+            channelClient.mux.send(message: data)
+        }
+        session.shell.ioBuffer = iobuffer
+        session.channelParentGuid = guid
+        // Should only be nil for tmux
+        let restorableSession = self.restorableSession!
+        restorableSession.arrangement = [:]
+        restorableSession.sessions = [session]
+        restorableSession.group = .kiTermRestorableSessionGroupChannel
+        iTermBuriedSessions.sharedInstance().add(restorableSession, for: session)
+    }
+
+    @objc(removeChannelClientWithID:)
+    func removeChannelClient(id: String) {
+        let indexes = channelClients.indexesOfObjects { obj, _, _ in
+            (obj as! ChannelClient).uid == id
+        }
+        channelClients.removeObjects(at: indexes)
+    }
+
+    @objc(removeChannelClientsForConductor:)
+    func removeChannelClients(for conductor: Conductor) {
+        let indexes = channelClients.indexesOfObjects { obj, _, _ in
+            (obj as! ChannelClient).conductor === conductor
+        }
+        channelClients.removeObjects(at: indexes)
+    }
+
+    @objc(swapWithChannelSessionWithUID:)
+    func swapWithChannelSession(uid: String) {
+        let session = iTermBuriedSessions.sharedInstance().buriedSessions().first { candidate in
+            candidate.channelUID == uid
+        }
+        guard let session else {
+            DLog("No buried session with channel uid \(uid)")
+            return
+        }
+        delegate?.swapSession(self, withBuriedSession: session)
+    }
+
+}

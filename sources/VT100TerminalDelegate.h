@@ -545,5 +545,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalInsertCopyButtonForBlock:(NSString *)blockID;
 - (void)terminalSetPointerShape:(NSString *)pointerShape;
 - (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand;
+- (void)terminalStartWrappedCommand:(NSString *)command channel:(NSString *)uid;
 
 @end

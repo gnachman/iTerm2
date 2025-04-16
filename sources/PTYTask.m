@@ -107,6 +107,7 @@ static void HandleSigChld(int n) {
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
+    [self.ioBuffer invalidate];
 
     [self closeFileDescriptorAndDeregisterIfPossible];
 
@@ -316,6 +317,16 @@ static void HandleSigChld(int n) {
     [[TaskNotifier sharedInstance] registerTask:self];
 }
 
+- (void)setIoBuffer:(iTermIOBuffer *)ioBuffer {
+    iTermChannelJobManager *jobManager = [[iTermChannelJobManager alloc] initWithQueue:_jobManagerQueue];
+    jobManager.ioBuffer = ioBuffer;
+    _jobManager = jobManager;
+}
+
+- (iTermIOBuffer *)ioBuffer {
+    return [[iTermChannelJobManager castFrom:_jobManager] ioBuffer];
+}
+
 - (int)readOnlyFileDescriptor {
     if (![_jobManager isKindOfClass:[iTermTmuxJobManager class]]) {
         return -1;
@@ -344,6 +355,11 @@ static void HandleSigChld(int n) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf.delegate taskDidReadFromCoprocessWhileSSHIntegrationInUse:copyOfData];
         });
+        return;
+    }
+    iTermIOBuffer *ioBuffer = self.ioBuffer;
+    if (ioBuffer) {
+        [ioBuffer write:data];
         return;
     }
     // Write as much as we can now through the non-blocking pipe

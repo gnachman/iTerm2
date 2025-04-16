@@ -33,6 +33,7 @@ NSString *const kiTermIndicatorSecureKeyboardEntry_User = @"kiTermIndicatorSecur
 NSString *const kiTermIndicatorPinned = @"kiTermIndicatorPinned";
 NSString *const kiTermIndicatorAIChatLinked = @"kiTermIndicatorAIChatLinked";
 NSString *const kiTermIndicatorAIChatStreaming = @"kiTermIndicatorAIChatStreaming";
+NSString *const kiTermIndicatorChannel = @"kiTermIndicatorChannel";
 
 static const NSTimeInterval kFullScreenFlashDuration = 0.3;
 static const NSTimeInterval kFlashDuration = 0.3;
@@ -124,6 +125,9 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             kiTermIndicatorAIChatStreaming: [self imagePairWithLegacyName:@"AIStreaming"
                                                             modernOutline:@"dot.radiowaves.right"
                                                                     large:NO],
+            kiTermIndicatorChannel: [self imagePairWithLegacyName:@"Channel"
+                                                    modernOutline:@"rectangle.stack"
+                                                            large:NO]
         };
     });
 
@@ -245,7 +249,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorSecureKeyboardEntry_User,
               kiTermIndicatorPinned,
               kiTermIndicatorAIChatLinked,
-              kiTermIndicatorAIChatStreaming];
+              kiTermIndicatorAIChatStreaming,
+              kiTermIndicatorChannel];
 }
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block {
@@ -295,7 +300,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorPinned: @"This Hotkey Window is pinned.",
         kiTermIndicatorAIChatLinked: [NSString stringWithFormat:@"AI Chats can view or control this session.\n * [Unlink from AI Chat](iterm2:unlink-session-chat?s=%@&t=%@)\n * [Reveal AI Chat](iterm2:reveal-chat-for-session?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken], sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
         kiTermIndicatorAIChatStreaming: [NSString stringWithFormat:@"Commands run in this session are automatically sent to an AI chat, along with their output. [Stop sending](iterm2:disable-streaming-session-chat?s=%@&t=%@)",
-                                         sessionID, [[NSWorkspace sharedWorkspace] it_newToken]]
+                                         sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
+        kiTermIndicatorChannel: [NSString stringWithFormat:@"This command is running within another session.\n * [Return to Enclosing Session](iterm2:pop-channel?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken]]
     };
     return messages[name];
 }

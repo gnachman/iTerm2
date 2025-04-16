@@ -331,6 +331,7 @@ class TokenExecutor: NSObject {
     // This takes ownership of vector.
     // You can call this on any queue when not high priority.
     // If high priority, then you must be on the main queue or have joined the main & mutation queue.
+    // This blocks when the queue of tokens gets too large.
     @objc
     func addTokens(_ vector: CVector, length: Int, highPriority: Bool) {
         if gDebugLogging.boolValue { DLog("Add tokens with length \(length) highpri=\(highPriority)") }

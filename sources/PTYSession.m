@@ -320,6 +320,7 @@ static NSString *const SESSION_ARRANGEMENT_FILTER = @"Filter";  // NSString
 static NSString *const SESSION_ARRANGEMENT_SSH_STATE = @"SSH State";  // NSNumber
 static NSString *const SESSION_ARRANGEMENT_CONDUCTOR = @"Conductor";  // NSString (json)
 static NSString *const SESSION_ARRANGEMENT_PENDING_JUMPS = @"Pending Jumps";  // NSArray<NSString *>, optional.
+static NSString *const SESSION_ARRANGEMENT_CHANNEL_ID = @"Channel ID";  // NSString
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -828,7 +829,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         [iTermCPUUtilization instanceForSessionID:_guid];
         _canChangeProfileInArrangementGeneration = -1;
         _runningRemoteCommand = [[iTermRunningRemoteCommand alloc] init];
-
+        _channelClients = [[NSMutableArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:kCoprocessStatusChangeNotification
@@ -1108,6 +1109,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_runningRemoteCommand release];
     [_turdDetector release];
     [_pathCompletionHelper release];
+    [_channelClients release];
+    [_channelUID release];
+    [_channelParentGuid release];
 
     [super dealloc];
 }
@@ -1511,6 +1515,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }];
     }
 
+    aSession->_channelUID = [arrangement[SESSION_ARRANGEMENT_CHANNEL_ID] copy];
     aSession->_workingDirectoryPollerDisabled = [arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] boolValue] || aSession->_shouldExpectCurrentDirUpdates;
     if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
         [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
@@ -1613,6 +1618,20 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([_foundingArrangement[SESSION_ARRANGEMENT_FILTER] length] > 0) {
         [self.delegate session:self setFilter:_foundingArrangement[SESSION_ARRANGEMENT_FILTER]];
     }
+}
+
+- (PTYSession *)newSessionForChannelID:(NSString *)channelID command:(NSString *)command {
+    NSDictionary *arrangement = [PTYSession arrangementForChannelID:channelID
+                                                            profile:self.profile
+                                                   workingDirectory:self.variablesScope.path
+                                                               size:self.screen.size];
+    PTYSession *session = [PTYSession sessionFromArrangement:arrangement
+                                                       named:command
+                                                      inView:[[[SessionView alloc] initWithFrame:self.view.frame] autorelease]
+                                                withDelegate:nil
+                                               forObjectType:iTermPaneObject
+                                          partialAttachments:nil];
+    return [session retain];
 }
 
 + (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
@@ -1919,6 +1938,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
                         [terminal.parser cancelConductorRecoveryMode];
                     }];
+                    [aSession removeChannelClientsForConductor:aSession->_conductor];
                     aSession->_conductor.delegate = nil;
                     [aSession->_conductor release];
                     aSession->_conductor = nil;
@@ -3190,9 +3210,12 @@ ITERM_WEAKLY_REFERENCEABLE
     assert(self.isRestartable);
     [_naggingController willRecycleSession];
 
-    _conductor.delegate = nil;
-    [_conductor release];
-    _conductor = nil;
+    if (_conductor) {
+        [self removeChannelClientsForConductor:_conductor];
+        _conductor.delegate = nil;
+        [_conductor release];
+        _conductor = nil;
+    }
     _shell.sshIntegrationActive = NO;
 
     if (_exited) {
@@ -3662,7 +3685,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
-// in the main thread to execute the parsed tokens.
+// in the main thread to execute the parsed tokens. This blocks when the queue of tokens gets too large.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
     [_screen threadedReadTask:buffer length:length];
 }
@@ -6022,6 +6045,19 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
     return YES;
+}
+
++ (NSDictionary *)arrangementForChannelID:(NSString *)channelID
+                                  profile:(Profile *)profile
+                         workingDirectory:(NSString *)workingDirectory
+                                     size:(VT100GridSize)size {
+    return [@{
+        SESSION_ARRANGEMENT_COLUMNS: @(size.width),
+        SESSION_ARRANGEMENT_ROWS: @(size.height),
+        SESSION_ARRANGEMENT_BOOKMARK: profile,
+        SESSION_ARRANGEMENT_WORKING_DIRECTORY: workingDirectory ?: [NSNull null],
+        SESSION_ARRANGEMENT_CHANNEL_ID: channelID
+    } dictionaryByRemovingNullValues];
 }
 
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
@@ -11612,6 +11648,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [[iTermChatWindowController instanceIfExists] isStreamingToGuid:self.guid];
 }
 
+- (BOOL)textViewSessionHasChannelParent {
+    return self.channelParentGuid != nil;
+}
+
 - (BOOL)textViewInPinnedHotkeyWindow {
     if (![iTermAdvancedSettingsModel showPinnedIndicator]) {
         return NO;
@@ -12220,6 +12260,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [_pathCompletionHelper autorelease];
         _pathCompletionHelper = nil;
     }
+}
+
+- (void)textViewRevealChannelWithUID:(NSString *)uid {
+    [self swapWithChannelSessionWithUID:uid];
 }
 
 - (void)textviewToggleTimestampsMode {
@@ -16221,8 +16265,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (config) {
         [_screen restoreSavedState:config];
     }
-    _conductor.delegate = nil;
-    [_conductor autorelease];
+    if (_conductor) {
+        [self removeChannelClientsForConductor:_conductor];
+        _conductor.delegate = nil;
+        [_conductor autorelease];
+    }
     _conductor = [_conductor.parent retain];
     _conductor.delegate = self;
     [self updateVariablesFromConductor];
@@ -19416,6 +19463,22 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)screenDidSynchronize {
     [self updateAutoComposerFrame];
     [self updateSearchRange];
+}
+
+- (void)screenStartWrappedCommand:(NSString *)command channel:(NSString *)uid {
+    DLog(@"command=%@ uid=%@ tmux=%@", command, uid, @(self.isTmuxClient));
+    if (self.isTmuxClient) {
+        return;
+    }
+    NSError *error = nil;
+    iTermChannelClient *channelClient = [[[iTermChannelClient alloc] initWithID:uid
+                                                                      conductor:self.conductor
+                                                                          error:&error] autorelease];
+    if (error) {
+        DLog(@"%@", error);
+        return;
+    }
+    [self addChannelClient:channelClient command:command];
 }
 
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager {

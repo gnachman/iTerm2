@@ -1620,6 +1620,9 @@ static iTermKeyEventReplayer *gReplayer;
     if ([components.path isEqualToString:@"disable-streaming-session-chat"]) {
         [self stopStreamingSessionChatFromURL:url];
     }
+    if ([components.path isEqualToString:@"pop-channel"]) {
+        [self popChannel:url];
+    }
     return NO;
 }
 
@@ -1652,6 +1655,40 @@ static iTermKeyEventReplayer *gReplayer;
     [[iTermChatWindowController instanceShowingErrors:YES] showChatWindow];
     [[iTermChatWindowController instanceShowingErrors:NO] selectChatWithID:chatID];
 
+}
+
+- (void)popChannel:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *token = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"t"]) {
+            token = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    if (![[NSWorkspace sharedWorkspace] it_checkToken:token]) {
+        return;
+    }
+    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    if (!session) {
+        return;
+    }
+    NSString *parentGuid = session.channelParentGuid;
+    if (!parentGuid) {
+        return;
+    }
+    PTYSession *parent = [[[iTermBuriedSessions sharedInstance] buriedSessions] objectPassingTest:^BOOL(PTYSession *element, NSUInteger index, BOOL *stop) {
+        return [element.guid isEqualToString:parentGuid];
+    }];
+    if (!parent) {
+        return;
+    }
+    [session.delegate swapSession:session withBuriedSession:parent];
 }
 
 - (void)stopStreamingSessionChatFromURL:(NSURL *)url {
@@ -2436,6 +2473,10 @@ static iTermKeyEventReplayer *gReplayer;
         PTYTab *tab;
 
         switch (restorableSession.group) {
+            case kiTermRestorableSessionGroupChannel:
+                ITAssertWithMessage(NO, @"Channel shouldn't be used for undo");
+                break;
+
             case kiTermRestorableSessionGroupSession:
                 // Restore a single session.
                 DLog(@"Restore a single session");
