@@ -32,6 +32,7 @@ typedef struct {
 @property (atomic, readonly) iTermControlCodeAttribute controlCode;
 @property (atomic, readonly, nullable) NSNumber *controlCodeNumber;
 @property (atomic, readonly, nullable) iTermURL *url;
+@property (nonatomic, readonly) BOOL isDefault;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
@@ -68,6 +69,7 @@ typedef struct {
 @interface iTermExternalAttributeIndex: NSObject<iTermExternalAttributeIndexReading>
 @property (nonatomic, strong) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
+@property (nonatomic, readonly) BOOL isEmpty;
 
 + (instancetype _Nullable)withDictionary:(NSDictionary *)dictionary;  // return nil if input is NSNull
 + (instancetype _Nullable)fromData:(NSData *)data;
