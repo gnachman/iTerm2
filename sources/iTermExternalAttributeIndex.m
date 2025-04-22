@@ -197,6 +197,10 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     }
 }
 
+- (BOOL)isEmpty {
+    return _attributes.count == 0;
+}
+
 - (void)mutateAttributesFrom:(int)start
                           to:(int)end
                        block:(iTermExternalAttribute * _Nullable(^)(iTermExternalAttribute * _Nullable))block {
@@ -593,6 +597,11 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     return !memcmp(&_underlineColor, &rhs->_underlineColor, sizeof(_underlineColor));
 }
 
+- (BOOL)isDefault {
+    return !self.hasUnderlineColor && self.blockIDList == nil && self.controlCodeNumber == nil && self.url == nil;
+}
+
+
 @end
 
 @implementation iTermUniformExternalAttributes  {
@@ -632,6 +641,10 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 
 - (NSString *)shortDescriptionWithLength:(int)length {
     return [self description];
+}
+
+- (BOOL)isEmpty {
+    return _attr == nil || _attr.isDefault;
 }
 
 - (NSDictionary *)dictionaryValue {
