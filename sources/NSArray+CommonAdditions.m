@@ -20,6 +20,17 @@
     return temp;
 }
 
+- (NSMutableArray *)mapToMutableArrayWithBlock:(id _Nullable (^NS_NOESCAPE)(id))block {
+    NSMutableArray *temp = [NSMutableArray array];
+    for (id anObject in self) {
+        id mappedObject = block(anObject);
+        if (mappedObject) {
+            [temp addObject:mappedObject];
+        }
+    }
+    return temp;
+}
+
 - (NSArray *)subarrayFromIndex:(NSUInteger)index {
     NSUInteger length;
     if (self.count >= index) {

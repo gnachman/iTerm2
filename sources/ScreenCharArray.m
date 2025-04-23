@@ -17,11 +17,11 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
 static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 
 @implementation ScreenCharArray {
+@protected
     BOOL _shouldFreeOnRelease;
     screen_char_t _placeholder;
     size_t _offset;
 
-@protected
     // If initialized with data, hold a reference to it to preserve ownership.
     NSData *_data;
     const screen_char_t *_line;
@@ -29,11 +29,13 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     iTermImmutableMetadata _metadata;
     int _eol;
     screen_char_t _continuation;
+    iTermBidiDisplayInfo *_bidiInfo;
 }
 
 @synthesize line = _line;
 @synthesize length = _length;
 @synthesize eol = _eol;
+@synthesize bidiInfo = _bidiInfo;
 
 + (instancetype)emptyLineOfLength:(int)length {
     NSMutableData *data = [NSMutableData data];
@@ -263,6 +265,11 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
 }
 
+- (NSData *)data {
+    [self makeSafe];
+    return _data;
+}
+
 - (NSString *)stringValue {
     NSMutableString *result = [NSMutableString string];
     const screen_char_t *line = self.line;
@@ -472,6 +479,31 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 
 - (ScreenCharArray *)subArrayFromIndex:(int)i {
     return [self screenCharArrayByRemovingFirst:i];
+}
+
+- (ScreenCharArray *)subArrayWithRange:(NSRange)range {
+    if (range.location == 0 && range.length == self.length) {
+        return self;
+    }
+    if (range.location == 0) {
+        return [self subArrayToIndex:range.length];
+    }
+    if (NSMaxRange(range) == self.length) {
+        return [self subArrayFromIndex:range.location];
+    }
+    if (self.length <= range.location || range.length == 0) {
+        return [ScreenCharArray emptyLineOfLength:0];
+    }
+    screen_char_t continuation = self.line[NSMaxRange(range) - 1];
+    continuation.code = EOL_SOFT;
+    continuation.complexChar = NO;
+    continuation.image = NO;
+    continuation.virtualPlaceholder = 0;
+    return [[ScreenCharArray alloc] initWithCopyOfLine:self.line + range.location
+                                                length:range.length
+                                              metadata:[self subMetadataInRange:range]
+                                          continuation:continuation
+                                              bidiInfo:[_bidiInfo subInfoInRange:range]];
 }
 
 - (ScreenCharArray *)screenCharArrayByRemovingFirst:(int)n {
@@ -747,7 +779,7 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
     iTermMetadataAppend(&metadata, self.length, &sca->_metadata, sca.length);
     _metadata = iTermMetadataMakeImmutable(metadata);
 
-    NSMutableData *data = [NSMutableData dataWithLength:(self.length + sca.length) * sizeof(screen_char_t)];
+    NSMutableData *data = [NSMutableData dataWithLength:(self.length + sca.length + 1) * sizeof(screen_char_t)];
     memmove(data.mutableBytes, _line, self.length * sizeof(screen_char_t));
     memmove(((screen_char_t *)data.mutableBytes) + self.length, sca.line, sca.length * sizeof(screen_char_t));
     _data = data;
@@ -806,6 +838,112 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
     _continuation.code = eol;
     _eol = eol;
 }
+
+- (void)deleteRange:(NSRange)range {
+    if (range.length == 0) {
+        return;
+    }
+    screen_char_t *line = self.mutableLine;
+    memmove(line + range.location,
+            line + NSMaxRange(range),
+            (self.length - NSMaxRange(range)) * sizeof(screen_char_t));
+    _length -= range.length;
+
+    iTermExternalAttributeIndex *eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
+    if (!eaIndex) {
+        return;
+    }
+    [eaIndex deleteRange:range];
+    _bidiInfo = nil;
+}
+
+- (void)setCharacter:(screen_char_t)c inRange:(NSRange)range {
+    screen_char_t *line = [self mutableLine];
+    for (int i = 0; i < _length; i++) {
+        line[i] = c;
+    }
+}
+
+- (void)insert:(ScreenCharArray *)sca atIndex:(int)index {
+    NSMutableData *data = [NSMutableData dataWithCapacity:_length + sca.length];
+    int offset = 0;
+    int count = index * sizeof(screen_char_t);
+    const int finalOffset = count;
+    memmove(data.mutableBytes, _line, count);
+    offset += count;
+    count = sca.length * sizeof(screen_char_t);
+    memmove(data.mutableBytes + offset, sca.line, count);
+    offset += count;
+    count = (_length - index) * sizeof(screen_char_t);
+    memmove(data.mutableBytes + offset, _line + finalOffset, count);
+
+    _data = data;
+    _line = _data.bytes;
+    _length += sca.length;
+    _shouldFreeOnRelease = NO;
+
+    iTermExternalAttributeIndex *eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
+    if (!eaIndex) {
+        return;
+    }
+    [eaIndex insertFrom:iTermImmutableMetadataGetExternalAttributesIndex(sca.metadata)
+            sourceRange:NSMakeRange(0, sca.length)
+                atIndex:index];
+}
+
+- (void)setMetadata:(iTermMetadata)metadata {
+    iTermImmutableMetadataRelease(_metadata);
+#warning TODO: Make sure this does not leak
+    iTermMetadataRetain(metadata);
+    _metadata = iTermMetadataMakeImmutable(metadata);
+}
+
+- (iTermExternalAttributeIndex *)eaIndexCreatingIfNeeded {
+    iTermExternalAttributeIndex *eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
+    if (eaIndex) {
+        return eaIndex;
+    }
+    eaIndex = [[iTermExternalAttributeIndex alloc] init];
+    [self setExternalAttributesIndex:eaIndex];
+    return eaIndex;
+}
+
+- (void)copyRange:(NSRange)sourceRange
+              from:(ScreenCharArray *)source
+ destinationIndex:(int)destinationIndex {
+    if (sourceRange.length == 0) {
+        return;
+    }
+    ITAssertWithMessage(destinationIndex >= 0 && destinationIndex + sourceRange.length <= _length,
+                        @"copyRange:destinationIndex out of bounds");
+
+    // Copy raw screen_char_t data
+    screen_char_t *line = [self mutableLine];
+    memmove(line + destinationIndex,
+            source.line + sourceRange.location,
+            sourceRange.length * sizeof(screen_char_t));
+
+    // Copy or clear external-attribute entries
+    iTermExternalAttributeIndex *srcEA  = [source eaIndex];
+    iTermExternalAttributeIndex *destEA = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
+    if (srcEA) {
+        if (!destEA) {
+            destEA = [self eaIndexCreatingIfNeeded];
+        }
+        [destEA copyFrom:srcEA
+                 source:sourceRange.location
+             destination:destinationIndex
+                    count:sourceRange.length];
+    } else if (destEA) {
+        [destEA eraseInRange:VT100GridRangeMake(destinationIndex, sourceRange.length)];
+    }
+    _bidiInfo = nil;
+    if (destinationIndex + sourceRange.length == self.length) {
+        _continuation = source.continuation;
+        self.eol = source.eol;
+    }
+}
+
 @end
 
 @implementation ScreenCharRope

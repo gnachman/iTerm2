@@ -148,6 +148,7 @@
 #import "TokenExecutorHelpers.h"
 #import "Trigger.h"
 #import "VT100DCSParser.h"
+#import "VT100LineInfo.h"
 #import "VT100RemoteHost.h"
 #import "VT100Terminal.h"
 #import "charmaps.h"

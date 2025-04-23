@@ -1,0 +1,169 @@
+//
+//  iTermRope.swift
+//  StyleMap
+//
+//  Created by George Nachman on 4/21/25.
+//
+
+@objc
+class iTermRope: NSObject {
+    private lazy var stringCache = SubStringCache()
+
+    struct Segment {
+        var string: iTermString
+        // Number of cells in string plus the number of cells in preceding segments.
+        var cumulativeCellCount: Int
+    }
+
+    final class Guts: Cloning {
+        var segments = [Segment]()
+        var deletedHeadCellCount = 0
+        var stringCache = SubStringCache()
+
+        func clone() -> Guts {
+            let result = Guts()
+            result.segments = segments
+            result.deletedHeadCellCount = deletedHeadCellCount
+            return result
+        }
+    }
+
+    @CopyOnWrite var guts = Guts()
+
+    override var description: String {
+        let segmentStrings: [String] = guts.segments.enumerated().map { i, seg in
+            "  Segment \(i) cumulativeCount=\(seg.cumulativeCellCount): \(seg.string)"
+        }
+        let header = "\(String(describing: type(of: self))): \(it_addressString) " +
+                        "cells=\(cellCount) " +
+                        "deletedCellCount=\(guts.deletedHeadCellCount) " +
+        "value=\(deltaString(range: fullRange).string.escapingControlCharactersAndBackslash())"
+        let array = [header] + segmentStrings
+        return "<" + array.joined(separator: "\n") + ">"
+    }
+
+    func clone() -> iTermRope {
+        return iTermRope(self)
+    }
+
+    override init() {
+        super.init()
+    }
+
+    init(_ other: iTermRope) {
+        guts = other.guts.clone()
+        super.init()
+    }
+}
+
+extension iTermRope: NSMutableCopying, NSCopying {
+    func copy(with zone: NSZone? = nil) -> Any {
+        return clone()
+    }
+
+    func mutableCopy(with zone: NSZone? = nil) -> Any {
+        return mutableClone()
+    }
+}
+
+@objc
+extension iTermRope: iTermString {
+    var cellCount: Int {
+        let lastCum = guts.segments.last?.cumulativeCellCount ?? guts.deletedHeadCellCount
+        return lastCum - guts.deletedHeadCellCount
+    }
+
+    func hydrate(into msca: MutableScreenCharArray,
+                 destinationIndex: Int,
+                 sourceRange: NSRange) {
+        var o = 0
+        enumerateSegments(inRange: Range(sourceRange)!) { i, seg, localRange in
+            seg.hydrate(into: msca,
+                        destinationIndex: destinationIndex + o,
+                        sourceRange: NSRange(localRange))
+            o += localRange.count
+        }
+    }
+
+    func hydrate(range: NSRange) -> ScreenCharArray {
+        return _hydrate(range: range)
+    }
+
+    func character(at index: Int) -> screen_char_t {
+        return _character(at: index)
+    }
+
+    func buildString(range: NSRange, builder: DeltaStringBuilder) {
+        enumerateSegments(inRange: Range(range)!) { i, seg, segmentRange in
+            seg.buildString(range: NSRange(segmentRange), builder: builder)
+        }
+    }
+
+    func deltaString(range: NSRange) -> DeltaString {
+        return stringCache.string(for: range) {
+            let builder = DeltaStringBuilder(count: CInt(cellCount))
+            buildString(range: fullRange, builder: builder)
+            return builder.build()
+        }
+    }
+
+    func mutableClone() -> any iTermMutableStringProtocol & iTermString {
+        return _mutableClone()
+    }
+
+    func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
+        return _string(withExternalAttributes: eaIndex, startingFrom: offset)
+    }
+
+    func externalAttributesIndex() -> (any iTermExternalAttributeIndexReading)? {
+        return _externalAttributesIndex()
+    }
+
+    var screenCharArray: ScreenCharArray {
+        return _screenCharArray
+    }
+
+    func hasEqual(range: NSRange, to chars: UnsafePointer<screen_char_t>) -> Bool {
+        return _hasEqual(range: range, to: chars)
+    }
+}
+
+extension iTermRope {
+    func indexOfSegment(for globalIndex: Int) -> Int {
+        if globalIndex <= guts.deletedHeadCellCount {
+            return 0
+        }
+        var low = 0
+        var high = guts.segments.count - 1
+        while low < high {
+            let mid = (low + high) / 2
+            if guts.segments[mid].cumulativeCellCount <= globalIndex {
+                low = mid + 1
+            } else {
+                high = mid
+            }
+        }
+        return low
+    }
+
+    func globalSegmentRange(index i: Int) -> Range<Int> {
+        let base = i > 0 ? guts.segments[i - 1].cumulativeCellCount : guts.deletedHeadCellCount
+        return base..<guts.segments[i].cumulativeCellCount
+    }
+
+    func enumerateSegments(inRange range: Range<Int>, closure: (Int, iTermString, Range<Int>) -> ()) {
+        let startIndex = indexOfSegment(for: range.lowerBound)
+        let globalRange = (range.lowerBound + guts.deletedHeadCellCount)..<(range.upperBound + guts.deletedHeadCellCount)
+        for i in startIndex..<guts.segments.count {
+            let gsr = globalSegmentRange(index: i)
+
+            guard let intersection = gsr.intersection(globalRange), intersection.count > 0 else {
+                break
+            }
+            let localStart = intersection.lowerBound - gsr.lowerBound
+            let localRange = localStart..<(localStart + intersection.count)
+            it_assert((0..<guts.segments[i].string.cellCount).contains(range: localRange))
+            closure(i, guts.segments[i].string, localRange)
+        }
+    }
+}

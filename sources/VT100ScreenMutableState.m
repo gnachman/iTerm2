@@ -750,7 +750,7 @@ static _Atomic int gPerformingJoinedBlock;
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
         if (rtlFound) {
-            [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
+            [self.currentGrid setRTLFound:YES onLine:pred.y];
         }
         [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
                                             block:^(screen_char_t *sct,

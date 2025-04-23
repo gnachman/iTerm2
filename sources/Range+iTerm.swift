@@ -17,3 +17,15 @@ extension ClosedRange where Bound: Strideable, Bound.Stride: SignedInteger {
         return Swift.min(Swift.max(value, lowerBound), upperBound)
     }
 }
+
+extension Range where Bound == Int {
+    func intersection(_ other: Range<Int>) -> Range<Int>? {
+        let lower = Swift.max(self.lowerBound, other.lowerBound)
+        let upper = Swift.min(self.upperBound, other.upperBound)
+        return lower < upper ? lower..<upper : nil
+    }
+
+    func contains(range: Range<Bound>) -> Bool {
+        return lowerBound <= range.lowerBound && upperBound >= range.upperBound
+    }
+}
