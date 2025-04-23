@@ -11,6 +11,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// This always has the same stuff as iTermMetadata minus external attributes.
+typedef struct {
+    NSTimeInterval timestamp;
+    BOOL rtlFound;
+} iTermLineStringMetadata;
+
 typedef struct {
     NSTimeInterval timestamp;
     void * _Nullable externalAttributes;

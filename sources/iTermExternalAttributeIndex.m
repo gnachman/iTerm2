@@ -24,6 +24,14 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     return [[self alloc] initWithDictionary:dictionary];
 }
 
+- (instancetype)initWithAttributeDictionary:(NSDictionary<NSNumber *, iTermExternalAttribute *> *)attributes {
+    self = [super init];
+    if (self) {
+        _attributes = [attributes copy];
+    }
+    return self;
+}
+
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
     if (!dictionary.count) {
         return nil;
@@ -174,7 +182,7 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     }];
 }
 
-- (void)copyFrom:(iTermExternalAttributeIndex *)source
+- (void)copyFrom:(id<iTermExternalAttributeIndexReading>)source
           source:(int)loadBase
      destination:(int)storeBase
            count:(int)count {
@@ -220,6 +228,18 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
 
 - (void)setObject:(iTermExternalAttribute * _Nullable)ea atIndexedSubscript:(NSUInteger)i {
     _attributes[@(i + _offset)] = ea;
+}
+
+- (iTermExternalAttributeIndex *)indexByDeletingFirst:(int)n {
+    NSMutableDictionary<NSNumber *, iTermExternalAttribute *> *temp = [NSMutableDictionary dictionary];
+    [_attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermExternalAttribute * _Nonnull obj, BOOL * _Nonnull stop) {
+        const int i = key.intValue;
+        if (i < n) {
+            return;
+        }
+        temp[@(i - n)] = obj;
+    }];
+    return [[iTermExternalAttributeIndex alloc] initWithAttributeDictionary:temp];
 }
 
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index {
@@ -268,6 +288,55 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     for (int i = 0; i < range.length; i++) {
         [self eraseAt:i + range.location];
     }
+}
+
+- (void)deleteRange:(NSRange)range {
+    NSMutableDictionary *updated = [NSMutableDictionary dictionary];
+    [_attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber *key, iTermExternalAttribute *obj, BOOL *stop) {
+        const int i = key.intValue;
+        if (NSLocationInRange(i, range)) {
+            return;
+        }
+        if (i >= NSMaxRange(range)) {
+            updated[@(i - range.length)] = obj;
+        } else {
+            updated[key] = obj;
+        }
+    }];
+    _attributes = updated;
+}
+
+- (void)insertFrom:(iTermExternalAttributeIndex *)eaIndex
+       sourceRange:(NSRange)sourceRange
+           atIndex:(int)destinationIndex {
+    NSMutableDictionary *updated = [NSMutableDictionary dictionary];
+    // Shift items right beginning at range.location
+    [_attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber *key, iTermExternalAttribute *obj, BOOL *stop) {
+        const int i = key.intValue;
+        if (i >= destinationIndex) {
+            updated[@(i + sourceRange.length)] = obj;
+        } else {
+            updated[@(i)]= obj;
+        }
+    }];
+    // Copy source range over
+    for (int i = 0; i < sourceRange.length; i++) {
+        updated[@(i + destinationIndex)] = eaIndex[sourceRange.location + i];
+    }
+    _attributes = updated;
+}
+
+- (void)copyInto:(iTermExternalAttributeIndex *)destination {
+    destination->_attributes = [_attributes mutableCopy];
+}
+
+- (void)copyFrom:(id<iTermExternalAttributeIndexReading>)destination startOffset:(int)startOffset {
+    [destination.attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermExternalAttribute * _Nonnull obj, BOOL * _Nonnull stop) {
+        const int i = key.intValue;
+        if (i >= startOffset) {
+            _attributes[@(i - startOffset)] = obj;
+        }
+    }];
 }
 
 - (void)setAttributes:(iTermExternalAttribute *)attributes at:(int)start count:(int)count {
@@ -651,7 +720,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     return @{ @"all": _attr.dictionaryValue };
 }
 
-- (void)copyFrom:(iTermExternalAttributeIndex *)source
+- (void)copyFrom:(id<iTermExternalAttributeIndexReading>)source
           source:(int)loadBase
      destination:(int)storeBase
            count:(int)count {
@@ -660,6 +729,10 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 
 - (iTermExternalAttribute *)objectAtIndexedSubscript:(NSInteger)idx {
     return _attr;
+}
+
+- (iTermExternalAttributeIndex *)indexByDeletingFirst:(int)n {
+    return self;
 }
 
 - (iTermExternalAttributeIndex *)subAttributesToIndex:(int)index {
@@ -688,6 +761,9 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 
 - (void)eraseInRange:(VT100GridRange)range {
     [self doesNotRecognizeSelector:_cmd];
+}
+
+- (void)deleteRange:(NSRange)range {
 }
 
 - (void)setAttributes:(iTermExternalAttribute *)attributes at:(int)start count:(int)count {

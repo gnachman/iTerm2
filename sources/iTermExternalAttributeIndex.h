@@ -64,6 +64,9 @@ typedef struct {
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
 - (iTermExternalAttribute * _Nullable)objectAtIndexedSubscript:(NSInteger)idx;
 - (id<iTermExternalAttributeIndexReading>)copy;
+- (iTermExternalAttributeIndex *)indexByDeletingFirst:(int)n;
+- (void)copyInto:(iTermExternalAttributeIndex *)destination;
+- (void)copyFrom:(id<iTermExternalAttributeIndexReading> _Nullable)destination startOffset:(int)startOffset;
 @end
 
 @interface iTermExternalAttributeIndex: NSObject<iTermExternalAttributeIndexReading>
@@ -79,8 +82,13 @@ typedef struct {
 
 - (void)eraseAt:(int)x;
 - (void)eraseInRange:(VT100GridRange)range;
+- (void)deleteRange:(NSRange)range;
+- (void)insertFrom:(iTermExternalAttributeIndex *)eaIndex
+       sourceRange:(NSRange)sourceRange
+           atIndex:(int)destinationIndex;
+
 - (void)setAttributes:(iTermExternalAttribute * _Nullable)attributes at:(int)cursorX count:(int)count;
-- (void)copyFrom:(iTermExternalAttributeIndex * _Nullable)source
+- (void)copyFrom:(id<iTermExternalAttributeIndexReading> _Nullable)source
           source:(int)source
      destination:(int)destination
            count:(int)count;
@@ -102,7 +110,7 @@ typedef struct {
 @interface iTermUniformExternalAttributes: iTermExternalAttributeIndex
 + (instancetype)withAttribute:(iTermExternalAttribute *)attr;
 
-- (void)copyFrom:(iTermExternalAttributeIndex * _Nullable)source
+- (void)copyFrom:(id<iTermExternalAttributeIndexReading> _Nullable)source
           source:(int)source
      destination:(int)destination
            count:(int)count NS_UNAVAILABLE;

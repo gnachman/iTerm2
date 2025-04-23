@@ -75,7 +75,6 @@
 - (int)lengthOfLineNumber:(int)lineNumber;
 
 - (screen_char_t)defaultChar;
-- (NSData *)defaultLineOfWidth:(int)width;
 
 // Converts a range relative to the start of a row into a grid run. If row is negative, a smaller-
 // than-range.length (but valid!) grid run will be returned.
@@ -319,9 +318,6 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 // will be lost.
 - (int)scrollWholeScreenDownByLines:(int)count poppingFromLineBuffer:(LineBuffer *)lineBuffer;
 
-// Returns a grid-owned empty line.
-- (NSMutableData *)defaultLineOfWidth:(int)width;
-
 // Set background/foreground colors in a range.
 - (void)setBackgroundColor:(screen_char_t)bg
            foregroundColor:(screen_char_t)fg
@@ -337,6 +333,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
             to:(VT100GridCoord)to;
 
 - (void)setBlockIDList:(NSString *)blockIDList onLine:(int)line;
+- (void)setRTLFound:(BOOL)rtlFound onLine:(int)line;
 
 // Pop lines out of the line buffer and on to the screen. Up to maxLines will be restored. Before
 // popping, lines to be modified will first be filled with defaultChar.
@@ -397,9 +394,5 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (BOOL)eraseBidiInfoInDirtyLines;
 - (void)setBidiInfo:(iTermBidiDisplayInfo *)bidiInfo forLine:(int)line;
 - (void)resetBidiDirty;
-
-#pragma mark - Testing use only
-
-- (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber;
 
 @end

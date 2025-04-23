@@ -27,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *debugStringValue;
 @property (nonatomic, readonly, nullable) iTermBidiDisplayInfo *bidiInfo;
 @property (nonatomic, readonly, nullable) iTermExternalAttributeIndex *eaIndex;
-
+@property (nonatomic, readonly) NSData *data;
 @property (nonatomic, readonly) NSInteger lengthExcludingTrailingWhitespaceAndNulls;
 
 + (instancetype)emptyLineOfLength:(int)length;
@@ -44,6 +44,11 @@ NS_ASSUME_NONNULL_BEGIN
                             length:(int)length
                       continuation:(screen_char_t)continuation
                           bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
+
+- (instancetype)initWithData:(NSData *)data
+       includingContinuation:(BOOL)includingContinuation
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation;
 
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
@@ -112,6 +117,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (ScreenCharArray *)subArrayToIndex:(int)i;
 - (ScreenCharArray *)subArrayFromIndex:(int)i;
+- (ScreenCharArray *)subArrayWithRange:(NSRange)range;
 
 - (NSMutableData *)mutableLineData;
 - (ScreenCharArray *)screenCharArrayBySettingCharacterAtIndex:(int)i
@@ -141,7 +147,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setBackground:(screen_char_t)bg inRange:(NSRange)range;
 - (void)setForeground:(screen_char_t)gg inRange:(NSRange)range;
 - (void)appendString:(NSString *)string fg:(screen_char_t)fg bg:(screen_char_t)bg;
-
+- (void)deleteRange:(NSRange)range;
+- (void)insert:(ScreenCharArray *)sca atIndex:(int)index;
+- (void)setMetadata:(iTermMetadata)metadata;
+- (void)setCharacter:(screen_char_t)c inRange:(NSRange)range;
+- (iTermExternalAttributeIndex *)eaIndexCreatingIfNeeded;
+- (void)copyRange:(NSRange)sourceRange from:(ScreenCharArray *)source destinationIndex:(int)destinationIndex;
 @end
 
 @interface ScreenCharRope: NSObject

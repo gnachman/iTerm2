@@ -9,6 +9,7 @@
 #import "VT100Grid.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermExternalAttributeIndex.h"
 #import "iTermMetadata.h"
@@ -36,15 +37,16 @@ static NSString *const kGridSizeKey = @"Size";
 @implementation VT100Grid {
     VT100GridSize size_;
     int screenTop_;  // Index into lines_ and dirty_ of first line visible in the grid.
-    NSMutableArray<NSMutableData *> *lines_;  // Array of NSMutableData. Each data has size_.width+1 screen_char_t's.
-    NSMutableArray<VT100LineInfo *> *lineInfos_;  // Array of VT100LineInfo.
+
+    NSMutableArray<iTermMutableLineString *> *_lines;
+    NSMutableIndexSet *_dirtyLines;
+
     __weak id<VT100GridDelegate> delegate_;
     VT100GridCoord cursor_;
     VT100GridRange scrollRegionRows_;
     VT100GridRange scrollRegionCols_;
     BOOL useScrollRegionCols_;
 
-    NSMutableData *cachedDefaultLine_;
     NSMutableData *resultLine_;
     screen_char_t savedDefaultChar_;
     NSTimeInterval _allDirtyTimestamp;
@@ -57,7 +59,6 @@ static NSString *const kGridSizeKey = @"Size";
 @synthesize scrollRegionCols = scrollRegionCols_;
 @synthesize useScrollRegionCols = useScrollRegionCols_;
 @synthesize allDirty = allDirty_;
-@synthesize lines = lines_;
 @synthesize savedDefaultChar = savedDefaultChar_;
 @synthesize cursor = cursor_;
 @synthesize delegate = delegate_;
@@ -89,31 +90,46 @@ static NSString *const kGridSizeKey = @"Size";
         assert(size_.width > 0 && size_.height > 0);
         
         NSMutableDictionary<NSNumber *, iTermExternalAttributeIndex *> *migrationIndexes = nil;
+        NSArray<NSData *> *lines_ = nil;
         if (dictionary[@"lines v3"]) {
             // 3.5.0beta6+ path
-            lines_ = [[NSArray castFrom:dictionary[@"lines v3"]] mutableCopy];
+            lines_ = [NSArray castFrom:dictionary[@"lines v3"]];
         } else if (dictionary[@"lines v2"]) {
             // 3.5.0beta3+ path
-            lines_ = [[[NSArray castFrom:dictionary[@"lines v2"]] mapWithBlock:^id _Nonnull(NSData *data) {
+            lines_ = [[NSArray castFrom:dictionary[@"lines v2"]] mapWithBlock:^id _Nonnull(NSData *data) {
                 return [data migrateV2ToV3];
-            }] mutableCopy];
+            }];;
         } else if (dictionary[@"lines"]) {
             // Migration code path for v1 -> v3 - upgrade legacy_screen_char_t.
             NSArray<NSData *> *legacyLines = [NSArray castFrom:dictionary[@"lines"]];
             if (!legacyLines) {
                 return nil;
             }
-            lines_ = [[NSMutableArray alloc] init];
+            NSMutableArray *temp = [[NSMutableArray alloc] init];
             migrationIndexes = [NSMutableDictionary dictionary];
             [legacyLines enumerateObjectsUsingBlock:^(NSData * _Nonnull legacyData, NSUInteger idx, BOOL * _Nonnull stop) {
                 iTermExternalAttributeIndex *migrationIndex = nil;
-                [lines_ addObject:[[legacyData migrateV1ToV3:&migrationIndex] mutableCopy]];
+                [temp addObject:[[legacyData migrateV1ToV3:&migrationIndex] mutableCopy]];
                 if (migrationIndex) {
                     migrationIndexes[@(idx)] = migrationIndex;
                 }
             }];
+            lines_ = temp;
         }
-        if (!lines_) {
+        if (lines_) {
+            _lines = [[lines_ mapWithBlock:^id(NSData *data) {
+                const screen_char_t *chars = (const screen_char_t *)data.bytes;
+                int count = data.length / sizeof(screen_char_t) - 1;
+                iTermLegacyStyleString *legacyString = [[iTermLegacyStyleString alloc] initWithChars:chars
+                                                                                               count:count
+                                                                                             eaIndex:nil];
+                return [[iTermMutableLineString alloc] initWithContent:[legacyString mutableClone]
+                                                                   eol:chars[count].code
+                                                          continuation:chars[count]
+                                                              metadata:(iTermLineStringMetadata){}];
+
+            }] mutableCopy];
+        } else {
             return nil;
         }
 
@@ -121,25 +137,33 @@ static NSString *const kGridSizeKey = @"Size";
         [[NSArray castFrom:dictionary[@"timestamps"]] enumerateObjectsUsingBlock:^(NSNumber *timestamp,
                                                                                    NSUInteger idx,
                                                                                    BOOL * _Nonnull stop) {
-            if (idx >= lineInfos_.count) {
+            if (idx >= _lines.count) {
                 DLog(@"Too many lineInfos");
                 *stop = YES;
                 return;
             }
-            lineInfos_[idx].timestamp = timestamp.doubleValue;
+            _lines[idx].timestamp = timestamp.doubleValue;
         }];
         [[NSArray castFrom:dictionary[@"metadata"]] enumerateObjectsUsingBlock:^(NSArray *entry,
                                                                                  NSUInteger idx,
                                                                                  BOOL * _Nonnull stop) {
-            if (idx >= lineInfos_.count) {
+            if (idx >= _lines.count) {
                 DLog(@"Too many lineInfos");
                 *stop = YES;
                 return;
             }
-            [lineInfos_[idx] decodeMetadataArray:entry];
+            iTermMetadata metadata;
+            iTermMetadataInitFromArray(&metadata, entry);
+            _lines[idx].timestamp = metadata.timestamp;
+            _lines[idx].rtlFound = metadata.rtlFound;
+            if (metadata.externalAttributes) {
+                iTermExternalAttributeIndex *eaIndex = iTermMetadataGetExternalAttributesIndex(metadata);
+                [_lines[idx].mutableContent setExternalAttributes:eaIndex startingFromOffset:0];
+            }
+            iTermMetadataRelease(metadata);
         }];
         [migrationIndexes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull idx, iTermExternalAttributeIndex * _Nonnull ea, BOOL * _Nonnull stop) {
-            [lineInfos_[idx.integerValue] setExternalAttributeIndex:ea];
+            [_lines[idx.integerValue].mutableContent setExternalAttributes:ea startingFromOffset:0];
         }];
         cursor_ = [NSDictionary castFrom:dictionary[@"cursor"]].gridCoord;
         scrollRegionRows_ = [NSDictionary castFrom:dictionary[@"scrollRegionRows"]].gridRange;
@@ -155,9 +179,9 @@ static NSString *const kGridSizeKey = @"Size";
     return self;
 }
 
-- (NSMutableData *)lineDataAtLineNumber:(int)lineNumber {
+- (iTermMutableLineString *)mutableLineStingAtLineNumber:(int)lineNumber {
     if (lineNumber >= 0 && lineNumber < size_.height) {
-        return [lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
+        return [_lines objectAtIndex:(screenTop_ + lineNumber) % size_.height];
     } else {
         return nil;
     }
@@ -168,40 +192,40 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (iTermMetadata)metadataAtLineNumber:(int)lineNumber {
-    return [self lineInfoAtLineNumber:lineNumber].metadata;
+    iTermMutableLineString *ls = [self mutableLineStingAtLineNumber:lineNumber];
+    iTermLineStringMetadata metadata = ls.metadata;
+    iTermMetadata result;
+    iTermMetadataInit(&result, metadata.timestamp, metadata.rtlFound, [ls.content externalAttributesIndex]);
+#warning TODO: Check this for leaks
+    return result;
 }
 
+- (iTermLegacyMutableString *)legacyMutableStringForLine:(int)line {
+    iTermMutableLineString *lineString = [self mutableLineStingAtLineNumber:line];
+    iTermLegacyMutableString *lms = [lineString ensureLegacy];
+    return lms;
+}
 NS_INLINE iTermExternalAttributeIndex *VT100GridGetExternalAttributes(VT100Grid *self, int line, BOOL create) {
-    const int i = VT100GridLineInfoIndex(self, line);
-    if (i < 0) {
-        return nil;
-    }
-    VT100LineInfo *info = self->lineInfos_[i];
-    if (!info) {
-        return nil;
-    }
-    if (!create) {
-        return iTermMetadataGetExternalAttributesIndex(info.metadata);
-    }
-    return [info externalAttributesCreatingIfNeeded:YES];
+    iTermLegacyMutableString *lms = [self legacyMutableStringForLine:line];
+    return [lms eaIndexCreatingIfNeeded:create];
 }
 
 - (iTermExternalAttributeIndex *)externalAttributesOnLine:(int)line
                                            createIfNeeded:(BOOL)createIfNeeded {
-    return [[self lineInfoAtLineNumber:line] externalAttributesCreatingIfNeeded:createIfNeeded];
+    return VT100GridGetExternalAttributes(self, line, createIfNeeded);
 }
 
 - (void)setMetadata:(iTermMetadata)metadata forLineNumber:(int)lineNumber {
-    VT100LineInfo *info = [self lineInfoAtLineNumber:lineNumber];
-    info.metadata = metadata;
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:lineNumber];
+    mls.rtlFound = metadata.rtlFound;
+    mls.timestamp = metadata.timestamp;
 }
 
 NS_INLINE screen_char_t *VT100GridScreenCharsAtLine(VT100Grid *self, int lineNumber) {
 #if DEBUG
     assert(lineNumber >= 0);
 #endif
-    const int i = (self->screenTop_ + lineNumber) % self->size_.height;
-    return self->lines_[i].mutableBytes;
+    return [[[self legacyMutableStringForLine:lineNumber] mutableScreenCharArray] mutableLine];
 }
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
@@ -232,18 +256,16 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     return VT100GridIndex(self->screenTop_, lineNumber, self->size_.height);
 }
 
-- (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber {
-    const int index = VT100GridIndex(screenTop_, lineNumber, size_.height);
-    if (index < 0) {
-        return nil;
-    }
-    return lineInfos_[index];
-}
-
+#warning TODO: This is really slow. Make the DVR & serialization use something more modern.
 - (NSArray<VT100LineInfo *> *)metadataArray {
     NSMutableArray<VT100LineInfo *> *result = [NSMutableArray array];
     for (int i = 0; i < self.size.height; i++) {
-        [result addObject:[self lineInfoAtLineNumber:i]];
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:i];
+        VT100LineInfo *lineInfo = [[VT100LineInfo alloc] init];
+        [lineInfo setTimestamp:mls.timestamp];
+        [lineInfo setRTLFound:mls.rtlFound];
+        [lineInfo setExternalAttributeIndex:mls.eaIndex];
+        [result addObject:lineInfo];
     }
     return result;
 }
@@ -254,10 +276,11 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     if (!dirty) {
         allDirty_ = NO;
     }
-    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:coord.y];
-    [lineInfo setDirty:dirty
-               inRange:VT100GridRangeMake(coord.x, 1)
-     updateTimestampTo:updateTimestamp ? self.currentDate : 0];
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:coord.y];
+    mls.dirty = dirty;
+    if (dirty && updateTimestamp > 0) {
+        mls.timestamp = self.currentDate;
+    }
     _hasChanged = YES;
 }
 
@@ -267,16 +290,14 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     if (!dirty) {
         allDirty_ = NO;
     }
-    const VT100GridRange xrange = VT100GridRangeMake(from.x, to.x - from.x + 1);
     const NSTimeInterval timestamp = self.currentDate;
-    for (int y = from.y; y <= to.y; y++) {
-        const int index = VT100GridIndex(screenTop_, y, size_.height);
-        if (index < 0) {
-            continue;
+    const int height = size_.height;
+    for (int y = MAX(0, from.y); y <= to.y && y < height; y++) {
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:y];
+        mls.dirty = dirty;
+        if (dirty && timestamp > 0) {
+            mls.timestamp = timestamp;
         }
-        [lineInfos_[index] setDirty:dirty
-                            inRange:xrange
-                  updateTimestampTo:dirty ? timestamp : 0];
     }
     _hasChanged = YES;
 }
@@ -286,7 +307,6 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
 
     if (dirty) {
         // Fast path
-        const VT100GridRange horizontalRange = VT100GridRangeMake(0, size_.width);
         const NSTimeInterval timestamp = self.currentDate;
         if (allDirty_ && (!updateTimestamps || _allDirtyTimestamp == timestamp)) {
             // Nothing changed.
@@ -296,8 +316,11 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
         if (updateTimestamps) {
             _allDirtyTimestamp = timestamp;
         }
-        [lineInfos_ enumerateObjectsUsingBlock:^(VT100LineInfo * _Nonnull lineInfo, NSUInteger idx, BOOL * _Nonnull stop) {
-            [lineInfo setDirty:YES inRange:horizontalRange updateTimestampTo:updateTimestamps ? timestamp : 0];
+        [_lines enumerateObjectsUsingBlock:^(iTermMutableLineString *mls, NSUInteger idx, BOOL *stop) {
+            mls.dirty = YES;
+            if (updateTimestamps && timestamp > 0) {
+                mls.timestamp = timestamp;
+            }
         }];
         return;
     }
@@ -324,16 +347,20 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     if (allDirty_) {
         return YES;
     }
-    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:coord.y];
-    return [lineInfo isDirtyAtOffset:coord.x];
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:coord.y];
+    return mls.dirty;
 }
 
 - (NSIndexSet *)dirtyIndexesOnLine:(int)line {
     if (allDirty_) {
         return [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, self.size.width)];
     }
-    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:line];
-    return [lineInfo dirtyIndexes];
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:line];
+    if (mls.dirty) {
+        return [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, size_.width)];
+    } else {
+        return [NSIndexSet indexSet];
+    }
 }
 
 - (BOOL)isAnyCharDirty {
@@ -341,8 +368,8 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
         return YES;
     }
     for (int y = 0; y < size_.height; y++) {
-        VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
-        if ([lineInfo anyCharIsDirty]) {
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:y];
+        if (mls.dirty) {
             return YES;
         }
     }
@@ -353,8 +380,12 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     if (allDirty_) {
         return VT100GridRangeMake(0, self.size.width);
     }
-    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
-    return [lineInfo dirtyRange];
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:y];
+    if (mls.dirty) {
+        return VT100GridRangeMake(0, size_.width);
+    } else {
+        return VT100GridRangeMake(-1, -1);
+    }
 }
 
 - (int)cursorX {
@@ -441,7 +472,8 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
 - (BOOL)mayContainRTL {
     const int height = size_.height;
     for (int i = 0; i < height; i++) {
-        if (lineInfos_[i].metadata.rtlFound) {
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:i];
+        if (mls.rtlFound) {
             return YES;
         }
     }
@@ -478,21 +510,24 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         lengthOfNextLine = [self lengthOfLineNumber:0];
     }
     for (i = 0; i < numLines; ++i) {
-        const screen_char_t *line = [self screenCharsAtLineNumber:i];
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:i];
+        iTermLegacyMutableString *lms = [mls ensureLegacy];
+        const screen_char_t *line = lms.screenCharArray.line;
+
         int currentLineLength = lengthOfNextLine;
         if (i + 1 < size_.height) {
-            lengthOfNextLine = [self lengthOfLine:[self screenCharsAtLineNumber:i+1]];
+            lengthOfNextLine = [self lengthOfLineNumber:i+1];
         } else {
             lengthOfNextLine = -1;
         }
 
-        int continuation = line[size_.width].code;
+        int continuation = mls.eol;
         if (i == cursor_.y) {
             [lineBuffer setCursor:cursor_.x];
         } else if ((cursor_.x == 0) &&
                    (i == cursor_.y - 1) &&
                    (lengthOfNextLine == 0) &&
-                   line[size_.width].code != EOL_HARD) {
+                   continuation != EOL_HARD) {
             // This line is continued, the next line is empty, and the cursor is
             // on the first column of the next line. Pull it up.
             // NOTE: This was cursor_.x + 1, but I'm pretty sure that's wrong as it would always be 1.
@@ -513,8 +548,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                         length:currentLineLength
                        partial:isPartial
                          width:size_.width
-                      metadata:[[self lineInfoAtLineNumber:i] immutableMetadata]
-                  continuation:line[size_.width]];
+                      metadata:iTermMetadataMakeImmutable([self metadataAtLineNumber:i])
+                  continuation:mls.continuation];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
               [lineBuffer numLinesWithWidth:size_.width], size_.width);
@@ -526,22 +561,24 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 }
 
 - (NSTimeInterval)timestampForLine:(int)y {
-    return [[self lineInfoAtLineNumber:y] metadata].timestamp;
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:y];
+    return mls.timestamp;
 }
 
+#warning TODO: Add a new interface to iTermString & co. to make this fast
 - (int)lengthOfLineNumber:(int)lineNumber {
-    screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
-    return [self lengthOfLine:line];
+    return [self lengthOfLine:[self mutableLineStingAtLineNumber:lineNumber]];
 }
 
-- (int)lengthOfLine:(screen_char_t *)line {
+- (int)lengthOfLine:(iTermMutableLineString *)mls {
     int lineLength = 0;
     // Figure out the line length.
-    if (line[size_.width].code == EOL_SOFT) {
+    if (mls.eol == EOL_SOFT) {
         lineLength = size_.width;
-    } else if (line[size_.width].code == EOL_DWC) {
+    } else if (mls.eol == EOL_DWC) {
         lineLength = size_.width - 1;
     } else {
+        const screen_char_t *line = [[mls ensureLegacy] screenCharArray].line;
         for (lineLength = size_.width - 1; lineLength >= 0; --lineLength) {
             if (line[lineLength].code && !ScreenCharIsDWC_SKIP(line[lineLength])) {
                 break;
@@ -553,8 +590,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 }
 
 - (int)continuationMarkForLineNumber:(int)lineNumber {
-    screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
-    return line[size_.width].code;
+    return [self mutableLineStingAtLineNumber:lineNumber].eol;
 }
 
 - (int)indexOfLineNumber:(int)lineNumber {
@@ -581,13 +617,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     screenTop_ = (screenTop_ + 1) % size_.height;
     _haveScrolled = YES;
     // Empty contents of last line on screen.
-    NSMutableData *lastLineData = [self lineDataAtLineNumber:(size_.height - 1)];
-    if (lastLineData) {  // This if statement is just to quiet the analyzer.
-        [self clearLineDataBytes:lastLineData.mutableBytes count:lastLineData.length / sizeof(screen_char_t)];
-        const int i = VT100GridLineInfoIndex(self, size_.height - 1);
-        if (i >= 0) {
-            [lineInfos_[i] resetMetadata];
-        }
+    const int y = size_.height - 1;
+    if (y >= 0 && y < _lines.count) {
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:y];
+        [mls eraseWithDefaultChar:_defaultChar];
     }
 
     // Mark new line at bottom of screen dirty and update its timestamp.
@@ -831,6 +864,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     useScrollRegionCols_ = useScrollRegionCols;
 }
 
+#warning TODO: Try to phase this out, esp in appendStringAtCursor
 - (void)mutateCharactersInRange:(VT100GridCoordRange)range
                           block:(void (^)(screen_char_t *sct,
                                           iTermExternalAttribute **eaOut,
@@ -839,7 +873,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     int left = MAX(0, range.start.x);
     for (int y = MAX(0, range.start.y); y <= MIN(range.end.y, size_.height - 1); y++) {
         const int right = MAX(left, y == range.end.y ? range.end.x : size_.width);
-        screen_char_t *line = [self lineDataAtLineNumber:y].mutableBytes;
+        screen_char_t *line = [self screenCharsAtLineNumber:y];
         iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y createIfNeeded:NO];
         [self markCharsDirty:YES inRun:VT100GridRunMake(left, y, right - left)];
         for (int x = left; x < right; x++) {
@@ -879,17 +913,21 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     const VT100GridCoord from = [self clamp:unsafeFrom];
     const VT100GridCoord to = [self clamp:unsafeTo];
     for (int y = MAX(0, from.y); y <= MIN(to.y, size_.height - 1); y++) {
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:y];
+        iTermLegacyMutableString *lms = [mls ensureLegacy];
+
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:from.x - 1 withChar:c];
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:to.x withChar:c];
         const int minX = MAX(0, from.x);
         const int maxX = MIN(to.x, size_.width - 1);
+
+        screen_char_t *line = lms.mutableScreenCharArray.mutableLine;
         for (int x = minX; x <= maxX; x++) {
             line[x] = c;
         }
         if (c.code == 0 && to.x == size_.width - 1) {
-            line[size_.width] = c;
-            line[size_.width].code = EOL_HARD;
+            mls.continuation = c;
+            mls.eol = EOL_HARD;
         }
         iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y
                                                                createIfNeeded:attrs != nil];
@@ -912,7 +950,12 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 }
 
 - (void)setMetadata:(iTermMetadata)metadata forLine:(int)lineNumber {
-    [[self lineInfoAtLineNumber:lineNumber] setMetadata:metadata];
+    iTermMutableLineString *msl = [self mutableLineStingAtLineNumber:lineNumber];
+    [msl setMetadata:(iTermLineStringMetadata){
+        .timestamp = metadata.timestamp,
+        .rtlFound = metadata.rtlFound
+    }];
+    [msl setExternalAttributes:iTermMetadataGetExternalAttributesIndex(metadata)];
 }
 
 - (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)code externalAttributes:(iTermExternalAttribute *)ea {
@@ -1021,9 +1064,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     inRectFrom:(VT100GridCoord)from
             to:(VT100GridCoord)to {
     for (int y = from.y; y <= to.y; y++) {
-        VT100LineInfo *info = [self lineInfoAtLineNumber:y];
-        iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:NO];
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        iTermLegacyMutableString *lms = [self legacyMutableStringForLine:y];
+        iTermExternalAttributeIndex *eaIndex = [lms eaIndexCreatingIfNeeded:NO];
+        screen_char_t *line = lms.mutableScreenCharArray.mutableLine;
         for (int x = from.x; x <= to.x; x++) {
             screen_char_t c = line[x];
             iTermExternalAttribute *attr = eaIndex[x];
@@ -1031,7 +1074,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             line[x] = c;
             if (updatedAttr != attr) {
                 if (!eaIndex) {
-                    eaIndex = [info externalAttributesCreatingIfNeeded:YES];
+                    eaIndex = [lms eaIndexCreatingIfNeeded:YES];
                 }
                 eaIndex[x] = updatedAttr;
             }
@@ -1046,8 +1089,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         inRectFrom:(VT100GridCoord)from
                 to:(VT100GridCoord)to {
     for (int y = from.y; y <= to.y; y++) {
-        VT100LineInfo *info = [self lineInfoAtLineNumber:y];
-        iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:url != nil];
+        iTermLegacyMutableString *lms = [self legacyMutableStringForLine:y];
+        iTermExternalAttributeIndex *eaIndex = [lms eaIndexCreatingIfNeeded:url != nil];
+
         [eaIndex mutateAttributesFrom:from.x to:to.x block:^iTermExternalAttribute * _Nullable(iTermExternalAttribute * _Nullable old) {
             return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
                                                           underlineColor:old.underlineColor
@@ -1062,8 +1106,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 }
 
 - (void)setBlockIDList:(NSString *)blockIDList onLine:(int)line {
-    VT100LineInfo *info = [self lineInfoAtLineNumber:line];
-    iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:blockIDList != nil];
+    iTermLegacyMutableString *lms = [self legacyMutableStringForLine:line];
+    iTermExternalAttributeIndex *eaIndex = [lms eaIndexCreatingIfNeeded:blockIDList != nil];
+
     [eaIndex mutateAttributesFrom:0
                                to:self.size.width - 1
                             block:^iTermExternalAttribute * _Nullable(iTermExternalAttribute * _Nullable old) {
@@ -1078,6 +1123,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                       to:VT100GridCoordMake(self.size.width - 1, line)];
 }
 
+- (void)setRTLFound:(BOOL)rtlFound onLine:(int)line {
+    [self mutableLineStingAtLineNumber:line].rtlFound = rtlFound;
+}
+
 - (void)copyDirtyFromGrid:(VT100Grid *)otherGrid  didScroll:(BOOL)didScroll {
     if (otherGrid == self) {
         return;
@@ -1085,21 +1134,13 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     const BOOL sizeChanged = !VT100GridSizeEquals(self.size, otherGrid.size);
     [self setSize:otherGrid.size];
     for (int i = 0; i < size_.height; i++) {
-        const VT100GridRange dirtyRange = [otherGrid dirtyRangeForLine:i];
-        if (!didScroll && !sizeChanged && dirtyRange.length <= 0) {
+        const int k = [otherGrid indexOfLineNumber:i];
+        iTermMutableLineString *sourceMLS = otherGrid->_lines[k];
+        if (!didScroll && !sizeChanged && !sourceMLS.dirty) {
             continue;
         }
-        screen_char_t *dest = [self screenCharsAtLineNumber:i];
-        screen_char_t *source = [otherGrid screenCharsAtLineNumber:i];
-        memmove(dest,
-                source,
-                sizeof(screen_char_t) * (size_.width + 1));
-        iTermMetadata metadata = iTermMetadataCopy([otherGrid metadataAtLineNumber:i]);
-        [self setMetadata:metadata forLineNumber:i];
-        iTermMetadataRelease(metadata);
-        if (dirtyRange.length > 0) {
-            [[self lineInfoAtLineNumber:i] setDirty:YES inRange:dirtyRange updateTimestampTo:0];
-        }
+        const int j = [self indexOfLineNumber:i];
+        _lines[j] = [sourceMLS mutableClone];
     }
     _hasChanged = YES;
     [otherGrid copyMiscellaneousStateTo:self];
@@ -1180,12 +1221,12 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             if (wraparound) {
                 if (leftMargin == 0 && rightMargin == size_.width) {
                     // Set the continuation marker
-                    screen_char_t* prevLine = VT100GridScreenCharsAtLine(self, cursor_.y);
+                    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:cursor_.y];
                     BOOL splitDwc = (cursor_.x == size_.width - 1);
-                    prevLine[size_.width] = defaultChar;
-                    prevLine[size_.width].code = (splitDwc ? EOL_DWC : EOL_SOFT);
+                    mls.continuation = defaultChar;
+                    mls.eol = (splitDwc ? EOL_DWC : EOL_SOFT);
                     if (splitDwc) {
-                        ScreenCharSetDWC_SKIP(&prevLine[size_.width - 1]);
+                        [mls setDWCSkip];
                     }
                 }
                 self.cursorX = leftMargin;
@@ -1218,23 +1259,22 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 
                 if (rtlFound && cursor_.y != lastY) {
                     lastY = cursor_.y;
-                    [[self lineInfoAtLineNumber:cursor_.y] setRTLFound:rtlFound];
+                    [self mutableLineStingAtLineNumber:cursor_.y].rtlFound = rtlFound;
                 }
-                screen_char_t *line = VT100GridScreenCharsAtLine(self, cursor_.y);
+                iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:cursor_.y];
                 if (rightMargin == size_.width) {
                     // Clear the continuation marker
-                    line[size_.width].code = EOL_HARD;
+                    mls.eol = EOL_HARD;
                 }
 
                 if (newCursorX < 0) {
                     newCursorX = 0;
                 }
                 self.cursorX = newCursorX;
-                if (ScreenCharIsDWC_RIGHT(line[cursor_.x])) {
+                if (ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
                     // This would cause us to overwrite the second part of a
                     // double-width character. Convert it to a space.
-                    line[cursor_.x - 1].code = 0;
-                    line[cursor_.x - 1].complexChar = NO;
+                    [mls eraseCharacterAt:cursor_.x - 1];
                 }
 
 #ifdef VERBOSE_STRING
@@ -1306,18 +1346,18 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         const int lineNumber = cursor_.y;
         if (rtlFound && cursor_.y != lastY) {
             lastY = cursor_.y;
-            [[self lineInfoAtLineNumber:cursor_.y] setRTLFound:rtlFound];
+            [self mutableLineStingAtLineNumber:cursor_.y].rtlFound = rtlFound;
         }
-        aLine = VT100GridScreenCharsAtLine(self, lineNumber);
-        iTermExternalAttributeIndex *eaIndex = VT100GridGetExternalAttributes(self, lineNumber, attributes != nil);
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:lineNumber];
+        iTermExternalAttributeIndex *eaIndex = [mls.ensureLegacy eaIndexCreatingIfNeeded:attributes != nil];
 
         BOOL mayStompSplitDwc = NO;
         if (newx == size_.width) {
             // The cursor is ending at the right margin. See if there's a DWC_SKIP/EOL_DWC pair
             // there which may be affected.
             mayStompSplitDwc = (!useScrollRegionCols_ &&
-                                aLine[size_.width].code == EOL_DWC &&
-                                ScreenCharIsDWC_SKIP(aLine[size_.width - 1]));
+                                mls.eol == EOL_DWC &&
+                                ScreenCharIsDWC_SKIP(mls.lastCharacter));
         } else if (!wraparound &&
                    rightMargin < size_.width &&
                    useScrollRegionCols_ &&
@@ -1339,7 +1379,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 
         // Overwriting the second-half of a double-width character so turn the
         // DWC into a space.
-        if (ScreenCharIsDWC_RIGHT(aLine[cursor_.x])) {
+        if (ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
             [self eraseDWCRightOnLine:lineNumber x:cursor_.x externalAttributeIndex:eaIndex];
         }
 
@@ -1347,8 +1387,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         // change anything (because the memcmp is really cheap). In particular, this helps vim out because
         // it really likes redrawing pane separators when it doesn't need to.
         if (charsToInsert > 1 ||
-            memcmp(aLine + cursor_.x, buffer + idx, charsToInsert * sizeof(screen_char_t))) {
+            ![mls.content hasEqualWithRange:NSMakeRange(cursor_.x, charsToInsert) to:buffer + idx]) {
             // copy charsToInsert characters into the line and set them dirty.
+            screen_char_t *aLine = mls.ensureLegacy.mutableScreenCharArray.mutableLine;
             memcpy(aLine + cursor_.x,
                    buffer + idx,
                    charsToInsert * sizeof(screen_char_t));
@@ -1360,30 +1401,28 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         if (wrapDwc) {
             [eaIndex eraseAt:cursor_.x + charsToInsert];
             if (cursor_.x + charsToInsert == size_.width - 1) {
-                ScreenCharSetDWC_SKIP(&aLine[cursor_.x + charsToInsert]);
+                [mls.ensureLegacy setDWCSkipAt:cursor_.x + charsToInsert];
             } else {
-                aLine[cursor_.x + charsToInsert].code = 0;
+                [mls.ensureLegacy eraseCodeAt:cursor_.x + charsToInsert];
             }
-            aLine[cursor_.x + charsToInsert].complexChar = NO;
         }
         self.cursorX = newx;
         idx += charsToInsert;
 
         // Overwrote some stuff that was already on the screen leaving behind the
         // second half of a DWC
-        if (cursor_.x < size_.width - 1 && ScreenCharIsDWC_RIGHT(aLine[cursor_.x])) {
+        if (cursor_.x < size_.width - 1 && ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
             [eaIndex eraseAt:cursor_.x];
-            aLine[cursor_.x].code = 0;
-            aLine[cursor_.x].complexChar = NO;
+            [mls.ensureLegacy eraseCodeAt:cursor_.x];
         }
 
         if (mayStompSplitDwc &&
-            !ScreenCharIsDWC_SKIP(aLine[size_.width - 1]) &&
-            aLine[size_.width].code == EOL_DWC) {
+            !ScreenCharIsDWC_SKIP(mls.lastCharacter) &&
+            mls.eol == EOL_DWC) {
             // The line no longer ends in a DWC_SKIP, but the continuation mark is still EOL_DWC.
             // Change the continuation mark to EOL_SOFT since there's presumably still a DWC at the
             // start of the next line.
-            aLine[size_.width].code = EOL_SOFT;
+            mls.eol = EOL_SOFT;
         }
 
         // The next char in the buffer shouldn't be DWC_RIGHT because we
@@ -1395,8 +1434,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         if (cursor_.x >= effective_width && ansi) {
             if (wraparound) {
                 //set the wrapping flag
-                aLine[size_.width] = defaultChar;
-                aLine[size_.width].code = ((effective_width == size_.width) ? EOL_SOFT : EOL_DWC);
+                mls.continuation = defaultChar;
+                mls.eol = ((effective_width == size_.width) ? EOL_SOFT : EOL_DWC);
                 self.cursorX = leftMargin;
                 numDropped += [self moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                                              unlimitedScrollback:unlimitedScrollback
@@ -1429,7 +1468,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 #ifdef VERBOSE_STRING
                 NSLog(@"Shifting old contents to the right");
 #endif
-    screen_char_t *aLine = [self screenCharsAtLineNumber:lineNumber];
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:lineNumber];
+    screen_char_t *aLine = mls.ensureLegacy.mutableScreenCharArray.mutableLine;
 
     // Shift the old line contents to the right by 'amount' positions.
     screen_char_t *src = aLine + cursorX;
@@ -1447,10 +1487,10 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         src[elements - 1].code = 0;
         src[elements - 1].complexChar = NO;
     } else if (ScreenCharIsDWC_SKIP(src[elements]) &&
-               aLine[size_.width].code == EOL_DWC) {
+               mls.eol == EOL_DWC) {
         // Stomping on a DWC_SKIP. Join the lines normally.
-        aLine[size_.width] = [self defaultChar];
-        aLine[size_.width].code = EOL_SOFT;
+        mls.continuation = [self defaultChar];
+        mls.eol = EOL_SOFT;
     }
     memmove(dst, src, elements * sizeof(screen_char_t));
     [self markCharsDirty:YES
@@ -1507,7 +1547,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         }
 
         // get the appropriate screen line
-        aLine = [self screenCharsAtLineNumber:startCoord.y];
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:startCoord.y];
+        aLine = mls.ensureLegacy.mutableScreenCharArray.mutableLine;
 
         if (n > 0 && startCoord.x + n <= rightMargin) {
             // Erase a section in the middle of a line. Shift the stuff to the right of the
@@ -1538,9 +1579,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                 aLine[rightMargin].code = 0;
             }
             if (rightMargin == size_.width - 1 &&
-                aLine[size_.width].code == EOL_DWC) {
+                mls.eol == EOL_DWC) {
                 // When the previous if statement is true, this one should also always be true.
-                aLine[size_.width].code = EOL_HARD;
+                mls.eol = EOL_HARD;
             }
 
             memmove(aLine + startCoord.x,
@@ -1658,10 +1699,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             lineNumberAboveScrollRegion < size_.height &&
             rect.origin.x == 0) {
             // Affecting continuation marks on line above/below rect.
-            screen_char_t *pred =
-                [self screenCharsAtLineNumber:lineNumberAboveScrollRegion];
-            if (pred[size_.width].code == EOL_SOFT) {
-                pred[size_.width].code = EOL_HARD;
+            iTermMutableLineString *pred = [self mutableLineStingAtLineNumber:lineNumberAboveScrollRegion];
+            if (pred.eol == EOL_SOFT) {
+                pred.eol = EOL_HARD;
             }
         }
         if (rect.origin.x + rect.size.width == size_.width && !softBreak) {
@@ -1676,10 +1716,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             }
             // Affecting continuation mark on first/last line in block
             if (lastLineOfScrollRegion >= 0 && lastLineOfScrollRegion < size_.height) {
-                screen_char_t *lastLine =
-                    [self screenCharsAtLineNumber:lastLineOfScrollRegion];
-                if (lastLine[size_.width].code == EOL_SOFT) {
-                    lastLine[size_.width].code = EOL_HARD;
+                iTermMutableLineString *lastLine = [self mutableLineStingAtLineNumber:lastLineOfScrollRegion];
+                if (lastLine.eol == EOL_SOFT) {
+                    lastLine.eol = EOL_HARD;
                 }
             }
         }
@@ -1746,13 +1785,14 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         externalAttributes:nil];
     }
     for (int y = 0; y < MIN(info.height, size_.height); y++) {
-        screen_char_t *dest = [self screenCharsAtLineNumber:y];
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:y];
+        screen_char_t *dest = mls.ensureLegacy.mutableScreenCharArray.mutableLine;
         const screen_char_t *src = s + ((y + sourceLineOffset) * (info.width + 1));
         memmove(dest, src, sizeof(screen_char_t) * charsToCopyPerLine);
         if (size_.width != info.width) {
             // Not copying continuation marks, set them all to hard.
-            dest[size_.width] = dest[size_.width - 1];
-            dest[size_.width].code = EOL_HARD;
+            mls.continuation = mls.lastCharacter;
+            mls.eol = EOL_HARD;
         }
         if (charsToCopyPerLine < info.width && ScreenCharIsDWC_RIGHT(src[charsToCopyPerLine])) {
             dest[charsToCopyPerLine - 1].code = 0;
@@ -1829,7 +1869,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             [lineString appendCharacter:c];
             [dirtyLineString appendCharacter:d];
         }
-        [result appendFormat:@"%04d: %@ %@\n", y, lineString, [self stringForContinuationMark:p[size_.width].code]];
+        [result appendFormat:@"%04d: %@ %@\n", y, lineString, [self stringForContinuationMark:[self mutableLineStingAtLineNumber:y].eol]];
         [result appendFormat:@"dirty %@%@\n", dirtyLineString, y == cursor_.y ? @" -cursor-" : @""];
     }
     return result;
@@ -1882,13 +1922,23 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                                               metadata:&metadata
                                           continuation:&continuation];
     assert(ok);
-    [[self lineInfoAtLineNumber:0] setMetadataFromImmutable:metadata];
-    line[width] = continuation;
-    line[width].code = eol;
+    iTermMutableLineString *mls = [self setMetadata:metadata onLine:0];
+    mls.eol = eol;
+    mls.continuation = continuation;
     if (eol == EOL_DWC) {
         ScreenCharSetDWC_SKIP(&line[width - 1]);
     }
     return YES;
+}
+
+- (iTermMutableLineString *)setMetadata:(iTermImmutableMetadata)metadata onLine:(int)line {
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:line];
+    [mls setMetadata:(iTermLineStringMetadata){
+        .timestamp = metadata.timestamp,
+        .rtlFound = metadata.rtlFound
+    }];
+    [mls setExternalAttributes:iTermImmutableMetadataGetExternalAttributesIndex(metadata)];
+    return mls;
 }
 
 - (BOOL)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
@@ -1910,7 +1960,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     BOOL foundCursor = NO;
     BOOL prevLineStartsWithDoubleWidth = NO;
     while (destLineNumber >= 0) {
-        screen_char_t *dest = [self screenCharsAtLineNumber:destLineNumber];
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:destLineNumber];
+        screen_char_t *dest = mls.ensureLegacy.mutableScreenCharArray.mutableLine;
         memcpy(dest, defaultLine, sizeof(screen_char_t) * size_.width);
         [self markCharsDirty:YES
                   inRectFrom:VT100GridCoordMake(0, destLineNumber)
@@ -1937,7 +1988,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                                 includesEndOfLine:&cont
                                          metadata:&metadata
                                      continuation:&continuation]);
-        [[self lineInfoAtLineNumber:destLineNumber] setMetadataFromImmutable:metadata];
+        [self setMetadata:metadata onLine:destLineNumber];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
@@ -1950,8 +2001,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         } else {
             prevLineStartsWithDoubleWidth = NO;
         }
-        dest[size_.width] = continuation;
-        dest[size_.width].code = cont;
+        mls.continuation = continuation;
+        mls.eol = cont;
         if (cont == EOL_DWC) {
             ScreenCharSetDWC_SKIP(&dest[size_.width - 1]);
         }
@@ -2080,7 +2131,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             if (line[x].complexChar) c = 'U';
             [dump appendFormat:@"%c", c];
         }
-        NSDate* date = [NSDate dateWithTimeIntervalSinceReferenceDate:[[self lineInfoAtLineNumber:y] metadata].timestamp];
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:y];
+        NSDate* date = [NSDate dateWithTimeIntervalSinceReferenceDate:mls.timestamp];
         [dump appendFormat:@"  | %@", [fmt stringFromDate:date]];
         if (y != size_.height - 1) {
             [dump appendString:@"\n"];
@@ -2092,7 +2144,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 - (NSString *)compactLineDumpWithContinuationMarks {
     NSMutableString *dump = [NSMutableString string];
     for (int y = 0; y < size_.height; y++) {
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:y];
+        const screen_char_t *line = mls.content.screenCharArray.line;
         for (int x = 0; x < size_.width; x++) {
             char c = line[x].code;
             if (line[x].code == 0) c = '.';
@@ -2105,7 +2158,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             if (line[x].complexChar) c = 'U';
             [dump appendFormat:@"%c", c];
         }
-        switch (line[size_.width].code) {
+        switch (mls.eol) {
             case EOL_HARD:
                 [dump appendString:@"!"];
                 break;
@@ -2154,8 +2207,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     if (n < 1) {
         return;
     }
-
-    screen_char_t *line = [self screenCharsAtLineNumber:pos.y];
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:pos.y];
+    screen_char_t *line = mls.ensureLegacy.mutableScreenCharArray.mutableLine;
     int charsToMove = self.rightMargin - pos.x - n + 1;
 
     // Splitting a dwc in half?
@@ -2182,18 +2235,18 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
     // Try to clean up DWC_SKIP+EOL_DWC pair, if needed.
     if (self.rightMargin == size_.width - 1 &&
-        line[size_.width].code == EOL_DWC) {
+        mls.eol == EOL_DWC) {
         // The line shifting means a split DWC is gone. The wrapping changes to hard if the last
         // code is 0 because soft wrapping doesn't make sense across a null code.
-        line[size_.width].code = line[size_.width - 1].code ? EOL_SOFT : EOL_HARD;
+        mls.eol = mls.lastCharacter.code ? EOL_SOFT : EOL_HARD;
     }
 
     if (size_.width > 0 &&
         self.rightMargin == size_.width - 1 &&
-        line[size_.width].code == EOL_SOFT &&
+        mls.eol == EOL_SOFT &&
         line[size_.width - 1].code == 0) {
         // If the last char becomes a null, convert to a hard line break.
-        line[size_.width].code = EOL_HARD;
+        mls.eol = EOL_HARD;
     }
 
     [self markCharsDirty:YES
@@ -2205,17 +2258,15 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 - (NSArray *)orderedLines {
     NSMutableArray *array = [NSMutableArray array];
     for (int i = 0; i < size_.height; i++) {
-        [array addObject:[self lineDataAtLineNumber:i]];
+        iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:i];
+#warning TODO: Should this have EOLs? Does it?
+        [array addObject:mls.screenCharsData];
     }
     return array;
 }
 
 - (NSArray<VT100LineInfo *> *)orderedLineInfos {
-    NSMutableArray *array = [NSMutableArray array];
-    for (int i = 0; i < size_.height; i++) {
-        [array addObject:[self lineInfoAtLineNumber:i]];
-    }
-    return array;
+    return [self metadataArray];
 }
 
 - (NSDictionary *)dictionaryValue {
@@ -2227,7 +2278,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 + (VT100GridSize)sizeInStateDictionary:(NSDictionary *)dict {
-    VT100GridSize size = [dict[kGridSizeKey] gridSize];
+    VT100GridSize size = [(NSDictionary *)dict[kGridSizeKey] gridSize];
     return size;
 }
 
@@ -2235,7 +2286,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     if (!dict || [dict isKindOfClass:[NSNull class]]) {
         return;
     }
-    VT100GridSize size = [dict[kGridSizeKey] gridSize];
+    VT100GridSize size = [(NSDictionary *)dict[kGridSizeKey] gridSize];
 
     // Saved values only make sense if the size is at least as large as when the state was saved.
     // When restoring from a saved arrangement, the initial grid size is a guess which is a bit too
@@ -2249,9 +2300,10 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 - (void)resetTimestamps {
-    for (VT100LineInfo *info in lineInfos_) {
-        [info resetMetadata];
-    }
+    [_lines enumerateObjectsUsingBlock:^(iTermMutableLineString *mls, NSUInteger idx, BOOL *stop) {
+        mls.timestamp = 0;
+        mls.rtlFound = NO;
+    }];
 }
 
 - (void)restorePreferredCursorPositionIfPossible {
@@ -2277,9 +2329,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 - (void)setContinuationMarkOnLine:(int)line to:(unichar)code {
-    screen_char_t *chars = [self screenCharsAtLineNumber:line];
-    assert(chars);
-    chars[size_.width].code = code;
+    [self mutableLineStingAtLineNumber:line].eol = code;
 }
 
 - (void)encode:(id<iTermEncoderAdapter>)encoder {
@@ -2287,7 +2337,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         return anObject.encodedMetadata;
     }];
     NSArray<NSData *> *lines = [[NSArray sequenceWithRange:NSMakeRange(0, size_.height)] mapWithBlock:^id(NSNumber *i) {
-        return [self lineDataAtLineNumber:i.intValue];
+        return [self mutableLineStingAtLineNumber:i.intValue].screenCharsData;
     }];
     NSArray<NSData *> *legacyLines = [lines mapEnumeratedWithBlock:^id(NSUInteger i, NSData *modernData, BOOL *stop) {
         return [modernData legacyScreenCharArrayWithExternalAttributes:[self externalAttributesOnLine:i createIfNeeded:NO]];
@@ -2308,7 +2358,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 - (void)mutateCellsInRect:(VT100GridRect)rect
                     block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, iTermExternalAttribute **, BOOL *))block {
     for (int y = MAX(0, rect.origin.y); y < MIN(size_.height, rect.origin.y + rect.size.height); y++) {
-        NSMutableData *data = [self lineDataAtLineNumber:y];
+        NSMutableData *data = [self mutableLineStingAtLineNumber:y].mutableScreenCharsData;
         screen_char_t *line = (screen_char_t *)data.mutableBytes;
         iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y
                                                                createIfNeeded:NO];
@@ -2336,7 +2386,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 - (void)enumerateCellsInRect:(VT100GridRect)rect block:(void (^)(VT100GridCoord, screen_char_t, iTermExternalAttribute *, BOOL *))block {
     for (int y = MAX(0, rect.origin.y); y < MIN(size_.height, rect.origin.y + rect.size.height); y++) {
-        NSMutableData *data = [self lineDataAtLineNumber:y];
+        NSMutableData *data = [self mutableLineStingAtLineNumber:y].mutableScreenCharsData;
         screen_char_t *line = (screen_char_t *)data.mutableBytes;
         iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y
                                                                createIfNeeded:NO];
@@ -2389,7 +2439,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 - (BOOL)mayContainRTLInRange:(NSRange)range {
     for (NSInteger i = 0; i < range.length; i++) {
-        if ([self metadataAtLineNumber:range.location + i].rtlFound) {
+        if ([self mutableLineStingAtLineNumber:range.location + i].rtlFound) {
             return YES;
         }
     }
@@ -2455,10 +2505,17 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 #pragma mark - Private
 
-- (NSMutableArray *)linesWithSize:(VT100GridSize)size {
-    NSMutableArray *lines = [[NSMutableArray alloc] init];
+- (NSMutableArray<iTermMutableLineString *> *)linesWithSize:(VT100GridSize)size {
+    NSMutableArray<iTermMutableLineString *> *lines = [[NSMutableArray alloc] initWithCapacity:size.height];
     for (int i = 0; i < size.height; i++) {
-        [lines addObject:[[self defaultLineOfWidth:size.width] mutableCopy]];
+        iTermUniformString *u = [[iTermUniformString alloc] initWithCharacter:_defaultChar
+                                                                        count:size.width];
+        iTermMutableString *ms = [[iTermMutableString alloc] init];
+        [ms appendString:u];
+        [lines addObject:[[iTermMutableLineString alloc] initWithContent:ms
+                                                                     eol:EOL_HARD
+                                                            continuation:_defaultChar
+                                                                metadata:(iTermLineStringMetadata){}]];
     }
     return lines;
 }
@@ -2480,65 +2537,11 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     return data;
 }
 
-static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
-    size_t length = (width + 1) * sizeof(screen_char_t);
-
-    screen_char_t *existingCache = (screen_char_t *)[self->cachedDefaultLine_ mutableBytes];
-    screen_char_t currentDefaultChar = self->_defaultChar;
-    if (self->cachedDefaultLine_ &&
-        self->cachedDefaultLine_.length == length &&
-        length > 0 &&
-        !memcmp(existingCache, &currentDefaultChar, sizeof(screen_char_t))) {
-        return self->cachedDefaultLine_.bytes;
-    }
-
-    NSMutableData *line = [NSMutableData dataWithLength:length];
-
-    self->cachedDefaultLine_ = nil;
-    [self clearLineDataBytes:line.mutableBytes count:line.length / sizeof(screen_char_t)];
-    self->cachedDefaultLine_ = line;
-
-    return line.bytes;
-}
-
-- (NSData *)defaultLineOfWidth:(int)width {
-    // Force cache to be updated if necessary.
-    VT100GridDefaultLine(self, width);
-    return cachedDefaultLine_;
-}
-
-// Not double-width char safe.
-- (void)clearScreenChars:(screen_char_t *)chars inRange:(VT100GridRange)range {
-    if (cachedDefaultLine_) {
-        // Only do this if there is a cached line; otherwise there's an infinite recursion since
-        // -defaultLineOfWidth indirectly calls this method.
-        const screen_char_t *defaultLineChars = VT100GridDefaultLine(self, size_.width);
-        memcpy(chars + range.location,
-               defaultLineChars,
-               sizeof(screen_char_t) * MIN(size_.width, range.length));
-        if (range.length > size_.width) {
-            const screen_char_t c = chars[range.location];
-            for (int i = range.location + MIN(size_.width, range.length);
-                 i < range.location + range.length;
-                 i++) {
-                chars[i] = c;
-            }
-        }
-    } else {
-        // Rarely called slow path.
-        screen_char_t c = _defaultChar;
-        for (int i = range.location; i < range.location + range.length; i++) {
-            chars[i] = c;
-        }
-    }
-}
-
 - (void)clearLineDataBytes:(screen_char_t *)dest count:(NSInteger)length {
     const screen_char_t c = _defaultChar;
     for (int i = 0; i < length; i++) {
         dest[i] = c;
     }
-    dest[length].code = EOL_HARD;
 }
 
 // Returns number of lines dropped from line buffer because it exceeded its size (always 0 or 1).
@@ -2548,8 +2551,9 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
         return 0;
     }
     screen_char_t *line = [self screenCharsAtLineNumber:0];
-    int len = [self lengthOfLine:line];
-    int continuationMark = line[size_.width].code;
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:0];
+    int len = [self lengthOfLine:mls];
+    int continuationMark = mls.eol;
     if (continuationMark == EOL_DWC && len == size_.width) {
         --len;
     }
@@ -2557,8 +2561,8 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
                     length:len
                    partial:(continuationMark != EOL_HARD)
                      width:size_.width
-                  metadata:[[self lineInfoAtLineNumber:0] immutableMetadata]
-              continuation:line[size_.width]];
+                  metadata:[self immutableMetadataAtLineNumber:0]
+              continuation:mls.continuation];
     int dropped;
     if (!unlimitedScrollback) {
         dropped = [lineBuffer dropExcessLinesWithWidth:size_.width];
@@ -2612,8 +2616,7 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
     if (newSize.width != size_.width || newSize.height != size_.height) {
         DLog(@"Grid for %@ resized to %@", self.delegate, VT100GridSizeDescription(newSize));
         size_ = newSize;
-        lines_ = [self linesWithSize:newSize];
-        lineInfos_ = [self lineInfosWithSize:newSize];
+        _lines = [self linesWithSize:newSize];
 
         scrollRegionRows_.location = MIN(scrollRegionRows_.location, size_.height - 1);
         scrollRegionRows_.length = MIN(scrollRegionRows_.length,
@@ -2694,16 +2697,14 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
         screen_char_t defaultChar = { 0 };
         return defaultChar;
     }
-    screen_char_t *line = [self screenCharsAtLineNumber:coord.y];
-    return line[coord.x];
+    return [[[self mutableLineStingAtLineNumber:coord.y] content] characterAt:coord.x];
 }
 
 - (NSString *)stringForCharacterAt:(VT100GridCoord)coord {
-    screen_char_t *theLine = [self screenCharsAtLineNumber:coord.y];
-    if (!theLine) {
+    if (coord.y < 0 || coord.y >= _lines.count) {
         return nil;
     }
-    screen_char_t theChar = theLine[coord.x];
+    const screen_char_t theChar = [self characterAt:coord];
     if (theChar.code == 0 && !theChar.complexChar) {
         return nil;
     }
@@ -2755,11 +2756,11 @@ static void DumpBuf(screen_char_t* p, int n) {
     if (lineNumber < 0) {
         return;
     }
-    screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
-    if (line[size_.width].code == EOL_DWC) {
-        line[size_.width].code = EOL_HARD;
-        if (ScreenCharIsDWC_SKIP(line[size_.width - 1])) {  // This really should always be the case.
-            line[size_.width - 1].code = 0;
+    iTermMutableLineString *mls = [self mutableLineStingAtLineNumber:lineNumber];
+    if (mls.eol == EOL_DWC) {
+        mls.eol = EOL_HARD;
+        if (ScreenCharIsDWC_SKIP(mls.lastCharacter)) {  // This really should always be the case.
+            [mls eraseCharacterAt:size_.width - 1];
             [self eraseExternalAttributesAt:VT100GridCoordMake(size_.width - 1, lineNumber)
                                       count:1];
         } else {
@@ -2794,8 +2795,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 }
 
 - (iTermExternalAttributeIndex *)createExternalAttributesForLine:(int)line {
-    VT100LineInfo *info = [self lineInfoAtLineNumber:line];
-    return [info externalAttributesCreatingIfNeeded:YES];
+    return [[[self mutableLineStingAtLineNumber:line] ensureLegacy] eaIndexCreatingIfNeeded:YES];
 }
 
 - (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber
@@ -2852,8 +2852,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 }
 
 // Returns NSString representation of line. This exists to facilitate debugging only.
-+ (NSString *)stringForScreenChars:(screen_char_t *)theLine length:(int)length
-{
++ (NSString *)stringForScreenChars:(screen_char_t *)theLine length:(int)length {
     NSMutableString* result = [NSMutableString stringWithCapacity:length];
 
     for (int i = 0; i < length; i++) {
@@ -2892,14 +2891,9 @@ static void DumpBuf(screen_char_t* p, int n) {
 - (id)copyWithZone:(NSZone *)zone {
     VT100Grid *theCopy = [[VT100Grid alloc] initWithSize:size_
                                                 delegate:delegate_];
-    theCopy->lines_ = [[NSMutableArray alloc] init];
-    for (NSObject *line in lines_) {
-        [theCopy->lines_ addObject:[line mutableCopy]];
-    }
-    theCopy->lineInfos_ = [[NSMutableArray alloc] init];
-    for (VT100LineInfo *line in lineInfos_) {
-        [theCopy->lineInfos_ addObject:[line copy]];
-    }
+    theCopy->_lines = [_lines mapToMutableArrayWithBlock:^id _Nullable(iTermMutableLineString *mls) {
+        return [mls mutableClone];
+    }];
     theCopy->screenTop_ = screenTop_;
     [self copyMiscellaneousStateTo:theCopy];
 

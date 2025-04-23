@@ -3067,6 +3067,23 @@
 		A6A64E6C2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A64E682508C5B50040490B /* OpenQuicklySnippetIcon@2x.png */; };
 		A6A64E6D2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A64E682508C5B50040490B /* OpenQuicklySnippetIcon@2x.png */; };
 		A6A64E6E2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A64E682508C5B50040490B /* OpenQuicklySnippetIcon@2x.png */; };
+		A6A7234C2DB7157C00A8115D /* iTermNonASCIIString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723062DB7153C00A8115D /* iTermNonASCIIString.swift */; };
+		A6A7234D2DB7157C00A8115D /* CopyOnWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723002DB7153C00A8115D /* CopyOnWrite.swift */; };
+		A6A7234E2DB7157C00A8115D /* iTermASCIIString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723022DB7153C00A8115D /* iTermASCIIString.swift */; };
+		A6A7234F2DB7157C00A8115D /* SubData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7230D2DB7153C00A8115D /* SubData.swift */; };
+		A6A723502DB7157C00A8115D /* iTermRope.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723072DB7153C00A8115D /* iTermRope.swift */; };
+		A6A723522DB7157C00A8115D /* SubStringCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7230E2DB7153C00A8115D /* SubStringCache.swift */; };
+		A6A723532DB7157C00A8115D /* iTermLineString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723042DB7153C00A8115D /* iTermLineString.swift */; };
+		A6A723542DB7157C00A8115D /* screen_char_t.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7230B2DB7153C00A8115D /* screen_char_t.swift */; };
+		A6A723552DB7157C00A8115D /* iTermString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723082DB7153C00A8115D /* iTermString.swift */; };
+		A6A723562DB7157C00A8115D /* SegmentMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7230C2DB7153C00A8115D /* SegmentMap.swift */; };
+		A6A723572DB7157C00A8115D /* iTermMutableString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723052DB7153C00A8115D /* iTermMutableString.swift */; };
+		A6A723582DB7157C00A8115D /* iTermLegacyStyleString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723032DB7153C00A8115D /* iTermLegacyStyleString.swift */; };
+		A6A723592DB7157C00A8115D /* DeltaString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723012DB7153C00A8115D /* DeltaString.swift */; };
+		A6A7235A2DB7157C00A8115D /* iTermSubString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723092DB7153C00A8115D /* iTermSubString.swift */; };
+		A6A7235C2DB7362D00A8115D /* iTermMutableStringProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7235B2DB7362B00A8115D /* iTermMutableStringProtocol.swift */; };
+		A6A7235E2DB7364700A8115D /* iTermLegacyMutableString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7235D2DB7363B00A8115D /* iTermLegacyMutableString.swift */; };
+		A6A723602DB86B0D00A8115D /* iTermUniformString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7235F2DB86B0400A8115D /* iTermUniformString.swift */; };
 		A6A72C4D27C7F660002E4CCA /* iTermPathFinder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F718C02265AF1D0053488E /* iTermPathFinder.m */; };
 		A6A73D3827C7F96C002E4CCA /* NSArray+CommonAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A73D3627C7F96C002E4CCA /* NSArray+CommonAdditions.h */; };
 		A6A73D3927C7F96C002E4CCA /* NSArray+CommonAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A73D3727C7F96C002E4CCA /* NSArray+CommonAdditions.m */; };
@@ -7321,6 +7338,23 @@
 		A6A64E602508BE650040490B /* StatusBarIconSnippet@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarIconSnippet@2x.png"; path = "images/StatusBarIcons/StatusBarIconSnippet@2x.png"; sourceTree = "<group>"; };
 		A6A64E672508C5B50040490B /* OpenQuicklySnippetIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = OpenQuicklySnippetIcon.png; path = images/icons/OpenQuicklySnippetIcon.png; sourceTree = "<group>"; };
 		A6A64E682508C5B50040490B /* OpenQuicklySnippetIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "OpenQuicklySnippetIcon@2x.png"; path = "images/icons/OpenQuicklySnippetIcon@2x.png"; sourceTree = "<group>"; };
+		A6A723002DB7153C00A8115D /* CopyOnWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopyOnWrite.swift; sourceTree = "<group>"; };
+		A6A723012DB7153C00A8115D /* DeltaString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeltaString.swift; sourceTree = "<group>"; };
+		A6A723022DB7153C00A8115D /* iTermASCIIString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermASCIIString.swift; sourceTree = "<group>"; };
+		A6A723032DB7153C00A8115D /* iTermLegacyStyleString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermLegacyStyleString.swift; sourceTree = "<group>"; };
+		A6A723042DB7153C00A8115D /* iTermLineString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermLineString.swift; sourceTree = "<group>"; };
+		A6A723052DB7153C00A8115D /* iTermMutableString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermMutableString.swift; sourceTree = "<group>"; };
+		A6A723062DB7153C00A8115D /* iTermNonASCIIString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermNonASCIIString.swift; sourceTree = "<group>"; };
+		A6A723072DB7153C00A8115D /* iTermRope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermRope.swift; sourceTree = "<group>"; };
+		A6A723082DB7153C00A8115D /* iTermString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermString.swift; sourceTree = "<group>"; };
+		A6A723092DB7153C00A8115D /* iTermSubString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSubString.swift; sourceTree = "<group>"; };
+		A6A7230B2DB7153C00A8115D /* screen_char_t.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = screen_char_t.swift; sourceTree = "<group>"; };
+		A6A7230C2DB7153C00A8115D /* SegmentMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentMap.swift; sourceTree = "<group>"; };
+		A6A7230D2DB7153C00A8115D /* SubData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubData.swift; sourceTree = "<group>"; };
+		A6A7230E2DB7153C00A8115D /* SubStringCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubStringCache.swift; sourceTree = "<group>"; };
+		A6A7235B2DB7362B00A8115D /* iTermMutableStringProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermMutableStringProtocol.swift; sourceTree = "<group>"; };
+		A6A7235D2DB7363B00A8115D /* iTermLegacyMutableString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermLegacyMutableString.swift; sourceTree = "<group>"; };
+		A6A7235F2DB86B0400A8115D /* iTermUniformString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermUniformString.swift; sourceTree = "<group>"; };
 		A6A73D3627C7F96C002E4CCA /* NSArray+CommonAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSArray+CommonAdditions.h"; sourceTree = "<group>"; };
 		A6A73D3727C7F96C002E4CCA /* NSArray+CommonAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSArray+CommonAdditions.m"; sourceTree = "<group>"; };
 		A6A73D3B27C7F9F0002E4CCA /* iTermPidinfoDebugLogging.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPidinfoDebugLogging.m; sourceTree = "<group>"; };
@@ -8367,6 +8401,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A6A7230F2DB7153C00A8115D /* Ropes */,
 				A612E5CC2DACB5FD0014F159 /* Channels */,
 				A6038324294E626400FE11C2 /* AITerm */,
 				A6EEAEDC283711D50039E850 /* Process Info */,
@@ -11871,6 +11906,30 @@
 				A6A5BE062A070C5E00F5FD44 /* ImportingWindowController.swift */,
 			);
 			path = iTerm2ImportStatus;
+			sourceTree = "<group>";
+		};
+		A6A7230F2DB7153C00A8115D /* Ropes */ = {
+			isa = PBXGroup;
+			children = (
+				A6A7235F2DB86B0400A8115D /* iTermUniformString.swift */,
+				A6A723002DB7153C00A8115D /* CopyOnWrite.swift */,
+				A6A723012DB7153C00A8115D /* DeltaString.swift */,
+				A6A723022DB7153C00A8115D /* iTermASCIIString.swift */,
+				A6A7235D2DB7363B00A8115D /* iTermLegacyMutableString.swift */,
+				A6A723032DB7153C00A8115D /* iTermLegacyStyleString.swift */,
+				A6A723042DB7153C00A8115D /* iTermLineString.swift */,
+				A6A723052DB7153C00A8115D /* iTermMutableString.swift */,
+				A6A7235B2DB7362B00A8115D /* iTermMutableStringProtocol.swift */,
+				A6A723062DB7153C00A8115D /* iTermNonASCIIString.swift */,
+				A6A723072DB7153C00A8115D /* iTermRope.swift */,
+				A6A723082DB7153C00A8115D /* iTermString.swift */,
+				A6A723092DB7153C00A8115D /* iTermSubString.swift */,
+				A6A7230B2DB7153C00A8115D /* screen_char_t.swift */,
+				A6A7230C2DB7153C00A8115D /* SegmentMap.swift */,
+				A6A7230D2DB7153C00A8115D /* SubData.swift */,
+				A6A7230E2DB7153C00A8115D /* SubStringCache.swift */,
+			);
+			path = Ropes;
 			sourceTree = "<group>";
 		};
 		A6A72C4E27C7F803002E4CCA /* Common */ = {
@@ -16485,6 +16544,20 @@
 				A61A85A224F1A70500B03880 /* iTermGlobalSearchWindowController.m in Sources */,
 				A6354B942A1A8828002836A3 /* BookmarkDialogViewController.swift in Sources */,
 				A6916941281346A400083F99 /* ExclusiveSelectionTextView.swift in Sources */,
+				A6A7234C2DB7157C00A8115D /* iTermNonASCIIString.swift in Sources */,
+				A6A7234D2DB7157C00A8115D /* CopyOnWrite.swift in Sources */,
+				A6A7234E2DB7157C00A8115D /* iTermASCIIString.swift in Sources */,
+				A6A7234F2DB7157C00A8115D /* SubData.swift in Sources */,
+				A6A723502DB7157C00A8115D /* iTermRope.swift in Sources */,
+				A6A723522DB7157C00A8115D /* SubStringCache.swift in Sources */,
+				A6A723532DB7157C00A8115D /* iTermLineString.swift in Sources */,
+				A6A723542DB7157C00A8115D /* screen_char_t.swift in Sources */,
+				A6A723552DB7157C00A8115D /* iTermString.swift in Sources */,
+				A6A723562DB7157C00A8115D /* SegmentMap.swift in Sources */,
+				A6A723572DB7157C00A8115D /* iTermMutableString.swift in Sources */,
+				A6A723582DB7157C00A8115D /* iTermLegacyStyleString.swift in Sources */,
+				A6A723592DB7157C00A8115D /* DeltaString.swift in Sources */,
+				A6A7235A2DB7157C00A8115D /* iTermSubString.swift in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,
 				A65618722D6BDFF90059CD35 /* TerminalCommandMessageCellView.swift in Sources */,
 				A60E045826DD4A6000DD162B /* TypingAggregator.swift in Sources */,
@@ -17152,6 +17225,7 @@
 				A6BBBFD12CC876D3000A697C /* Range+iTerm.swift in Sources */,
 				A6180D7521A36F730073F219 /* iTermMetalPerFrameStateRow.m in Sources */,
 				A6A9839127E5C427003319D1 /* PasswordManagerDataSourceProvider.swift in Sources */,
+				A6A7235C2DB7362D00A8115D /* iTermMutableStringProtocol.swift in Sources */,
 				A6EC937024E787BA00EEADEF /* iTermSnippetsModel.m in Sources */,
 				A629F5A223AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m in Sources */,
 				A6F699292730998B00C4A3A6 /* iTermBadgeLabel.m in Sources */,
@@ -17348,6 +17422,7 @@
 				A6E2A61C2B8D619A00EC6070 /* iTermCharacterBuffer.m in Sources */,
 				A6F718CF2266E71E0053488E /* iTermUserDefaults.m in Sources */,
 				A6D8973B22154A8800325F6A /* AnnotateTrigger.m in Sources */,
+				A6A723602DB86B0D00A8115D /* iTermUniformString.swift in Sources */,
 				A667C23F276C7A69006B4DEF /* PSMDarkTabStyle.m in Sources */,
 				A62D43922328C63B0038F565 /* NSWindow+iTerm.m in Sources */,
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
@@ -17406,6 +17481,7 @@
 				A695CA80213DAA8500486440 /* NSHost+iTerm.m in Sources */,
 				A621F10C26F650DF001DD3A6 /* ScreenCharArray.m in Sources */,
 				A653F6B924D291D00062377E /* iTermOrderedDictionary.m in Sources */,
+				A6A7235E2DB7364700A8115D /* iTermLegacyMutableString.swift in Sources */,
 				A693C0BF29D0B1F100AED4E4 /* MemoryAddressHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

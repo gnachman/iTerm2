@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Returns an array where each object in self is replaced with block(object).
 - (NSArray *)mapWithBlock:(id _Nullable (^NS_NOESCAPE)(ObjectType anObject))block;
+- (NSMutableArray *)mapToMutableArrayWithBlock:(id _Nullable (^NS_NOESCAPE)(ObjectType anObject))block;
 
 @end
 
