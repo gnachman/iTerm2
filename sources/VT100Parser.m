@@ -93,12 +93,14 @@
 
         VT100ByteStreamReset(&_byteStream);
     } else {
-        int rmlen = 0;
+        VT100ByteStreamConsumer consumer;
+        VT100ByteStreamConsumerInit(&consumer, cursor);
+
         const NSStringEncoding encoding = self.encoding;
         const BOOL support8BitControlCharacters = (encoding == NSASCIIStringEncoding || encoding == NSISOLatin1StringEncoding);
         const unsigned char firstChar = VT100ByteStreamCursorPeek(&cursor);
         if (isAsciiString(firstChar) && !_dcsHooked) {
-            ParseString(cursor, &rmlen, token, encoding);
+            ParseString(&consumer, token, encoding);
             position = cursor;
         } else if (iscontrol(firstChar) ||
                    _dcsHooked ||
@@ -106,10 +108,9 @@
             if (self.literalMode) {
                 token->type = VT100_LITERAL;
                 token->code = firstChar;
-                rmlen = 1;
+                VT100ByteStreamConsumerSetConsumed(&consumer, 1);
             } else {
-                [_controlParser parseControlWithCursor:cursor
-                                                 rmlen:&rmlen
+                [_controlParser parseControlWithConsumer:&consumer
                                            incidentals:vector
                                                  token:token
                                               encoding:encoding
@@ -248,29 +249,29 @@
             }
         } else {
             if (isString(firstChar, encoding)) {
-                ParseString(cursor, &rmlen, token, encoding);
+                ParseString(&consumer, token, encoding);
                 // If the encoding is UTF-8 then you get here only if *datap >= 0x80.
-                if (token->type != VT100_WAIT && rmlen == 0) {
+                if (token->type != VT100_WAIT && VT100ByteStreamConsumerGetConsumed(&consumer) == 0) {
                     token->type = VT100_UNKNOWNCHAR;
                     token->code = VT100ByteStreamCursorPeek(&cursor);
-                    rmlen = 1;
+                    VT100ByteStreamConsumerSetConsumed(&consumer, 1);
                 }
             } else {
                 // If the encoding is UTF-8 you shouldn't get here.
                 token->type = VT100_UNKNOWNCHAR;
                 token->code = VT100ByteStreamCursorPeek(&cursor);
-                rmlen = 1;
+                VT100ByteStreamConsumerSetConsumed(&consumer, 1);
             }
             position = cursor;
         }
-        length = rmlen;
+        length = VT100ByteStreamConsumerGetConsumed(&consumer);
 
 
-        if (rmlen > 0) {
-            ITAssertWithMessage(VT100ByteStreamGetCapacity(&_byteStream) >= VT100ByteStreamGetConsumed(&_byteStream) + rmlen,
+        if (VT100ByteStreamConsumerGetConsumed(&consumer) > 0) {
+            ITAssertWithMessage(VT100ByteStreamGetCapacity(&_byteStream) >= VT100ByteStreamGetConsumed(&_byteStream) + VT100ByteStreamConsumerGetConsumed(&consumer),
                                 @"Consumed more bytes than are available");
             // mark our current position in the stream
-            VT100ByteStreamConsume(&_byteStream, rmlen);
+            VT100ByteStreamConsume(&_byteStream, VT100ByteStreamConsumerGetConsumed(&consumer));
         }
     }
 

@@ -64,6 +64,7 @@ NS_INLINE void VT100ByteStreamConsumeAll(VT100ByteStream *self) {
 NS_INLINE void VT100ByteStreamConsume(VT100ByteStream *self, int count) {
     self->offset += count;
     ITAssertWithMessage(self->offset >= 0, @"Negative offset after consuming %d", count);
+    ITAssertWithMessage(self->offset <= self->currentLength, @"Offset too big");
 }
 
 NS_INLINE void VT100ByteStreamReset(VT100ByteStream *self) {
@@ -103,6 +104,8 @@ NS_INLINE void VT100ByteStreamAppend(VT100ByteStream *self, const unsigned char 
     }
 }
 
+#pragma mark - Cursor
+
 typedef struct {
     unsigned char *datap;
     int datalen;
@@ -112,27 +115,33 @@ NS_INLINE void VT100ByteStreamCursorInit(VT100ByteStreamCursor *self,
                                       VT100ByteStream *stream) {
     self->datap = stream->stream + stream->offset;
     self->datalen = stream->currentLength - stream->offset;
+    ITAssertWithMessage(self->datalen >= 0, @"Negative data length");
 }
 
 // Returns the number of bytes remaining to parse.
-NS_INLINE int VT100ByteStreamCursorGetSize(VT100ByteStreamCursor *self) {
+NS_INLINE int VT100ByteStreamCursorGetSize(const VT100ByteStreamCursor *self) {
     return self->datalen;
 }
 
-NS_INLINE unsigned char VT100ByteStreamCursorPeek(VT100ByteStreamCursor *self) {
+NS_INLINE unsigned char VT100ByteStreamCursorPeek(const VT100ByteStreamCursor *self) {
     return *self->datap;
 }
 
 NS_INLINE void VT100ByteStreamCursorAdvance(VT100ByteStreamCursor *self, int count) {
     self->datap += count;
     self->datalen -= count;
+    ITAssertWithMessage(self->datalen >= 0, @"Negative data length");
 }
 
-NS_INLINE unsigned char *VT100ByteStreamCursorGetPointer(VT100ByteStreamCursor *self) {
+NS_INLINE const unsigned char *VT100ByteStreamCursorGetPointer(const VT100ByteStreamCursor *self) {
     return self->datap;
 }
 
-NS_INLINE unsigned char VT100ByteStreamCursorPeekOffset(VT100ByteStreamCursor *self, int offset) {
+NS_INLINE unsigned char *VT100ByteStreamCursorGetMutablePointer(const VT100ByteStreamCursor *self) {
+    return self->datap;
+}
+
+NS_INLINE unsigned char VT100ByteStreamCursorPeekOffset(const VT100ByteStreamCursor *self, int offset) {
     return *(self->datap + offset);
 }
 
@@ -141,7 +150,7 @@ NS_INLINE void VT100ByteStreamCursorWrite(VT100ByteStreamCursor *self, unsigned 
     self->datap[0] = c;
 }
 
-NS_INLINE NSString *VT100ByteStreamCursorMakeString(VT100ByteStreamCursor *self,
+NS_INLINE NSString *VT100ByteStreamCursorMakeString(const VT100ByteStreamCursor *self,
                                                     int length,
                                                     NSStringEncoding encoding) {
     return [[[NSString alloc] initWithBytes:self->datap
@@ -149,7 +158,7 @@ NS_INLINE NSString *VT100ByteStreamCursorMakeString(VT100ByteStreamCursor *self,
                                    encoding:encoding] autorelease];
 }
 
-NS_INLINE NSString *VT100ByteStreamCursorDescription(VT100ByteStreamCursor *self) {
+NS_INLINE NSString *VT100ByteStreamCursorDescription(const VT100ByteStreamCursor *self) {
     return [NSString stringWithFormat:@"%.*s", self->datalen, self->datap];
 }
 
@@ -159,8 +168,58 @@ NS_INLINE void VT100ByteStreamCursorCopy(VT100ByteStreamCursor *self,
     memcpy(destination, self->datap, count);
 }
 
-NS_INLINE NSData *VT100ByteStreamCursorMakeData(VT100ByteStreamCursor *self,
+NS_INLINE NSData *VT100ByteStreamCursorMakeData(const VT100ByteStreamCursor *self,
                                                 int length) {
     return [NSData dataWithBytes:VT100ByteStreamCursorGetPointer(self)
                           length:length];
+}
+
+typedef struct {
+    VT100ByteStreamCursor cursor;
+    int rmlen;
+} VT100ByteStreamConsumer;
+
+NS_INLINE void VT100ByteStreamConsumerInit(VT100ByteStreamConsumer *self,
+                                           VT100ByteStreamCursor cursor) {
+    self->cursor = cursor;
+    self->rmlen = 0;
+}
+
+NS_INLINE void VT100ByteStreamConsumerReset(VT100ByteStreamConsumer *self) {
+    self->rmlen = 0;
+}
+
+NS_INLINE unsigned char VT100ByteStreamConsumerPeek(VT100ByteStreamConsumer *self) {
+    return VT100ByteStreamCursorPeek(&self->cursor);
+}
+
+NS_INLINE int VT100ByteStreamConsumerGetSize(VT100ByteStreamConsumer *self) {
+    return VT100ByteStreamCursorGetSize(&self->cursor);
+}
+
+NS_INLINE VT100ByteStreamCursor VT100ByteStreamConsumerGetCursor(VT100ByteStreamConsumer *self) {
+    return self->cursor;
+}
+
+NS_INLINE void VT100ByteStreamConsumerConsume(VT100ByteStreamConsumer *self, int count) {
+    self->rmlen += count;
+    ITAssertWithMessage(self->rmlen <= VT100ByteStreamCursorGetSize(&self->cursor), @"Consumed too much");
+}
+
+NS_INLINE void VT100ByteStreamConsumerSetConsumed(VT100ByteStreamConsumer *self, int count) {
+    self->rmlen = count;
+    ITAssertWithMessage(self->rmlen <= VT100ByteStreamCursorGetSize(&self->cursor), @"Consumed too much");
+}
+
+NS_INLINE int VT100ByteStreamConsumerGetConsumed(VT100ByteStreamConsumer *self) {
+    return self->rmlen;
+}
+
+NS_INLINE NSString *VT100ByteStreamConsumerDescription(VT100ByteStreamConsumer *self) {
+    return [NSString stringWithFormat:@"<Consumer rmlen=%d cursor=%@>", self->rmlen,
+            VT100ByteStreamCursorDescription(&self->cursor)];
+}
+
+NS_INLINE void VT100ByteStreamConsumerWriteHead(VT100ByteStreamConsumer *self, unsigned char c) {
+    VT100ByteStreamCursorWrite(&self->cursor, c);
 }

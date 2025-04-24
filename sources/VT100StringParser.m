@@ -12,11 +12,12 @@
 #import "NSStringITerm.h"
 #import "ScreenChar.h"
 
-static void DecodeUTF8Bytes(VT100ByteStreamCursor cursor,
-                            int *rmlen,
+static void DecodeUTF8Bytes(VT100ByteStreamConsumer *consumer,
                             VT100Token *token) {
     int utf8DecodeResult;
     int consumed = 0;
+
+    VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
 
     while (true) {
         int codePoint = 0;
@@ -42,7 +43,7 @@ static void DecodeUTF8Bytes(VT100ByteStreamCursor cursor,
     if (consumed > 0) {
         // If some characters were successfully decoded, just return them
         // and ignore the error or end of stream for now.
-        *rmlen = consumed;
+        VT100ByteStreamConsumerSetConsumed(consumer, consumed);
         assert(consumed >= 0);
         token->type = VT100_STRING;
     } else {
@@ -50,16 +51,16 @@ static void DecodeUTF8Bytes(VT100ByteStreamCursor cursor,
         if (utf8DecodeResult == 0) {
             token->type = VT100_WAIT;
         } else {
-            *rmlen = -utf8DecodeResult;
+            VT100ByteStreamConsumerSetConsumed(consumer, -utf8DecodeResult);
             token->type = VT100_INVALID_SEQUENCE;
         }
     }
 }
 
 
-static void DecodeEUCCNBytes(VT100ByteStreamCursor cursor,
-                             int *rmlen,
+static void DecodeEUCCNBytes(VT100ByteStreamConsumer *consumer,
                              VT100Token *token) {
+    VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
     int consumed = 0;
     int size;
     while ((size = VT100ByteStreamCursorGetSize(&cursor)) > 0) {
@@ -83,18 +84,17 @@ static void DecodeEUCCNBytes(VT100ByteStreamCursor cursor,
     }
 
     if (consumed == 0) {
-        *rmlen = 0;
+        VT100ByteStreamConsumerSetConsumed(consumer, 0);
         token->type = VT100_WAIT;
     } else {
-        *rmlen = consumed;
+        VT100ByteStreamConsumerSetConsumed(consumer, consumed);
         token->type = VT100_STRING;
     }
 }
 
-static void DecodeBIG5Bytes(VT100ByteStreamCursor cursor,
-                            int *rmlen,
-                            VT100Token *token)
-{
+static void DecodeBIG5Bytes(VT100ByteStreamConsumer *consumer,
+                            VT100Token *token) {
+    VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
     int consumed = 0;
 
     int size;
@@ -118,18 +118,17 @@ static void DecodeBIG5Bytes(VT100ByteStreamCursor cursor,
     }
 
     if (consumed == 0) {
-        *rmlen = 0;
+        VT100ByteStreamConsumerSetConsumed(consumer, 0);
         token->type = VT100_WAIT;
     } else {
-        *rmlen = consumed;
+        VT100ByteStreamConsumerSetConsumed(consumer, consumed);
         token->type = VT100_STRING;
     }
 }
 
-static void DecodeEUCJPBytes(VT100ByteStreamCursor cursor,
-                             int *rmlen,
-                             VT100Token *token)
-{
+static void DecodeEUCJPBytes(VT100ByteStreamConsumer *consumer,
+                             VT100Token *token) {
+    VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
     int consumed = 0;
 
     int size;
@@ -151,18 +150,18 @@ static void DecodeEUCJPBytes(VT100ByteStreamCursor cursor,
     }
 
     if (consumed == 0) {
-        *rmlen = 0;
+        VT100ByteStreamConsumerSetConsumed(consumer, 0);
         token->type = VT100_WAIT;
     } else {
-        *rmlen = consumed;
+        VT100ByteStreamConsumerSetConsumed(consumer, consumed);
         token->type = VT100_STRING;
     }
 }
 
 
-static void DecodeSJISBytes(VT100ByteStreamCursor cursor,
-                            int *rmlen,
+static void DecodeSJISBytes(VT100ByteStreamConsumer *consumer,
                             VT100Token *token) {
+    VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
     int consumed = 0;
 
     while (VT100ByteStreamCursorGetSize(&cursor) > 0) {
@@ -181,17 +180,17 @@ static void DecodeSJISBytes(VT100ByteStreamCursor cursor,
     }
 
     if (consumed == 0) {
-        *rmlen = 0;
+        VT100ByteStreamConsumerSetConsumed(consumer, 0);
         token->type = VT100_WAIT;
     } else {
-        *rmlen = consumed;
+        VT100ByteStreamConsumerSetConsumed(consumer, consumed);
         token->type = VT100_STRING;
     }
 }
 
-static void DecodeEUCKRBytes(VT100ByteStreamCursor cursor,
-                             int *rmlen,
+static void DecodeEUCKRBytes(VT100ByteStreamConsumer *consumer,
                              VT100Token *token) {
+    VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
     int consumed = 0;
 
     int size;
@@ -207,17 +206,17 @@ static void DecodeEUCKRBytes(VT100ByteStreamCursor cursor,
     }
 
     if (consumed == 0) {
-        *rmlen = 0;
+        VT100ByteStreamConsumerSetConsumed(consumer, 0);
         token->type = VT100_WAIT;
     } else {
-        *rmlen = consumed;
+        VT100ByteStreamConsumerSetConsumed(consumer, consumed);
         token->type = VT100_STRING;
     }
 }
 
-static void DecodeCP949Bytes(VT100ByteStreamCursor cursor,
-                             int *rmlen,
+static void DecodeCP949Bytes(VT100ByteStreamConsumer *consumer,
                              VT100Token *token) {
+    VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
     int consumed = 0;
 
     int size;
@@ -233,17 +232,17 @@ static void DecodeCP949Bytes(VT100ByteStreamCursor cursor,
     }
 
     if (consumed == 0) {
-        *rmlen = 0;
+        VT100ByteStreamConsumerSetConsumed(consumer, 0);
         token->type = VT100_WAIT;
     } else {
-        *rmlen = consumed;
+        VT100ByteStreamConsumerSetConsumed(consumer, consumed);
         token->type = VT100_STRING;
     }
 }
 
-static void DecodeOtherBytes(VT100ByteStreamCursor cursor,
-                             int *rmlen,
+static void DecodeOtherBytes(VT100ByteStreamConsumer *consumer,
                              VT100Token *token) {
+    VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
     int consumed = 0;
 
     while (VT100ByteStreamCursorGetSize(&cursor) > 0) {
@@ -257,10 +256,10 @@ static void DecodeOtherBytes(VT100ByteStreamCursor cursor,
     }
 
     if (consumed == 0) {
-        *rmlen = 0;
+        VT100ByteStreamConsumerSetConsumed(consumer, 0);
         token->type = VT100_WAIT;
     } else {
-        *rmlen = consumed;
+        VT100ByteStreamConsumerSetConsumed(consumer, consumed);
         token->type = VT100_STRING;
     }
 }
@@ -284,8 +283,7 @@ static NSString* SetReplacementCharInArray(unsigned char* datap, int* lenPtr, in
                                    encoding:NSUTF8StringEncoding] autorelease];
 }
 
-static void DecodeASCIIBytes(VT100ByteStreamCursor cursor,
-                             int *rmlen,
+static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
                              VT100Token *token) {
     int consumed = 0;
 
@@ -294,6 +292,7 @@ static void DecodeASCIIBytes(VT100ByteStreamCursor cursor,
     // (using 8-bytes-at-a-time bit twiddling and SIMD)
     // and although this while loop completed faster, the overall benchmark speed on spam.cc did
     // not improve.
+    VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
     while (VT100ByteStreamCursorGetSize(&cursor) > 0) {
         unsigned char c = VT100ByteStreamCursorPeek(&cursor);
         if (c >= 0x20 && c <= 0x7f) {
@@ -305,74 +304,79 @@ static void DecodeASCIIBytes(VT100ByteStreamCursor cursor,
     }
 
     if (consumed == 0) {
-        *rmlen = 0;
+        VT100ByteStreamConsumerReset(consumer);
         token->type = VT100_WAIT;
     } else {
-        *rmlen = consumed;
+        VT100ByteStreamConsumerSetConsumed(consumer, consumed);
         token->type = VT100_ASCIISTRING;
     }
 }
 
-void ParseString(VT100ByteStreamCursor cursor,
-                 int *rmlen,
+void ParseString(VT100ByteStreamConsumer *consumer,
                  VT100Token *result,
                  NSStringEncoding encoding) {
-    *rmlen = 0;
+    VT100ByteStreamConsumerReset(consumer);
+
     result->type = VT100_UNKNOWNCHAR;
-    result->code = VT100ByteStreamCursorPeek(&cursor);
+    result->code = VT100ByteStreamConsumerPeek(consumer);
 
     BOOL isAscii = NO;
-    if (isAsciiString(VT100ByteStreamCursorPeek(&cursor))) {
+    if (isAsciiString(VT100ByteStreamConsumerPeek(consumer))) {
         isAscii = YES;
-        DecodeASCIIBytes(cursor, rmlen, result);
+        DecodeASCIIBytes(consumer, result);
         encoding = NSASCIIStringEncoding;
     } else if (encoding == NSUTF8StringEncoding) {
-        DecodeUTF8Bytes(cursor, rmlen, result);
+        DecodeUTF8Bytes(consumer, result);
     } else if (isEUCCNEncoding(encoding)) {
         // Chinese-GB
-        DecodeEUCCNBytes(cursor, rmlen, result);
+        DecodeEUCCNBytes(consumer, result);
     } else if (isBig5Encoding(encoding)) {
-        DecodeBIG5Bytes(cursor, rmlen, result);
+        DecodeBIG5Bytes(consumer, result);
     } else if (isJPEncoding(encoding)) {
-        DecodeEUCJPBytes(cursor, rmlen, result);
+        DecodeEUCJPBytes(consumer, result);
     } else if (isSJISEncoding(encoding)) {
-        DecodeSJISBytes(cursor, rmlen, result);
+        DecodeSJISBytes(consumer, result);
     } else if (isEUCKREncoding(encoding)) {
         // korean
-        DecodeEUCKRBytes(cursor, rmlen, result);
+        DecodeEUCKRBytes(consumer, result);
     } else if (isCP949Encoding(encoding)) {
         // korean
-        DecodeCP949Bytes(cursor, rmlen, result);
+        DecodeCP949Bytes(consumer, result);
     } else {
-        DecodeOtherBytes(cursor, rmlen, result);
+        DecodeOtherBytes(consumer, result);
     }
 
+    const int consumedCount = VT100ByteStreamConsumerGetConsumed(consumer);
     if (result->type == VT100_INVALID_SEQUENCE) {
         // Output only one replacement symbol, even if rmlen is higher.
-        DLog(@"Parsed an invalid sequence of length %d for encoding %@: %@", *rmlen, @(encoding), VT100ByteStreamCursorDescription(&cursor));
-        VT100ByteStreamCursorWrite(&cursor, ONECHAR_UNKNOWN);
+        DLog(@"Parsed an invalid sequence of length %d for encoding %@: %@",
+             consumedCount,
+             @(encoding),
+             VT100ByteStreamConsumerDescription(consumer));
+        VT100ByteStreamConsumerWriteHead(consumer, ONECHAR_UNKNOWN);
         result.string = ReplacementString();
         result->type = VT100_STRING;
     } else if (result->type != VT100_WAIT && !isAscii) {
-        result.string = VT100ByteStreamCursorMakeString(&cursor, *rmlen, encoding);
+        VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
+        result.string = VT100ByteStreamCursorMakeString(&cursor, consumedCount, encoding);
 
         if (result.string == nil) {
             // Invalid bytes, can't encode.
             int i;
             if (encoding == NSUTF8StringEncoding) {
-                unsigned char temp[*rmlen * 3];
-                VT100ByteStreamCursorCopy(&cursor, temp, *rmlen);
+                unsigned char temp[consumedCount * 3];
+                VT100ByteStreamCursorCopy(&cursor, temp, consumedCount);
 
-                int length = *rmlen;
+                int length = consumedCount;
                 // Replace every byte with unicode replacement char <?>.
-                for (i = *rmlen - 1; i >= 0 && !result.string; i--) {
+                for (i = consumedCount - 1; i >= 0 && !result.string; i--) {
                     result.string = SetReplacementCharInArray(temp, &length, i);
                 }
             } else {
                 // Replace every byte with ?, the replacement char for non-unicode encodings.
-                for (i = *rmlen - 1; i >= 0 && !result.string; i--) {
+                for (i = consumedCount - 1; i >= 0 && !result.string; i--) {
                     VT100ByteStreamCursorWrite(&cursor, ONECHAR_UNKNOWN);
-                    result.string = VT100ByteStreamCursorMakeString(&cursor, *rmlen, encoding);
+                    result.string = VT100ByteStreamCursorMakeString(&cursor, consumedCount, encoding);
                 }
             }
         }

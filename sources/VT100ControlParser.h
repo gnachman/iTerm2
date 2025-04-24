@@ -30,13 +30,12 @@ NS_INLINE BOOL isc1(int c) {
 // Force the DCS parser to remove its hook (presently, that means terminating tmux integration).
 - (void)unhookDCS;
 
-- (void)parseControlWithCursor:(VT100ByteStreamCursor)cursor
-                         rmlen:(int *)rmlen
-                   incidentals:(CVector *)incidentals
-                         token:(VT100Token *)token
-                      encoding:(NSStringEncoding)encoding
-                    savedState:(NSMutableDictionary *)savedState
-                     dcsHooked:(BOOL *)dcsHooked;
+- (void)parseControlWithConsumer:(VT100ByteStreamConsumer *)consumer
+                     incidentals:(CVector *)incidentals
+                           token:(VT100Token *)token
+                        encoding:(NSStringEncoding)encoding
+                      savedState:(NSMutableDictionary *)savedState
+                       dcsHooked:(BOOL *)dcsHooked;
 
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelTmuxRecoveryMode;
