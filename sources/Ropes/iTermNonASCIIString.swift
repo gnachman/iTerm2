@@ -89,4 +89,20 @@ class iTermNonASCIIString: NSObject, iTermString {
     func hasEqual(range: NSRange, to chars: UnsafePointer<screen_char_t>) -> Bool {
         return _hasEqual(range: range, to: chars)
     }
+
+    func usedLength(range: NSRange) -> Int32 {
+        var used = Int32(range.length)
+        for i in Range(range)!.reversed() {
+            if codes[i] == 0 && !complex.contains(i) {
+                used -= 1
+            } else {
+                break
+            }
+        }
+        return used
+    }
+
+    func isEmpty(range: NSRange) -> Bool {
+        return usedLength(range: range) == 0
+    }
 }

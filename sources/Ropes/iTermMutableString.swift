@@ -92,16 +92,6 @@ extension iTermMutableString: iTermMutableStringProtocol {
         }
         guts.segments.removeSubrange(firstKeep...)
     }
-
-    @objc(setExternalAttributes:startingFromOffset:)
-    func set(externalAttributes eaIndex: iTermExternalAttributeIndexReading?,
-             offset: Int) {
-        enumerateSegments(inRange: 0..<cellCount) { segmentIndex, segment, segmentRange in
-            guts.segments[segmentIndex].string = segment.string(
-                withExternalAttributes: eaIndex,
-                startingFrom: segmentRange.lowerBound + offset)
-        }
-    }
 }
 
 extension iTermMutableString: iTermMutableStringProtocolSwift {

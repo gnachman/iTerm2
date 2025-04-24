@@ -73,4 +73,12 @@ class iTermUniformString: NSObject, iTermString {
         }
         return true
     }
+
+    func usedLength(range: NSRange) -> Int32 {
+        min(Int32(length), Int32(range.length))
+    }
+
+    func isEmpty(range: NSRange) -> Bool {
+        return ScreenCharIsNull(char)
+    }
 }

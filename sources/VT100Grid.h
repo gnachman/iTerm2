@@ -15,7 +15,7 @@
 #import "iTermParser.h"
 
 @class LineBuffer;
-@class VT100LineInfo;
+@class VT100Metadata;
 @class VT100Terminal;
 @class iTermBidiDisplayInfo;
 @protocol iTermEncoderAdapter;
@@ -49,7 +49,7 @@
 @property(nonatomic, readonly) VT100GridSize sizeRespectingRegionConditionally;
 @property(nonatomic, readonly) BOOL haveScrolled;
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
-@property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
+@property(nonatomic, readonly) NSArray<VT100Metadata *> *metadataArray;
 @property(nonatomic, readonly) screen_char_t defaultChar;
 
 - (id<VT100GridReading>)copy;
@@ -179,7 +179,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 // Serialized state, but excludes screen contents.
 // DEPRECATED - use encode: instead.
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
-@property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
+@property(nonatomic, readonly) NSArray<VT100Metadata *> *metadataArray;
 // Time of last update. Used for setting timestamps.
 @property(nonatomic) NSTimeInterval currentDate;
 @property(nonatomic) BOOL hasChanged;
@@ -192,7 +192,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 
 - (VT100Grid *)copy;
 
-- (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
+- (screen_char_t *)mutableScreenCharsAtLineNumber:(int)lineNumber;
 - (iTermMetadata)metadataAtLineNumber:(int)lineNumber;
 
 // Set both x and y coord of cursor at once. Cursor positions are clamped to legal values. The cursor
@@ -383,10 +383,6 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                                           iTermExternalAttribute **eaOut,
                                           VT100GridCoord coord,
                                           BOOL *stop))block;
-- (void)mutateExtendedAttributesOnLine:(int)line
-                        createIfNeeded:(BOOL)createIfNeeded
-                                 block:(void (^)(iTermExternalAttributeIndex *))block;
-
 - (void)enumerateParagraphs:(void (^)(int startLine, NSArray<MutableScreenCharArray *> *scas))closure;
 - (void)performBlockWithoutScrollRegions:(void (^NS_NOESCAPE)(void))block;
 

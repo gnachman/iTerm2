@@ -330,8 +330,8 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     destination->_attributes = [_attributes mutableCopy];
 }
 
-- (void)copyFrom:(id<iTermExternalAttributeIndexReading>)destination startOffset:(int)startOffset {
-    [destination.attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermExternalAttribute * _Nonnull obj, BOOL * _Nonnull stop) {
+- (void)copyFrom:(id<iTermExternalAttributeIndexReading>)source startOffset:(int)startOffset {
+    [source.attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermExternalAttribute * _Nonnull obj, BOOL * _Nonnull stop) {
         const int i = key.intValue;
         if (i >= startOffset) {
             _attributes[@(i - startOffset)] = obj;

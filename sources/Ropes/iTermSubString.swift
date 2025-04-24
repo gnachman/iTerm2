@@ -43,25 +43,24 @@ class iTermSubString: NSObject, iTermString {
         return base.character(at: range.lowerBound + i)
     }
 
+    private func global(range nsRange: NSRange) -> NSRange {
+        return NSRange(location: range.lowerBound + nsRange.location,
+                       length: nsRange.length)
+    }
     func hydrate(into msca: MutableScreenCharArray,
                  destinationIndex: Int,
                  sourceRange: NSRange) {
-        let global = NSRange(location: range.lowerBound + sourceRange.location,
-                             length: sourceRange.length)
         base.hydrate(into: msca,
                      destinationIndex: destinationIndex,
-                     sourceRange: global)
+                     sourceRange: global(range: sourceRange))
     }
 
     func hydrate(range nsRange: NSRange) -> ScreenCharArray {
-        let global = NSRange(location: range.lowerBound + nsRange.location, length: nsRange.length)
-        return base.hydrate(range: global)
+        return base.hydrate(range: global(range: nsRange))
     }
 
     func buildString(range nsRange: NSRange, builder: DeltaStringBuilder) {
-        let global = NSRange(location: range.lowerBound + nsRange.location,
-                             length: nsRange.length)
-        base.buildString(range: global, builder: builder)
+        base.buildString(range: global(range: nsRange), builder: builder)
     }
 
     func mutableClone() -> any iTermMutableStringProtocol & iTermString {
@@ -80,5 +79,13 @@ class iTermSubString: NSObject, iTermString {
 
     func hasEqual(range: NSRange, to chars: UnsafePointer<screen_char_t>) -> Bool {
         return _hasEqual(range: range, to: chars)
+    }
+
+    func usedLength(range: NSRange) -> Int32 {
+        return base.usedLength(range: global(range: range))
+    }
+
+    func isEmpty(range: NSRange) -> Bool {
+        return base.isEmpty(range: global(range: range))
     }
 }

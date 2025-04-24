@@ -6,6 +6,12 @@
 //
 
 @objc
+protocol iTermLegacyString: AnyObject, iTermString {
+    var eaIndex: iTermExternalAttributeIndexReading? { get }
+    var screenCharArray: ScreenCharArray { get }
+}
+
+@objc
 class iTermLegacyMutableString: NSObject {
     let sca: MutableScreenCharArray
 
@@ -60,8 +66,26 @@ class iTermLegacyMutableString: NSObject {
     }
 }
 
+func iTermUsedLength(chars: UnsafePointer<screen_char_t>, count: Int32) -> Int32 {
+    if count == 0 {
+        return 0
+    }
+    var lastNonEmptyIndex = Int(count - 1)
+    while lastNonEmptyIndex >= 0 {
+        if chars[lastNonEmptyIndex].code != 0 && !ScreenCharIsDWC_SKIP(chars[lastNonEmptyIndex]) {
+            break
+        }
+        lastNonEmptyIndex -= 1
+    }
+    return Int32(lastNonEmptyIndex + 1)
+}
+
 @objc
-extension iTermLegacyMutableString: iTermString {
+extension iTermLegacyMutableString: iTermLegacyString {
+    var eaIndex: iTermExternalAttributeIndexReading? {
+        eaIndex(createIfNeeded: false)
+    }
+
     func string(withExternalAttributes eaIndex: iTermExternalAttributeIndexReading?,
                 startingFrom offset: Int) -> any iTermString {
         return _string(withExternalAttributes: eaIndex, startingFrom: offset)
@@ -69,6 +93,21 @@ extension iTermLegacyMutableString: iTermString {
 
     var cellCount: Int {
         Int(sca.length)
+    }
+
+    func usedLength(range: NSRange) -> Int32 {
+        return iTermUsedLength(chars: sca.line.advanced(by: range.location),
+                               count: Int32(range.length))
+    }
+
+    func isEmpty(range: NSRange) -> Bool {
+        let line = sca.line
+        for i in Range(range)! {
+            if !ScreenCharIsNull(line[i]) {
+                return false
+            }
+        }
+        return true
     }
 
     func hydrate(range: NSRange) -> ScreenCharArray {
@@ -148,19 +187,12 @@ extension iTermLegacyMutableString: iTermMutableStringProtocol {
         sca.delete(NSRange(location: cellCount - count, length: count))
     }
 
-    @objc(setExternalAttributes:startingFromOffset:)
-    func set(externalAttributes source: iTermExternalAttributeIndexReading?,
-             offset: Int) {
-        var dest = iTermImmutableMetadataGetExternalAttributesIndex(sca.metadata) as! iTermExternalAttributeIndex?
-        if dest == nil && source == nil {
+    @objc(setExternalAttributes:)
+    func set(externalAttributes source: iTermExternalAttributeIndexReading?) {
+        if iTermImmutableMetadataGetExternalAttributesIndex(sca.metadata) == nil && source == nil {
             return
         }
-        if dest == nil {
-            dest = iTermExternalAttributeIndex()
-            sca.setExternalAttributesIndex(dest)
-        }
-        dest?.copy(from: source,
-                   startOffset: Int32(offset))
+        sca.setExternalAttributesIndex(source?.copy() as? iTermExternalAttributeIndex)
     }
 
     func erase(defaultChar: screen_char_t) {

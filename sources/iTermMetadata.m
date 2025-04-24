@@ -236,9 +236,13 @@ NSArray *iTermMetadataArrayFromData(NSData *data) {
 }
 
 NSData *iTermMetadataEncodeToData(iTermMetadata metadata) {
+    return iTermImmutableMetadataEncodeToData(iTermMetadataMakeImmutable(metadata));
+}
+
+NSData *iTermImmutableMetadataEncodeToData(iTermImmutableMetadata metadata) {
     iTermTLVEncoder *encoder = [[[iTermTLVEncoder alloc] init] autorelease];
     [encoder encodeDouble:metadata.timestamp];
-    iTermExternalAttributeIndex *attr = iTermMetadataGetExternalAttributesIndex(metadata);
+    iTermExternalAttributeIndex *attr = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
     [encoder encodeData:[attr data] ?: [NSData data]];
     [encoder encodeBool:metadata.rtlFound];
     return encoder.data;

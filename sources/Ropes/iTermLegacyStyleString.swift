@@ -27,6 +27,19 @@ class iTermLegacyStyleString: NSObject, iTermString {
         return "<iTermLegacyStyleString: cells=\(cellCount) value=\(deltaString(range: fullRange).string)>"
     }
 
+    func usedLength(range: NSRange) -> Int32 {
+        line.withUnsafeBufferPointer { ubp in
+            return iTermUsedLength(chars: ubp.baseAddress!.advanced(by: range.location),
+                                   count: Int32(range.length))
+        }
+    }
+
+    func isEmpty(range: NSRange) -> Bool {
+        return line.allSatisfy {
+            !ScreenCharIsNull($0)
+        }
+    }
+
     func deltaString(range: NSRange) -> DeltaString {
         return stringCache.string(for: range) {
             _deltaString(range: range)
