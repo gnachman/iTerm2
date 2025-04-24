@@ -4302,9 +4302,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Token Execution
 
 // WARNING: This is called on PTYTask's thread.
-- (void)threadedReadTask:(char *)buffer length:(int)length {
+- (void)threadedReadTask:(NSData *)data {
     // Pass the input stream to the parser.
-    [self.terminal.parser putStreamData:buffer length:length];
+    [self.terminal.parser putStreamData:data];
 
     // Parse the input stream into an array of tokens.
     CVector vector;
@@ -4316,7 +4316,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         return;
     }
 
-    [self addTokens:vector length:length highPriority:NO];
+    [self addTokens:vector length:data.length highPriority:NO];
 }
 
 // WARNING: This is called on PTYTask's thread.
@@ -4333,7 +4333,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)injectData:(NSData *)data {
     VT100Parser *parser = [[VT100Parser alloc] init];
     parser.encoding = self.terminal.encoding;
-    [parser putStreamData:data.bytes length:data.length];
+    [parser putStreamData:data];
     CVector vector;
     CVectorCreate(&vector, 100);
     [parser addParsedTokensToVector:&vector];
@@ -5356,8 +5356,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     NSData *pendingOutput = state[kTmuxWindowOpenerStatePendingOutput];
     if (pendingOutput && pendingOutput.length) {
-        [self.terminal.parser putStreamData:pendingOutput.bytes
-                                     length:pendingOutput.length];
+        [self.terminal.parser putStreamData:pendingOutput];
     }
     self.terminal.insertMode = [state[kStateDictInsertMode] boolValue];
     self.terminal.cursorMode = [state[kStateDictKCursorMode] boolValue];

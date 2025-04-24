@@ -411,7 +411,9 @@ static void HandleSigChld(int n) {
     int iterations = 4;
     int bytesRead = 0;
 
-    char buffer[MAXRW * iterations];
+    const NSUInteger size = MAXRW * iterations;
+    char *buffer = iTermUninitializedCalloc(size, 1);
+
     for (int i = 0; i < iterations; ++i) {
         // Only read up to MAXRW*iterations bytes, then release control
         ssize_t n = read(self.fd, buffer + bytesRead, MAXRW);
@@ -419,6 +421,7 @@ static void HandleSigChld(int n) {
             // There was a read error.
             if (errno != EAGAIN && errno != EINTR) {
                 // It was a serious error.
+                free(buffer);
                 [self brokenPipe];
                 return;
             } else {
@@ -440,7 +443,10 @@ static void HandleSigChld(int n) {
     hasOutput = YES;
 
     // Send data to the terminal
-    [self readTask:buffer length:bytesRead];
+    NSMutableData *data = [NSMutableData dataWithBytesNoCopy:buffer
+                                                      length:bytesRead
+                                                freeWhenDone:YES];
+    [self readTask:data];
 }
 
 - (void)processWrite {
@@ -875,19 +881,18 @@ static void HandleSigChld(int n) {
 }
 
 // The bytes in data were just read from the fd.
-- (void)readTask:(char *)buffer length:(int)length {
+- (void)readTask:(NSData *)data {
     if (self.loggingHelper) {
-        [self.loggingHelper logData:[NSData dataWithBytes:buffer
-                                                   length:length]];
+        [self.loggingHelper logData:data];
     }
 
     // The delegate is responsible for parsing VT100 tokens here and sending them off to the
     // main thread for execution. If its queues get too large, it can block.
-    [self.delegate threadedReadTask:buffer length:length];
+    [self.delegate threadedReadTask:data];
 
     @synchronized (self) {
         if (coprocess_ && !self.sshIntegrationActive) {
-            [self writeToCoprocess:[NSData dataWithBytes:buffer length:length]];
+            [self writeToCoprocess:data];
         }
     }
 }
