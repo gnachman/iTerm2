@@ -37,7 +37,7 @@ class iTermRope: NSObject {
         let header = "\(String(describing: type(of: self))): \(it_addressString) " +
                         "cells=\(cellCount) " +
                         "deletedCellCount=\(guts.deletedHeadCellCount) " +
-        "value=\(deltaString(range: fullRange).string.escapingControlCharactersAndBackslash())"
+        "value=\(deltaString(range: fullRange).string.escapingControlCharactersAndBackslash().d)"
         let array = [header] + segmentStrings
         return "<" + array.joined(separator: "\n") + ">"
     }
@@ -54,6 +54,11 @@ class iTermRope: NSObject {
         guts = other.guts.clone()
         super.init()
     }
+
+    init(_ string: iTermString) {
+        super.init()
+        guts.segments = [Segment(string: string, cumulativeCellCount: string.cellCount)]
+    }
 }
 
 extension iTermRope: NSMutableCopying, NSCopying {
@@ -68,6 +73,30 @@ extension iTermRope: NSMutableCopying, NSCopying {
 
 @objc
 extension iTermRope: iTermString {
+    func usedLength(range: NSRange) -> Int32 {
+        // Find the last segment that is not all used
+        var found = false
+        var sum = Int32(0)
+        enumerateSegmentsReversed(inRange: Range(range)!) { i, seg, localRange in
+            if found {
+                sum += Int32(localRange.count)
+                return
+            }
+            let used = seg.usedLength(range: NSRange(localRange))
+            if used != localRange.count {
+                found = true
+                sum += used
+            }
+        }
+        return sum
+    }
+
+    func isEmpty(range: NSRange) -> Bool {
+        return segmentIterator(inRange: Range(range)!).allSatisfy { (_, seg, localRange) in
+            seg.isEmpty(range: NSRange(localRange))
+        }
+    }
+
     var cellCount: Int {
         let lastCum = guts.segments.last?.cumulativeCellCount ?? guts.deletedHeadCellCount
         return lastCum - guts.deletedHeadCellCount
@@ -151,10 +180,17 @@ extension iTermRope {
         return base..<guts.segments[i].cumulativeCellCount
     }
 
-    func enumerateSegments(inRange range: Range<Int>, closure: (Int, iTermString, Range<Int>) -> ()) {
+    func enumerateSegments(inRange range: Range<Int>,
+                           closure: (Int, iTermString, Range<Int>) -> ()) {
+        for (i, str, subrange) in segmentIterator(inRange: range) {
+            closure(i, str, subrange)
+        }
+    }
+
+    func enumerateSegmentsReversed(inRange range: Range<Int>, closure: (Int, iTermString, Range<Int>) -> ()) {
         let startIndex = indexOfSegment(for: range.lowerBound)
         let globalRange = (range.lowerBound + guts.deletedHeadCellCount)..<(range.upperBound + guts.deletedHeadCellCount)
-        for i in startIndex..<guts.segments.count {
+        for i in (startIndex..<guts.segments.count).reversed() {
             let gsr = globalSegmentRange(index: i)
 
             guard let intersection = gsr.intersection(globalRange), intersection.count > 0 else {
@@ -165,5 +201,35 @@ extension iTermRope {
             it_assert((0..<guts.segments[i].string.cellCount).contains(range: localRange))
             closure(i, guts.segments[i].string, localRange)
         }
+    }
+
+    /// Iterator‐style version of `enumerateSegments(inRange:)`
+    func segmentIterator(inRange range: Range<Int>) -> AnySequence<(Int, iTermString, Range<Int>)> {
+        let startIndex = indexOfSegment(for: range.lowerBound)
+        let globalRange = (range.lowerBound + guts.deletedHeadCellCount)..<(range.upperBound + guts.deletedHeadCellCount)
+        return AnySequence { () -> AnyIterator<(Int, iTermString, Range<Int>)> in
+            var i = startIndex
+            return AnyIterator {
+                while i < self.guts.segments.count {
+                    let idx = i
+                    let gsr = self.globalSegmentRange(index: idx)
+                    guard let intersection = gsr.intersection(globalRange),
+                          intersection.count > 0 else {
+                        return nil
+                    }
+                    let localStart = intersection.lowerBound - gsr.lowerBound
+                    let localRange = localStart ..< (localStart + intersection.count)
+                    i += 1
+                    it_assert((0..<self.guts.segments[idx].string.cellCount).contains(range: localRange))
+                    return (idx, self.guts.segments[idx].string, localRange)
+                }
+                return nil
+            }
+        }
+    }
+
+    // convenience for whole‐buffer iteration
+    func segmentIterator() -> AnySequence<(Int, iTermString, Range<Int>)> {
+        return segmentIterator(inRange: 0..<cellCount)
     }
 }

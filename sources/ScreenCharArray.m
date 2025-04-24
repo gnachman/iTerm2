@@ -573,10 +573,6 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return result;
 }
 
-static BOOL ScreenCharIsNull(screen_char_t c) {
-    return c.code == 0 && !c.complexChar && !c.image;
-}
-
 - (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline {
     ScreenCharArray *result = [self copy];
     [result makeEndingSoft];
@@ -776,6 +772,7 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
 
 - (void)appendScreenCharArray:(ScreenCharArray *)sca {
     iTermMetadata metadata = iTermImmutableMetadataMutableCopy(_metadata);
+    iTermImmutableMetadataRelease(_metadata);
     iTermMetadataAppend(&metadata, self.length, &sca->_metadata, sca.length);
     _metadata = iTermMetadataMakeImmutable(metadata);
 

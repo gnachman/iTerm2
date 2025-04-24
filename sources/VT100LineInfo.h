@@ -44,3 +44,18 @@
 - (void)setMetadataFromImmutable:(iTermImmutableMetadata)metadata;
 
 @end
+
+@interface VT100Metadata: NSObject<DVREncodable>
+@property (nonatomic) BOOL rtlFound;
+@property (nonatomic) NSTimeInterval timestamp;
+@property (nonatomic, strong) id<iTermExternalAttributeIndexReading> eaIndex;
+
+- (instancetype)initWithRTLFound:(BOOL)rtlFound
+                       timestamp:(NSTimeInterval)timestamp
+                         eaIndex:(id<iTermExternalAttributeIndexReading>)eaIndex NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+
+// Compatible with VT100LineInfo's encoded metadata.
+- (NSArray *)encodedMetadata;
+@end
+

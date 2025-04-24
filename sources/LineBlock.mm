@@ -1505,10 +1505,16 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         [_metadataArray eraseLastLineCache];
         id<iTermExternalAttributeIndexReading> attrs = [_metadataArray lastExternalAttributeIndex];
         const int split_index = available_len - *length;
-        [_metadataArray setLastExternalAttributeIndex:[attrs subAttributesFromIndex:split_index]];
         if (metadataPtr) {
-            *metadataPtr = [_metadataArray immutableLineMetadataAtIndex:cll_entries - 1];
+            iTermImmutableMetadata original = [_metadataArray immutableLineMetadataAtIndex:cll_entries - 1];
+
+            iTermMetadata truncated;
+            iTermMetadataInitCopyingSubrange(&truncated, &original, split_index, available_len);
+            iTermMetadataAutorelease(truncated);
+
+            *metadataPtr = iTermMetadataMakeImmutable(truncated);
         }
+        [_metadataArray setLastExternalAttributeIndex:[attrs subAttributesToIndex:split_index]];
 
         is_partial = YES;
     } else {

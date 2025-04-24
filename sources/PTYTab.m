@@ -1620,7 +1620,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession {
     PtyLog(@"PTYTab showLiveSession:%p", liveSession);
     replaySession.active = NO;
-    [liveSession setProfile:[replaySession profile]];
     [liveSession willRetireSyntheticSession:replaySession];
     SessionView* oldView = [replaySession view];
     SessionView* newView = [liveSession view];

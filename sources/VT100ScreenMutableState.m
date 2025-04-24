@@ -752,14 +752,21 @@ static _Atomic int gPerformingJoinedBlock;
         if (rtlFound) {
             [self.currentGrid setRTLFound:YES onLine:pred.y];
         }
-        [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
-                                            block:^(screen_char_t *sct,
-                                                    iTermExternalAttribute *__autoreleasing *eaOut,
-                                                    VT100GridCoord coord,
-                                                    BOOL *stop) {
-            sct->code = buffer[0].code;
-            sct->complexChar = buffer[0].complexChar;
-        }];
+        const screen_char_t current = [self.currentGrid characterAt:pred];
+        if (current.code != buffer[0].code || current.complexChar != buffer[0].complexChar) {
+            // This handles the rare case where we receive a combining mark at the beginning of
+            // `string` and have to modify the preciding character. The design I'm hoping to achieve,
+            // where VT100Grid stores ASCII strings in a barely modified form, will take a performance
+            // hit in this code path.
+            [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
+                                                block:^(screen_char_t *sct,
+                                                        iTermExternalAttribute *__autoreleasing *eaOut,
+                                                        VT100GridCoord coord,
+                                                        BOOL *stop) {
+                sct->code = buffer[0].code;
+                sct->complexChar = buffer[0].complexChar;
+            }];
+        }
         bufferOffset++;
 
         // Does the augmented result begin with a double-width character? If so skip over the
@@ -2159,7 +2166,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
     }
     const int y = self.currentGrid.cursorY;
-    screen_char_t *aLine = [self.currentGrid screenCharsAtLineNumber:y];
+    screen_char_t *aLine = [self.currentGrid mutableScreenCharsAtLineNumber:y];
     BOOL allNulls = YES;
     for (int i = self.currentGrid.cursorX; i < nextTabStop; i++) {
         if (aLine[i].code) {
@@ -2225,7 +2232,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)convertHardNewlineToSoftOnGridLine:(int)line {
-    screen_char_t *aLine = [self.currentGrid screenCharsAtLineNumber:line];
+    screen_char_t *aLine = [self.currentGrid mutableScreenCharsAtLineNumber:line];
     if (aLine[self.currentGrid.size.width].code == EOL_HARD) {
         aLine[self.currentGrid.size.width].code = EOL_SOFT;
     }
@@ -5231,7 +5238,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
         do {
             // Add up to self.altGrid.size.width characters at a time until they're all used.
-            screen_char_t *dest = [self.altGrid screenCharsAtLineNumber:o];
+            screen_char_t *dest = [self.altGrid mutableScreenCharsAtLineNumber:o];
             memcpy(dest, line, MIN(self.altGrid.size.width, length) * sizeof(screen_char_t));
             const BOOL isPartial = (length > self.altGrid.size.width);
             dest[self.altGrid.size.width] = dest[self.altGrid.size.width - 1];  // TODO: This is probably wrong?

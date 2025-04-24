@@ -18,7 +18,7 @@ class ChannelClient: NSObject {
     init(uid: String, conductor: Conductor?) throws {
         self.uid = uid
         self.conductor = conductor
-        mux = if let conductor {
+        mux = if conductor != nil {
             Self.connectOverSSH()
         } else {
             try Self.connectLocally(uid)

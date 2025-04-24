@@ -11,25 +11,56 @@ protocol iTermLineStringReading {
     var eol: Int32 { get }
     var metadata: iTermLineStringMetadata { get }
     var continuation: screen_char_t { get }
+    func ensureImmutableLegacy() -> iTermLegacyString
+    var externalImmutableMetadata: iTermImmutableMetadata { get }
+    var timestamp: TimeInterval { get }
+    var rtlFound: Bool { get }
+    var immutableEAIndex: iTermExternalAttributeIndexReading? { get }
+    var dirty: Bool { get }
+    var isEmpty: Bool { get }
+    var usedLength: Int32 { get }
+    var screenCharsData: Data { get }
+}
+
+func iTermUsedLength(eol: Int32, content: iTermString) -> Int32 {
+    // Figure out the line length.
+    if eol == EOL_SOFT {
+        return Int32(content.cellCount)
+    }
+    if eol == EOL_DWC {
+        return Int32(content.cellCount - 1)
+    }
+    return content.usedLength(range: content.fullRange)
 }
 
 class iTermLineString: NSObject, iTermLineStringReading {
-    @objc let content: iTermString
+    @objc private(set) var content: iTermString
     @objc let eol: Int32  // EOL_HARD, EOL_SOFT, EOL_DWC
     @objc let continuation: screen_char_t
     @objc let metadata: iTermLineStringMetadata
+    private var _externalMetadata: iTermImmutableMetadata?
+    @objc let dirty: Bool
 
     @objc
-    init(content: iTermMutableString,
+    init(content: iTermString,
          eol: Int32,
          continuation: screen_char_t,
-         metadata: iTermLineStringMetadata) {
+         metadata: iTermLineStringMetadata,
+         dirty: Bool) {
         self.content = content
         self.eol = eol
         self.continuation = continuation
         self.metadata = metadata
+        self.dirty = dirty
 
         super.init()
+    }
+
+    deinit {
+        if let _externalMetadata {
+            iTermImmutableMetadataRelease(_externalMetadata)
+            self._externalMetadata = nil
+        }
     }
 
     override var description: String {
@@ -40,6 +71,60 @@ class iTermLineString: NSObject, iTermLineStringReading {
         default: "UNKNOWN (bug)"
         }
         return "<iTermLineString: \(it_addressString) eol=\(eolString) timestamp=\(metadata.timestamp) rtl=\(metadata.rtlFound) content=\(content.description)>"
+    }
+
+    var timestamp: TimeInterval {
+        externalImmutableMetadata.timestamp
+    }
+
+    var rtlFound: Bool {
+        externalImmutableMetadata.rtlFound.boolValue
+    }
+
+    var immutableEAIndex: iTermExternalAttributeIndexReading? {
+        iTermImmutableMetadataGetExternalAttributesIndex(externalImmutableMetadata)
+    }
+
+    var isEmpty: Bool {
+        if eol == EOL_SOFT || eol == EOL_DWC {
+            return false
+        }
+        return content.isEmpty
+    }
+
+    @objc
+    var usedLength: Int32 {
+        return iTermUsedLength(eol: eol, content: content)
+    }
+
+    @objc
+    func ensureImmutableLegacy() -> iTermLegacyString {
+        if let lms = content as? iTermLegacyString {
+            return lms
+        }
+        let replacement = iTermLegacyMutableString(width: 0)
+        replacement.append(string: content)
+        content = replacement
+        return replacement
+    }
+
+    @objc
+    var externalImmutableMetadata: iTermImmutableMetadata {
+        if let _externalMetadata {
+            return _externalMetadata
+        }
+        _externalMetadata = iTermImmutableMetadataDefault()
+        iTermImmutableMetadataInit(&_externalMetadata!,
+                                   metadata.timestamp,
+                                   metadata.rtlFound.boolValue,
+                                   content.externalAttributesIndex() as? iTermExternalAttributeIndex)
+        return _externalMetadata!
+    }
+
+    @objc
+    var screenCharsData: Data {
+        let lms = ensureImmutableLegacy()
+        return lms.screenCharArray.data
     }
 }
 
@@ -56,7 +141,10 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
     private var _lineInfo = VT100LineInfo()
 
     var content: iTermString { _content }
-    @objc var mutableContent: iTermMutableStringProtocol { _content }
+    @objc var mutableContent: iTermMutableStringProtocol {
+        invalidate()
+        return _content
+    }
     @objc var lineInfo: VT100LineInfo {
         _lineInfo.setTimestamp(timestamp)
         _lineInfo.setRTLFound(rtlFound)
@@ -78,6 +166,7 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
             metadata.timestamp
         }
         set {
+            invalidate()
             metadata.timestamp = newValue
         }
     }
@@ -88,6 +177,7 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
             metadata.rtlFound.boolValue
         }
         set {
+            invalidate()
             metadata.rtlFound = ObjCBool(newValue)
         }
     }
@@ -98,6 +188,10 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
         return sca.eaIndex
     }
 
+    var immutableEAIndex: (any iTermExternalAttributeIndexReading)? {
+        eaIndex
+    }
+
     @objc
     var screenCharsData: Data {
         let lms = ensureLegacy()
@@ -106,8 +200,41 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
 
     @objc
     var mutableScreenCharsData: NSMutableData {
+        invalidate()
         let lms = ensureLegacy()
         return lms.screenCharArray.mutableLineData()
+    }
+
+    @objc
+    var usedLength: Int32 {
+        return iTermUsedLength(eol: eol, content: _content)
+    }
+
+    @objc
+    var isEmpty: Bool {
+        if eol == EOL_SOFT || eol == EOL_DWC {
+            return false
+        }
+        return _content.isEmpty
+    }
+
+    private var _externalMetadata: iTermMetadata?
+    @objc
+    var externalMetadata: iTermMetadata {
+        if let _externalMetadata {
+            return _externalMetadata
+        }
+        _externalMetadata = iTermMetadataDefault()
+        iTermMetadataInit(&_externalMetadata!,
+                          timestamp,
+                          rtlFound,
+                          content.externalAttributesIndex() as? iTermExternalAttributeIndex)
+        return _externalMetadata!
+    }
+
+    @objc
+    var externalImmutableMetadata: iTermImmutableMetadata {
+        return iTermMetadataMakeImmutable(externalMetadata)
     }
 
     init(source: iTermMutableLineString) {
@@ -131,9 +258,17 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
         super.init()
     }
 
+    deinit {
+        if let _externalMetadata {
+            iTermMetadataRelease(_externalMetadata)
+            self._externalMetadata = nil
+        }
+    }
+
     @objc(setExternalAttributes:)
     func set(externalAttributes eaIndex: iTermExternalAttributeIndexReading?) {
-        _content.set(externalAttributes: eaIndex, offset: 0)
+        invalidate()
+        ensureLegacy().set(externalAttributes: eaIndex)
     }
 
     @objc
@@ -143,6 +278,7 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
         metadata.timestamp = max(metadata.timestamp, rhs.metadata.timestamp)
         metadata.rtlFound = ObjCBool(metadata.rtlFound.boolValue || rhs.metadata.rtlFound.boolValue)
         continuation = rhs.continuation
+        invalidate()
     }
 
     @objc
@@ -152,7 +288,19 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
 
     @objc
     func ensureLegacy() -> iTermLegacyMutableString {
+        invalidate()
         if let lms = _content as? iTermLegacyMutableString {
+            return lms
+        }
+        let replacement = iTermLegacyMutableString(width: 0)
+        replacement.append(string: _content)
+        _content = replacement
+        return replacement
+    }
+
+    @objc
+    func ensureImmutableLegacy() -> iTermLegacyString {
+        if let lms = _content as? iTermLegacyString {
             return lms
         }
         let replacement = iTermLegacyMutableString(width: 0)
@@ -165,11 +313,12 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
     func erase(defaultChar: screen_char_t) {
         timestamp = 0
         rtlFound = false
-        set(externalAttributes: nil)
-        _content.erase(defaultChar: defaultChar)
+        _content = iTermMutableString(iTermUniformString(char: defaultChar,
+                                                         length: _content.cellCount))
         eol = EOL_HARD
         continuation = defaultChar
         continuation.code = UInt16(EOL_HARD)
+        invalidate()
     }
 
     @objc
@@ -192,6 +341,7 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
         line[Int(i)].code = 0
         line[Int(i)].complexChar = 0
         line[Int(i)].image = 0
+        invalidate()
     }
 
     @objc(lastCharacter)
@@ -201,5 +351,12 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
             return screen_char_t()
         }
         return content.character(at: count - 1)
+    }
+
+    private func invalidate() {
+        if let _externalMetadata {
+            iTermMetadataRelease(_externalMetadata)
+            self._externalMetadata = .none
+        }
     }
 }

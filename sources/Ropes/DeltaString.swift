@@ -128,12 +128,9 @@ class DeltaStringBuilder: NSObject {
             partNS = ComplexCharRegistry.instance.string(for: code, isComplex: isComplexChar)
         }
         for offset in 0..<count {
-            let i = offset
-
             // private‑use handling
             if !isComplexChar
-                && (UInt16(ITERM2_PRIVATE_BEGIN)...UInt16(ITERM2_PRIVATE_END)).contains(code)
-            {
+                && (UInt16(ITERM2_PRIVATE_BEGIN)...UInt16(ITERM2_PRIVATE_END)).contains(code) {
                 runningΔ += 1
                 deltaPtr![deltaIdx + offset] = CInt(runningΔ)
                 continue

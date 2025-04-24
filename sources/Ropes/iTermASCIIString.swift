@@ -81,4 +81,12 @@ class iTermASCIIString: NSObject, iTermString {
     func hasEqual(range: NSRange, to chars: UnsafePointer<screen_char_t>) -> Bool {
         return _hasEqual(range: range, to: chars)
     }
+
+    func usedLength(range: NSRange) -> Int32 {
+        min(Int32(data.range.count), Int32(range.length))
+    }
+
+    func isEmpty(range: NSRange) -> Bool {
+        return range.length == 0
+    }
 }

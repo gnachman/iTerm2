@@ -39,15 +39,15 @@ except Exception as e:
   usage()
 
 def slowcat(filename):
-  f = open(filename, 'r')
+  f = open(filename, 'rb')
   contents = f.read()
   if delay <= 0:
     sys.stdout.write(contents)
     sys.stdout.flush()
   else:
     o = 0
-    for c in contents:
-      sys.stdout.write(c)
+    for b in contents:
+      sys.stdout.buffer.write(bytes([b]))
       if o >= skip:
         sys.stdout.flush()
         time.sleep(delay)

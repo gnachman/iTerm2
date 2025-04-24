@@ -229,6 +229,10 @@ const CGFloat sideMarginWidth = 40;
             case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
             case KEY_ACTION_PASTE_OR_SEND:
             case KEY_ACTION_ALERT_ON_NEXT_MARK:
+                _applyHidden = NO;
+                _parameterValue = @"";
+                break;
+
             case KEY_ACTION_COPY_INTERPOLATED_STRING:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"Enter interpolated string (evaluated in session context)";

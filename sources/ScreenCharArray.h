@@ -164,4 +164,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (MutableScreenCharArray *)joined;
 @end
 
+NS_INLINE BOOL ScreenCharIsNull(screen_char_t c) {
+    return c.code == 0 && !c.complexChar && !c.image;
+}
+
+
 NS_ASSUME_NONNULL_END

@@ -30,6 +30,8 @@ protocol iTermString: AnyObject {
     func externalAttributesIndex() -> iTermExternalAttributeIndexReading?
     var screenCharArray: ScreenCharArray { get }
     func hasEqual(range: NSRange, to chars: UnsafePointer<screen_char_t>) -> Bool
+    func usedLength(range: NSRange) -> Int32
+    func isEmpty(range: NSRange) -> Bool
 }
 
 extension iTermString {
@@ -80,6 +82,10 @@ extension iTermString {
         return memcmp(actual.line,
                       chars,
                       range.length * MemoryLayout<screen_char_t>.stride) == 0
+    }
+
+    var isEmpty: Bool {
+        return isEmpty(range: fullRange)
     }
 }
 
