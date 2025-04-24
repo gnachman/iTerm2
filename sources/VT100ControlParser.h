@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "CVector.h"
+#import "VT100ByteStream.h"
 #import "VT100Token.h"
 
 NS_INLINE BOOL iscontrol(int c) {
@@ -29,14 +30,13 @@ NS_INLINE BOOL isc1(int c) {
 // Force the DCS parser to remove its hook (presently, that means terminating tmux integration).
 - (void)unhookDCS;
 
-- (void)parseControlWithData:(unsigned char *)datap
-                     datalen:(int)datalen
-                       rmlen:(int *)rmlen
-                 incidentals:(CVector *)incidentals
-                       token:(VT100Token *)token
-                    encoding:(NSStringEncoding)encoding
-                  savedState:(NSMutableDictionary *)savedState
-                   dcsHooked:(BOOL *)dcsHooked;
+- (void)parseControlWithCursor:(VT100ByteStreamCursor)cursor
+                         rmlen:(int *)rmlen
+                   incidentals:(CVector *)incidentals
+                         token:(VT100Token *)token
+                      encoding:(NSStringEncoding)encoding
+                    savedState:(NSMutableDictionary *)savedState
+                     dcsHooked:(BOOL *)dcsHooked;
 
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelTmuxRecoveryMode;

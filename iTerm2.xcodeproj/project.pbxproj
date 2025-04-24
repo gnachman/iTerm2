@@ -3084,6 +3084,7 @@
 		A6A7235C2DB7362D00A8115D /* iTermMutableStringProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7235B2DB7362B00A8115D /* iTermMutableStringProtocol.swift */; };
 		A6A7235E2DB7364700A8115D /* iTermLegacyMutableString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7235D2DB7363B00A8115D /* iTermLegacyMutableString.swift */; };
 		A6A723602DB86B0D00A8115D /* iTermUniformString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7235F2DB86B0400A8115D /* iTermUniformString.swift */; };
+		A6A723652DBAE1F300A8115D /* VT100ByteStream.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A723642DBAE1F100A8115D /* VT100ByteStream.h */; };
 		A6A72C4D27C7F660002E4CCA /* iTermPathFinder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F718C02265AF1D0053488E /* iTermPathFinder.m */; };
 		A6A73D3827C7F96C002E4CCA /* NSArray+CommonAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A73D3627C7F96C002E4CCA /* NSArray+CommonAdditions.h */; };
 		A6A73D3927C7F96C002E4CCA /* NSArray+CommonAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A73D3727C7F96C002E4CCA /* NSArray+CommonAdditions.m */; };
@@ -7355,6 +7356,7 @@
 		A6A7235B2DB7362B00A8115D /* iTermMutableStringProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermMutableStringProtocol.swift; sourceTree = "<group>"; };
 		A6A7235D2DB7363B00A8115D /* iTermLegacyMutableString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermLegacyMutableString.swift; sourceTree = "<group>"; };
 		A6A7235F2DB86B0400A8115D /* iTermUniformString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermUniformString.swift; sourceTree = "<group>"; };
+		A6A723642DBAE1F100A8115D /* VT100ByteStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ByteStream.h; sourceTree = "<group>"; };
 		A6A73D3627C7F96C002E4CCA /* NSArray+CommonAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSArray+CommonAdditions.h"; sourceTree = "<group>"; };
 		A6A73D3727C7F96C002E4CCA /* NSArray+CommonAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSArray+CommonAdditions.m"; sourceTree = "<group>"; };
 		A6A73D3B27C7F9F0002E4CCA /* iTermPidinfoDebugLogging.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPidinfoDebugLogging.m; sourceTree = "<group>"; };
@@ -10636,6 +10638,7 @@
 		A647E3B118C35DD900450FA1 /* VT100 */ = {
 			isa = PBXGroup;
 			children = (
+				A6A723642DBAE1F100A8115D /* VT100ByteStream.h */,
 				A6854FED2D8B85790019E96C /* VT100GraphicRendition.m */,
 				A6854FEB2D8B85230019E96C /* VT100GraphicRendition.h */,
 				A6FE41892389FDAF00BBD086 /* VT100SixelParser.h */,
@@ -14017,6 +14020,7 @@
 				A6DC8135285CF3E80050788C /* GPBDuration.pbobjc.h in Headers */,
 				A6CEC1211DCE8146009F4FD2 /* GPBExtensionRegistry.h in Headers */,
 				A6DC814C285CF45C0050788C /* GPBType.pbobjc.h in Headers */,
+				A6A723652DBAE1F300A8115D /* VT100ByteStream.h in Headers */,
 				A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */,
 				A6DC8134285CF3E80050788C /* GPBAny.pbobjc.h in Headers */,
 				A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */,

@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "VT100ByteStream.h"
 #import "VT100Token.h"
 
 // Code to detect if characters are properly encoded for each encoding.
@@ -68,34 +69,33 @@ NS_INLINE BOOL isCP949Encoding(NSStringEncoding stringEncoding) {
     return (stringEncoding == (0x80000000 | kCFStringEncodingDOSKorean));
 }
 
-NS_INLINE BOOL isAsciiString(unsigned char *code) {
-    return *code >= 0x20 && *code <= 0x7f;
+NS_INLINE BOOL isAsciiString(unsigned char code) {
+    return code >= 0x20 && code <= 0x7f;
 }
 
-NS_INLINE BOOL isString(unsigned char *code, NSStringEncoding encoding) {
+NS_INLINE BOOL isString(unsigned char code, NSStringEncoding encoding) {
     if (encoding == NSUTF8StringEncoding) {
-        return (*code >= 0x80);
+        return (code >= 0x80);
     } else if (isEUCCNEncoding(encoding)) {
-        return iseuccn(*code);
+        return iseuccn(code);
     } else if (isBig5Encoding(encoding)) {
-        return isbig5(*code);
+        return isbig5(code);
     } else if (isJPEncoding(encoding)) {
-        return (*code == 0x8e || *code == 0x8f || (*code >= 0xa1 && *code <= 0xfe));
+        return (code == 0x8e || code == 0x8f || (code >= 0xa1 && code <= 0xfe));
     } else if (isSJISEncoding(encoding)) {
-        return *code >= 0x80;
+        return code >= 0x80;
     } else if (isEUCKREncoding(encoding)) {
-        return iseuckr(*code);
+        return iseuckr(code);
     } else if (isCP949Encoding(encoding)) {
-        return iscp949(*code);
-    } else if (*code >= 0x20) {
+        return iscp949(code);
+    } else if (code >= 0x20) {
         return YES;
     }
 
     return NO;
 }
 
-void ParseString(unsigned char *datap,
-                 int datalen,
+void ParseString(VT100ByteStreamCursor cursor,
                  int *rmlen,
                  VT100Token *result,
                  NSStringEncoding encoding);

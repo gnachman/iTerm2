@@ -64,14 +64,16 @@
 }
 
 
-- (void)parseControlWithData:(unsigned char *)datap
-                     datalen:(int)datalen
-                       rmlen:(int *)rmlen
-                 incidentals:(CVector *)incidentals
-                       token:(VT100Token *)token
-                    encoding:(NSStringEncoding)encoding
-                  savedState:(NSMutableDictionary *)savedState
-                   dcsHooked:(BOOL *)dcsHooked {
+- (void)parseControlWithCursor:(VT100ByteStreamCursor)cursor
+                         rmlen:(int *)rmlen
+                   incidentals:(CVector *)incidentals
+                         token:(VT100Token *)token
+                      encoding:(NSStringEncoding)encoding
+                    savedState:(NSMutableDictionary *)savedState
+                     dcsHooked:(BOOL *)dcsHooked {
+    unsigned char *datap = VT100ByteStreamCursorGetPointer(&cursor);
+    int datalen = VT100ByteStreamCursorGetSize(&cursor);
+    
     const BOOL support8BitControlCharacters = (encoding == NSASCIIStringEncoding || encoding == NSISOLatin1StringEncoding);
     if (_dcsParser.isHooked || isDCS(datap, datalen, support8BitControlCharacters)) {
         [self parseDCSWithData:datap

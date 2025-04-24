@@ -21,8 +21,6 @@
 #import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
 
-static char iTermProfileHotkeyObserveAppWindowsKey;
-
 typedef NS_ENUM(NSUInteger, iTermAnimationDirection) {
     kAnimationDirectionDown,
     kAnimationDirectionRight,

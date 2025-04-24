@@ -11,10 +11,9 @@
 #import "DebugLogging.h"
 #import "iTermMalloc.h"
 #import "NSStringITerm.h"
+#import "VT100ByteStream.h"
 #import "VT100ControlParser.h"
 #import "VT100StringParser.h"
-
-#define kDefaultStreamSize 100000
 
 @interface VT100Parser()
 // Nested parsers count their depth. This happens with ssh integration.
@@ -22,10 +21,7 @@
 @end
 
 @implementation VT100Parser {
-    unsigned char *_stream;
-    int _currentStreamLength;
-    int _totalStreamLength;
-    int _streamOffset;
+    VT100ByteStream _byteStream;
     BOOL _saveData;
     NSMutableDictionary *_savedStateForPartialParse;
     VT100ControlParser *_controlParser;
@@ -42,8 +38,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _totalStreamLength = kDefaultStreamSize;
-        _stream = iTermMalloc(_totalStreamLength);
+        VT100ByteStreamInit(&_byteStream);
         _savedStateForPartialParse = [[NSMutableDictionary alloc] init];
         _controlParser = [[VT100ControlParser alloc] init];
         _sshParsers = [[NSMutableDictionary alloc] init];
@@ -53,7 +48,7 @@
 }
 
 - (void)dealloc {
-    free(_stream);
+    VT100ByteStreamFree(&_byteStream);
     [_savedStateForPartialParse release];
     [_controlParser release];
     [_sshParsers release];
@@ -72,15 +67,13 @@
 }
 
 - (BOOL)addNextParsedTokensToVector:(CVector *)vector {
-    unsigned char *datap;
-    int datalen;
-
     VT100Token *token = [VT100Token token];
     token.string = nil;
     // get our current position in the stream
-    datap = _stream + _streamOffset;
-    datalen = _currentStreamLength - _streamOffset;
-    DLog(@"Have %d bytes to parse", datalen);
+    VT100ByteStreamCursor cursor;
+    VT100ByteStreamCursorInit(&cursor, &_byteStream);
+
+    DLog(@"Have %d bytes to parse", VT100ByteStreamCursorGetSize(&cursor));
 
     if (_emitRecoveryToken) {
         VT100Token *recoveryToken = [VT100Token token];
@@ -92,43 +85,36 @@
         _emitRecoveryToken = NO;
     }
 
-    unsigned char *position = NULL;
+    VT100ByteStreamCursor position = { 0 };
     int length = 0;
-    if (datalen == 0) {
+    if (VT100ByteStreamCursorGetSize(&cursor) == 0) {
         DLog(@"datalen is 0");
         token->type = VT100CC_NULL;
-        _streamOffset = 0;
-        _currentStreamLength = 0;
 
-        if (_totalStreamLength >= kDefaultStreamSize * 2) {
-            // We are done with this stream. Get rid of it and allocate a new one
-            // to avoid allowing this to grow too big.
-            free(_stream);
-            _totalStreamLength = kDefaultStreamSize;
-            _stream = iTermMalloc(_totalStreamLength);
-        }
+        VT100ByteStreamReset(&_byteStream);
     } else {
         int rmlen = 0;
         const NSStringEncoding encoding = self.encoding;
         const BOOL support8BitControlCharacters = (encoding == NSASCIIStringEncoding || encoding == NSISOLatin1StringEncoding);
-        
-        if (isAsciiString(datap) && !_dcsHooked) {
-            ParseString(datap, datalen, &rmlen, token, encoding);
-            position = datap;
-        } else if (iscontrol(datap[0]) || _dcsHooked || (support8BitControlCharacters && isc1(datap[0]))) {
+        const unsigned char firstChar = VT100ByteStreamCursorPeek(&cursor);
+        if (isAsciiString(firstChar) && !_dcsHooked) {
+            ParseString(cursor, &rmlen, token, encoding);
+            position = cursor;
+        } else if (iscontrol(firstChar) ||
+                   _dcsHooked ||
+                   (support8BitControlCharacters && isc1(firstChar))) {
             if (self.literalMode) {
                 token->type = VT100_LITERAL;
-                token->code = datap[0];
+                token->code = firstChar;
                 rmlen = 1;
             } else {
-                [_controlParser parseControlWithData:datap
-                                             datalen:datalen
-                                               rmlen:&rmlen
-                                         incidentals:vector
-                                               token:token
-                                            encoding:encoding
-                                          savedState:_savedStateForPartialParse
-                                           dcsHooked:&_dcsHooked];
+                [_controlParser parseControlWithCursor:cursor
+                                                 rmlen:&rmlen
+                                           incidentals:vector
+                                                 token:token
+                                              encoding:encoding
+                                            savedState:_savedStateForPartialParse
+                                             dcsHooked:&_dcsHooked];
                 DLog(@"%@: control parser produced %@", self, token);
                 if (token->type != VT100_WAIT) {
                     [_savedStateForPartialParse removeAllObjects];
@@ -258,43 +244,43 @@
                     default:
                         break;
                 }
-                position = datap;
+                position = cursor;
             }
         } else {
-            if (isString(datap, encoding)) {
-                ParseString(datap, datalen, &rmlen, token, encoding);
+            if (isString(firstChar, encoding)) {
+                ParseString(cursor, &rmlen, token, encoding);
                 // If the encoding is UTF-8 then you get here only if *datap >= 0x80.
                 if (token->type != VT100_WAIT && rmlen == 0) {
                     token->type = VT100_UNKNOWNCHAR;
-                    token->code = datap[0];
+                    token->code = VT100ByteStreamCursorPeek(&cursor);
                     rmlen = 1;
                 }
             } else {
                 // If the encoding is UTF-8 you shouldn't get here.
                 token->type = VT100_UNKNOWNCHAR;
-                token->code = datap[0];
+                token->code = VT100ByteStreamCursorPeek(&cursor);
                 rmlen = 1;
             }
-            position = datap;
+            position = cursor;
         }
         length = rmlen;
 
 
         if (rmlen > 0) {
-            NSParameterAssert(_currentStreamLength >= _streamOffset + rmlen);
+            ITAssertWithMessage(VT100ByteStreamGetCapacity(&_byteStream) >= VT100ByteStreamGetConsumed(&_byteStream) + rmlen,
+                                @"Consumed more bytes than are available");
             // mark our current position in the stream
-            _streamOffset += rmlen;
-            assert(_streamOffset >= 0);
+            VT100ByteStreamConsume(&_byteStream, rmlen);
         }
     }
 
     token->savingData = _saveData;
     if (token->type != VT100_WAIT && token->type != VT100CC_NULL) {
         if (_saveData) {
-            token.savedData = [NSData dataWithBytes:position length:length];
+            token.savedData = VT100ByteStreamCursorMakeData(&position, length);
         }
         if (token->type == VT100_ASCIISTRING) {
-            [token setAsciiBytes:(char *)position length:length];
+            [token setAsciiBytes:(char *)VT100ByteStreamCursorGetPointer(&position) length:length];
         }
 
         if (gDebugLogging) {
@@ -309,7 +295,7 @@
             int i = 0;
             int start = 0;
             while (i < length) {
-                unsigned char c = datap[i];
+                const unsigned char c = VT100ByteStreamCursorPeekOffset(&cursor, i);
                 [loginfo appendFormat:@"%02x ", (int)c];
                 [ascii appendFormat:@"%c", (c >= 32 && c < 128) ? c : '.'];
                 if (i == length - 1) {
@@ -336,47 +322,25 @@
 
 - (void)putStreamData:(NSData *)data {
     @synchronized(self) {
-        if (_currentStreamLength + data.length > _totalStreamLength) {
-            // Grow the stream if needed. Don't grow too fast so the xterm parser can catch overflow.
-            int n = MIN(500, (data.length + _currentStreamLength) / kDefaultStreamSize);
-
-            // Make sure it grows enough to hold this.
-            NSInteger proposedSize = _totalStreamLength;
-            proposedSize += MAX(n * kDefaultStreamSize, data.length);
-            if (proposedSize >= INT_MAX) {
-                DLog(@"Stream too big!");
-                return;
-            }
-            _totalStreamLength = proposedSize;
-            _stream = iTermRealloc(_stream, _totalStreamLength, 1);
-        }
-
-        memcpy(_stream + _currentStreamLength, data.bytes, data.length);
-        _currentStreamLength += data.length;
-        assert(_currentStreamLength >= 0);
-        if (_currentStreamLength == 0) {
-            _streamOffset = 0;
-        }
+        VT100ByteStreamAppend(&_byteStream, data.bytes, data.length);
     }
 }
 
 - (int)streamLength {
     @synchronized(self) {
-        return _currentStreamLength - _streamOffset;
+        return VT100ByteStreamGetRemainingSize(&_byteStream);
     }
 }
 
 - (NSData *)streamData {
     @synchronized(self) {
-        return [NSData dataWithBytes:_stream + _streamOffset
-                              length:_currentStreamLength - _streamOffset];
+        return VT100ByteStreamMakeData(&_byteStream);
     }
 }
 
 - (void)clearStream {
     @synchronized(self) {
-        _streamOffset = _currentStreamLength;
-        assert(_streamOffset >= 0);
+        VT100ByteStreamConsumeAll(&_byteStream);
         [_sshParsers[@(_mainSSHParserPID)] clearStream];
     }
 }
