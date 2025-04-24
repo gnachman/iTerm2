@@ -251,7 +251,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (void)sendPasswordInEchoProbe;
 - (void)setEchoProbeDelegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate;
 - (void)resetEchoProbe;
-- (void)threadedReadTask:(char *)buffer length:(int)length;
+- (void)threadedReadTask:(NSData *)data;
 
 - (void)destructivelySetScreenWidth:(int)width
                              height:(int)height

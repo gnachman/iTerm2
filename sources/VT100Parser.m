@@ -179,7 +179,7 @@
                         DLog(@"%@: Using child %@, begin reparsing SSH output in token %@ at depth %@: %@",
                              self, sshParser, token, @(self.depth), token.savedData);
                         NSData *data = token.savedData;
-                        [sshParser putStreamData:data.bytes length:data.length];
+                        [sshParser putStreamData:data];
                         const int start = CVectorCount(vector);
                         DLog(@"count before adding parsed tokens is %@", @(start));
                         [sshParser addParsedTokensToVector:vector];
@@ -242,7 +242,7 @@
                         VT100Parser *tempParser = [[[VT100Parser alloc] init] autorelease];
                         tempParser.encoding = encoding;
                         NSData *data = [token.string dataUsingEncoding:encoding];
-                        [tempParser putStreamData:data.bytes length:data.length];
+                        [tempParser putStreamData:data];
                         [tempParser addParsedTokensToVector:vector];
                         break;
                     }
@@ -334,15 +334,15 @@
     return NO;
 }
 
-- (void)putStreamData:(const char *)buffer length:(int)length {
+- (void)putStreamData:(NSData *)data {
     @synchronized(self) {
-        if (_currentStreamLength + length > _totalStreamLength) {
+        if (_currentStreamLength + data.length > _totalStreamLength) {
             // Grow the stream if needed. Don't grow too fast so the xterm parser can catch overflow.
-            int n = MIN(500, (length + _currentStreamLength) / kDefaultStreamSize);
+            int n = MIN(500, (data.length + _currentStreamLength) / kDefaultStreamSize);
 
             // Make sure it grows enough to hold this.
             NSInteger proposedSize = _totalStreamLength;
-            proposedSize += MAX(n * kDefaultStreamSize, length);
+            proposedSize += MAX(n * kDefaultStreamSize, data.length);
             if (proposedSize >= INT_MAX) {
                 DLog(@"Stream too big!");
                 return;
@@ -351,8 +351,8 @@
             _stream = iTermRealloc(_stream, _totalStreamLength, 1);
         }
 
-        memcpy(_stream + _currentStreamLength, buffer, length);
-        _currentStreamLength += length;
+        memcpy(_stream + _currentStreamLength, data.bytes, data.length);
+        _currentStreamLength += data.length;
         assert(_currentStreamLength >= 0);
         if (_currentStreamLength == 0) {
             _streamOffset = 0;

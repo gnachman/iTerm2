@@ -1598,8 +1598,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 // Warning: this is called on PTYTask's thread.
-- (void)threadedReadTask:(char *)buffer length:(int)length {
-    [_mutableState threadedReadTask:buffer length:length];
+- (void)threadedReadTask:(NSData *)data {
+    [_mutableState threadedReadTask:data];
 }
 
 - (long long)lastPromptLine {

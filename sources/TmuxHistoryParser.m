@@ -38,8 +38,7 @@
     screen_char_t *screenChars;
     NSMutableData *result = [NSMutableData data];
     NSData *histData = [hist dataUsingEncoding:NSUTF8StringEncoding];
-    [terminal.parser putStreamData:histData.bytes
-                            length:histData.length];
+    [terminal.parser putStreamData:histData];
 
     CVector vector;
     CVectorCreate(&vector, 100);

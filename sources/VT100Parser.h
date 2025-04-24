@@ -19,7 +19,7 @@
 @property(nonatomic, readonly) int streamLength;
 @property(atomic) BOOL literalMode;
 
-- (void)putStreamData:(const char *)buffer length:(int)length;
+- (void)putStreamData:(NSData *)data;
 - (void)clearStream;
 - (void)forceUnhookDCS:(NSString *)uniqueID;
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
