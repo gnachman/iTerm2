@@ -47,12 +47,8 @@ NS_INLINE int VT100ByteStreamGetRemainingSize(VT100ByteStream *self) {
     return self->currentLength - self->offset;
 }
 
-NS_INLINE unsigned char *VT100ByteStreamGetPointer(VT100ByteStream *self) {
-    return self->stream + self->offset;
-}
-
 NS_INLINE NSData *VT100ByteStreamMakeData(VT100ByteStream *self) {
-    return [NSData dataWithBytes:VT100ByteStreamGetPointer(self)
+    return [NSData dataWithBytes:self->stream + self->offset
                           length:VT100ByteStreamGetRemainingSize(self)];
 }
 
@@ -124,20 +120,23 @@ NS_INLINE int VT100ByteStreamCursorGetSize(const VT100ByteStreamCursor *self) {
 }
 
 NS_INLINE unsigned char VT100ByteStreamCursorPeek(const VT100ByteStreamCursor *self) {
+    ITAssertWithMessage(self->datalen > 0, @"Peek on empty cursor");
     return *self->datap;
-}
+ }
 
 NS_INLINE void VT100ByteStreamCursorAdvance(VT100ByteStreamCursor *self, int count) {
+    ITAssertWithMessage(count <= self->datalen,
+                        @"Advance past end of cursor (count=%d, remaining=%d)",
+                        count, self->datalen);
     self->datap += count;
     self->datalen -= count;
-    ITAssertWithMessage(self->datalen >= 0, @"Negative data length");
 }
 
 NS_INLINE const unsigned char *VT100ByteStreamCursorGetPointer(const VT100ByteStreamCursor *self) {
     return self->datap;
 }
 
-NS_INLINE unsigned char *VT100ByteStreamCursorGetMutablePointer(const VT100ByteStreamCursor *self) {
+NS_INLINE unsigned char *VT100ByteStreamCursorGetMutablePointer(VT100ByteStreamCursor *self) {
     return self->datap;
 }
 
