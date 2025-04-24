@@ -64,6 +64,24 @@
 }
 
 
+- (void)parseControlWithConsumer:(VT100ByteStreamConsumer *)consumer
+                     incidentals:(CVector *)incidentals
+                           token:(VT100Token *)token
+                        encoding:(NSStringEncoding)encoding
+                      savedState:(NSMutableDictionary *)savedState
+                       dcsHooked:(BOOL *)dcsHooked {
+    VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
+    int rmlen = VT100ByteStreamConsumerGetConsumed(consumer);
+    [self parseControlWithCursor:cursor
+                           rmlen:&rmlen
+                     incidentals:incidentals
+                           token:token
+                        encoding:encoding
+                      savedState:savedState
+                       dcsHooked:dcsHooked];
+    VT100ByteStreamConsumerSetConsumed(consumer, rmlen);
+}
+
 - (void)parseControlWithCursor:(VT100ByteStreamCursor)cursor
                          rmlen:(int *)rmlen
                    incidentals:(CVector *)incidentals
@@ -71,7 +89,7 @@
                       encoding:(NSStringEncoding)encoding
                     savedState:(NSMutableDictionary *)savedState
                      dcsHooked:(BOOL *)dcsHooked {
-    unsigned char *datap = VT100ByteStreamCursorGetPointer(&cursor);
+    unsigned char *datap = VT100ByteStreamCursorGetMutablePointer(&cursor);
     int datalen = VT100ByteStreamCursorGetSize(&cursor);
     
     const BOOL support8BitControlCharacters = (encoding == NSASCIIStringEncoding || encoding == NSISOLatin1StringEncoding);

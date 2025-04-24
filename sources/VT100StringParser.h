@@ -95,7 +95,6 @@ NS_INLINE BOOL isString(unsigned char code, NSStringEncoding encoding) {
     return NO;
 }
 
-void ParseString(VT100ByteStreamCursor cursor,
-                 int *rmlen,
+void ParseString(VT100ByteStreamConsumer *consumer,
                  VT100Token *result,
                  NSStringEncoding encoding);
