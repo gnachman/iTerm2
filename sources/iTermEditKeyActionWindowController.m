@@ -214,6 +214,20 @@ const CGFloat sideMarginWidth = 40;
                 _parameterValue = @"";
                 break;
 
+            case KEY_ACTION_COPY_INTERPOLATED_STRING:
+                _parameterHidden = NO;
+                _parameterPlaceholder = @"Enter interpolated string (evaluated in session context)";
+                if (interpolatedStringDelegate) {
+                    _parameterDelegate = interpolatedStringDelegate;
+                } else {
+                    _parameterDelegate =
+                    [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:context]
+                                                                       passthrough:nil
+                                                                     functionsOnly:NO];
+                }
+                _helpString = @"You can use this to copy information about the current session to the clipboard. [Learn more about interpolated strings](https://iterm2.com/documentation-scripting-fundamentals.html)";
+                break;
+
             case KEY_ACTION_SCROLL_END:
             case KEY_ACTION_SCROLL_HOME:
             case KEY_ACTION_SCROLL_LINE_DOWN:
@@ -229,20 +243,6 @@ const CGFloat sideMarginWidth = 40;
             case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
             case KEY_ACTION_PASTE_OR_SEND:
             case KEY_ACTION_ALERT_ON_NEXT_MARK:
-            case KEY_ACTION_COPY_INTERPOLATED_STRING:
-                _parameterHidden = NO;
-                _parameterPlaceholder = @"Enter interpolated string (evaluated in session context)";
-                if (interpolatedStringDelegate) {
-                    _parameterDelegate = interpolatedStringDelegate;
-                } else {
-                    _parameterDelegate =
-                    [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:context]
-                                                                       passthrough:nil
-                                                                     functionsOnly:NO];
-                }
-                _helpString = @"You can use this to copy information about the current session to the clipboard. [Learn more about interpolated strings](https://iterm2.com/documentation-scripting-fundamentals.html)";
-                break;
-
             case KEY_ACTION_COPY_OR_SEND:
                 _parameterValue = @"";
                 break;
