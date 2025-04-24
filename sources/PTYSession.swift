@@ -845,9 +845,7 @@ extension PTYSession {
                                 operationQueue: FileDescriptorMonitor.queue) { [weak session] in
             // receive returns nil if only part of a segmented message is received.
             if var data = channelClient.mux.receive() {
-                data.withUnsafeMutableBytes { (ptr: UnsafeMutableRawBufferPointer) in
-                    session?.threadedReadTask(ptr.baseAddress!, length: Int32(ptr.count))
-                }
+                session?.threadedReadTask(data)
             }
         } writeClosure: { data in
             channelClient.mux.send(message: data)
