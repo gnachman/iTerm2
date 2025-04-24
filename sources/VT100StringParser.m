@@ -364,14 +364,9 @@ void ParseString(VT100ByteStreamConsumer *consumer,
             // Invalid bytes, can't encode.
             int i;
             if (encoding == NSUTF8StringEncoding) {
-                unsigned char temp[consumedCount * 3];
-                VT100ByteStreamCursorCopy(&cursor, temp, consumedCount);
-
-                int length = consumedCount;
-                // Replace every byte with unicode replacement char <?>.
-                for (i = consumedCount - 1; i >= 0 && !result.string; i--) {
-                    result.string = SetReplacementCharInArray(temp, &length, i);
-                }
+                // I am 98% sure this is unreachable because the UTF-8 decoder isn't buggy enough
+                // to claim success but then leave us unable to create an NSString from it.
+                result.string = [@"\uFFFD" stringRepeatedTimes:consumedCount];
             } else {
                 // Replace every byte with ?, the replacement char for non-unicode encodings.
                 for (i = consumedCount - 1; i >= 0 && !result.string; i--) {
