@@ -27,7 +27,7 @@ typedef struct {
 @interface iTermExternalAttribute: NSObject<NSCopying>
 @property (atomic, readonly) BOOL hasUnderlineColor;
 @property (atomic, readonly) VT100TerminalColorValue underlineColor;
-@property (atomic, copy, readonly) NSString *blockIDList;  // comma delimited
+@property (atomic, copy, readonly, nullable) NSString *blockIDList;  // comma delimited
 @property (nonatomic, readonly) NSString *humanReadableDescription;
 @property (atomic, readonly) iTermControlCodeAttribute controlCode;
 @property (atomic, readonly, nullable) NSNumber *controlCodeNumber;

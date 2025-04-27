@@ -1165,9 +1165,9 @@ static void SwapInt(int *a, int *b) {
 
     // Append primary grid to line buffer.
     [self appendScreen:self.primaryGrid
-                  toScrollback:self.linebuffer
-                withUsedHeight:[self.primaryGrid numberOfLinesUsed]
-                     newHeight:newSize.height];
+          toScrollback:self.linebuffer
+        withUsedHeight:[self.primaryGrid numberOfLinesUsed]
+             newHeight:newSize.height];
     DLog(@"History after appending screen to scrollback:\n%@", [self.linebuffer debugString]);
 
     VT100GridCoordRange convertedRangeOfVisibleLines;

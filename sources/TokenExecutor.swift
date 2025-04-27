@@ -411,6 +411,23 @@ class TokenExecutor: NSObject {
         return impl.pause()
     }
 
+    class GlobalUnpauserDelegate: UnpauserDelegate {
+        func unpause() {
+            iTermAtomicInt64Add(globalPauseCount, -1)
+            NotificationCenter.default.post(name: TokenExecutorImpl.didUnpauseGloballyNotification, object: nil)
+        }
+    }
+
+    static let globalPauseCount = iTermAtomicInt64Create()
+    private static var globalUnpauserDelegate = GlobalUnpauserDelegate()
+    static func globalPause() -> Unpauser {
+        let newValue = iTermAtomicInt64Add(globalPauseCount, 1)
+        if newValue == 1 && gDebugLogging.boolValue {
+            DLog("Pause")
+        }
+        return Unpauser(globalUnpauserDelegate)
+    }
+
     // You can call this on any queue.
     @objc
     func schedule() {
@@ -441,6 +458,7 @@ class TokenExecutor: NSObject {
 }
 
 private class TokenExecutorImpl {
+    static let didUnpauseGloballyNotification = Notification.Name("didUnpauseGloballyNotification")
     private let terminal: VT100Terminal
     private let queue: DispatchQueue
     private let slownessDetector: SlownessDetector
@@ -475,6 +493,18 @@ private class TokenExecutorImpl {
                 self?.executeSideEffects(syncFirst: true)
             }
         })
+        NotificationCenter.default.addObserver(forName: Self.didUnpauseGloballyNotification,
+                                               observer: self,
+                                               object: nil) { [weak self] _ in
+            guard let self else {
+                return
+            }
+            self.queue.async {
+                if !self.isPaused {
+                    self.schedule()
+                }
+            }
+        }
     }
 
     func pause() -> Unpauser {
@@ -492,7 +522,7 @@ private class TokenExecutorImpl {
 #if DEBUG
         assertQueue()
 #endif
-        return iTermAtomicInt64Get(pauseCount) > 0
+        return iTermAtomicInt64Get(pauseCount) > 0 || iTermAtomicInt64Get(TokenExecutor.globalPauseCount) > 0
     }
 
     func invalidate() {
@@ -537,34 +567,26 @@ private class TokenExecutorImpl {
     // Runs block synchronously while token executor is stopped.
     func whilePaused(_ block: () -> (), onExecutorQueue: Bool) {
         dispatchPrecondition(condition: .onQueue(.main))
-        #warning("If tokens are coming in fast and you have enabled maximize throughput this can block forever trying to get onto queue")
         if gDebugLogging.boolValue { DLog("Incr pending pauses if \(iTermPreferences.maximizeThroughput())") }
-        let unpauser = iTermPreferences.maximizeThroughput() ? nil : pause()
+        var unpauser = iTermPreferences.maximizeThroughput() ? nil : TokenExecutor.globalPause()
+
         let sema = DispatchSemaphore(value: 0)
-        queue.sync {
-            let barrierDidRun = MutableAtomicObject(false)
-            taskQueue.appendTasks([
-                {
-                    if gDebugLogging.boolValue { DLog("barrierDidRun <- true") }
-                    barrierDidRun.set(true)
-                },
-                {
-                    if gDebugLogging.boolValue { DLog("waiting...") }
-                    _ = sema.wait(timeout: DispatchTime.distantFuture)
-                    if gDebugLogging.boolValue { DLog("...signaled") }
-                }
-            ])
-            queue.async {
-                // We know for sure this is the very next block that'll run on queue.
-                // It'll run the second task (above) and wait for the semaphore to be signaled.
-                if gDebugLogging.boolValue { DLog("Begin post-sync execute") }
-                self.execute()
-                if gDebugLogging.boolValue { DLog("Finished post-sync execute") }
+        let sema2 = DispatchSemaphore(value: 0)
+        queue.async {
+            sema2.signal()
+            sema.wait()
+        }
+        if unpauser != nil {
+            sema2.wait()
+        } else {
+            // When maximize throughput is on, we want to avoid pausing token execution but we can't
+            // let it go on indefinitely. After a timeout, pause it and block for what should be a short
+            // amount of time (until the current batch of tokens is done being executed).
+            let timeout = 0.03
+            if sema2.wait(timeout: .now() + timeout) == .timedOut {
+                unpauser = TokenExecutor.globalPause()
+                sema2.wait()
             }
-            if gDebugLogging.boolValue { DLog("Running pending high-pri tasks") }
-            executeHighPriorityTasks(until: { barrierDidRun.value })
-            precondition(barrierDidRun.value)
-            if gDebugLogging.boolValue { DLog("Task queue should now be blocked.") }
         }
         block()
         if unpauser != nil {
@@ -794,7 +816,7 @@ private class TokenExecutorImpl {
 
 extension TokenExecutorImpl: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "<TokenExecutorImpl: \(Unmanaged.passUnretained(self).toOpaque()): queue=\(queue.debugDescription) taskQueue=\(taskQueue.count) sideEffects=\(sideEffects.count) pauseCount=\(iTermAtomicInt64Get(pauseCount)) throughput=\(throughputEstimator.estimatedThroughput) delegate=\(String(describing: delegate))>"
+        return "<TokenExecutorImpl: \(Unmanaged.passUnretained(self).toOpaque()): queue=\(queue.debugDescription) taskQueue=\(taskQueue.count) sideEffects=\(sideEffects.count) pauseCount=\(iTermAtomicInt64Get(pauseCount)) globalPauseCount=\(iTermAtomicInt64Get(TokenExecutor.globalPauseCount)) throughput=\(throughputEstimator.estimatedThroughput) delegate=\(String(describing: delegate))>"
     }
 }
 
@@ -803,7 +825,7 @@ extension TokenExecutorImpl: UnpauserDelegate {
     func unpause() {
         let newCount = iTermAtomicInt64Add(pauseCount, -1)
         precondition(newCount >= 0)
-        if newCount == 0 {
+        if newCount == 0 && iTermAtomicInt64Get(TokenExecutor.globalPauseCount) == 0 {
             if gDebugLogging.boolValue { DLog("Unpause") }
             schedule()
         }

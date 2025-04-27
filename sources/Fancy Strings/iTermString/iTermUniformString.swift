@@ -53,6 +53,10 @@ class iTermUniformString: NSObject, iTermString {
         return _mutableClone()
     }
 
+    func clone() -> any iTermString {
+        return self
+    }
+
     func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
         return _string(withExternalAttributes: eaIndex, startingFrom: offset)
     }
@@ -75,10 +79,21 @@ class iTermUniformString: NSObject, iTermString {
     }
 
     func usedLength(range: NSRange) -> Int32 {
-        min(Int32(length), Int32(range.length))
+        if ScreenCharIsNull(char) {
+            return 0
+        }
+        return min(Int32(length), Int32(range.length))
     }
 
     func isEmpty(range: NSRange) -> Bool {
         return ScreenCharIsNull(char)
+    }
+
+    func substring(range: NSRange) -> any iTermString {
+        return iTermUniformString(char: char, length: range.length)
+    }
+
+    func externalAttribute(at index: Int) -> iTermExternalAttribute? {
+        return nil
     }
 }

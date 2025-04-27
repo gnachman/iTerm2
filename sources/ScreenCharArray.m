@@ -8,6 +8,7 @@
 #import "ScreenCharArray.h"
 #import "NSDictionary+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
+#import "NSMutableData+iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
 
 static NSString *const ScreenCharArrayKeyData = @"data";
@@ -209,6 +210,26 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     iTermMetadataSetExternalAttributes(&metadata, eaIndex);
     return [self initWithLine:line
                        length:length
+                     metadata:iTermMetadataMakeImmutable(metadata)
+                 continuation:continuation
+                     bidiInfo:bidiInfo];
+}
+
+- (instancetype)initWithData:(NSData *)data
+       includingContinuation:(BOOL)includingContinuation
+                continuation:(screen_char_t)continuation
+                        date:(NSDate *)date
+          externalAttributes:(id<iTermExternalAttributeIndexReading> _Nullable)eaIndex
+                    rtlFound:(BOOL)rtlFound
+                    bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo {
+    iTermMetadata metadata = {
+        .timestamp = [date timeIntervalSinceReferenceDate],
+        .externalAttributes = nil,
+        .rtlFound = rtlFound
+    };
+    iTermMetadataSetExternalAttributes(&metadata, (iTermExternalAttributeIndex *)eaIndex);
+    return [self initWithData:data
+        includingContinuation:includingContinuation
                      metadata:iTermMetadataMakeImmutable(metadata)
                  continuation:continuation
                      bidiInfo:bidiInfo];
@@ -423,6 +444,26 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
         }
     }
     return count;
+}
+
+- (BOOL)dataSizeMatchesLength {
+    if (!_data) {
+        return NO;
+    }
+    return _data.length == _length * sizeof(screen_char_t);
+}
+
+- (BOOL)hasValidAppendedContinuationMark {
+    if ([self dataSizeMatchesLength]) {
+        return NO;
+    }
+    if (_data.length < (_length + 1) * sizeof(screen_char_t)) {
+        return NO;
+    }
+    if (memcmp(&_line[_length], &_continuation, sizeof(screen_char_t))) {
+        return NO;
+    }
+    return YES;
 }
 
 - (nonnull id)mutableCopyWithZone:(nullable NSZone *)zone {
@@ -753,6 +794,14 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
 
 @implementation MutableScreenCharArray
 
+- (void)setLine:(const screen_char_t *)newLine shouldFreeOnRelease:(BOOL)shouldFreeOnRelease {
+    if (_shouldFreeOnRelease) {
+        free((void *)_line);
+    }
+    _line = newLine;
+    _shouldFreeOnRelease = shouldFreeOnRelease;
+}
+
 - (void)setContinuation:(screen_char_t)continuation {
     _continuation = continuation;
     _eol = continuation.code;
@@ -780,10 +829,32 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
     memmove(data.mutableBytes, _line, self.length * sizeof(screen_char_t));
     memmove(((screen_char_t *)data.mutableBytes) + self.length, sca.line, sca.length * sizeof(screen_char_t));
     _data = data;
-    _line = data.bytes;
+    [self setLine:(const screen_char_t *)data.bytes shouldFreeOnRelease:NO];
     _length += sca.length;
     _continuation = sca.continuation;
     _eol = sca.continuation.code;
+}
+
+- (void)ensureContinuationMarkAppended {
+    if (_data.length >= (_length + 1) * sizeof(screen_char_t)) {
+        screen_char_t *line = [self mutableLine];
+        line[_length] = _continuation;
+    } else {
+        NSData *temp = [NSData dataWithBytesNoCopy:(void *)_line
+                                            length:_length * sizeof(screen_char_t) freeWhenDone:NO];
+        _data = [temp dataByAppending:[NSData dataWithBytesNoCopy:&_continuation
+                                                            length:sizeof(_continuation)
+                                                      freeWhenDone:NO]];
+        [self setLine:(const screen_char_t *)_line shouldFreeOnRelease:NO];
+    }
+}
+
+- (void)ensureContinuationMarkNotAppended {
+    if ([self dataSizeMatchesLength]) {
+        return;
+    }
+    _data = [_data subdataWithRange:NSMakeRange(0, _length * sizeof(screen_char_t))];
+    [self setLine:(const screen_char_t *)_line shouldFreeOnRelease:NO];
 }
 
 - (void)appendString:(NSString *)string style:(screen_char_t)c continuation:(screen_char_t)continuation {
@@ -856,16 +927,16 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
 
 - (void)setCharacter:(screen_char_t)c inRange:(NSRange)range {
     screen_char_t *line = [self mutableLine];
-    for (int i = 0; i < _length; i++) {
-        line[i] = c;
+    for (int i = 0; i < range.length; i++) {
+        line[i + range.location] = c;
     }
 }
 
 - (void)insert:(ScreenCharArray *)sca atIndex:(int)index {
-    NSMutableData *data = [NSMutableData dataWithCapacity:_length + sca.length];
+    NSMutableData *data = [NSMutableData uninitializedDataWithLength:sizeof(screen_char_t) * (_length + sca.length)];
     int offset = 0;
     int count = index * sizeof(screen_char_t);
-    const int finalOffset = count;
+    const int finalOffset = index;
     memmove(data.mutableBytes, _line, count);
     offset += count;
     count = sca.length * sizeof(screen_char_t);
@@ -873,17 +944,21 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
     offset += count;
     count = (_length - index) * sizeof(screen_char_t);
     memmove(data.mutableBytes + offset, _line + finalOffset, count);
+    ITAssertWithMessage(data.length >= finalOffset * sizeof(screen_char_t) + count, @"Data too small");
 
     _data = data;
-    _line = _data.bytes;
+    [self setLine:(const screen_char_t *)_data.bytes shouldFreeOnRelease:NO];
     _length += sca.length;
     _shouldFreeOnRelease = NO;
 
     iTermExternalAttributeIndex *eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
     if (!eaIndex) {
-        return;
+        if (!sca.eaIndex) {
+            return;
+        }
+        eaIndex = [self eaIndexCreatingIfNeeded];
     }
-    [eaIndex insertFrom:iTermImmutableMetadataGetExternalAttributesIndex(sca.metadata)
+    [eaIndex insertFrom:sca.eaIndex
             sourceRange:NSMakeRange(0, sca.length)
                 atIndex:index];
 }

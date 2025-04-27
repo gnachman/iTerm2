@@ -80,6 +80,14 @@ NS_ASSUME_NONNULL_BEGIN
                     rtlFound:(BOOL)rtlFound
                     bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
 
+- (instancetype)initWithData:(NSData *)data
+       includingContinuation:(BOOL)includingContinuation
+                continuation:(screen_char_t)continuation
+                        date:(NSDate *)date
+          externalAttributes:(id<iTermExternalAttributeIndexReading> _Nullable)eaIndex
+                    rtlFound:(BOOL)rtlFound
+                    bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
+
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 
 // It only makes sense to use this when freeOnRelease=YES.
@@ -132,7 +140,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (int)numberOfTrailingEmptyCells;
 - (int)numberOfTrailingEmptyCellsWhereSpaceIsEmpty:(BOOL)spaceIsEmpty;
 - (int)numberOfLeadingEmptyCellsWhereSpaceIsEmpty:(BOOL)spaceIsEmpty;
-
+- (BOOL)dataSizeMatchesLength;  // If true, no continuation mark is at the end of the data.
+- (BOOL)hasValidAppendedContinuationMark;
 @end
 
 @interface MutableScreenCharArray: ScreenCharArray
@@ -147,6 +156,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setBackground:(screen_char_t)bg inRange:(NSRange)range;
 - (void)setForeground:(screen_char_t)gg inRange:(NSRange)range;
 - (void)appendString:(NSString *)string fg:(screen_char_t)fg bg:(screen_char_t)bg;
+- (void)ensureContinuationMarkAppended;
+- (void)ensureContinuationMarkNotAppended;
 - (void)deleteRange:(NSRange)range;
 - (void)insert:(ScreenCharArray *)sca atIndex:(int)index;
 - (void)setMetadata:(iTermMetadata)metadata;

@@ -19,7 +19,40 @@ protocol iTermLineStringReading {
     var dirty: Bool { get }
     var isEmpty: Bool { get }
     var usedLength: Int32 { get }
-    var screenCharsData: Data { get }
+    func screenCharsData(withEOL: Bool) -> Data
+    func screenCharArray(bidi: BidiDisplayInfoObjc?) -> ScreenCharArray
+}
+
+extension iTermLineStringReading {
+    func _screenCharsData(withEOL: Bool) -> Data {
+        let lms = ensureImmutableLegacy()
+        if withEOL {
+            if lms.screenCharArray.hasValidAppendedContinuationMark() {
+                lms.screenCharArray.makeSafe()
+                return lms.screenCharArray.data
+            }
+            let m = lms.screenCharArray.mutableCopy() as! MutableScreenCharArray
+            m.ensureContinuationMarkAppended()
+            return m.data
+        } else {
+            if lms.screenCharArray.dataSizeMatchesLength() {
+                return lms.screenCharArray.data
+            }
+            let m = lms.screenCharArray.mutableCopy() as! MutableScreenCharArray
+            m.ensureContinuationMarkNotAppended()
+            return m.data
+        }
+    }
+
+    func _screenCharArray(bidi: BidiDisplayInfoObjc?) -> ScreenCharArray {
+        return ScreenCharArray(data: screenCharsData(withEOL: true),
+                               includingContinuation: true,
+                               continuation: continuation,
+                               date: Date(timeIntervalSinceReferenceDate: timestamp),
+                               externalAttributes: immutableEAIndex,
+                               rtlFound: metadata.rtlFound.boolValue,
+                               bidiInfo: bidi)
+    }
 }
 
 func iTermUsedLength(eol: Int32, content: iTermString) -> Int32 {
@@ -121,15 +154,17 @@ class iTermLineString: NSObject, iTermLineStringReading {
         return _externalMetadata!
     }
 
-    @objc
-    var screenCharsData: Data {
-        let lms = ensureImmutableLegacy()
-        return lms.screenCharArray.data
+    func screenCharsData(withEOL: Bool) -> Data {
+        return _screenCharsData(withEOL: withEOL)
+    }
+
+    func screenCharArray(bidi: BidiDisplayInfoObjc?) -> ScreenCharArray {
+        return _screenCharArray(bidi: bidi)
     }
 }
 
 class iTermMutableLineString: NSObject, iTermLineStringReading {
-    private var _content: iTermMutableStringProtocol & iTermString
+    private var _content: iTermMutableStringProtocolSwift & iTermString
     @objc var eol: Int32 { // EOL_HARD, EOL_SOFT, EOL_DWC
         didSet {
             continuation.code = UInt16(eol)
@@ -238,7 +273,7 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
     }
 
     init(source: iTermMutableLineString) {
-        _content = source._content.mutableClone()
+        _content = source._content.mutableCloneSwift()
         eol = source.eol
         dirty = source.dirty
         continuation = source.continuation
@@ -250,7 +285,7 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
          eol: Int32,
          continuation: screen_char_t,
          metadata: iTermLineStringMetadata) {
-        self._content = content
+        self._content = content as! (iTermMutableStringProtocolSwift & iTermString)
         self.eol = eol
         self.continuation = continuation
         self.metadata = metadata
@@ -331,6 +366,7 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
         let lms = ensureLegacy()
         let sca = lms.mutableScreenCharArray
         ScreenCharSetDWC_SKIP(sca.mutableLine.advanced(by: content.cellCount - 1))
+        eol = EOL_DWC
     }
 
     @objc(eraseCharacterAt:)
@@ -353,10 +389,40 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
         return content.character(at: count - 1)
     }
 
+    @objc(eraseDWCRightAtIndex:currentDate:)
+    func eraseDWCRight(at i: Int32, currentDate: TimeInterval) {
+        let range = max(0, Int(i) - 1)..<(Int(i) + 1)
+        _content.replace(range: range,
+                         with: iTermUniformString(char: screen_char_t(),
+                                                  length: range.count))
+        dirty = true
+        timestamp = currentDate
+    }
+
     private func invalidate() {
         if let _externalMetadata {
             iTermMetadataRelease(_externalMetadata)
             self._externalMetadata = .none
         }
+    }
+
+    func screenCharsData(withEOL: Bool) -> Data {
+        return _screenCharsData(withEOL: withEOL)
+    }
+
+    @objc(setContentSize:)
+    func set(contentSize: Int) {
+        let actual = _content.cellCount
+        if actual == contentSize {
+            return
+        } else if actual < contentSize {
+            _content.append(string: iTermUniformString(char: screen_char_t(), length: contentSize - actual))
+        } else {
+            _content.deleteFromEnd(actual - contentSize)
+        }
+    }
+
+    func screenCharArray(bidi: BidiDisplayInfoObjc?) -> ScreenCharArray {
+        return _screenCharArray(bidi: bidi)
     }
 }

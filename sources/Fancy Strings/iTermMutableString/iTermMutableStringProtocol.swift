@@ -8,10 +8,12 @@
 @objc
 protocol iTermMutableStringProtocol {
     @objc(deleteRange:) func objcDelete(range: NSRange)
-    @objc func objReplace(range: NSRange, with replacement: iTermString)
+    @objc(replaceRange:with:) func objcReplace(range: NSRange, with replacement: iTermString)
     @objc(appendString:) func append(string: iTermString)
     @objc func deleteFromStart(_ count: Int)
     @objc func deleteFromEnd(_ count: Int)
+    // An immutable copy.
+    func clone() -> iTermString
 }
 
 protocol iTermMutableStringProtocolSwift: iTermMutableStringProtocol {

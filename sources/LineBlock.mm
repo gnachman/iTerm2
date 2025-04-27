@@ -1333,6 +1333,26 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                     continuation:continuation];
 }
 
+- (ScreenCharArray *)rawLineWithMetadataAtWrappedLineOffset:(int)lineNum width:(int)width {
+    int temp = lineNum;
+    const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&temp];
+    if (!location.found) {
+        return NULL;
+    }
+    const screen_char_t *buffer = _characterBuffer.pointer + _startOffset + location.prev;
+    const int length = location.length;
+    screen_char_t continuation = { 0 };
+    if (is_partial && location.index + 1 == cll_entries) {
+        continuation.code = EOL_SOFT;
+    } else {
+        continuation.code = EOL_HARD;
+    }
+    return [[ScreenCharArray alloc] initWithLine:buffer
+                                          length:length
+                                        metadata:[self metadataForLineNumber:lineNum width:width]
+                                    continuation:continuation];
+}
+
 
 - (iTermImmutableMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
     int temp = lineNum;

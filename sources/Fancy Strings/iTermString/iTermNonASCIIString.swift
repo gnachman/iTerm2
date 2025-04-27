@@ -19,7 +19,7 @@ class iTermNonASCIIString: NSObject, iTermString {
     }
 
     override var description: String {
-        return "<iTermNonASCIIString: cells=\(cellCount) value=\(deltaString(range: fullRange).string)>"
+        return "<iTermNonASCIIString: cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d)>"
     }
 
     var cellCount: Int { codes.count }
@@ -74,6 +74,10 @@ class iTermNonASCIIString: NSObject, iTermString {
         return _mutableClone()
     }
 
+    func clone() -> any iTermString {
+        return self
+    }
+
     func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
         return _string(withExternalAttributes: eaIndex, startingFrom: offset)
     }
@@ -104,5 +108,14 @@ class iTermNonASCIIString: NSObject, iTermString {
 
     func isEmpty(range: NSRange) -> Bool {
         return usedLength(range: range) == 0
+    }
+
+    func substring(range: NSRange) -> any iTermString {
+        return _substring(range: range)
+    }
+
+    func externalAttribute(at index: Int) -> iTermExternalAttribute? {
+        let u = styles.get(index: index)
+        return u.externalAttributes
     }
 }

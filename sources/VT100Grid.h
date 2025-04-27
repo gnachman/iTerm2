@@ -19,6 +19,7 @@
 @class VT100Terminal;
 @class iTermBidiDisplayInfo;
 @protocol iTermEncoderAdapter;
+@protocol iTermString;
 
 @protocol VT100GridDelegate <NSObject>
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm;
@@ -55,6 +56,7 @@
 - (id<VT100GridReading>)copy;
 
 - (const screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
+- (screen_char_t)continuationForLine:(int)lineNumber;
 - (iTermImmutableMetadata)immutableMetadataAtLineNumber:(int)lineNumber;
 - (BOOL)isCharDirtyAt:(VT100GridCoord)coord;
 - (BOOL)isAnyCharDirty;
@@ -105,6 +107,7 @@
 - (NSString *)compactLineDumpWithTimestamps;
 - (NSString *)compactLineDumpWithContinuationMarks;
 - (NSString *)compactDirtyDump;
+- (NSString *)dumpString;
 
 // Returns the coordinate of the cell before this one. It respects scroll regions and double-width
 // characters.
@@ -115,7 +118,7 @@
 - (void)encode:(id<iTermEncoderAdapter>)encoder;
 
 // Returns an array of NSData for lines in order (corresponding with lines on screen).
-- (NSArray *)orderedLines;
+- (NSArray<NSData *> *)orderedScreenCharDataWithAppendedContinuationMarks;
 
 - (void)enumerateCellsInRect:(VT100GridRect)rect
                        block:(void (^)(VT100GridCoord, screen_char_t, iTermExternalAttribute *, BOOL *))block;
@@ -138,6 +141,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 
 - (BOOL)lineIsEmpty:(int)n;
 - (BOOL)anyLineDirtyInRange:(NSRange)range;
+- (ScreenCharArray *)screenCharArrayAtLine:(int)lineNumber;
 
 @property (nonatomic, readonly) BOOL mayContainRTL;
 - (BOOL)mayContainRTLInRange:(NSRange)range;
@@ -294,6 +298,14 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                     insert:(BOOL)insert
     externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes
                   rtlFound:(BOOL)rtlFound;
+
+- (int)appendOptimizedStringAtCursor:(id<iTermString>)string
+             scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
+                 unlimitedScrollback:(BOOL)unlimitedScrollback
+             useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+                            rtlFound:(BOOL)rtlFound;
+
+- (BOOL)canUseOptimizedStringFastPath;
 
 // Delete some number of chars starting at a given location, moving chars to the right of them back.
 - (void)deleteChars:(int)num
