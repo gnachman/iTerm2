@@ -152,7 +152,7 @@ extension iTermRope: iTermString {
     }
 
     func mutableClone() -> any iTermMutableStringProtocol & iTermString {
-        return iTermMutableString(guts: guts)
+        return iTermMutableRope(guts: guts)
     }
 
     func clone() -> iTermString {

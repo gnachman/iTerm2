@@ -348,8 +348,8 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
     func erase(defaultChar: screen_char_t) {
         timestamp = 0
         rtlFound = false
-        _content = iTermMutableString(iTermUniformString(char: defaultChar,
-                                                         length: _content.cellCount))
+        _content = iTermMutableRope(iTermUniformString(char: defaultChar,
+                                                       length: _content.cellCount))
         eol = EOL_HARD
         continuation = defaultChar
         continuation.code = UInt16(EOL_HARD)
