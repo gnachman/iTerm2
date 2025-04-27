@@ -10,13 +10,26 @@ class iTermASCIIString: NSObject, iTermString {
     private let styles: StyleMap
     private var stringCache = SubStringCache()
 
+    @objc
+    init(data: Data, style: screen_char_t, ea: iTermExternalAttribute?) {
+        self.data = SubData(data: data, range: 0..<data.count)
+        var styleMap = StyleMap()
+        let ucs = UnifiedCharacterStyle(sct: style,
+                                        underlineColor: (ea?.hasUnderlineColor ?? false) ? ea?.underlineColor : nil,
+                                        blockIDs: ea?.blockIDList,
+                                        controlCode: ea?.controlCodeNumber?.int32Value,
+                                        url: ea?.url)
+        styleMap.append(count: data.count, payload: ucs)
+        self.styles = styleMap
+    }
+
     init(data: SubData, styles: StyleMap) {
         self.data = data
         self.styles = styles
     }
 
     override var description: String {
-        return "<iTermASCIIString: cells=\(cellCount) value=\(deltaString(range: fullRange).string)>"
+        return "<iTermASCIIString: cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d)>"
     }
 
     var cellCount: Int { data.range.count }
@@ -41,7 +54,9 @@ class iTermASCIIString: NSObject, iTermString {
         var o = destinationIndex
         var i = sourceRange.location
         let buffer = msca.mutableLine
-        for (payload, count) in styles.runIterator(in: Range(sourceRange)!) {
+        let iter = styles.runIterator(in: Range(sourceRange)!)
+        var tuple = iter.next()
+        while let (payload, count) = tuple {
             if let ea = payload.externalAttributes {
                 let eaIndex = msca.eaIndexCreatingIfNeeded()
                 eaIndex.setAttributes(ea, at: Int32(o), count: Int32(count))
@@ -54,6 +69,7 @@ class iTermASCIIString: NSObject, iTermString {
                 o += 1
                 i += 1
             }
+            tuple = iter.next()
         }
     }
 
@@ -64,6 +80,10 @@ class iTermASCIIString: NSObject, iTermString {
 
     func mutableClone() -> any iTermMutableStringProtocol & iTermString {
         return _mutableClone()
+    }
+
+    func clone() -> any iTermString {
+        return self
     }
 
     func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
@@ -88,5 +108,14 @@ class iTermASCIIString: NSObject, iTermString {
 
     func isEmpty(range: NSRange) -> Bool {
         return range.length == 0
+    }
+
+    func substring(range: NSRange) -> any iTermString {
+        return _substring(range: range)
+    }
+
+    func externalAttribute(at index: Int) -> iTermExternalAttribute? {
+        let u = styles.get(index: index)
+        return u.externalAttributes
     }
 }

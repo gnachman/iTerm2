@@ -658,6 +658,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     BOOL _xtermMouseReportingEverAllowed;
     NSMutableArray<iTermTmuxOptionMonitor *> *_userTmuxOptionMonitors;
     iTermExpectation *_turdDetector;
+
+    // Holds NSNull or ScreenCharArray. NSNull signals to remove the last line.
+    NSMutableArray *_pendingFilterUpdates;
 }
 
 @synthesize isDivorced = _divorced;
@@ -812,6 +815,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _commandQueue = [[NSMutableArray alloc] init];
         _alertOnMarksinOffscreenSessions = [iTermPreferences boolForKey:kPreferenceKeyAlertOnMarksInOffscreenSessions];
         _pendingPublishRequests = [[NSMutableArray alloc] init];
+        _pendingFilterUpdates = [[NSMutableArray alloc] init];
 
         // This is a placeholder. When the profile is set it will get updated.
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
@@ -1112,6 +1116,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_channelClients release];
     [_channelUID release];
     [_channelParentGuid release];
+    [_pendingFilterUpdates release];
 
     [super dealloc];
 }
@@ -20101,24 +20106,40 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 #pragma mark - iTermFilterDestination
 
-- (void)filterDestinationAppendCharacters:(const screen_char_t *)line
-                                    count:(int)count
-                   externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributeIndex
-                             continuation:(screen_char_t)continuation
-                                 rtlFound:(BOOL)rtlFound {
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState appendScreenChars:line
-                                 length:count
-                 externalAttributeIndex:externalAttributeIndex
-                           continuation:continuation
-                               rtlFound:rtlFound];
-    }];
+- (void)filterDestinationAppendScreenCharArray:(ScreenCharArray *)sca {
+    const BOOL wasEmpty = _pendingFilterUpdates.count == 0;
+    [_pendingFilterUpdates addObject:sca];
+    DLog(@"Add <%@> to pending filter update which now has %@ entries", sca, @(_pendingFilterUpdates.count));
+    if (wasEmpty) {
+        [self scheduleFilterUpdate];
+    }
+}
+
+- (void)scheduleFilterUpdate {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DLog(@"Draining pending filter updates");
+        [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            NSArray<ScreenCharArray *> *scas = [[_pendingFilterUpdates copy] autorelease];
+            [_pendingFilterUpdates removeAllObjects];
+            for (id obj in scas) {
+                ScreenCharArray *sca = [ScreenCharArray castFrom:obj];
+                if (sca) {
+                    [mutableState appendScreenChars:sca.line
+                                             length:sca.length
+                             externalAttributeIndex:sca.eaIndex
+                                       continuation:sca.continuation
+                                           rtlFound:sca.metadata.rtlFound];
+                } else {
+                    [mutableState removeLastLine];
+                }
+            }
+        }];
+    });
 }
 
 - (void)filterDestinationRemoveLastLine {
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState removeLastLine];
-    }];
+    [_pendingFilterUpdates addObject:[NSNull null]];
+    [self scheduleFilterUpdate];
 }
 
 #pragma mark - iTermImmutableColorMapDelegate

@@ -22,14 +22,14 @@ extension iTermMutableString: iTermMutableStringProtocol {
                                      cumulativeCellCount: cellCount)]
         }
     }
-    
+
     @objc(deleteRange:)
     func objcDelete(range: NSRange) {
         delete(range: Range(range)!)
     }
 
     @objc
-    func objReplace(range: NSRange, with replacement: iTermString) {
+    func objcReplace(range: NSRange, with replacement: iTermString) {
         replace(range: Range(range)!, with: replacement)
     }
 

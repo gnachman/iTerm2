@@ -25,6 +25,8 @@ protocol iTermString: AnyObject {
     func buildString(range: NSRange, builder: DeltaStringBuilder)
     func deltaString(range: NSRange) -> DeltaString
     func mutableClone() -> iTermMutableStringProtocol & iTermString
+    // Returns an immutable instance
+    func clone() -> iTermString
     func string(withExternalAttributes eaIndex: iTermExternalAttributeIndexReading?,
                 startingFrom offset: Int) -> any iTermString
     func externalAttributesIndex() -> iTermExternalAttributeIndexReading?
@@ -32,9 +34,14 @@ protocol iTermString: AnyObject {
     func hasEqual(range: NSRange, to chars: UnsafePointer<screen_char_t>) -> Bool
     func usedLength(range: NSRange) -> Int32
     func isEmpty(range: NSRange) -> Bool
+    func substring(range: NSRange) -> iTermString
+    func externalAttribute(at index: Int) -> iTermExternalAttribute?
 }
 
 extension iTermString {
+    func mutableCloneSwift() -> iTermMutableStringProtocolSwift & iTermString {
+        return mutableClone() as! (iTermMutableStringProtocolSwift & iTermString)
+    }
     var _screenCharArray: ScreenCharArray {
         return hydrate(range: fullRange)
     }
@@ -82,6 +89,10 @@ extension iTermString {
         return memcmp(actual.line,
                       chars,
                       range.length * MemoryLayout<screen_char_t>.stride) == 0
+    }
+
+    func _substring(range: NSRange) -> iTermString {
+        return iTermSubString(base: self, range: Range(range)!)
     }
 
     var isEmpty: Bool {

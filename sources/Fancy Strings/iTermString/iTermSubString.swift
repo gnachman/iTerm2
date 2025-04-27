@@ -22,13 +22,14 @@ class iTermSubString: NSObject, iTermString {
             let upper = offset + range.upperBound
             self.range = lower..<upper
         } else {
-            self.base = base
+            // Make totally sure `base` is immutable!
+            self.base = base.clone()
             self.range = range
         }
     }
 
     override var description: String {
-        return "<iTermSubString: cells=\(cellCount) value=\(deltaString(range: fullRange).string)>"
+        return "<iTermSubString: base=\(type(of: base)) @ \(((base as? NSObject)?.it_addressString).d) cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d)>"
     }
 
     func deltaString(range: NSRange) -> DeltaString {
@@ -67,6 +68,10 @@ class iTermSubString: NSObject, iTermString {
         return _mutableClone()
     }
 
+    func clone() -> any iTermString {
+        return self
+    }
+
     func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
         return _string(withExternalAttributes: eaIndex, startingFrom: offset)
     }
@@ -87,5 +92,13 @@ class iTermSubString: NSObject, iTermString {
 
     func isEmpty(range: NSRange) -> Bool {
         return base.isEmpty(range: global(range: range))
+    }
+
+    func substring(range: NSRange) -> any iTermString {
+        return iTermSubString(base: base, range: Range(global(range: range))!)
+    }
+
+    func externalAttribute(at index: Int) -> iTermExternalAttribute? {
+        return base.externalAttribute(at: global(range: NSRange(location: index, length: 1)).lowerBound)
     }
 }

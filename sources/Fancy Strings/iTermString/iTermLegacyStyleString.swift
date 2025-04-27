@@ -24,7 +24,7 @@ class iTermLegacyStyleString: NSObject, iTermString {
     var cellCount: Int { line.count }
 
     override var description: String {
-        return "<iTermLegacyStyleString: cells=\(cellCount) value=\(deltaString(range: fullRange).string)>"
+        return "<iTermLegacyStyleString: cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d)>"
     }
 
     func usedLength(range: NSRange) -> Int32 {
@@ -59,7 +59,7 @@ class iTermLegacyStyleString: NSObject, iTermString {
                  sourceRange: NSRange) {
         line.withUnsafeBufferPointer { ptr in
             let sourcePointer = ptr.baseAddress!.advanced(by: sourceRange.location)
-            msca.mutableLine.update(from: sourcePointer, count: sourceRange.length)
+            msca.mutableLine.advanced(by: destinationIndex).update(from: sourcePointer, count: sourceRange.length)
         }
         if let eaIndex {
             msca.eaIndexCreatingIfNeeded().copy(from: eaIndex,
@@ -120,7 +120,22 @@ class iTermLegacyStyleString: NSObject, iTermString {
         return _mutableClone()
     }
 
+    func clone() -> any iTermString {
+        return self
+    }
+
     func hasEqual(range: NSRange, to chars: UnsafePointer<screen_char_t>) -> Bool {
         return _hasEqual(range: range, to: chars)
+    }
+
+    func substring(range: NSRange) -> any iTermString {
+        return _substring(range: range)
+    }
+
+    func externalAttribute(at index: Int) -> iTermExternalAttribute? {
+        guard let eaIndex else {
+            return nil
+        }
+        return eaIndex[index]
     }
 }

@@ -1364,14 +1364,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 }
 
 - (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
-    const screen_char_t *line = [self.currentGrid screenCharsAtLineNumber:index];
-    const int width = self.width;
-    ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:line
-                                                            length:width
-                                                          metadata:[self.currentGrid immutableMetadataAtLineNumber:index]
-                                                      continuation:line[width]
-                                                          bidiInfo:[self.currentGrid bidiInfoForLine:index]];
-    return array;
+    return [self.currentGrid screenCharArrayAtLine:index];
 }
 
 - (id<iTermExternalAttributeIndexReading>)externalAttributeIndexForLine:(int)y {

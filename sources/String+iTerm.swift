@@ -317,3 +317,18 @@ extension String {
     }
 }
 
+extension String {
+    var trimmingTrailingNulls: Self {
+        var result = self
+        while !result.isEmpty && result.last == "\0" {
+            result.removeLast()
+        }
+        return result
+    }
+}
+
+extension NSString {
+    var trimmingTrailingNulls: String {
+        String(self).trimmingTrailingNulls
+    }
+}

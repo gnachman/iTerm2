@@ -264,25 +264,6 @@ static void DecodeOtherBytes(VT100ByteStreamConsumer *consumer,
     }
 }
 
-// The datap buffer must be two bytes larger than *lenPtr.
-// Returns a string or nil if the array is not well formed UTF-8.
-static NSString* SetReplacementCharInArray(unsigned char* datap, int* lenPtr, int badIndex)
-{
-    // Example: "q?x" with badIndex==1.
-    // 01234
-    // q?x
-    memmove(datap + badIndex + 3, datap + badIndex + 1, *lenPtr - badIndex - 1);
-    // 01234
-    // q?  x
-    const char kUtf8Replacement[] = { 0xEF, 0xBF, 0xBD };
-    memmove(datap + badIndex, kUtf8Replacement, 3);
-    // q###x
-    *lenPtr += 2;
-    return [[[NSString alloc] initWithBytes:datap
-                                     length:*lenPtr
-                                   encoding:NSUTF8StringEncoding] autorelease];
-}
-
 static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
                              VT100Token *token) {
     int consumed = 0;

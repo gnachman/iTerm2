@@ -10,9 +10,16 @@ class iTermRope: NSObject {
     private lazy var stringCache = SubStringCache()
 
     struct Segment {
-        var string: iTermString
-        // Number of cells in string plus the number of cells in preceding segments.
+        // No matter what `string` must be immutable. Although I prefer mutable fields in structs,
+        // keeping this as a let makes it easier to prove that string is immutable (since clone()
+        // is meant to return an immutable copy).
+        let string: iTermString
         var cumulativeCellCount: Int
+
+        init(string: iTermString, cumulativeCellCount: Int) {
+            self.string = string.clone()
+            self.cumulativeCellCount = cumulativeCellCount
+        }
     }
 
     final class Guts: Cloning {
@@ -22,7 +29,14 @@ class iTermRope: NSObject {
 
         func clone() -> Guts {
             let result = Guts()
-            result.segments = segments
+            result.segments = segments.map { segment in
+                if let mut = segment.string as? iTermMutableStringProtocol {
+                    return Segment(string: mut.clone(),
+                                   cumulativeCellCount: segment.cumulativeCellCount)
+                } else {
+                    return segment
+                }
+            }
             result.deletedHeadCellCount = deletedHeadCellCount
             return result
         }
@@ -37,13 +51,10 @@ class iTermRope: NSObject {
         let header = "\(String(describing: type(of: self))): \(it_addressString) " +
                         "cells=\(cellCount) " +
                         "deletedCellCount=\(guts.deletedHeadCellCount) " +
-        "value=\(deltaString(range: fullRange).string.escapingControlCharactersAndBackslash().d)"
+        "value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d)"
         let array = [header] + segmentStrings
-        return "<" + array.joined(separator: "\n") + ">"
-    }
-
-    func clone() -> iTermRope {
-        return iTermRope(self)
+        let separator = segmentStrings.count == 1 ? " " : "\n"
+        return "<" + array.joined(separator: separator) + ">"
     }
 
     override init() {
@@ -57,7 +68,11 @@ class iTermRope: NSObject {
 
     init(_ string: iTermString) {
         super.init()
-        guts.segments = [Segment(string: string, cumulativeCellCount: string.cellCount)]
+        guts.segments = [Segment(string: string.clone(), cumulativeCellCount: string.cellCount)]
+    }
+
+    required init(guts: Guts) {
+        self.guts = guts
     }
 }
 
@@ -83,7 +98,7 @@ extension iTermRope: iTermString {
                 return
             }
             let used = seg.usedLength(range: NSRange(localRange))
-            if used != localRange.count {
+            if used > 0 {
                 found = true
                 sum += used
             }
@@ -137,7 +152,11 @@ extension iTermRope: iTermString {
     }
 
     func mutableClone() -> any iTermMutableStringProtocol & iTermString {
-        return _mutableClone()
+        return iTermMutableString(guts: guts)
+    }
+
+    func clone() -> iTermString {
+        return iTermRope(guts: guts.clone())
     }
 
     func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
@@ -154,6 +173,17 @@ extension iTermRope: iTermString {
 
     func hasEqual(range: NSRange, to chars: UnsafePointer<screen_char_t>) -> Bool {
         return _hasEqual(range: range, to: chars)
+    }
+
+    func substring(range: NSRange) -> any iTermString {
+        return _substring(range: range)
+    }
+
+    func externalAttribute(at index: Int) -> iTermExternalAttribute? {
+        let segmentIndex = indexOfSegment(for: index)
+        let segment = guts.segments[segmentIndex]
+        let segmentStart = segment.cumulativeCellCount - segment.string.cellCount
+        return segment.string.externalAttribute(at: index - segmentStart)
     }
 }
 

@@ -301,6 +301,14 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         }
     }
     DLog(@"Done sending pending publish requests. Queue size is %@", @(_pendingPublishRequests.count));
+    if (_pendingPublishRequests.count) {
+        DLog(@"Schedule another update");
+        __weak __typeof(self) weakSelf = self;
+        _havePendingPublish = YES;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf sendPendingPublishRequests];
+        });
+    }
 }
 
 #pragma mark - AITerm

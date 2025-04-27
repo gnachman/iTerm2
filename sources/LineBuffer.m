@@ -844,6 +844,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return [block rawLineAtWrappedLineOffset:remainder width:width];
 }
 
+- (ScreenCharArray * _Nonnull)rawLineWithMetadataAtWrappedLine:(int)lineNum width:(int)width {
+    int remainder = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
+    return [block rawLineWithMetadataAtWrappedLineOffset:remainder width:width];
+}
+
 - (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
     if (count <= 0) {
         return @[];
@@ -1300,6 +1306,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                                               toX:&x
                                               toY:&y];
                     if (isOk) {
+                        y += yoffset;
                         [intermediate addCoordinate:VT100GridCoordMake(x, y)
                                         forPosition:positionToConvert + passed + length - 1];
                     } else {

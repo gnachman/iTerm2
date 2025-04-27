@@ -82,6 +82,13 @@ func iTermUsedLength(chars: UnsafePointer<screen_char_t>, count: Int32) -> Int32
 
 @objc
 extension iTermLegacyMutableString: iTermLegacyString {
+    func externalAttribute(at index: Int) -> iTermExternalAttribute? {
+        guard let eaIndex else {
+            return nil
+        }
+        return eaIndex[index]
+    }
+
     var eaIndex: iTermExternalAttributeIndexReading? {
         eaIndex(createIfNeeded: false)
     }
@@ -123,7 +130,7 @@ extension iTermLegacyMutableString: iTermLegacyString {
                  sourceRange: NSRange) {
         msca.copy(sourceRange, from: sca, destinationIndex: Int32(destinationIndex))
     }
-    
+
     func hydrate(into buffer: UnsafeMutablePointer<screen_char_t>,
                  eaIndex: iTermExternalAttributeIndex?,
                  offset: Int32,
@@ -150,6 +157,10 @@ extension iTermLegacyMutableString: iTermLegacyString {
         result.append(string: self)
         return result
     }
+    
+    func clone() -> iTermString {
+        return iTermLegacyStyleString(chars: sca.line, count: Int(sca.length), eaIndex: sca.eaIndex)
+    }
 
     func externalAttributesIndex() -> iTermExternalAttributeIndexReading? {
         sca.eaIndex
@@ -162,6 +173,10 @@ extension iTermLegacyMutableString: iTermLegacyString {
     func hasEqual(range: NSRange, to chars: UnsafePointer<screen_char_t>) -> Bool {
         return _hasEqual(range: range, to: chars)
     }
+
+    func substring(range: NSRange) -> any iTermString {
+        return _substring(range: range)
+    }
 }
 
 @objc
@@ -171,7 +186,7 @@ extension iTermLegacyMutableString: iTermMutableStringProtocol {
         sca.delete(range)
     }
 
-    @objc func objReplace(range: NSRange, with replacement: iTermString) {
+    @objc func objcReplace(range: NSRange, with replacement: iTermString) {
         replace(range: Range(range)!, with: replacement)
     }
 

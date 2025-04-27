@@ -50,6 +50,7 @@ static NSString *const kGridSizeKey = @"Size";
     NSMutableData *resultLine_;
     screen_char_t savedDefaultChar_;
     NSTimeInterval _allDirtyTimestamp;
+#warning TODO: Move this into iTermLineString so it can generate proper ScreenCharArray's'
     NSMutableArray *_bidiInfo;  // iTermBidiDisplayInfo or NSNull
     BOOL _bidiDirty;  // Did _bidiInfo change?
 }
@@ -123,12 +124,16 @@ static NSString *const kGridSizeKey = @"Size";
                 iTermLegacyStyleString *legacyString = [[iTermLegacyStyleString alloc] initWithChars:chars
                                                                                                count:count
                                                                                              eaIndex:nil];
-                return [[iTermMutableLineString alloc] initWithContent:[legacyString mutableClone]
-                                                                   eol:chars[count].code
-                                                          continuation:chars[count]
-                                                              metadata:(iTermLineStringMetadata){}];
-
+                iTermMutableLineString *mls = [[iTermMutableLineString alloc] initWithContent:[legacyString mutableClone]
+                                                                                          eol:chars[count].code
+                                                                                 continuation:chars[count]
+                                                                                     metadata:(iTermLineStringMetadata){}];
+                [mls setContentSize:size_.width];
+                return mls;
             }] mutableCopy];
+#if DEBUG
+            [self sanityCheck];
+#endif
         } else {
             return nil;
         }
@@ -178,6 +183,14 @@ static NSString *const kGridSizeKey = @"Size";
     }
     return self;
 }
+
+#if DEBUG
+- (void)sanityCheck {
+    for (iTermMutableLineString *line in _lines) {
+        assert(line.content.cellCount == size_.width);
+    }
+}
+#endif
 
 - (iTermMutableLineString *)mutableLineStringAtLineNumber:(int)lineNumber {
     if (lineNumber >= 0 && lineNumber < size_.height) {
@@ -245,8 +258,16 @@ NS_INLINE const screen_char_t *VT100GridScreenCharsAtLine(VT100Grid *self, int l
     return [[[self legacyStringForLine:lineNumber] screenCharArray] line];
 }
 
+- (ScreenCharArray *)screenCharArrayAtLine:(int)lineNumber {
+    return [[self lineStringAtLineNumber:lineNumber] screenCharArrayWithBidi:[[self bidiInfoForLine:lineNumber] nilIfNull]];
+}
+
 - (const screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
     return VT100GridMutableScreenCharsAtLine(self, lineNumber);
+}
+
+- (screen_char_t)continuationForLine:(int)lineNumber {
+    return [[self lineStringAtLineNumber:lineNumber] continuation];
 }
 
 - (screen_char_t *)mutableScreenCharsAtLineNumber:(int)lineNumber {
@@ -1110,6 +1131,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         const int j = [self indexOfLineNumber:i];
         _lines[j] = [sourceMLS mutableClone];
     }
+    [self sanityCheck];
     _hasChanged = YES;
     [otherGrid copyMiscellaneousStateTo:self];
     [otherGrid resetBidiDirty];
@@ -1121,6 +1143,129 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 
 - (int)scrollRight {
     return VT100GridRangeMax(scrollRegionCols_);
+}
+
+#warning TODO: Test all the DWC edge cases in this method
+- (int)appendOptimizedStringAtCursor:(id<iTermString>)string
+             scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
+                 unlimitedScrollback:(BOOL)unlimitedScrollback
+             useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+                            rtlFound:(BOOL)rtlFound {
+    int numDropped = 0;
+    assert(string);
+
+    const int length = [string cellCount];
+    const screen_char_t defaultChar = [self defaultChar];
+    int lastY = -1;
+    const int width = size_.width;
+
+    for (int idx = 0; idx < length; ) {
+        // see if next char is the right half of a DWC
+        const BOOL haveLeadingDWC = (idx + 1 < length &&
+                                     ScreenCharIsDWC_RIGHT([string characterAt:idx + 1]));
+        const int widthOffset = haveLeadingDWC ? 1 : 0;
+
+        // wrap if at right edge
+        if (cursor_.x >= width - widthOffset) {
+            iTermMutableLineString *mls = [self mutableLineStringAtLineNumber:cursor_.y];
+            BOOL splitDwc = (cursor_.x == width - 1);
+            mls.continuation = defaultChar;
+            mls.eol = splitDwc ? EOL_DWC : EOL_SOFT;
+            if (splitDwc) {
+                [mls setDWCSkip];
+            }
+
+            self.cursorX = 0;
+            numDropped += [self moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
+                                                         unlimitedScrollback:unlimitedScrollback
+                                                     useScrollbackWithRegion:useScrollbackWithRegion
+                                                                  willScroll:nil
+                                                            sentToLineBuffer:nil];
+        }
+
+        const int spaceRemaining = width - cursor_.x;
+        const int charsRemaining = length - idx;
+        BOOL wrapDwc = NO;
+        int  newx;
+
+        if (spaceRemaining <= charsRemaining) {
+            // avoid splitting a DWC across lines
+            if (idx + spaceRemaining < length &&
+                ScreenCharIsDWC_RIGHT([string characterAt:idx + spaceRemaining])) {
+                wrapDwc = YES;
+                newx = width - 1;
+            } else {
+                newx = width;
+            }
+        } else {
+            newx = cursor_.x + charsRemaining;
+        }
+
+        const int charsToInsert = newx - cursor_.x;
+        if (charsToInsert <= 0) {
+            break;
+        }
+
+        const int lineNumber = cursor_.y;
+        iTermMutableLineString *mls =
+            [self mutableLineStringAtLineNumber:lineNumber];
+        if (rtlFound && lineNumber != lastY) {
+            lastY = lineNumber;
+            mls.rtlFound = rtlFound;
+        }
+
+
+        // clear any stray DWC right-half at the insertion point
+        if (ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
+            [mls eraseDWCRightAtIndex:cursor_.x currentDate:_currentDate];
+            _hasChanged = YES;
+        }
+
+        // replace the run in one go (this also updates external attributes)
+        NSRange destRange = NSMakeRange(cursor_.x, charsToInsert);
+        NSRange srcRange  = NSMakeRange(idx, charsToInsert);
+        id<iTermString> substr = [string substringWithRange:srcRange];
+        [mls.mutableContent replaceRange:destRange with:substr];
+
+        [self markCharsDirty:YES
+                  inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
+                          to:VT100GridCoordMake(cursor_.x + charsToInsert - 1, lineNumber)];
+
+        // handle DWC wrap-around
+        if (wrapDwc) {
+            if (cursor_.x + charsToInsert == width - 1) {
+                [mls setDWCSkip];
+            } else {
+                [mls eraseDWCRightAtIndex:cursor_.x currentDate:_currentDate];
+            }
+        }
+
+        // advance cursor and index
+        self.cursorX = newx;
+        idx += charsToInsert;
+
+        // clean up any leftover DWC right-half
+        if (cursor_.x < width - 1 &&
+            ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
+            [mls eraseDWCRightAtIndex:cursor_.x currentDate:_currentDate];
+        }
+
+        // fix split-DWC state at end of line
+        if (mls.eol == EOL_DWC &&
+            !ScreenCharIsDWC_SKIP(mls.lastCharacter)) {
+            mls.eol = EOL_SOFT;
+        }
+    }
+
+    assert(numDropped >= 0);
+    return numDropped;
+}
+
+- (BOOL)canUseOptimizedStringFastPath {
+    if (useScrollRegionCols_) {
+        return NO;
+    }
+    return YES;
 }
 
 - (int)appendCharsAtCursor:(const screen_char_t *)buffer
@@ -1139,7 +1284,6 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     int charsToInsert;
     int newx;
     int leftMargin, rightMargin;
-    screen_char_t *aLine;
     const int scrollLeft = self.scrollLeft;
     const int scrollRight = self.scrollRight;
     const screen_char_t defaultChar = [self defaultChar];
@@ -2052,6 +2196,13 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                              self.bottomMargin - self.topMargin + 1);
 }
 
+- (NSString *)dumpString {
+    return [[[NSArray sequenceWithRange:NSMakeRange(0, size_.height)] mapWithBlock:^id _Nullable(NSNumber * _Nonnull anObject) {
+        int i = anObject.intValue;
+        return [NSString stringWithFormat:@"Line %d: %@", i, [_lines[i] description]];
+    }] componentsJoinedByString:@"\n"];
+}
+
 // . = null cell
 // ? = non-ascii
 // - = righthalf of dwc
@@ -2224,12 +2375,17 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     [self setCharsFrom:pos to:VT100GridCoordMake(pos.x + n - 1, pos.y) toChar:c externalAttributes:attrs];
 }
 
-- (NSArray *)orderedLines {
+- (NSArray<NSData *> *)orderedScreenCharDataWithAppendedContinuationMarks {
     NSMutableArray *array = [NSMutableArray array];
     for (int i = 0; i < size_.height; i++) {
         id<iTermLineStringReading> mls = [self lineStringAtLineNumber:i];
-#warning TODO: Should this have EOLs? Does it?
-        [array addObject:mls.screenCharsData];
+        NSData *data = [mls screenCharsDataWithEOL:YES];
+        if (data.length != (size_.width + 1) * sizeof(screen_char_t)) {
+            data = [mls screenCharsDataWithEOL:YES];
+        }
+        ITAssertWithMessage(data.length == (size_.width + 1) * sizeof(screen_char_t),
+                            @"Wrong data size for %@", mls);
+        [array addObject:data];
     }
     return array;
 }
@@ -2306,7 +2462,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         return anObject.encodedMetadata;
     }];
     NSArray<NSData *> *lines = [[NSArray sequenceWithRange:NSMakeRange(0, size_.height)] mapWithBlock:^id(NSNumber *i) {
-        return [self lineStringAtLineNumber:i.intValue].screenCharsData;
+        return [[self lineStringAtLineNumber:i.intValue] screenCharsDataWithEOL:YES];
     }];
     NSArray<NSData *> *legacyLines = [lines mapEnumeratedWithBlock:^id(NSUInteger i, NSData *modernData, BOOL *stop) {
         return [modernData legacyScreenCharArrayWithExternalAttributes:[self externalAttributesOnLine:i createIfNeeded:NO]];
@@ -2601,6 +2757,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         if (withSideEffects) {
             [self.delegate gridDidResize];
         }
+#if DEBUG
+        [self sanityCheck];
+#endif
     }
 }
 
@@ -2865,6 +3024,9 @@ static void DumpBuf(screen_char_t* p, int n) {
     }];
     theCopy->screenTop_ = screenTop_;
     [self copyMiscellaneousStateTo:theCopy];
+#if DEBUG
+        [self sanityCheck];
+#endif
 
     return theCopy;
 }
