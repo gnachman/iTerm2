@@ -2368,7 +2368,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
 
         const screen_char_t *line = [self.currentGrid screenCharsAtLineNumber:cursorY - 1];
-        const unichar c = line[self.width].code;
+        const unichar c = [self.currentGrid continuationForLine:cursorY - 1].code;
         return (c == EOL_SOFT || c == EOL_DWC);
     }
 
@@ -5302,8 +5302,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             screen_char_t *dest = [self.altGrid mutableScreenCharsAtLineNumber:o];
             memcpy(dest, line, MIN(self.altGrid.size.width, length) * sizeof(screen_char_t));
             const BOOL isPartial = (length > self.altGrid.size.width);
-            dest[self.altGrid.size.width] = dest[self.altGrid.size.width - 1];  // TODO: This is probably wrong?
-            dest[self.altGrid.size.width].code = (isPartial ? EOL_SOFT : EOL_HARD);
+            screen_char_t continuation = dest[self.altGrid.size.width - 1];
+            continuation.code = (isPartial ? EOL_SOFT : EOL_HARD);
+            [self.altGrid setContinuationCharacterOnLine:o to:continuation];
             length -= self.altGrid.size.width;
             line += self.altGrid.size.width;
             o++;
