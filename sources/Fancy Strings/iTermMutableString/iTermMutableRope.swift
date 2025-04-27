@@ -1,18 +1,18 @@
 //
-//  iTermMutableString.swift
+//  iTermMutableRope.swift
 //  StyleMap
 //
 //  Created by George Nachman on 4/21/25.
 //
 
 @objc
-class iTermMutableString: iTermRope {
+class iTermMutableRope: iTermRope {
 }
 
 // MARK: — Mutation APIs
 
 @objc
-extension iTermMutableString: iTermMutableStringProtocol {
+extension iTermMutableRope: iTermMutableStringProtocol {
     func erase(defaultChar: screen_char_t) {
         let array = Array(Array(repeating: defaultChar, count: cellCount))
         array.withUnsafeBytes { urbp in
@@ -94,7 +94,7 @@ extension iTermMutableString: iTermMutableStringProtocol {
     }
 }
 
-extension iTermMutableString: iTermMutableStringProtocolSwift {
+extension iTermMutableRope: iTermMutableStringProtocolSwift {
     /// Delete the given [cell‑index] range from the rope
     func delete(range: Range<Int>) {
         if range.count == 0 {
@@ -198,7 +198,7 @@ extension iTermMutableString: iTermMutableStringProtocolSwift {
 
 // MARK: - Utilities
 
-private extension iTermMutableString {
+private extension iTermMutableRope {
     func globalBase(segmentIndex: Int) -> Int {
         return segmentIndex == 0
             ? guts.deletedHeadCellCount

@@ -46,8 +46,8 @@ extension iTermString {
         return hydrate(range: fullRange)
     }
 
-    func _mutableClone() -> iTermMutableString {
-        let result = iTermMutableString()
+    func _mutableClone() -> iTermMutableRope {
+        let result = iTermMutableRope()
         result.append(string: self)
         return result
     }

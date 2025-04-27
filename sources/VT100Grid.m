@@ -2639,9 +2639,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     for (int i = 0; i < size.height; i++) {
         iTermUniformString *u = [[iTermUniformString alloc] initWithCharacter:_defaultChar
                                                                         count:size.width];
-        iTermMutableString *ms = [[iTermMutableString alloc] init];
-        [ms appendString:u];
-        [lines addObject:[[iTermMutableLineString alloc] initWithContent:ms
+        iTermMutableRope *rope = [[iTermMutableRope alloc] init];
+        [rope appendString:u];
+        [lines addObject:[[iTermMutableLineString alloc] initWithContent:rope
                                                                      eol:EOL_HARD
                                                             continuation:_defaultChar
                                                                 metadata:(iTermLineStringMetadata){}]];
