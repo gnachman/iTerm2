@@ -2457,6 +2457,10 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     [self mutableLineStringAtLineNumber:line].eol = code;
 }
 
+- (void)setContinuationCharacterOnLine:(int)line to:(screen_char_t)continuation {
+    [self mutableLineStringAtLineNumber:line].continuation = continuation;
+}
+
 - (void)encode:(id<iTermEncoderAdapter>)encoder {
     NSArray<NSArray *> *metadata = [[self orderedLineInfos] mapWithBlock:^id(VT100Metadata *anObject) {
         return anObject.encodedMetadata;

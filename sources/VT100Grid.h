@@ -376,6 +376,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (void)moveCursorToLeftMargin;
 
 - (void)setContinuationMarkOnLine:(int)line to:(unichar)code ;
+- (void)setContinuationCharacterOnLine:(int)line to:(screen_char_t)continuation;
 
 // TODO: write a test for this
 - (void)insertChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)attrs at:(VT100GridCoord)pos times:(int)num;
