@@ -29,6 +29,10 @@ class iTermLegacyMutableString: NSObject {
         sca.setCharacter(character, in: fullRange)
     }
 
+   required init(_ msca: MutableScreenCharArray) {
+        self.sca = msca
+    }
+
     override var description: String {
         return "<iTermLegacyMutableString: \(it_addressString) sca=\(sca.description)>"
     }
@@ -82,6 +86,28 @@ func iTermUsedLength(chars: UnsafePointer<screen_char_t>, count: Int32) -> Int32
 
 @objc
 extension iTermLegacyMutableString: iTermLegacyString {
+    func isEqual(to string: any iTermString) -> Bool {
+        if cellCount != string.cellCount {
+            return false
+        }
+        return isEqual(lhsRange: fullRange, toString: string, startingAtIndex: 0)
+    }
+
+    // This implements:
+    // return self[lhsRange] == rhs[startIndex..<(startIndex+lhsRange.count)
+    func isEqual(lhsRange: NSRange, toString rhs: iTermString, startingAtIndex startIndex: Int) -> Bool {
+        if cellCount < NSMaxRange(lhsRange) || rhs.cellCount < startIndex + lhsRange.length {
+            return false
+        }
+        if lhsRange == fullRange && startIndex == 0 {
+            return screenCharArray.isEqual(to: rhs.screenCharArray)
+        }
+        let lhsSub = substring(range: lhsRange)
+        let rhsSub = rhs.substring(range: NSRange(location: startIndex,
+                                                  length: lhsRange.length))
+        return lhsSub.screenCharArray.isEqual(rhsSub.screenCharArray)
+    }
+
     func externalAttribute(at index: Int) -> iTermExternalAttribute? {
         guard let eaIndex else {
             return nil
@@ -105,6 +131,33 @@ extension iTermLegacyMutableString: iTermLegacyString {
     func usedLength(range: NSRange) -> Int32 {
         return iTermUsedLength(chars: sca.line.advanced(by: range.location),
                                count: Int32(range.length))
+    }
+
+    func stringBySettingRTL(in range: NSRange,
+                            rtlIndexes: IndexSet?) -> any iTermString {
+        let copy = sca.mutableSubArray(with: range)
+        let line = copy.mutableLine
+        for i in 0..<Int(copy.length) {
+            if let rtlIndexes {
+                line[i].rtlStatus = rtlIndexes.contains(i) ? .RTL : .LTR
+            } else {
+                line[i].rtlStatus = .unknown
+            }
+        }
+        return Self(copy)
+    }
+
+    func doubleWidthIndexes(range nsrange: NSRange,
+                            rebaseTo newBaseIndex: Int) -> IndexSet {
+        var indexSet = IndexSet()
+        let line = sca.line
+        let offset = newBaseIndex - nsrange.location
+        for i in Range(nsrange)! {
+            if ScreenCharIsDWC_RIGHT(line[i]) {
+                indexSet.insert(i + offset)
+            }
+        }
+        return indexSet
     }
 
     func isEmpty(range: NSRange) -> Bool {
@@ -152,12 +205,12 @@ extension iTermLegacyMutableString: iTermLegacyString {
         return _deltaString(range: range)
     }
 
-    func mutableClone() -> any iTermMutableStringProtocol & iTermString {
+    func mutableClone() -> any iTermMutableStringProtocol {
         let result = iTermLegacyMutableString(width: 0)
         result.append(string: self)
         return result
     }
-    
+
     func clone() -> iTermString {
         return iTermLegacyStyleString(chars: sca.line, count: Int(sca.length), eaIndex: sca.eaIndex)
     }
@@ -176,6 +229,17 @@ extension iTermLegacyMutableString: iTermLegacyString {
 
     func substring(range: NSRange) -> any iTermString {
         return _substring(range: range)
+    }
+
+    @objc func setRTLIndexes(_ indexSet: IndexSet) {
+        let line = sca.mutableLine
+
+        for (range, isMember) in indexSet.membership(in: 0..<cellCount) {
+            let value = isMember ? RTLStatus.RTL : RTLStatus.LTR
+            for i in range {
+                line[i].rtlStatus = value
+            }
+        }
     }
 }
 
@@ -196,6 +260,13 @@ extension iTermLegacyMutableString: iTermMutableStringProtocol {
 
     @objc func deleteFromStart(_ count: Int) {
         sca.delete(NSRange(location: 0, length: count))
+    }
+
+    func resetRTLStatus() {
+        let line = sca.mutableLine
+        for i in 0..<Int(sca.length) {
+            line[i].rtlStatus = .unknown
+        }
     }
 
     @objc func deleteFromEnd(_ count: Int) {

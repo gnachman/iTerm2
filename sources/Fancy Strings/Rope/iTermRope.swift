@@ -88,6 +88,28 @@ extension iTermRope: NSMutableCopying, NSCopying {
 
 @objc
 extension iTermRope: iTermString {
+    func isEqual(to string: iTermString) -> Bool {
+        if cellCount != string.cellCount {
+            return false
+        }
+        return isEqual(lhsRange: fullRange, toString: string, startingAtIndex: 0)
+    }
+
+    // This implements:
+    // return self[lhsRange] == rhs[startIndex..<(startIndex+lhsRange.count)
+    func isEqual(lhsRange: NSRange, toString rhs: iTermString, startingAtIndex startIndex: Int) -> Bool {
+        for (i, substr, localRange) in segmentIterator(inRange: Range(lhsRange)!) {
+            let global = globalSegmentRange(index: i)
+            if !substr.isEqual(lhsRange: NSRange(localRange),
+                               toString: rhs,
+                               startingAtIndex: global.lowerBound - lhsRange.lowerBound + startIndex) {
+                return false
+            }
+        }
+        return true
+    }
+
+
     func usedLength(range: NSRange) -> Int32 {
         // Find the last segment that is not all used
         var found = false
@@ -104,6 +126,39 @@ extension iTermRope: iTermString {
             }
         }
         return sum
+    }
+
+    func stringBySettingRTL(in range: NSRange,
+                            rtlIndexes: IndexSet?) -> iTermString {
+        let temp = Guts()
+        var count = 0
+        enumerateSegments(inRange: Range(range)!) { i, substring, localRange in
+            count += localRange.count
+            let globalRange = globalSegmentRange(index: i)
+            var subset = rtlIndexes?[globalRange]
+            subset?.shift(startingAt: 0, by: -globalRange.lowerBound)
+            temp.segments.append(
+                Segment(
+                    string: substring.stringBySettingRTL(
+                        in: NSRange(localRange),
+                        rtlIndexes: subset),
+                    cumulativeCellCount: count))
+        }
+        return Self(guts: temp)
+    }
+
+    func doubleWidthIndexes(range nsrange: NSRange,
+                            rebaseTo newBaseIndex: Int) -> IndexSet {
+        var result = IndexSet()
+        var offset = 0
+        enumerateSegments(inRange: Range(nsrange)!) { i, string, localRange in
+            let segment = guts.segments[i]
+            let part = string.doubleWidthIndexes(range: NSRange(localRange),
+                                                 rebaseTo: offset)
+            offset += localRange.count
+            result.formUnion(part)
+        }
+        return result
     }
 
     func isEmpty(range: NSRange) -> Bool {
@@ -151,7 +206,7 @@ extension iTermRope: iTermString {
         }
     }
 
-    func mutableClone() -> any iTermMutableStringProtocol & iTermString {
+    func mutableClone() -> any iTermMutableStringProtocol {
         return iTermMutableRope(guts: guts)
     }
 

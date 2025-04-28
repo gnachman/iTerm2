@@ -278,6 +278,15 @@ class BidiDisplayInfoObjc: NSObject {
                 Keys.paragraphIsRTL.rawValue: guts.paragraphIsRTL ]
     }
 
+    @objc(initWithDeltaString:usedCount:)
+    init?(deltaString: DeltaString, usedCount: Int) {
+        if let guts = BidiDisplayInfo(deltaString: deltaString, usedCount: usedCount) {
+            self.guts = guts
+        } else {
+            return nil
+        }
+    }
+
     @objc(initWithDictionary:)
     init?(_ dictionary: NSDictionary) {
         guard iTermAdvancedSettingsModel.bidi() else {
@@ -692,6 +701,15 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         }
     }
 
+    init?(deltaString: DeltaString, usedCount: Int) {
+        let attributedString = NSAttributedString(string: deltaString.unsafeString as String)
+        (lut, rtlIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
+                                                            deltas: deltaString.deltas,
+                                                            count: usedCount)
+        if rtlIndexes.isEmpty {
+            return nil
+        }
+    }
     private static func pad(lut: [Int32], width: Int32, paragraphIsRTL: Bool) -> [Int32] {
         let baseLength = Int32(lut.count)
         precondition(width > baseLength)

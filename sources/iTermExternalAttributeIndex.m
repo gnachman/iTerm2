@@ -339,6 +339,40 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     }];
 }
 
+- (BOOL)isEqualToExternalAttributeIndex:(id<iTermExternalAttributeIndexReading>)other {
+    if (other == nil && self.attributes.count == 0) {
+        return YES;
+    }
+    NSMutableSet<NSNumber *> *keys = [NSMutableSet setWithArray:self.attributes.allKeys];
+    [keys addObjectsFromArray:other.attributes.allKeys];
+    for (NSNumber *key in keys) {
+        iTermExternalAttribute *lhs = self.attributes[key];
+        iTermExternalAttribute *rhs = self.attributes[key];
+        if (lhs) {
+            if (![lhs isEqualToExternalAttribute:rhs]) {
+                return NO;
+            }
+        } else {
+            if (![rhs isEqualToExternalAttribute:lhs]) {
+                return NO;
+            }
+        }
+    }
+    return YES;
+}
+
++ (BOOL)externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)lhs
+                isEqualToIndex:(id<iTermExternalAttributeIndexReading>)rhs {
+    if (lhs == nil && rhs == nil) {
+        return YES;
+    }
+    if (lhs) {
+        return [lhs isEqualToExternalAttributeIndex:rhs];
+    } else {
+        return [rhs isEqualToExternalAttributeIndex:lhs];
+    }
+}
+
 - (void)setAttributes:(iTermExternalAttribute *)attributes at:(int)start count:(int)count {
     for (int i = 0; i < count; i++) {
         _attributes[@(i + start + _offset)] = attributes;

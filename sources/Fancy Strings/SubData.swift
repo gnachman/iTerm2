@@ -56,3 +56,18 @@ extension SubData: Sequence {
     }
 }
 
+
+extension SubData: Equatable {
+    static func ==(lhs: SubData, rhs: SubData) -> Bool {
+        if lhs.range.count != rhs.range.count {
+            return false
+        }
+        return lhs._data.withUnsafeBytes { (urbp_l: UnsafeRawBufferPointer) in
+            return rhs._data.withUnsafeBytes { (urbp_r: UnsafeRawBufferPointer) in
+                return memcmp(urbp_l.baseAddress!.advanced(by: lhs.range.lowerBound),
+                              urbp_r.baseAddress!.advanced(by: rhs.range.lowerBound),
+                              lhs.range.count) == 0
+            }
+        }
+    }
+}

@@ -3086,6 +3086,7 @@
 		A6A723602DB86B0D00A8115D /* iTermUniformString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A7235F2DB86B0400A8115D /* iTermUniformString.swift */; };
 		A6A723652DBAE1F300A8115D /* VT100ByteStream.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A723642DBAE1F100A8115D /* VT100ByteStream.h */; };
 		A6A7236A2DBD8DC200A8115D /* NotificationCenter+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723692DBD8DBC00A8115D /* NotificationCenter+iTerm.swift */; };
+		A6A723A92DC010B400A8115D /* SubArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A723A82DC010B300A8115D /* SubArray.swift */; };
 		A6A72C4D27C7F660002E4CCA /* iTermPathFinder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F718C02265AF1D0053488E /* iTermPathFinder.m */; };
 		A6A73D3827C7F96C002E4CCA /* NSArray+CommonAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A73D3627C7F96C002E4CCA /* NSArray+CommonAdditions.h */; };
 		A6A73D3927C7F96C002E4CCA /* NSArray+CommonAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A73D3727C7F96C002E4CCA /* NSArray+CommonAdditions.m */; };
@@ -7359,6 +7360,7 @@
 		A6A7235F2DB86B0400A8115D /* iTermUniformString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermUniformString.swift; sourceTree = "<group>"; };
 		A6A723642DBAE1F100A8115D /* VT100ByteStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ByteStream.h; sourceTree = "<group>"; };
 		A6A723692DBD8DBC00A8115D /* NotificationCenter+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationCenter+iTerm.swift"; sourceTree = "<group>"; };
+		A6A723A82DC010B300A8115D /* SubArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubArray.swift; sourceTree = "<group>"; };
 		A6A73D3627C7F96C002E4CCA /* NSArray+CommonAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSArray+CommonAdditions.h"; sourceTree = "<group>"; };
 		A6A73D3727C7F96C002E4CCA /* NSArray+CommonAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSArray+CommonAdditions.m"; sourceTree = "<group>"; };
 		A6A73D3B27C7F9F0002E4CCA /* iTermPidinfoDebugLogging.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPidinfoDebugLogging.m; sourceTree = "<group>"; };
@@ -11917,6 +11919,7 @@
 		A6A7230F2DB7153C00A8115D /* Fancy Strings */ = {
 			isa = PBXGroup;
 			children = (
+				A6A723A82DC010B300A8115D /* SubArray.swift */,
 				A6A723682DBC155100A8115D /* Rope */,
 				A6A723672DBC152B00A8115D /* iTermMutableString */,
 				A6A723662DBC14EE00A8115D /* iTermString */,
@@ -11948,7 +11951,6 @@
 			isa = PBXGroup;
 			children = (
 				A6A7235D2DB7363B00A8115D /* iTermLegacyMutableString.swift */,
-				A6A723052DB7153C00A8115D /* iTermMutableRope.swift */,
 				A6A7235B2DB7362B00A8115D /* iTermMutableStringProtocol.swift */,
 			);
 			path = iTermMutableString;
@@ -11958,6 +11960,7 @@
 			isa = PBXGroup;
 			children = (
 				A6A723072DB7153C00A8115D /* iTermRope.swift */,
+				A6A723052DB7153C00A8115D /* iTermMutableRope.swift */,
 			);
 			path = Rope;
 			sourceTree = "<group>";
@@ -17100,6 +17103,7 @@
 				A62841572CE28BA200D0796B /* iTermWordExtractor.m in Sources */,
 				A6E2B49329F99550002737AD /* CommandParser.swift in Sources */,
 				A60E045A26DD537B00DD162B /* AsyncFilter.swift in Sources */,
+				A6A723A92DC010B400A8115D /* SubArray.swift in Sources */,
 				A6153D5521F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m in Sources */,
 				A67960D41F81FCBB008A42BC /* iTermCursorGuideRenderer.m in Sources */,
 				A692666A210A2FEA00A980C7 /* iTermTemporaryDoubleBufferedGridController.m in Sources */,

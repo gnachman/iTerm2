@@ -1,14 +1,14 @@
 /// Yet another interval map. This uses runlength encoding and has fast append, delete from head, and delete from tail.
-struct SegmentMap<Payload: Equatable> {
+struct SegmentMap<Payload: Equatable>: Equatable {
     // MARK: - Nested Types
 
-    struct Run {
+    struct Run: Equatable {
         var count: Int
         var payload: Payload
         var cumulativeCount: Int
     }
 
-    struct Block {
+    struct Block: Equatable {
         var basePrimary: Int
         var runs: [Run]
 
@@ -76,11 +76,13 @@ struct SegmentMap<Payload: Equatable> {
     /// Returns an iterator over (payload, count) sub‑runs within the given global range.
     func runIterator(in globalRange: Range<Int>) -> AnyIterator<(payload: Payload, count: Int)> {
         var currentIndex = globalRange.lowerBound
-        return AnyIterator {
-            guard currentIndex < globalRange.upperBound else { return nil }
+        return AnyIterator { () -> (payload: Payload, count: Int)? in
+            guard currentIndex < globalRange.upperBound else {
+                return nil
+            }
             let (payload, remainingInRun) = self.getRun(at: currentIndex)
             let remainingInRange = globalRange.upperBound - currentIndex
-            let emitCount = min(remainingInRun, remainingInRange)
+            let emitCount = Swift.min(remainingInRun, remainingInRange)
             let result = (payload: payload, count: emitCount)
             currentIndex += emitCount
             return result
@@ -172,5 +174,54 @@ struct SegmentMap<Payload: Equatable> {
             )
         }
         blocks.append(lastBlock)
+    }
+
+    /// Returns a new map containing only the elements in `subrange`,
+    /// re-indexed to start at zero.
+    subscript(_ subrange: Range<Int>) -> SegmentMap<Payload> {
+        precondition(
+            subrange.lowerBound >= 0 && subrange.upperBound <= length,
+            "range out of bounds"
+        )
+        if subrange.lowerBound == 0 && subrange.upperBound == length {
+            return self
+        }
+        var slice = SegmentMap<Payload>()
+        for (payload, count) in runIterator(in: subrange) {
+            slice.append(count: count,
+                         payload: payload)
+        }
+        return slice
+    }
+}
+
+extension SegmentMap: Sequence {
+    typealias Element = (payload: Payload, count: Int)
+
+    func makeIterator() -> AnyIterator<Element> {
+        return runIterator(in: 0..<length)
+    }
+}
+
+extension SegmentMap {
+    func map(_ transform: (Payload) -> Payload) -> SegmentMap<Payload> {
+        var result = SegmentMap<Payload>()
+        for (payload, count) in runIterator(in: 0..<length) {
+            result.append(count: count, payload: transform(payload))
+        }
+        return result
+    }
+
+    func flatMap(_ transform: (Payload, Int, Int) -> ([(Payload, Int)])) -> SegmentMap<Payload> {
+        var result = SegmentMap<Payload>()
+        var i = 0
+        for (payload, count) in runIterator(in: 0..<length) {
+            let newSegments = transform(payload, count, i)
+            i += count
+            for (newPayload, newCount) in newSegments {
+                result.append(count: newCount, payload: newPayload)
+            }
+        }
+        return result
     }
 }

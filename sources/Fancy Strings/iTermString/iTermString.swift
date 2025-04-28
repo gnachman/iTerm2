@@ -24,7 +24,7 @@ protocol iTermString: AnyObject {
                  sourceRange: NSRange)
     func buildString(range: NSRange, builder: DeltaStringBuilder)
     func deltaString(range: NSRange) -> DeltaString
-    func mutableClone() -> iTermMutableStringProtocol & iTermString
+    func mutableClone() -> iTermMutableStringProtocol
     // Returns an immutable instance
     func clone() -> iTermString
     func string(withExternalAttributes eaIndex: iTermExternalAttributeIndexReading?,
@@ -36,11 +36,21 @@ protocol iTermString: AnyObject {
     func isEmpty(range: NSRange) -> Bool
     func substring(range: NSRange) -> iTermString
     func externalAttribute(at index: Int) -> iTermExternalAttribute?
+    @objc(isEqualToString:)
+    func isEqual(to string: iTermString) -> Bool
+
+    // Within `lhsRange` of the receiver, is it equal to `string` starting at `startIndex` of `rhs`?
+    func isEqual(lhsRange: NSRange, toString rhs: iTermString, startingAtIndex startIndex: Int) -> Bool
+    func doubleWidthIndexes(range: NSRange,
+                            rebaseTo newBaseIndex: Int) -> IndexSet
+    // If rtlIndexes is nil, set RTL status to unknown for all characters.
+    // Otherwise set all to ltr (if not in rtlIndexes) or rtl otherwise.
+    func stringBySettingRTL(in: NSRange, rtlIndexes: IndexSet?) -> iTermString
 }
 
 extension iTermString {
-    func mutableCloneSwift() -> iTermMutableStringProtocolSwift & iTermString {
-        return mutableClone() as! (iTermMutableStringProtocolSwift & iTermString)
+    func mutableCloneSwift() -> iTermMutableStringProtocolSwift {
+        return mutableClone() as! iTermMutableStringProtocolSwift
     }
     var _screenCharArray: ScreenCharArray {
         return hydrate(range: fullRange)

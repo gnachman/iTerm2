@@ -264,6 +264,25 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return self;
 }
 
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      offset:(size_t)offset
+                      length:(int)length
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation
+                    bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo
+               freeOnRelease:(BOOL)freeOnRelease {
+    self = [self initWithLine:line + offset
+                       length:length
+                     metadata:metadata
+                 continuation:continuation
+                freeOnRelease:freeOnRelease];
+    if (self) {
+        _offset = offset;
+        _bidiInfo = bidiInfo;
+    }
+    return self;
+}
+
 - (void)dealloc {
     if (_shouldFreeOnRelease) {
         free((void *)(_line - _offset));
@@ -478,6 +497,29 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return [self mutableCopyWithZone:nil];
 }
 
+- (MutableScreenCharArray *)mutableReplacement {
+    MutableScreenCharArray *msca;
+    if (self.data) {
+        msca = [[MutableScreenCharArray alloc] initWithData:self.data
+                                      includingContinuation:self.hasValidAppendedContinuationMark
+                                                   metadata:self.metadata
+                                               continuation:self.continuation
+                                                   bidiInfo:self.bidiInfo];
+        _data = nil;
+    } else {
+        msca = [[MutableScreenCharArray alloc] initWithLine:self.line
+                                                     offset:0
+                                                     length:self.length
+                                                   metadata:self.metadata
+                                               continuation:self.continuation
+                                              freeOnRelease:_shouldFreeOnRelease];
+        msca.bidiInfo = self.bidiInfo;
+    }
+    _line = NULL;
+    _shouldFreeOnRelease = NO;
+    return msca;
+}
+
 - (id)copyWithZone:(NSZone *)zone {
     ScreenCharArray *theCopy = [[ScreenCharArray alloc] initWithCopyOfLine:_line
                                                                     length:_length
@@ -522,6 +564,19 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return [self screenCharArrayByRemovingFirst:i];
 }
 
+- (MutableScreenCharArray *)mutableSubArrayWithRange:(NSRange)range {
+    screen_char_t continuation = self.line[NSMaxRange(range) - 1];
+    continuation.code = EOL_SOFT;
+    continuation.complexChar = NO;
+    continuation.image = NO;
+    continuation.virtualPlaceholder = 0;
+    return [[MutableScreenCharArray alloc] initWithCopyOfLine:self.line + range.location
+                                                length:range.length
+                                              metadata:[self subMetadataInRange:range]
+                                          continuation:continuation
+                                              bidiInfo:[_bidiInfo subInfoInRange:range]];
+}
+
 - (ScreenCharArray *)subArrayWithRange:(NSRange)range {
     if (range.location == 0 && range.length == self.length) {
         return self;
@@ -535,16 +590,7 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     if (self.length <= range.location || range.length == 0) {
         return [ScreenCharArray emptyLineOfLength:0];
     }
-    screen_char_t continuation = self.line[NSMaxRange(range) - 1];
-    continuation.code = EOL_SOFT;
-    continuation.complexChar = NO;
-    continuation.image = NO;
-    continuation.virtualPlaceholder = 0;
-    return [[ScreenCharArray alloc] initWithCopyOfLine:self.line + range.location
-                                                length:range.length
-                                              metadata:[self subMetadataInRange:range]
-                                          continuation:continuation
-                                              bidiInfo:[_bidiInfo subInfoInRange:range]];
+    return [[self mutableSubArrayWithRange:range] immutableReplacement];
 }
 
 - (ScreenCharArray *)screenCharArrayByRemovingFirst:(int)n {
@@ -793,6 +839,29 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
 @end
 
 @implementation MutableScreenCharArray
+
+- (ScreenCharArray *)immutableReplacement {
+    ScreenCharArray *sca;
+    if (self.data) {
+        sca = [[ScreenCharArray alloc] initWithData:self.data
+                              includingContinuation:self.hasValidAppendedContinuationMark
+                                           metadata:self.metadata
+                                       continuation:self.continuation
+                                           bidiInfo:self.bidiInfo];
+        _data = nil;
+    } else {
+        sca = [[ScreenCharArray alloc] initWithLine:self.line
+                                             offset:0
+                                             length:self.length
+                                           metadata:self.metadata
+                                       continuation:self.continuation
+                                           bidiInfo:self.bidiInfo
+                                      freeOnRelease:_shouldFreeOnRelease];
+    }
+    _line = NULL;
+    _shouldFreeOnRelease = NO;
+    return sca;
+}
 
 - (void)setLine:(const screen_char_t *)newLine shouldFreeOnRelease:(BOOL)shouldFreeOnRelease {
     if (_shouldFreeOnRelease) {

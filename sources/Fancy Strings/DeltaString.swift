@@ -7,7 +7,7 @@
 
 import Foundation
 
-@objc
+@objc(iTermDeltaString)
 class DeltaString: NSObject {
     @objc let unsafeString: NSString  // fast but lifetime-limited by this DeltaString object
     @objc var string: NSString { unsafeString.copy() as! NSString }
@@ -17,7 +17,7 @@ class DeltaString: NSObject {
     @objc var deltas: UnsafePointer<CInt> { UnsafePointer(deltasStore) }
 
     private let deltasStore: UnsafeMutablePointer<CInt>
-    private let backingStore: UnsafeMutablePointer<unichar>?
+    @objc let backingStore: UnsafeMutablePointer<unichar>?
 
     /// replace all your old inits with this single one:
     @objc
@@ -81,7 +81,7 @@ class DeltaStringBuilder: NSObject {
     }
 
     /// append codes+complex exactly as before, carrying the running `delta` across chunks
-    func append(codes: [UInt16], complex: IndexSet, range: NSRange) {
+    func append(codes: SubArray<UInt16>, complex: IndexSet, range: NSRange) {
         let start = range.location
         let count = range.length
 

@@ -53,6 +53,14 @@
 - (instancetype)initWithLength:(int)length
                          width:(int)width
                       indexSet:(NSIndexSet *)indexSet {
+    if (width < 2) {
+        return nil;
+    }
+    if (indexSet.count == 0) {
+        return [[iTermTrivialDoubleWidthCharacterCache alloc] initWithLength:length
+                                                                       width:width
+                                                                    indexSet:indexSet];
+    }
     self = [super init];
     if (self) {
         _length = length;
@@ -72,12 +80,6 @@
     NSIndexSet *indexSet = [iTermDoubleWidthCharacterCache indexSetForCharacters:characters
                                                                           length:length
                                                                            width:width];
-    if (indexSet.count == 0) {
-        return [[iTermTrivialDoubleWidthCharacterCache alloc] initWithLength:length
-                                                                       width:width
-                                                                    indexSet:indexSet];
-    }
-
     return [self initWithLength:length width:width indexSet:indexSet];
 }
 

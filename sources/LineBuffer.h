@@ -40,6 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class LineBlock;
 @class LineBuffer;
 @class iTermBidiDisplayInfo;
+@protocol iTermLineStringReading;
 
 @protocol iTermLineBufferDelegate<NSObject>
 - (void)lineBufferDidDropLines:(LineBuffer * _Nonnull)lineBuffer;
@@ -103,7 +104,6 @@ NS_ASSUME_NONNULL_BEGIN
                                                   paddedTo:(int)paddedSize
                                             eligibleForDWC:(BOOL)eligibleForDWC;
 
-- (ScreenCharArray * _Nonnull)rawLineAtWrappedLine:(int)lineNum width:(int)width;
 - (ScreenCharArray * _Nonnull)rawLineWithMetadataAtWrappedLine:(int)lineNum width:(int)width;
 
 // This is the fast way to get a bunch of lines at once.
@@ -246,6 +246,9 @@ NS_ASSUME_NONNULL_BEGIN
              width:(int)width
           metadata:(iTermImmutableMetadata)metadata
       continuation:(screen_char_t)continuation;
+
+- (void)appendLineString:(id<iTermLineStringReading>)lineString
+                   width:(int)width;
 
 - (void)appendScreenCharArray:(ScreenCharArray *)sca
                         width:(int)width;

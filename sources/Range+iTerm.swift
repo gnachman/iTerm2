@@ -29,3 +29,10 @@ extension Range where Bound == Int {
         return lowerBound <= range.lowerBound && upperBound >= range.upperBound
     }
 }
+
+extension Range where Bound: Comparable {
+     func contains(_ other: Range<Bound>) -> Bool {
+        lowerBound <= other.lowerBound &&
+        upperBound >= other.upperBound
+    }
+}

@@ -49,7 +49,7 @@ class iTermUniformString: NSObject, iTermString {
         builder.append(char: char, repeated: range.length)
     }
 
-    func mutableClone() -> any iTermMutableStringProtocol & iTermString {
+    func mutableClone() -> any iTermMutableStringProtocol {
         return _mutableClone()
     }
 
@@ -95,5 +95,72 @@ class iTermUniformString: NSObject, iTermString {
 
     func externalAttribute(at index: Int) -> iTermExternalAttribute? {
         return nil
+    }
+
+    func isEqual(to string: any iTermString) -> Bool {
+        if cellCount != string.cellCount {
+            return false
+        }
+        return isEqual(lhsRange: fullRange, toString: string, startingAtIndex: 0)
+    }
+
+    // This implements:
+    // return self[lhsRange] == rhs[startIndex..<(startIndex+lhsRange.count)
+    func isEqual(lhsRange lhsNSRange: NSRange, toString rhs: iTermString, startingAtIndex startIndex: Int) -> Bool {
+        if cellCount < NSMaxRange(lhsNSRange) || rhs.cellCount < startIndex + lhsNSRange.length {
+            return false
+        }
+        if let us = rhs as? iTermUniformString {
+            return char == us.char
+        }
+        let rhsRange = startIndex..<(startIndex + lhsNSRange.length)
+        return substring(range: lhsNSRange).screenCharArray.isEqual(to: rhs.substring(range: NSRange(rhsRange)).screenCharArray)
+    }
+
+    func stringBySettingRTL(in nsrange: NSRange, rtlIndexes: IndexSet?) -> any iTermString {
+        if let rtlIndexes {
+            // Normally there should only be one value for my whole range.
+            if let firstRange = rtlIndexes.rangeView.first {
+                if firstRange.contains(0..<cellCount) {
+                    // Every item in this string is RTL
+                    var temp = char
+                    temp.rtlStatus = .RTL
+                    return iTermUniformString(char: temp, length: nsrange.length)
+                } else {
+                    // Sadly this is a mix :(
+                    // I honestly don't know how this could happen in real life.
+                    let complexRange = char.complexChar != 0 ? 0..<length : 0..<0
+                    var styleMap = StyleMap()
+                    for (range, isMember) in rtlIndexes.membership(in: Range(nsrange)!) {
+                        var c = char
+                        c.rtlStatus = isMember ? .RTL : .LTR
+                        let ucs = UnifiedCharacterStyle(sct: c)
+                        styleMap.append(count: range.count, payload: ucs)
+                    }
+                    return iTermNonASCIIString(
+                        codes: Array(repeating: char.code, count: length),
+                        complex: IndexSet(integersIn: complexRange),
+                        styles: styleMap)
+                }
+            } else {
+                // The index set is empty so it is uniformly left-to-right
+                var temp = char
+                temp.rtlStatus = .LTR
+                return iTermUniformString(char: temp, length: nsrange.length)
+            }
+        } else if char.rtlStatus == .unknown && nsrange == fullRange {
+            return self
+        } else {
+            var temp = char
+            temp.rtlStatus = .unknown
+            return iTermUniformString(char: temp, length: nsrange.length)
+        }
+    }
+
+    func doubleWidthIndexes(range: NSRange, rebaseTo newBaseIndex: Int) -> IndexSet {
+        if ScreenCharIsDWC_RIGHT(char) {
+            return IndexSet(integersIn: Range(range)!)
+        }
+        return IndexSet()
     }
 }
