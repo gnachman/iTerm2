@@ -15,7 +15,8 @@
 #import "LineBlockMetadataArray.h"
 
 @class LineBlock;
-
+@protocol iTermLineStringReading;
+@class iTermMutableLineString;
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
@@ -61,21 +62,13 @@
 
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
 // Callers should split such lines into multiple pieces.
-- (BOOL)appendLine:(const screen_char_t*)buffer
-            length:(int)length
-           partial:(BOOL)partial
-             width:(int)width
-          metadata:(iTermImmutableMetadata)metadata
-      continuation:(screen_char_t)continuation;
+- (BOOL)appendLineString:(id<iTermLineStringReading>)lineString
+                   width:(int)width;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
-// If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
-// If the line is not present, decrement *lineNum by the number of lines in this block and return NULL.
-- (const screen_char_t *)getWrappedLineWithWrapWidth:(int)width
-                                      lineNum:(int*)lineNum
-                                   lineLength:(int*)lineLength
-                            includesEndOfLine:(int*)includesEndOfLine
-                                 continuation:(screen_char_t *)continuationPtr;
+// If the line is not present, decrement *lineNum by the number of lines in this block and return nil.
+- (id<iTermLineStringReading>)wrappedLineStringWithWrapWidth:(int)width
+                                                     lineNum:(int *)lineNum;
 
 // Sets *yOffsetPtr (if not null) to the number of consecutive empty lines just before |lineNum| because
 // there's no way for the returned pointer to indicate this.
@@ -110,11 +103,8 @@
 - (BOOL)hasPartial;
 
 // Remove the last line. Returns false if there was none.
-- (BOOL)popLastLineInto:(screen_char_t const **)ptr
-             withLength:(int*)length
-              upToWidth:(int)width
-               metadata:(out iTermImmutableMetadata *)metadataPtr
-           continuation:(screen_char_t *)continuationPtr;
+- (id<iTermLineStringReading>)popLastLineUpToWidth:(int)width
+                                      forceSoftEOL:(BOOL)forceSoftEOL;
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
                          width:(int)width;
@@ -132,9 +122,6 @@
 // Are all lines of length 0? True if there are no lines, as well.
 - (BOOL)allLinesAreEmpty;
 
-// Grow the buffer.
-- (void)changeBufferSize:(int)capacity;
-
 // Return the number of raw (unwrapped) lines
 - (int)numRawLines;
 
@@ -144,11 +131,9 @@
 // Return the length of a raw (unwrapped) line
 - (int)lengthOfRawLine:(int)linenum;
 
-// Remove extra space from the end of the buffer. Future appends will fail.
-- (void)shrinkToFit;
-
 // Return a raw line
-- (const screen_char_t *)rawLine:(int)linenum;
+- (id<iTermLineStringReading>)rawLine:(int)linenum;
+- (int)offsetOfRawLine:(int)linenum;
 
 // NSLog the contents of the block. For debugging.
 - (void)dump:(int)rawOffset droppedChars:(long long)droppedChars toDebugLog:(BOOL)toDebugLog;
@@ -211,10 +196,6 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine;
 - (int)numberOfFullLinesFromOffset:(int)offset
                             length:(int)length
                              width:(int)width;
-
-- (int)numberOfFullLinesFromBuffer:(const screen_char_t *)buffer
-                            length:(int)length
-                             width:(int)width;
 // Finds a where the nth line begins after wrapping and returns its offset from the start of the
 // buffer.
 //
@@ -230,7 +211,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine;
 // |abcde|   <- line is short after wrapping
 // |XXzzzz|
 // The slow code for dealing with DWCs is run only if mayHaveDwc is YES.
-int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc);
+int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int width, BOOL mayHaveDwc);
 
 // Returns a dictionary with the contents of this block. The data is a weak reference and will be
 // invalid if the block is changed.

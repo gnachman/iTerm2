@@ -92,6 +92,36 @@ extension iTermMutableRope: iTermMutableStringProtocol {
         }
         guts.segments.removeSubrange(firstKeep...)
     }
+
+    func resetRTLStatus() {
+        guts.segments = guts.segments.map({ segment in
+            let modified: iTermString = segment.string.stringBySettingRTL(
+                in: segment.string.fullRange,
+                rtlIndexes: nil)
+            return Segment(string: modified,
+                           cumulativeCellCount: segment.cumulativeCellCount)
+        })
+    }
+
+    @objc func setRTLIndexes(_ indexSet: IndexSet) {
+        var segments = [Segment]()
+        enumerateSegments(inRange: 0..<cellCount) { i, string, localRange in
+            let globalRange = self.globalSegmentRange(index: i)
+            var subset = indexSet[globalRange]
+            subset.shift(startingAt: 0,
+                         by: -globalRange.lowerBound)
+            let modified = string.stringBySettingRTL(
+                in: NSRange(localRange),
+                rtlIndexes: subset)
+            segments.append(
+                Segment(
+                    string: modified,
+                    cumulativeCellCount: guts.segments[i].cumulativeCellCount))
+        }
+        guts.deletedHeadCellCount = 0
+        guts.segments = segments
+        guts.stringCache.clear()
+    }
 }
 
 extension iTermMutableRope: iTermMutableStringProtocolSwift {

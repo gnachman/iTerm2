@@ -7,6 +7,7 @@
 
 @objc
 protocol iTermLineStringReading {
+    var description: String { get }
     var content: any iTermString { get }
     var eol: Int32 { get }
     var metadata: iTermLineStringMetadata { get }
@@ -21,6 +22,8 @@ protocol iTermLineStringReading {
     var usedLength: Int32 { get }
     func screenCharsData(withEOL: Bool) -> Data
     func screenCharArray(bidi: BidiDisplayInfoObjc?) -> ScreenCharArray
+    func copy(withEOL eol: Int32) -> iTermLineStringReading
+    var bidi: BidiDisplayInfoObjc? { get }
 }
 
 extension iTermLineStringReading {
@@ -73,17 +76,20 @@ class iTermLineString: NSObject, iTermLineStringReading {
     @objc let metadata: iTermLineStringMetadata
     private var _externalMetadata: iTermImmutableMetadata?
     @objc let dirty: Bool
+    @objc let bidi: BidiDisplayInfoObjc?
 
     @objc
     init(content: iTermString,
          eol: Int32,
          continuation: screen_char_t,
          metadata: iTermLineStringMetadata,
+         bidi: BidiDisplayInfoObjc?,
          dirty: Bool) {
         self.content = content
         self.eol = eol
         self.continuation = continuation
         self.metadata = metadata
+        self.bidi = bidi
         self.dirty = dirty
 
         super.init()
@@ -103,7 +109,7 @@ class iTermLineString: NSObject, iTermLineStringReading {
         case EOL_DWC: "dwc"
         default: "UNKNOWN (bug)"
         }
-        return "<iTermLineString: \(it_addressString) eol=\(eolString) timestamp=\(metadata.timestamp) rtl=\(metadata.rtlFound) content=\(content.description)>"
+        return "<iTermLineString: \(it_addressString) eol=\(eolString) timestamp=\(metadata.timestamp) rtl=\(metadata.rtlFound) bidi=\(bidi.d) content=\(content.description)>"
     }
 
     var timestamp: TimeInterval {
@@ -161,10 +167,19 @@ class iTermLineString: NSObject, iTermLineStringReading {
     func screenCharArray(bidi: BidiDisplayInfoObjc?) -> ScreenCharArray {
         return _screenCharArray(bidi: bidi)
     }
+
+    func copy(withEOL eol: Int32) -> iTermLineStringReading {
+        return iTermLineString(content: content,
+                               eol: eol,
+                               continuation: continuation,
+                               metadata: metadata,
+                               bidi: bidi,
+                               dirty: dirty)
+    }
 }
 
 class iTermMutableLineString: NSObject, iTermLineStringReading {
-    private var _content: iTermMutableStringProtocolSwift & iTermString
+    private var _content: iTermMutableStringProtocolSwift
     @objc var eol: Int32 { // EOL_HARD, EOL_SOFT, EOL_DWC
         didSet {
             continuation.code = UInt16(eol)
@@ -173,6 +188,7 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
     @objc var dirty = false
     @objc var continuation: screen_char_t
     @objc var metadata: iTermLineStringMetadata
+    @objc var bidi: BidiDisplayInfoObjc?
     private var _lineInfo = VT100LineInfo()
 
     var content: iTermString { _content }
@@ -281,11 +297,11 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
     }
 
     @objc
-    init(content: iTermMutableStringProtocol & iTermString,
+    init(content: iTermMutableStringProtocol,
          eol: Int32,
          continuation: screen_char_t,
          metadata: iTermLineStringMetadata) {
-        self._content = content as! (iTermMutableStringProtocolSwift & iTermString)
+        self._content = content as! (iTermMutableStringProtocolSwift)
         self.eol = eol
         self.continuation = continuation
         self.metadata = metadata
@@ -424,5 +440,14 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
 
     func screenCharArray(bidi: BidiDisplayInfoObjc?) -> ScreenCharArray {
         return _screenCharArray(bidi: bidi)
+    }
+
+    func copy(withEOL eol: Int32) -> iTermLineStringReading {
+        return iTermLineString(content: content,
+                               eol: eol,
+                               continuation: continuation,
+                               metadata: metadata,
+                               bidi: bidi,
+                               dirty: dirty)
     }
 }

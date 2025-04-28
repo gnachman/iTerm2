@@ -10,6 +10,7 @@
 #import "iTermMetadata.h"
 
 @class iTermBidiDisplayInfo;
+@class MutableScreenCharArray;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -126,6 +127,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (ScreenCharArray *)subArrayToIndex:(int)i;
 - (ScreenCharArray *)subArrayFromIndex:(int)i;
 - (ScreenCharArray *)subArrayWithRange:(NSRange)range;
+- (MutableScreenCharArray *)mutableSubArrayWithRange:(NSRange)range;
 
 - (NSMutableData *)mutableLineData;
 - (ScreenCharArray *)screenCharArrayBySettingCharacterAtIndex:(int)i
@@ -142,6 +144,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (int)numberOfLeadingEmptyCellsWhereSpaceIsEmpty:(BOOL)spaceIsEmpty;
 - (BOOL)dataSizeMatchesLength;  // If true, no continuation mark is at the end of the data.
 - (BOOL)hasValidAppendedContinuationMark;
+
+- (MutableScreenCharArray *)mutableReplacement;
 @end
 
 @interface MutableScreenCharArray: ScreenCharArray
@@ -149,6 +153,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) screen_char_t *mutableLine;
 @property (nonatomic, readwrite) screen_char_t continuation;
 @property (nonatomic, readwrite) int eol;
+@property (nonatomic, readwrite, nullable) iTermBidiDisplayInfo *bidiInfo;
 
 - (void)appendScreenCharArray:(ScreenCharArray *)sca;
 - (void)appendString:(NSString *)string style:(screen_char_t)c continuation:(screen_char_t)continuation;
@@ -164,6 +169,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setCharacter:(screen_char_t)c inRange:(NSRange)range;
 - (iTermExternalAttributeIndex *)eaIndexCreatingIfNeeded;
 - (void)copyRange:(NSRange)sourceRange from:(ScreenCharArray *)source destinationIndex:(int)destinationIndex;
+- (ScreenCharArray *)immutableReplacement;
 @end
 
 @interface ScreenCharRope: NSObject

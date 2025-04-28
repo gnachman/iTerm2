@@ -21,6 +21,11 @@ class iTermLegacyStyleString: NSObject, iTermString {
         super.init()
     }
 
+    init(line: [screen_char_t], eaIndex: iTermExternalAttributeIndexReading?) {
+        self.line = line
+        self.eaIndex = eaIndex
+    }
+
     var cellCount: Int { line.count }
 
     override var description: String {
@@ -116,7 +121,7 @@ class iTermLegacyStyleString: NSObject, iTermString {
     @objc
     var screenCharArray: ScreenCharArray { _screenCharArray }
 
-    func mutableClone() -> any iTermMutableStringProtocol & iTermString {
+    func mutableClone() -> any iTermMutableStringProtocol {
         return _mutableClone()
     }
 
@@ -137,5 +142,56 @@ class iTermLegacyStyleString: NSObject, iTermString {
             return nil
         }
         return eaIndex[index]
+    }
+
+    func isEqual(to string: any iTermString) -> Bool {
+        if cellCount != string.cellCount {
+            return false
+        }
+        return isEqual(lhsRange: fullRange, toString: string, startingAtIndex: 0)
+    }
+
+    // This implements:
+    // return self[lhsRange] == rhs[startIndex..<(startIndex+lhsRange.count)
+    func isEqual(lhsRange lhsNSRange: NSRange, toString rhs: iTermString, startingAtIndex startIndex: Int) -> Bool {
+        if cellCount < NSMaxRange(lhsNSRange) || rhs.cellCount < startIndex + lhsNSRange.length {
+            return false
+        }
+        let lhsRange = Range(lhsNSRange)!
+        let rhsRange = startIndex..<(startIndex + lhsNSRange.length)
+        if let lss = rhs as? iTermLegacyStyleString {
+            return (line[lhsRange] == lss.line[rhsRange] &&
+                    iTermExternalAttributeIndex.externalAttributeIndex(
+                        eaIndex?.subAttributes(in: lhsNSRange),
+                        isEqualToIndex: lss.eaIndex?.subAttributes(in: NSRange(rhsRange))))
+        }
+        return substring(range: lhsNSRange).screenCharArray.isEqual(to: rhs.substring(range: NSRange(rhsRange)).screenCharArray)
+    }
+
+    func stringBySettingRTL(in nsrange: NSRange,
+                            rtlIndexes: IndexSet?) -> iTermString {
+        let range = Range(nsrange)!
+        let subEAIndex = nsrange == fullRange ? eaIndex : eaIndex?.subAttributes(in: nsrange)
+        return iTermLegacyStyleString(line: line[range].enumerated().map { i, c in
+            var temp = c
+            if let rtlIndexes {
+                temp.rtlStatus = rtlIndexes.contains(i) ? .RTL : .LTR
+            } else {
+                temp.rtlStatus = .unknown
+            }
+            return temp
+        }, eaIndex: subEAIndex)
+    }
+
+    func doubleWidthIndexes(range nsrange: NSRange,
+                            rebaseTo newBaseIndex: Int) -> IndexSet {
+        var indexSet = IndexSet()
+        let offset = newBaseIndex - nsrange.location
+        for i in Range(nsrange)! {
+            if ScreenCharIsDWC_RIGHT(line[i]) {
+                indexSet.insert(i + offset)
+            }
+        }
+        return indexSet
     }
 }

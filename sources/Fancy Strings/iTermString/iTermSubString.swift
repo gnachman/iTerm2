@@ -13,6 +13,11 @@ class iTermSubString: NSObject, iTermString {
     private let range: Range<Int>
     private lazy var stringCache = SubStringCache()
 
+    @objc(initWithBaseString:range:)
+    convenience init(base: iTermString, range: NSRange) {
+        self.init(base: base, range: Range(range)!)
+    }
+
     init(base: iTermString, range: Range<Int>) {
         if let sub = base as? iTermSubString {
             // unwrap nested substring
@@ -64,7 +69,7 @@ class iTermSubString: NSObject, iTermString {
         base.buildString(range: global(range: nsRange), builder: builder)
     }
 
-    func mutableClone() -> any iTermMutableStringProtocol & iTermString {
+    func mutableClone() -> any iTermMutableStringProtocol {
         return _mutableClone()
     }
 
@@ -100,5 +105,36 @@ class iTermSubString: NSObject, iTermString {
 
     func externalAttribute(at index: Int) -> iTermExternalAttribute? {
         return base.externalAttribute(at: global(range: NSRange(location: index, length: 1)).lowerBound)
+    }
+
+    func isEqual(to string: any iTermString) -> Bool {
+        if cellCount != string.cellCount {
+            return false
+        }
+        return isEqual(lhsRange: fullRange, toString: string, startingAtIndex: 0)
+    }
+
+    // This implements:
+    // return self[lhsRange] == rhs[startIndex..<(startIndex+lhsRange.count)
+    func isEqual(lhsRange lhsNSRange: NSRange, toString rhs: iTermString, startingAtIndex startIndex: Int) -> Bool {
+        if cellCount < NSMaxRange(lhsNSRange) || rhs.cellCount < startIndex + lhsNSRange.length {
+            return false
+        }
+        return base.isEqual(lhsRange: NSRange(location: lhsNSRange.location + self.range.lowerBound,
+                                              length: lhsNSRange.length),
+                            toString: rhs,
+                            startingAtIndex: startIndex)
+    }
+
+    func stringBySettingRTL(in nsrange: NSRange, rtlIndexes: IndexSet?) -> any iTermString {
+        let subrange = NSRange(location: self.range.lowerBound + nsrange.location,
+                               length: nsrange.length)
+        return base.stringBySettingRTL(in: subrange,
+                                       rtlIndexes: rtlIndexes)
+    }
+
+    func doubleWidthIndexes(range nsrange: NSRange,
+                            rebaseTo newBaseIndex: Int) -> IndexSet {
+        return base.doubleWidthIndexes(range: NSRange(location: range.lowerBound + nsrange.location, length: nsrange.length), rebaseTo: newBaseIndex)
     }
 }

@@ -123,10 +123,6 @@ static const NSInteger kUnicodeVersion = 9;
 // Append a block
 - (LineBlock *)_addBlockOfSize:(int)size {
     self.dirty = YES;
-    // Immediately shrink it so that it can compress down to the smallest
-    // possible size. The compression code has no way of knowing how big these
-    // buffers are.
-    [_lineBlocks.lastBlock shrinkToFit];
     [self commitLastBlock];
     return [_lineBlocks addBlockOfSize:size
                                 number:num_dropped_blocks + _lineBlocks.count
@@ -485,12 +481,38 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     [_lineBlocks.lastBlock setBidiForLastRawLine:bidi];
 }
 
+- (void)appendLineString:(id<iTermLineStringReading>)lineString
+                   width:(int)width {
+    _deferSanityCheck++;
+    [self reallyAppendLineString:lineString width:width];
+    _deferSanityCheck--;
+    [self sanityCheck];
+}
+
 - (void)reallyAppendLine:(const screen_char_t *)buffer
                   length:(int)length
                  partial:(BOOL)partial
                    width:(int)width
                 metadata:(iTermImmutableMetadata)metadataObj
             continuation:(screen_char_t)continuation {
+    if (length <= 0) {
+        return;
+    }
+    iTermLegacyStyleString *content = [[iTermLegacyStyleString alloc] initWithChars:buffer count:length eaIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadataObj)];
+    const iTermLineStringMetadata lsm = {
+        .timestamp = metadataObj.timestamp,
+        .rtlFound = metadataObj.rtlFound
+    };
+    iTermLineString *lineString = [[iTermLineString alloc] initWithContent:content
+                                                                       eol:partial ? EOL_SOFT : EOL_HARD
+                                                              continuation:buffer[length - 1]
+                                                                  metadata:lsm
+                                                                      bidi:nil
+                                                                     dirty:NO];
+    [self reallyAppendLineString:lineString width:width];
+}
+
+- (void)reallyAppendLineString:(id<iTermLineStringReading>)lineString width:(int)width {
     self.dirty = YES;
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
@@ -498,53 +520,28 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (_lineBlocks.count == 0) {
         [self _addBlockOfSize:block_size];
     }
+    const BOOL partial = lineString.eol != EOL_HARD;
+    const int length = lineString.content.cellCount;
 
     LineBlock *block = _lineBlocks.lastBlock;
 
     int beforeLines = [block getNumLinesWithWrapWidth:width];
-    if (![block appendLine:buffer
-                    length:length
-                   partial:partial
-                     width:width
-                  metadata:metadataObj
-              continuation:continuation]) {
+    if (![block appendLineString:lineString width:width]) {
         // It's going to be complicated. Invalidate the number of wrapped lines
         // cache.
         num_wrapped_lines_width = -1;
-        int prefix_len = 0;
-        iTermImmutableMetadata prefixMetadata = iTermMetadataMakeImmutable(iTermMetadataDefault());
-        screen_char_t* prefix = NULL;
+        id<iTermLineStringReading> prefixLineString = nil;
+
         if ([block hasPartial]) {
             // There is a line that's too long for the current block to hold.
             // Remove its prefix from the current block and later add the
             // concatenation of prefix + buffer to a larger block.
-            const screen_char_t *temp;
-            BOOL ok = [block popLastLineInto:&temp
-                                  withLength:&prefix_len
-                                   upToWidth:[block rawBufferSize] + 1
-                                    metadata:&prefixMetadata
-                                continuation:NULL];
-            assert(ok);
-            prefix = (screen_char_t*)iTermMalloc(MAX(1, prefix_len) * sizeof(screen_char_t));
-            memcpy(prefix, temp, prefix_len * sizeof(screen_char_t));
-            ITAssertWithMessage(ok, @"hasPartial but pop failed.");
+            prefixLineString = [block popLastLineUpToWidth:[block rawBufferSize] + 1
+                                              forceSoftEOL:YES];
+            ITAssertWithMessage(prefixLineString != nil, @"hasPartial but pop failed.");
         }
-        if ([block isEmpty]) {
-            // The buffer is empty but it's not large enough to hold a whole line. It must be grown.
-            if (partial) {
-                // The line is partial so we know there's more coming. Allocate enough space to hold the current line
-                // plus the usual block size (this is the case when the line is freaking huge).
-                // We could double the size to ensure better asymptotic runtime but you'd run out of memory
-                // faster with huge lines.
-                [block changeBufferSize: length + prefix_len + block_size];
-            } else {
-                // Allocate exactly enough space to hold this one line.
-                [block changeBufferSize: length + prefix_len];
-            }
-        } else {
-            // The existing buffer can't hold this line, but it has preceding line(s). Shrink it and
-            // allocate a new buffer that is large enough to hold this line.
-            [block shrinkToFit];
+        const int prefix_len = prefixLineString.content.cellCount;
+        if (![block isEmpty]) {
             if (length + prefix_len > block_size) {
                 block = [self _addBlockOfSize:length + prefix_len];
             } else {
@@ -554,26 +551,14 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
         // Append the prefix if there is one (the prefix was a partial line that we're
         // moving out of the last block into the new block)
-        if (prefix) {
-            BOOL ok __attribute__((unused)) =
-            [block appendLine:prefix
-                       length:prefix_len
-                      partial:YES
-                        width:width
-                     metadata:prefixMetadata
-                 continuation:continuation];
+        if (prefixLineString) {
+            BOOL ok __attribute__((unused)) = [block appendLineString:prefixLineString width:width];
             ITAssertWithMessage(ok, @"append can't fail here");
-            free(prefix);
         }
         // Finally, append this line to the new block. We know it'll fit because we made
         // enough room for it.
         BOOL ok __attribute__((unused)) =
-        [block appendLine:buffer
-                   length:length
-                  partial:partial
-                    width:width
-                 metadata:metadataObj
-             continuation:continuation];
+        [block appendLineString:lineString width:width];
         ITAssertWithMessage(ok, @"append can't fail here");
     } else if (num_wrapped_lines_width == width) {
         // Straightforward addition of a line to an existing block. Update the
@@ -659,9 +644,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         return EOL_HARD;
     }
 
-    int length = 0;
-    int eol;
-    screen_char_t continuation;
     const int requestedLine = remainder;
     __weak __typeof(self) weakSelf = self;
     __weak __typeof(block) weakBlock = block;
@@ -675,13 +657,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         return [NSString stringWithFormat:@"Block index %@, width=%@, lineNum=%@, remainder=%@\n%@",
                 @(i), @(width), @(lineNum), @(remainder), lineBlockDump];
     };
-    const screen_char_t *p = [block getWrappedLineWithWrapWidth:width
-                                                        lineNum:&remainder
-                                                     lineLength:&length
-                                              includesEndOfLine:&eol
-                                                   continuation:&continuation];
+    id<iTermLineStringReading> lineString = [block wrappedLineStringWithWrapWidth:width lineNum:&remainder];
+    int length = lineString.content.cellCount;
+    const int eol = lineString.eol;
+    const screen_char_t continuation = lineString.continuation;
+
     ITAssertWithMessage(length >= 0, @"Length is negative %@", @(length));
-    if (p == nil) {
+    if (lineString == nil) {
         ITAssertWithMessage(NO, @"Nil wrapped line %@ for block with width %@", @(requestedLine), @(width));
 #if DEBUG
         [self sanityCheck];
@@ -689,6 +671,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         memset(buffer, 0, width * sizeof(screen_char_t));
         return EOL_HARD;
     }
+
+    ScreenCharArray *sca = lineString.content.screenCharArray;
+    const screen_char_t *p = sca.line;
 
     if (continuationPtr) {
         *continuationPtr = continuation;
@@ -811,37 +796,23 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         return nil;
     }
 
-    int length, eol;
-    screen_char_t continuation;
-    iTermImmutableMetadata metadata;
-    const screen_char_t *line = [block getWrappedLineWithWrapWidth:width
-                                                           lineNum:&remainder
-                                                        lineLength:&length
-                                                 includesEndOfLine:&eol
-                                                           yOffset:nil
-                                                      continuation:&continuation
-                                              isStartOfWrappedLine:nil
-                                                          metadata:&metadata];
+    id<iTermLineStringReading> lineString = [block wrappedLineStringWithWrapWidth:width lineNum:&remainder];
+    const int length = lineString.content.cellCount;
+    const int eol = lineString.eol;
+    const screen_char_t continuation = lineString.continuation;
+    iTermImmutableMetadata metadata = lineString.externalImmutableMetadata;
+
     if (continuationPtr) {
         *continuationPtr = continuation;
     }
-    if (!line) {
+    if (!lineString) {
         NSLog(@"Couldn't find line %d", lineNum);
         ITAssertWithMessage(NO, @"Tried to get non-existent line");
         return nil;
     }
-    ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:line
-                                                             length:length
-                                                           metadata:metadata
-                                                       continuation:continuation];
+    ScreenCharArray *result = lineString.content.screenCharArray;
     ITAssertWithMessage(result.length <= width, @"Length too long");
     return result;
-}
-
-- (ScreenCharArray * _Nonnull)rawLineAtWrappedLine:(int)lineNum width:(int)width {
-    int remainder = 0;
-    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
-    return [block rawLineAtWrappedLineOffset:remainder width:width];
 }
 
 - (ScreenCharArray * _Nonnull)rawLineWithMetadataAtWrappedLine:(int)lineNum width:(int)width {
@@ -982,19 +953,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     *includesEndOfLine = [block hasPartial] ? EOL_SOFT : EOL_HARD;
 
     // Pop the last up-to-width chars off the last line.
-    int length;
-    const screen_char_t *temp;
-    screen_char_t continuation;
-    BOOL ok __attribute__((unused)) =
-    [block popLastLineInto:&temp
-                withLength:&length
-                 upToWidth:width
-                  metadata:metadataPtr
-              continuation:&continuation];
+    id<iTermLineStringReading> lineString = [block popLastLineUpToWidth:width forceSoftEOL:NO];
+    ScreenCharArray *sca = lineString.content.screenCharArray;
+    const int length = sca.length;
+    const screen_char_t *temp = sca.line;
+    const screen_char_t continuation = sca.continuation;
     if (continuationPtr) {
         *continuationPtr = continuation;
     }
-    ITAssertWithMessage(ok, @"Unexpected empty block");
+    ITAssertWithMessage(lineString != nil, @"Unexpected nil");
     ITAssertWithMessage(length <= width, @"Length too large");
     ITAssertWithMessage(length >= 0, @"Negative length");
 
@@ -1041,10 +1008,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         // The cursor is on the last line in the buffer.
         LineBlock* block = _lineBlocks.lastBlock;
         int last_line_length = [block lengthOfRawLine:([block numEntries]-1)];
-        const screen_char_t *lastRawLine = [block rawLine:([block numEntries]-1)];
-        int num_overflow_lines = [block numberOfFullLinesFromBuffer:lastRawLine length:last_line_length width:width];
+        id<iTermLineStringReading> lineString = [block rawLine:([block numEntries]-1)];
+        const int lastRawLineOffset = [block offsetOfRawLine:([block numEntries]-1)];
+        int num_overflow_lines = [block numberOfFullLinesFromOffset:lastRawLineOffset
+                                                             length:last_line_length
+                                                              width:width];
 
-        int min_x = OffsetOfWrappedLine(lastRawLine,
+        int min_x = OffsetOfWrappedLine(block,
+                                        lastRawLineOffset,
                                         num_overflow_lines,
                                         last_line_length,
                                         width,

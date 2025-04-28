@@ -6,7 +6,7 @@
 //
 
 @objc
-protocol iTermMutableStringProtocol {
+protocol iTermMutableStringProtocol: iTermString {
     @objc(deleteRange:) func objcDelete(range: NSRange)
     @objc(replaceRange:with:) func objcReplace(range: NSRange, with replacement: iTermString)
     @objc(appendString:) func append(string: iTermString)
@@ -14,6 +14,8 @@ protocol iTermMutableStringProtocol {
     @objc func deleteFromEnd(_ count: Int)
     // An immutable copy.
     func clone() -> iTermString
+    @objc func resetRTLStatus()
+    @objc func setRTLIndexes(_ indexSet: IndexSet)
 }
 
 protocol iTermMutableStringProtocolSwift: iTermMutableStringProtocol {

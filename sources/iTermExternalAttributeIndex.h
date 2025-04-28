@@ -67,12 +67,16 @@ typedef struct {
 - (iTermExternalAttributeIndex *)indexByDeletingFirst:(int)n;
 - (void)copyInto:(iTermExternalAttributeIndex *)destination;
 - (void)copyFrom:(id<iTermExternalAttributeIndexReading> _Nullable)destination startOffset:(int)startOffset;
+- (BOOL)isEqualToExternalAttributeIndex:(id<iTermExternalAttributeIndexReading>)other;
 @end
 
 @interface iTermExternalAttributeIndex: NSObject<iTermExternalAttributeIndexReading>
 @property (nonatomic, strong) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 @property (nonatomic, readonly) BOOL isEmpty;
+
++ (BOOL)externalAttributeIndex:(id<iTermExternalAttributeIndexReading> _Nullable)lhs
+                isEqualToIndex:(id<iTermExternalAttributeIndexReading> _Nullable)rhs;
 
 + (instancetype _Nullable)withDictionary:(NSDictionary *)dictionary;  // return nil if input is NSNull
 + (instancetype _Nullable)fromData:(NSData *)data;

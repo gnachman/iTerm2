@@ -54,6 +54,10 @@
                             length:(int)length
                              width:(int)width;
 
+- (instancetype)initWithLength:(int)length
+                         width:(int)width
+                      indexSet:(NSIndexSet *)indexSet;
+
 - (BOOL)validForWidth:(int)width length:(int)length;
 
 // Gives the offset into the raw line of the `n`th wrapped line.

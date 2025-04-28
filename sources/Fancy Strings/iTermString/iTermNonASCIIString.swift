@@ -7,12 +7,18 @@
 
 @objc
 class iTermNonASCIIString: NSObject, iTermString {
-    private let codes: [UInt16]
+    private let codes: SubArray<UInt16>
     private let complex: IndexSet
     let styles: StyleMap
     private var stringCache = SubStringCache()
 
     init(codes: [UInt16], complex: IndexSet, styles: StyleMap) {
+        self.codes = SubArray(codes)
+        self.complex = complex
+        self.styles = styles
+    }
+
+    init(codes: SubArray<UInt16>, complex: IndexSet, styles: StyleMap) {
         self.codes = codes
         self.complex = complex
         self.styles = styles
@@ -70,7 +76,7 @@ class iTermNonASCIIString: NSObject, iTermString {
         builder.append(codes: codes, complex: complex, range: range)
     }
 
-    func mutableClone() -> any iTermMutableStringProtocol & iTermString {
+    func mutableClone() -> any iTermMutableStringProtocol {
         return _mutableClone()
     }
 
@@ -118,4 +124,53 @@ class iTermNonASCIIString: NSObject, iTermString {
         let u = styles.get(index: index)
         return u.externalAttributes
     }
+
+    func isEqual(to string: any iTermString) -> Bool {
+        if cellCount != string.cellCount {
+            return false
+        }
+        return isEqual(lhsRange: fullRange, toString: string, startingAtIndex: 0)
+    }
+
+    // This implements:
+    // return self[lhsRange] == rhs[startIndex..<(startIndex+lhsRange.count)
+    func isEqual(lhsRange lhsNSRange: NSRange, toString rhs: iTermString, startingAtIndex startIndex: Int) -> Bool {
+        if cellCount < NSMaxRange(lhsNSRange) || rhs.cellCount < startIndex + lhsNSRange.length {
+            return false
+        }
+        let lhsRange = Range(lhsNSRange)!
+        let rhsRange = startIndex..<(startIndex + lhsNSRange.length)
+        if let nas = rhs as? iTermNonASCIIString {
+            return (codes[lhsRange] == nas.codes[rhsRange] &&
+                    complex[lhsRange] == nas.complex[rhsRange] &&
+                    styles[lhsRange] == nas.styles[rhsRange])
+        }
+        return substring(range: lhsNSRange).screenCharArray.isEqual(to: rhs.substring(range: NSRange(rhsRange)).screenCharArray)
+    }
+
+    func stringBySettingRTL(in nsrange: NSRange,
+                            rtlIndexes: IndexSet?) -> iTermString {
+        let modifiedStyles = styles.subrangeBySettingRTL(
+            in: nsrange, rtlIndexes: rtlIndexes)
+        guard let modifiedStyles else {
+            return self
+        }
+        let range = Range(nsrange)!
+        return iTermNonASCIIString(codes: codes[range],
+                                   complex: complex[range],
+                                   styles: modifiedStyles)
+    }
+
+    func doubleWidthIndexes(range nsrange: NSRange,
+                            rebaseTo newBaseIndex: Int) -> IndexSet {
+        var indexSet = IndexSet()
+        let offset = newBaseIndex - nsrange.location
+        for i in Range(nsrange)! {
+            if codes[i] == DWC_RIGHT && !complex.contains(i) {
+                indexSet.insert(i + offset)
+            }
+        }
+        return indexSet
+    }
+
 }

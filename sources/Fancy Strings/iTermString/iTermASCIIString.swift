@@ -78,7 +78,7 @@ class iTermASCIIString: NSObject, iTermString {
         builder.append(ascii: sub)
     }
 
-    func mutableClone() -> any iTermMutableStringProtocol & iTermString {
+    func mutableClone() -> any iTermMutableStringProtocol {
         return _mutableClone()
     }
 
@@ -117,5 +117,71 @@ class iTermASCIIString: NSObject, iTermString {
     func externalAttribute(at index: Int) -> iTermExternalAttribute? {
         let u = styles.get(index: index)
         return u.externalAttributes
+    }
+
+    func isEqual(to string: any iTermString) -> Bool {
+        if cellCount != string.cellCount {
+            return false
+        }
+        return isEqual(lhsRange: fullRange, toString: string, startingAtIndex: 0)
+    }
+
+    // This implements:
+    // return self[lhsRange] == rhs[startIndex..<(startIndex+lhsRange.count)
+    func isEqual(lhsRange lhsNSRange: NSRange, toString rhs: iTermString, startingAtIndex startIndex: Int) -> Bool {
+        if cellCount < NSMaxRange(lhsNSRange) || rhs.cellCount < startIndex + lhsNSRange.length {
+            return false
+        }
+        let lhsRange = Range(lhsNSRange)!
+        let rhsRange = startIndex..<(startIndex + lhsNSRange.length)
+        if let ascii = rhs as? iTermASCIIString {
+            return data[lhsRange] == ascii.data[rhsRange] && styles[lhsRange] == ascii.styles[rhsRange]
+        }
+        return substring(range: lhsNSRange).screenCharArray.isEqual(to: rhs.substring(range: NSRange(rhsRange)).screenCharArray)
+    }
+
+    func doubleWidthIndexes(range nsrange: NSRange,
+                            rebaseTo newBaseIndex: Int) -> IndexSet {
+        return IndexSet()
+    }
+
+    func stringBySettingRTL(in nsrange: NSRange,
+                            rtlIndexes: IndexSet?) -> iTermString {
+        let modifiedStyles = styles.subrangeBySettingRTL(
+            in: nsrange, rtlIndexes: rtlIndexes)
+        guard let modifiedStyles else {
+            return self
+        }
+        return iTermASCIIString(data: data[Range(nsrange)!],
+                                styles: modifiedStyles)
+    }
+}
+
+extension StyleMap {
+    func subrangeBySettingRTL(in nsrange: NSRange,
+                              rtlIndexes: IndexSet?) -> StyleMap? {
+        let range = Range(nsrange)!
+        let substyles = self[range]
+        if rtlIndexes == nil &&
+            substyles.allSatisfy({ $0.payload.sct.rtlStatus == .unknown }) {
+            return nil
+        }
+
+        return substyles.flatMap { payload, count, i in
+            if let rtlIndexes {
+                var modified = Array<(UnifiedCharacterStyle, Int)>()
+                var temp = payload
+                for (range, isMember) in rtlIndexes.membership(in: Range(nsrange)!) {
+                    temp.sct.rtlStatus = isMember ? .RTL : .LTR
+                    let tuple = (temp, range.count)
+                    modified.append(tuple)
+                }
+                return modified
+            } else {
+                var temp = payload
+                temp.sct.rtlStatus = .unknown
+                return [(temp, count)]
+            }
+        }
     }
 }
