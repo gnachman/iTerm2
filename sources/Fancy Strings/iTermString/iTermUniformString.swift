@@ -6,7 +6,7 @@
 //
 
 @objc
-class iTermUniformString: NSObject, iTermString {
+class iTermUniformString: iTermBaseString, iTermString {
     private let char: screen_char_t
     private let length: Int
     private var stringCache = SubStringCache()

@@ -6,7 +6,7 @@
 //
 
 @objc
-class iTermNonASCIIString: NSObject, iTermString {
+class iTermNonASCIIString: iTermBaseString, iTermString {
     private let codes: SubArray<UInt16>
     private let complex: IndexSet
     let styles: StyleMap

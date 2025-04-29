@@ -5,7 +5,7 @@
 //  Created by George Nachman on 4/21/25.
 //
 
-class iTermASCIIString: NSObject, iTermString {
+class iTermASCIIString: iTermBaseString, iTermString {
     private let data: SubData
     private let styles: StyleMap
     private var stringCache = SubStringCache()

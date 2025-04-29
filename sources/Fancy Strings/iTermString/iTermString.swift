@@ -111,3 +111,23 @@ extension iTermString {
 extension iTermString {
     var fullRange: NSRange { NSRange(location: 0, length: cellCount) }
 }
+
+class iTermBaseString: NSObject {
+    override init() {
+        super.init()
+    }
+
+    override func isEqual(_ object: Any?) -> Bool {
+        guard let other = object as? iTermString else {
+            return false
+        }
+        let this = self as! iTermString
+        return this.isEqual(lhsRange: NSRange(location: 0, length: this.cellCount),
+                            toString: other,
+                            startingAtIndex: 0)
+    }
+    override var hash: Int {
+        let this = self as! iTermString
+        return this.cellCount
+    }
+}

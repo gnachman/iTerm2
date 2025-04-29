@@ -528,4 +528,12 @@ final class iTermMutableRopeTests: XCTestCase {
         )
         XCTAssertEqual(msca.stringValue, "345")
     }
+
+    func testDeleteAll() {
+        let r = iTermMutableRope()
+        r.append(string: iTermASCIIString(data: Data("Hello".utf8), style: screen_char_t(), ea: nil))
+        r.deleteFromEnd(5)
+        XCTAssertEqual(r.cellCount, 0)
+        XCTAssertEqual(r, iTermMutableRope())
+    }
 }

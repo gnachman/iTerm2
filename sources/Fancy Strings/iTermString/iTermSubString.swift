@@ -8,7 +8,7 @@
 /// A lightweight “view” into an existing iTermString, masking off
 /// a prefix or suffix by only exposing cells in `range`.
 @objc
-class iTermSubString: NSObject, iTermString {
+class iTermSubString: iTermBaseString, iTermString {
     private let base: iTermString
     private let range: Range<Int>
     private lazy var stringCache = SubStringCache()

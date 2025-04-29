@@ -12,7 +12,7 @@ protocol iTermLegacyString: AnyObject, iTermString {
 }
 
 @objc
-class iTermLegacyMutableString: NSObject {
+class iTermLegacyMutableString: iTermBaseString {
     let sca: MutableScreenCharArray
 
     @objc
