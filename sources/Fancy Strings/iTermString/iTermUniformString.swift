@@ -8,8 +8,8 @@
 @objc
 class iTermUniformString: NSObject, iTermString {
     private let char: screen_char_t
-    private var stringCache = SubStringCache()
     private let length: Int
+    private var stringCache = SubStringCache()
 
     @objc(initWithCharacter:count:)
     init(char: screen_char_t, length: Int) {
@@ -57,10 +57,6 @@ class iTermUniformString: NSObject, iTermString {
         return self
     }
 
-    func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
-        return _string(withExternalAttributes: eaIndex, startingFrom: offset)
-    }
-
     func externalAttributesIndex() -> (any iTermExternalAttributeIndexReading)? {
         return nil
     }
@@ -86,7 +82,7 @@ class iTermUniformString: NSObject, iTermString {
     }
 
     func isEmpty(range: NSRange) -> Bool {
-        return ScreenCharIsNull(char)
+        return range.length == 0 || ScreenCharIsNull(char)
     }
 
     func substring(range: NSRange) -> any iTermString {
@@ -159,7 +155,7 @@ class iTermUniformString: NSObject, iTermString {
 
     func doubleWidthIndexes(range: NSRange, rebaseTo newBaseIndex: Int) -> IndexSet {
         if ScreenCharIsDWC_RIGHT(char) {
-            return IndexSet(integersIn: Range(range)!)
+            return IndexSet(integersIn: Range(range)!.shifted(by: newBaseIndex - range.location))
         }
         return IndexSet()
     }

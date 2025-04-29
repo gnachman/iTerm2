@@ -64,7 +64,7 @@ class iTermNonASCIIString: NSObject, iTermString {
             }
             for j in 0..<count {
                 sc.code = codes[i + j]
-                sc.complexChar = complex.contains(i) ? 1 : 0
+                sc.complexChar = complex.contains(i + j) ? 1 : 0
                 buffer[o + j] = sc
             }
             o += count
@@ -82,10 +82,6 @@ class iTermNonASCIIString: NSObject, iTermString {
 
     func clone() -> any iTermString {
         return self
-    }
-
-    func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
-        return _string(withExternalAttributes: eaIndex, startingFrom: offset)
     }
 
     func externalAttributesIndex() -> (any iTermExternalAttributeIndexReading)? {

@@ -34,7 +34,7 @@ struct SegmentMap<Payload: Equatable>: Equatable {
         return low
     }
 
-    func findBlock(forGlobalIndex index: Int) -> Int {
+    private func findBlock(forGlobalIndex index: Int) -> Int {
         Self.findBlock(forGlobalIndex: index, in: blocks)
     }
 
@@ -61,7 +61,7 @@ struct SegmentMap<Payload: Equatable>: Equatable {
         return block.runs[runIdx].payload
     }
 
-    func getRun(at index: Int) -> (payload: Payload, count: Int) {
+    private func getRun(at index: Int) -> (payload: Payload, count: Int) {
         precondition(index >= 0 && index < length, "index out of bounds")
         let blockIdx = findBlock(forGlobalIndex: index)
         let block = blocks[blockIdx]
@@ -157,7 +157,7 @@ struct SegmentMap<Payload: Equatable>: Equatable {
     }
 
     mutating func append(count: Int, payload: Payload) {
-        precondition(count > 0, "count must be > 0")
+        precondition(count >= 0, "count must be >= 0")
         if blocks.isEmpty {
             blocks.append(Block(basePrimary: 0, runs: []))
         }

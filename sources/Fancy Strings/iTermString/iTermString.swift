@@ -27,8 +27,6 @@ protocol iTermString: AnyObject {
     func mutableClone() -> iTermMutableStringProtocol
     // Returns an immutable instance
     func clone() -> iTermString
-    func string(withExternalAttributes eaIndex: iTermExternalAttributeIndexReading?,
-                startingFrom offset: Int) -> any iTermString
     func externalAttributesIndex() -> iTermExternalAttributeIndexReading?
     var screenCharArray: ScreenCharArray { get }
     func hasEqual(range: NSRange, to chars: UnsafePointer<screen_char_t>) -> Bool

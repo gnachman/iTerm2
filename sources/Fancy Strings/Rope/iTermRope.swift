@@ -7,8 +7,6 @@
 
 @objc
 class iTermRope: NSObject {
-    private lazy var stringCache = SubStringCache()
-
     struct Segment {
         // No matter what `string` must be immutable. Although I prefer mutable fields in structs,
         // keeping this as a let makes it easier to prove that string is immutable (since clone()
@@ -71,6 +69,17 @@ class iTermRope: NSObject {
         guts.segments = [Segment(string: string.clone(), cumulativeCellCount: string.cellCount)]
     }
 
+    init(_ strings: [iTermString]) {
+        super.init()
+        var segments = [Segment]()
+        var count = 0
+        for string in strings {
+            count += string.cellCount
+            segments.append(Segment(string: string, cumulativeCellCount: count))
+        }
+        guts.segments = segments
+    }
+
     required init(guts: Guts) {
         self.guts = guts
     }
@@ -98,13 +107,21 @@ extension iTermRope: iTermString {
     // This implements:
     // return self[lhsRange] == rhs[startIndex..<(startIndex+lhsRange.count)
     func isEqual(lhsRange: NSRange, toString rhs: iTermString, startingAtIndex startIndex: Int) -> Bool {
+        if !Range(fullRange)!.contains(Range(lhsRange)!) {
+            return false
+        }
+        if lhsRange.length > rhs.cellCount - startIndex {
+            return false
+        }
+        var rhsIndex = startIndex
         for (i, substr, localRange) in segmentIterator(inRange: Range(lhsRange)!) {
             let global = globalSegmentRange(index: i)
             if !substr.isEqual(lhsRange: NSRange(localRange),
                                toString: rhs,
-                               startingAtIndex: global.lowerBound - lhsRange.lowerBound + startIndex) {
+                               startingAtIndex: rhsIndex) {
                 return false
             }
+            rhsIndex += localRange.count
         }
         return true
     }
@@ -199,7 +216,7 @@ extension iTermRope: iTermString {
     }
 
     func deltaString(range: NSRange) -> DeltaString {
-        return stringCache.string(for: range) {
+        return guts.stringCache.string(for: range) {
             let builder = DeltaStringBuilder(count: CInt(cellCount))
             buildString(range: fullRange, builder: builder)
             return builder.build()
@@ -212,10 +229,6 @@ extension iTermRope: iTermString {
 
     func clone() -> iTermString {
         return iTermRope(guts: guts.clone())
-    }
-
-    func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
-        return _string(withExternalAttributes: eaIndex, startingFrom: offset)
     }
 
     func externalAttributesIndex() -> (any iTermExternalAttributeIndexReading)? {
@@ -277,7 +290,9 @@ extension iTermRope {
         let globalRange = (range.lowerBound + guts.deletedHeadCellCount)..<(range.upperBound + guts.deletedHeadCellCount)
         for i in (startIndex..<guts.segments.count).reversed() {
             let gsr = globalSegmentRange(index: i)
-
+            if gsr.isEmpty {
+                continue
+            }
             guard let intersection = gsr.intersection(globalRange), intersection.count > 0 else {
                 break
             }
@@ -297,14 +312,19 @@ extension iTermRope {
             return AnyIterator {
                 while i < self.guts.segments.count {
                     let idx = i
+                    defer {
+                        i += 1
+                    }
                     let gsr = self.globalSegmentRange(index: idx)
+                    if gsr.isEmpty {
+                        continue
+                    }
                     guard let intersection = gsr.intersection(globalRange),
                           intersection.count > 0 else {
                         return nil
                     }
                     let localStart = intersection.lowerBound - gsr.lowerBound
                     let localRange = localStart ..< (localStart + intersection.count)
-                    i += 1
                     it_assert((0..<self.guts.segments[idx].string.cellCount).contains(range: localRange))
                     return (idx, self.guts.segments[idx].string, localRange)
                 }

@@ -14,13 +14,10 @@ class iTermMutableRope: iTermRope {
 @objc
 extension iTermMutableRope: iTermMutableStringProtocol {
     func erase(defaultChar: screen_char_t) {
-        let array = Array(Array(repeating: defaultChar, count: cellCount))
-        array.withUnsafeBytes { urbp in
-            guts.segments = [Segment(string: iTermLegacyStyleString(chars: urbp.bindMemory(to: screen_char_t.self).baseAddress!,
-                                                                    count: cellCount,
-                                                                    eaIndex: nil),
-                                     cumulativeCellCount: cellCount)]
-        }
+        let guts = Guts()
+        guts.segments = [Segment(string: iTermUniformString(char: defaultChar, length: cellCount),
+                                 cumulativeCellCount: cellCount)]
+        self.guts = guts
     }
 
     @objc(deleteRange:)
@@ -94,13 +91,14 @@ extension iTermMutableRope: iTermMutableStringProtocol {
     }
 
     func resetRTLStatus() {
-        guts.segments = guts.segments.map({ segment in
+        let replacementSegments = guts.segments.map { segment in
             let modified: iTermString = segment.string.stringBySettingRTL(
                 in: segment.string.fullRange,
                 rtlIndexes: nil)
             return Segment(string: modified,
                            cumulativeCellCount: segment.cumulativeCellCount)
-        })
+        }
+        guts.segments = replacementSegments
     }
 
     @objc func setRTLIndexes(_ indexSet: IndexSet) {
