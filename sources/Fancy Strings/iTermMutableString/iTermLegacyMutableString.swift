@@ -119,11 +119,6 @@ extension iTermLegacyMutableString: iTermLegacyString {
         eaIndex(createIfNeeded: false)
     }
 
-    func string(withExternalAttributes eaIndex: iTermExternalAttributeIndexReading?,
-                startingFrom offset: Int) -> any iTermString {
-        return _string(withExternalAttributes: eaIndex, startingFrom: offset)
-    }
-
     var cellCount: Int {
         Int(sca.length)
     }
@@ -297,6 +292,6 @@ extension iTermLegacyMutableString: iTermMutableStringProtocolSwift {
     }
 
     func insert(_ string: iTermString, at index: Int) {
-        sca.insert(sca, at: Int32(index))
+        sca.insert(string.screenCharArray, at: Int32(index))
     }
 }

@@ -77,10 +77,6 @@ class iTermSubString: NSObject, iTermString {
         return self
     }
 
-    func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
-        return _string(withExternalAttributes: eaIndex, startingFrom: offset)
-    }
-
     func externalAttributesIndex() -> (any iTermExternalAttributeIndexReading)? {
         return _externalAttributesIndex()
     }
@@ -129,8 +125,10 @@ class iTermSubString: NSObject, iTermString {
     func stringBySettingRTL(in nsrange: NSRange, rtlIndexes: IndexSet?) -> any iTermString {
         let subrange = NSRange(location: self.range.lowerBound + nsrange.location,
                                length: nsrange.length)
+        var shifted = rtlIndexes
+        shifted?.shift(startingAt: 0, by: range.lowerBound)
         return base.stringBySettingRTL(in: subrange,
-                                       rtlIndexes: rtlIndexes)
+                                       rtlIndexes: shifted)
     }
 
     func doubleWidthIndexes(range nsrange: NSRange,

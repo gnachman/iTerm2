@@ -7,7 +7,7 @@
 
 @objc
 class iTermLegacyStyleString: NSObject, iTermString {
-    private let line: [screen_char_t]
+    let line: [screen_char_t]
     private let eaIndex: iTermExternalAttributeIndexReading?
     private var stringCache = SubStringCache()
 
@@ -40,8 +40,11 @@ class iTermLegacyStyleString: NSObject, iTermString {
     }
 
     func isEmpty(range: NSRange) -> Bool {
+        if range.length == 0 {
+            return true
+        }
         return line.allSatisfy {
-            !ScreenCharIsNull($0)
+            ScreenCharIsNull($0)
         }
     }
 
@@ -62,19 +65,15 @@ class iTermLegacyStyleString: NSObject, iTermString {
     func hydrate(into msca: MutableScreenCharArray,
                  destinationIndex: Int,
                  sourceRange: NSRange) {
-        line.withUnsafeBufferPointer { ptr in
-            let sourcePointer = ptr.baseAddress!.advanced(by: sourceRange.location)
-            msca.mutableLine.advanced(by: destinationIndex).update(from: sourcePointer, count: sourceRange.length)
-        }
-        if let eaIndex {
-            msca.eaIndexCreatingIfNeeded().copy(from: eaIndex,
-                                                source: Int32(sourceRange.location),
-                                                destination: Int32(destinationIndex),
-                                                count: Int32(sourceRange.length))
+        let destIndex: iTermExternalAttributeIndex? = if let eaIndex {
+            msca.eaIndexCreatingIfNeeded()
         } else {
-            msca.eaIndex?.erase(in: VT100GridRange(location: Int32(destinationIndex),
-                                                   length: Int32(sourceRange.length)))
+            msca.eaIndexCreatingIfNeeded()
         }
+        hydrate(into: msca.mutableLine,
+                eaIndex: destIndex,
+                offset: Int32(destinationIndex),
+                range: sourceRange)
     }
 
     func hydrate(into buffer: UnsafeMutablePointer<screen_char_t>,
@@ -84,12 +83,12 @@ class iTermLegacyStyleString: NSObject, iTermString {
         let start = range.location
         let length = range.length
 
-        // TODO: Add extended attribute support
         line.withUnsafeBufferPointer { ptr in
             ptr.baseAddress!
                 .advanced(by: start)
                 .withMemoryRebound(to: screen_char_t.self, capacity: length) { src in
-                    buffer.update(from: src, count: length)
+                    let dest = buffer.advanced(by: Int(offset))
+                    dest.update(from: src, count: length)
                 }
         }
         if let eaIndex {
@@ -110,12 +109,6 @@ class iTermLegacyStyleString: NSObject, iTermString {
     @objc
     func externalAttributesIndex() -> (any iTermExternalAttributeIndexReading)? {
         return _externalAttributesIndex()
-    }
-
-    @objc
-    func string(withExternalAttributes eaIndex: iTermExternalAttributeIndexReading?,
-                startingFrom offset: Int) -> any iTermString {
-        return _string(withExternalAttributes: eaIndex, startingFrom: offset)
     }
 
     @objc

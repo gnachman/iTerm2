@@ -16,6 +16,13 @@
 //   func append(_ s: String) {
 //     storage.append(s)   // wrapper’s getter ensures uniqueness
 //   }
+//
+//   // Never read and write a field of Storage in the same statement. You will end up assigning
+//   // to an "original" value that got copied-on-write but the resulting value will be a pre-
+//   // assignment clone.
+//   func set(s: String, atIndex i: Int) {
+//     let replacement = storage.substrings.set(s: s, atIndex: i)
+//     storage.substrings = replacement
 // }
 
 protocol Cloning {
@@ -24,22 +31,22 @@ protocol Cloning {
 
 @propertyWrapper
 struct CopyOnWrite<Storage: AnyObject & Cloning> {
-  private var box: Storage
-  init(wrappedValue value: Storage) { box = value }
-  var wrappedValue: Storage {
-    mutating get {
-      if !isKnownUniquelyReferenced(&box) {
-        box = box.clone()
-      }
-      return box
+    private var box: Storage
+    init(wrappedValue value: Storage) { box = value }
+    var wrappedValue: Storage {
+        mutating get {
+            if !isKnownUniquelyReferenced(&box) {
+                box = box.clone()
+            }
+            return box
+        }
+        set {
+            if !isKnownUniquelyReferenced(&box) {
+                box = newValue.clone()
+            } else {
+                box = newValue
+            }
+        }
     }
-    set {
-      if !isKnownUniquelyReferenced(&box) {
-        box = newValue.clone()
-      } else {
-        box = newValue
-      }
-    }
-  }
 }
 

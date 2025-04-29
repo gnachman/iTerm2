@@ -86,10 +86,6 @@ class iTermASCIIString: NSObject, iTermString {
         return self
     }
 
-    func string(withExternalAttributes eaIndex: (any iTermExternalAttributeIndexReading)?, startingFrom offset: Int) -> any iTermString {
-        return _string(withExternalAttributes: eaIndex, startingFrom: offset)
-    }
-
     func externalAttributesIndex() -> (any iTermExternalAttributeIndexReading)? {
         return _externalAttributesIndex()
     }

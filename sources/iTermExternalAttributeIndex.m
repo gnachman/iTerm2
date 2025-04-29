@@ -226,6 +226,10 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     return _attributes[@(idx + _offset)];
 }
 
+- (iTermExternalAttribute *)attributeAtIndex:(int)i {
+    return _attributes[@(i + _offset)];
+}
+
 - (void)setObject:(iTermExternalAttribute * _Nullable)ea atIndexedSubscript:(NSUInteger)i {
     _attributes[@(i + _offset)] = ea;
 }
@@ -704,6 +708,16 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     return !self.hasUnderlineColor && self.blockIDList == nil && self.controlCodeNumber == nil && self.url == nil;
 }
 
+- (BOOL)isEqual:(id)object {
+    if (self == object) {
+        return YES;
+    }
+    iTermExternalAttribute *other = [iTermExternalAttribute castFrom:object];
+    if (!other) {
+        return NO;
+    }
+    return [self isEqualToExternalAttribute:other];
+}
 
 @end
 
@@ -762,6 +776,10 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 }
 
 - (iTermExternalAttribute *)objectAtIndexedSubscript:(NSInteger)idx {
+    return _attr;
+}
+
+- (iTermExternalAttribute *)attributeAtIndex:(int)i {
     return _attr;
 }
 

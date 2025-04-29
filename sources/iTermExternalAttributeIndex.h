@@ -68,6 +68,7 @@ typedef struct {
 - (void)copyInto:(iTermExternalAttributeIndex *)destination;
 - (void)copyFrom:(id<iTermExternalAttributeIndexReading> _Nullable)destination startOffset:(int)startOffset;
 - (BOOL)isEqualToExternalAttributeIndex:(id<iTermExternalAttributeIndexReading>)other;
+- (iTermExternalAttribute * _Nullable)attributeAtIndex:(int)i;
 @end
 
 @interface iTermExternalAttributeIndex: NSObject<iTermExternalAttributeIndexReading>

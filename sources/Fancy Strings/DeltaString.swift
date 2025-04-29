@@ -19,6 +19,10 @@ class DeltaString: NSObject {
     private let deltasStore: UnsafeMutablePointer<CInt>
     @objc let backingStore: UnsafeMutablePointer<unichar>?
 
+    var safeDeltas: [CInt] {
+        let buffer = UnsafeBufferPointer(start: deltas, count: Int(length))
+        return Array(buffer)
+    }
     /// replace all your old inits with this single one:
     @objc
     init(string: NSString,
@@ -147,7 +151,6 @@ class DeltaStringBuilder: NSObject {
                     uniIdx += 1
                 }
             } else {
-                runningΔ += 1
                 deltaPtr![deltaIdx + offset] = CInt(runningΔ)
                 uniPtr![uniIdx] = unichar(code)
                 uniIdx += 1
