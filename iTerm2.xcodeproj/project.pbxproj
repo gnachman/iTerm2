@@ -7438,6 +7438,7 @@
 		A6B1476221334D3900D0814F /* iTermTmuxStatusBarMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxStatusBarMonitor.h; sourceTree = "<group>"; };
 		A6B1476321334D3900D0814F /* iTermTmuxStatusBarMonitor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxStatusBarMonitor.m; sourceTree = "<group>"; };
 		A6B152DC29255ED500628436 /* iTermLocaleGuesser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermLocaleGuesser.swift; sourceTree = "<group>"; };
+		A6B1C69D2DC15898008AD3CA /* ModernTests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = ModernTests.xctestplan; path = ModernTests/ModernTests.xctestplan; sourceTree = "<group>"; };
 		A6B3A7311AC74E02008E8D4E /* FindCursorCell4.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = FindCursorCell4.png; path = images/FindCursorCell4.png; sourceTree = "<group>"; };
 		A6B3A7321AC74E02008E8D4E /* FindCursorCell3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = FindCursorCell3.png; path = images/FindCursorCell3.png; sourceTree = "<group>"; };
 		A6B3A7331AC74E02008E8D4E /* FindCursorCell2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = FindCursorCell2.png; path = images/FindCursorCell2.png; sourceTree = "<group>"; };
@@ -8400,6 +8401,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6B1C69D2DC15898008AD3CA /* ModernTests.xctestplan */,
 				A63F2A3A23FA5951008DDEA4 /* it2run */,
 				5370676121C9D2390088D0F3 /* SignedArchive */,
 				530AB7EC20AE85DE00D2AA08 /* api */,

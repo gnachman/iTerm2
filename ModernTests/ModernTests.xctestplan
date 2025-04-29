@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "89C4D9A1-9D40-4CD6-9269-D869FF4AD4EE",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:iTerm2.xcodeproj",
+        "identifier" : "A6A723AD2DC04C2200A8115D",
+        "name" : "ModernTests"
+      }
+    }
+  ],
+  "version" : 1
+}

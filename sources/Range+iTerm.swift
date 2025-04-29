@@ -36,3 +36,13 @@ extension Range where Bound: Comparable {
         upperBound >= other.upperBound
     }
 }
+
+extension NSRange {
+    func contains(_ other: Range<Int>) -> Bool {
+        return lowerBound <= other.lowerBound && upperBound >= other.upperBound
+    }
+
+    func contains(_ other: NSRange) -> Bool {
+        return lowerBound <= other.lowerBound && upperBound >= other.upperBound
+    }
+}

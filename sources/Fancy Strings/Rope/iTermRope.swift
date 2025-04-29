@@ -192,6 +192,7 @@ extension iTermRope: iTermString {
     func hydrate(into msca: MutableScreenCharArray,
                  destinationIndex: Int,
                  sourceRange: NSRange) {
+        it_assert(fullRange.contains(sourceRange), "Source range \(sourceRange) out of bounds in rope of length \(cellCount)")
         var o = 0
         enumerateSegments(inRange: Range(sourceRange)!) { i, seg, localRange in
             seg.hydrate(into: msca,

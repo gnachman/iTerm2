@@ -486,7 +486,6 @@ final class iTermMutableRopeTests: XCTestCase {
         let ascii = iTermASCIIString(data: Data("XXX".utf8), style: style, ea: nil)
         let rope = iTermMutableRope([ascii])
 
-        let full = rope.fullRange
         rope.setRTLIndexes(IndexSet([0,2]))
         for i in 0..<rope.cellCount {
             let status = rope.character(at: i).rtlStatus
@@ -508,17 +507,10 @@ final class iTermMutableRopeTests: XCTestCase {
         XCTAssertTrue(rope.isEmpty(range: full))
         XCTAssertEqual(rope.usedLength(range: full), 0)
 
-        // out‐of‐bounds hasEqual should be false
-        var buf = [screen_char_t]()
-        let eq = buf.withUnsafeBufferPointer { ptr in
-            rope.hasEqual(range: NSRange(location:0,length:1), to: ptr.baseAddress!)
-        }
-        XCTAssertFalse(eq)
-
         // isEqual(lhsRange:toString:) on empty rope returns false unless both empty
         let ascii = iTermASCIIString(data: Data("".utf8), style: makeStyle(), ea: nil)
         XCTAssertTrue(rope.isEqual(lhsRange: full, toString: ascii, startingAtIndex: 0))
-        XCTAssertFalse(rope.isEqual(lhsRange: NSRange(location:1,length:1), toString: ascii, startingAtIndex:0))
+        XCTAssertFalse(rope.isEqual(lhsRange: NSRange(location: 1, length: 1), toString: ascii, startingAtIndex:0))
     }
 
     func testHydrateSmallRangesAcrossSegments() {
