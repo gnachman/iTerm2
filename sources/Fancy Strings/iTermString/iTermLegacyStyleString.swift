@@ -6,7 +6,7 @@
 //
 
 @objc
-class iTermLegacyStyleString: NSObject, iTermString {
+class iTermLegacyStyleString: iTermBaseString, iTermString {
     let line: [screen_char_t]
     private let eaIndex: iTermExternalAttributeIndexReading?
     private var stringCache = SubStringCache()
@@ -65,11 +65,7 @@ class iTermLegacyStyleString: NSObject, iTermString {
     func hydrate(into msca: MutableScreenCharArray,
                  destinationIndex: Int,
                  sourceRange: NSRange) {
-        let destIndex: iTermExternalAttributeIndex? = if let eaIndex {
-            msca.eaIndexCreatingIfNeeded()
-        } else {
-            msca.eaIndexCreatingIfNeeded()
-        }
+        let destIndex = eaIndex != nil ? msca.eaIndexCreatingIfNeeded() : msca.eaIndex
         hydrate(into: msca.mutableLine,
                 eaIndex: destIndex,
                 offset: Int32(destinationIndex),

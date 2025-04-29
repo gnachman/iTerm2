@@ -6,7 +6,7 @@
 //
 
 @objc
-class iTermRope: NSObject {
+class iTermRope: iTermBaseString {
     struct Segment {
         // No matter what `string` must be immutable. Although I prefer mutable fields in structs,
         // keeping this as a let makes it easier to prove that string is immutable (since clone()
