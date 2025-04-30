@@ -334,6 +334,27 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return result;
 }
 
+- (NSString *)stringValueIncludingEmbeddedNulls {
+    NSMutableString *result = [NSMutableString string];
+    const screen_char_t *line = self.line;
+    const int usedLength = [self lengthExcludingTrailingNulls];
+    for (int i = 0; i < usedLength; i++) {
+        const screen_char_t c = line[i];
+        if (c.image) {
+            continue;
+        }
+        if (!c.complexChar) {
+            if (c.code >= ITERM2_PRIVATE_BEGIN && c.code <= ITERM2_PRIVATE_END) {
+                continue;
+            }
+            [result appendCharacter:c.code];
+            continue;
+        }
+        [result appendString:ScreenCharToStr(&c) ?: @""];
+    }
+    return result;
+}
+
 - (NSString *)debugStringValue {
     NSString *eol;
     switch (self.eol) {
@@ -831,6 +852,15 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
     NSInteger length = self.length;
     const screen_char_t *line = self.line;
     while (length > 0 && ScreenCharIsNullOrWhitespace(line[length - 1])) {
+        length -= 1;
+    }
+    return length;
+}
+
+- (NSInteger)lengthExcludingTrailingNulls {
+    NSInteger length = self.length;
+    const screen_char_t *line = self.line;
+    while (length > 0 && ScreenCharIsNull(line[length - 1])) {
         length -= 1;
     }
     return length;

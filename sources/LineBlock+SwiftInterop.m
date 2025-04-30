@@ -206,4 +206,8 @@ isEqualToRope:(id<iTermMutableStringProtocol>)other {
     return [_rope doubleWidthIndexesWithRange:NSMakeRange(0, _rope.cellCount) rebaseTo:0];
 }
 
+- (void)deleteFromEndOfRope:(int)count {
+    [_rope deleteFromEnd:count];
+}
+
 @end

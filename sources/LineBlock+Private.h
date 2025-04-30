@@ -21,7 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @public
     id<iTermMutableStringProtocol> _rope;
-    int _desiredCapacity;
     int _firstEntry;  // first valid cumulative_line_length
 
 

@@ -52,6 +52,10 @@
 // Called when an assertion fails to add more contextual information to the message.
 @property(nonatomic, copy) NSString *(^debugInfo)(void);
 
+// First valid raw line number.
+@property(nonatomic, readonly) int firstEntry;
+@property(nonatomic) int desiredCapacity;
+
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary
                 absoluteBlockNumber:(long long)absoluteBlockNumber;
 
@@ -249,5 +253,9 @@ void EnableDoubleWidthCharacterLineCache(void);
 // This doesn't support CoW so only call this before making the first copy.
 - (void)eraseRTLStatusInAllCharacters;
 - (void)setBidiForLastRawLine:(iTermBidiDisplayInfo *)bidi;
+
+#pragma mark - Testing
+
+- (NSInteger)numberOfClients;
 
 @end

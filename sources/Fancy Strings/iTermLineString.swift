@@ -87,7 +87,9 @@ class iTermLineString: NSObject, iTermLineStringReading {
          dirty: Bool) {
         self.content = content
         self.eol = eol
-        self.continuation = continuation
+        var c = continuation
+        c.code = unichar(eol)
+        self.continuation = c
         self.metadata = metadata
         self.bidi = bidi
         self.dirty = dirty

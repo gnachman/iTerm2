@@ -250,7 +250,7 @@ do { \
                                              delegate:self];
     int i = 0;
     for (NSString *line in lines) {
-        screen_char_t *s = [grid screenCharsAtLineNumber:i++];
+        screen_char_t *s = [grid mutableScreenCharsAtLineNumber:i++];
         for (int j = 0; j < [line length]; j++) {
             unichar c = [line characterAtIndex:j];
             if (c == '.') c = 0;
@@ -1019,6 +1019,7 @@ do { \
             @"ddddd\n"
             @"ccccc"]);
 
+
     // Same, but scroll by so much it just clears the area out.
     s = [self compactLineDumpForRectScrolledDownBy:-10
                                         scrollRect:VT100GridRectMake(0, 1, 5, 3)
@@ -1118,7 +1119,6 @@ do { \
             @"ddd\n"
             @"ddd"]);
 
-
     // Same, but other direction
     s = [self compactLineDumpForRectScrolledDownBy:-1
                                         scrollRect:VT100GridRectMake(0, 1, 3, 2)
@@ -1150,7 +1150,8 @@ do { \
             @"ijkl!\n"
             @"qrst!"]);
 
-    // Same but scroll by 2
+    // Test that continuation marks are cleaned up before the scrolled region with
+    // full width and scrolling down by 2
     grid = [self gridFromCompactLinesWithContinuationMarks:
             @"abcd+\n"
             @"efgh+\n"
@@ -1297,7 +1298,7 @@ do { \
     screen_char_t frame[(w + 1) * h];
     int o = 0;
     for (int y = 0; y < h; y++) {
-        screen_char_t *line = [grid screenCharsAtLineNumber:y];
+        const screen_char_t *line = [grid screenCharsAtLineNumber:y];
         memmove(frame + o, line, sizeof(screen_char_t) * (w + 1));
         o += w;
     }
@@ -1382,7 +1383,7 @@ do { \
                           to:VT100GridCoordMake(2, 2)];
 
     for (int y = 0; y < 4; y++) {
-        screen_char_t *line = [grid screenCharsAtLineNumber:y];
+        const screen_char_t *line = [grid screenCharsAtLineNumber:y];
         screen_char_t fg, bg;
         for (int x = 0; x < 4; x++) {
             if ((x == 1 || x == 2) && (y == 1 || y == 2)) {
@@ -1406,7 +1407,7 @@ do { \
                           to:VT100GridCoordMake(3, 3)];
     // Now should be green bg everywhere, red fg in center square
     for (int y = 0; y < 4; y++) {
-        screen_char_t *line = [grid screenCharsAtLineNumber:y];
+        const screen_char_t *line = [grid screenCharsAtLineNumber:y];
         screen_char_t fg;
         for (int x = 0; x < 4; x++) {
             if ((x == 1 || x == 2) && (y == 1 || y == 2)) {
@@ -1429,7 +1430,7 @@ do { \
     // Now should be default on green everywhere
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
-            screen_char_t *line = [grid screenCharsAtLineNumber:y];
+            const screen_char_t *line = [grid screenCharsAtLineNumber:y];
             XCTAssert(ForegroundAttributesEqual(foregroundColor_, line[x]));
             XCTAssert(BackgroundColorsEqual(greenBg, line[x]));
         }
@@ -2752,7 +2753,8 @@ do { \
                    wraparound:YES
                          ansi:NO
                        insert:NO
-       externalAttributeIndex:nil];
+       externalAttributeIndex:nil
+                     rtlFound:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
                @"89abcdef+\n"
                @"ghijklmn+\n"
@@ -2851,7 +2853,8 @@ do { \
                        wraparound:YES
                              ansi:NO
                            insert:NO
-           externalAttributeIndex:nil];
+           externalAttributeIndex:nil
+                         rtlFound:NO];
         [grid moveCursorToLeftMargin];
         [grid moveCursorDown:1];
         [grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:YES];
@@ -2874,7 +2877,8 @@ do { \
                        wraparound:YES
                              ansi:NO
                            insert:NO
-           externalAttributeIndex:nil];
+           externalAttributeIndex:nil
+                         rtlFound:NO];
         [grid moveCursorToLeftMargin];
         [grid moveCursorDown:1];
         while ([grid lengthOfLineNumber:0] > 0 || grid.cursor.x > 0 || grid.cursor.y > 0) {

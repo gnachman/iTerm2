@@ -495,9 +495,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                    width:(int)width
                 metadata:(iTermImmutableMetadata)metadataObj
             continuation:(screen_char_t)continuation {
-    if (length <= 0) {
-        return;
-    }
     iTermLegacyStyleString *content = [[iTermLegacyStyleString alloc] initWithChars:buffer count:length eaIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadataObj)];
     const iTermLineStringMetadata lsm = {
         .timestamp = metadataObj.timestamp,
@@ -505,7 +502,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     };
     iTermLineString *lineString = [[iTermLineString alloc] initWithContent:content
                                                                        eol:partial ? EOL_SOFT : EOL_HARD
-                                                              continuation:buffer[length - 1]
+                                                              continuation:continuation
                                                                   metadata:lsm
                                                                       bidi:nil
                                                                      dirty:NO];
@@ -520,7 +517,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (_lineBlocks.count == 0) {
         [self _addBlockOfSize:block_size];
     }
-    const BOOL partial = lineString.eol != EOL_HARD;
     const int length = lineString.content.cellCount;
 
     LineBlock *block = _lineBlocks.lastBlock;
@@ -541,7 +537,19 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             ITAssertWithMessage(prefixLineString != nil, @"hasPartial but pop failed.");
         }
         const int prefix_len = prefixLineString.content.cellCount;
-        if (![block isEmpty]) {
+        if ([block isEmpty]) {
+            // The buffer is empty but it's not large enough to hold a whole line. It must be grown.
+            if (lineString.eol == EOL_SOFT) {
+                // The line is partial so we know there's more coming. Allocate enough space to hold the current line
+                // plus the usual block size (this is the case when the line is freaking huge).
+                // We could double the size to ensure better asymptotic runtime but you'd run out of memory
+                // faster with huge lines.
+                block.desiredCapacity = length + prefix_len + block_size;
+            } else {
+                // Allocate exactly enough space to hold this one line.
+                block.desiredCapacity = length + prefix_len;
+            }
+        } else {
             if (length + prefix_len > block_size) {
                 block = [self _addBlockOfSize:length + prefix_len];
             } else {
@@ -748,6 +756,18 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return [self dropExcessLinesWithWidth:width];
 }
 
+- (ScreenCharArray *)unwrappedLineAt:(int)index {
+    int n = 0;
+    for (LineBlock *block in _lineBlocks.blocks) {
+        const int count = block.numRawLines;
+        if (n + count > index) {
+            return [[block rawLine:index - n + block.firstEntry] screenCharArrayWithBidi:nil];
+        }
+        n += count;
+    }
+    return nil;
+}
+
 - (ScreenCharArray *)screenCharArrayForLine:(int)line
                                       width:(int)width
                                    paddedTo:(int)paddedSize
@@ -797,10 +817,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 
     id<iTermLineStringReading> lineString = [block wrappedLineStringWithWrapWidth:width lineNum:&remainder];
-    const int length = lineString.content.cellCount;
-    const int eol = lineString.eol;
     const screen_char_t continuation = lineString.continuation;
-    iTermImmutableMetadata metadata = lineString.externalImmutableMetadata;
 
     if (continuationPtr) {
         *continuationPtr = continuation;
@@ -810,7 +827,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         ITAssertWithMessage(NO, @"Tried to get non-existent line");
         return nil;
     }
-    ScreenCharArray *result = lineString.content.screenCharArray;
+    ScreenCharArray *result = [lineString screenCharArrayWithBidi:lineString.bidi];
     ITAssertWithMessage(result.length <= width, @"Length too long");
     return result;
 }
@@ -954,6 +971,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     // Pop the last up-to-width chars off the last line.
     id<iTermLineStringReading> lineString = [block popLastLineUpToWidth:width forceSoftEOL:NO];
+    if (metadataPtr) {
+        *metadataPtr = lineString.externalImmutableMetadata;
+    }
     ScreenCharArray *sca = lineString.content.screenCharArray;
     const int length = sca.length;
     const screen_char_t *temp = sca.line;
@@ -1008,7 +1028,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         // The cursor is on the last line in the buffer.
         LineBlock* block = _lineBlocks.lastBlock;
         int last_line_length = [block lengthOfRawLine:([block numEntries]-1)];
-        id<iTermLineStringReading> lineString = [block rawLine:([block numEntries]-1)];
         const int lastRawLineOffset = [block offsetOfRawLine:([block numEntries]-1)];
         int num_overflow_lines = [block numberOfFullLinesFromOffset:lastRawLineOffset
                                                              length:last_line_length
