@@ -3,6 +3,7 @@
 //
 
 #import "DebugLogging.h"
+#import "DVRBuffer.h"
 #import "FMDatabase.h"
 #import "NSSavePanel+iTerm.h"
 #import "ObjCExceptions.h"

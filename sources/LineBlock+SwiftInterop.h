@@ -55,6 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSData *)ropeData;
 - (void)replaceRopeWithCopy;
 - (NSIndexSet *)doubleWidthIndexSet;
+- (void)deleteFromEndOfRope:(int)count;
 
 @end
 

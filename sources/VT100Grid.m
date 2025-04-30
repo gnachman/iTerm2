@@ -1776,6 +1776,10 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             [self erasePossibleDoubleWidthCharInLineNumber:lineNumber
                                           startingAtOffset:rightIndex
                                                   withChar:defaultChar];
+            if (rect.origin.x < 2 && rightIndex < size_.width - 1) {
+                // We could stop half a dwc (or not) but for safety erase the DWC_SKIP
+                [self erasePossibleDWCSkipOnLine:lineNumber];
+            }
         }
 
         // Move lines.
@@ -1788,10 +1792,15 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             screen_char_t *sourceLine = [self mutableScreenCharsAtLineNumber:sourceIndex];
             screen_char_t *targetLine = [self mutableScreenCharsAtLineNumber:destIndex];
 
-            const int length = rect.size.width + continuation;
+            if (continuation) {
+                [self setContinuationOnLine:destIndex to:[self continuationForLine:sourceIndex]];
+            }
+
+            const int length = rect.size.width;
             memmove(targetLine + rect.origin.x,
                     sourceLine + rect.origin.x,
                     length * sizeof(screen_char_t));
+
             [self copyExternalAttributesFrom:VT100GridCoordMake(rect.origin.x, sourceIndex)
                                           to:VT100GridCoordMake(rect.origin.x, destIndex)
                                       length:length];
@@ -2072,6 +2081,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
     BOOL foundCursor = NO;
     BOOL prevLineStartsWithDoubleWidth = NO;
+    BOOL isFirst = YES;
     while (destLineNumber >= 0) {
         iTermMutableLineString *mls = [self mutableLineStringAtLineNumber:destLineNumber];
         screen_char_t *dest = mls.ensureLegacy.mutableScreenCharArray.mutableLine;
@@ -2114,12 +2124,23 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         } else {
             prevLineStartsWithDoubleWidth = NO;
         }
+        // If the first line you pop has a soft EOL but doesn't extend to the right margin then
+        // force it to be a hard EOL. The eol flag is just an indication that the line buffer
+        // doesn't end in a newline, not that the restore screen ought to have a soft EOL for the
+        // corresponding line.
+        BOOL forceHard = (isFirst &&
+                          cont == EOL_SOFT &&
+                          ScreenCharIsNull(dest[size_.width - 1]));
+        if (forceHard) {
+            cont = EOL_HARD;
+        }
         mls.continuation = continuation;
         mls.eol = cont;
         if (cont == EOL_DWC) {
             ScreenCharSetDWC_SKIP(&dest[size_.width - 1]);
         }
         --destLineNumber;
+        isFirst = NO;
     }
     return foundCursor;
 }
@@ -2455,6 +2476,11 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 - (void)setContinuationMarkOnLine:(int)line to:(unichar)code {
     [self mutableLineStringAtLineNumber:line].eol = code;
+}
+
+- (void)setContinuationOnLine:(int)line to:(screen_char_t)continuation {
+    [self mutableLineStringAtLineNumber:line].continuation = continuation;
+    [self mutableLineStringAtLineNumber:line].eol = continuation.code;
 }
 
 - (void)setContinuationCharacterOnLine:(int)line to:(screen_char_t)continuation {
@@ -2928,6 +2954,17 @@ static void DumpBuf(screen_char_t* p, int n) {
 
 - (iTermExternalAttributeIndex *)createExternalAttributesForLine:(int)line {
     return [[[self mutableLineStringAtLineNumber:line] ensureLegacy] eaIndexCreatingIfNeeded:YES];
+}
+
+- (void)erasePossibleDWCSkipOnLine:(int)lineNumber {
+    screen_char_t *aLine = [self mutableScreenCharsAtLineNumber:lineNumber];
+    if (ScreenCharIsDWC_SKIP(aLine[size_.width - 1])) {
+        aLine[size_.width - 1].code = 0;
+        [self markCharDirty:YES
+                         at:VT100GridCoordMake(size_.width - 1, lineNumber)
+            updateTimestamp:YES];
+        [self setContinuationMarkOnLine:lineNumber to:EOL_HARD];
+    }
 }
 
 - (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber

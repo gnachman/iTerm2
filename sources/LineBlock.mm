@@ -1079,7 +1079,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     }
 
     const LineBlockMetadata *md = [_metadataArray metadataAtIndex:location.index];
-    const NSRange range = NSMakeRange(location.prev + locationRelativeRange.location,
+    const NSRange range = NSMakeRange(location.prev + locationRelativeRange.location + _startOffset,
                                       locationRelativeRange.length);
     return [self lineStringWithRange:range
                         continuation:md->continuation
@@ -1459,6 +1459,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
         length = available_len - offset_from_start;
         const NSRange range = NSMakeRange(_startOffset + start + offset_from_start, length);
         cert.mutableCumulativeLineLengths[cll_entries - 1] -= length;
+        [self deleteFromEndOfRope:length];
         [_metadataArray eraseLastLineCache];
         id<iTermExternalAttributeIndexReading> attrs = [_metadataArray lastExternalAttributeIndex];
         const int split_index = available_len - length;
@@ -1499,6 +1500,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
                                           bidi:bidi];
         [_metadataArray removeLast];
         --cll_entries;
+        [self deleteFromEndOfRope:length];
         assert(_metadataArray.numEntries == cll_entries);
         is_partial = NO;
     }
@@ -1575,6 +1577,10 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     }
     id<iTermLineStringReading> lineString = [self rawLine:cll_entries - 1];
     return [self screenCharArrayForLineString:lineString];
+}
+
+- (int)firstEntry {
+    return _firstEntry;
 }
 
 - (int)lengthOfRawLine:(int)linenum {
