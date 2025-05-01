@@ -65,20 +65,34 @@ extension iTermString {
     }
 
     func _string(withExternalAttributes eaIndex: iTermExternalAttributeIndexReading?,
-                 startingFrom offset: Int) -> any iTermString {
+                 sourceRange: Range<Int>,
+                 destinationStartIndex: Int) -> any iTermString {
         let sca = _screenCharArray
+        if eaIndex == nil && sca.eaIndex == nil {
+            return self
+        }
+        var replacementIndex = sca.eaIndex?.mutableCopy() as? iTermExternalAttributeIndex
+        if eaIndex != nil && replacementIndex == nil {
+            replacementIndex = iTermExternalAttributeIndex()
+        }
+        replacementIndex?.copy(from: eaIndex,
+                               source: Int32(sourceRange.lowerBound),
+                               destination: Int32(destinationStartIndex),
+                               count: Int32(sourceRange.count))
         return iTermLegacyStyleString(chars: sca.line,
                                       count: Int(sca.length),
-                                      eaIndex: sca.eaIndex)
+                                      eaIndex: replacementIndex)
     }
 
     func _hydrate(range: NSRange) -> ScreenCharArray {
+        it_assert(fullRange.contains(range), "Source range \(range) out of bounds in string of length \(cellCount)")
         let msca = MutableScreenCharArray.emptyLine(ofLength: Int32(range.length))
         hydrate(into: msca, destinationIndex: 0, sourceRange: range)
         return msca
     }
 
     func _character(at off: Int) -> screen_char_t {
+        it_assert(off >= 0 && off < cellCount)
         let msca = MutableScreenCharArray.emptyLine(ofLength: 1)
         hydrate(into: msca,
                 destinationIndex: 0,

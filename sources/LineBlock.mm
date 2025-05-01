@@ -73,11 +73,6 @@ static dispatch_queue_t gDeallocQueue;
 #define SearchLog(args...)
 #endif
 
-@protocol iTermLineBlockMutationCertificate
-- (int *)mutableCumulativeLineLengths;
-- (void)setCumulativeLineLengthsCapacity:(int)capacity;
-- (void)invalidate;
-@end
 
 // ONLY -validMutationCertificate should create this!
 @interface iTermLineBlockMutator: NSObject<iTermLineBlockMutationCertificate>
@@ -295,12 +290,16 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
         for (int i = 0; i < cll_capacity; i++) {
             mutableCLL[i] = [cllArray[i] intValue];
             NSArray *components = metadataArray[i];
-
+            const NSUInteger length = cumulative_line_lengths[i] - startOffset;
             [_metadataArray setEntry:i
                       fromComponents:components
                       migrationIndex:migrationIndex
                          startOffset:startOffset
-                              length:cumulative_line_lengths[i] - startOffset];
+                              length:length];
+            id<iTermExternalAttributeIndexReading> eaIndex = iTermMetadataGetExternalAttributesIndex([_metadataArray metadataAtIndex:i]->lineMetadata);
+            [self setExternalAttributes:eaIndex
+                            sourceRange:NSMakeRange(0, length)
+                  destinationStartIndex:startOffset];
             startOffset = cumulative_line_lengths[i];
         }
         [_metadataArray increaseCapacityTo:cll_capacity];
@@ -663,9 +662,6 @@ static int iTermLineBlockNumberOfFullLinesImpl(LineBlock *self,
     }
     // We found the raw line that includes the wrapped line we're searching for.
     // eat up *lineNum many width-sized wrapped lines from this start of the current full line
-    iTermImmutableMetadata metadata = iTermMetadataMakeImmutable(iTermMetadataDefault());
-    int length = 0;
-    screen_char_t continuation = { 0 };
     int eol = 0;
     const NSRange range = [self locationRelativeRangeOfWrappedLineWithWidth:width
                                                                    location:location
@@ -839,8 +835,12 @@ static int iTermLineBlockNumberOfFullLinesImpl(LineBlock *self,
                                                                    location:location
                                                                        line:*lineNum
                                                                      eolOut:&eol];
+    *lineNum = 0;
+    isStartOfWrappedLine = (range.location == 0);
+    *yOffsetPtr = location.numEmptyLines;
+
     const int length = range.length;
-    const int offset = range.location;
+    const int offset = range.location + location.prev + _startOffset;
 
     VLog(@"getPositionOfLine: locationRelativeRangeOfWrappedLineWithWidth returned length=%@, eol=%@, yOffset=%@, isStartOfWrappedLine=%@",
           @(length), @(eol), yOffsetPtr ? [@(*yOffsetPtr) stringValue] : @"nil", @(isStartOfWrappedLine));
@@ -878,7 +878,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(LineBlock *self,
             // First cell of first line in block.
             VLog(@"getPositionOfLine: First cell of first line in block");
         } else {
-            // First sell of second-or-later line in block.
+            // First cell of second-or-later line in block.
             *yOffsetPtr += 1;
             VLog(@"getPositionOfLine: First cell of 2nd or later line, advance yOffset to %@", @(*yOffsetPtr));
         }
@@ -985,10 +985,6 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width {
     int mutableLineNum = lineNum;
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&mutableLineNum];
-    int length = 0;
-    int eof = 0;
-    iTermMetadata metadata;
-    int lineOffset = 0;
 
     id<iTermLineStringReading> lineString =
         [self _wrappedLineStringWithWrapWidth:width
@@ -1183,11 +1179,15 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
             // 1. Given:
             //     abc
             //     (empty)
-            //   Then the location for the start of line 1 is (prev=0,numEmptyLines=1,index=1,length=0)
+            //   Then the location for the start of line 1 is (prev=3,numEmptyLines=1,index=1,length=0)
             // 2. Given:
             //    (empty)
             //    (empty)
             //   Then the location for the start of line 1 is (prev=0,numEmptyLines=1,index=1,length=0)
+            //
+            // I don't think this is right. Probably a better way of referring to locations is needed.
+            // For example if you have lines ["", "", "A", "", "BC"] then the locations of the last
+            // two raw lines are the same (prev=1, numEmptyLines=1).
             ++numEmptyLines;
         }
         int spans;
@@ -1245,11 +1245,6 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     }
     // We found the raw line that includes the wrapped line we're searching for.
     // eat up *lineNum many width-sized wrapped lines from this start of the current full line
-    iTermImmutableMetadata metadata = iTermMetadataMakeImmutable(iTermMetadataDefault());
-    int length = 0;
-    screen_char_t continuation = { 0 };
-    int eol = 0;
-    iTermBidiDisplayInfo *bidiInfo = nil;
     id<iTermLineStringReading> lineString =
         [self _wrappedLineStringWithWrapWidth:width
                                      location:location
@@ -1374,7 +1369,6 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
                          width:(int)width {
     ModifyLineBlock(self, [self, numberOfLinesToRemove, width](id<iTermLineBlockMutationCertificate> cert) -> void {
         for (int i = 0; i < numberOfLinesToRemove; i++) {
-            int length = 0;
             id<iTermLineStringReading> lineString = [self popLastLineUpToWidth:width
                                                                   forceSoftEOL:NO
                                                                           cert:cert];
@@ -1389,6 +1383,12 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     if (cll_entries == _firstEntry) {
         return;
     }
+
+    const int length = [self lengthOfLastLine];
+    ModifyLineBlock(self,
+                    [self, length](id<iTermLineBlockMutationCertificate> cert) -> void {
+        [self deleteFromEndOfRope:length];
+    });
 
     [_metadataArray willMutate];
 
@@ -1459,7 +1459,6 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
         length = available_len - offset_from_start;
         const NSRange range = NSMakeRange(_startOffset + start + offset_from_start, length);
         cert.mutableCumulativeLineLengths[cll_entries - 1] -= length;
-        [self deleteFromEndOfRope:length];
         [_metadataArray eraseLastLineCache];
         id<iTermExternalAttributeIndexReading> attrs = [_metadataArray lastExternalAttributeIndex];
         const int split_index = available_len - length;
@@ -1483,6 +1482,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
                                            eol:continuation.code
                                       metadata:iTermMetadataMakeImmutable(truncated)
                                           bidi:bidi];
+        [self deleteFromEndOfRope:length];
     } else {
         // The last raw line is not longer than width. Return the whole thing.
         length = available_len;
@@ -1599,6 +1599,8 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
 }
 
 - (id<iTermLineStringReading>)rawLine:(int)linenum {
+    ITAssertWithMessage(linenum < cll_entries && linenum >= _firstEntry, @"Out of bounds");
+
     const int offset = [self offsetOfRawLine:linenum];
     const int length = [self lengthOfRawLine:linenum];
     screen_char_t continuation = length > 0 ? [self characterAtIndex:offset] : (screen_char_t){0};
@@ -1713,6 +1715,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     [_metadataArray reset];
     cached_numlines_width = -1;
     cll_entries = 0;
+    is_partial = NO;
     [self setBufferStartOffset:0];
     _firstEntry = 0;
     iTermLineBlockDidChange(self, "drop lines");

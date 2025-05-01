@@ -47,7 +47,6 @@
     const LineBlockMetadata *md = [_metadataArray metadataAtIndex:i];
     iTermBidiDisplayInfo *bidiInfo = nil;
 
-    ScreenCharArray *sca = nil;
     id<iTermString> string = nil;
     if (md->lineMetadata.rtlFound) {
         string = [_rope substringWithRange:NSMakeRange([self _lineRawOffset:i],
@@ -157,11 +156,12 @@ isEqualToRope:(id<iTermMutableStringProtocol>)other {
 }
 
 - (NSString *)debugStringForRawLine:(int)i {
-    const BOOL iscont = (i == cll_entries-1) && is_partial;
+    const BOOL iscont = (i == cll_entries - 1) && is_partial;
     int prev = i > 0 ? cumulative_line_lengths[i - 1] : 0;
+    int ci = MAX(0, cumulative_line_lengths[i] - 1);
     id<iTermLineStringReading> string = [self lineStringWithRange:NSMakeRange(_startOffset + prev - self.bufferStartOffset,
                                                                               cumulative_line_lengths[i] - prev)
-                                                     continuation:[self characterAtIndex:cumulative_line_lengths[i] - 1]
+                                                     continuation:[self characterAtIndex:ci]
                                                               eol:iscont ? EOL_SOFT : EOL_HARD
                                                          metadata:[_metadataArray immutableLineMetadataAtIndex:i]
                                                              bidi:nil];
@@ -208,6 +208,14 @@ isEqualToRope:(id<iTermMutableStringProtocol>)other {
 
 - (void)deleteFromEndOfRope:(int)count {
     [_rope deleteFromEnd:count];
+}
+
+- (void)setExternalAttributes:(id<iTermExternalAttributeIndexReading>)eaIndex
+                  sourceRange:(NSRange)sourceRange
+        destinationStartIndex:(NSInteger)destinationStartIndex {
+    [_rope setExternalAttributes:eaIndex
+                     sourceRange:sourceRange
+           destinationStartIndex:destinationStartIndex];
 }
 
 @end

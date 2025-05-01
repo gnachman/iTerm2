@@ -34,6 +34,7 @@ extension iTermMutableRope: iTermMutableStringProtocol {
     func append(string: iTermString) {
         appendSegment(string)
     }
+
     /// Delete N cells from front using indexOfSegment for binary search
     @objc
     func deleteFromStart(_ count: Int) {
@@ -102,7 +103,7 @@ extension iTermMutableRope: iTermMutableStringProtocol {
     }
 
     @objc func setRTLIndexes(_ indexSet: IndexSet) {
-        var segments = [Segment]()
+        var segments = guts.segments
         enumerateSegments(inRange: 0..<cellCount) { i, string, localRange in
             let globalRange = self.globalSegmentRange(index: i)
             var subset = indexSet[globalRange]
@@ -111,11 +112,39 @@ extension iTermMutableRope: iTermMutableStringProtocol {
             let modified = string.stringBySettingRTL(
                 in: NSRange(localRange),
                 rtlIndexes: subset)
-            segments.append(
-                Segment(
-                    string: modified,
-                    cumulativeCellCount: guts.segments[i].cumulativeCellCount))
+            segments[i] = Segment(
+                string: modified,
+                cumulativeCellCount: guts.segments[i].cumulativeCellCount)
         }
+        guts.segments = segments
+        guts.stringCache.clear()
+    }
+
+    @objc func setExternalAttributes(_ sourceIndex: iTermExternalAttributeIndexReading?,
+                                     sourceRange: NSRange,
+                                     destinationStartIndex: Int) {
+        var segments = guts.segments
+        var o = 0
+        enumerateSegments(inRange: destinationStartIndex..<(destinationStartIndex + sourceRange.length)) { i, string, localRange in
+            let g = globalSegmentRange(index: i)
+            let sourceStart = sourceRange.location + o
+            let sourceRange = sourceStart..<(sourceStart + localRange.count)
+            let newString = string._string(
+                withExternalAttributes: sourceIndex,
+                sourceRange: sourceRange,
+                destinationStartIndex: g.lowerBound + localRange.lowerBound)
+            segments[i] = Segment(
+                    string: newString,
+                    cumulativeCellCount: guts.segments[i].cumulativeCellCount)
+            o += localRange.count
+        }
+        guts.segments = segments
+        guts.stringCache.clear()
+    }
+}
+
+extension iTermMutableRope {
+    private func set(segments: [Segment]) {
         guts.deletedHeadCellCount = 0
         guts.segments = segments
         guts.stringCache.clear()

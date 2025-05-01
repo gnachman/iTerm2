@@ -19,6 +19,7 @@ class iTermSubString: iTermBaseString, iTermString {
     }
 
     init(base: iTermString, range: Range<Int>) {
+        it_assert(base.fullRange.contains(range))
         if let sub = base as? iTermSubString {
             // unwrap nested substring
             self.base = sub.base

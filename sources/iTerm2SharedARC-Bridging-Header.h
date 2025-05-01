@@ -100,6 +100,7 @@
 #import "IntervalTree.h"
 #import "Interval+Additions.h"
 #import "LineBlock.h"
+#import "LineBlock+Private.h"
 #import "LineBufferHelpers.h"
 #import "MovePaneController.h"
 #import <NMSSH/NMSSH.h>

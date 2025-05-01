@@ -56,6 +56,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)replaceRopeWithCopy;
 - (NSIndexSet *)doubleWidthIndexSet;
 - (void)deleteFromEndOfRope:(int)count;
+- (void)setExternalAttributes:(id<iTermExternalAttributeIndexReading>)eaIndex
+                  sourceRange:(NSRange)sourceRange
+        destinationStartIndex:(NSInteger)destinationStartIndex;
+- (void)appendExternalAttributesFrom:(id<iTermLineStringReading>)source;
 
 @end
 

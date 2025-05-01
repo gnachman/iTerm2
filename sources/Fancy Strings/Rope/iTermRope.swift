@@ -219,7 +219,7 @@ extension iTermRope: iTermString {
     func deltaString(range: NSRange) -> DeltaString {
         return guts.stringCache.string(for: range) {
             let builder = DeltaStringBuilder(count: CInt(cellCount))
-            buildString(range: fullRange, builder: builder)
+            buildString(range: range, builder: builder)
             return builder.build()
         }
     }

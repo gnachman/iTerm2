@@ -16,6 +16,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol iTermLineBlockMutationCertificate
+- (int *)mutableCumulativeLineLengths;
+- (void)setCumulativeLineLengthsCapacity:(int)capacity;
+- (void)invalidate;
+@end
+
 @interface LineBlock() {
     int _startOffset;  // Index of the first non-dropped screen_char_t in _rawBuffer.
 
@@ -193,6 +199,12 @@ typedef struct {
 
 - (LineBlockLocation)locationOfRawLineForWidth:(int)width
                                        lineNum:(int *)lineNum;
+- (BOOL)reallyAppendLineString:(id<iTermLineStringReading>)lineString
+                         width:(int)width
+                          cert:(id<iTermLineBlockMutationCertificate>)cert;
+- (int)cacheAwareOffsetOfWrappedLineInBuffer:(LineBlockLocation)location
+                           wrappedLineNumber:(int)lineNum
+                                       width:(int)width;
 
 @end
 
