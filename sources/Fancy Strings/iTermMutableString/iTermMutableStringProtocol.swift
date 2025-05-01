@@ -16,6 +16,10 @@ protocol iTermMutableStringProtocol: iTermString {
     func clone() -> iTermString
     @objc func resetRTLStatus()
     @objc func setRTLIndexes(_ indexSet: IndexSet)
+    @objc func setExternalAttributes(_ eaIndex: iTermExternalAttributeIndexReading?,
+                                     sourceRange: NSRange,
+                                     destinationStartIndex: Int)
+
 }
 
 protocol iTermMutableStringProtocolSwift: iTermMutableStringProtocol {

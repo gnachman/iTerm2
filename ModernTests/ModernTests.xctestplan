@@ -9,7 +9,32 @@
     }
   ],
   "defaultOptions" : {
-
+    "addressSanitizer" : {
+      "detectStackUseAfterReturn" : true,
+      "enabled" : true
+    },
+    "environmentVariableEntries" : [
+      {
+        "key" : "MallocStackLogging",
+        "value" : "1"
+      },
+      {
+        "key" : "MallocStackLoggingNoCompact",
+        "value" : "1"
+      },
+      {
+        "key" : "MallocGuardEdges",
+        "value" : "1"
+      },
+      {
+        "key" : "MallocScribble = 1\nMallocPreScribble",
+        "value" : "1"
+      },
+      {
+        "key" : "MallocPreScribble",
+        "value" : "1"
+      }
+    ]
   },
   "testTargets" : [
     {

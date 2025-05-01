@@ -8,6 +8,7 @@
 #import "iTermLineBlockArray.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermCumulativeSumCache.h"
 #import "iTermTuple.h"
 #import "LineBlock.h"
@@ -412,23 +413,18 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
         BOOL stop = NO;
         int line = remainder;
         do {
-            int length, eol;
-            screen_char_t continuation;
             int temp = line;
-            iTermImmutableMetadata metadata;
-            const screen_char_t *chars = [block getWrappedLineWithWrapWidth:width
-                                                                    lineNum:&temp
-                                                                 lineLength:&length
-                                                          includesEndOfLine:&eol
-                                                                    yOffset:NULL
-                                                               continuation:&continuation
-                                                       isStartOfWrappedLine:NULL
-                                                                   metadata:&metadata];
-            if (chars == NULL) {
+            id<iTermLineStringReading> lineString = [block wrappedLineStringWithWrapWidth:width lineNum:&line];
+            if (lineString == nil) {
                 return;
             }
-            ITAssertWithMessage(length <= width, @"Length too long");
-            callback(chars, length, eol, continuation, metadata, &stop);
+            ITAssertWithMessage(lineString.content.cellCount <= width, @"Length too long");
+            callback(lineString.content.screenCharArray.line,
+                     lineString.content.cellCount,
+                     lineString.eol,
+                     lineString.continuation,
+                     lineString.externalImmutableMetadata,
+                     &stop);
             if (stop) {
                 return;
             }

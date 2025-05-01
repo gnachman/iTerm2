@@ -279,6 +279,22 @@ extension iTermLegacyMutableString: iTermMutableStringProtocol {
     func erase(defaultChar: screen_char_t) {
         sca.setCharacter(defaultChar, in: fullRange)
     }
+
+    @objc func setExternalAttributes(_ sourceIndex: iTermExternalAttributeIndexReading?,
+                                     sourceRange: NSRange,
+                                     destinationStartIndex: Int) {
+        if let sourceIndex {
+            let eaIndex = sca.eaIndexCreatingIfNeeded()
+            eaIndex.copy(from: sourceIndex,
+                         source: Int32(sourceRange.location),
+                         destination: Int32(destinationStartIndex),
+                         count: Int32(sourceRange.length))
+        } else if let temp = sca.eaIndex {
+            temp.setAttributes(nil,
+                               at: Int32(destinationStartIndex),
+                               count: Int32(sourceRange.length))
+        }
+    }
 }
 
 extension iTermLegacyMutableString: iTermMutableStringProtocolSwift {
