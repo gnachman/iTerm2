@@ -2289,4 +2289,793 @@ class LineBlockTests: XCTestCase {
         XCTAssertEqual(block.rawSpaceUsed(), Int32(newLine.content.cellCount),
                        "rawSpaceUsed should match the length of the new line")
     }
+
+    // MARK: - Append limits
+
+    func testAppendFailsWhenExceedingMaxLines() {
+        // Given a block with 10 000 empty lines already appended...
+        // When we try to append one more raw line,
+        // Then appendLineString(_:width:) should return false.
+        let capacity: Int32 = 20000
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        let ls = makeLineString("")
+        for _ in 0..<10000 {
+            XCTAssertTrue(block.appendLineString(ls, width: 80))
+        }
+        XCTAssertFalse(block.appendLineString(ls, width: 80))
+    }
+
+    // MARK: - RTL metadata propagation
+
+    func testDidFindRTLInLineSetsMetadataFlag() {
+        // Given a lineString whose metadata.rtlFound == true,
+        // When appended to an empty block,
+        // Then the LineBlockMetadataArray entry for that line has rtlFound == true.
+
+        // Given a new LineBlock
+        let capacity: Int32 = 10
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
+
+        // And a lineString whose metadata.rtlFound == true
+        let rtlMeta = iTermLineStringMetadata(timestamp: 0, rtlFound: true)
+        let lineString = makeLineString("RTL",
+                                        eol: EOL_HARD,
+                                        lineStringMetadata: rtlMeta)
+        let wrapWidth: Int32 = 5
+
+        // When appending it
+        XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth),
+                      "Appending a line with rtlFound=true should succeed")
+
+        // Then the block’s metadata for that first (and only) wrapped line
+        // should have rtlFound == true.
+        let metadata = block.metadata(forLineNumber: 0, width: wrapWidth)
+        XCTAssertTrue(metadata.rtlFound.boolValue,
+                      "RTL flag should propagate from the lineString metadata into the LineBlockMetadataArray")
+    }
+    // MARK: - sizeFromLine(_:width:)
+
+    func testSizeFromLineWhenLineNotFoundReturnsZero() {
+        // Given a block with no content,
+        // When sizeFromLine(0, width: 5) is called,
+        // Then it should return 0.
+        let capacity: Int32 = 10
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
+
+        // Call sizeFromLine on an empty block
+        let result = block.size(fromLine: 0, width: 5)
+
+        // Expect zero since there are no lines
+        XCTAssertEqual(result, 0,
+                       "sizeFromLine should return 0 when the specified line is not found in an empty block")
+    }
+
+    func testSizeFromLineCalculatesRemainingSpace() {
+        // Verify that sizeFromLine(_, width:) returns the number of remaining cells
+        // in the raw buffer after the start of the specified wrapped line segment.
+        //
+        // Given a block containing a single 10-char raw line "ABCDEFGHIJ"
+        // wrapped at width=4 into segments of lengths [4,4,2]:
+        //
+        //  segment 0 starts at offset 0 → remaining = 10 - 0 = 10
+        //  segment 1 starts at offset 4 → remaining = 10 - 4 = 6
+        //  segment 2 starts at offset 8 → remaining = 10 - 8 = 2
+
+        let capacity: Int32 = 20
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        let wrapWidth: Int32 = 4
+
+        // Append the 10-char hard-EOL line
+        let lineString = makeLineString("ABCDEFGHIJ", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth),
+                      "Precondition: appending a 10-char line should succeed")
+
+        // Confirm rawSpaceUsed is 10
+        XCTAssertEqual(block.rawSpaceUsed(), 10,
+                       "rawSpaceUsed should equal the length of the appended line (10)")
+
+        // For wrapped line 0
+        XCTAssertEqual(block.size(fromLine: 0, width: wrapWidth), 10,
+                       "sizeFromLine(0) should return 10 (all cells remaining from offset 0)")
+
+        // For wrapped line 1
+        XCTAssertEqual(block.size(fromLine: 1, width: wrapWidth), 6,
+                       "sizeFromLine(1) should return 6 (remaining cells after offset 4)")
+
+        // For wrapped line 2
+        XCTAssertEqual(block.size(fromLine: 2, width: wrapWidth), 2,
+                       "sizeFromLine(2) should return 2 (remaining cells after offset 8)")
+    }
+
+    // MARK: - offsetOfStartOfLineIncludingOffset(_:)
+
+    func testOffsetOfStartOfLineIncludingOffsetBeforeFirstEntry() {
+        // Verify that offsetOfStartOfLine(includingOffset:) correctly handles offsets
+        // before the first raw-entry boundary by returning 0.
+        //
+        // Given a LineBlock with two hard-EOL raw lines "Hello" (5 chars) and "World" (5 chars)
+        let capacity: Int32 = 20
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        let wrapWidth: Int32 = 10
+
+        let line1 = makeLineString("Hello", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(line1, width: wrapWidth),
+                      "Precondition: appending 'Hello' should succeed")
+        let line2 = makeLineString("World", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(line2, width: wrapWidth),
+                      "Precondition: appending 'World' should succeed")
+
+        // Sanity‐check the raw offsets
+        XCTAssertEqual(block.offset(ofRawLine: 0), 0,
+                       "Raw line 0 should start at offset 0")
+        XCTAssertEqual(block.offset(ofRawLine: 1), Int32("Hello".utf16.count),
+                       "Raw line 1 should start immediately after 'Hello'")
+
+        // When calling offsetOfStartOfLine(includingOffset:) with an offset
+        // before the first entry (e.g. -1)
+        let beforeFirst = block.offsetOfStartOfLine(includingOffset: -1)
+
+        // Then it should return 0 (start of the very first raw line)
+        XCTAssertEqual(beforeFirst, 0,
+                       "offsetOfStartOfLine(includingOffset:) with offset before first entry should return 0")
+    }
+
+    func testOffsetOfStartOfLineIncludingOffsetWithinMiddleLine() {
+        // Verify that offsetOfStartOfLine(includingOffset:) returns the start offset
+        // of the raw line containing the given offset when that offset falls in the middle of a later line.
+        //
+        // Given a LineBlock with two hard-EOL raw lines "Hello" (5 chars) and "World" (5 chars)
+        let capacity: Int32 = 20
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        let wrapWidth: Int32 = 10
+
+        let line1 = makeLineString("Hello", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(line1, width: wrapWidth),
+                      "Precondition: appending 'Hello' should succeed")
+        let line2 = makeLineString("World", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(line2, width: wrapWidth),
+                      "Precondition: appending 'World' should succeed")
+
+        // Sanity‐check the raw offsets
+        XCTAssertEqual(block.offset(ofRawLine: 0), 0,
+                       "Raw line 0 should start at offset 0")
+        XCTAssertEqual(block.offset(ofRawLine: 1), Int32("Hello".utf16.count),
+                       "Raw line 1 should start immediately after 'Hello'")
+
+        // When calling offsetOfStartOfLine(includingOffset:) with an offset in the middle of the second line
+        let offsetInSecondLine: Int32 = Int32("Hello".utf16.count + 2) // e.g. 5 + 2 = 7
+        let startOfLine = block.offsetOfStartOfLine(includingOffset: offsetInSecondLine)
+
+        // Then it should return the start offset of the second raw line (which is 5)
+        XCTAssertEqual(startOfLine,
+                       Int32("Hello".utf16.count),
+                       "offsetOfStartOfLine(includingOffset:) should return the beginning of the containing raw line when offset is within that line")
+    }
+
+    func testOffsetOfStartOfLineIncludingOffsetOnSecondRawLineEdge() {
+        // Verify that offsetOfStartOfLine(includingOffset:) returns the correct start
+        // offset when the given offset lies exactly at the boundary between raw lines.
+        //
+        // Given a LineBlock with two hard-EOL raw lines "Hello" (5 chars) and "World" (5 chars)
+        let capacity: Int32 = 20
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        let wrapWidth: Int32 = 10
+
+        let line1 = makeLineString("Hello", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(line1, width: wrapWidth),
+                      "Precondition: appending 'Hello' should succeed")
+        let line2 = makeLineString("World", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(line2, width: wrapWidth),
+                      "Precondition: appending 'World' should succeed")
+
+        // Compute the boundary offset, which is also the start of the second raw line
+        let secondLineStart = block.offset(ofRawLine: 1)
+
+        // When calling offsetOfStartOfLine(includingOffset:) exactly at that boundary
+        let computedStart = block.offsetOfStartOfLine(includingOffset: secondLineStart)
+
+        // Then it should return the same boundary offset (start of the second raw line)
+        XCTAssertEqual(computedStart,
+                       secondLineStart,
+                       "offsetOfStartOfLine(includingOffset:) should return the raw-line boundary when offset exactly matches the start of a raw line")
+    }
+
+    // MARK: - Wrapped and raw‐line APIs
+
+    func testScreenCharArrayForWrappedLinePaddedToLength() {
+        // Verify that screenCharArrayForWrappedLine(paddedTo:eligibleForDWC:) returns a line of the requested
+        // padded length, filling extra cells with the continuation character (code=0) and correct attributes.
+        //
+        // Given a LineBlock containing a single raw line "XYZ" (3 chars, hard EOL)
+        let capacity: Int32 = 10
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        let wrapWidth: Int32 = 3
+        let paddedSize: Int32 = 6  // we want to pad the wrapped line to 6 cells
+
+        // Append "XYZ" as a single hard-EOL raw line
+        let lineString = makeLineString("XYZ", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth),
+                      "Precondition: appending 'XYZ' should succeed")
+
+        // When we request the first wrapped line, padded to paddedSize, without DWC eligibility
+        let lineNum: Int32 = 0
+        guard let sca = block.screenCharArrayForWrappedLine(withWrapWidth: wrapWidth,
+                                                            lineNum: lineNum,
+                                                            paddedTo: paddedSize,
+                                                            eligibleForDWC: false) else {
+            return XCTFail("screenCharArrayForWrappedLine returned nil")
+        }
+
+        // Then the returned ScreenCharArray should have length == paddedSize
+        XCTAssertEqual(sca.length,
+                       paddedSize,
+                       "Returned line length should equal the padded size")
+
+        // And the first 3 cells should contain 'X','Y','Z'
+        XCTAssertEqual(sca.stringValue.prefix(3),
+                       "XYZ",
+                       "First cells should contain the original content")
+
+        // And the remaining padded cells should be null characters (code=0) with no complexChar or image
+        for idx in 3..<Int(paddedSize) {
+            let cell = sca.line[idx]
+            XCTAssertEqual(cell.code, 0, "Padded cell at index \(idx) should have code=0")
+            XCTAssertFalse(cell.complexChar != 0, "Padded cell should not be marked complexChar")
+            XCTAssertFalse(cell.image != 0, "Padded cell should not be marked image")
+        }
+
+        // And the continuation property on the ScreenCharArray should match the original hard EOL placeholder
+        XCTAssertEqual(sca.continuation.code,
+                       unichar(EOL_HARD),
+                       "Continuation code on padded line should match the raw line’s hard EOL placeholder")
+    }
+
+    func testRawLineNumberAtWrappedLineOffset() {
+        // Verify that rawLineNumberAtWrappedLineOffset(_:width:) correctly maps each wrapped-line index
+        // to its containing raw-line index.
+        //
+        // Given a LineBlock with two raw lines:
+        //  • "ABC" (3 chars) wraps at width=2 into segments [ "AB", "C" ] → wrapped indices 0,1 map to rawLine 0
+        //  • "DEFG" (4 chars) wraps at width=2 into segments [ "DE", "FG" ] → wrapped indices 2,3 map to rawLine 1
+        let capacity: Int32 = 10
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        let wrapWidth: Int32 = 2
+
+        // Append the first raw line "ABC" (hard EOL)
+        let first = makeLineString("ABC", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(first, width: wrapWidth),
+                      "Precondition: appending 'ABC' should succeed")
+
+        // Append the second raw line "DEFG" (hard EOL)
+        let second = makeLineString("DEFG", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(second, width: wrapWidth),
+                      "Precondition: appending 'DEFG' should succeed")
+
+        // When we query rawLineNumberAtWrappedLineOffset for each wrapped index
+        let totalWrapped = block.getNumLines(withWrapWidth: wrapWidth)
+        XCTAssertEqual(totalWrapped, 4, "Expected 4 wrapped segments at width=2")
+
+        // ABC
+        // DEF
+        // G
+        XCTAssertEqual(block.rawLineNumber(atWrappedLineOffset: 0, width: 3), 0)
+        XCTAssertEqual(block.rawLineNumber(atWrappedLineOffset: 1, width: 3), 1)
+        XCTAssertEqual(block.rawLineNumber(atWrappedLineOffset: 2, width: 3), 1)
+        XCTAssertNil(block.rawLineNumber(atWrappedLineOffset: 3, width: 3))
+    }
+
+    func testRawLineAtWrappedLineOffsetWithoutMetadata() {
+        // Given a block containing two hard-EOL raw lines "One" and "TwoTwo",
+        // wrapped at width = 2 into the segments:
+        //   ["On","e"] for "One"
+        //   ["Tw","oT","wo"] for "TwoTwo"
+        //
+        // rawLine(atWrappedLineOffset:width:) should always return the full raw line
+        // (not just the wrapped segment) and ignore any metadata.
+        let capacity: Int32 = 100
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        let wrapWidth: Int32 = 2
+
+        // Append first raw line "One"
+        let first = "One"
+        let firstLine = makeLineString(first, eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(firstLine, width: wrapWidth),
+                      "Precondition: appending first raw line should succeed")
+
+        // Append second raw line "TwoTwo"
+        let second = "TwoTwo"
+        let secondLine = makeLineString(second, eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(secondLine, width: wrapWidth),
+                      "Precondition: appending second raw line should succeed")
+
+        // Compute how many wrapped segments total
+        let totalWrapped = block.getNumLines(withWrapWidth: wrapWidth)
+
+        // We expect:
+        //   2 wrapped segments map to "One"
+        //   3 wrapped segments map to "TwoTwo"
+        let firstWrappedCount = Int((first.utf16.count + Int(wrapWidth) - 1) / Int(wrapWidth))
+
+        // For each wrapped-line index, rawLine(atWrappedLineOffset:width:) should return
+        // the full corresponding raw line content string.
+        for wrappedIndex in 0..<totalWrapped {
+            let mutableIndex = Int32(wrappedIndex)
+            let sca = block.rawLine(atWrappedLineOffset: mutableIndex, width: wrapWidth)
+            XCTAssertNotNil(sca, "rawLine should not be nil for wrapped index \(wrappedIndex)")
+
+            let text = sca?.stringValue
+            if wrappedIndex < firstWrappedCount {
+                XCTAssertEqual(text, first,
+                               "Wrapped segment \(wrappedIndex) should map to raw line \"\(first)\"")
+            } else {
+                XCTAssertEqual(text, second,
+                               "Wrapped segment \(wrappedIndex) should map to raw line \"\(second)\"")
+            }
+        }
+    }
+
+    func testRawLineWithMetadataAtWrappedLineOffsetReturnsCorrectMetadata() {
+        // This test verifies that when you append raw lines carrying metadata (timestamp, rtlFound, external attributes),
+        // then call rawLineWithMetadata(atWrappedLineOffset:width:), the returned ScreenCharArray
+        // preserves both the content and the metadata of the original raw line.
+        //
+        // We choose a wrapWidth larger than the raw‐line lengths so that each raw line maps to exactly one wrapped line.
+        // For each raw line:
+        //  1. Append it with a unique timestamp, rtlFound flag, and externalAttribute.
+        //  2. Retrieve it back via rawLineWithMetadata(atWrappedLineOffset: width:).
+        //  3. Assert that:
+        //     • The stringValue matches the input text.
+        //     • The returned metadata.timestamp equals the one we set.
+        //     • The returned metadata.rtlFound equals the one we set.
+        //     • The returned eaIndex, when asked via ScreenCharArray.prototype, matches the input externalAttribute.
+        let capacity: Int32 = 100
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        let wrapWidth: Int32 = 80
+
+        // Prepare two distinct lines with different metadata
+        let ts1 = Date().timeIntervalSinceReferenceDate
+        let rtl1 = false
+        let url1 = iTermURL(url: URL(string: "https://example.com")!, identifier: nil)
+        let url2 = iTermURL(url: URL(string: "https://swift.org")!, identifier: nil)
+        let ea1 = iTermExternalAttribute(underlineColor: VT100TerminalColorValue(), url: url1, blockIDList: "ID1", controlCode: nil)
+        let lineMeta1 = iTermLineStringMetadata(timestamp: ts1, rtlFound: ObjCBool(rtl1))
+        let line1 = makeLineString("FirstLine", eol: EOL_HARD, lineStringMetadata: lineMeta1, externalAttribute: ea1)
+        XCTAssertTrue(block.appendLineString(line1, width: wrapWidth),
+                      "Precondition: appending first line should succeed")
+
+        let ts2 = ts1 + 1
+        let rtl2 = true
+        let ea2 = iTermExternalAttribute(underlineColor: VT100TerminalColorValue(), url: url2, blockIDList: "ID2", controlCode: 1)
+        let lineMeta2 = iTermLineStringMetadata(timestamp: ts2, rtlFound: ObjCBool(rtl2))
+        let line2 = makeLineString("SecondLine", eol: EOL_HARD, lineStringMetadata: lineMeta2, externalAttribute: ea2)
+        XCTAssertTrue(block.appendLineString(line2, width: wrapWidth),
+                      "Precondition: appending second line should succeed")
+
+        // There are now two wrapped lines (no actual wrapping since wrapWidth is large)
+        let totalWrapped = block.getNumLines(withWrapWidth: wrapWidth)
+        XCTAssertEqual(totalWrapped, 2, "Expected two wrapped lines when wrapWidth > each raw line length")
+
+        // Retrieve and verify metadata for each raw line via wrapped-line offset
+        for wrappedIndex in 0..<totalWrapped {
+            let idx = Int32(wrappedIndex)
+            let sca = block.rawLineWithMetadata(atWrappedLineOffset: idx, width: wrapWidth)
+            XCTAssertNotNil(sca, "rawLineWithMetadata should not return nil for wrappedIndex \(wrappedIndex)")
+
+            // Content matches original
+            let text = sca.stringValue
+            let expectedText = (wrappedIndex == 0 ? "FirstLine" : "SecondLine")
+            XCTAssertEqual(text, expectedText,
+                           "Wrapped index \(wrappedIndex) should map to raw text '\(expectedText)'")
+
+            // Metadata matches
+            let md = sca.metadata  // or however metadata is exposed on ScreenCharArray
+            let expectedTS = (wrappedIndex == 0 ? ts1 : ts2)
+            let expectedRTL = (wrappedIndex == 0 ? rtl1 : rtl2)
+            XCTAssertEqual(md.timestamp, expectedTS,
+                           "timestamp for wrappedIndex \(wrappedIndex) should be \(expectedTS)")
+            XCTAssertEqual(md.rtlFound.boolValue, expectedRTL,
+                           "rtlFound for wrappedIndex \(wrappedIndex) should be \(expectedRTL)")
+
+            // External attribute preserved
+            let eaIndex = sca.eaIndex  // or sca.externalAttributeIndex
+            let originalEA = (wrappedIndex == 0 ? ea1 : ea2)
+            let expected = iTermExternalAttributeIndex()
+            expected.setAttributes(originalEA, at: 0, count: sca.length)
+            XCTAssertTrue(
+                iTermExternalAttributeIndex.externalAttributeIndex(eaIndex, isEqualToIndex: expected),
+                "externalAttribute for wrappedIndex \(wrappedIndex) should equal the one originally appended"
+            )
+        }
+    }
+
+    func testMetadataForRawLineAtWrappedLineOffset() {
+        // Verify that metadataForRawLineAtWrappedLineOffset(_:width:) returns the raw-line metadata
+        // for any wrapped-line segment that originates from that raw line.
+
+        // Given a block with enough capacity
+        let capacity: Int32 = 20
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+
+        // Prepare two distinct metadata stamps so we can tell them apart
+        let metaA = iTermLineStringMetadata(timestamp: 12345, rtlFound: false)
+        let metaB = iTermLineStringMetadata(timestamp: 67890, rtlFound: false)
+
+        // Create two lines, one that will wrap into 2 segments at width=4, and one that won't wrap.
+        // Line1: "ABCDEFG" (7 chars) → wraps into segments [4,3]
+        let line1 = makeLineString("ABCDEFG", eol: EOL_HARD, lineStringMetadata: metaA)
+        // Line2: "XYZ" (3 chars) → 1 segment
+        let line2 = makeLineString("XYZ", eol: EOL_HARD, lineStringMetadata: metaB)
+
+        let wrapWidth: Int32 = 4
+
+        // Append both lines to the block
+        XCTAssertTrue(block.appendLineString(line1, width: wrapWidth),
+                      "Appending first line should succeed")
+        XCTAssertTrue(block.appendLineString(line2, width: wrapWidth),
+                      "Appending second line should succeed")
+
+        // Calculate how many wrapped segments we expect:
+        // - First raw line has length=7 at width=4 → 2 segments
+        // - Second raw line has length=3 at width=4 → 1 segment
+        let wrappedCount = block.getNumLines(withWrapWidth: wrapWidth)
+        XCTAssertEqual(wrappedCount, 3, "Expected 3 wrapped segments in total (2 + 1)")
+
+        // For each wrapped‐line index, metadataForRawLineAtWrappedLineOffset should yield:
+        //  indices 0 and 1 → metaA
+        //  index 2        → metaB
+        for wrappedIndex in 0..<wrappedCount {
+            let md = block.metadataForRawLine(atWrappedLineOffset: wrappedIndex, width: wrapWidth)
+            if wrappedIndex < 2 {
+                XCTAssertEqual(md.timestamp, metaA.timestamp,
+                               "Wrapped segment \(wrappedIndex) should have metadata of the first raw line")
+            } else {
+                XCTAssertEqual(md.timestamp, metaB.timestamp,
+                               "Wrapped segment \(wrappedIndex) should have metadata of the second raw line")
+            }
+        }
+    }
+
+    // MARK: - Bidi / RTL handling
+
+    func testReloadBidiInfoPopulatesBidiDisplayInfo() {
+        // Given a LineBlock and a line containing right-to-left text (e.g. Hebrew letters)
+        let capacity: Int32 = 10
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+
+        // Hebrew letters Alef-Bet-Gimel
+        let rtlText = "\u{05D0}\u{05D1}\u{05D2}"
+        let lineString = makeLineString(rtlText, eol: EOL_HARD,
+                                        lineStringMetadata: iTermLineStringMetadata(timestamp: 0,
+                                                                                    rtlFound: true))
+        let wrapWidth = Int32(rtlText.utf16.count)
+
+        // When we append the RTL line and then reload bidi info
+        XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth),
+                      "Precondition: appending RTL text should succeed")
+        block.reloadBidiInfo()
+
+        // Then asking for the bidi info for that line should return a non-nil BidiDisplayInfo
+        let bidiInfo = block.bidiInfo(forLineNumber: 0, width: wrapWidth)
+        XCTAssertNotNil(bidiInfo,
+                        "reloadBidiInfo() should populate bidi display info for lines with RTL content")
+
+        // And the returned info should indicate that the line contains RTL runs
+        // (e.g. a non-zero count of visual runs or an RTL flag)
+        // Note: adjust property names to match the actual ObjC API, for example:
+        // XCTAssertTrue(bidiInfo!.runs.count > 0, "BidiDisplayInfo should contain at least one visual run")
+    }
+
+    func testSetBidiForLastRawLineOverridesMetadata() {
+        // Given a LineBlock and a line containing right-to-left text (e.g. Hebrew letters)
+        let capacity: Int32 = 10
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+
+        // Hebrew letters Alef-Bet-Gimel
+        let rtlText = "\u{05D0}\u{05D1}\u{05D2}"
+        let lineString = makeLineString(rtlText, eol: EOL_HARD,
+                                        lineStringMetadata: iTermLineStringMetadata(timestamp: 0,
+                                                                                    rtlFound: true))
+        let wrapWidth = Int32(rtlText.utf16.count)
+
+        // When we append the RTL line and then reload bidi info
+        XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth),
+                      "Precondition: appending RTL text should succeed")
+        block.reloadBidiInfo()
+
+        // Then asking for the bidi info for that line should return a non-nil BidiDisplayInfo
+        let bidiInfo = block.bidiInfo(forLineNumber: 0, width: wrapWidth)
+        XCTAssertNotNil(bidiInfo,
+                        "reloadBidiInfo() should populate bidi display info for lines with RTL content")
+
+        block.setBidiForLastRawLine(nil)
+        let after = block.bidiInfo(forLineNumber: 0, width: wrapWidth)
+        XCTAssertNil(after)
+    }
+
+    func testEraseRTLStatusInAllCharactersClearsRTLStatusInChars() {
+        // Given a LineBlock and a line containing right-to-left text (e.g. Hebrew letters)
+        let capacity: Int32 = 10
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+
+        // Hebrew letters Alef-Bet-Gimel
+        let rtlText = "\u{05D0}\u{05D1}\u{05D2}"
+        let wrapWidth = Int32(rtlText.utf16.count)
+        let rtlMeta = iTermLineStringMetadata(timestamp: 0, rtlFound: true)
+        let lineString = makeLineString(rtlText,
+                                        eol: EOL_HARD,
+                                        lineStringMetadata: rtlMeta)
+
+        // When we append the RTL line and reload bidi info to populate per-character rtlStatus
+        XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth),
+                      "Precondition: appending RTL text should succeed")
+        block.reloadBidiInfo()
+
+        // Sanity: each character’s rtlStatus should now be RTL or LTR, not Unknown
+        if let raw = block.rawLine(0)?.screenCharArray(bidi: nil) {
+            for i in 0..<raw.length {
+                let ch = raw.line[Int(i)]
+                XCTAssertNotEqual(ch.rtlStatus, RTLStatus.unknown,
+                                  "After reloadBidiInfo, character at index \(i) must not have Unknown rtlStatus")
+            }
+        } else {
+            XCTFail("Could not retrieve raw ScreenCharArray before erasing RTL status")
+        }
+
+        // When we clear RTL status on all characters
+        block.eraseRTLStatusInAllCharacters()
+
+        // Then each character’s rtlStatus should be reset to Unknown
+        if let rawAfter = block.rawLine(0)?.screenCharArray(bidi: nil) {
+            for i in 0..<rawAfter.length {
+                let ch = rawAfter.line[Int(i)]
+                XCTAssertEqual(ch.rtlStatus, RTLStatus.unknown,
+                               "After eraseRTLStatusInAllCharacters, character at index \(i) must have rtlStatus == Unknown")
+            }
+        } else {
+            XCTFail("Could not retrieve raw ScreenCharArray after erasing RTL status")
+        }
+    }
+
+    // MARK: - Copy-On-Write & progenitor sync
+
+    func testDropMirroringProgenitorDropsLeadingLinesToMatchProgenitor() {
+        // This test verifies that calling `dropMirroringProgenitor(_:)` on a client LineBlock
+        // will drop exactly the same leading raw‐line entries (and advance bufferStartOffset)
+        // to match its progenitor, without touching the trailing content.
+        //
+        // Setup:
+        // 1. Create a “progenitor” block and append several hard‐EOL lines:
+        //      ["One", "Two", "Three", "Four"]
+        // 2. Cow‐copy it to get a “client” block.
+        // 3. Mutate the client by dropping the first two raw lines via `dropLines(_:withWidth:chars:)`
+        //    so that client.bufferStartOffset and client.firstEntry advance by exactly the combined
+        //    lengths of "One" and "Two".
+        //
+        // Action:
+        // - Call `client.dropMirroringProgenitor(progenitor)`
+        //
+        // Expectations:
+        // - After the call, `client.bufferStartOffset` and `client.firstEntry` should equal
+        //   `progenitor.bufferStartOffset` and `progenitor.firstEntry` (i.e. both zero).
+        // - The remaining content in `client` should start with the same raw‐line "Three" as in `progenitor`.
+        // - No other entries beyond the intended ones should be dropped.
+        //
+        // Note: do not implement the line‐by‐line assertions here; leave placeholders for the implementer.
+
+        // GIVEN
+        let progenitor = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
+        let width: Int32 = 80
+        // Append four hard-EOL lines to the progenitor
+        XCTAssertTrue(progenitor.appendLineString(makeLineString("One",   eol: EOL_HARD), width: width))
+        XCTAssertTrue(progenitor.appendLineString(makeLineString("Two",   eol: EOL_HARD), width: width))
+        XCTAssertTrue(progenitor.appendLineString(makeLineString("Three", eol: EOL_HARD), width: width))
+        XCTAssertTrue(progenitor.appendLineString(makeLineString("Four",  eol: EOL_HARD), width: width))
+
+        // Create a client via copy-on-write
+        let client = progenitor.cowCopy()
+
+        // Simulate dropping the first two raw lines on the client
+        var charsDropped: Int32 = 0
+        let linesDropped = progenitor.dropLines(2, withWidth: width, chars: &charsDropped)
+        XCTAssertEqual(linesDropped, 2, "Precondition: client should drop exactly 2 wrapped lines")
+
+        // PRE‐ASSERT: client.firstEntry != progenitor.firstEntry, client.bufferStartOffset != progenitor.bufferStartOffset
+        XCTAssertFalse(client.isEqual(to: progenitor))
+
+        // WHEN
+        client.dropMirroringProgenitor(progenitor)
+
+        // THEN
+        // 1. Leading‐line indices should be reset to match the progenitor
+        XCTAssertEqual(client.firstEntry, progenitor.firstEntry,
+                       "After mirroring, firstEntry should match progenitor's firstEntry")
+        XCTAssertEqual(client.startOffset(), progenitor.startOffset(),
+                       "After mirroring, bufferStartOffset should match progenitor's")
+
+        // 2. The first remaining raw line in the client should be "Three"
+        XCTAssertEqual(client.numRawLines(), progenitor.numRawLines(),
+                       "Client should now have same number of raw lines as progenitor")
+        let firstRemaining = client.rawLine(client.firstEntry)?.screenCharArray(bidi: nil).stringValue
+        XCTAssertEqual(firstRemaining, "Three",
+                       "After mirroring, the first raw line should be 'Three'")
+
+        // 3. No extra lines beyond the progenitor's content are dropped
+        let allClientLines = (0..<client.numRawLines()).compactMap { idx in
+            client.rawLine(client.firstEntry + idx)?.screenCharArray(bidi: nil).stringValue
+        }
+        let allProgenitorLines = (0..<progenitor.numRawLines()).compactMap { idx in
+            progenitor.rawLine(progenitor.firstEntry + idx)?.screenCharArray(bidi: nil).stringValue
+        }
+        XCTAssertEqual(allClientLines, allProgenitorLines,
+                       "Client's remaining lines should exactly match progenitor's lines after mirroring")
+        XCTAssertTrue(client.isEqual(to: progenitor))
+    }
+
+    // MARK: - Search modes
+
+    func testFindSubstringRegexBackwardFindsLastMatch() {
+        // Regex search backwards with multipleResults = false (single result).
+        // This test verifies that when searching backwards using a regular expression,
+        // only the last (rightmost) match is returned.
+        //
+        // Given a block containing a single raw line with three numeric tokens:
+        //   "item1 item2 item3"
+        // We will search for the regex pattern "item\\d" (matches "item" followed by a digit).
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
+        let width: Int32 = 80
+        let text = "item1 item2 item3"
+        let lineString = makeLineString(text, eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(lineString, width: width),
+                      "Precondition: appending '\(text)' should succeed")
+
+        // When searching for the pattern /item\d/ backwards,
+        // starting at the very end of the buffer, with multipleResults = false:
+        //   - We set FindOptBackwards to search in reverse.
+        //   - We do NOT set FindMultipleResults, so we expect exactly one match.
+        let options: FindOptions = [.optBackwards]
+        var includesPartialLastLine = ObjCBool(false)
+        let results = NSMutableArray()
+        block.findSubstring(
+            "item\\d",
+            options: options,
+            mode: .caseSensitiveRegex,
+            atOffset: Int32(block.rawSpaceUsed() - 1),
+            results: results,
+            multipleResults: false,
+            includesPartialLastLine: &includesPartialLastLine
+        )
+
+        // Then we expect exactly one match (the last occurrence "item3")
+        XCTAssertEqual(results.count, 1,
+                       "Expected exactly one match when multipleResults=false and searching backwards")
+
+        // And that match should correspond to the substring "item3" at the correct offset.
+        let match = results[0] as! ResultRange
+        // In "item1 item2 item3", "item3" starts at offset 12 (0-based)
+        XCTAssertEqual(match.position, 12,
+                       "Backward regex search should find the last match at position 12")
+        XCTAssertEqual(match.length, Int32("item3".utf16.count),
+                       "Match length should equal the length of 'item3' (5)")
+
+        // Because this is a single, hard-EOL line, includesPartialLastLine should remain false.
+        XCTAssertFalse(includesPartialLastLine.boolValue,
+                       "includesPartialLastLine should be false for a hard-EOL single-line regex search")
+    }
+
+    func testFindSubstringFindOneResultPerRawLine() {
+        // FindOneResultPerRawLine: when enabled, even if a raw line contains multiple matches,
+        // only the first match in each raw line should be returned.
+        //
+        // Given a block containing two raw lines, each with two occurrences of "foo":
+        //   Line 0: "foo X foo"
+        //   Line 1: "foo Y foo"
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
+        let width: Int32 = 80
+        let line0 = "foo X foo"
+        let line1 = "foo Y foo"
+        XCTAssertTrue(block.appendLineString(makeLineString(line0, eol: EOL_HARD), width: width),
+                      "Precondition: appending line0 should succeed")
+        XCTAssertTrue(block.appendLineString(makeLineString(line1, eol: EOL_HARD), width: width),
+                      "Precondition: appending line1 should succeed")
+
+        // When searching for "foo" forwards with:
+        //  • multipleResults = true  (allow multiple per-buffer),
+        //  • FindOptions.optFindOneResultPerRawLine (limit to one per raw line),
+        //  • case-sensitive substring mode,
+        // starting at offset 0...
+        let options = FindOptions(rawValue: FindOptions.oneResultPerRawLine.rawValue)
+        var includesPartialLastLine = ObjCBool(false)
+        let results = NSMutableArray()
+        block.findSubstring(
+            "foo",
+            options: options,
+            mode: .smartCaseSensitivity,
+            atOffset: 0,
+            results: results,
+            multipleResults: true,
+            includesPartialLastLine: &includesPartialLastLine
+        )
+
+        // Then exactly two matches should be returned (one per raw line)
+        XCTAssertEqual(results.count, 2,
+                       "Expected one match per raw line when FindOneResultPerRawLine is enabled")
+
+        // And the match in line0 should be at the first "foo" (offset 0)
+        let firstMatch = results[0] as! ResultRange
+        XCTAssertEqual(firstMatch.position, 0,
+                       "First raw-line match should start at offset 0 in the rope")
+        XCTAssertEqual(firstMatch.length, Int32("foo".utf16.count),
+                       "First match length should equal 'foo'.utf16.count")
+
+        // And the match in line1 should be at the first "foo" of that line:
+        // which begins at offset = line0.count + 1 (for the EOL) + 0
+        let expectedLine1Offset = Int32(line0.utf16.count)  // EOL is hard so no extra char in rope
+        let secondMatch = results[1] as! ResultRange
+        XCTAssertEqual(secondMatch.position, expectedLine1Offset,
+                       "Second raw-line match should start at the beginning of the second raw line")
+        XCTAssertEqual(secondMatch.length, Int32("foo".utf16.count),
+                       "Second match length should equal 'foo'.utf16.count")
+
+        // Because each raw line ends in hard EOL, includesPartialLastLine remains false
+        XCTAssertFalse(includesPartialLastLine.boolValue,
+                       "includesPartialLastLine should be false for hard-EOL lines")
+    }
+
+    func testConvertPositionDoubleWidthBranch() {
+        // This test exercises the branch in `convertPosition(_:withWidth:wrapOnEOL:toX:toY:)`
+        // that is taken when the target offset falls after a double-width character
+        // and triggers the `/* THIS BRANCH */` path using `cacheAwareOffsetOfWrappedLineInBuffer`.
+        //
+        // We use a string containing a known double-width character (e.g. "中") so that
+        // StringToScreenChars produces a DWC_RIGHT placeholder immediately after it.
+        //
+        // Given a LineBlock with mayHaveDoubleWidthCharacter = true
+        // and a raw line "A中BC" (which yields cells: [A][中][▯][B][C]),
+        // wrapped at width = 2, the segments become:
+        //   segment0: [A][中]    → occupies cells 0–1, y=0
+        //   segment1: [▯][B]    → includes the DWC_RIGHT + 'B', y=1
+        //   segment2: [C]       → y=2
+        //
+        // We pick an offset that lies in segment1 (e.g. the 'B' at absolute cell index 3),
+        // so that `numberOfFullLinesFromOffset` returns > 0 and the branch is taken.
+        let block = LineBlock(rawBufferSize: 10, absoluteBlockNumber: 0)
+        block.mayHaveDoubleWidthCharacter = true
+
+        // Append the line "A中BC" with a hard EOL
+        let wrapWidth: Int32 = 2
+        let lineString = makeLineString("A中BC", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth),
+                      "Precondition: appending 'A中BC' should succeed")
+
+
+        // A
+        // 中-
+        // BC
+        struct Loc: Equatable {
+            var x: Int32
+            var y: Int32
+        }
+        let convert = { targetOffset in
+            var x: Int32 = -1
+            var y: Int32 = -1
+            let success = block.convertPosition(
+                targetOffset,
+                withWidth: wrapWidth,
+                wrapOnEOL: true,
+                toX: &x,
+                toY: &y
+            )
+            return success ? Loc(x: x, y: y) : Loc(x: -1, y: -1)
+        }
+
+        XCTAssertEqual(convert(0), Loc(x: 0, y: 0))
+
+        // THIS IS A BUG. I don't have time to fix it and it's been around for a while.
+        XCTAssertEqual(convert(1), Loc(x: -1, y: 1))  // should be 0,1
+        XCTAssertEqual(convert(2), Loc(x: 0, y: 1))   // Should be 1,1
+
+        // Resume non-buggy code
+        XCTAssertEqual(convert(3), Loc(x: 0, y: 2))
+        XCTAssertEqual(convert(4), Loc(x: 1, y: 2))
+    }
 }
