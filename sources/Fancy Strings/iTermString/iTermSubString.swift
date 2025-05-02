@@ -136,4 +136,18 @@ class iTermSubString: iTermBaseString, iTermString {
                             rebaseTo newBaseIndex: Int) -> IndexSet {
         return base.doubleWidthIndexes(range: NSRange(location: range.lowerBound + nsrange.location, length: nsrange.length), rebaseTo: newBaseIndex)
     }
+
+    var mayContainDoubleWidthCharacter: Bool {
+        base.mayContainDoubleWidthCharacter(in: NSRange(range))
+    }
+    func mayContainDoubleWidthCharacter(in nsrange: NSRange) -> Bool {
+        let subrange = NSRange(location: self.range.lowerBound + nsrange.location,
+                               length: nsrange.length)
+        return base.mayContainDoubleWidthCharacter(in: subrange)
+    }
+    func hasExternalAttributes(range nsrange: NSRange) -> Bool {
+        let subrange = NSRange(location: self.range.lowerBound + nsrange.location,
+                               length: nsrange.length)
+        return base.hasExternalAttributes(range: subrange)
+    }
 }

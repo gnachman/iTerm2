@@ -151,6 +151,16 @@ class iTermASCIIString: iTermBaseString, iTermString {
         return iTermASCIIString(data: data[Range(nsrange)!],
                                 styles: modifiedStyles)
     }
+    var mayContainDoubleWidthCharacter: Bool {
+        false
+    }
+    func mayContainDoubleWidthCharacter(in nsrange: NSRange) -> Bool {
+        false
+    }
+    func hasExternalAttributes(range: NSRange) -> Bool {
+        // TODO: I need to ge rid of stylemap and store a single iTermExternalAttributes here and then this can be more accurate
+        true
+    }
 }
 
 extension StyleMap {

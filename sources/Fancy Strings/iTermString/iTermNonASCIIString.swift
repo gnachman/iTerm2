@@ -169,4 +169,14 @@ class iTermNonASCIIString: iTermBaseString, iTermString {
         return indexSet
     }
 
+    var mayContainDoubleWidthCharacter: Bool {
+        true
+    }
+    func mayContainDoubleWidthCharacter(in nsrange: NSRange) -> Bool {
+        true
+    }
+    func hasExternalAttributes(range: NSRange) -> Bool {
+        // TODO: Remove style map and then this can be more accurate
+        true
+    }
 }

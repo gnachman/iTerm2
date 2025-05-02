@@ -236,6 +236,18 @@ extension iTermLegacyMutableString: iTermLegacyString {
             }
         }
     }
+    var mayContainDoubleWidthCharacter: Bool {
+        return true
+    }
+    func mayContainDoubleWidthCharacter(in nsrange: NSRange) -> Bool {
+        return true
+    }
+    func hasExternalAttributes(range: NSRange) -> Bool {
+        if let eaIndex = sca.eaIndex {
+            return !eaIndex.isEmpty
+        }
+        return false
+    }
 }
 
 @objc

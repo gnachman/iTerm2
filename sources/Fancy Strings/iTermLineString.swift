@@ -241,6 +241,11 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
         return sca.eaIndex
     }
 
+    @objc
+    var hasExternalAttributes: Bool {
+        return content.hasExternalAttributes(range: content.fullRange)
+    }
+
     var immutableEAIndex: (any iTermExternalAttributeIndexReading)? {
         eaIndex
     }
@@ -451,5 +456,13 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
                                metadata: metadata,
                                bidi: bidi,
                                dirty: dirty)
+    }
+
+    @objc(hasDWCRightAtIndex:)
+    func hasDWCRight(at i: Int32) -> Bool {
+        if !_content.mayContainDoubleWidthCharacter(in: NSRange(location: Int(i), length: 1)) {
+            return false
+        }
+        return ScreenCharIsDWC_RIGHT(_content.character(at: Int(i)))
     }
 }

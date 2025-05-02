@@ -10,11 +10,13 @@ class iTermUniformString: iTermBaseString, iTermString {
     private let char: screen_char_t
     private let length: Int
     private var stringCache = SubStringCache()
+    private let isDWCRight: Bool
 
     @objc(initWithCharacter:count:)
     init(char: screen_char_t, length: Int) {
         self.char = char
         self.length = length
+        isDWCRight = ScreenCharIsDWC_RIGHT(char)
     }
 
     override var description: String {
@@ -158,5 +160,14 @@ class iTermUniformString: iTermBaseString, iTermString {
             return IndexSet(integersIn: Range(range)!.shifted(by: newBaseIndex - range.location))
         }
         return IndexSet()
+    }
+    var mayContainDoubleWidthCharacter: Bool {
+        isDWCRight
+    }
+    func mayContainDoubleWidthCharacter(in nsrange: NSRange) -> Bool {
+        isDWCRight
+    }
+    func hasExternalAttributes(range: NSRange) -> Bool {
+        false
     }
 }

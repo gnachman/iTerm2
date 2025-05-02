@@ -19,7 +19,6 @@ protocol iTermMutableStringProtocol: iTermString {
     @objc func setExternalAttributes(_ eaIndex: iTermExternalAttributeIndexReading?,
                                      sourceRange: NSRange,
                                      destinationStartIndex: Int)
-
 }
 
 protocol iTermMutableStringProtocolSwift: iTermMutableStringProtocol {
