@@ -38,6 +38,12 @@ class iTermRope: iTermBaseString {
             result.deletedHeadCellCount = deletedHeadCellCount
             return result
         }
+
+        func set(segments: [Segment]) {
+            self.segments = segments
+            deletedHeadCellCount = 0
+            stringCache.clear()
+        }
     }
 
     @CopyOnWrite var guts = Guts()
@@ -253,6 +259,28 @@ extension iTermRope: iTermString {
         let segment = guts.segments[segmentIndex]
         let segmentStart = segment.cumulativeCellCount - segment.string.cellCount
         return segment.string.externalAttribute(at: index - segmentStart)
+    }
+    var mayContainDoubleWidthCharacter: Bool {
+        // Avoid setting up a segment iterator
+        return guts.segments.anySatisfies { segment in
+            segment.string.mayContainDoubleWidthCharacter
+        }
+    }
+    func mayContainDoubleWidthCharacter(in nsrange: NSRange) -> Bool {
+        for (_, string, localRange) in segmentIterator(inRange: Range(nsrange)!) {
+            if string.mayContainDoubleWidthCharacter(in: NSRange(localRange)) {
+                return true
+            }
+        }
+        return false
+    }
+    func hasExternalAttributes(range: NSRange) -> Bool {
+        for (_, string, localRange) in segmentIterator(inRange: Range(range)!) {
+            if string.hasExternalAttributes(range: NSRange(localRange)) {
+                return true
+            }
+        }
+        return false
     }
 }
 

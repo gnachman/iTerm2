@@ -183,4 +183,16 @@ class iTermLegacyStyleString: iTermBaseString, iTermString {
         }
         return indexSet
     }
+    var mayContainDoubleWidthCharacter: Bool {
+        true
+    }
+    func mayContainDoubleWidthCharacter(in nsrange: NSRange) -> Bool {
+        true
+    }
+    func hasExternalAttributes(range: NSRange) -> Bool {
+        if let eaIndex {
+            return !eaIndex.isEmpty
+        }
+        return false
+    }
 }

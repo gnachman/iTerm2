@@ -344,6 +344,17 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     _hasChanged = YES;
 }
 
+- (void)markLineDirty:(int)lineNumber {
+    DLog(@"Mark line %d delegate=%@", lineNumber, delegate_);
+    const NSTimeInterval timestamp = self.currentDate;
+    iTermMutableLineString *mls = [self mutableLineStringAtLineNumber:lineNumber];
+    mls.dirty = YES;
+    if (timestamp > 0) {
+        mls.timestamp = timestamp;
+    }
+    _hasChanged = YES;
+}
+
 - (void)markAllCharsDirty:(BOOL)dirty updateTimestamps:(BOOL)updateTimestamps {
     DLog(@"Mark all chars dirty=%@ delegate=%@", @(dirty), delegate_);
 
@@ -1131,7 +1142,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         const int j = [self indexOfLineNumber:i];
         _lines[j] = [sourceMLS mutableClone];
     }
+#if DEBUG
     [self sanityCheck];
+#endif
     _hasChanged = YES;
     [otherGrid copyMiscellaneousStateTo:self];
     [otherGrid resetBidiDirty];
@@ -1145,120 +1158,213 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     return VT100GridRangeMax(scrollRegionCols_);
 }
 
+typedef struct {
+    int idx;
+    int numDropped;
+    int length;
+    screen_char_t defaultChar;
+    int lastY;
+    int width;
+
+    id<iTermString> string;
+    LineBuffer *lineBuffer;
+    BOOL unlimitedScrollback;
+    BOOL useScrollbackWithRegion;
+    BOOL rtlFound;
+    BOOL sourceMayHaveDWC;
+} VT100GridAppendState;
+
 #warning TODO: Test all the DWC edge cases in this method
 - (int)appendOptimizedStringAtCursor:(id<iTermString>)string
              scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
                  unlimitedScrollback:(BOOL)unlimitedScrollback
              useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
                             rtlFound:(BOOL)rtlFound {
-    int numDropped = 0;
     assert(string);
 
-    const int length = [string cellCount];
-    const screen_char_t defaultChar = [self defaultChar];
-    int lastY = -1;
-    const int width = size_.width;
+    VT100GridAppendState state = {
+        .idx = 0,
+        .numDropped = 0,
+        .length = [string cellCount],
+        .defaultChar = [self defaultChar],
+        .lastY = -1,
+        .width = size_.width,
+        .string = string,
+        .lineBuffer = lineBuffer,
+        .unlimitedScrollback = unlimitedScrollback,
+        .useScrollbackWithRegion = useScrollbackWithRegion,
+        .rtlFound = rtlFound,
+        .sourceMayHaveDWC = string.mayContainDoubleWidthCharacter
+    };
 
-    for (int idx = 0; idx < length; ) {
-        // see if next char is the right half of a DWC
-        const BOOL haveLeadingDWC = (idx + 1 < length &&
-                                     ScreenCharIsDWC_RIGHT([string characterAt:idx + 1]));
-        const int widthOffset = haveLeadingDWC ? 1 : 0;
+    VT100GridAppendState *statePtr = &state;
 
-        // wrap if at right edge
-        if (cursor_.x >= width - widthOffset) {
-            iTermMutableLineString *mls = [self mutableLineStringAtLineNumber:cursor_.y];
-            BOOL splitDwc = (cursor_.x == width - 1);
-            mls.continuation = defaultChar;
-            mls.eol = splitDwc ? EOL_DWC : EOL_SOFT;
-            if (splitDwc) {
-                [mls setDWCSkip];
-            }
-
-            self.cursorX = 0;
-            numDropped += [self moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
-                                                         unlimitedScrollback:unlimitedScrollback
-                                                     useScrollbackWithRegion:useScrollbackWithRegion
-                                                                  willScroll:nil
-                                                            sentToLineBuffer:nil];
-        }
-
-        const int spaceRemaining = width - cursor_.x;
-        const int charsRemaining = length - idx;
-        BOOL wrapDwc = NO;
-        int  newx;
-
-        if (spaceRemaining <= charsRemaining) {
-            // avoid splitting a DWC across lines
-            if (idx + spaceRemaining < length &&
-                ScreenCharIsDWC_RIGHT([string characterAt:idx + spaceRemaining])) {
-                wrapDwc = YES;
-                newx = width - 1;
-            } else {
-                newx = width;
-            }
-        } else {
-            newx = cursor_.x + charsRemaining;
-        }
-
-        const int charsToInsert = newx - cursor_.x;
-        if (charsToInsert <= 0) {
+    for (int idx = 0; idx < statePtr->length; ) {
+        const BOOL ok = [self appendOptimizedStringAtCursorWithState:statePtr];
+        if (!ok) {
             break;
         }
+    }
+    assert(statePtr->numDropped >= 0);
+    return statePtr->numDropped;
+}
 
-        const int lineNumber = cursor_.y;
-        iTermMutableLineString *mls =
-            [self mutableLineStringAtLineNumber:lineNumber];
-        if (rtlFound && lineNumber != lastY) {
-            lastY = lineNumber;
-            mls.rtlFound = rtlFound;
+- (BOOL)appendOptimizedNoDWCStringAtCursorWithState:(VT100GridAppendState *)statePtr
+                                                mls:(iTermMutableLineString *)mls {
+    int idx = statePtr->idx;
+
+    // wrap if at right edge
+    if (cursor_.x >= statePtr->width) {
+        mls.continuation = statePtr->defaultChar;
+        mls.eol = EOL_SOFT;
+
+        self.cursorX = 0;
+        statePtr->numDropped += [self moveCursorDownOneLineScrollingIntoLineBuffer:statePtr->lineBuffer
+                                                               unlimitedScrollback:statePtr->unlimitedScrollback
+                                                           useScrollbackWithRegion:statePtr->useScrollbackWithRegion
+                                                                        willScroll:nil
+                                                                  sentToLineBuffer:nil];
+    }
+
+    const int spaceRemaining = statePtr->width - cursor_.x;
+    const int charsRemaining = statePtr->length - idx;
+
+    int newx;
+
+    if (spaceRemaining <= charsRemaining) {
+        newx = statePtr->width;
+    } else {
+        newx = cursor_.x + charsRemaining;
+    }
+
+    const int charsToInsert = newx - cursor_.x;
+    if (charsToInsert <= 0) {
+        return NO;
+    }
+
+    const int lineNumber = cursor_.y;
+    if (statePtr->rtlFound && lineNumber != statePtr->lastY) {
+        statePtr->lastY = lineNumber;
+        mls.rtlFound = statePtr->rtlFound;
+    }
+
+    // replace the run in one go (this also updates external attributes)
+    const NSRange destRange = NSMakeRange(cursor_.x, charsToInsert);
+    const NSRange srcRange  = NSMakeRange(idx, charsToInsert);
+    id<iTermString> substr = [statePtr->string substringWithRange:srcRange];
+    [mls.mutableContent replaceRange:destRange with:substr];
+
+    [self markLineDirty:lineNumber];
+
+    // advance cursor and index
+    self.cursorX = newx;
+    statePtr->idx += charsToInsert;
+
+    return YES;
+}
+
+- (BOOL)appendOptimizedStringAtCursorWithState:(VT100GridAppendState *)statePtr {
+    iTermMutableLineString *mls = [self mutableLineStringAtLineNumber:cursor_.y];
+    const BOOL destinationMayHaveDWC = mls.content.mayContainDoubleWidthCharacter;
+    if (!destinationMayHaveDWC && !statePtr->sourceMayHaveDWC) {
+        return [self appendOptimizedNoDWCStringAtCursorWithState:statePtr
+                                                             mls:mls];
+    }
+    int idx = statePtr->idx;
+
+    // see if next char is the right half of a DWC
+    const BOOL haveLeadingDWC = (idx + 1 < statePtr->length &&
+                                 ScreenCharIsDWC_RIGHT([statePtr->string characterAt:idx + 1]));
+    const int widthOffset = haveLeadingDWC ? 1 : 0;
+
+    // wrap if at right edge
+    if (cursor_.x >= statePtr->width - widthOffset) {
+        BOOL splitDwc = (cursor_.x == statePtr->width - 1);
+        mls.continuation = statePtr->defaultChar;
+        mls.eol = splitDwc ? EOL_DWC : EOL_SOFT;
+        if (splitDwc) {
+            [mls setDWCSkip];
         }
 
+        self.cursorX = 0;
+        statePtr->numDropped += [self moveCursorDownOneLineScrollingIntoLineBuffer:statePtr->lineBuffer
+                                                               unlimitedScrollback:statePtr->unlimitedScrollback
+                                                           useScrollbackWithRegion:statePtr->useScrollbackWithRegion
+                                                                        willScroll:nil
+                                                                  sentToLineBuffer:nil];
+    }
 
-        // clear any stray DWC right-half at the insertion point
-        if (ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
+    const int spaceRemaining = statePtr->width - cursor_.x;
+    const int charsRemaining = statePtr->length - idx;
+    BOOL wrapDwc = NO;
+    int  newx;
+
+    if (spaceRemaining <= charsRemaining) {
+        // avoid splitting a DWC across lines
+        if (idx + spaceRemaining < statePtr->length &&
+            ScreenCharIsDWC_RIGHT([statePtr->string characterAt:idx + spaceRemaining])) {
+            wrapDwc = YES;
+            newx = statePtr->width - 1;
+        } else {
+            newx = statePtr->width;
+        }
+    } else {
+        newx = cursor_.x + charsRemaining;
+    }
+
+    const int charsToInsert = newx - cursor_.x;
+    if (charsToInsert <= 0) {
+        return NO;
+    }
+
+    const int lineNumber = cursor_.y;
+    if (statePtr->rtlFound && lineNumber != statePtr->lastY) {
+        statePtr->lastY = lineNumber;
+        mls.rtlFound = statePtr->rtlFound;
+    }
+
+
+    // clear any stray DWC right-half at the insertion point
+    if (ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
+        [mls eraseDWCRightAtIndex:cursor_.x currentDate:_currentDate];
+        _hasChanged = YES;
+    }
+
+    // replace the run in one go (this also updates external attributes)
+    NSRange destRange = NSMakeRange(cursor_.x, charsToInsert);
+    NSRange srcRange  = NSMakeRange(idx, charsToInsert);
+    id<iTermString> substr = [statePtr->string substringWithRange:srcRange];
+    [mls.mutableContent replaceRange:destRange with:substr];
+
+    [self markCharsDirty:YES
+              inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
+                      to:VT100GridCoordMake(cursor_.x + charsToInsert - 1, lineNumber)];
+
+    // handle DWC wrap-around
+    if (wrapDwc) {
+        if (cursor_.x + charsToInsert == statePtr->width - 1) {
+            [mls setDWCSkip];
+        } else {
             [mls eraseDWCRightAtIndex:cursor_.x currentDate:_currentDate];
-            _hasChanged = YES;
-        }
-
-        // replace the run in one go (this also updates external attributes)
-        NSRange destRange = NSMakeRange(cursor_.x, charsToInsert);
-        NSRange srcRange  = NSMakeRange(idx, charsToInsert);
-        id<iTermString> substr = [string substringWithRange:srcRange];
-        [mls.mutableContent replaceRange:destRange with:substr];
-
-        [self markCharsDirty:YES
-                  inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
-                          to:VT100GridCoordMake(cursor_.x + charsToInsert - 1, lineNumber)];
-
-        // handle DWC wrap-around
-        if (wrapDwc) {
-            if (cursor_.x + charsToInsert == width - 1) {
-                [mls setDWCSkip];
-            } else {
-                [mls eraseDWCRightAtIndex:cursor_.x currentDate:_currentDate];
-            }
-        }
-
-        // advance cursor and index
-        self.cursorX = newx;
-        idx += charsToInsert;
-
-        // clean up any leftover DWC right-half
-        if (cursor_.x < width - 1 &&
-            ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
-            [mls eraseDWCRightAtIndex:cursor_.x currentDate:_currentDate];
-        }
-
-        // fix split-DWC state at end of line
-        if (mls.eol == EOL_DWC &&
-            !ScreenCharIsDWC_SKIP(mls.lastCharacter)) {
-            mls.eol = EOL_SOFT;
         }
     }
 
-    assert(numDropped >= 0);
-    return numDropped;
+    // advance cursor and index
+    self.cursorX = newx;
+    statePtr->idx += charsToInsert;
+
+    // clean up any leftover DWC right-half
+    if (cursor_.x < statePtr->width - 1 &&
+        ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
+        [mls eraseDWCRightAtIndex:cursor_.x currentDate:_currentDate];
+    }
+
+    // fix split-DWC state at end of line
+    if (mls.eol == EOL_DWC &&
+        !ScreenCharIsDWC_SKIP(mls.lastCharacter)) {
+        mls.eol = EOL_SOFT;
+    }
+    return YES;
 }
 
 - (BOOL)canUseOptimizedStringFastPath {
@@ -1266,6 +1372,34 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         return NO;
     }
     return YES;
+}
+
+typedef struct  {
+    iTermMutableLineString *mls;
+    BOOL createIfNeeded;
+
+    iTermExternalAttributeIndex *eaIndex;
+    BOOL set;
+} VT100GridLazyEAIndex;
+
+static void VT100GridLazyEAIndexInit(VT100GridLazyEAIndex *index,
+                                     iTermMutableLineString *mls,
+                                     BOOL createIfNeeded) {
+    index->mls = mls;
+    index->createIfNeeded = createIfNeeded;
+    index->eaIndex = nil;
+    index->set = NO;
+}
+
+static iTermExternalAttributeIndex *VT100GridLazyEAIndexGet(VT100GridLazyEAIndex *lazy) {
+    if (lazy->set) {
+        return lazy->eaIndex;
+    }
+    lazy->set = YES;
+    if (lazy->createIfNeeded || lazy->mls.hasExternalAttributes) {
+        lazy->eaIndex = [lazy->mls.ensureLegacy eaIndexCreatingIfNeeded:lazy->createIfNeeded];
+    }
+    return lazy->eaIndex;
 }
 
 - (int)appendCharsAtCursor:(const screen_char_t *)buffer
@@ -1460,8 +1594,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             lastY = cursor_.y;
             [self mutableLineStringAtLineNumber:cursor_.y].rtlFound = rtlFound;
         }
+
         iTermMutableLineString *mls = [self mutableLineStringAtLineNumber:lineNumber];
-        iTermExternalAttributeIndex *eaIndex = [mls.ensureLegacy eaIndexCreatingIfNeeded:attributes != nil];
+        VT100GridLazyEAIndex lazyEAIndex;
+        VT100GridLazyEAIndexInit(&lazyEAIndex, mls, attributes != nil);
 
         BOOL mayStompSplitDwc = NO;
         if (newx == size_.width) {
@@ -1485,14 +1621,14 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                         rightBy:charsToInsert
                      startingAt:cursor_.x
                            upTo:rightMargin
-         externalAttributeIndex:eaIndex];
+         externalAttributeIndex:VT100GridLazyEAIndexGet(&lazyEAIndex)];
             }
         }
 
         // Overwriting the second-half of a double-width character so turn the
         // DWC into a space.
         if (ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
-            [self eraseDWCRightOnLine:lineNumber x:cursor_.x externalAttributeIndex:eaIndex];
+            [self eraseDWCRightOnLine:lineNumber x:cursor_.x externalAttributeIndex:VT100GridLazyEAIndexGet(&lazyEAIndex)];
         }
 
         // This is an ugly little optimization--if we're inserting just one character, see if it would
@@ -1508,10 +1644,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             [self markCharsDirty:YES
                       inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
                               to:VT100GridCoordMake(cursor_.x + charsToInsert - 1, lineNumber)];
-            [eaIndex copyFrom:attributes source:idx destination:cursor_.x count:charsToInsert];
+            [VT100GridLazyEAIndexGet(&lazyEAIndex) copyFrom:attributes source:idx destination:cursor_.x count:charsToInsert];
         }
         if (wrapDwc) {
-            [eaIndex eraseAt:cursor_.x + charsToInsert];
+            [VT100GridLazyEAIndexGet(&lazyEAIndex) eraseAt:cursor_.x + charsToInsert];
             if (cursor_.x + charsToInsert == size_.width - 1) {
                 [mls.ensureLegacy setDWCSkipAt:cursor_.x + charsToInsert];
             } else {
@@ -1524,7 +1660,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         // Overwrote some stuff that was already on the screen leaving behind the
         // second half of a DWC
         if (cursor_.x < size_.width - 1 && ScreenCharIsDWC_RIGHT([mls.content characterAt:cursor_.x])) {
-            [eaIndex eraseAt:cursor_.x];
+            [VT100GridLazyEAIndexGet(&lazyEAIndex) eraseAt:cursor_.x];
             [mls.ensureLegacy eraseCodeAt:cursor_.x];
         }
 
@@ -2705,19 +2841,16 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     if (!lineBuffer) {
         return 0;
     }
-    screen_char_t *line = [self mutableScreenCharsAtLineNumber:0];
     iTermMutableLineString *mls = [self mutableLineStringAtLineNumber:0];
     int len = [self lengthOfLine:mls];
     int continuationMark = mls.eol;
     if (continuationMark == EOL_DWC && len == size_.width) {
-        --len;
+#warning TODO: Test this code path
+        mls = [mls mutableClone];
+        [mls.mutableContent deleteFromEnd:1];
     }
-    [lineBuffer appendLine:line
-                    length:len
-                   partial:(continuationMark != EOL_HARD)
-                     width:size_.width
-                  metadata:[self immutableMetadataAtLineNumber:0]
-              continuation:mls.continuation];
+    // TODO: If the continuation mark is EOL_DWC remove the last chracter
+    [lineBuffer appendLineString:mls width:size_.width];
     int dropped;
     if (!unlimitedScrollback) {
         dropped = [lineBuffer dropExcessLinesWithWidth:size_.width];
@@ -2828,8 +2961,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         return invalid;
     }
 
-    const screen_char_t *line = [self screenCharsAtLineNumber:cy];
-    if (ScreenCharIsDWC_RIGHT(line[cx])) {
+#warning TODO: Test this code path
+    iTermMutableLineString *mls = [self mutableLineStringAtLineNumber:cy];
+    if ([mls hasDWCRightAtIndex:cx]) {
         if (cx > 0) {
             if (dwc) {
                 *dwc = YES;

@@ -57,10 +57,17 @@
         return nil;
     }
     if (indexSet.count == 0) {
-        return [[iTermTrivialDoubleWidthCharacterCache alloc] initWithLength:length
-                                                                       width:width
-                                                                    indexSet:indexSet];
+        return [[iTermTrivialDoubleWidthCharacterCache alloc] initPrivateWithLength:length
+                                                                              width:width
+                                                                           indexSet:indexSet];
+    } else {
+        return [self initPrivateWithLength:length width:width indexSet:indexSet];
     }
+}
+
+- (instancetype)initPrivateWithLength:(int)length
+                                width:(int)width
+                             indexSet:(NSIndexSet *)indexSet {
     self = [super init];
     if (self) {
         _length = length;

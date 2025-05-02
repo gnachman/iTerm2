@@ -537,3 +537,81 @@ final class iTermMutableRopeTests: XCTestCase {
         XCTAssertEqual(r, iTermMutableRope())
     }
 }
+
+class iTermMutableRopeReplaceTests: XCTestCase {
+    private func ascii(_ s: String) -> iTermASCIIString {
+        let style = makeStyle()
+        return iTermASCIIString(data: Data(s.utf8), style: style, ea: nil)
+    }
+
+    private func rope(from s: String) -> iTermMutableRope {
+        return iTermMutableRope([ascii(s)])
+    }
+
+    func testReplaceZeroLengthInsert() {
+        let r = rope(from: "ABC")
+        let x = ascii("X")
+        r.replace(range: 1..<1, with: x)
+        XCTAssertEqual(r.screenCharArray.stringValue, "AXBC")
+    }
+
+    func testReplaceEmptyReplacementDeletes() {
+        let r = rope(from: "ABCDE")
+        r.replace(range: 2..<4, with: ascii(""))
+        XCTAssertEqual(r.screenCharArray.stringValue, "ABE")
+    }
+
+    func testReplaceEqualLengthSingleSegment() {
+        let r = rope(from: "HelloWorld")
+        let replacement = ascii("123456789") // length 9 replacing 1..<10
+        r.replace(range: 1..<10, with: replacement)
+        XCTAssertEqual(r.screenCharArray.stringValue, "H123456789")
+    }
+
+    func testReplaceShorterReplacementSingleSegment() {
+        let r = rope(from: "ABCDEFG")
+        let replacement = ascii("Z")
+        r.replace(range: 2..<5, with: replacement)
+        XCTAssertEqual(r.screenCharArray.stringValue, "ABZFG")
+    }
+
+    func testReplaceLongerReplacementSingleSegment() {
+        let r = rope(from: "XYZ")
+        let replacement = ascii("12345")
+        r.replace(range: 1..<2, with: replacement)
+        XCTAssertEqual(r.screenCharArray.stringValue, "X12345Z")
+    }
+
+    func testReplaceEntireRangeClears() {
+        let r = rope(from: "DATA")
+        r.replace(range: 0..<4, with: iTermASCIIString(data: Data(), style: makeStyle(), ea: nil))
+        XCTAssertEqual(r.screenCharArray.stringValue, "")
+        XCTAssertEqual(r.cellCount, 0)
+    }
+
+    func testReplaceAcrossSegmentsGeneralSplice() {
+        let a1 = ascii("AB")
+        let a2 = ascii("CD")
+        let rope = iTermMutableRope([a1, a2])  // "ABCD"
+        let replacement = ascii("XYZ")
+        rope.replace(range: 1..<3, with: replacement) // replaces "BC"
+        XCTAssertEqual(rope.screenCharArray.stringValue, "AXYZD")
+    }
+
+    func testObjcReplaceBehavesSame() {
+        let r = rope(from: "HELLO")
+        let repl = ascii("YY")
+        r.objcReplace(range: NSRange(location: 1, length: 3), with: repl) // replace "ELL"
+        XCTAssertEqual(r.screenCharArray.stringValue, "HYYO")
+    }
+
+    func testReplaceAtStartAndEnd() {
+        let r = rope(from: "123456")
+        // replace start
+        r.replace(range: 0..<2, with: ascii("AB"))
+        XCTAssertEqual(r.screenCharArray.stringValue, "AB3456")
+        // replace end
+        r.replace(range: 4..<6, with: ascii("CD"))
+        XCTAssertEqual(r.screenCharArray.stringValue, "AB34CD")
+    }
+}

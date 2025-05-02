@@ -56,6 +56,7 @@ typedef struct {
 @protocol iTermExternalAttributeIndexReading<NSCopying, NSMutableCopying, NSObject>
 @property (nonatomic, readonly) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
+@property (nonatomic, readonly) BOOL isEmpty;
 - (NSData *)data;
 - (NSString *)shortDescriptionWithLength:(int)length;
 - (iTermExternalAttributeIndex *)subAttributesInRange:(NSRange)range;
@@ -74,7 +75,6 @@ typedef struct {
 @interface iTermExternalAttributeIndex: NSObject<iTermExternalAttributeIndexReading>
 @property (nonatomic, strong) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
-@property (nonatomic, readonly) BOOL isEmpty;
 
 + (BOOL)externalAttributeIndex:(id<iTermExternalAttributeIndexReading> _Nullable)lhs
                 isEqualToIndex:(id<iTermExternalAttributeIndexReading> _Nullable)rhs;

@@ -207,10 +207,67 @@ extension iTermMutableRope: iTermMutableStringProtocolSwift {
 
     /// Replace the given range by deleting it, then inserting `replacement`
     func replace(range: Range<Int>, with replacement: iTermString) {
+        if range == 0..<cellCount {
+            guts.set(segments: [Segment(string: replacement, cumulativeCellCount: replacement.cellCount)])
+            return
+        }
         guts.stringCache.invalidate(range: range.lowerBound..<cellCount)
-        delete(range: range)
-        guard replacement.cellCount > 0 else { return }
-        insert(replacement, at: range.lowerBound)
+        let removeCount = range.count
+        let insertCount = replacement.cellCount
+        if removeCount == 0 {
+            insert(replacement, at: range.lowerBound)
+            return
+        }
+        if insertCount == 0 {
+            delete(range: range)
+            return
+        }
+
+        // General splice
+        let segmentIndexRange = splitSegmentsForReplacement(range)
+        let replacementSegments = buildReplacementSegments(from: replacement)
+        replaceSegments(inRange: segmentIndexRange,
+                        with: replacementSegments)
+    }
+
+    /// Splits the start and end segment boundaries so that the removal range
+    /// aligns on segment boundaries. Returns the range of segments to remove.
+    private func splitSegmentsForReplacement(_ range: Range<Int>) -> ClosedRange<Int> {
+        let globalStart = guts.deletedHeadCellCount + range.lowerBound
+        let globalEnd = guts.deletedHeadCellCount + range.upperBound
+
+        // Split at start
+        var startIdx = indexOfSegment(for: globalStart)
+        let startBase = globalBase(segmentIndex: startIdx)
+        let startOffset = globalStart - startBase
+        if startOffset > 0 && startOffset < guts.segments[startIdx].string.cellCount {
+            partition(segmentIndex: startIdx, atOffset: startOffset)
+            startIdx += 1
+        }
+
+        // Split at end
+        let endIdx = indexOfSegment(for: globalEnd - 1)
+        let endBase = globalBase(segmentIndex: endIdx)
+        let endOffset = globalEnd - endBase
+        if endOffset > 0 && endOffset < guts.segments[endIdx].string.cellCount {
+            partition(segmentIndex: endIdx, atOffset: endOffset)
+        }
+
+        // After splitting, recompute removal end index
+        return startIdx...endIdx
+    }
+
+    /// Constructs an array of `Segment` from the replacement string,
+    /// reusing segments if `replacement` is already a rope.
+    private func buildReplacementSegments(from replacement: iTermString) -> [Segment] {
+        return [Segment(string: replacement, cumulativeCellCount: replacement.cellCount)]
+    }
+
+    /// Performs the single array splice of old segments to new.
+    private func replaceSegments(inRange range: ClosedRange<Int>,
+                                with segmentsToInsert: [Segment]) {
+        guts.segments.replaceSubrange(range, with: segmentsToInsert)
+        rebuildCellCounts(fromSegmentIndex: range.lowerBound)
     }
 
     @objc

@@ -44,6 +44,11 @@ protocol iTermString: AnyObject {
     // If rtlIndexes is nil, set RTL status to unknown for all characters.
     // Otherwise set all to ltr (if not in rtlIndexes) or rtl otherwise.
     func stringBySettingRTL(in: NSRange, rtlIndexes: IndexSet?) -> iTermString
+    func mayContainDoubleWidthCharacter(in: NSRange) -> Bool
+    var mayContainDoubleWidthCharacter: Bool { get }
+
+    // May return false positives
+    @objc func hasExternalAttributes(range: NSRange) -> Bool
 }
 
 extension iTermString {
