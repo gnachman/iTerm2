@@ -521,23 +521,6 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     assert(_metadataArray.numEntries == cll_entries);
 }
 
-// used by dump to format a line of screen_char_t's into an asciiz string.
-static char* formatsct(const screen_char_t* src, int len, char* dest) {
-    if (len > 999) len = 999;
-    int i;
-    for (i = 0; i < len; ++i) {
-        dest[i] = (src[i].code && !src[i].complexChar) ? src[i].code : '.';
-    }
-    dest[i] = 0;
-    return dest;
-}
-
-- (void)appendToDebugString:(NSMutableString *)s {
-    for (int i = _firstEntry; i < cll_entries; ++i) {
-        [s appendFormat:@"%@\n", [self debugStringForRawLine:i]];
-    }
-}
-
 - (NSString *)dumpString {
     return [self dumpStringWithDroppedChars:0];
 }
@@ -546,7 +529,6 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     NSMutableArray<NSString *> *strings = [NSMutableArray array];
     [strings addObject:[NSString stringWithFormat:@"numRawLines=%@", @([self numRawLines])]];
 
-    char temp[1000];
     int i;
     int rawOffset = 0;
     int prev;
@@ -579,7 +561,6 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     } else {
         NSLog(@"numRawLines=%@", @([self numRawLines]));
     }
-    char temp[1000];
     int i;
     int prev;
     if (_firstEntry > 0) {
@@ -989,10 +970,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     id<iTermLineStringReading> lineString =
         [self _wrappedLineStringWithWrapWidth:width
                                      location:location
-                                      lineNum:&mutableLineNum
-                                      yOffset:NULL
-                         isStartOfWrappedLine:NULL
-                                   lineOffset:NULL];
+                                      lineNum:&mutableLineNum];
 #warning TODO: Does this properly pick up a subrange of the metadata?
     return [self metadataOfLineString:lineString];
 }
@@ -1005,16 +983,6 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
 
 - (id<iTermLineStringReading>)wrappedLineStringWithWrapWidth:(int)width
                                                      lineNum:(int *)lineNum {
-    return [self wrappedLineStringWithWrapWidth:width
-                                        lineNum:lineNum
-                                        yOffset:NULL
-                           isStartOfWrappedLine:NULL];
-}
-
-- (id<iTermLineStringReading>)wrappedLineStringWithWrapWidth:(int)width
-                                                     lineNum:(int *)lineNum
-                                                     yOffset:(int *)yOffsetPtr
-                                        isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine {
     ITBetaAssert(*lineNum >= 0, @"Negative lines to wrappedLineStringWithWrapWidth");
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:lineNum];
     if (!location.found) {
@@ -1024,10 +992,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     // eat up *lineNum many width-sized wrapped lines from this start of the current full line
     id<iTermLineStringReading> lineString = [self _wrappedLineStringWithWrapWidth:width
                                                                          location:location
-                                                                          lineNum:lineNum
-                                                                          yOffset:yOffsetPtr
-                                                             isStartOfWrappedLine:isStartOfWrappedLine
-                                                                       lineOffset:NULL];
+                                                                          lineNum:lineNum];
     return lineString;
 }
 
@@ -1051,28 +1016,13 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
 
 - (id<iTermLineStringReading>)_wrappedLineStringWithWrapWidth:(int)width
                                                      location:(LineBlockLocation)location
-                                                      lineNum:(int*)lineNum
-                                                      yOffset:(int*)yOffsetPtr
-                                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                                   lineOffset:(out int *)lineOffset {
+                                                      lineNum:(int*)lineNum {
     int eol = EOL_HARD;
     const NSRange locationRelativeRange = [self locationRelativeRangeOfWrappedLineWithWidth:width
                                                                                    location:location
                                                                                        line:*lineNum
                                                                                      eolOut:&eol];
     *lineNum = 0;
-    if (yOffsetPtr) {
-        // Set *yOffsetPtr to the number of consecutive empty lines just before the requested
-        // line.
-        *yOffsetPtr = location.numEmptyLines;
-    }
-
-    if (isStartOfWrappedLine) {
-        *isStartOfWrappedLine = (locationRelativeRange.location == 0);
-    }
-    if (lineOffset) {
-        *lineOffset = locationRelativeRange.location;
-    }
 
     const LineBlockMetadata *md = [_metadataArray metadataAtIndex:location.index];
     const NSRange range = NSMakeRange(location.prev + locationRelativeRange.location + _startOffset,
@@ -1248,10 +1198,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     id<iTermLineStringReading> lineString =
         [self _wrappedLineStringWithWrapWidth:width
                                      location:location
-                                      lineNum:&mutableLineNum
-                                      yOffset:NULL
-                         isStartOfWrappedLine:NULL
-                                   lineOffset:NULL];
+                                      lineNum:&mutableLineNum];
     ScreenCharArray *sca = [self screenCharArrayForLineString:lineString];
     return [sca paddedToLength:paddedSize eligibleForDWC:eligibleForDWC];
 }
