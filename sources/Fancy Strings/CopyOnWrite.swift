@@ -31,20 +31,25 @@ protocol Cloning {
 
 @propertyWrapper
 struct CopyOnWrite<Storage: AnyObject & Cloning> {
+    private let mutex = Mutex()
     private var box: Storage
     init(wrappedValue value: Storage) { box = value }
     var wrappedValue: Storage {
         mutating get {
-            if !isKnownUniquelyReferenced(&box) {
-                box = box.clone()
+            return mutex.sync {
+                if !isKnownUniquelyReferenced(&box) {
+                    box = box.clone()
+                }
+                return box
             }
-            return box
         }
         set {
-            if !isKnownUniquelyReferenced(&box) {
-                box = newValue.clone()
-            } else {
-                box = newValue
+            mutex.sync {
+                if !isKnownUniquelyReferenced(&box) {
+                    box = newValue.clone()
+                } else {
+                    box = newValue
+                }
             }
         }
     }
