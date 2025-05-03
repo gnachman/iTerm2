@@ -13,7 +13,12 @@ class iTermRope: iTermBaseString {
         // is meant to return an immutable copy).
         let string: iTermString
         var cumulativeCellCount: Int
-
+        lazy var mayHaveExternalAttributes: Bool = {
+            if let rope = string as? iTermRope {
+                return rope.guts.mayHaveExternalAttributes
+            }
+            return string.hasExternalAttributes(range: string.fullRange)
+        }()
         init(string: iTermString, cumulativeCellCount: Int) {
             self.string = string.clone()
             self.cumulativeCellCount = cumulativeCellCount
@@ -21,21 +26,16 @@ class iTermRope: iTermBaseString {
     }
 
     final class Guts: Cloning {
-        var segments = [Segment]()
+        private(set) var segments = [Segment]()
         var deletedHeadCellCount = 0
         var stringCache = SubStringCache()
+        var mayHaveExternalAttributes = false
 
         func clone() -> Guts {
             let result = Guts()
-            result.segments = segments.map { segment in
-                if let mut = segment.string as? iTermMutableStringProtocol {
-                    return Segment(string: mut.clone(),
-                                   cumulativeCellCount: segment.cumulativeCellCount)
-                } else {
-                    return segment
-                }
-            }
+            result.segments = segments
             result.deletedHeadCellCount = deletedHeadCellCount
+            result.mayHaveExternalAttributes = mayHaveExternalAttributes
             return result
         }
 
@@ -43,6 +43,112 @@ class iTermRope: iTermBaseString {
             self.segments = segments
             deletedHeadCellCount = 0
             stringCache.clear()
+            updateMayHaveExternalAttributes()
+        }
+
+        func updateMayHaveExternalAttributes() {
+            for i in 0..<segments.count {
+                if segments[i].mayHaveExternalAttributes {
+                    mayHaveExternalAttributes = true
+                    return
+                }
+            }
+            mayHaveExternalAttributes = false
+        }
+
+        func setSegmentsWithoutSideEffects(_ segments: [Segment]) {
+            self.segments = segments
+        }
+
+        func removeFirstSegments(_ count: Int) {
+            self.segments.removeFirst(count)
+            deletedHeadCellCount = 0
+            stringCache.clear()
+        }
+
+        func removeSegments(fromIndex: Int) {
+            stringCache.clear()
+            segments.removeSubrange(fromIndex...)
+        }
+
+        func removeSegmentsSubrange(_ subrange: Range<Int>) {
+            if subrange.lowerBound == 0 {
+                deletedHeadCellCount = 0
+            }
+            segments.removeSubrange(subrange)
+            stringCache.clear()
+        }
+
+        func replaceSegments(subrange range: ClosedRange<Int>, replacement: [Segment]) {
+            segments.replaceSubrange(range, with: replacement)
+            if range.lowerBound == 0 {
+                deletedHeadCellCount = 0
+            }
+            stringCache.clear()
+            mayHaveExternalAttributes = mayHaveExternalAttributes || replacement.anySatisfies {
+                $0.string.hasExternalAttributes(range: $0.string.fullRange)
+            }
+        }
+
+        func insert(segment: Segment, at i: Int) {
+            if i == 0 {
+                it_assert(deletedHeadCellCount == 0)
+            }
+            segments.insert(segment, at: i)
+            let start = i > 0 ? segments[i - 1].cumulativeCellCount : 0
+            let end = segments.last?.cumulativeCellCount ?? 0
+            stringCache.invalidate(range: start..<end)
+            mayHaveExternalAttributes = mayHaveExternalAttributes || segments[i].mayHaveExternalAttributes
+        }
+
+        func append(segment: Segment) {
+            segments.append(segment)
+            mayHaveExternalAttributes = mayHaveExternalAttributes || segments[segments.count - 1].mayHaveExternalAttributes
+        }
+
+        func append(segments: [Segment], mayHaveExternalAttribute: Bool) {
+            let i = self.segments.count
+            self.segments.append(contentsOf: segments)
+            mayHaveExternalAttributes = mayHaveExternalAttributes || mayHaveExternalAttribute
+            rebuildCellCounts(fromSegmentIndex: i)
+        }
+
+        func set(segment: Segment, at i: Int) {
+            if i == 0 {
+                it_assert(deletedHeadCellCount == 0)
+            }
+            segments[i] = segment
+            stringCache.invalidate(range: cellRangeForSegment(from: i))
+            mayHaveExternalAttributes = mayHaveExternalAttributes || segments[i].mayHaveExternalAttributes
+        }
+
+        private func cellRangeForSegment(at i: Int) -> Range<Int> {
+            let start = i > 0 ? segments[i - 1].cumulativeCellCount : 0
+            let end = segments[i].cumulativeCellCount
+            return start..<end
+        }
+
+        private func cellRangeForSegment(from i: Int) -> Range<Int> {
+            let start = i > 0 ? segments[i - 1].cumulativeCellCount : 0
+            let end = segments.last?.cumulativeCellCount ?? 0
+            return start..<end
+        }
+
+        func rebuildCellCounts(fromSegmentIndex firstSegmentIndex: Int) {
+            if firstSegmentIndex == 0 {
+                deletedHeadCellCount = 0
+                var cum = deletedHeadCellCount
+                for i in 0..<segments.count {
+                    cum += segments[i].string.cellCount
+                    segments[i].cumulativeCellCount = cum
+                }
+            } else {
+                var cum = segments[firstSegmentIndex - 1].cumulativeCellCount
+                for i in firstSegmentIndex..<segments.count {
+                    cum += segments[i].string.cellCount
+                    segments[i].cumulativeCellCount = cum
+                }
+            }
         }
     }
 
@@ -72,7 +178,9 @@ class iTermRope: iTermBaseString {
 
     init(_ string: iTermString) {
         super.init()
-        guts.segments = [Segment(string: string.clone(), cumulativeCellCount: string.cellCount)]
+        if string.cellCount > 0 {
+            guts.set(segments: [Segment(string: string.clone(), cumulativeCellCount: string.cellCount)])
+        }
     }
 
     init(_ strings: [iTermString]) {
@@ -80,10 +188,14 @@ class iTermRope: iTermBaseString {
         var segments = [Segment]()
         var count = 0
         for string in strings {
-            count += string.cellCount
+            let cellCount = string.cellCount
+            if cellCount == 0 {
+                continue
+            }
+            count += cellCount
             segments.append(Segment(string: string, cumulativeCellCount: count))
         }
-        guts.segments = segments
+        guts.set(segments: segments)
     }
 
     required init(guts: Guts) {
@@ -134,13 +246,40 @@ extension iTermRope: iTermString {
 
 
     func usedLength(range: NSRange) -> Int32 {
+        if range.location == 0 && range.length == cellCount {
+            // Fast path when measuring the whole rope.
+            var used = cellCount
+            let segments = guts.segments
+            for i in (0..<segments.count).reversed() {
+                let segmentCount: Int
+                let segmentUsed: Int
+                if i == 0 {
+                    let deleted = guts.deletedHeadCellCount
+                    segmentCount = segments[i].string.cellCount - deleted
+                    segmentUsed = Int(segments[i].string.usedLength(range: NSRange(location: deleted, length: segmentCount)))
+                } else {
+                    segmentCount = segments[i].string.cellCount
+                    segmentUsed = Int(segments[i].string.usedLength(range: NSRange(location: 0, length: segmentCount)))
+                }
+                let unusedInSegment = segmentCount - segmentUsed
+                if unusedInSegment > 0 {
+                    used -= unusedInSegment
+                    if unusedInSegment < segmentCount {
+                        break
+                    }
+                }
+            }
+            return Int32(used)
+        }
+
         // Find the last segment that is not all used
         var found = false
         var sum = Int32(0)
-        enumerateSegmentsReversed(inRange: Range(range)!) { i, seg, localRange in
+
+        for (_, seg, localRange) in segmentIterator(inRange: Range(range)!).reversed() {
             if found {
                 sum += Int32(localRange.count)
-                return
+                continue
             }
             let used = seg.usedLength(range: NSRange(localRange))
             if used > 0 {
@@ -155,18 +294,20 @@ extension iTermRope: iTermString {
                             rtlIndexes: IndexSet?) -> iTermString {
         let temp = Guts()
         var count = 0
+        var segments = [Segment]()
         enumerateSegments(inRange: Range(range)!) { i, substring, localRange in
             count += localRange.count
             let globalRange = globalSegmentRange(index: i)
             var subset = rtlIndexes?[globalRange]
             subset?.shift(startingAt: 0, by: -globalRange.lowerBound)
-            temp.segments.append(
+            segments.append(
                 Segment(
                     string: substring.stringBySettingRTL(
                         in: NSRange(localRange),
                         rtlIndexes: subset),
                     cumulativeCellCount: count))
         }
+        temp.set(segments: segments)
         return Self(guts: temp)
     }
 
@@ -175,7 +316,6 @@ extension iTermRope: iTermString {
         var result = IndexSet()
         var offset = 0
         enumerateSegments(inRange: Range(nsrange)!) { i, string, localRange in
-            let segment = guts.segments[i]
             let part = string.doubleWidthIndexes(range: NSRange(localRange),
                                                  rebaseTo: offset)
             offset += localRange.count
@@ -234,11 +374,15 @@ extension iTermRope: iTermString {
         return iTermMutableRope(guts: guts)
     }
 
+    // Mutable subclasses must override this!
     func clone() -> iTermString {
-        return iTermRope(guts: guts.clone())
+        return self
     }
 
     func externalAttributesIndex() -> (any iTermExternalAttributeIndexReading)? {
+        if !guts.mayHaveExternalAttributes {
+            return nil
+        }
         return _externalAttributesIndex()
     }
 
@@ -311,24 +455,6 @@ extension iTermRope {
                            closure: (Int, iTermString, Range<Int>) -> ()) {
         for (i, str, subrange) in segmentIterator(inRange: range) {
             closure(i, str, subrange)
-        }
-    }
-
-    func enumerateSegmentsReversed(inRange range: Range<Int>, closure: (Int, iTermString, Range<Int>) -> ()) {
-        let startIndex = indexOfSegment(for: range.lowerBound)
-        let globalRange = (range.lowerBound + guts.deletedHeadCellCount)..<(range.upperBound + guts.deletedHeadCellCount)
-        for i in (startIndex..<guts.segments.count).reversed() {
-            let gsr = globalSegmentRange(index: i)
-            if gsr.isEmpty {
-                continue
-            }
-            guard let intersection = gsr.intersection(globalRange), intersection.count > 0 else {
-                break
-            }
-            let localStart = intersection.lowerBound - gsr.lowerBound
-            let localRange = localStart..<(localStart + intersection.count)
-            it_assert((0..<guts.segments[i].string.cellCount).contains(range: localRange))
-            closure(i, guts.segments[i].string, localRange)
         }
     }
 

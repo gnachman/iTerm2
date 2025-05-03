@@ -7,6 +7,9 @@
 
 @objc
 class iTermMutableRope: iTermRope {
+    override func clone() -> any iTermString {
+        return iTermRope(guts: guts.clone())
+    }
 }
 
 // MARK: — Mutation APIs
@@ -14,9 +17,12 @@ class iTermMutableRope: iTermRope {
 @objc
 extension iTermMutableRope: iTermMutableStringProtocol {
     func erase(defaultChar: screen_char_t) {
+        if cellCount == 0 {
+            return
+        }
         let guts = Guts()
-        guts.segments = [Segment(string: iTermUniformString(char: defaultChar, length: cellCount),
-                                 cumulativeCellCount: cellCount)]
+        guts.set(segments: [Segment(string: iTermUniformString(char: defaultChar, length: cellCount),
+                                    cumulativeCellCount: cellCount)])
         self.guts = guts
     }
 
@@ -32,7 +38,15 @@ extension iTermMutableRope: iTermMutableStringProtocol {
 
     @objc(appendString:)
     func append(string: iTermString) {
-        appendSegment(string)
+        if string.cellCount == 0 {
+            return
+        }
+        if let rope = string as? iTermRope {
+            guts.append(segments: rope.guts.segments,
+                        mayHaveExternalAttribute: rope.guts.mayHaveExternalAttributes)
+        } else {
+            appendSegment(string)
+        }
     }
 
     /// Delete N cells from front using indexOfSegment for binary search
@@ -41,8 +55,7 @@ extension iTermMutableRope: iTermMutableStringProtocol {
         guard count > 0 else { precondition(count >= 0); return }
         guts.stringCache.clear()
         if count == cellCount {
-            guts.segments = []
-            guts.deletedHeadCellCount = 0
+            guts.set(segments: [])
             return
         }
         precondition(count < cellCount)
@@ -52,13 +65,13 @@ extension iTermMutableRope: iTermMutableStringProtocol {
 
         // Remove all segments entirely before cutIndex
         if cutIndex > 0 {
-            guts.segments.removeFirst(cutIndex)
+            guts.removeFirstSegments(cutIndex)
         }
         if let firstSeg = guts.segments.first {
             let offset = newDeleted - prevCum
             if offset > 0 && offset < firstSeg.string.cellCount {
                 partition(segmentIndex: 0, atOffset: offset)
-                guts.segments.removeFirst()
+                guts.removeFirstSegments(1)
             }
         }
         guts.deletedHeadCellCount = newDeleted
@@ -69,9 +82,7 @@ extension iTermMutableRope: iTermMutableStringProtocol {
     func deleteFromEnd(_ count: Int) {
         guard count > 0 else { precondition(count >= 0); return }
         if count == cellCount {
-            guts.stringCache.clear()
-            guts.segments = []
-            guts.deletedHeadCellCount = 0
+            guts.set(segments: [])
             return
         }
         precondition(count < cellCount)
@@ -88,7 +99,7 @@ extension iTermMutableRope: iTermMutableStringProtocol {
             partition(segmentIndex: cutIndex, atOffset: offset)
             firstKeep += 1
         }
-        guts.segments.removeSubrange(firstKeep...)
+        guts.removeSegments(fromIndex: firstKeep)
     }
 
     func resetRTLStatus() {
@@ -99,7 +110,7 @@ extension iTermMutableRope: iTermMutableStringProtocol {
             return Segment(string: modified,
                            cumulativeCellCount: segment.cumulativeCellCount)
         }
-        guts.segments = replacementSegments
+        guts.set(segments: replacementSegments)
     }
 
     @objc func setRTLIndexes(_ indexSet: IndexSet) {
@@ -116,7 +127,7 @@ extension iTermMutableRope: iTermMutableStringProtocol {
                 string: modified,
                 cumulativeCellCount: guts.segments[i].cumulativeCellCount)
         }
-        guts.segments = segments
+        guts.setSegmentsWithoutSideEffects(segments)
         guts.stringCache.clear()
     }
 
@@ -138,16 +149,15 @@ extension iTermMutableRope: iTermMutableStringProtocol {
                     cumulativeCellCount: guts.segments[i].cumulativeCellCount)
             o += localRange.count
         }
-        guts.segments = segments
+        guts.setSegmentsWithoutSideEffects(segments)
         guts.stringCache.clear()
+        guts.updateMayHaveExternalAttributes()
     }
 }
 
 extension iTermMutableRope {
     private func set(segments: [Segment]) {
-        guts.deletedHeadCellCount = 0
-        guts.segments = segments
-        guts.stringCache.clear()
+        guts.set(segments: segments.filter { $0.string.cellCount > 0 })
     }
 }
 
@@ -200,8 +210,7 @@ extension iTermMutableRope: iTermMutableStringProtocolSwift {
             partition(segmentIndex: endIdx, atOffset: endOffset)
             endIdx += 1
         }
-
-        guts.segments.removeSubrange(firstToRemove..<endIdx)
+        guts.removeSegmentsSubrange(firstToRemove..<endIdx)
         rebuildCellCounts(from: startIdx)
     }
 
@@ -266,8 +275,8 @@ extension iTermMutableRope: iTermMutableStringProtocolSwift {
     /// Performs the single array splice of old segments to new.
     private func replaceSegments(inRange range: ClosedRange<Int>,
                                 with segmentsToInsert: [Segment]) {
-        guts.segments.replaceSubrange(range, with: segmentsToInsert)
-        rebuildCellCounts(fromSegmentIndex: range.lowerBound)
+        guts.replaceSegments(subrange: range, replacement: segmentsToInsert)
+        guts.rebuildCellCounts(fromSegmentIndex: range.lowerBound)
     }
 
     @objc
@@ -286,15 +295,17 @@ extension iTermMutableRope: iTermMutableStringProtocolSwift {
             // split mid‑segment, then insert between
             let offset = globalIndex - segStart
             partition(segmentIndex: segIdx, atOffset: offset)
-            guts.segments.insert(Segment(string: string, cumulativeCellCount: -1), at: segIdx + 1)
+            guts.insert(segment: Segment(string: string, cumulativeCellCount: -1),
+                        at: segIdx + 1)
             rebuildIndex = segIdx + 1
         } else {
             // boundary insert
             let insertIdx = insertionIndexOfSegment(for: globalIndex)
-            guts.segments.insert(Segment(string: string, cumulativeCellCount: -1), at: insertIdx)
+            guts.insert(segment: Segment(string: string, cumulativeCellCount: -1),
+                        at: insertIdx)
             rebuildIndex = insertIdx
         }
-        rebuildCellCounts(fromSegmentIndex: rebuildIndex)
+        guts.rebuildCellCounts(fromSegmentIndex: rebuildIndex)
     }
 
     func sanityCheck() {
@@ -335,7 +346,7 @@ private extension iTermMutableRope {
 
     func appendSegment(_ seg: iTermString) {
         let newCum = (guts.segments.last?.cumulativeCellCount ?? guts.deletedHeadCellCount) + seg.cellCount
-        guts.segments.append(Segment(string: seg, cumulativeCellCount: newCum))
+        guts.append(segment: Segment(string: seg, cumulativeCellCount: newCum))
     }
 
     /// Split `segments[segmentIndex]` at `offset`, producing two substrings. Neither may be empty.
@@ -344,38 +355,21 @@ private extension iTermMutableRope {
         precondition(offset > 0 && offset < original.string.cellCount)
         let prefix = iTermSubString(base: original.string, range: 0..<offset)
         let suffix = iTermSubString(base: original.string, range: offset..<original.string.cellCount)
-        guts.segments[segmentIndex] = Segment(
+        guts.set(segment: Segment(
             string: prefix,
             cumulativeCellCount: original.cumulativeCellCount
                 - original.string.cellCount
                 + prefix.cellCount
-        )
-        guts.segments.insert(
-            Segment(string: suffix, cumulativeCellCount: original.cumulativeCellCount),
-            at: segmentIndex + 1
-        )
+        ),
+                 at: segmentIndex)
+
+        guts.insert(segment: Segment(string: suffix, cumulativeCellCount: original.cumulativeCellCount),
+                    at: segmentIndex + 1)
     }
 
     /// Recompute cumulative segmentCellCounts from `segments`
     func rebuildCellCounts(from index: Int = 0) {
         let firstSeg = indexOfSegment(for: index)
-        rebuildCellCounts(fromSegmentIndex: firstSeg)
-    }
-
-    func rebuildCellCounts(fromSegmentIndex firstSegmentIndex: Int) {
-        if firstSegmentIndex == 0 {
-            guts.deletedHeadCellCount = 0
-            var cum = guts.deletedHeadCellCount
-            for i in 0..<guts.segments.count {
-                cum += guts.segments[i].string.cellCount
-                guts.segments[i].cumulativeCellCount = cum
-            }
-        } else {
-            var cum = guts.segments[firstSegmentIndex - 1].cumulativeCellCount
-            for i in firstSegmentIndex..<guts.segments.count {
-                cum += guts.segments[i].string.cellCount
-                guts.segments[i].cumulativeCellCount = cum
-            }
-        }
+        guts.rebuildCellCounts(fromSegmentIndex: firstSeg)
     }
 }

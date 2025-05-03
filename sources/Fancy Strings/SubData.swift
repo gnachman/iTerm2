@@ -9,6 +9,7 @@
 struct SubData {
     private var _data: Data
     private(set) var range: Range<Int>
+    var count: Int { range.count }
     var data: Data {
         Data(_data[range])
     }

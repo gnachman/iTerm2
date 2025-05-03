@@ -9,19 +9,22 @@
 class iTermNonASCIIString: iTermBaseString, iTermString {
     private let codes: SubArray<UInt16>
     private let complex: IndexSet
-    let styles: StyleMap
+    let style: screen_char_t
+    let ea: iTermExternalAttribute?
     private var stringCache = SubStringCache()
 
-    init(codes: [UInt16], complex: IndexSet, styles: StyleMap) {
+    init(codes: [UInt16], complex: IndexSet, style: screen_char_t, ea: iTermExternalAttribute?) {
         self.codes = SubArray(codes)
         self.complex = complex
-        self.styles = styles
+        self.style = style
+        self.ea = ea
     }
 
-    init(codes: SubArray<UInt16>, complex: IndexSet, styles: StyleMap) {
+    init(codes: SubArray<UInt16>, complex: IndexSet, style: screen_char_t, ea: iTermExternalAttribute?) {
         self.codes = codes
         self.complex = complex
-        self.styles = styles
+        self.style = style
+        self.ea = ea
     }
 
     override var description: String {
@@ -47,28 +50,24 @@ class iTermNonASCIIString: iTermBaseString, iTermString {
     func hydrate(into msca: MutableScreenCharArray,
                  destinationIndex: Int,
                  sourceRange: NSRange) {
-        var o = destinationIndex
-        var i = sourceRange.location
         let buffer = msca.mutableLine
-        for run in styles.runIterator(in: Range(sourceRange)!) {
-            var sc = run.payload.sct
-            let count = run.count
-            if let ea = run.payload.externalAttributes {
-                let eaIndex = msca.eaIndexCreatingIfNeeded()
-                eaIndex.setAttributes(ea,
-                                      at: Int32(o),
-                                      count: Int32(count))
-            } else if let eaIndex = msca.eaIndex {
-                eaIndex.erase(in: VT100GridRange(location: Int32(o),
-                                                 length: Int32(count)))
-            }
-            for j in 0..<count {
-                sc.code = codes[i + j]
-                sc.complexChar = complex.contains(i + j) ? 1 : 0
-                buffer[o + j] = sc
-            }
-            o += count
-            i += count
+
+        var sc = style
+        let count = cellCount
+        if let ea {
+            let eaIndex = msca.eaIndexCreatingIfNeeded()
+            eaIndex.setAttributes(ea,
+                                  at: Int32(destinationIndex),
+                                  count: Int32(count))
+        } else if let eaIndex = msca.eaIndex {
+            eaIndex.erase(in: VT100GridRange(location: Int32(destinationIndex),
+                                             length: Int32(count)))
+        }
+        let i = sourceRange.location
+        for j in 0..<count {
+            sc.code = codes[i + j]
+            sc.complexChar = complex.contains(i + j) ? 1 : 0
+            buffer[destinationIndex + j] = sc
         }
     }
 
@@ -117,8 +116,7 @@ class iTermNonASCIIString: iTermBaseString, iTermString {
     }
 
     func externalAttribute(at index: Int) -> iTermExternalAttribute? {
-        let u = styles.get(index: index)
-        return u.externalAttributes
+        return ea
     }
 
     func isEqual(to string: any iTermString) -> Bool {
@@ -139,22 +137,37 @@ class iTermNonASCIIString: iTermBaseString, iTermString {
         if let nas = rhs as? iTermNonASCIIString {
             return (codes[lhsRange] == nas.codes[rhsRange] &&
                     complex[lhsRange] == nas.complex[rhsRange] &&
-                    styles[lhsRange] == nas.styles[rhsRange])
+                    style == nas.style &&
+                    iTermExternalAttribute.externalAttribute(ea, isEqualTo: nas.ea))
         }
         return substring(range: lhsNSRange).screenCharArray.isEqual(to: rhs.substring(range: NSRange(rhsRange)).screenCharArray)
     }
 
     func stringBySettingRTL(in nsrange: NSRange,
                             rtlIndexes: IndexSet?) -> iTermString {
-        let modifiedStyles = styles.subrangeBySettingRTL(
-            in: nsrange, rtlIndexes: rtlIndexes)
-        guard let modifiedStyles else {
+        if rtlIndexes == nil && style.rtlStatus == .unknown {
             return self
         }
-        let range = Range(nsrange)!
-        return iTermNonASCIIString(codes: codes[range],
-                                   complex: complex[range],
-                                   styles: modifiedStyles)
+        if let rtlIndexes, rtlIndexes.isEmpty && style.rtlStatus == .LTR {
+            return self
+        }
+        var substrings = [iTermNonASCIIString]()
+        if let rtlIndexes {
+            for (range, rtl) in rtlIndexes.membership(in: Range(nsrange)!) {
+                var style = self.style
+                style.rtlStatus = rtl ? .RTL : .LTR
+#warning("TODO: Test this")
+                substrings.append(iTermNonASCIIString(codes: codes[range],
+                                                      complex: complex[range].shifted(by: -range.lowerBound),
+                                                      style: style,
+                                                      ea: ea))
+            }
+            return iTermRope(substrings)
+        } else {
+            var style = self.style
+            style.rtlStatus = .unknown
+            return iTermNonASCIIString(codes: codes, complex: complex, style: style, ea: ea)
+        }
     }
 
     func doubleWidthIndexes(range nsrange: NSRange,
@@ -176,7 +189,9 @@ class iTermNonASCIIString: iTermBaseString, iTermString {
         true
     }
     func hasExternalAttributes(range: NSRange) -> Bool {
-        // TODO: Remove style map and then this can be more accurate
-        true
+        if let ea {
+            return !ea.isDefault
+        }
+        return false
     }
 }

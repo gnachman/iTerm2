@@ -523,6 +523,16 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
                                     controlCode:cc >= 0 && cc < 256 ? @(cc) : nil];
 }
 
++ (BOOL)externalAttribute:(iTermExternalAttribute *)lhs isEqualToExternalAttribute:(iTermExternalAttribute *)rhs {
+    if (lhs && rhs) {
+        return [lhs isEqualToExternalAttribute:rhs];
+    }
+    if (lhs && lhs.isDefault) {
+        return YES;
+    }
+    return rhs.isDefault;
+}
+
 - (instancetype)init {
     return [super init];
 }

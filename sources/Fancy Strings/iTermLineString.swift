@@ -465,4 +465,15 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
         }
         return ScreenCharIsDWC_RIGHT(_content.character(at: Int(i)))
     }
+
+    @objc(substringWithRange:)
+    func substringWithRange(_ range: NSRange) -> iTermLineStringReading {
+        return iTermLineString(content: iTermSubString(base: content,
+                                                       range: range),
+                               eol: eol,
+                               continuation: continuation,
+                               metadata: metadata,
+                               bidi: bidi,
+                               dirty: dirty)
+    }
 }

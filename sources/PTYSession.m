@@ -14847,6 +14847,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         const VT100GridRange lineRange = [_screen lineNumberRangeOfInterval:maybeMark.entry.interval];
         const int line = lineRange.location;
         const VT100GridCoordRange outputRange = [_screen rangeOfOutputForCommandMark:maybeMark];
+#warning TODO: It is rather wasteful to make a snapshot here. Only do it if someone wants it.
         NSDictionary *userInfo = @{
             PTYCommandDidExitUserInfoKeyCommand: maybeMark.command ?: (id)[NSNull null],
             PTYCommandDidExitUserInfoKeyExitCode: @(maybeMark.code),

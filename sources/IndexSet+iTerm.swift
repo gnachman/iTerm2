@@ -28,6 +28,12 @@ extension IndexSet {
     var enumeratedDescription: String {
         map { String($0) }.joined(separator: ", ")
     }
+
+    func shifted(by shift: Int) -> IndexSet {
+        var temp = self
+        temp.shift(startingAt: 0, by: shift)
+        return temp
+    }
 }
 
 extension IndexSet {

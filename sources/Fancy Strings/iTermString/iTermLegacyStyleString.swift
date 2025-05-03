@@ -26,6 +26,12 @@ class iTermLegacyStyleString: iTermBaseString, iTermString {
         self.eaIndex = eaIndex
     }
 
+    init(_ sca: ScreenCharArray) {
+        let buffer = UnsafeBufferPointer(start: sca.line, count: Int(sca.length))
+        line = Array(buffer)
+        eaIndex = sca.eaIndex
+    }
+
     var cellCount: Int { line.count }
 
     override var description: String {

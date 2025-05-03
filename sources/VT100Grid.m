@@ -2844,13 +2844,19 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     iTermMutableLineString *mls = [self mutableLineStringAtLineNumber:0];
     int len = [self lengthOfLine:mls];
     int continuationMark = mls.eol;
+    id<iTermLineStringReading> lineToAppend;
     if (continuationMark == EOL_DWC && len == size_.width) {
 #warning TODO: Test this code path
         mls = [mls mutableClone];
         [mls.mutableContent deleteFromEnd:1];
+        lineToAppend = mls;
+    } else if (len == mls.content.cellCount) {
+        lineToAppend = mls;
+    } else {
+        lineToAppend = [mls substringWithRange:NSMakeRange(0, len)];
     }
     // TODO: If the continuation mark is EOL_DWC remove the last chracter
-    [lineBuffer appendLineString:mls width:size_.width];
+    [lineBuffer appendLineString:lineToAppend width:size_.width];
     int dropped;
     if (!unlimitedScrollback) {
         dropped = [lineBuffer dropExcessLinesWithWidth:size_.width];

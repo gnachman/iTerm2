@@ -43,6 +43,8 @@ typedef struct {
                                                         controlCode:(NSNumber * _Nullable)code;
 
 + (instancetype _Nullable)fromData:(NSData *)data;
++ (BOOL)externalAttribute:(iTermExternalAttribute * _Nullable)lhs
+isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
 - (instancetype)init;
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
                                    url:(iTermURL * _Nullable)url

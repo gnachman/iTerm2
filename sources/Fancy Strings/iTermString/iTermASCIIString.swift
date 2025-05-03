@@ -7,32 +7,33 @@
 
 class iTermASCIIString: iTermBaseString, iTermString {
     private let data: SubData
-    private let styles: StyleMap
+    private let style: screen_char_t
+    private let ea: iTermExternalAttribute?
+    private let count: Int
     private var stringCache = SubStringCache()
 
     @objc
     init(data: Data, style: screen_char_t, ea: iTermExternalAttribute?) {
         self.data = SubData(data: data, range: 0..<data.count)
-        var styleMap = StyleMap()
-        let ucs = UnifiedCharacterStyle(sct: style,
-                                        underlineColor: (ea?.hasUnderlineColor ?? false) ? ea?.underlineColor : nil,
-                                        blockIDs: ea?.blockIDList,
-                                        controlCode: ea?.controlCodeNumber?.int32Value,
-                                        url: ea?.url)
-        styleMap.append(count: data.count, payload: ucs)
-        self.styles = styleMap
+        self.count = data.count
+        self.style = style
+        self.ea = ea
     }
 
-    init(data: SubData, styles: StyleMap) {
-        self.data = data
-        self.styles = styles
+    init(subdata: SubData, style: screen_char_t, ea: iTermExternalAttribute?) {
+        self.data = subdata
+        self.count = data.count
+        self.style = style
+        self.ea = ea
     }
 
     override var description: String {
         return "<iTermASCIIString: cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d)>"
     }
 
-    var cellCount: Int { data.range.count }
+    var cellCount: Int {
+        count
+    }
 
     func deltaString(range: NSRange) -> DeltaString {
         return stringCache.string(for: range) {
@@ -54,22 +55,18 @@ class iTermASCIIString: iTermBaseString, iTermString {
         var o = destinationIndex
         var i = sourceRange.location
         let buffer = msca.mutableLine
-        let iter = styles.runIterator(in: Range(sourceRange)!)
-        var tuple = iter.next()
-        while let (payload, count) = tuple {
-            if let ea = payload.externalAttributes {
-                let eaIndex = msca.eaIndexCreatingIfNeeded()
-                eaIndex.setAttributes(ea, at: Int32(o), count: Int32(count))
-            }
-            for _ in 0..<count {
-                var sc = payload.sct
-                sc.complexChar = 0
-                sc.code = UInt16(data[i])
-                buffer[o] = sc
-                o += 1
-                i += 1
-            }
-            tuple = iter.next()
+        let count = sourceRange.length
+        if let ea {
+            let eaIndex = msca.eaIndexCreatingIfNeeded()
+            eaIndex.setAttributes(ea, at: Int32(o), count: Int32(count))
+        }
+        for _ in 0..<count {
+            var sc = style
+            sc.complexChar = 0
+            sc.code = UInt16(data[i])
+            buffer[o] = sc
+            o += 1
+            i += 1
         }
     }
 
@@ -111,8 +108,7 @@ class iTermASCIIString: iTermBaseString, iTermString {
     }
 
     func externalAttribute(at index: Int) -> iTermExternalAttribute? {
-        let u = styles.get(index: index)
-        return u.externalAttributes
+        return ea
     }
 
     func isEqual(to string: any iTermString) -> Bool {
@@ -131,7 +127,9 @@ class iTermASCIIString: iTermBaseString, iTermString {
         let lhsRange = Range(lhsNSRange)!
         let rhsRange = startIndex..<(startIndex + lhsNSRange.length)
         if let ascii = rhs as? iTermASCIIString {
-            return data[lhsRange] == ascii.data[rhsRange] && styles[lhsRange] == ascii.styles[rhsRange]
+            return (data[lhsRange] == ascii.data[rhsRange] &&
+                    style == ascii.style &&
+                    iTermExternalAttribute.externalAttribute(ea, isEqualTo: ascii.ea))
         }
         return substring(range: lhsNSRange).screenCharArray.isEqual(to: rhs.substring(range: NSRange(rhsRange)).screenCharArray)
     }
@@ -143,14 +141,27 @@ class iTermASCIIString: iTermBaseString, iTermString {
 
     func stringBySettingRTL(in nsrange: NSRange,
                             rtlIndexes: IndexSet?) -> iTermString {
-        let modifiedStyles = styles.subrangeBySettingRTL(
-            in: nsrange, rtlIndexes: rtlIndexes)
-        guard let modifiedStyles else {
+        if rtlIndexes == nil && style.rtlStatus == .unknown {
             return self
         }
-        return iTermASCIIString(data: data[Range(nsrange)!],
-                                styles: modifiedStyles)
+        if let rtlIndexes, rtlIndexes.isEmpty && style.rtlStatus == .LTR {
+            return self
+        }
+        var substrings = [iTermASCIIString]()
+        if let rtlIndexes {
+            for (range, rtl) in rtlIndexes.membership(in: Range(nsrange)!) {
+                var style = self.style
+                style.rtlStatus = rtl ? .RTL : .LTR
+                substrings.append(iTermASCIIString(subdata: data[range], style: style, ea: ea))
+            }
+            return iTermRope(substrings)
+        } else {
+            var style = self.style
+            style.rtlStatus = .unknown
+            return iTermASCIIString(subdata: data, style: style, ea: ea)
+        }
     }
+
     var mayContainDoubleWidthCharacter: Bool {
         false
     }
@@ -158,8 +169,7 @@ class iTermASCIIString: iTermBaseString, iTermString {
         false
     }
     func hasExternalAttributes(range: NSRange) -> Bool {
-        // TODO: I need to ge rid of stylemap and store a single iTermExternalAttributes here and then this can be more accurate
-        true
+        return ea != nil
     }
 }
 
