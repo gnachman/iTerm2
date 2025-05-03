@@ -94,34 +94,34 @@ class DeltaStringBuilder: NSObject {
             let code = codes[i]
             let isComplexChar = complex.contains(i)
 
+            runningΔ += 1
+
             // private‑use handling
             if !isComplexChar
-                && (UInt16(ITERM2_PRIVATE_BEGIN)...UInt16(ITERM2_PRIVATE_END)).contains(code)
-            {
-                runningΔ += 1
-                deltaPtr![deltaIdx + offset] = CInt(runningΔ)
+                && (UInt16(ITERM2_PRIVATE_BEGIN)...UInt16(ITERM2_PRIVATE_END)).contains(code) {
                 continue
             }
 
             if let partNS = ComplexCharRegistry.instance.string(for: code, isComplex: isComplexChar) {
                 let part = partNS as String
                 let utf16Len = part.utf16.count
-                runningΔ += 1
-                runningΔ -= utf16Len
-                deltaPtr![deltaIdx + offset] = CInt(runningΔ)
+                let len = part.utf16.count
+
                 for cu in part.utf16 {
+                    runningΔ -= 1
+                    deltaPtr![deltaIdx] = CInt(runningΔ)
+                    deltaIdx += 1
+
                     uniPtr![uniIdx] = cu
                     uniIdx += 1
                 }
             } else {
-                runningΔ += 1
-                deltaPtr![deltaIdx + offset] = CInt(runningΔ)
+                deltaPtr![deltaIdx] = CInt(runningΔ)
+                deltaIdx += 1
                 uniPtr![uniIdx] = unichar(code)
                 uniIdx += 1
             }
         }
-
-        deltaIdx += count
     }
 
     func append(char: screen_char_t, repeated count: Int) {

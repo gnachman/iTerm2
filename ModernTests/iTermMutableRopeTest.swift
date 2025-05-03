@@ -374,14 +374,11 @@ final class iTermMutableRopeTests: XCTestCase {
         let D: UInt16 = UInt16(Character("D").utf16.first!)
         let E: UInt16 = UInt16(Character("E").utf16.first!)
         let codes = [D, E]
-        var sm = SegmentMap<UnifiedCharacterStyle>()
-        let ucs = UnifiedCharacterStyle(sct: style)
-        sm.append(count: codes.count, payload: ucs)
         let nonAscii = iTermNonASCIIString(
             codes: codes,
             complex: [],
-            styles: sm
-        )
+            style: style,
+            ea: nil)
 
         let rope = iTermMutableRope()
         rope.append(string: ascii)

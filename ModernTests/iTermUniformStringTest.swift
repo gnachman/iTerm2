@@ -196,7 +196,6 @@ final class iTermUniformStringTest: XCTestCase {
         let mixed = IndexSet([0,2,4])
 
         let result = uni.stringBySettingRTL(in: full, rtlIndexes: mixed)
-        XCTAssertTrue(type(of: result) == iTermNonASCIIString.self)
 
         // check that the resulting non-ASCII string has correct rtl statuses
         for i in 0..<result.cellCount {

@@ -34,19 +34,12 @@ final class iTermNonASCIIStringTest: XCTestCase {
         let B: UInt16 = 66
         let codes: [UInt16] = [A, han, ph, B]
         let complex = IndexSet()
-        // styleMap: all same base style
-        var baseStyleMap = SegmentMap<UnifiedCharacterStyle>()
-        let baseStyle = UnifiedCharacterStyle(sct: makeBaseStyle(),
-                                              underlineColor: nil,
-                                              blockIDs: nil,
-                                              controlCode: nil,
-                                              url: nil)
-        baseStyleMap.append(count: codes.count, payload: baseStyle)
 
         let nonAscii = iTermNonASCIIString(codes: codes,
                                            complex: complex,
-                                           styles: baseStyleMap)
-
+                                           style: makeBaseStyle(),
+                                           ea: nil)
+        print(nonAscii.deltaString(range: nonAscii.fullRange))
         XCTAssertEqual(nonAscii.cellCount, codes.count)
         // stringValue should compress placeholder to actual char
         XCTAssertEqual(nonAscii.screenCharArray.stringValue, "A漢B")
@@ -61,15 +54,7 @@ final class iTermNonASCIIStringTest: XCTestCase {
         let ph: UInt16 = UInt16(DWC_RIGHT)
         let B: UInt16 = 66
         let codes: [UInt16] = [A, han, ph, B]
-        let styles = SegmentMap<UnifiedCharacterStyle>()
-        var sm = styles
-        let style = UnifiedCharacterStyle(sct: makeBaseStyle(),
-                                          underlineColor: nil,
-                                          blockIDs: nil,
-                                          controlCode: nil,
-                                          url: nil)
-        sm.append(count: codes.count, payload: style)
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: sm)
+        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: nil)
         let full = NSRange(location: 0, length: s.cellCount)
         // placeholder is at index 2 => wide char marker
         let dw = s.doubleWidthIndexes(range: full, rebaseTo: 0)
@@ -82,14 +67,7 @@ final class iTermNonASCIIStringTest: XCTestCase {
 
     func testHydrateIntoMutable_andHasEqual() {
         let codes: [UInt16] = [65, 66, 67]
-        let style = UnifiedCharacterStyle(sct: makeBaseStyle(),
-                                          underlineColor: nil,
-                                          blockIDs: nil,
-                                          controlCode: nil,
-                                          url: nil)
-        var sm = SegmentMap<UnifiedCharacterStyle>()
-        sm.append(count: codes.count, payload: style)
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: sm)
+        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: nil)
 
         let msca = MutableScreenCharArray.emptyLine(ofLength: 5)
         // fill some existing data
@@ -100,7 +78,7 @@ final class iTermNonASCIIStringTest: XCTestCase {
         XCTAssertEqual(sub.stringValue, "ABC")
 
         // hasEqual: compare range in s
-        var buf = [screen_char_t](repeating: style.sct, count: 3)
+        var buf = [screen_char_t](repeating: makeBaseStyle(), count: 3)
         for i in 0..<3 { buf[i].code = codes[i] }
         let eq = buf.withUnsafeBufferPointer { ptr in
             s.hasEqual(range: NSRange(location: 0, length: 3), to: ptr.baseAddress!)
@@ -124,35 +102,14 @@ final class iTermNonASCIIStringTest: XCTestCase {
                 complexSet.insert(i)
             }
         }
-        var sm2 = SegmentMap<UnifiedCharacterStyle>()
-        let uStyle = UnifiedCharacterStyle(sct: baseStyle,
-                                           underlineColor: nil,
-                                           blockIDs: nil,
-                                           controlCode: nil,
-                                           url: nil)
-        sm2.append(count: count, payload: uStyle)
-
-        let s = iTermNonASCIIString(codes: codes, complex: complexSet, styles: sm2)
+        let s = iTermNonASCIIString(codes: codes, complex: complexSet, style: makeBaseStyle(), ea: nil)
         let actual = s.hydrate(range: s.fullRange)
         XCTAssertEqual(actual, msca)
     }
 
     func testSubstring_andIsEqualRanges() {
         let codes: [UInt16] = [65, 66, 67, 68]
-        var sm = SegmentMap<UnifiedCharacterStyle>()
-        let style1 = UnifiedCharacterStyle(sct: makeBaseStyle(),
-                                           underlineColor: nil,
-                                           blockIDs: nil,
-                                           controlCode: nil,
-                                           url: nil)
-        let style2 = UnifiedCharacterStyle(sct: makeBaseStyle(),
-                                           underlineColor: nil,
-                                           blockIDs: nil,
-                                           controlCode: nil,
-                                           url: iTermURL(url: URL(string: "https://x")!, identifier: nil))
-        sm.append(count: 2, payload: style1)
-        sm.append(count: 2, payload: style2)
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: sm)
+        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: nil)
 
         // substring [1..2]
         let sub = s.substring(range: NSRange(location: 1, length: 2))
@@ -166,15 +123,7 @@ final class iTermNonASCIIStringTest: XCTestCase {
 
     func testClone_mutableClone_andMutation() {
         let codes: [UInt16] = [65, 66]
-        let sm = SegmentMap<UnifiedCharacterStyle>()
-        let style = UnifiedCharacterStyle(sct: makeBaseStyle(),
-                                          underlineColor: nil,
-                                          blockIDs: nil,
-                                          controlCode: nil,
-                                          url: nil)
-        var styles = sm
-        styles.append(count: 2, payload: style)
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: styles)
+        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: nil)
 
         let cloned = s.clone()
         XCTAssertTrue(cloned.isEqual(to: s))
@@ -189,15 +138,7 @@ final class iTermNonASCIIStringTest: XCTestCase {
     func testDeltaString_andBuildString_andRTL() {
         // simple ascii run
         let codes: [UInt16] = [65, 66, 67]
-        let sm = SegmentMap<UnifiedCharacterStyle>()
-        let style = UnifiedCharacterStyle(sct: makeBaseStyle(),
-                                          underlineColor: nil,
-                                          blockIDs: nil,
-                                          controlCode: nil,
-                                          url: nil)
-        var styles = sm
-        styles.append(count: 3, payload: style)
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: styles)
+        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: nil)
 
         let full = NSRange(location: 0, length: 3)
         let delta = s.deltaString(range: full)
@@ -224,28 +165,15 @@ final class iTermNonASCIIStringTest: XCTestCase {
 
     func testExternalAttributesIndex_distribution() {
         let codes: [UInt16] = [65, 66, 67, 68]
-        var sm = SegmentMap<UnifiedCharacterStyle>()
         let underlineColor = VT100TerminalColorValue(red: 1, green: 1, blue: 1, mode: ColorModeNormal)
-        let style1 = UnifiedCharacterStyle(sct: makeBaseStyle(),
-                                           underlineColor: nil,
-                                           blockIDs: nil,
-                                           controlCode: nil,
-                                           url: nil)
-        let style2 = UnifiedCharacterStyle(sct: makeBaseStyle(),
-                                           underlineColor: underlineColor,
-                                           blockIDs: nil,
-                                           controlCode: nil,
-                                           url: nil)
-        sm.append(count: 2, payload: style1)
-        sm.append(count: 2, payload: style2)
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: sm)
+        let ea = iTermExternalAttribute(underlineColor: underlineColor, url: nil, blockIDList: nil, controlCode: nil)
+        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: ea)
         guard let idx = s.externalAttributesIndex() else {
             return XCTFail("Expected attributes index")
         }
         for i in 0..<4 {
             let attr = idx.attributes[NSNumber(value:i)]
-            let expected = (i<2 ? style1.externalAttributes : style2.externalAttributes)
-            XCTAssertEqual(attr, expected)
+            XCTAssertEqual(attr, ea)
         }
     }
 
@@ -254,70 +182,50 @@ final class iTermNonASCIIStringTest: XCTestCase {
         let codes: [UInt16] = [A, A]
         // give an extended URL attr at index 1
         let url = iTermURL(url: URL(string: "https://x")!, identifier: nil)
-        var sm = SegmentMap<UnifiedCharacterStyle>()
-        let style1 = UnifiedCharacterStyle(sct: makeStyle(), underlineColor: nil, blockIDs: nil, controlCode: nil, url: url)
-        sm.append(count: 2, payload: style1)
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: sm)
+        let ea = iTermExternalAttribute(havingUnderlineColor: false,
+                                        underlineColor: VT100TerminalColorValue(),
+                                        url: url,
+                                        blockIDList: nil,
+                                        controlCode: nil)
+        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: ea)
 
         let md = MutableScreenCharArray.emptyLine(ofLength: 4)
         s.hydrate(into: md, destinationIndex: 1, sourceRange: NSRange(location: 0, length: 2))
-        let ea = md.eaIndexCreatingIfNeeded()
-        XCTAssertEqual(ea.attribute(at: 1), style1.externalAttributes)
-        XCTAssertEqual(ea.attribute(at: 2), style1.externalAttributes)
+        let eaIndex = md.eaIndexCreatingIfNeeded()
+        XCTAssertEqual(eaIndex.attribute(at: 1), ea)
+        XCTAssertEqual(eaIndex.attribute(at: 2), ea)
     }
 
     func testHydrateIntoCopiesExtendedAttributes_destHasIndexButSourceDoesNot() {
         let A: UInt16 = 65
         let codes: [UInt16] = [A, A]
-        // give an extended URL attr at index 1
-        let url = iTermURL(url: URL(string: "https://x")!, identifier: nil)
-        var sm = SegmentMap<UnifiedCharacterStyle>()
-        let style1 = UnifiedCharacterStyle(sct: makeStyle(), underlineColor: nil, blockIDs: nil, controlCode: nil, url: nil)
-        sm.append(count: 2, payload: style1)
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: sm)
+        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: nil)
 
-        let md = MutableScreenCharArray.emptyLine(ofLength: 4)
+        let msca = MutableScreenCharArray.emptyLine(ofLength: 4)
         let eaIndex = iTermExternalAttributeIndex()
         let ea2 = iTermExternalAttribute(havingUnderlineColor: true,
                                          underlineColor: VT100TerminalColorValue(red:2,green:2,blue:2,mode:ColorModeNormal),
                                          url: nil, blockIDList: nil, controlCode: nil)
         eaIndex.setAttributes(ea2, at: 0, count: 2)
-        md.setExternalAttributesIndex(eaIndex)
-        s.hydrate(into: md, destinationIndex: 1, sourceRange: NSRange(location: 0, length: 2))
-        let ea = md.eaIndexCreatingIfNeeded()
-        XCTAssertEqual(ea.attribute(at: 1), style1.externalAttributes)
-        XCTAssertEqual(ea.attribute(at: 2), style1.externalAttributes)
+        msca.setExternalAttributesIndex(eaIndex)
+        s.hydrate(into: msca, destinationIndex: 1, sourceRange: NSRange(location: 0, length: 2))
+        let ea = msca.eaIndexCreatingIfNeeded()
+        XCTAssertEqual(ea.attribute(at: 1), nil)
+        XCTAssertEqual(ea.attribute(at: 2), nil)
     }
 
     func testUsedLengthCountsNonZero() {
         // codes include a zero
         let codes: [UInt16] = [65, 67, 0]
-        var sm = SegmentMap<UnifiedCharacterStyle>()
-        let style = UnifiedCharacterStyle(sct: makeStyle(), underlineColor: nil, blockIDs: nil, controlCode: nil, url: nil)
-        sm.append(count: 3, payload: style)
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: sm)
+        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: nil)
 
         let full = NSRange(location: 0, length: 3)
         XCTAssertEqual(s.usedLength(range: full), 2)
     }
 
-    func testExternalAttributeAtSparse() {
-        let codes: [UInt16] = [65, 66, 67]
-        var sm = SegmentMap<UnifiedCharacterStyle>()
-        let style1 = UnifiedCharacterStyle(sct: makeStyle(), underlineColor: nil, blockIDs: nil, controlCode: nil, url: nil)
-        let style2 = UnifiedCharacterStyle(sct: makeStyle(), underlineColor: nil, blockIDs: nil, controlCode: nil, url: iTermURL(url: URL(string: "https://x")!, identifier: nil))
-        sm.append(count: 1, payload: style1)
-        sm.append(count: 2, payload: style2)
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: sm)
-
-        XCTAssertNil(s.externalAttribute(at: 0))
-        XCTAssertEqual(s.externalAttribute(at: 1), style2.externalAttributes)
-    }
-
     func testIsEqualOutOfBoundsRangeReturnsFalse() {
         let codes: [UInt16] = [65,66]
-        var sm = SegmentMap<UnifiedCharacterStyle>(); sm.append(count: 2, payload: UnifiedCharacterStyle(sct: makeStyle(), underlineColor: nil, blockIDs: nil, controlCode: nil, url: nil))
-        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), styles: sm)
+        let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: nil)
         let rhs = s.clone()
         XCTAssertFalse(s.isEqual(lhsRange: NSRange(location: 10, length: 1),
                                  toString: rhs,
@@ -327,7 +235,8 @@ final class iTermNonASCIIStringTest: XCTestCase {
     func testDoubleWidthIndexes_true() {
         let string = iTermNonASCIIString(codes: Array(repeating: UInt16(DWC_RIGHT), count: 10),
                                          complex: IndexSet(),
-                                         styles: StyleMap())
+                                         style: makeBaseStyle(),
+                                         ea: nil)
         let actual = string.doubleWidthIndexes(range: NSRange(location: 5, length: 2), rebaseTo: 3)
         let expected = IndexSet([3, 4])
         XCTAssertEqual(actual, expected)

@@ -114,9 +114,6 @@ class iTermRope: iTermBaseString {
         }
 
         func set(segment: Segment, at i: Int) {
-            if i == 0 {
-                it_assert(deletedHeadCellCount == 0)
-            }
             segments[i] = segment
             stringCache.invalidate(range: cellRangeForSegment(from: i))
             mayHaveExternalAttributes = mayHaveExternalAttributes || segments[i].mayHaveExternalAttributes
@@ -263,10 +260,11 @@ extension iTermRope: iTermString {
                 }
                 let unusedInSegment = segmentCount - segmentUsed
                 if unusedInSegment > 0 {
+                    // Whole segment is empty. Keep looking
                     used -= unusedInSegment
-                    if unusedInSegment < segmentCount {
-                        break
-                    }
+                }
+                if unusedInSegment < segmentCount {
+                    break
                 }
             }
             return Int32(used)
