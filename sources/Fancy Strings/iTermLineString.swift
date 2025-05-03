@@ -115,11 +115,11 @@ class iTermLineString: NSObject, iTermLineStringReading {
     }
 
     var timestamp: TimeInterval {
-        externalImmutableMetadata.timestamp
+        metadata.timestamp
     }
 
     var rtlFound: Bool {
-        externalImmutableMetadata.rtlFound.boolValue
+        metadata.rtlFound.boolValue
     }
 
     var immutableEAIndex: iTermExternalAttributeIndexReading? {
