@@ -236,7 +236,8 @@ final class iTermSubStringTests: XCTestCase {
         let dwc = UInt16(DWC_RIGHT)
         let base = iTermNonASCIIString(codes: [empty, empty] + Array(repeating: dwc, count: 10) + [empty, empty],
                                        complex: IndexSet(),
-                                       styles: StyleMap())
+                                       style: screen_char_t(),
+                                       ea: nil)
         let string = base.substring(range: NSRange(location: 2, length: 10))
         let actual = string.doubleWidthIndexes(range: NSRange(location: 5, length: 2), rebaseTo: 3)
         let expected = IndexSet([3, 4])

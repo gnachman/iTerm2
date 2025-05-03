@@ -348,6 +348,19 @@ final class iTermRopeTests: XCTestCase {
         XCTAssertEqual(rope.usedLength(range: full), Int32(6))
     }
 
+    func testUsedLengthMultipleSegmentsTraversedWithTrailingNull() {
+        let seg0 = makeASCII("AB")           // length 2, all used
+        let zeroSeg = makeUniform(letter: 0, length: 3) // length 3, all zeros
+        var c = screen_char_t()
+        c.code = UInt16("C".utf16.first!)     // 'C'
+        c.foregroundColorMode = 1
+        let seg2 = iTermUniformString(char: c, length: 1) // length 1, used
+        let seg3 = iTermNonASCIIString(codes: [65, 0], complex: IndexSet(), style: screen_char_t(), ea: nil)
+        let rope = iTermRope([seg0, zeroSeg, seg2, seg3])
+        let full = NSRange(location: 0, length: rope.cellCount)
+        XCTAssertEqual(rope.usedLength(range: full), Int32(7))
+    }
+
     func testUsedLengthTrailingSegmentExcluded() {
         let seg0 = makeASCII("AB")   // used=2
         let zeroSeg = makeUniform(letter: 0, length: 3) // zeros

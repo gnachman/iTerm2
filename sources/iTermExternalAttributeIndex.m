@@ -524,6 +524,9 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 }
 
 + (BOOL)externalAttribute:(iTermExternalAttribute *)lhs isEqualToExternalAttribute:(iTermExternalAttribute *)rhs {
+    if (lhs == rhs) {
+        return YES;
+    }
     if (lhs && rhs) {
         return [lhs isEqualToExternalAttribute:rhs];
     }

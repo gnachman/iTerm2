@@ -64,7 +64,7 @@ class iTermNonASCIIString: iTermBaseString, iTermString {
                                              length: Int32(count)))
         }
         let i = sourceRange.location
-        for j in 0..<count {
+        for j in 0..<sourceRange.length {
             sc.code = codes[i + j]
             sc.complexChar = complex.contains(i + j) ? 1 : 0
             buffer[destinationIndex + j] = sc
