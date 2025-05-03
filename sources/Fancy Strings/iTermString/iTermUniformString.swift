@@ -125,20 +125,14 @@ class iTermUniformString: iTermBaseString, iTermString {
                     temp.rtlStatus = .RTL
                     return iTermUniformString(char: temp, length: nsrange.length)
                 } else {
-                    // Sadly this is a mix :(
-                    // I honestly don't know how this could happen in real life.
-                    let complexRange = char.complexChar != 0 ? 0..<length : 0..<0
-                    var styleMap = StyleMap()
+                    let msca = self.screenCharArray.mutableReplacement()
+                    let line = msca.mutableLine
                     for (range, isMember) in rtlIndexes.membership(in: Range(nsrange)!) {
-                        var c = char
-                        c.rtlStatus = isMember ? .RTL : .LTR
-                        let ucs = UnifiedCharacterStyle(sct: c)
-                        styleMap.append(count: range.count, payload: ucs)
+                        for i in range {
+                            line[i].rtlStatus = isMember ? .RTL : .LTR
+                        }
                     }
-                    return iTermNonASCIIString(
-                        codes: Array(repeating: char.code, count: length),
-                        complex: IndexSet(integersIn: complexRange),
-                        styles: styleMap)
+                    return iTermLegacyStyleString(msca)
                 }
             } else {
                 // The index set is empty so it is uniformly left-to-right

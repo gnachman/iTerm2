@@ -135,6 +135,48 @@ final class iTermRopeTests: XCTestCase {
         XCTAssertEqual(rope.usedLength(range: NSRange(location: 3, length: 2)), 0)
     }
 
+    private func legacy(string: String) -> iTermLegacyStyleString {
+        var buffer = Array<screen_char_t>(repeating: screen_char_t(), count: string.utf16.count * 3)
+        return buffer.withUnsafeMutableBufferPointer { umbp in
+            var len = Int32(umbp.count)
+            StringToScreenChars(string, umbp.baseAddress!, screen_char_t(), screen_char_t(), &len, false, nil, nil, iTermUnicodeNormalization.none, 9, false, nil)
+            return iTermLegacyStyleString(chars: umbp.baseAddress!, count: Int(len), eaIndex: nil)
+        }
+    }
+
+    func testUsedLengthSubrange() {
+        let segments = [
+            legacy(string: "Mac:/Users/gnachman% cat git/iterm2-alt2/tests/arabic"),
+            legacy(string: "لرحيم ألم تر كيف فعل ربك بأصحاب الفيل ألم"),
+            legacy(string: ""),
+            legacy(string: "beginning لرحيم ألم تر كيف فعل ربك بأصحاب الفيل ألم end"),
+            legacy(string: ""),
+            legacy(string: "ألملرحيم english at the end"),
+            legacy(string: ""),
+            legacy(string: "english at the beginning ألملرحيم"),
+            legacy(string: ""),
+            legacy(string: "english before ألملرحيم and after"),
+            legacy(string: ""),
+            legacy(string: "ألملرحيم english in the middle ألملرحيم"),
+            legacy(string: ""),
+            legacy(string: "URL:"),
+            legacy(string: "ألملرحيم"),
+            legacy(string: ""),
+            legacy(string: ""),
+            legacy(string: ""),
+            legacy(string: ""),
+            legacy(string: ""),
+            legacy(string: ""),
+            legacy(string: ""),
+            legacy(string: ""),
+            legacy(string: ""),
+            legacy(string: ""),
+        ]
+        let rope = iTermRope(segments)
+        let actual = rope.usedLength(range: NSRange(location: 53, length: 41))
+        XCTAssertEqual(actual, 41)
+    }
+
     func testStringBySettingRTLAcrossSegments() {
         let a = makeASCII("AA")   // indices 0,1
         let b = makeASCII("BB")   // 2,3
