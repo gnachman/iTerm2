@@ -498,7 +498,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     NSData *blockData = [decoder decodeData];
     NSString *blockIDList = nil;
     if (blockData) {
-        NSString *blockIDList = [[NSString alloc] initWithData:blockData encoding:NSUTF8StringEncoding];
+        blockIDList = [[NSString alloc] initWithData:blockData encoding:NSUTF8StringEncoding];
         if (!blockIDList.length) {
             blockIDList = nil;
         }

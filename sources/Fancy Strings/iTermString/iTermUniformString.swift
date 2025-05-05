@@ -13,7 +13,7 @@ class iTermUniformString: iTermBaseString, iTermString {
     private let isDWCRight: Bool
 
     @objc(initWithCharacter:count:)
-    init(char: screen_char_t, length: Int) {
+    required init(char: screen_char_t, length: Int) {
         self.char = char
         self.length = length
         isDWCRight = ScreenCharIsDWC_RIGHT(char)
@@ -164,4 +164,33 @@ class iTermUniformString: iTermBaseString, iTermString {
     func hasExternalAttributes(range: NSRange) -> Bool {
         false
     }
+
+    enum CodingKeys: Int32, TLVTag {
+        case char
+        case length
+    }
+    func efficientlyEncodedData(range: NSRange, type: UnsafeMutablePointer<Int32>) -> Data {
+        type.pointee = iTermStringType.uniformString.rawValue
+
+        var tlvEncoder = EfficientTLVEncoder<CodingKeys>()
+        tlvEncoder.put(tag: .char, value: char)
+        tlvEncoder.put(tag: .length, value: range.length)
+        return tlvEncoder.data
+    }
 }
+
+extension iTermUniformString: EfficientDecodable, EfficientEncodable {
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Self {
+        var tlvDecoder: EfficientTLVDecoder<CodingKeys> = decoder.tlvDecoder()
+        var dict = try tlvDecoder.decodeAll(required: Set([.char, .length]))
+        return Self(char: try screen_char_t.create(efficientDecoder: &(dict[.char]!)),
+                    length: try Int.create(efficientDecoder: &(dict[.length]!)))
+    }
+
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        var type = Int32(0)
+        let data = efficientlyEncodedData(range: fullRange, type: &type)
+        encoder.putRawBytes(data)
+    }
+}
+

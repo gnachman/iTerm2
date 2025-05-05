@@ -247,3 +247,20 @@ NSData *iTermImmutableMetadataEncodeToData(iTermImmutableMetadata metadata) {
     [encoder encodeBool:metadata.rtlFound];
     return encoder.data;
 }
+
+iTermMetadata iTermMetadataDecodedFromData(NSData *data) {
+    iTermMetadata temp;
+    memset(&temp, 0, sizeof(temp));
+    iTermTLVDecoder *decoder = [[[iTermTLVDecoder alloc] initWithData:data] autorelease];
+    if (![decoder decodeDouble:&temp.timestamp]) {
+        return iTermMetadataDefault();
+    }
+    NSData *attrData = [decoder decodeData];
+    if (!attrData) {
+        return iTermMetadataDefault();
+    }
+    [decoder decodeBool:&temp.rtlFound];
+    iTermExternalAttributeIndex *attr = [iTermExternalAttributeIndex fromData:attrData];
+    iTermMetadataSetExternalAttributes(&temp, attr);
+    return temp;
+}

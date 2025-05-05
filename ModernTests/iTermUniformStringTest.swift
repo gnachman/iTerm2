@@ -325,4 +325,19 @@ final class iTermUniformStringTest: XCTestCase {
                                    toString: rhs,
                                    startingAtIndex: 0))
     }
+
+    func testRoundTrip() throws {
+        let original = iTermUniformString(char: makeStyleChar(), length: 5)
+
+        // Encode
+        var encoder = EfficientEncoder()
+        original.encodeEfficiently(encoder: &encoder)
+        let encodedData = encoder.data
+
+        var decoder = EfficientDecoder(encodedData)
+        let decoded = try iTermUniformString.create(efficientDecoder: &decoder)
+
+        // Verify round-trip equality
+        XCTAssertTrue(original.isEqual(to: decoded))
+    }
 }

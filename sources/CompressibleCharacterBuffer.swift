@@ -53,7 +53,7 @@ class UnsafeReallocatableMutableBuffer<T: DefaultInitializable & Equatable>: Equ
     func encode(_ encoder: inout EfficientEncoder, maxSize: Int) {
         encoder.putScalar(count)
         var array = Array(buffer)[0..<maxSize]
-        encoder.putArray(&array)
+        encoder.putByteArray(&array)
     }
 
     deinit {
@@ -107,7 +107,19 @@ extension screen_char_t: Equatable {
     }
 }
 
-class EfficientDecoderError: Error {
+class EfficientDecoderError: LocalizedError {
+    private let _reason: String?
+
+    var errorDescription: String? {
+        return _reason ?? "An error occurred while decoding an object"
+    }
+    init() {
+        _reason = nil
+    }
+
+    init(_ reason: String) {
+        _reason = reason
+    }
 }
 
 protocol DefaultInitializable {
@@ -167,80 +179,6 @@ extension unichar: DefaultInitializable {
     }
 }
 
-struct EfficientDecoder {
-    private let data: Data
-    private var offset = 0
-
-    var bytesRemaining: Int { data.count - offset }
-
-    init(_ data: Data) {
-        self.data = data
-    }
-
-    mutating func getScalar<T: DefaultInitializable>() throws -> T {
-        let size = MemoryLayout<T>.stride
-        if data.count + offset < size {
-            throw EfficientDecoderError()
-        }
-        defer {
-            offset += size
-        }
-        var result = T()
-        _ = withUnsafeMutableBytes(of: &result) { buffer in
-            data.copyBytes(to: buffer, from: offset..<(offset + size))
-        }
-        return result
-    }
-
-    mutating func getArray<T: DefaultInitializable>() throws -> [T] {
-        let count: Int32 = try getScalar()
-        let lengthInBytes = Int(count) * MemoryLayout<T>.stride
-        if offset < 0 {
-            throw EfficientDecoderError()
-        }
-        if offset + lengthInBytes > data.count {
-            throw EfficientDecoderError()
-        }
-        defer {
-            offset += lengthInBytes
-        }
-        var result = Array<T>(repeating: T(), count: Int(count))
-        result.withUnsafeMutableBufferPointer { buffer in
-            data.copyBytes(to: buffer, from: offset..<(offset + lengthInBytes))
-        }
-        return result
-    }
-}
-
-struct EfficientEncoder {
-    private(set) var data = Data()
-
-    mutating func putScalar<T>(_ value: T) {
-        var temp = value
-        withUnsafeBytes(of: &temp) { pointer in
-            data.append(Data(pointer))
-        }
-    }
-
-    mutating func putScalar(_ value: Data) {
-        putScalar(value.count)
-        self.data.append(value)
-    }
-
-    mutating func putArray<T>(_ value: inout [T]) {
-        putScalar(Int32(value.count))
-        value.withUnsafeBufferPointer { temp in
-            data.append(temp)
-        }
-    }
-
-    mutating func putArray<T>(_ value: inout ArraySlice<T>) {
-        putScalar(Int32(value.count))
-        value.withUnsafeBufferPointer { temp in
-            data.append(temp)
-        }
-    }
-}
 
 struct CompressedScreenCharBuffer: Equatable, CustomDebugStringConvertible {
     var debugDescription: String {

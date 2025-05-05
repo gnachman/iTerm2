@@ -300,4 +300,28 @@ final class iTermASCIIStringTest: XCTestCase {
                                       toString: rhs,
                                       startingAtIndex: 0))
     }
+
+    func testRoundTrip() throws {
+        let ea = iTermExternalAttribute(
+            havingUnderlineColor: true,
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            url: nil,
+            blockIDList: nil,
+            controlCode: nil
+        )
+        let original = iTermASCIIString(data: Data([65, 66, 67]),
+                                        style: makeStyle(),
+                                        ea: ea)
+
+        // Encode
+        var encoder = EfficientEncoder()
+        original.encodeEfficiently(encoder: &encoder)
+        let encodedData = encoder.data
+
+        var decoder = EfficientDecoder(encodedData)
+        let decoded = try iTermASCIIString.create(efficientDecoder: &decoder)
+
+        // Verify round-trip equality
+        XCTAssertTrue(original.isEqual(to: decoded))
+    }
 }

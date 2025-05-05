@@ -31,6 +31,17 @@ class iTermRope: iTermBaseString {
         var stringCache = SubStringCache()
         var mayHaveExternalAttributes = false
 
+        init() {
+        }
+
+        init(segments: [Segment],
+             deletedHeadCellCount: Int,
+             mayHaveExternalAttributes: Bool) {
+            self.segments = segments
+            self.deletedHeadCellCount = deletedHeadCellCount
+            self.mayHaveExternalAttributes = mayHaveExternalAttributes
+        }
+
         func clone() -> Guts {
             let result = Guts()
             result.segments = segments
@@ -197,6 +208,72 @@ class iTermRope: iTermBaseString {
 
     required init(guts: Guts) {
         self.guts = guts
+    }
+}
+
+extension iTermRope: EfficientDecodable, EfficientEncodable {
+    enum CodingKeys: Int32, TLVTag {
+        case segments = 0
+        case deletedHeadCount = 1
+        case mayHaveExternalAttributes = 2
+    }
+
+    static func create(data: Data) throws -> iTermRope {
+        var encoder = EfficientDecoder(data)
+        return try create(efficientDecoder: &encoder)
+    }
+
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        var type = Int32(0)
+        let data = efficientlyEncodedData(range: fullRange, type: &type)
+        encoder.putRawBytes(data)
+    }
+
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Self {
+        var tlvDecoder: EfficientTLVDecoder<CodingKeys> = decoder.tlvDecoder()
+        var dict = try tlvDecoder.decodeAll(required: Set<CodingKeys>([.segments,
+                                                                       .deletedHeadCount,
+                                                                       .mayHaveExternalAttributes]))
+        let segments = try Array<Segment>.create(efficientDecoder: &dict[.segments]!)
+        let deletedHeadCount: Int = try Int.create(efficientDecoder: &dict[.deletedHeadCount]!)
+        let mayHaveExternalAttributes: Bool = try Bool.create(efficientDecoder: &dict[.mayHaveExternalAttributes]!)
+        return Self(guts: Guts(segments: segments,
+                               deletedHeadCellCount: deletedHeadCount,
+                               mayHaveExternalAttributes: mayHaveExternalAttributes))
+    }
+}
+
+extension iTermRope.Segment: EfficientDecodable, EfficientEncodable {
+    enum CodingKeys: Int32, TLVTag {
+        case stringType = 0
+        case string = 1
+        case cumulativeCellCount = 2
+    }
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Self {
+        var decoder: EfficientTLVDecoder<CodingKeys> = decoder.tlvDecoder()
+        var dict = try decoder.decodeAll(required: Set<CodingKeys>([.stringType,
+                                                                    .string,
+                                                                    .cumulativeCellCount]))
+        let stringType = try Int32.create(efficientDecoder: &(dict[.stringType]!))
+        let stringData = try Data.create(efficientDecoder: &(dict[.string]!))
+        let cumulativeCellCount = try Int.create(efficientDecoder: &(dict[.cumulativeCellCount]!))
+
+        let string = try CreateString(type: iTermStringType(rawValue: stringType),
+                                      stringData: stringData)
+        return Self(string: string, cumulativeCellCount: cumulativeCellCount)
+    }
+
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        var tlvEncoder: EfficientTLVEncoder<CodingKeys> = encoder.tlvEncoder()
+        var type = Int32(0)
+        let data = string.efficientlyEncodedData(range: string.fullRange, type: &type)
+        tlvEncoder.put(tag: .stringType,
+                       value: type)
+        tlvEncoder.put(tag: .string,
+                       value: data)
+        tlvEncoder.put(tag: .cumulativeCellCount,
+                       value: cumulativeCellCount)
+        encoder.putRawBytes(tlvEncoder.data)
     }
 }
 
@@ -424,6 +501,37 @@ extension iTermRope: iTermString {
         }
         return false
     }
+    func efficientlyEncodedData(range: NSRange, type: UnsafeMutablePointer<Int32>) -> Data {
+        type.pointee = iTermStringType.rope.rawValue
+
+        var tlvEncoder = EfficientTLVEncoder<CodingKeys>()
+        tlvEncoder.put(tag: .segments,
+                       value: segmentsClipped(toRange: range))
+        tlvEncoder.put(tag: .deletedHeadCount,
+                       value: max(0, guts.deletedHeadCellCount - range.location))
+        tlvEncoder.put(tag: .mayHaveExternalAttributes,
+                       value: guts.mayHaveExternalAttributes)
+        return tlvEncoder.data
+    }
+}
+
+private extension iTermRope {
+    private func segmentsClipped(toRange clippingRange: NSRange) -> [Segment] {
+        var result = [Segment]()
+        var ccc = 0
+        for (_, string, localRange) in segmentIterator(inRange: Range(clippingRange)!) {
+            ccc += string.cellCount
+            if NSRange(localRange) == string.fullRange {
+                result.append(Segment(string: string,
+                                      cumulativeCellCount: ccc))
+                continue
+            } else {
+                result.append(Segment(string: iTermSubString(base: string, range: localRange),
+                                      cumulativeCellCount: ccc))
+            }
+        }
+        return result
+    }
 }
 
 extension iTermRope {
@@ -489,5 +597,27 @@ extension iTermRope {
     // convenience for whole‐buffer iteration
     func segmentIterator() -> AnySequence<(Int, iTermString, Range<Int>)> {
         return segmentIterator(inRange: 0..<cellCount)
+    }
+}
+
+func CreateString(type: iTermStringType?, stringData: Data) throws -> iTermString {
+    var stringDecoder = EfficientDecoder(stringData)
+    return switch type {
+    case .rope:
+        try iTermRope.create(efficientDecoder: &stringDecoder)
+    case .mutableRope, .legacyMutableString:
+        throw EfficientDecoderError("Mutable segment strings not supported")
+    case .asciiString:
+        try iTermASCIIString.create(efficientDecoder: &stringDecoder)
+    case .legacyStyleString:
+        try iTermLegacyStyleString.create(efficientDecoder: &stringDecoder)
+    case .nonASCIIString:
+        try iTermNonASCIIString.create(efficientDecoder: &stringDecoder)
+    case .subString:
+        try iTermSubString.create(efficientDecoder: &stringDecoder)
+    case .uniformString:
+        try iTermUniformString.create(efficientDecoder: &stringDecoder)
+    case .none:
+        throw EfficientDecoderError("Unrecognized segment string type")
     }
 }

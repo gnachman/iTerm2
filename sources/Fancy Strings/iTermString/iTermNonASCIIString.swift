@@ -13,7 +13,7 @@ class iTermNonASCIIString: iTermBaseString, iTermString {
     let ea: iTermExternalAttribute?
     private var stringCache = SubStringCache()
 
-    init(codes: [UInt16], complex: IndexSet, style: screen_char_t, ea: iTermExternalAttribute?) {
+    required init(codes: [UInt16], complex: IndexSet, style: screen_char_t, ea: iTermExternalAttribute?) {
         self.codes = SubArray(codes)
         self.complex = complex
         self.style = style
@@ -193,5 +193,60 @@ class iTermNonASCIIString: iTermBaseString, iTermString {
             return !ea.isDefault
         }
         return false
+    }
+
+    enum CodingKeys: Int32, TLVTag {
+        case codes
+        case complex
+        case style
+        case ea
+    }
+
+    func efficientlyEncodedData(range: NSRange, type: UnsafeMutablePointer<Int32>) -> Data {
+        type.pointee = iTermStringType.nonASCIIString.rawValue
+
+        var tlvEncoder = EfficientTLVEncoder<CodingKeys>()
+        tlvEncoder.put(tag: .codes, value: codes[Range(range)!].array)
+        tlvEncoder.put(tag: .complex, value: complex[Range(range)!].shifted(by: -range.lowerBound))
+        tlvEncoder.put(tag: .style, value: style)
+        tlvEncoder.put(tag: .ea, value: ea)
+        return tlvEncoder.data
+    }
+}
+
+extension iTermNonASCIIString: EfficientDecodable, EfficientEncodable {
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Self {
+        var tlvDecoder: EfficientTLVDecoder<CodingKeys> = decoder.tlvDecoder()
+        var dict = try tlvDecoder.decodeAll(required: Set([.codes, .complex, .style, .ea]))
+        return Self(
+            codes: try [UInt16].create(efficientDecoder: &(dict[.codes]!)),
+            complex: try IndexSet.create(efficientDecoder: &(dict[.complex]!)),
+            style: try screen_char_t.create(efficientDecoder: &(dict[.style]!)),
+            ea: try iTermExternalAttribute?.create(efficientDecoder: &(dict[.ea]!)))
+    }
+
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        var type = Int32(0)
+        let data = efficientlyEncodedData(range: fullRange, type: &type)
+        encoder.putRawBytes(data)
+    }
+}
+
+extension IndexSet: EfficientEncodable, EfficientDecodable {
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        for range in rangeView {
+            encoder.putScalar(range.lowerBound)
+            encoder.putScalar(range.upperBound)
+        }
+    }
+    
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> IndexSet {
+        var result = IndexSet()
+        while !decoder.finished {
+            let lower: Int = try decoder.getScalar()
+            let upper: Int = try decoder.getScalar()
+            result.insert(integersIn: lower..<upper)
+        }
+        return result
     }
 }

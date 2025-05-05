@@ -48,7 +48,7 @@
     iTermBidiDisplayInfo *bidiInfo = nil;
 
     id<iTermString> string = nil;
-    if (md->lineMetadata.rtlFound) {
+    if (md->lineStringMetadata.rtlFound) {
         string = [_rope substringWithRange:NSMakeRange([self _lineRawOffset:i],
                                                        [self _lineLength:i])];
         const NSRange fullRange = NSMakeRange(0, string.cellCount);
@@ -85,24 +85,24 @@
     return lineString.externalImmutableMetadata;
 }
 
+- (iTermLineStringMetadata)lineStringMetadataOfLineString:(id<iTermLineStringReading>)lineString {
+    return lineString.metadata;
+}
+
 - (id<iTermLineStringReading>)lineStringWithRange:(NSRange)range
                                      continuation:(screen_char_t)continuation
                                               eol:(unichar)eol
-                                         metadata:(iTermImmutableMetadata)metadata
+                                         metadata:(iTermLineStringMetadata)metadata
                                              bidi:(iTermBidiDisplayInfo *)bidi {
     screen_char_t temp = continuation;
     temp.code = eol;
     iTermSubString *content = [[iTermSubString alloc] initWithBaseString:_rope
                                                                    range:range];
 
-    const iTermLineStringMetadata lmd = {
-        .timestamp = metadata.timestamp,
-        .rtlFound = metadata.rtlFound
-    };
     return [[iTermLineString alloc] initWithContent:content
                                                 eol:eol
                                        continuation:temp
-                                           metadata:lmd
+                                           metadata:metadata
                                                bidi:bidi
                                               dirty:NO];
 }
@@ -127,13 +127,17 @@
     return [rope mutableClone];
 }
 
-+ (id<iTermMutableStringProtocol>)ropeFromData:(NSData *)data {
++ (id<iTermMutableStringProtocol>)ropeFromData:(NSData *)data usedLength:(int)usedLength {
     iTermMutableRope *rope = [[iTermMutableRope alloc] init];
     iTermLegacyStyleString *string = [[iTermLegacyStyleString alloc] initWithChars:(const screen_char_t *)data.bytes
-                                                                             count:data.length / sizeof(screen_char_t)
+                                                                             count:usedLength
                                                                            eaIndex:nil];
     [rope appendString:string];
     return rope;
+}
+
++ (id<iTermMutableStringProtocol>)ropeFromVersion5Data:(NSData *)data {
+    return [iTermMutableRope createWithData:data];
 }
 
 - (ScreenCharArray *)expensiveFullScreenCharArrayOfRope:(id<iTermMutableStringProtocol>)rope {
@@ -163,7 +167,7 @@ isEqualToRope:(id<iTermMutableStringProtocol>)other {
                                                                               cumulative_line_lengths[i] - prev)
                                                      continuation:[self characterAtIndex:ci]
                                                               eol:iscont ? EOL_SOFT : EOL_HARD
-                                                         metadata:[_metadataArray immutableLineMetadataAtIndex:i]
+                                                         metadata:[_metadataArray metadataAtIndex:i]->lineStringMetadata
                                                              bidi:nil];
     return [string description];
 }
@@ -193,13 +197,12 @@ isEqualToRope:(id<iTermMutableStringProtocol>)other {
 }
 
 - (NSData *)ropeData {
-    ScreenCharArray *sca = _rope.screenCharArray;
-    [sca makeSafe];
-    return sca.data;
+    int32_t type = 0;
+    return [_rope efficientlyEncodedDataWithRange:NSMakeRange(0, _rope.cellCount) type:&type];
 }
 
 - (void)replaceRopeWithCopy {
-    _rope = [_rope mutableClone];
+    _rope = (iTermMutableRope *)[_rope mutableClone];
 }
 
 - (NSIndexSet *)doubleWidthIndexSet {
@@ -218,4 +221,7 @@ isEqualToRope:(id<iTermMutableStringProtocol>)other {
            destinationStartIndex:destinationStartIndex];
 }
 
+- (void)replaceRopeWithEmptyRope {
+    _rope = [[iTermMutableRope alloc] init];
+}
 @end

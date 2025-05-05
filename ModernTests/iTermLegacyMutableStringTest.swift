@@ -475,4 +475,55 @@ final class iTermLegacyMutableStringTests: XCTestCase {
         let full = NSRange(location: 0, length: 0)
         XCTAssertEqual(m.usedLength(range: full), 0)
     }
+
+    func testRoundTrip() throws {
+        // Construct original string
+        let style = makeStyle()
+        let sca = MutableScreenCharArray.emptyLine(ofLength: 2)
+        sca.append("AB", fg: style, bg: style)
+        let original = iTermLegacyMutableString(sca)
+
+        // Attach external attributes metadata
+        let eaIndex = iTermExternalAttributeIndex()
+        let ea = iTermExternalAttribute(
+            havingUnderlineColor: true,
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            url: nil,
+            blockIDList: nil,
+            controlCode: nil
+        )
+        eaIndex.setAttributes(ea, at: 1, count: 1)
+        var metadata = iTermMetadataDefault()
+        metadata.timestamp = 1234.0
+        metadata.rtlFound = true
+        iTermMetadataSetExternalAttributes(&metadata, eaIndex)
+        original.set(metadata: metadata)
+
+        // Encode
+        var encoder = EfficientEncoder()
+        original.encodeEfficiently(encoder: &encoder)
+        let encodedData = encoder.data
+
+        var decoder = EfficientDecoder(encodedData)
+        let decoded = try iTermLegacyMutableString.create(efficientDecoder: &decoder)
+
+        // Verify round-trip equality
+        XCTAssertTrue(original.isEqual(to: decoded))
+    }
+
+    func testTLVEncoder() throws {
+        enum CodingKeys: Int32, TLVTag {
+            case metadata
+        }
+        var tlvEncoder = EfficientTLVEncoder<CodingKeys>()
+        let data = Data([1,2,3])
+        tlvEncoder.put(tag: .metadata, value: data)
+
+        var decoder = EfficientDecoder(tlvEncoder.data)
+        var tlvDecoder: EfficientTLVDecoder<CodingKeys> = decoder.tlvDecoder()
+        var dict = try tlvDecoder.decodeAll(required: Set([.metadata]))
+        let decoded = try Data.create(efficientDecoder: &(dict[.metadata]!))
+
+        XCTAssertEqual(data, decoded)
+    }
 }

@@ -18,7 +18,7 @@ class iTermSubString: iTermBaseString, iTermString {
         self.init(base: base, range: Range(range)!)
     }
 
-    init(base: iTermString, range: Range<Int>) {
+    required init(base: iTermString, range: Range<Int>) {
         it_assert(base.fullRange.contains(range))
         if let sub = base as? iTermSubString {
             // unwrap nested substring
@@ -149,5 +149,41 @@ class iTermSubString: iTermBaseString, iTermString {
         let subrange = NSRange(location: self.range.lowerBound + nsrange.location,
                                length: nsrange.length)
         return base.hasExternalAttributes(range: subrange)
+    }
+    enum CodingKeys: Int32, TLVTag {
+        case stringType
+        case stringData
+    }
+    func efficientlyEncodedData(range nsrange: NSRange, type: UnsafeMutablePointer<Int32>) -> Data {
+        let subrange = NSRange(location: self.range.lowerBound + nsrange.location,
+                               length: nsrange.length)
+
+        type.pointee = iTermStringType.subString.rawValue
+
+        var stringType = Int32(0)
+        let stringData = base.efficientlyEncodedData(range: subrange, type: &stringType)
+
+        var tlvEncoder = EfficientTLVEncoder<CodingKeys>()
+        tlvEncoder.put(tag: .stringType, value: stringType)
+        tlvEncoder.put(tag: .stringData, value: stringData)
+        return tlvEncoder.data
+    }
+}
+
+extension iTermSubString: EfficientDecodable, EfficientEncodable {
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Self {
+        var tlvDecoder: EfficientTLVDecoder<CodingKeys> = decoder.tlvDecoder()
+        var dict = try tlvDecoder.decodeAll(required: Set([.stringType, .stringData]))
+        let stringType = try Int32.create(efficientDecoder: &(dict[.stringType]!))
+        let stringData = try Data.create(efficientDecoder: &(dict[.stringData]!))
+        let base = try CreateString(type: iTermStringType(rawValue: stringType),
+                                    stringData: stringData)
+        return Self(base: base, range: Range(base.fullRange)!)
+    }
+
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        var type = Int32(0)
+        let data = efficientlyEncodedData(range: fullRange, type: &type)
+        encoder.putRawBytes(data)
     }
 }

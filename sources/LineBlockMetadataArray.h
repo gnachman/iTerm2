@@ -15,7 +15,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 typedef struct {
-    iTermMetadata lineMetadata;
+    iTermLineStringMetadata lineStringMetadata;
     screen_char_t continuation;
     int number_of_wrapped_lines;
     int width_for_number_of_wrapped_lines;
@@ -81,11 +81,11 @@ NS_INLINE LineBlockMutableMetadata iTermLineBlockMetadataProvideGetMutable(iTerm
 // migrationIndex: For migrating old encoded settings. Stores the external attributes for the whole block together. Pass nil if not migrating.
 // startOffset: Index into migrationIndex for this entry
 // length: Length of this entry in migrationIndex.
-- (void)setEntry:(int)i
-  fromComponents:(NSArray *)components
-migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
-     startOffset:(int)startOffset
-          length:(int)length;
+- (iTermExternalAttributeIndex *)xx_setEntry:(int)i
+                           fromComponents:(NSArray *)components
+                           migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
+                              startOffset:(int)startOffset
+                                   length:(int)length NS_WARN_UNUSED_RESULT;
 
 // Sets `first`, the index of the first valid item.
 - (void)setFirstIndex:(int)i;
@@ -100,12 +100,10 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 
 // precondition: i >= first && i < numEntries
 - (const LineBlockMetadata *)metadataAtIndex:(int)i;
-- (iTermImmutableMetadata)immutableLineMetadataAtIndex:(int)i;
+- (iTermLineStringMetadata)xx_immutableLineMetadataAtIndex:(int)i;
 
 // precondition: numEntries > 0
 - (screen_char_t)lastContinuation;
-
-- (id<iTermExternalAttributeIndexReading> _Nullable)lastExternalAttributeIndex;
 
 // Used to save state for later restoration with setEntry:fromComponents:externalAttributeIndex:
 - (NSArray *)encodedArray;
@@ -124,18 +122,16 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 - (void)increaseCapacityTo:(int)newCapacity;
 
 // numEntries <- 0, first <- 0. Releases memory as needed.
-- (void)reset;
+- (void)xx_reset;
 
 // Append to the end of the array.
-- (void)append:(iTermImmutableMetadata)lineMetadata
+- (void)xx_append:(iTermLineStringMetadata)lineStringMetadata
   continuation:(screen_char_t)continuation;
 
 // Appends to the last entry already in the array.
 // numEntries > first
-- (const iTermMetadata *)appendToLastLine:(iTermImmutableMetadata *)metadataToAppend
-                           originalLength:(int)originalLength
-                         additionalLength:(int)additionalLength
-                             continuation:(screen_char_t)continuation;
+- (const iTermLineStringMetadata *)xx_appendToLastLine:(iTermLineStringMetadata)metadataToAppend
+                                          continuation:(screen_char_t)continuation;
 
 - (void)setBidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo
              atLine:(int)line
@@ -145,22 +141,18 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 // i >= first && i < numEntries
 - (iTermLineBlockMetadataProvider)metadataProviderAtIndex:(int)i;
 
-// Replace the external attributes in the last entry.
-// numEntries > first
-- (void)setLastExternalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex;
-
 - (void)setRTLFound:(BOOL)rtlFound atIndex:(NSInteger)index;
 
 // Remove the first entry (by incrementing the `first` pointer and freeing
 // associated memory).
-- (void)removeFirst;
+- (void)xx_removeFirst;
 
 // Remove the first `n` entries. See -removeFirst for details.
-- (void)removeFirst:(int)n;
+- (void)xx_removeFirst:(int)n;
 
 // Remove the last entry (by decrementing `numEntries` and freeing associated
 // memory).
-- (void)removeLast;
+- (void)xx_removeLast;
 
 // Remove cache values in the first entry.
 - (void)eraseLastLineCache;

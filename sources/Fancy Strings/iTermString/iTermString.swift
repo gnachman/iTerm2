@@ -7,10 +7,6 @@
 
 import Foundation
 
-// MARK: - Data extension for iTermString
-
-typealias StyleMap = SegmentMap<UnifiedCharacterStyle>
-
 // MARK: — Protocol
 
 @objc
@@ -49,6 +45,18 @@ protocol iTermString: AnyObject {
 
     // May return false positives
     @objc func hasExternalAttributes(range: NSRange) -> Bool
+    func efficientlyEncodedData(range: NSRange, type: UnsafeMutablePointer<Int32>) -> Data
+}
+
+enum iTermStringType: Int32 {
+    case rope
+    case mutableRope
+    case legacyMutableString
+    case asciiString
+    case legacyStyleString
+    case nonASCIIString
+    case subString
+    case uniformString
 }
 
 extension iTermString {
