@@ -21,7 +21,7 @@ class iTermLegacyStyleString: iTermBaseString, iTermString {
         super.init()
     }
 
-    init(line: [screen_char_t], eaIndex: iTermExternalAttributeIndexReading?) {
+    required init(line: [screen_char_t], eaIndex: iTermExternalAttributeIndexReading?) {
         self.line = line
         self.eaIndex = eaIndex
     }
@@ -200,5 +200,48 @@ class iTermLegacyStyleString: iTermBaseString, iTermString {
             return !eaIndex.isEmpty
         }
         return false
+    }
+    enum CodingKeys: Int32, TLVTag {
+        case line
+        case eaIndex
+    }
+
+    func efficientlyEncodedData(range: NSRange, type: UnsafeMutablePointer<Int32>) -> Data {
+        type.pointee = iTermStringType.legacyStyleString.rawValue
+
+        var tlvEncoder = EfficientTLVEncoder<CodingKeys>()
+        tlvEncoder.put(tag: .line, value: Array(line[Range(range)!]))
+        tlvEncoder.put(tag: .eaIndex, value: eaIndex?.subAttributes(in: range))
+        return tlvEncoder.data
+    }
+}
+
+extension iTermLegacyStyleString: EfficientDecodable, EfficientEncodable {
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Self {
+        var tlvDecoder: EfficientTLVDecoder<CodingKeys> = decoder.tlvDecoder()
+        var dict = try tlvDecoder.decodeAll(required: Set([.line, .eaIndex]))
+        return Self(
+            line: try Array<screen_char_t>.create(efficientDecoder: &(dict[.line]!)),
+            eaIndex: try Optional<iTermExternalAttributeIndex>.create(efficientDecoder: &(dict[.eaIndex]!)))
+    }
+
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        var type = Int32(0)
+        let data = efficientlyEncodedData(range: fullRange, type: &type)
+        encoder.putRawBytes(data)
+    }
+}
+
+extension iTermExternalAttributeIndex: EfficientDecodable, EfficientEncodable {
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Self {
+        let data = try Data.create(efficientDecoder: &decoder)
+        if let value = iTermExternalAttributeIndex.fromData(data) {
+            return value as! Self
+        }
+        throw EfficientDecoderError()
+    }
+
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        encoder.putRawBytes(data())
     }
 }

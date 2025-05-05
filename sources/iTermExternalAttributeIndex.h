@@ -50,7 +50,7 @@ isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
                                    url:(iTermURL * _Nullable)url
                            blockIDList:(NSString * _Nullable)blocokIDList
                            controlCode:(NSNumber * _Nullable)code;
-- (instancetype)initWithDictionary:(NSDictionary *)dict;
+- (instancetype _Nullable)initWithDictionary:(NSDictionary *)dict;
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
 - (NSData *)data;
 @end

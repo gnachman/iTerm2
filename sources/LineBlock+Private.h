@@ -12,7 +12,7 @@
 @protocol iTermLineBlockMutationCertificate;
 @class iTermCharacterBuffer;
 @class iTermWeakBox<T>;
-@protocol iTermMutableStringProtocol;
+@class iTermMutableRope;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
     int _startOffset;  // Index of the first non-dropped screen_char_t in _rawBuffer.
 
 @public
-    id<iTermMutableStringProtocol> _rope;
+    iTermMutableRope *_rope;
     int _firstEntry;  // first valid cumulative_line_length
 
 

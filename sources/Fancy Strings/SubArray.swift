@@ -60,6 +60,10 @@ struct SubArray<Element>: RandomAccessCollection {
     func index(before i: Int) -> Int {
         i - 1
     }
+
+    var array: [Element] {
+        return Array(base[bounds])
+    }
 }
 
 extension SubArray {

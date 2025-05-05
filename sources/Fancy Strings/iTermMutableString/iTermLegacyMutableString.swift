@@ -248,7 +248,52 @@ extension iTermLegacyMutableString: iTermLegacyString {
         }
         return false
     }
+    enum CodingKeys: Int32, TLVTag {
+        case line
+        case eaIndex
+        case metadata
+        case continuation
+    }
+
+    func efficientlyEncodedData(range: NSRange, type: UnsafeMutablePointer<Int32>) -> Data {
+        type.pointee = iTermStringType.legacyMutableString.rawValue
+
+        var tlvEncoder = EfficientTLVEncoder<CodingKeys>()
+        let subsca = sca.subArray(with: range)
+        tlvEncoder.put(tag: .line, value: subsca.data)
+        tlvEncoder.put(tag: .eaIndex, value: subsca.eaIndex)
+        tlvEncoder.put(tag: .metadata, value: iTermImmutableMetadataEncodeToData(subsca.metadata))
+        tlvEncoder.put(tag: .continuation, value: subsca.continuation)
+        return tlvEncoder.data
+    }
 }
+
+extension iTermLegacyMutableString: EfficientDecodable, EfficientEncodable {
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Self {
+        var tlvDecoder: EfficientTLVDecoder<CodingKeys> = decoder.tlvDecoder()
+        var dict = try tlvDecoder.decodeAll(required: Set([
+            .line,
+            .eaIndex,
+            .metadata,
+            .continuation]))
+
+        let encodedMetadata = try Data.create(efficientDecoder: &(dict[.metadata]!))
+
+        let msca = MutableScreenCharArray(
+            data: try Data.create(efficientDecoder: &(dict[.line]!)),
+            includingContinuation: true,
+            metadata: iTermMetadataMakeImmutable(iTermMetadataDecodedFromData(encodedMetadata)),
+            continuation: try screen_char_t.create(efficientDecoder: &(dict[.continuation]!)))
+        return Self(msca)
+    }
+
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        var type = Int32(0)
+        let data = efficientlyEncodedData(range: fullRange, type: &type)
+        encoder.putRawBytes(data)
+    }
+}
+
 
 @objc
 extension iTermLegacyMutableString: iTermMutableStringProtocol {

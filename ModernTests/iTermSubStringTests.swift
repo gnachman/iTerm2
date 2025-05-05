@@ -243,4 +243,120 @@ final class iTermSubStringTests: XCTestCase {
         let expected = IndexSet([3, 4])
         XCTAssertEqual(actual, expected)
     }
+
+    func testRoundTrip_uniform() throws {
+        let base = iTermUniformString(char: makeStyle(), length: 5)
+
+        let original = iTermSubString(base: base, range: NSRange(location: 1, length: 2))
+
+        // Encode
+        var encoder = EfficientEncoder()
+        original.encodeEfficiently(encoder: &encoder)
+        let encodedData = encoder.data
+
+        var decoder = EfficientDecoder(encodedData)
+        let decoded = try iTermSubString.create(efficientDecoder: &decoder)
+
+        // Verify round-trip equality
+        XCTAssertTrue(original.isEqual(to: decoded))
+    }
+
+    func testRoundTrip_legacyStyle() throws {
+        let style = makeStyle()
+        let sca = MutableScreenCharArray.emptyLine(ofLength: 2)
+        sca.append("ABCD", fg: style, bg: style)
+
+        // Attach external attributes metadata
+        let eaIndex = iTermExternalAttributeIndex()
+        let ea = iTermExternalAttribute(
+            havingUnderlineColor: true,
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            url: nil,
+            blockIDList: nil,
+            controlCode: nil
+        )
+        eaIndex.setAttributes(ea, at: 1, count: 1)
+        var metadata = iTermMetadataDefault()
+        metadata.timestamp = 1234.0
+        metadata.rtlFound = true
+        iTermMetadataSetExternalAttributes(&metadata, eaIndex)
+        sca.setMetadata(metadata)
+
+        let base = iTermLegacyStyleString(sca)
+        let original = iTermSubString(base: base, range: NSRange(location: 1, length: 2))
+
+        // Encode
+        var encoder = EfficientEncoder()
+        original.encodeEfficiently(encoder: &encoder)
+        let encodedData = encoder.data
+
+        var decoder = EfficientDecoder(encodedData)
+        let decoded = try iTermSubString.create(efficientDecoder: &decoder)
+
+        // Verify round-trip equality
+        XCTAssertTrue(original.isEqual(to: decoded))
+    }
+
+    func testRoundTrip_ASCII() throws {
+        let ea = iTermExternalAttribute(
+            havingUnderlineColor: true,
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            url: nil,
+            blockIDList: nil,
+            controlCode: nil
+        )
+        let base = iTermASCIIString(data: Data([65, 66, 67, 68]),
+                                        style: makeStyle(),
+                                        ea: ea)
+        let original = iTermSubString(base: base, range: NSRange(location: 1, length: 2))
+
+        // Encode
+        var encoder = EfficientEncoder()
+        original.encodeEfficiently(encoder: &encoder)
+        let encodedData = encoder.data
+
+        var decoder = EfficientDecoder(encodedData)
+        let decoded = try iTermSubString.create(efficientDecoder: &decoder)
+
+        // Verify round-trip equality
+        XCTAssertTrue(original.isEqual(to: decoded))
+    }
+
+    func testRoundTrip_nonASCII() throws {
+        let ea = iTermExternalAttribute(
+            havingUnderlineColor: true,
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            url: nil,
+            blockIDList: nil,
+            controlCode: nil
+        )
+
+        let baseStyle = makeStyle()
+        let msca = MutableScreenCharArray.emptyLine(ofLength: 0)
+        msca.append("a❤️b", fg: baseStyle, bg: baseStyle)
+        let count = Int(msca.length)
+
+        var codes = [UInt16]()
+        var complexSet = IndexSet()
+        for i in 0..<count {
+            let c = msca.line[i]
+            codes.append(UInt16(truncatingIfNeeded: c.code))
+            if c.complexChar != 0 {
+                complexSet.insert(i)
+            }
+        }
+        let base = iTermNonASCIIString(codes: codes, complex: complexSet, style: baseStyle, ea: ea)
+        let original = iTermSubString(base: base, range: NSRange(location: 1, length: 2))
+
+        // Encode
+        var encoder = EfficientEncoder()
+        original.encodeEfficiently(encoder: &encoder)
+        let encodedData = encoder.data
+
+        var decoder = EfficientDecoder(encodedData)
+        let decoded = try iTermSubString.create(efficientDecoder: &decoder)
+
+        // Verify round-trip equality
+        XCTAssertTrue(original.isEqual(to: decoded))
+    }
 }

@@ -288,4 +288,40 @@ final class iTermLegacyStyleStringTest: XCTestCase {
         let expected = IndexSet([3, 4])
         XCTAssertEqual(actual, expected)
     }
+
+    func testRoundTrip() throws {
+        // Construct original string
+        let style = makeStyle()
+        let sca = MutableScreenCharArray.emptyLine(ofLength: 2)
+        sca.append("AB", fg: style, bg: style)
+
+        // Attach external attributes metadata
+        let eaIndex = iTermExternalAttributeIndex()
+        let ea = iTermExternalAttribute(
+            havingUnderlineColor: true,
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            url: nil,
+            blockIDList: nil,
+            controlCode: nil
+        )
+        eaIndex.setAttributes(ea, at: 1, count: 1)
+        var metadata = iTermMetadataDefault()
+        metadata.timestamp = 1234.0
+        metadata.rtlFound = true
+        iTermMetadataSetExternalAttributes(&metadata, eaIndex)
+        sca.setMetadata(metadata)
+
+        let original = iTermLegacyStyleString(sca)
+
+        // Encode
+        var encoder = EfficientEncoder()
+        original.encodeEfficiently(encoder: &encoder)
+        let encodedData = encoder.data
+
+        var decoder = EfficientDecoder(encodedData)
+        let decoded = try iTermLegacyStyleString.create(efficientDecoder: &decoder)
+
+        // Verify round-trip equality
+        XCTAssertTrue(original.isEqual(to: decoded))
+    }
 }

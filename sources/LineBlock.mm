@@ -42,6 +42,7 @@ NSString *const kLineBlockRawBufferV1Key = @"Raw Buffer";  // v1 - uses legacy s
 NSString *const kLineBlockRawBufferV2Key = @"Raw Buffer v2";  // v2 - used 0xf000-0xf003 for DWC_SKIP and friends.
 NSString *const kLineBlockRawBufferV3Key = @"Raw Buffer v3";  // v3 - uses 0x0001-0x0004 for DWC_SKIP and friends
 NSString *const kLineBlockRawBufferV4Key = @"Raw Buffer v4";  // v4 - Like v3 but could be compressed. No longer supported because overhead from compression-related abstractions was too slow.
+NSString *const kLineBlockRawBufferV5Key = @"Raw Buffer v5";  // v4 - Based on ropes. Encodes external attributes along with characters
 NSString *const kLineBlockBufferStartOffsetKey = @"Buffer Start Offset";
 NSString *const kLineBlockStartOffsetKey = @"Start Offset";
 NSString *const kLineBlockFirstEntryKey = @"First Entry";
@@ -51,6 +52,7 @@ NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 NSString *const kLineBlockGuid = @"GUID";
+NSString *const kLineBlockDesiredCapacity = @"Desired Capacity";
 static dispatch_queue_t gDeallocQueue;
 
 #ifdef DEBUG_SEARCH
@@ -175,7 +177,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     lineBlock->_generation = g;
 }
 
-- (instancetype)initWithRope:(id<iTermMutableStringProtocol>)rope
+- (instancetype)initWithRope:(iTermMutableRope *)rope
                         guid:(NSString *)guid {
     self = [super init];
     if (self) {
@@ -254,8 +256,13 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
         }
 
         NSData *data = nil;
+        BOOL externalAttributesSet = NO;
         iTermExternalAttributeIndex *migrationIndex = nil;
-        if (dictionary[kLineBlockRawBufferV4Key]) {
+        if (dictionary[kLineBlockRawBufferV5Key]) {
+            _rope = [LineBlock ropeFromVersion5Data:dictionary[kLineBlockRawBufferV5Key]];
+            _desiredCapacity = [dictionary[kLineBlockDesiredCapacity] intValue];
+            externalAttributesSet = YES;
+        } else if (dictionary[kLineBlockRawBufferV4Key]) {
             data = [self decompressedDataFromV4Data:dictionary[kLineBlockRawBufferV4Key]];
         } else if (dictionary[kLineBlockRawBufferV3Key]) {
             data = dictionary[kLineBlockRawBufferV3Key];
@@ -266,11 +273,12 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
             data = [dictionary[kLineBlockRawBufferV1Key] migrateV1ToV3:&migrationIndex];
             _generation = iTermAllocateGeneration();
         }
-        if (!data || data.length / sizeof(screen_char_t) >= INT_MAX) {
-            return nil;
+        if (!_rope) {
+            if (!data || data.length / sizeof(screen_char_t) >= INT_MAX) {
+                return nil;
+            }
+            _desiredCapacity = data.length / sizeof(screen_char_t);
         }
-        _rope = [LineBlock ropeFromData:data];
-        _desiredCapacity = data.length / sizeof(screen_char_t);
 
         [self setBufferStartOffset:[dictionary[kLineBlockBufferStartOffsetKey] intValue]];
         _firstEntry = [dictionary[kLineBlockFirstEntryKey] intValue];
@@ -279,6 +287,13 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
             DLog(@"Restore block %p with guid %@", self, _guid);
         }
         NSArray *cllArray = dictionary[kLineBlockCLLKey];
+        int usedLength = 0;
+        if (cllArray.count > 0) {
+            usedLength = ((NSNumber *)cllArray.lastObject).intValue;
+        }
+        if (!_rope) {
+            _rope = [LineBlock ropeFromData:data usedLength:usedLength];
+        }
         cll_capacity = [cllArray count];
         iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMalloc(sizeof(int) * cll_capacity));
         [self commonInit];
@@ -291,15 +306,18 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
             mutableCLL[i] = [cllArray[i] intValue];
             NSArray *components = metadataArray[i];
             const NSUInteger length = cumulative_line_lengths[i] - startOffset;
-            [_metadataArray setEntry:i
-                      fromComponents:components
-                      migrationIndex:migrationIndex
-                         startOffset:startOffset
-                              length:length];
-            id<iTermExternalAttributeIndexReading> eaIndex = iTermMetadataGetExternalAttributesIndex([_metadataArray metadataAtIndex:i]->lineMetadata);
-            [self setExternalAttributes:eaIndex
-                            sourceRange:NSMakeRange(0, length)
-                  destinationStartIndex:startOffset];
+#warning TODO: Test this
+#warning TODO: Only use the return value for migration. Create a new version that is more efficient.
+            iTermExternalAttributeIndex *eaIndex = [_metadataArray xx_setEntry:i
+                                                                fromComponents:components
+                                                                migrationIndex:migrationIndex
+                                                                   startOffset:startOffset
+                                                                        length:length];
+            if (!externalAttributesSet) {
+                [self setExternalAttributes:eaIndex
+                                sourceRange:NSMakeRange(0, length)
+                      destinationStartIndex:startOffset];
+            }
             startOffset = cumulative_line_lengths[i];
         }
         [_metadataArray increaseCapacityTo:cll_capacity];
@@ -499,7 +517,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
 }
 
 - (void)_appendCumulativeLineLength:(int)cumulativeLength
-                           metadata:(iTermImmutableMetadata)lineMetadata
+                           metadata:(iTermLineStringMetadata)lineStringMetadata
                        continuation:(screen_char_t)continuation
                                cert:(id<iTermLineBlockMutationCertificate>)cert {
     ITAssertWithMessage(_metadataArray.numEntries == cll_entries, @"_metadataArray.numEntries=%@ != cll_entries=%@", @(_metadataArray.numEntries), @(cll_entries));
@@ -515,8 +533,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
                             @(_metadataArray.numEntries), @(_metadataArray.capacity));
     }
     ((int *)cumulative_line_lengths)[cll_entries] = cumulativeLength;
-    [_metadataArray append:lineMetadata continuation:continuation];
-
+    [_metadataArray xx_append:lineStringMetadata continuation:continuation];
     cll_entries += 1;
     assert(_metadataArray.numEntries == cll_entries);
 }
@@ -539,8 +556,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     }
     for (i = _firstEntry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
-        NSString *md = iTermMetadataShortDescription([_metadataArray metadataAtIndex:i]->lineMetadata,
-                                                     cumulative_line_lengths[i] - prev);
+        NSString *md = iTermLineStringMetadataShortDescription([_metadataArray metadataAtIndex:i]->lineStringMetadata);
         NSString *message = [NSString stringWithFormat:@"Line %d, length %d, offset from raw=%d, abs pos=%lld, continued=%s %@: %@\n",
                              i,
                              cumulative_line_lengths[i] - prev,
@@ -570,8 +586,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     }
     for (i = _firstEntry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
-        NSString *md = iTermMetadataShortDescription([_metadataArray metadataAtIndex:i]->lineMetadata,
-                                                     cumulative_line_lengths[i] - prev);
+        NSString *md = iTermLineStringMetadataShortDescription([_metadataArray metadataAtIndex:i]->lineStringMetadata);
         NSString *message = [NSString stringWithFormat:@"Line %d, length %d, offset from raw=%d, abs pos=%lld, continued=%s %@: %@\n",
                              i,
                              cumulative_line_lengths[i] - prev,
@@ -707,7 +722,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(LineBlock *self,
     const screen_char_t continuation = [self continuationOfLineString:lineString];
     const unichar eol = continuation.code;
     const BOOL partial = eol != EOL_HARD;
-    iTermImmutableMetadata lineMetadata = [self metadataOfLineString:lineString];
+    iTermLineStringMetadata lineStringMetadata = [self lineStringMetadataOfLineString:lineString];
 
     if (is_partial && !(!partial && length == 0)) {
         // append to an existing line
@@ -728,25 +743,18 @@ static int iTermLineBlockNumberOfFullLinesImpl(LineBlock *self,
             cached_numlines += newnum - oldnum;
         }
 
-        int originalLength = cumulative_line_lengths[cll_entries - 1];
-        if (cll_entries != _firstEntry + 1) {
-            const int start = cumulative_line_lengths[cll_entries - 2] - self.bufferStartOffset;
-            originalLength -= start;
-        }
         cert.mutableCumulativeLineLengths[cll_entries - 1] += length;
-        const iTermMetadata *amendedMetadata = [_metadataArray appendToLastLine:&lineMetadata
-                                                                 originalLength:originalLength
-                                                               additionalLength:length
-                                                                   continuation:continuation];
+        const iTermLineStringMetadata *amendedMetadata = [_metadataArray xx_appendToLastLine:lineStringMetadata
+                                                                                continuation:continuation];
         didFindRTL = amendedMetadata->rtlFound;
 #ifdef TEST_LINEBUFFER_SANITY
         [self checkAndResetCachedNumlines:@"appendLine partial case" width:width];
 #endif
     } else {
         // add a new line
-        didFindRTL = lineMetadata.rtlFound;
+        didFindRTL = lineStringMetadata.rtlFound;
         [self _appendCumulativeLineLength:(space_used + length)
-                                 metadata:lineMetadata
+                                 metadata:lineStringMetadata
                              continuation:continuation
                                      cert:cert];
         if (width != cached_numlines_width) {
@@ -771,7 +779,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(LineBlock *self,
 
 - (void)didFindRTLInLine:(int)line cert:(id<iTermLineBlockMutationCertificate>)cert {
     const LineBlockMetadata *existing = [_metadataArray metadataAtIndex:line];
-    if (!existing->lineMetadata.rtlFound) {
+    if (!existing->lineStringMetadata.rtlFound) {
         [_metadataArray setRTLFound:YES atIndex:line];
     }
 }
@@ -1030,7 +1038,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     return [self lineStringWithRange:range
                         continuation:md->continuation
                                  eol:eol
-                            metadata:iTermMetadataMakeImmutable(md->lineMetadata)
+                            metadata:md->lineStringMetadata
                                 bidi:[self subBidiInfo:md->bidi_display_info
                                                  range:locationRelativeRange
                                                  width:width]];
@@ -1248,7 +1256,16 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     if (!location.found) {
         return iTermImmutableMetadataDefault();
     }
-    return [_metadataArray immutableLineMetadataAtIndex:location.index];
+    const NSRange range = NSMakeRange([self offsetOfRawLine:location.index],
+                                      [self lengthOfRawLine:location.index]);
+    const LineBlockMetadata *lbm = [_metadataArray metadataAtIndex:location.index];
+#warning TODO: I kinda doubt the EOL is correct here.
+    id<iTermLineStringReading> lineString = [self lineStringWithRange:range
+                                                         continuation:lbm->continuation
+                                                                  eol:lbm->continuation.code
+                                                             metadata:lbm->lineStringMetadata
+                                                                 bidi:lbm->bidi_display_info];
+    return [self metadataOfLineString:lineString];
 }
 
 - (int)getNumLinesWithWrapWidth:(int)width {
@@ -1340,7 +1357,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     [_metadataArray willMutate];
 
     cll_entries -= 1;
-    [_metadataArray removeLast];
+    [_metadataArray xx_removeLast];
 
     is_partial = NO;
     if (cll_entries == _firstEntry) {
@@ -1348,7 +1365,8 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
         [self setBufferStartOffset:0];
         _firstEntry = 0;
         cll_entries = 0;
-        [_metadataArray reset];
+        [_metadataArray xx_reset];
+        [self replaceRopeWithEmptyRope];
     }
     assert(_metadataArray.first == _firstEntry);
     assert(_metadataArray.numEntries == cll_entries);
@@ -1407,16 +1425,10 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
         const NSRange range = NSMakeRange(_startOffset + start + offset_from_start, length);
         cert.mutableCumulativeLineLengths[cll_entries - 1] -= length;
         [_metadataArray eraseLastLineCache];
-        id<iTermExternalAttributeIndexReading> attrs = [_metadataArray lastExternalAttributeIndex];
         const int split_index = available_len - length;
 
-        iTermImmutableMetadata original = [_metadataArray immutableLineMetadataAtIndex:cll_entries - 1];
+        iTermLineStringMetadata lsm = [_metadataArray metadataAtIndex:cll_entries - 1]->lineStringMetadata;
 
-        iTermMetadata truncated;
-        iTermMetadataInitCopyingSubrange(&truncated, &original, split_index, available_len);
-        iTermMetadataAutorelease(truncated);
-
-        [_metadataArray setLastExternalAttributeIndex:[attrs subAttributesToIndex:split_index]];
 #warning TODO: Test bidi, metadata here.
         const LineBlockMetadata *md = [_metadataArray metadataAtIndex:cll_entries - 1];
 
@@ -1427,14 +1439,13 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
         lineString = [self lineStringWithRange:range
                                   continuation:continuation
                                            eol:continuation.code
-                                      metadata:iTermMetadataMakeImmutable(truncated)
+                                      metadata:lsm
                                           bidi:bidi];
         [self deleteFromEndOfRope:length];
     } else {
         // The last raw line is not longer than width. Return the whole thing.
         length = available_len;
 #warning TODO: Test bidi, metadata here.
-        iTermImmutableMetadata metadata = [_metadataArray immutableLineMetadataAtIndex:cll_entries - 1];
         const NSRange range = NSMakeRange(_startOffset + start, length);
         const LineBlockMetadata *md = [_metadataArray metadataAtIndex:cll_entries - 1];
         iTermBidiDisplayInfo *bidi = [self subBidiInfo:md->bidi_display_info
@@ -1443,9 +1454,9 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
         lineString = [self lineStringWithRange:range
                                   continuation:continuation
                                            eol:continuation.code
-                                      metadata:metadata
+                                      metadata:md->lineStringMetadata
                                           bidi:bidi];
-        [_metadataArray removeLast];
+        [_metadataArray xx_removeLast];
         --cll_entries;
         [self deleteFromEndOfRope:length];
         assert(_metadataArray.numEntries == cll_entries);
@@ -1457,7 +1468,8 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
         [self setBufferStartOffset:0];
         _firstEntry = 0;
         cll_entries = 0;
-        [_metadataArray reset];
+        [_metadataArray xx_reset];
+        [self replaceRopeWithEmptyRope];
         assert(_metadataArray.first == _firstEntry);
         assert(_metadataArray.numEntries == cll_entries);
     }
@@ -1563,7 +1575,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
     return [self lineStringWithRange:range
                         continuation:continuation
                                  eol:eol
-                            metadata:iTermMetadataMakeImmutable(md->lineMetadata)
+                            metadata:md->lineStringMetadata
                                 bidi:bidi];
 }
 
@@ -1642,7 +1654,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
             [self setBufferStartOffset:self.bufferStartOffset + prev + offset];
 
             _firstEntry = i;
-            [_metadataArray removeFirst:_firstEntry - _metadataArray.first];
+            [_metadataArray xx_removeFirst:_firstEntry - _metadataArray.first];
             assert(_metadataArray.first == _firstEntry);
             [_metadataArray eraseFirstLineCache];
 
@@ -1659,11 +1671,12 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
 
     // Consumed the whole buffer.
     *charsDropped = [self rawSpaceUsed];
-    [_metadataArray reset];
+    [_metadataArray xx_reset];
     cached_numlines_width = -1;
     cll_entries = 0;
     is_partial = NO;
     [self setBufferStartOffset:0];
+    [self replaceRopeWithEmptyRope];
     _firstEntry = 0;
     iTermLineBlockDidChange(self, "drop lines");
     assert(_metadataArray.first == _firstEntry);
@@ -1710,7 +1723,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
 
     while (_firstEntry < other->_firstEntry && _firstEntry < cll_capacity) {
         DLog(@"Drop entry");
-        [_metadataArray removeFirst];
+        [_metadataArray xx_removeFirst];
         _firstEntry += 1;
         assert(_metadataArray.first == _firstEntry);
     }
@@ -2458,8 +2471,9 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 }
 
 - (NSDictionary *)dictionary {
-#warning TODO: Replace this with a more efficient encoding
-    return @{ kLineBlockRawBufferV3Key: [self ropeData],
+#warning TODO: Replace this with a more efficient encoding. Currently we do not even save external attributes.
+    return @{ kLineBlockRawBufferV5Key: [self ropeData],
+              kLineBlockDesiredCapacity: @(_desiredCapacity),
               kLineBlockBufferStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockFirstEntryKey: @(_firstEntry),

@@ -1,6 +1,6 @@
 //
 //  iTermASCIIString.swift
-//  StyleMap
+//  iTerm2
 //
 //  Created by George Nachman on 4/21/25.
 //
@@ -13,7 +13,7 @@ class iTermASCIIString: iTermBaseString, iTermString {
     private var stringCache = SubStringCache()
 
     @objc
-    init(data: Data, style: screen_char_t, ea: iTermExternalAttribute?) {
+    required init(data: Data, style: screen_char_t, ea: iTermExternalAttribute?) {
         self.data = SubData(data: data, range: 0..<data.count)
         self.count = data.count
         self.style = style
@@ -28,7 +28,7 @@ class iTermASCIIString: iTermBaseString, iTermString {
     }
 
     override var description: String {
-        return "<iTermASCIIString: cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d)>"
+        return "<iTermASCIIString: cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d) \(ea?.description ?? "")>"
     }
 
     var cellCount: Int {
@@ -171,33 +171,77 @@ class iTermASCIIString: iTermBaseString, iTermString {
     func hasExternalAttributes(range: NSRange) -> Bool {
         return ea != nil
     }
+
+    enum CodingKeys: Int32, TLVTag {
+        case data
+        case style
+        case ea
+    }
+
+    func efficientlyEncodedData(range: NSRange, type: UnsafeMutablePointer<Int32>) -> Data {
+        type.pointee = iTermStringType.asciiString.rawValue
+
+        var tlvEncoder = EfficientTLVEncoder<CodingKeys>()
+        tlvEncoder.put(tag: .data, value: data.data.subdata(in: Range(range)!))
+        tlvEncoder.put(tag: .style, value: style)
+        tlvEncoder.put(tag: .ea, value: ea)
+        return tlvEncoder.data
+    }
 }
 
-extension StyleMap {
-    func subrangeBySettingRTL(in nsrange: NSRange,
-                              rtlIndexes: IndexSet?) -> StyleMap? {
-        let range = Range(nsrange)!
-        let substyles = self[range]
-        if rtlIndexes == nil &&
-            substyles.allSatisfy({ $0.payload.sct.rtlStatus == .unknown }) {
-            return nil
-        }
+extension iTermASCIIString: EfficientDecodable, EfficientEncodable {
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Self {
+        var tlvDecoder: EfficientTLVDecoder<CodingKeys> = decoder.tlvDecoder()
+        var dict = try tlvDecoder.decodeAll(required: Set([.data, .style, .ea]))
+        return Self(data: try Data.create(efficientDecoder: &(dict[.data]!)),
+                    style: try screen_char_t.create(efficientDecoder: &(dict[.style]!)),
+                    ea: try iTermExternalAttribute?.create(efficientDecoder: &(dict[.ea]!)))
+    }
+    
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        var type = Int32(0)
+        let data = efficientlyEncodedData(range: fullRange, type: &type)
+        encoder.putRawBytes(data)
+    }
+}
 
-        return substyles.flatMap { payload, count, i in
-            if let rtlIndexes {
-                var modified = Array<(UnifiedCharacterStyle, Int)>()
-                var temp = payload
-                for (range, isMember) in rtlIndexes.membership(in: Range(nsrange)!) {
-                    temp.sct.rtlStatus = isMember ? .RTL : .LTR
-                    let tuple = (temp, range.count)
-                    modified.append(tuple)
-                }
-                return modified
-            } else {
-                var temp = payload
-                temp.sct.rtlStatus = .unknown
-                return [(temp, count)]
-            }
+extension iTermExternalAttribute: EfficientEncodable, EfficientDecodable {
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Self {
+        let data = try decoder.getRawBytes()
+        guard let obj = Self.fromData(data) else {
+            throw EfficientDecoderError()
+        }
+        return obj
+    }
+
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        encoder.putRawBytes(data())
+    }
+}
+
+extension screen_char_t: EfficientEncodable {
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        encoder.putScalar(self)
+    }
+}
+
+extension Optional: EfficientEncodable, EfficientDecodable where Wrapped: EfficientEncodable & EfficientDecodable {
+    static func create(efficientDecoder decoder: inout EfficientDecoder) throws -> Optional<Wrapped> {
+        let flag: UInt8 = try decoder.getScalar()
+        if flag == 0 {
+            return .none
+        }
+        let obj = try Wrapped.create(efficientDecoder: &decoder)
+        return .some(obj)
+    }
+
+    func encodeEfficiently(encoder: inout EfficientEncoder) {
+        switch self {
+        case .none:
+            encoder.putScalar(UInt8(0))
+        case .some(let obj):
+            encoder.putScalar(UInt8(1))
+            obj.encodeEfficiently(encoder: &encoder)
         }
     }
 }

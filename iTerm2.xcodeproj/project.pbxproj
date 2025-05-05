@@ -1103,6 +1103,7 @@
 		A60E046226DEEE5E00DD162B /* MiniFilterViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A60E046026DEEE5E00DD162B /* MiniFilterViewController.xib */; };
 		A60E046326DEEE5E00DD162B /* MiniFilterViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A60E046026DEEE5E00DD162B /* MiniFilterViewController.xib */; };
 		A60E046526E037BE00DD162B /* ContentSubscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60E046426E037BD00DD162B /* ContentSubscriber.swift */; };
+		A60E9FC52DC69A7900E3193B /* EfficientCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60E9FC42DC69A7500E3193B /* EfficientCodec.swift */; };
 		A60EAE7D23F9CEB3007536CE /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */; };
 		A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
 		A60EBD181FAED953008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
@@ -5911,6 +5912,7 @@
 		A60E045E26DEEA5100DD162B /* MiniFilterViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniFilterViewController.swift; sourceTree = "<group>"; };
 		A60E046026DEEE5E00DD162B /* MiniFilterViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MiniFilterViewController.xib; sourceTree = "<group>"; };
 		A60E046426E037BD00DD162B /* ContentSubscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSubscriber.swift; sourceTree = "<group>"; };
+		A60E9FC42DC69A7500E3193B /* EfficientCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EfficientCodec.swift; sourceTree = "<group>"; };
 		A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 		A60F6FEA270B7F1D0017A003 /* iTermModifyOtherKeys1Test.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermModifyOtherKeys1Test.m; sourceTree = "<group>"; };
 		A61094182A4A213D00AC2268 /* key-dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "key-dark.png"; path = "images/key-dark.png"; sourceTree = "<group>"; };
@@ -11369,6 +11371,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A60E9FC42DC69A7500E3193B /* EfficientCodec.swift */,
 				A643B7F92DAACF3B00EF918E /* PathCompletionHelper.swift */,
 				A643B7F32DA88F1200EF918E /* PathExtractor.swift */,
 				A632FDFE2DA87BBB003256D4 /* PathSniffer.swift */,
@@ -17431,6 +17434,7 @@
 				A6481650228FD240008E7E0C /* iTermWeakProxy.m in Sources */,
 				A6CC7F60274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift in Sources */,
 				A6EA071A24EA043600DD6E17 /* NSURL+iTerm.m in Sources */,
+				A60E9FC52DC69A7900E3193B /* EfficientCodec.swift in Sources */,
 				A6FE614A2AC1EDF70078A66D /* SortedArray.swift in Sources */,
 				A66C818C294E755C00452A11 /* AITerm.swift in Sources */,
 				A60C035D2089698500FE2F1F /* iTermAPIScriptLauncher.m in Sources */,

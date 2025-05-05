@@ -12,15 +12,16 @@
 @protocol iTermLineStringReading;
 @class iTermMutableLineString;
 @protocol iTermMutableStringProtocol;
-@class
-iTermDeltaString;
+@class iTermDeltaString;
+@class iTermMutableRope;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface LineBlock(SwiftInterop)
 
-+ (id<iTermMutableStringProtocol>)createRope;
-+ (id<iTermMutableStringProtocol>)ropeFromData:(NSData *)data;
++ (iTermMutableRope *)createRope;
++ (iTermMutableRope *)ropeFromData:(NSData *)data usedLength:(int)usedLength;
++ (iTermMutableRope *)ropeFromVersion5Data:(NSData *)data;
 - (NSData * _Nullable)decompressedDataFromV4Data:(NSData *)v4data;
 - (void)sanityCheckBidiDisplayInfoForRawLine:(int)i;
 - (void)reallyReloadBidiInfo;
@@ -30,20 +31,21 @@ NS_ASSUME_NONNULL_BEGIN
 - (int)lengthOfLineString:(id<iTermLineStringReading>)lineString;
 - (screen_char_t)continuationOfLineString:(id<iTermLineStringReading>)lineString;
 - (iTermImmutableMetadata)metadataOfLineString:(id<iTermLineStringReading>)lineString;
+- (iTermLineStringMetadata)lineStringMetadataOfLineString:(id<iTermLineStringReading>)lineString;
 
 - (id<iTermLineStringReading>)lineStringWithRange:(NSRange)range
                                      continuation:(screen_char_t)continuation
                                               eol:(unichar)eol
-                                         metadata:(iTermImmutableMetadata)metadata
+                                         metadata:(iTermLineStringMetadata)metadata
                                              bidi:(iTermBidiDisplayInfo * _Nullable)bidi;
 - (screen_char_t)characterAtIndex:(int)i;
 - (ScreenCharArray *)screenCharArrayForLineString:(id<iTermLineStringReading>)lineString;
 - (iTermBidiDisplayInfo *)bidiOfLineString:(id<iTermLineStringReading>)lineString;
-- (id<iTermMutableStringProtocol>)copyOfRope:(id<iTermMutableStringProtocol>)rope;
-- (ScreenCharArray *)expensiveFullScreenCharArrayOfRope:(id<iTermMutableStringProtocol>)rope;
-- (NSString *)shortDescriptionOfRope:(id<iTermMutableStringProtocol>)rope;
-- (NSInteger)lengthOfRope:(id<iTermMutableStringProtocol>)rope;
-- (BOOL)rope:(id<iTermMutableStringProtocol>)rope isEqualToRope:(id<iTermMutableStringProtocol>)other;
+- (iTermMutableRope *)copyOfRope:(iTermMutableRope *)rope;
+- (ScreenCharArray *)expensiveFullScreenCharArrayOfRope:(iTermMutableRope *)rope;
+- (NSString *)shortDescriptionOfRope:(iTermMutableRope *)rope;
+- (NSInteger)lengthOfRope:(iTermMutableRope *)rope;
+- (BOOL)rope:(iTermMutableRope *)rope isEqualToRope:(iTermMutableRope *)other;
 - (NSString *)debugStringForRawLine:(int)i;
 - (void)appendString:(id<iTermLineStringReading>)string;
 - (ScreenCharArray *)screenCharArrayForRange:(NSRange)range;
@@ -60,6 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
                   sourceRange:(NSRange)sourceRange
         destinationStartIndex:(NSInteger)destinationStartIndex;
 - (void)appendExternalAttributesFrom:(id<iTermLineStringReading>)source;
+- (void)replaceRopeWithEmptyRope;
 
 @end
 

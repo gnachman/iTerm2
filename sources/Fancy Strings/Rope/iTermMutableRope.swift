@@ -7,6 +7,12 @@
 
 @objc
 class iTermMutableRope: iTermRope {
+    @objc
+    static func create(data: Data) -> iTermMutableRope? {
+        var decoder = EfficientDecoder(data)
+        return try? iTermMutableRope.create(efficientDecoder: &decoder)
+    }
+
     override func clone() -> any iTermString {
         return iTermRope(guts: guts.clone())
     }

@@ -39,7 +39,6 @@ final class iTermNonASCIIStringTest: XCTestCase {
                                            complex: complex,
                                            style: makeBaseStyle(),
                                            ea: nil)
-        print(nonAscii.deltaString(range: nonAscii.fullRange))
         XCTAssertEqual(nonAscii.cellCount, codes.count)
         // stringValue should compress placeholder to actual char
         XCTAssertEqual(nonAscii.screenCharArray.stringValue, "A漢B")
@@ -240,5 +239,43 @@ final class iTermNonASCIIStringTest: XCTestCase {
         let actual = string.doubleWidthIndexes(range: NSRange(location: 5, length: 2), rebaseTo: 3)
         let expected = IndexSet([3, 4])
         XCTAssertEqual(actual, expected)
+    }
+
+    func testRoundTrip() throws {
+        let ea = iTermExternalAttribute(
+            havingUnderlineColor: true,
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            url: nil,
+            blockIDList: nil,
+            controlCode: nil
+        )
+
+        let baseStyle = makeBaseStyle()
+        let msca = MutableScreenCharArray.emptyLine(ofLength: 0)
+        msca.append("❤️b", fg: baseStyle, bg: baseStyle)
+        let fullStr = msca.stringValue as String
+        let count = Int(msca.length)
+
+        var codes = [UInt16]()
+        var complexSet = IndexSet()
+        for i in 0..<count {
+            let c = msca.line[i]
+            codes.append(UInt16(truncatingIfNeeded: c.code))
+            if c.complexChar != 0 {
+                complexSet.insert(i)
+            }
+        }
+        let original = iTermNonASCIIString(codes: codes, complex: complexSet, style: makeBaseStyle(), ea: ea)
+
+        // Encode
+        var encoder = EfficientEncoder()
+        original.encodeEfficiently(encoder: &encoder)
+        let encodedData = encoder.data
+
+        var decoder = EfficientDecoder(encodedData)
+        let decoded = try iTermNonASCIIString.create(efficientDecoder: &decoder)
+
+        // Verify round-trip equality
+        XCTAssertTrue(original.isEqual(to: decoded))
     }
 }

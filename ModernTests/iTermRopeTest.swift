@@ -372,7 +372,7 @@ final class iTermRopeTests: XCTestCase {
         let onlyZeros = NSRange(location: 2, length: 3)
         XCTAssertEqual(rope.usedLength(range: onlyZeros), Int32(0))
     }
-    
+
     func testBoundaryAlignedRanges() {
         let rope = iTermRope([makeASCII("ab"), makeASCII("cd")]) // "abcd"
         // substring exactly at boundary 2..<2
@@ -423,5 +423,107 @@ final class iTermRopeTests: XCTestCase {
             rope.hasEqual(range: NSRange(location: 2, length: 2), to: ptr.baseAddress!)
         }
         XCTAssertFalse(neq)
+    }
+
+    func testRoundTrip() throws {
+        let uniform = iTermUniformString(char: makeStyle(), length: 5)
+        let legacyStyle = {
+            let style = makeStyle()
+            let sca = MutableScreenCharArray.emptyLine(ofLength: 2)
+            sca.append("ABCD", fg: style, bg: style)
+
+            // Attach external attributes metadata
+            let eaIndex = iTermExternalAttributeIndex()
+            let ea = iTermExternalAttribute(
+                havingUnderlineColor: true,
+                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+                url: nil,
+                blockIDList: nil,
+                controlCode: nil
+            )
+            eaIndex.setAttributes(ea, at: 1, count: 1)
+            var metadata = iTermMetadataDefault()
+            metadata.timestamp = 1234.0
+            metadata.rtlFound = true
+            iTermMetadataSetExternalAttributes(&metadata, eaIndex)
+            sca.setMetadata(metadata)
+
+            return iTermLegacyStyleString(sca)
+        }()
+        let ascii = {
+            let ea = iTermExternalAttribute(
+                havingUnderlineColor: true,
+                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+                url: nil,
+                blockIDList: nil,
+                controlCode: nil
+            )
+            return iTermASCIIString(data: Data([65, 66, 67, 68]),
+                                    style: makeStyle(),
+                                    ea: ea)
+        }()
+        let nonAscii = {
+            let ea = iTermExternalAttribute(
+                havingUnderlineColor: true,
+                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+                url: nil,
+                blockIDList: nil,
+                controlCode: nil
+            )
+
+            let baseStyle = makeStyle()
+            let msca = MutableScreenCharArray.emptyLine(ofLength: 0)
+            msca.append("a❤️b", fg: baseStyle, bg: baseStyle)
+            let count = Int(msca.length)
+
+            var codes = [UInt16]()
+            var complexSet = IndexSet()
+            for i in 0..<count {
+                let c = msca.line[i]
+                codes.append(UInt16(truncatingIfNeeded: c.code))
+                if c.complexChar != 0 {
+                    complexSet.insert(i)
+                }
+            }
+            return iTermNonASCIIString(codes: codes, complex: complexSet, style: baseStyle, ea: ea)
+        }()
+        let substring = {
+            let ea = iTermExternalAttribute(
+                havingUnderlineColor: true,
+                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+                url: nil,
+                blockIDList: nil,
+                controlCode: nil
+            )
+
+            let baseStyle = makeStyle()
+            let msca = MutableScreenCharArray.emptyLine(ofLength: 0)
+            msca.append("a❤️b", fg: baseStyle, bg: baseStyle)
+            let count = Int(msca.length)
+
+            var codes = [UInt16]()
+            var complexSet = IndexSet()
+            for i in 0..<count {
+                let c = msca.line[i]
+                codes.append(UInt16(truncatingIfNeeded: c.code))
+                if c.complexChar != 0 {
+                    complexSet.insert(i)
+                }
+            }
+            let base = iTermNonASCIIString(codes: codes, complex: complexSet, style: baseStyle, ea: ea)
+            return iTermSubString(base: base, range: NSRange(location: 1, length: 2))
+        }()
+        let original = iTermRope([uniform, legacyStyle, ascii, nonAscii, substring])
+
+        // Encode
+        var encoder = EfficientEncoder()
+        original.encodeEfficiently(encoder: &encoder)
+        let encodedData = encoder.data
+
+        var decoder = EfficientDecoder(encodedData)
+        let decoded = try iTermRope.create(efficientDecoder: &decoder)
+
+        // Verify round-trip equality
+        XCTAssertTrue(original.isEqual(to: decoded))
     }
 }
