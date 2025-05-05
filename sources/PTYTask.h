@@ -20,7 +20,7 @@
 @protocol PTYTaskDelegate <NSObject>
 // Runs in a background thread. Should do as much work as possible in this
 // thread before kicking off a possibly async task in the main thread.
-- (void)threadedReadTask:(NSData *)data;
+- (void)threadedReadTask:(char *)buffer length:(int)length;
 
 // Runs in the same background task as -threadedReadTask:length:.
 - (void)threadedTaskBrokenPipe;

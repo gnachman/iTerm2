@@ -144,34 +144,3 @@
 }
 
 @end
-
-@implementation VT100Metadata {
-    iTermImmutableMetadata _immutableMetadata;
-    NSData *_cachedEncodedMetadata;
-}
-
-- (instancetype)initWithRTLFound:(BOOL)rtlFound
-                       timestamp:(NSTimeInterval)timestamp
-                         eaIndex:(id<iTermExternalAttributeIndexReading>)eaIndex {
-    self = [super init];
-    if (self) {
-        iTermImmutableMetadataInit(&_immutableMetadata, timestamp, rtlFound, eaIndex);
-    }
-    return self;
-}
-
-- (void)dealloc {
-    iTermImmutableMetadataRelease(_immutableMetadata);
-}
-
-- (NSArray *)encodedMetadata {
-    return iTermImmutableMetadataEncodeToArray(_immutableMetadata);
-}
-
-- (NSData *)dvrEncodableData {
-    if (!_cachedEncodedMetadata) {
-        _cachedEncodedMetadata = iTermImmutableMetadataEncodeToData(_immutableMetadata);
-    }
-    return _cachedEncodedMetadata;
-}
-@end

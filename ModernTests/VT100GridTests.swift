@@ -1887,9 +1887,9 @@ class VT100GridTests: XCTestCase {
         }
 
         XCTAssertEqual(testGrid1.allLinesAsStrings, [
-            "abcd\n",
-            "efgh\n",
-            "ijkl\n",
+            "abcd",
+            "efgh",
+            "ijkl",
             "mnop\n"
         ])
         XCTAssertEqual(testGrid1.cursorX, 1)
@@ -2273,7 +2273,7 @@ class VT100GridTests: XCTestCase {
                              delegate: nil)!
 
         for (i, line) in lines.enumerated() {
-            let s = grid.mutableScreenChars(atLineNumber: Int32(i))!
+            let s = grid.screenChars(atLineNumber: Int32(i))!
 
             for j in 0..<(line.count - 1) {
                 let index = line.index(line.startIndex, offsetBy: j)
@@ -2316,7 +2316,7 @@ class VT100GridTests: XCTestCase {
                              delegate: nil)!
 
         for (i, line) in lines.enumerated() {
-            let s = grid.mutableScreenChars(atLineNumber: Int32(i))!
+            let s = grid.screenChars(atLineNumber: Int32(i))!
 
             for j in 0..<line.count {
                 let index = line.index(line.startIndex, offsetBy: j)
@@ -3927,6 +3927,13 @@ extension VT100Grid {
         return (0..<size.height).map {
             lineAsString($0)
         }
+    }
+
+    func screenCharArray(atLine i: Int32) -> ScreenCharArray? {
+        return ScreenCharArray(line: screenChars(atLineNumber: i),
+                               length: size.width,
+                               metadata: iTermMetadataMakeImmutable(metadata(atLineNumber: i)),
+                               continuation: screenChars(atLineNumber: i)[Int(size.width)])
     }
 
     func lineAsString(_ i: Int32) -> String {

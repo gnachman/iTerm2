@@ -431,7 +431,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     const int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:width];
     NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
     for (NSInteger i = range.location; i < NSMaxRange(range); i++) {
-        [result addObject:[_state.currentGrid screenCharArrayAtLine:i - numLinesInLineBuffer]];
+        const screen_char_t *line = [_state.currentGrid screenCharsAtLineNumber:i - numLinesInLineBuffer];
+        ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:line
+                                                                 length:width
+                                                           continuation:line[width]] autorelease];
+        [result addObject:array];
     }
     return result;
 }
@@ -562,7 +566,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     info.height = _state.currentGrid.size.height;
     info.width = _state.currentGrid.size.width;
 
-    [dvr_ appendFrame:[_state.currentGrid orderedScreenCharDataWithAppendedContinuationMarks]
+    [dvr_ appendFrame:[_state.currentGrid orderedLines]
                length:sizeof(screen_char_t) * (_state.currentGrid.size.width + 1) * (_state.currentGrid.size.height)
              metadata:[_state.currentGrid metadataArray]
            cleanLines:cleanLines
@@ -1594,8 +1598,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 // Warning: this is called on PTYTask's thread.
-- (void)threadedReadTask:(NSData *)data {
-    [_mutableState threadedReadTask:data];
+- (void)threadedReadTask:(char *)buffer length:(int)length {
+    [_mutableState threadedReadTask:buffer length:length];
 }
 
 - (long long)lastPromptLine {

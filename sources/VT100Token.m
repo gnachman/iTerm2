@@ -20,6 +20,7 @@
 
 @implementation VT100Token {
     AsciiData _asciiData;
+    ScreenChars _screenChars;
 }
 
 + (instancetype)token {
@@ -36,9 +37,13 @@ void iTermAsciiDataFree(AsciiData *asciiData) {
     if (asciiData->buffer != asciiData->staticBuffer) {
         free(asciiData->buffer);
     }
+    if (asciiData->screenChars &&
+        asciiData->screenChars->buffer != asciiData->screenChars->staticBuffer) {
+        free(asciiData->screenChars->buffer);
+    }
 }
 
-void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length) {
+void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars) {
     assert(asciiData->buffer == NULL);
 
     asciiData->length = length;
@@ -48,6 +53,18 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length) {
         asciiData->buffer = asciiData->staticBuffer;
     }
     memcpy(asciiData->buffer, bytes, length);
+
+    if (asciiData->length > kStaticScreenCharsCount) {
+        screenChars->buffer = iTermCalloc(asciiData->length, sizeof(screen_char_t));
+    } else {
+        screenChars->buffer = screenChars->staticBuffer;
+        memset(screenChars->buffer, 0, asciiData->length * sizeof(screen_char_t));
+    }
+    for (NSInteger i = 0; i < length; i++) {
+        screenChars->buffer[i].code = asciiData->buffer[i];
+    }
+    screenChars->length = asciiData->length;
+    asciiData->screenChars = screenChars;
 }
 
 
@@ -348,7 +365,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length) {
 }
 
 - (void)setAsciiBytes:(char *)bytes length:(int)length {
-    iTermAsciiDataSet(&_asciiData, bytes, length);
+    iTermAsciiDataSet(&_asciiData, bytes, length, &_screenChars);
 }
 
 - (AsciiData *)asciiData {
@@ -359,6 +376,10 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length) {
     return [[[NSString alloc] initWithBytes:_asciiData.buffer
                                      length:_asciiData.length
                                    encoding:NSASCIIStringEncoding] autorelease];
+}
+
+- (ScreenChars *)screenChars {
+    return &_screenChars;
 }
 
 - (void)translateFromScreenTerminal {

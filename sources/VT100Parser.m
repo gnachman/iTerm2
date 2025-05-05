@@ -166,7 +166,8 @@
                         DLog(@"%@: Using child %@, begin reparsing SSH output in token %@ at depth %@: %@",
                              self, sshParser, token, @(self.depth), token.savedData);
                         NSData *data = token.savedData;
-                        [sshParser putStreamData:data];
+                        [sshParser putStreamData:data.bytes
+                                          length:data.length];
                         const int start = CVectorCount(vector);
                         DLog(@"count before adding parsed tokens is %@", @(start));
                         [sshParser addParsedTokensToVector:vector];
@@ -229,7 +230,8 @@
                         VT100Parser *tempParser = [[[VT100Parser alloc] init] autorelease];
                         tempParser.encoding = encoding;
                         NSData *data = [token.string dataUsingEncoding:encoding];
-                        [tempParser putStreamData:data];
+                        [tempParser putStreamData:data.bytes
+                                           length:data.length];
                         [tempParser addParsedTokensToVector:vector];
                         break;
                     }
@@ -321,9 +323,11 @@
     return NO;
 }
 
-- (void)putStreamData:(NSData *)data {
+- (void)putStreamData:(const char *)bytes length:(int)length {
     @synchronized(self) {
-        VT100ByteStreamAppend(&_byteStream, data.bytes, data.length);
+        VT100ByteStreamAppend(&_byteStream,
+                              (const unsigned char *)bytes,
+                              length);
     }
 }
 

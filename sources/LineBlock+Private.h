@@ -12,21 +12,16 @@
 @protocol iTermLineBlockMutationCertificate;
 @class iTermCharacterBuffer;
 @class iTermWeakBox<T>;
-@class iTermMutableRope;
 
 NS_ASSUME_NONNULL_BEGIN
-
-@protocol iTermLineBlockMutationCertificate
-- (int *)mutableCumulativeLineLengths;
-- (void)setCumulativeLineLengthsCapacity:(int)capacity;
-- (void)invalidate;
-@end
 
 @interface LineBlock() {
     int _startOffset;  // Index of the first non-dropped screen_char_t in _rawBuffer.
 
 @public
-    iTermMutableRope *_rope;
+    // The raw lines, end-to-end. There is no delimiter between each line.
+    iTermCharacterBuffer *_characterBuffer;
+
     int _firstEntry;  // first valid cumulative_line_length
 
 
@@ -199,12 +194,17 @@ typedef struct {
 
 - (LineBlockLocation)locationOfRawLineForWidth:(int)width
                                        lineNum:(int *)lineNum;
-- (BOOL)reallyAppendLineString:(id<iTermLineStringReading>)lineString
-                         width:(int)width
-                          cert:(id<iTermLineBlockMutationCertificate>)cert;
-- (int)cacheAwareOffsetOfWrappedLineInBuffer:(LineBlockLocation)location
-                           wrappedLineNumber:(int)lineNum
-                                       width:(int)width;
+- (int)_wrappedLineWithWrapWidth:(int)width
+                        location:(LineBlockLocation)location
+                         lineNum:(int *)lineNum
+                      lineLength:(int *)lineLength
+               includesEndOfLine:(int *)includesEndOfLine
+                         yOffset:(int * _Nullable)yOffsetPtr
+                    continuation:(screen_char_t * _Nullable)continuationPtr
+            isStartOfWrappedLine:(BOOL * _Nullable)isStartOfWrappedLine
+                        metadata:(out iTermImmutableMetadata * _Nullable)metadataPtr
+                        bidiInfo:(out iTermBidiDisplayInfo * _Nullable * _Nullable)bidiInfoPtr
+                      lineOffset:(out int * _Nullable)lineOffset;
 
 @end
 

@@ -167,7 +167,7 @@
     const screen_char_t *line = [self getLineAtIndex:y];
     int numberOfLines = self.numberOfLines;
     int width = self.width;
-    if (x > 0 && line != nil) {
+    if (x > 0) {
         while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
             x++;
             result.length--;
@@ -190,7 +190,7 @@
     y = end.y;
     ITBetaAssert(y >= 0, @"Negative y to from max of run %@", VT100GridRunDescription(run));
     line = [self getLineAtIndex:y];
-    if (x < width - 1 && line != nil) {
+    if (x < width - 1) {
         while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
             if (x <= 0) {
                 break;
@@ -283,13 +283,8 @@ static void SwapInt(int *a, int *b) {
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
     if (range.end.x == self.width) {
         VLog(@"positionRangeForCoordRange: x=width");
-        screen_char_t continuation;
-        const screen_char_t *line = [self getLineAtIndex:range.end.y continuation:&continuation];
-        if (!line) {
-            DLog(@"Line %@ out of range", @(range.end.y));
-            return nil;
-        }
-        if (line[range.end.x - 1].code == 0 && continuation.code == EOL_HARD) {
+        const screen_char_t *line = [self getLineAtIndex:range.end.y];
+        if (line[range.end.x - 1].code == 0 && line[range.end.x].code == EOL_HARD) {
             VLog(@"positionRangeForCoordRange: has hard newline, set endExtends=YES");
             // The selection goes all the way to the end of the line and there is a null at the
             // end of the line, so it extends to the end of the line. The linebuffer can't recover

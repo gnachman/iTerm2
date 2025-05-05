@@ -139,18 +139,18 @@ class LineBufferTests: XCTestCase {
         first.append(s1, width: width)
         let second = first.copy()
 
-        XCTAssertEqual(first.testOnlyBlock(at: 0).numberOfClients(), 1)
+        XCTAssertEqual(first.testOnlyBlock(at: 0).numberOfClients, 1)
         XCTAssertFalse(first.testOnlyBlock(at: 0).hasOwner())
 
-        XCTAssertEqual(second.testOnlyBlock(at: 0).numberOfClients(), 0)
+        XCTAssertEqual(second.testOnlyBlock(at: 0).numberOfClients, 0)
         XCTAssertTrue(second.testOnlyBlock(at: 0).hasOwner())
 
         second.append(s1, width: width)
 
-        XCTAssertEqual(first.testOnlyBlock(at: 0).numberOfClients(), 0)
+        XCTAssertEqual(first.testOnlyBlock(at: 0).numberOfClients, 0)
         XCTAssertFalse(first.testOnlyBlock(at: 0).hasOwner())
 
-        XCTAssertEqual(second.testOnlyBlock(at: 0).numberOfClients(), 0)
+        XCTAssertEqual(second.testOnlyBlock(at: 0).numberOfClients, 0)
         XCTAssertFalse(second.testOnlyBlock(at: 0).hasOwner())
     }
 
@@ -162,18 +162,18 @@ class LineBufferTests: XCTestCase {
         first.append(s1, width: width)
         let second = first.copy()
 
-        XCTAssertEqual(first.testOnlyBlock(at: 0).numberOfClients(), 1)
+        XCTAssertEqual(first.testOnlyBlock(at: 0).numberOfClients, 1)
         XCTAssertFalse(first.testOnlyBlock(at: 0).hasOwner())
 
-        XCTAssertEqual(second.testOnlyBlock(at: 0).numberOfClients(), 0)
+        XCTAssertEqual(second.testOnlyBlock(at: 0).numberOfClients, 0)
         XCTAssertTrue(second.testOnlyBlock(at: 0).hasOwner())
 
         first.append(s1, width: width)
 
-        XCTAssertEqual(first.testOnlyBlock(at: 0).numberOfClients(), 0)
+        XCTAssertEqual(first.testOnlyBlock(at: 0).numberOfClients, 0)
         XCTAssertFalse(first.testOnlyBlock(at: 0).hasOwner())
 
-        XCTAssertEqual(second.testOnlyBlock(at: 0).numberOfClients(), 0)
+        XCTAssertEqual(second.testOnlyBlock(at: 0).numberOfClients, 0)
         XCTAssertFalse(second.testOnlyBlock(at: 0).hasOwner())
     }
 

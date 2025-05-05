@@ -333,7 +333,7 @@ class AsyncFilter: NSObject {
             destination.removeLastLine()
         }
         lastLineIsTemporary = temporary
-        let sca = lineBufferCopy.rawLineWithMetadata(atWrappedLine: lineNumber, width: width)
+        let sca = lineBufferCopy.rawLine(atWrappedLine: lineNumber, width: width)
         sca.makeSafe()
         destination.append(sca)
     }

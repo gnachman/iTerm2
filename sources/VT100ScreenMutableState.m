@@ -750,14 +750,12 @@ static _Atomic int gPerformingJoinedBlock;
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
         if (rtlFound) {
-            [self.currentGrid setRTLFound:YES onLine:pred.y];
+            [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
         }
         const screen_char_t current = [self.currentGrid characterAt:pred];
         if (current.code != buffer[0].code || current.complexChar != buffer[0].complexChar) {
             // This handles the rare case where we receive a combining mark at the beginning of
-            // `string` and have to modify the preciding character. The design I'm hoping to achieve,
-            // where VT100Grid stores ASCII strings in a barely modified form, will take a performance
-            // hit in this code path.
+            // `string` and have to modify the preciding character.
             [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
                                                 block:^(screen_char_t *sct,
                                                         iTermExternalAttribute *__autoreleasing *eaOut,
@@ -816,7 +814,6 @@ static _Atomic int gPerformingJoinedBlock;
             // Record the last character.
             self.lastCharacter = buffer[len - 1];
             self.lastCharacterIsDoubleWidth = NO;
-#warning Either this is wrong or the succeeding warning in the method below is wrong
             self.lastExternalAttribute = externalAttributes[len];
         }
         LineBuffer *lineBuffer = nil;
@@ -855,57 +852,11 @@ static _Atomic int gPerformingJoinedBlock;
             }];
         }
     }
-    [self didAppendStringAtCursor];
-}
-- (void)didAppendStringAtCursor {
+
     if (self.commandStartCoord.x != -1) {
         [self didUpdatePromptLocation];
         [self commandRangeDidChange];
     }
-}
-
-- (void)appendOptimizedStringAtCursor:(id<iTermString>)string
-                             rtlFound:(BOOL)rtlFound
-                                ascii:(BOOL)ascii {
-    assert(!self.config.publishing);
-    const int len = string.cellCount;
-    if (len > 0) {
-        const screen_char_t lastCharacter = [string characterAt:len - 1];
-
-        if (!ascii && ScreenCharIsDWC_RIGHT(lastCharacter) && !lastCharacter.complexChar) {
-            // Last character is the right half of a double-width character. Use the penultimate character instead.
-            if (len >= 2) {
-                self.lastCharacter = [string characterAt:len - 2];
-                self.lastCharacterIsDoubleWidth = YES;
-                self.lastExternalAttribute = string.externalAttributesIndex[len - 2];
-            }
-        } else {
-            // Record the last character.
-            self.lastCharacter = lastCharacter;
-            self.lastCharacterIsDoubleWidth = NO;
-#warning Either this is wrong or the preceding warning in the method above is wrong
-            self.lastExternalAttribute = [string externalAttributeAt:len - 1];
-        }
-        LineBuffer *lineBuffer = nil;
-        if (self.currentGrid != self.altGrid || self.saveToScrollbackInAlternateScreen) {
-            // Not in alt screen or it's ok to scroll into line buffer while in alt screen.k
-            lineBuffer = self.linebuffer;
-        }
-        [self incrementOverflowBy:[self.currentGrid appendOptimizedStringAtCursor:string
-                                                          scrollingIntoLineBuffer:lineBuffer
-                                                              unlimitedScrollback:self.unlimitedScrollback
-                                                          useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                         rtlFound:rtlFound]];
-
-    }
-    [self didAppendStringAtCursor];
-}
-
-- (BOOL)canUseOptimizedStringFastPath {
-    if (!self.wraparoundMode || self.ansi || self.insert) {
-        return NO;
-    }
-    return self.currentGrid.canUseOptimizedStringFastPath;
 }
 
 - (void)appendAsciiDataAtCursor:(AsciiData *)asciiData {
@@ -914,48 +865,42 @@ static _Atomic int gPerformingJoinedBlock;
         return;
     }
     STOPWATCH_START(appendAsciiDataAtCursor);
+    char firstChar = asciiData->buffer[0];
 
-    DLog(@"appendAsciiDataAtCursor: %ld chars at x=%d, y=%d, line=%d",
+    DLog(@"appendAsciiDataAtCursor: %ld chars starting with %c at x=%d, y=%d, line=%d",
          (unsigned long)len,
+         firstChar,
          self.currentGrid.cursorX,
          self.currentGrid.cursorY,
          self.currentGrid.cursorY + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width]);
 
+    screen_char_t *buffer;
+    buffer = asciiData->screenChars->buffer;
 
     VT100Terminal *terminal = self.terminal;
     const screen_char_t defaultChar = terminal.processedDefaultChar;
     iTermExternalAttribute *ea = [terminal externalAttributes];
 
-    const BOOL lineDrawing = [self.charsetUsesLineDrawingMode containsObject:@(terminal.charset)];
-    if (self.config.publishing || lineDrawing || !self.canUseOptimizedStringFastPath) {
-        // Can't use the ASCII optimization. Slow path.
-        screen_char_t *buffer = iTermCalloc(len, sizeof(screen_char_t));
-        for (int i = 0; i < asciiData->length; i++) {
-            buffer[i] = defaultChar;
-            buffer[i].code = asciiData->buffer[i];
+    screen_char_t zero = { 0 };
+    if (memcmp(&defaultChar, &zero, sizeof(defaultChar))) {
+        STOPWATCH_START(setUpScreenCharArray);
+        for (int i = 0; i < len; i++) {
+            CopyForegroundColor(&buffer[i], defaultChar);
+            CopyBackgroundColor(&buffer[i], defaultChar);
         }
-        if (lineDrawing) {
-            // If a graphics character set was selected then translate buffer
-            // characters into graphics characters.
-            ConvertCharsToGraphicsCharset(buffer, asciiData->length);
-        }
-        [self appendScreenCharArrayAtCursor:buffer
-                                     length:len
-                     externalAttributeIndex:ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil
-                                   rtlFound:NO];
-        free(buffer);
-        return;
+        STOPWATCH_LAP(setUpScreenCharArray);
     }
 
-    // Fast path
-    iTermASCIIString *asciiString = [[iTermASCIIString alloc] initWithData:[NSData dataWithBytes:asciiData->buffer
-                                                                                          length:asciiData->length]
-                                                                     style:defaultChar
-                                                                        ea:ea];
-    [self appendOptimizedStringAtCursor:asciiString
-                               rtlFound:NO
-                                  ascii:YES];
+    // If a graphics character set was selected then translate buffer
+    // characters into graphics characters.
+    if ([self.charsetUsesLineDrawingMode containsObject:@(terminal.charset)]) {
+        ConvertCharsToGraphicsCharset(buffer, len);
+    }
 
+    [self appendScreenCharArrayAtCursor:buffer
+                                 length:len
+                 externalAttributeIndex:ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil
+                               rtlFound:NO];
     STOPWATCH_LAP(appendAsciiDataAtCursor);
 }
 
@@ -2219,7 +2164,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
     }
     const int y = self.currentGrid.cursorY;
-    screen_char_t *aLine = [self.currentGrid mutableScreenCharsAtLineNumber:y];
+    screen_char_t *aLine = [self.currentGrid screenCharsAtLineNumber:y];
     BOOL allNulls = YES;
     for (int i = self.currentGrid.cursorX; i < nextTabStop; i++) {
         if (aLine[i].code) {
@@ -2285,8 +2230,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)convertHardNewlineToSoftOnGridLine:(int)line {
-    if ([self.currentGrid continuationForLine:line].code == EOL_HARD) {
-        [self.currentGrid setContinuationMarkOnLine:line to:EOL_SOFT];
+    screen_char_t *aLine = [self.currentGrid screenCharsAtLineNumber:line];
+    if (aLine[self.currentGrid.size.width].code == EOL_HARD) {
+        aLine[self.currentGrid.size.width].code = EOL_SOFT;
     }
 }
 
@@ -2368,7 +2314,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
 
         const screen_char_t *line = [self.currentGrid screenCharsAtLineNumber:cursorY - 1];
-        const unichar c = [self.currentGrid continuationForLine:cursorY - 1].code;
+        const unichar c = line[self.width].code;
         return (c == EOL_SOFT || c == EOL_DWC);
     }
 
@@ -3878,9 +3824,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                       withLines:lines
                                      removedIntervalTreeObjects:&savedITOs
                                                    removedLines:&savedLines];
-    [savedLines enumerateObjectsUsingBlock:^(ScreenCharArray * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        assert(obj.eol == EOL_HARD);
-    }];
     if (!VT100GridAbsCoordRangeIsValid(markRange)) {
         return;
     }
@@ -3904,9 +3847,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
     if (promptLength >= 0) {
         Interval *interval = [self intervalForGridAbsCoordRange:markRange];
-        [savedLines enumerateObjectsUsingBlock:^(ScreenCharArray * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            assert(obj.eol == EOL_HARD);
-        }];
         iTermFoldMark *mark = [[iTermFoldMark alloc] initWithLines:savedLines
                                                          savedITOs:savedITOs
                                                       promptLength:promptLength];
@@ -4040,9 +3980,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [removedSCAs addObject:[[self screenCharArrayForLine:i] clone]];
     }
     if (removedLines) {
-        [removedSCAs enumerateObjectsUsingBlock:^(ScreenCharArray * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            assert(obj.eol == EOL_HARD);
-        }];
         *removedLines = removedSCAs;
     }
 
@@ -4363,9 +4300,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Token Execution
 
 // WARNING: This is called on PTYTask's thread.
-- (void)threadedReadTask:(NSData *)data {
+- (void)threadedReadTask:(char *)buffer length:(int)length {
     // Pass the input stream to the parser.
-    [self.terminal.parser putStreamData:data];
+    [self.terminal.parser putStreamData:buffer length:length];
 
     // Parse the input stream into an array of tokens.
     CVector vector;
@@ -4377,7 +4314,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         return;
     }
 
-    [self addTokens:vector length:data.length highPriority:NO];
+    [self addTokens:vector length:length highPriority:NO];
 }
 
 // WARNING: This is called on PTYTask's thread.
@@ -4394,7 +4331,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)injectData:(NSData *)data {
     VT100Parser *parser = [[VT100Parser alloc] init];
     parser.encoding = self.terminal.encoding;
-    [parser putStreamData:data];
+    [parser putStreamData:data.bytes length:data.length];
     CVector vector;
     CVectorCreate(&vector, 100);
     [parser addParsedTokensToVector:&vector];
@@ -5299,12 +5236,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
         do {
             // Add up to self.altGrid.size.width characters at a time until they're all used.
-            screen_char_t *dest = [self.altGrid mutableScreenCharsAtLineNumber:o];
+            screen_char_t *dest = [self.altGrid screenCharsAtLineNumber:o];
             memcpy(dest, line, MIN(self.altGrid.size.width, length) * sizeof(screen_char_t));
             const BOOL isPartial = (length > self.altGrid.size.width);
-            screen_char_t continuation = dest[self.altGrid.size.width - 1];
-            continuation.code = (isPartial ? EOL_SOFT : EOL_HARD);
-            [self.altGrid setContinuationCharacterOnLine:o to:continuation];
+            dest[self.altGrid.size.width] = dest[self.altGrid.size.width - 1];  // TODO: This is probably wrong?
+            dest[self.altGrid.size.width].code = (isPartial ? EOL_SOFT : EOL_HARD);
             length -= self.altGrid.size.width;
             line += self.altGrid.size.width;
             o++;
@@ -5418,7 +5354,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     NSData *pendingOutput = state[kTmuxWindowOpenerStatePendingOutput];
     if (pendingOutput && pendingOutput.length) {
-        [self.terminal.parser putStreamData:pendingOutput];
+        [self.terminal.parser putStreamData:pendingOutput.bytes
+                                     length:pendingOutput.length];
     }
     self.terminal.insertMode = [state[kStateDictInsertMode] boolValue];
     self.terminal.cursorMode = [state[kStateDictKCursorMode] boolValue];

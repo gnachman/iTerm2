@@ -3691,8 +3691,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens. This blocks when the queue of tokens gets too large.
-- (void)threadedReadTask:(NSData *)data {
-    [_screen threadedReadTask:data];
+- (void)threadedReadTask:(char *)buffer length:(int)length {
+    [_screen threadedReadTask:buffer length:length];
 }
 
 - (BOOL)haveResizedRecently {

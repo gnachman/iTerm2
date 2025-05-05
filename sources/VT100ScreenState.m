@@ -680,31 +680,26 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 - (const screen_char_t *)getLineAtIndex:(int)theIndex {
     return [self getLineAtIndex:theIndex
                     destination:[self.currentGrid resultLineData]
-                          width:self.currentGrid.size.width
-                   continuation:nil];
+                          width:self.currentGrid.size.width];
 }
 
-- (const screen_char_t *)getLineAtIndex:(int)theIndex
-                           continuation:(screen_char_t *)continuationPtr {
+- (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {
     return [self getLineAtIndex:theIndex
-                    destination:[self.currentGrid resultLineData]
-                          width:self.currentGrid.size.width
-                   continuation:continuationPtr];
+                    destination:[NSMutableData dataWithBytesNoCopy:buffer
+                                                            length:(self.currentGrid.size.width + 1) * sizeof(screen_char_t)
+                                                      freeWhenDone:NO]
+                          width:self.currentGrid.size.width];
 }
 
 - (const screen_char_t *)getLineAtIndex:(int)theIndex
                             destination:(NSMutableData *)dataBuffer
-                                  width:(int)width
-                           continuation:(screen_char_t *)continuationPtr {
+                                  width:(int)width {
     ITBetaAssert(theIndex >= 0, @"Negative index to getLineAtIndex");
     assert(dataBuffer.length >= (width + 1) * sizeof(screen_char_t));
     int numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
     screen_char_t *buffer = dataBuffer.mutableBytes;
     if (theIndex >= numLinesInLineBuffer) {
         // Get a line from the circular screen buffer
-        if (continuationPtr) {
-            *continuationPtr = [self.currentGrid continuationForLine:(theIndex - numLinesInLineBuffer)];
-        }
         return [self.currentGrid screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
     } else {
         // Get a line from the scrollback buffer.
@@ -728,16 +723,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         if (cont == EOL_DWC) {
             ScreenCharSetDWC_SKIP(&buffer[self.currentGrid.size.width - 1]);
         }
-        if (continuationPtr) {
-            screen_char_t temp = continuation;
-            temp.code = cont;
-            *continuationPtr = temp;
-        } else {
-            // I think this is the last place where the continuation mark is stored in at index `width`.
-            // I'm afraid to remove it but I don't believe it's actually used.
-            buffer[self.currentGrid.size.width] = continuation;
-            buffer[self.currentGrid.size.width].code = cont;
-        }
+        buffer[self.currentGrid.size.width] = continuation;
+        buffer[self.currentGrid.size.width].code = cont;
 
         return buffer;
     }
@@ -762,9 +749,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     BOOL foundStart = NO;
     const int numLines = [self numberOfLines];
     for (i = MIN(numLines, lineNumber) - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
-        screen_char_t continuation;
-        const screen_char_t *line = [self getLineAtIndex:i continuation:&continuation];
-        if (continuation.code == EOL_HARD || line == nil) {
+        const screen_char_t *line = [self getLineAtIndex:i];
+        if (line[self.width].code == EOL_HARD) {
             *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
             foundStart = YES;
             break;
@@ -778,13 +764,9 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     }
     BOOL done = NO;
     for (i = lineNumber; !done && i < self.numberOfLines && i < lineNumber + kMaxRadius; i++) {
-        screen_char_t continuation;
-        const screen_char_t *line = [self getLineAtIndex:i continuation:&continuation];
-        if (!line) {
-            break;
-        }
+        const screen_char_t *line = [self getLineAtIndex:i];
         int length = self.width;
-        done = continuation.code == EOL_HARD;
+        done = line[length].code == EOL_HARD;
         if (done) {
             // Remove trailing newlines
             while (length > 0 && line[length - 1].code == 0 && !line[length - 1].complexChar) {
@@ -1382,7 +1364,14 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 }
 
 - (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
-    return [self.currentGrid screenCharArrayAtLine:index];
+    const screen_char_t *line = [self.currentGrid screenCharsAtLineNumber:index];
+    const int width = self.width;
+    ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:line
+                                                            length:width
+                                                          metadata:[self.currentGrid immutableMetadataAtLineNumber:index]
+                                                      continuation:line[width]
+                                                          bidiInfo:[self.currentGrid bidiInfoForLine:index]];
+    return array;
 }
 
 - (id<iTermExternalAttributeIndexReading>)externalAttributeIndexForLine:(int)y {

@@ -14,11 +14,8 @@
 #import "iTermMetadata.h"
 #import "LineBlockMetadataArray.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 @class LineBlock;
-@protocol iTermLineStringReading;
-@class iTermMutableLineString;
+
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
@@ -33,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) NSInteger generation;
 
 // Block this was copied from.
-@property(nonatomic, weak, readonly, nullable) LineBlock *progenitor;
+@property(nonatomic, weak, readonly) LineBlock *progenitor;
 @property(nonatomic, readonly) BOOL invalidated;
 @property(nonatomic, readonly) long long absoluteBlockNumber;
 
@@ -52,14 +49,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) unsigned int index;
 
 // Called when an assertion fails to add more contextual information to the message.
-@property(nonatomic, copy, nullable) NSString *(^debugInfo)(void);
-
-// First valid raw line number.
+@property(nonatomic, copy) NSString *(^debugInfo)(void);
 @property(nonatomic, readonly) int firstEntry;
-@property(nonatomic) int desiredCapacity;
+@property(nonatomic, readonly) NSInteger numberOfClients;
 
-+ (instancetype _Nullable)blockWithDictionary:(NSDictionary *)dictionary
-                          absoluteBlockNumber:(long long)absoluteBlockNumber;
++ (instancetype)blockWithDictionary:(NSDictionary *)dictionary
+                absoluteBlockNumber:(long long)absoluteBlockNumber;
 
 - (instancetype)initWithRawBufferSize:(int)size
                   absoluteBlockNumber:(long long)absoluteBlockNumber;
@@ -68,22 +63,40 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
 // Callers should split such lines into multiple pieces.
-- (BOOL)appendLineString:(id<iTermLineStringReading>)lineString
-                   width:(int)width;
+- (BOOL)appendLine:(const screen_char_t*)buffer
+            length:(int)length
+           partial:(BOOL)partial
+             width:(int)width
+          metadata:(iTermImmutableMetadata)metadata
+      continuation:(screen_char_t)continuation;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
-// If the line is not present, decrement *lineNum by the number of lines in this block and return nil.
-- (id<iTermLineStringReading> _Nullable)wrappedLineStringWithWrapWidth:(int)width
-                                                               lineNum:(int *)lineNum;
+// If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
+// If the line is not present, decrement *lineNum by the number of lines in this block and return NULL.
+- (const screen_char_t *)getWrappedLineWithWrapWidth:(int)width
+                                      lineNum:(int*)lineNum
+                                   lineLength:(int*)lineLength
+                            includesEndOfLine:(int*)includesEndOfLine
+                                 continuation:(screen_char_t *)continuationPtr;
 
-- (ScreenCharArray * _Nullable)screenCharArrayForWrappedLineWithWrapWidth:(int)width
+// Sets *yOffsetPtr (if not null) to the number of consecutive empty lines just before |lineNum| because
+// there's no way for the returned pointer to indicate this.
+- (const screen_char_t *)getWrappedLineWithWrapWidth:(int)width
+                                             lineNum:(int*)lineNum
+                                          lineLength:(int*)lineLength
+                                   includesEndOfLine:(int*)includesEndOfLine
+                                             yOffset:(int*)yOffsetPtr
+                                        continuation:(screen_char_t *)continuationPtr
+                                isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
+                                            metadata:(out iTermImmutableMetadata *)metadataPtr;
+
+- (ScreenCharArray *)screenCharArrayForWrappedLineWithWrapWidth:(int)width
                                                         lineNum:(int)lineNum
                                                        paddedTo:(int)paddedSize
                                                  eligibleForDWC:(BOOL)eligibleForDWC;
 
-- (ScreenCharArray * _Nullable)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
-- (ScreenCharArray *)rawLineWithMetadataAtWrappedLineOffset:(int)lineNum width:(int)width;
-- (NSNumber * _Nullable)rawLineNumberAtWrappedLineOffset:(int)lineNum width:(int)width;
+- (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
+- (NSNumber *)rawLineNumberAtWrappedLineOffset:(int)lineNum width:(int)width;
 
 // Get the number of lines in this block at a given screen width.
 - (int)getNumLinesWithWrapWidth:(int)width;
@@ -98,8 +111,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)hasPartial;
 
 // Remove the last line. Returns false if there was none.
-- (id<iTermLineStringReading> _Nullable)popLastLineUpToWidth:(int)width
-                                      forceSoftEOL:(BOOL)forceSoftEOL;
+- (BOOL)popLastLineInto:(screen_char_t const **)ptr
+             withLength:(int*)length
+              upToWidth:(int)width
+               metadata:(out iTermImmutableMetadata *)metadataPtr
+           continuation:(screen_char_t *)continuationPtr;
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
                          width:(int)width;
@@ -117,6 +133,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Are all lines of length 0? True if there are no lines, as well.
 - (BOOL)allLinesAreEmpty;
 
+// Grow the buffer.
+- (void)changeBufferSize:(int)capacity;
+
 // Return the number of raw (unwrapped) lines
 - (int)numRawLines;
 
@@ -126,9 +145,14 @@ NS_ASSUME_NONNULL_BEGIN
 // Return the length of a raw (unwrapped) line
 - (int)lengthOfRawLine:(int)linenum;
 
+// Remove extra space from the end of the buffer. Future appends will fail.
+- (void)shrinkToFit;
+
 // Return a raw line
-- (id<iTermLineStringReading> _Nullable)rawLine:(int)linenum;
-- (int)offsetOfRawLine:(int)linenum;
+- (const screen_char_t *)rawLine:(int)linenum;
+- (ScreenCharArray *)screenCharArrayForRawLine:(int)linenum;
+
+- (NSString *)debugStringForRawLine:(int)i;
 
 // NSLog the contents of the block. For debugging.
 - (void)dump:(int)rawOffset droppedChars:(long long)droppedChars toDebugLog:(BOOL)toDebugLog;
@@ -137,7 +161,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
 - (iTermImmutableMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 
-- (iTermBidiDisplayInfo * _Nullable)bidiInfoForLineNumber:(int)lineNum width:(int)width;
+- (iTermBidiDisplayInfo *)bidiInfoForLineNumber:(int)lineNum width:(int)width;
 
 // Appends the contents of the block to |s|.
 - (void)appendToDebugString:(NSMutableString *)s;
@@ -149,7 +173,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (int)numEntries;
 
 // Searches for a substring, populating results with ResultRange objects.
-// Note that when searching backwards offset is actually the upper bound; the search begins just *before* it.
 - (void)findSubstring:(NSString*)substring
               options:(FindOptions)options
                  mode:(iTermFindMode)mode
@@ -192,6 +215,13 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine;
 - (int)numberOfFullLinesFromOffset:(int)offset
                             length:(int)length
                              width:(int)width;
+
+- (int)numberOfFullLinesFromBuffer:(const screen_char_t *)buffer
+                            length:(int)length
+                             width:(int)width;
+
+- (int)offsetOfRawLine:(int)linenum;
+
 // Finds a where the nth line begins after wrapping and returns its offset from the start of the
 // buffer.
 //
@@ -207,7 +237,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine;
 // |abcde|   <- line is short after wrapping
 // |XXzzzz|
 // The slow code for dealing with DWCs is run only if mayHaveDwc is YES.
-int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int width, BOOL mayHaveDwc);
+int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc);
 
 // Returns a dictionary with the contents of this block. The data is a weak reference and will be
 // invalid if the block is changed.
@@ -222,7 +252,7 @@ int OffsetOfWrappedLine(LineBlock *self, int startOffset, int n, int length, int
 void EnableDoubleWidthCharacterLineCache(void);
 
 - (void)setPartial:(BOOL)partial;
-- (ScreenCharArray * _Nullable)lastRawLine;
+- (ScreenCharArray *)lastRawLine;
 
 // For tests only
 - (LineBlockMutableMetadata)internalMetadataForLine:(int)line;
@@ -233,7 +263,7 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (NSInteger)sizeFromLine:(int)lineNum width:(int)width;
 
 - (id)copy NS_UNAVAILABLE;
-- (id)copyWithZone:(NSZone * _Nullable)zone NS_UNAVAILABLE;
+- (id)copyWithZone:(NSZone *)zone NS_UNAVAILABLE;
 - (LineBlock *)cowCopy;
 
 - (instancetype)copyWithAbsoluteBlockNumber:(long long)absoluteBlockNumber;
@@ -244,13 +274,6 @@ void EnableDoubleWidthCharacterLineCache(void);
 
 // This doesn't support CoW so only call this before making the first copy.
 - (void)eraseRTLStatusInAllCharacters;
-- (void)setBidiForLastRawLine:(iTermBidiDisplayInfo * _Nullable)bidi;
-
-#pragma mark - Testing
-
-- (NSInteger)numberOfClients;
+- (void)setBidiForLastRawLine:(iTermBidiDisplayInfo *)bidi;
 
 @end
-
-NS_ASSUME_NONNULL_END
-

@@ -844,8 +844,10 @@ extension PTYSession {
         let iobuffer = IOBuffer(fileDescriptor: channelClient.fd,
                                 operationQueue: FileDescriptorMonitor.queue) { [weak session] in
             // receive returns nil if only part of a segmented message is received.
-            if let data = channelClient.mux.receive() {
-                session?.threadedReadTask(data)
+            if var data = channelClient.mux.receive() {
+                data.withUnsafeMutableBytes { (ptr: UnsafeMutableRawBufferPointer) in
+                    session?.threadedReadTask(ptr.baseAddress!, length: Int32(ptr.count))
+                }
             }
         } writeClosure: { data in
             channelClient.mux.send(message: data)

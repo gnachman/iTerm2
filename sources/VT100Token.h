@@ -284,6 +284,15 @@ typedef enum {
     VT100_LITERAL
 } VT100TerminalTokenType;
 
+// A preinitialized array of screen_char_t. When ASCII data is present, it will have the codes
+// populated and all other fields zeroed out.
+#define kStaticScreenCharsCount 16
+typedef struct {
+    screen_char_t *buffer;
+    int length;
+    screen_char_t staticBuffer[kStaticScreenCharsCount];
+} ScreenChars;
+
 // Tokens with type VT100_ASCIISTRING are stored in |asciiData| with this type.
 // |buffer| will point at |staticBuffer| or a malloc()ed buffer, depending on
 // |length|.
@@ -291,7 +300,13 @@ typedef struct {
     char *buffer;
     int length;
     char staticBuffer[128];
+    ScreenChars *screenChars;
 } AsciiData;
+
+typedef struct {
+    AsciiData asciiData;
+    ScreenChars screenChars;
+} BundledAsciiData;
 
 NS_INLINE NSString *iTermCreateStringFromAsciiData(AsciiData *asciiData) {
     return [[NSString alloc] initWithBytes:asciiData->buffer
@@ -299,7 +314,7 @@ NS_INLINE NSString *iTermCreateStringFromAsciiData(AsciiData *asciiData) {
                                   encoding:NSASCIIStringEncoding];
 }
 
-void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length);
+void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars);
 void iTermAsciiDataFree(AsciiData *asciiData);
 
 #define SSH_OUTPUT_AUTOPOLL_PID -1000

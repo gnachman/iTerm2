@@ -97,7 +97,13 @@
         const LineBlockMetadata *value = &_array[i];
         LineBlockMetadata *destination = &copy->_array[i];
 
-        destination->lineStringMetadata = value->lineStringMetadata;
+        iTermExternalAttributeIndex *index = iTermMetadataGetExternalAttributesIndex(value->lineMetadata);
+        iTermExternalAttributeIndex *indexCopy = [index copy];
+        iTermMetadataInit(&destination->lineMetadata,
+                          value->lineMetadata.timestamp,
+                          value->lineMetadata.rtlFound,
+                          indexCopy);
+
         destination->continuation = value->continuation;
         destination->number_of_wrapped_lines = 0;
         destination->width_for_number_of_wrapped_lines = 0;
@@ -119,6 +125,9 @@
             _array[i].doubleWidthCharacters = nil;
             _array[i].bidi_display_info = nil;
         }
+    }
+    for (int i = 0; i < _numEntries; i++) {
+        iTermMetadataRelease(_array[i].lineMetadata);
     }
     free(_array);
     _array = (LineBlockMetadata *)0xdeadbeef;
@@ -181,11 +190,11 @@
     return _guts->_first;
 }
 
-- (iTermExternalAttributeIndex *)xx_setEntry:(int)i
-                              fromComponents:(NSArray *)components
-                              migrationIndex:(iTermExternalAttributeIndex *)migrationIndex
-                                 startOffset:(int)startOffset
-                                      length:(int)length {
+- (void)setEntry:(int)i
+  fromComponents:(NSArray *)components
+  migrationIndex:(iTermExternalAttributeIndex *)migrationIndex
+     startOffset:(int)startOffset
+          length:(int)length {
     [self willMutate];
     ITAssertWithMessage(i == _guts->_numEntries, @"i=%@ != numEntries=%@", @(i), @(_guts->_numEntries));
     ITAssertWithMessage(i < _guts->_capacity, @"i=%@ >= capacity=%@", @(i), @(_guts->_capacity));
@@ -214,10 +223,10 @@
     }
     NSNumber *rtlFound = components.count > j ? components[j++] : @NO;
 
-    _guts->_array[i].lineStringMetadata = (iTermLineStringMetadata){
-        .timestamp = timestamp.doubleValue,
-        .rtlFound = rtlFound.boolValue
-    };
+    iTermMetadataInit(&_guts->_array[i].lineMetadata,
+                      timestamp.doubleValue,
+                      rtlFound.boolValue,
+                      eaIndex);
     _guts->_array[i].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
         _guts->_array[i].doubleWidthCharacters = nil;
@@ -232,7 +241,6 @@
     if (components.count > j) {
         _guts->_array[i].bidi_display_info = [[iTermBidiDisplayInfo alloc] initWithDictionary:components[j++]];
     }
-    return eaIndex;
 }
 
 - (void)setFirstIndex:(int)i {
@@ -262,13 +270,21 @@
     return &_guts->_array[i];
 }
 
-- (iTermLineStringMetadata)xx_immutableLineMetadataAtIndex:(int)i {
-    return _guts->_array[i].lineStringMetadata;
+- (iTermImmutableMetadata)immutableLineMetadataAtIndex:(int)i {
+    iTermMetadataRetainAutorelease(_guts->_array[i].lineMetadata);
+    return iTermMetadataMakeImmutable(_guts->_array[i].lineMetadata);
 }
 
 - (screen_char_t)lastContinuation {
     ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
     return _guts->_array[_guts->_numEntries - 1].continuation;
+}
+
+- (id<iTermExternalAttributeIndexReading>)lastExternalAttributeIndex {
+    if (_guts->_numEntries == 0) {
+        return nil;
+    }
+    return iTermMetadataGetExternalAttributesIndex(_guts->_array[_guts->_numEntries - 1].lineMetadata);
 }
 
 - (NSArray *)encodedArray {
@@ -283,12 +299,7 @@
                                   @(_guts->_array[i].continuation.bgGreen),
                                   @(_guts->_array[i].continuation.bgBlue),
                                   @(_guts->_array[i].continuation.backgroundColorMode) ];
-        iTermMetadata temp = {
-            .timestamp = _guts->_array[i].lineStringMetadata.timestamp,
-            .rtlFound = _guts->_array[i].lineStringMetadata.rtlFound,
-            .externalAttributes = nil
-        };
-        NSArray *metadataObjects = iTermMetadataEncodeToArray(temp);
+        NSArray *metadataObjects = iTermMetadataEncodeToArray(_guts->_array[i].lineMetadata);
 
         NSMutableArray *combined = [baseObjects mutableCopy];
         [combined addObjectsFromArray:metadataObjects];
@@ -303,26 +314,51 @@
 
 #pragma mark - Mutation
 
-- (void)xx_append:(iTermLineStringMetadata)lineStringMetadata continuation:(screen_char_t)continuation {
+- (void)setEntry:(int)i value:(const LineBlockMetadata *)value {
+    [self willMutate];
+    LineBlockMetadata *destination = (LineBlockMetadata *)&_guts->_array[i];
+
+    iTermExternalAttributeIndex *index = iTermMetadataGetExternalAttributesIndex(value->lineMetadata);
+    iTermExternalAttributeIndex *indexCopy = [index copy];
+    iTermMetadataInit(&destination->lineMetadata,
+                      value->lineMetadata.timestamp,
+                      value->lineMetadata.rtlFound,
+                      indexCopy);
+
+    destination->continuation = value->continuation;
+    destination->number_of_wrapped_lines = 0;
+    destination->width_for_number_of_wrapped_lines = 0;
+    if (_guts->_useDWCCache) {
+        destination->doubleWidthCharacters = nil;
+    }
+    destination->bidi_display_info = value->bidi_display_info;
+}
+
+- (void)append:(iTermImmutableMetadata)lineMetadata continuation:(screen_char_t)continuation {
     [self willMutate];
     ITAssertWithMessage(_guts->_capacity > 0, @"capacity=%@ <= 0", @(_guts->_capacity));
     ITAssertWithMessage(_guts->_numEntries < _guts->_capacity, @"numEntries=%@ >= capacity=%@", @(_guts->_numEntries), @(_guts->_capacity));
 
-    _guts->_array[_guts->_numEntries].lineStringMetadata = lineStringMetadata;
+    iTermMetadataAutorelease(_guts->_array[_guts->_numEntries].lineMetadata);
+    _guts->_array[_guts->_numEntries].lineMetadata = iTermImmutableMetadataMutableCopy(lineMetadata);
     _guts->_array[_guts->_numEntries].continuation = continuation;
     _guts->_array[_guts->_numEntries].number_of_wrapped_lines = 0;
 
     _guts->_numEntries += 1;
 }
 
-- (const iTermLineStringMetadata *)xx_appendToLastLine:(iTermLineStringMetadata)metadataToAppend
-                                       continuation:(screen_char_t)continuation {
+- (const iTermMetadata *)appendToLastLine:(iTermImmutableMetadata *)metadataToAppend
+                           originalLength:(int)originalLength
+                         additionalLength:(int)additionalLength 
+                             continuation:(screen_char_t)continuation {
     [self willMutate];
     ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
     ITAssertWithMessage(_guts->_numEntries > _guts->_first, @"numEntries=%@ <= first=%@", @(_guts->_numEntries), @(_guts->_first));
 
-    _guts->_array[_guts->_numEntries - 1].lineStringMetadata.timestamp = metadataToAppend.timestamp;
-    _guts->_array[_guts->_numEntries - 1].lineStringMetadata.rtlFound |= metadataToAppend.rtlFound;
+    iTermMetadataAppend(&_guts->_array[_guts->_numEntries - 1].lineMetadata,
+                        originalLength,
+                        metadataToAppend,
+                        additionalLength);
     _guts->_array[_guts->_numEntries - 1].continuation = continuation;
     _guts->_array[_guts->_numEntries - 1].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
@@ -330,7 +366,7 @@
         _guts->_array[_guts->_numEntries - 1].doubleWidthCharacters = nil;
     }
     _guts->_array[_guts->_numEntries - 1].bidi_display_info = nil;
-    return &_guts->_array[_guts->_numEntries - 1].lineStringMetadata;
+    return &_guts->_array[_guts->_numEntries - 1].lineMetadata;
 }
 
 - (void)increaseCapacityTo:(int)newCapacity {
@@ -353,13 +389,14 @@
     };
 }
 
-- (void)xx_removeLast {
+- (void)removeLast {
     [self willMutate];
     ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
     _guts->_numEntries -= 1;
     _guts->_array[_guts->_numEntries].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
         _guts->_array[_guts->_numEntries].doubleWidthCharacters = nil;
+        iTermMetadataSetExternalAttributes(&_guts->_array[_guts->_numEntries].lineMetadata, nil);
     }
     _guts->_array[_guts->_numEntries].bidi_display_info = nil;
 }
@@ -386,24 +423,34 @@
     }
 }
 
+- (void)setLastExternalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
+    [self willMutate];
+    ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
+    ITAssertWithMessage(_guts->_numEntries > _guts->_first, @"numEntries=%@ <= first=%@", @(_guts->_numEntries), @(_guts->_first));
+
+    iTermMetadataSetExternalAttributes(&_guts->_array[_guts->_numEntries - 1].lineMetadata,
+                                       eaIndex);
+
+}
+
 - (void)setRTLFound:(BOOL)rtlFound atIndex:(NSInteger)index {
     [self willMutate];
-    _guts->_array[index].lineStringMetadata.rtlFound = rtlFound;
+    _guts->_array[index].lineMetadata.rtlFound = rtlFound;
 }
 
 - (void)setBidiInfo:(iTermBidiDisplayInfo *)bidiInfo
              atLine:(int)index
            rtlFound:(BOOL)rtlFound {
     [self willMutate];
-    _guts->_array[index].lineStringMetadata.rtlFound = rtlFound;
+    _guts->_array[index].lineMetadata.rtlFound = rtlFound;
     _guts->_array[index].bidi_display_info = bidiInfo;
 }
 
-- (void)xx_removeFirst {
-    [self xx_removeFirst:1];
+- (void)removeFirst {
+    [self removeFirst:1];
 }
 
-- (void)xx_removeFirst:(int)n {
+- (void)removeFirst:(int)n {
     [self willMutate];
     for (int i = 0; i < n; i++) {
         const int first = _guts->_first;
@@ -415,15 +462,17 @@
             _guts->_array[first].doubleWidthCharacters = nil;
         }
         _guts->_array[first].bidi_display_info = nil;
+        iTermMetadataSetExternalAttributes(&_guts->_array[first].lineMetadata, nil);
         _guts->_first += 1;
         ITAssertWithMessage(_guts->_first <= _guts->_numEntries,
                             @"first=%@ > numEntries=%@", @(_guts->_first), @(_guts->_numEntries));
     }
 }
 
-- (void)xx_reset {
+- (void)reset {
     [self willMutate];
     for (int i = 0; i < _guts->_numEntries; i++) {
+        iTermMetadataSetExternalAttributes(&_guts->_array[i].lineMetadata, nil);
         _guts->_array[i].doubleWidthCharacters = nil;
         _guts->_array[i].bidi_display_info = nil;
     }

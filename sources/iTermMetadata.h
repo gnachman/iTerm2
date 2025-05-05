@@ -11,7 +11,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-// This always has the same stuff as iTermMetadata minus external attributes.
 typedef struct {
     NSTimeInterval timestamp;
     BOOL rtlFound;
@@ -109,25 +108,5 @@ NSArray * _Nullable iTermMetadataArrayFromData(NSData *data);
 NSData *iTermMetadataEncodeToData(iTermMetadata metadata);
 NSData *iTermImmutableMetadataEncodeToData(iTermImmutableMetadata metadata);
 iTermMetadata iTermMetadataDecodedFromData(NSData *data);
-
-NS_INLINE iTermLineStringMetadata iTermLineStringMetadataFromiTermMetadata(const iTermMetadata m) {
-    return (iTermLineStringMetadata){
-        .timestamp = m.timestamp,
-        .rtlFound = m.rtlFound
-    };
-}
-
-NS_INLINE iTermLineStringMetadata iTermLineStringMetadataFromiTermImmutableMetadata(const iTermImmutableMetadata m) {
-    return (iTermLineStringMetadata){
-        .timestamp = m.timestamp,
-        .rtlFound = m.rtlFound
-    };
-}
-
-NS_INLINE NSString *iTermLineStringMetadataShortDescription(const iTermLineStringMetadata m) {
-    return [NSString stringWithFormat:@"<timestamp=%@ rtl=%@>",
-            @(m.timestamp),
-            @(m.rtlFound)];
-}
 
 NS_ASSUME_NONNULL_END

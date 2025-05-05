@@ -15,11 +15,10 @@
 #import "iTermParser.h"
 
 @class LineBuffer;
-@class VT100Metadata;
+@class VT100LineInfo;
 @class VT100Terminal;
 @class iTermBidiDisplayInfo;
 @protocol iTermEncoderAdapter;
-@protocol iTermString;
 
 @protocol VT100GridDelegate <NSObject>
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm;
@@ -50,13 +49,12 @@
 @property(nonatomic, readonly) VT100GridSize sizeRespectingRegionConditionally;
 @property(nonatomic, readonly) BOOL haveScrolled;
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
-@property(nonatomic, readonly) NSArray<VT100Metadata *> *metadataArray;
+@property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
 @property(nonatomic, readonly) screen_char_t defaultChar;
 
 - (id<VT100GridReading>)copy;
 
 - (const screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
-- (screen_char_t)continuationForLine:(int)lineNumber;
 - (iTermImmutableMetadata)immutableMetadataAtLineNumber:(int)lineNumber;
 - (BOOL)isCharDirtyAt:(VT100GridCoord)coord;
 - (BOOL)isAnyCharDirty;
@@ -77,6 +75,7 @@
 - (int)lengthOfLineNumber:(int)lineNumber;
 
 - (screen_char_t)defaultChar;
+- (NSData *)defaultLineOfWidth:(int)width;
 
 // Converts a range relative to the start of a row into a grid run. If row is negative, a smaller-
 // than-range.length (but valid!) grid run will be returned.
@@ -107,7 +106,6 @@
 - (NSString *)compactLineDumpWithTimestamps;
 - (NSString *)compactLineDumpWithContinuationMarks;
 - (NSString *)compactDirtyDump;
-- (NSString *)dumpString;
 
 // Returns the coordinate of the cell before this one. It respects scroll regions and double-width
 // characters.
@@ -118,7 +116,7 @@
 - (void)encode:(id<iTermEncoderAdapter>)encoder;
 
 // Returns an array of NSData for lines in order (corresponding with lines on screen).
-- (NSArray<NSData *> *)orderedScreenCharDataWithAppendedContinuationMarks;
+- (NSArray *)orderedLines;
 
 - (void)enumerateCellsInRect:(VT100GridRect)rect
                        block:(void (^)(VT100GridCoord, screen_char_t, iTermExternalAttribute *, BOOL *))block;
@@ -141,7 +139,6 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 
 - (BOOL)lineIsEmpty:(int)n;
 - (BOOL)anyLineDirtyInRange:(NSRange)range;
-- (ScreenCharArray *)screenCharArrayAtLine:(int)lineNumber;
 
 @property (nonatomic, readonly) BOOL mayContainRTL;
 - (BOOL)mayContainRTLInRange:(NSRange)range;
@@ -183,7 +180,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 // Serialized state, but excludes screen contents.
 // DEPRECATED - use encode: instead.
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
-@property(nonatomic, readonly) NSArray<VT100Metadata *> *metadataArray;
+@property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
 // Time of last update. Used for setting timestamps.
 @property(nonatomic) NSTimeInterval currentDate;
 @property(nonatomic) BOOL hasChanged;
@@ -196,7 +193,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 
 - (VT100Grid *)copy;
 
-- (screen_char_t *)mutableScreenCharsAtLineNumber:(int)lineNumber;
+- (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
 - (iTermMetadata)metadataAtLineNumber:(int)lineNumber;
 
 // Set both x and y coord of cursor at once. Cursor positions are clamped to legal values. The cursor
@@ -299,14 +296,6 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
     externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes
                   rtlFound:(BOOL)rtlFound;
 
-- (int)appendOptimizedStringAtCursor:(id<iTermString>)string
-             scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
-                 unlimitedScrollback:(BOOL)unlimitedScrollback
-             useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
-                            rtlFound:(BOOL)rtlFound;
-
-- (BOOL)canUseOptimizedStringFastPath;
-
 // Delete some number of chars starting at a given location, moving chars to the right of them back.
 - (void)deleteChars:(int)num
          startingAt:(VT100GridCoord)startCoord;
@@ -330,6 +319,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 // will be lost.
 - (int)scrollWholeScreenDownByLines:(int)count poppingFromLineBuffer:(LineBuffer *)lineBuffer;
 
+// Returns a grid-owned empty line.
+- (NSMutableData *)defaultLineOfWidth:(int)width;
+
 // Set background/foreground colors in a range.
 - (void)setBackgroundColor:(screen_char_t)bg
            foregroundColor:(screen_char_t)fg
@@ -345,7 +337,6 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
             to:(VT100GridCoord)to;
 
 - (void)setBlockIDList:(NSString *)blockIDList onLine:(int)line;
-- (void)setRTLFound:(BOOL)rtlFound onLine:(int)line;
 
 // Pop lines out of the line buffer and on to the screen. Up to maxLines will be restored. Before
 // popping, lines to be modified will first be filled with defaultChar.
@@ -376,7 +367,6 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (void)moveCursorToLeftMargin;
 
 - (void)setContinuationMarkOnLine:(int)line to:(unichar)code ;
-- (void)setContinuationCharacterOnLine:(int)line to:(screen_char_t)continuation;
 
 // TODO: write a test for this
 - (void)insertChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)attrs at:(VT100GridCoord)pos times:(int)num;
@@ -396,6 +386,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                                           iTermExternalAttribute **eaOut,
                                           VT100GridCoord coord,
                                           BOOL *stop))block;
+- (void)mutateExtendedAttributesOnLine:(int)line
+                        createIfNeeded:(BOOL)createIfNeeded
+                                 block:(void (^)(iTermExternalAttributeIndex *))block;
+
 - (void)enumerateParagraphs:(void (^)(int startLine, NSArray<MutableScreenCharArray *> *scas))closure;
 - (void)performBlockWithoutScrollRegions:(void (^NS_NOESCAPE)(void))block;
 
@@ -403,5 +397,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (BOOL)eraseBidiInfoInDirtyLines;
 - (void)setBidiInfo:(iTermBidiDisplayInfo *)bidiInfo forLine:(int)line;
 - (void)resetBidiDirty;
+
+#pragma mark - Testing use only
+
+- (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber;
 
 @end

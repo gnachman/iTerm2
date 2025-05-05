@@ -298,8 +298,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 // This function is dangerous! It writes to an internal buffer and returns a
 // pointer to it. Better to use getLineAtIndex:withBuffer:.
 - (const screen_char_t * _Nullable)getLineAtIndex:(int)theIndex;
-- (const screen_char_t *)getLineAtIndex:(int)theIndex
-                           continuation:(screen_char_t *)continuationPtr;
+- (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer;
 
 - (iTermStringLine * _Nullable)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                              startPtr:(long long *)startAbsLineNumber;
