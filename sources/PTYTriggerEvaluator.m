@@ -178,6 +178,9 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     if (!_triggersSlownessDetector.enabled) {
         return;
     }
+    if (self.triggers.count == 0) {
+        return;
+    }
     NSDictionary<NSString *, NSNumber *> *dist = [_triggersSlownessDetector timeDistribution];
     const NSTimeInterval totalTime = _triggersSlownessDetector.timeSinceReset;
     if (totalTime > 1) {
