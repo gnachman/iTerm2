@@ -143,7 +143,7 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
         previous = current;
     }
     if (!first) {
-        [self addBackgroundRun:&current toArray:runs endingAtModel:j visual:lastVisualColumn];
+        [self addBackgroundRun:&current toArray:runs endingAtModel:j visual:visualColumn];
     }
 
     iTermBackgroundColorRunsInLine *backgroundColorRuns =
