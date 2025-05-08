@@ -1710,6 +1710,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         wrapped.sshInfo = token.sshInfo;
         switch (token.type) {
             case VT100_ASCIISTRING:
+            case VT100_MIXED_ASCII_CR_LF:
                 wrapped.string = [[NSString alloc] initWithBytes:token.asciiData->buffer
                                                           length:token.asciiData->length
                                                         encoding:NSASCIIStringEncoding];
@@ -1765,7 +1766,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
             [_delegate terminalDidReceiveBase64FileData:token.string ?: @""];
             return;
-        } else if (token->type == VT100_ASCIISTRING) {
+        } else if (token->type == VT100_ASCIISTRING ||
+                   token->type == VT100_MIXED_ASCII_CR_LF) {
             [_delegate terminalDidReceiveBase64FileData:[token stringForAsciiData]];
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
@@ -1787,7 +1789,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
             [_delegate terminalDidReceiveBase64PasteboardString:token.string ?: @""];
             return;
-        } else if (token->type == VT100_ASCIISTRING) {
+        } else if (token->type == VT100_ASCIISTRING ||
+                   token->type == VT100_MIXED_ASCII_CR_LF) {
             [_delegate terminalDidReceiveBase64PasteboardString:[token stringForAsciiData]];
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
@@ -1844,6 +1847,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
         case VT100_ASCIISTRING:
             [_delegate terminalAppendAsciiData:token.asciiData];
+            break;
+        case VT100_MIXED_ASCII_CR_LF:
+            [_delegate terminalAppendMixedAsciiCRLFData:token.asciiData
+                                                  crlfs:token.crlfs];
             break;
 
         case VT100_UNKNOWNCHAR:

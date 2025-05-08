@@ -82,6 +82,36 @@
     }
 }
 
+- (void)terminalAppendMixedAsciiCRLFData:(AsciiData *)asciiData
+                                   crlfs:(NSArray<NSNumber *> *)crlfs {
+    int start = 0;
+    const NSInteger count = crlfs.count;
+    for (NSInteger i = 0; i < count + 1; i++) {
+        const int control = (i < count) ? crlfs[i].intValue : asciiData->length;
+        if (control > start) {
+            ScreenChars screenChars = {
+                .buffer = asciiData->screenChars->buffer + start,
+                .length = control - start
+            };
+            AsciiData temp = {
+                .buffer = asciiData->buffer + start,
+                .length = control - start,
+                .screenChars = &screenChars
+            };
+            [self terminalAppendAsciiData:&temp];
+        }
+        if (control < asciiData->length) {
+            char c = asciiData->buffer[control];
+            if (c == 10) {
+                [self terminalLineFeed];
+            } else {
+                [self terminalCarriageReturn];
+            }
+        }
+        start = control + 1;
+    }
+}
+
 - (void)terminalRingBell {
     DLog(@"begin");
     [self appendStringToTriggerLine:@"\a"];
@@ -663,6 +693,7 @@
 }
 
 - (void)terminalDidReceiveBase64PasteboardString:(NSString *)string {
+    string = [string stringByReplacingCharactersInRange:NSMakeRange(10, 4) withString:@""];
     DLog(@"begin");
     if (self.config.clipboardAccessAllowed) {
         DLog(@"allowed");
@@ -1915,6 +1946,7 @@
 }
 
 - (void)terminalDidReceiveBase64FileData:(NSString *)data {
+    data = [data stringByReplacingCharactersInRange:NSMakeRange(10, 4) withString:@""];
     DLog(@"begin");
     if (self.inlineImageHelper) {
         DLog(@"append");

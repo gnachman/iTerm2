@@ -63,6 +63,7 @@ typedef enum {
     VT100_SKIP,
     VT100_STRING,
     VT100_ASCIISTRING,
+    VT100_MIXED_ASCII_CR_LF,
     VT100_UNKNOWNCHAR,
     VT100_INVALID_SEQUENCE,
     VT100_BINARY_GARBAGE,
@@ -348,6 +349,7 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 
 // For VT100_STRING
 @property(nonatomic, retain) NSString *string;
+@property(nonatomic, retain) NSArray<NSNumber *> *crlfs;
 
 // For saved data (when copying to clipboard) or sixel payload.
 @property(nonatomic, retain) NSData *savedData;

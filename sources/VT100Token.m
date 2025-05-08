@@ -77,6 +77,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     [_kvpKey release];
     [_kvpValue release];
     [_savedData release];
+    [_crlfs release];
 
     iTermAsciiDataFree(&_asciiData);
 
@@ -125,6 +126,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(VT100_SKIP):                      @"VT100_SKIP",
                 @(VT100_STRING):                    @"VT100_STRING",
                 @(VT100_ASCIISTRING):               @"VT100_ASCIISTRING",
+                @(VT100_MIXED_ASCII_CR_LF):         @"VT100_MIXED_ASCII_CR_LF",
                 @(VT100_UNKNOWNCHAR):               @"VT100_UNKNOWNCHAR",
                 @(VT100_INVALID_SEQUENCE):          @"VT100_INVALID_SEQUENCE",
                 @(VT100_BINARY_GARBAGE):            @"VT100_BINARY_GARBAGE",
@@ -357,11 +359,11 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
 }
 
 - (BOOL)isAscii {
-    return type == VT100_ASCIISTRING;
+    return type == VT100_ASCIISTRING || type == VT100_MIXED_ASCII_CR_LF;
 }
 
 - (BOOL)isStringType {
-    return (type == VT100_STRING || type == VT100_ASCIISTRING);
+    return (type == VT100_STRING || type == VT100_ASCIISTRING || type == VT100_MIXED_ASCII_CR_LF);
 }
 
 - (void)setAsciiBytes:(char *)bytes length:(int)length {

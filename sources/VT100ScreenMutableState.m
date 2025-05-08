@@ -586,26 +586,28 @@ static _Atomic int gPerformingJoinedBlock;
 #pragma mark - Terminal Fundamentals
 
 - (void)appendLineFeed {
+    VT100Grid *grid = self.currentGrid;
+
     LineBuffer *lineBufferToUse = self.linebuffer;
-    const BOOL noScrollback = (self.currentGrid == self.altGrid && !self.saveToScrollbackInAlternateScreen);
+    const BOOL noScrollback = (grid == self.altGrid && !self.saveToScrollbackInAlternateScreen);
     if (noScrollback) {
         // In alt grid but saving to scrollback in alt-screen is off, so pass in a nil linebuffer.
         lineBufferToUse = nil;
     }
     if (_currentBlockIDList) {
-        [self.currentGrid setBlockIDList:_currentBlockIDList onLine:self.currentGrid.cursor.y];
+        [grid setBlockIDList:_currentBlockIDList onLine:grid.cursor.y];
     }
-    const BOOL haveScrollRegion = self.currentGrid.haveScrollRegion;
-    const BOOL shouldMoveSelectionIfUnsent = haveScrollRegion && self.currentGrid.cursor.y == VT100GridRangeMax(self.currentGrid.scrollRegionRows);
+    const BOOL haveScrollRegion = grid.haveScrollRegion;
+    const BOOL shouldMoveSelectionIfUnsent = haveScrollRegion && grid.cursor.y == VT100GridRangeMax(grid.scrollRegionRows);
     BOOL sent = NO;
-    [self incrementOverflowBy:[self.currentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
+    [self incrementOverflowBy:[grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
                                                                          unlimitedScrollback:self.unlimitedScrollback
                                                                      useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                                   willScroll:nil
                                                                             sentToLineBuffer:&sent]];
 
     if (!sent && shouldMoveSelectionIfUnsent) {
-        const VT100GridRect rect = [self.currentGrid scrollRegionRect];
+        const VT100GridRect rect = [grid scrollRegionRect];
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenMoveSelectionUpBy:1 inRegion:rect];

@@ -274,10 +274,18 @@ static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
     // and although this while loop completed faster, the overall benchmark speed on spam.cc did
     // not improve.
     VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
+    NSMutableArray<NSNumber *> *crlfs = nil;
     while (VT100ByteStreamCursorGetSize(&cursor) > 0) {
         unsigned char c = VT100ByteStreamCursorPeek(&cursor);
         if (c >= 0x20 && c <= 0x7f) {
             VT100ByteStreamCursorAdvance(&cursor, 1);
+            consumed++;
+        } else if (c == 10 || c == 13) {
+            if (!crlfs) {
+                crlfs = [NSMutableArray array];
+            }
+            VT100ByteStreamCursorAdvance(&cursor, 1);
+            [crlfs addObject:@(consumed)];
             consumed++;
         } else {
             break;
@@ -289,7 +297,12 @@ static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
         token->type = VT100_WAIT;
     } else {
         VT100ByteStreamConsumerSetConsumed(consumer, consumed);
-        token->type = VT100_ASCIISTRING;
+        if (!crlfs) {
+            token->type = VT100_ASCIISTRING;
+        } else {
+            token->type = VT100_MIXED_ASCII_CR_LF;
+            token.crlfs = crlfs;
+        }
     }
 }
 

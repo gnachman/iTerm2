@@ -154,7 +154,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) screen_char_t *mutableLine;
 @property (nonatomic, readwrite) screen_char_t continuation;
 @property (nonatomic, readwrite) int eol;
-@property (nonatomic, readwrite, nullable) iTermBidiDisplayInfo *bidiInfo;
+@property (nonatomic, readwrite, nullable, strong) iTermBidiDisplayInfo *bidiInfo;
 
 - (void)appendScreenCharArray:(ScreenCharArray *)sca;
 - (void)appendString:(NSString *)string style:(screen_char_t)c continuation:(screen_char_t)continuation;

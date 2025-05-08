@@ -307,7 +307,6 @@ extension iTermRope: iTermString {
         }
         var rhsIndex = startIndex
         for (i, substr, localRange) in segmentIterator(inRange: Range(lhsRange)!) {
-            let global = globalSegmentRange(index: i)
             if !substr.isEqual(lhsRange: NSRange(localRange),
                                toString: rhs,
                                startingAtIndex: rhsIndex) {

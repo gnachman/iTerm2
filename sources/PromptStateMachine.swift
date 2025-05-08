@@ -477,7 +477,7 @@ extension VT100Token {
         switch type {
         case VT100_STRING:
             return self.string
-        case VT100_ASCIISTRING:
+        case VT100_MIXED_ASCII_CR_LF, VT100_ASCIISTRING:
             let data = NSData(bytes: asciiData.pointee.buffer, length: Int(asciiData.pointee.length))
             return String(data: data as Data, encoding: encoding)
         case VT100CC_LF:

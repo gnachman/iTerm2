@@ -109,6 +109,9 @@
                 token->type = VT100_LITERAL;
                 token->code = firstChar;
                 VT100ByteStreamConsumerSetConsumed(&consumer, 1);
+            } else if (!_dcsHooked && (firstChar == 10 || firstChar == 13)) {
+                ParseString(&consumer, token, encoding);
+                position = cursor;
             } else {
                 [_controlParser parseControlWithConsumer:&consumer
                                            incidentals:vector
@@ -282,7 +285,8 @@
         if (_saveData) {
             token.savedData = VT100ByteStreamCursorMakeData(&position, length);
         }
-        if (token->type == VT100_ASCIISTRING) {
+        if (token->type == VT100_ASCIISTRING ||
+            token->type == VT100_MIXED_ASCII_CR_LF) {
             [token setAsciiBytes:(char *)VT100ByteStreamCursorGetPointer(&position) length:length];
         }
 

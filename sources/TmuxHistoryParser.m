@@ -38,7 +38,8 @@
     screen_char_t *screenChars;
     NSMutableData *result = [NSMutableData data];
     NSData *histData = [hist dataUsingEncoding:NSUTF8StringEncoding];
-    [terminal.parser putStreamData:histData];
+    [terminal.parser putStreamData:histData.bytes
+                            length:histData.length];
 
     CVector vector;
     CVectorCreate(&vector, 100);
@@ -48,7 +49,8 @@
         VT100Token *token = CVectorGetObject(&vector, i);
         [terminal executeToken:token];
         NSString *string = token.isStringType ? token.string : nil;
-        if (!string && token->type == VT100_ASCIISTRING) {
+        if (!string && (token->type == VT100_ASCIISTRING ||
+                        token->type == VT100_MIXED_ASCII_CR_LF)) {
             string = [token stringForAsciiData];
         }
 
