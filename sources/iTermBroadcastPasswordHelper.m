@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermEchoProbe.h"
+#import "iTermUserDefaults.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PTYSession.h"
@@ -118,7 +119,13 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
     DLog(@"Finished with successes=%@ failures=%@ indeterminate=%@", _successes, _failures, @(_indeterminate));
     for (PTYSession *session in _completion(_successes, _failures)) {
         DLog(@"Send password to %@", session);
-        [session writeTaskNoBroadcast:[_password stringByAppendingString:@"\n"]];
+        NSString *string;
+        if ([iTermUserDefaults shouldSendReturnAfterPassword]) {
+            string = [_password stringByAppendingString:@"\n"];
+        } else {
+            string = _password;
+        }
+        [session echoProbe:nil writeString:string];
     }
     [self cleanup];
 }

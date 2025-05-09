@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermEchoProbeDelegate<NSObject>
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data;
-- (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string;
+- (void)echoProbe:(iTermEchoProbe * _Nullable)echoProbe writeString:(NSString *)string;
 
 // Call -reset from this if you decide not to send the password anyway.
 - (void)echoProbeDidFail:(iTermEchoProbe *)echoProbe;

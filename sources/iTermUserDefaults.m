@@ -30,6 +30,7 @@ static NSString *const iTermUserDefaultsKeyAddTriggerUpdateProfile = @"NoSyncAdd
 static NSString *const iTermUserDefaultsKeyLastSystemPythonVersionRequirement = @"NoSyncLastSystemPythonVersionRequirement";
 static NSString *const iTermUserDefaultsKeyProbeForPassword = @"ProbeForPassword";
 static NSString *const iTermUserDefaultsKeyImportPath = @"ImportPath";
+static NSString *const iTermUserDefaultsKeyShouldSendReturnAfterPassword = @"ShouldSendReturnAfterPassword";
 
 @implementation iTermUserDefaults
 
@@ -60,7 +61,8 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         userDefaults = [NSUserDefaults standardUserDefaults];
-        [userDefaults registerDefaults:@{ iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows: @YES }];
+        [userDefaults registerDefaults:@{ iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows: @YES,
+                                          iTermUserDefaultsKeyShouldSendReturnAfterPassword: @YES }];
     });
     return userDefaults;
 }
@@ -230,6 +232,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 
 + (void)setImportPath:(NSString *)importPath {
     [self.userDefaults setObject:importPath forKey:iTermUserDefaultsKeyImportPath];
+}
+
++ (BOOL)shouldSendReturnAfterPassword {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyShouldSendReturnAfterPassword];
+}
+
++ (void)setShouldSendReturnAfterPassword:(BOOL)shouldSendReturnAfterPassword {
+    [self.userDefaults setBool:shouldSendReturnAfterPassword
+                        forKey:iTermUserDefaultsKeyShouldSendReturnAfterPassword];
 }
 
 @end

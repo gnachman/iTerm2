@@ -18220,6 +18220,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
     [self writeTaskNoBroadcast:string];
+    if ([iTermUserDefaults shouldSendReturnAfterPassword]) {
+        [_view showUnobtrusiveMessage:@"Password sent."
+                             duration:3];
+    } else {
+        [_view showUnobtrusiveMessage:@"Password sent (press Return)."
+                             duration:3];
+    }
 }
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data {

@@ -166,7 +166,9 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
     const BOOL shouldSend = [self.delegate echoProbeShouldSendPassword:self];
     if (shouldSend) {
         [self.delegate echoProbe:self writeString:_password];
-        [self.delegate echoProbe:self writeString:@"\n"];
+        if ([iTermUserDefaults shouldSendReturnAfterPassword]) {
+            [self.delegate echoProbe:self writeString:@"\n"];
+        }
     }
     [self.delegate echoProbeDidSucceed:self];
     _password = nil;

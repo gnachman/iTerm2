@@ -342,6 +342,10 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 
 #pragma mark - Actions
 
+- (IBAction)toggleAutomaticallySendReturn:(id)sender {
+    [iTermUserDefaults setShouldSendReturnAfterPassword:![iTermUserDefaults shouldSendReturnAfterPassword]];
+}
+
 - (IBAction)generatePassword:(id)sender {
     _newPassword.stringValue = [iTermPasswordManagerWindowController randomPassword];
 }
@@ -793,6 +797,9 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
             return NO;
         }
         menuItem.state = _entries[_tableView.clickedRow].sendOTP ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
+    } else if (menuItem.action == @selector(toggleAutomaticallySendReturn:)) {
+        menuItem.state = [iTermUserDefaults shouldSendReturnAfterPassword] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
     return YES;

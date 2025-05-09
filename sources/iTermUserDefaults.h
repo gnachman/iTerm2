@@ -37,6 +37,7 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 @property (class, nonatomic, copy) NSString *lastSystemPythonVersionRequirement;
 @property (class, nonatomic) BOOL probeForPassword;
 @property (class, nonatomic, copy, nullable) NSString *importPath;
+@property (class, nonatomic) BOOL shouldSendReturnAfterPassword;
 
 @end
 
