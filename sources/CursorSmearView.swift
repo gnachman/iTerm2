@@ -58,6 +58,7 @@ class CursorSmearView: NSView {
     private let animationDuration = CFTimeInterval(0.1)
 
     private func makeAnimation(start: NSRect, end: NSRect) -> CAAnimation {
+        DLog("Make animation from \(start) to \(end)")
         let pathAnimation = CAKeyframeAnimation(keyPath: "path")
         pathAnimation.duration = animationDuration
         pathAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -98,12 +99,14 @@ class CursorSmearView: NSView {
 
     private func animationPaths(rect1: NSRect, rect2: NSRect) -> [CGPath] {
         // Compute the convex hull
+        DLog("rect1=\(rect1), rect2=\(rect2)")
         let hull = convexHull(of: rect1, and: rect2)
 
         // Align the start and end rectangles to match the hull
         let startPath = alignRectToConvexHull(rect: rect1, hull: hull)
         let endPath = alignRectToConvexHull(rect: rect2, hull: hull)
 
+        DLog("Use animation path with start=<\(startPath), mid=\(hull), end=\(endPath)")
         return [pathFromVertices(startPath),
                 pathFromVertices(hull),
                 pathFromVertices(endPath)]
