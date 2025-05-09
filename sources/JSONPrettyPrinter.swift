@@ -490,13 +490,13 @@ class JSONAttributedStringBuilder {
 
 extension String {
     func prepending(string: String, toListDelimitedBy delimiter: String) -> String {
-        var parts = components(separatedBy: delimiter)
+        var parts = isEmpty ? [String]() : components(separatedBy: delimiter)
         parts.insert(string, at: 0)
         return parts.joined(separator: delimiter)
     }
     func removing(string: String, fromListDelimitedBy delimiter: String) -> String {
         var parts = components(separatedBy: delimiter)
-        parts.removeAll { $0 == delimiter }
+        parts.removeAll { $0 == string || $0.isEmpty }
         return parts.joined(separator: delimiter)
     }
 }
