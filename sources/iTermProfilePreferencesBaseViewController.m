@@ -29,10 +29,16 @@
 }
 
 - (void)setObject:(NSObject *)value forKey:(NSString *)key {
-    [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
+    [self setObject:value forKey:key withSideEffects:YES];
+}
+
+- (void)setObject:(NSObject *)value forKey:(NSString *)key withSideEffects:(BOOL)sideEffects {
+    if (sideEffects) {
+        [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
+    }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
-    [iTermProfilePreferences setObject:value forKey:key inProfile:profile model:model];
+    [iTermProfilePreferences setObject:value forKey:key inProfile:profile model:model withSideEffects:sideEffects];
 }
 
 - (BOOL)boolForKey:(NSString *)key {

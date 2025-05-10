@@ -183,7 +183,7 @@
                                                           selector:@selector(setTriggersValue:)
                                                             object:[self objectForKey:KEY_TRIGGERS]];
     [[triggerController.window undoManager] setActionName:@"Edit Triggers"];
-    [self setObject:value forKey:KEY_TRIGGERS];
+    [self setObject:value forKey:KEY_TRIGGERS withSideEffects:NO];
 }
 
 - (void)setTriggersValue:(NSArray *)value {
