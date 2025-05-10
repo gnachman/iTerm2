@@ -168,7 +168,7 @@ DQ
                         </connections>
                     </button>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Mk1-Ez-PEA" userLabel="Detail view container">
-                        <rect key="frame" x="460" y="52" width="459" height="283"/>
+                        <rect key="frame" x="460" y="52" width="459" height="303"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     </customView>
                 </subviews>
