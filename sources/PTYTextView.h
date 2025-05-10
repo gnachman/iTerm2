@@ -283,7 +283,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewOpen:(NSString *)string
     workingDirectory:(NSString *)folder
           remoteHost:(id<VT100RemoteHostReading>)remoteHost;
-- (void)textViewEnterShortcutNavigationMode;
+- (void)textViewEnterShortcutNavigationMode:(BOOL)clearOnEnd;
 - (void)textViewExitShortcutNavigationMode;
 - (void)textViewWillHandleMouseDown:(NSEvent *)event;
 - (BOOL)textViewPasteFiles:(NSArray<NSString *> *)filenames;

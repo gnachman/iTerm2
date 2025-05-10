@@ -164,13 +164,14 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
     iTermContentNavigationActionCopy
 };
 
-- (void)convertVisibleSearchResultsToContentNavigationShortcutsWithAction:(iTermContentNavigationAction)action;
+- (void)convertVisibleSearchResultsToContentNavigationShortcutsWithAction:(iTermContentNavigationAction)action
+                                                               clearOnEnd:(BOOL)clearOnEnd;
 
 - (ContentNavigationShortcutView *)addShortcutWithRange:(VT100GridAbsCoordRange)range
                                           keyEquivalent:(NSString *)keyEquivalent
                                                  action:(void (^)(id<iTermContentNavigationShortcutView>,
                                                                   NSEvent *))action;
-- (void)removeContentNavigationShortcuts;
+- (void)removeContentNavigationShortcutsAndSearchResults:(BOOL)removeSearchResults;
 
 // This is meant to be used after the view finishes animating.
 - (void)removeContentNavigationShortcutView:(id<iTermContentNavigationShortcutView>)view;

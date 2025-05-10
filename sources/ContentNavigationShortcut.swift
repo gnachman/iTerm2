@@ -15,6 +15,8 @@ protocol ContentNavigationShortcutViewProtocol {
     func pop(completion: @escaping () -> ())
     func dissolve(completion: @escaping () -> ())
     var centerScreenCoordinate: NSPoint { get }
+    @objc(highlightPrefix:)
+    func highlight(prefix: String?)
 }
 
 @objc(iTermContentNavigationShortcut)
@@ -48,6 +50,7 @@ class ContentNavigationShortcutView: NSView, ContentNavigationShortcutViewProtoc
     // margin is per side so double for both left+right margins or top+bottom.
     let margin = NSSize(width: 12, height: 12)
     private(set) var terminating = false
+    private var prefix: String?
 
     @objc
     init(shortcut: ContentNavigationShortcut,
@@ -192,6 +195,53 @@ class ContentNavigationShortcutView: NSView, ContentNavigationShortcutViewProtoc
             return NSPoint(x: Double.nan, y: Double.nan)
         }
         return screen.origin
+    }
+
+    func highlight(prefix: String?) {
+        guard prefix != self.prefix else {
+            return
+        }
+        self.prefix = prefix
+
+        guard let shortcut else {
+            return
+        }
+
+        if let prefix, !prefix.isEmpty {
+            if !shortcut.keyEquivalent.hasPrefix(prefix.uppercased()) {
+                pop {}
+                return
+            }
+            setPartiallyHighlightedLabel(prefix: prefix,
+                                         shortcut: shortcut)
+        } else {
+            setRegularLabel(shortcut: shortcut)
+        }
+    }
+
+    private func setRegularLabel(shortcut: ContentNavigationShortcut) {
+        let font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .small))
+        label.stringValue = shortcut.keyEquivalent
+        label.textColor = NSColor.white
+        label.font = font
+    }
+
+    private func setPartiallyHighlightedLabel(prefix: String,
+                                              shortcut: ContentNavigationShortcut) {
+        let font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .small))
+        let baseAttributes: [NSAttributedString.Key: Any] = [NSAttributedString.Key.font: font]
+        var highlightedAttributes = baseAttributes
+        highlightedAttributes[.foregroundColor] = NSColor.white.withAlphaComponent(0.5)
+        var regularAttributes = baseAttributes
+        regularAttributes[.foregroundColor] = NSColor.white
+
+        let parts = [
+            NSAttributedString(string: prefix.uppercased(),
+                               attributes: highlightedAttributes),
+            NSAttributedString(string: String(shortcut.keyEquivalent.dropFirst(prefix.count)),
+                               attributes: regularAttributes),
+        ]
+        label.attributedStringValue = parts.joined(separator: NSAttributedString())
     }
 
     @objc

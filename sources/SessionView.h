@@ -29,7 +29,6 @@
 #import "iTermBackgroundColorView.h"
 #import "iTermFindDriver.h"
 #import "iTermLegacyView.h"
-#import "iTermMetalDriver.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "SessionTitleView.h"
@@ -42,6 +41,7 @@
 @class iTermLegacyView;
 @class iTermMTKView;
 @class iTermMetalDriver;
+@protocol iTermMetalDriverDataSource;
 @protocol iTermSearchResultsMinimapViewDelegate;
 @class iTermSearchResultsMinimapView;
 @class PTYSession;

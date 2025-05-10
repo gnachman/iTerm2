@@ -7,6 +7,7 @@
 //
 
 #import "iTermRestorableSession.h"
+#import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PTYSession.h"

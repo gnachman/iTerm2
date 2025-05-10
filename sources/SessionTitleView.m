@@ -7,6 +7,7 @@
 //
 
 #import "SessionTitleView.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermHamburgerButton.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarViewController.h"

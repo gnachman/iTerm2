@@ -2911,7 +2911,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (IBAction)revealContentNavigationShortcuts:(id)sender {
-    [self convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionOpen];
+    [self convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionOpen
+                                                                 clearOnEnd:NO];
 }
 
 - (IBAction)selectAll:(id)sender {

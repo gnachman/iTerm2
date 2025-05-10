@@ -16768,8 +16768,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [[iTermFindPasteboard sharedInstance] updateObservers:nil internallyGenerated:YES];
 }
 
-- (void)textViewEnterShortcutNavigationMode {
+- (void)textViewEnterShortcutNavigationMode:(BOOL)clearOnEnd {
     _modeHandler.mode = iTermSessionModeShortcutNavigation;
+    _modeHandler.clearSelectionsOnExit = clearOnEnd;
 }
 
 - (void)textViewExitShortcutNavigationMode {
@@ -18758,6 +18759,21 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 #pragma mark - iTermShortcutNavigationModeHandlerDelegate
 
+- (BOOL)shortcutNavigationCharactersAreCommandPrefix:(NSString *)characters {
+    return [[_textview contentNavigationShortcuts] anyWithBlock:^BOOL(iTermContentNavigationShortcut *shortcut) {
+        if (shortcut.view.terminating) {
+            return NO;
+        }
+        return [[shortcut.keyEquivalent lowercaseString] hasPrefix:characters];
+    }];
+}
+
+- (void)shortcutNavigationDidSetPrefix:(NSString *)prefix {
+    [[_textview contentNavigationShortcuts] enumerateObjectsUsingBlock:^(iTermContentNavigationShortcut *shortcut, NSUInteger idx, BOOL * _Nonnull stop) {
+        [shortcut.view highlightPrefix:prefix];
+    }];
+}
+
 - (void (^)(NSEvent *))shortcutNavigationActionForKeyEquivalent:(NSString *)characters {
     return [[_textview contentNavigationShortcuts] objectPassingTest:^BOOL(iTermContentNavigationShortcut *shortcut, NSUInteger index, BOOL *stop) {
         if (shortcut.view.terminating) {
@@ -18768,7 +18784,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)shortcutNavigationDidComplete {
-    [_textview removeContentNavigationShortcuts];
+    [_textview removeContentNavigationShortcutsAndSearchResults:_modeHandler.clearSelectionsOnExit];
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.shortcutNavigationMode = NO;
     }];

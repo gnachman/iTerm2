@@ -891,3 +891,35 @@ extension PTYSession {
     }
 
 }
+
+@objc
+extension PTYSession {
+    func smartSelectAllVisible() {
+        DLog("begin");
+        textview?.removeContentNavigationShortcutsAndSearchResults(false)
+        let visibleLines = textview.rangeOfVisibleLines
+        let overflow = screen.totalScrollbackOverflow()
+        let y = VT100GridRangeNoninclusiveMaxLL(visibleLines) + overflow
+        textview.findOnPageHelper.setStartPoint(VT100GridAbsCoordMake(0, y))
+        let findDriver = view.findDriverCreatingIfNeeded
+
+        let regex = regularExpressonForNonLowPrecisionSmartSelectionRulesCombined
+        DLog("findDriver=\(findDriver.d) regex=\(regex.d)")
+        var done = false
+        let visibleAbsLines = NSMakeRange(Int(visibleLines.location) + Int(overflow),
+                                          Int(visibleLines.length))
+        var indexes = IndexSet(integersIn: Range(visibleAbsLines)!)
+        findDriver?.closeViewAndDoTemporarySearch(for: regex,
+                                                  mode: .caseSensitiveRegex) { [weak self] linesSearched in
+            guard let textview = self?.textview, !done else {
+                return
+            }
+            indexes.remove(integersIn: Range(linesSearched)!)
+            if indexes.isEmpty {
+                textview.convertVisibleSearchResultsToContentNavigationShortcuts(with: .copy,
+                                                                                 clearOnEnd: true)
+                done = true
+            }
+        }
+    }
+}

@@ -16,6 +16,7 @@
 #import "NSView+iTerm.h"
 #import "PTYTabView.h"
 #import "PTYWindow.h"
+#import "iTermApplication.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermDragHandleView.h"
 #import "iTermFakeWindowTitleLabel.h"

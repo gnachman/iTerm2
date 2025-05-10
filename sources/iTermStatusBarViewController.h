@@ -11,7 +11,6 @@
 #import "iTermFindViewController.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarLayoutAlgorithm.h"
-#import "iTerm2SharedARC-Swift.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

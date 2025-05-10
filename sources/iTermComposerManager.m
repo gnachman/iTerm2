@@ -7,6 +7,7 @@
 
 #import "iTermComposerManager.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMinimalComposerViewController.h"
 #import "iTermStatusBarComposerComponent.h"

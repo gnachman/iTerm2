@@ -2182,7 +2182,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     return view;
 }
 
-- (void)removeContentNavigationShortcuts {
+- (void)removeContentNavigationShortcutsAndSearchResults:(BOOL)removeSearchResults {
     if (!self.contentNavigationShortcuts.count) {
         return;
     }
@@ -2194,7 +2194,9 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
             }];
         }
     }
-    [self clearHighlights:YES];
+    if (removeSearchResults) {
+        [self clearHighlights:YES];
+    }
 }
 
 - (void)removeContentNavigationShortcutView:(id<iTermContentNavigationShortcutView>)view {
@@ -2208,8 +2210,9 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
 }
 
-- (void)convertVisibleSearchResultsToContentNavigationShortcutsWithAction:(iTermContentNavigationAction)action {
-    [self removeContentNavigationShortcuts];
+- (void)convertVisibleSearchResultsToContentNavigationShortcutsWithAction:(iTermContentNavigationAction)action
+                                                               clearOnEnd:(BOOL)clearOnEnd {
+    [self removeContentNavigationShortcutsAndSearchResults:NO];
     const VT100GridRange relativeRange = [self rangeOfVisibleLines];
     const NSRange range = NSMakeRange(relativeRange.location + self.dataSource.totalScrollbackOverflow,
                                       relativeRange.length);
@@ -2230,6 +2233,13 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         }
         return [@(lhs.internalAbsStartY) compare:@(rhs.internalAbsStartY)];
     }];
+    const NSInteger approximateCount = results.count;
+    int digits = 1;
+    NSInteger cardinality = 26;
+    while (cardinality < approximateCount) {
+        digits += 1;
+        cardinality *= 26;
+    }
     NSInteger i = 0;
     for (SearchResult *result in results) {
         VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(result.internalAbsCoordRange,
@@ -2254,10 +2264,13 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         NSString *keyEquivalent;
         if (i < 10) {
             keyEquivalent = [@(i) stringValue];
-        } else if (i < 10 + 26) {
-            keyEquivalent = [NSString stringWithLongCharacter:'A' + i - 10];
         } else {
-            break;
+            keyEquivalent = @"";
+            NSInteger r = i - 10;
+            while (keyEquivalent.length < digits) {
+                keyEquivalent = [[NSString stringWithLongCharacter:'A' + (r % 26)] stringByAppendingString:keyEquivalent];
+                r /= 26;
+            }
         }
         ContentNavigationShortcutView *view =
         [self addShortcutWithRange:result.internalAbsCoordRange
@@ -2305,7 +2318,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     }
     [layerOuter layoutWithin:self.enclosingScrollView.documentVisibleRect];
     [self refresh];
-    [self.delegate textViewEnterShortcutNavigationMode];
+    [self.delegate textViewEnterShortcutNavigationMode:clearOnEnd];
     [self.window makeFirstResponder:self];
 }
 

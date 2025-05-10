@@ -440,35 +440,72 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
 
 @end
 
-@implementation iTermShortcutNavigationModeHandler
-- (BOOL)wouldHandleEvent:(NSEvent *)event {
+@implementation iTermShortcutNavigationModeHandler {
+    NSString *_prefix;  // What the user has typed so far
+}
+
+static NSString *iTermShortcutNavigationModeHandlerPrefixOnly = @"iTermShortcutNavigationModeHandlerPrefixOnly";
+
+- (void)setPrefix:(NSString *)prefix {
+    [self.delegate shortcutNavigationDidSetPrefix:prefix];
+    _prefix = [prefix copy];
+}
+
+- (NSString *)validKeyEquivalentForEvent:(NSEvent *)event {
     const NSEventModifierFlags mask = (NSEventModifierFlagCommand |
                                        NSEventModifierFlagControl);
     if ((event.modifierFlags & mask) != 0) {
-        return NO;
+        return nil;
     }
     if (event.characters.length == 0) {
-        return NO;
+        return nil;
     }
     if ([event.characters characterAtIndex:0] == 27) {
-        return  YES;
+        return event.characters;
     }
-    return [self.delegate shortcutNavigationActionForKeyEquivalent:event.charactersIgnoringModifiers] != nil;
+    NSString *candidate = event.charactersIgnoringModifiers;
+    if (_prefix) {
+        candidate = [_prefix stringByAppendingString:candidate];
+    }
+    if ([self.delegate shortcutNavigationActionForKeyEquivalent:candidate] != nil) {
+        [self setPrefix:candidate];
+        return candidate;
+    }
+    if ([self.delegate shortcutNavigationActionForKeyEquivalent:event.charactersIgnoringModifiers] != nil) {
+        [self setPrefix:nil];
+        return event.charactersIgnoringModifiers;
+    }
+    if ([self.delegate shortcutNavigationCharactersAreCommandPrefix:candidate]) {
+        [self setPrefix:candidate];
+        return iTermShortcutNavigationModeHandlerPrefixOnly;
+    }
+    return nil;
 }
 
-- (BOOL)handleEvent:(NSEvent *)event {
-    if (![self wouldHandleEvent:event]) {
-        return NO;
+typedef NS_ENUM(NSUInteger, iTermSessionModeHandlerHandleEvent) {
+    iTermSessionModeHandlerHandleEventUnhandled,
+    iTermSessionModeHandlerHandleEventHandled,
+    iTermSessionModeHandlerHandleEventPartial  // The event is a prefix of a valid command
+};
+
+- (iTermSessionModeHandlerHandleEvent)handleEvent:(NSEvent *)event {
+    NSString *keyEquivalent = [self validKeyEquivalentForEvent:event];
+    if (!keyEquivalent) {
+        return iTermSessionModeHandlerHandleEventUnhandled;
     }
+    if (keyEquivalent == iTermShortcutNavigationModeHandlerPrefixOnly) {
+        return iTermSessionModeHandlerHandleEventPartial;
+    }
+    [self setPrefix:nil];
     if ([event.characters characterAtIndex:0] == 27) {
-        return YES;
+        return iTermSessionModeHandlerHandleEventHandled;
     }
-    void (^block)(NSEvent *) = [self.delegate shortcutNavigationActionForKeyEquivalent:event.charactersIgnoringModifiers];
+    void (^block)(NSEvent *) = [self.delegate shortcutNavigationActionForKeyEquivalent:keyEquivalent];
     if (!block) {
-        return NO;
+        return iTermSessionModeHandlerHandleEventUnhandled;
     }
     block(event);
-    return YES;
+    return iTermSessionModeHandlerHandleEventHandled;
 }
 
 @end
@@ -519,7 +556,7 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
         case iTermSessionModeDefault:
             return NO;
         case iTermSessionModeShortcutNavigation:
-            return [self.shortcutNavigationModeHandler wouldHandleEvent:event];
+            return [self.shortcutNavigationModeHandler validKeyEquivalentForEvent:event] != nil;
         case iTermSessionModeCopy:
             return [self.copyModeHandler wouldHandleEvent:event];
     }
@@ -537,11 +574,16 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
         case iTermSessionModeDefault:
             return NO;
         case iTermSessionModeShortcutNavigation: {
-            const BOOL handled = [_shortcutNavigationModeHandler handleEvent:event];
-            if (handled) {
-                self.mode = iTermSessionModeDefault;
+            switch ([_shortcutNavigationModeHandler handleEvent:event]) {
+                case iTermSessionModeHandlerHandleEventUnhandled:
+                    return NO;
+                case iTermSessionModeHandlerHandleEventPartial:
+                    return YES;
+                case iTermSessionModeHandlerHandleEventHandled:
+                    self.mode = iTermSessionModeDefault;
+                    return YES;
             }
-            return handled;
+            assert(NO);
         }
         case iTermSessionModeCopy: {
             const BOOL handled = [self.copyModeHandler handleEvent:event];

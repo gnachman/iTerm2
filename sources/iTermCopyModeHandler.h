@@ -49,6 +49,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void (^)(NSEvent *))shortcutNavigationActionForKeyEquivalent:(NSString *)characters;
 - (void)shortcutNavigationDidComplete;
 - (void)shortcutNavigationDidBegin;
+- (BOOL)shortcutNavigationCharactersAreCommandPrefix:(NSString *)characters;
+- (void)shortcutNavigationDidSetPrefix:(NSString *)prefix;
 @end
 
 @interface iTermShortcutNavigationModeHandler: NSObject
@@ -66,9 +68,11 @@ typedef NS_ENUM(NSUInteger, iTermSessionMode) {
 @property (nonatomic) iTermSessionMode mode;
 - (iTermCopyModeHandler *)copyModeHandler NOT_COPY_FAMILY;
 @property (nonatomic, readonly) iTermShortcutNavigationModeHandler *shortcutNavigationModeHandler;
+@property (nonatomic) BOOL clearSelectionsOnExit;
 
 - (BOOL)wouldHandleEvent:(NSEvent *)event;
 - (void)enterCopyModeWithoutCleverness;
+
 - (BOOL)handleEvent:(NSEvent *)event;
 - (BOOL)shouldAutoEnterWithEvent:(NSEvent *)event;
 - (BOOL)previousMark;

@@ -43,6 +43,7 @@
 #import "iTermInstantReplayWindowController.h"
 #import "iTermKeyMappings.h"
 #import "iTermMenuBarObserver.h"
+#import "iTermMetalDriver.h"
 #import "iTermObject.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermOrderEnforcer.h"
@@ -3163,7 +3164,8 @@ ITERM_WEAKLY_REFERENCEABLE
         const NSRange visibleAbsLines = NSMakeRange(visibleLines.location + session.screen.totalScrollbackOverflow,
                                                     visibleLines.length);
         if (NSLocationInRange(visibleAbsLines.location, linesSearched)) {
-            [session.textview convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionOpen];
+            [session.textview convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionOpen
+                                                                                     clearOnEnd:YES];
             done = YES;
             return;
         }
@@ -3172,30 +3174,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)smartSelectAllVisible:(id)sender {
-    DLog(@"begin");
-    const long long y = VT100GridRangeNoninclusiveMaxLL(self.currentSession.screenRangeOfVisibleLines) + self.currentSession.screen.totalScrollbackOverflow;
-    [self.currentSession.textview.findOnPageHelper setStartPoint:VT100GridAbsCoordMake(0, y)];
-    iTermFindDriver *findDriver = self.currentSession.view.findDriverCreatingIfNeeded;
-
-    NSString *regex = [self.currentSession regularExpressonForNonLowPrecisionSmartSelectionRulesCombined];
-    DLog(@"findDriver=%@ regex=%@", findDriver, regex);
-    __weak PTYSession *session = self.currentSession;
-    __block BOOL done = NO;
-    [findDriver closeViewAndDoTemporarySearchForString:regex
-                                                  mode:iTermFindModeCaseSensitiveRegex
-                                              progress:^(NSRange linesSearched) {
-        if (!session.textview || done) {
-            return;
-        }
-        const VT100GridRange visibleLines = [session.textview rangeOfVisibleLines];
-        const NSRange visibleAbsLines = NSMakeRange(visibleLines.location + session.screen.totalScrollbackOverflow,
-                                                    visibleLines.length);
-        if (NSLocationInRange(visibleAbsLines.location, linesSearched)) {
-            [session.textview convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionCopy];
-            done = YES;
-            return;
-        }
-    }];
+    [self.currentSession smartSelectAllVisible];
     [self makeCurrentSessionFirstResponder];
 }
 

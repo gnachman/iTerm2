@@ -13,6 +13,7 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
+#import "iTermMetalDriver.h"
 #import "iTermPreferences.h"
 #import "iTermSearchResultsMinimapView.h"
 #import "iTermStatusBarContainerView.h"
