@@ -1439,6 +1439,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_mutableState performBlockAsynchronously:block];
 }
 
+- (VT100ScreenState *)immutableState {
+    return _state;
+}
+
 - (BOOL)stateIsShared {
     return _sharedStateCount > 0;
 }

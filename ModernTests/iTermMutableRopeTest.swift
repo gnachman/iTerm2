@@ -63,7 +63,6 @@ final class iTermMutableRopeTests: XCTestCase {
     }
 
     func testSubstringAndIsEqualRanges() {
-        let text = "ABC"
         let style = makeStyle()
         let m = iTermMutableRope(iTermLegacyMutableString(width: 2))
         m.erase(defaultChar: makeStyleChar(letter: UInt16("A".utf16.first!)))
@@ -299,7 +298,7 @@ final class iTermMutableRopeTests: XCTestCase {
     func testHydrateIntoMutableScreenCharArray() {
         // prepare source mutable string "1234"
         let style = makeStyle()
-        var bufSca = MutableScreenCharArray.emptyLine(ofLength: 0)
+        let bufSca = MutableScreenCharArray.emptyLine(ofLength: 0)
         bufSca.append("1234", fg: style, bg: style)
         let m = iTermMutableRope(iTermLegacyMutableString(bufSca))
         let dest = MutableScreenCharArray.emptyLine(ofLength: 6)

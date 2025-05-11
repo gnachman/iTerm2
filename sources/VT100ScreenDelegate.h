@@ -21,6 +21,7 @@
 @class VT100ScreenState;
 @class VT100ScreenConfiguration;
 @class VT100MutableScreenConfiguration;
+@class VT100SavedColorsSlot;
 
 @interface VT100ScreenTokenExecutorUpdate: NSObject
 
@@ -59,6 +60,15 @@
 - (void)triggerSideEffectShowCapturedOutputTool;
 
 @end
+
+typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
+    // We polled for the working directory for a really sketchy reason, such as the user pressing enter.
+    VT100ScreenWorkingDirectoryPushTypePull,
+    // We received an unreliable signal that we should poll, such as an OSC title change.
+    VT100ScreenWorkingDirectoryPushTypeWeakPush,
+    // Got a control sequence giving the current directory. Completely trustworthy.
+    VT100ScreenWorkingDirectoryPushTypeStrongPush
+};
 
 @protocol VT100ScreenDelegate <NSObject, iTermImmutableColorMapDelegate, iTermObject, iTermTriggerSideEffectExecutor>
 
@@ -325,15 +335,6 @@
                         outputRange:(VT100GridCoordRange)outputRange
                             command:(NSString *_Nonnull)command
                                mark:(id<VT100ScreenMarkReading> _Nonnull)mark;
-
-typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
-    // We polled for the working directory for a really sketchy reason, such as the user pressing enter.
-    VT100ScreenWorkingDirectoryPushTypePull,
-    // We received an unreliable signal that we should poll, such as an OSC title change.
-    VT100ScreenWorkingDirectoryPushTypeWeakPush,
-    // Got a control sequence giving the current directory. Completely trustworthy.
-    VT100ScreenWorkingDirectoryPushTypeStrongPush
-};
 
 - (void)screenLogWorkingDirectoryOnAbsoluteLine:(long long)absLine
                                      remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost

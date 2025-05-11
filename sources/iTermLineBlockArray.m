@@ -543,10 +543,10 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     }
     LineBlock *block = _blocks[index];
 
-    // To avoid double-counting Y offsetes, reduce the offset in lines within the block by the number
+    // To avoid double-counting Y offsets, reduce the offset in lines within the block by the number
     // of empty lines that were skipped.
     int dy = 0;
-
+    int additionalRemainder = 0;
     int desiredYOffset = originalDesiredYOffset;
     if (roundUp) {
         // Seek forward until we find a block that contains this position.
@@ -556,7 +556,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
             desiredYOffset -= emptyCount;
             // In the diagrams below the | indicates the location given by position.
             //
-            // Cases 1 and 2 involve the unfortunate behavior that occurds for the position after a
+            // Cases 1 and 2 involve the unfortunate behavior that occurs for the position after a
             // non-empty line not belonging to the next wrapped line but to the location just after
             // the last character on the non-empty line.
             //
@@ -582,6 +582,12 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
             if (!block.allLinesAreEmpty) {
                 // case 1 or 2
                 dy += 1;
+                if (block.numberOfTrailingEmptyLines == 0) {
+                    // Case 2
+                    // The X position will be equal to the length of the last wrapped line.
+                    // For case 1, the x position will be 0.
+                    additionalRemainder = [block lengthOfLastWrappedLineForWidth:width];
+                }
             }
             index += 1;
             block = _blocks[index];
@@ -605,7 +611,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     }
 
     if (remainderPtr) {
-        *remainderPtr = position - [_rawSpaceCache sumOfValuesInRange:NSMakeRange(0, index)];
+        *remainderPtr = position - [_rawSpaceCache sumOfValuesInRange:NSMakeRange(0, index)] + additionalRemainder;
         assert(*remainderPtr >= 0);
     }
     if (blockOffsetPtr) {

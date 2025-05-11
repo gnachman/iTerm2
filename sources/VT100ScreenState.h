@@ -16,7 +16,6 @@
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
-#import "iTerm2SharedARC-Swift.h"
 #import "iTermColorMap.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMark.h"
@@ -53,6 +52,10 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 @class IntervalTree;
 @class iTermMutableArrayOfWeakObjects;
 @class iTermOrderEnforcer;
+@protocol iTermMarkCacheReading;
+@class iTermMarkCache;
+@protocol iTermBlockMarkReading;
+@class VT100ScreenMutableState;
 
 @protocol VT100ScreenState<NSObject>
 
@@ -231,7 +234,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 // -resetScrollbackOverflow.
 @property (nonatomic, readwrite) int scrollbackOverflow;
 @property (nonatomic, readwrite) VT100GridAbsCoord commandStartCoord;
-@property (nonatomic, strong, readonly) iTermMarkCache *markCache;
+@property (nonatomic, strong, readonly) iTermMarkCache *mutableMarkCache;
 @property (nonatomic, readwrite) unsigned int maxScrollbackLines;
 @property (nonatomic, strong, readwrite) NSMutableSet<NSNumber *> *tabStops;
 @property (nonatomic, strong) NSMutableSet<NSNumber *> *charsetUsesLineDrawingMode;

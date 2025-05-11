@@ -402,6 +402,46 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             [s appendFormat:@"(nil)"];
             continue;
         }
+        [s appendFormat:@"%@", ScreenCharArrayToStringDebug(line.line, line.length)];
+        for (int j = line.length; j < width; j++) {
+            [s appendString:@"."];
+        }
+        if (continuationMarks) {
+            if (continuation.code == EOL_HARD) {
+                [s appendString:@"!"];
+            } else if (continuation.code == EOL_SOFT) {
+                [s appendString:@"+"];
+            } else if (continuation.code == EOL_DWC) {
+                [s appendString:@">"];
+            } else {
+                [s appendString:@"?"];
+            }
+        }
+        if (i < n - 1) {
+            [s appendString:@"\n"];
+        }
+    }
+    return s;
+}
+
+- (NSString *)compactLineDumpWithBlockDelimitersAndWidth:(int)width andContinuationMarks:(BOOL)continuationMarks {
+    NSMutableString *s = [NSMutableString string];
+    int n = [self numLinesWithWidth:width];
+    LineBlock *block = nil;
+    LineBlock *lastBlock = nil;
+    for (int i = 0; i < n; i++) {
+        screen_char_t continuation;
+        int remainder = 0;
+        block = [_lineBlocks blockContainingLineNumber:i width:width remainder:&remainder];
+        if (block != lastBlock) {
+            [s appendFormat:@"\n-- Begin block %@ --\n", @(block.absoluteBlockNumber)];
+            lastBlock = block;
+        }
+        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width continuation:&continuation];
+        if (!line) {
+            [s appendFormat:@"(nil)"];
+            continue;
+        }
         [s appendFormat:@"%9d: %@", i, ScreenCharArrayToStringDebug(line.line, line.length)];
         for (int j = line.length; j < width; j++) {
             [s appendString:@"."];
@@ -1346,8 +1386,15 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     }
     int blockNumber = context.absBlockNum - num_dropped_blocks;
     LineBufferPosition *position = [LineBufferPosition position];
-    const long long precedingBlocksLength = [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, blockNumber)];
-    position.absolutePosition = precedingBlocksLength + context.offset + droppedChars;
+    if (context.offset >= 0) {
+        const long long precedingBlocksLength = [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, blockNumber)];
+        position.absolutePosition = precedingBlocksLength + context.offset + droppedChars;
+    } else {
+        // Offset of -1 means we will search beginning at the end of the specified block regardless
+        // of its length.
+        const long long blocksLength = [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, blockNumber + 1)];
+        position.absolutePosition = blocksLength + droppedChars;
+    }
     position.yOffset = 0;
     position.extendsToEndOfLine = NO;
     return position;
@@ -2130,7 +2177,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     if (!block.hasPartial) {
         return 0;
     }
-    return [block lengthOfLastLineWrappedToWidth:width];
+    return [block numberOfWrappedLinesForLastRawLineWrappedToWidth:width];
 }
 
 #pragma mark - iTermLineBlockArrayDelegate

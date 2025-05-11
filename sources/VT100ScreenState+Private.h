@@ -14,6 +14,8 @@ extern NSString *VT100ScreenTerminalStateKeyLineDrawingCharacterSets;
 extern NSString *VT100ScreenTerminalStateKeyRemoteHost;
 extern NSString *VT100ScreenTerminalStateKeyPath;
 
+@class iTermFoldMark;
+
 @interface VT100ScreenState() <VT100ScreenMutableState> {
 @protected
     VT100Grid *_primaryGrid;

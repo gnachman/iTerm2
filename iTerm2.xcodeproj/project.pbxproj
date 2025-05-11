@@ -3454,6 +3454,7 @@
 		A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
 		A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
 		A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
+		A6C811F42DCFD5E40088E628 /* SearchEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBBFD42CC87713000A697C /* SearchEngineTests.swift */; };
 		A6C838AD2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
 		A6C838AE2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
 		A6C838AF2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
@@ -17618,6 +17619,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6C811F42DCFD5E40088E628 /* SearchEngineTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1583,7 +1583,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return [self lengthOfRawLine:index];
 }
 
-- (int)lengthOfLastLineWrappedToWidth:(int)width {
+- (int)numberOfWrappedLinesForLastRawLineWrappedToWidth:(int)width {
     int temp = [self getNumLinesWithWrapWidth:width];
     if (temp == 0) {
         return 0;
@@ -1601,6 +1601,43 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
     const int numLines = [self getNumLinesWithWrapWidth:width];
     return (numLines - y);
+}
+
+- (int)lengthOfLastWrappedLineForWidth:(int)width {
+    if (cll_entries == 0) {
+        return 0;
+    }
+    const int length = [self lengthOfLastLine];
+    if (length == 0) {
+        return 0;
+    }
+    int temp = [self getNumLinesWithWrapWidth:width];
+    if (temp == 0) {
+        return 0;
+    }
+    temp -= 1;
+    const LineBlockLocation location = {
+        // Is this structure valid?
+        .found = YES,
+
+        // Offset of the start of the wrapped line from bufferStart.
+        .prev = cumulative_line_lengths[cll_entries - 1] - self.startOffset,
+
+        // How many empty lines to skip at prev.
+        .numEmptyLines = 0,
+
+        // Raw line number.
+        .index = cll_entries - 1,
+
+        // Length of the raw line.
+        .length = length
+    };
+    int x;
+    int y;
+    if (![self convertPosition:location.prev withWidth:width wrapOnEOL:NO toX:&x toY:&y]) {
+        return 0;
+    }
+    return x;
 }
 
 - (ScreenCharArray *)lastRawLine {

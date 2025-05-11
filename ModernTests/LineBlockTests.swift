@@ -687,19 +687,19 @@ class LineBlockTests: XCTestCase {
                       "Should be able to append a 10-char line into a fresh block")
 
         // When wrapping to width 4, the segments are [4,4,2], so the last segment length is 2
-        XCTAssertEqual(block.lengthOfLastLineWrapped(toWidth: wrapWidth1),
+        XCTAssertEqual(block.numberOfWrappedLinesForLastRawLineWrapped(toWidth: wrapWidth1),
                        3,
                        "Expected last wrapped segment length of 3 for raw length 10 at width 4")
 
         // And if we choose a width that divides evenly, e.g. 5 → segments [5,5], last segment length is 5
         let wrapWidth2: Int32 = 5
-        XCTAssertEqual(block.lengthOfLastLineWrapped(toWidth: wrapWidth2),
+        XCTAssertEqual(block.numberOfWrappedLinesForLastRawLineWrapped(toWidth: wrapWidth2),
                        2,
                        "Expected last wrapped segment length of 2 for raw length 10 at width 5")
 
         // Also verify a width larger than the line gives the full length back
         let wrapWidth3: Int32 = 20
-        XCTAssertEqual(block.lengthOfLastLineWrapped(toWidth: wrapWidth3),
+        XCTAssertEqual(block.numberOfWrappedLinesForLastRawLineWrapped(toWidth: wrapWidth3),
                        1,
                        "When wrap width exceeds line length, lengthOfLastLineWrappedToWidth should return the full raw line length")
     }

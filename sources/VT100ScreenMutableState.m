@@ -462,6 +462,10 @@ static _Atomic int gPerformingJoinedBlock;
     return self.config.unlimitedScrollback;
 }
 
+- (iTermMarkCache *)mutableMarkCache {
+    return (iTermMarkCache *)self.markCache;
+}
+
 #pragma mark - Terminal State Accessors
 
 - (BOOL)terminalSoftAlternateScreenMode {
@@ -1524,9 +1528,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // Erase interval tree objects above grid.
     VT100GridAbsCoordRange absRangeToClear = VT100GridAbsCoordRangeMake(0, 0, self.width, self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
     Interval *intervalToClear = [self intervalForGridAbsCoordRange:absRangeToClear];
-    DLog(@"BEFORE: %@", self.markCache.description);
-    [self.markCache eraseUpToLocation:intervalToClear.limit - 1];
-    DLog(@"AFTER: %@", self.markCache.description);
+    DLog(@"BEFORE: %@", self.mutableMarkCache.description);
+    [self.mutableMarkCache eraseUpToLocation:intervalToClear.limit - 1];
+    DLog(@"AFTER: %@", self.mutableMarkCache.description);
     [self removeIntervalTreeObjectsInAbsRange:absRangeToClear
                           exceptAbsCoordRange:VT100GridAbsCoordRangeMake(-1, -1, -1, -1)];
 
@@ -2443,7 +2447,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"addMarkStartingAtAbsoluteLine: %@", mark);
     [self.mutableIntervalTree addObject:mark withInterval:[self intervalForGridAbsCoordRange:absRange]];
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
-        self.markCache[absRange.end.y] = mark;
+        self.mutableMarkCache[absRange.end.y] = mark;
     }
 
     const iTermIntervalTreeObjectType objectType = iTermIntervalTreeObjectTypeForObject(mark);
@@ -2506,7 +2510,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                             [self coordRangeForInterval:obj.entry.interval].end.y);
         return @(theKey);
     }];
-    [self.markCache removeMarks:objects onLines:keys];
+    [self.mutableMarkCache removeMarks:objects onLines:keys];
     [objects enumerateObjectsUsingBlock:^(VT100ScreenMark * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         self.lastCommandMark = nil;
         VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
@@ -2556,7 +2560,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         if (absCoordRangeToClear.start.y == 0 &&
             absCoordRangeToClear.start.x == 0) {
             Interval *interval = [self intervalForGridAbsCoordRange:absCoordRangeToClear];
-            [self.markCache eraseUpToLocation:interval.location];
+            [self.mutableMarkCache eraseUpToLocation:interval.location];
         }
     } else {
         absCoordRangeToSave = VT100GridAbsCoordRangeFromCoordRange(coordRangeToSave, self.cumulativeScrollbackOverflow);
@@ -2661,9 +2665,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         return;
     }
     DLog(@"Begin");
-    DLog(@"BEFORE: %@", self.markCache);
-    [self.markCache eraseUpToLocation:lastDeadLocation - 1];
-    DLog(@"AFTER: %@", self.markCache);
+    DLog(@"BEFORE: %@", self.mutableMarkCache);
+    [self.mutableMarkCache eraseUpToLocation:lastDeadLocation - 1];
+    DLog(@"AFTER: %@", self.mutableMarkCache);
     Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
     for (id<IntervalTreeObject> obj in [self.intervalTree objectsInInterval:deadInterval]) {
         if ([obj.entry.interval limit] <= lastDeadLocation) {
@@ -2728,8 +2732,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         return anObject == mark;
     }];
     self.namedMarksDirty = YES;
-    if (self.markCache[range.end.y] == mark) {
-        [self.markCache removeMark:mark onLine:range.end.y];
+    if (self.mutableMarkCache[range.end.y] == mark) {
+        [self.mutableMarkCache removeMark:mark onLine:range.end.y];
     }
     [self removeAnnotationsOnLine:range.end.y];
 }
@@ -3358,14 +3362,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)reloadMarkCache {
     DLog(@"Reload mark cache");
     long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
-    [self.markCache removeAll];
+    [self.mutableMarkCache removeAll];
     [self.blockStartAbsLine removeAllObjects];
     self.blocksGeneration += 1;
     for (id<IntervalTreeObject> obj in [self.intervalTree allObjects]) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
             VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
             id<iTermMark> mark = (id<iTermMark>)obj;
-            self.markCache[totalScrollbackOverflow + range.end.y] = mark;
+            self.mutableMarkCache[totalScrollbackOverflow + range.end.y] = mark;
             continue;
         }
         if ([obj isKindOfClass:[iTermBlockMark class]]) {
@@ -3986,7 +3990,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 
     // Temporarily remove the command mark at the first line, if any, so we can re-add it later.
-    VT100ScreenMark *commandMark = [VT100ScreenMark castFrom:self.markCache[self.cumulativeScrollbackOverflow + absRange.start.y]];
+    VT100ScreenMark *commandMark = [VT100ScreenMark castFrom:self.mutableMarkCache[self.cumulativeScrollbackOverflow + absRange.start.y]];
     Interval *commandMarkInterval = [commandMark.entry.interval copy];
     if (commandMark) {
         DLog(@"Temporarily remove command mark %@ at %@", commandMark, VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:commandMarkInterval]));
@@ -4154,7 +4158,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)shiftCommandRangesBelowAbsLine:(long long)startLine by:(long long)delta {
     Interval *i = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, startLine, 0, startLine)];
-    for (id<iTermMark> unsafeMark in [self.markCache enumerateFrom:i.location]) {
+    for (id<iTermMark> unsafeMark in [self.mutableMarkCache enumerateFrom:i.location]) {
         [self.mutableIntervalTree mutateObject:unsafeMark block:^(id<IntervalTreeObject> mark) {
             VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
             if (!screenMark) {

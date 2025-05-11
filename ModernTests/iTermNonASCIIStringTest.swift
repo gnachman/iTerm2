@@ -89,7 +89,6 @@ final class iTermNonASCIIStringTest: XCTestCase {
         let baseStyle = makeBaseStyle()
         let msca = MutableScreenCharArray.emptyLine(ofLength: 0)
         msca.append("❤️b", fg: baseStyle, bg: baseStyle)
-        let fullStr = msca.stringValue as String
         let count = Int(msca.length)
 
         var codes = [UInt16]()
@@ -253,7 +252,6 @@ final class iTermNonASCIIStringTest: XCTestCase {
         let baseStyle = makeBaseStyle()
         let msca = MutableScreenCharArray.emptyLine(ofLength: 0)
         msca.append("❤️b", fg: baseStyle, bg: baseStyle)
-        let fullStr = msca.stringValue as String
         let count = Int(msca.length)
 
         var codes = [UInt16]()

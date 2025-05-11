@@ -122,6 +122,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) BOOL sendingIsBlocked;
 
 @property (nonatomic, readonly) BOOL isAtCommandPrompt;
+@property (nonatomic, readonly) VT100ScreenMutableState *mutableState;  // for tests
+@property (nonatomic, readonly) VT100ScreenState *immutableState;  // for tests
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.
@@ -269,12 +271,5 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (LineBufferPosition *)positionForTailSearchOfScreen;
 - (void)foldAbsLineRange:(NSRange)range;
 - (NSString *)intervalTreeDump;
-
-@end
-
-@interface VT100Screen (Testing)
-
-// Destructively sets the screen size.
-- (void)destructivelySetScreenWidth:(int)width height:(int)height;
 
 @end

@@ -461,12 +461,29 @@ struct SearchEngineOutput {
     var finished: Bool
 }
 
+protocol MockableQueue {
+    func mockableAsync(_ closure: @escaping () -> ())
+    func mockableSync<T>(_ closure: () -> (T)) -> T
+}
+
+extension DispatchQueue: MockableQueue {
+    func mockableAsync(_ closure: @escaping () -> ()) {
+        async {
+            closure()
+        }
+    }
+    func mockableSync<T>(_ closure: () -> (T)) -> T {
+        return sync {
+            closure()
+        }
+    }
+}
 
 // SearchOperation has the low level logic of performing a search. It runs on a given dispatch
 // queue and its methods are expected to be called on that queue only, except as noted.
-fileprivate class SearchOperation: Pausable {
-    private let queue: DispatchQueue
-    private var snapshot: TerminalContentSnapshot
+class SearchOperation: Pausable {
+    private let queue: MockableQueue
+    private(set) var snapshot: TerminalContentSnapshot
     private(set) var request: SearchRequest
     private var context = FindContext()
     private(set) var positions: Positions
@@ -507,7 +524,7 @@ fileprivate class SearchOperation: Pausable {
     }
 
     // Describes the range of positions to be searched.
-    fileprivate struct Positions: CustomDebugStringConvertible {
+    struct Positions: CustomDebugStringConvertible {
         var debugDescription: String {
             return "<Positions: start=\(start), stop=\(stop), wrapped=\(wrapped)>"
         }
@@ -562,7 +579,7 @@ fileprivate class SearchOperation: Pausable {
 
     init?(snapshot: TerminalContentSnapshot,
           request: SearchRequest,
-          queue: DispatchQueue) {
+          queue: MockableQueue) {
         guard let positions = Positions(snapshot: snapshot, request: request, wrapped: false) else {
             return nil
         }
@@ -604,7 +621,7 @@ fileprivate class SearchOperation: Pausable {
                                           lineBuffer: snapshot.lineBuffer,
                                           width: snapshot.width(),
                                           overflow: snapshot.cumulativeOverflow)
-        SELog("Searching block \(context.absBlockNum). Position of context is \(snapshot.lineBuffer.position(of: context, width: snapshot.width())). Will stop at \(positions.stop)")
+        SELog("Searching block \(context.absBlockNum). Position of context is \(snapshot.lineBuffer.position(of: context, width: snapshot.width())), coordinate \(rangeSearchedStart). Will stop at \(positions.stop)")
 
         snapshot.lineBuffer.findSubstring(context, stopAt: positions.stop)
 
@@ -612,7 +629,7 @@ fileprivate class SearchOperation: Pausable {
                                         lineBuffer: snapshot.lineBuffer,
                                         width: snapshot.width(),
                                         overflow: snapshot.cumulativeOverflow)
-        SELog("Next block will be \(context.absBlockNum). Updated position of context is \(snapshot.lineBuffer.position(of: context, width: snapshot.width()))")
+        SELog("Next block will be \(context.absBlockNum). Updated position of context is \(snapshot.lineBuffer.position(of: context, width: snapshot.width())), coordinate \(rangeSearchedEnd)")
 
         return searchInfo(searched: VT100GridAbsCoordRange(start: rangeSearchedStart,
                                                            end: rangeSearchedEnd))
@@ -620,7 +637,7 @@ fileprivate class SearchOperation: Pausable {
 
     private func searchInfo(searched coordRange: VT100GridAbsCoordRange) -> SearchInfo {
         let overflow = snapshot.cumulativeOverflow
-        let absBlockNum = context.absBlockNum
+        let absBlockNum = context.offset < 0 ? context.absBlockNum + 1 : context.absBlockNum
         let line = overflow + Int64(snapshot.lineBuffer.numberOfWrappedLines(withWidth: snapshot.width(),
                                                                              upToAbsoluteBlockNumber: absBlockNum))
         let lineRange = switch request.direction {
@@ -658,7 +675,7 @@ fileprivate class SearchOperation: Pausable {
                 return
             }
             SELog("Schedule next search")
-            queue.async { [weak self] in
+            queue.mockableAsync { [weak self] in
                 self?.search()
             }
         } else {
@@ -667,30 +684,33 @@ fileprivate class SearchOperation: Pausable {
     }
 
     func searchOnce() {
-        SELog("search(): start with state=\(state)")
+        SELog("searchOnce(): start with state=\(state)")
         switch state {
         case .ready:
             state = .searching
         case .searching:
             break
         case .finished, .canceled:
+            SELog("searchOnce(): aborting")
             return
         }
 
         // Keep the stop position up to date in case the start or end of the line buffer has changed.
         positions.updateStopPosition(snapshot: snapshot, request: request)
+        SELog("searchOnce(): will enter reallySearch")
         let searchInfo = reallySearch()
+        SELog("searchOnce(): returned from reallySearch with status \(context.status)")
 
         switch context.status {
         case .Matched:
             // found matches
             lastLocationSearched = snapshot.lineBuffer.position(of: context, width: snapshot.width())
-            SELog("Found \(context.results?.count ?? 0) matches. Update lastLocationSearched to \(lastLocationSearched.debugDescriptionOrNil)")
+            SELog("searchOnce(): Found \(context.results?.count ?? 0) matches. Update lastLocationSearched to \(lastLocationSearched.debugDescriptionOrNil)")
             handleMatches(searchInfo: searchInfo)
-            SELog("After handling matches queue has \(resultQueue.count) items")
+            SELog("searchOnce(): After handling matches queue has \(resultQueue.count) items")
         case .NotFound:
             // reached stop point
-            SELog("Reached stopping point")
+            SELog("searchOnce(): Reached stopping point")
             if  !positions.wrapped {
                 wrap()
             } else {
@@ -698,7 +718,7 @@ fileprivate class SearchOperation: Pausable {
             }
         case .Searching:
             lastLocationSearched = snapshot.lineBuffer.position(of: context, width: snapshot.width())
-            SELog("No matches found but keep looking. Update lastLocationSearched to \(lastLocationSearched.debugDescriptionOrNil)")
+            SELog("searchOnce(): No matches found but keep looking. Update lastLocationSearched to \(lastLocationSearched.debugDescriptionOrNil)")
             // keep looking
             break
         @unknown default:
@@ -887,14 +907,20 @@ fileprivate class SearchOperation: Pausable {
         SELog("handleMatches conveted \(allPositions.count) XYRanges to \(searchResults.count) SearchResults from \(String(describing: allPositions.first))->\(String(describing: searchResults.first)) to \(String(describing: allPositions.last))->\(String(describing: searchResults.last))")
         if !request.wantMultipleResults && !searchResults.isEmpty {
             context.reset()
+            resultQueue.produce(SearchEngineOutput(results: searchResults,
+                                                   lineRange: searchInfo.lineRange,
+                                                   coordRange: searchInfo.coordRange,
+                                                   progress: 1.0,
+                                                   finished: state == .finished))
             finish()
+        } else {
+            context.results?.removeAllObjects()
+            resultQueue.produce(SearchEngineOutput(results: searchResults,
+                                                   lineRange: searchInfo.lineRange,
+                                                   coordRange: searchInfo.coordRange,
+                                                   progress: context.progress,
+                                                   finished: state == .finished))
         }
-        context.results?.removeAllObjects()
-        resultQueue.produce(SearchEngineOutput(results: searchResults,
-                                               lineRange: searchInfo.lineRange,
-                                               coordRange: searchInfo.coordRange,
-                                               progress: context.progress,
-                                               finished: state == .finished))
     }
 }
 
@@ -924,17 +950,32 @@ class SearchEngineUnpauser: NSObject, UnpauserProtocol {
 // less historical cruft than iTermSearchEngine.
 class SearchEngine: Pausable {
     fileprivate private(set) var operation: SearchOperation?
-    private static let queue = DispatchQueue(label: "com.iterm2.search")
+    private static let regularQueue = DispatchQueue(label: "com.iterm2.search")
+    private let queue: MockableQueue
     private(set) var snapshot: TerminalContentSnapshot?
+
+    init() {
+        queue = Self.regularQueue
+    }
+
+    init(queue: MockableQueue) {
+        self.queue = queue
+    }
 
     var havePendingResults: Bool {
         return operation?.havePendingResults ?? false
     }
 
+    func prepare(operation: SearchOperation) {
+        self.operation?.cancel()
+        self.snapshot = operation.snapshot
+        self.operation = operation
+    }
+
     func beginSearch(snapshot: TerminalContentSnapshot, request: SearchRequest) -> LineBufferPosition? {
         SELog("beginSearch request=\(request)")
         operation?.cancel()
-        guard let operation = SearchOperation(snapshot: snapshot, request: request, queue: Self.queue) else {
+        guard let operation = SearchOperation(snapshot: snapshot, request: request, queue: queue) else {
             return nil
         }
         self.snapshot = snapshot
@@ -964,28 +1005,29 @@ class SearchEngine: Pausable {
             return
         }
         self.snapshot = snapshot
-        Self.queue.async {
+        queue.mockableAsync {
             operation.updateSnapshot(snapshot: snapshot)
         }
     }
 
     func cancel() {
+        let queue = self.queue
         if let operation = self.operation {
-            Self.queue.async {
+            queue.mockableAsync {
                 operation.cancel()
             }
         }
     }
 
     func pause() -> UnpauserProtocol? {
-        Self.queue.sync {
+        queue.mockableSync {
             return operation?.pause()
         }
     }
 
     func resumeIfOversize() {
         if let operation = self.operation {
-            Self.queue.async {
+            queue.mockableAsync {
                 operation.resumeIfOversize()
             }
         }
@@ -1147,7 +1189,13 @@ class iTermSearchEngine: NSObject, Pausable {
         impl = SearchEngine()
         return impl?.beginSearch(snapshot: snapshot, request: request)
     }
-    
+
+    // For tests
+    func ensureImpl(operation: SearchOperation, queue: MockableQueue) {
+        impl = SearchEngine(queue: queue)
+        impl?.prepare(operation: operation)
+    }
+
     // Get search results, if there are any.
     @objc
     func consume(rangeSearched: UnsafeMutablePointer<VT100GridAbsCoordRange>?,
@@ -1223,8 +1271,8 @@ class iTermSearchEngine: NSObject, Pausable {
         }
         
         func unpause() {
-            unpauser.unpause()
             sideEffect()
+            unpauser.unpause()
         }
     }
     

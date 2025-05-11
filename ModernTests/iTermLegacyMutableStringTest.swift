@@ -99,7 +99,6 @@ final class iTermLegacyMutableStringTests: XCTestCase {
     }
 
     func testSubstringAndIsEqualRanges() {
-        let text = "ABC"
         let style = makeStyle()
         let m = iTermLegacyMutableString(width: 2)
         m.erase(defaultChar: makeStyleChar(letter: UInt16("A".utf16.first!)))
@@ -200,7 +199,6 @@ final class iTermLegacyMutableStringTests: XCTestCase {
     }
 
     func testEAIndexCreateAndSetAndExternalAttribute() {
-        let style = makeStyle()
         let m = iTermLegacyMutableString(width: 2)
         XCTAssertNil(m.eaIndex)
         let ea = iTermExternalAttribute(havingUnderlineColor: true,
@@ -388,7 +386,7 @@ final class iTermLegacyMutableStringTests: XCTestCase {
     func testHydrateIntoMutableScreenCharArray() {
         // prepare source mutable string "1234"
         let style = makeStyle()
-        var bufSca = MutableScreenCharArray.emptyLine(ofLength: 0)
+        let bufSca = MutableScreenCharArray.emptyLine(ofLength: 0)
         bufSca.append("1234", fg: style, bg: style)
         let m = iTermLegacyMutableString(bufSca)
         let dest = MutableScreenCharArray.emptyLine(ofLength: 6)
@@ -404,7 +402,7 @@ final class iTermLegacyMutableStringTests: XCTestCase {
     func testHydrateIntoRawBufferAndExternalAttributes() {
         // make mutable with EA at index 1
         let style = makeStyle()
-        var sca = MutableScreenCharArray.emptyLine(ofLength: 3)
+        let sca = MutableScreenCharArray.emptyLine(ofLength: 3)
         sca.append("ABC", fg: style, bg: style)
         let eaIndex = iTermExternalAttributeIndex()
         let ea = iTermExternalAttribute(havingUnderlineColor: true,
@@ -415,7 +413,7 @@ final class iTermLegacyMutableStringTests: XCTestCase {
         let m = iTermLegacyMutableString(sca)
         // raw buffer
         var buffer = [screen_char_t](repeating: screen_char_t(), count: 3)
-        var destEA = iTermExternalAttributeIndex()
+        let destEA = iTermExternalAttributeIndex()
         let offset: Int32 = 5
         m.hydrate(into: &buffer,
                   eaIndex: destEA,

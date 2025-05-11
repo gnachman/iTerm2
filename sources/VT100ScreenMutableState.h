@@ -15,6 +15,7 @@
 @protocol iTermOrderedToken;
 @class iTermTokenExecutor;
 @class TmuxHistory;
+@class iTermEventuallyConsistentIntervalTree;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -143,7 +144,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeLastLine;
 
 void VT100ScreenEraseCell(screen_char_t *sct,
-                          iTermExternalAttribute **eaOut,
+                          iTermExternalAttribute * _Nullable * _Nonnull eaOut,
                           BOOL eraseAttributes,
                           const screen_char_t *defaultChar);
 

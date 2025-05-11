@@ -14,6 +14,7 @@
 #import "VT100RemoteHost.h"
 #import "VT100ScreenDelegate.h"
 #import "VT100WorkingDirectory.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermGCD.h"
 #import "iTermImageMark.h"
 #import "iTermSelection.h"
@@ -930,13 +931,13 @@ static void SwapInt(int *a, int *b) {
         iTermSubSelection *originalSub = altScreenSubSelectionTuples[i][1];
         VT100GridCoordRange newSelection;
         BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
-                                                limitPosition:newLastPos
-                                                startPosition:positionRange.start
-                                                  endPosition:positionRange.end
-                                                     newWidth:newSize.width
-                                                   lineBuffer:appendOnlyLineBuffer
-                                                        range:&newSelection
-                                                 linesMovedUp:linesMovedUp];
+                                        limitPosition:newLastPos
+                                        startPosition:positionRange.start
+                                          endPosition:positionRange.end
+                                             newWidth:newSize.width
+                                           lineBuffer:appendOnlyLineBuffer
+                                                range:&newSelection
+                                         linesMovedUp:linesMovedUp];
         if (ok) {
             const VT100GridAbsWindowedRange theRange =
             VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeFromCoordRange(newSelection, self.cumulativeScrollbackOverflow),
@@ -1237,11 +1238,11 @@ static void SwapInt(int *a, int *b) {
     const int newTop = rangeOfVisibleLinesConvertedCorrectly ? convertedRangeOfVisibleLines.start.y : -1;
 
     [self didResizeToSize:newSize
-                        selection:selection
-               couldHaveSelection:couldHaveSelection
-                    subSelections:newSubSelections
-                           newTop:newTop
-                         delegate:delegate];
+                selection:selection
+       couldHaveSelection:couldHaveSelection
+            subSelections:newSubSelections
+                   newTop:newTop
+                 delegate:delegate];
     [altScreenLineBuffer endResizing];
     self.commandStartCoord = [self startCoordOfCurrentCommand];
     [self sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];

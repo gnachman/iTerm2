@@ -22,6 +22,7 @@
 #import "NSDictionary+iTerm.h"
 #import "VT100RemoteHost.h"
 #import "VT100WorkingDirectory.h"
+#import "iTerm2SharedARC-Swift.h"
 
 // State restoration dictionary keys
 NSString *const kScreenStateKey = @"Screen State";
@@ -172,6 +173,11 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return _markCache;
 }
 
+- (iTermMarkCache *)mutableMarkCache {
+    [self doesNotRecognizeSelector:_cmd];
+    return nil;
+}
+
 - (id<VT100ScreenMarkReading>)cachedLastCommandMark {
     return _lastCommandMark;
 }
@@ -262,9 +268,9 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 }
 
 - (void)copySlowStuffFrom:(VT100ScreenMutableState *)source {
-    if (!_markCache || source.markCache.dirty) {
+    if (!_markCache || source.mutableMarkCache.dirty) {
         DLog(@"Mark cache is dirty. Update copy in read-only state.");
-        _markCache = source.markCache.readOnlyCopy;
+        _markCache = source.mutableMarkCache.readOnlyCopy;
     }
     if (!_colorMap) {
         _colorMap = [source.colorMap copy];

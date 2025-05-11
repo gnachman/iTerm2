@@ -217,6 +217,41 @@ class LineBufferTests: XCTestCase {
         XCTAssertEqual(first.allScreenCharArrays, [s1, s2])
         XCTAssertEqual(second.allScreenCharArrays, [s2])
     }
+
+    func testConvertPositionMultiBlock() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+        let s1 = screenCharArrayWithDefaultStyle("Hello world",
+                                                 eol: EOL_HARD)
+        let s2 = screenCharArrayWithDefaultStyle("Goodbye cruel world",
+                                                 eol: EOL_HARD)
+        buffer.append(s1, width: width)
+        buffer.forceSeal()
+        buffer.append(s2, width: width)
+
+        let context = FindContext()
+        buffer.prepareToSearch(for: "Hello", startingAt: buffer.lastPosition(), options: .optBackwards, mode: .caseSensitiveSubstring, with: context)
+
+        buffer.findSubstring(context, stopAt: buffer.firstPosition())
+        do {
+            XCTAssertEqual(context.status, .Searching)
+            let pos = buffer.position(of: context, width: width)
+            var ok = ObjCBool(false)
+            let coord = buffer.coordinate(for: pos, width: width, extendsRight: false, ok: &ok)
+            XCTAssertTrue(ok.boolValue)
+            XCTAssertEqual(coord, VT100GridCoord(x: 11, y: 0))
+        }
+
+        buffer.findSubstring(context, stopAt: buffer.firstPosition())
+        do {
+            XCTAssertEqual(context.status, .Matched)
+            let pos = buffer.position(of: context, width: width)
+            var ok = ObjCBool(false)
+            let coord = buffer.coordinate(for: pos, width: width, extendsRight: false, ok: &ok)
+            XCTAssertTrue(ok.boolValue)
+            XCTAssertEqual(coord, VT100GridCoord(x: 0, y: 0))
+        }
+    }
 }
 
 extension LineBuffer {

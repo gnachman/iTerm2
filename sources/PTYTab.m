@@ -2,6 +2,7 @@
 #import "FakeWindow.h"
 #import "IntervalMap.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
