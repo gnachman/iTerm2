@@ -125,7 +125,9 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
             return state;
             
         case iTermEchoProbeWaiting:
-            if ((token->type == VT100_ASCIISTRING || token->type == VT100_MIXED_ASCII_CR_LF) &&
+            if ((token->type == VT100_ASCIISTRING ||
+                 token->type == VT100_MIXED_ASCII_CR_LF ||
+                 token->type == VT100_GANG) &&
                 [[token stringForAsciiData] isEqualToString:@"*"]) {
                 return iTermEchoProbeOneAsterisk;
             } else {
@@ -141,7 +143,9 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
             }
     
         case iTermEchoProbeBackspaceOverAsterisk:
-            if ((token->type == VT100_ASCIISTRING || token->type == VT100_MIXED_ASCII_CR_LF) &&
+            if ((token->type == VT100_ASCIISTRING ||
+                 token->type == VT100_MIXED_ASCII_CR_LF ||
+                 token->type == VT100_GANG) &&
                 [[token stringForAsciiData] isEqualToString:@" "]) {
                 return iTermEchoProbeSpaceOverAsterisk;
             } else if (token->type == VT100CSI_EL && token.csi->p[0] == 0) {

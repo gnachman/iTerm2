@@ -300,6 +300,7 @@ static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
         if (!crlfs) {
             token->type = VT100_ASCIISTRING;
         } else {
+#warning TODO: Did this break ssh side channels?
             token->type = VT100_MIXED_ASCII_CR_LF;
             token.crlfs = crlfs;
         }

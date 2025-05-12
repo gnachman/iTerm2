@@ -17,6 +17,7 @@
 #import "VT100ScreenState+Private.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermHistogram.h"
 
 @implementation VT100ScreenMutableState (TerminalDelegate)
 
@@ -82,8 +83,30 @@
     }
 }
 
+#warning DNS
+
+static iTermHistogram *hog;
+- (void)accrueAsciiCount:(int)count {
+    if (!hog) {
+        hog = [[iTermHistogram alloc] init];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            static NSTimer *timer;
+            timer = [NSTimer scheduledTimerWithTimeInterval:1.0 repeats:YES block:^(NSTimer * _Nonnull timer) {
+                NSLog(@"ASCII Counts:\n%@", hog.stringValue);
+            }];
+        });
+    }
+    [hog addValue:count];
+}
+
 - (void)terminalAppendMixedAsciiCRLFData:(AsciiData *)asciiData
                                    crlfs:(NSArray<NSNumber *> *)crlfs {
+    [self accrueAsciiCount:asciiData->length];
+    [self appendMixedAsciiCRLFData:asciiData crlfs:crlfs];
+}
+
+- (void)appendMixedAsciiCRLFData:(AsciiData *)asciiData
+                           crlfs:(NSArray<NSNumber *> *)crlfs {
     int start = 0;
     const NSInteger count = crlfs.count;
     for (NSInteger i = 0; i < count + 1; i++) {
@@ -109,6 +132,17 @@
             }
         }
         start = control + 1;
+    }
+}
+
+- (void)terminalAppendMixedAsciiGang:(NSArray<VT100Token *> *)tokens {
+    int count = 0;
+    for (VT100Token *token in tokens) {
+        count += token.asciiData->length;
+    }
+    [self accrueAsciiCount:count];
+    for (VT100Token *token in tokens) {
+        [self appendMixedAsciiCRLFData:token.asciiData crlfs:token.crlfs];
     }
 }
 

@@ -50,7 +50,8 @@
         [terminal executeToken:token];
         NSString *string = token.isStringType ? token.string : nil;
         if (!string && (token->type == VT100_ASCIISTRING ||
-                        token->type == VT100_MIXED_ASCII_CR_LF)) {
+                        token->type == VT100_MIXED_ASCII_CR_LF ||
+                        token->type == VT100_GANG)) {
             string = [token stringForAsciiData];
         }
 

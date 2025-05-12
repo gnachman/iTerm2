@@ -2683,6 +2683,7 @@
 		A6936B5A1D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */; };
 		A693C0BD29D0B15900AED4E4 /* DeadlineMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */; };
 		A693C0BF29D0B1F100AED4E4 /* MemoryAddressHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */; };
+		A69553892DD1AA7F002E694D /* TokenArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69553882DD1AA7B002E694D /* TokenArray.swift */; };
 		A695CA7F213DAA8500486440 /* NSHost+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A695CA7D213DAA8500486440 /* NSHost+iTerm.h */; };
 		A695CA80213DAA8500486440 /* NSHost+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A695CA7E213DAA8500486440 /* NSHost+iTerm.m */; };
 		A697100618D82E79007E901D /* iTermAdvancedSettingsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */; };
@@ -3455,6 +3456,7 @@
 		A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
 		A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
 		A6C811F42DCFD5E40088E628 /* SearchEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBBFD42CC87713000A697C /* SearchEngineTests.swift */; };
+		A6C811F92DD1A7870088E628 /* TwoTierTokenQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C811F82DD1A7850088E628 /* TwoTierTokenQueue.swift */; };
 		A6C838AD2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
 		A6C838AE2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
 		A6C838AF2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
@@ -7138,6 +7140,7 @@
 		A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyPreferencesModel.m; sourceTree = "<group>"; };
 		A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineMonitor.swift; sourceTree = "<group>"; };
 		A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAddressHelper.swift; sourceTree = "<group>"; };
+		A69553882DD1AA7B002E694D /* TokenArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenArray.swift; sourceTree = "<group>"; };
 		A695CA7D213DAA8500486440 /* NSHost+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSHost+iTerm.h"; sourceTree = "<group>"; };
 		A695CA7E213DAA8500486440 /* NSHost+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSHost+iTerm.m"; sourceTree = "<group>"; };
 		A696AB3921603A3F000023C3 /* iTermMetalUnavailableReason.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalUnavailableReason.h; sourceTree = "<group>"; };
@@ -7553,6 +7556,7 @@
 		A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = iTerm2.sdef; sourceTree = "<group>"; };
 		A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+Scripting.m"; sourceTree = "<group>"; };
+		A6C811F82DD1A7850088E628 /* TwoTierTokenQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoTierTokenQueue.swift; sourceTree = "<group>"; };
 		A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = DeprecatedProfileKeyMappings.plist; sourceTree = "<group>"; };
 		A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "success-sound.mp3"; sourceTree = "<group>"; };
 		A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "error-sound.mp3"; sourceTree = "<group>"; };
@@ -10467,6 +10471,8 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A69553882DD1AA7B002E694D /* TokenArray.swift */,
+				A6C811F82DD1A7850088E628 /* TwoTierTokenQueue.swift */,
 				A697CD702D973E370031583F /* iTermApplicationDelegate.swift */,
 				A61E0C4F2D5ACD4C00D4633A /* PTYSession.swift */,
 				A6F3EB4E2D32EC5500612173 /* TailFindController.swift */,
@@ -16626,6 +16632,7 @@
 			files = (
 				A62132D12786109000B80724 /* CapturedOutput.m in Sources */,
 				A667C26027791223006B4DEF /* PTYAnnotation.m in Sources */,
+				A69553892DD1AA7F002E694D /* TokenArray.swift in Sources */,
 				A653F6BB24D4C9B50062377E /* iTermKeyLabels.m in Sources */,
 				A6EC0B0F2C9C9AA800598D20 /* FoldMark.swift in Sources */,
 				53D0FD52237DCB5A00DAFA8A /* NSTableView+iTerm.m in Sources */,
@@ -16722,6 +16729,7 @@
 				A621F10326F2B0FE001DD3A6 /* VT100LineInfo.m in Sources */,
 				A6EC80812828E9F600493544 /* Conductor.swift in Sources */,
 				A6CC7F5C274B6C570060C3C2 /* ToolJobs.m in Sources */,
+				A6C811F92DD1A7870088E628 /* TwoTierTokenQueue.swift in Sources */,
 				A63F0A5D2BF436850096633F /* iTermHostnameFinder.swift in Sources */,
 				535D0915224DD13F00A79581 /* iTermPreferencesSearchEngineResultsWindowController.m in Sources */,
 				A6EC8073281F2C2900493544 /* ExternalSearchResult.swift in Sources */,

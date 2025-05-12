@@ -282,7 +282,8 @@ typedef enum {
     SSH_RECOVERY_BOUNDARY,
     SSH_SIDE_CHANNEL,  // Synthetic - produced internally in VT100Terminal
 
-    VT100_LITERAL
+    VT100_LITERAL,
+    VT100_GANG
 } VT100TerminalTokenType;
 
 // A preinitialized array of screen_char_t. When ASCII data is present, it will have the codes
@@ -371,6 +372,7 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 @property(nonatomic, readonly) AsciiData *asciiData;
 @property(nonatomic) VT100TerminalTokenType type;
 @property(nonatomic) SSHInfo sshInfo;
+@property(nonatomic, strong) NSArray<VT100Token *> *subtokens;
 
 + (instancetype)token;
 + (instancetype)newTokenForControlCharacter:(unsigned char)controlCharacter;

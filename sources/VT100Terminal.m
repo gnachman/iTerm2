@@ -1709,6 +1709,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         wrapped.type = SSH_SIDE_CHANNEL;
         wrapped.sshInfo = token.sshInfo;
         switch (token.type) {
+            case VT100_GANG:
+                wrapped.string = [token stringForAsciiData];
+                break;
             case VT100_ASCIISTRING:
             case VT100_MIXED_ASCII_CR_LF:
                 wrapped.string = [[NSString alloc] initWithBytes:token.asciiData->buffer
@@ -1767,7 +1770,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalDidReceiveBase64FileData:token.string ?: @""];
             return;
         } else if (token->type == VT100_ASCIISTRING ||
-                   token->type == VT100_MIXED_ASCII_CR_LF) {
+                   token->type == VT100_MIXED_ASCII_CR_LF ||
+                   token->type == VT100_GANG) {
             [_delegate terminalDidReceiveBase64FileData:[token stringForAsciiData]];
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
@@ -1790,7 +1794,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalDidReceiveBase64PasteboardString:token.string ?: @""];
             return;
         } else if (token->type == VT100_ASCIISTRING ||
-                   token->type == VT100_MIXED_ASCII_CR_LF) {
+                   token->type == VT100_MIXED_ASCII_CR_LF ||
+                   token->type == VT100_GANG) {
             [_delegate terminalDidReceiveBase64PasteboardString:[token stringForAsciiData]];
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
@@ -1852,7 +1857,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalAppendMixedAsciiCRLFData:token.asciiData
                                                   crlfs:token.crlfs];
             break;
-
+        case VT100_GANG:
+            [_delegate terminalAppendMixedAsciiGang:token.subtokens];
+            break;
         case VT100_UNKNOWNCHAR:
             break;
         case VT100_NOTSUPPORT:
